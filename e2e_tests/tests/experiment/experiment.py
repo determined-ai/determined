@@ -236,10 +236,11 @@ def wait_for_experiment_state(
     target_state: experimentv1State,
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
     log_every: int = 60,
+    credentials: Optional[authentication.Credentials] = None,
 ) -> None:
     for seconds_waited in range(max_wait_secs):
         try:
-            state = experiment_state(experiment_id)
+            state = experiment_state(experiment_id, credentials)
         except api.errors.NotFoundException:
             logging.warning(
                 "Experiment not yet available to check state: "
@@ -412,8 +413,12 @@ def experiment_config_json(experiment_id: int) -> Dict[str, Any]:
     return r.experiment.config
 
 
-def experiment_state(experiment_id: int) -> experimentv1State:
-    r = bindings.get_GetExperiment(api_utils.determined_test_session(), experimentId=experiment_id)
+def experiment_state(
+    experiment_id: int, credentials: Optional[authentication.Credentials] = None
+) -> experimentv1State:
+    r = bindings.get_GetExperiment(
+        api_utils.determined_test_session(credentials), experimentId=experiment_id
+    )
     return r.experiment.state
 
 
