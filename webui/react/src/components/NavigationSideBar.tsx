@@ -16,9 +16,7 @@ import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import shortCutSettingsConfig, {
-  shortcutMet,
   Settings as ShortcutSettings,
-  shortcutToString,
 } from 'pages/Settings/UserSettings.settings';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
@@ -31,6 +29,7 @@ import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { matchesShortcut, shortcutToString } from 'utils/shortcut';
 
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
@@ -205,7 +204,7 @@ const NavigationSideBar: React.FC = () => {
 
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
-      if (shortcutMet(e, navbarCollapsed)) {
+      if (matchesShortcut(e, navbarCollapsed)) {
         handleCollapse();
       }
     };
