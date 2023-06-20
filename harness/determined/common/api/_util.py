@@ -51,7 +51,7 @@ def read_paginated(
         offset = pagination.endIndex
 
 
-def default_retry(max_retries: int = MAX_RETRIES):
+def default_retry(max_retries: int = MAX_RETRIES) -> urllib3.util.retry.Retry:
     retry = urllib3.util.retry.Retry(
         total=max_retries,
         backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
