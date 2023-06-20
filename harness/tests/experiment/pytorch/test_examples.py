@@ -1,15 +1,16 @@
+# type: ignore
 import logging
 import pathlib
-import pytest
 import typing
-import torch
 
+import pytest
+import torch
 from torch.distributed import launcher
 
-from tests.experiment import utils, pytorch_utils  # noqa: I100
+from tests.experiment import pytorch_utils, utils  # noqa: I100
 
 
-def test_pytorch_mnist(tmp_path: pathlib.Path):
+def test_pytorch_mnist(tmp_path: pathlib.Path) -> None:
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
     config = utils.load_config(utils.tutorials_path("mnist_pytorch/const.yaml"))
@@ -35,10 +36,10 @@ def test_pytorch_mnist(tmp_path: pathlib.Path):
         steps=(1, 1),
     )
 
+
 @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
 @pytest.mark.gpu_parallel
 def test_pytorch_parallel(tmp_path: pathlib.Path) -> None:
-
     launch_config = pytorch_utils.setup_torch_distributed()
 
     root_logfile = tmp_path.joinpath("root_test.log")
@@ -65,25 +66,26 @@ def test_pytorch_parallel(tmp_path: pathlib.Path) -> None:
 
     utils.assert_patterns_in_logs(root_log_output, patterns)
 
+
 @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
 @pytest.mark.gpu_parallel
 def test_cifar10_parallel(tmp_path: pathlib.Path) -> None:
-
     launch_config = pytorch_utils.setup_torch_distributed()
 
     outputs = launcher.elastic_launch(launch_config, run_cifar10)(tmp_path)
     launcher.elastic_launch(launch_config, run_cifar10)(tmp_path, outputs[0])
 
+
 @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
 @pytest.mark.gpu_parallel
 def test_gan_parallel(tmp_path: pathlib.Path) -> None:
-
     launch_config = pytorch_utils.setup_torch_distributed()
 
     outputs = launcher.elastic_launch(launch_config, run_gan)(tmp_path)
     launcher.elastic_launch(launch_config, run_gan)(tmp_path, outputs[0])
 
-def run_mnist(tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
+
+def run_mnist(tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0) -> None:
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
     root_logfile = tmp_path.joinpath("root_test.log")
@@ -130,7 +132,8 @@ def run_mnist(tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0)
         )
         return True
 
-def run_cifar10(tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
+
+def run_cifar10(tmp_path: pathlib.Path, batches_trained: int = 0):
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
     config = utils.load_config(utils.cv_examples_path("cifar10_pytorch/const.yaml"))
@@ -168,9 +171,9 @@ def run_cifar10(tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 
             steps=(1, 1),
             batches_trained=batches_trained,
         )
-        return True
 
-def run_gan(tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
+
+def run_gan(tmp_path: pathlib.Path, batches_trained: int = 0):
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
     config = utils.load_config(utils.gan_examples_path("gan_mnist_pytorch/const.yaml"))
@@ -208,4 +211,3 @@ def run_gan(tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
             steps=(1, 1),
             batches_trained=batches_trained,
         )
-        return True

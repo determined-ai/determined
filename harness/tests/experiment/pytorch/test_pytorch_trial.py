@@ -2,7 +2,6 @@
 import contextlib
 import importlib
 import io
-import logging
 import os
 import pathlib
 import sys
@@ -18,7 +17,7 @@ from torch.distributed import launcher
 
 import determined as det
 from determined import pytorch
-from tests.experiment import utils, pytorch_utils  # noqa: I100
+from tests.experiment import pytorch_utils, utils  # noqa: I100
 from tests.experiment.fixtures import pytorch_onevar_model
 
 # Apex is included only for GPU trials.
@@ -986,9 +985,7 @@ class TestPyTorchTrial:
         )
 
         outputs = launcher.elastic_launch(launch_config, run_amp)(tmp_path, api_style)
-        launcher.elastic_launch(launch_config, run_amp)(
-            tmp_path, api_style, outputs[0]
-        )
+        launcher.elastic_launch(launch_config, run_amp)(tmp_path, api_style, outputs[0])
 
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
@@ -1148,7 +1145,6 @@ class TestPyTorchTrial:
             utils.assert_equivalent_metrics(A, B)
 
         return (training_metrics["A"], training_metrics["B"])
-
 
     def test_trial_validation_checkpointing(self, tmp_path: pathlib.Path):
         tensorboard_path = tmp_path.joinpath("tensorboard")
@@ -1410,8 +1406,8 @@ def amp_metrics_test(trial_class, training_metrics, agg_freq=1):
                 assert loss <= loss_prev, "loss was expected to decrease monotonically"
                 loss_prev = loss
 
-def run_identity(tmp_path: pathlib.Path):
 
+def run_identity(tmp_path: pathlib.Path):
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
     config = utils.load_config(utils.fixtures_path("pytorch_identity/distributed.yaml"))
@@ -1453,11 +1449,8 @@ def run_identity(tmp_path: pathlib.Path):
 
     return validation_metrics
 
-def run_amp(
-    tmp_path: pathlib.Path,
-    api_style: str,
-    batches_trained: typing.Optional[int] = 0
-):
+
+def run_amp(tmp_path: pathlib.Path, api_style: str, batches_trained: typing.Optional[int] = 0):
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
     class_selector = {
         "apex": "MNistApexAMPTrial",
@@ -1465,9 +1458,7 @@ def run_amp(
         "manual": "MNistManualAMPTrial",
     }
 
-    config = utils.load_config(
-        utils.fixtures_path(f"pytorch_amp/{api_style}_amp_distributed.yaml")
-    )
+    config = utils.load_config(utils.fixtures_path(f"pytorch_amp/{api_style}_amp_distributed.yaml"))
     config = config.copy()
     config.setdefault("profiling", {})
     config["profiling"]["enabled"] = True
@@ -1507,6 +1498,7 @@ def run_amp(
             batches_trained=batches_trained,
         )
         return True
+
 
 def run_no_op(
     tmp_path: pathlib.Path,

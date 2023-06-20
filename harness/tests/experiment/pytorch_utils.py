@@ -1,3 +1,4 @@
+# type: ignore
 import os
 import pathlib
 import random
@@ -5,10 +6,10 @@ import sys
 import typing
 import uuid
 
-import determined as det
-from determined import pytorch, gpu
 from torch.distributed import launcher
 
+import determined as det
+from determined import gpu, pytorch
 from tests.experiment import utils
 
 
@@ -50,6 +51,7 @@ def calculate_gradients(
         expected_weights.append(weight)
 
     return expected_weights
+
 
 def create_trial_and_trial_controller(
     trial_class: pytorch.PyTorchTrial,
@@ -152,6 +154,7 @@ def create_trial_and_trial_controller(
     trial_controller.training_iterator = iter(trial_controller.training_loader)
     return trial_inst, trial_controller
 
+
 def train_for_checkpoint(
     hparams: typing.Dict,
     trial_class: pytorch.PyTorchTrial,
@@ -181,6 +184,7 @@ def train_for_checkpoint(
     assert len(os.listdir(checkpoint_dir)) == 1, "trial did not create a checkpoint"
 
     return trial_controller.state.batches_trained
+
 
 def train_from_checkpoint(
     hparams: typing.Dict,
@@ -212,6 +216,7 @@ def train_from_checkpoint(
 
     assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
 
+
 def train_and_checkpoint(
     hparams: typing.Dict,
     trial_class: pytorch.PyTorchTrial,
@@ -237,6 +242,7 @@ def train_and_checkpoint(
         steps=steps,
         batches_trained=steps_completed,
     )
+
 
 def setup_torch_distributed(local_procs=2, max_retries=0) -> launcher.LaunchConfig:
     # set up distributed backend.
