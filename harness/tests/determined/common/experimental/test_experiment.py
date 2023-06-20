@@ -71,7 +71,12 @@ def test_wait_waits_until_terminal_state(
     responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}", json=exp_resp_terminal.to_json())
 
     expref.wait(interval=0.01)
-    assert expref._get().state == terminal_state
+
+    # Register an extra response so the mock can keep serving the experiment
+    #   (necessary for the `expref.reload() call below)
+    responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}", json=exp_resp_terminal.to_json())
+    expref.reload()
+    assert expref.state == terminal_state
 
 
 @responses.activate
