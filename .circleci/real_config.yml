@@ -2096,9 +2096,7 @@ jobs:
 
       - install-devcluster
 
-      # Must overwrite the default value ("circleci") since `slurmcluster.sh` sets the name of
-      # the dev box to "$USER-dev-box"
-      - run: echo 'export USER=circleci-job-<<parameters.instance-name>>' >> "$BASH_ENV"    
+      - run: echo 'export OPT_DEVBOX_PREFIX=circleci-job-<<parameters.instance-name>>' >> "$BASH_ENV"    
 
       - gcloud/install:
           version: "412.0.0"
@@ -2129,8 +2127,8 @@ jobs:
 
       - run:
           name: Wait for VM creation
-          command: sleep 2m
-      
+          command: sleep 3m
+            
       - run-e2e-tests:
           mark: <<parameters.mark>>
           wait-for-master: true
@@ -3058,53 +3056,6 @@ workflows:
               ld_library_path:
 
       - test-e2e-slurm:
-          name: test-e2e-slurm-enroot
-          slack-mentions: "${SLACK_USER_ID}"
-          requires:
-            - package-and-push-system-local
-          master_config: |
-            task_container_defaults:
-              # The current image must be created in the launcher account before running this test
-              # cd /lustre/ssd/foundation_engineering/
-              # enroot import docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
-              # enroot create /lustre/ssd/foundation_engineering/determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
-              image: determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
-              environment_variables:
-                  # Some ports are not working, disable them so distributed jobs work.
-                  - NCCL_IB_HCA=mlx6_0:0
-                  # Workaround XDG_RUNTIME_DIR not provided by Slurm
-                  - ENROOT_RUNTIME_PATH=/tmp/launcher
-            checkpoint_storage:
-              type: shared_fs
-              host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
-              storage_path: determined-checkpoint
-              save_experiment_best: 0
-              save_trial_best: 1
-              save_trial_latest: 1
-            db:
-              user: postgres
-              host: localhost
-              port: 5432
-              name: determined
-              password: launcher
-            resource_manager:
-              type: slurm
-              master_host: $HOSTNAME
-              master_port: 8080
-              host: localhost
-              port: 8181
-              protocol: http
-              slot_type: cuda
-              user_name: launcher
-              container_run_type: enroot
-              group_name: hpcd
-              singularity_image_root: /lustre/hdd/foundation_engineering/images
-              job_storage_root: /scratch/launcher/.launcher.$HOSTNAME
-              auth_file: /home/launcher/.launcher.$HOSTNAME.token
-              path: /opt/singularity/bin:/usr/local/bin:${PATH}
-              ld_library_path:
-
-      - test-e2e-slurm:
           name: test-e2e-slurm-gpu
           slack-mentions: "${SLACK_USER_ID}"
           mark: "e2e_slurm_gpu"
@@ -3130,6 +3081,19 @@ workflows:
               name: [test-e2e-slurm-podman-gcp]
               instance-name: ["${CIRCLE_WORKFLOW_JOB_ID}"]
               container-run-type: ["podman"]
+              context: ["gcp"]
+              mark: ["e2e_slurm and not parallel"]
+              extra-pytest-flags: ["-k 'not start_and_write_to_shell'"]
+          requires:
+            - build-go
+
+    # Enroot test on GCP
+      - test-e2e-slurm-gcp:
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-enroot-gcp]
+              instance-name: ["${CIRCLE_WORKFLOW_JOB_ID}"]
+              container-run-type: ["enroot"]
               context: ["gcp"]
               mark: ["e2e_slurm and not parallel"]
               extra-pytest-flags: ["-k 'not start_and_write_to_shell'"]
@@ -3918,6 +3882,52 @@ workflows:
               slot_type: cuda
               user_name: launcher
               container_run_type: podman
+              group_name: hpcd
+              singularity_image_root: /lustre/hdd/foundation_engineering/images
+              job_storage_root: /scratch/launcher/.launcher.$HOSTNAME
+              auth_file: /home/launcher/.launcher.$HOSTNAME.token
+              path: /opt/singularity/bin:/usr/local/bin:${PATH}
+              ld_library_path:
+      - test-e2e-slurm:
+          name: test-e2e-slurm-enroot-znode
+          slack-mentions: "${SLACK_USER_ID}"
+          requires:
+            - package-and-push-system-local
+          master_config: |
+            task_container_defaults:
+              # The current image must be created in the launcher account before running this test
+              # cd /lustre/ssd/foundation_engineering/
+              # enroot import docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
+              # enroot create /lustre/ssd/foundation_engineering/determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
+              image: determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
+              environment_variables:
+                  # Some ports are not working, disable them so distributed jobs work.
+                  - NCCL_IB_HCA=mlx6_0:0
+                  # Workaround XDG_RUNTIME_DIR not provided by Slurm
+                  - ENROOT_RUNTIME_PATH=/tmp/launcher
+            checkpoint_storage:
+              type: shared_fs
+              host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
+              storage_path: determined-checkpoint
+              save_experiment_best: 0
+              save_trial_best: 1
+              save_trial_latest: 1
+            db:
+              user: postgres
+              host: localhost
+              port: 5432
+              name: determined
+              password: launcher
+            resource_manager:
+              type: slurm
+              master_host: $HOSTNAME
+              master_port: 8080
+              host: localhost
+              port: 8181
+              protocol: http
+              slot_type: cuda
+              user_name: launcher
+              container_run_type: enroot
               group_name: hpcd
               singularity_image_root: /lustre/hdd/foundation_engineering/images
               job_storage_root: /scratch/launcher/.launcher.$HOSTNAME

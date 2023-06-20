@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-set -e
+set -ex
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         -c)
-            OPT_CONTAINER_RUN_TYPE=$2
+            export OPT_CONTAINER_RUN_TYPE=$2
             if [[ -z $OPT_CONTAINER_RUN_TYPE ]]; then
                 echo >&2 "usage $0:  Missing -c {container_type}"
                 exit 1
@@ -86,6 +86,14 @@ export OPT_REMOTE_GROUP=$(gcloud_ssh id -gn)
 export OPT_PROJECT_ROOT='../..'
 export OPT_CLUSTER_INTERNAL_IP=$(terraform -chdir=terraform output --raw internal_ip)
 export OPT_AUTHFILE=$LOCAL_TOKEN_DEST
+
+CPU_IMAGE_STRING=$(grep "CPUImage" ../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
+CPU_IMAGE_FMT=${CPU_IMAGE_STRING//[\/:]/+}.sqsh
+
+if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
+    gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "sudo ENROOT_RUNTIME_PATH=/tmp ENROOT_TEMP_PATH=/tmp manage-enroot-cache -s /tmp ${CPU_IMAGE_STRING}"
+    gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "enroot create /tmp/${CPU_IMAGE_FMT}"
+fi
 
 TEMPYAML=$TEMPDIR/slurmcluster.yaml
 envsubst <$PARENT_PATH/slurmcluster.yaml >$TEMPYAML

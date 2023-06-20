@@ -63,6 +63,9 @@ stages:
           bind_mounts:
             - host_path: /etc/hosts
               container_path: /etc/hosts
+          # Workaround XDG_RUNTIME_DIR not provided by Slurm
+          environment_variables:
+            - ENROOT_RUNTIME_PATH=/tmp/launcher
         resource_pools:
 
         resource_manager:
