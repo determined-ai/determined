@@ -24,6 +24,7 @@ def make_expref(standard_session: api.Session) -> Callable[[int], experiment.Exp
     return _make_expref
 
 
+@responses.activate
 def test_await_waits_for_first_trial_to_start(
     make_expref: Callable[[int], experiment.Experiment]
 ) -> None:
