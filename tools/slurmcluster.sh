@@ -362,6 +362,16 @@ OPT_MASTERPORT_osprey=$USERPORT
 OPT_TRESSUPPORTED_osprey=false
 OPT_PROTOCOL_osprey=http
 
+# Configuration for vnode01 (vm-cluster1)
+OPT_name_vnode01=10.30.89.87
+OPT_LAUNCHERPROTOCOL_vnode01=http
+OPT_CHECKPOINTPATH_vnode01=/shared/fe/determined-cp
+OPT_DEBUGLEVEL_vnode01=debug
+OPT_MASTERHOST_vnode01=10.30.89.87
+OPT_MASTERPORT_vnode01=$USERPORT
+OPT_TRESSUPPORTED_vnode01=false
+OPT_PROTOCOL_vnode01=http
+
 # Configuration for swan
 OPT_name_swan=swan.hpcrb.rdlabs.ext.hpe.com
 OPT_LAUNCHERPROTOCOL_swan=http
