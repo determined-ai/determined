@@ -93,12 +93,14 @@ type requestQueue struct {
 
 	queue []*queuedResourceRequest
 
-	creationInProgress       set.Set[string]
-	pendingResourceCreations map[string]*queuedResourceRequest
-	blockedResourceDeletions map[string]*queuedResourceRequest
+	creationInProgress       set.Set[requestID]
+	pendingResourceCreations map[requestID]*queuedResourceRequest
+	blockedResourceDeletions map[requestID]*queuedResourceRequest
 
 	syslog *logrus.Entry
 }
+
+type requestID string
 
 func startRequestQueue(
 	podInterfaces map[string]typedV1.PodInterface,
@@ -112,9 +114,9 @@ func startRequestQueue(
 
 		queue: make([]*queuedResourceRequest, 0),
 
-		creationInProgress:       make(set.Set[string]),
-		pendingResourceCreations: make(map[string]*queuedResourceRequest),
-		blockedResourceDeletions: make(map[string]*queuedResourceRequest),
+		creationInProgress:       make(set.Set[requestID]),
+		pendingResourceCreations: make(map[requestID]*queuedResourceRequest),
+		blockedResourceDeletions: make(map[requestID]*queuedResourceRequest),
 
 		syslog: logrus.New().WithField("component", "kubernetesrm-queue"),
 	}
@@ -134,22 +136,22 @@ func (r *requestQueue) startWorkers() {
 	}
 }
 
-func keyForCreate(msg createKubernetesResources) string {
+func keyForCreate(msg createKubernetesResources) requestID {
 	if msg.podSpec != nil {
-		return msg.podSpec.Namespace + "/" + msg.podSpec.Name
+		return requestID(msg.podSpec.Namespace + "/" + msg.podSpec.Name)
 	}
 	if msg.configMapSpec != nil {
-		return msg.configMapSpec.Namespace + "/" + msg.configMapSpec.Name
+		return requestID(msg.configMapSpec.Namespace + "/" + msg.configMapSpec.Name)
 	}
 	panic("invalid createKubernetesResources message")
 }
 
-func keyForDelete(msg deleteKubernetesResources) string {
+func keyForDelete(msg deleteKubernetesResources) requestID {
 	if msg.podName != "" {
-		return msg.namespace + "/" + msg.podName
+		return requestID(msg.namespace + "/" + msg.podName)
 	}
 	if msg.configMapName != "" {
-		return msg.namespace + "/" + msg.configMapName
+		return requestID(msg.namespace + "/" + msg.configMapName)
 	}
 	panic("invalid deleteKubernetesResources message")
 }
@@ -216,7 +218,7 @@ func (r *requestQueue) deleteKubernetesResources(
 	}
 }
 
-func (r *requestQueue) workerReady(createRef string) {
+func (r *requestQueue) workerReady(createRef requestID) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

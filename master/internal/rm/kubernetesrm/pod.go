@@ -80,8 +80,8 @@ type pod struct {
 
 	restore bool
 
-	syslog           *logrus.Entry
-	resourceErrorCtx func(ctx *actor.Context) errorCallbackFunc
+	syslog              *logrus.Entry
+	handleResourceError func(ctx *actor.Context) errorCallbackFunc
 }
 
 type getPodNodeInfo struct{}
@@ -155,7 +155,7 @@ func newPod(
 			}).Fields(),
 		),
 	}
-	p.resourceErrorCtx = func(ctx *actor.Context) errorCallbackFunc {
+	p.handleResourceError = func(ctx *actor.Context) errorCallbackFunc {
 		return func(err error) {
 			p.resourceErrorCallback(ctx, err)
 		}
@@ -257,7 +257,7 @@ func (p *pod) createPodSpecAndSubmit(ctx *actor.Context) error {
 		return err
 	}
 
-	p.resourceRequestQueue.createKubernetesResources(p.resourceErrorCtx(ctx), p.pod, p.configMap)
+	p.resourceRequestQueue.createKubernetesResources(p.handleResourceError(ctx), p.pod, p.configMap)
 	return nil
 }
 
@@ -344,7 +344,7 @@ func (p *pod) deleteKubernetesResources(ctx *actor.Context) {
 
 	ctx.Log().Infof("requesting to delete kubernetes resources")
 	p.resourceRequestQueue.deleteKubernetesResources(
-		p.resourceErrorCtx(ctx),
+		p.handleResourceError(ctx),
 		p.namespace,
 		p.podName,
 		p.configMapName,

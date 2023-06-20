@@ -746,7 +746,7 @@ func TestKillTaskPod(t *testing.T) {
 	defer cleanup(t)
 	deleteFailed := false
 	system, newPod, ref, _, _, k8sPods := createPodWithMockQueue()
-	newPod.resourceErrorCtx = func(ctx *actor.Context) errorCallbackFunc {
+	newPod.handleResourceError = func(ctx *actor.Context) errorCallbackFunc {
 		return func(err error) {
 			switch err.(type) {
 			case resourceDeletionFailed:

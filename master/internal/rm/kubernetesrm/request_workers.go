@@ -16,7 +16,7 @@ type requestProcessingWorker struct {
 	syslog              *logrus.Entry
 }
 
-type readyCallbackFunc func(string)
+type readyCallbackFunc func(createRef requestID)
 
 func startRequestProcessingWorker(
 	podInterfaces map[string]typedV1.PodInterface,

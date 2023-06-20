@@ -99,7 +99,7 @@ type pods struct {
 	summarizeCache     summarizeResult
 	summarizeCacheTime time.Time
 
-	resourceErrorCtx func(ctx *actor.Context) errorCallbackFunc
+	handleResourceError func(ctx *actor.Context) errorCallbackFunc
 }
 
 type summarizeResult struct {
@@ -185,7 +185,7 @@ func Initialize(
 		podInterfaces:                make(map[string]typedV1.PodInterface),
 		configMapInterfaces:          make(map[string]typedV1.ConfigMapInterface),
 	}
-	p.resourceErrorCtx = func(ctx *actor.Context) errorCallbackFunc {
+	p.handleResourceError = func(ctx *actor.Context) errorCallbackFunc {
 		return func(err error) {
 			p.resourceErrorCallback(ctx, err)
 		}
@@ -588,13 +588,13 @@ func (p *pods) deleteKubernetesResources(
 ) {
 	for _, pod := range pods.Items {
 		p.resourceRequestQueue.deleteKubernetesResources(
-			p.resourceErrorCtx(ctx), pod.Namespace, pod.Name, "",
+			p.handleResourceError(ctx), pod.Namespace, pod.Name, "",
 		)
 	}
 
 	for _, configMap := range configMaps.Items {
 		p.resourceRequestQueue.deleteKubernetesResources(
-			p.resourceErrorCtx(ctx), configMap.Namespace, "", configMap.Name,
+			p.handleResourceError(ctx), configMap.Namespace, "", configMap.Name,
 		)
 	}
 }
