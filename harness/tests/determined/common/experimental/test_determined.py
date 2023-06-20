@@ -36,7 +36,7 @@ def make_client(mock_default_auth: Callable) -> Callable[[], Determined]:
 
 
 @responses.activate
-def test_default_retry_retries_until_max(make_client: Callable[[], Determined]) -> None:
+def test_default_retry_retries_transient_failures(make_client: Callable[[], Determined]) -> None:
     client = make_client()
 
     model_resp = api_responses.sample_get_model()
@@ -49,6 +49,20 @@ def test_default_retry_retries_until_max(make_client: Callable[[], Determined]) 
 
     client.get_model(model_resp.model.name)
     responses.assert_call_count(get_model_url, 3)
+
+
+@responses.activate
+def test_default_retry_retries_until_max(make_client: Callable[[], Determined]) -> None:
+    client = make_client()
+    model_resp = api_responses.sample_get_model()
+    get_model_url = f"{_MASTER}/api/v1/models/{model_resp.model.name}"
+
+    responses.get(get_model_url, status=504)
+    with pytest.raises(errors.BadRequestException):
+        client.get_model(model_resp.model.name)
+
+    # Expect max retries (5) + 1 calls.
+    responses.assert_call_count(get_model_url, 6)
 
 
 @responses.activate

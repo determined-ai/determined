@@ -1,14 +1,39 @@
 from typing import Callable
+from unittest import mock
 
 import pytest
 import responses
 
 from determined.common import api
-from determined.common.api import bindings
-from determined.common.experimental import experiment
+from determined.common.api import authentication, bindings
+from determined.common.experimental import Determined, experiment
 from tests.fixtures import api_responses
 
 _MASTER = "http://localhost:8080"
+
+
+@pytest.fixture
+@mock.patch("determined.common.api.authentication.Authentication")
+def mock_default_auth(auth_mock: mock.MagicMock) -> None:
+    responses.get(f"{_MASTER}/api/v1/me", status=200, json={"username": api_responses.USERNAME})
+    responses.post(
+        f"{_MASTER}/api/v1/auth/login",
+        status=200,
+        json=api_responses.sample_login(username=api_responses.USERNAME).to_json(),
+    )
+    auth_mock.return_value = authentication.Authentication(
+        master_address=_MASTER,
+        requested_user=api_responses.USERNAME,
+        password=api_responses.PASSWORD,
+    )
+
+
+@pytest.fixture
+def make_client(mock_default_auth: Callable) -> Callable[[], Determined]:
+    def _make_client() -> Determined:
+        return Determined(master=_MASTER)
+
+    return _make_client
 
 
 @pytest.fixture
@@ -48,8 +73,10 @@ def test_await_waits_for_first_trial_to_start(
 
 @responses.activate
 def test_wait_retries_transient_504(
-    make_expref: Callable[[int], experiment.ExperimentReference]
+    make_client: Callable[[], Determined],
+    make_expref: Callable[[int], experiment.ExperimentReference],
 ) -> None:
+    client = make_client()
     expref = make_expref(1)
 
     exp_resp = api_responses.sample_get_experiment(
@@ -60,7 +87,7 @@ def test_wait_retries_transient_504(
     responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}", status=504)
     responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}", status=200, json=exp_resp.to_json())
 
-    expref.wait(interval=0.01)
+    client.get_experiment(1).wait(0.01)
     assert len(responses.calls) > 2  # 2 504s and 1 200
 
 
