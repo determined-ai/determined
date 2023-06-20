@@ -84,8 +84,8 @@ Defines the default Docker image to use when executing the workload. If a Docker
 in the :ref:`experiment config <exp-environment-image>` this default is overridden. This image must
 be accessible via ``docker pull`` to every Determined agent machine in the cluster. Users can
 configure different container images for NVIDIA GPU tasks using the ``cuda`` key (``gpu`` prior to
-0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using the ``rocm`` key. Default
-values:
+Determined 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using the ``rocm`` key.
+Default values:
 
 -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2`` for NVIDIA GPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.2`` for ROCm.
@@ -96,18 +96,18 @@ values:
 
 A list of environment variables that will be set in every task container. Each element of the list
 should be a string of the form ``NAME=VALUE``. See :ref:`environment-variables` for more details.
-Environment variables specified in experiment config will override default values specified here.
-You can customize environment variables for CUDA (NVIDIA GPU), CPU, and ROCm (AMD GPU) tasks
-differently by specifying a dict with ``cuda`` (``gpu`` prior to 0.17.6), ``cpu``, and ``rocm``
-keys.
+Environment variables specified in the experiment configuration will override default values
+specified here. You can customize environment variables for CUDA (NVIDIA GPU), CPU, and ROCm (AMD
+GPU) tasks differently by specifying a dict with ``cuda`` (``gpu`` prior to Determined 0.17.6),
+``cpu``, and ``rocm`` keys.
 
 ``force_pull_image``
 ====================
 
 Defines the default policy for forcibly pulling images from the Docker registry and bypassing the
-Docker cache. If a pull policy is specified in the :ref:`experiment config <exp-environment-image>`
-this default value is overridden. Please note that as of November 1st, 2020, unauthenticated users
-will be `capped at 100 pulls from Docker Hub per 6 hours
+Docker cache. If a pull policy is specified in the :ref:`experiment configuration
+<exp-environment-image>` this default value is overridden. Please note that as of November 1st,
+2020, unauthenticated users will be `capped at 100 pulls from Docker Hub per 6 hours
 <https://www.docker.com/blog/scaling-docker-to-serve-millions-more-developers-network-egress/>`__.
 Defaults to ``false``.
 
@@ -324,8 +324,8 @@ Resource type used for compute tasks. Defaults to ``cuda``.
 ``slot_type: cuda``
 ^^^^^^^^^^^^^^^^^^^
 
-   One NVIDIA GPU will be requested per compute slot. Prior to 0.17.6, this option was called
-   ``gpu``.
+   One NVIDIA GPU will be requested per compute slot. Prior to Determined 0.17.6, this option was
+   called ``gpu``.
 
 ``slot_type: cpu``
 ^^^^^^^^^^^^^^^^^^
@@ -433,7 +433,7 @@ must be writable by the launcher, and readable by the Determined master.
 -------------
 
 The default slot type assumed when users request resources from Determined in terms of ``slots``.
-Available values are ``cuda``, ``rocm`` and ``cpu``, where 1 ``cuda`` or ``rocm`` slot is 1 GPU.
+Available values are ``cuda``, ``rocm``, and ``cpu``, where 1 ``cuda`` or ``rocm`` slot is 1 GPU.
 Otherwise, CPU slots are requested. The number of CPUs allocated per node is 1, unless overridden by
 ``slots_per_node`` in the experiment configuration. Defaults per-partition to ``cuda`` if GPU
 resources are found within the partition, else ``cpu``. If GPUs cannot be detected automatically,
@@ -789,9 +789,9 @@ Specifies the configuration of dynamic agents.
 
 The full URL of the master. A valid URL is in the format of ``scheme://host:port``. The scheme must
 be either ``http`` or ``https``. If the master is deployed on EC2, rather than hardcoding the IP
-address, we advise you use one of the following to set the host as an alias: ``local-ipv4``,
+address, you should use one of the following to set the host as an alias: ``local-ipv4``,
 ``public-ipv4``, ``local-hostname``, or ``public-hostname``. If the master is deployed on GCP,
-rather than hardcoding the IP address, we advise you use one of the following to set the host as an
+rather than hardcoding the IP address, you should use one of the following to set the host as an
 alias: ``internal-ip`` or ``external-ip``. Which one you should select is based on your network
 configuration. On master startup, we will replace the above alias host with its real value. Defaults
 to ``http`` as scheme, local IP address as host, and ``8080`` as port.
@@ -1420,12 +1420,12 @@ Specifies configuration settings related to telemetry collection and tracing.
 Whether to collect and report anonymous information about the usage of this Determined cluster. See
 :ref:`telemetry` for details on what kinds of information are reported. Defaults to ``true``.
 
-``otel-enabled``
+``otel_enabled``
 ================
 
 Whether OpenTelemetry is enabled. Defaults to ``false``.
 
-``otel-endpoint``
+``otel_endpoint``
 =================
 
 OpenTelemetry endpoint to use. Defaults to ``localhost:4317``.

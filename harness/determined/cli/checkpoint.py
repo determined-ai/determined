@@ -2,11 +2,9 @@ import json
 from argparse import Namespace
 from typing import Any, List, Optional
 
-from determined import cli, errors
-from determined.common import experimental
+from determined import cli, errors, experimental
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.experimental import Determined
 from determined.experimental.client import DownloadMode
 
 from . import render
@@ -94,7 +92,7 @@ def list_checkpoints(args: Namespace) -> None:
 
 
 def download(args: Namespace) -> None:
-    checkpoint = Determined(args.master, None).get_checkpoint(args.uuid)
+    checkpoint = experimental.Determined(args.master, None).get_checkpoint(args.uuid)
 
     try:
         path = checkpoint.download(path=args.output_dir, mode=args.mode)
@@ -108,7 +106,7 @@ def download(args: Namespace) -> None:
 
 
 def describe(args: Namespace) -> None:
-    checkpoint = Determined(args.master, None).get_checkpoint(args.uuid)
+    checkpoint = experimental.Determined(args.master, None).get_checkpoint(args.uuid)
     render_checkpoint(checkpoint)
 
 

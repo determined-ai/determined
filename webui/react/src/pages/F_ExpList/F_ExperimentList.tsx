@@ -222,7 +222,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           ...experimentFilters,
           filter: filtersString,
           limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
-          offset: isPagedView ? Math.max(page - 1, 0) * settings.pageLimit : tableOffset,
+          offset: isPagedView ? page * settings.pageLimit : tableOffset,
           sort: sortString || undefined,
         },
         { signal: canceler.signal },
@@ -511,7 +511,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : error ? (
           <Error />
         ) : (
-          <Space direction="vertical" style={{ width: '100%' }}>
+          <Space className={css.space} direction="vertical">
             <ComparisonView
               initialWidth={comparisonViewWidth}
               open={settings.compare}

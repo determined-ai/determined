@@ -129,13 +129,9 @@ const MetricSelect: React.FC<Props> = ({
   };
 
   const allOption = useMemo(() => {
-    let allOptionLabel;
     const numVisibleOptions = visibleMetrics.length;
-    if (numVisibleOptions === totalNumMetrics) {
-      allOptionLabel = 'All';
-    } else {
-      allOptionLabel = `All ${numVisibleOptions} results`;
-    }
+    const allOptionLabel =
+      numVisibleOptions === totalNumMetrics ? 'All' : `All ${numVisibleOptions} results`;
     return (
       <Option key={allOptionId} value={allOptionId}>
         <BadgeTag label={allOptionLabel} />
