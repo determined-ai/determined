@@ -25,8 +25,8 @@ const proxyTo = (targetServer) => {
     res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,PATCH,POST,PUT,DELETE');
     res.setHeader(
       'Access-Control-Allow-Headers',
-      'authorization, Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type,' +
-        ' Access-Control-Request-Method, Access-Control-Request-Headers',
+      'authorization, Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type,'
+      + ' Access-Control-Request-Method, Access-Control-Request-Headers',
     );
 
     if ('OPTIONS' === req.method) {
@@ -51,7 +51,7 @@ const proxyTo = (targetServer) => {
   };
 };
 
-app.use('/dynamic/:protocol/:target', function (req, res) {
+app.use('/dynamic/:protocol/:target', function(req, res) {
   const targetServer = req.params.protocol + '://' + req.params.target;
   return proxyTo(targetServer)(req, res);
 });
