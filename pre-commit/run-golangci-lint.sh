@@ -2,8 +2,7 @@
 
 CONFIG_FILE="$1"
 
-if ! command -v golangci-lint 2>&1 /dev/null
-then
+if ! command -v golangci-lint /dev/null 2>&1; then
     echo "golangci-lint could not be found"
     exit
 fi
