@@ -928,96 +928,6 @@ class TestPyTorchTrial:
 
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
-    def test_pytorch_parallel(self, tmp_path: pathlib.Path):
-        # set up distributed backend.
-        os.environ[det._DistributedBackend.TORCH] = str(1)
-
-        rdzv_backend = "c10d"
-        rdzv_endpoint = "localhost:29400"
-        rdzv_id = str(uuid.uuid4())
-
-        launch_config = launcher.LaunchConfig(
-            min_nodes=1,
-            max_nodes=1,
-            nproc_per_node=2,
-            run_id=rdzv_id,
-            max_restarts=0,
-            rdzv_endpoint=rdzv_endpoint,
-            rdzv_backend=rdzv_backend,
-        )
-
-        root_logfile = tmp_path.joinpath("root_test.log")
-
-        outputs = launcher.elastic_launch(launch_config, self.run_mnist)(tmp_path)
-        launcher.elastic_launch(launch_config, self.run_mnist)(tmp_path, outputs[0])
-
-        with open(root_logfile, "r") as f:
-            root_log_output = f.readlines()
-
-        validation_size = 10000
-        num_workers = 2
-        global_batch_size = 64
-        scheduling_unit = 1
-        per_slot_batch_size = global_batch_size // num_workers
-        exp_val_batches = (validation_size + (per_slot_batch_size - 1)) // per_slot_batch_size
-
-        patterns = [
-            # Expect two training reports.
-            f"report_training_metrics.*steps_completed={1*scheduling_unit}",
-            f"report_training_metrics.*steps_completed={2*scheduling_unit}",
-            f"validated: {validation_size} records.*in {exp_val_batches} batches",
-        ]
-
-        utils.assert_patterns_in_logs(root_log_output, patterns)
-
-    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
-    @pytest.mark.gpu_parallel
-    def test_cifar10_parallel(self, tmp_path: pathlib.Path):
-        # set up distributed backend.
-        os.environ[det._DistributedBackend.TORCH] = str(1)
-
-        rdzv_backend = "c10d"
-        rdzv_endpoint = "localhost:29400"
-        rdzv_id = str(uuid.uuid4())
-
-        launch_config = launcher.LaunchConfig(
-            min_nodes=1,
-            max_nodes=1,
-            nproc_per_node=2,
-            run_id=rdzv_id,
-            max_restarts=0,
-            rdzv_endpoint=rdzv_endpoint,
-            rdzv_backend=rdzv_backend,
-        )
-
-        outputs = launcher.elastic_launch(launch_config, self.run_cifar10)(tmp_path)
-        launcher.elastic_launch(launch_config, self.run_cifar10)(tmp_path, outputs[0])
-
-    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
-    @pytest.mark.gpu_parallel
-    def test_gan_parallel(self, tmp_path: pathlib.Path):
-        # set up distributed backend.
-        os.environ[det._DistributedBackend.TORCH] = str(1)
-
-        rdzv_backend = "c10d"
-        rdzv_endpoint = "localhost:29400"
-        rdzv_id = str(uuid.uuid4())
-
-        launch_config = launcher.LaunchConfig(
-            min_nodes=1,
-            max_nodes=1,
-            nproc_per_node=2,
-            run_id=rdzv_id,
-            max_restarts=0,
-            rdzv_endpoint=rdzv_endpoint,
-            rdzv_backend=rdzv_backend,
-        )
-
-        outputs = launcher.elastic_launch(launch_config, self.run_gan)(tmp_path)
-        launcher.elastic_launch(launch_config, self.run_gan)(tmp_path, outputs[0])
-
-    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
-    @pytest.mark.gpu_parallel
     def test_gradient_aggregation_parallel(self, tmp_path: pathlib.Path):
         # set up distributed backend.
         os.environ[det._DistributedBackend.TORCH] = str(1)
@@ -1036,7 +946,7 @@ class TestPyTorchTrial:
             rdzv_backend=rdzv_backend,
         )
 
-        val_metrics = launcher.elastic_launch(launch_config, self.run_identity)(tmp_path)
+        val_metrics = launcher.elastic_launch(launch_config, run_identity)(tmp_path)
 
         # weights returned by both models are the same.
         model_1_metrics = val_metrics[0]
@@ -1075,8 +985,8 @@ class TestPyTorchTrial:
             rdzv_backend=rdzv_backend,
         )
 
-        outputs = launcher.elastic_launch(launch_config, self.run_amp)(tmp_path, api_style)
-        launcher.elastic_launch(launch_config, self.run_amp)(
+        outputs = launcher.elastic_launch(launch_config, run_amp)(tmp_path, api_style)
+        launcher.elastic_launch(launch_config, run_amp)(
             tmp_path, api_style, outputs[0]
         )
 
@@ -1102,7 +1012,7 @@ class TestPyTorchTrial:
             rdzv_backend=rdzv_backend,
         )
 
-        outputs = launcher.elastic_launch(launch_config, self.run_no_op)(tmp_path)
+        outputs = launcher.elastic_launch(launch_config, run_no_op)(tmp_path)
 
         log_output = sum([outputs[i] for i in range(num_procs)], [])
 
@@ -1135,7 +1045,7 @@ class TestPyTorchTrial:
 
         num_steps = 10
         global_batch_size = 2
-        outputs = launcher.elastic_launch(launch_config, self.run_no_op)(
+        outputs = launcher.elastic_launch(launch_config, run_no_op)(
             tmp_path, num_steps, global_batch_size, dataset_len
         )
 
@@ -1150,270 +1060,6 @@ class TestPyTorchTrial:
                 patterns.append(f"rank {rank} finished batch {batch_idx} in epoch {epoch_idx}")
 
         utils.assert_patterns_in_logs(log_output, patterns)
-
-    def run_mnist(self, tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
-        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
-
-        root_logfile = tmp_path.joinpath("root_test.log")
-
-        root_file_handler = logging.FileHandler(root_logfile, mode="a+")
-        root_logger = logging.getLogger()  # root logger
-        root_logger.setLevel(logging.INFO)
-        root_logger.addHandler(root_file_handler)
-
-        config = utils.load_config(utils.tutorials_path("mnist_pytorch/const.yaml"))
-        hparams = config["hyperparameters"]
-
-        exp_config = utils.make_default_exp_config(
-            hparams,
-            scheduling_unit=1,
-            searcher_metric="validation_loss",
-            checkpoint_dir=checkpoint_dir,
-        )
-        exp_config.update(config)
-        exp_config["searcher"]["smaller_is_better"] = True
-
-        example_path = utils.tutorials_path("mnist_pytorch/model_def.py")
-        trial_class = utils.import_class_from_module("MNistTrial", example_path)
-        trial_class._searcher_metric = "validation_loss"
-
-        if batches_trained == 0:
-            return self.train_for_checkpoint(
-                trial_class=trial_class,
-                hparams=hparams,
-                slots_per_trial=2,
-                tmp_path=tmp_path,
-                exp_config=exp_config,
-                steps=1,
-            )
-        else:
-            self.train_from_checkpoint(
-                trial_class=trial_class,
-                hparams=hparams,
-                slots_per_trial=2,
-                tmp_path=tmp_path,
-                exp_config=exp_config,
-                steps=(1, 1),
-                batches_trained=batches_trained,
-            )
-            return True
-
-    def run_cifar10(self, tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
-        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
-
-        config = utils.load_config(utils.cv_examples_path("cifar10_pytorch/const.yaml"))
-        hparams = config["hyperparameters"]
-
-        exp_config = utils.make_default_exp_config(
-            hparams,
-            scheduling_unit=1,
-            searcher_metric="validation_loss",
-            checkpoint_dir=checkpoint_dir,
-        )
-        exp_config.update(config)
-        exp_config["searcher"]["smaller_is_better"] = True
-
-        example_path = utils.cv_examples_path("cifar10_pytorch/model_def.py")
-        trial_class = utils.import_class_from_module("CIFARTrial", example_path)
-        trial_class._searcher_metric = "validation_error"
-
-        if batches_trained == 0:
-            return self.train_for_checkpoint(
-                trial_class=trial_class,
-                hparams=hparams,
-                slots_per_trial=2,
-                tmp_path=tmp_path,
-                exp_config=exp_config,
-                steps=1,
-            )
-        else:
-            self.train_from_checkpoint(
-                trial_class=trial_class,
-                hparams=hparams,
-                slots_per_trial=2,
-                tmp_path=tmp_path,
-                exp_config=exp_config,
-                steps=(1, 1),
-                batches_trained=batches_trained,
-            )
-            return True
-
-    def run_gan(self, tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
-        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
-
-        config = utils.load_config(utils.gan_examples_path("gan_mnist_pytorch/const.yaml"))
-        hparams = config["hyperparameters"]
-
-        exp_config = utils.make_default_exp_config(
-            hparams,
-            scheduling_unit=1,
-            searcher_metric="validation_loss",
-            checkpoint_dir=checkpoint_dir,
-        )
-        exp_config.update(config)
-        exp_config["searcher"]["smaller_is_better"] = True
-
-        example_path = utils.gan_examples_path("gan_mnist_pytorch/model_def.py")
-        trial_class = utils.import_class_from_module("GANTrial", example_path)
-        trial_class._searcher_metric = "loss"
-
-        if batches_trained == 0:
-            return self.train_for_checkpoint(
-                trial_class=trial_class,
-                hparams=hparams,
-                slots_per_trial=2,
-                tmp_path=tmp_path,
-                exp_config=exp_config,
-                steps=1,
-            )
-        else:
-            self.train_from_checkpoint(
-                trial_class=trial_class,
-                hparams=hparams,
-                slots_per_trial=2,
-                tmp_path=tmp_path,
-                exp_config=exp_config,
-                steps=(1, 1),
-                batches_trained=batches_trained,
-            )
-            return True
-
-    def run_identity(self, tmp_path: pathlib.Path):
-        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
-
-        config = utils.load_config(utils.fixtures_path("pytorch_identity/distributed.yaml"))
-        hparams = config["hyperparameters"]
-
-        exp_config = utils.make_default_exp_config(
-            hparams,
-            scheduling_unit=1,
-            searcher_metric="validation_loss",
-            checkpoint_dir=checkpoint_dir,
-        )
-        exp_config.update(config)
-        exp_config["searcher"]["smaller_is_better"] = True
-
-        # each subprocess must import separately as trial_class cannot be pickled.
-        example_path = utils.fixtures_path("pytorch_identity/model_def.py")
-        trial_class = utils.import_class_from_module("IdentityPyTorchTrial", example_path)
-        trial_class._searcher_metric = "weight"
-
-        tensorboard_path = tmp_path.joinpath("tensorboard")
-
-        trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
-            trial_class=trial_class,
-            hparams=hparams,
-            slots_per_trial=2,
-            trial_seed=self.trial_seed,
-            max_batches=16,
-            min_validation_batches=1,
-            min_checkpoint_batches=16,
-            checkpoint_dir=checkpoint_dir,
-            tensorboard_path=tensorboard_path,
-            aggregation_frequency=2,
-        )
-
-        trial_controller.run()
-
-        metrics_callback = trial.metrics_callback
-
-        validation_metrics = metrics_callback.validation_metrics
-
-        return validation_metrics
-
-    def run_amp(
-        self, tmp_path: pathlib.Path, api_style: str, batches_trained: typing.Optional[int] = 0
-    ):
-        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
-        class_selector = {
-            "apex": "MNistApexAMPTrial",
-            "auto": "MNistAutoAMPTrial",
-            "manual": "MNistManualAMPTrial",
-        }
-
-        config = utils.load_config(
-            utils.fixtures_path(f"pytorch_amp/{api_style}_amp_distributed.yaml")
-        )
-        config = config.copy()
-        config.setdefault("profiling", {})
-        config["profiling"]["enabled"] = True
-
-        hparams = config["hyperparameters"]
-
-        exp_config = utils.make_default_exp_config(
-            hparams,
-            scheduling_unit=1,
-            searcher_metric="validation_loss",
-            checkpoint_dir=checkpoint_dir,
-        )
-        exp_config.update(config)
-        exp_config["searcher"]["smaller_is_better"] = True
-
-        example_path = utils.fixtures_path(f"pytorch_amp/{api_style}_amp_model_def.py")
-        trial_class = utils.import_class_from_module(class_selector[api_style], example_path)
-        trial_class._searcher_metric = "validation_loss"
-
-        if batches_trained == 0:
-            return self.train_for_checkpoint(
-                trial_class=trial_class,
-                hparams=hparams,
-                slots_per_trial=2,
-                tmp_path=tmp_path,
-                exp_config=exp_config,
-                steps=1,
-            )
-        else:
-            self.train_from_checkpoint(
-                trial_class=trial_class,
-                hparams=hparams,
-                slots_per_trial=2,
-                tmp_path=tmp_path,
-                exp_config=exp_config,
-                steps=(1, 1),
-                batches_trained=batches_trained,
-            )
-            return True
-
-    def run_no_op(
-        self,
-        tmp_path: pathlib.Path,
-        num_steps: int = 1,
-        global_batch_size: int = 32,
-        dataset_len: int = 64,
-    ):
-        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
-
-        config = utils.load_config(utils.fixtures_path("pytorch_no_op/const.yaml"))
-        hparams = config["hyperparameters"]
-        hparams["dataset_len"] = dataset_len
-        hparams["global_batch_size"] = global_batch_size
-
-        exp_config = utils.make_default_exp_config(
-            hparams,
-            scheduling_unit=1,
-            searcher_metric="validation_loss",
-            checkpoint_dir=checkpoint_dir,
-        )
-        exp_config.update(config)
-        exp_config["searcher"]["smaller_is_better"] = True
-
-        example_path = utils.fixtures_path("pytorch_no_op/model_def.py")
-        trial_class = utils.import_class_from_module("NoopPyTorchTrial", example_path)
-        trial_class._searcher_metric = "validation_error"
-
-        f = io.StringIO()
-
-        with contextlib.redirect_stdout(f):
-            self.train_for_checkpoint(
-                hparams=hparams,
-                trial_class=trial_class,
-                tmp_path=tmp_path,
-                exp_config=exp_config,
-                slots_per_trial=2,
-                steps=num_steps,
-            )
-
-        return f.getvalue().split("\n")
 
     def checkpoint_and_check_metrics(
         self,
@@ -1503,96 +1149,6 @@ class TestPyTorchTrial:
 
         return (training_metrics["A"], training_metrics["B"])
 
-    def train_and_checkpoint(
-        self,
-        hparams: typing.Dict,
-        trial_class: pytorch.PyTorchTrial,
-        tmp_path: pathlib.Path,
-        exp_config: typing.Dict,
-        steps: typing.Tuple[int, int] = (1, 1),
-    ) -> None:
-        # Trial A: train batches and checkpoint
-        steps_completed = self.train_for_checkpoint(
-            hparams=hparams,
-            trial_class=trial_class,
-            tmp_path=tmp_path,
-            exp_config=exp_config,
-            steps=steps[0],
-        )
-
-        # Trial B: restore from checkpoint and train for more batches
-        self.train_from_checkpoint(
-            hparams=hparams,
-            trial_class=trial_class,
-            tmp_path=tmp_path,
-            exp_config=exp_config,
-            steps=steps,
-            batches_trained=steps_completed,
-        )
-
-    def train_for_checkpoint(
-        self,
-        hparams: typing.Dict,
-        trial_class: pytorch.PyTorchTrial,
-        tmp_path: pathlib.Path,
-        exp_config: typing.Dict,
-        slots_per_trial: int = 1,
-        steps: int = 1,
-    ) -> int:
-        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
-        tensorboard_path = tmp_path.joinpath("tensorboard")
-
-        trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
-            trial_class=trial_class,
-            hparams=hparams,
-            slots_per_trial=slots_per_trial,
-            trial_seed=self.trial_seed,
-            exp_config=exp_config,
-            max_batches=steps,
-            min_validation_batches=steps,
-            min_checkpoint_batches=steps,
-            checkpoint_dir=checkpoint_dir,
-            tensorboard_path=tensorboard_path,
-            expose_gpus=True,
-        )
-
-        trial_controller.run()
-
-        assert len(os.listdir(checkpoint_dir)) == 1, "trial did not create a checkpoint"
-
-        return trial_controller.state.batches_trained
-
-    def train_from_checkpoint(
-        self,
-        hparams: typing.Dict,
-        trial_class: pytorch.PyTorchTrial,
-        tmp_path: pathlib.Path,
-        exp_config: typing.Dict,
-        slots_per_trial: int = 1,
-        steps: typing.Tuple[int, int] = (1, 1),
-        batches_trained: int = 0,
-    ) -> None:
-        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
-        tensorboard_path = tmp_path.joinpath("tensorboard")
-
-        trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
-            trial_class=trial_class,
-            hparams=hparams,
-            slots_per_trial=slots_per_trial,
-            trial_seed=self.trial_seed,
-            exp_config=exp_config,
-            max_batches=steps[0] + steps[1],
-            min_validation_batches=steps[0],
-            min_checkpoint_batches=sys.maxsize,
-            checkpoint_dir=checkpoint_dir,
-            tensorboard_path=tensorboard_path,
-            latest_checkpoint=os.listdir(checkpoint_dir)[0],
-            steps_completed=batches_trained,
-            expose_gpus=True,
-        )
-        trial_controller.run()
-
-        assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
 
     def test_trial_validation_checkpointing(self, tmp_path: pathlib.Path):
         tensorboard_path = tmp_path.joinpath("tensorboard")
@@ -1709,7 +1265,7 @@ class TestPyTorchTrial:
         trial_class = utils.import_class_from_module("MNistTrial", example_path)
         trial_class._searcher_metric = "validation_loss"
 
-        self.train_and_checkpoint(
+        pytorch_utils.train_and_checkpoint(
             trial_class=trial_class,
             hparams=hparams,
             tmp_path=tmp_path,
@@ -1880,4 +1436,140 @@ def amp_metrics_test(trial_class, training_metrics, agg_freq=1):
                 assert loss <= loss_prev, "loss was expected to decrease monotonically"
                 loss_prev = loss
 
+def run_identity(tmp_path: pathlib.Path):
 
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+
+    config = utils.load_config(utils.fixtures_path("pytorch_identity/distributed.yaml"))
+    hparams = config["hyperparameters"]
+
+    exp_config = utils.make_default_exp_config(
+        hparams,
+        scheduling_unit=1,
+        searcher_metric="validation_loss",
+        checkpoint_dir=checkpoint_dir,
+    )
+    exp_config.update(config)
+    exp_config["searcher"]["smaller_is_better"] = True
+
+    # each subprocess must import separately as trial_class cannot be pickled.
+    example_path = utils.fixtures_path("pytorch_identity/model_def.py")
+    trial_class = utils.import_class_from_module("IdentityPyTorchTrial", example_path)
+    trial_class._searcher_metric = "weight"
+
+    tensorboard_path = tmp_path.joinpath("tensorboard")
+
+    trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
+        trial_class=trial_class,
+        hparams=hparams,
+        slots_per_trial=2,
+        max_batches=16,
+        min_validation_batches=1,
+        min_checkpoint_batches=16,
+        checkpoint_dir=checkpoint_dir,
+        tensorboard_path=tensorboard_path,
+        aggregation_frequency=2,
+    )
+
+    trial_controller.run()
+
+    metrics_callback = trial.metrics_callback
+
+    validation_metrics = metrics_callback.validation_metrics
+
+    return validation_metrics
+
+def run_amp(
+    tmp_path: pathlib.Path,
+    api_style: str,
+    batches_trained: typing.Optional[int] = 0
+):
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+    class_selector = {
+        "apex": "MNistApexAMPTrial",
+        "auto": "MNistAutoAMPTrial",
+        "manual": "MNistManualAMPTrial",
+    }
+
+    config = utils.load_config(
+        utils.fixtures_path(f"pytorch_amp/{api_style}_amp_distributed.yaml")
+    )
+    config = config.copy()
+    config.setdefault("profiling", {})
+    config["profiling"]["enabled"] = True
+
+    hparams = config["hyperparameters"]
+
+    exp_config = utils.make_default_exp_config(
+        hparams,
+        scheduling_unit=1,
+        searcher_metric="validation_loss",
+        checkpoint_dir=checkpoint_dir,
+    )
+    exp_config.update(config)
+    exp_config["searcher"]["smaller_is_better"] = True
+
+    example_path = utils.fixtures_path(f"pytorch_amp/{api_style}_amp_model_def.py")
+    trial_class = utils.import_class_from_module(class_selector[api_style], example_path)
+    trial_class._searcher_metric = "validation_loss"
+
+    if batches_trained == 0:
+        return pytorch_utils.train_for_checkpoint(
+            trial_class=trial_class,
+            hparams=hparams,
+            slots_per_trial=2,
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            steps=1,
+        )
+    else:
+        pytorch_utils.train_from_checkpoint(
+            trial_class=trial_class,
+            hparams=hparams,
+            slots_per_trial=2,
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            steps=(1, 1),
+            batches_trained=batches_trained,
+        )
+        return True
+
+def run_no_op(
+    tmp_path: pathlib.Path,
+    num_steps: int = 1,
+    global_batch_size: int = 32,
+    dataset_len: int = 64,
+):
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+
+    config = utils.load_config(utils.fixtures_path("pytorch_no_op/const.yaml"))
+    hparams = config["hyperparameters"]
+    hparams["dataset_len"] = dataset_len
+    hparams["global_batch_size"] = global_batch_size
+
+    exp_config = utils.make_default_exp_config(
+        hparams,
+        scheduling_unit=1,
+        searcher_metric="validation_loss",
+        checkpoint_dir=checkpoint_dir,
+    )
+    exp_config.update(config)
+    exp_config["searcher"]["smaller_is_better"] = True
+
+    example_path = utils.fixtures_path("pytorch_no_op/model_def.py")
+    trial_class = utils.import_class_from_module("NoopPyTorchTrial", example_path)
+    trial_class._searcher_metric = "validation_error"
+
+    f = io.StringIO()
+
+    with contextlib.redirect_stdout(f):
+        pytorch_utils.train_for_checkpoint(
+            hparams=hparams,
+            trial_class=trial_class,
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            slots_per_trial=2,
+            steps=num_steps,
+        )
+
+    return f.getvalue().split("\n")

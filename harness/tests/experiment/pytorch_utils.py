@@ -1,10 +1,13 @@
+import os
 import pathlib
 import random
 import sys
 import typing
+import uuid
 
 import determined as det
 from determined import pytorch, gpu
+from torch.distributed import launcher
 
 from tests.experiment import utils
 
@@ -148,3 +151,109 @@ def create_trial_and_trial_controller(
 
     trial_controller.training_iterator = iter(trial_controller.training_loader)
     return trial_inst, trial_controller
+
+def train_for_checkpoint(
+    hparams: typing.Dict,
+    trial_class: pytorch.PyTorchTrial,
+    tmp_path: pathlib.Path,
+    exp_config: typing.Dict,
+    slots_per_trial: int = 1,
+    steps: int = 1,
+) -> int:
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+    tensorboard_path = tmp_path.joinpath("tensorboard")
+
+    trial, trial_controller = create_trial_and_trial_controller(
+        trial_class=trial_class,
+        hparams=hparams,
+        slots_per_trial=slots_per_trial,
+        exp_config=exp_config,
+        max_batches=steps,
+        min_validation_batches=steps,
+        min_checkpoint_batches=steps,
+        checkpoint_dir=checkpoint_dir,
+        tensorboard_path=tensorboard_path,
+        expose_gpus=True,
+    )
+
+    trial_controller.run()
+
+    assert len(os.listdir(checkpoint_dir)) == 1, "trial did not create a checkpoint"
+
+    return trial_controller.state.batches_trained
+
+def train_from_checkpoint(
+    hparams: typing.Dict,
+    trial_class: pytorch.PyTorchTrial,
+    tmp_path: pathlib.Path,
+    exp_config: typing.Dict,
+    slots_per_trial: int = 1,
+    steps: typing.Tuple[int, int] = (1, 1),
+    batches_trained: int = 0,
+) -> None:
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+    tensorboard_path = tmp_path.joinpath("tensorboard")
+
+    trial, trial_controller = create_trial_and_trial_controller(
+        trial_class=trial_class,
+        hparams=hparams,
+        slots_per_trial=slots_per_trial,
+        exp_config=exp_config,
+        max_batches=steps[0] + steps[1],
+        min_validation_batches=steps[0],
+        min_checkpoint_batches=sys.maxsize,
+        checkpoint_dir=checkpoint_dir,
+        tensorboard_path=tensorboard_path,
+        latest_checkpoint=os.listdir(checkpoint_dir)[0],
+        steps_completed=batches_trained,
+        expose_gpus=True,
+    )
+    trial_controller.run()
+
+    assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
+
+def train_and_checkpoint(
+    hparams: typing.Dict,
+    trial_class: pytorch.PyTorchTrial,
+    tmp_path: pathlib.Path,
+    exp_config: typing.Dict,
+    steps: typing.Tuple[int, int] = (1, 1),
+) -> None:
+    # Trial A: train batches and checkpoint
+    steps_completed = train_for_checkpoint(
+        hparams=hparams,
+        trial_class=trial_class,
+        tmp_path=tmp_path,
+        exp_config=exp_config,
+        steps=steps[0],
+    )
+
+    # Trial B: restore from checkpoint and train for more batches
+    train_from_checkpoint(
+        hparams=hparams,
+        trial_class=trial_class,
+        tmp_path=tmp_path,
+        exp_config=exp_config,
+        steps=steps,
+        batches_trained=steps_completed,
+    )
+
+def setup_torch_distributed(local_procs=2, max_retries=0) -> launcher.LaunchConfig:
+    # set up distributed backend.
+    os.environ[det._DistributedBackend.TORCH] = str(1)
+
+    rdzv_backend = "c10d"
+    rdzv_endpoint = "localhost:29400"
+    rdzv_id = str(uuid.uuid4())
+
+    launch_config = launcher.LaunchConfig(
+        min_nodes=1,
+        max_nodes=1,
+        nproc_per_node=local_procs,
+        run_id=rdzv_id,
+        max_restarts=max_retries,
+        rdzv_endpoint=rdzv_endpoint,
+        rdzv_backend=rdzv_backend,
+    )
+
+    return launch_config
