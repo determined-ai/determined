@@ -928,22 +928,8 @@ class TestPyTorchTrial:
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
     def test_gradient_aggregation_parallel(self, tmp_path: pathlib.Path):
-        # set up distributed backend.
-        os.environ[det._DistributedBackend.TORCH] = str(1)
 
-        rdzv_backend = "c10d"
-        rdzv_endpoint = "localhost:29400"
-        rdzv_id = str(uuid.uuid4())
-
-        launch_config = launcher.LaunchConfig(
-            min_nodes=1,
-            max_nodes=1,
-            nproc_per_node=2,
-            run_id=rdzv_id,
-            max_restarts=0,
-            rdzv_endpoint=rdzv_endpoint,
-            rdzv_backend=rdzv_backend,
-        )
+        launch_config = pytorch_utils.setup_torch_distributed()
 
         val_metrics = launcher.elastic_launch(launch_config, run_identity)(tmp_path)
 
@@ -967,22 +953,8 @@ class TestPyTorchTrial:
     @pytest.mark.gpu_parallel
     @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"])
     def test_pytorch_distributed_with_amp(self, tmp_path: pathlib.Path, api_style):
-        # set up distributed backend.
-        os.environ[det._DistributedBackend.TORCH] = str(1)
 
-        rdzv_backend = "c10d"
-        rdzv_endpoint = "localhost:29400"
-        rdzv_id = str(uuid.uuid4())
-
-        launch_config = launcher.LaunchConfig(
-            min_nodes=1,
-            max_nodes=1,
-            nproc_per_node=2,
-            run_id=rdzv_id,
-            max_restarts=0,
-            rdzv_endpoint=rdzv_endpoint,
-            rdzv_backend=rdzv_backend,
-        )
+        launch_config = pytorch_utils.setup_torch_distributed()
 
         outputs = launcher.elastic_launch(launch_config, run_amp)(tmp_path, api_style)
         launcher.elastic_launch(launch_config, run_amp)(tmp_path, api_style, outputs[0])
@@ -990,24 +962,10 @@ class TestPyTorchTrial:
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
     def test_distributed_logging(self, tmp_path: pathlib.Path):
-        # set up distributed backend.
-        os.environ[det._DistributedBackend.TORCH] = str(1)
-
-        rdzv_backend = "c10d"
-        rdzv_endpoint = "localhost:29400"
-        rdzv_id = str(uuid.uuid4())
 
         num_procs = 2
 
-        launch_config = launcher.LaunchConfig(
-            min_nodes=1,
-            max_nodes=1,
-            nproc_per_node=num_procs,
-            run_id=rdzv_id,
-            max_restarts=0,
-            rdzv_endpoint=rdzv_endpoint,
-            rdzv_backend=rdzv_backend,
-        )
+        launch_config = pytorch_utils.setup_torch_distributed(local_procs=num_procs)
 
         outputs = launcher.elastic_launch(launch_config, run_no_op)(tmp_path)
 
@@ -1021,24 +979,10 @@ class TestPyTorchTrial:
     @pytest.mark.gpu_parallel
     @pytest.mark.parametrize("dataset_len", [2, 3])
     def test_epoch_sync(self, tmp_path: pathlib.Path, dataset_len: int):
-        # set up distributed backend.
-        os.environ[det._DistributedBackend.TORCH] = str(1)
-
-        rdzv_backend = "c10d"
-        rdzv_endpoint = "localhost:29400"
-        rdzv_id = str(uuid.uuid4())
 
         num_procs = 2
 
-        launch_config = launcher.LaunchConfig(
-            min_nodes=1,
-            max_nodes=1,
-            nproc_per_node=num_procs,
-            run_id=rdzv_id,
-            max_restarts=0,
-            rdzv_endpoint=rdzv_endpoint,
-            rdzv_backend=rdzv_backend,
-        )
+        launch_config = pytorch_utils.setup_torch_distributed(local_procs=num_procs)
 
         num_steps = 10
         global_batch_size = 2
