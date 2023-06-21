@@ -314,6 +314,7 @@ def torch_batch_process(
             raise Exception("torch_batch_process only runs on-cluster.")
 
         slots_per_node = len(info.slot_ids)
+
         num_nodes = len(info.container_addrs)
         total_worker = num_nodes * slots_per_node
         # Get global rank

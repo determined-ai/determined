@@ -2,14 +2,17 @@ import contextlib
 import io
 import os
 import sys
-from typing import Callable, Dict, Iterator, List
+from typing import Callable, Dict, Iterator, List, Optional
 
 import determined as det
 from tests.experiment import utils
 
 
 def make_mock_cluster_info(
-    container_addrs: List[str], container_rank: int, num_slots: int
+    container_addrs: List[str],
+    container_rank: int,
+    num_slots: int,
+    latest_checkpoint: Optional[str] = None,
 ) -> det.ClusterInfo:
     config = utils.make_default_exp_config({}, 100, "loss", None)
     trial_info_mock = det.TrialInfo(
@@ -39,16 +42,20 @@ def make_mock_cluster_info(
         task_type="TRIAL",
         rendezvous_info=rendezvous_info_mock,
         trial_info=trial_info_mock,
+        latest_checkpoint=latest_checkpoint,
     )
     return cluster_info_mock
 
 
 @contextlib.contextmanager
 def set_mock_cluster_info(
-    container_addrs: List[str], container_rank: int, num_slots: int
+    container_addrs: List[str],
+    container_rank: int,
+    num_slots: int,
+    latest_checkpoint: Optional[str] = None,
 ) -> Iterator[det.ClusterInfo]:
     old_info = det._info._info
-    info = make_mock_cluster_info(container_addrs, container_rank, num_slots)
+    info = make_mock_cluster_info(container_addrs, container_rank, num_slots, latest_checkpoint)
     det._info._info = info
     try:
         yield info
