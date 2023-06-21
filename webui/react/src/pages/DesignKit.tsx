@@ -13,6 +13,7 @@ import Checkbox from 'components/kit/Checkbox';
 import ClipboardButton from 'components/kit/ClipboardButton';
 import CodeEditor from 'components/kit/CodeEditor';
 import { Column, Columns } from 'components/kit/Columns';
+import Drawer from 'components/kit/Drawer';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
@@ -84,6 +85,7 @@ const ComponentTitles = {
   CodeEditor: 'CodeEditor',
   Color: 'Color',
   Columns: 'Columns',
+  Drawer: 'Drawer',
   Dropdown: 'Dropdown',
   Empty: 'Empty',
   Facepile: 'Facepile',
@@ -2682,6 +2684,68 @@ const AccordionSection: React.FC = () => {
   );
 };
 
+const DrawerSection: React.FC = () => {
+  const [openLeft, setOpenLeft] = useState(false);
+  const [openRight, setOpenRight] = useState(false);
+  const scrollLines = [];
+  for (let i = 0; i < 100; i++) {
+    scrollLines.push(i);
+  }
+
+  return (
+    <ComponentSection id="Drawer" title="Drawer">
+      <AntDCard>
+        <p>
+          An <code>{'<Drawer>'}</code> is a full-height overlaid sidebar which moves into the
+          viewport from the left or right side.
+        </p>
+      </AntDCard>
+      <AntDCard title="Left side">
+        <p>
+          Drawer appears from the left side in an animation. Similar to a Modal, it can be closed
+          only by clicking a Close button (at top right) or Escape key.
+        </p>
+        <p>If the drawer body has extra content, it is scrollable without hiding the header.</p>
+        <Space>
+          <Button onClick={() => setOpenLeft(true)}>Open Drawer</Button>
+        </Space>
+        <Drawer
+          open={openLeft}
+          placement="left"
+          title="Left Drawer"
+          onClose={() => setOpenLeft(!openLeft)}>
+          {scrollLines.map((i) => (
+            <p key={i}>Sample scrollable content</p>
+          ))}
+        </Drawer>
+      </AntDCard>
+      <AntDCard title="Right side">
+        <p>Drawer appears from the right side.</p>
+        <p>
+          When a drawer has stateful content, that state is persisted when closed and re-opened.
+        </p>
+        <Space>
+          <Button onClick={() => setOpenRight(true)}>Open Drawer</Button>
+        </Space>
+        <Drawer
+          open={openRight}
+          placement="right"
+          title="Right Drawer"
+          onClose={() => setOpenRight(!openRight)}>
+          <p>Sample content</p>
+          <Checkbox>A</Checkbox>
+          <Checkbox>B</Checkbox>
+          <Checkbox>C</Checkbox>
+          <Checkbox>D</Checkbox>
+          <Form.Item label="Sample Persistent Input" name="sample_drawer">
+            <Input.TextArea />
+          </Form.Item>
+        </Drawer>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const Components = {
   Accordion: <AccordionSection />,
   Breadcrumbs: <BreadcrumbsSection />,
@@ -2693,6 +2757,7 @@ const Components = {
   CodeEditor: <CodeEditorSection />,
   Color: <ColorSection />,
   Columns: <ColumnsSection />,
+  Drawer: <DrawerSection />,
   Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,

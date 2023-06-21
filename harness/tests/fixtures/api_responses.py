@@ -13,6 +13,11 @@ FIXTURES_DIR = pathlib.Path(__file__).resolve().parent
 P = TypeVar("P", bound=bindings.Paginated)
 
 
+# Default constants.
+USERNAME = "determined"
+PASSWORD = "password"
+
+
 def sample_get_experiment(**kwargs: Any) -> bindings.v1GetExperimentResponse:
     """Get an experiment from a fixture and optionally override some fields.
 
@@ -51,6 +56,23 @@ def sample_get_model_versions() -> bindings.v1GetModelVersionsResponse:
     with open(FIXTURES_DIR / "model_versions.json") as f:
         resp = bindings.v1GetModelVersionsResponse.from_json(json.load(f))
         return resp
+
+
+def sample_login(username: str = USERNAME) -> bindings.v1LoginResponse:
+    resp = bindings.v1LoginResponse(
+        token="fake-login-token", user=sample_get_user(username=username).user
+    )
+    return resp
+
+
+def sample_get_user(username: str = USERNAME) -> bindings.v1GetUserResponse:
+    user = bindings.v1User(
+        active=True,
+        admin=False,
+        username=username,
+    )
+
+    return bindings.v1GetUserResponse(user=user)
 
 
 def sample_get_pagination() -> bindings.v1Pagination:

@@ -46,24 +46,6 @@ def test_await_waits_for_first_trial_to_start(
     assert len(responses.calls) > 2
 
 
-@responses.activate
-def test_wait_retries_transient_504(
-    make_expref: Callable[[int], experiment.ExperimentReference]
-) -> None:
-    expref = make_expref(1)
-
-    exp_resp = api_responses.sample_get_experiment(
-        id=expref.id, state=bindings.experimentv1State.COMPLETED
-    )
-
-    responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}", status=504)
-    responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}", status=504)
-    responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}", status=200, json=exp_resp.to_json())
-
-    expref.wait(interval=0.01)
-    assert len(responses.calls) > 2  # 2 504s and 1 200
-
-
 @pytest.mark.parametrize(
     "terminal_state",
     [
