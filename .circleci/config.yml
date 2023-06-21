@@ -1818,7 +1818,7 @@ jobs:
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
       - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
       - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-cpu-tf1-pycov test_container make -C harness test-cpu-tf1
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-cpu-tf1-pycov make -C harness test-cpu-tf1
       - run: coverage xml -i --data-file=./test-unit-harness-cpu-tf1-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
 
@@ -1842,7 +1842,7 @@ jobs:
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
       - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
       - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-pycov test_container make -C harness test-gpu
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-pycov make -C harness test-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
@@ -1865,7 +1865,7 @@ jobs:
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
       - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
       - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-lightning-pycov test_container make -C harness test-gpu-lightning
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-lightning-pycov make -C harness test-gpu-lightning
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
@@ -1888,7 +1888,7 @@ jobs:
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
       - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
       - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-deepspeed-pycov test_container make -C harness test-gpu-deepspeed
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-deepspeed-pycov make -C harness test-gpu-deepspeed
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-deepspeed-pycov
       - persist_to_workspace:
           root: .
