@@ -8,17 +8,17 @@ import Form, { FormInstance } from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import { Modal } from 'components/kit/Modal';
+import Spinner from 'components/Spinner/Spinner';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { getTaskTemplates } from 'services/api';
-import Spinner from 'shared/components/Spinner/Spinner';
-import { RawJson } from 'shared/types';
 import clusterStore from 'stores/cluster';
 import workspaceStore from 'stores/workspaces';
+import { RawJson } from 'types';
 import { Template, Workspace } from 'types';
 import handleError from 'utils/error';
 import { JupyterLabOptions, launchJupyterLab, previewJupyterLab } from 'utils/jupyter';
-import { Loadable, Loaded } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 const { Option } = Select;
@@ -63,7 +63,7 @@ const settingsConfig: SettingsConfig<JupyterLabOptions> = {
 };
 
 interface FullConfigProps {
-  config?: string;
+  config: Loadable<string>;
   configError?: string;
   currentWorkspace?: Workspace;
   form: FormInstance;
@@ -81,7 +81,7 @@ const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 
 const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const [showFullConfig, setShowFullConfig] = useState(false);
-  const [config, setConfig] = useState<string>();
+  const [config, setConfig] = useState<Loadable<string>>(NotLoaded);
   const [configError, setConfigError] = useState<string>();
   const [fullConfigFormInvalid, setFullConfigFormInvalid] = useState(true);
   const [form] = Form.useForm<JupyterLabOptions>();
@@ -107,6 +107,8 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   }, [form, updateDefaults]);
 
   const fetchConfig = useCallback(async () => {
+    setConfig(NotLoaded);
+
     const fields: JupyterLabOptions = form.getFieldsValue(true);
     try {
       const newConfig = await previewJupyterLab({
@@ -116,9 +118,8 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
         template: fields?.template,
         workspaceId: fields.workspaceId,
       });
-      setConfig(yaml.dump(newConfig));
+      setConfig(Loaded(yaml.dump(newConfig)));
     } catch (e) {
-      setConfig(undefined);
       setConfigError('Unable to fetch JupyterLab config.');
     }
   }, [form]);
@@ -133,9 +134,11 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
     updateDefaults(fields);
     if (showFullConfig) {
       const values = await fullConfigForm.validateFields();
+      const usableConfig = Loadable.isLoaded(config) ? config.data : '';
+
       if (values) {
         launchJupyterLab({
-          config: yaml.load(config || '') as RawJson,
+          config: yaml.load(usableConfig) as RawJson,
           workspaceId: values.workspaceId,
         });
       }
@@ -156,7 +159,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const handleConfigChange = useCallback(
     (config: string) => {
       validateFullConfigForm();
-      setConfig(config);
+      setConfig(Loaded(config));
       setConfigError(undefined);
     },
     [validateFullConfigForm],
@@ -235,8 +238,9 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   setWorkspace,
   workspaces,
 }: FullConfigProps) => {
+  const usableConfig = useMemo(() => (Loadable.isLoaded(config) ? config.data : ''), [config]);
   const [field, setField] = useState([
-    { name: 'config', value: '' },
+    { name: 'config', value: usableConfig },
     { name: 'workspaceId', value: currentWorkspace?.id },
   ]);
 
@@ -256,13 +260,16 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   useEffect(() => {
     setField((curField) => [
       ...curField.filter((f) => f.name[0] === 'workspaceId'),
-      { name: 'config', value: config || '' },
+      { name: 'config', value: usableConfig },
     ]);
-  }, [config]);
+  }, [usableConfig]);
 
   useEffect(() => {
     form.setFieldValue('workspaceId', currentWorkspace?.id);
   }, [currentWorkspace, form]);
+  useEffect(() => {
+    form.setFieldValue('config', usableConfig);
+  }, [usableConfig, form]);
 
   const onSelectWorkspace = (workspaceId?: number) => {
     const selected = workspaces.find((w) => workspaceId && w.id === workspaceId);
@@ -290,6 +297,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
           </Select>
         </Form.Item>
         <Form.Item
+          initialValue={usableConfig}
           name="config"
           rules={[
             { message: 'JupyterLab config required', required: true },
@@ -309,7 +317,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
             },
           ]}>
           <CodeEditor
-            files={[{ content: Loaded(''), key: 'config.yaml' }]}
+            files={[{ content: config, key: 'config.yaml' }]}
             height="40vh"
             onError={handleError}
           />

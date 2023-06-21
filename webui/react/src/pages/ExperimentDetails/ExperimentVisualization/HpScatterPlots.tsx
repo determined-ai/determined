@@ -3,7 +3,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
+import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner/Spinner';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
@@ -11,12 +13,10 @@ import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner/Spinner';
-import useUI from 'shared/contexts/stores/UI';
-import { Primitive } from 'shared/types';
-import { flattenObject, isBoolean, isString } from 'shared/utils/data';
+import useUI from 'stores/contexts/UI';
+import { Primitive } from 'types';
 import { ExperimentBase, HyperparameterType, Metric, metricTypeParamMap, Scale } from 'types';
+import { flattenObject, isBoolean, isString } from 'utils/data';
 import { metricToStr } from 'utils/metric';
 
 import css from './HpScatterPlots.module.scss';
@@ -148,8 +148,9 @@ const ScatterPlots: React.FC<Props> = ({
       detApi.StreamingInternal.trialsSnapshot(
         experiment.id,
         selectedMetric.name,
-        metricTypeParamMap[selectedMetric.type],
         selectedBatch,
+        metricTypeParamMap[selectedMetric.type],
+        undefined, // custom metric type
         selectedBatchMargin,
         undefined,
         { signal: canceler.signal },

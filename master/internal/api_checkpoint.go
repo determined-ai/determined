@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
@@ -30,17 +31,13 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 )
 
-func errCheckpointNotFound(id string) error {
-	return status.Errorf(codes.NotFound, "checkpoint not found: %s", id)
-}
-
 func errCheckpointsNotFound(ids []string) error {
 	tmp := make([]string, len(ids))
 	for i, id := range ids {
 		tmp[i] = id
 	}
 	sort.Strings(tmp)
-	return status.Errorf(codes.NotFound, "checkpoints not found: %s", strings.Join(tmp, ", "))
+	return api.NotFoundErrs("checkpoints", strings.Join(tmp, ", "), true)
 }
 
 func (m *Master) canDoActionOnCheckpoint(
@@ -58,7 +55,7 @@ func (m *Master) canDoActionOnCheckpoint(
 	if err != nil {
 		return err
 	} else if checkpoint == nil {
-		return errCheckpointNotFound(id)
+		return api.NotFoundErrs("checkpoint", id, true)
 	}
 	if checkpoint.CheckpointTrainingMetadata.ExperimentID == 0 {
 		return nil // TODO(nick) add authz for other task types.
@@ -69,7 +66,7 @@ func (m *Master) canDoActionOnCheckpoint(
 	}
 
 	if err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp); err != nil {
-		return authz.SubIfUnauthorized(err, errCheckpointNotFound(id))
+		return authz.SubIfUnauthorized(err, api.NotFoundErrs("checkpoint", id, true))
 	}
 	if err := action(ctx, curUser, exp); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
@@ -92,7 +89,7 @@ func (m *Master) canDoActionOnCheckpointThroughModel(
 	if len(modelIDs) == 0 {
 		// if length of model ids is zero then permission denied
 		// so return checkpoitn not found.
-		return errCheckpointNotFound(ckptID)
+		return api.NotFoundErrs("checkpoint", ckptID, true)
 	}
 
 	var errCanGetModel error
@@ -109,7 +106,7 @@ func (m *Master) canDoActionOnCheckpointThroughModel(
 	}
 	// we get to this return when there are no models belonging
 	// to a workspace where user has permissions.
-	return authz.SubIfUnauthorized(errCanGetModel, errCheckpointNotFound(ckptID))
+	return authz.SubIfUnauthorized(errCanGetModel, api.NotFoundErrs("checkpoint", ckptID, true))
 }
 
 func (a *apiServer) GetCheckpoint(

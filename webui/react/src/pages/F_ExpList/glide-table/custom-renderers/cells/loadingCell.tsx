@@ -1,7 +1,7 @@
 import { CustomCell, CustomRenderer, GridCellKind } from '@glideapps/glide-data-grid';
 
-import { Theme } from 'shared/themes';
-import { rgba2str, rgbaFromGradient, str2rgba } from 'shared/utils/color';
+import { rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
+import { Theme } from 'utils/themes';
 
 import { roundedRect } from '../utils';
 

@@ -9,6 +9,7 @@ import ssl
 import sys
 import threading
 import time
+import urllib.request
 from dataclasses import dataclass
 from typing import Iterator, List, Optional, Union
 
@@ -145,8 +146,21 @@ def http_connect_tunnel(
 ) -> None:
     parsed_master = request.parse_master_address(master)
     assert parsed_master.hostname is not None, "Failed to parse master address: {}".format(master)
+
+    # The "lomond.WebSocket()" function does not honor the "no_proxy" or
+    # "NO_PROXY" environment variables. To work around that, we check if
+    # the hostname is in the "no_proxy" or "NO_PROXY" environment variables
+    # ourselves using the "proxy_bypass()" function, which checks the "no_proxy"
+    # and "NO_PROXY" environment variables, and returns True if the host does
+    # not require a proxy server. The "lomond.WebSocket()" function will disable
+    # the proxy if the "proxies" parameter is an empty dictionary.  Otherwise,
+    # if the "proxies" parameter is "None", it will honor the "HTTP_PROXY" and
+    # "HTTPS_PROXY" environment variables. When the "proxies" parameter is not
+    # specified, the default value is "None".
+    proxies = {} if urllib.request.proxy_bypass(parsed_master.hostname) else None  # type: ignore
+
     url = request.make_url(master, "proxy/{}/".format(service))
-    ws = lomond.WebSocket(request.maybe_upgrade_ws_scheme(url))
+    ws = lomond.WebSocket(request.maybe_upgrade_ws_scheme(url), proxies=proxies)
     if authorization_token is not None:
         ws.add_header(b"Authorization", f"Bearer {authorization_token}".encode())
 
@@ -185,7 +199,11 @@ def _http_tunnel_listener(
 
     class TunnelHandler(socketserver.BaseRequestHandler):
         def handle(self) -> None:
-            ws = lomond.WebSocket(request.maybe_upgrade_ws_scheme(url))
+            proxies = (
+                {} if urllib.request.proxy_bypass(parsed_master.hostname) else None  # type: ignore
+            )
+
+            ws = lomond.WebSocket(request.maybe_upgrade_ws_scheme(url), proxies=proxies)
             if authorization_token is not None:
                 ws.add_header(b"Authorization", f"Bearer {authorization_token}".encode())
             # We can't send data to the WebSocket before the connection becomes ready,

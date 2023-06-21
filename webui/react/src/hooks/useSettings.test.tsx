@@ -4,8 +4,8 @@ import { array, boolean, number, string, undefined as undefinedType, union } fro
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
+import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import userStore from 'stores/users';
 
 import * as hook from './useSettings';
@@ -179,6 +179,10 @@ describe('useSettings', () => {
 
   it('should update settings', async () => {
     const { result } = setup();
+
+    // assure isLoading becomes true, which will allow useLayoutEffect, which will start watching for updates
+    await waitFor(() => expect(result.container.current.isLoading).toStrictEqual(true));
+
     act(() => result.container.current.updateSettings(newSettings));
 
     for (const configProp of Object.values(config.settings)) {

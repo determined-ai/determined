@@ -7,6 +7,67 @@
 ###############
 
 **************
+ Version 0.23
+**************
+
+Version 0.23.0
+==============
+
+**Release Date:** June 05, 2023
+
+**Breaking Changes**
+
+-  Remove HDFS checkpoint storage support, which has been deprecated since 0.21.1 (April 2023).
+
+-  Kubernetes: When a pod spec is specified in both ``task_container_defaults`` and the
+   experiment/job configuration, the pod spec is merged according to `strategic merge patch
+   <https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/#use-a-strategic-merge-patch-to-update-a-deployment>`__.
+   The previous behavior was using only the experiment/job configuration if supplied.
+
+-  CLI: The ``det notebook|tensorboard start`` commands no longer block for the whole life cycle of
+   the notebook or TensorBoard process. They will also not stream related event logs. Users should
+   use the existing `det notebook|tensorboard|task logs` commands to stream logs from the process.
+
+-  Python SDK: Remove the packages ``determined-cli``, ``determined-common``, and
+   ``determined-deploy``, which were deprecated in 0.15.0 (April 2021). The submodules
+   ``determined.cli``, ``determined.common``, and ``determined.deploy`` of the ``determined``
+   package should be used instead.
+
+**New Features**
+
+-  Experiment: :ref:`Custom hyperparameter searchers <topic-guides_hp-tuning-det_custom>` can
+   include extra directories to pass into the ``client.create_experiment`` context.
+
+-  Checkpoints: Add support for deleting a subset of files from checkpoints.
+
+   The SDK method :meth:`determined.experimental.client.Checkpoint.remove_files` has been added to
+   delete files matching a list of globs provided. The CLI command ``det checkpoint rm uuid1,uuuid2
+   --glob 'deleteDir1/**' --glob deleteDir2`` provides access to this method.
+
+-  AWS and GCP: Add `launch_error_timeout` and `launch_error_retries` provider configuration
+   options.
+
+   -  `launch_error_timeout`: Duration for which a provisioning error is valid. Tasks that are
+      unschedulable in the existing cluster may be canceled. After the timeout period, the error
+      state is reset. Defaults to `0s`.
+
+   -  `launch_error_retries`: Number of retries to allow before registering a provider provisioning
+      error. Defaults to ``0``.
+
+-  DeepSpeed experiments can now be wrapped with the ``determined.pytorch.dsat`` module to
+   automatically tune their distributed training hyperparameters.
+
+-  API: ``GetExperiments(archived=False)`` no longer lists experiments from archived projects or
+   workspaces. This change affects both the WebUI and the CLI. Unarchived projects and workspaces
+   are not affected.
+
+**Improvements**
+
+-  CLI: ``det user list`` will not display the Admin column when RBAC is enabled.
+-  Checkpoints: In checkpoint-related views and APIs, the previously hidden file ``metadata.json``
+   is now visible.
+
+**************
  Version 0.22
 **************
 

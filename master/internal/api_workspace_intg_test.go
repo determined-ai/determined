@@ -18,6 +18,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
@@ -182,10 +183,6 @@ func TestPatchWorkspace(t *testing.T) {
 
 var wAuthZ *mocks.WorkspaceAuthZ
 
-func workspaceNotFoundErr(id int) error {
-	return status.Errorf(codes.NotFound, fmt.Sprintf("workspace (%d) not found", id))
-}
-
 // pgdb can be nil to use the singleton database for testing.
 func setupWorkspaceAuthZTest(
 	t *testing.T, pgdb *db.PgDB,
@@ -203,12 +200,12 @@ func TestAuthzGetWorkspace(t *testing.T) {
 	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t, nil)
 	// Deny returns same as 404.
 	_, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: -9999})
-	require.Equal(t, workspaceNotFoundErr(-9999).Error(), err.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("workspace", "-9999", true).Error(), err.Error())
 
 	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: 1})
-	require.Equal(t, workspaceNotFoundErr(1).Error(), err.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("workspace", "1", true).Error(), err.Error())
 
 	// A error returned by CanGetWorkspace is returned unmodified.
 	expectedErr := fmt.Errorf("canGetWorkspaceError")
@@ -364,12 +361,13 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 		id := int(resp.Workspace.Id)
 
 		// Bad ID gives not found.
-		require.Equal(t, workspaceNotFoundErr(-9999), curCase.IDToReqCall(-9999))
+		require.Equal(t, apiPkg.NotFoundErrs("workspace", "-9999", true), curCase.IDToReqCall(-9999))
 
 		// Without permission to view returns not found.
 		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
 			Return(authz2.PermissionDeniedError{}).Once()
-		require.Equal(t, workspaceNotFoundErr(id).Error(), curCase.IDToReqCall(id).Error())
+		require.Equal(t, apiPkg.NotFoundErrs("workspace", fmt.Sprint(id), true).Error(),
+			curCase.IDToReqCall(id).Error())
 
 		// A error returned by CanGetWorkspace is returned unmodified.
 		cantGetWorkspaceErr := fmt.Errorf("canGetWorkspaceError")

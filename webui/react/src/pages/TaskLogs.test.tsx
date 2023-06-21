@@ -6,10 +6,10 @@ import { flakyIt } from 'quarantineTests';
 import { serverAddress } from 'routes/utils';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { generateAlphaNumeric } from 'shared/utils/string';
+import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import { LogLevelFromApi } from 'types';
 import handleError from 'utils/error';
+import { generateAlphaNumeric } from 'utils/string';
 
 interface TestLog {
   id: number | string;

@@ -3,8 +3,8 @@ import { FixedSizeList as List } from 'react-window';
 
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
-import { isEqual } from 'shared/utils/data';
-import { camelCaseToSentence } from 'shared/utils/string';
+import { isEqual } from 'utils/data';
+import { camelCaseToSentence } from 'utils/string';
 
 import DraggableListItem from './DraggableListItem';
 import css from './Transfer.module.scss';

@@ -6,10 +6,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/docker/docker/pkg/stdcopy"
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -74,7 +75,6 @@ type pod struct {
 	container        cproto.Container
 	ports            []int
 	resourcesDeleted bool
-	testLogStreamer  bool
 	containerNames   set.Set[string]
 
 	logCtx logger.Context
@@ -160,13 +160,10 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		ctx.AddLabels(p.logCtx)
 		if p.restore {
-			if p.container.State == cproto.Running && !p.testLogStreamer {
-				logStreamer, err := newPodLogStreamer(p.podInterface, p.podName, ctx.Self())
+			if p.container.State == cproto.Running {
+				err := p.startPodLogStreamer(ctx)
 				if err != nil {
 					return err
-				}
-				if _, ok := ctx.ActorOf(fmt.Sprintf("%s-logs", p.podName), logStreamer); !ok {
-					return errors.Errorf("log streamer already exists")
 				}
 			}
 		} else {
@@ -197,9 +194,6 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	case ChangePosition:
 		ctx.Log().Info("interrupting pod to change positions")
 		p.taskActor.System().Tell(p.taskActor, sproto.ReleaseResources{})
-
-	case sproto.ContainerLog:
-		p.receiveContainerLog(ctx, msg)
 
 	case KillTaskPod:
 		ctx.Log().Info("received request to stop pod")
@@ -232,6 +226,18 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	}
 
 	return nil
+}
+
+func (p *pod) startPodLogStreamer(ctx *actor.Context) error {
+	return startPodLogStreamer(p.podInterface, p.podName, func(log []byte) {
+		p.receiveContainerLog(ctx, sproto.ContainerLog{
+			Timestamp: time.Now().UTC(),
+			RunMessage: &aproto.RunMessage{
+				Value:   string(log),
+				StdType: stdcopy.Stdout,
+			},
+		})
+	})
 }
 
 func (p *pod) createPodSpecAndSubmit(ctx *actor.Context) error {
@@ -287,16 +293,9 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 	case cproto.Running:
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Running)
-		// testLogStreamer is a testing flag only set in the pod_tests.
-		// This allows us to bypass the need for a log streamer or REST server.
-		if !p.testLogStreamer {
-			logStreamer, err := newPodLogStreamer(p.podInterface, p.podName, ctx.Self())
-			if err != nil {
-				return err
-			}
-			if _, ok := ctx.ActorOf(fmt.Sprintf("%s-logs", p.podName), logStreamer); !ok {
-				return errors.Errorf("log streamer already exists")
-			}
+		err := p.startPodLogStreamer(ctx)
+		if err != nil {
+			return err
 		}
 
 		p.informTaskResourcesStarted(ctx, getResourcesStartedForPod(p.pod, p.ports))

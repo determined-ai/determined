@@ -627,7 +627,7 @@ def test_log_wait_timeout(tmp_path: Path, secrets: Dict[str, str]) -> None:
 @pytest.mark.e2e_cpu
 def test_log_argument(task_type: str) -> None:
     taskid = "28ad1623-dcf0-47d2-9faa-265aaa05b078"
-    expected = f"task not found: {taskid}"
+    expected = f"task {taskid} not found"
     cmd: List[str] = ["det", "-m", conf.make_master_url(), task_type, "logs", taskid]
     p = subprocess.run(cmd, stderr=subprocess.PIPE, check=False)
     assert p.stderr is not None

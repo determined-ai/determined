@@ -61,11 +61,12 @@ type PodmanClient struct {
 	wg         waitgroupx.Group
 	containers map[cproto.ID]*PodmanContainer
 	agentTmp   string
+	debug      bool
 }
 
 // New returns a new podman client, which launches and tracks containers.
-func New(opts options.PodmanOptions, agentID string) (*PodmanClient, error) {
-	agentTmp, err := cruntimes.BaseTempDirName(agentID)
+func New(opts options.Options) (*PodmanClient, error) {
+	agentTmp, err := cruntimes.BaseTempDirName(opts.AgentID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to compose agentTmp directory path: %w", err)
 	}
@@ -80,10 +81,11 @@ func New(opts options.PodmanOptions, agentID string) (*PodmanClient, error) {
 
 	return &PodmanClient{
 		log:        logrus.WithField("component", "podman"),
-		opts:       opts,
+		opts:       opts.PodmanOptions,
 		wg:         waitgroupx.WithContext(context.Background()),
 		containers: make(map[cproto.ID]*PodmanContainer),
 		agentTmp:   agentTmp,
+		debug:      opts.Debug,
 	}, nil
 }
 
@@ -184,7 +186,9 @@ func (s *PodmanClient) RunContainer(
 	args = append(args, "--env", "NVIDIA_VISIBLE_DEVICES")
 	args = append(args, "--env", "ROCR_VISIBLE_DEVICES")
 	args = append(args, "--env", "HIP_VISIBLE_DEVICES")
-
+	if s.debug {
+		args = append(args, "--env", "DET_DEBUG=1")
+	}
 	envFilePath := path.Join(tmpdir, envFileName)
 	envFile, err := os.OpenFile(
 		envFilePath,

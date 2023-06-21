@@ -1,9 +1,9 @@
 import { V1AugmentedTrial, V1QueryTrialsResponse } from 'services/api-ts-sdk';
-import { Primitive, RawJson } from 'shared/types';
-import { flattenObject } from 'shared/utils/data';
-import { union } from 'shared/utils/set';
+import { Primitive, RawJson } from 'types';
 import { Metric, MetricType } from 'types';
+import { flattenObject } from 'utils/data';
 import { metricKeyToMetric, metricToKey } from 'utils/metric';
+import { union } from 'utils/set';
 
 export function mergeLists<T>(
   A: Array<T>,

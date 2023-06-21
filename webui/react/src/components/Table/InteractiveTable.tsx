@@ -26,12 +26,12 @@ import {
   DraggableEventHandler,
 } from 'react-draggable';
 
+import Spinner from 'components/Spinner/Spinner';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
-import Spinner from 'shared/components/Spinner/Spinner';
-import { Primitive } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
+import { Primitive } from 'types';
+import { isEqual } from 'utils/data';
 
 import css from './InteractiveTable.module.scss';
 

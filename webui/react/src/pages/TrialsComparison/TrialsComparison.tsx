@@ -5,6 +5,7 @@ import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import Grid, { GridMode } from 'components/Grid';
 import Empty from 'components/kit/Empty';
 import LearningCurveChart from 'components/LearningCurveChart';
+import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
@@ -12,10 +13,9 @@ import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';
 import TrialTable from 'pages/TrialsComparison/Table/TrialTable';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
-import Message, { MessageType } from 'shared/components/Message';
-import { intersection } from 'shared/utils/set';
 import { Scale } from 'types';
 import { metricToKey } from 'utils/metric';
+import { intersection } from 'utils/set';
 
 import useHighlight from '../../hooks/useHighlight';
 

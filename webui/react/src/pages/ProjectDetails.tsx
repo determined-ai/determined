@@ -3,24 +3,24 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 
 import DynamicTabs from 'components/DynamicTabs';
+import Message, { MessageType } from 'components/Message';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import { useProjectActionMenu } from 'components/ProjectActionDropdown';
+import Spinner from 'components/Spinner';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getProject, postUserActivity } from 'services/api';
 import { V1ActivityType, V1EntityType } from 'services/api-ts-sdk';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import { isEqual } from 'shared/utils/data';
-import { routeToReactUrl } from 'shared/utils/routes';
-import { isNotFound } from 'shared/utils/service';
 import workspaceStore from 'stores/workspaces';
 import { Project } from 'types';
+import { isEqual } from 'utils/data';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { routeToReactUrl } from 'utils/routes';
+import { isNotFound } from 'utils/service';
 
 import ExperimentList from './ExperimentList';
 import F_ExperimentList from './F_ExpList/F_ExperimentList';

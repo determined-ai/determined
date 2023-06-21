@@ -6,28 +6,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
-
-func obfuscateJob(job *jobv1.Job) jobv1.LimitedJob {
-	return jobv1.LimitedJob{
-		Summary:        job.Summary,
-		Type:           job.Type,
-		ResourcePool:   job.ResourcePool,
-		IsPreemptible:  job.IsPreemptible,
-		Priority:       job.Priority,
-		Weight:         job.Weight,
-		JobId:          job.JobId,
-		RequestedSlots: job.RequestedSlots,
-		AllocatedSlots: job.AllocatedSlots,
-		Progress:       job.Progress,
-		WorkspaceId:    job.WorkspaceId,
-	}
-}
 
 // GetJobs retrieves a list of jobs for a resource pool.
 func (a *apiServer) GetJobs(
@@ -94,7 +79,7 @@ func (a *apiServer) GetJobsV2(
 				Full: job,
 			}
 		} else {
-			limitedJob := obfuscateJob(job)
+			limitedJob := authz.ObfuscateJob(job)
 			j.Job = &jobv1.RBACJob_Limited{
 				Limited: &limitedJob,
 			}

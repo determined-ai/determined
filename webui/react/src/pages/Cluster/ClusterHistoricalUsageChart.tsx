@@ -2,9 +2,9 @@ import dayjs from 'dayjs';
 import React, { useMemo } from 'react';
 import uPlot, { AlignedData, Series } from 'uplot';
 
+import Message, { MessageType } from 'components/Message';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
-import Message, { MessageType } from 'shared/components/Message';
-import { glasbeyColor } from 'shared/utils/color';
+import { glasbeyColor } from 'utils/color';
 
 import { GroupBy } from './ClusterHistoricalUsage.settings';
 import css from './ClusterHistoricalUsageChart.module.scss';
@@ -44,6 +44,20 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
 
     return data;
   }, [hoursByLabel, hoursTotal, time]);
+
+  const hasData = useMemo(() => {
+    return Object.keys(hoursByLabel).reduce(
+      (agg, label) => agg || hoursByLabel[label].length > 0,
+      false,
+    );
+  }, [hoursByLabel]);
+
+  const singlePoint = useMemo(
+    // one series, and that one series has one point
+    () => Object.keys(hoursByLabel).length === 1 && Object.values(hoursByLabel)[0].length === 1,
+    [hoursByLabel],
+  );
+
   const chartOptions: Options = useMemo(() => {
     let dateFormat = 'MM-DD';
     let timeSeries: Series = { label: 'Day', value: '{YYYY}-{MM}-{DD}' };
@@ -68,7 +82,6 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
         width: 2,
       });
     });
-    const singlePoint = Object.keys(hoursByLabel).length + (hoursTotal?.length || 0) <= 1;
 
     return {
       axes: [
@@ -105,13 +118,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
       series,
       tzDate: (ts) => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
     };
-  }, [groupBy, height, hoursByLabel, hoursTotal, label, chartKey]);
-  const hasData = useMemo(() => {
-    return Object.keys(hoursByLabel).reduce(
-      (agg, label) => agg || hoursByLabel[label].length > 0,
-      false,
-    );
-  }, [hoursByLabel]);
+  }, [groupBy, height, hoursByLabel, hoursTotal, label, chartKey, singlePoint]);
 
   if (!hasData) {
     return <Message title="No data to plot." type={MessageType.Empty} />;

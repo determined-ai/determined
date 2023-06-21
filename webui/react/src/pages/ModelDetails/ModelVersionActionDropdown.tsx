@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo } from 'react';
 
+import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import usePermissions from 'hooks/usePermissions';
-import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import { ModelVersion } from 'types';
 
 interface Props {

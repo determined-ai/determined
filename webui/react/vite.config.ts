@@ -8,35 +8,34 @@ import checker from 'vite-plugin-checker';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import { configDefaults, defineConfig } from 'vitest/config';
 
-import { cspHtml } from './src/shared/configs/vite-plugin-csp';
+import { cspHtml } from './vite-plugin-csp';
 
 // want to fallback in case of empty string, hence no ??
 const webpackProxyUrl = process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080';
 
-
 const devServerRedirects = (redirects: Record<string, string>): Plugin => {
   let config: UserConfig;
-    return ({
-      config(c) {
-        config = c;
-      },
-        configureServer(server) {
-          Object.entries(redirects).forEach(([from, to]) => {
-            const fromUrl = `${config.base || ''}${from}`;
-            server.middlewares.use(fromUrl, (req, res, next) => {
-              if (req.originalUrl === fromUrl) {
-                res.writeHead(302, {
-                  Location: `${config.base || ''}${to}`,
-                });
-                res.end();
-              } else {
-                next();
-              }
+  return {
+    config(c) {
+      config = c;
+    },
+    configureServer(server) {
+      Object.entries(redirects).forEach(([from, to]) => {
+        const fromUrl = `${config.base || ''}${from}`;
+        server.middlewares.use(fromUrl, (req, res, next) => {
+          if (req.originalUrl === fromUrl) {
+            res.writeHead(302, {
+              Location: `${config.base || ''}${to}`,
             });
-          });
-        },
-        name: 'dev-server-redirects',
-    });
+            res.end();
+          } else {
+            next();
+          }
+        });
+      });
+    },
+    name: 'dev-server-redirects',
+  };
 };
 
 const publicUrlBaseHref = (): Plugin => {
@@ -102,7 +101,7 @@ export default defineConfig(({ mode }) => ({
     },
     preprocessorOptions: {
       scss: {
-        additionalData: fs.readFileSync('./src/shared/styles/global.scss'),
+        additionalData: fs.readFileSync('./src/styles/global.scss'),
       },
     },
   },
@@ -110,7 +109,7 @@ export default defineConfig(({ mode }) => ({
     'process.env.IS_DEV': JSON.stringify(mode === 'development'),
     'process.env.PUBLIC_URL': JSON.stringify((mode !== 'test' && publicUrl) || ''),
     'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
-    'process.env.VERSION': '"0.22.3-dev0"',
+    'process.env.VERSION': '"0.23.1-dev0"',
   },
   optimizeDeps: {
     include: ['notebook'],

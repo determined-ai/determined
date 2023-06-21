@@ -9,7 +9,7 @@ import { DarkLight } from 'components/kit/internal/types';
 import { ErrorHandler, ErrorLevel, ErrorType } from 'components/kit/internal/types';
 import usePrevious from 'components/kit/internal/usePrevious';
 import useResize from 'components/kit/internal/useResize';
-import useUI from 'shared/contexts/stores/UI';
+import useUI from 'stores/contexts/UI';
 
 import { useChartSync } from './SyncProvider';
 import { FacetedData } from './types';

@@ -9,7 +9,7 @@ import {
   getTrialDetails,
   getWorkspace,
 } from 'services/api';
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import {} from 'stores/cluster';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';

@@ -17,6 +17,7 @@ import { useModal } from 'components/kit/Modal';
 import Tags from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
+import Spinner from 'components/Spinner';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -38,6 +39,7 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import useExperimentTags from 'hooks/useExperimentTags';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {
@@ -56,14 +58,8 @@ import {
 import { Experimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { GetExperimentsParams } from 'services/types';
-import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import { RecordKey } from 'shared/types';
-import { ErrorLevel } from 'shared/utils/error';
-import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
-import { alphaNumericSorter } from 'shared/utils/sort';
-import { humanReadableBytes } from 'shared/utils/string';
 import userStore from 'stores/users';
+import { RecordKey } from 'types';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -74,6 +70,7 @@ import {
   ProjectExperiment,
   RunState,
 } from 'types';
+import { ErrorLevel } from 'utils/error';
 import handleError from 'utils/error';
 import {
   canActionExperiment,
@@ -82,6 +79,9 @@ import {
 } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
+import { alphaNumericSorter } from 'utils/sort';
+import { humanReadableBytes } from 'utils/string';
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
 
@@ -137,8 +137,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const settingsConfig = useMemo(() => settingsConfigForProject(id), [id]);
 
-  const { settings, updateSettings, resetSettings, activeSettings } =
-    useSettings<ExperimentListSettings>(settingsConfig);
+  const {
+    settings,
+    isLoading: isLoadingSettings,
+    updateSettings,
+    resetSettings,
+    activeSettings,
+  } = useSettings<ExperimentListSettings>(settingsConfig);
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
@@ -160,7 +165,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const usersString = useMemo(() => settings.user?.join('.'), [settings.user]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
-    if (!settings) return;
+    if (!settings || isLoadingSettings) return;
     try {
       const states = statesString
         ?.split('.')
@@ -215,7 +220,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, settings, labelsString, pinnedString, statesString, usersString]);
+  }, [id, isLoadingSettings, settings, labelsString, pinnedString, statesString, usersString]);
 
   const fetchLabels = useCallback(async () => {
     try {

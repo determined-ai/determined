@@ -373,7 +373,7 @@ contains the architecture and weights of the model being trained. Each checkpoin
 is used as the name of the checkpoint directory on the external storage system.
 
 If this field is not specified, the experiment will default to the checkpoint storage configured in
-the :ref:`master-config-reference`.
+the :ref:`master configuration <master-config-reference>`.
 
 .. _checkpoint-garbage-collection:
 

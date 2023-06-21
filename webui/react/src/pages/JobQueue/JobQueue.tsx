@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import ActionDropdown, { Triggers } from 'components/ActionDropdown/ActionDropdown';
 import Icon from 'components/kit/Icon';
 import Section from 'components/Section';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   checkmarkRenderer,
+  createOmitableRenderer,
   defaultRowClassName,
   getFullPaginationConfig,
   userRenderer,
@@ -16,15 +18,11 @@ import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/Jo
 import { paths } from 'routes/utils';
 import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
-import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/ActionDropdown';
-import { isEqual } from 'shared/utils/data';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
-import { numericSorter } from 'shared/utils/sort';
-import { capitalize } from 'shared/utils/string';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
-import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
+import { FullJob, Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
+import { isEqual } from 'utils/data';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import {
   canManageJob,
@@ -35,6 +33,9 @@ import {
 } from 'utils/job';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { routeToReactUrl } from 'utils/routes';
+import { numericSorter } from 'utils/sort';
+import { capitalize } from 'utils/string';
 
 import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';
@@ -135,6 +136,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
 
   const dropDownOnTrigger = useCallback(
     (job: Job) => {
+      if (!('entityId' in job)) return {};
       const triggers: Triggers<JobAction> = {};
       const commandType = jobTypeToCommandType(job.type);
 
@@ -221,27 +223,31 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
           case 'actions':
             return {
               ...col,
-              render: (_, record) => (
-                <div>
-                  <ActionDropdown<JobAction>
-                    actionOrder={[
-                      JobAction.ManageJob,
-                      JobAction.MoveToTop,
-                      JobAction.ViewLog,
-                      JobAction.Cancel,
-                      JobAction.Kill,
-                    ]}
-                    confirmations={{
-                      [JobAction.Cancel]: { cancelText: 'Abort', onError: handleError },
-                      [JobAction.Kill]: { danger: true, onError: handleError },
-                      [JobAction.MoveToTop]: { onError: handleError },
-                    }}
-                    id={record.name}
-                    kind="job"
-                    onError={handleError}
-                    onTrigger={dropDownOnTrigger(record)}
-                  />
-                </div>
+              render: createOmitableRenderer<Job, FullJob>(
+                'entityId',
+                (_, record) => (
+                  <div>
+                    <ActionDropdown<JobAction>
+                      actionOrder={[
+                        JobAction.ManageJob,
+                        JobAction.MoveToTop,
+                        JobAction.ViewLog,
+                        JobAction.Cancel,
+                        JobAction.Kill,
+                      ]}
+                      confirmations={{
+                        [JobAction.Cancel]: { cancelText: 'Abort', onError: handleError },
+                        [JobAction.Kill]: { danger: true, onError: handleError },
+                        [JobAction.MoveToTop]: { onError: handleError },
+                      }}
+                      id={record.name}
+                      kind="job"
+                      onError={handleError}
+                      onTrigger={dropDownOnTrigger(record)}
+                    />
+                  </div>
+                ),
+                null,
               ),
             };
           case SCHEDULING_VAL_KEY: {
@@ -306,7 +312,9 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
           case 'user':
             return {
               ...col,
-              render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
+              render: createOmitableRenderer<Job, FullJob>('entityId', (_, r) =>
+                userRenderer(users.find((u) => u.id === r.userId)),
+              ),
             };
           default:
             return col;

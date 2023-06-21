@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -22,10 +23,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/test/olddata"
 )
-
-func expNotFoundErrEcho(id int) error {
-	return echo.NewHTTPError(http.StatusNotFound, "experiment not found: %d", id)
-}
 
 func newTestEchoContext(user model.User) echo.Context {
 	e := echo.New()
@@ -100,11 +97,12 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 
 	for _, curCase := range cases {
 		// Not found returns same as permission denied.
-		require.Equal(t, expNotFoundErrEcho(-999), curCase.IDToReqCall(-999))
+		require.Equal(t, apiPkg.NotFoundErrs("experiment", "-999", false), curCase.IDToReqCall(-999))
 
 		authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
 			Return(authz2.PermissionDeniedError{}).Once()
-		require.Equal(t, expNotFoundErrEcho(exp.ID), curCase.IDToReqCall(exp.ID))
+		require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(exp.ID), false),
+			curCase.IDToReqCall(exp.ID))
 
 		// CanGetExperiment error returns unmodified.
 		expectedErr := fmt.Errorf("canGetExperimentError")

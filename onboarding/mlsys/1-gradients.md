@@ -3,8 +3,8 @@
 Machine learning is all about getting computers to solve math problems for you.
 
 Specifically, it's about solving math problems like, "For a given mathematical
-model, what model weights would cause the model to calculate the most accurate
-predictions for a set of inputs?"
+model, what model weights would result in the most accurate predictions for a
+set of inputs?"
 
 In this exercise, you'll write code to solve this exact problem and for one
 particularly simple model.
@@ -24,7 +24,7 @@ through the origin.
 
 ## The Data Set
 
-Our made-up dataset has 4 data points (`true` indicates "ground truth"):
+Our made-up dataset has 4 data points (`ytrue` indicates "ground truth"):
 
 - `(x=1, ytrue=1)`
 - `(x=2, ytrue=2)`
@@ -44,37 +44,39 @@ before proceeding with further math.
 ## What does "most accurately" mean, really?
 
 For this model and dataset, there is a perfect answer (`m=1`), but usually there
-isn't.  So usually instead of seeking an perfect answer, we are really seeking
-to minimize a function, called the "loss", that mathematically describes the
-goodness-of-fit between our model and the data.  There are lots of loss
-functions, but we're going to work with the Mean Squared Error (MSE) function.
+isn't.  So usually instead of seeking a perfect answer, we are really seeking
+to minimize a function, called the "loss", that mathematically summarizes how
+far off our model predictions are from the data's ground truth.  There are lots
+of loss functions, but we're going to work with the Mean Squared Error (MSE)
+function.
 
 The MSE definition is just like it sounds: the mean of the squares of the
 errors between each ground truth `ytrue` and the corresponding model prediction
 `ypred`.  So for `N` data points, we can say:
 
-    loss_mse = ( (ytrue1 - ypred1)**2 + ... + (ytrueN - ypredN)**2 ) / N
+```math
+\mathrm{loss_mse} =
+    \frac{
+        (\mathrm{ytrue}_1 - \mathrm{ypred}_1)^2
+        + ...
+        + (\mathrm{ytrue}_N - \mathrm{ypred}_N)^2
+    }{N}
+```
 
 It should be clear from the above formula that the number of data points in the
 MSE loss calculation `N` is just a constant divisor that applies to each term.
 Then the MSE becomes the sum of a losses calculated individually for each
 point:
 
-    loss_point = (ytrue - ypred)**2 / N
+```math
+\mathrm{loss_point} = \frac{(\mathrm{ytrue} - \mathrm{ypred})^2}{N}
+```
 
-And we can rewrite `loss_point` in terms of `m`:
+And we can expand `ypred = m*x` to rewrite `loss_point` in terms of `m`:
 
-    loss_point = (ytrue - m * x)**2 / N
-
-Did you notice that the loss is a function of `m`, even though our model
-defines `ypred` as a function of `x`?  Also, our dataset
-`x` and `ypred` values appear in the loss calculation as constants, even though
-we might normally think of `x` as our variable.  That is because every `m`
-value on our loss curve corresponds to a different model for `ypred = m*x`.
-The value of the loss at each value `m` is defined by how accurately it
-predicts the (constant) values in our dataset.
-
-![multi](multi.jpg "Multi Graph")
+```math
+\mathrm{loss_point} = \frac{(\mathrm{ytrue} - m x)^2}{N}
+```
 
 ### Q2:
 
@@ -114,7 +116,7 @@ the simplest and most prevalent techniques in deep learning is called "gradient
 descent".  We basically follow the curve of our loss until we get to the
 minimum of the loss graph:
 
-![gradient descent](gradient_descent.jpg "Gradient Descent")
+![gradient-descent](./files/1-gradient-descent.jpg "Gradient Descent")
 
 The basic idea is that we look at the slope of the loss curve (or the "gradient"
 of the loss curve if our loss is more than two-dimensional), and try to take a
@@ -126,7 +128,7 @@ direction (decreasing `m`).
 
 The size of our step is based on the magnitude of the slope multiplied by a
 tunable learning rate parameter, `lr`.  Intuitively,  this means that if the
-slope is really steep, we probably can afford to take a really big step, but if
+slope is really steep, we probably can afford to take a really big step, but
 if the slope is really small we think we're getting close to the slope and we
 only take a small step.
 
@@ -145,18 +147,28 @@ to the gradient of the loss.
 
 We'll start by recalling the definition of `loss_point` in terms of `m`:
 
-    loss_point = (ytrue - (m*x))**2 / N
+```math
+\mathrm{loss_point} = \frac{(\mathrm{ytrue} - m x)^2}{N}
+```
 
 Then apply the product rule and the chain rule from to get the derivative with
 respect to the weight `m`:
 
-    dloss_point/dm = - 2*x*(ytrue - m*x) / N
+```math
+\frac{\partial\mathrm{loss_point}}{\partial m} =
+    \frac{- 2 x(\mathrm{ytrue} - m x)}{N}
+```
 
 And since our total `loss_mse` is just the sum of several `loss_point` values,
 we know from calculus that the derivative of the total `loss_mse` is the sum
 of the per-point derivatives:
 
-    dloss_mse/dm = - 2 * ( x1*(ytrue1 - m*x1) + ... + xN*(ytrueN - m*xN) ) / N
+```math
+\frac{\partial\mathrm{loss_mse}}{\partial m} =
+    \frac{-2}{N} (
+        x_1 (\mathrm{ytrue}_1 - m x_1) + ... + x_N (\mathrm{ytrue}_N - m x_N)
+    )
+```
 
 ### Q5:
 
@@ -189,9 +201,9 @@ The basic gradient descent loop algorithm is:
 
 1. Pick an initial model weight.
 2. Select one or more `(x, ytrue)` pairs from the dataset.
-3. Calculate a prediction for the selected inputs with a label (Q2).
-4. Calculate the gradient using the prediction vs label (Q3).
-5. Subtract `gradient * lr` from our model weight ("Minimizing the loss").
+3. Calculate a prediction for the selected inputs (Q3).
+4. Calculate the gradient using the prediction and the ground truth (Q5).
+5. Subtract `gradient * lr` from the model weight ("Minimizing the loss").
 6. Repeat steps 2—5 until you decide to stop.
 
 ### Q6
@@ -207,7 +219,8 @@ function should take the following inputs:
 Your function should return the final trained weight `m`.
 
 Additionally, in the "select one or more `(x, ytrue)` input pairs" step, for
-now you should just select the next `(x, ytrue)` pair in the dataset, and it
+now, just select one data point (we'll build up to processing multiple at a
+time).  For now, just select the next `(x, ytrue)` pair in the dataset, and it
 should wrap back to the beginning of the dataset after reaching the end.  So if
 your dataset is of length 10, then your eleventh iteration should reuse the
 first `(x, ytrue)` pair of your dataset.
@@ -261,7 +274,7 @@ Describe what is happening.
 ## Noise in Training
 
 You should have a pretty good grasp of how the gradient "steers" the training
-of the model towards better predictions over time.  We've been using an
+of the model toward better predictions over time.  We've been using an
 artificially easy dataset to make it obvious what the ideal value for `m` would
 be, but let's change up the dataset to make it more noisy.  The ideal value of
 `m` will still be 1, the loss just won't ever go to zero anymore.
@@ -282,8 +295,8 @@ print(train_loop(m=0, lr=0.0001, dataset=dataset, iterations=10000))
 ```
 
 Now that we have noise in our dataset, we find that some values are "noisier"
-than others.  Notice that the at `m=1` our model is off by `1`, but at `x=4`
-our model is off by `1.5`.  These noisier points can cause training to become
+than others.  Notice that at `x=1` our model is off by `1`, but at `x=4` our
+model is off by `2.25`.  These noisier points can cause training to become
 unstable at higher learning rates.
 
 ### Q9
@@ -299,7 +312,7 @@ for lr in [.001, .002, .004, .008, .016, .032, .064, .128, .256]:
 Which learning rates cause training to diverge?  Which learning rates cause the
 model to converge to 1?  Are there values which are somewhere in between?
 
-## Batch size in Training
+## Batch Size in Training
 
 In real life, all datasets have noise.  If you calculate the gradient for every
 record and step the model on each data point's gradient, that noise can cause
@@ -313,16 +326,16 @@ the gradients from each point.
 This is called "batching" your inputs.  The number of inputs that you include
 in each training iteration is called your "batch size".
 
-### Q11
+### Q10
 
 Let `m=2` and fill the following table of per-data-point gradients:
 
-| `(x, ytrue)`  | `grad_point` |
-| ------------- | ------------ |
-|     (1, 0)    |              |
-|     (2, 1)    |              |
-|     (3, 1)    |              |
-|    (4, 6.25)  |              |
+| `(x, ytrue)`  | `grad_point(N=1)` |
+| ------------- | ----------------- |
+|     (1, 0)    |                   |
+|     (2, 1)    |                   |
+|     (3, 1)    |                   |
+|    (4, 6.25)  |                   |
 
 Then, with `m=2`, fill the following table of `batch_size=2` batch gradients:
 
@@ -331,10 +344,11 @@ Then, with `m=2`, fill the following table of `batch_size=2` batch gradients:
 |     (1, 0)     |     (2, 1)     |              |
 |     (3, 1)     |    (4, 6.25)   |              |
 
-Do you see that by averaging gradients from multiple points, we end up with
-smoother overall gradients?
+What is the scale between the largest and smallest gradient values in the first
+table?  What about the second table?  Do you see that by averaging gradients
+from multiple points, we end up with smoother overall gradients?
 
-### Q12
+### Q11
 
 Write a new training loop that takes batches instead of individual points.
 
@@ -396,7 +410,7 @@ worker calculates gradients for its batch.  Then all workers communicate their
 gradients to all other workers, after which each worker has the average of all
 worker gradients.
 
-### Q13
+### Q12
 
 Write a training loop that simulates data-parallel distributed training.  No
 need for actual distributed mechanics; just do it inside a single process.
@@ -491,3 +505,14 @@ reduces network communications.  If you always aggregate gradients from 4
 batches before applying them to the model, you only need to communicate
 gradients between workers 1/4th of the time, significantly reducing your
 communication overhead.
+
+## Summary
+
+Upon completion of this exercise, you have learned:
+
+- How to implement gradient descent
+- That averaging gradients allows for faster training
+- How batching data is just a form of averaging gradients
+- How data-parallel dtrain is just a different form of averaging gradients
+- Why gradient aggregation (a third form of averaging gradients) is
+  complementary to data-parallel dtrain

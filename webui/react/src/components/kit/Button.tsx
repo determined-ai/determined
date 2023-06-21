@@ -24,11 +24,28 @@ interface ButtonProps {
   tooltip?: string;
 }
 
+interface CloneElementProps {
+  // antd parent component (Dropdown) may set this component's className prop via cloneElement.
+  className?: string;
+}
+
 const Button: React.FC<ButtonProps> = forwardRef(
-  ({ size = 'middle', tooltip = '', ...props }: ButtonProps, ref) => {
+  (
+    {
+      size = 'middle',
+      tooltip = '',
+      className, // do not include className in {...props} below.
+      ...props
+    }: ButtonProps & CloneElementProps,
+    ref,
+  ) => {
     const classes = [css.base];
+    if (className) classes.push(className); // preserve className value set via cloneElement.
     if (props.selected) classes.push(css.selected);
     if (props.column) classes.push(css.column);
+    if (props.icon) classes.push(css.withIcon);
+    if (props.children) classes.push(css.withChildren);
+
     return (
       <ConditionalWrapper
         condition={tooltip.length > 0}

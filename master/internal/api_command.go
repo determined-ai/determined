@@ -225,7 +225,7 @@ func (a *apiServer) GetCommands(
 		return nil, err
 	}
 
-	workspaceNotFoundErr := status.Errorf(codes.NotFound, "workspace %d not found", req.WorkspaceId)
+	workspaceNotFoundErr := api.NotFoundErrs("workspace", fmt.Sprint(req.WorkspaceId), true)
 
 	if req.WorkspaceId != 0 {
 		// check if the workspace exists.
@@ -274,7 +274,7 @@ func (a *apiServer) GetCommand(
 	ctx = audit.SupplyEntityID(ctx, req.CommandId)
 	if err := command.AuthZProvider.Get().CanGetNSC(
 		ctx, *curUser, model.AccessScopeID(resp.Command.WorkspaceId)); err != nil {
-		return nil, authz.SubIfUnauthorized(err, errActorNotFound(addr))
+		return nil, authz.SubIfUnauthorized(err, api.NotFoundErrs("actor", fmt.Sprint(addr), true))
 	}
 	return resp, nil
 }

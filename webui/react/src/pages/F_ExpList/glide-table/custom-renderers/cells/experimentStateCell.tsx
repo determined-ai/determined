@@ -1,7 +1,7 @@
 import { CustomCell, CustomRenderer, GridCellKind } from '@glideapps/glide-data-grid';
 
-import { Theme } from 'shared/themes';
 import { CompoundRunState, JobState, RunState } from 'types';
+import { Theme } from 'utils/themes';
 
 import { roundedRect } from '../utils';
 

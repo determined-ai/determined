@@ -1,6 +1,6 @@
 from argparse import ONE_OR_MORE, Namespace
 from datetime import datetime
-from typing import Any, List
+from typing import Any, List, Union
 
 import pytz
 
@@ -11,6 +11,17 @@ from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
+def parse_jobv2_resp(
+    resp: bindings.v1GetJobsV2Response,
+) -> List[Union[bindings.v1Job, bindings.v1LimitedJob]]:
+    jobs_nullable = [j.full if j.full is not None else j.limited for j in resp.jobs]
+    jobs: List[Union[bindings.v1Job, bindings.v1LimitedJob]] = []
+    for j in jobs_nullable:
+        if j is not None:
+            jobs.append(j)
+    return jobs
+
+
 @authentication.required
 def ls(args: Namespace) -> None:
     session = cli.setup_session(args)
@@ -19,8 +30,8 @@ def ls(args: Namespace) -> None:
 
     order_by = bindings.v1OrderBy.ASC if not args.reverse else bindings.v1OrderBy.DESC
 
-    def get_with_offset(offset: int) -> bindings.v1GetJobsResponse:
-        return bindings.get_GetJobs(
+    def get_with_offset(offset: int) -> bindings.v1GetJobsV2Response:
+        return bindings.get_GetJobsV2(
             session,
             resourcePool=args.resource_pool,
             offset=offset,
@@ -28,8 +39,8 @@ def ls(args: Namespace) -> None:
             orderBy=order_by,
         )
 
-    resps = api.read_paginated(get_with_offset, offset=args.offset, pages=args.pages)
-    jobs = [j for r in resps for j in r.jobs]
+    paginated_resps = api.read_paginated(get_with_offset, offset=args.offset, pages=args.pages)
+    jobs = [j for r in paginated_resps for j in parse_jobv2_resp(r)]
 
     if args.yaml or args.json:
         data = {
@@ -64,14 +75,16 @@ def ls(args: Namespace) -> None:
             j.summary.jobsAhead if j.summary is not None and j.summary.jobsAhead > -1 else "N/A",
             j.jobId,
             j.type.value,
-            computed_job_name(j),
+            computed_job_name(j) if isinstance(j, bindings.v1Job) else render.OMITTED_VALUE,
             j.priority if is_priority else j.weight,
             pytz.utc.localize(
                 datetime.strptime(j.submissionTime.split(".")[0], "%Y-%m-%dT%H:%M:%S")
-            ),
+            )
+            if isinstance(j, bindings.v1Job)
+            else render.OMITTED_VALUE,
             f"{j.allocatedSlots}/{j.requestedSlots}",
             j.summary.state.value if j.summary is not None else "N/A",
-            j.username,
+            j.username if isinstance(j, bindings.v1Job) else render.OMITTED_VALUE,
         ]
         for j in jobs
     ]

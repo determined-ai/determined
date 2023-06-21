@@ -2,16 +2,19 @@
 
 html {
   --pst-font-family-base-system: "Open Sans", "Metric HPE", Arial, sans-serif;
+  --docsearch-modal-max-width: 1000px;
 }
 
 html[data-theme="light"] {
   --pst-color-primary: #f37a22;
   --pst-color-inline-code: #323232;
+  --docsearch-modal-width: var(--docsearch-modal-max-width);
 }
 
 html[data-theme="dark"] {
   --pst-color-primary: #f37a22;
   --pst-color-inline-code: #cecece;
+  --docsearch-modal-width: var(--docsearch-modal-max-width);
 }
 
 #site-navigation {
@@ -28,13 +31,28 @@ html[data-theme="dark"] {
   margin: 0;
 }
 
-.version.centered {
-  text-align: center;
+.DocSearch-Modal{
+  max-height: 800px;
+}
+
+.version.centered i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+}
+
+.version.centered .version-switcher__container {
+  margin-left: 8px;
 }
 
 .bd-header-article {
   min-width: 488px;
   z-index: 200; /* sphinx-book-theme default is 1020, lower this enough to stay below algolia modal */
+}
+
+.bd-sidebar-primary {
+  overscroll-behavior: none;
 }
 
 .header-links-left a {

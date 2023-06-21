@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -336,7 +337,7 @@ func TestCheckpointAuthZ(t *testing.T) {
 				require.Equal(t, errCheckpointsNotFound([]string{notFoundUUID}),
 					curCase.IDToReqCall(notFoundUUID))
 			} else {
-				require.Equal(t, errCheckpointNotFound(notFoundUUID),
+				require.Equal(t, apiPkg.NotFoundErrs("checkpoint", notFoundUUID, true),
 					curCase.IDToReqCall(notFoundUUID))
 			}
 
@@ -346,7 +347,7 @@ func TestCheckpointAuthZ(t *testing.T) {
 				require.Equal(t, errCheckpointsNotFound([]string{checkpointID}),
 					curCase.IDToReqCall(checkpointID))
 			} else {
-				require.Equal(t, errCheckpointNotFound(checkpointID),
+				require.Equal(t, apiPkg.NotFoundErrs("checkpoint", checkpointID, true),
 					curCase.IDToReqCall(checkpointID))
 			}
 

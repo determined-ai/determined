@@ -62,10 +62,8 @@ func (p *IdleTimeoutWatcher) ReceiveMsg(ctx *actor.Context) error {
 	case IdleTimeoutWatcherTick:
 		var lastActivity *time.Time
 		if p.UseProxyState {
-			proxyRef := ctx.Self().System().Get(actor.Addr("proxy"))
-			services := ctx.Ask(proxyRef, proxy.GetSummary{}).Get().(map[string]proxy.Service)
-			service, ok := services[p.ServiceID]
-			if !ok {
+			service := proxy.DefaultProxy.GetService(p.ServiceID)
+			if service == nil {
 				return nil
 			}
 			lastActivity = ptrs.Ptr(service.LastRequested)

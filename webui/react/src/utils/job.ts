@@ -1,10 +1,10 @@
 import { IconName } from 'components/kit/Icon';
 import { updateJobQueue } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
-import { DetError, DetErrorOptions, ErrorType, wrapPublicMessage } from 'shared/utils/error';
-import { capitalize } from 'shared/utils/string';
 import { CommandType, Job, JobType, ResourcePool } from 'types';
+import { DetError, DetErrorOptions, ErrorType, wrapPublicMessage } from 'utils/error';
 import handleError from 'utils/error';
+import { capitalize } from 'utils/string';
 
 // This marks scheduler types that do not support fine-grain control of
 // job positions in the queue.
@@ -46,7 +46,6 @@ export const orderedSchedulers = new Set<Api.V1SchedulerType>([
 
 /**
  * Create the update request based on a given position for a job.
- *
  * @param jobs The list of all jobs.
  * @param jobId The job id of the job to update
  * @param position The position of the job in the queue. Starting from 1.

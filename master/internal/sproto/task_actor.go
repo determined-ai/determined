@@ -27,7 +27,9 @@ type (
 		// Level is typically unset, but set by parts of the system that know a log shouldn't
 		// look as scary as is it. For example, it is set when an Allocation is killed intentionally
 		// on the Killed logs.
-		Level *string
+		Level   *string
+		Source  *string
+		AgentID *string
 	}
 
 	// GetResourcesContainerState requests cproto.Container state for a given clump of resources.
@@ -84,5 +86,7 @@ func (c ContainerLog) ToTaskLog() *model.TaskLog {
 		Level:       c.Level,
 		Timestamp:   ptrs.Ptr(c.Timestamp.UTC()),
 		Log:         c.Message(),
+		Source:      c.Source,
+		AgentID:     c.AgentID,
 	}
 }

@@ -25,6 +25,8 @@ const SplitPane: React.FC<Props> = ({
   const handle = useRef<HTMLDivElement>(null);
   const containerDimensions = useResize(container);
 
+  useEffect(() => setWidth(initialWidth), [initialWidth]);
+
   useEffect(() => {
     const c = (e: MouseEvent) => {
       e.preventDefault();

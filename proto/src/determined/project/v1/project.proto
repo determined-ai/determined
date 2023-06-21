@@ -20,6 +20,8 @@ enum LocationType {
   LOCATION_TYPE_HYPERPARAMETERS = 2;
   // Column is located on the experiment's validation metrics
   LOCATION_TYPE_VALIDATIONS = 3;
+  // Column is located on the experiment's training steps
+  LOCATION_TYPE_TRAINING = 4;
 }
 
 // ColumnType indicates the type of data under the column
@@ -131,4 +133,18 @@ message PatchProject {
   google.protobuf.StringValue name = 1;
   // The new description for the project.
   google.protobuf.StringValue description = 2;
+}
+
+// MetricsRange represents the range of a metrics. Range is a in the format of
+// [min, max].
+message MetricsRange {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "metrics_name", "min", "max" ] }
+  };
+  // The name of metrics formatted as <type>.<name>.
+  string metrics_name = 1;
+  // The min of metrics values.
+  double min = 2;
+  // The max of metrics values.
+  double max = 3;
 }

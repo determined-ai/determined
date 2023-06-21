@@ -19,13 +19,15 @@ import "protoc-gen-swagger/options/annotations.proto";
 // DownsampledMetrics captures a metric's name and downsampled data points.
 message DownsampledMetrics {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "data", "type" ] }
+    json_schema: { required: [ "data", "type", "custom_type" ] }
   };
   // A possibly down-sampled series of metrics' readings through the progress of
   // the trial.
   repeated DataPoint data = 1;
   // Type of metrics (training, validation, or unset).
-  MetricType type = 3;
+  MetricType type = 3 [deprecated = true];
+  // Type of metrics (training, validation, etc).
+  string custom_type = 4;
 }
 
 // WorkloadContainer is a wrapper for Determined workloads to allow repeated
@@ -600,7 +602,9 @@ message GetTrialWorkloadsRequest {
   bool include_batch_metrics = 7;
   // When sorting workloads by sort_key, specify training or validation form of
   // a metric.
-  MetricType metric_type = 8;
+  MetricType metric_type = 8 [deprecated = true];
+  // Type of metrics (training, validation, etc).
+  string custom_type = 9;
 }
 // Response to GetTrialWorkloadsRequest.
 message GetTrialWorkloadsResponse {
@@ -688,7 +692,9 @@ message SummarizeTrialRequest {
   // Sample from metrics before this batch number.
   int32 end_batches = 5;
   // Type of metrics.
-  MetricType metric_type = 6;
+  MetricType metric_type = 6 [deprecated = true];
+  // Type of metrics (training, validation, etc).
+  string custom_type = 8;
   // Scale of metric visualization (linear or log scale).
   Scale scale = 7;
 }
@@ -731,10 +737,12 @@ message CompareTrialsRequest {
   // Sample from metrics before this batch number.
   int32 end_batches = 5;
   // Type of metrics.
-  MetricType metric_type = 6;
+  MetricType metric_type = 6 [deprecated = true];
+  // Type of metrics (training, validation, etc).
+  string custom_type = 11;
   // Scale of metric visualization (linear or log scale).
   Scale scale = 7;
-  // metric ids for the query
+  // metric ids for the query. must be in the form metric_type.metric_name.
   repeated string metric_ids = 9;
   // The metric and range filter for a time series
   determined.common.v1.PolymorphicFilter time_series_filter = 10;
@@ -985,6 +993,32 @@ message PostTrialRunnerMetadataRequest {
 }
 // Response to PatchTrialMetadataRequest
 message PostTrialRunnerMetadataResponse {}
+
+// Stream training metrics.
+message GetMetricsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_ids", "type" ] }
+  };
+  // Trial IDs to get metrics for.
+  repeated int32 trial_ids = 1
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required:
+          ["trial_ids"];
+      }];
+  // The type of metrics to get eg 'training', 'validation', etc.
+  string type = 2 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+    required:
+      ["type"];
+  }];
+}
+// Response to GetMetricsRequest.
+message GetMetricsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "metrics" ] }
+  };
+  // Metric response.
+  repeated determined.trial.v1.MetricsReport metrics = 1;
+}
 
 // Stream training metrics.
 message GetTrainingMetricsRequest {

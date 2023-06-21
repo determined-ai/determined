@@ -1,7 +1,7 @@
 import { literal, string, undefined as undefinedType, union } from 'io-ts';
 
 import { SettingsConfig } from 'hooks/useSettings';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 
 export interface Settings {
   after?: string;

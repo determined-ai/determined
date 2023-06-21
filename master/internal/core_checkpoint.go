@@ -96,8 +96,7 @@ func (m *Master) getCheckpointImpl(
 			fmt.Sprintf("unable to retrieve experiment config for checkpoint %s: %s",
 				id.String(), err.Error()))
 	case storageConfig == nil:
-		return echo.NewHTTPError(http.StatusNotFound,
-			fmt.Sprintf("checkpoint not found: %s", id.String()))
+		return api.NotFoundErrs("checkpoint", id.String(), false)
 	}
 
 	// DelayWriter delays the first write until we have successfully downloaded

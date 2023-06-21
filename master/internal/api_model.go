@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -638,8 +639,7 @@ func (a *apiServer) PostModelVersion(
 
 	switch getCheckpointErr := a.m.db.QueryProto("get_checkpoint", c, req.CheckpointUuid); {
 	case getCheckpointErr == db.ErrNotFound:
-		return nil, status.Errorf(
-			codes.NotFound, "checkpoint %s not found", req.CheckpointUuid)
+		return nil, api.NotFoundErrs("checkpoint", req.CheckpointUuid, true)
 	case getCheckpointErr != nil:
 		return nil, getCheckpointErr
 	}

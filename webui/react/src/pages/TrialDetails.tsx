@@ -3,11 +3,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
+import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';
+import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import useFeature from 'hooks/useFeature';
+import usePolling from 'hooks/usePolling';
 import F_TrialDetailsOverview from 'pages/TrialDetails/F_TrialDetailsOverview';
 import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
@@ -16,18 +19,15 @@ import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails } from 'services/api';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import { ApiState, ValueOf } from 'shared/types';
-import { ErrorType } from 'shared/utils/error';
-import { isAborted, isNotFound } from 'shared/utils/service';
 import workspaceStore from 'stores/workspaces';
+import { ApiState, ValueOf } from 'types';
 import { ExperimentBase, TrialDetails, Workspace } from 'types';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { isAborted, isNotFound } from 'utils/service';
 
 import MultiTrialDetailsHyperparameters from './TrialDetails/MultiTrialDetailsHyperparameters';
 

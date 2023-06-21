@@ -128,6 +128,8 @@ enum PermissionType {
   PERMISSION_TYPE_VIEW_CLUSTER_USAGE = 8002;
   // Ability to update agents.
   PERMISSION_TYPE_UPDATE_AGENTS = 8003;
+  // Ability to view sensitive subset of agent info.
+  PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO = 8004;
 
   // Ability to create and update role definitions.
   PERMISSION_TYPE_UPDATE_ROLES = 96001;

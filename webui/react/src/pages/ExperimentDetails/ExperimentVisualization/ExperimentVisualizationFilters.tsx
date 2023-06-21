@@ -7,19 +7,19 @@ import Select, { Option, SelectValue } from 'components/kit/Select';
 import MetricSelect from 'components/MetricSelect';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelect from 'components/ScaleSelect';
-import { ValueOf } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
+import { ValueOf } from 'types';
 import { Metric, Scale } from 'types';
+import { isEqual } from 'utils/data';
 
 import { ExperimentVisualizationType } from '../ExperimentVisualization';
 
 import css from './ExperimentVisualizationFilters.module.scss';
 
 export interface VisualizationFilters {
-  batch: number;
-  batchMargin: number;
+  batch?: number;
+  batchMargin?: number;
   hParams: string[];
-  maxTrial: number;
+  maxTrial?: number;
   metric?: Metric;
   scale: Scale;
   view?: ViewType;
@@ -40,7 +40,7 @@ export const ViewType = {
 export type ViewType = ValueOf<typeof ViewType>;
 
 interface Props {
-  batches: number[];
+  batches?: number[];
   filters: VisualizationFilters;
   fullHParams: string[];
   metrics: Metric[];
@@ -148,7 +148,8 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
 
   // Pick the first valid option if the current local batch is invalid.
   useEffect(() => {
-    if (batches.length === 0 || batches.includes(filters.batch)) return;
+    if (!batches || batches.length === 0 || (filters.batch && batches.includes(filters.batch)))
+      return;
     onChange?.({ batch: batches.first() });
   }, [batches, filters.batch, onChange]);
 
@@ -177,7 +178,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           ))}
         </Select>
       )}
-      {showBatches && (
+      {showBatches && batches && (
         <>
           <Select
             label="Batches Processed"

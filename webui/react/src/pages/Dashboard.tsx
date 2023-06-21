@@ -10,6 +10,7 @@ import Link from 'components/Link';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import {
   experimentNameRenderer,
@@ -18,6 +19,7 @@ import {
   taskTypeRenderer,
 } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import {
   getCommands,
@@ -27,16 +29,14 @@ import {
   getShells,
   getTensorBoards,
 } from 'services/api';
-import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import { ErrorType } from 'shared/utils/error';
-import { dateTimeStringSorter } from 'shared/utils/sort';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { dateTimeStringSorter } from 'utils/sort';
 
 import css from './Dashboard.module.scss';
 

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import usePolling from 'hooks/usePolling';
 import { queryTrials } from 'services/api';
 import { V1QueryTrialsResponse } from 'services/api-ts-sdk';
-import usePolling from 'shared/hooks/usePolling';
 import handleError from 'utils/error';
 
 import { encodeFilters, encodeTrialSorter } from '../api';

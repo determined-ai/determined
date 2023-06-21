@@ -177,6 +177,9 @@ def generate_function(api: str, phase: Phase, function: swagger_parser.Function)
         + params_by_location.get("query", [])
         + params_by_location.get("body", [])
     )
+    # we might want to sort params by name or field id as well so that they're positioning is not
+    # reliant on the schema's but this will need followup client code update.
+    params_in_order = sorted(params_in_order, key=lambda param: not param.required)
 
     function_args = ", ".join(
         f"{param.name}{'' if param.required else '?'}: {annotation(param.type)}"

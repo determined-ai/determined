@@ -3,7 +3,7 @@ import { globalStorage } from 'globalStorage';
 import { paths, serverAddress } from 'routes/utils';
 import * as Api from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
-import { routeToReactUrl } from 'shared/utils/routes';
+import { routeToReactUrl } from 'utils/routes';
 
 const onServerAddressChange = () => {
   updateDetApi({ basePath: serverAddress() });

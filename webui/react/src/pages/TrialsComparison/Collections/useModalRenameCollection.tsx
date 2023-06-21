@@ -2,11 +2,11 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import Input from 'components/kit/Input';
+import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
 import { patchTrialsCollection } from 'services/api';
-import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { validateLength } from 'shared/utils/string';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { validateLength } from 'utils/string';
 
 import css from './useModalRenameCollection.module.scss';
 

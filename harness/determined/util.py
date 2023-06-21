@@ -455,3 +455,33 @@ def is_numerical_scalar(n: Any) -> bool:
         return True
 
     return False
+
+
+def mask_checkpoint_storage(d: Dict) -> Dict:
+    mask = "********"
+    new_dict = copy.deepcopy(d)
+
+    # checkpoint_storage
+    for key in ("access_key", "secret_key"):
+        if key in new_dict:
+            new_dict[key] = mask
+
+    return new_dict
+
+
+def mask_config_dict(d: Dict) -> Dict:
+    mask = "********"
+    new_dict = copy.deepcopy(d)
+
+    try:
+        new_dict["checkpoint_storage"] = mask_checkpoint_storage(new_dict["checkpoint_storage"])
+    except (KeyError, AttributeError):
+        pass
+
+    try:
+        if new_dict["environment"]["registry_auth"].get("password") is not None:
+            new_dict["environment"]["registry_auth"]["password"] = mask
+    except (KeyError, AttributeError):
+        pass
+
+    return new_dict

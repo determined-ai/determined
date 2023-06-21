@@ -7,6 +7,7 @@ import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Link from 'components/Link';
+import Spinner from 'components/Spinner';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
@@ -18,13 +19,12 @@ import {
   updateGroup,
 } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner';
-import { isEqual } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import { DetailedUser, UserRole } from 'types';
+import { isEqual } from 'utils/data';
 import { message } from 'utils/dialogApi';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';

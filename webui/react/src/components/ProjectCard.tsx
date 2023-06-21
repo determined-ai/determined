@@ -6,8 +6,8 @@ import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import TimeAgo from 'components/TimeAgo';
 import { paths } from 'routes/utils';
-import { nearestCardinalNumber } from 'shared/utils/number';
 import { Project } from 'types';
+import { nearestCardinalNumber } from 'utils/number';
 
 import DynamicIcon from './DynamicIcon';
 import { useProjectActionMenu } from './ProjectActionDropdown';

@@ -17,6 +17,7 @@ from determined.common import util, yaml
 # a filter like `head`.
 _FORMAT = "presto"
 _DEFAULT_VALUE = "N/A"
+OMITTED_VALUE = "***"
 
 
 def select_values(values: List[Dict[str, Any]], headers: Dict[str, str]) -> List[Dict[str, Any]]:

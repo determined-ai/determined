@@ -17,7 +17,13 @@ export interface MenuOption {
   icon?: React.ReactNode;
 }
 
-export type MenuItem = MenuDivider | MenuOption;
+export interface MenuOptionGroup {
+  children: MenuItem[];
+  label: React.ReactNode;
+  type: 'group';
+}
+
+export type MenuItem = MenuDivider | MenuOption | MenuOptionGroup;
 
 export type Placement = 'bottomLeft' | 'bottomRight';
 
@@ -36,11 +42,15 @@ interface BaseProps {
 type ContentProps = {
   content?: React.ReactNode;
   menu?: never;
+  selectable?: never;
+  selectedKeys?: never;
 };
 
 type MenuProps = {
   content?: never;
   menu?: MenuItem[];
+  selectable?: boolean;
+  selectedKeys?: string[];
 };
 
 export type Props = (ContentProps | MenuProps) & BaseProps;
@@ -54,6 +64,8 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
   open,
   placement = 'bottomLeft',
   onClick,
+  selectable,
+  selectedKeys,
 }) => {
   const antdMenu: AntdMenuProps = useMemo(() => {
     return {
@@ -62,8 +74,10 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
         info.domEvent.stopPropagation();
         onClick?.(info.key, info.domEvent);
       },
+      selectable,
+      selectedKeys,
     };
-  }, [menu, onClick]);
+  }, [menu, onClick, selectable, selectedKeys]);
 
   /**
    * Using `dropdownRender` for Dropdown causes some issues with triggering the dropdown.

@@ -46,6 +46,25 @@ message GetProjectColumnsResponse {
   repeated determined.project.v1.ProjectColumn columns = 4;
 }
 
+// Request for experiment list metrics ranges
+message GetProjectNumericMetricsRangeRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The id of the project.
+  int32 id = 1;
+}
+
+// Response for experiment list metrics ranges
+message GetProjectNumericMetricsRangeResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "range" ] }
+  };
+  // List of ranges.
+  repeated determined.project.v1.MetricsRange ranges = 1;
+}
+
 // Request for creating a project.
 message PostProjectRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

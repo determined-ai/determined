@@ -81,8 +81,7 @@ func echoGetExperimentAndCheckCanDoActions(ctx context.Context, c echo.Context, 
 ) (*model.Experiment, model.User, error) {
 	user := c.(*detContext.DetContext).MustGetUser()
 	e, err := db.ExperimentByID(ctx, expID)
-
-	expNotFound := echo.NewHTTPError(http.StatusNotFound, "experiment not found: %d", expID)
+	expNotFound := api.NotFoundErrs("experiment", fmt.Sprint(expID), false)
 	if errors.Is(err, db.ErrNotFound) {
 		return nil, model.User{}, expNotFound
 	} else if err != nil {
@@ -221,34 +220,24 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 	return c.Blob(http.StatusOK, "application/x-gtar", modelDef)
 }
 
-// ErrProjectNotFound is returned in parseCreateExperiment for when project cannot be found
-// or when project cannot be viewed due to RBAC restrictions.
-type ErrProjectNotFound string
-
-// Error implements the error interface.
-func (p ErrProjectNotFound) Error() string {
-	return string(p)
-}
-
 func getCreateExperimentsProject(
 	m *Master, req *apiv1.CreateExperimentRequest, user *model.User, config expconf.ExperimentConfig,
 ) (*projectv1.Project, error) {
 	// Place experiment in Uncategorized, unless project set in request params or config.
 	var err error
 	projectID := model.DefaultProjectID
-	errProjectNotFound := ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
+	errProjectNotFound := api.NotFoundErrs("project", fmt.Sprint(projectID), true)
 	if req.ProjectId > 1 {
 		projectID = int(req.ProjectId)
-		errProjectNotFound = ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
+		errProjectNotFound = api.NotFoundErrs("project", fmt.Sprint(projectID), true)
 	} else {
 		if (config.Workspace() == "") != (config.Project() == "") {
 			return nil,
 				errors.New("workspace and project must both be included in config if one is provided")
 		}
 		if config.Workspace() != "" && config.Project() != "" {
-			errProjectNotFound = ErrProjectNotFound(fmt.Sprintf(
-				"workspace '%s' or project '%s' not found",
-				config.Workspace(), config.Project()))
+			errProjectNotFound = api.NotFoundErrs("workspace/project",
+				config.Workspace()+"/"+config.Project(), true)
 
 			projectID, err = m.db.ProjectByName(config.Workspace(), config.Project())
 			if errors.Is(err, db.ErrNotFound) {

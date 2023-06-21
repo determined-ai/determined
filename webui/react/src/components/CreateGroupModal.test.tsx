@@ -7,7 +7,7 @@ import { useModal } from 'components/kit/Modal';
 import { createGroup as mockCreateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { GetGroupParams } from 'services/types';
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import { DetailedUser } from 'types';
 
 import CreateGroupModalComponent, {

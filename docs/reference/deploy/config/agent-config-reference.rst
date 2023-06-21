@@ -191,3 +191,10 @@ Docker container or without the need to enter a password.
 ***********
 
 Deprecated. This field has been deprecated and will be ignored. Use ``resource_pool`` instead.
+
+***********
+ ``debug``
+***********
+
+If ``true``, enables a more verbose form of logging that may be helpful in diagnosing issues.
+Defaults to ``false``.

@@ -6,6 +6,11 @@ import (
 
 	"github.com/uptrace/bun"
 
+	"golang.org/x/exp/slices"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
@@ -390,6 +395,47 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 				queryString = fmt.Sprintf("%s ?", col)
 			default:
 				queryArgs = append(queryArgs, metricName,
+					bun.Safe(oSQL), *e.Value)
+				queryString = fmt.Sprintf("%s ? ?", col)
+			}
+			if c != nil && *c == or {
+				q.WhereOr(queryString, queryArgs...)
+			} else {
+				q.Where(queryString, queryArgs...)
+			}
+		case projectv1.LocationType_LOCATION_TYPE_TRAINING.String():
+			queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
+			if e.Type != nil {
+				queryColumnType = *e.Type
+			}
+			metricDetails := strings.Split(e.ColumnName, ".")
+			metricQualifier := metricDetails[len(metricDetails)-1]
+			metricName := strings.TrimSuffix(
+				strings.TrimPrefix(e.ColumnName, "training."),
+				"."+metricQualifier)
+			if !slices.Contains(SummaryMetricStatistics, metricQualifier) {
+				return nil, status.Errorf(codes.InvalidArgument,
+					"sort training metrics by statistic: count, last, max, min, or sum")
+			}
+			col := `trials.summary_metrics->'avg_metrics'->?->>?`
+			var queryArgs []interface{}
+			var queryString string
+			switch queryColumnType {
+			case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
+				col = fmt.Sprintf(`(%v)::float8`, col)
+			}
+			switch *e.Operator {
+			case contains:
+				queryArgs = append(queryArgs, metricName, metricQualifier, fmt.Sprintf("%%%s%%", *e.Value))
+				queryString = fmt.Sprintf("%s LIKE ?", col)
+			case doesNotContain:
+				queryArgs = append(queryArgs, metricName, metricQualifier, fmt.Sprintf("%%%s%%", *e.Value))
+				queryString = fmt.Sprintf("%s NOT LIKE ?", col)
+			case empty, notEmpty:
+				queryArgs = append(queryArgs, metricName, metricQualifier, bun.Safe(oSQL))
+				queryString = fmt.Sprintf("%s ?", col)
+			default:
+				queryArgs = append(queryArgs, metricName, metricQualifier,
 					bun.Safe(oSQL), *e.Value)
 				queryString = fmt.Sprintf("%s ? ?", col)
 			}

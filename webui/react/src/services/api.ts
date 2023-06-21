@@ -3,10 +3,10 @@ import * as Api from 'services/api-ts-sdk';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
-import { EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
-import { generateDetApi } from 'shared/utils/service';
 import { DeterminedInfo, Telemetry } from 'stores/determinedInfo';
+import { EmptyParams, RawJson, SingleEntityParams } from 'types';
 import * as Type from 'types';
+import { generateDetApi } from 'utils/service';
 import { tensorBoardMatchesSource } from 'utils/task';
 
 /* Authentication */
@@ -213,7 +213,7 @@ export const getResourceAllocationAggregated = generateDetApi<
 
 export const getJobQ = generateDetApi<
   Service.GetJobQParams,
-  Api.V1GetJobsResponse,
+  Api.V1GetJobsV2Response,
   Service.GetJobsResponse
 >(Config.getJobQueue);
 

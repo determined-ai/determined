@@ -6,17 +6,17 @@ import React, { useCallback, useMemo, useState } from 'react';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
+import Message, { MessageType } from 'components/Message';
+import Spinner from 'components/Spinner';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects } from 'services/api';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
 import workspaceStore from 'stores/workspaces';
 import { Project, Workspace } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { routeToReactUrl } from 'utils/routes';
 
 import css from './WorkspaceQuickSearch.module.scss';
 

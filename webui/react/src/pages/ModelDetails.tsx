@@ -7,11 +7,13 @@ import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
 import Notes from 'components/kit/Notes';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
+import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
+import Spinner from 'components/Spinner/Spinner';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
   defaultRowClassName,
@@ -22,6 +24,7 @@ import {
   userRenderer,
 } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {
@@ -32,18 +35,15 @@ import {
   unarchiveModel,
 } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import { isEqual } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
-import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions, Note } from 'types';
+import { isEqual } from 'utils/data';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { isAborted, isNotFound, validateDetApiEnum } from 'utils/service';
 
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,

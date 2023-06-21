@@ -8,7 +8,7 @@ import LogViewer, {
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { jsonToClusterLog } from 'services/decoder';
-import { isNumber } from 'shared/utils/data';
+import { isNumber } from 'utils/data';
 import handleError from 'utils/error';
 
 import css from './ClusterLogs.module.scss';

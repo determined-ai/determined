@@ -6,9 +6,9 @@ import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { ValueOf } from 'shared/types';
 import clusterStore from 'stores/cluster';
 import determinedStore from 'stores/determinedInfo';
+import { ValueOf } from 'types';
 import { useObservable } from 'utils/observable';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';

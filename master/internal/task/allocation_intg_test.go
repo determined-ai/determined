@@ -10,6 +10,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+	"github.com/determined-ai/determined/master/internal/task/preemptible"
 
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -151,7 +152,7 @@ func TestAllocation(t *testing.T) {
 
 			// Good stop.
 			if tc.acked {
-				system.Ask(self, AckPreemption{AllocationID: a.model.AllocationID}).Get()
+				preemptible.Acknowledge(a.model.AllocationID.String())
 			}
 
 			// Terminating stage.

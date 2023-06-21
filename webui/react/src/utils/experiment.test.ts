@@ -1,4 +1,4 @@
-import { RawJson } from 'shared/types';
+import { RawJson } from 'types';
 import * as Type from 'types';
 
 import * as utils from './experiment';

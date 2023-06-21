@@ -24,7 +24,7 @@ import Wait from 'pages/Wait';
 import Webhooks from 'pages/WebhookList';
 import WorkspaceDetails from 'pages/WorkspaceDetails';
 import WorkspaceList from 'pages/WorkspaceList';
-import { RouteConfig } from 'shared/types';
+import { RouteConfig } from 'types';
 
 import Routes from './routes';
 

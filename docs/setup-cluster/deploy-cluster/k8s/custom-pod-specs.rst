@@ -55,7 +55,8 @@ Determined does not currently support configuring:
    task belongs to. The mapping between resource pools and namespaces can be configured in the
    ``resourcePools`` section of the Helm ``values.yaml``.
 
--  Host Networking - This must be configured via the :ref:`master-config-reference`.
+-  Host Networking - This must be configured via the :ref:`master configuration
+   <master-config-reference>`.
 
 -  Restart Policy - This is always set to ``Never``.
 

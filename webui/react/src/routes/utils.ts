@@ -2,7 +2,9 @@ import { pathToRegexp } from 'path-to-regexp';
 
 import { globalStorage } from 'globalStorage';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
-import { RouteConfig } from 'shared/types';
+import { BrandingType } from 'stores/determinedInfo';
+import { RouteConfig } from 'types';
+import { CommandTask } from 'types';
 import {
   AnyMouseEvent,
   AnyMouseEventHandler,
@@ -13,9 +15,7 @@ import {
   reactHostAddress,
   routeToExternalUrl,
   routeToReactUrl,
-} from 'shared/utils/routes';
-import { BrandingType } from 'stores/determinedInfo';
-import { CommandTask } from 'types';
+} from 'utils/routes';
 import { waitPageUrl } from 'utils/wait';
 
 import routes from './routes';

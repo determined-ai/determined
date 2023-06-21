@@ -7,13 +7,7 @@ from determined import cli
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.experimental import (
-    Determined,
-    Model,
-    ModelOrderBy,
-    ModelSortBy,
-    ModelVersion,
-)
+from determined.experimental import Determined, Model, ModelOrderBy, ModelSortBy, ModelVersion
 
 from . import render
 

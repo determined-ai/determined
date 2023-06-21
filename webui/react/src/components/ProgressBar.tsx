@@ -1,8 +1,8 @@
 import React from 'react';
 
 import Bar from 'components/Bar';
-import { floatToPercent } from 'shared/utils/string';
 import { getStateColorCssVar, StateOfUnion } from 'themes';
+import { floatToPercent } from 'utils/string';
 
 export interface Props {
   barOnly?: boolean;

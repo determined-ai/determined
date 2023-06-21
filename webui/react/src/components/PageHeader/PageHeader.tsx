@@ -4,7 +4,7 @@ import Breadcrumb from 'components/kit/Breadcrumb';
 import { MenuItem } from 'components/kit/Dropdown';
 import Tooltip from 'components/kit/Tooltip';
 import { BreadCrumbRoute } from 'components/Page';
-import { CommonProps } from 'shared/types';
+import { CommonProps } from 'types';
 
 import Link from '../Link';
 

@@ -10,7 +10,9 @@ import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
+import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
+import Spinner from 'components/Spinner';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -24,20 +26,18 @@ import {
 } from 'components/Table/Table';
 import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
+import usePrevious from 'hooks/usePrevious';
 import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import usePrevious from 'shared/hooks/usePrevious';
-import { isEqual } from 'shared/utils/data';
-import { validateDetApiEnum } from 'shared/utils/service';
 import userStore from 'stores/users';
 import { Workspace } from 'types';
+import { isEqual } from 'utils/data';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { validateDetApiEnum } from 'utils/service';
 
 import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';

@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
@@ -62,10 +63,6 @@ func (m *mockStream[T]) SetTrailer(metadata.MD)        {}
 func (m *mockStream[T]) Context() context.Context      { return m.ctx }
 func (m *mockStream[T]) SendMsg(mes interface{}) error { return nil }
 func (m *mockStream[T]) RecvMsg(mes interface{}) error { return nil }
-
-func expNotFoundErr(expID int) error {
-	return status.Errorf(codes.NotFound, "experiment not found: %d", expID)
-}
 
 var (
 	authZExp   *mocks.ExperimentAuthZ
@@ -183,7 +180,7 @@ func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 	for i := 0; i < 60; i++ {
 		e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
 		if err != nil {
-			require.Equal(t, expNotFoundErr(exp.ID), err)
+			require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(exp.ID), true), err)
 			return
 		}
 		require.NotEqual(t, experimentv1.State_STATE_DELETE_FAILED, e.Experiment.State)
@@ -830,12 +827,13 @@ func TestAuthZGetExperiment(t *testing.T) {
 
 	// Not found returns same as permission denied.
 	_, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: -999})
-	require.Equal(t, expNotFoundErr(-999).Error(), err.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("experiment", "-999", true).Error(), err.Error())
 
 	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
-	require.Equal(t, expNotFoundErr(exp.ID).Error(), err.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(exp.ID), true).Error(),
+		err.Error())
 
 	// Error returns error unmodified.
 	expectedErr := fmt.Errorf("canGetExperimentError")
@@ -860,7 +858,8 @@ func TestAuthZGetExperiments(t *testing.T) {
 	authZProject.On("CanGetProject", mock.Anything, curUser,
 		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	_, err := api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{ProjectId: int32(projectID)})
-	require.Equal(t, projectNotFoundErr(projectID).Error(), err.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true).Error(),
+		err.Error())
 
 	// Error from FilterExperimentsQuery passes through.
 	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).
@@ -911,7 +910,8 @@ func TestAuthZGetExperimentLabels(t *testing.T) {
 	_, err := api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{
 		ProjectId: int32(projectID),
 	})
-	require.Equal(t, projectNotFoundErr(projectID).Error(), err.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true).Error(),
+		err.Error())
 
 	// Error from FilterExperimentsLabelsQuery passes through.
 	authZProject.On("CanGetProject", mock.Anything, curUser,
@@ -947,7 +947,8 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	_, err := api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ParentId: int32(forkFrom.ID),
 	})
-	require.Equal(t, expNotFoundErr(forkFrom.ID), err)
+	require.Equal(t, apiPkg.NotFoundErrs("experiment",
+		fmt.Sprint(forkFrom.ID), true), err)
 
 	// Can't fork from experiment.
 	expectedErr := status.Errorf(codes.PermissionDenied, "canForkExperimentError")
@@ -966,8 +967,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 		ProjectId: int32(projectID),
 		Config:    minExpConfToYaml(t),
 	})
-	require.Equal(t, status.Errorf(codes.NotFound,
-		fmt.Sprintf("project (%d) not found", projectID)), err)
+	require.Equal(t, apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true), err)
 
 	// Can't view project passed in from config.
 	pAuthZ.On("CanGetProject", mock.Anything, curUser,
@@ -975,15 +975,14 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Config: minExpConfToYaml(t) + "project: Uncategorized\nworkspace: Uncategorized",
 	})
-	require.Equal(t, status.Errorf(codes.NotFound,
-		"workspace 'Uncategorized' or project 'Uncategorized' not found"), err)
-
+	require.Equal(t,
+		apiPkg.NotFoundErrs("workspace/project", "Uncategorized/Uncategorized", true), err)
 	// Same as passing in a non existent project.
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Config: minExpConfToYaml(t) + "project: doesntexist123\nworkspace: doesntexist123",
 	})
-	require.Equal(t, status.Errorf(codes.NotFound,
-		"workspace 'doesntexist123' or project 'doesntexist123' not found"), err)
+	require.Equal(t,
+		apiPkg.NotFoundErrs("workspace/project", "doesntexist123/doesntexist123", true), err)
 
 	// Can't create experiment deny.
 	expectedErr = status.Errorf(codes.PermissionDenied, "canCreateExperimentError")
@@ -1147,11 +1146,12 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 
 	for _, curCase := range caseIndividualCalls {
 		// Not found returns same as permission denied.
-		require.Equal(t, expNotFoundErr(-999), curCase.IDToReqCall(-999))
+		require.Equal(t, apiPkg.NotFoundErrs("experiment", "-999", true), curCase.IDToReqCall(-999))
 
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
 			Return(authz2.PermissionDeniedError{}).Once()
-		require.Equal(t, expNotFoundErr(exp.ID), curCase.IDToReqCall(exp.ID))
+		require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(exp.ID), true),
+			curCase.IDToReqCall(exp.ID))
 
 		// CanGetExperiment error returns unmodified.
 		expectedErr := fmt.Errorf("canGetExperimentError")
@@ -1213,7 +1213,8 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			q := args.Get(3).(*bun.SelectQuery).Where("0 = 1")
 			*resQuery = *q
 		})
-		require.Equal(t, expNotFoundErr(exp.ID), curCase.IDToReqCall(exp.ID))
+		require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(exp.ID), true),
+			curCase.IDToReqCall(exp.ID))
 
 		// FilterExperimentsQuery error returned unmodified.
 		expectedErr := fmt.Errorf("canGetExperimentError")
@@ -1295,7 +1296,8 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			*resQuery = *q
 		})
 		results, _ := curCase.IDToReqCall(exp.ID)
-		require.Equal(t, expNotFoundErr(exp.ID).Error(), results[0].Error)
+		require.Equal(t, apiPkg.NotFoundErrs("experiment",
+			fmt.Sprint(exp.ID), true).Error(), results[0].Error)
 
 		// FilterExperimentsQuery error returned unmodified.
 		expectedErr := fmt.Errorf("canGetExperimentError")
@@ -1305,8 +1307,8 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			q := args.Get(3).(*bun.SelectQuery).Where("0 = 1")
 			*resQuery = *q
 		})
-		_, apiErr := curCase.IDToReqCall(exp.ID)
-		require.Equal(t, expectedErr, apiErr)
+		_, apiPkg := curCase.IDToReqCall(exp.ID)
+		require.Equal(t, expectedErr, apiPkg)
 	}
 }
 

@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 
+import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
@@ -7,7 +8,6 @@ import { useModal } from 'components/kit/Modal';
 import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
 import WorkspaceDeleteModalComponent from 'components/WorkspaceDeleteModal';
 import usePermissions from 'hooks/usePermissions';
-import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';

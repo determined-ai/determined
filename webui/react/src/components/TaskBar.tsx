@@ -5,9 +5,9 @@ import Icon from 'components/kit/Icon';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { killTask } from 'services/api';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { CommandTask, CommandType } from 'types';
 import handleError from 'utils/error';
+import { routeToReactUrl } from 'utils/routes';
 
 import useConfirm from './kit/useConfirm';
 import css from './TaskBar.module.scss';

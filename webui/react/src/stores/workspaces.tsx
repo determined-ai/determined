@@ -11,11 +11,11 @@ import {
 } from 'services/api';
 import { V1PostWorkspaceRequest } from 'services/api-ts-sdk';
 import { GetWorkspacesParams } from 'services/types';
-import { isEqual } from 'shared/utils/data';
-import { alphaNumericSorter } from 'shared/utils/sort';
 import { Workspace } from 'types';
+import { isEqual } from 'utils/data';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { alphaNumericSorter } from 'utils/sort';
 
 import PollingStore from './polling';
 

@@ -1,5 +1,5 @@
 SELECT t.task_id,
-  t.task_type,
+  CONCAT('TASK_TYPE_',t.task_type) as task_type,
   t.start_time,
   t.end_time,
   (

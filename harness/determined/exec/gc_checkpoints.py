@@ -56,7 +56,7 @@ def delete_checkpoints(
     """
     Delete some of the checkpoints associated with a single experiment.
     """
-    logging.info("Deleting {} checkpoints".format(len(to_delete)))
+    logging.info(f"Deleting {len(to_delete)} checkpoints")
 
     storage_id_to_resources: Dict[str, Dict[str, int]] = {}
     for storage_id in to_delete:
@@ -98,7 +98,7 @@ def main(argv: List[str]) -> None:
     parser.add_argument(
         "--version",
         action="version",
-        version="Determined checkpoint GC, version {}".format(det.__version__),
+        version=f"Determined checkpoint GC, version {det.__version__}",
     )
     parser.add_argument("--experiment-id", help="The experiment ID to run the GC job for")
     parser.add_argument(
@@ -144,10 +144,11 @@ def main(argv: List[str]) -> None:
         level=args.log_level, format="%(asctime)s:%(module)s:%(levelname)s: %(message)s"
     )
 
-    logging.info("Determined checkpoint GC, version {}".format(det.__version__))
+    logging.info(f"Determined checkpoint GC, version {det.__version__}")
 
     storage_config = args.storage_config
-    logging.info("Using checkpoint storage: {}".format(storage_config))
+    masked_config = json.dumps(det.util.mask_checkpoint_storage(storage_config))
+    logging.info(f"Using checkpoint storage: {masked_config}")
 
     storage_ids = [s.strip() for s in args.delete]
     globs = [s.strip() for s in args.globs]

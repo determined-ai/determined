@@ -10,7 +10,6 @@ import (
 	"os/user"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -31,6 +30,7 @@ import (
 	"github.com/determined-ai/determined/agent/pkg/events"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -62,11 +62,12 @@ type SingularityClient struct {
 	wg         waitgroupx.Group
 	containers map[cproto.ID]*SingularityContainer
 	agentTmp   string
+	debug      bool
 }
 
 // New returns a new singularity client, which launches and tracks containers.
-func New(opts options.SingularityOptions, agentID string) (*SingularityClient, error) {
-	agentTmp, err := cruntimes.BaseTempDirName(agentID)
+func New(opts options.Options) (*SingularityClient, error) {
+	agentTmp, err := cruntimes.BaseTempDirName(opts.AgentID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to compose agentTmp directory path: %w", err)
 	}
@@ -81,10 +82,11 @@ func New(opts options.SingularityOptions, agentID string) (*SingularityClient, e
 
 	return &SingularityClient{
 		log:        logrus.WithField("compotent", "singularity"),
-		opts:       opts,
+		opts:       opts.SingularityOptions,
 		wg:         waitgroupx.WithContext(context.Background()),
 		containers: make(map[cproto.ID]*SingularityContainer),
 		agentTmp:   agentTmp,
+		debug:      opts.Debug,
 	}, nil
 }
 
@@ -262,16 +264,6 @@ func (s *SingularityClient) RunContainer(
 	}
 
 	for _, m := range req.HostConfig.Mounts {
-		// TODO(DET-9079): Investigate handling these options.
-		if m.ReadOnly {
-			if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
-				"mount %s:%s was requested as readonly but singularity does not support this; "+
-					"will bind mount anyway, without it being readonly",
-				m.Source, m.Target,
-			))); err != nil {
-				return nil, err
-			}
-		}
 		if m.BindOptions != nil && m.BindOptions.Propagation != "rprivate" { // rprivate is default.
 			if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
 				"mount %s:%s had propagation settings but singularity does not support this; "+
@@ -281,7 +273,11 @@ func (s *SingularityClient) RunContainer(
 				return nil, err
 			}
 		}
-		args = append(args, "--bind", fmt.Sprintf("%s:%s", m.Source, m.Target))
+		bindMountTemplate := "%s:%s"
+		if m.ReadOnly {
+			bindMountTemplate += ":ro"
+		}
+		args = append(args, "--bind", fmt.Sprintf(bindMountTemplate, m.Source, m.Target))
 	}
 
 	if shmsize := req.HostConfig.ShmSize; shmsize != 4294967296 { // 4294967296 is the default.
@@ -294,15 +290,10 @@ func (s *SingularityClient) RunContainer(
 		}
 	}
 
-	// TODO(DET-9075): Un-dockerize the RunContainer API so we can know to pass `--rocm` without
-	// regexing on devices.
 	// TODO(DET-9080): Test this on ROCM devices.
-	rocmDevice := regexp.MustCompile("/dev/dri/by-path/pci-.*-card")
-	for _, d := range req.HostConfig.Devices {
-		if rocmDevice.MatchString(d.PathOnHost) {
-			args = append(args, "--rocm")
-			break
-		}
+	s.log.Tracef("Device type is %s", req.DeviceType)
+	if req.DeviceType == device.ROCM {
+		args = append(args, "--rocm")
 	}
 
 	// Visible devices are set later by modifying the exec.Command's env.
@@ -318,16 +309,7 @@ func (s *SingularityClient) RunContainer(
 		args = append(args, "--nv")
 	}
 
-	// TODO(DET-9079): It is unlikely we can handle this, but we should do better at documenting.
-	if len(req.HostConfig.CapAdd) != 0 || len(req.HostConfig.CapDrop) != 0 {
-		if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
-			"cap add or drop was requested but singularity does not support this; "+
-				"will be ignored (cap_add: %+v, cap_drop: %+v)", req.HostConfig.CapAdd,
-			req.HostConfig.CapDrop,
-		))); err != nil {
-			return nil, err
-		}
-	}
+	args = capabilitiesToSingularityArgs(req, args)
 
 	image := cruntimes.CanonicalizeImage(req.ContainerConfig.Image)
 	args = append(args, image)
@@ -356,6 +338,9 @@ func (s *SingularityClient) RunContainer(
 		fmt.Sprintf("SINGULARITYENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
 		fmt.Sprintf("APPTAINERENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
 	)
+	if s.debug {
+		cmd.Env = append(cmd.Env, "DET_DEBUG=1")
+	}
 	addEnvironmentValueIfSet([]string{"http_proxy", "https_proxy", "no_proxy"}, cmd)
 
 	// HACK(singularity): without this, --nv doesn't work right. If the singularity run command
@@ -399,6 +384,16 @@ func (s *SingularityClient) RunContainer(
 		},
 		ContainerWaiter: s.waitOnContainer(cproto.ID(id), cont, p),
 	}, nil
+}
+
+func capabilitiesToSingularityArgs(req cproto.RunSpec, args []string) []string {
+	if len(req.HostConfig.CapAdd) > 0 {
+		args = append(args, "--add-caps", strings.Join(req.HostConfig.CapAdd, ","))
+	}
+	if len(req.HostConfig.CapDrop) > 0 {
+		args = append(args, "--drop-caps", strings.Join(req.HostConfig.CapDrop, ","))
+	}
+	return args
 }
 
 func addEnvironmentValueIfSet(variables []string, cmd *exec.Cmd) {

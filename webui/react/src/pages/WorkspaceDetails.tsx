@@ -3,22 +3,22 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
+import Message from 'components/Message';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
+import Spinner from 'components/Spinner';
 import TaskList from 'components/TaskList';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getGroups, getWorkspaceMembers, searchRolesAssignableToScope } from 'services/api';
 import { V1Group, V1GroupSearchResult, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
-import Message from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import { ValueOf } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
+import { ValueOf } from 'types';
 import { User } from 'types';
+import { isEqual } from 'utils/data';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';

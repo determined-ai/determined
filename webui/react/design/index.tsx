@@ -11,7 +11,7 @@ import { ConfirmationProvider } from '../src/components/kit/useConfirm';
 import ThemeProvider from '../src/components/ThemeProvider';
 import { Settings, UserSettings } from '../src/hooks/useSettingsProvider';
 import DesignKit from '../src/pages/DesignKit';
-import { StoreProvider as UIProvider } from '../src/shared/contexts/stores/UI';
+import { StoreProvider as UIProvider } from '../src/stores/contexts/UI';
 
 import 'antd/dist/reset.css';
 
@@ -26,18 +26,18 @@ const router = createBrowserRouter([
   {
     path: "*",
     element: <HelmetProvider>
-              <UIProvider>
-                <UserSettings.Provider value={fakeSettingsContext}>
-                  <ThemeProvider>
-                    <ConfirmationProvider>
-                      <div className={css.base}>
-                        <DesignKit />
-                      </div>
-                    </ConfirmationProvider>
-                  </ThemeProvider>
-                </UserSettings.Provider>
-              </UIProvider>
-            </HelmetProvider>,
+      <UIProvider>
+        <UserSettings.Provider value={fakeSettingsContext}>
+          <ThemeProvider>
+            <ConfirmationProvider>
+              <div className={css.base}>
+                <DesignKit />
+              </div>
+            </ConfirmationProvider>
+          </ThemeProvider>
+        </UserSettings.Provider>
+      </UIProvider>
+    </HelmetProvider>,
   },
 ]);
 

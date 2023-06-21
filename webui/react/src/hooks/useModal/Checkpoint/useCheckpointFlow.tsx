@@ -2,7 +2,7 @@ import { ReactElement, useCallback, useMemo } from 'react';
 
 import { useModal } from 'components/kit/Modal';
 import ModelCreateModal from 'components/ModelCreateModal';
-import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
+import { ModalCloseReason } from 'hooks/useModal/useModal';
 import { CheckpointWorkloadExtended, CoreApiGenericCheckpoint, ExperimentConfig } from 'types';
 
 import useModalCheckpoint from './useModalCheckpoint';

@@ -26,6 +26,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/preemptible"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -66,7 +67,7 @@ func (a *apiServer) canGetTrialsExperimentAndCheckCanDoAction(ctx context.Contex
 		return err
 	}
 
-	trialNotFound := status.Errorf(codes.NotFound, "trial %d not found", trialID)
+	trialNotFound := api.NotFoundErrs("trial", fmt.Sprint(trialID), true)
 	exp, err := db.ExperimentByTrialID(ctx, trialID)
 	if errors.Is(err, db.ErrNotFound) {
 		return trialNotFound
@@ -198,6 +199,7 @@ func (a *apiServer) TrialLogs(
 			Limit:           req.Limit,
 			Follow:          req.Follow,
 			AllocationIds:   nil,
+			AgentIds:        req.AgentIds,
 			ContainerIds:    req.ContainerIds,
 			RankIds:         req.RankIds,
 			Levels:          req.Levels,
@@ -654,16 +656,31 @@ func (a *apiServer) formatMetrics(
 	return nil
 }
 
-func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
-	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
+func (a *apiServer) parseMetricTypeArgs(
+	legacyType apiv1.MetricType, newType model.MetricType,
+) (model.MetricType, error) {
+	if legacyType != apiv1.MetricType_METRIC_TYPE_UNSPECIFIED && newType != "" {
+		return "", status.Errorf(codes.InvalidArgument, "cannot specify both legacy and new metric type")
+	}
+	if newType != "" {
+		return newType, nil
+	}
+	conv := &protoconverter.ProtoConverter{}
+	convertedLegacyType := conv.ToMetricType(legacyType)
+	if cErr := conv.Error(); cErr != nil {
+		return "", status.Errorf(codes.InvalidArgument, "converting metric type: %s", cErr)
+	}
+	return convertedLegacyType, nil
+}
+
+func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
+	metricType model.MetricType, maxDatapoints int, startBatches int,
 	endBatches int, logScale bool,
 	timeSeriesFilter *commonv1.PolymorphicFilter,
 	metricIds []string,
 ) ([]*apiv1.DownsampledMetrics, error) {
 	var startTime time.Time
-	var err error
 	var metrics []*apiv1.DownsampledMetrics
-	var metricMeasurements []db.MetricMeasurements
 	// For now "epoch" is the only custom xAxis metric label supported so we
 	// build the `MetricSeriesEpoch` array. In the future this logic should
 	// be updated to support any number of xAxis metric options
@@ -681,60 +698,31 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	if endBatches == 0 {
 		endBatches = math.MaxInt32
 	}
-
-	if len(metricNames) > 0 {
-		if (metricType == apiv1.MetricType_METRIC_TYPE_TRAINING) ||
-			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
-			var metric apiv1.DownsampledMetrics
-			metricMeasurements, err = trials.MetricsTimeSeries(
-				trialID, startTime, metricNames, startBatches, endBatches,
-				xAxisLabelMetrics,
-				maxDatapoints, batches, timeSeriesFilter, "training")
-			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
-			}
-			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
-			if len(metricMeasurements) > 0 {
-				if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
-					return nil, err
-				}
-				metrics = append(metrics, &metric)
-			}
-		}
-
-		if (metricType == apiv1.MetricType_METRIC_TYPE_VALIDATION) ||
-			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
-			var metric apiv1.DownsampledMetrics
-			metricMeasurements, err = trials.MetricsTimeSeries(
-				trialID, startTime, metricNames, startBatches, endBatches,
-				xAxisLabelMetrics, maxDatapoints, batches, timeSeriesFilter, "validation")
-			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
-			}
-			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
-
-			if len(metricMeasurements) > 0 {
-				if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
-					return nil, err
-				}
-				metrics = append(metrics, &metric)
-			}
-		}
+	if maxDatapoints == 0 {
+		maxDatapoints = 200
 	}
 
-	if len(metricIds) > 0 {
-		var timeSeriesColumn *string
+	var timeSeriesColumn *string
 
-		// If no time series filter column name is supplied then default to batches.
-		defaultTimeSeriesColumn := batches
-		if timeSeriesFilter == nil || timeSeriesFilter.Name == nil {
-			timeSeriesColumn = &defaultTimeSeriesColumn
+	// If no time series filter column name is supplied then default to batches.
+	defaultTimeSeriesColumn := batches
+	if timeSeriesFilter == nil || timeSeriesFilter.Name == nil {
+		timeSeriesColumn = &defaultTimeSeriesColumn
+	} else {
+		timeSeriesColumn = timeSeriesFilter.Name
+	}
+
+	metricTypeToNames := make(map[model.MetricType][]string)
+	if len(metricNames) > 0 {
+		if metricType == "" {
+			// to keep backwards compatibility.
+			metricTypeToNames[model.TrainingMetricType] = metricNames
+			metricTypeToNames[model.ValidationMetricType] = metricNames
 		} else {
-			timeSeriesColumn = timeSeriesFilter.Name
+			metricTypeToNames[metricType] = metricNames
 		}
-
-		var metricNamesTraining []string
-		var metricNamesValidation []string
+	}
+	if len(metricIds) > 0 {
 		for _, metricID := range metricIds {
 			nameAndType := strings.SplitN(metricID, ".", 2)
 			if len(nameAndType) < 2 {
@@ -744,56 +732,42 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 				)
 			}
 			metricIDName := nameAndType[1]
-			metricIDType := nameAndType[0]
+			metricIDType := model.MetricType(nameAndType[0])
 
-			if metricIDType == "training" {
-				metricNamesTraining = append(metricNamesTraining, metricIDName)
-			}
-			if metricIDType == "validation" {
-				metricNamesValidation = append(metricNamesValidation, metricIDName)
-			}
+			metricTypeToNames[metricIDType] = append(metricTypeToNames[metricIDType], metricIDName)
 		}
-		if maxDatapoints == 0 {
-			maxDatapoints = 200
+	}
+
+	getDownSampledMetric := func(aMetricNames []string, aMetricType model.MetricType,
+	) (*apiv1.DownsampledMetrics, error) {
+		var metric apiv1.DownsampledMetrics
+		metricMeasurements, err := trials.MetricsTimeSeries(
+			trialID, startTime, aMetricNames, startBatches, endBatches,
+			xAxisLabelMetrics,
+			maxDatapoints, *timeSeriesColumn, timeSeriesFilter, aMetricType)
+		if err != nil {
+			return nil, errors.Wrapf(err, fmt.Sprintf("error fetching time series of %s metrics",
+				aMetricType))
 		}
-
-		if len(metricNamesTraining) > 0 {
-			var metric apiv1.DownsampledMetrics
-
-			metricMeasurements, err = trials.MetricsTimeSeries(
-				trialID, startTime, metricNamesTraining, startBatches, endBatches,
-				xAxisLabelMetrics, maxDatapoints, *timeSeriesColumn,
-				timeSeriesFilter, "training",
-			)
-			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of %v metrics", "training")
+		//nolint:staticcheck // SA1019: backward compatibility
+		metric.Type = aMetricType.ToProto()
+		metric.CustomType = aMetricType.ToString()
+		if len(metricMeasurements) > 0 {
+			if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
+				return nil, err
 			}
-
-			if len(metricMeasurements) > 0 {
-				if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
-					return nil, err
-				}
-				metrics = append(metrics, &metric)
-			}
+			return &metric, nil
 		}
+		return nil, nil
+	}
 
-		if len(metricNamesValidation) > 0 {
-			var metric apiv1.DownsampledMetrics
-			metricMeasurements, err = trials.MetricsTimeSeries(
-				trialID, startTime, metricNamesValidation, startBatches, endBatches,
-				xAxisLabelMetrics, maxDatapoints, *timeSeriesColumn,
-				timeSeriesFilter, "validation",
-			)
-			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of %v metrics", "validation")
-			}
-
-			if len(metricMeasurements) > 0 {
-				if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
-					return nil, err
-				}
-				metrics = append(metrics, &metric)
-			}
+	for metricType, metricNames := range metricTypeToNames {
+		metric, err := getDownSampledMetric(metricNames, metricType)
+		if err != nil {
+			return nil, err
+		}
+		if metric != nil {
+			metrics = append(metrics, metric)
 		}
 	}
 
@@ -814,7 +788,13 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
 
-	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
+	//nolint:staticcheck // SA1019: backward compatibility
+	metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
+	if err != nil {
+		return nil, err
+	}
+
+	tsample, err := a.multiTrialSample(req.TrialId, req.MetricNames, metricType,
 		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
 		(req.Scale == apiv1.Scale_SCALE_LOG),
 		nil, metricIds)
@@ -844,7 +824,13 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 			return nil, errors.Wrapf(err, "failed to get trial %d", trialID)
 		}
 
-		tsample, err := a.MultiTrialSample(trialID, req.MetricNames, req.MetricType,
+		//nolint:staticcheck // SA1019: backward compatibility
+		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
+		if err != nil {
+			return nil, err
+		}
+
+		tsample, err := a.multiTrialSample(trialID, req.MetricNames, metricType,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
 			(req.Scale == apiv1.Scale_SCALE_LOG), req.TimeSeriesFilter, req.MetricIds)
 		if err != nil {
@@ -856,6 +842,20 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 	return &apiv1.CompareTrialsResponse{Trials: trials}, nil
 }
 
+func (a *apiServer) GetMetrics(
+	req *apiv1.GetMetricsRequest, resp apiv1.Determined_GetMetricsServer,
+) error {
+	sendFunc := func(m []*trialv1.MetricsReport) error {
+		return resp.Send(&apiv1.GetMetricsResponse{Metrics: m})
+	}
+	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
+		model.MetricType(req.Type)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (a *apiServer) GetTrainingMetrics(
 	req *apiv1.GetTrainingMetricsRequest, resp apiv1.Determined_GetTrainingMetricsServer,
 ) error {
@@ -863,7 +863,7 @@ func (a *apiServer) GetTrainingMetrics(
 		return resp.Send(&apiv1.GetTrainingMetricsResponse{Metrics: m})
 	}
 	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
-		model.TrainingMetricType.ToString()); err != nil {
+		model.TrainingMetricType); err != nil {
 		return err
 	}
 
@@ -877,7 +877,7 @@ func (a *apiServer) GetValidationMetrics(
 		return resp.Send(&apiv1.GetValidationMetricsResponse{Metrics: m})
 	}
 	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
-		model.ValidationMetricType.ToString()); err != nil {
+		model.ValidationMetricType); err != nil {
 		return err
 	}
 
@@ -885,7 +885,7 @@ func (a *apiServer) GetValidationMetrics(
 }
 
 func (a *apiServer) streamMetrics(ctx context.Context,
-	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, metricType string,
+	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, metricType model.MetricType,
 ) error {
 	if len(trialIDs) == 0 {
 		return status.Error(codes.InvalidArgument, "must specify at least one trialId")
@@ -976,6 +976,7 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 		limit,
 		req.Filter.String(),
 		req.IncludeBatchMetrics,
+		//nolint:staticcheck // SA1019: backward compatibility
 		req.MetricType.String(),
 	); {
 	case err == db.ErrNotFound:
@@ -1160,13 +1161,11 @@ func (a *apiServer) AllocationPreemptionSignal(
 	}
 
 	id := uuid.New()
-	var w task.PreemptionWatcher
-	if err := a.ask(handler.Address(), task.WatchPreemption{
-		ID: id, AllocationID: allocationID,
-	}, &w); err != nil {
+	w, err := preemptible.Watch(allocationID.String(), id)
+	if err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(handler.Address(), task.UnwatchPreemption{ID: id})
+	defer preemptible.Unwatch(allocationID.String(), id)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(req.TimeoutSeconds)*time.Second)
 	defer cancel()
@@ -1197,11 +1196,7 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 		return nil, err
 	}
 
-	if err := a.ask(handler.Address(), task.AckPreemption{
-		AllocationID: allocationID,
-	}, nil); err != nil {
-		return nil, err
-	}
+	preemptible.Acknowledge(allocationID.String())
 	return &apiv1.AckAllocationPreemptionSignalResponse{}, nil
 }
 
@@ -1374,11 +1369,15 @@ func (a *apiServer) ReportTrialProgress(
 func (a *apiServer) ReportTrialMetrics(
 	ctx context.Context, req *apiv1.ReportTrialMetricsRequest,
 ) (*apiv1.ReportTrialMetricsResponse, error) {
+	metricType := model.MetricType(req.Type)
+	if err := metricType.Validate(); err != nil {
+		return nil, err
+	}
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Metrics.TrialId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
-	if err := a.m.db.AddTrialMetrics(ctx, req.Metrics, req.Type); err != nil {
+	if err := a.m.db.AddTrialMetrics(ctx, req.Metrics, metricType); err != nil {
 		return nil, err
 	}
 	return &apiv1.ReportTrialMetricsResponse{}, nil

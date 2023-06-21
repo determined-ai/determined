@@ -7,10 +7,10 @@ import Tooltip from 'components/kit/Tooltip';
 import { resourceStateToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
-import { routeToReactUrl } from 'shared/utils/routes';
-import { floatToPercent } from 'shared/utils/string';
 import { getStateColorCssVar, ShirtSize } from 'themes';
 import { ResourceState, SlotState } from 'types';
+import { routeToReactUrl } from 'utils/routes';
+import { floatToPercent } from 'utils/string';
 
 import { BadgeType } from './Badge';
 import css from './SlotAllocation.module.scss';

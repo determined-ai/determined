@@ -5,12 +5,12 @@ import React, { ReactNode, useCallback, useEffect, useLayoutEffect, useState } f
 
 import { useSettings } from 'hooks/useSettings';
 import { config, Settings } from 'hooks/useTheme.settings';
-import useUI from 'shared/contexts/stores/UI';
-import { DarkLight, globalCssVars, Mode } from 'shared/themes';
-import { RecordKey } from 'shared/types';
-import { camelCaseToKebab } from 'shared/utils/string';
+import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
 import themes from 'themes';
+import { RecordKey } from 'types';
+import { camelCaseToKebab } from 'utils/string';
+import { DarkLight, globalCssVars, Mode } from 'utils/themes';
 
 const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
 const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';

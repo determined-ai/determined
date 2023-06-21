@@ -7,10 +7,10 @@ import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
-import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
-import { identity, noOp } from 'shared/utils/service';
 import { DeterminedInfo, Telemetry } from 'stores/determinedInfo';
+import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'types';
 import * as Type from 'types';
+import { identity, noOp } from 'utils/service';
 
 const updatedApiConfigParams = (
   apiConfig?: Api.ConfigurationParameters,
@@ -203,7 +203,6 @@ export const resetUserSetting: DetApi<
 /**
  * Returns roles, and workspace/global assignment of those roles,
  * for a user specified in params.
- *
  * @param {GetUserParams} params - An object containing userId to look up their roles.
  */
 export const getUserPermissions: DetApi<
@@ -991,6 +990,7 @@ export const timeSeries: DetApi<
       params.startBatches,
       params.endBatches,
       params.metricType ? Type.metricTypeParamMap[params.metricType] : 'METRIC_TYPE_UNSPECIFIED',
+      undefined,
       params.scale === Type.Scale.Log ? 'SCALE_LOG' : 'SCALE_LINEAR',
     ),
 };
@@ -1775,17 +1775,23 @@ export const launchTensorBoard: DetApi<
 
 export const getJobQueue: DetApi<
   Service.GetJobQParams,
-  Api.V1GetJobsResponse,
+  Api.V1GetJobsV2Response,
   Service.GetJobsResponse
 > = {
   name: 'getJobQ',
   postProcess: (response) => {
-    response.jobs = response.jobs.filter((job) => !!job.summary);
-    // we don't work with jobs without a summary in the ui yet
-    return response as Service.GetJobsResponse;
+    const internalResponse: Service.GetJobsResponse = {
+      jobs: [],
+      pagination: response.pagination,
+    };
+    internalResponse.jobs = response.jobs
+      // we don't work with jobs without a summary in the ui yet
+      .filter((job) => !!(job.limited?.summary || job.full?.summary))
+      .map((jobPack) => (jobPack.full || jobPack.limited) as Type.Job);
+    return internalResponse;
   },
   request: (params: Service.GetJobQParams) =>
-    detApi.Internal.getJobs(
+    detApi.Internal.getJobsV2(
       params.offset,
       params.limit,
       params.resourcePool,

@@ -4,8 +4,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ColorLegend from 'components/ColorLegend';
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
+import Message, { MessageType } from 'components/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner/Spinner';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
@@ -13,12 +15,8 @@ import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner/Spinner';
-import useUI from 'shared/contexts/stores/UI';
-import { Primitive, Range } from 'shared/types';
-import { rgba2str, str2rgba } from 'shared/utils/color';
-import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
+import useUI from 'stores/contexts/UI';
+import { Primitive, Range } from 'types';
 import {
   ExperimentBase,
   HyperparameterType,
@@ -28,6 +26,8 @@ import {
   Scale,
 } from 'types';
 import { getColorScale } from 'utils/chart';
+import { rgba2str, str2rgba } from 'utils/color';
+import { clone, flattenObject, isBoolean, isObject, isString } from 'utils/data';
 import { metricToStr } from 'utils/metric';
 
 import { ViewType } from './ExperimentVisualizationFilters';
@@ -225,8 +225,9 @@ const HpHeatMaps: React.FC<Props> = ({
       detApi.StreamingInternal.trialsSnapshot(
         experiment.id,
         selectedMetric.name,
-        metricTypeParamMap[selectedMetric.type],
         selectedBatch,
+        metricTypeParamMap[selectedMetric.type],
+        undefined, // custom metric type
         selectedBatchMargin,
         undefined,
         { signal: canceler.signal },

@@ -5,15 +5,15 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { paths, routeAll } from 'routes/utils';
 import { logout } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { isAuthFailure } from 'shared/utils/service';
 import authStore from 'stores/auth';
 import determinedStore from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { isAuthFailure } from 'utils/service';
 
 const SignOut: React.FC = () => {
   const navigate = useNavigate();

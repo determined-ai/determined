@@ -393,11 +393,13 @@ func (c *Container) shimDockerEvents() events.Publisher[docker.Event] {
 	return events.FuncPublisher[docker.Event](func(ctx context.Context, e docker.Event) error {
 		switch {
 		case e.Log != nil:
+			source := "agent" // enrich log
 			return c.pub.Publish(ctx, Event{Log: &aproto.ContainerLog{
 				ContainerID: c.containerID,
 				Timestamp:   e.Log.Timestamp,
 				Level:       &e.Log.Level,
 				AuxMessage:  &e.Log.Message,
+				Source:      &source,
 			}})
 
 		case e.Stats != nil:

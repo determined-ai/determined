@@ -74,7 +74,7 @@ func (a *apiServer) canDoActionsOnTask(
 	ctx context.Context, taskID model.TaskID,
 	actions ...func(context.Context, model.User, *model.Experiment) error,
 ) error {
-	errTaskNotFound := status.Errorf(codes.NotFound, "task not found: %s", taskID)
+	errTaskNotFound := api.NotFoundErrs("task", fmt.Sprint(taskID), true)
 	t, err := a.m.db.TaskByID(taskID)
 	if errors.Is(err, db.ErrNotFound) {
 		return errTaskNotFound
@@ -129,7 +129,7 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 	}
 
 	taskID := model.AllocationID(allocationID).ToTaskID()
-	errAllocationNotFound := status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
+	errAllocationNotFound := api.NotFoundErrs("allocation", allocationID, true)
 	isExp, exp, err := expFromTaskID(ctx, taskID)
 	if err != nil {
 		return err

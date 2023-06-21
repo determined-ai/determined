@@ -221,7 +221,9 @@ class Model:
         def get_with_offset(offset: int) -> bindings.v1GetModelVersionsResponse:
             return bindings.get_GetModelVersions(
                 self._session,
+                limit=None,
                 modelName=self.name,
+                offset=offset,
                 orderBy=order_by._to_bindings(),
             )
 

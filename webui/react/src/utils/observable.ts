@@ -1,7 +1,7 @@
 import { Observable, observable, useObservable, WritableObservable } from 'micro-observables';
 import React from 'react';
 
-import { isEqual } from 'shared/utils/data';
+import { isEqual } from 'utils/data';
 
 // type comparator<T> = (current: T, previous: T) => boolean;
 

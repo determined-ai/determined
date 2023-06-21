@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 
-import useUI from 'shared/contexts/stores/UI';
+import useUI from 'stores/contexts/UI';
 
 interface DocumentHidden {
   hidden?: unknown;
