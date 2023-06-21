@@ -30,7 +30,7 @@ type Jobs struct {
 	syslog    *logrus.Entry
 }
 
-// NewJobs creates a new jobs actor.
+// NewJobs creates a new jobs instance.
 func NewJobs(rm rm.ResourceManager, system *actor.System) *Jobs {
 	return &Jobs{
 		rm:        rm,
