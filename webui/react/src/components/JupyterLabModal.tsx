@@ -1,8 +1,8 @@
 import { Alert, Select } from 'antd';
-import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import JupyterLabSettings, { DEFAULT_SLOT_COUNT } from 'components/JupyterLab.settings';
 import Button from 'components/kit/Button';
 import Form, { FormInstance } from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -10,7 +10,7 @@ import InputNumber from 'components/kit/InputNumber';
 import { Modal } from 'components/kit/Modal';
 import Spinner from 'components/Spinner/Spinner';
 import usePermissions from 'hooks/usePermissions';
-import { SettingsConfig, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { getTaskTemplates } from 'services/api';
 import clusterStore from 'stores/cluster';
 import workspaceStore from 'stores/workspaces';
@@ -22,45 +22,6 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 const { Option } = Select;
-
-const STORAGE_PATH = 'jupyter-lab';
-const DEFAULT_SLOT_COUNT = 1;
-
-const settingsConfig: SettingsConfig<JupyterLabOptions> = {
-  settings: {
-    name: {
-      defaultValue: '',
-      skipUrlEncoding: true,
-      storageKey: 'name',
-      type: union([string, undefinedType]),
-    },
-    pool: {
-      defaultValue: '',
-      skipUrlEncoding: true,
-      storageKey: 'pool',
-      type: union([string, undefinedType]),
-    },
-    slots: {
-      defaultValue: DEFAULT_SLOT_COUNT,
-      skipUrlEncoding: true,
-      storageKey: 'slots',
-      type: union([number, undefinedType]),
-    },
-    template: {
-      defaultValue: undefined,
-      skipUrlEncoding: true,
-      storageKey: 'template',
-      type: union([string, undefinedType]),
-    },
-    workspaceId: {
-      defaultValue: undefined,
-      skipUrlEncoding: true,
-      storageKey: 'workspaceId',
-      type: union([number, undefinedType]),
-    },
-  },
-  storagePath: STORAGE_PATH,
-};
 
 interface FullConfigProps {
   config: Loadable<string>;
@@ -99,7 +60,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   }, [currentWorkspace, fullConfigForm]);
 
   const { settings: defaults, updateSettings: updateDefaults } =
-    useSettings<JupyterLabOptions>(settingsConfig);
+    useSettings<JupyterLabOptions>(JupyterLabSettings);
 
   const handleModalClose = useCallback(() => {
     const fields: JupyterLabOptions = form.getFieldsValue(true);

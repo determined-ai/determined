@@ -11,6 +11,7 @@ export interface JupyterLabOptions {
   slots?: number;
   template?: string;
   workspaceId?: number;
+  shortcut?: string;
 }
 
 interface JupyterLabLaunchOptions extends JupyterLabOptions {
