@@ -109,7 +109,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
             (await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id }));
         }
         fetchUserRoles();
-        if (currentUser && currentUser.id === user.id) await checkAuth();
+        if (currentUser && currentUser.id === user.id) checkAuth();
         message.success('User has been updated');
       } else {
         formData[ACTIVE_NAME] = true;

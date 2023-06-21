@@ -22,13 +22,10 @@ const useAuthCheck = (): (() => Promise<boolean>) => {
   }, []);
 
   const redirectToExternalSignin = useCallback(() => {
-    let redirect = '';
-    const path = window.location.pathname;
-    if (path.includes(paths.login()) || path.includes(paths.logout())) {
-      redirect = window.location.origin;
-    } else {
-      redirect = encodeURIComponent(window.location.href);
-    }
+    const { pathname: path, origin, href } = window.location;
+    const redirect = [paths.login(), paths.logout()].some((p) => path.includes(p))
+      ? origin
+      : encodeURIComponent(href);
     const authUrl = `${info.externalLoginUri}?redirect=${redirect}`;
     routeAll(authUrl);
   }, [info.externalLoginUri]);
