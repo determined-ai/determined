@@ -2,7 +2,7 @@ import enum
 import sys
 import time
 import warnings
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 from determined.common import api
 from determined.common.api import bindings
@@ -99,7 +99,7 @@ class Experiment:
         self,
         sort_by: trial.TrialSortBy = trial.TrialSortBy.ID,
         order_by: trial.TrialOrderBy = trial.TrialOrderBy.ASCENDING,
-    ) -> Iterable[trial.Trial]:
+    ) -> Iterator[trial.Trial]:
         """
         Get an iterator of :class:`~determined.experimental.Trial` instances
         representing trials for an experiment.
