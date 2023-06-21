@@ -341,14 +341,7 @@ func (s *SingularityClient) RunContainer(
 	if s.debug {
 		cmd.Env = append(cmd.Env, "DET_DEBUG=1")
 	}
-	s.log.Trace("Checking for supplied credentials")
-	if req.Registry != nil {
-		cmd.Env = append(cmd.Env,
-			fmt.Sprintf("SINGULARITY_DOCKER_USERNAME=%s", req.Registry.Username),
-			fmt.Sprintf("SINGULARITY_DOCKER_PASSWORD=%s", req.Registry.Password),
-			fmt.Sprintf("APPTAINER_DOCKER_USERNAME=%s", req.Registry.Username),
-			fmt.Sprintf("APPTAINER_DOCKER_PASSWORD=%s", req.Registry.Password))
-	}
+	s.addOptionalRegistryAuthCredentials(req, cmd)
 	addEnvironmentValueIfSet([]string{"http_proxy", "https_proxy", "no_proxy"}, cmd)
 
 	// HACK(singularity): without this, --nv doesn't work right. If the singularity run command
@@ -392,6 +385,17 @@ func (s *SingularityClient) RunContainer(
 		},
 		ContainerWaiter: s.waitOnContainer(cproto.ID(id), cont, p),
 	}, nil
+}
+
+func (s *SingularityClient) addOptionalRegistryAuthCredentials(req cproto.RunSpec, cmd *exec.Cmd) {
+	s.log.Trace("Checking for supplied credentials")
+	if req.Registry != nil {
+		cmd.Env = append(cmd.Env,
+			fmt.Sprintf("SINGULARITY_DOCKER_USERNAME=%s", req.Registry.Username),
+			fmt.Sprintf("SINGULARITY_DOCKER_PASSWORD=%s", req.Registry.Password),
+			fmt.Sprintf("APPTAINER_DOCKER_USERNAME=%s", req.Registry.Username),
+			fmt.Sprintf("APPTAINER_DOCKER_PASSWORD=%s", req.Registry.Password))
+	}
 }
 
 func capabilitiesToSingularityArgs(req cproto.RunSpec, args []string) []string {

@@ -209,7 +209,6 @@ func (c *Container) run(parent context.Context) (err error) {
 			return err
 		}
 
-		c.spec.RunSpec.Registry = c.spec.PullSpec.Registry // Copy for use at RunContainer-time
 		runtimeID, err := c.cruntime.CreateContainer(
 			ctx,
 			c.containerID,
