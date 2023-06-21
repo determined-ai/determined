@@ -12,8 +12,12 @@ import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
 import Spinner from 'components/Spinner/Spinner';
+import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
+import shortCutSettingsConfig, {
+  Settings as ShortcutSettings,
+} from 'pages/Settings/UserSettings.settings';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
@@ -25,6 +29,7 @@ import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { matchesShortcut, shortcutToString } from 'utils/shortcut';
 
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
@@ -39,7 +44,7 @@ interface ItemProps extends LinkProps {
   label: string;
   labelRender?: React.ReactNode;
   status?: string;
-  tooltip?: boolean;
+  tooltip?: string | boolean;
 }
 
 interface Settings {
@@ -103,7 +108,9 @@ export const NavigationItem: React.FC<ItemProps> = ({
   );
 
   return props.tooltip ? (
-    <Tooltip content={props.label} placement="right">
+    <Tooltip
+      content={typeof props.tooltip === 'string' ? props.tooltip : props.label}
+      placement="right">
       <div>{link}</div>
     </Tooltip>
   ) : (
@@ -124,6 +131,9 @@ const NavigationSideBar: React.FC = () => {
   const { ui } = useUI();
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const {
+    settings: { navbarCollapsed },
+  } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
 
@@ -191,6 +201,20 @@ const NavigationSideBar: React.FC = () => {
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
   }, [settings.navbarCollapsed, updateSettings]);
+
+  useEffect(() => {
+    const keyDownListener = (e: KeyboardEvent) => {
+      if (matchesShortcut(e, navbarCollapsed)) {
+        handleCollapse();
+      }
+    };
+
+    keyEmitter.on(KeyEvent.KeyDown, keyDownListener);
+
+    return () => {
+      keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
+    };
+  }, [handleCollapse, navbarCollapsed]);
 
   const { canAdministrateUsers } = usePermissions();
 
@@ -330,7 +354,11 @@ const NavigationSideBar: React.FC = () => {
             <NavigationItem
               icon={settings.navbarCollapsed ? 'expand' : 'collapse'}
               label={settings.navbarCollapsed ? 'Expand' : 'Collapse'}
-              tooltip={settings.navbarCollapsed}
+              tooltip={
+                settings.navbarCollapsed
+                  ? `Expand (${shortcutToString(navbarCollapsed)})`
+                  : `Collapse (${shortcutToString(navbarCollapsed)})`
+              }
               onClick={handleCollapse}
             />
           </section>
