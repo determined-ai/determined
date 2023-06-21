@@ -50,6 +50,11 @@ const (
 	C10DPort = "C10D_PORT"
 )
 
+// TaskSpecifier creates a TaskSpec. ToTaskSpec must only be called once per specifier.
+type TaskSpecifier interface {
+	ToTaskSpec() TaskSpec
+}
+
 // TaskSpec defines the spec of a task.
 type TaskSpec struct {
 	// Fields that are only for task logics.

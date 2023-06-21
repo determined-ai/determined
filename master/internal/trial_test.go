@@ -10,6 +10,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/ssh"
 
 	"github.com/pkg/errors"
 
@@ -38,6 +39,8 @@ func TestTrial(t *testing.T) {
 	system, db, rID, tr, self := setup(t)
 
 	// Pre-scheduled stage.
+	db.On("UpdateTrialRunID", 0, 1).Return(nil)
+	db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
 	require.NoError(t, system.Ask(self,
 		model.StateWithReason{State: model.ActiveState}).Error())
 	require.NoError(t, system.Ask(self, trialSearcherState{
@@ -50,14 +53,6 @@ func TestTrial(t *testing.T) {
 		Closed:   true,
 	}).Error())
 	require.NotNil(t, tr.allocation)
-
-	// Pre-allocated stage.
-	db.On("UpdateTrialRunID", 0, 1).Return(nil)
-	db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
-	require.NoError(t, system.Ask(tr.allocation, actors.ForwardThroughMock{
-		To:  self,
-		Msg: task.BuildTaskSpec{},
-	}).Error())
 	require.True(t, db.AssertExpectations(t))
 
 	// Running stage.
@@ -89,6 +84,8 @@ func TestTrialRestarts(t *testing.T) {
 	system, db, rID, tr, self := setup(t)
 
 	// Pre-scheduled stage.
+	db.On("UpdateTrialRunID", 0, 1).Return(nil)
+	db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
 	require.NoError(t, system.Ask(self,
 		model.StateWithReason{State: model.ActiveState}).Error())
 	require.NoError(t, system.Ask(self, trialSearcherState{
@@ -100,23 +97,18 @@ func TestTrialRestarts(t *testing.T) {
 		Complete: false,
 		Closed:   true,
 	}).Error())
+	require.True(t, db.AssertExpectations(t))
 
 	for i := 0; i <= tr.config.MaxRestarts(); i++ {
 		require.NotNil(t, tr.allocation)
 		require.Equal(t, i, tr.restarts)
 
-		// Pre-allocated stage.
-		db.On("UpdateTrialRunID", 0, i+1).Return(nil)
-		db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
-		require.NoError(t, system.Ask(tr.allocation, actors.ForwardThroughMock{
-			To:  self,
-			Msg: task.BuildTaskSpec{},
-		}).Error())
-		require.True(t, db.AssertExpectations(t))
-
 		db.On("UpdateTrialRestarts", 0, i+1).Return(nil)
 		if i == tr.config.MaxRestarts() {
 			db.On("UpdateTrial", 0, model.ErrorState).Return(nil)
+		} else {
+			// For the next go-around, when we update trial run ID.
+			db.On("UpdateTrialRunID", 0, i+2).Return(nil)
 		}
 
 		system.Tell(tr.allocation, actors.ForwardThroughMock{
@@ -126,57 +118,9 @@ func TestTrialRestarts(t *testing.T) {
 		require.NoError(t, tr.allocation.StopAndAwaitTermination())
 		system.Ask(self, actor.Ping{}).Get() // sync
 
-		if i == tr.config.MaxRestarts() {
-			require.True(t, db.AssertExpectations(t))
-		}
+		require.True(t, db.AssertExpectations(t))
 	}
 	require.NoError(t, self.AwaitTermination())
-	require.True(t, model.TerminalStates[tr.state])
-}
-
-func TestTrialSimultaneousCancelAndAllocation(t *testing.T) {
-	system, db, rID, tr, self := setup(t)
-
-	// Pre-scheduled stage.
-	require.NoError(t, system.Ask(self,
-		model.StateWithReason{State: model.ActiveState}).Error())
-	require.NoError(t, system.Ask(self, trialSearcherState{
-		Create: searcher.Create{RequestID: rID},
-		Op: searcher.ValidateAfter{
-			RequestID: rID,
-			Length:    10,
-		},
-		Complete: false,
-		Closed:   true,
-	}).Error())
-	require.NotNil(t, tr.allocation)
-
-	// Send the trial a termination, but don't setup our mock allocation to handle it, as if it
-	// is busy handling receiving resources.
-	db.On("UpdateTrial", 0, model.StoppingCanceledState).Return(nil)
-	require.NoError(t, system.Ask(self, model.StateWithReason{
-		State: model.StoppingCanceledState,
-	}).Error())
-	require.True(t, db.AssertExpectations(t))
-
-	// Now the allocation checks in to get what to launch while we're canceled.
-	require.ErrorIs(t, system.Ask(tr.allocation, actors.ForwardThroughMock{
-		To:  self,
-		Msg: task.BuildTaskSpec{},
-	}).Error(), task.ErrAlreadyCancelled{})
-	require.True(t, db.AssertExpectations(t))
-
-	// After the allocation exits, we should error.
-	db.On("UpdateTrial", 0, model.CanceledState).Return(nil)
-	system.Tell(tr.allocation, actors.ForwardThroughMock{
-		To:  self,
-		Msg: &task.AllocationExited{},
-	})
-	require.NoError(t, tr.allocation.StopAndAwaitTermination())
-	require.NoError(t, self.AwaitTermination())
-	require.True(t, db.AssertExpectations(t))
-
-	// But the actor itself should have the state recorded.
 	require.True(t, model.TerminalStates[tr.state])
 }
 
@@ -192,6 +136,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 	allocImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
 	taskAllocator = func(
 		logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
+		specifier tasks.TaskSpecifier,
 	) actor.Actor {
 		return &allocImpl
 	}
@@ -228,6 +173,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 			AgentUserGroup: &model.AgentUserGroup{},
 			SSHRsaSize:     1024,
 		},
+		ssh.PrivateAndPublicKeys{},
 		false,
 	)
 	self := system.MustActorOf(actor.Addr("trial"), tr)
