@@ -1811,6 +1811,7 @@ jobs:
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
+      - run: pip install mypy pytest coverage
       - skip-if-docs-only
       - skip-if-github-only
       - skip-if-webui-only
@@ -1837,7 +1838,7 @@ jobs:
       - skip-if-docs-only
       - skip-if-github-only
       - skip-if-webui-only
-      - run: pip install myp pytest coverage
+      - run: pip install mypy pytest coverage
       - install-codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
       - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
@@ -1883,7 +1884,7 @@ jobs:
       - skip-if-docs-only
       - skip-if-github-only
       - skip-if-webui-only
-      - run: pip install myp pytest coverage
+      - run: pip install mypy pytest coverage
       - install-codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
       - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
