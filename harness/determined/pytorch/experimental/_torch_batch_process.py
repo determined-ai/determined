@@ -62,7 +62,7 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         model.to(self.device)
         return model
 
-    def get_default_storage_path_context(self) -> ContextManager[pathlib.Path]:
+    def upload_path(self) -> ContextManager[pathlib.Path]:
         """
         Returns a context that uploads files to default storage path on exit.
         """
@@ -98,8 +98,11 @@ def _initialize_distributed_backend() -> Optional[core.DistributedContext]:
     return None
 
 
-def _initialize_default_inference_context() -> core.Context:
-    distributed_context = _initialize_distributed_backend()
+def _initialize_default_inference_context(
+    distributed_context: Optional[core.DistributedContext],
+) -> core.Context:
+    if distributed_context is None:
+        distributed_context = _initialize_distributed_backend()
     # Use WorkerAskChief mode to ensure synchronize correctly across worker
     # Using WorkerAskMaster mode could lead to some workers exiting when others
     # are waiting for synchronization.
@@ -278,8 +281,9 @@ def torch_batch_process(
     max_batches: Optional[int] = None,
     checkpoint_interval: int = 5,
     dataloader_kwargs: Optional[Dict[str, Any]] = None,
+    distributed_context: Optional[core.DistributedContext] = None,
 ) -> None:
-    with _initialize_default_inference_context() as core_context:
+    with _initialize_default_inference_context(distributed_context) as core_context:
         """
         (1) Set up necessary variables to run batch processing
         """

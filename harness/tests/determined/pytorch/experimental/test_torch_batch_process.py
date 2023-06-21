@@ -1,18 +1,13 @@
 import math
-from typing import Any, Dict, List, Optional, Type
-from unittest.mock import MagicMock, Mock, call, patch
+import unittest.mock
+from typing import Any, Dict, List, Optional
 
 import pytest
 import torch
-from torch.utils.data import Dataset
+from torch.utils import data
 
 from determined import pytorch
-from determined.pytorch.experimental._torch_batch_process import (
-    TorchBatchProcessor,
-    TorchBatchProcessorContext,
-    get_default_device,
-    torch_batch_process,
-)
+from determined.pytorch import experimental
 
 DEFAULT_SLOT_IDS = [0]
 DEFAULT_ADDRS = ["0.0.0.12"]
@@ -20,54 +15,48 @@ DEFAULT_DEVICE = torch.device("cuda", 1)
 DEFAULT_STORAGE_PATH = "default_storage_path"
 
 
-@pytest.fixture
-def batch_processor_with_avg_metric_reducer() -> Type[TorchBatchProcessor]:
-    class MySumMetricReducer(pytorch.MetricReducer):
-        def __init__(self) -> None:
-            self.reset()
+class MySumMetricReducer(pytorch.MetricReducer):
+    def __init__(self) -> None:
+        self.reset()
 
-        def reset(self) -> None:
-            self.sum = 0
+    def reset(self) -> None:
+        self.sum = 0
 
-        def update(self, value: List[int]) -> None:
-            self.sum += sum(value)
+    def update(self, value: List[int]) -> None:
+        self.sum += sum(value)
 
-        def per_slot_reduce(self) -> int:
-            return self.sum
+    def per_slot_reduce(self) -> int:
+        return self.sum
 
-        def cross_slot_reduce(self, per_slot_metrics: List[int]) -> int:
-            return sum(per_slot_metrics)
-
-    class MyProcessor(TorchBatchProcessor):
-        def __init__(self, context: TorchBatchProcessorContext) -> None:
-            self.context = context
-            self.reducer_sum = context.wrap_reducer(reducer=MySumMetricReducer(), name="sum_metric")
-
-        def process_batch(self, batch: Any, batch_idx: int) -> None:
-            self.reducer_sum.update(batch)
-
-    return MyProcessor
+    def cross_slot_reduce(self, per_slot_metrics: List[int]) -> int:
+        return sum(per_slot_metrics)
 
 
-def _get_index_dataset(data_length: int = 50) -> Dataset:
-    class IndexData(Dataset):
-        def __init__(self, data_length: int) -> None:
-            self.data = data_length
+class MyProcessor(experimental.TorchBatchProcessor):
+    def __init__(self, context: experimental.TorchBatchProcessorContext) -> None:
+        self.context = context
+        self.reducer_sum = context.wrap_reducer(reducer=MySumMetricReducer(), name="sum_metric")
 
-        def __len__(self) -> int:
-            return int(self.data)
+    def process_batch(self, batch: Any, batch_idx: int) -> None:
+        self.reducer_sum.update(batch)
 
-        def __getitem__(self, idx: int) -> int:
-            return idx
 
-    return IndexData(data_length)
+class IndexData(data.Dataset):
+    def __init__(self, data_length: int = 50) -> None:
+        self.data = data_length
+
+    def __len__(self) -> int:
+        return int(self.data)
+
+    def __getitem__(self, idx: int) -> int:
+        return idx
 
 
 def _get_core_context(
     rank: int = 0, should_preempt_results: Optional[List[bool]] = None
-) -> MagicMock:
-    mock_core_context = MagicMock()
-    mock_distributed_context = MagicMock()
+) -> unittest.mock.MagicMock:
+    mock_core_context = unittest.mock.MagicMock()
+    mock_distributed_context = unittest.mock.MagicMock()
     mock_distributed_context.get_rank.return_value = rank
     mock_distributed_context.broadcast.return_value = "mock_checkpoint_uuid"
     mock_core_context.__enter__().distributed = mock_distributed_context
@@ -80,34 +69,40 @@ def _get_core_context(
 
 def _get_det_info(
     slot_ids: List[int], container_addrs: List[str], latest_checkpoint: Optional[str] = None
-) -> MagicMock:
-    mock_cluster_info = MagicMock()
+) -> unittest.mock.MagicMock:
+    mock_cluster_info = unittest.mock.MagicMock()
     mock_cluster_info.slot_ids = slot_ids
     mock_cluster_info.container_addrs = container_addrs
     mock_cluster_info.latest_checkpoint = latest_checkpoint
     return mock_cluster_info
 
 
-@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
-@patch("determined.get_cluster_info")
-@patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
-@patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
-@patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context"
+)
+@unittest.mock.patch("determined.get_cluster_info")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint"
+)
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._report_progress_to_master"
+)
+@unittest.mock.patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
 @pytest.mark.parametrize(
     "dataloader_kwargs, batch_size",
     [
         [{"shuffle": True}, 10],
-        [{"sampler": Mock()}, 10],
-        [{"batch_sampler": Mock()}, 10],
+        [{"sampler": unittest.mock.Mock()}, 10],
+        [{"batch_sampler": unittest.mock.Mock()}, 10],
         [{"batch_size": 20}, 10],
     ],
 )
 def test_torch_batch_process_dataloader_kwargs_validation(
-    mock_reduce_metrics: MagicMock,
-    mock_report_progress_to_master: MagicMock,
-    mock_synchronize_and_checkpoint: MagicMock,
-    mock_get_cluster_info: MagicMock,
-    mock_initialize_default_inference_context: MagicMock,
+    mock_reduce_metrics: unittest.mock.MagicMock,
+    mock_report_progress_to_master: unittest.mock.MagicMock,
+    mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
+    mock_get_cluster_info: unittest.mock.MagicMock,
+    mock_initialize_default_inference_context: unittest.mock.MagicMock,
     dataloader_kwargs: Dict[str, Any],
     batch_size: int,
 ) -> None:
@@ -115,15 +110,15 @@ def test_torch_batch_process_dataloader_kwargs_validation(
         slot_ids=DEFAULT_SLOT_IDS, container_addrs=DEFAULT_ADDRS
     )
     mock_initialize_default_inference_context.return_value = _get_core_context()
-    index_dataset = _get_index_dataset()
+    index_dataset = IndexData()
 
-    MyProcessorCLS = Mock()
-    my_processor_instance = Mock()
+    MyProcessorCLS = unittest.mock.Mock()
+    my_processor_instance = unittest.mock.Mock()
     MyProcessorCLS.return_value = my_processor_instance
 
     # Test calling torch_batch_process with invalid arguments
     with pytest.raises(ValueError):
-        torch_batch_process(
+        experimental.torch_batch_process(
             dataset=index_dataset,
             batch_processor_cls=MyProcessorCLS,
             batch_size=batch_size,
@@ -131,11 +126,17 @@ def test_torch_batch_process_dataloader_kwargs_validation(
         )
 
 
-@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
-@patch("determined.get_cluster_info")
-@patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
-@patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
-@patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context"
+)
+@unittest.mock.patch("determined.get_cluster_info")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint"
+)
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._report_progress_to_master"
+)
+@unittest.mock.patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
 @pytest.mark.parametrize(
     "data_length, batch_size, checkpoint_interval, rank, slot_ids",
     [  # Group 1: data length is divisible by batch_size
@@ -147,11 +148,11 @@ def test_torch_batch_process_dataloader_kwargs_validation(
     ],
 )
 def test_torch_batch_process_times_synchronize(
-    mock_reduce_metrics: MagicMock,
-    mock_report_progress_to_master: MagicMock,
-    mock_synchronize_and_checkpoint: MagicMock,
-    mock_get_cluster_info: MagicMock,
-    mock_initialize_default_inference_context: MagicMock,
+    mock_reduce_metrics: unittest.mock.MagicMock,
+    mock_report_progress_to_master: unittest.mock.MagicMock,
+    mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
+    mock_get_cluster_info: unittest.mock.MagicMock,
+    mock_initialize_default_inference_context: unittest.mock.MagicMock,
     data_length: int,
     batch_size: int,
     checkpoint_interval: int,
@@ -162,13 +163,13 @@ def test_torch_batch_process_times_synchronize(
         slot_ids=slot_ids, container_addrs=DEFAULT_ADDRS
     )
     mock_initialize_default_inference_context.return_value = _get_core_context(rank=rank)
-    index_dataset = _get_index_dataset(data_length)
+    index_dataset = IndexData(data_length)
 
-    MyProcessorCLS = Mock()
-    my_processor_instance = Mock()
+    MyProcessorCLS = unittest.mock.Mock()
+    my_processor_instance = unittest.mock.Mock()
     MyProcessorCLS.return_value = my_processor_instance
 
-    torch_batch_process(
+    experimental.torch_batch_process(
         dataset=index_dataset,
         batch_processor_cls=MyProcessorCLS,
         batch_size=batch_size,
@@ -191,11 +192,17 @@ def test_torch_batch_process_times_synchronize(
     assert mock_report_progress_to_master.call_count == (times_iterate if rank == 0 else 0)
 
 
-@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
-@patch("determined.get_cluster_info")
-@patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
-@patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
-@patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context"
+)
+@unittest.mock.patch("determined.get_cluster_info")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint"
+)
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._report_progress_to_master"
+)
+@unittest.mock.patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
 @pytest.mark.parametrize(
     "data_length, batch_size, checkpoint_interval, rank, slot_ids, "
     "expected_process_batch_call_count",
@@ -216,11 +223,11 @@ def test_torch_batch_process_times_synchronize(
     ],
 )
 def test_torch_batch_process_times_process_batch(
-    mock_reduce_metrics: MagicMock,
-    mock_report_progress_to_master: MagicMock,
-    mock_synchronize_and_checkpoint: MagicMock,
-    mock_get_cluster_info: MagicMock,
-    mock_initialize_default_inference_context: MagicMock,
+    mock_reduce_metrics: unittest.mock.MagicMock,
+    mock_report_progress_to_master: unittest.mock.MagicMock,
+    mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
+    mock_get_cluster_info: unittest.mock.MagicMock,
+    mock_initialize_default_inference_context: unittest.mock.MagicMock,
     data_length: int,
     batch_size: int,
     checkpoint_interval: int,
@@ -232,13 +239,13 @@ def test_torch_batch_process_times_process_batch(
         slot_ids=slot_ids, container_addrs=DEFAULT_ADDRS
     )
     mock_initialize_default_inference_context.return_value = _get_core_context(rank=rank)
-    index_dataset = _get_index_dataset(data_length)
+    index_dataset = IndexData(data_length)
 
-    MyProcessorCLS = Mock()
-    my_processor_instance = Mock()
+    MyProcessorCLS = unittest.mock.Mock()
+    my_processor_instance = unittest.mock.Mock()
     MyProcessorCLS.return_value = my_processor_instance
 
-    torch_batch_process(
+    experimental.torch_batch_process(
         dataset=index_dataset,
         batch_processor_cls=MyProcessorCLS,
         batch_size=batch_size,
@@ -250,12 +257,18 @@ def test_torch_batch_process_times_process_batch(
     assert my_processor_instance.on_finish.call_count == 1
 
 
-@patch("determined.pytorch.experimental._torch_batch_process._load_state")
-@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
-@patch("determined.get_cluster_info")
-@patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
-@patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
-@patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
+@unittest.mock.patch("determined.pytorch.experimental._torch_batch_process._load_state")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context"
+)
+@unittest.mock.patch("determined.get_cluster_info")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint"
+)
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._report_progress_to_master"
+)
+@unittest.mock.patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
 @pytest.mark.parametrize(
     "data_length, batch_size, checkpoint_interval, rank, slot_ids, "
     "steps_completed, expected_process_batch_call_count",
@@ -268,12 +281,12 @@ def test_torch_batch_process_times_process_batch(
     ],
 )
 def test_torch_batch_process_times_process_batch_with_skip(
-    mock_reduce_metrics: MagicMock,
-    mock_report_progress_to_master: MagicMock,
-    mock_synchronize_and_checkpoint: MagicMock,
-    mock_get_cluster_info: MagicMock,
-    mock_initialize_default_inference_context: MagicMock,
-    mock_load_state: MagicMock,
+    mock_reduce_metrics: unittest.mock.MagicMock,
+    mock_report_progress_to_master: unittest.mock.MagicMock,
+    mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
+    mock_get_cluster_info: unittest.mock.MagicMock,
+    mock_initialize_default_inference_context: unittest.mock.MagicMock,
+    mock_load_state: unittest.mock.MagicMock,
     data_length: int,
     batch_size: int,
     checkpoint_interval: int,
@@ -286,10 +299,10 @@ def test_torch_batch_process_times_process_batch_with_skip(
         slot_ids=slot_ids, latest_checkpoint="fake_latest_checkpoint", container_addrs=DEFAULT_ADDRS
     )
     mock_initialize_default_inference_context.return_value = _get_core_context(rank=rank)
-    index_dataset = _get_index_dataset(data_length)
+    index_dataset = IndexData(data_length)
 
-    MyProcessorCLS = Mock()
-    my_processor_instance = Mock()
+    MyProcessorCLS = unittest.mock.Mock()
+    my_processor_instance = unittest.mock.Mock()
     MyProcessorCLS.return_value = my_processor_instance
 
     mock_load_state.return_value = {
@@ -297,7 +310,7 @@ def test_torch_batch_process_times_process_batch_with_skip(
         "default_output_uuid": "abc",
     }
 
-    torch_batch_process(
+    experimental.torch_batch_process(
         dataset=index_dataset,
         batch_processor_cls=MyProcessorCLS,
         batch_size=batch_size,
@@ -309,12 +322,18 @@ def test_torch_batch_process_times_process_batch_with_skip(
     assert my_processor_instance.on_finish.call_count == 1
 
 
-@patch("determined.pytorch.experimental._torch_batch_process._load_state")
-@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
-@patch("determined.get_cluster_info")
-@patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
-@patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
-@patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
+@unittest.mock.patch("determined.pytorch.experimental._torch_batch_process._load_state")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context"
+)
+@unittest.mock.patch("determined.get_cluster_info")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint"
+)
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._report_progress_to_master"
+)
+@unittest.mock.patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
 @pytest.mark.parametrize(
     "data_length, batch_size, checkpoint_interval, rank, slot_ids, "
     "max_batches, expected_process_batch_call_count",
@@ -325,12 +344,12 @@ def test_torch_batch_process_times_process_batch_with_skip(
     ],
 )
 def test_torch_batch_process_max_batches(
-    mock_reduce_metrics: MagicMock,
-    mock_report_progress_to_master: MagicMock,
-    mock_synchronize_and_checkpoint: MagicMock,
-    mock_get_cluster_info: MagicMock,
-    mock_initialize_default_inference_context: MagicMock,
-    mock_load_state: MagicMock,
+    mock_reduce_metrics: unittest.mock.MagicMock,
+    mock_report_progress_to_master: unittest.mock.MagicMock,
+    mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
+    mock_get_cluster_info: unittest.mock.MagicMock,
+    mock_initialize_default_inference_context: unittest.mock.MagicMock,
+    mock_load_state: unittest.mock.MagicMock,
     data_length: int,
     batch_size: int,
     checkpoint_interval: int,
@@ -343,16 +362,16 @@ def test_torch_batch_process_max_batches(
         slot_ids=slot_ids, container_addrs=DEFAULT_ADDRS
     )
     mock_initialize_default_inference_context.return_value = _get_core_context(rank=rank)
-    index_dataset = _get_index_dataset(data_length)
+    index_dataset = IndexData(data_length)
 
-    MyProcessorCLS = Mock()
-    my_processor_instance = Mock()
+    MyProcessorCLS = unittest.mock.Mock()
+    my_processor_instance = unittest.mock.Mock()
     MyProcessorCLS.return_value = my_processor_instance
 
     if max_batches > expected_process_batch_call_count:
         # Warning is raised when max_batches > total number of batches
         with pytest.warns(Warning):
-            torch_batch_process(
+            experimental.torch_batch_process(
                 dataset=index_dataset,
                 batch_processor_cls=MyProcessorCLS,
                 batch_size=batch_size,
@@ -360,7 +379,7 @@ def test_torch_batch_process_max_batches(
                 max_batches=max_batches,
             )
     else:
-        torch_batch_process(
+        experimental.torch_batch_process(
             dataset=index_dataset,
             batch_processor_cls=MyProcessorCLS,
             batch_size=batch_size,
@@ -373,17 +392,23 @@ def test_torch_batch_process_max_batches(
     assert my_processor_instance.on_finish.call_count == 1
 
 
-@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
-@patch("determined.get_cluster_info")
-@patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
-@patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
-@patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context"
+)
+@unittest.mock.patch("determined.get_cluster_info")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint"
+)
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._report_progress_to_master"
+)
+@unittest.mock.patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
 def test_torch_batch_process_preemption(
-    mock_reduce_metrics: MagicMock,
-    mock_report_progress_to_master: MagicMock,
-    mock_synchronize_and_checkpoint: MagicMock,
-    mock_get_cluster_info: MagicMock,
-    mock_initialize_default_inference_context: MagicMock,
+    mock_reduce_metrics: unittest.mock.MagicMock,
+    mock_report_progress_to_master: unittest.mock.MagicMock,
+    mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
+    mock_get_cluster_info: unittest.mock.MagicMock,
+    mock_initialize_default_inference_context: unittest.mock.MagicMock,
 ) -> None:
     mock_get_cluster_info.return_value = _get_det_info(
         slot_ids=DEFAULT_SLOT_IDS, container_addrs=DEFAULT_ADDRS
@@ -391,13 +416,13 @@ def test_torch_batch_process_preemption(
     mock_initialize_default_inference_context.return_value = _get_core_context(
         should_preempt_results=[False, True]
     )
-    index_dataset = _get_index_dataset(100)
+    index_dataset = IndexData(100)
 
-    MyProcessorCLS = Mock()
-    my_processor_instance = Mock()
+    MyProcessorCLS = unittest.mock.Mock()
+    my_processor_instance = unittest.mock.Mock()
     MyProcessorCLS.return_value = my_processor_instance
 
-    torch_batch_process(
+    experimental.torch_batch_process(
         dataset=index_dataset,
         batch_processor_cls=MyProcessorCLS,
         batch_size=10,
@@ -416,16 +441,21 @@ def test_torch_batch_process_preemption(
     assert mock_reduce_metrics.call_count == 1
 
 
-@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
-@patch("determined.get_cluster_info")
-@patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
-@patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context"
+)
+@unittest.mock.patch("determined.get_cluster_info")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint"
+)
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._report_progress_to_master"
+)
 def test_torch_batch_process_reduce_metrics(
-    mock_report_progress_to_master: MagicMock,
-    mock_synchronize_and_checkpoint: MagicMock,
-    mock_get_cluster_info: MagicMock,
-    mock_initialize_default_inference_context: MagicMock,
-    batch_processor_with_avg_metric_reducer: Type[TorchBatchProcessor],
+    mock_report_progress_to_master: unittest.mock.MagicMock,
+    mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
+    mock_get_cluster_info: unittest.mock.MagicMock,
+    mock_initialize_default_inference_context: unittest.mock.MagicMock,
 ) -> None:
     # Simulate a two worker run, and we are worker 0 (chief)
     # The entire dataset is [0, 1, 2, 3 , 4, 5, 6, 7, 8, 9]
@@ -438,21 +468,23 @@ def test_torch_batch_process_reduce_metrics(
     mock_get_cluster_info.return_value = _get_det_info(
         slot_ids=[0, 1], container_addrs=DEFAULT_ADDRS
     )
-    index_dataset = _get_index_dataset(10)
+    index_dataset = IndexData(10)
     mock_core_context = _get_core_context(rank=0)
     mock_initialize_default_inference_context.return_value = mock_core_context
 
     mock_core_context.__enter__().distributed.gather.return_value = [[10], [35]]
 
-    torch_batch_process(
+    experimental.torch_batch_process(
         dataset=index_dataset,
-        batch_processor_cls=batch_processor_with_avg_metric_reducer,
+        batch_processor_cls=MyProcessor,
         batch_size=5,
         checkpoint_interval=1,
     )
 
     # Assert gather was first called with worker 0's sum amount: 10
-    assert mock_core_context.__enter__().distributed.gather.call_args_list[0] == call([10])
+    assert mock_core_context.__enter__().distributed.gather.call_args_list[0] == unittest.mock.call(
+        [10]
+    )
     # Assert that we report metrics with the sum across workers: 45
     mock_core_context.__enter__().train.report_validation_metrics.assert_called_once_with(
         steps_completed=1,
@@ -460,47 +492,56 @@ def test_torch_batch_process_reduce_metrics(
     )
 
 
-@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
-@patch("determined.get_cluster_info")
-@patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
-@patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
-@patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context"
+)
+@unittest.mock.patch("determined.get_cluster_info")
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint"
+)
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._report_progress_to_master"
+)
+@unittest.mock.patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
 @pytest.mark.parametrize("checkpoint_interval", [-1, 0])
 def test_torch_batch_process_invalid_checkpoint_interval(
-    mock_reduce_metrics: MagicMock,
-    mock_report_progress_to_master: MagicMock,
-    mock_synchronize_and_checkpoint: MagicMock,
-    mock_get_cluster_info: MagicMock,
-    mock_initialize_default_inference_context: MagicMock,
+    mock_reduce_metrics: unittest.mock.MagicMock,
+    mock_report_progress_to_master: unittest.mock.MagicMock,
+    mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
+    mock_get_cluster_info: unittest.mock.MagicMock,
+    mock_initialize_default_inference_context: unittest.mock.MagicMock,
     checkpoint_interval: int,
 ) -> None:
     mock_get_cluster_info.return_value = _get_det_info(
         slot_ids=DEFAULT_SLOT_IDS, container_addrs=DEFAULT_ADDRS
     )
     mock_initialize_default_inference_context.return_value = _get_core_context()
-    index_dataset = _get_index_dataset()
+    index_dataset = IndexData()
 
-    MyProcessorCLS = Mock()
-    my_processor_instance = Mock()
+    MyProcessorCLS = unittest.mock.Mock()
+    my_processor_instance = unittest.mock.Mock()
     MyProcessorCLS.return_value = my_processor_instance
 
     with pytest.raises(ValueError):
-        torch_batch_process(
+        experimental.torch_batch_process(
             dataset=index_dataset,
             batch_processor_cls=MyProcessorCLS,
             checkpoint_interval=checkpoint_interval,
         )
 
 
-@patch("determined.pytorch.to_device")
-@patch("determined.pytorch.experimental._torch_batch_process.get_default_device")
+@unittest.mock.patch("determined.pytorch.to_device")
+@unittest.mock.patch("determined.pytorch.experimental._torch_batch_process.get_default_device")
 def test_torch_batch_processor_context_to_device(
-    mock_get_default_device: MagicMock, mock_pytorch_to_device: MagicMock
+    mock_get_default_device: unittest.mock.MagicMock,
+    mock_pytorch_to_device: unittest.mock.MagicMock,
 ) -> None:
     mock_get_default_device.return_value = DEFAULT_DEVICE
 
     core_context = _get_core_context()
-    torch_batch_processor_context = TorchBatchProcessorContext(core_context, DEFAULT_STORAGE_PATH)
+    torch_batch_processor_context = experimental.TorchBatchProcessorContext(
+        core_context, DEFAULT_STORAGE_PATH
+    )
 
     tensor_1 = torch.zeros(4)
     torch_batch_processor_context.to_device(tensor_1)
@@ -510,16 +551,18 @@ def test_torch_batch_processor_context_to_device(
     assert torch.all(tensor_1.eq(to_device_call_args[0]))
 
 
-@patch("determined.pytorch.experimental._torch_batch_process.get_default_device")
+@unittest.mock.patch("determined.pytorch.experimental._torch_batch_process.get_default_device")
 def test_torch_batch_processor_context_prepare_model_for_inference(
-    mock_get_default_device: MagicMock,
+    mock_get_default_device: unittest.mock.MagicMock,
 ) -> None:
     mock_get_default_device.return_value = DEFAULT_DEVICE
 
     core_context = _get_core_context()
-    torch_batch_processor_context = TorchBatchProcessorContext(core_context, DEFAULT_STORAGE_PATH)
+    torch_batch_processor_context = experimental.TorchBatchProcessorContext(
+        core_context, DEFAULT_STORAGE_PATH
+    )
 
-    model = MagicMock()
+    model = unittest.mock.MagicMock()
     torch_batch_processor_context.prepare_model_for_inference(model)
 
     # Test model.eval() called
@@ -529,17 +572,19 @@ def test_torch_batch_processor_context_prepare_model_for_inference(
     model.to.assert_called_once_with(DEFAULT_DEVICE)
 
 
-@patch("determined.pytorch.experimental._torch_batch_process.get_default_device")
-def test_torch_batch_processor_context_get_default_storage_path_context(
-    mock_get_default_device: MagicMock,
+@unittest.mock.patch("determined.pytorch.experimental._torch_batch_process.get_default_device")
+def test_torch_batch_processor_context_upload_path(
+    mock_get_default_device: unittest.mock.MagicMock,
 ) -> None:
     mock_get_default_device.return_value = DEFAULT_DEVICE
 
     core_context = _get_core_context()
-    torch_batch_processor_context = TorchBatchProcessorContext(core_context, DEFAULT_STORAGE_PATH)
+    torch_batch_processor_context = experimental.TorchBatchProcessorContext(
+        core_context, DEFAULT_STORAGE_PATH
+    )
 
     assert torch_batch_processor_context._use_default_storage is False
-    torch_batch_processor_context.get_default_storage_path_context()
+    torch_batch_processor_context.upload_path()
 
     core_context.checkpoint._storage_manager.store_path.assert_called_once_with(
         DEFAULT_STORAGE_PATH
@@ -547,7 +592,7 @@ def test_torch_batch_processor_context_get_default_storage_path_context(
     assert torch_batch_processor_context._use_default_storage is True
 
 
-@patch("determined.pytorch.experimental._torch_batch_process.torch.cuda.device_count")
+@unittest.mock.patch("determined.pytorch.experimental._torch_batch_process.torch.cuda.device_count")
 @pytest.mark.parametrize(
     "local_rank, device_count, expected_device",
     [
@@ -557,7 +602,7 @@ def test_torch_batch_processor_context_get_default_storage_path_context(
     ],
 )
 def test_get_default_device(
-    mock_torch_device_count: MagicMock,
+    mock_torch_device_count: unittest.mock.MagicMock,
     local_rank: int,
     device_count: int,
     expected_device: torch.device,
@@ -566,5 +611,5 @@ def test_get_default_device(
     core_context.distributed.local_rank = local_rank
     mock_torch_device_count.return_value = device_count
 
-    default_device = get_default_device(core_context)
+    default_device = experimental.get_default_device(core_context)
     assert expected_device == default_device
