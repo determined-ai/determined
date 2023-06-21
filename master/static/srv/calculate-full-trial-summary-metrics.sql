@@ -3,14 +3,14 @@ WITH trial_metrics as (
 SELECT
 	name,
 	trial_id,
-	CASE safe_sum(entries)
-		WHEN safe_sum(entries) FILTER (WHERE metric_type = 'number') THEN 'number'
-		WHEN safe_sum(entries) FILTER (WHERE metric_type = 'string') THEN 'string'
-		WHEN safe_sum(entries) FILTER (WHERE metric_type = 'date') THEN 'date'
-		WHEN safe_sum(entries) FILTER (WHERE metric_type = 'object') THEN 'object'
-		WHEN safe_sum(entries) FILTER (WHERE metric_type = 'boolean') THEN 'boolean'
-		WHEN safe_sum(entries) FILTER (WHERE metric_type = 'array') THEN 'array'
-		WHEN safe_sum(entries) FILTER (WHERE metric_type = 'null') THEN 'null'
+	CASE sum(entries)
+		WHEN sum(entries) FILTER (WHERE metric_type = 'number') THEN 'number'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'string') THEN 'string'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'date') THEN 'date'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'object') THEN 'object'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'boolean') THEN 'boolean'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'array') THEN 'array'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'null') THEN 'null'
 		ELSE 'string'
 	END as metric_type
 FROM (
