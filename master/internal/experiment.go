@@ -19,6 +19,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -249,10 +250,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return err
 		}
 
-		ctx.Self().System().TellAt(sproto.JobsActorAddr, sproto.RegisterJob{
-			JobID:    e.JobID,
-			JobActor: ctx.Self(),
-		})
+		job.Manager.RegisterJob(e.JobID, ctx.Self())
 
 		if e.restored {
 			j, err := e.db.JobByID(e.JobID)
@@ -407,11 +405,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				ctx.Log().Error(err)
 			}
 		}
-
-		ctx.Self().System().TellAt(sproto.JobsActorAddr, sproto.UnregisterJob{
-			JobID: e.JobID,
-		})
-
+		job.Manager.UnregisterJob(e.JobID)
 		state := model.StoppingToTerminalStates[e.State]
 		if wasPatched, err := e.Transition(state); err != nil {
 			return err

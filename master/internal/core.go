@@ -51,7 +51,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -1010,11 +1009,12 @@ func (m *Master) Run(ctx context.Context) error {
 		},
 		cert,
 	)
+	job.Manager = job.NewJobs(m.rm, m.system)
+
 	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
-	m.system.ActorOf(sproto.JobsActorAddr, job.NewJobs(m.rm))
 
 	if err = m.restoreNonTerminalExperiments(); err != nil {
 		return err

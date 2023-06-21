@@ -119,18 +119,6 @@ type RecoverJobPosition struct {
 	ResourcePool string
 }
 
-// RegisterJob Registers an active job with the jobs actor.
-// Used as to denote a child actor.
-type RegisterJob struct {
-	JobID    model.JobID
-	JobActor *actor.Ref
-}
-
-// UnregisterJob removes a job from the jobs actor.
-type UnregisterJob struct {
-	JobID model.JobID
-}
-
 // SchedulingState denotes the scheduling state of a job and in order of its progression value.
 type SchedulingState uint8 // CHECK perhaps could be defined in resource manager. cyclic import
 

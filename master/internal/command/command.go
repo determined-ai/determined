@@ -18,6 +18,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -289,10 +290,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}, c.db, c.rm)
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
-		ctx.Self().System().TellAt(sproto.JobsActorAddr, sproto.RegisterJob{
-			JobID:    c.jobID,
-			JobActor: ctx.Self(),
-		})
+		job.Manager.RegisterJob(c.jobID, ctx.Self())
 
 		ctx.Ask(c.allocation, actor.Ping{}).Get()
 		if err := c.persist(); err != nil {
@@ -307,9 +305,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
-		ctx.Self().System().TellAt(sproto.JobsActorAddr, sproto.UnregisterJob{
-			JobID: c.jobID,
-		})
+		job.Manager.UnregisterJob(c.jobID)
 		if err := c.db.DeleteUserSessionByToken(c.GenericCommandSpec.Base.UserSessionToken); err != nil {
 			ctx.Log().WithError(err).Errorf(
 				"failure to delete user session for task: %v", c.taskID)

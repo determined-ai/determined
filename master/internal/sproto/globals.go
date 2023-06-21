@@ -13,8 +13,6 @@ var (
 	AgentsAddr = actor.Addr("agents")
 	// PodsAddr is the actor address of the pods.
 	PodsAddr = actor.Addr("pods")
-	// JobsActorAddr is the address of the jobs actor.
-	JobsActorAddr = actor.Addr("jobs")
 )
 
 type (
