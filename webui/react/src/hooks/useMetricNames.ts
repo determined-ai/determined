@@ -6,10 +6,14 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import { Metric, MetricType } from 'types';
 import { isEqual } from 'utils/data';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';
 
-const useMetricNames = (experimentIds: number[], errorHandler?: (e: unknown) => void): Metric[] => {
-  const [metrics, setMetrics] = useState<Metric[]>([]);
+const useMetricNames = (
+  experimentIds: number[],
+  errorHandler?: (e: unknown) => void,
+): Loadable<Metric[]> => {
+  const [metrics, setMetrics] = useState<Loadable<Metric[]>>(NotLoaded);
   const [actualExpIds, setActualExpIds] = useState<number[]>([]);
 
   useEffect(
@@ -19,7 +23,7 @@ const useMetricNames = (experimentIds: number[], errorHandler?: (e: unknown) => 
 
   useEffect(() => {
     if (actualExpIds.length === 0) {
-      setMetrics([]);
+      setMetrics(NotLoaded);
       return;
     }
     const canceler = new AbortController();
@@ -51,7 +55,9 @@ const useMetricNames = (experimentIds: number[], errorHandler?: (e: unknown) => 
           ...newTrainingMetrics.map((name) => ({ name, type: MetricType.Training })),
         ];
         setMetrics((prevMetrics) =>
-          prevMetrics.length === newMetrics.length ? prevMetrics : newMetrics,
+          Loadable.getOrElse([], prevMetrics).length === newMetrics.length
+            ? prevMetrics
+            : Loaded(newMetrics),
         );
       },
       errorHandler,
