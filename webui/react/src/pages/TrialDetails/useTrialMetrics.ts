@@ -5,6 +5,7 @@ import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import usePolling from 'hooks/usePolling';
+import usePrevious from 'hooks/usePrevious';
 import { timeSeries } from 'services/api';
 import { Metric, MetricContainer, MetricType, RunState, Scale, TrialDetails } from 'types';
 import { isEqual } from 'utils/data';
@@ -115,8 +116,13 @@ export const useTrialMetrics = (
   const [scale, setScale] = useState<Scale>(Scale.Linear);
   const [hasData, setHasData] = useState<boolean>(true);
 
+  const previousTrials = usePrevious(trials, []);
+
   const fetchTrialSummary = useCallback(async () => {
-    setLoadableData(NotLoaded);
+    // If the trial ids have not changed then we do not need to
+    // show the loading state again.
+    if (!isEqual(previousTrials, trials)) setLoadableData(NotLoaded);
+
     if (trials.length === 0) {
       // If there are no trials selected then
       // no data is available.
@@ -151,7 +157,7 @@ export const useTrialMetrics = (
         message.error('Error fetching metrics');
       }
     }
-  }, [metrics, trials, scale, loadableMetrics]);
+  }, [metrics, trials, scale, loadableMetrics, previousTrials]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchTrialSummary()]);
