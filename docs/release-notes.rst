@@ -24,8 +24,8 @@ Version 0.23.1
 
 **Deprecated Features**
 
--  ``LightningAdapter`` is deprecated and will be removed in a future version. We recommend PyTorch
-   Lightning users to migrate to :ref:`Core API <core-getting-started>`.
+-  ``LightningAdapter`` is deprecated and will be removed in a future version. We recommend that PyTorch
+   Lightning users migrate to the :ref:`Core API <core-getting-started>`.
 
 **Bug Fixes**
 
