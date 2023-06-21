@@ -70,7 +70,7 @@ const useAuthCheck = (): (() => Promise<boolean>) => {
     } else {
       authStore.setAuthChecked();
     }
-    return true;
+    return authStore.isAuthenticated.get();
   }, [info.externalLoginUri, searchParams, redirectToExternalSignin, updateBearerToken]);
 
   return checkAuth;

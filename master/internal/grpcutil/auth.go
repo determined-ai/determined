@@ -153,7 +153,9 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 	var err error
 	userModel, session, err = user.UserByToken(token, &extConfig)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) || errors.Is(err, db.ErrNotFound) || errors.Is(err, jwt.ErrTokenExpired) {
+		if errors.Is(err, sql.ErrNoRows) ||
+			errors.Is(err, db.ErrNotFound) ||
+			errors.Is(err, jwt.ErrTokenExpired) {
 			return nil, nil, ErrInvalidCredentials
 		}
 		return nil, nil, err
