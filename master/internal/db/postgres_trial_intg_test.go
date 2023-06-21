@@ -362,6 +362,40 @@ func generateSummaryMetricsTestCases(
 		"a": {Last: "1.8", Type: "string"},
 	}
 
+	doubleOverflow := RequireMockTrial(t, db, exp).ID
+	addMetrics(ctx, t, db, doubleOverflow,
+		`[{"a":1.79769e308}, {"a":1.79769e308}]`,
+		`[{"a":1.79769e308}, {"a":1.79769e308}]`, archive)
+	doubleOverflowMetrics := map[string]summaryMetrics{
+		"a": {
+			Count: 2, Sum: math.Inf(1), Min: 1.79769e308, Max: 1.79769e308,
+			Last: "179769" + strings.Repeat("0", 303), Type: "number",
+		},
+	}
+	doubleOverflowValMetrics := map[string]summaryMetrics{
+		"a": {
+			Count: 2, Sum: math.Inf(1), Min: 1.79769e308, Max: 1.79769e308,
+			Last: "179769" + strings.Repeat("0", 303), Type: "number",
+		},
+	}
+
+	doubleOverflowNeg := RequireMockTrial(t, db, exp).ID
+	addMetrics(ctx, t, db, doubleOverflowNeg,
+		`[{"a":-1.79769e308}, {"a":-1.79769e308}]`,
+		`[{"a":-1.79769e308}, {"a":-1.79769e308}]`, archive)
+	doubleOverflowNegMetrics := map[string]summaryMetrics{
+		"a": {
+			Count: 2, Sum: math.Inf(-1), Min: -1.79769e308, Max: -1.79769e308,
+			Last: "-179769" + strings.Repeat("0", 303), Type: "number",
+		},
+	}
+	doubleOverflowNegValMetrics := map[string]summaryMetrics{
+		"a": {
+			Count: 2, Sum: math.Inf(-1), Min: -1.79769e308, Max: -1.79769e308,
+			Last: "-179769" + strings.Repeat("0", 303), Type: "number",
+		},
+	}
+
 	trialIDs := []int{
 		noMetrics,
 		numericMetrics,
@@ -371,6 +405,8 @@ func generateSummaryMetricsTestCases(
 		infNaNMetrics,
 		types,
 		mixedTypes,
+		doubleOverflow,
+		doubleOverflowNeg,
 	}
 	expectedTrain := []map[string]summaryMetrics{
 		expectedNoMetrics,
@@ -381,6 +417,8 @@ func generateSummaryMetricsTestCases(
 		expectedInfNaNMetrics,
 		expectedTypesMetrics,
 		expectedMixedTypesMetrics,
+		doubleOverflowMetrics,
+		doubleOverflowNegMetrics,
 	}
 	expectedVal := []map[string]summaryMetrics{
 		expectedNoValMetrics,
@@ -391,6 +429,8 @@ func generateSummaryMetricsTestCases(
 		expectedInfNaNValMetrics,
 		expectedTypesValMetrics,
 		expectedMixedTypesValMetrics,
+		doubleOverflowValMetrics,
+		doubleOverflowNegValMetrics,
 	}
 
 	return trialIDs, expectedTrain, expectedVal

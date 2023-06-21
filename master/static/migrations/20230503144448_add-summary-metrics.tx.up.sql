@@ -1,3 +1,34 @@
+CREATE OR REPLACE FUNCTION safe_sum_accumulate(float8, float8, OUT float8)
+  RETURNS float8 AS $$
+  BEGIN
+    -- Check for potential overflow
+    BEGIN
+      IF $1 IS NULL THEN
+        $3 := $2;
+      ELSIF $2 IS NULL THEN
+        $3 := $1;
+      ELSE
+        $3 := $1 + $2;
+      END IF;
+    EXCEPTION
+      WHEN numeric_value_out_of_range THEN
+        IF $1 < 0 THEN
+          $3 := '-Infinity';
+        ELSE
+          $3 := 'Infinity';
+        END IF;
+    END;
+  END;
+$$ LANGUAGE plpgsql;
+
+DROP AGGREGATE IF EXISTS safe_sum(float8);
+
+CREATE AGGREGATE safe_sum(float8) (
+  SFUNC = safe_sum_accumulate,
+  STYPE = float8
+);
+
+
 -- We need to declare start_timestamp before this migration starts
 -- to avoid missing metrics reported while this migration runs in background cases.
 DO $$ DECLARE start_timestamp timestamptz := NOW(); BEGIN
@@ -34,14 +65,14 @@ WITH training_trial_metrics as (
 SELECT
     name,
     trial_id,
-    CASE sum(entries)
-        WHEN sum(entries) FILTER (WHERE metric_type = 'number') THEN 'number'
-        WHEN sum(entries) FILTER (WHERE metric_type = 'string') THEN 'string'
-        WHEN sum(entries) FILTER (WHERE metric_type = 'date') THEN 'date'
-        WHEN sum(entries) FILTER (WHERE metric_type = 'object') THEN 'object'
-        WHEN sum(entries) FILTER (WHERE metric_type = 'boolean') THEN 'boolean'
-        WHEN sum(entries) FILTER (WHERE metric_type = 'array') THEN 'array'
-        WHEN sum(entries) FILTER (WHERE metric_type = 'null') THEN 'null'
+    CASE safe_sum(entries)
+        WHEN safe_sum(entries) FILTER (WHERE metric_type = 'number') THEN 'number'
+        WHEN safe_sum(entries) FILTER (WHERE metric_type = 'string') THEN 'string'
+        WHEN safe_sum(entries) FILTER (WHERE metric_type = 'date') THEN 'date'
+        WHEN safe_sum(entries) FILTER (WHERE metric_type = 'object') THEN 'object'
+        WHEN safe_sum(entries) FILTER (WHERE metric_type = 'boolean') THEN 'boolean'
+        WHEN safe_sum(entries) FILTER (WHERE metric_type = 'array') THEN 'array'
+        WHEN safe_sum(entries) FILTER (WHERE metric_type = 'null') THEN 'null'
         ELSE 'string'
     END as metric_type
 FROM (
@@ -89,7 +120,7 @@ SELECT
     name,
     ntm.trial_id,
     count(1) as count_agg,
-    sum((steps.metrics->'avg_metrics'->>name)::double precision) as sum_agg,
+    safe_sum((steps.metrics->'avg_metrics'->>name)::double precision) as sum_agg,
     min((steps.metrics->'avg_metrics'->>name)::double precision) as min_agg,
     max((steps.metrics->'avg_metrics'->>name)::double precision) as max_agg,
     'number' as metric_type
@@ -162,14 +193,14 @@ validation_trial_metrics as (
 SELECT
     name,
     trial_id,
-    CASE sum(entries)
-        WHEN sum(entries) FILTER (WHERE metric_type = 'number') THEN 'number'
-        WHEN sum(entries) FILTER (WHERE metric_type = 'string') THEN 'string'
-        WHEN sum(entries) FILTER (WHERE metric_type = 'date') THEN 'date'
-        WHEN sum(entries) FILTER (WHERE metric_type = 'object') THEN 'object'
-        WHEN sum(entries) FILTER (WHERE metric_type = 'boolean') THEN 'boolean'
-        WHEN sum(entries) FILTER (WHERE metric_type = 'array') THEN 'array'
-        WHEN sum(entries) FILTER (WHERE metric_type = 'null') THEN 'null'
+    CASE safe_sum(entries)
+        WHEN safe_sum(entries) FILTER (WHERE metric_type = 'number') THEN 'number'
+        WHEN safe_sum(entries) FILTER (WHERE metric_type = 'string') THEN 'string'
+        WHEN safe_sum(entries) FILTER (WHERE metric_type = 'date') THEN 'date'
+        WHEN safe_sum(entries) FILTER (WHERE metric_type = 'object') THEN 'object'
+        WHEN safe_sum(entries) FILTER (WHERE metric_type = 'boolean') THEN 'boolean'
+        WHEN safe_sum(entries) FILTER (WHERE metric_type = 'array') THEN 'array'
+        WHEN safe_sum(entries) FILTER (WHERE metric_type = 'null') THEN 'null'
         ELSE 'string'
     END as metric_type
 FROM (
@@ -214,7 +245,7 @@ SELECT
     name,
     ntm.trial_id,
     count(1) as count_agg,
-    sum((validations.metrics->'validation_metrics'->>name)::double precision) as sum_agg,
+    safe_sum((validations.metrics->'validation_metrics'->>name)::double precision) as sum_agg,
     min((validations.metrics->'validation_metrics'->>name)::double precision) as min_agg,
     max((validations.metrics->'validation_metrics'->>name)::double precision) as max_agg,
     'number' as metric_type
