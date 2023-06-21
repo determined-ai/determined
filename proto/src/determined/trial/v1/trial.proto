@@ -265,3 +265,41 @@ message MetricsReport {
   // Run ID of trial when metric was reported.
   int32 trial_run_id = 7;
 }
+
+
+
+
+message TrialSourceInfo {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "trial_id",
+        "checkpoint_uuid",
+        "trial_source_info_type",
+      ]
+    }
+  };
+  // ID of the trial.
+  int32 trial_id = 1;
+  // UUID of the checkpoint.
+  string checkpoint_uuid = 2;
+  // Source Trial which generated the checkpoint (if applicable)
+  int32 source_trial_id = 3;
+  // // Source Trial which generated the checkpoint (if applicable)
+  // int32 source_trial_id = 4;
+  // Latest validation.
+  MetricsWorkload latest_validation = 4;
+
+  // // End time of when metric was reported.
+  // google.protobuf.Timestamp end_time = 2;
+  // // Struct of the reported metrics.
+  // google.protobuf.Struct metrics = 3;
+  // // batches completed in the report.
+  // int32 total_batches = 4;
+  // // If metric is archived.
+  // bool archived = 5;
+  // // ID of metric in table.
+  // int32 id = 6;
+  // // Run ID of trial when metric was reported.
+  // int32 trial_run_id = 7;  
+}
