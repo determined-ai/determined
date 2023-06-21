@@ -12,16 +12,20 @@ usage:
 	@echo ""
 	@echo " make unslurmcluster  - Tears down GCP compute instance made by invoking make slurmcluster."
 	@echo ""
-	@echo " make slurmcluster [cont=type]  - Invokes a slurmcluster using the specified container run type."
-	@echo "									'type' provides a resource_manager.container_run_type value"
-	@echo "                                  Options for 'type' are 'singularity' or 'podman'. Default is 'singularity'."
+	@echo " make slurmcluster [cont=type] - Invokes a slurmcluster using the specified container run type."
+	@echo "				 'type' provides a resource_manager.container_run_type value"
+	@echo "                                 Options for 'type' are 'singularity' or 'podman'. Default is 'singularity'."
+	@echo ""
+	@echo " make slurmcluster [vmtime=secs] -  Sets a time limit in seconds for the slurmcluster devbox to run before"
+	@echo "				    automatically deleting the VM. If unspecified, the default time is two hours or"
+	@echo "                                    7200 seconds. One must run 'make unslurmcluster' before changing the time."
 	@echo ""
 
 
 .PHONY: slurmcluster
 slurmcluster:
 	mkdir -p ~/.slurmcluster
-	$(MAKE) -C terraform build
+	$(MAKE) -C terraform build VMTIME=$(vmtime)
 	- ./scripts/slurmcluster.sh -c $(cont) || ./scripts/slurmcluster.sh -c singularity
 
 .PHONY: unslurmcluster

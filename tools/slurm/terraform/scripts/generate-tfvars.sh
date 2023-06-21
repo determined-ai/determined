@@ -9,9 +9,15 @@ if [ -z $OPT_DEVBOX_PREFIX ]; then
     OPT_DEVBOX_PREFIX="$USER"
 fi
 
+VMTIME=$1
+if [ -z $VMTIME ]; then
+    VMTIME=7200
+fi
+
 cat <<EOF
 name = "$OPT_DEVBOX_PREFIX-dev-box"
 ssh_user = "$USER"
 ssh_key_pub = "$KEY_FILE"
 ssh_allow_ip = "$SSH_ALLOW_IP"
+vmLifetimeSeconds = "$VMTIME"
 EOF

@@ -23,7 +23,7 @@ build/generate-sshkeys: scripts/generate-sshkeys.sh
 
 build/default.tfvars: scripts/generate-tfvars.sh build/generate-sshkeys
 	mkdir -p build
-	./scripts/generate-tfvars.sh > build/default.tfvars
+	./scripts/generate-tfvars.sh $(VMTIME) > build/default.tfvars
 
 .PHONY: build
 build: init build/default.tfvars
