@@ -18,18 +18,16 @@ interface Props {
 const JupyterLabButton: React.FC<Props> = ({ enabled, workspace }: Props) => {
   const JupyterLabModal = useModal(JupyterLabModalComponent);
   const { settings } = useSettings<JupyterLabOptions>(JupyterLabSettings);
-  const shortcut: ShortcutConfig = settings.shortcut ? JSON.parse(settings.shortcut) : undefined;
+  const shortcut: ShortcutConfig | undefined = settings.shortcut
+    ? JSON.parse(settings.shortcut)
+    : undefined;
 
   return (
     <>
       {enabled ? (
-        shortcut ? (
-          <Tooltip content={getShortcutString(shortcut)}>
-            <Button onClick={JupyterLabModal.open}>Launch JupyterLab</Button>
-          </Tooltip>
-        ) : (
+        <Tooltip content={shortcut && getShortcutString(shortcut)}>
           <Button onClick={JupyterLabModal.open}>Launch JupyterLab</Button>
-        )
+        </Tooltip>
       ) : (
         <Tooltip content="You do not have permission to launch JupyterLab" placement="leftBottom">
           <div>

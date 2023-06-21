@@ -12,10 +12,12 @@ const JupyterLabGlobal: React.FC = () => {
   const { settings } = useSettings<JupyterLabOptions>(JupyterLabSettings);
 
   useEffect(() => {
-    const shortcut: ShortcutConfig = settings.shortcut ? JSON.parse(settings.shortcut) : undefined;
+    const shortcut: ShortcutConfig | undefined = settings.shortcut
+      ? JSON.parse(settings.shortcut)
+      : undefined;
 
     const keyDownListener = (e: KeyboardEvent) => {
-      if (shortcutMatch(e, shortcut)) {
+      if (shortcut && shortcutMatch(e, shortcut)) {
         JupyterLabModal.open();
       }
     };

@@ -65,11 +65,11 @@ const useKeyTracker = (): void => {
 };
 
 export type ShortcutConfig = {
-  altKey: boolean;
+  altKey?: boolean;
   key: string;
-  metaKey: boolean;
-  shiftKey: boolean;
-  ctrlKey: boolean;
+  metaKey?: boolean;
+  shiftKey?: boolean;
+  ctrlKey?: boolean;
 };
 
 const keyNames = {
