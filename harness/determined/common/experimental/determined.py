@@ -1,7 +1,7 @@
 import logging
 import pathlib
 import warnings
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Union
 
 import determined as det
 from determined.common import api, context, util, yaml
@@ -98,7 +98,7 @@ class Determined:
 
         authentication.logout(self._session._master, user, self._session._cert)
 
-    def list_users(self) -> Iterable[user.User]:
+    def list_users(self) -> Iterator[user.User]:
         users_bindings = bindings.get_GetUsers(session=self._session).users
         for user_b in users_bindings:
             yield user.User._from_bindings(user_b, self._session)
@@ -259,21 +259,23 @@ class Determined:
         model_id: Optional[int] = None,
         workspace_names: Optional[List[str]] = None,
         workspace_ids: Optional[List[int]] = None,
-    ) -> Iterable[model.Model]:
+    ) -> List[model.Model]:
         warnings.warn(
             "Determined.get_models() has been deprecated and will be removed in a future version."
             "Please call Determined.list_models() instead.",
             FutureWarning,
             stacklevel=2,
         )
-        return self.list_models(
-            sort_by=sort_by,
-            order_by=order_by,
-            name=name,
-            description=description,
-            model_id=model_id,
-            workspace_names=workspace_names,
-            workspace_ids=workspace_ids,
+        return list(
+            self.list_models(
+                sort_by=sort_by,
+                order_by=order_by,
+                name=name,
+                description=description,
+                model_id=model_id,
+                workspace_names=workspace_names,
+                workspace_ids=workspace_ids,
+            )
         )
 
     def list_models(
@@ -285,7 +287,7 @@ class Determined:
         model_id: Optional[int] = None,
         workspace_names: Optional[List[str]] = None,
         workspace_ids: Optional[List[int]] = None,
-    ) -> Iterable[model.Model]:
+    ) -> Iterator[model.Model]:
         """
         Get an iterable of all models in the model registry.
 
@@ -303,7 +305,7 @@ class Determined:
             workspace_ids: Workspace IDs to filter models by.
 
         Note:
-            This method returns an Iterable type that lazily instantiates response objects. To
+            This method returns an Iterator type that lazily fetches response objects. To
             fetch all models at once, call list(list_models()).
         """
 
