@@ -29,6 +29,11 @@ variable "name" {
   type = string
 }
 
+variable "vmLifetimeSeconds"{
+  type = number
+  default = 7200
+}
+
 variable "machine_type" {
   type    = string
   default = "n1-standard-8"

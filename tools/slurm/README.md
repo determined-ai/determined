@@ -35,6 +35,10 @@ port `8081` on the compute instance points at `localhost:8080` on your machine. 
 `devcluster` is started with the Slurm RM pointed at the remote instance, and local development
 with `devcluster` works from here as always.
 
+## Automatic VM Deletion
+
+By default, each devbox invoked by `make slurmcluster` will automatically delete the VM after two hours of runtime. If you want to override this time limit, one can run `make slurm cluster vmtime=[seconds]`. Where `seconds` is a value between 0 to 315,576,000,000 seconds inclusive. The two hour time limit ensures that devboxes are being deleted if they are not used to prevent excess costs.
+
 # Running pytest Suites
 
 ## In Development
