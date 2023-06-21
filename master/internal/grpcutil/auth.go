@@ -155,9 +155,8 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) || errors.Is(err, db.ErrNotFound) || errors.Is(err, jwt.ErrTokenExpired) {
 			return nil, nil, ErrInvalidCredentials
-		} else {
-			return nil, nil, err
 		}
+		return nil, nil, err
 	}
 
 	if !userModel.Active {
