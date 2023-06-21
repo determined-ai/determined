@@ -55,6 +55,11 @@ html[data-theme="dark"] {
   overscroll-behavior: none;
 }
 
+.bd-main {
+  /* Book theme overrides flex-grow: 0 but we want to align content center.  */
+  flex-grow: 1;
+}
+
 .header-links-left a {
   white-space: nowrap;
 }
@@ -78,24 +83,17 @@ html[data-theme="dark"] {
 }
 
 .tiles-flex {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px
 }
 
-.tile-container {
-  width: calc(33% - 20px);
-}
 
 .tile {
   /* looks */
-  background-color: var(--pst-color-surface);
-  border: 1px solid var(--pst-color-text-muted);
   border-radius: 5px;
   /* sizing/boxing */
-  height: 200px;
-  margin: 10px;
+  height: 220px;
   padding: 10px;
   /* animation */
   -webkit-transition: 250ms;
@@ -105,8 +103,44 @@ html[data-theme="dark"] {
   will-change: transform;
   /* layout */
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 24px 40px auto;
+  grid-template-areas:
+    'icon'
+    'title'
+    'description';
+  gap: 4px;
+}
+
+.tile-icon {
+  background-color: transparent !important;
+  grid-area: icon;
+  height: 24px;
+  width: 24px;
+}
+
+.tile-container:nth-child(6n - 5) > .tile {
+  background-color: #FEC901;
+}
+
+.tile-container:nth-child(6n - 4) > .tile {
+  background-color: #32DAC8;
+}
+
+.tile-container:nth-child(6n - 3) > .tile {
+  background-color: #fdc6a7;
+}
+
+.tile-container:nth-child(6n - 2) > .tile {
+  background-color: #b98cf4;
+}
+
+.tile-container:nth-child(6n - 1) > .tile {
+  background-color: #ededed;
+}
+
+.tile-container:nth-child(6n) > .tile {
+  background-color: #a0da70;
 }
 
 .tile:hover {
@@ -116,15 +150,16 @@ html[data-theme="dark"] {
 
 .tile .tile-title {
   /* looks */
+  color: black;
   font-size: 18px;
   text-align: center;
   /* sizing/boxing */
-  height: 30%;
   margin: 0px;
   /* layout */
   display: flex;
   flex-direction: column;
   justify-content: space-around;
+  grid-area: title;
 }
 
 .tile .tile-divider {
@@ -139,8 +174,10 @@ html[data-theme="dark"] {
 
 .tile .tile-description {
   /* looks */
+  color: black;
   font-size: 14px;
   margin: 0.5rem 0;
+  grid-area: description;
 }
 
 /* Legacy styles from furo theme layout: */
@@ -502,22 +539,14 @@ h6 {
     width: 420px;
   }
 
-  .tile-container {
-    width: 50%;
-  }
-
   .tile {
-    height: auto;
+    height: 100%;
   }
 }
 
 @media screen and (max-width: 508px) {
   .landing .landing-search {
     display: none;
-  }
-
-  .tile-container {
-    width: calc(100% - 20px);
   }
 
   .tile {
