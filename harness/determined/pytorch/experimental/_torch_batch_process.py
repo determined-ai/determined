@@ -149,12 +149,12 @@ def _load_state(checkpoint_directory: pathlib.Path) -> Any:
 
 
 def _synchronize_and_checkpoint(
-    core_context: core.Context, steps_completed: int, rank: int, default_output_uuid: str
+    core_context: core.Context, steps_completed: int, default_output_uuid: str
 ) -> None:
     """
     Synchronize the workers and create checkpoint to record steps completed
     """
-    if rank == 0:
+    if core_context.distributed.get_rank() == 0:
         steps_completed_list = core_context.distributed.gather(steps_completed)
         if steps_completed_list is None:
             return
@@ -386,9 +386,7 @@ def torch_batch_process(
                 per_batch_processor.on_checkpoint_start()
                 if core_context._tensorboard_manager is not None:
                     core_context._tensorboard_manager.sync()
-                _synchronize_and_checkpoint(
-                    core_context, steps_completed, rank, default_output_uuid
-                )
+                _synchronize_and_checkpoint(core_context, steps_completed, default_output_uuid)
                 last_checkpoint_idx = batch_idx
 
                 # Report progress can only be done accurately with synchronization
@@ -411,7 +409,7 @@ def torch_batch_process(
         if batch_idx > last_checkpoint_idx:
             per_batch_processor.on_checkpoint_start()
             logging.info(f"Completed steps:  {steps_completed} and checkpointing")
-            _synchronize_and_checkpoint(core_context, iterate_length, rank, default_output_uuid)
+            _synchronize_and_checkpoint(core_context, iterate_length, default_output_uuid)
 
         _reduce_metrics(batch_processor_context, core_context, rank, steps_completed)
         # Finish any tensorboard uploads remaining

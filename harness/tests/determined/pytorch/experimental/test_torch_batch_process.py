@@ -1,6 +1,6 @@
 import math
 import unittest.mock
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pytest
 import torch
@@ -59,9 +59,7 @@ def _get_core_context(
     rank: int = 0, should_preempt_results: Optional[List[bool]] = None
 ) -> unittest.mock.MagicMock:
     mock_core_context = unittest.mock.MagicMock()
-    mock_distributed_context = unittest.mock.MagicMock()
-    mock_distributed_context.get_rank.return_value = rank
-    mock_distributed_context.broadcast.return_value = "mock_checkpoint_uuid"
+    mock_distributed_context = _get_dist_context(rank=rank)
     mock_core_context.__enter__().distributed = mock_distributed_context
     if should_preempt_results is None:
         mock_core_context.__enter__().preempt.should_preempt.return_value = False
@@ -70,19 +68,9 @@ def _get_core_context(
     return mock_core_context
 
 
-def _get_det_info(
-    slot_ids: List[int], container_addrs: List[str], latest_checkpoint: Optional[str] = None
-) -> unittest.mock.MagicMock:
-    mock_cluster_info = unittest.mock.MagicMock()
-    mock_cluster_info.slot_ids = slot_ids
-    mock_cluster_info.container_addrs = container_addrs
-    mock_cluster_info.latest_checkpoint = latest_checkpoint
-    return mock_cluster_info
-
-
 def _get_dist_context(
     rank: int = 0,
-    all_gather_return_value: Optional[Any] = [1, 2],
+    all_gather_return_value: Optional[Any] = None,
     gather_return_value: Optional[Any] = None,
 ) -> unittest.mock.MagicMock:
     mock_distributed_context = unittest.mock.MagicMock()
@@ -93,53 +81,22 @@ def _get_dist_context(
     return mock_distributed_context
 
 
-# @unittest.mock.patch(
-#     "determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context"
-# )
-# @unittest.mock.patch("determined.get_cluster_info")
-# @unittest.mock.patch(
-#     "determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint"
-# )
-# @unittest.mock.patch(
-#     "determined.pytorch.experimental._torch_batch_process._report_progress_to_master"
-# )
-# @unittest.mock.patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
-# @pytest.mark.parametrize(
-#     "dataloader_kwargs, batch_size",
-#     [
-#         [{"shuffle": True}, 10],
-#         [{"sampler": unittest.mock.Mock()}, 10],
-#         [{"batch_sampler": unittest.mock.Mock()}, 10],
-#         [{"batch_size": 20}, 10],
-#     ],
-# )
-# def test_torch_batch_process_dataloader_kwargs_validation(
-#     mock_reduce_metrics: unittest.mock.MagicMock,
-#     mock_report_progress_to_master: unittest.mock.MagicMock,
-#     mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
-#     mock_get_cluster_info: unittest.mock.MagicMock,
-#     mock_initialize_default_inference_context: unittest.mock.MagicMock,
-#     dataloader_kwargs: Dict[str, Any],
-#     batch_size: int,
-# ) -> None:
-#     mock_get_cluster_info.return_value = _get_det_info(
-#         slot_ids=DEFAULT_SLOT_IDS, container_addrs=DEFAULT_ADDRS
-#     )
-#     mock_initialize_default_inference_context.return_value = _get_core_context()
-#     index_dataset = IndexData()
-#
-#     MyProcessorCLS = unittest.mock.Mock()
-#     my_processor_instance = unittest.mock.Mock()
-#     MyProcessorCLS.return_value = my_processor_instance
-#
-#     # Test calling torch_batch_process with invalid arguments
-#     with pytest.raises(ValueError):
-#         experimental.torch_batch_process(
-#             dataset=index_dataset,
-#             batch_processor_cls=MyProcessorCLS,
-#             batch_size=batch_size,
-#             dataloader_kwargs=dataloader_kwargs,
-#         )
+@pytest.mark.parametrize(
+    "dataloader_kwargs, batch_size",
+    [
+        [{"shuffle": True}, 10],
+        [{"sampler": unittest.mock.Mock()}, 10],
+        [{"batch_sampler": unittest.mock.Mock()}, 10],
+        [{"batch_size": 20}, 10],
+    ],
+)
+def test_torch_batch_process_dataloader_kwargs_validation(
+    dataloader_kwargs: Dict[str, Any],
+    batch_size: int,
+) -> None:
+    # Test calling torch_batch_process with invalid arguments
+    with pytest.raises(ValueError):
+        experimental._torch_batch_process._validate_dataloader_kwargs(dataloader_kwargs, batch_size)
 
 
 @unittest.mock.patch(
