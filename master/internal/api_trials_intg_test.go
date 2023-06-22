@@ -281,9 +281,10 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 		"", maxDataPoints, 0, 10, false, nil, metricIds)
 	require.Equal(t, 2, len(actualAllMetrics))
 	require.NoError(t, err)
-	require.Equal(t, maxDataPoints, len(actualAllMetrics[0].Data)) // max datapoints check
-	require.Equal(t, maxDataPoints, len(actualAllMetrics[1].Data)) // max datapoints check
-	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualAllMetrics[0]))
+	// TODO
+	require.Equal(t, maxDataPoints, len(actualAllMetrics[0].Data))                        // max datapoints check
+	require.Equal(t, maxDataPoints, len(actualAllMetrics[1].Data))                        // max datapoints check
+	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualAllMetrics[0])) // first fails here
 	require.True(t, isMultiTrialSampleCorrect(expectedValMetrics, actualAllMetrics[1]))
 }
 
