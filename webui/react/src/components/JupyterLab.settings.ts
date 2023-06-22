@@ -1,18 +1,18 @@
 import { number, string, undefined as undefinedType, union } from 'io-ts';
 
-import { ShortcutConfig } from 'hooks/useKeyTracker';
 import { SettingsConfig } from 'hooks/useSettings';
 import { JupyterLabOptions } from 'utils/jupyter';
+import { KeyboardShortcut } from 'utils/shortcut';
 
 const STORAGE_PATH = 'jupyter-lab';
 export const DEFAULT_SLOT_COUNT = 1;
 
-const defaultShortcut: ShortcutConfig = {
-  altKey: false,
-  ctrlKey: false,
+const defaultShortcut: KeyboardShortcut = {
+  alt: false,
+  ctrl: false,
   key: 'g',
-  metaKey: true,
-  shiftKey: true,
+  meta: true,
+  shift: true,
 };
 
 const JupyterLabSettings: SettingsConfig<JupyterLabOptions> = {

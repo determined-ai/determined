@@ -1,9 +1,9 @@
 export interface KeyboardShortcut {
-  ctrl: boolean;
-  meta: boolean;
-  alt: boolean;
-  shift: boolean;
-  key?: string;
+  ctrl?: boolean;
+  meta?: boolean;
+  alt?: boolean;
+  shift?: boolean;
+  key: string;
 }
 
 export const matchesShortcut = (e: KeyboardEvent, shortcut: KeyboardShortcut): boolean =>
@@ -11,7 +11,7 @@ export const matchesShortcut = (e: KeyboardEvent, shortcut: KeyboardShortcut): b
   e.metaKey === shortcut.meta &&
   e.altKey === shortcut.alt &&
   e.shiftKey === shortcut.shift &&
-  e.key === shortcut.key;
+  e.key.toUpperCase() === shortcut.key.toUpperCase();
 
 export const shortcutToString = (shortcut: KeyboardShortcut): string => {
   const os = window.navigator.userAgent;
@@ -20,6 +20,6 @@ export const shortcutToString = (shortcut: KeyboardShortcut): string => {
   shortcut.meta && s.push(os.includes('Mac') ? 'Cmd' : os.includes('Win') ? 'Win' : 'Super');
   shortcut.shift && s.push('Shift');
   shortcut.alt && s.push('Alt');
-  shortcut.key && s.push(shortcut.key);
+  shortcut.key && s.push(shortcut.key.toUpperCase());
   return s.join(' + ');
 };
