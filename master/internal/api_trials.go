@@ -753,8 +753,17 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		return nil, nil
 	}
 
-	for metricType, metricNames := range metricTypeToNames {
-		metric, err := getDownSampledMetric(metricNames, metricType)
+	var metricTypes []model.MetricType
+	for metricType := range metricTypeToNames {
+		metricTypes = append(metricTypes, metricType)
+	}
+	sort.Slice(metricTypes, func(i, j int) bool {
+		return metricTypes[i] < metricTypes[j]
+	})
+
+	for _, mType := range metricTypes {
+		metricNames := metricTypeToNames[mType]
+		metric, err := getDownSampledMetric(metricNames, mType)
 		if err != nil {
 			return nil, err
 		}
