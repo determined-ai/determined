@@ -722,20 +722,18 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 			metricTypeToNames[metricType] = metricNames
 		}
 	}
-	if len(metricIds) > 0 {
-		for _, metricID := range metricIds {
-			nameAndType := strings.SplitN(metricID, ".", 2)
-			if len(nameAndType) < 2 {
-				return nil, fmt.Errorf(`error fetching time series of validation metrics
-					invalid metricId %v metrics must be in the form metric_type.metric_name`,
-					metricID,
-				)
-			}
-			metricIDName := nameAndType[1]
-			metricIDType := model.MetricType(nameAndType[0])
-
-			metricTypeToNames[metricIDType] = append(metricTypeToNames[metricIDType], metricIDName)
+	for _, metricID := range metricIds {
+		nameAndType := strings.SplitN(metricID, ".", 2)
+		if len(nameAndType) < 2 {
+			return nil, fmt.Errorf(`error fetching time series of validation metrics
+				invalid metricId %v metrics must be in the form metric_type.metric_name`,
+				metricID,
+			)
 		}
+		metricIDName := nameAndType[1]
+		metricIDType := model.MetricType(nameAndType[0])
+
+		metricTypeToNames[metricIDType] = append(metricTypeToNames[metricIDType], metricIDName)
 	}
 
 	getDownSampledMetric := func(aMetricNames []string, aMetricType model.MetricType,
