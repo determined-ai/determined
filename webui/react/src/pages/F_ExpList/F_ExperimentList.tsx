@@ -159,12 +159,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, [settings.filterset, isLoadingSettings]);
 
-  const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>(
-    settings.selectedExperimentIds,
-  );
-  const [excludedExperimentIds, setExcludedExperimentIds] = useState<Set<number>>(
-    new Set<number>(),
-  );
+  const [selectedExperimentIds, setSelectedExperimentIds] = useState<Loadable<number[]>>(NotLoaded);
+  const [excludedExperimentIds, setExcludedExperimentIds] = useState<Loadable<Set<number>>>(NotLoaded);
   const [selectAll, setSelectAll] = useState(false);
   const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -491,6 +487,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     },
     [updateSettings],
   );
+
+  useMemo(() => {
+    console.log([isLoading, selectedExperimentIds]);
+    if (!isLoading) {
+      updateSettings({ selectedExperimentIds });
+    }
+  }, [isLoading, updateSettings, selectedExperimentIds]);
 
   const selectedExperiments: ExperimentWithTrial[] = useMemo(() => {
     updateSettings({ selectedExperimentIds });

@@ -78,7 +78,7 @@ export interface GlideTableProps {
   colorMap: MapOfIdsToColors;
   columnWidths: Record<string, number>;
   comparisonViewOpen?: boolean;
-  excludedExperimentIds: Set<number>;
+  excludedExperimentIds: Loadable<Set<number>>;
   data: Loadable<ExperimentWithTrial>[];
   dataTotal: number;
   handleScroll?: (r: Rectangle) => void;
@@ -90,7 +90,7 @@ export interface GlideTableProps {
   project?: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
-  selectedExperimentIds: number[];
+  selectedExperimentIds: Loadable<number[]>;
   setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
   setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
   selectAll: boolean;
