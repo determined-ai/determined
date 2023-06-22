@@ -73,7 +73,8 @@ html_sidebars = {
         "sidebar-version.html",
         "search-field.html",
         "sbt-sidebar-nav.html",
-    ]
+    ],
+    "index": [],
 }
 
 pygments_style = "sphinx"
@@ -105,6 +106,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_sitemap",
     "sphinx_reredirects",
+    "sphinx_design",
     "myst_parser",
 ]
 

@@ -21,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
+	"github.com/determined-ai/determined/master/internal/task/idle"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -127,12 +128,15 @@ func (a *apiServer) validateToKillNotebook(ctx context.Context, notebookID strin
 
 func (a *apiServer) IdleNotebook(
 	ctx context.Context, req *apiv1.IdleNotebookRequest,
-) (resp *apiv1.IdleNotebookResponse, err error) {
-	err = a.validateToKillNotebook(ctx, req.NotebookId)
+) (*apiv1.IdleNotebookResponse, error) {
+	err := a.validateToKillNotebook(ctx, req.NotebookId)
 	if err != nil {
 		return nil, err
 	}
-	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
+	if !req.Idle {
+		idle.RecordActivity(req.NotebookId)
+	}
+	return &apiv1.IdleNotebookResponse{}, nil
 }
 
 func (a *apiServer) KillNotebook(
