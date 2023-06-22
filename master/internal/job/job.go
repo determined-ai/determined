@@ -154,7 +154,7 @@ func (j *Jobs) jobRef(id model.JobID) *actor.Ref {
 	return j.actorByID[id]
 }
 
-// RegisterJob registers a job with the job registry.
+// RegisterJob registers a job actor with the job registry.
 func (j *Jobs) RegisterJob(id model.JobID, ref *actor.Ref) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
