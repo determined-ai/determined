@@ -21,7 +21,7 @@ import (
 // Manager is the global singleton for managing jobs.
 var Manager *Jobs
 
-// Jobs manage jobs.
+// Jobs manages jobs.
 type Jobs struct {
 	mu        sync.Mutex
 	rm        rm.ResourceManager
