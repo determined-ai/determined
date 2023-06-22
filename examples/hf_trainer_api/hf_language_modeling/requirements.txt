@@ -1,4 +1,4 @@
-setuptools==59.5.0
+setuptools==65.5.1
 accelerate>=0.12.0
 torch>=1.5.0
 transformers>=4.28.1,<4.29.0
