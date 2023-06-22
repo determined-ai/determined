@@ -25,6 +25,14 @@ After initialization is completed, distributed training in Determined follows a 
    workers having identical solution states.
 #. Return to the first step.
 
+.. image:: /assets/images/dtrain-loop-light.png
+   :class: only-dark
+   :alt: Determined AI distributed training loop dark mode
+
+.. image:: /assets/images/dtrain-loop-light.png
+   :class: only-light
+   :alt: Determined AI distributed training loop light mode
+
 **************************
  Performance Optimization
 **************************
