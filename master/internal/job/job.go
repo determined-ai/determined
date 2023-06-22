@@ -88,7 +88,11 @@ func (j *Manager) jobQRefs(jobQ map[model.JobID]*sproto.RMJobInfo) []*actor.Ref 
 }
 
 // GetJobs returns a list of jobs for a resource pool.
-func (j *Manager) GetJobs(resourcePool string, desc bool, states []jobv1.State) ([]*jobv1.Job, error) {
+func (j *Manager) GetJobs(
+	resourcePool string,
+	desc bool,
+	states []jobv1.State,
+) ([]*jobv1.Job, error) {
 	jobQ, err := j.jobQSnapshot(resourcePool)
 	if err != nil {
 		return nil, err
