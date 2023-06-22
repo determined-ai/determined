@@ -1,5 +1,3 @@
-import { any } from 'io-ts';
-
 import { SettingsConfig } from 'hooks/useSettings';
 import { KeyboardShortcut } from 'utils/shortcut';
 
@@ -19,7 +17,7 @@ const shortCutSettingsConfig: SettingsConfig<Settings> = {
       },
       skipUrlEncoding: true,
       storageKey: 'navbarCollapsed',
-      type: any,
+      type: KeyboardShortcut,
     },
   },
   storagePath: 'shortcuts',
