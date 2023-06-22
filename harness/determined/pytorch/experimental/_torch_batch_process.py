@@ -283,6 +283,20 @@ def torch_batch_process(
     dataloader_kwargs: Optional[Dict[str, Any]] = None,
     distributed_context: Optional[core.DistributedContext] = None,
 ) -> None:
+    """
+    ```torch_batch_process``` shard and iterate through the provided dataset and process the dataset
+    with user-defined logic in ```batch_processor_cls```.
+
+    Arguments:
+        batch_processor_cls: A user-defined class extending ```TorchBatchProcessor```
+        dataset: A torch dataset class implementing __len__() and __getitem__()
+        batch_size: The number of items to in each batch
+        max_batches: The maximum number of batches to iterate over per worker
+        checkpoint_interval: Interval to checkpoint progress (i.e. record number
+            of batches processed)
+        dataloader_kwargs: Kwargs to pass to PyTorch dataloader
+        distributed_context: Distributed context to initialize core context
+    """
     with _initialize_default_inference_context(distributed_context) as core_context:
         """
         (1) Set up necessary variables to run batch processing
