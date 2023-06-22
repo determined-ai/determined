@@ -177,21 +177,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   const navigate = useNavigate();
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
 
-  // parse navigation url to state
-  useEffect(() => {
-    if (!querySettings) return;
-
-    const parsedSettings = queryToSettings<T>(config, querySettings);
-    stateOb.update((s) => {
-      const oldSettings = s.get(config.storagePath) ?? {};
-      const newSettings = { ...s.get(config.storagePath), ...parsedSettings };
-      return s.set(
-        config.storagePath,
-        isEqual(oldSettings, newSettings) ? oldSettings : newSettings,
-      );
-    });
-  }, [config, querySettings, stateOb]);
-
   const settings: SettingsRecord<T> = useMemo(
     () =>
       ({
@@ -317,6 +302,14 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     },
     [config, stateOb],
   );
+
+  // parse navigation url to state
+  useEffect(() => {
+    if (!querySettings) return;
+
+    const parsedSettings = queryToSettings<T>(config, querySettings);
+    updateSettings(parsedSettings);
+  }, [config, querySettings, updateSettings]);
 
   useLayoutEffect(() => {
     if (initialLoading) return;
