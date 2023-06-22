@@ -83,8 +83,8 @@ func (w *Watcher) run(ctx context.Context) {
 func (w *Watcher) tick() (done bool) {
 	var lastActivity *time.Time
 	if w.cfg.UseProxyState {
-		service := proxy.DefaultProxy.GetService(w.cfg.ServiceID)
-		if service == nil {
+		service, ok := proxy.DefaultProxy.Summary(w.cfg.ServiceID)
+		if !ok {
 			return false
 		}
 		lastActivity = ptrs.Ptr(service.LastRequested)
