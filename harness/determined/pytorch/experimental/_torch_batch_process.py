@@ -14,11 +14,9 @@ from torch import nn
 from torch.utils import data
 
 import determined as det
-from determined import core, pytorch
-from determined.common import set_logger
-from determined.pytorch import DataLoader
+from determined import common, core, pytorch
 
-set_logger(False)
+common.set_logger(False)
 
 DEFAULT_BATCH_SIZE = 1
 
@@ -360,7 +358,7 @@ def torch_batch_process(
             context=batch_processor_context,
         )
 
-        dataloader = DataLoader(
+        dataloader = pytorch.DataLoader(
             dataset=dataset, batch_size=batch_size, shuffle=False, **dataloader_kwargs
         ).get_data_loader(repeat=False, skip=skip, num_replicas=total_worker, rank=rank)
 
@@ -439,7 +437,7 @@ def torch_batch_process(
             )
             logging.info(f"Files stored with default paths are at: {default_storage_path}")
 
-        # Perform allgather here to ensure we only report progress to master when all workers finish
+        # Perform gather here to ensure we only report progress to master when all workers finish
         core_context.distributed.gather(None)
 
         # when rank == 0, dummy_searcher_op will be initialized, but lint is complaining
