@@ -198,6 +198,29 @@ commands:
               echo "detected changes outside of .github: $DIFF_DIRS"
             fi
 
+  skip-on-dev-branch:
+    steps:
+      - run:
+          name: Check if extra GCP tests specfied
+          command: |
+            echo "Not on main, release, or rc branch. Checking for [ALLGCP] tag..."
+            if [[ "$COMMIT_MESSAGE" != *"[ALLGCP]"* ]] ; then
+              echo "[ALLGCP] tag not found. Skipping job."
+              circleci-agent step halt
+            else
+              echo "Found [ALLGCP] tag. Proceeding to run test-e2e-slurm-*-gcp tests"
+            fi
+
+
+  set-commit-message:
+    steps:
+      - run:
+          name: Set git commit message to environment variable
+          command: |
+            COMMIT_MESSAGE=$(git log --format=%B -n 1 $CIRCLE_SHA1)
+            echo "COMMIT_MESSAGE=$(printf "%q" "$COMMIT_MESSAGE")" >> $BASH_ENV
+            echo "Commit message: $COMMIT_MESSAGE"
+
   set-slack-user-id:
     steps:
       - run:
@@ -2037,6 +2060,9 @@ jobs:
     steps:
       - run: echo "Test suite disabled."
 
+  # By default, this job only runs on the main branch unless 
+  # oterhwise specified. To invoke this job on a developer branch, the
+  # "[ALLGCP]" keyword must be included in the commit message.
   test-e2e-slurm-gcp:
     parameters:
       mark:
@@ -2044,6 +2070,9 @@ jobs:
       parallelism:
         type: integer
         default: 1
+      always-run:
+        type: boolean
+        default: false
       extra-pytest-flags:
         type: string
         default: ""
@@ -2076,13 +2105,26 @@ jobs:
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
+
+      # This is a bit confusing... basically only enter logic for NOT running job
+      # when always-run=false
+      - unless:
+          condition:
+            or:
+              - equal: [ true, <<parameters.always-run>> ]
+              - equal: [ "main", <<pipeline.git.branch>> ]
+              - matches: { pattern: "^/release-.*/$", value: <<pipeline.git.branch>> }
+          steps:
+            - set-commit-message
+            - skip-on-dev-branch
+
       - skip-if-docs-only
       - skip-if-github-only
       - skip-if-webui-only
-      - set-slack-user-id
+      - set-slack-user-id      
 
       - attach_workspace:
-          at: .
+          at: . 
 
       - reinstall-go
       - go-get-deps
@@ -3069,6 +3111,7 @@ workflows:
               name: [test-e2e-slurm-singularity-gcp]
               instance-name: ["${CIRCLE_WORKFLOW_JOB_ID}"]
               context: ["gcp"]
+              always-run: [true]
               mark: ["e2e_slurm and not parallel"]
               extra-pytest-flags: ["-k 'not start_and_write_to_shell'"]
           requires:

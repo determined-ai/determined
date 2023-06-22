@@ -76,7 +76,16 @@ pytest --capture=tee-sys -vv \
 ```
 This invocation specifies that all tests are to be run via the remote launcher running on `localhost:8080`. The command specifies that all pytests with the `e2e_slurm` mark should be run except those that have the `parallel` mark as well (this is due to the fact that there are no GPUs and only 1 node on the GCP compute instances). The `-k 'not start_and_write_to_shell'` specifies to not run the `start_and_write_to_shell` function in `e2e_tests/tests/command/test_shell.py`. This test is currently skipped due to a proxy issue on GCP.
 
-## Notes on `make slurmcluster` tests on CircleCI 
+# Notes on `make slurmcluster` tests on CircleCI 
+
+By default, the `test-e2e-slurm-*-gcp` jobs are not run within the `test-e2e` workflow on a **developer branch**. If you would like to invoke these jobs on a certain commit, you must add the "[ALLGCP]" keyword to the commit message. For example,
+```
+git add --all
+git commit -m "[ALLGCP] This is my commit where all slurm-gcp jobs will run."
+git push
+```
+will invoke the slurm-gcp jobs within the `test-e2e` workflow.
+**On branch `main` and `release/rc` branches, these jobs always run, regardless of commit message.**
 
 The following test suites currently run only on hardware. They do not run successfully with `make slurmcluster` and thus are not executed via GCP as part of the CI/CD gate:
   - `test-e2e-slurm-gpu`: Test is skipped because the compute instance that the tests run on do not have any GPUs.
