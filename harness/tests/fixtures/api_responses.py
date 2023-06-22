@@ -59,7 +59,8 @@ def sample_get_model_versions() -> bindings.v1GetModelVersionsResponse:
 
 def sample_login(username: str = USERNAME) -> bindings.v1LoginResponse:
     resp = bindings.v1LoginResponse(
-        token="fake-login-token", user=sample_get_user(username=username).user)
+        token="fake-login-token", user=sample_get_user(username=username).user
+    )
     return resp
 
 
@@ -87,17 +88,12 @@ def sample_get_pagination() -> bindings.v1Pagination:
 
 def empty_get_pagination() -> bindings.v1Pagination:
     """A pagination response for an object with no entries."""
-    return bindings.v1Pagination(endIndex=5,
-                                 limit=0,
-                                 offset=0,
-                                 startIndex=0,
-                                 total=5)
+    return bindings.v1Pagination(endIndex=5, limit=0, offset=0, startIndex=0, total=5)
 
 
-def page_of(complete_resp: P,
-            pageable_type: str,
-            offset: int = 0,
-            limit: Optional[int] = None) -> P:
+def page_of(
+    complete_resp: P, pageable_type: str, offset: int = 0, limit: Optional[int] = None
+) -> P:
     """Return a paginated response from a complete response.
 
     This assumes that the passed `complete_resp` contains an attribute named `pageable_type` that
@@ -126,11 +122,9 @@ def page_of(complete_resp: P,
     start_index = offset if offset >= 0 else total + offset  # Negative offset means from the end
     end_index = total if limit is None else min(start_index + limit, total)
 
-    paged_resp.pagination = bindings.v1Pagination(endIndex=end_index,
-                                                  limit=limit,
-                                                  offset=offset,
-                                                  startIndex=start_index,
-                                                  total=total)
+    paged_resp.pagination = bindings.v1Pagination(
+        endIndex=end_index, limit=limit, offset=offset, startIndex=start_index, total=total
+    )
 
     page = getattr(paged_resp, pageable_type)[start_index:end_index]
     setattr(paged_resp, pageable_type, page)
@@ -160,11 +154,9 @@ def serve_by_page(
         The precise return value (required by responses) is a tuple of (status_code, headers, body).
     """
 
-    def _serve_by_page(
-            request: requests.PreparedRequest) -> Tuple[int, Dict, str]:
+    def _serve_by_page(request: requests.PreparedRequest) -> Tuple[int, Dict, str]:
         # ignore type checking on request.params -- responses guarantees params is populated
-        limit = min(int(request.params.get("limit", max_page_size)),
-                    max_page_size)  # type: ignore
+        limit = min(int(request.params.get("limit", max_page_size)), max_page_size)  # type: ignore
         paged_response = page_of(
             pageable_resp,
             pageable_type,
