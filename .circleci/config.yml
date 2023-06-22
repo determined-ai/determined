@@ -1866,7 +1866,7 @@ jobs:
       - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
       - install-codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
-      - run: COVERAGE_FILE=/mnt/project/test-unit-harness-gpu-parallel-pycov make -C harness test-gpu-parallel
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-parallel-pycov make -C harness test-gpu-parallel
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-parallel-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
@@ -2596,6 +2596,7 @@ workflows:
             - test-unit-harness-gpu
             - test-unit-harness-cpu
             - test-unit-harness-tf2
+            - test-unit-harness-gpu-parallel
             - test-unit-model-hub
             - test-unit-storage
 
