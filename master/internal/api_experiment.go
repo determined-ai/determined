@@ -264,7 +264,7 @@ func (a *apiServer) GetExperiment(
 	}
 
 	jobID := model.JobID(exp.JobId)
-	jobSummary, err := job.Manager.GetJobSummary(jobID, exp.ResourcePool)
+	jobSummary, err := job.DefaultManager.GetJobSummary(jobID, exp.ResourcePool)
 	if err != nil {
 		// An error here either is real or just that the experiment was not yet terminal in the DB
 		// when we first queried it but was by the time it got around to handling out ask. We can't

@@ -18,11 +18,11 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// Manager is the global singleton for managing jobs.
-var Manager *Jobs
+// DefaultManager is the global singleton for managing jobs.
+var DefaultManager *Manager
 
-// Jobs manages jobs.
-type Jobs struct {
+// Manager manages jobs.
+type Manager struct {
 	mu        sync.Mutex
 	rm        rm.ResourceManager
 	actorByID map[model.JobID]*actor.Ref
@@ -30,9 +30,9 @@ type Jobs struct {
 	syslog    *logrus.Entry
 }
 
-// NewJobs creates a new jobs instance.
-func NewJobs(rm rm.ResourceManager, system *actor.System) *Jobs {
-	return &Jobs{
+// NewManager creates a new jobs manager instance.
+func NewManager(rm rm.ResourceManager, system *actor.System) *Manager {
+	return &Manager{
 		rm:        rm,
 		actorByID: make(map[model.JobID]*actor.Ref),
 		system:    system,
@@ -40,7 +40,7 @@ func NewJobs(rm rm.ResourceManager, system *actor.System) *Jobs {
 	}
 }
 
-func (j *Jobs) parseV1JobMsgs(
+func (j *Manager) parseV1JobMsgs(
 	msgs map[*actor.Ref]actor.Message,
 ) (map[model.JobID]*jobv1.Job, error) {
 	jobs := make(map[model.JobID]*jobv1.Job)
@@ -62,7 +62,7 @@ func (j *Jobs) parseV1JobMsgs(
 }
 
 // jobQSnapshot asks for a fresh consistent snapshot of the job queue from the RM.
-func (j *Jobs) jobQSnapshot(resourcePool string) (sproto.AQueue, error) {
+func (j *Manager) jobQSnapshot(resourcePool string) (sproto.AQueue, error) {
 	resp, err := j.rm.GetJobQ(j.system, sproto.GetJobQ{ResourcePool: resourcePool})
 	if err != nil {
 		j.syslog.WithError(err).Error("getting job queue info from RM")
@@ -72,7 +72,7 @@ func (j *Jobs) jobQSnapshot(resourcePool string) (sproto.AQueue, error) {
 	return resp, nil
 }
 
-func (j *Jobs) jobQRefs(jobQ map[model.JobID]*sproto.RMJobInfo) []*actor.Ref {
+func (j *Manager) jobQRefs(jobQ map[model.JobID]*sproto.RMJobInfo) []*actor.Ref {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 	// Get jobs from the job actors.
@@ -88,7 +88,7 @@ func (j *Jobs) jobQRefs(jobQ map[model.JobID]*sproto.RMJobInfo) []*actor.Ref {
 }
 
 // GetJobs returns a list of jobs for a resource pool.
-func (j *Jobs) GetJobs(resourcePool string, desc bool, states []jobv1.State) ([]*jobv1.Job, error) {
+func (j *Manager) GetJobs(resourcePool string, desc bool, states []jobv1.State) ([]*jobv1.Job, error) {
 	jobQ, err := j.jobQSnapshot(resourcePool)
 	if err != nil {
 		return nil, err
@@ -137,7 +137,7 @@ func (j *Jobs) GetJobs(resourcePool string, desc bool, states []jobv1.State) ([]
 	return jobsInRM, nil
 }
 
-func (j *Jobs) setJobPriority(ref *actor.Ref, priority int) error {
+func (j *Manager) setJobPriority(ref *actor.Ref, priority int) error {
 	if priority < 1 || priority > 99 {
 		return errors.New("priority must be between 1 and 99")
 	}
@@ -147,7 +147,7 @@ func (j *Jobs) setJobPriority(ref *actor.Ref, priority int) error {
 	return resp.Error()
 }
 
-func (j *Jobs) jobRef(id model.JobID) *actor.Ref {
+func (j *Manager) jobRef(id model.JobID) *actor.Ref {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 
@@ -155,7 +155,7 @@ func (j *Jobs) jobRef(id model.JobID) *actor.Ref {
 }
 
 // RegisterJob registers a job actor with the job registry.
-func (j *Jobs) RegisterJob(id model.JobID, ref *actor.Ref) {
+func (j *Manager) RegisterJob(id model.JobID, ref *actor.Ref) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 
@@ -163,7 +163,7 @@ func (j *Jobs) RegisterJob(id model.JobID, ref *actor.Ref) {
 }
 
 // UnregisterJob removes the job from the job registry.
-func (j *Jobs) UnregisterJob(id model.JobID) {
+func (j *Manager) UnregisterJob(id model.JobID) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 
@@ -171,7 +171,7 @@ func (j *Jobs) UnregisterJob(id model.JobID) {
 }
 
 // GetJobSummary returns a summary of the job given an id and resource pool.
-func (j *Jobs) GetJobSummary(id model.JobID, resourcePool string) (*jobv1.JobSummary, error) {
+func (j *Manager) GetJobSummary(id model.JobID, resourcePool string) (*jobv1.JobSummary, error) {
 	jobs, err := j.jobQSnapshot(resourcePool)
 	if err != nil {
 		return nil, err
@@ -188,7 +188,7 @@ func (j *Jobs) GetJobSummary(id model.JobID, resourcePool string) (*jobv1.JobSum
 }
 
 // UpdateJobQueue sends queue control updates to specific jobs.
-func (j *Jobs) UpdateJobQueue(updates []*jobv1.QueueControl) error {
+func (j *Manager) UpdateJobQueue(updates []*jobv1.QueueControl) error {
 	errors := make([]string, 0)
 	for _, update := range updates {
 		jobID := model.JobID(update.JobId)

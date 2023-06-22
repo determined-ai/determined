@@ -290,7 +290,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}, c.db, c.rm)
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
-		job.Manager.RegisterJob(c.jobID, ctx.Self())
+		job.DefaultManager.RegisterJob(c.jobID, ctx.Self())
 
 		ctx.Ask(c.allocation, actor.Ping{}).Get()
 		if err := c.persist(); err != nil {
@@ -305,7 +305,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
-		job.Manager.UnregisterJob(c.jobID)
+		job.DefaultManager.UnregisterJob(c.jobID)
 		if err := c.db.DeleteUserSessionByToken(c.GenericCommandSpec.Base.UserSessionToken); err != nil {
 			ctx.Log().WithError(err).Errorf(
 				"failure to delete user session for task: %v", c.taskID)

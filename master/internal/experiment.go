@@ -250,7 +250,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return err
 		}
 
-		job.Manager.RegisterJob(e.JobID, ctx.Self())
+		job.DefaultManager.RegisterJob(e.JobID, ctx.Self())
 
 		if e.restored {
 			j, err := e.db.JobByID(e.JobID)
@@ -405,7 +405,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				ctx.Log().Error(err)
 			}
 		}
-		job.Manager.UnregisterJob(e.JobID)
+		job.DefaultManager.UnregisterJob(e.JobID)
 		state := model.StoppingToTerminalStates[e.State]
 		if wasPatched, err := e.Transition(state); err != nil {
 			return err
