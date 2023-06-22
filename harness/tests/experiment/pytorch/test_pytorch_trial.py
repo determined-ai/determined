@@ -937,7 +937,7 @@ class TestPyTorchTrial:
         model_2_metrics = val_metrics[1]
         model_2_weights = [model_2_metrics[i]["weight"] for i in range(len(model_2_metrics))]
 
-        expected_weights = pytorch_utils.calculate_gradients(num_epochs=1)
+        expected_weights = calculate_gradients(num_epochs=1)
 
         assert model_1_weights == pytest.approx(
             expected_weights
@@ -1478,3 +1478,40 @@ def run_no_op(
         )
 
     return f.getvalue().split("\n")
+
+def calculate_gradients(
+    batch_size: int = 4, epoch_size: int = 64, num_epochs: int = 3, lr: float = 0.001,
+) -> typing.List[float]:
+    # independently compute expected metrics
+    batches = [
+        (v[:], v[:])
+        for v in (
+            [x * 0.1 + 1.0 for x in range(y, y + batch_size)]
+            for y in (z % epoch_size for z in range(0, epoch_size * num_epochs, batch_size))
+        )
+    ]
+
+    def compute_expected_weight(
+        data: typing.List[float], label: typing.List[float], w: float
+    ) -> float:
+        n = len(data)
+        expected_step = 2.0 * lr * sum((d * (l - d * w) for d, l in zip(data, label))) / n
+        return w + expected_step
+
+    expected_weights = []
+    weight = 0.0
+    data: typing.List[float] = []
+    label: typing.List[float] = []
+    for i, batch in enumerate(batches):
+        if i % 2 == 0:
+            # for even-numbered batches the optimizer step is a no-op:
+            # the weights don't change
+            data, label = batch
+        else:
+            additional_data, additional_label = batch
+            data += additional_data
+            label += additional_label
+            weight = compute_expected_weight(data, label, weight)
+        expected_weights.append(weight)
+
+    return expected_weights

@@ -13,46 +13,6 @@ from determined import gpu, pytorch
 from tests.experiment import utils
 
 
-def calculate_gradients(
-    batch_size: int = 4, epoch_size: int = 64, num_epochs: int = 3
-) -> typing.List[float]:
-    # independently compute expected metrics
-    batches = [
-        (v[:], v[:])
-        for v in (
-            [x * 0.1 + 1.0 for x in range(y, y + batch_size)]
-            for y in (z % epoch_size for z in range(0, epoch_size * num_epochs, batch_size))
-        )
-    ]
-
-    lr = 0.001
-
-    def compute_expected_weight(
-        data: typing.List[float], label: typing.List[float], w: float
-    ) -> float:
-        n = len(data)
-        expected_step = 2.0 * lr * sum((d * (l - d * w) for d, l in zip(data, label))) / n
-        return w + expected_step
-
-    expected_weights = []
-    weight = 0.0
-    data: typing.List[float] = []
-    label: typing.List[float] = []
-    for i, batch in enumerate(batches):
-        if i % 2 == 0:
-            # for even-numbered batches the optimizer step is a no-op:
-            # the weights don't change
-            data, label = batch
-        else:
-            additional_data, additional_label = batch
-            data += additional_data
-            label += additional_label
-            weight = compute_expected_weight(data, label, weight)
-        expected_weights.append(weight)
-
-    return expected_weights
-
-
 def create_trial_and_trial_controller(
     trial_class: pytorch.PyTorchTrial,
     hparams: typing.Dict,
@@ -198,6 +158,8 @@ def train_from_checkpoint(
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
     tensorboard_path = tmp_path.joinpath("tensorboard")
 
+    num_existing_checkpoints = len(os.listdir(checkpoint_dir))
+
     trial, trial_controller = create_trial_and_trial_controller(
         trial_class=trial_class,
         hparams=hparams,
@@ -214,7 +176,7 @@ def train_from_checkpoint(
     )
     trial_controller.run()
 
-    assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
+    assert len(os.listdir(checkpoint_dir)) == num_existing_checkpoints + 1, "trial did not create a checkpoint"
 
 
 def train_and_checkpoint(
