@@ -7,7 +7,11 @@ import { keyEmitter, KeyEvent, ShortcutConfig, shortcutMatch } from 'hooks/useKe
 import { useSettings } from 'hooks/useSettings';
 import { JupyterLabOptions } from 'utils/jupyter';
 
-const JupyterLabGlobal: React.FC = () => {
+interface Props {
+  active?: boolean;
+}
+
+const JupyterLabGlobal: React.FC<Props> = ({ active }) => {
   const JupyterLabModal = useModal(JupyterLabModalComponent);
   const { settings } = useSettings<JupyterLabOptions>(JupyterLabSettings);
 
@@ -22,12 +26,12 @@ const JupyterLabGlobal: React.FC = () => {
       }
     };
 
-    keyEmitter.on(KeyEvent.KeyDown, keyDownListener);
+    if (active) keyEmitter.on(KeyEvent.KeyDown, keyDownListener);
 
     return () => {
       keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
     };
-  }, [JupyterLabModal, settings]);
+  }, [JupyterLabModal, settings, active]);
 
   return <JupyterLabModal.Component />;
 };

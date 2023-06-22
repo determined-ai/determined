@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 
-import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Spinner from 'components/Spinner/Spinner';
 import clusterStore from 'stores/cluster';
 import useUI from 'stores/contexts/UI';
@@ -49,7 +48,6 @@ const Navigation: React.FC<Props> = ({ children }) => {
         {children}
         <NavigationTabbar />
       </div>
-      <JupyterLabGlobal />
     </Spinner>
   );
 };

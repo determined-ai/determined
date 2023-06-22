@@ -5,6 +5,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 
+import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Button from 'components/kit/Button';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import Link from 'components/Link';
@@ -130,6 +131,7 @@ const AppView: React.FC = () => {
                   <AntdApp>
                     <ConfirmationProvider>
                       <Navigation>
+                        <JupyterLabGlobal active={Loadable.isLoaded(loadableUser)} />
                         <main>
                           <Router routes={appRoutes} />
                         </main>
