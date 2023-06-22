@@ -28,12 +28,6 @@ parameters:
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
-  machine-image:
-    type: string
-    default: ubuntu-2004:202201-02
-  gpu-machine-image:
-    type: string
-    default: ubuntu-2004-cuda-11.2:202103-01
   # DEFAULT_PT_GPU_IMAGE: Pytorch training image reference used by the tests
   # Inject here as a parameter so that it is updated by bumpversion, and can
   # be referenced by --ee testing.
