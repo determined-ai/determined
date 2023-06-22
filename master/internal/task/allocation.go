@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task/idle"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
@@ -42,6 +43,8 @@ type (
 		req sproto.AllocateRequest
 		// The persisted representation.
 		model model.Allocation
+		// The task spec to run.
+		specifier tasks.TaskSpecifier
 
 		// State of all our resources.
 		resources resourcesList
@@ -67,8 +70,6 @@ type (
 		// Encapsulates logic of rendezvousing containers of the currently
 		// allocated task. If there is no current task, or it is unallocated, it is nil.
 		rendezvous *rendezvous
-		// Encapsulates the logic of watching for idle timeouts.
-		idleTimeoutWatcher *IdleTimeoutWatcher
 		// proxy state
 		proxies []string
 		// active all gather state
@@ -95,11 +96,6 @@ type (
 		Err               error
 		FinalState        AllocationState
 	}
-	// BuildTaskSpec is a message to request the task spec from the parent task. This
-	// is just a hack since building a task spec cant be semi-costly and we want to defer it
-	// until it is needed (we save stuff to the DB and make SSH keys, doing this for 10k trials
-	// at once is real bad.
-	BuildTaskSpec struct{}
 	// AllocationState requests allocation state. A copy is filled and returned.
 	AllocationState struct {
 		State     model.AllocationState
@@ -134,6 +130,7 @@ const (
 // NewAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
 func NewAllocation(
 	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
+	specifier tasks.TaskSpecifier,
 ) actor.Actor {
 	req.LogContext = detLogger.MergeContexts(logCtx, detLogger.Context{
 		"allocation-id": req.AllocationID,
@@ -150,6 +147,7 @@ func NewAllocation(
 			ResourcePool: req.ResourcePool,
 			Ports:        map[string]int{},
 		},
+		specifier: specifier,
 
 		resources: resourcesList{},
 
@@ -224,6 +222,9 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		}
 		if a.req.Preemptible {
 			preemptible.Unregister(a.req.AllocationID.String())
+		}
+		if cfg := a.req.IdleTimeout; cfg != nil {
+			idle.Unregister(cfg.ServiceID)
 		}
 		allocationmap.UnregisterAllocation(a.model.AllocationID)
 	case sproto.ContainerLog:
@@ -339,16 +340,6 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			a.allGather = nil
 			a.allGatherFinished = true
 		}
-	case IdleTimeoutWatcherTick, IdleWatcherNoteActivity:
-		if a.req.IdleTimeout == nil {
-			if ctx.ExpectingResponse() {
-				ctx.Respond(ErrBehaviorDisabled{idleWatcher})
-			}
-			return nil
-		}
-		if err := a.idleTimeoutWatcher.ReceiveMsg(ctx); err != nil {
-			a.Error(ctx, err)
-		}
 	case sproto.InvalidResourcesRequestError:
 		ctx.Tell(a.req.AllocationRef, msg)
 		a.Error(ctx, msg)
@@ -442,16 +433,6 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		return errors.Wrapf(err, "appending resources")
 	}
 
-	// Get the task spec first, so the trial/task table is populated before allocations.
-	resp := ctx.Ask(ctx.Self().Parent(), BuildTaskSpec{})
-	switch ok, err := resp.ErrorOrTimeout(time.Hour); {
-	case err != nil:
-		return errors.Wrapf(err, "could not get task spec")
-	case !ok:
-		return errors.Wrapf(err, "timeout getting task spec, likely a deadlock")
-	}
-	spec := resp.Get().(tasks.TaskSpec)
-
 	if err := a.db.UpdateAllocationState(a.model); err != nil {
 		return errors.Wrap(err, "updating allocation state")
 	}
@@ -472,8 +453,13 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	if cfg := a.req.IdleTimeout; cfg != nil {
-		a.idleTimeoutWatcher = NewIdleTimeoutWatcher(a.req.Name, cfg)
-		a.idleTimeoutWatcher.PreStart(ctx)
+		idle.Register(*cfg, func(err error) {
+			ctx.Log().WithError(err).Infof("killing %s due to inactivity", a.req.Name)
+			ctx.Tell(ctx.Self(), sproto.AllocationSignalWithReason{
+				AllocationSignal:    sproto.TerminateAllocation,
+				InformationalReason: err.Error(),
+			})
+		})
 	}
 
 	if a.req.Restore {
@@ -495,6 +481,8 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 			}
 		}
 	} else {
+		spec := a.specifier.ToTaskSpec()
+
 		token, err := a.db.StartAllocationSession(a.model.AllocationID, spec.Owner)
 		if err != nil {
 			return errors.Wrap(err, "starting a new allocation session")
@@ -979,6 +967,9 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 	}
 	if a.rendezvous != nil {
 		defer a.rendezvous.close()
+	}
+	if cfg := a.req.IdleTimeout; cfg != nil {
+		defer idle.Unregister(cfg.ServiceID)
 	}
 	switch {
 	case a.killedWhileRunning:

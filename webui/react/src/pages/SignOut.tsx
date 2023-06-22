@@ -2,6 +2,7 @@ import { useObservable } from 'micro-observables';
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import useAuthCheck from 'hooks/useAuthCheck';
 import { paths, routeAll } from 'routes/utils';
 import { logout } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
@@ -20,6 +21,7 @@ const SignOut: React.FC = () => {
   const location = useLocation();
   const info = useObservable(determinedStore.info);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const checkAuth = useAuthCheck();
 
   useEffect(() => {
     const signOut = async (): Promise<void> => {
@@ -44,14 +46,15 @@ const SignOut: React.FC = () => {
       authStore.reset();
 
       if (info.externalLogoutUri) {
-        routeAll(info.externalLogoutUri);
+        const isAuthenticated = await checkAuth();
+        if (isAuthenticated) routeAll(info.externalLogoutUri);
       } else {
         navigate(paths.login() + '?r=' + Math.random(), { state: location.state });
       }
     };
 
     if (!isSigningOut) signOut();
-  }, [navigate, info.externalLogoutUri, location.state, isSigningOut]);
+  }, [checkAuth, navigate, info.externalLogoutUri, location.state, isSigningOut]);
 
   return null;
 };

@@ -544,7 +544,7 @@ message ExpMetricNamesResponse {
   repeated string training_metrics = 2 [deprecated = true];
   // List of validation metric names.
   repeated string validation_metrics = 3 [deprecated = true];
-  // List of generic metric names.
+  // List of metric type-name pairs.
   repeated determined.metric.v1.MetricName metric_names = 4;
 }
 

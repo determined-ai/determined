@@ -49,6 +49,28 @@ repos:
         entry: ./pre-commit/check.py
         require_serial: true
         language: python
+      # golang hooks based on https://github.com/Bahjat/pre-commit-golang
+      - id: go-fmt-import
+        name: "go import/fmt"
+        entry: ./pre-commit/run-go-fmt-import.sh
+        files: '\.go$'
+        language: "script"
+        description: "Runs `goimport,gofmt`, requires golang"
+        exclude: ^(proto/pkg)
+      - id: gofumpt
+        name: "gofumpt"
+        entry: ./pre-commit/run-go-gofumpt.sh
+        files: '\.go$'
+        language: "script"
+        description: "Runs `gofumpt`, requires github.com/mvdan/gofumpt"
+        exclude: ^(proto/pkg)
+      - id: golangci-lint
+        name: "go golangci-lint"
+        entry: ./pre-commit/run-golangci-lint.sh
+        files: '\.go$'
+        language: "script"
+        description: "Runs `golangci-lint`, install https://github.com/golangci/golangci-lint"
+        exclude: ^(proto/pkg)
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.28.0

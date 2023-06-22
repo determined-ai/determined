@@ -463,7 +463,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       {settings.compare && (
         <TrialsComparisonModal
           experiment={experiment}
-          trials={settings.row ?? []}
+          trialIds={settings.row ?? []}
           visible={settings.compare}
           onCancel={handleTrialCompareCancel}
           onUnselect={handleTrialUnselect}

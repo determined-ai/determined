@@ -15,7 +15,7 @@ from determined.cli.master import format_log_entry
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
-from determined.common.experimental import Determined
+from determined.experimental import Determined
 
 from .checkpoint import render_checkpoint
 

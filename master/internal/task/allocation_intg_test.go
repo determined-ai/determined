@@ -35,6 +35,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+type mockTaskSpecifier struct{}
+
+func (m mockTaskSpecifier) ToTaskSpec() (t tasks.TaskSpec) { return t }
+
 func TestAllocation(t *testing.T) {
 	cases := []struct {
 		name  string
@@ -90,9 +94,6 @@ func TestAllocation(t *testing.T) {
 				rID1: mockRsvn(rID1, "agent-1"),
 				rID2: mockRsvn(rID2, "agent-2"),
 			}
-			trialImpl.Expect(fmt.Sprintf("%T", BuildTaskSpec{}), actors.MockResponse{
-				Msg: tasks.TaskSpec{},
-			})
 			require.NoError(t, system.Ask(rm.Ref(), actors.ForwardThroughMock{
 				To: self,
 				Msg: sproto.ResourcesAllocated{
@@ -207,9 +208,6 @@ func TestAllocationAllGather(t *testing.T) {
 		rID2: mockRsvn(rID2, "agent-2"),
 	}
 
-	trialImpl.Expect(fmt.Sprintf("%T", BuildTaskSpec{}), actors.MockResponse{
-		Msg: tasks.TaskSpec{},
-	})
 	require.NoError(t, system.Ask(rm.Ref(), actors.ForwardThroughMock{
 		To: self,
 		Msg: sproto.ResourcesAllocated{
@@ -311,6 +309,7 @@ func setup(t *testing.T) (
 		},
 		pgDB,
 		rm,
+		mockTaskSpecifier{},
 	)
 	self := system.MustActorOf(actor.Addr(trialAddr, "allocation"), a)
 	// Pre-scheduled stage.

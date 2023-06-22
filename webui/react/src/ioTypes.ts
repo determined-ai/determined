@@ -115,6 +115,29 @@ const ioMetricValue = io.unknown;
 const ioMetric = io.record(io.string, ioMetricValue);
 export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
 
+const ioMetricSummary = io.type({
+  count: optional(io.union([io.number, io.undefined])),
+  last: optional(io.union([io.number, io.string, io.boolean])),
+  max: optional(io.number),
+  min: optional(io.number),
+  sum: optional(io.number),
+  type: io.union([
+    io.literal('string'),
+    io.literal('number'),
+    io.literal('boolean'),
+    io.literal('date'),
+    io.literal('object'),
+    io.literal('array'),
+    io.literal('null'),
+  ]),
+});
+
+export const ioSummaryMetrics = io.type({
+  avg_metrics: io.union([io.record(io.string, ioMetricSummary), io.undefined]),
+  validation_metrics: io.union([io.record(io.string, ioMetricSummary), io.undefined]),
+});
+export type ioSummaryMetrics = io.TypeOf<typeof ioSummaryMetrics>;
+
 /* Experiments */
 
 const checkpointStorageTypes: Record<string, null> = Object.values(CheckpointStorageType).reduce(

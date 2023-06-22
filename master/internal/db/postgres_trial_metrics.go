@@ -85,6 +85,11 @@ func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map
 	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
 ) (int, error) {
 	pType := customMetricTypeToPartitionType(mType)
+
+	if err := mType.Validate(); err != nil {
+		return 0, err
+	}
+
 	var metricRowID int
 	//nolint:execinquery // we want to get the id.
 	if err := tx.QueryRowContext(ctx, `

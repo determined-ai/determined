@@ -113,6 +113,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     NotLoaded: () => [],
   });
 
+  const setPinnedColumnsCount = useCallback(
+    (newCount: number) => {
+      updateSettings({ pinnedColumnsCount: newCount });
+    },
+    [updateSettings],
+  );
   const onIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
     if (!newOpen) {
@@ -158,7 +164,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [canceler] = useState(new AbortController());
 
   const colorMap = useGlasbey(selectedExperimentIds);
-  const { height: containerHeight } = useResize(contentRef);
+  const { height: containerHeight, width: containerWidth } = useResize(contentRef);
   const height =
     containerHeight - 2 * parseInt(getCssVar('--theme-stroke-width')) - (isPagedView ? 40 : 0);
   const [scrollPositionSetCount] = useState(observable(0));
@@ -222,7 +228,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           ...experimentFilters,
           filter: filtersString,
           limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
-          offset: isPagedView ? Math.max(page - 1, 0) * settings.pageLimit : tableOffset,
+          offset: isPagedView ? page * settings.pageLimit : tableOffset,
           sort: sortString || undefined,
         },
         { signal: canceler.signal },
@@ -430,24 +436,31 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     updateSettings({ compare: !settings.compare });
   }, [settings.compare, updateSettings]);
 
+  const pinnedColumns = useMemo(() => {
+    return [...STATIC_COLUMNS, ...settings.columns.slice(0, settings.pinnedColumnsCount)];
+  }, [settings.columns, settings.pinnedColumnsCount]);
+
   const comparisonViewWidth = useMemo(() => {
-    return STATIC_COLUMNS.reduce(
-      (totalWidth, curCol) => totalWidth + settings.columnWidths[curCol] ?? 0,
-      17, // Constant of 17px accounts for scrollbar width
+    return Math.min(
+      containerWidth - 30,
+      pinnedColumns.reduce(
+        (totalWidth, curCol) => totalWidth + settings.columnWidths[curCol] ?? 0,
+        17, // Constant of 17px accounts for scrollbar width
+      ),
     );
-  }, [settings.columnWidths]);
+  }, [containerWidth, pinnedColumns, settings.columnWidths]);
 
   const handleCompareWidthChange = useCallback(
     (width: number) => {
       updateSettings({
         columnWidths: {
           ...settings.columnWidths,
-          [STATIC_COLUMNS.last()]:
-            settings.columnWidths[STATIC_COLUMNS.last()] + width - comparisonViewWidth,
+          [pinnedColumns.last()]:
+            settings.columnWidths[pinnedColumns.last()] + width - comparisonViewWidth,
         },
       });
     },
-    [settings.columnWidths, updateSettings, comparisonViewWidth],
+    [updateSettings, settings.columnWidths, pinnedColumns, comparisonViewWidth],
   );
 
   const handleColumnWidthChange = useCallback(
@@ -511,7 +524,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : error ? (
           <Error />
         ) : (
-          <Space direction="vertical" style={{ width: '100%' }}>
+          <Space className={css.space} direction="vertical">
             <ComparisonView
               initialWidth={comparisonViewWidth}
               open={settings.compare}
@@ -531,6 +544,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 handleUpdateExperimentList={handleUpdateExperimentList}
                 height={height}
                 page={page}
+                pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
                 project={project}
                 projectColumns={projectColumns}
                 rowHeight={settings.rowHeight}
@@ -539,6 +553,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 selectedExperimentIds={selectedExperimentIds}
                 setColumnWidths={handleColumnWidthChange}
                 setExcludedExperimentIds={setExcludedExperimentIds}
+                setPinnedColumnsCount={setPinnedColumnsCount}
                 setSelectAll={setSelectAll}
                 setSelectedExperimentIds={setSelectedExperimentIds}
                 setSortableColumnIds={setVisibleColumns}

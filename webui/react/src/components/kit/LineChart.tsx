@@ -58,7 +58,7 @@ interface ChartProps {
   onPointFocus?: (point: UPlotPoint | undefined) => void;
   plugins?: Plugin[];
   scale?: Scale;
-  series: Serie[];
+  series: Serie[] | Loadable<Serie[]>;
   showLegend?: boolean;
   title?: ReactNode;
   xAxis?: XAxisDomain;
@@ -326,12 +326,15 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
       ? Loadable.getOrElse([], propChartsProps)
       : propChartsProps;
     const isLoading = Loadable.isLoadable(propChartsProps) && Loadable.isLoading(propChartsProps);
-
     // X-Axis control
+
     const xAxisOptions = useMemo(() => {
       const xOpts = new Set<string>();
       chartsProps.forEach((chart) => {
-        chart.series.forEach((serie) => {
+        const series = Loadable.isLoadable(chart.series)
+          ? Loadable.getOrElse([], chart.series)
+          : chart.series;
+        series.forEach((serie) => {
           Object.entries(serie.data).forEach(([xAxisOption, dataPoints]) => {
             if (dataPoints.length > 0) {
               xOpts.add(xAxisOption);

@@ -25,6 +25,7 @@ import {
   RunState,
   Scale,
 } from 'types';
+import { Loadable } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';
 
 import ExperimentVisualizationFilters, {
@@ -117,7 +118,8 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   }, []);
 
   // Stream available metrics.
-  const metrics = useMetricNames([experiment.id], handleMetricNamesError);
+  const loadableMetrics = useMetricNames([experiment.id], handleMetricNamesError);
+  const metrics = Loadable.getOrElse([], loadableMetrics);
 
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
@@ -195,7 +197,13 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
      * In the case of Custom Searchers, all the tabs besides
      * "Learning Curve" aren't helpful or relevant, so we are hiding them
      */
-    if (!(filters.maxTrial && filters.batchMargin && filters.batch)) return [];
+    if (
+      filters.maxTrial === undefined ||
+      filters.batchMargin === undefined ||
+      filters.batch === undefined
+    ) {
+      return [];
+    }
 
     const tabs: TabsProps['items'] = [
       {

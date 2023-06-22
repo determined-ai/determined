@@ -436,7 +436,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
       {showCompareTrials && (
         <TrialsComparisonModal
           experiment={experiment}
-          trials={selectedRowKeys}
+          trialIds={selectedRowKeys}
           visible={showCompareTrials}
           onCancel={() => setShowCompareTrials(false)}
           onUnselect={handleTrialUnselect}

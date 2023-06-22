@@ -9,6 +9,7 @@ import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'types';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import TrialChart from './TrialChart';
 import { Settings, settingsConfigForExperiment } from './TrialDetailsOverview.settings';
@@ -41,7 +42,8 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     [experiment.id],
   );
 
-  const metricNames = useMetricNames([experiment.id], handleMetricNamesError);
+  const loadableMetricNames = useMetricNames([experiment.id], handleMetricNamesError);
+  const metricNames = Loadable.getOrElse([], loadableMetricNames);
 
   const { defaultMetrics, metrics } = useMemo(() => {
     const validationMetric = experiment?.config?.searcher.metric;
