@@ -20,7 +20,7 @@ export const IconSizeArray = [
 
 export type IconSize = (typeof IconSizeArray)[number];
 
-type SVGProps = { color?: string; size: IconSize; title: string };
+type SVGProps = { title: string };
 
 export const IconNameArray = [
   'home',
@@ -107,10 +107,9 @@ export const IconNameArray = [
   'row-xl',
 ] as const;
 
-const ColumnsIcon: React.FC<SVGProps> = ({ color = '', size, title }) => (
+const ColumnsIcon: React.FC<SVGProps> = ({ title }) => (
   <svg
     aria-label={title}
-    className={[css[size], css[color]].join(' ')}
     fill="none"
     style={{ width: '100%' }}
     viewBox="0 0 24 24"
@@ -124,10 +123,9 @@ const ColumnsIcon: React.FC<SVGProps> = ({ color = '', size, title }) => (
   </svg>
 );
 
-const FilterIcon: React.FC<SVGProps> = ({ color = '', size, title }) => (
+const FilterIcon: React.FC<SVGProps> = ({ title }) => (
   <svg
     aria-label={title}
-    className={[css[size], css[color]].join(' ')}
     fill="none"
     style={{ width: '100%' }}
     viewBox="0 0 24 24"
@@ -141,10 +139,9 @@ const FilterIcon: React.FC<SVGProps> = ({ color = '', size, title }) => (
   </svg>
 );
 
-const OptionsIcon: React.FC<SVGProps> = ({ color = '', size, title }) => (
+const OptionsIcon: React.FC<SVGProps> = ({ title }) => (
   <svg
     aria-label={title}
-    className={[css[size], css[color]].join(' ')}
     fill="none"
     style={{ width: '100%' }}
     viewBox="0 0 24 24"
@@ -158,10 +155,9 @@ const OptionsIcon: React.FC<SVGProps> = ({ color = '', size, title }) => (
   </svg>
 );
 
-const PanelIcon: React.FC<SVGProps> = ({ color = '', size, title }) => (
+const PanelIcon: React.FC<SVGProps> = ({ title }) => (
   <svg
     aria-label={title}
-    className={[css[size], css[color]].join(' ')}
     fill="none"
     style={{ width: '100%' }}
     viewBox="0 0 24 24"
@@ -175,10 +171,9 @@ const PanelIcon: React.FC<SVGProps> = ({ color = '', size, title }) => (
   </svg>
 );
 
-const RowIconLarge: React.FC<SVGProps> = ({ color = '', size, title }) => (
+const RowIconLarge: React.FC<SVGProps> = ({ title }) => (
   <svg
     aria-label={title}
-    className={[css[size], css[color]].join(' ')}
     fill="none"
     style={{ width: '100%' }}
     viewBox="0 0 24 24"
@@ -192,10 +187,9 @@ const RowIconLarge: React.FC<SVGProps> = ({ color = '', size, title }) => (
   </svg>
 );
 
-const RowIconMedium: React.FC<SVGProps> = ({ color = '', size, title }) => (
+const RowIconMedium: React.FC<SVGProps> = ({ title }) => (
   <svg
     aria-label={title}
-    className={[css[size], css[color]].join(' ')}
     fill="none"
     style={{ width: '100%' }}
     viewBox="0 0 24 24"
@@ -209,10 +203,9 @@ const RowIconMedium: React.FC<SVGProps> = ({ color = '', size, title }) => (
   </svg>
 );
 
-const RowIconExtraLarge: React.FC<SVGProps> = ({ color = '', size, title }) => (
+const RowIconExtraLarge: React.FC<SVGProps> = ({ title }) => (
   <svg
     aria-label={title}
-    className={[css[size], css[color]].join(' ')}
     fill="none"
     style={{ width: '100%' }}
     viewBox="0 0 24 24"
@@ -221,13 +214,8 @@ const RowIconExtraLarge: React.FC<SVGProps> = ({ color = '', size, title }) => (
   </svg>
 );
 
-const RowIconSmall: React.FC<SVGProps> = ({ color = '', size, title }) => (
-  <svg
-    aria-label={title}
-    className={[css[size], css[color]].join(' ')}
-    fill="none"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg">
+const RowIconSmall: React.FC<SVGProps> = ({ title }) => (
+  <svg aria-label={title} fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path
       clipRule="evenodd"
       d="M4.5 6C4.22386 6 4 6.22386 4 6.5C4 6.77614 4.22386 7 4.5 7H19.5C19.7761 7 20 6.77614 20 6.5C20 6.22386 19.7761 6 19.5 6H4.5ZM4.5 10C4.22386 10 4 10.2239 4 10.5C4 10.7761 4.22386 11 4.5 11H19.5C19.7761 11 20 10.7761 20 10.5C20 10.2239 19.7761 10 19.5 10H4.5ZM4 14.5C4 14.2239 4.22386 14 4.5 14H19.5C19.7761 14 20 14.2239 20 14.5C20 14.7761 19.7761 15 19.5 15H4.5C4.22386 15 4 14.7761 4 14.5ZM4.5 18C4.22386 18 4 18.2239 4 18.5C4 18.7761 4.22386 19 4.5 19H19.5C19.7761 19 20 18.7761 20 18.5C20 18.2239 19.7761 18 19.5 18H4.5Z"
@@ -257,17 +245,17 @@ const Icon: React.FC<Props> = ({
   const classes = [css.base];
 
   const svgIcon = useMemo(() => {
-    if (name === 'columns') return <ColumnsIcon color={color} size={size} title={title} />;
-    if (name === 'filter') return <FilterIcon color={color} size={size} title={title} />;
-    if (name === 'options') return <OptionsIcon color={color} size={size} title={title} />;
-    if (name === 'panel') return <PanelIcon color={color} size={size} title={title} />;
-    if (name === 'row-small') return <RowIconSmall color={color} size={size} title={title} />;
-    if (name === 'row-medium') return <RowIconMedium color={color} size={size} title={title} />;
-    if (name === 'row-large') return <RowIconLarge color={color} size={size} title={title} />;
-    if (name === 'row-xl') return <RowIconExtraLarge color={color} size={size} title={title} />;
+    if (name === 'columns') return <ColumnsIcon title={title} />;
+    if (name === 'filter') return <FilterIcon title={title} />;
+    if (name === 'options') return <OptionsIcon title={title} />;
+    if (name === 'panel') return <PanelIcon title={title} />;
+    if (name === 'row-small') return <RowIconSmall title={title} />;
+    if (name === 'row-medium') return <RowIconMedium title={title} />;
+    if (name === 'row-large') return <RowIconLarge title={title} />;
+    if (name === 'row-xl') return <RowIconExtraLarge title={title} />;
 
     return null;
-  }, [color, name, size, title]);
+  }, [name, title]);
 
   if (name && name !== 'filter') classes.push(`icon-${name}`);
   if (size) classes.push(css[size]);
