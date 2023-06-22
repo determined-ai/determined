@@ -81,7 +81,7 @@ data:
     {{- if .Values.enterpriseEdition }}
     {{- if .Values.oidc }}
     oidc:
-      enabled: {{ .Values.oidc.enabled | default true }}
+      enabled: {{ .Values.oidc.enabled | default false }}
       provider: {{ required "A valid provider entry is required!" .Values.oidc.provider}}
       idp_recipient_url: {{ required "A valid recipient url is required!" .Values.oidc.idpRecipientUrl }}
       idp_sso_url: {{ required "A valid sso url is required!" .Values.oidc.idpSsoUrl }}
@@ -96,7 +96,7 @@ data:
 
     {{- if .Values.scim }}
     scim:
-      enabled: {{ .Values.scim.enabled | default true }}
+      enabled: {{ .Values.scim.enabled | default false }}
       auth:
         type: {{ required "A valid authentication type is required!" .Values.scim.auth.type }}
         {{- if eq .Values.scim.auth.type "basic" }}
