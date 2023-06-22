@@ -59,6 +59,7 @@ import {
   defaultTextColumn,
   getColumnDefs,
   getHeaderIcons,
+  minColumnWidth,
 } from './columns';
 import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
@@ -766,13 +767,13 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           drawHeader={drawHeader}
           freezeColumns={staticColumns.length + pinnedColumnsCount}
           getCellContent={getCellContent}
-          // `getCellsForSelection` is required for double click column resize to content.
-          getCellsForSelection
+          getCellsForSelection // `getCellsForSelection` is required for double click column resize to content.
           getRowThemeOverride={getRowThemeOverride}
           gridSelection={selection}
           headerHeight={36}
           headerIcons={headerIcons}
           height={height}
+          minColumnWidth={minColumnWidth}
           ref={gridRef}
           rowHeight={rowHeightMap[rowHeight]}
           rows={dataTotal}

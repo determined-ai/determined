@@ -42,7 +42,7 @@ import {
   settingsConfigForProject,
   settingsConfigGlobal,
 } from './F_ExperimentList.settings';
-import { ExperimentColumn, experimentColumns } from './glide-table/columns';
+import { ExperimentColumn, experimentColumns, minColumnWidth } from './glide-table/columns';
 import { Error, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
@@ -452,11 +452,21 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const handleCompareWidthChange = useCallback(
     (width: number) => {
+      let subtractedWidth = comparisonViewWidth - width;
+      const newWidths: Record<string, number> = {};
+      let iter = 1;
+      while (subtractedWidth !== 0) {
+        const colName = pinnedColumns[pinnedColumns.length - iter];
+        const oldColWidth = settings.columnWidths[colName];
+        const newColWidth = Math.max(minColumnWidth, oldColWidth - subtractedWidth);
+        subtractedWidth -= oldColWidth - newColWidth;
+        newWidths[colName] = newColWidth;
+        iter++;
+      }
       updateSettings({
         columnWidths: {
           ...settings.columnWidths,
-          [pinnedColumns.last()]:
-            settings.columnWidths[pinnedColumns.last()] + width - comparisonViewWidth,
+          ...newWidths,
         },
       });
     },
@@ -526,6 +536,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : (
           <Space className={css.space} direction="vertical">
             <ComparisonView
+              fixedColumnsCount={
+                STATIC_COLUMNS.length + (isLoadingSettings ? 0 : settings.pinnedColumnsCount)
+              }
               initialWidth={comparisonViewWidth}
               open={settings.compare}
               projectId={project.id}

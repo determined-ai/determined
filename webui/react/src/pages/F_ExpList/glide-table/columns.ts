@@ -20,6 +20,8 @@ import { getDisplayName } from 'utils/user';
 
 import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
+export const minColumnWidth = 40;
+
 // order used in ColumnPickerMenu
 export const experimentColumns = [
   'selected',
