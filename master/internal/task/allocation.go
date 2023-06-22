@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task/idle"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
@@ -69,8 +70,6 @@ type (
 		// Encapsulates logic of rendezvousing containers of the currently
 		// allocated task. If there is no current task, or it is unallocated, it is nil.
 		rendezvous *rendezvous
-		// Encapsulates the logic of watching for idle timeouts.
-		idleTimeoutWatcher *IdleTimeoutWatcher
 		// proxy state
 		proxies []string
 		// active all gather state
@@ -224,6 +223,9 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if a.req.Preemptible {
 			preemptible.Unregister(a.req.AllocationID.String())
 		}
+		if cfg := a.req.IdleTimeout; cfg != nil {
+			idle.Unregister(cfg.ServiceID)
+		}
 		allocationmap.UnregisterAllocation(a.model.AllocationID)
 	case sproto.ContainerLog:
 		a.sendTaskLog(msg.ToTaskLog())
@@ -338,16 +340,6 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			a.allGather = nil
 			a.allGatherFinished = true
 		}
-	case IdleTimeoutWatcherTick, IdleWatcherNoteActivity:
-		if a.req.IdleTimeout == nil {
-			if ctx.ExpectingResponse() {
-				ctx.Respond(ErrBehaviorDisabled{idleWatcher})
-			}
-			return nil
-		}
-		if err := a.idleTimeoutWatcher.ReceiveMsg(ctx); err != nil {
-			a.Error(ctx, err)
-		}
 	case sproto.InvalidResourcesRequestError:
 		ctx.Tell(a.req.AllocationRef, msg)
 		a.Error(ctx, msg)
@@ -461,8 +453,13 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	if cfg := a.req.IdleTimeout; cfg != nil {
-		a.idleTimeoutWatcher = NewIdleTimeoutWatcher(a.req.Name, cfg)
-		a.idleTimeoutWatcher.PreStart(ctx)
+		idle.Register(*cfg, func(err error) {
+			ctx.Log().WithError(err).Infof("killing %s due to inactivity", a.req.Name)
+			ctx.Tell(ctx.Self(), sproto.AllocationSignalWithReason{
+				AllocationSignal:    sproto.TerminateAllocation,
+				InformationalReason: err.Error(),
+			})
+		})
 	}
 
 	if a.req.Restore {
@@ -970,6 +967,9 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 	}
 	if a.rendezvous != nil {
 		defer a.rendezvous.close()
+	}
+	if cfg := a.req.IdleTimeout; cfg != nil {
+		defer idle.Unregister(cfg.ServiceID)
 	}
 	switch {
 	case a.killedWhileRunning:

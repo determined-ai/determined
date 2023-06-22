@@ -348,11 +348,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			Notebook: c.toNotebook(ctx),
 			Config:   protoutils.ToStruct(c.Config),
 		})
-	case *apiv1.IdleNotebookRequest:
-		if !msg.Idle {
-			ctx.Tell(c.allocation, task.IdleWatcherNoteActivity{LastActivity: time.Now()})
-		}
-		ctx.Respond(&apiv1.IdleNotebookResponse{})
 	case *apiv1.KillNotebookRequest:
 		// TODO(Brad): Do the same thing to allocations that we are doing to RMs.
 		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
