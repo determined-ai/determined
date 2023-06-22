@@ -233,7 +233,6 @@ def _get_storage_information(
     if storage_type == "s3":
         bucket = checkpoint_config["bucket"]
         return f"s3://{bucket}/{default_uuid_path}"
-    # TODO test
     elif storage_type == "gcs":
         bucket = checkpoint_config["bucket"]
         return f"gs://{bucket}/{default_uuid_path}"
