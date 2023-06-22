@@ -65,6 +65,7 @@ const FilterField = ({
   const currentColumn = columns.find((c) => c.column === field.columnName);
   const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(field.columnName);
 
+  const [inputOpen, setInputOpen] = useState(false);
   const [fieldValue, setFieldValue] = useState<FormFieldValue>(field.value);
 
   // use this function to update field value
@@ -160,11 +161,15 @@ const FilterField = ({
   const captureEnterKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       // would use isComposing alone but safari has a bug: https://bugs.webkit.org/show_bug.cgi?id=165004
-      if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) {
+      if (e.key === 'Enter' && !inputOpen && !e.nativeEvent.isComposing && e.keyCode !== 229) {
         formStore.addChild(parentId, FormKind.Field, { index: index + 1, item: getInitField() });
+        // stop panel flashing for selects and dates
+        if (field.type === 'COLUMN_TYPE_DATE' || isSpecialColumn) {
+          e.stopPropagation();
+        }
       }
     },
-    [formStore, index, parentId],
+    [field.type, formStore, index, inputOpen, isSpecialColumn, parentId],
   );
 
   return (
@@ -216,6 +221,7 @@ const FilterField = ({
                 const val = value?.toString() ?? null;
                 updateFieldValue(field.id, val);
               }}
+              onDropdownVisibleChange={setInputOpen}
             />
           </div>
         ) : (
@@ -257,6 +263,7 @@ const FilterField = ({
                     const dateString = dayjs(value).utc().startOf('date').format();
                     updateFieldValue(field.id, dateString);
                   }}
+                  onOpenChange={setInputOpen}
                 />
               </div>
             )}
