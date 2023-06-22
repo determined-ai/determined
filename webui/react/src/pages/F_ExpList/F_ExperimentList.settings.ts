@@ -21,6 +21,7 @@ export interface F_ExperimentListSettings {
   columnWidths: Record<string, number>;
   compare: boolean;
   filterset: string; // save FilterFormSet as string
+  selectedExperimentIds: number[];
   sortString: string;
   pageLimit: number;
   rowHeight: RowHeight;
@@ -68,6 +69,12 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       skipUrlEncoding: true,
       storageKey: 'rowHeight',
       type: ioRowHeight,
+    },
+    selectedExperimentIds: {
+      defaultValue: [],
+      skipUrlEncoding: true,
+      storageKey: 'selectedExperimentIds',
+      type: array(number),
     },
     sortString: {
       defaultValue: '',

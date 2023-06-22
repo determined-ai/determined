@@ -133,6 +133,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   data,
   dataTotal,
   clearSelectionTrigger,
+  selectedExperimentIds,
   setSelectedExperimentIds,
   sortableColumnIds,
   setSortableColumnIds,
@@ -556,6 +557,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               setStandAloneSelect(row);
 
             if (selection.rows.hasIndex(row)) {
+              selectedExperimentIds.splice(selectedExperimentIds.indexOf(rowData.experiment.id), 1);
               setSelection(({ columns, rows }: GridSelection) => ({
                 columns,
                 rows: rows.remove(row),
@@ -573,6 +575,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 }
               }
             } else {
+              setSelectedExperimentIds(selectedExperimentIds.concat([rowData.experiment.id]));
               setSelection(({ columns, rows }: GridSelection) => ({
                 columns,
                 rows: rows.add(row),
