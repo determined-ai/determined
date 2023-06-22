@@ -226,17 +226,22 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   }, [clearSelectionTrigger]);
 
   useEffect(() => {
-    const selectedRowIndices = selection.rows.toArray();
-    setSelectedExperimentIds((prevIds) => {
-      const selectedIds = selectedRowIndices
-        .map((idx) => data?.[idx])
-        .filter((row) => row !== undefined)
-        .filter(Loadable.isLoaded)
-        .map((record) => record.data.experiment.id);
-      if (prevIds === selectedIds) return prevIds;
-      return selectedIds;
-    });
-  }, [selection.rows, setSelectedExperimentIds, data]);
+    const loadedRows = data.filter(Loadable.isLoaded);
+    if (loadedRows.length !== data.length) return;
+
+    if (!selection.rows.length && selectedExperimentIds.length) {
+      setSelection(({ columns, rows }: GridSelection) => {
+        data.forEach((loadableRow, idx) => {
+          Loadable.map(loadableRow, (row) => {
+            if (selectedExperimentIds.includes(row.experiment.id)) {
+              rows = rows.add([idx, idx + 1]);
+            }
+          });
+        });
+        return { columns, rows };
+      });
+    }
+  }, [selection.rows, selectedExperimentIds, setSelectedExperimentIds, data]);
 
   const columnDefs = useMemo<Record<string, ColumnDef>>(
     () =>
@@ -557,7 +562,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               setStandAloneSelect(row);
 
             if (selection.rows.hasIndex(row)) {
-              selectedExperimentIds.splice(selectedExperimentIds.indexOf(rowData.experiment.id), 1);
+              const existIndex = selectedExperimentIds.indexOf(rowData.experiment.id);
+              setSelectedExperimentIds(
+                selectedExperimentIds
+                  .slice(0, existIndex)
+                  .concat(selectedExperimentIds.slice(existIndex + 1)),
+              );
               setSelection(({ columns, rows }: GridSelection) => ({
                 columns,
                 rows: rows.remove(row),
@@ -591,7 +601,17 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         }
       });
     },
-    [data, columnIds, columnDefs, selection, selectAll, setExcludedExperimentIds, standAloneSelect],
+    [
+      data,
+      columnIds,
+      columnDefs,
+      selection,
+      selectAll,
+      selectedExperimentIds,
+      setSelectedExperimentIds,
+      setExcludedExperimentIds,
+      standAloneSelect,
+    ],
   );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(

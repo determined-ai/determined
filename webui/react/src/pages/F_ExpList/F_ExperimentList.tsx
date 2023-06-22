@@ -159,8 +159,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, [settings.filterset, isLoadingSettings]);
 
-  const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>(settings.selectedExperimentIds);
-  console.log(selectedExperimentIds);
+  const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>(
+    settings.selectedExperimentIds,
+  );
   const [excludedExperimentIds, setExcludedExperimentIds] = useState<Set<number>>(
     new Set<number>(),
   );
@@ -498,7 +499,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     return Loadable.filterNotLoaded(experiments, (experiment) =>
       selectedIdSet.has(experiment.experiment.id),
     );
-  }, [experiments, selectedExperimentIds]);
+  }, [updateSettings, experiments, selectedExperimentIds]);
 
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
