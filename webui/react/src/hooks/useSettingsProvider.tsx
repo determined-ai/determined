@@ -1,6 +1,6 @@
 import { Map } from 'immutable';
 import { observable, useObservable, WritableObservable } from 'micro-observables';
-import React, { createContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useEffect, useRef, useState } from 'react';
 
 import Spinner from 'components/Spinner';
 import { getUserSetting } from 'services/api';
@@ -86,9 +86,9 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     querySettings.current = url;
   }, []);
 
-  const clearQuerySettings = () => {
+  const clearQuerySettings = useCallback(() => {
     querySettings.current = '';
-  };
+  }, []);
 
   return (
     <Spinner
