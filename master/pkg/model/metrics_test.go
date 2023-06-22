@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -61,8 +62,8 @@ func TestMetricIdentifierDeserialize(t *testing.T) {
 			false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run("deserialize metric identifier", func(t *testing.T) {
+	for idx, tt := range tests {
+		t.Run(fmt.Sprint(idx), func(t *testing.T) {
 			got, err := DeserializeMetricIdentifier(tt.args.s)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DeserializeMetricIdentifier(%v) error = %v, wantErr %v", tt.args, err, tt.wantErr)
