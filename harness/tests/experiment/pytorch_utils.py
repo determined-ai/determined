@@ -176,7 +176,9 @@ def train_from_checkpoint(
     )
     trial_controller.run()
 
-    assert len(os.listdir(checkpoint_dir)) == num_existing_checkpoints + 1, "trial did not create a checkpoint"
+    assert (
+        len(os.listdir(checkpoint_dir)) == num_existing_checkpoints + 1
+    ), "trial did not create a checkpoint"
 
 
 def train_and_checkpoint(

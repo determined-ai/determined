@@ -10,7 +10,7 @@ from torch.distributed import launcher
 from tests.experiment import pytorch_utils, utils  # noqa: I100
 
 
-def test_pytorch_mnist(tmp_path: pathlib.Path) -> None:
+def test_pytorch_mnist_example(tmp_path: pathlib.Path) -> None:
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
     config = utils.load_config(utils.tutorials_path("mnist_pytorch/const.yaml"))

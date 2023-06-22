@@ -1479,8 +1479,12 @@ def run_no_op(
 
     return f.getvalue().split("\n")
 
+
 def calculate_gradients(
-    batch_size: int = 4, epoch_size: int = 64, num_epochs: int = 3, lr: float = 0.001,
+    batch_size: int = 4,
+    epoch_size: int = 64,
+    num_epochs: int = 3,
+    lr: float = 0.001,
 ) -> typing.List[float]:
     # independently compute expected metrics
     batches = [
