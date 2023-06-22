@@ -439,7 +439,23 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       setMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
       setMenuIsOpen(true);
     },
-    [columnIds, projectColumns, sorts, onSortChange, staticColumns, pinnedColumnsCount, selectAllRows, deselectAllRows, selection.rows.length, formStore, gridRef, onIsOpenFilterChange, sortableColumnIds, setSortableColumnIds, setPinnedColumnsCount],
+    [
+      columnIds,
+      projectColumns,
+      sorts,
+      onSortChange,
+      staticColumns,
+      pinnedColumnsCount,
+      selectAllRows,
+      deselectAllRows,
+      selection.rows.length,
+      formStore,
+      gridRef,
+      onIsOpenFilterChange,
+      sortableColumnIds,
+      setSortableColumnIds,
+      setPinnedColumnsCount,
+    ],
   );
 
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
