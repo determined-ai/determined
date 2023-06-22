@@ -6,37 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMetricIdentifierSerialize(t *testing.T) {
-	type fields struct {
-		Type MetricType
-		Name string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		want    string
-		wantErr bool
-	}{
-		// TODO
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			m := &MetricIdentifier{
-				Type: tt.fields.Type,
-				Name: tt.fields.Name,
-			}
-			got, err := m.Serialize()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("MetricIdentifier.Serialize() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("MetricIdentifier.Serialize() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestMetricIdentifierDeserialize(t *testing.T) {
 	type args struct {
 		s string
@@ -101,22 +70,5 @@ func TestMetricIdentifierDeserialize(t *testing.T) {
 			}
 			require.Equal(t, tt.want, got)
 		})
-	}
-}
-
-func TestMetricIdentifierTwoWay(t *testing.T) {
-	metricType := MetricType("ValidationMetricType")
-	metricName := "ValidationMetricName"
-	metricID := MetricIdentifier{Type: metricType, Name: metricName}
-	s, err := metricID.Serialize()
-	if err != nil {
-		t.Errorf("Serialize error = %v", err)
-	}
-	metricID2, err := DeserializeMetricIdentifier(s)
-	if err != nil {
-		t.Errorf("Deserialize error = %v", err)
-	}
-	if metricID2.Type != metricID.Type || metricID2.Name != metricID.Name {
-		t.Errorf("MetricIdentifierTwoWay error = %v", err)
 	}
 }

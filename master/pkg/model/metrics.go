@@ -63,11 +63,6 @@ type MetricIdentifier struct {
 	Name string
 }
 
-// Serialize serializes a metric identifier to a string.
-func (m MetricIdentifier) Serialize() (string, error) {
-	return m.Type.ToString() + "." + m.Name, m.Type.Validate()
-}
-
 // ToProto returns the proto representation of the metric identifier.
 func (m MetricIdentifier) ToProto() *metricv1.MetricName {
 	return &metricv1.MetricName{
