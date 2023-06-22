@@ -1,6 +1,6 @@
 import * as t from 'io-ts';
 import { useObservable } from 'micro-observables';
-import { useCallback, useContext, useEffect, useLayoutEffect, useMemo } from 'react';
+import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { updateUserSetting } from 'services/api';
@@ -162,12 +162,17 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
 };
 
 const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
-  const {
-    isLoading: isLoadingOb,
-    querySettings,
-    state: stateOb,
-    clearQuerySettings,
-  } = useContext(UserSettings);
+  const { isLoading: isLoadingOb, state: stateOb } = useContext(UserSettings);
+
+  const querySettings = useRef('');
+  useEffect(() => {
+    const url = window.location.search.substring(/^\?/.test(location.search) ? 1 : 0);
+    querySettings.current = url;
+  }, []);
+  const clearQuerySettings = useCallback(() => {
+    querySettings.current = '';
+  }, []);
+
   const initialLoading = useObservable(isLoadingOb);
   const derivedOb = useMemo(
     () => stateOb.select((s) => s.get(config.storagePath)),
@@ -305,15 +310,15 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   // parse navigation url to state
   useEffect(() => {
-    if (!querySettings) return;
+    if (!querySettings.current) return;
 
-    const parsedSettings = queryToSettings<T>(config, querySettings);
+    const parsedSettings = queryToSettings<T>(config, querySettings.current);
     updateSettings(parsedSettings);
-  }, [config, querySettings, updateSettings]);
+  }, [config, updateSettings]);
 
   useLayoutEffect(() => {
     if (initialLoading) return;
-    setTimeout(clearQuerySettings, 200);
+    clearQuerySettings();
     return derivedOb.subscribe(async (cur, prev) => {
       if (!cur || !currentUser || isEqual(cur, prev)) return;
 
