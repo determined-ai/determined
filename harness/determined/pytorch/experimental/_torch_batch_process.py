@@ -11,7 +11,7 @@ from typing import Any, ContextManager, Dict, Optional, Set, Sized, Type
 import torch
 import torch.distributed as dist
 from torch import nn
-from torch.utils.data import Dataset
+from torch.utils import data
 
 import determined as det
 from determined import core, pytorch
@@ -276,7 +276,7 @@ def _reduce_metrics(
 
 def torch_batch_process(
     batch_processor_cls: Type[TorchBatchProcessor],
-    dataset: Dataset,
+    dataset: data.Dataset,
     batch_size: Optional[int] = None,
     max_batches: Optional[int] = None,
     checkpoint_interval: int = 5,
