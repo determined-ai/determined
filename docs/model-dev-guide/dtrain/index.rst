@@ -28,7 +28,7 @@ implement distributed training, including the following:
 
 Additional Resources:
 
--  Learn how :ref:`configuration templates <config-template>` can help reduce redundancy.
+-  Learn how :ref:`Configuration Templates <config-template>` can help reduce redundancy.
 -  Discover how Determined aims to support reproducible machine learning experiments in
    :ref:`Reproducibility <reproducibility>`.
 -  In :ref:`Optimizing Training <optimizing-training>`, you'll learn about out-of-the box tools you

@@ -26,21 +26,21 @@ training, as described in :ref:`Basic Setup: Step 7 - Configure the Cluster
 Slots Per Trial
 ===============
 
-The ``resources.slots_per_trial`` field in the :ref:`experiment-config-reference` controls the
-number of GPUs used to train a single trial.
+The ``resources.slots_per_trial`` field in the :ref:`experiment configuration
+<experiment-config-reference>` controls the number of GPUs used to train a single trial.
 
 By default, this field is set to a value of ``1``, which disables distributed training. If you
 increase the ``slots_per_trial`` value, this will automatically enable multi-GPU training. Bear in
 mind that these GPUs can either be located on a single machine or distributed across multiple
 machines. The experiment configuration merely dictates the number of GPUs to be used in the training
 process, while the Determined job scheduler decides whether to schedule the task on a single agent
-or multiple agents. Whether to schedule the task on a single agent or multiple agents depends on the
-machines in the cluster and other active workloads.
+or multiple agents. Whether the job scheduler schedules the task on a single agent or multiple
+agents depends on the machines in the cluster and other active workloads.
 
 Multi-machine parallelism allows you to further parallelize training across more GPUs. To use this
-feature, ``slots_per_trial`` should be set as a multiple of the total number of GPUs on an agent
-machine. For example, if your resource pool consists of multiple 8-GPU agent machines, valid
-``slots_per_trial`` values would be 16, 24, 32, and so on.
+feature, set ``slots_per_trial`` to a multiple of the total number of GPUs on an agent machine. For
+example, if your resource pool consists of multiple 8-GPU agent machines, valid ``slots_per_trial``
+values would be 16, 24, 32, and so on.
 
 In the following configuration, trials will use the combined resources of multiple machines to train
 a model:
@@ -78,20 +78,28 @@ Global Batch Size
 You can reduce computational overhead by setting the ``global_batch_size`` to the largest batch size
 that fits into a single GPU multiplied times the number of slots.
 
-During distributed training, the ``global_batch_size`` specified in the
-:ref:`experiment-config-reference` is partitioned across ``slots_per_trial`` GPUs. The per-GPU batch
-size is set to: ``global_batch_size // slots_per_trial``. If ``slots_per_trial`` does not divide
-``global_batch_size`` evenly, the remainder is dropped. For convenience, the per-GPU batch size can
-be accessed via the Trial API, using :func:`context.get_per_slot_batch_size
-<determined.TrialContext.get_per_slot_batch_size>`.
+.. note::
+
+   This feature only applies to :ref:`high-level-apis` (Trial APIs) and does not apply to the Core
+   API.
+
+During distributed training, the ``global_batch_size`` specified in the :ref:`experiment
+configuration file <experiment-config-reference>` is partitioned across ``slots_per_trial`` GPUs.
+The per-GPU batch size is set to: ``global_batch_size // slots_per_trial``. Recall that if
+``global_batch_size`` is not evenly divisible by ``slots_per_trial``, the remainder is dropped. For
+convenience, the per-GPU batch size can be accessed via the Trial API, using
+:func:`context.get_per_slot_batch_size <determined.TrialContext.get_per_slot_batch_size>`.
 
 For improved performance, *weak-scaling* is recommended. Weak-scaling means proportionally
 increasing your ``global_batch_size`` with ``slots_per_trial``. For example, you might change
-``global_batch_size`` and ``slots_per_trial`` from 32 and 1 to 128 and 4, respectively.
+``global_batch_size`` and ``slots_per_trial`` from 32 and 1 to 128 and 4, respectively. You can
+visit the blog post, `Scaling deep learning workloads
+<https://developer.hpe.com/blog/scaling-deep-learning-workloads/>`_, to learn more about weak
+scaling.
 
 Note that adjusting ``global_batch_size`` can impact your model convergence, which in turn can
-affect your training and/or testing accuracy. You might need to adjust model hyperparameters like
-the learning rate, or consider using a different optimizer when training with larger batch sizes.
+affect your training and/or testing accuracy. You might need to adjust model hyperparameters, such
+as the learning rate, or consider using a different optimizer when training with larger batch sizes.
 
 .. _multi-gpu-training-implement-adv-optimizations:
 
@@ -99,11 +107,6 @@ Advanced Optimizations
 ======================
 
 The following optimizations can further reduce training time.
-
-.. note::
-
-   These optimizations only apply to :ref:`high-level-apis` (Trial APIs) and do not apply to the
-   Core API.
 
 -  ``optimizations.aggregation_frequency`` controls how many batches are evaluated before exchanging
    gradients. This optimization increases your effective batch size to ``aggregation_frequency`` *
@@ -124,8 +127,8 @@ The following optimizations can further reduce training time.
    This impacts results shown in the WebUI and TensorBoard but does not influence model behavior or
    hyperparameter search.
 
-To learn more about these optimizations, visit the ``optimizations`` section in the
-:ref:`experiment-config-reference`.
+To learn more about these optimizations, visit the :ref:`optimizations <exp-config-optimizations>`
+section in the Experiment Configuration Reference.
 
 If you're not seeing improved performance with distributed training, your model might have a
 performance bottleneck that can't be directly alleviated by using multiple GPUs, such as with data
@@ -153,7 +156,7 @@ is being used for training. Each of these processes attempts to download trainin
 data, so it is important to ensure that concurrent data downloads do not conflict with one another.
 
 One way to achieve this is to include a unique identifier in the local file system path where the
-downloaded data is stored. A convenient identifier is the ``rank`` of the current process: the
+downloaded data is stored. A convenient identifier is the ``rank`` of the current process. The
 process ``rank`` is automatically assigned by Determined and is unique among all trial processes.
 You can accomplish this by leveraging the :func:`self.context.distributed.get_rank()
 <determined._core._distributed.DistributedContext.get_rank>` function.
@@ -187,8 +190,8 @@ configuration file.
 *********************
 
 The Determined master schedules distributed training jobs automatically, ensuring that all of the
-compute resources required for a job are available before the job is launched. When using
-distributed training, take note of the following details related to scheduler behavior:
+compute resources required for a job are available before the job is launched. Here are some
+important details regarding ``slots_per_trial`` and the scheduler's behavior:
 
 -  If ``slots_per_trial`` is less than or equal to the number of slots on a single agent, Determined
    considers scheduling multiple distributed training jobs on a single agent. This approach is
@@ -204,9 +207,10 @@ distributed training, take note of the following details related to scheduler be
 
 .. note::
 
-   The scheduler can find fits for distributed jobs against agents of different sizes by configuring
-   the :ref:`allowing_heterogeneous_fits <allow-uneven-slots>` parameter. This parameter defaults to
-   ``false``.
+   The scheduler can find fits for distributed jobs against agents of different sizes. This is
+   configured via the :ref:`allowing_heterogeneous_fits <allow-uneven-slots>` parameter. This
+   parameter defaults to ``false``. By default Determined requires that the job use all of the slots
+   (GPUs) on an agent.
 
 .. warning::
 

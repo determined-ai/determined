@@ -25,14 +25,6 @@ After initialization is completed, distributed training in Determined follows a 
    workers having identical solution states.
 #. Return to the first step.
 
-.. image:: /assets/images/dtrain-loop-light.png
-   :class: only-dark
-   :alt: Determined AI distributed training loop dark mode
-
-.. image:: /assets/images/dtrain-loop-light.png
-   :class: only-light
-   :alt: Determined AI distributed training loop light mode
-
 **************************
  Performance Optimization
 **************************
@@ -73,11 +65,12 @@ you have scaled your ``global_batch_size`` proportionally with ``slots_per_trial
 that training performance is being bottlenecked by network communication or disk I/O.
 
 To check if your training is bottlenecked by communication, we suggest setting
-``optimizations.aggregation_frequency`` in the :ref:`experiment-config-reference` to a very large
-number (e.g., 1000). This setting results in communicating updates once every 1000 batches.
-Comparing throughput with ``aggregation_frequency`` of 1 vs. ``aggregation_frequency`` of 1000 will
-demonstrate the communication overhead. If you do observe significant communication overhead, refer
-to :ref:`multi-gpu-training` for guidance on how to optimize communication.
+``optimizations.aggregation_frequency`` in the :ref:`experiment configuration
+<experiment-config-reference>` to a very large number (e.g., 1000). This setting results in
+communicating updates once every 1000 batches. Comparing throughput with an
+``aggregation_frequency`` of 1 vs. an ``aggregation_frequency`` of 1000 will demonstrate the
+communication overhead. If you do observe significant communication overhead, refer to
+:ref:`multi-gpu-training-implement-adv-optimizations` for guidance on how to optimize communication.
 
 To check if your training is bottlenecked by I/O, we encourage users to experiment with using
 synthetic datasets. If you observe that I/O is a significant bottleneck, we suggest optimizing the
