@@ -248,9 +248,6 @@ def test_torch_batch_process_times_process_batch_with_skip(
     steps_completed: int,
     expected_process_batch_call_count: int,
 ) -> None:
-    import logging
-
-    logging.info(f"num slots are {num_slots}")
     with test_util.set_mock_cluster_info(
         DEFAULT_ADDRS, rank, num_slots, latest_checkpoint="fake_latest_checkpoint"
     ):
@@ -425,8 +422,6 @@ def test_torch_batch_process_reduce_metrics(
         )
 
 
-#
-#
 @unittest.mock.patch(
     "determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context"
 )
