@@ -2,14 +2,15 @@ package tasks
 
 import (
 	"archive/tar"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"strings"
 
 	docker "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
+	"github.com/labstack/gommon/log"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -65,7 +66,7 @@ type TaskSpec struct {
 	// Fields that are set on the cluster level.
 	ClusterID   string
 	HarnessPath string
-	MasterCert  *tls.Certificate
+	MasterCert  config.TLSConfig
 	SSHRsaSize  int
 
 	SegmentEnabled bool
@@ -129,12 +130,16 @@ func (t *TaskSpec) ResolveWorkDir() {
 
 // Archives returns all the archives.
 func (t *TaskSpec) Archives() ([]cproto.RunArchive, []cproto.RunArchive) {
+	masterCert, err := t.MasterCert.ReadCertificate()
+	if err != nil {
+		log.Error(err)
+	}
 	res := []cproto.RunArchive{
 		workDirArchive(t.AgentUserGroup, t.WorkDir, t.WorkDir == DefaultWorkDir),
 		runDirHelpersArchive(t.AgentUserGroup),
 		injectUserArchive(t.AgentUserGroup, t.WorkDir),
 		harnessArchive(t.HarnessPath, t.AgentUserGroup),
-		masterCertArchive(t.MasterCert),
+		masterCertArchive(masterCert),
 	}
 	res = append(res, t.ExtraArchives...)
 
@@ -197,7 +202,8 @@ func (t TaskSpec) EnvVars() map[string]string {
 		e["DET_INTER_NODE_NETWORK_INTERFACE"] = networkInterface
 	}
 
-	if t.MasterCert != nil {
+	cert, err := t.MasterCert.ReadCertificate()
+	if err != nil && cert != nil {
 		e["DET_USE_TLS"] = "true"
 		e["DET_MASTER_CERT_FILE"] = certPath
 	} else {

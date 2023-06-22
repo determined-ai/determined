@@ -857,15 +857,11 @@ func (m *Master) Run(ctx context.Context) error {
 	// Must happen before recovery. If tasks can't recover their allocations, they need an end time.
 	cluster.InitTheLastBootClusterHeartbeat()
 
-	cert, err := m.config.Security.TLS.ReadCertificate()
-	if err != nil {
-		return errors.Wrap(err, "failed to read TLS certificate")
-	}
 	m.taskSpec = &tasks.TaskSpec{
 		ClusterID:             m.ClusterID,
 		HarnessPath:           filepath.Join(m.config.Root, "wheels"),
 		TaskContainerDefaults: m.config.TaskContainerDefaults,
-		MasterCert:            cert,
+		MasterCert:            m.config.Security.TLS,
 		SSHRsaSize:            m.config.Security.SSH.RsaKeySize,
 		SegmentEnabled:        m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "",
 		SegmentAPIKey:         m.config.Telemetry.SegmentMasterKey,
@@ -995,6 +991,11 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 	if err = m.db.EndAllInstanceStats(); err != nil {
 		return errors.Wrap(err, "could not update end stats for instances")
+	}
+
+	cert, err := m.config.Security.TLS.ReadCertificate()
+	if err != nil {
+		return err
 	}
 
 	// Resource Manager.
