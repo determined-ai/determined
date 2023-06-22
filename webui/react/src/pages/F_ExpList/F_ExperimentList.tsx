@@ -164,7 +164,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [canceler] = useState(new AbortController());
 
   const colorMap = useGlasbey(selectedExperimentIds);
-  const { height: containerHeight } = useResize(contentRef);
+  const { height: containerHeight, width: containerWidth } = useResize(contentRef);
   const height =
     containerHeight - 2 * parseInt(getCssVar('--theme-stroke-width')) - (isPagedView ? 40 : 0);
   const [scrollPositionSetCount] = useState(observable(0));
@@ -441,11 +441,14 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [settings.columns, settings.pinnedColumnsCount]);
 
   const comparisonViewWidth = useMemo(() => {
-    return pinnedColumns.reduce(
-      (totalWidth, curCol) => totalWidth + settings.columnWidths[curCol] ?? 0,
-      17, // Constant of 17px accounts for scrollbar width
+    return Math.min(
+      containerWidth - 30,
+      pinnedColumns.reduce(
+        (totalWidth, curCol) => totalWidth + settings.columnWidths[curCol] ?? 0,
+        17, // Constant of 17px accounts for scrollbar width
+      ),
     );
-  }, [pinnedColumns, settings.columnWidths]);
+  }, [containerWidth, pinnedColumns, settings.columnWidths]);
 
   const handleCompareWidthChange = useCallback(
     (width: number) => {

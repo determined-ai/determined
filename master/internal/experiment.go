@@ -36,6 +36,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -108,7 +109,8 @@ type (
 		searcher            *searcher.Searcher
 		warmStartCheckpoint *model.Checkpoint
 
-		taskSpec *tasks.TaskSpec
+		taskSpec      *tasks.TaskSpec
+		generatedKeys ssh.PrivateAndPublicKeys
 
 		faultToleranceEnabled bool
 		restored              bool
@@ -181,6 +183,11 @@ func newExperiment(
 
 	taskSpec.AgentUserGroup = agentUserGroup
 
+	generatedKeys, err := ssh.GenerateKey(taskSpec.SSHRsaSize, nil)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "generating ssh keys for trials")
+	}
+
 	return &experiment{
 		Experiment:          expModel,
 		activeConfig:        activeConfig,
@@ -189,7 +196,8 @@ func newExperiment(
 		searcher:            search,
 		warmStartCheckpoint: checkpoint,
 
-		taskSpec: taskSpec,
+		taskSpec:      taskSpec,
+		generatedKeys: generatedKeys,
 
 		faultToleranceEnabled: true,
 
@@ -676,7 +684,7 @@ func (e *experiment) processOperations(
 			e.TrialSearcherState[op.RequestID] = state
 			ctx.ActorOf(op.RequestID, newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
-				state, e.rm, e.db, config, checkpoint, e.taskSpec, false,
+				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
 			))
 		case searcher.ValidateAfter:
 			state := e.TrialSearcherState[op.RequestID]

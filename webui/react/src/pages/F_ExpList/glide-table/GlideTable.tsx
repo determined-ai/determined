@@ -267,7 +267,11 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       // to put a border on the bottom row (actually the top of the row below it)
       if (row === data.length) return;
       // avoid showing 'empty rows' below data
-      if (!data[row]) return;
+      if (!data[row]) {
+        return {
+          borderColor: getCssVar(Surface.Surface),
+        };
+      }
 
       const hoverStyle = row === hoveredRow ? { bgCell: getCssVar(Surface.SurfaceWeak) } : {};
 

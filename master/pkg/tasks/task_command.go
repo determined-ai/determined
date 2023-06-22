@@ -57,7 +57,7 @@ type GenericCommandSpec struct {
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
+func (s GenericCommandSpec) ToTaskSpec() TaskSpec {
 	res := s.Base
 
 	s.MakeEnvPorts()
@@ -75,17 +75,17 @@ func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec 
 	}
 	res.ResolveWorkDir()
 
-	if keys != nil {
+	if s.Keys != nil {
 		s.AdditionalFiles = append(s.AdditionalFiles, archive.Archive{
 			res.AgentUserGroup.OwnedArchiveItem(sshDir, nil, sshDirMode, tar.TypeDir),
 			res.AgentUserGroup.OwnedArchiveItem(
-				shellAuthorizedKeysFile, keys.PublicKey, 0o644, tar.TypeReg,
+				shellAuthorizedKeysFile, s.Keys.PublicKey, 0o644, tar.TypeReg,
 			),
 			res.AgentUserGroup.OwnedArchiveItem(
-				privKeyFile, keys.PrivateKey, privKeyMode, tar.TypeReg,
+				privKeyFile, s.Keys.PrivateKey, privKeyMode, tar.TypeReg,
 			),
 			res.AgentUserGroup.OwnedArchiveItem(
-				pubKeyFile, keys.PublicKey, pubKeyMode, tar.TypeReg,
+				pubKeyFile, s.Keys.PublicKey, pubKeyMode, tar.TypeReg,
 			),
 			res.AgentUserGroup.OwnedArchiveItem(
 				sshdConfigFile,
@@ -112,6 +112,13 @@ func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec 
 	}
 
 	res.TaskType = s.TaskType
+
+	// Evict the context from memory after starting the command as it is no longer needed. We
+	// evict as soon as possible to prevent the master from hitting an OOM.
+	// TODO: Consider not storing the userFiles in memory at all.
+	s.UserFiles = nil
+	s.AdditionalFiles = nil
+
 	return res
 }
 

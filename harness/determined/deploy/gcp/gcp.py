@@ -9,9 +9,15 @@ from typing import Any, Dict, List, Optional
 
 import googleapiclient.discovery
 from google.auth.exceptions import DefaultCredentialsError
+from google.cloud import storage
+from googleapiclient.errors import HttpError
+from ruamel import yaml
+from tabulate import tabulate
 from termcolor import colored
 
 from determined import util
+from determined.cli import render
+from determined.cli.errors import CliError
 from determined.deploy import healthcheck
 
 from .preflight import check_quota
@@ -348,3 +354,52 @@ def set_gcp_credentials_env(tf_vars: Dict) -> None:
 def wait_for_master(configs: Dict, env: Dict, timeout: int = 300) -> None:
     master_url = terraform_output(configs, env, "Web-UI")
     healthcheck.wait_for_master_url(master_url, timeout)
+
+
+def check_or_create_gcsbucket(project_id: str, keypath: Optional[str] = None) -> None:
+    if keypath:
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = keypath
+    bucket_name = project_id + "-determined-deploy"
+    try:
+        storage_service = googleapiclient.discovery.build("storage", "v1")
+    except DefaultCredentialsError as exc:
+        raise CliError(
+            "Unable to locate GCP credentials. Please set GOOGLE_APPLICATION_CREDENTIALS "
+            + "or explicitly create credentials and re-run the application. "
+            + "For more information, please see "
+            + "https://docs.determined.ai/latest/sysadmin-deploy-on-gcp/install-gcp.html#credential"
+            + "s and "
+            + "https://cloud.google.com/docs/authentication/getting-started"
+        ) from exc
+
+    try:
+        storage_service.buckets().get(bucket=bucket_name).execute()
+    except HttpError as err:
+        if err.resp.status == 404:
+            request_body = {
+                "name": bucket_name,
+            }
+            storage_service.buckets().insert(project=project_id, body=request_body).execute()
+        else:
+            raise
+
+
+def list_clusters(bucket_name: str, print_format: str = "table") -> None:
+    storage_client = storage.Client()
+    blobs = storage_client.list_blobs(bucket_name)
+    cluster_list = [["Cluster ID"]]
+    for blob in blobs:
+        json_data_string = blob.download_as_string()
+        json_data = json.loads(json_data_string)
+        if json_data.get("resources"):
+            cluster_list.append([blob.name[:-16]])
+    cluster_json = {"Clusters": [dict(zip(cluster_list[0], row)) for row in cluster_list[1:]]}
+
+    if print_format == "json":
+        render.print_json(cluster_json)
+    elif print_format == "yaml":
+        cluster_yaml = yaml.dump(cluster_json)
+        print(cluster_yaml)
+    else:
+        print(tabulate(cluster_list, headers="firstrow"))
+    return

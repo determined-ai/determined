@@ -20,7 +20,7 @@ If `make live` fails or is killed, the browser window will crash itself so that
 you don't continue making edits and wonder why your edits aren't appearing in
 your browser.
 
-## using `rename.py`
+## Using `rename.py`
 
 We care a lot about keeping our organic search links, so we are meticulous
 about maintaining links from old document paths to updated document paths.
@@ -95,6 +95,10 @@ necessary for optimizing SEO, and is a common practice on other docs sites
 (Python standard library documentation, for instance). As a result, the Algolia
 crawler must be configured with `ignoreCanonicalTo: true` before it will index
 anything other than `/latest`.
+
+## Version Switcher
+
+To provide a docs version dropdown for users to select the version of docs they want to use, we configured the bumpversion tool to read/update the version information stored in the `versions.json` file located at `docs/_static/version-switcher/‘ within the project directory.
 
 ## Theming
 

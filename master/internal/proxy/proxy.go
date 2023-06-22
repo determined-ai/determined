@@ -22,6 +22,17 @@ type Service struct {
 	AllowUnauthenticated bool
 }
 
+// Clone returns a deep copy of the Service.
+func (s Service) Clone() Service {
+	sURL := *s.URL
+	return Service{
+		URL:                  &sURL,
+		LastRequested:        s.LastRequested,
+		ProxyTCP:             s.ProxyTCP,
+		AllowUnauthenticated: s.AllowUnauthenticated,
+	}
+}
+
 // ProxyHTTPAuth processes a proxy request, returning true if the request should terminate
 // immediately and an error if one was encountered during authentication.
 type ProxyHTTPAuth func(echo.Context) (done bool, err error)
@@ -97,13 +108,8 @@ func (p *Proxy) GetService(serviceID string) *Service {
 	service.LastRequested = time.Now()
 
 	// Make a copy to avoid callers mutating the object outside of this locked method.
-	sURL := *service.URL
-	return &Service{
-		URL:                  &sURL,
-		LastRequested:        service.LastRequested,
-		ProxyTCP:             service.ProxyTCP,
-		AllowUnauthenticated: service.AllowUnauthenticated,
-	}
+	clone := service.Clone()
+	return &clone
 }
 
 // NewProxyHandler returns a middleware function for proxying HTTP-like traffic to services
@@ -156,23 +162,28 @@ func (p *Proxy) NewProxyHandler(serviceID string) echo.HandlerFunc {
 	}
 }
 
-// Summary returns a snapshot of the registered services.
-func (p *Proxy) Summary() map[string]Service {
+// Summaries returns a snapshot of the registered services.
+func (p *Proxy) Summaries() map[string]Service {
 	p.lock.RLock()
 	defer p.lock.RUnlock()
+
 	snapshot := make(map[string]Service)
-
 	for id, service := range p.services {
-		sURL := *service.URL
-		snapshot[id] = Service{
-			URL:                  &sURL,
-			LastRequested:        service.LastRequested,
-			ProxyTCP:             service.ProxyTCP,
-			AllowUnauthenticated: service.AllowUnauthenticated,
-		}
+		snapshot[id] = service.Clone()
 	}
-
 	return snapshot
+}
+
+// Summary returns a snapshot of a specific registered service.
+func (p *Proxy) Summary(id string) (Service, bool) {
+	p.lock.RLock()
+	defer p.lock.RUnlock()
+
+	service, ok := p.services[id]
+	if !ok {
+		return Service{}, false
+	}
+	return service.Clone(), true
 }
 
 func asyncCopy(dst io.Writer, src io.Reader) chan error {

@@ -19,6 +19,7 @@ import { getTrialDetails } from 'services/api';
 import { ExperimentItem, Metric, MetricSummary, Primitive, TrialDetails } from 'types';
 import { isNumber } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
+import { Loadable } from 'utils/loadable';
 import { humanReadableBytes, pluralizer } from 'utils/string';
 
 import css from './TrialsComparisonModal.module.scss';
@@ -153,7 +154,8 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
     [experimentIds],
   );
 
-  const metrics = useMetricNames(experimentIds, handleMetricNamesError);
+  const loadableMetrics = useMetricNames(experimentIds, handleMetricNamesError);
+  const metrics = Loadable.getOrElse([], loadableMetrics);
 
   const prevMetrics = usePrevious(metrics, []);
 
