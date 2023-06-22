@@ -10,7 +10,7 @@ export const DEFAULT_SLOT_COUNT = 1;
 const defaultShortcut: KeyboardShortcut = {
   alt: false,
   ctrl: false,
-  key: 'g',
+  key: 'L',
   meta: true,
   shift: true,
 };
