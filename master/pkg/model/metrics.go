@@ -17,6 +17,15 @@ const (
 	TrainingMetricType MetricType = "training"
 )
 
+// ValidateMetricName validates the metric name.
+// CHAT: do we make a new type similar to MetricType?
+func ValidateMetricName(name string) error {
+	if len(name) == 0 {
+		return status.Errorf(codes.InvalidArgument, "metric name cannot be empty")
+	}
+	return nil
+}
+
 // MetricType denotes what custom type the metric is.
 type MetricType string
 
@@ -75,7 +84,13 @@ func DeserializeMetricIdentifier(s string) (*MetricIdentifier, error) {
 			"invalid metric identifier: '%s' expected <type>.<name>", s)
 	}
 	metricIDName := nameAndType[1]
+	if err := ValidateMetricName(metricIDName); err != nil {
+		return nil, err
+	}
 	metricIDType := MetricType(nameAndType[0])
+	if err := metricIDType.Validate(); err != nil {
+		return nil, err
+	}
 	return &MetricIdentifier{
 		Type: metricIDType,
 		Name: metricIDName,
