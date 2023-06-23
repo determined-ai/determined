@@ -17,7 +17,7 @@ var (
 		return true, nil
 	}
 	serviceIDs = []string{"a", "b", "c"}
-	u          = url.URL{Path: "localhost:8081"}
+	u          = url.URL{Path: "localhost:8082"}
 )
 
 func register(t *testing.T, prTCP bool, unauth bool) {
