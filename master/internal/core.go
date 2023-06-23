@@ -859,9 +859,8 @@ func (m *Master) Run(ctx context.Context) error {
 
 	cert, err := m.config.Security.TLS.ReadCertificate()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to read TLS certificate")
 	}
-
 	m.taskSpec = &tasks.TaskSpec{
 		ClusterID:             m.ClusterID,
 		HarnessPath:           filepath.Join(m.config.Root, "wheels"),
