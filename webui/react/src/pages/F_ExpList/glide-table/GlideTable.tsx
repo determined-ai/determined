@@ -91,12 +91,12 @@ export interface GlideTableProps {
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
   selectedExperimentIds: number[];
-  setExcludedExperimentIds: Dispatch<SetStateAction<Loadable<Set<number>>>>;
-  setSelectedExperimentIds: Dispatch<SetStateAction<Loadable<number[]>>>;
+  setExcludedExperimentIds: (arg0: (arg0b: Set<number>) => Set<number>) => void;
+  setSelectedExperimentIds: (arg0: number[]) => void;
   selectAll: boolean;
   staticColumns: string[];
   setColumnWidths: (newWidths: Record<string, number>) => void;
-  setSelectAll: Dispatch<SetStateAction<boolean>>;
+  setSelectAll: Dispatch<SetStateAction<Loadable<boolean>>>;
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   sorts: Sort[];
   onSortChange: (sorts: Sort[]) => void;
@@ -303,13 +303,13 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   );
 
   const deselectAllRows = useCallback(() => {
-    setSelectAll(false);
+    setSelectAll(Loaded(false));
     setSelection((prev) => ({ ...prev, rows: CompactSelection.empty() }));
   }, [setSelectAll, setSelection]);
 
   const selectAllRows = useCallback(() => {
-    setExcludedExperimentIds(Loaded(new Set()));
-    setSelectAll(true);
+    setExcludedExperimentIds(() => Loaded(new Set()));
+    setSelectAll(Loaded(true));
     setSelection(({ columns, rows }: GridSelection) => ({
       columns,
       rows: rows.add([0, data.length]),
@@ -564,11 +564,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             if (selection.rows.hasIndex(row)) {
               const existIndex = selectedExperimentIds.indexOf(rowData.experiment.id);
               setSelectedExperimentIds(
-                Loaded(
                   selectedExperimentIds
                     .slice(0, existIndex)
                     .concat(selectedExperimentIds.slice(existIndex + 1)),
-                ),
               );
               setSelection(({ columns, rows }: GridSelection) => ({
                 columns,
@@ -589,7 +587,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               }
             } else {
               setSelectedExperimentIds(
-                Loaded(selectedExperimentIds.concat([rowData.experiment.id])),
+                selectedExperimentIds.concat([rowData.experiment.id]),
               );
               setSelection(({ columns, rows }: GridSelection) => ({
                 columns,

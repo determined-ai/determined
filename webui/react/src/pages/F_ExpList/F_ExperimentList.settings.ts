@@ -20,7 +20,9 @@ export interface F_ExperimentListSettings {
   columns: string[];
   columnWidths: Record<string, number>;
   compare: boolean;
+  excludedExperimentIds: number[];
   filterset: string; // save FilterFormSet as string
+  selectAll: boolean;
   selectedExperimentIds: number[];
   sortString: string;
   pageLimit: number;
@@ -46,6 +48,12 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       storageKey: 'compare',
       type: boolean,
     },
+    excludedExperimentIds: {
+      defaultValue: [],
+      skipUrlEncoding: true,
+      storageKey: 'excludedExperimentIds',
+      type: array(number),
+    },
     filterset: {
       defaultValue: JSON.stringify(INIT_FORMSET),
       skipUrlEncoding: true,
@@ -69,6 +77,12 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       skipUrlEncoding: true,
       storageKey: 'rowHeight',
       type: ioRowHeight,
+    },
+    selectAll: {
+      defaultValue: false,
+      skipUrlEncoding: true,
+      storageKey: 'selectAll',
+      type: boolean,
     },
     selectedExperimentIds: {
       defaultValue: [],

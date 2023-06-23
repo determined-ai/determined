@@ -169,7 +169,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     loadableExcludedExperimentIds,
   );
 
-  const [selectAll, setSelectAll] = useState(false);
+  const [selectAll, setSelectAll] = useState<Loadable<boolean>>(NotLoaded);
   const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error] = useState(false);
@@ -341,7 +341,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
      * are no longer part of the filter criteria.
      */
     setClearSelectionTrigger((prev) => prev + 1);
-    setSelectAll(false);
+    setSelectAll(Loaded(false));
 
     // Refetch experiment list to get updates based on batch action.
     await fetchExperiments();
@@ -416,7 +416,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setClearSelectionTrigger((prev) => prev + 1);
-        setSelectAll(false);
+        setSelectAll(Loaded(false));
       }
     };
     window.addEventListener('keydown', handleEsc);
@@ -513,14 +513,50 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     settings.selectedExperimentIds,
   ]);
 
+  useMemo(() => {
+    if (!isLoadingSettings) {
+      if (!Loadable.isLoaded(selectAll)) {
+        setSelectAll(Loaded(settings.selectAll));
+      } else {
+        updateSettings({
+          selectAll: Loadable.getOrElse(false, selectAll),
+        });
+      }
+    }
+  }, [
+    selectAll,
+    isLoadingSettings,
+    settings.selectAll,
+  ]);
+
+  useMemo(() => {
+    if (!isLoadingSettings) {
+      if (!Loadable.isLoaded(loadableExcludedExperimentIds)) {
+        setExcludedExperimentIds(Loaded(new Set(settings.excludedExperimentIds)));
+        console.log(settings.excludedExperimentIds);
+      } else {
+        updateSettings({
+          excludedExperimentIds: Loadable.match(loadableExcludedExperimentIds, {
+            Loaded: (set) => Array.from(set),
+            NotLoaded: () => [],
+          }),
+        });
+      }
+    }
+  }, [
+    isLoadingSettings,
+    updateSettings,
+    loadableExcludedExperimentIds,
+    settings.excludedExperimentIds,
+  ]);
+
   const selectedExperiments: ExperimentWithTrial[] = useMemo(() => {
-    updateSettings({ selectedExperimentIds });
     if (selectedExperimentIds.length === 0) return [];
     const selectedIdSet = new Set(selectedExperimentIds);
     return Loadable.filterNotLoaded(experiments, (experiment) =>
       selectedIdSet.has(experiment.experiment.id),
     );
-  }, [updateSettings, experiments, selectedExperimentIds]);
+  }, [experiments, selectedExperimentIds]);
 
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
@@ -546,7 +582,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         project={project}
         projectColumns={projectColumns}
         rowHeight={settings.rowHeight}
-        selectAll={selectAll}
+        selectAll={Loadable.getOrElse(false, selectAll)}
         selectedExperimentIds={selectedExperimentIds}
         setExpListView={updateExpListView}
         setIsOpenFilter={onIsOpenFilterChange}
@@ -594,13 +630,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 projectColumns={projectColumns}
                 rowHeight={settings.rowHeight}
                 scrollPositionSetCount={scrollPositionSetCount}
-                selectAll={selectAll}
+                selectAll={(switchVal) => setSelectAll(Loaded(switchVal))}
                 selectedExperimentIds={selectedExperimentIds}
                 setColumnWidths={handleColumnWidthChange}
-                setExcludedExperimentIds={setExcludedExperimentIds}
+                setExcludedExperimentIds={(ids) => setExcludedExperimentIds(Loaded(ids))}
                 setPinnedColumnsCount={setPinnedColumnsCount}
                 setSelectAll={setSelectAll}
-                setSelectedExperimentIds={setSelectedExperimentIds}
+                setSelectedExperimentIds={(ids) => setSelectedExperimentIds(Loaded(ids))}
                 setSortableColumnIds={setVisibleColumns}
                 sortableColumnIds={columnsIfLoaded}
                 sorts={sorts}
