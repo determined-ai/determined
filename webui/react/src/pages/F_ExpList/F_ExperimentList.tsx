@@ -440,7 +440,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     return [...STATIC_COLUMNS, ...settings.columns.slice(0, settings.pinnedColumnsCount)];
   }, [settings.columns, settings.pinnedColumnsCount]);
 
-  const comparisonViewWidth = useMemo(() => {
+  const comparisonViewTableWidth = useMemo(() => {
     return Math.min(
       containerWidth - 30,
       pinnedColumns.reduce(
@@ -451,26 +451,27 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [containerWidth, pinnedColumns, settings.columnWidths]);
 
   const handleCompareWidthChange = useCallback(
-    (width: number) => {
-      let subtractedWidth = comparisonViewWidth - width;
-      const newWidths: Record<string, number> = {};
-      let iter = 1;
-      while (subtractedWidth !== 0) {
-        const colName = pinnedColumns[pinnedColumns.length - iter];
-        const oldColWidth = settings.columnWidths[colName];
-        const newColWidth = Math.max(minColumnWidth, oldColWidth - subtractedWidth);
-        subtractedWidth -= oldColWidth - newColWidth;
-        newWidths[colName] = newColWidth;
-        iter++;
-      }
+    (newTableWidth: number) => {
+      const widthDifference = newTableWidth - comparisonViewTableWidth;
+      // Positive widthDifference: Table pane growing/compare pane shrinking
+      // Negative widthDifference: Table pane shrinking/compare pane growing
+      const newColumnWidths: Record<string, number> = { ...settings.columnWidths };
+      pinnedColumns
+        .filter(
+          (col) =>
+            col !== 'selected' && (widthDifference > 0 || newColumnWidths[col] !== minColumnWidth),
+        )
+        .forEach((col, _, arr) => {
+          newColumnWidths[col] = Math.max(
+            minColumnWidth,
+            newColumnWidths[col] + widthDifference / arr.length,
+          );
+        });
       updateSettings({
-        columnWidths: {
-          ...settings.columnWidths,
-          ...newWidths,
-        },
+        columnWidths: newColumnWidths,
       });
     },
-    [updateSettings, settings.columnWidths, pinnedColumns, comparisonViewWidth],
+    [updateSettings, settings.columnWidths, pinnedColumns, comparisonViewTableWidth],
   );
 
   const handleColumnWidthChange = useCallback(
@@ -539,7 +540,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               fixedColumnsCount={
                 STATIC_COLUMNS.length + (isLoadingSettings ? 0 : settings.pinnedColumnsCount)
               }
-              initialWidth={comparisonViewWidth}
+              initialWidth={comparisonViewTableWidth}
               open={settings.compare}
               projectId={project.id}
               selectedExperiments={selectedExperiments}

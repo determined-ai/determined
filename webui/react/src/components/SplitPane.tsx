@@ -32,6 +32,7 @@ const SplitPane: React.FC<Props> = ({
 
   useEffect(() => {
     const c = (e: MouseEvent) => {
+      if (e.button !== 0) return;
       e.preventDefault();
       setIsDragging(true);
     };
@@ -72,7 +73,8 @@ const SplitPane: React.FC<Props> = ({
 
   useEffect(() => {
     if (!isDragging) return;
-    const c = () => {
+    const c = (e: MouseEvent) => {
+      if (e.button !== 0) return;
       // Turn off dragging flag when user mouse is up
       setIsDragging(false);
       onChange?.(width);
