@@ -34,6 +34,7 @@ type RunSpec struct {
 	// UseFluentLogging is whether to use Fluent Bit logging (as opposed to directly streaming).
 	UseFluentLogging bool
 	DeviceType       device.Type
+	Registry         *types.AuthConfig
 }
 
 // ChecksConfig describes the configuration for multiple readiness checks.

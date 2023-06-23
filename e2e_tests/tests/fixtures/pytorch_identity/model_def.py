@@ -5,6 +5,14 @@ import torch.utils.data
 from determined import pytorch
 
 
+class MetricsCallback(pytorch.PyTorchCallback):
+    def __init__(self):
+        self.validation_metrics = []
+
+    def on_validation_end(self, metrics: Dict[str, Any]) -> None:
+        self.validation_metrics.append(metrics)
+
+
 class IdentityDataset(torch.utils.data.Dataset):
     def __init__(self, initial_value: int = 1):
         self.initial_value = initial_value
@@ -31,6 +39,7 @@ class IdentityPyTorchTrial(pytorch.PyTorchTrial):
         self.opt = context.wrap_optimizer(optimizer)
 
         self.loss_fn = torch.nn.MSELoss(reduction="mean")
+        self.metrics_callback = MetricsCallback()
 
     def train_batch(
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
@@ -65,3 +74,6 @@ class IdentityPyTorchTrial(pytorch.PyTorchTrial):
         return pytorch.DataLoader(
             IdentityDataset(20), batch_size=self.context.get_per_slot_batch_size()
         )
+
+    def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
+        return {"metrics": self.metrics_callback}

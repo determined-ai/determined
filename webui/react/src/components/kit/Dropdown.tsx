@@ -1,5 +1,6 @@
 import { Popover as AntdPopover, Dropdown as AntDropdown } from 'antd';
 import { MenuProps as AntdMenuProps } from 'antd/es/menu/menu';
+import { MenuClickEventHandler } from 'rc-menu/lib/interface';
 import { PropsWithChildren, useMemo } from 'react';
 import * as React from 'react';
 
@@ -12,9 +13,10 @@ export interface MenuDivider {
 export interface MenuOption {
   danger?: boolean;
   disabled?: boolean;
-  key: string;
-  label: React.ReactNode;
+  key: number | string;
+  label?: React.ReactNode;
   icon?: React.ReactNode;
+  onClick?: MenuClickEventHandler;
 }
 
 export interface MenuOptionGroup {
@@ -23,7 +25,7 @@ export interface MenuOptionGroup {
   type: 'group';
 }
 
-export type MenuItem = MenuDivider | MenuOption | MenuOptionGroup;
+export type MenuItem = MenuDivider | MenuOption | MenuOptionGroup | null;
 
 export type Placement = 'bottomLeft' | 'bottomRight';
 
@@ -35,6 +37,7 @@ interface BaseProps {
   isContextMenu?: boolean;
   menu?: MenuItem[];
   open?: boolean;
+  autoWidthOverlay?: boolean;
   placement?: Placement;
   onClick?: (key: string, e: DropdownEvent) => void | Promise<void>;
 }
@@ -62,6 +65,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
   isContextMenu,
   menu = [],
   open,
+  autoWidthOverlay,
   placement = 'bottomLeft',
   onClick,
   selectable,
@@ -78,6 +82,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
       selectedKeys,
     };
   }, [menu, onClick, selectable, selectedKeys]);
+  const overlayStyle = autoWidthOverlay ? { minWidth: 'auto' } : undefined;
 
   /**
    * Using `dropdownRender` for Dropdown causes some issues with triggering the dropdown.
@@ -88,6 +93,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
       className={css.base}
       content={content}
       open={open}
+      overlayStyle={overlayStyle}
       placement={placement}
       showArrow={false}
       trigger="click">
@@ -99,6 +105,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
       disabled={disabled}
       menu={antdMenu}
       open={open}
+      overlayStyle={overlayStyle}
       placement={placement}
       trigger={[isContextMenu ? 'contextMenu' : 'click']}>
       {children}
