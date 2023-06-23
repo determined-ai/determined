@@ -1,9 +1,8 @@
-import contextlib
 import os
 import tempfile
 import uuid
 from http import HTTPStatus
-from typing import Generator, List, Optional
+from typing import List
 
 import pytest
 
@@ -13,11 +12,13 @@ from determined.common.api._util import NTSC_Kind, wait_for_ntsc_state
 from determined.common.api.errors import APIException
 from tests import api_utils
 from tests import config as conf
-from tests.cluster.test_users import ADMIN_CREDENTIALS, change_user_password, logged_in_user
+from tests.api_utils import ADMIN_CREDENTIALS
+from tests.cluster.test_users import change_user_password, logged_in_user
+from tests.cluster.utils import setup_workspaces
 from tests.experiment import run_basic_test, wait_for_experiment_state
+from tests.utils import det_cmd, det_cmd_json
 
 from .test_agent_user_group import _delete_workspace_and_check
-from .test_groups import det_cmd, det_cmd_json
 
 
 @pytest.mark.e2e_cpu
@@ -459,34 +460,6 @@ def test_reset_workspace_checkpoint_storage_conf() -> None:
         assert resp_patch.workspace.checkpointStorageConfig is None
     finally:
         _delete_workspace_and_check(sess, resp_w.workspace)
-
-
-@contextlib.contextmanager
-def setup_workspaces(
-    session: Optional[api.Session] = None, count: int = 1
-) -> Generator[List[bindings.v1Workspace], None, None]:
-    session = session or api_utils.determined_test_session(admin=True)
-    assert session
-    workspaces: List[bindings.v1Workspace] = []
-    try:
-        for _ in range(count):
-            body = bindings.v1PostWorkspaceRequest(name=f"workspace_{uuid.uuid4().hex[:8]}")
-            workspaces.append(bindings.post_PostWorkspace(session, body=body).workspace)
-
-        yield workspaces
-
-    finally:
-        # kill child jobs before deletion. NTSC is handled by the workspace deletion request.
-        wids = {w.id for w in workspaces}
-        exps = bindings.get_GetExperiments(session).experiments
-        for e in exps:
-            if e.workspaceId not in wids:
-                continue
-            bindings.post_KillExperiment(session, id=e.id)
-
-        for w in workspaces:
-            # TODO check if it needs deleting.
-            bindings.delete_DeleteWorkspace(session, id=w.id)
 
 
 TERMINATING_STATES = [

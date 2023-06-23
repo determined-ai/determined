@@ -7,9 +7,10 @@ from typing import Any, Dict, Iterator, List, Union, cast
 import pytest
 
 from tests import config as conf
+from tests.api_utils import ADMIN_CREDENTIALS
 
 from .abstract_cluster import Cluster
-from .test_users import ADMIN_CREDENTIALS, logged_in_user
+from .test_users import logged_in_user
 from .utils import now_ts, set_master_port
 
 DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devcluster")
