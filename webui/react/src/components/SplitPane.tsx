@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { throttle } from 'throttle-debounce';
 
 import useResize from 'hooks/useResize';
 
@@ -24,6 +25,8 @@ const SplitPane: React.FC<Props> = ({
   const container = useRef<HTMLDivElement>(null);
   const handle = useRef<HTMLDivElement>(null);
   const containerDimensions = useResize(container);
+
+  const throttledOnChange = useMemo(() => onChange && throttle(10, onChange), [onChange]);
 
   useEffect(() => setWidth(initialWidth), [initialWidth]);
 
@@ -54,11 +57,18 @@ const SplitPane: React.FC<Props> = ({
 
       // Resize box A
       setWidth(newWidth);
+      throttledOnChange?.(newWidth);
     };
     document.addEventListener('mousemove', c);
 
     return () => document.removeEventListener('mousemove', c);
-  }, [containerDimensions.width, containerDimensions.x, isDragging, minimumWidths]);
+  }, [
+    containerDimensions.width,
+    containerDimensions.x,
+    throttledOnChange,
+    isDragging,
+    minimumWidths,
+  ]);
 
   useEffect(() => {
     if (!isDragging) return;
