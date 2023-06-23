@@ -19,6 +19,7 @@ import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
 import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
+import InlineForm from 'components/kit/InlineForm';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
@@ -93,6 +94,7 @@ const ComponentTitles = {
   Facepile: 'Facepile',
   Form: 'Form',
   Icons: 'Icons',
+  InlineForm: 'InlineForm',
   Input: 'Input',
   InputNumber: 'InputNumber',
   InputSearch: 'InputSearch',
@@ -924,6 +926,49 @@ const CodeEditorSection: React.FC = () => {
           ]}
           readonly={true}
           onError={handleError}
+        />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const InlineFormSection: React.FC = () => {
+  return (
+    <ComponentSection id="InlineForm" title="InlineForm">
+      <AntDCard>
+        <p>
+          The <code>{'<InlineForm>'}</code> allows people to have a simple form with just one input
+          (being either an <code>{'<Input>'}</code> or a <code>{'<Select>'}</code>)) to interact
+          with.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <p>
+          First you have to choose the <code>{'type'}</code> of your form input, being{' '}
+          <code>{'input'}</code> or <code>{'select'}</code>
+        </p>
+        <p>Each type has its props related to the usage of said component.</p>
+        <p>
+          <code>{'<Input>'}</code> has <code>{'initialInputValue'}</code> which not only sets the
+          initial value for the input, but also reverts back to it in case the user press the cancel
+          button.
+        </p>
+        <p>
+          <code>{'<Select>'}</code> has <code>{'selectOptions'}</code>,{' '}
+          <code>{'defaultSelectOption'}</code>, which works the same way as the{' '}
+          <code>{'initialInputValue'}</code> and <code>{'selectSearchable'}</code>
+        </p>
+        <br />
+        <InlineForm label="Input" type="input" />
+        <InlineForm
+          defaultSelectOption={1}
+          label="Select"
+          selectOptions={[
+            { label: 'off', value: 1 },
+            { label: 'on', value: 2 },
+          ]}
+          selectSearchable={false}
+          type="select"
         />
       </AntDCard>
     </ComponentSection>
@@ -2784,6 +2829,7 @@ const Components = {
   Facepile: <FacepileSection />,
   Form: <FormSection />,
   Icons: <IconsSection />,
+  InlineForm: <InlineFormSection />,
   Input: <InputSection />,
   InputNumber: <InputNumberSection />,
   InputSearch: <InputSearchSection />,
