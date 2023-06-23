@@ -1,3 +1,4 @@
+import math
 from typing import Callable
 
 import pytest
@@ -88,3 +89,29 @@ def test_wait_raises_exception_when_experiment_is_paused(
 
     with pytest.raises(ValueError):
         expref.wait()
+
+
+@responses.activate
+def test_list_trials_iter_paginated_responses(
+    make_expref: Callable[[int], experiment.Experiment]
+) -> None:
+    expref = make_expref(1)
+
+    tr_resp = api_responses.sample_get_experiment_trials()
+    for trial in tr_resp.trials:
+        trial.experimentId = expref.id
+
+    page_size = 2
+    responses.add_callback(
+        responses.GET,
+        f"{_MASTER}/api/v1/experiments/{expref.id}/trials",
+        callback=api_responses.serve_by_page(tr_resp, "trials", max_page_size=page_size),
+    )
+
+    trials = expref.list_trials(limit=page_size)
+
+    # Iterate through each item in generator and ensure API is called to fetch new pages.
+    for i, _ in enumerate(trials):
+        page_num = math.ceil((i + 1) / page_size)
+        assert len(responses.calls) == page_num
+    assert len(responses.calls) == math.ceil((len(tr_resp.trials)) / page_size)
