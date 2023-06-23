@@ -16,7 +16,7 @@ type Option = {
 interface Props {
   label: string;
   initialInputValue?: string;
-  onSubmit?: () => Promise<void>;
+  onSubmit: (inputValue: string | number) => Promise<void> | void;
   required?: boolean;
   type: 'input' | 'select';
   defaultSelectOption?: SelectValue;
@@ -67,6 +67,11 @@ const InlineForm: React.FC<Props> = ({
     setIsEditing(false);
   }, [type, initialInputValue, defaultSelectOption, form]);
 
+  const submitForm = useCallback(() => {
+    onSubmit(form.getFieldValue('input'));
+    setIsEditing(false);
+  }, [form, onSubmit]);
+
   return (
     <Form className={css.formBase} form={form} initialValues={{ layout: 'inline' }} layout="inline">
       <Form.Item
@@ -84,7 +89,7 @@ const InlineForm: React.FC<Props> = ({
               <Button
                 icon={<Icon name="checkmark" title="confirm" />}
                 type="primary"
-                onClick={() => onSubmit?.()}
+                onClick={() => submitForm()}
               />
             </Form.Item>
             <Form.Item className={css.cancelButton}>

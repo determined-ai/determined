@@ -960,7 +960,7 @@ const InlineFormSection: React.FC = () => {
         </p>
         <br />
         <div style={{ maxWidth: '500px' }}>
-          <InlineForm label="Input" type="input" />
+          <InlineForm label="Input" type="input" onSubmit={(value) => value} />
           <InlineForm
             defaultSelectOption={1}
             label="Select"
@@ -970,6 +970,7 @@ const InlineFormSection: React.FC = () => {
             ]}
             selectSearchable={false}
             type="select"
+            onSubmit={(value) => value}
           />
         </div>
       </AntDCard>
