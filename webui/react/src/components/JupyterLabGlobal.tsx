@@ -6,7 +6,7 @@ import { useModal } from 'components/kit/Modal';
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import { useSettings } from 'hooks/useSettings';
 import { JupyterLabOptions } from 'utils/jupyter';
-import { KeyboardShortcut, matchesShortcut } from 'utils/shortcut';
+import { matchesShortcut } from 'utils/shortcut';
 
 interface Props {
   active?: boolean;
@@ -15,12 +15,9 @@ interface Props {
 const JupyterLabGlobal: React.FC<Props> = ({ active }) => {
   const JupyterLabModal = useModal(JupyterLabModalComponent);
   const { settings } = useSettings<JupyterLabOptions>(JupyterLabSettings);
+  const shortcut = settings.shortcut;
 
   useEffect(() => {
-    const shortcut: KeyboardShortcut | undefined = settings.shortcut
-      ? JSON.parse(settings.shortcut)
-      : undefined;
-
     const keyDownListener = (e: KeyboardEvent) => {
       if (shortcut && matchesShortcut(e, shortcut)) {
         JupyterLabModal.open();
@@ -32,7 +29,7 @@ const JupyterLabGlobal: React.FC<Props> = ({ active }) => {
     return () => {
       keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
     };
-  }, [JupyterLabModal, settings, active]);
+  }, [JupyterLabModal, shortcut, active]);
 
   return <JupyterLabModal.Component />;
 };

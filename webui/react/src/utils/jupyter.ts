@@ -3,6 +3,7 @@ import { previewJupyterLab as apiPreviewJupyterLab } from 'services/api';
 import { RawJson } from 'types';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { KeyboardShortcut } from 'utils/shortcut';
 import { openCommandResponse } from 'utils/wait';
 
 export interface JupyterLabOptions {
@@ -11,7 +12,7 @@ export interface JupyterLabOptions {
   slots?: number;
   template?: string;
   workspaceId?: number;
-  shortcut?: string;
+  shortcut?: KeyboardShortcut;
 }
 
 interface JupyterLabLaunchOptions extends JupyterLabOptions {

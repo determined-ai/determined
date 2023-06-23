@@ -30,10 +30,10 @@ const JupyterLabSettings: SettingsConfig<JupyterLabOptions> = {
       type: union([string, undefinedType]),
     },
     shortcut: {
-      defaultValue: JSON.stringify(defaultShortcut),
+      defaultValue: defaultShortcut,
       skipUrlEncoding: true,
       storageKey: 'shortcut',
-      type: union([string, undefinedType]),
+      type: union([KeyboardShortcut, undefinedType]),
     },
     slots: {
       defaultValue: DEFAULT_SLOT_COUNT,

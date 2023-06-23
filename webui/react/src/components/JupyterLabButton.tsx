@@ -8,7 +8,7 @@ import Tooltip from 'components/kit/Tooltip';
 import { useSettings } from 'hooks/useSettings';
 import { Workspace } from 'types';
 import { JupyterLabOptions } from 'utils/jupyter';
-import { KeyboardShortcut, shortcutToString } from 'utils/shortcut';
+import { shortcutToString } from 'utils/shortcut';
 
 interface Props {
   enabled?: boolean;
@@ -18,9 +18,7 @@ interface Props {
 const JupyterLabButton: React.FC<Props> = ({ enabled, workspace }: Props) => {
   const JupyterLabModal = useModal(JupyterLabModalComponent);
   const { settings } = useSettings<JupyterLabOptions>(JupyterLabSettings);
-  const shortcut: KeyboardShortcut | undefined = settings.shortcut
-    ? JSON.parse(settings.shortcut)
-    : undefined;
+  const shortcut = settings.shortcut;
 
   return (
     <>
