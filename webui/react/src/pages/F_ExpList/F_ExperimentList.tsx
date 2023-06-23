@@ -159,8 +159,16 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, [settings.filterset, isLoadingSettings]);
 
-  const [selectedExperimentIds, setSelectedExperimentIds] = useState<Loadable<number[]>>(NotLoaded);
-  const [excludedExperimentIds, setExcludedExperimentIds] = useState<Loadable<Set<number>>>(NotLoaded);
+  const [loadableSelectedExperimentIds, setSelectedExperimentIds] =
+    useState<Loadable<number[]>>(NotLoaded);
+  const selectedExperimentIds = Loadable.getOrElse([], loadableSelectedExperimentIds);
+  const [loadableExcludedExperimentIds, setExcludedExperimentIds] =
+    useState<Loadable<Set<number>>>(NotLoaded);
+  const excludedExperimentIds = Loadable.getOrElse(
+    new Set<number>(),
+    loadableExcludedExperimentIds,
+  );
+
   const [selectAll, setSelectAll] = useState(false);
   const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -489,11 +497,21 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   useMemo(() => {
-    console.log([isLoading, selectedExperimentIds]);
-    if (!isLoading) {
-      updateSettings({ selectedExperimentIds });
+    if (!isLoadingSettings) {
+      if (!Loadable.isLoaded(loadableSelectedExperimentIds)) {
+        setSelectedExperimentIds(Loaded(settings.selectedExperimentIds));
+      } else {
+        updateSettings({
+          selectedExperimentIds: Loadable.getOrElse([], loadableSelectedExperimentIds),
+        });
+      }
     }
-  }, [isLoading, updateSettings, selectedExperimentIds]);
+  }, [
+    isLoadingSettings,
+    updateSettings,
+    loadableSelectedExperimentIds,
+    settings.selectedExperimentIds,
+  ]);
 
   const selectedExperiments: ExperimentWithTrial[] = useMemo(() => {
     updateSettings({ selectedExperimentIds });

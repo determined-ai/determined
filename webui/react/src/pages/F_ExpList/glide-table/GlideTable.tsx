@@ -43,7 +43,7 @@ import usersStore from 'stores/users';
 import { ExperimentWithTrial, Project, ProjectColumn } from 'types';
 import { Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
 import { getCssVar } from 'utils/themes';
@@ -78,7 +78,7 @@ export interface GlideTableProps {
   colorMap: MapOfIdsToColors;
   columnWidths: Record<string, number>;
   comparisonViewOpen?: boolean;
-  excludedExperimentIds: Loadable<Set<number>>;
+  excludedExperimentIds: Set<number>;
   data: Loadable<ExperimentWithTrial>[];
   dataTotal: number;
   handleScroll?: (r: Rectangle) => void;
@@ -90,9 +90,9 @@ export interface GlideTableProps {
   project?: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
-  selectedExperimentIds: Loadable<number[]>;
-  setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
-  setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
+  selectedExperimentIds: number[];
+  setExcludedExperimentIds: Dispatch<SetStateAction<Loadable<Set<number>>>>;
+  setSelectedExperimentIds: Dispatch<SetStateAction<Loadable<number[]>>>;
   selectAll: boolean;
   staticColumns: string[];
   setColumnWidths: (newWidths: Record<string, number>) => void;
@@ -308,7 +308,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   }, [setSelectAll, setSelection]);
 
   const selectAllRows = useCallback(() => {
-    setExcludedExperimentIds(new Set());
+    setExcludedExperimentIds(Loaded(new Set()));
     setSelectAll(true);
     setSelection(({ columns, rows }: GridSelection) => ({
       columns,
@@ -564,9 +564,11 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             if (selection.rows.hasIndex(row)) {
               const existIndex = selectedExperimentIds.indexOf(rowData.experiment.id);
               setSelectedExperimentIds(
-                selectedExperimentIds
-                  .slice(0, existIndex)
-                  .concat(selectedExperimentIds.slice(existIndex + 1)),
+                Loaded(
+                  selectedExperimentIds
+                    .slice(0, existIndex)
+                    .concat(selectedExperimentIds.slice(existIndex + 1)),
+                ),
               );
               setSelection(({ columns, rows }: GridSelection) => ({
                 columns,
@@ -575,25 +577,31 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               if (selectAll) {
                 const experiment = data[row];
                 if (Loadable.isLoaded(experiment)) {
-                  setExcludedExperimentIds((prev) => {
+                  setExcludedExperimentIds((loadablePrev) => {
                     if (experiment.data.experiment) {
-                      return new Set([...prev, experiment.data.experiment?.id]);
+                      const prev = Loadable.getOrElse(new Set<number>(), loadablePrev);
+                      return Loaded(new Set([...prev, experiment.data.experiment?.id]));
                     } else {
-                      return prev;
+                      return loadablePrev;
                     }
                   });
                 }
               }
             } else {
-              setSelectedExperimentIds(selectedExperimentIds.concat([rowData.experiment.id]));
+              setSelectedExperimentIds(
+                Loaded(selectedExperimentIds.concat([rowData.experiment.id])),
+              );
               setSelection(({ columns, rows }: GridSelection) => ({
                 columns,
                 rows: rows.add(row),
               }));
               const experiment = data[row];
               if (Loadable.isLoaded(experiment)) {
-                setExcludedExperimentIds((prev) => {
-                  return new Set([...prev].filter((id) => id !== experiment.data.experiment?.id));
+                setExcludedExperimentIds((loadablePrev) => {
+                  const prev = Loadable.getOrElse(new Set<number>(), loadablePrev);
+                  return Loaded(
+                    new Set([...prev].filter((id) => id !== experiment.data.experiment?.id)),
+                  );
                 });
               }
             }
