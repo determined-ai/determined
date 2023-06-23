@@ -2288,8 +2288,6 @@ const IconsSection: React.FC = () => {
         </p>
       </AntDCard>
       <AntDCard title="Usage">
-        <code>{'<Icon>'}</code> usage.
-        <br />
         <strong>Icon default</strong>
         <Icon name="star" title="star" />
         <strong>Icon variations</strong>
