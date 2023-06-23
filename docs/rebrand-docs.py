@@ -136,15 +136,9 @@ html_css_files = [
     "styles/hpe.css",
 ]
 html_favicon = "assets/images/favicon-hpe.ico"
-html_theme_options = {
-    "logo": {
-        "image_light": "assets/images/logo-hpe-on-light-horizontal.svg",
-        "image_dark": "assets/images/logo-hpe-on-dark-horizontal.svg",
-    },
-    "repository_url": "https://github.com/determined-ai/determined",
-    "use_repository_button": True,
-    "use_download_button": False,
-    "use_fullscreen_button": False,
+html_theme_options["logo"] = {
+    "image_light": "assets/images/logo-hpe-on-light-horizontal.svg",
+    "image_dark": "assets/images/logo-hpe-on-dark-horizontal.svg",
 }
 html_baseurl = "https://hpe-mlde.determined.ai"
 """
