@@ -8,8 +8,19 @@
   .fileTree {
     background-color: transparent;
     color: var(--theme-background-on-strong);
+    grid-column: 1 / 2;
+    grid-row: 1 / 3;
     height: 100%;
     padding: 0.5em;
+
+    :global(.ant-tree-title),
+    :global(.ant-tree-node-content-wrapper) {
+      // text ellipsis for antd tree
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%;
+    }
 
     @media screen and (max-width: 1024px) {
       border-right: none;
