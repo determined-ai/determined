@@ -80,8 +80,9 @@ that fits into a single GPU multiplied times the number of slots.
 
 .. note::
 
-   This feature only applies to :ref:`high-level-apis` (Trial APIs) and does not apply to the Core
-   API.
+   The ``global_batch_size`` field will be automatically respected by the Trial APIs. To use this
+   hyperparameter with the Core API, you'll need to reference ``global_batch_size`` explicitly and
+   organize your code to respect its value.
 
 During distributed training, the ``global_batch_size`` specified in the :ref:`experiment
 configuration file <experiment-config-reference>` is partitioned across ``slots_per_trial`` GPUs.

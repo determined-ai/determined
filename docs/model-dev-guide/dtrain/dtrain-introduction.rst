@@ -69,8 +69,8 @@ To check if your training is bottlenecked by communication, we suggest setting
 <experiment-config-reference>` to a very large number (e.g., 1000). This setting results in
 communicating updates once every 1000 batches. Comparing throughput with an
 ``aggregation_frequency`` of 1 vs. an ``aggregation_frequency`` of 1000 will demonstrate the
-communication overhead. If you do observe significant communication overhead, refer to
-:ref:`multi-gpu-training-implement-adv-optimizations` for guidance on how to optimize communication.
+communication overhead. For more guidance on optimizing communication, see
+:ref:`multi-gpu-training-implement-adv-optimizations`.
 
 To check if your training is bottlenecked by I/O, we encourage users to experiment with using
 synthetic datasets. If you observe that I/O is a significant bottleneck, we suggest optimizing the
