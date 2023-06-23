@@ -35,12 +35,6 @@ type RMJobInfo struct { // rename ?
 	AllocatedSlots int
 }
 
-// GetJobSummary requests a summary of the job.
-type GetJobSummary struct {
-	JobID        model.JobID
-	ResourcePool string
-}
-
 // GetJob requests a job representation from a job.
 type GetJob struct{}
 
