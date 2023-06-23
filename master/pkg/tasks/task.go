@@ -6,17 +6,14 @@ import (
 	"fmt"
 	"strings"
 
-	docker "github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
-	"github.com/labstack/gommon/log"
-
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	docker "github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 )
 
 // File location constants.
@@ -66,7 +63,7 @@ type TaskSpec struct {
 	// Fields that are set on the cluster level.
 	ClusterID   string
 	HarnessPath string
-	MasterCert  config.TLSConfig
+	MasterCert  []byte
 	SSHRsaSize  int
 
 	SegmentEnabled bool
@@ -130,16 +127,12 @@ func (t *TaskSpec) ResolveWorkDir() {
 
 // Archives returns all the archives.
 func (t *TaskSpec) Archives() ([]cproto.RunArchive, []cproto.RunArchive) {
-	masterCert, err := t.MasterCert.ReadCertificate()
-	if err != nil {
-		log.Error(err)
-	}
 	res := []cproto.RunArchive{
 		workDirArchive(t.AgentUserGroup, t.WorkDir, t.WorkDir == DefaultWorkDir),
 		runDirHelpersArchive(t.AgentUserGroup),
 		injectUserArchive(t.AgentUserGroup, t.WorkDir),
 		harnessArchive(t.HarnessPath, t.AgentUserGroup),
-		masterCertArchive(masterCert),
+		masterCertArchive(t.MasterCert),
 	}
 	res = append(res, t.ExtraArchives...)
 
@@ -202,8 +195,7 @@ func (t TaskSpec) EnvVars() map[string]string {
 		e["DET_INTER_NODE_NETWORK_INTERFACE"] = networkInterface
 	}
 
-	cert, err := t.MasterCert.ReadCertificate()
-	if err != nil && cert != nil {
+	if len(t.MasterCert) != 0 {
 		e["DET_USE_TLS"] = "true"
 		e["DET_MASTER_CERT_FILE"] = certPath
 	} else {

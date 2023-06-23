@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"path/filepath"
 	"sync"
@@ -427,4 +428,19 @@ func ReadWeight(rpName string, jobConf interface{}) float64 {
 		weight = conf.Resources.Weight
 	}
 	return weight
+}
+
+// GetCertPEM returns the PEM-encoded certificate.
+func GetCertPEM(cert *tls.Certificate) []byte {
+	var certBytes []byte
+	if cert != nil {
+		for _, c := range cert.Certificate {
+			b := pem.EncodeToMemory(&pem.Block{
+				Type:  "CERTIFICATE",
+				Bytes: c,
+			})
+			certBytes = append(certBytes, b...)
+		}
+	}
+	return certBytes
 }
