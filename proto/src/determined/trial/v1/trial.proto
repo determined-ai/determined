@@ -266,9 +266,17 @@ message MetricsReport {
   int32 trial_run_id = 7;
 }
 
+// TrialSourceInfoType see \dT+ trial_source_info_type in db
+enum TrialSourceInfoType {
+  // The type is unspecified
+  TYPE_UNSPECIFIED = 0;
+  // "Inference" Trial Source Info Type, used for batch inference
+  TYPE_INFERENCE = 1;
+  // "Fine Tuning" Trial Source Info Type, used in model hub
+  TYPE_FINE_TUNING = 2;
+}
 
-
-
+// Denotes a connection between a given trial and a checkpoint/source trial/model version
 message TrialSourceInfo {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
@@ -285,21 +293,14 @@ message TrialSourceInfo {
   string checkpoint_uuid = 2;
   // Source Trial which generated the checkpoint (if applicable)
   int32 source_trial_id = 3;
-  // // Source Trial which generated the checkpoint (if applicable)
-  // int32 source_trial_id = 4;
-  // Latest validation.
-  MetricsWorkload latest_validation = 4;
-
-  // // End time of when metric was reported.
-  // google.protobuf.Timestamp end_time = 2;
-  // // Struct of the reported metrics.
-  // google.protobuf.Struct metrics = 3;
-  // // batches completed in the report.
-  // int32 total_batches = 4;
-  // // If metric is archived.
-  // bool archived = 5;
-  // // ID of metric in table.
-  // int32 id = 6;
-  // // Run ID of trial when metric was reported.
-  // int32 trial_run_id = 7;  
+  // Source model_version id which generated the checkpoint (if applicable)
+  int32 source_model_version_id = 4;
+  // Source model_version version which generated the checkpoint (if applicable)
+  int32 source_model_version_version = 5;
+  // Type for this trial_source_info
+  TrialSourceInfoType trial_source_info_type = 6;
+  // User defined description text
+  string description = 7;
+  // Struct of the user defined metadata
+  google.protobuf.Struct metadata = 8;
 }
