@@ -1,13 +1,11 @@
 import * as t from 'io-ts';
 
-import { optional } from 'ioTypes';
-
 export const KeyboardShortcut = t.type({
-  alt: optional(t.boolean),
-  ctrl: optional(t.boolean),
-  key: optional(t.string),
-  meta: optional(t.boolean),
-  shift: optional(t.boolean),
+  alt: t.boolean,
+  ctrl: t.boolean,
+  key: t.string,
+  meta: t.boolean,
+  shift: t.boolean,
 });
 
 export type KeyboardShortcut = t.TypeOf<typeof KeyboardShortcut>;
@@ -25,7 +23,7 @@ export const matchesShortcut = (e: KeyboardEvent, shortcut: KeyboardShortcut): b
   e.metaKey === shortcut.meta &&
   e.altKey === shortcut.alt &&
   e.shiftKey === shortcut.shift &&
-  e.key.toUpperCase() === shortcut.key?.toUpperCase();
+  e.key.toUpperCase() === shortcut.key.toUpperCase();
 
 export const shortcutToString = (shortcut: KeyboardShortcut): string => {
   const os = window.navigator.userAgent;
