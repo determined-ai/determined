@@ -114,4 +114,5 @@ def test_list_trials_iter_paginated_responses(
     for i, _ in enumerate(trials):
         page_num = math.ceil((i + 1) / page_size)
         assert len(responses.calls) == page_num
-    assert len(responses.calls) == math.ceil((len(tr_resp.trials)) / page_size)
+    total_pages = math.ceil((len(tr_resp.trials)) / page_size)
+    assert len(responses.calls) == total_pages
