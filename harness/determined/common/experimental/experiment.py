@@ -116,6 +116,7 @@ class Experiment:
         self,
         sort_by: trial.TrialSortBy = trial.TrialSortBy.ID,
         order_by: trial.TrialOrderBy = trial.TrialOrderBy.ASCENDING,
+        limit: Optional[int] = None,
     ) -> Iterator[trial.Trial]:
         """
         Get an iterator of :class:`~determined.experimental.Trial` instances
@@ -125,6 +126,7 @@ class Experiment:
             sort_by: Which field to sort by. See :class:`~determined.experimental.TrialSortBy`.
             order_by: Whether to sort in ascending or descending order. See
                 :class:`~determined.experimental.TrialOrderBy`.
+            limit: Optional field that sets maximum page size of response. Defaults to no maximum.
 
         Note:
             This method returns an Iterable type that lazily instantiates response objects. To
@@ -137,6 +139,7 @@ class Experiment:
                 experimentId=self._id,
                 offset=offset,
                 orderBy=bindings.v1OrderBy(order_by.value),
+                limit=limit,
                 sortBy=bindings.v1GetExperimentTrialsRequestSortBy(sort_by.value),
             )
 
