@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"strings"
 
+	docker "github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
+
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	docker "github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
 )
 
 // File location constants.
