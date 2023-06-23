@@ -959,17 +959,19 @@ const InlineFormSection: React.FC = () => {
           <code>{'initialInputValue'}</code> and <code>{'selectSearchable'}</code>
         </p>
         <br />
-        <InlineForm label="Input" type="input" />
-        <InlineForm
-          defaultSelectOption={1}
-          label="Select"
-          selectOptions={[
-            { label: 'off', value: 1 },
-            { label: 'on', value: 2 },
-          ]}
-          selectSearchable={false}
-          type="select"
-        />
+        <div style={{ maxWidth: '500px' }}>
+          <InlineForm label="Input" type="input" />
+          <InlineForm
+            defaultSelectOption={1}
+            label="Select"
+            selectOptions={[
+              { label: 'off', value: 1 },
+              { label: 'on', value: 2 },
+            ]}
+            selectSearchable={false}
+            type="select"
+          />
+        </div>
       </AntDCard>
     </ComponentSection>
   );

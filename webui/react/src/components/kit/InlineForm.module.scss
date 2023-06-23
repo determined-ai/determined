@@ -1,3 +1,30 @@
 .formBase {
-  width: max-content;
+  display: inline-grid;
+  grid-template-columns: 80% auto max-content;
+  width: 100%;
+
+  .formItemInput {
+    grid-column: 1 / 2;
+    margin-inline-end: 0;
+
+    & > div {
+      display: inline-grid;
+      grid-template-columns: min-content auto 70%;
+      width: 100%;
+
+      div:nth-of-type(2) {
+        grid-column: 3 / 4;
+      }
+    }
+  }
+  .buttonsContainer {
+    display: flex;
+    grid-column: 3 / 4;
+    justify-content: flex-end;
+    width: 100%;
+
+    .cancelButton {
+      margin-inline-end: 0;
+    }
+  }
 }

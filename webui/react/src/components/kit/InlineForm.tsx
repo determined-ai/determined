@@ -77,32 +77,34 @@ const InlineForm: React.FC<Props> = ({
         required={required}>
         {element}
       </Form.Item>
-      {isEditing ? (
-        <>
-          <Form.Item>
+      <div className={css.buttonsContainer}>
+        {isEditing ? (
+          <>
+            <Form.Item>
+              <Button
+                icon={<Icon name="checkmark" title="confirm" />}
+                type="primary"
+                onClick={() => onSubmit?.()}
+              />
+            </Form.Item>
+            <Form.Item className={css.cancelButton}>
+              <Button
+                icon={<Icon name="close-small" size="tiny" title="cancel" />}
+                type="default"
+                onClick={() => resetForm()}
+              />
+            </Form.Item>
+          </>
+        ) : (
+          <Form.Item className={css.cancelButton}>
             <Button
-              icon={<Icon name="checkmark" title="confirm" />}
-              type="primary"
-              onClick={() => onSubmit?.()}
-            />
-          </Form.Item>
-          <Form.Item>
-            <Button
-              icon={<Icon name="close-small" size="tiny" title="cancel" />}
+              icon={<Icon name="pencil" size="small" title="edit" />}
               type="default"
-              onClick={() => resetForm()}
+              onClick={() => setIsEditing(true)}
             />
           </Form.Item>
-        </>
-      ) : (
-        <Form.Item>
-          <Button
-            icon={<Icon name="pencil" size="small" title="edit" />}
-            type="default"
-            onClick={() => setIsEditing(true)}
-          />
-        </Form.Item>
-      )}
+        )}
+      </div>
     </Form>
   );
 };
