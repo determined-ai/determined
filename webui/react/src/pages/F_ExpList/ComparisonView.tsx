@@ -28,7 +28,7 @@ const ComparisonView: React.FC<Props> = ({
   selectedExperiments,
 }) => {
   const minWidths: [number, number] = useMemo(() => {
-    return [fixedColumnsCount * minColumnWidth + 17, 50]; // Constant of 17px accounts for scrollbar width
+    return [fixedColumnsCount * minColumnWidth + 17, 100]; // Constant of 17px accounts for scrollbar width
   }, [fixedColumnsCount]);
 
   const trials = useMemo(

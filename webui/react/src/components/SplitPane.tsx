@@ -26,7 +26,7 @@ const SplitPane: React.FC<Props> = ({
   const handle = useRef<HTMLDivElement>(null);
   const containerDimensions = useResize(container);
 
-  const throttledOnChange = useMemo(() => onChange && throttle(10, onChange), [onChange]);
+  const throttledOnChange = useMemo(() => onChange && throttle(8, onChange), [onChange]);
 
   useEffect(() => setWidth(initialWidth), [initialWidth]);
 

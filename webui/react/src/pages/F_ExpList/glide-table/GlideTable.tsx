@@ -762,6 +762,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       {tooltip}
       <div className={css.base}>
         <DataEditor
+          className={comparisonViewOpen ? css.compareTable : undefined}
           columns={columns}
           customRenderers={customRenderers}
           drawHeader={drawHeader}
