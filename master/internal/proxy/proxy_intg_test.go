@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -109,18 +108,6 @@ func TestProxyLifecycle(t *testing.T) {
 		t.Errorf("failed to clear all proxy services.")
 	}
 	require.Equal(t, 0, len(DefaultProxy.Summaries()))
-}
-
-type logStore struct {
-	inner []*logrus.Entry
-}
-
-func (l *logStore) Fire(e *logrus.Entry) error {
-	l.inner = append(l.inner, e)
-	return nil
-}
-func (l *logStore) Levels() []logrus.Level {
-	return logrus.AllLevels
 }
 
 func TestNewProxyHandler(t *testing.T) {
