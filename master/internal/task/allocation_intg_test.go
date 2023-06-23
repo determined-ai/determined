@@ -12,9 +12,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
 
-	"github.com/google/uuid"
-	"google.golang.org/protobuf/types/known/structpb"
-
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -181,96 +178,6 @@ func TestAllocation(t *testing.T) {
 			require.Contains(t, trialImpl.Messages, tc.exit)
 			// require.True(t, db.AssertExpectations(t))
 		})
-	}
-}
-
-func TestAllocationAllGather(t *testing.T) {
-	system, _, rm, trialImpl, _, _, a, self := setup(t) //nolint: dogsled
-
-	// Pre-allocated stage.
-	mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
-		rsrv := &mocks.Resources{}
-		rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(nil).Times(1)
-		rsrv.On("Summary").Return(sproto.ResourcesSummary{
-			AllocationID:  a.req.AllocationID,
-			ResourcesID:   rID,
-			ResourcesType: sproto.ResourcesTypeDockerContainer,
-			AgentDevices:  map[aproto.ID][]device.Device{aproto.ID(agentID): nil},
-		})
-		rsrv.On("Kill", mock.Anything, mock.Anything).Return()
-		return rsrv
-	}
-
-	rID1, rID2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
-	resources := map[sproto.ResourcesID]sproto.Resources{
-		rID1: mockRsvn(rID1, "agent-1"),
-		rID2: mockRsvn(rID2, "agent-2"),
-	}
-
-	require.NoError(t, system.Ask(rm.Ref(), actors.ForwardThroughMock{
-		To: self,
-		Msg: sproto.ResourcesAllocated{
-			ID:           a.req.AllocationID,
-			ResourcePool: "default",
-			Resources:    resources,
-		},
-	}).Error())
-	system.Ask(rm.Ref(), actors.ForwardThroughMock{To: self, Msg: actor.Ping{}}).Get()
-	require.Nil(t, trialImpl.AssertExpectations())
-
-	numPeers := 4
-	type peerState struct {
-		uuid    uuid.UUID
-		data    *structpb.Struct
-		watcher AllGatherWatcher
-	}
-	peerStates := map[int]*peerState{}
-
-	var expectedData []float64
-	for i := 0; i < numPeers; i++ {
-		expectedData = append(expectedData, float64(i))
-		data, err := structpb.NewStruct(map[string]interface{}{"key": i})
-		require.NoError(t, err)
-
-		peerStates[i] = &peerState{
-			uuid: uuid.New(),
-			data: data,
-		}
-
-		resp := system.Ask(self, WatchAllGather{
-			WatcherID: peerStates[i].uuid,
-			NumPeers:  numPeers,
-			Data:      peerStates[i].data,
-		})
-		require.NoError(t, resp.Error())
-
-		if i == 0 {
-			// All gather should now be "started".
-			require.NotNil(t, a.allGather)
-		}
-
-		require.IsType(t, AllGatherWatcher{}, resp.Get())
-		tResp := resp.Get().(AllGatherWatcher)
-		peerStates[i].watcher = tResp
-	}
-
-	// All gather should now be "completed".
-	require.Nil(t, a.allGather)
-
-	for _, ps := range peerStates {
-		resp := <-ps.watcher.C
-		require.NoError(t, resp.Err)
-		require.Len(t, resp.Data, numPeers)
-
-		var actualData []float64
-		for _, d := range resp.Data {
-			for _, v := range d.AsMap() {
-				actualData = append(actualData, v.(float64))
-			}
-		}
-
-		require.Equal(t, expectedData, actualData)
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
@@ -212,9 +213,10 @@ func (a *apiServer) AllocationAllGather(
 		return nil, err
 	}
 
+	allocationID := model.AllocationID(req.AllocationId)
 	handler, err := a.m.rm.GetAllocationHandler(
 		a.m.system,
-		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
+		sproto.GetAllocationHandler{ID: allocationID},
 	)
 	if err != nil {
 		return nil, err
@@ -223,30 +225,21 @@ func (a *apiServer) AllocationAllGather(
 		return nil, err
 	}
 
-	wID, err := uuid.Parse(req.RequestUuid)
+	id, err := uuid.Parse(req.RequestUuid)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	var w task.AllGatherWatcher
-	if err = a.ask(handler.Address(), task.WatchAllGather{
-		WatcherID: wID,
-		NumPeers:  int(req.NumPeers),
-		Data:      req.Data,
-	}, &w); err != nil {
+	data, err := task.AllGather(ctx, a.m.system, allocationID, id, int(req.NumPeers), req.Data)
+	if err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(handler.Address(), task.UnwatchAllGather{WatcherID: wID})
 
-	select {
-	case rsp := <-w.C:
-		if rsp.Err != nil {
-			return nil, rsp.Err
-		}
-		return &apiv1.AllocationAllGatherResponse{Data: rsp.Data}, nil
-	case <-ctx.Done():
-		return nil, nil
+	var out []*structpb.Struct
+	for _, d := range data {
+		out = append(out, d.(*structpb.Struct))
 	}
+	return &apiv1.AllocationAllGatherResponse{Data: out}, nil
 }
 
 func (a *apiServer) PostAllocationProxyAddress(
