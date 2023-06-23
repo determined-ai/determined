@@ -25,7 +25,14 @@ implement distributed training, including the following:
 -  Considerations for concurrent data downloads
 -  Details to be aware regarding scheduler behavior
 -  Accelerating inference workloads
--  How configuration templates can help reduce redundancy
+
+Additional Resources:
+
+-  Learn how :ref:`Configuration Templates <config-template>` can help reduce redundancy.
+-  Discover how Determined aims to support reproducible machine learning experiments in
+   :ref:`Reproducibility <reproducibility>`.
+-  In :ref:`Optimizing Training <optimizing-training>`, you'll learn about out-of-the box tools you
+   can use for instrumenting training.
 
 .. toctree::
    :caption: Distributed Training
@@ -33,3 +40,6 @@ implement distributed training, including the following:
 
    Distributed Training Concepts <dtrain-introduction>
    Implementing Distributed Training <dtrain-implement>
+   Configuration Templates <config-templates>
+   Reproducibility <reproducibility>
+   Optimizing Training <optimize-training>

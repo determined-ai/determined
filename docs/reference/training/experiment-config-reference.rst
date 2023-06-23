@@ -1313,6 +1313,8 @@ Optional. Just like ``add_capabilities`` but corresponding to the ``--cap-drop``
 Optional. Expose configured network ports on the chief task container. See :ref:`proxy-ports` for
 details.
 
+.. _exp-config-optimizations:
+
 ***************
  Optimizations
 ***************
