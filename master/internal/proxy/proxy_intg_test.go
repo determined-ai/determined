@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -129,7 +128,6 @@ func TestNewProxyHandler(t *testing.T) {
 			t.Logf("failed to start server: %s", err)
 		}
 	}()
-	defer e.Shutdown(context.TODO())
 
 	// Ensure server is up, before testing it.
 	i := 0
