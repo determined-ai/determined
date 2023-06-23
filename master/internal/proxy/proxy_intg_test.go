@@ -1,10 +1,16 @@
 package proxy
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,7 +19,7 @@ var (
 		return true, nil
 	}
 	serviceIDs = []string{"a", "b", "c"}
-	u          = url.URL{}
+	u          = url.URL{Path: "localhost:8081"}
 )
 
 func register(t *testing.T, prTCP bool, unauth bool) {
@@ -103,4 +109,67 @@ func TestProxyLifecycle(t *testing.T) {
 		t.Errorf("failed to clear all proxy services.")
 	}
 	require.Equal(t, 0, len(DefaultProxy.Summaries()))
+}
+
+type logStore struct {
+	inner []*logrus.Entry
+}
+
+func (l *logStore) Fire(e *logrus.Entry) error {
+	l.inner = append(l.inner, e)
+	return nil
+}
+func (l *logStore) Levels() []logrus.Level {
+	return logrus.AllLevels
+}
+
+func TestNewProxyHandler(t *testing.T) {
+	// First init the new Proxy
+	InitProxy(proxyAuth)
+	// And check that the Proxy struct is set up correctly
+	require.NotNil(t, DefaultProxy.HTTPAuth)
+	require.Equal(t, map[string]*Service{}, DefaultProxy.services)
+	require.Equal(t, "", DefaultProxy.syslog.Message)
+
+	e := echo.New()
+	// Create http test recorder
+	req := httptest.NewRequest(http.MethodGet, u.Path+"/proxy", nil)
+	// Create new echo context
+	c := e.NewContext(req, httptest.NewRecorder())
+
+	go func() {
+		if err := e.Start(u.Path); err != nil && err != http.ErrServerClosed {
+			t.Logf("failed to start server: %s", err)
+		}
+	}()
+	defer e.Shutdown(context.TODO())
+
+	// Ensure server is up, before testing it.
+	i := 0
+	tk := time.NewTicker(time.Second)
+	defer tk.Stop()
+	for range tk.C {
+		resp, err := http.Get("http://" + u.Path + "/proxy")
+		if err == nil {
+			resp.Body.Close() //nolint:errcheck
+			break
+		}
+		i++
+		if i > 5 {
+			t.FailNow()
+		}
+	}
+
+	// Case 1: handler returns OK because service name is registered/found
+	t.Run("a", func(t *testing.T) { register(t, true, true) })
+	c.SetPath("/:service")
+	c.SetParamNames("service")
+	c.SetParamValues("a")
+
+	handler := DefaultProxy.NewProxyHandler("service")
+	assert.NoError(t, handler(c))
+
+	// Case 2: handler returns error because service name not found
+	handler = DefaultProxy.NewProxyHandler("wrong")
+	assert.Error(t, handler(c))
 }
