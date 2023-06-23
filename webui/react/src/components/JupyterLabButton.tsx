@@ -1,15 +1,15 @@
 import React from 'react';
 
-import JupyterLabSettings from 'components/JupyterLab.settings';
 import JupyterLabModalComponent from 'components/JupyterLabModal';
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import { useSettings } from 'hooks/useSettings';
+import shortCutSettingsConfig, {
+  Settings as ShortcutSettings,
+} from 'pages/Settings/UserSettings.settings';
 import { Workspace } from 'types';
-import { JupyterLabOptions } from 'utils/jupyter';
 import { shortcutToString } from 'utils/shortcut';
-
 interface Props {
   enabled?: boolean;
   workspace?: Workspace;
@@ -17,13 +17,14 @@ interface Props {
 
 const JupyterLabButton: React.FC<Props> = ({ enabled, workspace }: Props) => {
   const JupyterLabModal = useModal(JupyterLabModalComponent);
-  const { settings } = useSettings<JupyterLabOptions>(JupyterLabSettings);
-  const shortcut = settings.shortcut;
+  const {
+    settings: { jupyterLab: jupyterLabShortcut },
+  } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
 
   return (
     <>
       {enabled ? (
-        <Tooltip content={shortcut && shortcutToString(shortcut)}>
+        <Tooltip content={shortcutToString(jupyterLabShortcut)}>
           <Button onClick={JupyterLabModal.open}>Launch JupyterLab</Button>
         </Tooltip>
       ) : (

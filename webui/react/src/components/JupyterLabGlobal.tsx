@@ -1,25 +1,26 @@
 import React, { useEffect } from 'react';
 
-import JupyterLabSettings from 'components/JupyterLab.settings';
 import JupyterLabModalComponent from 'components/JupyterLabModal';
 import { useModal } from 'components/kit/Modal';
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import { useSettings } from 'hooks/useSettings';
-import { JupyterLabOptions } from 'utils/jupyter';
+import shortCutSettingsConfig, {
+  Settings as ShortcutSettings,
+} from 'pages/Settings/UserSettings.settings';
 import { matchesShortcut } from 'utils/shortcut';
-
 interface Props {
   active?: boolean;
 }
 
 const JupyterLabGlobal: React.FC<Props> = ({ active }) => {
   const JupyterLabModal = useModal(JupyterLabModalComponent);
-  const { settings } = useSettings<JupyterLabOptions>(JupyterLabSettings);
-  const shortcut = settings.shortcut;
+  const {
+    settings: { jupyterLab: jupyterLabShortcut },
+  } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
 
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
-      if (shortcut && matchesShortcut(e, shortcut)) {
+      if (matchesShortcut(e, jupyterLabShortcut)) {
         JupyterLabModal.open();
       }
     };
@@ -29,7 +30,7 @@ const JupyterLabGlobal: React.FC<Props> = ({ active }) => {
     return () => {
       keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
     };
-  }, [JupyterLabModal, shortcut, active]);
+  }, [JupyterLabModal, jupyterLabShortcut, active]);
 
   return <JupyterLabModal.Component />;
 };
