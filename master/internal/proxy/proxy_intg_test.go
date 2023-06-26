@@ -61,7 +61,7 @@ func conditionServerUp() bool {
 	if err == nil {
 		resp.Body.Close()
 	}
-	return err != nil
+	return err == nil
 }
 
 func TestProxyLifecycle(t *testing.T) {
@@ -153,7 +153,6 @@ func TestNewProxyHandler(t *testing.T) {
 	if !ok {
 		t.FailNow()
 	}
-
 	// Case 1: handler returns OK because service name is registered/found
 	register(t, true, true)
 	c.SetPath("/:service")
