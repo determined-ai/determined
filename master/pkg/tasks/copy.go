@@ -2,8 +2,6 @@ package tasks
 
 import (
 	"archive/tar"
-	"crypto/tls"
-	"encoding/pem"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -79,18 +77,7 @@ func harnessArchive(harnessPath string, aug *model.AgentUserGroup) cproto.RunArc
 	return wrapArchive(aug.OwnArchive(harnessFiles), "/")
 }
 
-func masterCertArchive(cert *tls.Certificate) cproto.RunArchive {
-	var certBytes []byte
-	if cert != nil {
-		for _, c := range cert.Certificate {
-			b := pem.EncodeToMemory(&pem.Block{
-				Type:  "CERTIFICATE",
-				Bytes: c,
-			})
-			certBytes = append(certBytes, b...)
-		}
-	}
-
+func masterCertArchive(certBytes []byte) cproto.RunArchive {
 	var arch archive.Archive
 	if len(certBytes) != 0 {
 		arch = append(arch, archive.RootItem(certPath, certBytes, 0o644, tar.TypeReg))
