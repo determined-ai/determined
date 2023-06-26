@@ -3,13 +3,13 @@ package proxy
 import (
 	"bytes"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"golang.org/x/net/proxy"
 )
 
 // websocketReadWriter exposes an io.ReadWriter interface to a WebSocket connection that is only
@@ -47,8 +47,10 @@ func (w *websocketReadWriter) Write(buf []byte) (int, error) {
 
 func newSingleHostReverseTCPOverWebSocketProxy(c echo.Context, t *url.URL) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		dialer := proxy.FromEnvironment()
+
 		// Make sure we can open the connection to the remote host.
-		out, err := net.Dial("tcp", t.Host)
+		out, err := dialer.Dial("tcp", t.Host)
 		if err != nil {
 			c.Error(echo.NewHTTPError(http.StatusBadGateway,
 				errors.Errorf("error dialing to %v: %v", t, err)))

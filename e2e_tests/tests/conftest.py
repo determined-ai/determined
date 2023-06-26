@@ -12,10 +12,11 @@ from botocore import exceptions as boto_exc
 
 from determined.experimental import client as _client
 from tests import config
+from tests.api_utils import ADMIN_CREDENTIALS
 from tests.experiment import profile_test
 from tests.nightly.compute_stats import compare_stats
 
-from .cluster.test_users import ADMIN_CREDENTIALS, logged_in_user
+from .cluster.test_users import logged_in_user
 from .cluster_log_manager import ClusterLogManager
 
 _INTEG_MARKERS = {
@@ -26,6 +27,7 @@ _INTEG_MARKERS = {
     "e2e_cpu_2a",
     "e2e_cpu_agent_connection_loss",
     "e2e_cpu_elastic",
+    "e2e_cpu_rbac",
     "e2e_gpu",
     "e2e_k8s",
     "det_deploy_local",

@@ -3,13 +3,9 @@ package internal
 import (
 	"context"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/job"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
@@ -18,13 +14,13 @@ import (
 func (a *apiServer) GetJobs(
 	ctx context.Context, req *apiv1.GetJobsRequest,
 ) (resp *apiv1.GetJobsResponse, err error) {
-	actorResp := a.m.system.AskAt(sproto.JobsActorAddr, req)
-	if err := actorResp.Error(); err != nil {
+	jobs, err := job.DefaultManager.GetJobs(
+		req.ResourcePool,
+		req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
+		req.States,
+	)
+	if err != nil {
 		return nil, err
-	}
-	jobs, ok := actorResp.Get().([]*jobv1.Job)
-	if !ok {
-		return nil, status.Error(codes.Internal, "unexpected response from actor")
 	}
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -49,13 +45,13 @@ func (a *apiServer) GetJobs(
 func (a *apiServer) GetJobsV2(
 	ctx context.Context, req *apiv1.GetJobsV2Request,
 ) (resp *apiv1.GetJobsV2Response, err error) {
-	actorResp := a.m.system.AskAt(sproto.JobsActorAddr, req)
-	if err := actorResp.Error(); err != nil {
+	jobs, err := job.DefaultManager.GetJobs(
+		req.ResourcePool,
+		req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
+		req.States,
+	)
+	if err != nil {
 		return nil, err
-	}
-	jobs, ok := actorResp.Get().([]*jobv1.Job)
-	if !ok {
-		return nil, status.Error(codes.Internal, "unexpected response from actor")
 	}
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -108,12 +104,10 @@ func (a *apiServer) GetJobQueueStats(
 // UpdateJobQueue forwards the job queue message to the relevant resource pool.
 func (a *apiServer) UpdateJobQueue(
 	_ context.Context, req *apiv1.UpdateJobQueueRequest,
-) (resp *apiv1.UpdateJobQueueResponse, err error) {
-	resp = &apiv1.UpdateJobQueueResponse{}
-
-	actorResp := a.m.system.AskAt(sproto.JobsActorAddr, req)
-	if err := actorResp.Error(); err != nil {
+) (*apiv1.UpdateJobQueueResponse, error) {
+	err := job.DefaultManager.UpdateJobQueue(req.Updates)
+	if err != nil {
 		return nil, err
 	}
-	return resp, nil
+	return &apiv1.UpdateJobQueueResponse{}, nil
 }

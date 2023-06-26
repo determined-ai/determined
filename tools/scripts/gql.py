@@ -186,6 +186,7 @@ query($id: ID!) {
       number
       title
       url
+      body
       repository {
         owner {
           login
