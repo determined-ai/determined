@@ -722,20 +722,13 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 			metricTypeToNames[metricType] = metricNames
 		}
 	}
-	if len(metricIds) > 0 {
-		for _, metricID := range metricIds {
-			nameAndType := strings.SplitN(metricID, ".", 2)
-			if len(nameAndType) < 2 {
-				return nil, fmt.Errorf(`error fetching time series of validation metrics
-					invalid metricId %v metrics must be in the form metric_type.metric_name`,
-					metricID,
-				)
-			}
-			metricIDName := nameAndType[1]
-			metricIDType := model.MetricType(nameAndType[0])
-
-			metricTypeToNames[metricIDType] = append(metricTypeToNames[metricIDType], metricIDName)
+	for _, metricIDStr := range metricIds {
+		metricID, err := model.DeserializeMetricIdentifier(metricIDStr)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error parsing metric id %s", metricIDStr)
 		}
+		metricTypeToNames[metricID.Type] = append(metricTypeToNames[metricID.Type],
+			string(metricID.Name))
 	}
 
 	getDownSampledMetric := func(aMetricNames []string, aMetricType model.MetricType,
@@ -761,8 +754,17 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		return nil, nil
 	}
 
-	for metricType, metricNames := range metricTypeToNames {
-		metric, err := getDownSampledMetric(metricNames, metricType)
+	metricTypes := make([]model.MetricType, 0, len(metricTypeToNames))
+	for metricType := range metricTypeToNames {
+		metricTypes = append(metricTypes, metricType)
+	}
+	sort.Slice(metricTypes, func(i, j int) bool {
+		return metricTypes[i] < metricTypes[j]
+	})
+
+	for _, mType := range metricTypes {
+		metricNames := metricTypeToNames[mType]
+		metric, err := getDownSampledMetric(metricNames, mType)
 		if err != nil {
 			return nil, err
 		}
