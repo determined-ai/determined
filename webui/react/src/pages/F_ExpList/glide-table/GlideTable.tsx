@@ -1,4 +1,3 @@
-import { FilterOutlined } from '@ant-design/icons';
 import DataEditor, {
   CellClickedEventArgs,
   CompactSelection,
@@ -35,6 +34,7 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import { MenuItem } from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
 import usePrevious from 'hooks/usePrevious';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
@@ -399,7 +399,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               ...sortMenuItemsForColumn(column, sorts, onSortChange),
               { type: 'divider' as const },
               {
-                icon: <FilterOutlined />,
+                icon: <Icon name="filter" title="filter" />,
                 key: 'filter',
                 label: 'Filter by this column',
                 onClick: () => {
