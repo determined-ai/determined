@@ -30,6 +30,8 @@ import subprocess
 import sys
 from typing import Callable, Optional
 
+import requests
+
 import gql
 
 TEST = os.environ.get("RELEASE_TEST") == "1"
@@ -46,6 +48,7 @@ FIX_OPEN_STATUS = "Fix (open)"
 FIX_CONFLICT_STATUS = "Fix (conflict)"
 
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
+CASPER_TOKEN = os.environ["CASPER_TOKEN"]
 
 
 def run(*args, check=True, quiet=False, **kwargs):
@@ -117,7 +120,8 @@ def cherry_pick_pr(pr_id: str) -> None:
         add_item_to_project(current_project_id(), pr_id, FIX_CONFLICT_STATUS)
         return
 
-    pr_commit = gql.get_pr_merge_commit(id=pr_id)["node"]["mergeCommit"]["oid"]
+    pr = gql.get_pr_merge_commit_and_url(id=pr_id)["node"]
+    pr_commit = pr["mergeCommit"]["oid"]
     print(f"Cherry-picking {pr_commit}")
 
     try:
@@ -173,8 +177,12 @@ def cherry_pick_pr(pr_id: str) -> None:
 
         traceback.print_exc()
         print("Cherry-pick failed, adding PR as conflicted")
-        # TODO Notify a human.
         add_item_to_project(current_project_id(), pr_id, FIX_CONFLICT_STATUS)
+        requests.post(
+            "https://casper.internal.infra.determined.ai/hubot/conflict",
+            headers={"X-Casper-Token": CASPER_TOKEN},
+            json={"url": pr["url"]},
+        )
 
 
 class Actions:

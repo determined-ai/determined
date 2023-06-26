@@ -31,6 +31,7 @@ jobs:
           private_key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
       - name: Handle merged PR
         env:
+          CASPER_TOKEN: ${{ secrets.CASPER_TOKEN }}
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
           PR_ID: ${{ github.event.pull_request.node_id }}
         run: tools/scripts/track-pr pr-merged "$PR_ID"
@@ -51,6 +52,7 @@ jobs:
           private_key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
       - name: Handle labeled PR
         env:
+          CASPER_TOKEN: ${{ secrets.CASPER_TOKEN }}
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
           PR_ID: ${{ github.event.pull_request.node_id }}
           PR_LABEL: ${{ github.event.label.name }}
