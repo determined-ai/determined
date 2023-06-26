@@ -298,13 +298,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.RecoverJobPosition:
 		k.forwardToPool(ctx, msg.ResourcePool, msg)
 
-	case sproto.GetAllocationHandler:
-		if handler, err := k.aggregateTaskHandler(k.forwardToAllPools(ctx, msg)); err != nil {
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(handler)
-		}
-
 	case sproto.GetAllocationSummary:
 		if summary := k.aggregateTaskSummary(k.forwardToAllPools(ctx, msg)); summary != nil {
 			ctx.Respond(summary)

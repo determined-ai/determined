@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -129,7 +130,6 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 	}
 
 	taskID := model.AllocationID(allocationID).ToTaskID()
-	errAllocationNotFound := api.NotFoundErrs("allocation", allocationID, true)
 	isExp, exp, err := expFromTaskID(ctx, taskID)
 	if err != nil {
 		return err
@@ -139,13 +139,13 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 		if ok, err = canAccessNTSCTask(ctx, *curUser, taskID); err != nil {
 			return err
 		} else if !ok {
-			return errAllocationNotFound
+			return api.NotFoundErrs("allocation", allocationID, true)
 		}
 		return nil
 	}
 
 	if err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
-		return authz.SubIfUnauthorized(err, errAllocationNotFound)
+		return authz.SubIfUnauthorized(err, api.NotFoundErrs("allocation", allocationID, true))
 	}
 	if err = expauth.AuthZProvider.Get().CanEditExperiment(ctx, *curUser, exp); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
@@ -161,18 +161,15 @@ func (a *apiServer) AllocationReady(
 		return nil, err
 	}
 
-	resp, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
-	)
-	if err != nil {
-		return nil, err
+	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, resp); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
-	if err := a.ask(resp.Address(), task.AllocationReady{}, nil); err != nil {
+	if err := a.ask(ref.Address(), task.AllocationReady{}, nil); err != nil {
 		return nil, err
 	}
 	return &apiv1.AllocationReadyResponse{}, nil
@@ -185,18 +182,15 @@ func (a *apiServer) AllocationWaiting(
 		return nil, err
 	}
 
-	resp, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
-	)
-	if err != nil {
-		return nil, err
+	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, resp); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
-	if err := a.ask(resp.Address(), task.AllocationWaiting{}, nil); err != nil {
+	if err := a.ask(ref.Address(), task.AllocationWaiting{}, nil); err != nil {
 		return nil, err
 	}
 	return &apiv1.AllocationWaitingResponse{}, nil
@@ -212,14 +206,11 @@ func (a *apiServer) AllocationAllGather(
 		return nil, err
 	}
 
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
-	)
-	if err != nil {
-		return nil, err
+	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
@@ -229,14 +220,14 @@ func (a *apiServer) AllocationAllGather(
 	}
 
 	var w task.AllGatherWatcher
-	if err = a.ask(handler.Address(), task.WatchAllGather{
+	if err = a.ask(ref.Address(), task.WatchAllGather{
 		WatcherID: wID,
 		NumPeers:  int(req.NumPeers),
 		Data:      req.Data,
 	}, &w); err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(handler.Address(), task.UnwatchAllGather{WatcherID: wID})
+	defer a.m.system.TellAt(ref.Address(), task.UnwatchAllGather{WatcherID: wID})
 
 	select {
 	case rsp := <-w.C:
@@ -259,18 +250,15 @@ func (a *apiServer) PostAllocationProxyAddress(
 		return nil, err
 	}
 
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
-	)
-	if err != nil {
-		return nil, err
+	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
-	if err := a.ask(handler.Address(), task.SetAllocationProxyAddress{
+	if err := a.ask(ref.Address(), task.SetAllocationProxyAddress{
 		ProxyAddress: req.ProxyAddress,
 	}, nil); err != nil {
 		return nil, err

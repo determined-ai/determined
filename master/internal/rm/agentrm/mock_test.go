@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -38,7 +39,9 @@ type MockTask struct {
 func (t *MockTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		allocationmap.RegisterAllocation(t.ID, ctx.Self())
 	case actor.PostStop:
+		allocationmap.UnregisterAllocation(t.ID)
 	case SendRequestResourcesToResourceManager:
 		task := sproto.AllocateRequest{
 			AllocationID:      t.ID,
@@ -61,7 +64,7 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 			ctx.Tell(t.RMRef, task)
 		}
 	case SendResourcesReleasedToResourceManager:
-		task := sproto.ResourcesReleased{AllocationRef: ctx.Self()}
+		task := sproto.ResourcesReleased{AllocationID: t.ID}
 		if ctx.ExpectingResponse() {
 			ctx.Respond(ctx.Ask(t.RMRef, task).Get())
 		} else {
@@ -86,7 +89,7 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 			rank++
 		}
 	case sproto.ReleaseResources:
-		ctx.Tell(t.RMRef, sproto.ResourcesReleased{AllocationRef: ctx.Self()})
+		ctx.Tell(t.RMRef, sproto.ResourcesReleased{AllocationID: t.ID})
 
 	case sproto.ResourcesStateChanged:
 
