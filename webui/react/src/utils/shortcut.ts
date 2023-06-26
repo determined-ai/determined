@@ -32,8 +32,6 @@ export const shortcutToString = (shortcut: KeyboardShortcut): string => {
   shortcut.meta && s.push(os.includes('Mac') ? 'Cmd' : os.includes('Win') ? 'Win' : 'Super');
   shortcut.shift && s.push('Shift');
   shortcut.alt && s.push('Alt');
-  shortcut.key &&
-    !['Control', 'Meta', 'Alt', 'Shift'].includes(shortcut.key) &&
-    s.push(shortcut.key.toUpperCase());
+  !['Control', 'Meta', 'Alt', 'Shift'].includes(shortcut.key) && s.push(shortcut.key.toUpperCase());
   return s.join(' + ');
 };
