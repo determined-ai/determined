@@ -4245,6 +4245,7 @@ class v1GetMasterResponse(Printable):
         clusterId: str,
         clusterName: str,
         masterId: str,
+        strictJobQueueControl: bool,
         version: str,
         branding: "typing.Union[str, None, Unset]" = _unset,
         externalLoginUri: "typing.Union[str, None, Unset]" = _unset,
@@ -4259,6 +4260,7 @@ class v1GetMasterResponse(Printable):
         self.clusterId = clusterId
         self.clusterName = clusterName
         self.masterId = masterId
+        self.strictJobQueueControl = strictJobQueueControl
         self.version = version
         if not isinstance(branding, Unset):
             self.branding = branding
@@ -4285,6 +4287,7 @@ class v1GetMasterResponse(Printable):
             "clusterId": obj["clusterId"],
             "clusterName": obj["clusterName"],
             "masterId": obj["masterId"],
+            "strictJobQueueControl": obj["strictJobQueueControl"],
             "version": obj["version"],
         }
         if "branding" in obj:
@@ -4312,6 +4315,7 @@ class v1GetMasterResponse(Printable):
             "clusterId": self.clusterId,
             "clusterName": self.clusterName,
             "masterId": self.masterId,
+            "strictJobQueueControl": self.strictJobQueueControl,
             "version": self.version,
         }
         if not omit_unset or "branding" in vars(self):
@@ -8607,6 +8611,7 @@ class v1PermissionType(DetEnum):
     VIEW_CLUSTER_USAGE = "PERMISSION_TYPE_VIEW_CLUSTER_USAGE"
     UPDATE_AGENTS = "PERMISSION_TYPE_UPDATE_AGENTS"
     VIEW_SENSITIVE_AGENT_INFO = "PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO"
+    CONTROL_STRICT_JOB_QUEUE = "PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE"
     VIEW_TEMPLATES = "PERMISSION_TYPE_VIEW_TEMPLATES"
     UPDATE_TEMPLATES = "PERMISSION_TYPE_UPDATE_TEMPLATES"
     CREATE_TEMPLATES = "PERMISSION_TYPE_CREATE_TEMPLATES"
