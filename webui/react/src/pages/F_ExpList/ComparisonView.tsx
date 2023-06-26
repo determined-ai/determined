@@ -2,12 +2,13 @@ import React, { useMemo } from 'react';
 
 import Pivot, { TabItem } from 'components/kit/Pivot';
 import SplitPane from 'components/SplitPane';
+import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { ExperimentWithTrial, TrialItem } from 'types';
 
 import CompareMetrics from './CompareMetrics';
 import CompareParallelCoordinates from './CompareParallelCoordinates';
-import { minColumnWidth } from './glide-table/columns';
+import { MIN_COLUMN_WIDTH } from './glide-table/columns';
 
 interface Props {
   children: React.ReactElement;
@@ -27,9 +28,11 @@ const ComparisonView: React.FC<Props> = ({
   projectId,
   selectedExperiments,
 }) => {
+  const scrollbarWidth = useScrollbarWidth();
+
   const minWidths: [number, number] = useMemo(() => {
-    return [fixedColumnsCount * minColumnWidth + 17, 100]; // Constant of 17px accounts for scrollbar width
-  }, [fixedColumnsCount]);
+    return [fixedColumnsCount * MIN_COLUMN_WIDTH + scrollbarWidth, 100];
+  }, [fixedColumnsCount, scrollbarWidth]);
 
   const trials = useMemo(
     () =>

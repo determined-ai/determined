@@ -59,7 +59,8 @@ import {
   defaultTextColumn,
   getColumnDefs,
   getHeaderIcons,
-  minColumnWidth,
+  MIN_COLUMN_WIDTH,
+  MULTISELECT,
 } from './columns';
 import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
@@ -289,7 +290,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   const onColumnResize: DataEditorProps['onColumnResize'] = useCallback(
     (column: GridColumn, width: number) => {
       const columnId = column.id;
-      if (columnId === undefined || columnId === 'selected') return;
+      if (columnId === undefined || columnId === MULTISELECT) return;
       setColumnWidths({ ...columnWidths, [columnId]: width });
     },
     [columnWidths, setColumnWidths],
@@ -323,7 +324,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     (col: number, { bounds }: HeaderClickedEventArgs) => {
       const columnId = columnIds[col];
 
-      if (columnId === 'selected') {
+      if (columnId === MULTISELECT) {
         const items: MenuItem[] = [
           selection.rows.length > 0
             ? {
@@ -689,14 +690,14 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           case V1ColumnType.NUMBER:
             columnDefs[currentColumn.column] = defaultNumberColumn(
               currentColumn,
-              columnWidths,
+              columnWidths[currentColumn.column],
               dataPath,
             );
             break;
           case V1ColumnType.DATE:
             columnDefs[currentColumn.column] = defaultDateColumn(
               currentColumn,
-              columnWidths,
+              columnWidths[currentColumn.column],
               dataPath,
             );
             break;
@@ -705,7 +706,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           default:
             columnDefs[currentColumn.column] = defaultTextColumn(
               currentColumn,
-              columnWidths,
+              columnWidths[currentColumn.column],
               dataPath,
             );
         }
@@ -729,7 +730,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const drawHeader: DrawHeaderCallback = useCallback(
     ({ ctx, column, rect, theme }) => {
-      if (!column.id || column.id === 'selected') return false;
+      if (!column.id || column.id === MULTISELECT) return false;
 
       const sortDirection = column.id && sortMap[column.id];
       if (sortDirection) {
@@ -774,7 +775,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           headerHeight={36}
           headerIcons={headerIcons}
           height={height}
-          minColumnWidth={minColumnWidth}
+          minColumnWidth={MIN_COLUMN_WIDTH}
           ref={gridRef}
           rowHeight={rowHeightMap[rowHeight]}
           rows={dataTotal}
