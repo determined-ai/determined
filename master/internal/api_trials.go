@@ -727,7 +727,8 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		if err != nil {
 			return nil, errors.Wrapf(err, "error parsing metric id %s", metricIDStr)
 		}
-		metricTypeToNames[metricID.Type] = append(metricTypeToNames[metricID.Type], metricID.Name)
+		metricTypeToNames[metricID.Type] = append(metricTypeToNames[metricID.Type],
+			string(metricID.Name))
 	}
 
 	getDownSampledMetric := func(aMetricNames []string, aMetricType model.MetricType,

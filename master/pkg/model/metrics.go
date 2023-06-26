@@ -17,10 +17,10 @@ const (
 	TrainingMetricType MetricType = "training"
 )
 
-type MetricName string
+type metricName string
 
 // Validate validates the metric name.
-func (t MetricName) Validate() error {
+func (t metricName) Validate() error {
 	if len(t) == 0 {
 		return status.Errorf(codes.InvalidArgument, "metric name cannot be empty")
 	}
@@ -61,7 +61,7 @@ func (t MetricType) Validate() error {
 // MetricIdentifier packages metric type and name together.
 type MetricIdentifier struct {
 	Type MetricType
-	Name MetricName
+	Name metricName
 }
 
 // ToProto returns the proto representation of the metric identifier.
@@ -79,7 +79,7 @@ func DeserializeMetricIdentifier(s string) (*MetricIdentifier, error) {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid metric identifier: '%s' expected <type>.<name>", s)
 	}
-	metricIDName := MetricName(nameAndType[1])
+	metricIDName := metricName(nameAndType[1])
 	if err := metricIDName.Validate(); err != nil {
 		return nil, err
 	}
