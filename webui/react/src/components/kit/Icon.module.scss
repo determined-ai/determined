@@ -6,47 +6,80 @@
 }
 .tiny {
   font-size: var(--icon-tiny);
-  max-width: var(--icon-tiny);
+
+  svg {
+    width: var(--icon-tiny);
+  }
 }
 .small {
   font-size: var(--icon-small);
-  max-width: var(--icon-small);
+
+  svg {
+    width: var(--icon-small);
+  }
 }
 .medium {
   font-size: var(--icon-medium);
-  max-width: var(--icon-medium);
+
+  svg {
+    width: var(--icon-medium);
+  }
 }
 .large {
   font-size: var(--icon-large);
-  max-width: var(--icon-large);
+
+  svg {
+    width: var(--icon-large);
+  }
 }
 .big {
   font-size: var(--icon-big);
-  max-width: var(--icon-big);
+
+  svg {
+    width: var(--icon-big);
+  }
 }
 .great {
   font-size: var(--icon-great);
-  max-width: var(--icon-great);
+
+  svg {
+    width: var(--icon-great);
+  }
 }
 .huge {
   font-size: var(--icon-huge);
-  max-width: var(--icon-huge);
+
+  svg {
+    width: var(--icon-huge);
+  }
 }
 .enormous {
   font-size: var(--icon-enormous);
-  max-width: var(--icon-enormous);
+
+  svg {
+    width: var(--icon-enormous);
+  }
 }
 .giant {
   font-size: var(--icon-giant);
-  max-width: var(--icon-giant);
+
+  svg {
+    width: var(--icon-giant);
+  }
 }
 .jumbo {
   font-size: var(--icon-jumbo);
-  max-width: var(--icon-jumbo);
+
+  svg {
+    width: var(--icon-jumbo);
+  }
 }
 .mega {
   font-size: var(--icon-mega);
-  max-width: var(--icon-mega);
+
+  svg {
+    width: var(--icon-mega);
+  }
 }
 .cancel {
   color: var(--theme-ix-cancel);
