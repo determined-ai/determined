@@ -62,8 +62,13 @@ until gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" --
 done
 echo "SSH is up"
 
+SOCKS5_PROXY_PORT=60000
+
+SOCKS5_PROXY_TUNNEL_OPTS="-D ${SOCKS5_PROXY_PORT} -nNT"
+
 # Launch SSH tunnels.
-gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- -NL 8081:localhost:8081 -NR 8080:localhost:8080 &
+echo "Launching SSH tunnels"
+gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- -NL 8081:localhost:8081 -NR 8080:localhost:8080 ${SOCKS5_PROXY_TUNNEL_OPTS} &
 TUNNEL_PID=$!
 trap 'kill $TUNNEL_PID' EXIT
 echo "Started bidirectional tunnels to $INSTANCE_NAME"
@@ -98,6 +103,16 @@ fi
 TEMPYAML=$TEMPDIR/slurmcluster.yaml
 envsubst <$PARENT_PATH/slurmcluster.yaml >$TEMPYAML
 echo "Generated devcluster file: $TEMPYAML"
+
+# We connect to the Slurm VM using an external IP address, but although it's a
+# single node cluster, the Determined master running on the test machine tries
+# to connect to the shell container using its private 10.X.X.X address.
+# Therefore, we must tell the Determined master to use the SOCKS5 proxy SSH
+# tunnel that we configured so it can communicate with the container's private
+# IP address.
+#
+# Note: Do not set ALL_PROXY before calling "gcloud" or it will fail.
+export ALL_PROXY=socks5://localhost:${SOCKS5_PROXY_PORT}
 
 # Run devcluster.
 echo "Running cluster..."
