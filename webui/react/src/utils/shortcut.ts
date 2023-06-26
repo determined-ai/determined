@@ -39,3 +39,27 @@ export const shortcutToString = (shortcut: KeyboardShortcut): string => {
     s.push(shortcut.key);
   return s.join(' + ');
 };
+
+export const formatKey = (code: string, key: string): string => {
+  if (code.startsWith('Digit')) return code.replace('Digit', '');
+  switch (code) {
+    case 'BracketLeft':
+      return '[';
+    case 'BracketRight':
+      return ']';
+    case 'Backslash':
+      return '\\';
+    case 'Semicolon':
+      return ';';
+    case 'Quote':
+      return "'";
+    case 'Comma':
+      return ',';
+    case 'Period':
+      return '.';
+    case 'Slash':
+      return '/';
+    default:
+      return key.toUpperCase();
+  }
+};

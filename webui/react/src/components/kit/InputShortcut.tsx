@@ -1,7 +1,12 @@
 import { Input, InputRef } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { EmptyKeyboardShortcut, KeyboardShortcut, shortcutToString } from 'utils/shortcut';
+import {
+  EmptyKeyboardShortcut,
+  formatKey,
+  KeyboardShortcut,
+  shortcutToString,
+} from 'utils/shortcut';
 
 import Button from './Button';
 import Icon from './Icon';
@@ -33,7 +38,7 @@ const InputShortcut: React.FC<InputShortcutProps> = ({
       const keys: KeyboardShortcut = {
         alt: e.altKey,
         ctrl: e.ctrlKey,
-        key: e.key,
+        key: formatKey(e.code, e.key),
         meta: e.metaKey,
         shift: e.shiftKey,
       };
