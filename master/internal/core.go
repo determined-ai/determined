@@ -918,7 +918,6 @@ func (m *Master) Run(ctx context.Context) error {
 	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
 	userService := user.GetService()
 
-	allocationmap.InitAllocationMap()
 	proxy.InitProxy(processProxyAuthentication)
 	portregistry.InitPortRegistry()
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
