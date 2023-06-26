@@ -96,7 +96,7 @@ def _prepare_key(retention_dir: Union[Path, None]) -> Tuple[ContextManager[IO], 
         if platform.system() == "Windows":
             import oschmod
 
-            oschmod.set_mode(key_path, "600")
+            oschmod.set_mode(str(key_path), "600")
         else:
             key_path.chmod(0o600)
 
