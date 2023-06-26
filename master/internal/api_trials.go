@@ -754,7 +754,7 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		return nil, nil
 	}
 
-	var metricTypes []model.MetricType
+	metricTypes := make([]model.MetricType, 0, len(metricTypeToNames))
 	for metricType := range metricTypeToNames {
 		metricTypes = append(metricTypes, metricType)
 	}
