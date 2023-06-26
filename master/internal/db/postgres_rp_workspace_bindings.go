@@ -16,7 +16,7 @@ type RPWorkspaceBinding struct {
 	bun.BaseModel `bun:"table:rp_workspace_bindings"`
 	WorkspaceID   int    `bun:"workspace_id"`
 	PoolName      string `bun:"pool_name"`
-	Validity      bool   `bun:"validity"`
+	Valid         bool   `bun:"valid"`
 }
 
 // AddRPWorkspaceBindings inserts new bindings between workspaceIds and poolName.
@@ -40,7 +40,7 @@ func AddRPWorkspaceBindings(ctx context.Context, workspaceIds []int32, poolName 
 		bindings = append(bindings, RPWorkspaceBinding{
 			WorkspaceID: int(workspaceID),
 			PoolName:    poolName,
-			Validity:    true,
+			Valid:       true,
 		})
 	}
 
