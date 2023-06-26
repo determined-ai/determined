@@ -6,12 +6,18 @@ package db
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/etc"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
+)
+
+const (
+	testPoolName  = "test pool"
+	testPool2Name = "test pool too"
 )
 
 func TestAddAndRemoveBindings(t *testing.T) {
@@ -35,8 +41,6 @@ func TestAddAndRemoveBindings(t *testing.T) {
 	}
 	// Test single insert/delete
 	// Test bulk insert/delete
-	testPoolName := "test pool"
-	testPool2Name := "test pool too"
 	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, testPoolName, []config.ResourcePoolConfig{
 		{PoolName: testPoolName}, {PoolName: testPool2Name},
 	})
@@ -83,9 +87,45 @@ func TestAddAndRemoveBindings(t *testing.T) {
 
 func TestBindingFail(t *testing.T) {
 	// Test add the same binding multiple times - should fail
+	ctx := context.Background()
+	pgDB := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
+	user := RequireMockUser(t, pgDB)
+	workspaceIDs, err := MockWorkspaces([]string{"test1", "test2", "test3"}, user.ID)
+	require.NoError(t, err, "failed creating workspaces: %t", err)
+	defer func() {
+		err = CleanupMockWorkspace(workspaceIDs)
+		if err != nil {
+			log.Errorf("error when cleaning up mock workspaces")
+		}
+	}()
+	var int32IDs []int32
+	for _, workspaceID := range workspaceIDs {
+		int32IDs = append(int32IDs, workspaceID)
+	}
+
+	nonExistentPoolID := 9999999
+	poolConfigs := []config.ResourcePoolConfig{{PoolName: testPoolName}, {PoolName: testPool2Name}}
+	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, testPoolName, poolConfigs)
+	require.NoError(t, err, "failed to add bindings: %t", err)
+
+	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, testPoolName, poolConfigs)
+	time.Sleep(30 * time.Second)
+	require.Errorf(t, err, "expected error adding binding for workspace %d", int32IDs[0])
 	// Test add same binding among bulk transaction - should fail the entire transaction
+	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[1], int32IDs[1]}, testPoolName, poolConfigs)
+	require.Errorf(t, err,
+		"expected error adding binding for workspaces %d, %d", int32IDs[0], int32IDs[1])
 	// Test add workspace that doesn't exist
+	err = AddRPWorkspaceBindings(ctx, []int32{int32(nonExistentPoolID)}, testPoolName, poolConfigs)
+	require.Errorf(t, err,
+		"expected error adding binding for non-existent workspaces %d", nonExistentPoolID)
 	// Test add RP that doesn't exist
+	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[2]}, "NonexistentPool", poolConfigs)
+	require.Errorf(t, err, "expected error adding binding for workspaces %d on non-existent pool",
+		int32IDs[2], int32IDs[1])
+
 	return
 }
 
@@ -100,13 +140,6 @@ func TestListRPsBoundToWorkspace(t *testing.T) {
 	// pretty straightforward
 	// don't list binding that are invalid
 	// return unbound pools too (we pull from config)
-	return
-}
-
-func TestListAllBindings(t *testing.T) {
-	// pretty straightforward
-	// list ALL bindings, even invalid ones
-	// make sure to return unbound pools too (we pull from config)
 	return
 }
 
