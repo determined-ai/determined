@@ -98,49 +98,132 @@ func TestListWorkspacesBindingRP(t *testing.T) {
 }
 
 func TestListRPsAvailableToWorkspace(t *testing.T) {
-	// pretty straightforward
-	// don't list binding that are invalid
-	// return unbound pools too (we pull from config)
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	ctx := context.Background()
 	user := RequireMockUser(t, db)
 
-	// A workspace has no bounded RP
-	// TODO: Write RP config to master config?
+	workspaceNames := []string{"workspace1", "workspace2"}
+	workspaceIDs, err := MockWorkspaces(workspaceNames, user.ID)
+	require.NoError(t, err)
 	existingPools := []config.ResourcePoolConfig{
 		{PoolName: "poolName1"},
 		{PoolName: "poolName2"},
 		{PoolName: "poolName3"},
 	}
 
-	workspaceNames := []string{"workspace1"}
-	workspaceIDs, err := MockWorkspaces(workspaceNames, user.ID)
+	// A workspace has no bounded RP
+	rpNames, _, err := ReadRPsAvailableToWorkspace(ctx, workspaceIDs[0], 0, 500, existingPools)
 	require.NoError(t, err)
 
-	rpWorkspaceBindings, _, err := ReadRPsBoundToWorkspace(ctx, workspaceIDs[0], 0, 500)
-	require.NoError(t, err)
-	boundRPs := []string{}
-	for _, rpWorkspaceBinding := range rpWorkspaceBindings {
-		boundRPs = append(boundRPs, rpWorkspaceBinding.PoolName)
+	expectedRPNames := []string{}
+	for _, rpName := range existingPools {
+		expectedRPNames = append(expectedRPNames, rpName.PoolName)
 	}
-	expectedBoundRPs := []string{"poolName1", "poolName2", "poolName3"}
-	sort.Strings(expectedBoundRPs)
-	sort.Strings(boundRPs)
-	require.Equal(t, boundRPs, expectedBoundRPs)
+	sort.Strings(rpNames)
+	require.Equal(t, expectedRPNames, rpNames)
 
 	// Workspace 1 has no bounded RP and a RP is bound to workspace 2
-	workspaceNames = []string{"workspace2"}
-	workspaceIDs, err = MockWorkspaces(workspaceNames, user.ID)
+	err = AddRPWorkspaceBindings(ctx, workspaceIDs[1:2], "poolName2", existingPools)
 	require.NoError(t, err)
 
-	err = AddRPWorkspaceBindings(ctx, workspaceIDs, "poolName2", existingPools)
+	rpNames, _, err = ReadRPsAvailableToWorkspace(ctx, workspaceIDs[0], 0, 500, existingPools)
+	require.NoError(t, err)
+	expectedRPNames = []string{"poolName1", "poolName3"}
+	sort.Strings(rpNames)
+	require.Equal(t, expectedRPNames, rpNames)
+
+	err = RemoveRPWorkspaceBindings(ctx, workspaceIDs[1:2], "poolName2")
 	require.NoError(t, err)
 
 	// A workspace has some bounded RP and some unbound RP
+	err = AddRPWorkspaceBindings(ctx, workspaceIDs[0:1], "poolName1", existingPools)
+	require.NoError(t, err)
+	err = AddRPWorkspaceBindings(ctx, workspaceIDs[1:2], "poolName2", existingPools)
+	require.NoError(t, err)
+
+	rpNames, _, err = ReadRPsAvailableToWorkspace(ctx, workspaceIDs[0], 0, 500, existingPools)
+	require.NoError(t, err)
+	expectedRPNames = []string{"poolName1", "poolName3"}
+	sort.Strings(rpNames)
+	require.Equal(t, expectedRPNames, rpNames)
+
+	err = RemoveRPWorkspaceBindings(ctx, workspaceIDs[0:1], "poolName1")
+	require.NoError(t, err)
+	err = RemoveRPWorkspaceBindings(ctx, workspaceIDs[1:2], "poolName2")
+	require.NoError(t, err)
 
 	// A workspace only has bounded RP.
+	err = AddRPWorkspaceBindings(ctx, workspaceIDs[0:1], "poolName1", existingPools)
+	require.NoError(t, err)
+	err = AddRPWorkspaceBindings(ctx, workspaceIDs, "poolName2", existingPools)
+	require.NoError(t, err)
+	err = AddRPWorkspaceBindings(ctx, workspaceIDs[1:2], "poolName3", existingPools)
+	require.NoError(t, err)
+
+	rpNames, _, err = ReadRPsAvailableToWorkspace(ctx, workspaceIDs[0], 0, 500, existingPools)
+	require.NoError(t, err)
+	expectedRPNames = []string{"poolName1", "poolName2"}
+	sort.Strings(rpNames)
+	require.Equal(t, expectedRPNames, rpNames)
+
+	err = RemoveRPWorkspaceBindings(ctx, workspaceIDs[0:1], "poolName1")
+	require.NoError(t, err)
+	err = RemoveRPWorkspaceBindings(ctx, workspaceIDs, "poolName2")
+	require.NoError(t, err)
+	err = RemoveRPWorkspaceBindings(ctx, workspaceIDs[1:2], "poolName3")
+	require.NoError(t, err)
+
+	// Test pagination
+	morePools := []config.ResourcePoolConfig{
+		{PoolName: "poolName4"},
+		{PoolName: "poolName5"},
+		{PoolName: "poolName6"},
+		{PoolName: "poolName7"},
+		{PoolName: "poolName8"},
+	}
+	existingPools = append(existingPools, morePools...)
+	err = AddRPWorkspaceBindings(ctx, workspaceIDs[0:1], "poolName2", existingPools)
+	require.NoError(t, err)
+	err = AddRPWorkspaceBindings(ctx, workspaceIDs[0:1], "poolName3", existingPools)
+	require.NoError(t, err)
+
+	rpNames, pagination, err := ReadRPsAvailableToWorkspace(ctx, workspaceIDs[0], 0, 3, existingPools)
+	require.NoError(t, err)
+	expectedRPNames = []string{}
+	for _, rpName := range existingPools[0:3] {
+		expectedRPNames = append(expectedRPNames, rpName.PoolName)
+	}
+	sort.Strings(rpNames)
+	require.Equal(t, expectedRPNames, rpNames)
+
+	rpNames, pagination, err = ReadRPsAvailableToWorkspace(
+		ctx, workspaceIDs[0], pagination.EndIndex, pagination.Limit, existingPools,
+	)
+	require.NoError(t, err)
+	expectedRPNames = []string{}
+	for _, rpName := range existingPools[3:6] {
+		expectedRPNames = append(expectedRPNames, rpName.PoolName)
+	}
+	sort.Strings(rpNames)
+	require.Equal(t, expectedRPNames, rpNames)
+
+	rpNames, _, err = ReadRPsAvailableToWorkspace(
+		ctx, workspaceIDs[0], pagination.EndIndex, pagination.Limit, existingPools,
+	)
+	require.NoError(t, err)
+	expectedRPNames = []string{}
+	for _, rpName := range existingPools[6:8] {
+		expectedRPNames = append(expectedRPNames, rpName.PoolName)
+	}
+	sort.Strings(rpNames)
+	require.Equal(t, expectedRPNames, rpNames)
+
+	err = RemoveRPWorkspaceBindings(ctx, workspaceIDs[0:1], "poolName2")
+	require.NoError(t, err)
+	err = RemoveRPWorkspaceBindings(ctx, workspaceIDs[0:1], "poolName3")
+	require.NoError(t, err)
 
 	err = CleanupMockWorkspace(workspaceIDs)
 	require.NoError(t, err)
