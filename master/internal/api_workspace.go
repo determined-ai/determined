@@ -629,36 +629,16 @@ func (a *apiServer) ListRPsBoundToWorkspace(
 		return nil, err
 	}
 
-	rpWorkspaceBindings, pagination, err := db.ReadRPsBoundToWorkspace(
-		ctx, req.WorkspaceId, req.Offset, req.Limit,
+	masterConfig := config.GetMasterConfig()
+	rpNames, pagination, err := db.ReadRPsAvailableToWorkspace(
+		ctx, req.WorkspaceId, req.Offset, req.Limit, masterConfig.ResourceConfig.ResourcePools,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	boundRPs := []string{}
-	for _, rpWorkspaceBinding := range rpWorkspaceBindings {
-		boundRPs = append(boundRPs, rpWorkspaceBinding.PoolName)
-	}
-
-	// Add unbound RPs.
-	if pagination.EndIndex == pagination.Total {
-		masterConfig := config.GetMasterConfig()
-
-		unboundRPs, err := db.GetUnboundRPs(ctx, masterConfig.ResourceConfig.ResourcePools)
-		if err != nil {
-			return nil, err
-		}
-		// TODO: pagination is tricky because of the unboundRPs
-		return &apiv1.ListRPsBoundToWorkspaceResponse{
-			ResourcePools: append(boundRPs, unboundRPs...),
-			Pagination:    pagination,
-		}, nil
-	}
-
-	// TODO: pagination is tricky because of the unboundRPs
 	return &apiv1.ListRPsBoundToWorkspaceResponse{
-		ResourcePools: boundRPs,
+		ResourcePools: rpNames,
 		Pagination:    pagination,
 	}, nil
 }
