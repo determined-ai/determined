@@ -244,13 +244,6 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.RecoverJobPosition:
 		a.forwardToPool(ctx, msg.ResourcePool, msg)
 
-	case sproto.GetAllocationHandler:
-		if handler, err := a.aggregateTaskHandler(a.forwardToAllPools(ctx, msg)); err != nil {
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(handler)
-		}
-
 	case sproto.GetAllocationSummary:
 		if summary := a.aggregateTaskSummary(a.forwardToAllPools(ctx, msg)); summary != nil {
 			ctx.Respond(summary)

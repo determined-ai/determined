@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
@@ -1149,14 +1150,11 @@ func (a *apiServer) AllocationPreemptionSignal(
 	}
 
 	allocationID := model.AllocationID(req.AllocationId)
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
-	if err != nil {
-		return nil, err
+	ref := allocationmap.GetAllocation(allocationID)
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
@@ -1185,14 +1183,12 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 	}
 
 	allocationID := model.AllocationID(req.AllocationId)
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
-	if err != nil {
-		return nil, err
+
+	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
@@ -1249,18 +1245,15 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 	}
 	allocationID := model.AllocationID(req.AllocationId)
 
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
-	if err != nil {
-		return nil, err
+	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
-	if err := a.ask(handler.Address(), task.MarkResourcesDaemon{
+	if err := a.ask(ref.Address(), task.MarkResourcesDaemon{
 		AllocationID: allocationID,
 		ResourcesID:  sproto.ResourcesID(req.ResourcesId),
 	}, nil); err != nil {
@@ -1473,27 +1466,23 @@ func (a *apiServer) AllocationRendezvousInfo(
 
 	allocationID := model.AllocationID(req.AllocationId)
 	resourcesID := sproto.ResourcesID(req.ResourcesId)
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
-	if err != nil {
-		return nil, err
+	ref := allocationmap.GetAllocation(allocationID)
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
 	var w task.RendezvousWatcher
-	if err = a.ask(handler.Address(), task.WatchRendezvousInfo{
+	if err := a.ask(ref.Address(), task.WatchRendezvousInfo{
 		ResourcesID: resourcesID,
 	}, &w); err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(
-		handler.Address(), task.UnwatchRendezvousInfo{
-			ResourcesID: resourcesID,
-		})
+	defer a.m.system.TellAt(ref.Address(), task.UnwatchRendezvousInfo{
+		ResourcesID: resourcesID,
+	})
 
 	select {
 	case rsp := <-w.C:
