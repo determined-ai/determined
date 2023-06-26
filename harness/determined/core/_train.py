@@ -76,7 +76,7 @@ class TrainContext:
         batch_metrics: Optional[List[Metrics]] = None,
     ) -> None:
         """
-        Report training metrics to the master.
+        Report trial metrics to the master.
 
         You can include a list of ``batch_metrics``.  Batch metrics are not be shown in the WebUI
         but may be accessed from the master using the CLI for post-processing.
