@@ -89,6 +89,12 @@ def _get_dist_context(
         [{"batch_sampler": unittest.mock.Mock()}, 10],
         [{"batch_size": 20}, 10],
     ],
+    ids=[
+        "Shuffle arg provided",
+        "Sampler arg provided",
+        "Batch_sampler arg provided",
+        "batch_size arg provided twice",
+    ],
 )
 def test_torch_batch_process_invalid_dataloader_kwargs(
     dataloader_kwargs: Dict[str, Any],
@@ -504,7 +510,9 @@ def test_torch_batch_process_reduce_metrics(
 @unittest.mock.patch(
     "determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint"
 )
-@pytest.mark.parametrize("checkpoint_interval", [-1, 0])
+@pytest.mark.parametrize(
+    "checkpoint_interval", [-1, 0], ids=["Invalid checkpoint_interval", "Valid checkpoint_interval"]
+)
 def test_torch_batch_process_invalid_checkpoint_interval(
     mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
     mock_initialize_default_inference_context: unittest.mock.MagicMock,
@@ -598,6 +606,11 @@ def test_torch_batch_processor_context_upload_path(
         [0, 0, torch.device("cpu")],
         [0, 1, torch.device("cuda", 0)],
         [1, 2, torch.device("cuda", 1)],
+    ],
+    ids=[
+        "No CUDA device available",
+        "One CUDA device available",
+        "Two CUDA devices available; local_rank=1",
     ],
 )
 def test_get_default_device(
