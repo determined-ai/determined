@@ -530,6 +530,13 @@ func (a *apiServer) DeleteWorkspace(
 	log.Debugf("deleting workspace %d NTSC", req.Id)
 	command.TellNTSC(a.m.system, req)
 
+	log.Debugf("deleting workspace %d templates", req.Id)
+	_, err = db.Bun().NewDelete().Model(&model.Template{}).
+		Where("workspace_id = ?", req.Id).Exec(ctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error deleting workspace (%d) templates", req.Id)
+	}
+
 	if len(projects) == 0 {
 		err = a.m.db.QueryProto("delete_workspace", holder, req.Id)
 		return &apiv1.DeleteWorkspaceResponse{Completed: (err == nil)},
