@@ -17,10 +17,11 @@ const (
 	TrainingMetricType MetricType = "training"
 )
 
-// ValidateMetricName validates the metric name.
-// CHAT: do we make a new type similar to MetricType?
-func ValidateMetricName(name string) error {
-	if len(name) == 0 {
+type MetricName string
+
+// Validate validates the metric name.
+func (t MetricName) Validate() error {
+	if len(t) == 0 {
 		return status.Errorf(codes.InvalidArgument, "metric name cannot be empty")
 	}
 	return nil
@@ -60,14 +61,14 @@ func (t MetricType) Validate() error {
 // MetricIdentifier packages metric type and name together.
 type MetricIdentifier struct {
 	Type MetricType
-	Name string
+	Name MetricName
 }
 
 // ToProto returns the proto representation of the metric identifier.
 func (m MetricIdentifier) ToProto() *metricv1.MetricName {
 	return &metricv1.MetricName{
 		Type: m.Type.ToString(),
-		Name: m.Name,
+		Name: string(m.Name),
 	}
 }
 
@@ -78,8 +79,8 @@ func DeserializeMetricIdentifier(s string) (*MetricIdentifier, error) {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid metric identifier: '%s' expected <type>.<name>", s)
 	}
-	metricIDName := nameAndType[1]
-	if err := ValidateMetricName(metricIDName); err != nil {
+	metricIDName := MetricName(nameAndType[1])
+	if err := metricIDName.Validate(); err != nil {
 		return nil, err
 	}
 	metricIDType := MetricType(nameAndType[0])
