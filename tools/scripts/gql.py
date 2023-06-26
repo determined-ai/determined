@@ -164,11 +164,12 @@ query($id: ID!) {
 """
 )
 
-get_pr_merge_commit = GraphQLQuery(
+get_pr_merge_commit_and_url = GraphQLQuery(
     """
 query($id: ID!) {
   node(id: $id) {
     ... on PullRequest {
+      url
       mergeCommit {
         oid
       }
