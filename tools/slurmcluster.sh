@@ -33,6 +33,7 @@ HELPEND=$((LINENO - 1))
 
 INTUNNEL=1
 TUNNEL=1
+SOCKS5_PROXY_TUNNEL=1
 DEVLAUNCHER=
 USERNAME=$USER
 DEBUGLEVEL=debug
@@ -51,6 +52,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -x)
             TUNNEL=
+            shift
+            ;;
+        --no-socks5-proxy)
+            SOCKS5_PROXY_TUNNEL=
             shift
             ;;
         -t)
@@ -99,21 +104,22 @@ while [[ $# -gt 0 ]]; do
             ;;
         -h | --help)
             echo "Usage: $0 [-anxtpedi] [-c {image}] [-u {username}]  {cluster}"
-            echo "  -h     This help message & documentation."
-            echo "  -n     Disable start of the inbound tunnel (when using Cisco AnyConnect)."
-            echo "  -x     Disable start of personal tunnel back to master (if you have done so manually)."
-            echo "  -t     Force debug level to trace regardless of cluster configuration value."
-            echo "  -i     Force debug level to INFO regardless of cluster configuration value."
-            echo "  -p     Use podman as a container host (otherwise singlarity)."
-            echo "  -e     Use enroot as a container host (otherwise singlarity)."
-            echo "  -d     Use a developer launcher (port assigned for the user in loadDevLauncher.sh)."
-            echo "  -c     Use the specified {image} as the default image.  Useful with -d and for enroot."
-            echo "  --cpu  Force slot_type to cpu instead of the default (cuda)."
-            echo "  -u     Use provided {username} to lookup the per-user port number."
-            echo "  -a     Attempt to retrieve the .launcher.token - you must have sudo root on the cluster."
-            echo "  -A     Use agents instead of launcher to access HPC resources."
-            echo "  -s     Do not launch the devcluster. The devcluster will need to be launched and managed separately. "
-            echo "         For example, e2e_slurm_restart tests manage their own instance of devcluster."
+            echo "  -h                 This help message & documentation."
+            echo "  -n                 Disable start of the inbound tunnel (when using Cisco AnyConnect)."
+            echo "  -x                 Disable start of personal tunnel back to master (if you have done so manually)."
+            echo "  --no-socks5-proxy  Disable start of SOCKS5 proxy SSH tunnel."
+            echo "  -t                 Force debug level to trace regardless of cluster configuration value."
+            echo "  -i                 Force debug level to INFO regardless of cluster configuration value."
+            echo "  -p                 Use podman as a container host (otherwise singlarity)."
+            echo "  -e                 Use enroot as a container host (otherwise singlarity)."
+            echo "  -d                 Use a developer launcher (port assigned for the user in loadDevLauncher.sh)."
+            echo "  -c                 Use the specified {image} as the default image.  Useful with -d and for enroot."
+            echo "  --cpu              Force slot_type to cpu instead of the default (cuda)."
+            echo "  -u                 Use provided {username} to lookup the per-user port number."
+            echo "  -a                 Attempt to retrieve the .launcher.token - you must have sudo root on the cluster."
+            echo "  -A                 Use agents instead of launcher to access HPC resources."
+            echo "  -s                 Do not launch the devcluster. The devcluster will need to be launched and managed separately. "
+            echo "                     For example, e2e_slurm_restart tests manage their own instance of devcluster."
             echo
             echo "Documentation:"
             head -n $HELPEND $0 | tail -n $((HELPEND - 1))
@@ -150,6 +156,14 @@ function mkintunnel() {
     LAUNCHER_PORT=$2
     SSH_HOST=$3
     ssh -NL ${LAUNCHER_PORT}:${LAUNCHER_HOST}:${LAUNCHER_PORT} ${SSH_HOST}
+}
+
+# Setup a SOCKS5 proxy SSH tunnel to access any port on the compute nodes.
+# This is needed when starting a Determined shell.
+function mksocks5proxytunnel() {
+    PROXY_PORT=$1
+    SSH_HOST=$2
+    ssh -D ${PROXY_PORT} -nNT ${SSH_HOST}
 }
 
 # Attempt to retrieve the auth token from the remote host
@@ -219,6 +233,18 @@ DEV_LAUNCHER_PORT_jerryharrow=18090
 DEV_LAUNCHER_PORT_canmingcobble=18092
 DEV_LAUNCHER_PORT_wilsone=18888
 DEV_LAUNCHER_PORT=$(lookup "DEV_LAUNCHER_PORT_$USERNAME")
+
+# SOCKS5 proxy port that will be used to create an SSH tunnel to access any port on the compute nodes
+SOCKS5_PROXY_PORT_madagund=60000
+SOCKS5_PROXY_PORT_laney=60001
+SOCKS5_PROXY_PORT_rcorujo=60002
+SOCKS5_PROXY_PORT_phillipgaisford=60003
+SOCKS5_PROXY_PORT_mandalpa=60004
+SOCKS5_PROXY_PORT_alyssa=60005
+SOCKS5_PROXY_PORT_jerryharrow=60006
+SOCKS5_PROXY_PORT_canmingcobble=60007
+SOCKS5_PROXY_PORT_wilsone=60008
+SOCKS5_PROXY_PORT=$(lookup "SOCKS5_PROXY_PORT_$USERNAME")
 
 # Configuration for atlas
 OPT_name_atlas=atlas.us.cray.com
@@ -613,7 +639,7 @@ echo
 if [ $SKIP_DEVCLUSTER_STAGE -eq 0 ]; then
     trap "kill 0" EXIT
 fi
-if [[ -n $INTUNNEL || -n $TUNNEL ]]; then
+if [[ -n $INTUNNEL || -n $TUNNEL || -n $SOCKS5_PROXY_TUNNEL ]]; then
     # Terminate any tunnels (non-interactive sshd proceses for the user)
     ssh ${OPT_REMOTEUSER}$SLURMCLUSTER pkill -u '$USER' -x -f '"^sshd: $USER[ ]*$"'
 fi
@@ -623,6 +649,16 @@ fi
 if [[ -n $TUNNEL ]]; then
     mktunnel $OPT_MASTERHOST $OPT_MASTERPORT ${OPT_REMOTEUSER}$SLURMCLUSTER &
 fi
+
+if [[ -n $SOCKS5_PROXY_TUNNEL ]]; then
+    mksocks5proxytunnel $SOCKS5_PROXY_PORT ${OPT_REMOTEUSER}$SLURMCLUSTER &
+
+    # The Determined master needs this environment variable set in order
+    # for shells to work. Of course, the SOCKS5 proxy SSH tunnel must be running,
+    # which we created in the "mksocks5proxytunnel" above.
+    export ALL_PROXY=socks5://localhost:${SOCKS5_PROXY_PORT}
+fi
+
 # Give a little time for the tunnels to setup before using
 sleep 3
 
