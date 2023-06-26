@@ -28,7 +28,7 @@ test-cpu:
 
 .PHONY: test-cpu-tf1
 test-cpu-tf1:
-	coverage run -m pytest -v --runslow --durations=0 -m "tf1_cpu" tests/experiment --ignore=tests/experiment/integrations
+	coverage run -m pytest -v --runslow --durations=0 -m "tf1_cpu" tests/experiment/keras tests/experiment/tensorflow --ignore=tests/experiment/integrations
 
 .PHONY: test-gpu
 test-gpu:
@@ -43,6 +43,10 @@ test-gpu-lightning:
 .PHONY: test-gpu-deepspeed
 test-gpu-deepspeed:
 	coverage run -m pytest -v --runslow --durations=0 -m "deepspeed and gpu" tests/experiment/integrations/test_deepspeed_trial.py
+
+.PHONY: test-gpu-parallel
+test-gpu-parallel:
+	coverage run -m pytest -v --runslow --durations=0 -m tests/experiment -m "gpu_parallel" tests/experiment --ignore=tests/experiment/integrations
 
 .PHONY: test
 test:

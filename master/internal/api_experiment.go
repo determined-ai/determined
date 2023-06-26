@@ -20,6 +20,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/trials"
@@ -50,7 +51,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/metricv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
@@ -264,12 +264,7 @@ func (a *apiServer) GetExperiment(
 	}
 
 	jobID := model.JobID(exp.JobId)
-
-	jobSummary := &jobv1.JobSummary{}
-	err = a.ask(sproto.JobsActorAddr, sproto.GetJobSummary{
-		JobID:        jobID,
-		ResourcePool: exp.ResourcePool,
-	}, &jobSummary)
+	jobSummary, err := job.DefaultManager.GetJobSummary(jobID, exp.ResourcePool)
 	if err != nil {
 		// An error here either is real or just that the experiment was not yet terminal in the DB
 		// when we first queried it but was by the time it got around to handling out ask. We can't

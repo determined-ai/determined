@@ -20,6 +20,8 @@ model - e.g., multi-GPU, hyperparameter search, etc.
 
 -  :doc:`/model-dev-guide/apis-howto/api-core-ug`
 
+.. _high-level-apis:
+
 *****************
  High-Level APIs
 *****************

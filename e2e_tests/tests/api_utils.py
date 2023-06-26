@@ -5,7 +5,8 @@ from determined.common import api
 from determined.common.api import Session, authentication, bindings, certs
 from determined.common.api._util import AnyNTSC, NTSC_Kind
 from tests import config as conf
-from tests.cluster import test_users
+
+ADMIN_CREDENTIALS = authentication.Credentials("admin", "")
 
 
 def get_random_string() -> str:
@@ -20,7 +21,7 @@ def determined_test_session(
 
     if credentials is None:
         if admin:
-            credentials = test_users.ADMIN_CREDENTIALS
+            credentials = ADMIN_CREDENTIALS
         else:
             credentials = authentication.Credentials("determined", "")
 
