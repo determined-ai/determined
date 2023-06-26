@@ -1,6 +1,7 @@
 import importlib
 import os
 import pathlib
+import re
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
 
 import numpy as np
@@ -436,3 +437,27 @@ def ensure_requires_global_batch_size(
         _ = make_trial_controller_from_trial_implementation(
             trial_class, workloads=make_workloads(), hparams=bad_hparams
         )
+
+
+def assert_patterns_in_logs(input_list: List[str], patterns: List[str]) -> None:
+    """
+    Match each regex pattern in the list to the logs, one-at-a-time, in order.
+    """
+    assert patterns, "must provide at least one pattern"
+    patterns_iter = iter(patterns)
+    p = re.compile(next(patterns_iter))
+    for log_line in input_list:
+        if p.search(log_line) is None:
+            continue
+        # Matched a pattern.
+        try:
+            p = re.compile(next(patterns_iter))
+        except StopIteration:
+            # All patterns have been matched.
+            return
+    # Some patterns were not found.
+    text = '"\n  "'.join([p.pattern, *patterns_iter])
+    raise ValueError(
+        f'the following patterns:\n  "{text}"\nwere not found in \
+        the trial logs:\n\n{"".join(input_list)}'  # noqa
+    )

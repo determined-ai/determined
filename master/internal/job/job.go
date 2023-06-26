@@ -4,34 +4,43 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 
 	"golang.org/x/exp/slices"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// Jobs manage jobs.
-type Jobs struct {
+// DefaultManager is the global singleton for managing jobs.
+var DefaultManager *Manager
+
+// Manager manages jobs.
+type Manager struct {
+	mu        sync.Mutex
 	rm        rm.ResourceManager
 	actorByID map[model.JobID]*actor.Ref
+	system    *actor.System
+	syslog    *logrus.Entry
 }
 
-// NewJobs creates a new jobs actor.
-func NewJobs(rm rm.ResourceManager) *Jobs {
-	return &Jobs{
+// NewManager creates a new jobs manager instance.
+func NewManager(rm rm.ResourceManager, system *actor.System) *Manager {
+	return &Manager{
 		rm:        rm,
 		actorByID: make(map[model.JobID]*actor.Ref),
+		system:    system,
+		syslog:    logrus.WithField("component", "jobs"),
 	}
 }
 
-func (j *Jobs) parseV1JobMsgs(
+func (j *Manager) parseV1JobMsgs(
 	msgs map[*actor.Ref]actor.Message,
 ) (map[model.JobID]*jobv1.Job, error) {
 	jobs := make(map[model.JobID]*jobv1.Job)
@@ -53,27 +62,19 @@ func (j *Jobs) parseV1JobMsgs(
 }
 
 // jobQSnapshot asks for a fresh consistent snapshot of the job queue from the RM.
-func (j *Jobs) jobQSnapshot(ctx *actor.Context, resourcePool string) (sproto.AQueue, error) {
-	resp, err := j.rm.GetJobQ(ctx, sproto.GetJobQ{ResourcePool: resourcePool})
+func (j *Manager) jobQSnapshot(resourcePool string) (sproto.AQueue, error) {
+	resp, err := j.rm.GetJobQ(j.system, sproto.GetJobQ{ResourcePool: resourcePool})
 	if err != nil {
-		ctx.Log().WithError(err).Error("getting job queue info from RM")
+		j.syslog.WithError(err).Error("getting job queue info from RM")
 		return nil, err
 	}
 
 	return resp, nil
 }
 
-func (j *Jobs) getJobs(
-	ctx *actor.Context,
-	resourcePool string,
-	desc bool,
-	states []jobv1.State,
-) ([]*jobv1.Job, error) {
-	jobQ, err := j.jobQSnapshot(ctx, resourcePool)
-	if err != nil {
-		return nil, err
-	}
-
+func (j *Manager) jobQRefs(jobQ map[model.JobID]*sproto.RMJobInfo) []*actor.Ref {
+	j.mu.Lock()
+	defer j.mu.Unlock()
 	// Get jobs from the job actors.
 	jobRefs := make([]*actor.Ref, 0, len(jobQ))
 	for jID := range jobQ {
@@ -82,9 +83,25 @@ func (j *Jobs) getJobs(
 			jobRefs = append(jobRefs, jobRef)
 		}
 	}
-	jobs, err := j.parseV1JobMsgs(ctx.AskAll(sproto.GetJob{}, jobRefs...).GetAll())
+
+	return jobRefs
+}
+
+// GetJobs returns a list of jobs for a resource pool.
+func (j *Manager) GetJobs(
+	resourcePool string,
+	desc bool,
+	states []jobv1.State,
+) ([]*jobv1.Job, error) {
+	jobQ, err := j.jobQSnapshot(resourcePool)
 	if err != nil {
-		ctx.Log().WithError(err).Error("parsing responses from job actors")
+		return nil, err
+	}
+	jobRefs := j.jobQRefs(jobQ)
+
+	jobs, err := j.parseV1JobMsgs(j.system.AskAll(sproto.GetJob{}, jobRefs...).GetAll())
+	if err != nil {
+		j.syslog.WithError(err).Error("parsing responses from job actors")
 		return nil, err
 	}
 
@@ -124,134 +141,117 @@ func (j *Jobs) getJobs(
 	return jobsInRM, nil
 }
 
-func (j *Jobs) setJobPriority(ctx *actor.Context, jobID model.JobID, priority int) error {
+func (j *Manager) setJobPriority(ref *actor.Ref, priority int) error {
 	if priority < 1 || priority > 99 {
 		return errors.New("priority must be between 1 and 99")
 	}
-	jobActor := j.actorByID[jobID]
-	resp := ctx.Ask(jobActor, sproto.SetGroupPriority{
+	resp := j.system.Ask(ref, sproto.SetGroupPriority{
 		Priority: priority,
 	})
 	return resp.Error()
 }
 
-// Receive implements the actor.Actor interface.
-func (j *Jobs) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
+func (j *Manager) jobRef(id model.JobID) *actor.Ref {
+	j.mu.Lock()
+	defer j.mu.Unlock()
 
-	case sproto.RegisterJob:
-		j.actorByID[msg.JobID] = msg.JobActor
+	return j.actorByID[id]
+}
 
-	case sproto.UnregisterJob:
-		delete(j.actorByID, msg.JobID)
+// RegisterJob registers a job actor with the job registry.
+func (j *Manager) RegisterJob(id model.JobID, ref *actor.Ref) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
 
-	case *apiv1.GetJobsRequest:
-		jobs, err := j.getJobs(
-			ctx,
-			msg.ResourcePool,
-			msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
-			msg.States)
-		if err != nil {
-			ctx.Respond(err)
-			return nil
-		}
-		ctx.Respond(jobs)
-	case *apiv1.GetJobsV2Request:
-		jobs, err := j.getJobs(
-			ctx,
-			msg.ResourcePool,
-			msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
-			msg.States)
-		if err != nil {
-			ctx.Respond(err)
-			return nil
-		}
-		ctx.Respond(jobs)
+	j.actorByID[id] = ref
+}
 
-	case sproto.GetJobSummary:
-		jobs, err := j.jobQSnapshot(ctx, msg.ResourcePool)
-		if err != nil {
-			ctx.Respond(err)
-			return nil
-		}
-		jobInfo, ok := jobs[msg.JobID]
-		if !ok || jobInfo == nil {
-			// job is not active.
-			ctx.Respond(sproto.ErrJobNotFound(msg.JobID))
-			return nil
-		}
-		summary := jobv1.JobSummary{
-			State:     jobInfo.State.Proto(),
-			JobsAhead: int32(jobInfo.JobsAhead),
-		}
-		ctx.Respond(&summary)
+// UnregisterJob removes the job from the job registry.
+func (j *Manager) UnregisterJob(id model.JobID) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
 
-	case *apiv1.UpdateJobQueueRequest:
-		errors := make([]string, 0)
-		for _, update := range msg.Updates {
-			jobID := model.JobID(update.JobId)
-			jobActor := j.actorByID[jobID]
-			if jobActor == nil {
-				ctx.Respond(sproto.ErrJobNotFound(jobID))
-				return nil
+	delete(j.actorByID, id)
+}
+
+// GetJobSummary returns a summary of the job given an id and resource pool.
+func (j *Manager) GetJobSummary(id model.JobID, resourcePool string) (*jobv1.JobSummary, error) {
+	jobs, err := j.jobQSnapshot(resourcePool)
+	if err != nil {
+		return nil, err
+	}
+	jobInfo, ok := jobs[id]
+	if !ok || jobInfo == nil {
+		// job is not active.
+		return nil, sproto.ErrJobNotFound(id)
+	}
+	return &jobv1.JobSummary{
+		State:     jobInfo.State.Proto(),
+		JobsAhead: int32(jobInfo.JobsAhead),
+	}, nil
+}
+
+// UpdateJobQueue sends queue control updates to specific jobs.
+func (j *Manager) UpdateJobQueue(updates []*jobv1.QueueControl) error {
+	errors := make([]string, 0)
+	for _, update := range updates {
+		jobID := model.JobID(update.JobId)
+		jobActor := j.jobRef(jobID)
+		if jobActor == nil {
+			return sproto.ErrJobNotFound(jobID)
+		}
+		switch action := update.GetAction().(type) {
+		case *jobv1.QueueControl_Priority:
+			priority := int(action.Priority)
+			if err := j.setJobPriority(jobActor, priority); err != nil {
+				errors = append(errors, err.Error())
 			}
-			switch action := update.GetAction().(type) {
-			case *jobv1.QueueControl_Priority:
-				priority := int(action.Priority)
-				if err := j.setJobPriority(ctx, jobID, priority); err != nil {
-					errors = append(errors, err.Error())
-				}
-			case *jobv1.QueueControl_Weight:
-				if action.Weight <= 0 {
-					errors = append(errors, "weight must be greater than 0")
-					continue
-				}
-				resp := ctx.Ask(jobActor, sproto.SetGroupWeight{
-					Weight: float64(action.Weight),
-				})
-				if err := resp.Error(); err != nil {
-					errors = append(errors, err.Error())
-				}
-			case *jobv1.QueueControl_ResourcePool:
-				if action.ResourcePool == "" {
-					errors = append(errors, "resource pool must be set")
-					continue
-				}
-				resp := ctx.Ask(jobActor, sproto.SetResourcePool{
-					ResourcePool: action.ResourcePool,
-				})
-				if err := resp.Error(); err != nil {
-					errors = append(errors, err.Error())
-				}
-			case *jobv1.QueueControl_AheadOf:
-				if err := j.rm.MoveJob(ctx, sproto.MoveJob{
-					ID:     jobID,
-					Anchor: model.JobID(action.AheadOf),
-					Ahead:  true,
-				}); err != nil {
-					errors = append(errors, err.Error())
-				}
-			case *jobv1.QueueControl_BehindOf:
-				if err := j.rm.MoveJob(ctx, sproto.MoveJob{
-					ID:     jobID,
-					Anchor: model.JobID(action.BehindOf),
-					Ahead:  false,
-				}); err != nil {
-					errors = append(errors, err.Error())
-				}
-			default:
-				ctx.Respond(fmt.Errorf("unexpected action: %v", action))
-				return nil
+		case *jobv1.QueueControl_Weight:
+			if action.Weight <= 0 {
+				errors = append(errors, "weight must be greater than 0")
+				continue
 			}
+			resp := j.system.Ask(jobActor, sproto.SetGroupWeight{
+				Weight: float64(action.Weight),
+			})
+			if err := resp.Error(); err != nil {
+				errors = append(errors, err.Error())
+			}
+		case *jobv1.QueueControl_ResourcePool:
+			if action.ResourcePool == "" {
+				errors = append(errors, "resource pool must be set")
+				continue
+			}
+			resp := j.system.Ask(jobActor, sproto.SetResourcePool{
+				ResourcePool: action.ResourcePool,
+			})
+			if err := resp.Error(); err != nil {
+				errors = append(errors, err.Error())
+			}
+		case *jobv1.QueueControl_AheadOf:
+			if err := j.rm.MoveJob(j.system, sproto.MoveJob{
+				ID:     jobID,
+				Anchor: model.JobID(action.AheadOf),
+				Ahead:  true,
+			}); err != nil {
+				errors = append(errors, err.Error())
+			}
+		case *jobv1.QueueControl_BehindOf:
+			if err := j.rm.MoveJob(j.system, sproto.MoveJob{
+				ID:     jobID,
+				Anchor: model.JobID(action.BehindOf),
+				Ahead:  false,
+			}); err != nil {
+				errors = append(errors, err.Error())
+			}
+		default:
+			return fmt.Errorf("unexpected action: %v", action)
 		}
-		if len(errors) == 1 {
-			ctx.Respond(fmt.Errorf(errors[0]))
-		} else if len(errors) > 1 {
-			ctx.Respond(fmt.Errorf("encountered the following errors: %s", strings.Join(errors, ", ")))
-		}
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
+	}
+	if len(errors) == 1 {
+		return fmt.Errorf(errors[0])
+	} else if len(errors) > 1 {
+		return fmt.Errorf("encountered the following errors: %s", strings.Join(errors, ", "))
 	}
 	return nil
 }

@@ -22,7 +22,7 @@ spec:
       priorityClassName: determined-system-priority
       containers:
       - name: determined-db-{{ .Release.Name }}
-        image: postgres:10.14
+        image: {{ .Values.defaultImages.postgreSQL | quote }}
         imagePullPolicy: "Always"
         resources:
           requests:

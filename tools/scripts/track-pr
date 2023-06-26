@@ -64,12 +64,13 @@ def make_issue_for_pr(issue_repo_id: str, pr_id: str) -> str:
     pr_repo = pr_info["repository"]["name"]
     pr_num = pr_info["number"]
     pr_title = pr_info["title"]
+    pr_body = pr_info["body"]
     pr_url = pr_info["url"]
     title = f"Test {pr_repo}#{pr_num} ({pr_title})"
     print(f"Creating tracking issue '{title}'")
-    return gql.create_issue(repo=issue_repo_id, title=title, body=pr_url)["createIssue"]["issue"][
-        "id"
-    ]
+    return gql.create_issue(
+        repo=issue_repo_id, title=title, body=f"(copied from {pr_url})\n\n----\n\n{pr_body}"
+    )["createIssue"]["issue"]["id"]
 
 
 def add_item_to_project(project_id: str, item_id: str, status: str) -> None:

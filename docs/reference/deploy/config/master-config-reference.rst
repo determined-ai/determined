@@ -262,6 +262,8 @@ behavior specified here. For more on scheduling behavior in Determined, see :ref
       the smallest number of agents.
    -  ``worst``: The worst-fit policy ensures that tasks will be placed on under-utilized agents.
 
+.. _allow-uneven-slots:
+
 ``allow_heterogeneous_fits``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
