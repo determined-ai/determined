@@ -6,7 +6,6 @@ package db
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -105,22 +104,22 @@ func TestBindingFail(t *testing.T) {
 		int32IDs = append(int32IDs, workspaceID)
 	}
 
-	nonExistentPoolID := 9999999
+	nonExistentWorkspaceID := 9999999
 	poolConfigs := []config.ResourcePoolConfig{{PoolName: testPoolName}, {PoolName: testPool2Name}}
 	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, testPoolName, poolConfigs)
 	require.NoError(t, err, "failed to add bindings: %t", err)
 
 	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, testPoolName, poolConfigs)
-	time.Sleep(30 * time.Second)
 	require.Errorf(t, err, "expected error adding binding for workspace %d", int32IDs[0])
 	// Test add same binding among bulk transaction - should fail the entire transaction
 	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[1], int32IDs[1]}, testPoolName, poolConfigs)
 	require.Errorf(t, err,
 		"expected error adding binding for workspaces %d, %d", int32IDs[0], int32IDs[1])
 	// Test add workspace that doesn't exist
-	err = AddRPWorkspaceBindings(ctx, []int32{int32(nonExistentPoolID)}, testPoolName, poolConfigs)
+	err = AddRPWorkspaceBindings(
+		ctx, []int32{int32(nonExistentWorkspaceID)}, testPool2Name, poolConfigs)
 	require.Errorf(t, err,
-		"expected error adding binding for non-existent workspaces %d", nonExistentPoolID)
+		"expected error adding binding for non-existent workspaces %d", nonExistentWorkspaceID)
 	// Test add RP that doesn't exist
 	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[2]}, "NonexistentPool", poolConfigs)
 	require.Errorf(t, err, "expected error adding binding for workspaces %d on non-existent pool",
