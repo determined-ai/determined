@@ -90,7 +90,7 @@ def _get_dist_context(
         [{"batch_size": 20}, 10],
     ],
 )
-def test_torch_batch_process_dataloader_kwargs_validation(
+def test_torch_batch_process_invalid_dataloader_kwargs(
     dataloader_kwargs: Dict[str, Any],
     batch_size: int,
 ) -> None:
@@ -117,8 +117,14 @@ def test_torch_batch_process_dataloader_kwargs_validation(
         [50, 20, 1, 0, 2],  # multi-slots, chief
         [50, 20, 1, 1, 2],  # multi-slots, non-chief
     ],
+    ids=[
+        "Data length divisible by batch_size; multi-slot; Chief",
+        "Data length divisible by batch_size; multi-slot; Worker",
+        "Data length not divisible by batch_size; multi-slot; Chief",
+        "Data length not divisible by batch_size; multi-slot; Worker",
+    ],
 )
-def test_torch_batch_process_times_synchronize(
+def test_torch_batch_process_all_slots_checkpoint_same_number_of_times(
     mock_report_progress_to_master: unittest.mock.MagicMock,
     mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
     mock_initialize_default_inference_context: unittest.mock.MagicMock,
@@ -156,8 +162,64 @@ def test_torch_batch_process_times_synchronize(
         # on_checkpoint_start should be called the same number of times as
         # _synchronize_and_checkpoint
         assert my_processor_instance.on_checkpoint_start.call_count == times_iterate
+
+
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context"
+)
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint"
+)
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._report_progress_to_master"
+)
+@pytest.mark.parametrize(
+    "data_length, batch_size, checkpoint_interval,rank, num_slots",
+    [  # Group 1: data length is divisible by batch_size
+        [50, 10, 1, 0, 2],  # multi-slots, chief
+        [50, 10, 1, 1, 2],  # multi-slots, non-chief
+        # Group 2: data length is not divisible by batch_size
+        [50, 20, 1, 0, 2],  # multi-slots, chief
+        [50, 20, 1, 1, 2],  # multi-slots, non-chief
+    ],
+    ids=[
+        "Data length divisible by batch_size; multi-slot; Chief",
+        "Data length divisible by batch_size; multi-slot; Worker",
+        "Data length not divisible by batch_size; multi-slot; Chief",
+        "Data length not divisible by batch_size; multi-slot; Worker",
+    ],
+)
+def test_torch_batch_process_only_cheif_reports_progress(
+    mock_report_progress_to_master: unittest.mock.MagicMock,
+    mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
+    mock_initialize_default_inference_context: unittest.mock.MagicMock,
+    data_length: int,
+    batch_size: int,
+    checkpoint_interval: int,
+    rank: int,
+    num_slots: int,
+) -> None:
+    with test_util.set_mock_cluster_info(DEFAULT_ADDRS, rank, num_slots):
+        mock_initialize_default_inference_context.return_value = core._dummy_init(
+            distributed=_get_dist_context(rank=rank)
+        )
+        index_dataset = IndexData(data_length)
+
+        MyProcessorCLS = unittest.mock.Mock()
+        my_processor_instance = unittest.mock.Mock()
+        MyProcessorCLS.return_value = my_processor_instance
+
+        experimental.torch_batch_process(
+            dataset=index_dataset,
+            batch_processor_cls=MyProcessorCLS,
+            batch_size=batch_size,
+            checkpoint_interval=checkpoint_interval,
+        )
         # For chief, _report_progress_to_master should be called the same number of times as
         # _synchronize_and_checkpoint
+        times_iterate = math.ceil(
+            math.ceil(data_length / batch_size / num_slots) / checkpoint_interval
+        )
         assert mock_report_progress_to_master.call_count == (times_iterate if rank == 0 else 0)
 
 
@@ -185,8 +247,16 @@ def test_torch_batch_process_times_synchronize(
         # Total batches for worker 1 (1), iterate for 1 times
         [50, 20, 1, 1, 2, 1],
     ],
+    ids=[
+        "Data length divisible by batch_size; single-slot",
+        "Data length divisible by batch_size; multi-slot; Chief",
+        "Data length divisible by batch_size; multi-slot; Worker",
+        "Data length not divisible by batch_size; single-slot",
+        "Data length not divisible by batch_size; multi-slot; Chief",
+        "Data length not divisible by batch_size; multi-slot; Worker",
+    ],
 )
-def test_torch_batch_process_times_process_batch(
+def test_torch_batch_process_process_batch_called_expected_number_of_times(
     mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
     mock_initialize_default_inference_context: unittest.mock.MagicMock,
     data_length: int,
@@ -235,8 +305,13 @@ def test_torch_batch_process_times_process_batch(
         # total batches for worker 1 (2), completed (2), iterate for 0 batches
         [50, 10, 1, 1, 2, 2, 0],
     ],
+    ids=[
+        "Single-slot; total_batches=5; completed_batches=2",
+        "Multi-slot; chief; total_batches=5; completed_batches=2",
+        "Multi-slot; worker; total_batches=5; completed_batches=2",
+    ],
 )
-def test_torch_batch_process_times_process_batch_with_skip(
+def test_torch_batch_process_skip_completed_batches(
     mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
     mock_initialize_default_inference_context: unittest.mock.MagicMock,
     mock_load_state: unittest.mock.MagicMock,
@@ -290,8 +365,9 @@ def test_torch_batch_process_times_process_batch_with_skip(
         # max_batches (10) > total batches (3) -> iterate for 3 batches
         [50, 10, 1, 0, 2, 10, 3],
     ],
+    ids=["Valid max_batches arg", "Invalid max_batches arg"],
 )
-def test_torch_batch_process_max_batches(
+def test_torch_batch_process_only_use_valid_max_batches_arg(
     mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
     mock_initialize_default_inference_context: unittest.mock.MagicMock,
     data_length: int,
