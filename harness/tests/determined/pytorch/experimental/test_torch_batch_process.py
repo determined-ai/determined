@@ -368,12 +368,9 @@ def test_torch_batch_process_skip_completed_batches(
     "max_batches, expected_process_batch_call_count",
     [  # max_batches (2) < total batches (3) -> iterate for 2 batches
         [50, 10, 1, 0, 2, 2, 2],
-        # max_batches (10) > total batches (3) -> iterate for 3 batches
-        [50, 10, 1, 0, 2, 10, 3],
     ],
-    ids=["Valid max_batches arg", "Invalid max_batches arg"],
 )
-def test_torch_batch_process_only_use_valid_max_batches_arg(
+def test_torch_batch_follows_valid_max_batches(
     mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
     mock_initialize_default_inference_context: unittest.mock.MagicMock,
     data_length: int,
@@ -395,17 +392,56 @@ def test_torch_batch_process_only_use_valid_max_batches_arg(
         my_processor_instance = unittest.mock.Mock()
         MyProcessorCLS.return_value = my_processor_instance
 
-        if max_batches > expected_process_batch_call_count:
-            # Warning is raised when max_batches > total number of batches
-            with pytest.warns(Warning):
-                experimental.torch_batch_process(
-                    dataset=index_dataset,
-                    batch_processor_cls=MyProcessorCLS,
-                    batch_size=batch_size,
-                    checkpoint_interval=checkpoint_interval,
-                    max_batches=max_batches,
-                )
-        else:
+        experimental.torch_batch_process(
+            dataset=index_dataset,
+            batch_processor_cls=MyProcessorCLS,
+            batch_size=batch_size,
+            checkpoint_interval=checkpoint_interval,
+            max_batches=max_batches,
+        )
+
+        assert my_processor_instance.process_batch.call_count == expected_process_batch_call_count
+        # on_finish should only be called once
+        assert my_processor_instance.on_finish.call_count == 1
+
+
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context"
+)
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint"
+)
+@pytest.mark.parametrize(
+    "data_length, batch_size, checkpoint_interval, rank, num_slots, "
+    "max_batches, expected_process_batch_call_count",
+    [
+        # max_batches (10) > total batches (3) -> iterate for 3 batches
+        [50, 10, 1, 0, 2, 10, 3],
+    ],
+)
+def test_torch_batch_process_ignores_invalid_max_batches_and_raises_warning(
+    mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
+    mock_initialize_default_inference_context: unittest.mock.MagicMock,
+    data_length: int,
+    batch_size: int,
+    checkpoint_interval: int,
+    rank: int,
+    num_slots: int,
+    max_batches: int,
+    expected_process_batch_call_count: int,
+) -> None:
+    with test_util.set_mock_cluster_info(DEFAULT_ADDRS, rank, num_slots):
+        mock_initialize_default_inference_context.return_value = core._dummy_init(
+            distributed=_get_dist_context(rank=rank)
+        )
+
+        index_dataset = IndexData(data_length)
+
+        MyProcessorCLS = unittest.mock.Mock()
+        my_processor_instance = unittest.mock.Mock()
+        MyProcessorCLS.return_value = my_processor_instance
+
+        with pytest.warns(Warning):
             experimental.torch_batch_process(
                 dataset=index_dataset,
                 batch_processor_cls=MyProcessorCLS,
@@ -413,7 +449,6 @@ def test_torch_batch_process_only_use_valid_max_batches_arg(
                 checkpoint_interval=checkpoint_interval,
                 max_batches=max_batches,
             )
-
         assert my_processor_instance.process_batch.call_count == expected_process_batch_call_count
         # on_finish should only be called once
         assert my_processor_instance.on_finish.call_count == 1
@@ -513,7 +548,7 @@ def test_torch_batch_process_reduce_metrics(
 @pytest.mark.parametrize(
     "checkpoint_interval", [-1, 0], ids=["Invalid checkpoint_interval", "Valid checkpoint_interval"]
 )
-def test_torch_batch_process_invalid_checkpoint_interval(
+def test_torch_batch_process_invalid_checkpoint_interval_raises_error(
     mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
     mock_initialize_default_inference_context: unittest.mock.MagicMock,
     checkpoint_interval: int,
@@ -538,7 +573,7 @@ def test_torch_batch_process_invalid_checkpoint_interval(
 
 @unittest.mock.patch("determined.pytorch.to_device")
 @unittest.mock.patch("determined.pytorch.experimental._torch_batch_process.get_default_device")
-def test_torch_batch_processor_context_to_device(
+def test_torch_batch_processor_context_to_device_sends_tensor_to_device(
     mock_get_default_device: unittest.mock.MagicMock,
     mock_pytorch_to_device: unittest.mock.MagicMock,
 ) -> None:
@@ -558,7 +593,7 @@ def test_torch_batch_processor_context_to_device(
 
 
 @unittest.mock.patch("determined.pytorch.experimental._torch_batch_process.get_default_device")
-def test_torch_batch_processor_context_prepare_model_for_inference(
+def test_torch_batch_processor_context_prepare_model_for_inference_calls_eval(
     mock_get_default_device: unittest.mock.MagicMock,
 ) -> None:
     mock_get_default_device.return_value = DEFAULT_DEVICE
@@ -574,12 +609,27 @@ def test_torch_batch_processor_context_prepare_model_for_inference(
     # Test model.eval() called
     model.eval.assert_called_once()
 
+
+@unittest.mock.patch("determined.pytorch.experimental._torch_batch_process.get_default_device")
+def test_torch_batch_processor_context_prepare_model_for_inference_calls_to_device(
+    mock_get_default_device: unittest.mock.MagicMock,
+) -> None:
+    mock_get_default_device.return_value = DEFAULT_DEVICE
+
+    core_context = core._dummy_init(distributed=_get_dist_context())
+    torch_batch_processor_context = experimental.TorchBatchProcessorContext(
+        core_context, DEFAULT_STORAGE_PATH
+    )
+
+    model = unittest.mock.MagicMock()
+    torch_batch_processor_context.prepare_model_for_inference(model)
+
     # Tested model.to(device) called
     model.to.assert_called_once_with(DEFAULT_DEVICE)
 
 
 @unittest.mock.patch("determined.pytorch.experimental._torch_batch_process.get_default_device")
-def test_torch_batch_processor_context_upload_path(
+def test_torch_batch_processor_context_upload_path_sets_use_default_storage(
     mock_get_default_device: unittest.mock.MagicMock,
 ) -> None:
     mock_get_default_device.return_value = DEFAULT_DEVICE
