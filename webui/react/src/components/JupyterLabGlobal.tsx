@@ -7,12 +7,15 @@ import { useSettings } from 'hooks/useSettings';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
 } from 'pages/Settings/UserSettings.settings';
+import { Workspace } from 'types';
 import { matchesShortcut } from 'utils/shortcut';
+
 interface Props {
-  active?: boolean;
+  enabled?: boolean;
+  workspace?: Workspace;
 }
 
-const JupyterLabGlobal: React.FC<Props> = ({ active }) => {
+const JupyterLabGlobal: React.FC<Props> = ({ enabled, workspace }) => {
   const JupyterLabModal = useModal(JupyterLabModalComponent);
   const {
     settings: { jupyterLab: jupyterLabShortcut },
@@ -25,14 +28,14 @@ const JupyterLabGlobal: React.FC<Props> = ({ active }) => {
       }
     };
 
-    if (active) keyEmitter.on(KeyEvent.KeyDown, keyDownListener);
+    if (enabled) keyEmitter.on(KeyEvent.KeyDown, keyDownListener);
 
     return () => {
       keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
     };
-  }, [JupyterLabModal, jupyterLabShortcut, active]);
+  }, [JupyterLabModal, jupyterLabShortcut, enabled]);
 
-  return <JupyterLabModal.Component />;
+  return <JupyterLabModal.Component workspace={workspace} />;
 };
 
 export default JupyterLabGlobal;
