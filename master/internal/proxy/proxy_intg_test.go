@@ -13,7 +13,8 @@ import (
 )
 
 var (
-	proxyAuth = func(c echo.Context) (done bool, err error) {
+	tickInterval = 100 * time.Millisecond
+	proxyAuth    = func(c echo.Context) (done bool, err error) {
 		return true, nil
 	}
 	serviceIDs = []string{"a", "b", "c"}
@@ -42,6 +43,22 @@ func unregister(t *testing.T) {
 			t.Errorf("failed to unregister service %s", id)
 		}
 	}
+}
+
+// TODO carolina/bradley: add to utils
+func waitForCondition(timeout time.Duration, condition func() bool) bool {
+	for i := 0; i < int(timeout/tickInterval); i++ {
+		if condition() {
+			return true
+		}
+		time.Sleep(tickInterval)
+	}
+	return false
+}
+
+func conditionServerUp() bool {
+	_, err := http.Get("http://" + u.Path + "/proxy")
+	return err != nil
 }
 
 func TestProxyLifecycle(t *testing.T) {
@@ -129,24 +146,17 @@ func TestNewProxyHandler(t *testing.T) {
 		}
 	}()
 
-	// Ensure server is up, before testing it.
-	i := 0
-	tk := time.NewTicker(time.Second)
-	defer tk.Stop()
-	for range tk.C {
-		resp, err := http.Get("http://" + u.Path + "/proxy")
-		if err == nil {
-			resp.Body.Close() //nolint:errcheck
-			break
-		}
-		i++
-		if i > 5 {
-			t.FailNow()
-		}
+	waitForCondition(5*time.Second, conditionServerUp)
+
+	resp, err := http.Get("http://" + u.Path + "/proxy")
+	if err == nil {
+		resp.Body.Close()
+	} else {
+		t.FailNow()
 	}
 
 	// Case 1: handler returns OK because service name is registered/found
-	t.Run("a", func(t *testing.T) { register(t, true, true) })
+	register(t, true, true)
 	c.SetPath("/:service")
 	c.SetParamNames("service")
 	c.SetParamValues("a")
