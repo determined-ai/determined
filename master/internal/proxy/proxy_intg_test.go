@@ -45,7 +45,7 @@ func unregister(t *testing.T) {
 	}
 }
 
-// TODO carolina/bradley: add to utils
+// TODO carolina/bradley: add to utils.
 func waitForCondition(timeout time.Duration, condition func() bool) bool {
 	for i := 0; i < int(timeout/tickInterval); i++ {
 		if condition() {
@@ -57,7 +57,10 @@ func waitForCondition(timeout time.Duration, condition func() bool) bool {
 }
 
 func conditionServerUp() bool {
-	_, err := http.Get("http://" + u.Path + "/proxy")
+	resp, err := http.Get("http://" + u.Path + "/proxy")
+	if err == nil {
+		resp.Body.Close()
+	}
 	return err != nil
 }
 
@@ -146,12 +149,8 @@ func TestNewProxyHandler(t *testing.T) {
 		}
 	}()
 
-	waitForCondition(5*time.Second, conditionServerUp)
-
-	resp, err := http.Get("http://" + u.Path + "/proxy")
-	if err == nil {
-		resp.Body.Close()
-	} else {
+	ok := waitForCondition(5*time.Second, conditionServerUp)
+	if !ok {
 		t.FailNow()
 	}
 
