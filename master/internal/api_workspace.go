@@ -156,12 +156,13 @@ func (a *apiServer) GetWorkspaceProjects(
 	// Construct the ordering expression.
 	startTime := apiv1.GetWorkspaceProjectsRequest_SORT_BY_LAST_EXPERIMENT_START_TIME
 	sortColMap := map[apiv1.GetWorkspaceProjectsRequest_SortBy]string{
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED:   "id",
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_CREATION_TIME: "created_at",
+		// `p` is an alias of `project` which is defined in master/static/srv/get_workspace_projects.sql
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED:   "p.id",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_CREATION_TIME: "p.created_at",
 		startTime: "last_experiment_started_at",
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_ID:          "id",
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_NAME:        "name",
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_DESCRIPTION: "description",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_ID:          "p.id",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_NAME:        "p.name",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_DESCRIPTION: "p.description",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
