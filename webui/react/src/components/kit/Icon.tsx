@@ -220,7 +220,7 @@ const Icon: React.FC<Props> = ({
     return null;
   }, [name]);
 
-  if (name && name !== 'filter') classes.push(`icon-${name}`);
+  if (name) classes.push(`icon-${name}`);
   if (size) classes.push(css[size]);
   if (color) classes.push(css[color]);
 
