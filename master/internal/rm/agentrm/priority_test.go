@@ -315,7 +315,7 @@ func TestPrioritySchedulingPreemptionDisabledLowerPriorityMustWait(t *testing.T)
 	assertEqualToAllocate(t, secondAllocation, expectedToAllocate)
 
 	for _, task := range firstAllocation {
-		RemoveTask(task.SlotsNeeded, task.AllocationRef, taskList, true)
+		RemoveTask(task.SlotsNeeded, task.AllocationID, taskList, true)
 	}
 
 	thirdAllocation, _ := p.prioritySchedule(taskList, groupMap,
@@ -349,7 +349,7 @@ func TestPrioritySchedulingPreemptionDisabledTaskFinished(t *testing.T) {
 	}
 
 	AllocateTasks(toAllocate, agentMap, taskList)
-	ok := RemoveTask(4, toAllocate[0].AllocationRef, taskList, true)
+	ok := RemoveTask(4, toAllocate[0].AllocationID, taskList, true)
 	if !ok {
 		t.Errorf("Failed to remove task %s", toAllocate[0].AllocationID)
 	}
@@ -410,7 +410,7 @@ func TestPrioritySchedulingPreemptionDisabledAllTasksFinished(t *testing.T) {
 	AddUnallocatedTasks(t, newTasks, system, taskList)
 
 	for _, task := range toAllocate {
-		RemoveTask(task.SlotsNeeded, task.AllocationRef, taskList, true)
+		RemoveTask(task.SlotsNeeded, task.AllocationID, taskList, true)
 	}
 
 	toAllocate, _ = p.prioritySchedule(taskList, groupMap,
@@ -786,7 +786,7 @@ func AllocateTasks(
 					},
 				},
 			}
-			taskList.AddAllocation(req.AllocationRef, allocated)
+			taskList.AddAllocation(req.AllocationID, allocated)
 		}
 	}
 }
@@ -810,7 +810,12 @@ func AddUnallocatedTasks(
 	}
 }
 
-func RemoveTask(slots int, toRelease *actor.Ref, taskList *tasklist.TaskList, delete bool) bool {
+func RemoveTask(
+	slots int,
+	toRelease model.AllocationID,
+	taskList *tasklist.TaskList,
+	delete bool,
+) bool {
 	for _, alloc := range taskList.Allocation(toRelease).Resources {
 		alloc, ok := alloc.(*containerResources)
 		if !ok {
@@ -819,7 +824,7 @@ func RemoveTask(slots int, toRelease *actor.Ref, taskList *tasklist.TaskList, de
 		alloc.agent.deallocateContainer(alloc.containerID)
 	}
 	if delete {
-		taskList.RemoveTaskByHandler(toRelease)
+		taskList.RemoveTaskByID(toRelease)
 	} else {
 		taskList.RemoveAllocation(toRelease)
 	}
