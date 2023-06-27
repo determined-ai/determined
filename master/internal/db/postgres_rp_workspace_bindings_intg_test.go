@@ -137,18 +137,18 @@ func TestListWorkspacesBindingRP(t *testing.T) {
 			log.Errorf("error when cleaning up mock workspaces")
 		}
 	}()
+	existingPools := []config.ResourcePoolConfig{{PoolName: testPoolName}, {PoolName: testPool2Name}}
 	// no bindings
-	bindings, _, err := ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0)
+	bindings, _, err := ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0, existingPools)
 	require.NoError(t, err, "error when reading workspaces bound to RP %s", testPoolName)
 	require.Equal(t, 0, len(bindings),
 		"expected length of bindings to be 0, but got %d", len(bindings))
 
 	// one binding
-	poolConfigs := []config.ResourcePoolConfig{{PoolName: testPoolName}, {PoolName: testPool2Name}}
-	err = AddRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPoolName, poolConfigs)
+	err = AddRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPoolName, existingPools)
 	require.NoError(t, err, "failed to add bindings: %t", err)
 
-	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0)
+	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0, existingPools)
 	require.NoError(t, err, "error when reading workspaces bound to RP %s", testPoolName)
 	require.Equal(t, 1, len(bindings),
 		"expected length of bindings to be 0, but got %d", len(bindings))
@@ -158,12 +158,11 @@ func TestListWorkspacesBindingRP(t *testing.T) {
 	// don't list bindings that are invalid
 	bindingsToInsert := []RPWorkspaceBinding{
 		{WorkspaceID: int(workspaceIDs[0]), PoolName: "invalid pool", Valid: false},
-		{WorkspaceID: int(workspaceIDs[1]), PoolName: testPoolName, Valid: false},
 	}
 	_, err = Bun().NewInsert().Model(&bindingsToInsert).Exec(ctx)
 	require.NoError(t, err, "error inserting invalid entries into rp_workspace_bindings table")
 
-	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0)
+	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0, existingPools)
 	require.NoError(t, err, "error when reading workspaces bound to RP %s", testPoolName)
 	require.Equal(t, 1, len(bindings),
 		"expected length of bindings to be 0, but got %d", len(bindings))
@@ -201,7 +200,7 @@ func TestOverwriteBindings(t *testing.T) {
 
 	err = AddRPWorkspaceBindings(ctx, workspaceIDs, testPoolName, existingPools)
 	require.NoError(t, err, "failed to add ")
-	bindings, _, err := ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0)
+	bindings, _, err := ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0, existingPools)
 	require.NoError(t, err, "failed to read bindings: %t", err)
 	require.Equal(t, 3, len(bindings),
 		"expected bindings length 3, but got length %d", len(bindings))
@@ -218,7 +217,7 @@ func TestOverwriteBindings(t *testing.T) {
 
 	err = OverwriteRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPoolName, existingPools)
 	require.NoError(t, err, "failed to overwrite bindings: %t", err)
-	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0)
+	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0, existingPools)
 	require.NoError(t, err, "failed to read bindings: %t", err)
 	require.Equal(t, 1, len(bindings),
 		"expected bindings length 1, but got length %d", len(bindings))
@@ -233,7 +232,7 @@ func TestOverwriteBindings(t *testing.T) {
 	err = OverwriteRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPool2Name, existingPools)
 	require.NoError(t, err)
 
-	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPool2Name, 0, 0)
+	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPool2Name, 0, 0, existingPools)
 	require.NoError(t, err, "failed to read bindings: %t", err)
 	require.Equal(t, 1, len(bindings),
 		"expected bindings length 1, but got length %d", len(bindings))
