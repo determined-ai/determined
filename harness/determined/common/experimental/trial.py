@@ -71,14 +71,6 @@ class TrialMetrics:
     metrics: Dict[str, Any]
     batch_metrics: Optional[List[Dict[str, Any]]] = None
 
-    @property
-    def steps_completed(self) -> int:
-        return self.total_batches
-
-    @steps_completed.setter
-    def steps_completed(self, value: int) -> None:
-        self.total_batches = value
-
     @classmethod
     def _from_bindings(
         cls, metric_report: bindings.v1MetricsReport, metric_type: str
@@ -94,7 +86,17 @@ class TrialMetrics:
         )
 
 
-class TrainingMetrics(TrialMetrics):
+class StepsBackwardCompat:
+    @property
+    def steps_completed(self) -> int:
+        return self.total_batches
+
+    @steps_completed.setter
+    def steps_completed(self, value: int) -> None:
+        self.total_batches = value
+
+
+class TrainingMetrics(TrialMetrics, StepsBackwardCompat):
     """
     Specifies a training metric report that the trial reported.
     """
@@ -112,7 +114,7 @@ class TrainingMetrics(TrialMetrics):
         return super()._from_bindings(metric_report, util._LEGACY_TRAINING)
 
 
-class ValidationMetrics(TrialMetrics):
+class ValidationMetrics(TrialMetrics, StepsBackwardCompat):
     """
     Specifies a validation metric report that the trial reported.
     """
