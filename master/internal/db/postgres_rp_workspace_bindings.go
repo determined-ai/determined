@@ -77,7 +77,7 @@ func ReadWorkspacesBoundToRP(
 ) ([]*RPWorkspaceBinding, *apiv1.Pagination, error) {
 	var rpWorkspaceBindings []*RPWorkspaceBinding
 	query := Bun().NewSelect().Model(&rpWorkspaceBindings).Where("pool_name = ?",
-		poolName)
+		poolName).Where("valid = ?", true)
 
 	pagination, err := runPagedBunQuery(ctx, query, int(offset), int(limit))
 	if err != nil {

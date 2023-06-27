@@ -34,13 +34,9 @@ func TestAddAndRemoveBindings(t *testing.T) {
 		}
 	}()
 
-	var int32IDs []int32
-	for _, workspaceID := range workspaceIDs {
-		int32IDs = append(int32IDs, workspaceID)
-	}
 	// Test single insert/delete
 	// Test bulk insert/delete
-	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, testPoolName, []config.ResourcePoolConfig{
+	err = AddRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPoolName, []config.ResourcePoolConfig{
 		{PoolName: testPoolName}, {PoolName: testPool2Name},
 	})
 	require.NoError(t, err, "failed to add bindings: %t", err)
@@ -54,14 +50,14 @@ func TestAddAndRemoveBindings(t *testing.T) {
 	require.Equal(t, testPoolName, values[0].PoolName,
 		"expected pool name to be '%s', but got %s", testPoolName, values[0].PoolName)
 
-	err = RemoveRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, testPoolName)
+	err = RemoveRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPoolName)
 	require.NoError(t, err, "failed to remove bindings: %t", err)
 
 	count, err = Bun().NewSelect().Model(&values).ScanAndCount(ctx)
 	require.NoError(t, err, "error when scanning DB: %t", err)
 	require.Equal(t, 0, count, "expected 0 items in DB, found %d", count)
 
-	err = AddRPWorkspaceBindings(ctx, int32IDs, testPool2Name, []config.ResourcePoolConfig{
+	err = AddRPWorkspaceBindings(ctx, workspaceIDs, testPool2Name, []config.ResourcePoolConfig{
 		{PoolName: testPoolName}, {PoolName: testPool2Name},
 	})
 	require.NoError(t, err, "failed to add bindings: %t", err)
@@ -76,7 +72,7 @@ func TestAddAndRemoveBindings(t *testing.T) {
 			"expected pool name to be '%s', but got %s", testPool2Name, values[i].PoolName)
 	}
 
-	err = RemoveRPWorkspaceBindings(ctx, int32IDs, testPool2Name)
+	err = RemoveRPWorkspaceBindings(ctx, workspaceIDs, testPool2Name)
 	require.NoError(t, err, "failed to remove bindings: %t", err)
 
 	count, err = Bun().NewSelect().Model(&values).ScanAndCount(ctx)
@@ -99,38 +95,79 @@ func TestBindingFail(t *testing.T) {
 			log.Errorf("error when cleaning up mock workspaces")
 		}
 	}()
-	var int32IDs []int32
-	for _, workspaceID := range workspaceIDs {
-		int32IDs = append(int32IDs, workspaceID)
-	}
 
 	nonExistentWorkspaceID := 9999999
 	poolConfigs := []config.ResourcePoolConfig{{PoolName: testPoolName}, {PoolName: testPool2Name}}
-	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, testPoolName, poolConfigs)
+	err = AddRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPoolName, poolConfigs)
 	require.NoError(t, err, "failed to add bindings: %t", err)
 
-	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, testPoolName, poolConfigs)
-	require.Errorf(t, err, "expected error adding binding for workspace %d", int32IDs[0])
+	err = AddRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPoolName, poolConfigs)
+	require.Errorf(t, err, "expected error adding binding for workspace %d", workspaceIDs[0])
 	// Test add same binding among bulk transaction - should fail the entire transaction
-	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[1], int32IDs[1]}, testPoolName, poolConfigs)
+	err = AddRPWorkspaceBindings(ctx, []int32{workspaceIDs[1], workspaceIDs[1]}, testPoolName, poolConfigs)
 	require.Errorf(t, err,
-		"expected error adding binding for workspaces %d, %d", int32IDs[0], int32IDs[1])
+		"expected error adding binding for workspaces %d, %d", workspaceIDs[0], workspaceIDs[1])
 	// Test add workspace that doesn't exist
 	err = AddRPWorkspaceBindings(
 		ctx, []int32{int32(nonExistentWorkspaceID)}, testPool2Name, poolConfigs)
 	require.Errorf(t, err,
 		"expected error adding binding for non-existent workspaces %d", nonExistentWorkspaceID)
 	// Test add RP that doesn't exist
-	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[2]}, "NonexistentPool", poolConfigs)
+	err = AddRPWorkspaceBindings(ctx, []int32{workspaceIDs[2]}, "NonexistentPool", poolConfigs)
 	require.Errorf(t, err, "expected error adding binding for workspaces %d on non-existent pool",
-		int32IDs[2], int32IDs[1])
+		workspaceIDs[2], workspaceIDs[1])
 
 	return
 }
 
 func TestListWorkspacesBindingRP(t *testing.T) {
-	// pretty straightforward
+	ctx := context.Background()
+	pgDB := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
+	user := RequireMockUser(t, pgDB)
+	workspaceIDs, err := MockWorkspaces([]string{"test1", "test2", "test3", "test4"}, user.ID)
+	require.NoError(t, err, "failed creating workspaces: %t", err)
+	defer func() {
+		err = CleanupMockWorkspace(workspaceIDs)
+		if err != nil {
+			log.Errorf("error when cleaning up mock workspaces")
+		}
+	}()
+	// no bindings yet
+	bindings, _, err := ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0)
+	require.NoError(t, err, "error when reading workspaces bound to RP %s", testPoolName)
+	require.Equal(t, 0, len(bindings),
+		"expected length of bindings to be 0, but got %d", len(bindings))
+
+	// one binding
+	poolConfigs := []config.ResourcePoolConfig{{PoolName: testPoolName}, {PoolName: testPool2Name}}
+	err = AddRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPoolName, poolConfigs)
+	require.NoError(t, err, "failed to add bindings: %t", err)
+
+	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0)
+	require.NoError(t, err, "error when reading workspaces bound to RP %s", testPoolName)
+	require.Equal(t, 1, len(bindings),
+		"expected length of bindings to be 0, but got %d", len(bindings))
+	require.Equal(t, int(workspaceIDs[0]), bindings[0].WorkspaceID,
+		"expected workspaceID %d, but got %d", workspaceIDs[0], bindings[0].WorkspaceID)
+
 	// don't list bindings that are invalid
+	bindingsToInsert := []RPWorkspaceBinding{
+		{WorkspaceID: int(workspaceIDs[0]), PoolName: "invalid pool", Valid: false},
+		{WorkspaceID: int(workspaceIDs[1]), PoolName: testPoolName, Valid: false},
+	}
+	_, err = Bun().NewInsert().Model(&bindingsToInsert).Exec(ctx)
+	require.NoError(t, err, "error inserting invalid entries into rp_workspace_bindings table")
+
+	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0)
+	require.NoError(t, err, "error when reading workspaces bound to RP %s", testPoolName)
+	require.Equal(t, 1, len(bindings),
+		"expected length of bindings to be 0, but got %d", len(bindings))
+	require.Equal(t, int(workspaceIDs[0]), bindings[0].WorkspaceID,
+		"expected workspaceID %d, but got %d", workspaceIDs[0], bindings[0].WorkspaceID)
+
+	// pretty straightforward
 	// if RP is unbound, return nothing
 	return
 }
