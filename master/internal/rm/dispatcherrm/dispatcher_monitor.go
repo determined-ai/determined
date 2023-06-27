@@ -54,7 +54,8 @@ var messagePatternsOfInterest = []*regexp.Regexp{
 func writeExperimentLog(
 	ctx *actor.Context,
 	dispatchID string,
-	message string) {
+	message string,
+) {
 	ctx.Tell(ctx.Self(), dispatchExpLogMessage{
 		DispatchID: dispatchID,
 		Message:    message,

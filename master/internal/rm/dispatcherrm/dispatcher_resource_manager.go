@@ -382,7 +382,6 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 
 	case
 		sproto.GetJobQ,
-		sproto.GetJobSummary,
 		sproto.GetJobQStats,
 		sproto.SetGroupWeight,
 		sproto.SetGroupPriority,
@@ -390,14 +389,6 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 		sproto.DeleteJob,
 		*apiv1.GetJobQueueStatsRequest:
 		return m.receiveJobQueueMsg(ctx)
-
-	case sproto.GetAllocationHandler:
-		handler := m.reqList.TaskHandler(msg.ID)
-		if handler == nil {
-			ctx.Respond(fmt.Errorf("allocation handler for allocation ID %s not found", msg.ID))
-			return nil
-		}
-		ctx.Respond(handler)
 
 	case sproto.GetAllocationSummary:
 		if resp := m.reqList.TaskSummary(msg.ID, m.groups, string(m.wlmType)); resp != nil {
@@ -670,7 +661,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 
 	case StartDispatcherResources:
 		// Perform any necessary actions on m.reqList before going async
-		req, ok := m.reqList.TaskByHandler(msg.TaskActor)
+		req, ok := m.reqList.TaskByID(msg.AllocationID)
 		if !ok {
 			sendResourceStateChangedErrorResponse(ctx, errors.New("no such task"), msg,
 				"task not found in the task list")
@@ -748,7 +739,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	case DispatchStateChange:
 		log := ctx.Log().WithField("dispatch-id", msg.DispatchID)
 		task := m.getAssociatedTask(log, ctx, msg.DispatchID)
-		alloc := m.reqList.Allocation(task.AllocationRef)
+		alloc := m.reqList.Allocation(task.AllocationID)
 		if len(alloc.Resources) != 1 {
 			log.Warnf("allocation has malformed resources: %v", alloc)
 			return nil
@@ -807,7 +798,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			return nil
 		}
 
-		alloc := m.reqList.Allocation(task.AllocationRef)
+		alloc := m.reqList.Allocation(task.AllocationID)
 		if len(alloc.Resources) != 1 {
 			log.Warnf("allocation has malformed resources: %v", alloc)
 			return nil
@@ -826,7 +817,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		m.receiveSetTaskName(ctx, msg)
 
 	case sproto.ResourcesReleased:
-		m.resourcesReleased(ctx, msg.AllocationID, msg.AllocationRef)
+		m.resourcesReleased(ctx, msg.AllocationID)
 
 	default:
 		ctx.Log().Errorf("receiveRequestMsg: unexpected message %T", msg)
@@ -1618,8 +1609,7 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 
 func (m *dispatcherResourceManager) addTask(ctx *actor.Context, msg sproto.AllocateRequest) {
 	actors.NotifyOnStop(ctx, msg.AllocationRef, sproto.ResourcesReleased{
-		AllocationID:  msg.AllocationID,
-		AllocationRef: msg.AllocationRef,
+		AllocationID: msg.AllocationID,
 	})
 
 	if msg.Group == nil {
@@ -1650,7 +1640,7 @@ func (m *dispatcherResourceManager) jobQInfo(rp string) map[model.JobID]*sproto.
 func (m *dispatcherResourceManager) receiveSetTaskName(
 	ctx *actor.Context, msg sproto.SetAllocationName,
 ) {
-	if task, found := m.reqList.TaskByHandler(msg.AllocationRef); found {
+	if task, found := m.reqList.TaskByID(msg.AllocationID); found {
 		task.Name = msg.Name
 	}
 }
@@ -1699,7 +1689,7 @@ func (m *dispatcherResourceManager) assignResources(
 	}
 
 	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Resources: allocations}
-	m.reqList.AddAllocationRaw(req.AllocationRef, &assigned)
+	m.reqList.AddAllocationRaw(req.AllocationID, &assigned)
 	req.AllocationRef.System().Tell(req.AllocationRef, assigned)
 
 	if req.Restore {
@@ -1732,7 +1722,6 @@ func (m *dispatcherResourceManager) assignResources(
 func (m *dispatcherResourceManager) resourcesReleased(
 	ctx *actor.Context,
 	allocationID model.AllocationID,
-	handler *actor.Ref,
 ) {
 	// Remove any scheduled launch for the job associated with the
 	// allocation ID.  Typically, this would be called at the end of
@@ -1748,12 +1737,19 @@ func (m *dispatcherResourceManager) resourcesReleased(
 	// more than once.
 	m.scheduledLaunches.Delete(allocationID)
 
-	ctx.Log().WithField("allocation-id", allocationID).
-		WithField("address", handler.Address()).
+	req := m.reqList.RemoveTaskByID(allocationID)
+	if req == nil {
+		ctx.Log().
+			WithField("allocation-id", allocationID).
+			WithField("scheduled-launches", m.scheduledLaunches.Len()).
+			Info("resources were already released")
+		return
+	}
+	ctx.Log().
+		WithField("name", req.Name).
+		WithField("allocation-id", allocationID).
 		WithField("scheduled-launches", m.scheduledLaunches.Len()).
 		Info("resources are released")
-
-	m.reqList.RemoveTaskByHandler(handler)
 }
 
 // Perform a terminate and delete all dispatches in the DB
@@ -1825,8 +1821,7 @@ func (m *dispatcherResourceManager) schedulePendingTasks(ctx *actor.Context) {
 
 	for it := m.reqList.Iterator(); it.Next(); {
 		req := it.Value()
-		assigned := m.reqList.Allocation(req.AllocationRef)
-		if !tasklist.AssignmentIsScheduled(assigned) {
+		if !m.reqList.IsScheduled(req.AllocationID) {
 			// A restore means that the Determined master was restarted and
 			// we're simply monitoring the jobs we previously launched. When
 			// it's not a restore, we want to limit the number of launch
