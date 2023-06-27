@@ -104,6 +104,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
             <div className={`${css.flexRow} ${css.ellipsis}`}>
               <ProjectOutlined style={{ fontSize: '16px' }} />
               <Link onClick={() => onClickProject(project)}>{project.name}</Link>
+              <span>({project.numExperiments})</span>
             </div>
           ),
         }));
