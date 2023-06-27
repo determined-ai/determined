@@ -22,7 +22,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -677,30 +676,12 @@ func (a *agent) clearNonReattachedContainers(
 	recovered map[cproto.ID]aproto.ContainerReattachAck,
 	explicitlyDoomed map[cproto.ID]aproto.ContainerReattachAck,
 ) error {
-	for cid, allocation := range a.agentState.containerAllocation {
+	for cid := range a.agentState.containerAllocation {
 		if _, ok := recovered[cid]; ok {
 			continue
 		}
 
-		var containerState *cproto.Container
-		resp := ctx.Ask(allocation, sproto.GetResourcesContainerState{
-			ResourcesID: sproto.ResourcesID(cid),
-		})
-		switch {
-		case resp.Error() != nil:
-			// This error can occur when the allocation knowns about our container
-			// but has the ResourcesWithState.Container field nil. We can instead
-			// get the containerState from our agentState and send that.
-			containerState = a.agentState.containerState[cid]
-
-			ctx.Log().Warnf(
-				"allocation GetTaskContainerState id: %s, got error: %s", cid, resp.Error())
-		case resp.Get() == nil:
-			ctx.Log().Warnf("allocation GetTaskContainerState id: %s, is nil", cid)
-		default:
-			containerState = ptrs.Ptr(resp.Get().(cproto.Container))
-		}
-
+		containerState := a.agentState.containerState[cid]
 		if containerState != nil {
 			containerState.State = cproto.Terminated
 
