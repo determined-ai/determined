@@ -28,6 +28,7 @@ func AddRPWorkspaceBindings(ctx context.Context, workspaceIds []int32, poolName 
 	for _, pool := range resourcePools {
 		if poolName == pool.PoolName {
 			poolExists = true
+			break
 		}
 	}
 
@@ -74,7 +75,18 @@ func RemoveRPWorkspaceBindings(ctx context.Context,
 // ReadWorkspacesBoundToRP get the bindings between workspaceIds and the requested resource pool.
 func ReadWorkspacesBoundToRP(
 	ctx context.Context, poolName string, offset, limit int32,
+	resourcePools []config.ResourcePoolConfig,
 ) ([]*RPWorkspaceBinding, *apiv1.Pagination, error) {
+	poolExists := false
+	for _, validPool := range resourcePools {
+		if validPool.PoolName == poolName {
+			poolExists = true
+			break
+		}
+	}
+	if !poolExists {
+		return nil, nil, errors.Errorf("pool with name %v doesn't exist in config", poolName)
+	}
 	var rpWorkspaceBindings []*RPWorkspaceBinding
 	query := Bun().NewSelect().Model(&rpWorkspaceBindings).Where("pool_name = ?",
 		poolName)
