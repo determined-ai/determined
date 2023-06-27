@@ -7,7 +7,7 @@ import determined as det
 from determined import tensorboard
 from determined.common import api, util
 from determined.common.api import bindings, errors
-from determined.common.util import _LEGACY_TRAINING, _LEGACY_VALIDATION, Metrics, MetricType
+from determined.common.util import _LEGACY_TRAINING, _LEGACY_VALIDATION
 from determined.core import DistributedContext, TensorboardMode
 
 logger = logging.getLogger("determined.core")
@@ -70,10 +70,10 @@ class TrainContext:
 
     def report_trial_metrics(
         self,
-        metric_type: MetricType,
+        metric_type: str,
         total_batches: int,
-        metrics: Metrics,
-        batch_metrics: Optional[List[Metrics]] = None,
+        metrics: Dict[str, Any],
+        batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
         """
         Report trial metrics to the master.
@@ -239,10 +239,10 @@ class DummyTrainContext(TrainContext):
 
     def report_trial_metrics(
         self,
-        metric_type: MetricType,
+        metric_type: str,
         total_batches: int,
-        metrics: Metrics,
-        batch_metrics: Optional[List[Metrics]] = None,
+        metrics: Dict[str, Any],
+        batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
         """
         Report trial metrics to the master.

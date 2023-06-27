@@ -81,7 +81,7 @@ class TrialMetrics:
 
     @classmethod
     def _from_bindings(
-        cls, metric_report: bindings.v1MetricsReport, metric_type: util.MetricType
+        cls, metric_report: bindings.v1MetricsReport, metric_type: util.str
     ) -> "TrialMetrics":
         key = "validation_metrics" if metric_type == util._LEGACY_VALIDATION else "avg_metrics"
         return cls(
@@ -371,7 +371,7 @@ class TrialReference:
     def __repr__(self) -> str:
         return "Trial(id={})".format(self.id)
 
-    def stream_metrics(self, metric_type: util.MetricType) -> Iterable[TrialMetrics]:
+    def stream_metrics(self, metric_type: util.str) -> Iterable[TrialMetrics]:
         """
         Streams validation metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.

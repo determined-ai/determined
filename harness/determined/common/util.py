@@ -13,7 +13,6 @@ from typing import (
     IO,
     Any,
     Callable,
-    Dict,
     Iterator,
     Optional,
     Sequence,
@@ -31,8 +30,6 @@ from determined.common import yaml
 
 _yaml = yaml.YAML(typ="safe", pure=True)
 
-MetricType = str
-Metrics = Dict[str, Any]
 _LEGACY_TRAINING = "training"
 _LEGACY_VALIDATION = "validation"
 

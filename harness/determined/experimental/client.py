@@ -420,9 +420,7 @@ def remove_oauth_client(client_id: str) -> None:
 
 
 @_require_singleton
-def stream_trials_metrics(
-    trial_ids: List[int], metric_type: util.MetricType
-) -> Iterable[TrialMetrics]:
+def stream_trials_metrics(trial_ids: List[int], metric_type: util.str) -> Iterable[TrialMetrics]:
     """
     Streams trial metrics for one or more trials sorted by
     trial_id, trial_run_id and steps_completed.
