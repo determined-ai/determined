@@ -266,7 +266,7 @@ func getCreateExperimentsProject(
 
 // unmarshalTemplateConfig unmarshals the template config into `o` and returns api-ready errors.
 func (m *Master) unmarshalTemplateConfig(ctx context.Context, templateName string,
-	user *model.User, out interface{},
+	user *model.User, out interface{}, disallowUnknownFields bool,
 ) error {
 	notFoundErr := status.Errorf(codes.InvalidArgument,
 		api.NotFoundErrMsg("temlpate", fmt.Sprint(templateName)))
@@ -282,7 +282,12 @@ func (m *Master) unmarshalTemplateConfig(ctx context.Context, templateName strin
 	if permErr != nil {
 		return notFoundErr
 	}
-	if err := yaml.Unmarshal(template.Config, out, yaml.DisallowUnknownFields); err != nil {
+	if disallowUnknownFields {
+		err = yaml.Unmarshal(template.Config, out, yaml.DisallowUnknownFields)
+	} else {
+		err = yaml.Unmarshal(template.Config, out)
+	}
+	if err != nil {
 		return errors.Wrapf(err, "yaml.Unmarshal(template=%s)", templateName)
 	}
 	return nil
@@ -301,7 +306,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 	// Apply the template that the user specified.
 	if req.Template != nil {
 		var tc expconf.ExperimentConfig
-		err := m.unmarshalTemplateConfig(ctx, *req.Template, user, &tc)
+		err := m.unmarshalTemplateConfig(ctx, *req.Template, user, &tc, true)
 		if err != nil {
 			return nil, config, nil, nil, err
 		}

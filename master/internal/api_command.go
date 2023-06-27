@@ -140,7 +140,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	// Get the full configuration.
 	config := model.DefaultConfig(&taskSpec.TaskContainerDefaults)
 	if req.TemplateName != "" {
-		err := a.m.unmarshalTemplateConfig(ctx, req.TemplateName, aUser, &config)
+		err := a.m.unmarshalTemplateConfig(ctx, req.TemplateName, aUser, &config, false)
 		if err != nil {
 			return nil, launchWarnings, err
 		}
