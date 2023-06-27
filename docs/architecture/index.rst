@@ -24,6 +24,8 @@ so you can spend your time building models instead of managing infrastructure.
    :class: only-light
    :alt: Determined AI system architecture diagram light mode
 
+*Determined AI System Architecture*
+
 Learn more:
 
 -  :doc:`Intro to Determined <introduction>`: Conceptual information about Determined including its
