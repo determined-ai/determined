@@ -134,7 +134,7 @@ func TestListWorkspacesBindingRP(t *testing.T) {
 			log.Errorf("error when cleaning up mock workspaces")
 		}
 	}()
-	// no bindings yet
+	// no bindings
 	bindings, _, err := ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0)
 	require.NoError(t, err, "error when reading workspaces bound to RP %s", testPoolName)
 	require.Equal(t, 0, len(bindings),
@@ -167,8 +167,6 @@ func TestListWorkspacesBindingRP(t *testing.T) {
 	require.Equal(t, int(workspaceIDs[0]), bindings[0].WorkspaceID,
 		"expected workspaceID %d, but got %d", workspaceIDs[0], bindings[0].WorkspaceID)
 
-	// pretty straightforward
-	// if RP is unbound, return nothing
 	return
 }
 
