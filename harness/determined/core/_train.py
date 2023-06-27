@@ -102,8 +102,6 @@ class TrainContext:
                     self._tbd_writer.on_validation_step_end(total_batches, metrics)
                 elif metric_type == util._LEGACY_TRAINING:
                     self._tbd_writer.on_train_step_end(total_batches, metrics, batch_metrics)
-                else:
-                    pass  # FIXME
             self._tensorboard_manager.sync()
 
     def report_training_metrics(
