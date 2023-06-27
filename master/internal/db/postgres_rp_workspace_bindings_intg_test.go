@@ -179,34 +179,84 @@ func TestListRPsBoundToWorkspace(t *testing.T) {
 	return
 }
 
+func bindingsEqual(a, b []int32) bool {
+	aMap := map[int32]bool{}
+	for _, val := range a {
+		aMap[val] = false
+	}
+
+	for _, val := range b {
+		found, ok := aMap[val]
+		if !ok || found {
+			return false
+		}
+		aMap[val] = true
+	}
+	return true
+}
+
 func TestOverwriteBindings(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	ctx := context.Background()
 	user := RequireMockUser(t, db)
-	var existingPools []config.ResourcePoolConfig
-	pool := config.ResourcePoolConfig{PoolName: "poolName1"}
-	existingPools = append(existingPools, pool)
+
+	existingPools := []config.ResourcePoolConfig{{PoolName: testPoolName}}
 	// Test overwrite bindings
-	poolName := "poolName1" //nolint:goconst
 	workspaceNames := []string{"test1", "test2", "test3"}
 	workspaceIDs, err := MockWorkspaces(workspaceNames, user.ID)
-	require.NoError(t, err)
-	err = AddRPWorkspaceBindings(ctx, workspaceIDs, poolName, existingPools)
-	require.NoError(t, err)
-	err = OverwriteRPWorkspaceBindings(ctx, workspaceIDs, poolName, existingPools)
-	require.NoError(t, err)
-	// TODO: call list bindings here to make sure it worked
+	require.NoError(t, err, "failed to add bindings: %t", err)
+	defer func() {
+		err = CleanupMockWorkspace(workspaceIDs)
+		if err != nil {
+			log.Errorf("error when cleaning up mock workspaces")
+		}
+	}()
+
+	err = AddRPWorkspaceBindings(ctx, workspaceIDs, testPoolName, existingPools)
+	require.NoError(t, err, "failed to add ")
+	bindings, _, err := ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0)
+	require.NoError(t, err, "failed to read bindings: %t", err)
+	require.Equal(t, 3, len(bindings),
+		"expected bindings length 3, but got length %d", len(bindings))
+	var bindingsIDs []int32
+	for _, binding := range bindings {
+		require.Equal(t, testPoolName, binding.PoolName,
+			"expected bound pool to be %s, but was %s", testPoolName, binding.PoolName)
+		bindingsIDs = append(bindingsIDs, int32(binding.WorkspaceID))
+	}
+	require.True(t, bindingsEqual(workspaceIDs, bindingsIDs),
+		"workspace IDs %t do not match bound workspace IDs %t", workspaceIDs, bindingsIDs)
+
+	err = OverwriteRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPoolName, existingPools)
+	require.NoError(t, err, "failed to overwrite bindings: %t", err)
+	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0)
+	require.NoError(t, err, "failed to read bindings: %t", err)
+	require.Equal(t, 1, len(bindings),
+		"expected bindings length 1, but got length %d", len(bindings))
+	require.Equal(t, int(workspaceIDs[0]), bindings[0].WorkspaceID,
+		"workspaceID %d does not match bound workspace ID %d",
+		workspaceIDs[0], bindings[0].WorkspaceID,
+	)
+	require.Equal(t, testPoolName, bindings[0].PoolName,
+		"expected bound pool to be %s, but was %s", testPoolName, bindings[0].PoolName)
 	// Test overwrite pool that's not bound to anything currently
-	pool = config.ResourcePoolConfig{PoolName: "poolName2"}
-	existingPools = append(existingPools, pool)
-	poolName = "poolName2"
-	err = OverwriteRPWorkspaceBindings(ctx, workspaceIDs, poolName, existingPools)
+	existingPools = append(existingPools, config.ResourcePoolConfig{PoolName: testPool2Name})
+	err = OverwriteRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPool2Name, existingPools)
 	require.NoError(t, err)
 	// TODO: call list bindings here to make sure it worked
-	err = CleanupMockWorkspace(workspaceIDs)
-	require.NoError(t, err)
+	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPool2Name, 0, 0)
+	require.NoError(t, err, "failed to read bindings: %t", err)
+	require.Equal(t, 1, len(bindings),
+		"expected bindings length 1, but got length %d", len(bindings))
+	require.Equal(t, int(workspaceIDs[0]), bindings[0].WorkspaceID,
+		"workspaceID %d does not match bound workspace ID %d",
+		workspaceIDs[0], bindings[0].WorkspaceID,
+	)
+	require.Equal(t, testPool2Name, bindings[0].PoolName,
+		"expected bound pool to be %s, but was %s", testPool2Name, bindings[0].PoolName)
+
 	return
 }
 
