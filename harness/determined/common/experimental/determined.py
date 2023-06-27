@@ -287,6 +287,7 @@ class Determined:
         model_id: Optional[int] = None,
         workspace_names: Optional[List[str]] = None,
         workspace_ids: Optional[List[int]] = None,
+        limit: Optional[int] = None,
     ) -> Iterator[model.Model]:
         """
         Get an iterable of all models in the model registry.
@@ -301,12 +302,15 @@ class Determined:
                 only include models with descriptions matching this parameter.
             model_id: If this parameter is set, models will be filtered to
                 only include the model with this unique numeric id.
-            workspace_names: Workspace names to filter models by.
-            workspace_ids: Workspace IDs to filter models by.
+            workspace_names: Only return models with names in this list.
+            workspace_ids: Only return models with workspace IDs in this list.
+            limit: Optional field that sets maximum page size of the response from the server.
+                When there are many models to return, a lower page size can result in shorter
+                latency at the expense of more HTTP requests to the server. Defaults to no maximum.
 
-        Note:
-            This method returns an Iterator type that lazily fetches response objects. To
-            fetch all models at once, call list(list_models()).
+        Returns:
+            An Iterator type that lazily instantiates response objects. To
+            get all models at once, call list(list_models()).
         """
 
         # TODO: more parameters?
@@ -325,6 +329,7 @@ class Determined:
                 offset=offset,
                 orderBy=order_by._to_bindings(),
                 sortBy=sort_by._to_bindings(),
+                limit=limit,
                 userIds=None,
                 users=None,
                 workspaceNames=workspace_names,

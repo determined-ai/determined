@@ -20,8 +20,6 @@ RETRY_STATUSES = [502, 503, 504]  # Bad Gateway, Service Unavailable, Gateway Ti
 # Default max number of times to retry a request.
 MAX_RETRIES = 5
 
-# Default page size limit.
-PAGE_LIMIT = 100
 
 # Not that read_paginated requires the output of get_with_offset to be a Paginated type to work.
 # The Paginated union type is generated based on response objects with a .pagination attribute.
