@@ -182,6 +182,10 @@ class ModelArguments:
             "help": "Will enable to load a pretrained model whose head dimensions are different."
         },
     )
+    trust_remote_code: bool = field(
+        default=False,
+        metadata={"help": ("Set to true to allow execution of code from remote model repos.")},
+    )
 
 
 def collate_fn(examples):
@@ -324,6 +328,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
+        trust_remote_code=model_args.trust_remote_code,
     )
     model = AutoModelForImageClassification.from_pretrained(
         model_args.model_name_or_path,
