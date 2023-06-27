@@ -17,6 +17,7 @@ import Empty from 'components/kit/Empty';
 import Pagination from 'components/kit/Pagination';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
+import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters, V1LocationType } from 'services/api-ts-sdk';
@@ -42,7 +43,12 @@ import {
   settingsConfigForProject,
   settingsConfigGlobal,
 } from './F_ExperimentList.settings';
-import { ExperimentColumn, experimentColumns } from './glide-table/columns';
+import {
+  ExperimentColumn,
+  experimentColumns,
+  MIN_COLUMN_WIDTH,
+  MULTISELECT,
+} from './glide-table/columns';
 import { Error, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
@@ -75,7 +81,7 @@ const INITIAL_LOADING_EXPERIMENTS: Loadable<ExperimentWithTrial>[] = new Array(P
   NotLoaded,
 );
 
-const STATIC_COLUMNS = ['selected', 'name'];
+const STATIC_COLUMNS = [MULTISELECT, 'name'];
 
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -440,27 +446,41 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     return [...STATIC_COLUMNS, ...settings.columns.slice(0, settings.pinnedColumnsCount)];
   }, [settings.columns, settings.pinnedColumnsCount]);
 
-  const comparisonViewWidth = useMemo(() => {
+  const scrollbarWidth = useScrollbarWidth();
+
+  const comparisonViewTableWidth = useMemo(() => {
     return Math.min(
       containerWidth - 30,
       pinnedColumns.reduce(
         (totalWidth, curCol) => totalWidth + settings.columnWidths[curCol] ?? 0,
-        17, // Constant of 17px accounts for scrollbar width
+        scrollbarWidth,
       ),
     );
-  }, [containerWidth, pinnedColumns, settings.columnWidths]);
+  }, [containerWidth, pinnedColumns, scrollbarWidth, settings.columnWidths]);
 
   const handleCompareWidthChange = useCallback(
-    (width: number) => {
+    (newTableWidth: number) => {
+      const widthDifference = newTableWidth - comparisonViewTableWidth;
+      // Positive widthDifference: Table pane growing/compare pane shrinking
+      // Negative widthDifference: Table pane shrinking/compare pane growing
+      const newColumnWidths: Record<string, number> = { ...settings.columnWidths };
+      pinnedColumns
+        .filter(
+          (col) =>
+            col !== MULTISELECT &&
+            (widthDifference > 0 || newColumnWidths[col] !== MIN_COLUMN_WIDTH),
+        )
+        .forEach((col, _, arr) => {
+          newColumnWidths[col] = Math.max(
+            MIN_COLUMN_WIDTH,
+            newColumnWidths[col] + widthDifference / arr.length,
+          );
+        });
       updateSettings({
-        columnWidths: {
-          ...settings.columnWidths,
-          [pinnedColumns.last()]:
-            settings.columnWidths[pinnedColumns.last()] + width - comparisonViewWidth,
-        },
+        columnWidths: newColumnWidths,
       });
     },
-    [updateSettings, settings.columnWidths, pinnedColumns, comparisonViewWidth],
+    [updateSettings, settings.columnWidths, pinnedColumns, comparisonViewTableWidth],
   );
 
   const handleColumnWidthChange = useCallback(
@@ -526,7 +546,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : (
           <Space className={css.space} direction="vertical">
             <ComparisonView
-              initialWidth={comparisonViewWidth}
+              fixedColumnsCount={STATIC_COLUMNS.length + settings.pinnedColumnsCount}
+              initialWidth={comparisonViewTableWidth}
               open={settings.compare}
               projectId={project.id}
               selectedExperiments={selectedExperiments}
