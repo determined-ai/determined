@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
+
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 
@@ -19,7 +21,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -258,7 +259,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return err
 		}
 
-		job.DefaultManager.RegisterJob(e.JobID, ctx.Self())
+		jobservice.Default.RegisterJob(e.JobID, ctx.Self())
 
 		if e.restored {
 			j, err := e.db.JobByID(e.JobID)
@@ -413,7 +414,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				ctx.Log().Error(err)
 			}
 		}
-		job.DefaultManager.UnregisterJob(e.JobID)
+		jobservice.Default.UnregisterJob(e.JobID)
 		state := model.StoppingToTerminalStates[e.State]
 		if wasPatched, err := e.Transition(state); err != nil {
 			return err
