@@ -45,7 +45,7 @@ const InlineForm: React.FC<Props> = ({
     if (type === 'input') return <Input disabled={!isEditing} />;
 
     if (!selectOptions) {
-      throw new Error("No 'selectOptions' prop present...");
+      throw new Error("No 'selectOptions' prop present.");
     }
 
     return (
