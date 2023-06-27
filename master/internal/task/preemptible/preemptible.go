@@ -20,7 +20,7 @@ var ErrPreemptionDisabled = fmt.Errorf("allocation is not preemptible")
 // DefaultTimeout is the delay before the deadline exceeded callback passed to preempt is called.
 var DefaultTimeout = time.Hour
 
-// Watcher contains a channel which can be polled for a preemption signal.
+// Watcher signals all gather completion via a channel which is closed upon said completion.
 // TODO(DET-9565): Use of this watcher pattern here is unnecessary.
 type Watcher struct{ C <-chan struct{} }
 

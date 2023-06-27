@@ -13,7 +13,7 @@ import (
 
 // ErrAllGatherTimeoutExceeded indicates that we not halt within the expected deadline.
 var ErrAllGatherTimeoutExceeded = fmt.Errorf(
-	"some ranks are taking a long time to connect to master" +
+	"some ranks are taking a long time to connect to master " +
 		"during all gather; when running on kubernetes this may happen " +
 		"because only some of the pods have been scheduled; it is possible " +
 		"that some pods will never be scheduled without adding compute " +
@@ -31,7 +31,7 @@ var ErrReconnected = fmt.Errorf("another watcher with the same ID connected")
 // DefaultTimeout is the default timeout for all gather.
 var DefaultTimeout = 10 * time.Minute
 
-// Watcher contains a channel which can be polled for all gather completion.
+// Watcher signals all gather completion via a channel which is closed upon said completion.
 type Watcher struct {
 	C <-chan Result
 }
@@ -100,13 +100,13 @@ func (g *allGather) join(id uuid.UUID, numPeers int, data any) Watcher {
 	return w
 }
 
-func (g *allGather) leave(id uuid.UUID) (empty bool) {
+func (g *allGather) leave(id uuid.UUID) bool {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
 	c, ok := g.watchers[id]
 	if !ok {
-		return
+		return len(g.watchers) == 0
 	}
 
 	g.removeWatcher(id, c, Result{Err: ErrClosed})

@@ -11,8 +11,8 @@ import (
 )
 
 // AllGather blocks until `numPeers` with the same `allocationID` are waiting and then returns the
-// data from all those peers. It returns an error in the if the call returns early, without data,
-// for any reason. Only one call may connect per `id`.
+// data from all those peers. It returns an error if the call returns early without data for any
+// reason. Only one call may connect per `id`.
 func AllGather(
 	ctx context.Context,
 	msgr actor.Messenger,
