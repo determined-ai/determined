@@ -6,8 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/determined-ai/determined/master/internal/job/jobmanager"
-
 	"golang.org/x/exp/slices"
 
 	"github.com/pkg/errors"
@@ -19,16 +17,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
-
-// DefaultManager is the global singleton for managing jobs.
-var DefaultManager *Manager
-
-// SetDefaultManager sets the package-level DefaultManager in
-// this package and `jobmanager`.
-func SetDefaultManager(m *Manager) {
-	DefaultManager = m
-	jobmanager.DefaultJobManager = m
-}
 
 // Manager manages jobs.
 type Manager struct {

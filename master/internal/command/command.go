@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/job/jobmanager"
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
 
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -291,7 +291,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}, c.db, c.rm, c.GenericCommandSpec)
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
-		jobmanager.DefaultJobManager.RegisterJob(c.jobID, ctx.Self())
+		jobservice.Default.RegisterJob(c.jobID, ctx.Self())
 
 		ctx.Ask(c.allocation, actor.Ping{}).Get()
 		if err := c.persist(); err != nil {
@@ -306,7 +306,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
-		jobmanager.DefaultJobManager.UnregisterJob(c.jobID)
+		jobservice.Default.UnregisterJob(c.jobID)
 		if err := c.db.DeleteUserSessionByToken(c.GenericCommandSpec.Base.UserSessionToken); err != nil {
 			ctx.Log().WithError(err).Errorf(
 				"failure to delete user session for task: %v", c.taskID)
