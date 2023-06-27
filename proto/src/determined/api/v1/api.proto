@@ -683,17 +683,18 @@ service Determined {
     };
   }
 
-  // // Create a Trial Collection for a set of TrialFilters.
-  // rpc CreateTrialSourceInfo(CreateTrialSourceInfoRequest)
-  //     returns (CreateTrialSourceInfoResponse) {
-  //   option (google.api.http) = {
-  //     post: "/api/v1/trial-source-info"
-  //     body: "*"
-  //   };
-  //   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-  //     tags: [ "Internal" ]
-  //   };
-  // }´
+  // Create a Trial Collection for a set of TrialFilters.
+  rpc CreateTrialSourceInfo(CreateTrialSourceInfoRequest)
+      returns (CreateTrialSourceInfoResponse) {
+  
+    option (google.api.http) = {
+      post: "/api/v1/trial-source-info"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
+    };
+  }
 
   // Create unmanaged trial.
   rpc CreateTrial(CreateTrialRequest) returns (CreateTrialResponse) {

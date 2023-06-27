@@ -718,6 +718,17 @@ export const TrialSorterNamespace = {
 } as const
 export type TrialSorterNamespace = ValueOf<typeof TrialSorterNamespace>
 /**
+ * - TYPE_UNSPECIFIED: The type is unspecified  - TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+ * @export
+ * @enum {string}
+ */
+export const TrialSourceInfoTrialSourceInfoType = {
+    UNSPECIFIED: 'TYPE_UNSPECIFIED',
+    INFERENCE: 'TYPE_INFERENCE',
+    FINETUNING: 'TYPE_FINE_TUNING',
+} as const
+export type TrialSourceInfoTrialSourceInfoType = ValueOf<typeof TrialSourceInfoTrialSourceInfoType>
+/**
  * - STATE_UNSPECIFIED: The trial is in an unspecified state.  - STATE_ACTIVE: The trial is in an active state.  - STATE_PAUSED: The trial is in a paused state  - STATE_STOPPING_CANCELED: The trial is canceled and is shutting down.  - STATE_STOPPING_KILLED: The trial is killed and is shutting down.  - STATE_STOPPING_COMPLETED: The trial is completed and is shutting down.  - STATE_STOPPING_ERROR: The trial is errored and is shutting down.  - STATE_CANCELED: The trial is canceled and is shut down.  - STATE_COMPLETED: The trial is completed and is shut down.  - STATE_ERROR: The trial is errored and is shut down.
  * @export
  * @enum {string}
@@ -2312,6 +2323,38 @@ export interface V1CreateTrialsCollectionResponse {
      * @memberof V1CreateTrialsCollectionResponse
      */
     collection?: V1TrialsCollection;
+}
+/**
+ * 
+ * @export
+ * @interface V1CreateTrialSourceInfoRequest
+ */
+export interface V1CreateTrialSourceInfoRequest {
+    /**
+     * 
+     * @type {V1TrialSourceInfo}
+     * @memberof V1CreateTrialSourceInfoRequest
+     */
+    trialSourceInfo: V1TrialSourceInfo;
+}
+/**
+ * 
+ * @export
+ * @interface V1CreateTrialSourceInfoResponse
+ */
+export interface V1CreateTrialSourceInfoResponse {
+    /**
+     * Trial ID of the created
+     * @type {number}
+     * @memberof V1CreateTrialSourceInfoResponse
+     */
+    trialId: number;
+    /**
+     * UUID of the checkpoint.
+     * @type {string}
+     * @memberof V1CreateTrialSourceInfoResponse
+     */
+    checkpointUuid: string;
 }
 /**
  * Response to CurrentUserRequest.
@@ -10099,6 +10142,61 @@ export interface V1TrialSorter {
 /**
  * 
  * @export
+ * @interface V1TrialSourceInfo
+ */
+export interface V1TrialSourceInfo {
+    /**
+     * ID of the trial.
+     * @type {number}
+     * @memberof V1TrialSourceInfo
+     */
+    trialId: number;
+    /**
+     * UUID of the checkpoint.
+     * @type {string}
+     * @memberof V1TrialSourceInfo
+     */
+    checkpointUuid: string;
+    /**
+     * Source Trial which generated the checkpoint (if applicable)
+     * @type {number}
+     * @memberof V1TrialSourceInfo
+     */
+    sourceTrialId?: number;
+    /**
+     * Source model_version id which generated the checkpoint (if applicable)
+     * @type {number}
+     * @memberof V1TrialSourceInfo
+     */
+    sourceModelVersionId?: number;
+    /**
+     * Source model_version version which generated the checkpoint (if applicable)
+     * @type {number}
+     * @memberof V1TrialSourceInfo
+     */
+    sourceModelVersionVersion?: number;
+    /**
+     * Type for this trial_source_info
+     * @type {TrialSourceInfoTrialSourceInfoType}
+     * @memberof V1TrialSourceInfo
+     */
+    trialSourceInfoType: TrialSourceInfoTrialSourceInfoType;
+    /**
+     * User defined description text
+     * @type {string}
+     * @memberof V1TrialSourceInfo
+     */
+    description?: string;
+    /**
+     * Struct of the user defined metadata
+     * @type {any}
+     * @memberof V1TrialSourceInfo
+     */
+    metadata?: any;
+}
+/**
+ * 
+ * @export
  * @interface V1TrialsSampleResponse
  */
 export interface V1TrialsSampleResponse {
@@ -17117,6 +17215,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Create a Trial Collection for a set of TrialFilters.
+         * @param {V1CreateTrialSourceInfoRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrialSourceInfo(body: V1CreateTrialSourceInfoRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling createTrialSourceInfo.');
+            }
+            const localVarPath = `/api/v1/trial-source-info`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
@@ -19031,6 +19167,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Create a Trial Collection for a set of TrialFilters.
+         * @param {V1CreateTrialSourceInfoRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrialSourceInfo(body: V1CreateTrialSourceInfoRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateTrialSourceInfoResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createTrialSourceInfo(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
@@ -19929,6 +20084,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Create a Trial Collection for a set of TrialFilters.
+         * @param {V1CreateTrialSourceInfoRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrialSourceInfo(body: V1CreateTrialSourceInfoRequest, options?: any) {
+            return InternalApiFp(configuration).createTrialSourceInfo(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
@@ -20515,6 +20680,18 @@ export class InternalApi extends BaseAPI {
      */
     public createTrial(body: V1CreateTrialRequest, options?: any) {
         return InternalApiFp(this.configuration).createTrial(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Create a Trial Collection for a set of TrialFilters.
+     * @param {V1CreateTrialSourceInfoRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public createTrialSourceInfo(body: V1CreateTrialSourceInfoRequest, options?: any) {
+        return InternalApiFp(this.configuration).createTrialSourceInfo(body, options)(this.fetch, this.basePath)
     }
     
     /**
