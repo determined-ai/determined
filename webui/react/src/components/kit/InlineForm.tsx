@@ -6,7 +6,7 @@ import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 
-import css from './Inlineform.module.scss';
+import css from './InlineForm.module.scss';
 
 type Option = {
   label: string;
