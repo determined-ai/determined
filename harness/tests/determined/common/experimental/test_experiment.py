@@ -100,7 +100,7 @@ def test_list_trials_iterates_through_all_trials(
 
     tr_resp = api_responses.sample_get_experiment_trials()
 
-    assert len(tr_resp) >= 2, "Test expects sample trial response to contain >= 2 Trials."
+    assert len(tr_resp.trials) >= 2, "Test expects sample trial response to contain >= 2 Trials."
     for trial in tr_resp.trials:
         trial.experimentId = expref.id
 
@@ -112,7 +112,7 @@ def test_list_trials_iterates_through_all_trials(
 
     trials = expref.list_trials(limit=page_size)
 
-    assert len(list(trials)) == len(tr_resp)
+    assert len(list(trials)) == len(tr_resp.trials)
 
 
 @responses.activate
@@ -124,7 +124,7 @@ def test_list_trials_requests_pages_lazily(
 
     tr_resp = api_responses.sample_get_experiment_trials()
 
-    assert len(tr_resp) >= 2, "Test expects sample trial response to contain >= 2 Trials."
+    assert len(tr_resp.trials) >= 2, "Test expects sample trial response to contain >= 2 Trials."
     for trial in tr_resp.trials:
         trial.experimentId = expref.id
 
