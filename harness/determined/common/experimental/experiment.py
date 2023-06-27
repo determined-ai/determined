@@ -109,11 +109,13 @@ class Experiment:
             sort_by: Which field to sort by. See :class:`~determined.experimental.TrialSortBy`.
             order_by: Whether to sort in ascending or descending order. See
                 :class:`~determined.experimental.TrialOrderBy`.
-            limit: Optional field that sets maximum page size of response. Defaults to no maximum.
+            limit: Optional field that sets maximum page size of the response from the server.
+                When there are many trials to return, a lower page size can result in shorter
+                latency at the expense of more HTTP requests to the server. Defaults to no maximum.
 
-        Note:
+        Returns:
             This method returns an Iterable type that lazily instantiates response objects. To
-            fetch all models at once, call list(list_trials()).
+            get all models at once, call list(list_trials()).
         """
 
         def get_with_offset(offset: int) -> bindings.v1GetExperimentTrialsResponse:
