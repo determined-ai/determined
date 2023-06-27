@@ -12,6 +12,7 @@ interface InputNumberProps {
   precision?: number;
   step?: number;
   value?: number;
+  onPressEnter?: (e: React.KeyboardEvent) => void;
 }
 
 const InputNumber: React.FC<InputNumberProps> = (props: InputNumberProps) => {

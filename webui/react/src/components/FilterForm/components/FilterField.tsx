@@ -4,12 +4,12 @@ import type { SelectProps as AntdSelectProps } from 'antd';
 import type { DatePickerProps } from 'antd/es/date-picker';
 import dayjs from 'dayjs';
 import { useObservable } from 'micro-observables';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { debounce } from 'throttle-debounce';
 
 import ConjunctionContainer from 'components/FilterForm/components/ConjunctionContainer';
-import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
+import { FilterFormStore, getInitField } from 'components/FilterForm/components/FilterFormStore';
 import {
   AvailableOperators,
   Conjunction,
@@ -65,6 +65,7 @@ const FilterField = ({
   const currentColumn = columns.find((c) => c.column === field.columnName);
   const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(field.columnName);
 
+  const [inputOpen, setInputOpen] = useState(false);
   const [fieldValue, setFieldValue] = useState<FormFieldValue>(field.value);
 
   // use this function to update field value
@@ -157,6 +158,20 @@ const FilterField = ({
     },
   });
 
+  const captureEnterKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      // would use isComposing alone but safari has a bug: https://bugs.webkit.org/show_bug.cgi?id=165004
+      if (e.key === 'Enter' && !inputOpen && !e.nativeEvent.isComposing && e.keyCode !== 229) {
+        formStore.addChild(parentId, FormKind.Field, { index: index + 1, item: getInitField() });
+        // stop panel flashing for selects and dates
+        if (field.type === 'COLUMN_TYPE_DATE' || isSpecialColumn) {
+          e.stopPropagation();
+        }
+      }
+    },
+    [field.type, formStore, index, inputOpen, isSpecialColumn, parentId],
+  );
+
   return (
     <div className={css.base} ref={(node) => drop(node)}>
       <ConjunctionContainer
@@ -167,86 +182,93 @@ const FilterField = ({
         }}
       />
       <div className={css.fieldCard} ref={preview}>
-        <>
-          <Select
-            autoFocus
-            dropdownMatchSelectWidth={250}
-            options={columns.map((col) => ({
-              label: col.displayName || col.column,
-              value: col.column,
-            }))}
-            value={field.columnName}
-            width={'100%'}
-            onChange={onChangeColumnName}
-          />
-          <Select
-            options={(isSpecialColumn
-              ? [Operator.Eq, Operator.NotEq] // just Eq and NotEq for Special column
-              : AvailableOperators[currentColumn?.type ?? V1ColumnType.UNSPECIFIED]
-            ).map((op) => ({
-              label: ReadableOperator[field.type][op],
-              value: op,
-            }))}
-            value={field.operator}
-            width={'100%'}
-            onChange={(value) => {
-              const op = (value?.toString() ?? '=') as Operator;
-              formStore.setFieldOperator(field.id, op);
-              if (op === Operator.IsEmpty || op === Operator.NotEmpty) {
-                updateFieldValue(field.id, null);
-              }
-            }}
-          />
-          {isSpecialColumn ? (
-            <>
-              <Select
-                options={getSpecialOptions(field.columnName as SpecialColumnNames)}
-                value={fieldValue?.toString()}
-                width={'100%'}
-                onChange={(value) => {
-                  const val = value?.toString() ?? null;
-                  updateFieldValue(field.id, val);
+        <Select
+          autoFocus
+          dropdownMatchSelectWidth={250}
+          options={columns.map((col) => ({
+            label: col.displayName || col.column,
+            value: col.column,
+          }))}
+          value={field.columnName}
+          width={'100%'}
+          onChange={onChangeColumnName}
+        />
+        <Select
+          options={(isSpecialColumn
+            ? [Operator.Eq, Operator.NotEq] // just Eq and NotEq for Special column
+            : AvailableOperators[currentColumn?.type ?? V1ColumnType.UNSPECIFIED]
+          ).map((op) => ({
+            label: ReadableOperator[field.type][op],
+            value: op,
+          }))}
+          value={field.operator}
+          width={'100%'}
+          onChange={(value) => {
+            const op = (value?.toString() ?? '=') as Operator;
+            formStore.setFieldOperator(field.id, op);
+            if (op === Operator.IsEmpty || op === Operator.NotEmpty) {
+              updateFieldValue(field.id, null);
+            }
+          }}
+        />
+        {isSpecialColumn ? (
+          <div onKeyDownCapture={captureEnterKeyDown}>
+            <Select
+              options={getSpecialOptions(field.columnName as SpecialColumnNames)}
+              value={fieldValue?.toString()}
+              width={'100%'}
+              onChange={(value) => {
+                const val = value?.toString() ?? null;
+                updateFieldValue(field.id, val);
+              }}
+              onDropdownVisibleChange={setInputOpen}
+            />
+          </div>
+        ) : (
+          <>
+            {(currentColumn?.type === V1ColumnType.TEXT ||
+              currentColumn?.type === V1ColumnType.UNSPECIFIED) && (
+              <Input
+                disabled={
+                  field.operator === Operator.IsEmpty || field.operator === Operator.NotEmpty
+                }
+                value={fieldValue?.toString() ?? undefined}
+                onChange={(e) => {
+                  const val = e.target.value || null; // when empty string, val is null
+                  updateFieldValue(field.id, val, true);
                 }}
+                onPressEnter={captureEnterKeyDown}
               />
-            </>
-          ) : (
-            <>
-              {(currentColumn?.type === V1ColumnType.TEXT ||
-                currentColumn?.type === V1ColumnType.UNSPECIFIED) && (
-                <Input
-                  disabled={
-                    field.operator === Operator.IsEmpty || field.operator === Operator.NotEmpty
-                  }
-                  value={fieldValue?.toString() ?? undefined}
-                  onChange={(e) => {
-                    const val = e.target.value || null; // when empty string, val is null
-                    updateFieldValue(field.id, val, true);
-                  }}
-                />
-              )}
-              {currentColumn?.type === V1ColumnType.NUMBER && (
-                <InputNumber
-                  className={css.fullWidth}
-                  value={fieldValue != null ? Number(fieldValue) : undefined}
-                  onChange={(val) => {
-                    const value = val != null ? Number(val) : null;
-                    updateFieldValue(field.id, value, true);
-                  }}
-                />
-              )}
-              {currentColumn?.type === V1ColumnType.DATE && (
-                // timezone is UTC since DB uses UTC
+            )}
+            {currentColumn?.type === V1ColumnType.NUMBER && (
+              <InputNumber
+                className={css.fullWidth}
+                value={fieldValue != null ? Number(fieldValue) : undefined}
+                onChange={(val) => {
+                  const value = val != null ? Number(val) : null;
+                  updateFieldValue(field.id, value, true);
+                }}
+                onPressEnter={captureEnterKeyDown}
+              />
+            )}
+            {currentColumn?.type === V1ColumnType.DATE && (
+              // dirty approach -- datePicker doesn't provide onPressEnter so
+              // we override the behavior by attaching a handler higher up in
+              // the tree in the capture phase
+              <div onKeyDownCapture={captureEnterKeyDown}>
+                {/* timezone is UTC since DB uses UTC */}
                 <DatePicker
                   value={dayjs(fieldValue).isValid() ? dayjs(fieldValue).utc() : null}
                   onChange={(value: DatePickerProps['value']) => {
                     const dateString = dayjs(value).utc().startOf('date').format();
                     updateFieldValue(field.id, dateString);
                   }}
+                  onOpenChange={setInputOpen}
                 />
-              )}
-            </>
-          )}
-        </>
+              </div>
+            )}
+          </>
+        )}
         <Button
           icon={<Icon name="close" title="close field" />}
           type="text"
