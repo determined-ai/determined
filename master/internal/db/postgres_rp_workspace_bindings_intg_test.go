@@ -5,6 +5,7 @@ package db
 
 import (
 	"context"
+	"sort"
 	"testing"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -179,22 +180,6 @@ func TestListRPsBoundToWorkspace(t *testing.T) {
 	return
 }
 
-func bindingsEqual(a, b []int32) bool {
-	aMap := map[int32]bool{}
-	for _, val := range a {
-		aMap[val] = false
-	}
-
-	for _, val := range b {
-		found, ok := aMap[val]
-		if !ok || found {
-			return false
-		}
-		aMap[val] = true
-	}
-	return true
-}
-
 func TestOverwriteBindings(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
@@ -226,7 +211,9 @@ func TestOverwriteBindings(t *testing.T) {
 			"expected bound pool to be %s, but was %s", testPoolName, binding.PoolName)
 		bindingsIDs = append(bindingsIDs, int32(binding.WorkspaceID))
 	}
-	require.True(t, bindingsEqual(workspaceIDs, bindingsIDs),
+	sort.Slice(workspaceIDs, func(i, j int) bool { return workspaceIDs[i] < workspaceIDs[j] })
+	sort.Slice(bindingsIDs, func(i, j int) bool { return bindingsIDs[i] < bindingsIDs[j] })
+	require.Equal(t, workspaceIDs, bindingsIDs,
 		"workspace IDs %t do not match bound workspace IDs %t", workspaceIDs, bindingsIDs)
 
 	err = OverwriteRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPoolName, existingPools)
@@ -245,7 +232,7 @@ func TestOverwriteBindings(t *testing.T) {
 	existingPools = append(existingPools, config.ResourcePoolConfig{PoolName: testPool2Name})
 	err = OverwriteRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPool2Name, existingPools)
 	require.NoError(t, err)
-	// TODO: call list bindings here to make sure it worked
+
 	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPool2Name, 0, 0)
 	require.NoError(t, err, "failed to read bindings: %t", err)
 	require.Equal(t, 1, len(bindings),
