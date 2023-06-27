@@ -189,7 +189,7 @@ func TestListRPsAvailableToWorkspace(t *testing.T) {
 	}
 
 	// A workspace has no bounded RP
-	rpNames, _, err := ReadRPsAvailableToWorkspace(ctx, workspaceIDs[0], 0, 500, existingPools)
+	rpNames, _, err := ReadRPsAvailableToWorkspace(ctx, workspaceIDs[0], 0, 0, existingPools)
 	require.NoError(t, err)
 
 	expectedRPNames := []string{}
@@ -203,7 +203,7 @@ func TestListRPsAvailableToWorkspace(t *testing.T) {
 	err = AddRPWorkspaceBindings(ctx, workspaceIDs[1:2], "poolName2", existingPools)
 	require.NoError(t, err)
 
-	rpNames, _, err = ReadRPsAvailableToWorkspace(ctx, workspaceIDs[0], 0, 500, existingPools)
+	rpNames, _, err = ReadRPsAvailableToWorkspace(ctx, workspaceIDs[0], 0, 0, existingPools)
 	require.NoError(t, err)
 	expectedRPNames = []string{"poolName1", "poolName3"}
 	sort.Strings(rpNames)
@@ -218,7 +218,7 @@ func TestListRPsAvailableToWorkspace(t *testing.T) {
 	err = AddRPWorkspaceBindings(ctx, workspaceIDs[1:2], "poolName2", existingPools)
 	require.NoError(t, err)
 
-	rpNames, _, err = ReadRPsAvailableToWorkspace(ctx, workspaceIDs[0], 0, 500, existingPools)
+	rpNames, _, err = ReadRPsAvailableToWorkspace(ctx, workspaceIDs[0], 0, 0, existingPools)
 	require.NoError(t, err)
 	expectedRPNames = []string{"poolName1", "poolName3"}
 	sort.Strings(rpNames)
@@ -237,7 +237,7 @@ func TestListRPsAvailableToWorkspace(t *testing.T) {
 	err = AddRPWorkspaceBindings(ctx, workspaceIDs[1:2], "poolName3", existingPools)
 	require.NoError(t, err)
 
-	rpNames, _, err = ReadRPsAvailableToWorkspace(ctx, workspaceIDs[0], 0, 500, existingPools)
+	rpNames, _, err = ReadRPsAvailableToWorkspace(ctx, workspaceIDs[0], 0, 0, existingPools)
 	require.NoError(t, err)
 	expectedRPNames = []string{"poolName1", "poolName2"}
 	sort.Strings(rpNames)

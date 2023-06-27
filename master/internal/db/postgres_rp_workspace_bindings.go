@@ -97,6 +97,10 @@ func ReadWorkspacesBoundToRP(
 	}
 	// Bun bug treating limit=0 as no limit when it
 	// should be the exact opposite of no records returned.
+	// TODO: revisit and check this for commonality.
+	// We may put pagination.StartIndex-pagination.EndIndex != 0
+	// back to the function and return a nil query if StartIndex = EndIndex. This is for
+	// limit = -2, we don't run the query, return pagination only.
 	if pagination.StartIndex-pagination.EndIndex != 0 {
 		if err = query.Scan(ctx); err != nil {
 			if errors.Cause(err) == sql.ErrNoRows {
@@ -236,6 +240,8 @@ func ReadRPsAvailableToWorkspace(
 	var rpNames []string
 	var query *bun.SelectQuery
 	if len(unboundRPs) > 0 {
+		// TODO: The elements in unboundRPs are structs with a string field.
+		// Is there a better way to do this?
 		values := Bun().NewValues(&unboundRPs)
 		boundAndUnboundRPSubTable := Bun().NewSelect().
 			ColumnExpr("pool_name AS Name").
@@ -257,6 +263,10 @@ func ReadRPsAvailableToWorkspace(
 	}
 	// Bun bug treating limit=0 as no limit when it
 	// should be the exact opposite of no records returned.
+	// TODO: revisit and check this for commonality.
+	// We may put pagination.StartIndex-pagination.EndIndex != 0
+	// back to the function and return a nil query if StartIndex = EndIndex. This is for
+	// limit = -2, we don't run the query, return pagination only.
 	if pagination.StartIndex-pagination.EndIndex != 0 {
 		if err = query.Scan(ctx, &rpNames); err != nil {
 			if errors.Cause(err) == sql.ErrNoRows {
