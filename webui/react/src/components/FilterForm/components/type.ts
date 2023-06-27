@@ -144,7 +144,7 @@ export const RUN_STATES = [
   RunState.Error,
 ] as const;
 
-export const SEARCHER_TYPE = ['adaptive_asha', 'single', 'random'] as const;
+export const SEARCHER_TYPE = ['adaptive_asha', 'single', 'grid', 'random', 'custom'] as const;
 
 export const SpecialColumnNames = ['user', 'state', 'resourcePool', 'searcherType'] as const;
 
