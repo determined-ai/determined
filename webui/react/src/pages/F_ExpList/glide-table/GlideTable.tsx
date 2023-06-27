@@ -15,15 +15,8 @@ import DataEditor, {
   Theme,
 } from '@glideapps/glide-data-grid';
 import { DrawHeaderCallback } from '@glideapps/glide-data-grid/dist/ts/data-grid/data-grid-types';
-import React, {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { MenuProps } from 'antd';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
@@ -43,7 +36,7 @@ import usersStore from 'stores/users';
 import { ExperimentWithTrial, Project, ProjectColumn } from 'types';
 import { Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
-import { Loadable, Loaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
 import { getCssVar } from 'utils/themes';
@@ -96,7 +89,7 @@ export interface GlideTableProps {
   selectAll: boolean;
   staticColumns: string[];
   setColumnWidths: (newWidths: Record<string, number>) => void;
-  setSelectAll: Dispatch<SetStateAction<Loadable<boolean>>>;
+  setSelectAll: (arg0: boolean) => void;
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   sorts: Sort[];
   onSortChange: (sorts: Sort[]) => void;
@@ -303,13 +296,13 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   );
 
   const deselectAllRows = useCallback(() => {
-    setSelectAll(Loaded(false));
+    setSelectAll(false);
     setSelection((prev) => ({ ...prev, rows: CompactSelection.empty() }));
   }, [setSelectAll, setSelection]);
 
   const selectAllRows = useCallback(() => {
-    setExcludedExperimentIds(() => Loaded(new Set()));
-    setSelectAll(Loaded(true));
+    setExcludedExperimentIds(() => new Set());
+    setSelectAll(true);
     setSelection(({ columns, rows }: GridSelection) => ({
       columns,
       rows: rows.add([0, data.length]),
@@ -319,12 +312,19 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   const previousData = usePrevious(data, undefined);
   useEffect(() => {
     if (selectAll && previousData && data.length > previousData.length) {
-      setSelection(({ columns, rows }: GridSelection) => ({
-        columns,
-        rows: rows.add([previousData.length, data.length]),
-      }));
+      setSelection(({ columns, rows }: GridSelection) => {
+        rows = rows.add([previousData.length - 1, data.length]);
+        data.forEach((loadableRow, idx) => {
+          Loadable.map(loadableRow, (row) => {
+            if (excludedExperimentIds.has(row.experiment.id)) {
+              rows = rows.remove([idx, idx + 1]);
+            }
+          });
+        });
+        return { columns, rows };
+      });
     }
-  }, [data, previousData, selectAll]);
+  }, [data, previousData, selectAll, excludedExperimentIds]);
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, { bounds }: HeaderClickedEventArgs) => {
@@ -564,9 +564,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             if (selection.rows.hasIndex(row)) {
               const existIndex = selectedExperimentIds.indexOf(rowData.experiment.id);
               setSelectedExperimentIds(
-                  selectedExperimentIds
-                    .slice(0, existIndex)
-                    .concat(selectedExperimentIds.slice(existIndex + 1)),
+                selectedExperimentIds
+                  .slice(0, existIndex)
+                  .concat(selectedExperimentIds.slice(existIndex + 1)),
               );
               setSelection(({ columns, rows }: GridSelection) => ({
                 columns,
@@ -575,31 +575,25 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               if (selectAll) {
                 const experiment = data[row];
                 if (Loadable.isLoaded(experiment)) {
-                  setExcludedExperimentIds((loadablePrev) => {
+                  setExcludedExperimentIds((prev) => {
                     if (experiment.data.experiment) {
-                      const prev = Loadable.getOrElse(new Set<number>(), loadablePrev);
-                      return Loaded(new Set([...prev, experiment.data.experiment?.id]));
+                      return new Set([...prev, experiment.data.experiment?.id]);
                     } else {
-                      return loadablePrev;
+                      return prev;
                     }
                   });
                 }
               }
             } else {
-              setSelectedExperimentIds(
-                selectedExperimentIds.concat([rowData.experiment.id]),
-              );
+              setSelectedExperimentIds(selectedExperimentIds.concat([rowData.experiment.id]));
               setSelection(({ columns, rows }: GridSelection) => ({
                 columns,
                 rows: rows.add(row),
               }));
               const experiment = data[row];
               if (Loadable.isLoaded(experiment)) {
-                setExcludedExperimentIds((loadablePrev) => {
-                  const prev = Loadable.getOrElse(new Set<number>(), loadablePrev);
-                  return Loaded(
-                    new Set([...prev].filter((id) => id !== experiment.data.experiment?.id)),
-                  );
+                setExcludedExperimentIds((prev) => {
+                  return new Set([...prev].filter((id) => id !== experiment.data.experiment?.id));
                 });
               }
             }
