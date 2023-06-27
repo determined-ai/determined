@@ -474,6 +474,7 @@ func Test_obtainJobStateFromWlmQueueDetails(t *testing.T) {
 func writeExperimentLogMock(
 	ctx *actor.Context,
 	dispatchID string,
-	message string) {
+	message string,
+) {
 	numTimesWriteExperimentLogCalled++
 }
