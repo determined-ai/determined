@@ -15,7 +15,6 @@ import DataEditor, {
   Theme,
 } from '@glideapps/glide-data-grid';
 import { DrawHeaderCallback } from '@glideapps/glide-data-grid/dist/ts/data-grid/data-grid-types';
-import { MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -324,7 +323,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         return { columns, rows };
       });
     }
-  }, [data, previousData, selectAll, excludedExperimentIds]);
+  }, [data, previousData, selectAll]);
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, { bounds }: HeaderClickedEventArgs) => {
