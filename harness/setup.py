@@ -34,6 +34,7 @@ setuptools.setup(
         "azure-storage-blob",
         "termcolor>=1.1.0",
         "boto3",
+        "oschmod;platform_system=='Windows'",
         # CLI:
         "argcomplete>=1.9.4",
         "gitpython>=3.1.3",
