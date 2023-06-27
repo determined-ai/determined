@@ -78,9 +78,8 @@ func (a AssignWorkspaceCreatorConfig) Validate() []error {
 
 // IsRBACUIEnabled returns if the feature flag RBAC should be enabled.
 func (c AuthZConfig) IsRBACUIEnabled() bool {
-	_, isRBACCapable := knownAuthZTypes["rbac"]
 	if c.RBACUIEnabled != nil {
-		return *c.RBACUIEnabled && isRBACCapable
+		return *c.RBACUIEnabled
 	}
 	return c.Type != BasicAuthZType
 }

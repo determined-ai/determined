@@ -1,17 +1,36 @@
-from typing import List
+import json
+import subprocess
+from typing import Any, List
 
 import pytest
 
-from tests.api_utils import ADMIN_CREDENTIALS
-from tests.cluster.utils import rbac_disabled
-from tests.utils import det_cmd, det_cmd_expect_error, det_cmd_json
+from tests import config as conf
 
-from .test_users import get_random_string, logged_in_user
+from .test_users import ADMIN_CREDENTIALS, get_random_string, logged_in_user
 
 
-@pytest.mark.e2e_cpu_rbac
+def det_cmd(cmd: List[str], **kwargs: Any) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["det", "-m", conf.make_master_url()] + cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        **kwargs,
+    )
+
+
+def det_cmd_json(cmd: List[str]) -> Any:
+    res = det_cmd(cmd, check=True)
+    return json.loads(res.stdout)
+
+
+def det_cmd_expect_error(cmd: List[str], expected: str) -> None:
+    res = det_cmd(cmd)
+    assert res.returncode != 0
+    assert expected in res.stderr.decode()
+
+
+@pytest.mark.e2e_cpu
 @pytest.mark.parametrize("add_users", [[], ["admin", "determined"]])
-@pytest.mark.skipif(rbac_disabled(), reason="ee with enabled rbac is required for this test")
 def test_group_creation(add_users: List[str]) -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
         group_name = get_random_string()
@@ -54,8 +73,7 @@ def test_group_creation(add_users: List[str]) -> None:
         det_cmd_expect_error(["user-group", "describe", group_name], "not find")
 
 
-@pytest.mark.e2e_cpu_rbac
-@pytest.mark.skipif(rbac_disabled(), reason="ee with enabled rbac is required for this test")
+@pytest.mark.e2e_cpu
 def test_group_updates() -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
         group_name = get_random_string()
@@ -86,8 +104,7 @@ def test_group_updates() -> None:
 
 @pytest.mark.parametrize("offset", [0, 2])
 @pytest.mark.parametrize("limit", [1, 3])
-@pytest.mark.e2e_cpu_rbac
-@pytest.mark.skipif(rbac_disabled(), reason="ee with enabled rbac is required for this test")
+@pytest.mark.e2e_cpu
 def test_group_list_pagination(offset: int, limit: int) -> None:
     # Ensure we have at minimum n groups.
     n = 5
@@ -108,8 +125,7 @@ def test_group_list_pagination(offset: int, limit: int) -> None:
     assert expected == paged_group_list["groups"]
 
 
-@pytest.mark.e2e_cpu_rbac
-@pytest.mark.skipif(rbac_disabled(), reason="ee with enabled rbac is required for this test")
+@pytest.mark.e2e_cpu
 def test_group_errors() -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
         fake_group = get_random_string()

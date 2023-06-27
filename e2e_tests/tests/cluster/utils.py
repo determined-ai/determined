@@ -1,45 +1,16 @@
-import contextlib
 import json
 import subprocess
 import time
-import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any, Dict
 
 import pytest
 import requests
 from typing_extensions import Literal
 
 from determined.common import api
-from determined.common.api import authentication, bindings, certs, errors
+from determined.common.api import authentication, certs
 from tests import config as conf
-from tests.api_utils import determined_test_session
-
-
-def rbac_disabled() -> bool:
-    try:
-        return not bindings.get_GetMaster(determined_test_session()).rbacEnabled
-    except (errors.APIException, errors.MasterNotFoundException):
-        return True
-
-
-@contextlib.contextmanager
-def setup_workspaces(
-    session: Optional[api.Session] = None, count: int = 1
-) -> Generator[List[bindings.v1Workspace], None, None]:
-    session = session or determined_test_session(admin=True)
-    workspaces: List[bindings.v1Workspace] = []
-    try:
-        for _ in range(count):
-            body = bindings.v1PostWorkspaceRequest(name=f"workspace_{uuid.uuid4().hex[:8]}")
-            workspaces.append(bindings.post_PostWorkspace(session, body=body).workspace)
-
-        yield workspaces
-
-    finally:
-        for w in workspaces:
-            # TODO check if it needs deleting.
-            bindings.delete_DeleteWorkspace(session, id=w.id)
 
 
 def cluster_slots() -> Dict[str, Any]:
@@ -136,7 +107,6 @@ def command_succeeded(command_id: str) -> bool:
 
 
 def wait_for_task_state(task_type: TaskType, task_id: str, state: str, ticks: int = 60) -> None:
-    gotten_state = None
     for _ in range(ticks):
         info = get_task_info(task_type, task_id)
         gotten_state = info.get("state")
