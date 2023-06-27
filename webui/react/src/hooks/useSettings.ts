@@ -313,7 +313,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   useLayoutEffect(() => {
     if (initialLoading) return;
-    setTimeout(clearQuerySettings, 200);
+    clearQuerySettings();
     return derivedOb.subscribe(async (cur, prev) => {
       if (!cur || !currentUser || isEqual(cur, prev)) return;
 
