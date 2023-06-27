@@ -262,33 +262,33 @@ func TestOverwriteBindings(t *testing.T) {
 
 func TestOverwriteFail(t *testing.T) {
 	ctx := context.Background()
-	var existingPools []config.ResourcePoolConfig
-	pool := config.ResourcePoolConfig{PoolName: "poolName1"}
-	existingPools = append(existingPools, pool)
+	pgDB := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
+	existingPools := []config.ResourcePoolConfig{{PoolName: testPoolName}}
 	// Test overwrite adding workspace that doesn't exist
 	workspaceIDs := []int32{100, 102, 103}
-	poolName := "poolName1"
-	err := OverwriteRPWorkspaceBindings(ctx, workspaceIDs, poolName, existingPools)
+	err := OverwriteRPWorkspaceBindings(ctx, workspaceIDs, testPoolName, existingPools)
 	// db Error that workspace doesn't exist
 	require.ErrorContains(t, err, "violates foreign key constraint")
 	// Test overwrite pool that doesn't exist
-	poolName = "poolNameDoesntExist"
-	err = OverwriteRPWorkspaceBindings(ctx, workspaceIDs, poolName, existingPools)
+	nonExistentPoolName := "poolNameDoesntExist"
+	err = OverwriteRPWorkspaceBindings(ctx, workspaceIDs, nonExistentPoolName, existingPools)
 	require.ErrorContains(t, err, "doesn't exist in config")
 	return
 }
 
 func TestRemoveInvalidBinding(t *testing.T) {
 	ctx := context.Background()
+	pgDB := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 	// remove binding that doesn't exist
-	poolName := "poolName" //nolint:goconst
 	workspaceIDs := []int32{1}
-	err := RemoveRPWorkspaceBindings(ctx, workspaceIDs, poolName)
+	err := RemoveRPWorkspaceBindings(ctx, workspaceIDs, testPoolName)
 	require.ErrorContains(t, err, "binding doesn't exist")
 	// bulk remove bindings that don't exist
-	poolName = "poolName"
 	workspaceIDs = []int32{1, 2, 3}
-	err = RemoveRPWorkspaceBindings(ctx, workspaceIDs, poolName)
+	err = RemoveRPWorkspaceBindings(ctx, workspaceIDs, testPoolName)
 	require.ErrorContains(t, err, " binding doesn't exist")
 	return
 }
