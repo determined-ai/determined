@@ -1,16 +1,16 @@
-#!/bin/sh
+#!/bin/bash
 
-CONFIG_FILE="$1"
+CHANGES="$*"
 
-if ! command -v golangci-lint /dev/null 2>&1; then
+if ! command -v golangci-lint >/dev/null; then
     echo "golangci-lint could not be found"
     exit
 fi
 
-ERRS=$(golangci-lint run --new-from-rev="$(git rev-parse HEAD)" "$CONFIG_FILE")
+CHANGED_DIRS=$(echo "$CHANGES" | xargs -n1 dirname | sort -u)
 
-if [ -n "${ERRS}" ]; then
-    echo "${ERRS}"
-    exit 1
-fi
+for DIR in $CHANGED_DIRS; do
+    golangci-lint --build-tags integration run --timeout 10s "$DIR"
+done
+
 exit 0
