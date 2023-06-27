@@ -100,6 +100,9 @@ class Determined:
 
     def list_users(self) -> Iterator[user.User]:
         users_bindings = bindings.get_GetUsers(session=self._session).users
+        if not users_bindings:
+            yield from ()
+        assert users_bindings  # mypy needs help.
         for user_b in users_bindings:
             yield user.User._from_bindings(user_b, self._session)
 
