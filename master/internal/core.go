@@ -1008,7 +1008,7 @@ func (m *Master) Run(ctx context.Context) error {
 		},
 		cert,
 	)
-	job.DefaultManager = job.NewManager(m.rm, m.system)
+	job.SetDefaultManager(job.NewManager(m.rm, m.system))
 
 	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
