@@ -106,7 +106,6 @@ class TrainContext:
                     pass  # FIXME
             self._tensorboard_manager.sync()
 
-    @util.deprecated("use report_trial_metrics instead")
     def report_training_metrics(
         self,
         steps_completed: int,
@@ -114,7 +113,6 @@ class TrainContext:
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
         """
-        @deprecated
         Report training metrics to the master.
 
         You can include a list of ``batch_metrics``.  Batch metrics are not be shown in the WebUI
@@ -172,14 +170,12 @@ class TrainContext:
 
         return serializable_metrics
 
-    @util.deprecated("use report_trial_metrics() instead")
     def report_validation_metrics(
         self,
         steps_completed: int,
         metrics: Dict[str, Any],
     ) -> None:
         """
-        @deprecated
         Report validation metrics to the master.
 
         Note that for hyperparameter search, this is independent of the need to report the searcher
@@ -258,19 +254,15 @@ class DummyTrainContext(TrainContext):
             f" batch_metrics={batch_metrics})"
         )
 
-    @util.deprecated("use report_trial_metrics() instead")
     def report_training_metrics(
         self,
         steps_completed: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
-        """@deprecated"""
         self.report_trial_metrics(util._LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
 
-    @util.deprecated("use report_trial_metrics() instead")
     def report_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
-        """@deprecated"""
         self.report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
 
     def upload_tensorboard_files(

@@ -96,7 +96,6 @@ class TrialMetrics:
 
 class TrainingMetrics(TrialMetrics):
     """
-    @deprecated
     Specifies a training metric report that the trial reported.
     """
 
@@ -115,7 +114,6 @@ class TrainingMetrics(TrialMetrics):
 
 class ValidationMetrics(TrialMetrics):
     """
-    @deprecated
     Specifies a validation metric report that the trial reported.
     """
 
@@ -380,7 +378,6 @@ class TrialReference:
 
     def stream_training_metrics(self) -> Iterable[TrainingMetrics]:
         """
-        @deprecated
         Streams training metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.
         """
@@ -388,7 +385,6 @@ class TrialReference:
 
     def stream_validation_metrics(self) -> Iterable[ValidationMetrics]:
         """
-        @deprecated
         Streams validation metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.
         """
@@ -443,7 +439,6 @@ def _stream_trials_metrics(
             yield TrialMetrics._from_bindings(m, metric_type=metric_type)
 
 
-@util.deprecated()
 def _stream_training_metrics(
     session: api.Session, trial_ids: List[int]
 ) -> Iterable[TrainingMetrics]:
@@ -453,7 +448,6 @@ def _stream_training_metrics(
             yield cast(TrainingMetrics, TrainingMetrics._from_bindings(m))
 
 
-@util.deprecated()
 def _stream_validation_metrics(
     session: api.Session, trial_ids: List[int]
 ) -> Iterable[ValidationMetrics]:
