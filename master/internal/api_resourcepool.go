@@ -40,10 +40,8 @@ func (a *apiServer) BindRPToWorkspace(
 				curUser.Username))
 	}
 
-	masterConfig := config.GetMasterConfig()
-
 	err = db.AddRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName,
-		masterConfig.ResourceConfig.ResourcePools)
+		config.GetMasterConfig().ResourceConfig.ResourcePools)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +66,7 @@ func (a *apiServer) OverwriteRPWorkspaceBindings(
 
 	masterConfig := config.GetMasterConfig()
 	err = db.OverwriteRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName,
-		masterConfig.ResourceConfig.ResourcePools)
+		masterConfig.ResourcePools)
 	if err != nil {
 		return nil, err
 	}
@@ -105,6 +103,7 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 ) (*apiv1.ListWorkspacesBoundToRPResponse, error) {
 	rpWorkspaceBindings, pagination, err := db.ReadWorkspacesBoundToRP(
 		ctx, req.ResourcePoolName, req.Offset, req.Limit,
+		config.GetMasterConfig().ResourcePools,
 	)
 	if err != nil {
 		return nil, err
