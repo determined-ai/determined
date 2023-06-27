@@ -9,12 +9,12 @@ hyperparameters:
   layer2_dropout: 0.25
   layer3_dropout: 0.5
   global_batch_size: 32
-records_per_epoch: 50000
+records_per_epoch: 500
 searcher:
   name: single
   metric: validation_error
   max_length:
-    epochs: 4
+    epochs: 2
 entrypoint: model_def:CIFARTrial
 min_validation_period:
   epochs: 1

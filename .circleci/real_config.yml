@@ -4071,17 +4071,9 @@ workflows:
           requires:
             - package-and-push-system-local
           extra-pytest-flags: "--no-compare-stats"
-      ## Disabled because the only test in it was moved to quarantine.
-      # - test-e2e-slurm:
-      #     name: test-e2e-slurm-preemption
-      #     mark: "e2e_slurm_preemption"
-      #     slack-mentions: "${SLACK_USER_ID}"
-      #     requires:
-      #       - package-and-push-system-local
-      #     extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
-          name: test-e2e-slurm-preemption-quarantine
-          mark: "e2e_slurm_preemption_quarantine"
+          name: test-e2e-slurm-preemption
+          mark: "e2e_slurm_preemption"
           slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local
