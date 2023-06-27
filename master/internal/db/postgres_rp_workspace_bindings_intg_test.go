@@ -36,9 +36,10 @@ func TestAddAndRemoveBindings(t *testing.T) {
 
 	// Test single insert/delete
 	// Test bulk insert/delete
-	err = AddRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPoolName, []config.ResourcePoolConfig{
-		{PoolName: testPoolName}, {PoolName: testPool2Name},
-	})
+	err = AddRPWorkspaceBindings(ctx,
+		[]int32{workspaceIDs[0]}, testPoolName, []config.ResourcePoolConfig{
+			{PoolName: testPoolName}, {PoolName: testPool2Name},
+		})
 	require.NoError(t, err, "failed to add bindings: %t", err)
 
 	var values []RPWorkspaceBinding
@@ -104,7 +105,8 @@ func TestBindingFail(t *testing.T) {
 	err = AddRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPoolName, poolConfigs)
 	require.Errorf(t, err, "expected error adding binding for workspace %d", workspaceIDs[0])
 	// Test add same binding among bulk transaction - should fail the entire transaction
-	err = AddRPWorkspaceBindings(ctx, []int32{workspaceIDs[1], workspaceIDs[1]}, testPoolName, poolConfigs)
+	err = AddRPWorkspaceBindings(ctx,
+		[]int32{workspaceIDs[1], workspaceIDs[1]}, testPoolName, poolConfigs)
 	require.Errorf(t, err,
 		"expected error adding binding for workspaces %d, %d", workspaceIDs[0], workspaceIDs[1])
 	// Test add workspace that doesn't exist
