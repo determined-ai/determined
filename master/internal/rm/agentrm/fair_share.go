@@ -93,7 +93,7 @@ func fairshareSchedule(
 
 	for it := taskList.Iterator(); it.Next(); {
 		req := it.Value()
-		allocations := taskList.Allocation(req.AllocationRef)
+		allocations := taskList.Allocation(req.AllocationID)
 		if req.SlotsNeeded == 0 && allocations == nil {
 			if fits := findFits(
 				req,
@@ -171,10 +171,9 @@ func calculateGroupStates(
 	for _, state := range states {
 		check.Panic(check.True(state.Group != nil, "the group of a task must not be nil"))
 		for _, req := range state.reqs {
-			allocated := taskList.Allocation(req.AllocationRef)
 			state.slotDemand += req.SlotsNeeded
 			switch {
-			case !tasklist.AssignmentIsScheduled(allocated):
+			case !taskList.IsScheduled(req.AllocationID):
 				state.pendingReqs = append(state.pendingReqs, req)
 			default:
 				if !req.Preemptible {

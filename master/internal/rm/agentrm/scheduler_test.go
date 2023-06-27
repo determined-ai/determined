@@ -165,9 +165,9 @@ func forceSetTaskAllocations(
 		for i := 0; i < numAllocated; i++ {
 			allocated.Resources[sproto.ResourcesID(uuid.NewString())] = containerResources{}
 		}
-		taskList.AddAllocation(req.AllocationRef, allocated)
+		taskList.AddAllocation(req.AllocationID, allocated)
 	} else {
-		taskList.AddAllocation(req.AllocationRef, nil)
+		taskList.AddAllocation(req.AllocationID, nil)
 	}
 }
 
@@ -211,7 +211,15 @@ func assertEqualToRelease(
 		expectedMap[task.ID] = true
 	}
 	for _, taskActor := range actual {
-		task, _ := taskList.TaskByHandler(taskActor)
+		// HACK: Holdover until the scheduler interface doesn't have actors.
+		var task *sproto.AllocateRequest
+		for it := taskList.Iterator(); it.Next(); {
+			req := it.Value()
+			if req.AllocationRef == taskActor {
+				task = req
+				break
+			}
+		}
 		assert.Assert(t, task != nil)
 
 		if task != nil {
@@ -494,6 +502,7 @@ func setupSchedulerStates(
 	taskList := tasklist.New()
 	for _, mockTask := range mockTasks {
 		ref, created := system.ActorOf(actor.Addr(mockTask.ID), mockTask)
+		system.Ask(ref, actor.Ping{})
 		assert.Assert(t, created)
 
 		groups[ref] = &tasklist.Group{Handler: ref}
@@ -545,7 +554,7 @@ func setupSchedulerStates(
 					},
 				},
 			}
-			taskList.AddAllocation(req.AllocationRef, allocated)
+			taskList.AddAllocation(req.AllocationID, allocated)
 		}
 	}
 
