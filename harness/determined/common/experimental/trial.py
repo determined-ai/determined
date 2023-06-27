@@ -83,7 +83,7 @@ class TrialMetrics:
     def _from_bindings(
         cls, metric_report: bindings.v1MetricsReport, metric_type: util.MetricType
     ) -> "TrialMetrics":
-        key = "validation_metrics" if metric_type == util.LEGACY_VALIDATION else "avg_metrics"
+        key = "validation_metrics" if metric_type == util._LEGACY_VALIDATION else "avg_metrics"
         return cls(
             trial_id=metric_report.trialId,
             trial_run_id=metric_report.trialRunId,
@@ -110,7 +110,7 @@ class TrainingMetrics(TrialMetrics):
         cls,
         metric_report: bindings.v1MetricsReport,
     ) -> "TrialMetrics":
-        return super()._from_bindings(metric_report, util.LEGACY_TRAINING)
+        return super()._from_bindings(metric_report, util._LEGACY_TRAINING)
 
 
 class ValidationMetrics(TrialMetrics):
@@ -128,7 +128,7 @@ class ValidationMetrics(TrialMetrics):
     def _from_bindings(  # type: ignore
         cls, metric_report: bindings.v1MetricsReport
     ) -> "TrialMetrics":
-        return super()._from_bindings(metric_report, util.LEGACY_VALIDATION)
+        return super()._from_bindings(metric_report, util._LEGACY_VALIDATION)
 
 
 class TrialReference:

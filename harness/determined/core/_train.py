@@ -7,7 +7,7 @@ import determined as det
 from determined import tensorboard
 from determined.common import api, util
 from determined.common.api import bindings, errors
-from determined.common.util import LEGACY_TRAINING, LEGACY_VALIDATION, Metrics, MetricType
+from determined.common.util import _LEGACY_TRAINING, _LEGACY_VALIDATION, Metrics, MetricType
 from determined.core import DistributedContext, TensorboardMode
 
 logger = logging.getLogger("determined.core")
@@ -99,9 +99,9 @@ class TrainContext:
         # Also sync tensorboard (all metrics, not just json-serializable ones).
         if self._tensorboard_mode == TensorboardMode.AUTO:
             if self._tbd_writer:
-                if metric_type == LEGACY_VALIDATION:
+                if metric_type == _LEGACY_VALIDATION:
                     self._tbd_writer.on_validation_step_end(total_batches, metrics)
-                elif metric_type == LEGACY_TRAINING:
+                elif metric_type == _LEGACY_TRAINING:
                     self._tbd_writer.on_train_step_end(total_batches, metrics, batch_metrics)
                 else:
                     pass  # FIXME
@@ -122,7 +122,7 @@ class TrainContext:
         but may be accessed from the master using the CLI for post-processing.
         """
 
-        self.report_trial_metrics(LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
+        self.report_trial_metrics(_LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
 
     def get_tensorboard_path(self) -> pathlib.Path:
         """
@@ -187,7 +187,7 @@ class TrainContext:
         metric using ``SearcherOperation.report_completed()`` in the Searcher API.
         """
 
-        self.report_trial_metrics(LEGACY_VALIDATION, steps_completed, metrics)
+        self.report_trial_metrics(_LEGACY_VALIDATION, steps_completed, metrics)
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         """
@@ -267,12 +267,12 @@ class DummyTrainContext(TrainContext):
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
         """@deprecated"""
-        self.report_trial_metrics(LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
+        self.report_trial_metrics(_LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
 
     @util.deprecated("use report_trial_metrics() instead")
     def report_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
         """@deprecated"""
-        self.report_trial_metrics(LEGACY_VALIDATION, steps_completed, metrics)
+        self.report_trial_metrics(_LEGACY_VALIDATION, steps_completed, metrics)
 
     def upload_tensorboard_files(
         self,

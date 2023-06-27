@@ -129,9 +129,9 @@ def test_pytorch_parallel() -> None:
     exp_val_batches = (validation_size + (per_slot_batch_size - 1)) // per_slot_batch_size
     patterns = [
         # Expect two training reports.
-        f"report_trial_metrics.*metric_type={util.LEGACY_TRAINING}"
+        f"report_trial_metrics.*metric_type={util._LEGACY_TRAINING}"
         + f".*total_batches={scheduling_unit * 1}",
-        f"report_trial_metrics.*metric_type={util.LEGACY_TRAINING}"
+        f"report_trial_metrics.*metric_type={util._LEGACY_TRAINING}"
         + f".*total_batches={scheduling_unit * 2}",
         f"validated: {validation_size} records.*in {exp_val_batches} batches",
     ]
