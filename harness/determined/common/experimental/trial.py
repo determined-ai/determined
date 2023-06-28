@@ -125,6 +125,13 @@ class Trial:
         trial_id: ID of trial.
         session: HTTP request session.
         hparams: (Mutable, Optional[Dict]) Hyperparameters for the trial.
+        summary: (Mutable, Optional[Dict]) Summary metrics for the trial.
+
+    Note:
+        All attributes are cached by default.
+
+        The `hparams` and `summary` attributes are mutable and may be changed by methods that
+        update these values, either automatically or explicitly with `reload()`.
 
     """
 
@@ -133,6 +140,7 @@ class Trial:
         self._session = session
 
         self.hparams: Optional[Dict[str, Any]] = None
+        self.summary: Optional[Dict[str, Any]] = None
 
     def logs(
         self,
@@ -363,6 +371,7 @@ class Trial:
 
     def _hydrate(self, trial: bindings.trialv1Trial) -> None:
         self.hparams = trial.hparams
+        self.summary = trial.summaryMetrics
 
     def reload(self) -> None:
         """
