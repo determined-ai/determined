@@ -5,7 +5,7 @@ import { optional } from 'ioTypes';
 export const KeyboardShortcut = t.type({
   alt: t.boolean,
   ctrl: t.boolean,
-  key: optional(t.string),
+  key: t.string,
   meta: t.boolean,
   shift: t.boolean,
 });
