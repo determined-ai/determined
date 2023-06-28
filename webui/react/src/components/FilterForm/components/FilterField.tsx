@@ -105,9 +105,14 @@ const FilterField = ({
       case 'searcherType':
         return SEARCHER_TYPE.map((searcher) => ({ label: searcher, value: searcher }));
       case 'user':
-        return users
-          .map((user) => ({ label: user.displayName || user.username, value: user.id }))
-          .sort((a, b) => alphaNumericSorter(a.label, b.label));
+        return (
+          users
+            .map((user) => ({ label: user.displayName || user.username, value: user.id }))
+            // getUsers sorts the users similarly but uses nullish coalescing
+            // which doesn't work because the backend sends null strings in the
+            // database as empty strings
+            .sort((a, b) => alphaNumericSorter(a.label, b.label))
+        );
     }
   };
 
@@ -168,6 +173,19 @@ const FilterField = ({
     [field.type, formStore, index, inputOpen, isSpecialColumn, parentId],
   );
 
+  const selectedUser =
+    field.columnName === 'user'
+      ? Loadable.getOrElse(null, userStore.getUser(Number(field.value)).get())
+      : null;
+
+  const valueSelectValue =
+    field.columnName === 'user'
+      ? {
+          label: selectedUser?.displayName || selectedUser?.username,
+          value: field.value?.toString() || '',
+        }
+      : field.value?.toString();
+
   return (
     <div className={css.base} ref={(node) => drop(node)}>
       <ConjunctionContainer
@@ -211,7 +229,7 @@ const FilterField = ({
           <div onKeyDownCapture={captureEnterKeyDown}>
             <Select
               options={getSpecialOptions(field.columnName as SpecialColumnNames)}
-              value={fieldValue?.toString()}
+              value={valueSelectValue}
               width={'100%'}
               onChange={(value) => {
                 const val = value?.toString() ?? null;
