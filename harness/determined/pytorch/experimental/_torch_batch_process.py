@@ -34,11 +34,13 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
     def to_device(
         self, data: pytorch._Data, warned_types: Optional[Set[Type]] = None
     ) -> pytorch.TorchData:
-        """Map generated data to the device allocated by the Determined cluster.
+        """
+        Accept np.ndarray, torch.Tensor, list, or dictionary. Recursively convert any ndarrays to
+        tensors and call .to() on any tensors or data types that have custom serialization logic
+        defined via a callable to() attribute.
 
-        All the data in the data loader and the models are automatically moved to the
-        allocated device. This method aims at providing a function for the data generated
-        on the fly.
+        If the data cannot be moved to device, log a warning (only once per type) and return the
+        original data.
         """
         return pytorch.to_device(data, self.device, warned_types)
 
@@ -56,6 +58,11 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         return self._tensorboard_path
 
     def prepare_model_for_inference(self, model: nn.Module) -> nn.Module:
+        """
+        Set model to eval mode and send model to device
+        Arguments:
+            model: a nn.Module
+        """
         model.eval()
         model.to(self.device)
         return model
@@ -114,8 +121,7 @@ class TorchBatchProcessor(metaclass=abc.ABCMeta):
     def __init__(self, context: TorchBatchProcessorContext) -> None:
         """
         User can initialize necessary resources in the init function, such as
-        - model for prediction
-        - storage client (e.g. s3 client)
+        model for prediction
 
         Arguments:
             context: an TorchBatchProcessorContext instance
@@ -185,6 +191,7 @@ def _report_progress_to_master(
     batch_size: int,
     dataset_len: int,
 ) -> None:
+    # TODO: update after searcher context removal to report to master
     records_processed = batch_idx * total_worker * batch_size
     completion_rate = records_processed / dataset_len
     searcher_op.report_progress(completion_rate)
