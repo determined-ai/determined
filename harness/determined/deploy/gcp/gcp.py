@@ -35,7 +35,7 @@ terraform {
 
 
 def deploy(configs: Dict, env: Dict, variables_to_exclude: List, dry_run: bool = False) -> None:
-    validate_gcp_credentials(configs)
+    set_validate_gcp_credentials(configs)
     if not configs.get("no_preflight_checks"):
         check_quota(configs)
 
@@ -322,27 +322,38 @@ def run_command(command: List[str], env: Dict[str, str], cwd: Optional[str] = No
     subprocess.check_call(command, env=env, stdout=sys.stdout, cwd=cwd)
 
 
-def validate_gcp_credentials(configs: Dict) -> None:
-    vars_file_path = get_terraform_vars_file_path(configs)
-    # Try to load google credentials from terraform vars when present.
-    if os.path.exists(vars_file_path):
-        tf_vars = terraform_read_variables(vars_file_path)
-        set_gcp_credentials_env(tf_vars)
+def set_validate_gcp_credentials(
+    configs: Optional[Dict] = None, keypath: Optional[str] = None
+) -> None:
+    """Sets and validates GCP Credentials.
+    - If det_configs are available, then uses that to set credentials
+    - Else if only keypath is available, then uses it set credentials
+    - If none are available/provided, validates if credentials are set and valid
+    """
+    if keypath:
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = keypath
+    if configs:
+        vars_file_path = get_terraform_vars_file_path(configs)
+        # Try to load google credentials from terraform vars when present.
+        if os.path.exists(vars_file_path):
+            tf_vars = terraform_read_variables(vars_file_path)
+            set_gcp_credentials_env(tf_vars)
 
     try:
         googleapiclient.discovery.build("compute", "v1")
-    except DefaultCredentialsError:
-        print(
-            colored("Unable to locate GCP credentials.", "red"),
-            "Please set %s or explicitly create credentials"
-            % colored("GOOGLE_APPLICATION_CREDENTIALS", "yellow"),
-            "and re-run the application. ",
-            "For more information, please see",
-            "https://docs.determined.ai/latest/sysadmin-deploy-on-gcp/install-gcp.html#credentials",
-            "and",
-            "https://cloud.google.com/docs/authentication/getting-started",
+    except DefaultCredentialsError as exc:
+        err = (
+            colored("Unable to locate GCP credentials.", "red")
+            + " Please set "
+            + colored("GOOGLE_APPLICATION_CREDENTIALS", "yellow")
+            + " or explicitly create credentials "
+            + "and re-run the application. "
+            + "For more information, please see "
+            + "https://docs.determined.ai/latest/sysadmin-deploy-on-gcp/install-gcp.html#credential"
+            + "s and "
+            + "https://cloud.google.com/docs/authentication/getting-started"
         )
-        sys.exit(1)
+        raise CliError(err) from exc
 
 
 def set_gcp_credentials_env(tf_vars: Dict) -> None:
@@ -357,21 +368,9 @@ def wait_for_master(configs: Dict, env: Dict, timeout: int = 300) -> None:
 
 
 def check_or_create_gcsbucket(project_id: str, keypath: Optional[str] = None) -> None:
-    if keypath:
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = keypath
+    set_validate_gcp_credentials(keypath=keypath)
     bucket_name = project_id + "-determined-deploy"
-    try:
-        storage_service = googleapiclient.discovery.build("storage", "v1")
-    except DefaultCredentialsError as exc:
-        raise CliError(
-            "Unable to locate GCP credentials. Please set GOOGLE_APPLICATION_CREDENTIALS "
-            + "or explicitly create credentials and re-run the application. "
-            + "For more information, please see "
-            + "https://docs.determined.ai/latest/sysadmin-deploy-on-gcp/install-gcp.html#credential"
-            + "s and "
-            + "https://cloud.google.com/docs/authentication/getting-started"
-        ) from exc
-
+    storage_service = googleapiclient.discovery.build("storage", "v1")
     try:
         storage_service.buckets().get(bucket=bucket_name).execute()
     except HttpError as err:
@@ -384,8 +383,9 @@ def check_or_create_gcsbucket(project_id: str, keypath: Optional[str] = None) ->
             raise
 
 
-def list_clusters(bucket_name: str, print_format: str = "table") -> None:
-    storage_client = storage.Client()
+def list_clusters(bucket_name: str, project_id: str, print_format: str = "table") -> None:
+    set_validate_gcp_credentials()
+    storage_client = storage.Client(project=project_id)
     blobs = storage_client.list_blobs(bucket_name)
     cluster_list = [["Cluster ID"]]
     for blob in blobs:
