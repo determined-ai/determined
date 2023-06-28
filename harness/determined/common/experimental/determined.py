@@ -104,7 +104,7 @@ class Determined:
             yield from ()
         assert users_bindings  # mypy needs help.
         for user_b in users_bindings:
-            yield self._from_bindings(user_b)
+            yield user.User._from_bindings(user_b, self._session)
 
     def create_experiment(
         self,
