@@ -195,9 +195,9 @@ class Actions:
             cherry_pick_pr(pr_id)
         else:
             title = gql.get_pr_title(id=pr_id)["node"]["title"]
-            if re.match("(feat|fix):", title) is not None:
+            if re.match(r"(feat|fix)\S*:", title, re.IGNORECASE) is not None:
                 print("Adding feat/fix PR")
-            elif re.match("[a-z]+:", title) is not None:
+            elif re.match(r"\S+:", title, re.IGNORECASE) is not None:
                 print("Skipping non-feat/fix PR")
                 return
             else:
