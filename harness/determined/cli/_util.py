@@ -133,3 +133,15 @@ def wait_ntsc_ready(session: api.Session, ntsc_type: api.NTSC_Kind, eid: str) ->
     loading_animator.clear(msg)
     if err_msg:
         raise errors.CliError(err_msg)
+
+
+# not_found_errs mirrors NotFoundErrs from the golang api/errors.go. In the cases where
+# Python errors override the golang errors, this ensures the error messages stay consistent.
+def not_found_errs(
+    category: str, name: str, session: api.Session
+) -> api.errors.BadRequestException:
+    resp = bindings.get_GetMaster(session)
+    msg = f"{category} '{name}' not found"
+    if not resp.to_json().get("rbacEnabled"):
+        return api.errors.NotFoundException(msg)
+    return api.errors.NotFoundException(msg + ", please check your permissions.")
