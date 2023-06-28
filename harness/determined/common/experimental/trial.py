@@ -115,16 +115,24 @@ class ValidationMetrics:
 
 class Trial:
     """
-    A Trial object is usually obtained from
-    ``determined.experimental.client.get_trial()``.
+    A class representing a Trial object.
 
-    Trial reference class used for querying relevant
-    :class:`~determined.experimental.Checkpoint` instances.
+    A Trial object is usually obtained from ``determined.experimental.client.get_trial()``.
+    Trial reference class used for querying relevant :class:`~determined.experimental.Checkpoint`
+    instances.
+
+    Attributes:
+        trial_id: ID of trial.
+        session: HTTP request session.
+        hparams: (Mutable, Optional[Dict]) Hyperparameters for the trial.
+
     """
 
     def __init__(self, trial_id: int, session: api.Session):
         self.id = trial_id
         self._session = session
+
+        self.hparams: Optional[Dict[str, Any]] = None
 
     def logs(
         self,
@@ -353,6 +361,16 @@ class Trial:
     def __repr__(self) -> str:
         return "Trial(id={})".format(self.id)
 
+    def _hydrate(self, trial: bindings.trialv1Trial) -> None:
+        self.hparams = trial.hparams
+
+    def reload(self) -> None:
+        """
+        Explicit refresh of cached properties.
+        """
+        resp = bindings.get_GetTrial(session=self._session, trialId=self.id).trial
+        self._hydrate(resp)
+
     def stream_training_metrics(self) -> Iterable[TrainingMetrics]:
         """
         Streams training metrics for this trial sorted by
@@ -366,6 +384,12 @@ class Trial:
         trial_id, trial_run_id and steps_completed.
         """
         return _stream_validation_metrics(self._session, [self.id])
+
+    @classmethod
+    def _from_bindings(cls, trial_bindings: bindings.trialv1Trial, session: api.Session) -> "Trial":
+        trial = cls(trial_bindings.id, session)
+        trial._hydrate(trial_bindings)
+        return trial
 
 
 # This is to shorten line lengths of the TrialSortBy definition.
