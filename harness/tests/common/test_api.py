@@ -20,10 +20,10 @@ def gen_make_url_cases() -> List[Case]:
         Case("http://localhost:8080/proxied/", "", f"{host}/proxied/"),
         Case("http://localhost:8080/proxied", "", f"{host}/proxied"),
         # unsupported cases
-        # Case("http://localhost:8080/proxied", "/api/v1/experiments", f"{host}/proxied/{path}"),
-        # Case("http://localhost:8080/proxied", "api/v1/experiments/", f"{host}/proxied/{path}/"),
-        # Case("http://localhost:8080/proxied/", "/api/v1/experiments", f"{host}/proxied/{path}"),
-        # Case("http://localhost:8080/proxied/", "api/v1/experiments/", f"{host}/proxied/{path}/"),
+        # Case("http://localhost:8080/proxied", f"/{path}", f"{host}/proxied/{path}"),
+        # Case("http://localhost:8080/proxied", f"{path}/", f"{host}/proxied/{path}/"),
+        # Case("http://localhost:8080/proxied/", f"/{path}", f"{host}/proxied/{path}"),
+        # Case("http://localhost:8080/proxied/", f"{path}/", f"{host}/proxied/{path}/"),
     ]
     return cases
 
