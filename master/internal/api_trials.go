@@ -942,6 +942,70 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 	return nil
 }
 
+// // TODO: Add comment
+// func (a *apiServer) CreateTrialSourceInfo(
+// 	ctx context.Context, req *apiv1.CreateTrialSourceInfoRequest,
+// ) (*apiv1.CreateTrialSourceInfoResponse, error) {
+// 	return nil, nil
+// 	// curUser, _, err := grpcutil.GetUser(ctx)
+// 	// if err != nil {
+// 	// 	return nil, fmt.Errorf("failed to create trial source info %w", err)
+// 	// }
+
+// 	// container := &apiv1.ComparableTrial{Trial: &trialv1.Trial{}}
+// 	// switch err := a.m.db.QueryProto(
+// 	// 	"insert_trial_source_info",
+// 	// 	container.Trial,
+// 	// 	trialID
+// 	// ); {
+// 	// // case err == db.ErrNotFound:
+// 	// // 	return nil, status.Errorf(codes.NotFound, "trial %d not found:", trialID)
+// 	// case err != nil:
+// 	// 	return nil, errors.Wrapf(err, "failed to get trial %d", trialID)
+// 	// }
+
+// 	// return nil, nil
+
+// 	// OTHER CODE
+
+// 	// err = checkTrialFiltersEmpty(req.Filters)
+// 	// if err != nil {
+// 	// 	return nil, err
+// 	// }
+
+// 	// if req.ProjectId == 0 {
+// 	// 	return nil, errors.New("failed to create trials collection: must specify project_id")
+// 	// }
+// 	// err = AuthZProvider.Get().CanCreateTrialCollection(ctx, curUser, req.ProjectId)
+// 	// if authz.IsPermissionDenied(err) {
+// 	// 	return nil, status.Error(
+// 	// 		codes.PermissionDenied,
+// 	// 		"unable to create collection",
+// 	// 	)
+// 	// }
+// 	// if err != nil {
+// 	// 	return nil, fmt.Errorf("unable to create collection %w", err)
+// 	// }
+
+// 	// collection := TrialsCollection{
+// 	// 	UserID:    int32(curUser.ID),
+// 	// 	Name:      req.Name,
+// 	// 	ProjectID: req.ProjectId,
+// 	// 	Filters:   req.Filters,
+// 	// 	Sorter:    req.Sorter,
+// 	// }
+// 	// _, err = db.Bun().NewInsert().
+// 	// 	Model(&collection).
+// 	// 	Returning("*").
+// 	// 	Exec(ctx)
+// 	// if err != nil {
+// 	// 	return nil, fmt.Errorf("error in creating collection %w", err)
+// 	// }
+
+// 	// resp := &apiv1.CreateTrialsCollectionResponse{Collection: collection.Proto()}
+// 	// return resp, nil
+// }
+
 func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWorkloadsRequest) (
 	*apiv1.GetTrialWorkloadsResponse, error,
 ) {
