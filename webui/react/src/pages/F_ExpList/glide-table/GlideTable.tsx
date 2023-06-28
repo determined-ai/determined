@@ -219,10 +219,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   }, [clearSelectionTrigger]);
 
   useEffect(() => {
-    const loadedRows = data.filter(Loadable.isLoaded);
-    if (loadedRows.length !== data.length) return;
-
-    if (!selection.rows.length && selectedExperimentIds.length) {
+    if (selection.rows.length !== selectedExperimentIds.length) {
       setSelection(({ columns, rows }: GridSelection) => {
         data.forEach((loadableRow, idx) => {
           Loadable.map(loadableRow, (row) => {
@@ -234,7 +231,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         return { columns, rows };
       });
     }
-  }, [selection.rows, selectedExperimentIds, setSelectedExperimentIds, data]);
+  }, [selection.rows, selectedExperimentIds, data]);
 
   const columnDefs = useMemo<Record<string, ColumnDef>>(
     () =>
@@ -297,8 +294,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const deselectAllRows = useCallback(() => {
     setSelectAll(false);
+    setSelectedExperimentIds([]);
     setSelection((prev) => ({ ...prev, rows: CompactSelection.empty() }));
-  }, [setSelectAll, setSelection]);
+  }, [setSelectAll, setSelection, setSelectedExperimentIds]);
 
   const selectAllRows = useCallback(() => {
     setExcludedExperimentIds(() => new Set());
