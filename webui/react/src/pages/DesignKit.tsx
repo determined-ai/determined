@@ -962,7 +962,7 @@ const InlineFormSection: React.FC = () => {
           <code>{'initialInputValue'}</code> and <code>{'selectSearchable'}</code>
         </p>
         <br />
-        <div style={{ maxWidth: '500px' }}>
+        <div style={{ maxWidth: '700px' }}>
           <InlineForm label="Input" type="input" onSubmit={fooCallback} />
           <InlineForm
             defaultSelectOption={1}

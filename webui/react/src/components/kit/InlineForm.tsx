@@ -92,7 +92,7 @@ const InlineForm: React.FC<Props> = ({
                 onClick={() => submitForm()}
               />
             </Form.Item>
-            <Form.Item className={css.cancelButton}>
+            <Form.Item>
               <Button
                 icon={<Icon name="close-small" size="tiny" title="cancel" />}
                 type="default"
@@ -101,7 +101,7 @@ const InlineForm: React.FC<Props> = ({
             </Form.Item>
           </>
         ) : (
-          <Form.Item className={css.cancelButton}>
+          <Form.Item>
             <Button
               icon={<Icon name="pencil" size="small" title="edit" />}
               type="default"
