@@ -976,6 +976,12 @@ export interface ProjectColumn {
   displayName?: string;
 }
 
+export interface ProjectMetricsRange {
+  metricsName: string;
+  min: number;
+  max: number;
+}
+
 export interface Permission {
   id: Api.V1PermissionType;
   scopeCluster: boolean;

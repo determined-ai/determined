@@ -18,7 +18,7 @@ import Pagination from 'components/kit/Pagination';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
-import { getProjectColumns, searchExperiments } from 'services/api';
+import { getProjectColumns, getProjectNumericMetricsRange, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters, V1LocationType } from 'services/api-ts-sdk';
 import {
   ExperimentAction,
@@ -26,6 +26,7 @@ import {
   ExperimentWithTrial,
   Project,
   ProjectColumn,
+  ProjectMetricsRange,
   RunState,
 } from 'types';
 import handleError from 'utils/error';
@@ -105,6 +106,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
+  const [projectHeatmap, setProjectHeatmap] = useState<ProjectMetricsRange[]>([]);
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const filtersString = useObservable(formStore.asJsonString);
   const loadableFormset = useObservable(formStore.formset);
@@ -294,11 +296,14 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             : 0,
         );
 
+        const heatMap = await getProjectNumericMetricsRange({ id: project.id });
+        setProjectHeatmap(heatMap);
+
         if (mounted) {
           setProjectColumns(Loaded(columns));
         }
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to fetch project columns' });
+        handleError(e, { publicSubject: 'Unable to fetch project columns or heatmap' });
       }
     })();
     return () => {
@@ -547,6 +552,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
                 project={project}
                 projectColumns={projectColumns}
+                projectHeatmap={projectHeatmap}
                 rowHeight={settings.rowHeight}
                 scrollPositionSetCount={scrollPositionSetCount}
                 selectAll={selectAll}

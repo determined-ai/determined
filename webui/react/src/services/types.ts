@@ -492,6 +492,10 @@ export interface GetProjectColumnsParams {
   id: number;
 }
 
+export interface GetProjectNumericMetricsRangeParams {
+  id: number;
+}
+
 export interface ArchiveWorkspaceParams {
   id: number;
 }

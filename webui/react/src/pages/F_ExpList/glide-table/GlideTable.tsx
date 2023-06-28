@@ -40,7 +40,7 @@ import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'stores/contexts/UI';
 import usersStore from 'stores/users';
-import { ExperimentWithTrial, Project, ProjectColumn } from 'types';
+import { ExperimentWithTrial, Project, ProjectColumn, ProjectMetricsRange } from 'types';
 import { Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
@@ -70,6 +70,7 @@ import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
 import { BatchAction } from './TableActionBar';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
+import { isEmpty } from 'fp-ts/lib/ReadonlyRecord';
 
 export interface GlideTableProps {
   clearSelectionTrigger?: number;
@@ -87,6 +88,7 @@ export interface GlideTableProps {
   page: number;
   project?: Project;
   projectColumns: Loadable<ProjectColumn[]>;
+  projectHeatmap: ProjectMetricsRange[];
   rowHeight: RowHeight;
   selectedExperimentIds: number[];
   setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
@@ -157,6 +159,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   staticColumns,
   pinnedColumnsCount,
   setPinnedColumnsCount,
+  projectHeatmap,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
   const [hoveredRow, setHoveredRow] = useState<number>();
@@ -216,6 +219,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   // Detect if user just click a row away from current selected group.
   // If this stand alone select is set, use it as the base when doing multi select.
   const [standAloneSelect, setStandAloneSelect] = React.useState<number>();
+
+  const [heatmapApplied, setHeatmapApplied] = React.useState<string[]>([]);
 
   useEffect(() => {
     if (clearSelectionTrigger === 0) return;
@@ -280,6 +285,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           colorMap[record.experiment.id] ? { accentColor: colorMap[record.experiment.id] } : {},
         NotLoaded: () => ({}),
       });
+      !isEmpty(rowColorTheme) && console.log({rowColorTheme})
       return { ...rowColorTheme, ...hoverStyle };
     },
     [colorMap, data, hoveredRow],
@@ -317,6 +323,17 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       }));
     }
   }, [data, previousData, selectAll]);
+
+  const applyHeadmap = useCallback((col: string) => {
+    setHeatmapApplied((prev) => (
+      prev.includes(col) ? prev.filter(p => p !== col) : [...prev, col]
+    )
+    );
+  }, []);
+
+  useEffect(() => {
+    console.log({heatmapApplied, projectHeatmap})
+  }, [heatmapApplied, projectHeatmap])
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, { bounds }: HeaderClickedEventArgs) => {
@@ -409,6 +426,17 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 },
               },
             ]),
+        column.type === V1ColumnType.NUMBER &&
+        (column.location === V1LocationType.VALIDATIONS ||
+          column.location === V1LocationType.TRAINING)
+          ? {
+              key: 'heatmap',
+              label: heatmapApplied.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
+              onClick: () => {
+                applyHeadmap(column.column);
+              },
+            }
+          : null,
         // Column is pinned if the index is inside of the frozen columns
         col < staticColumns.length
           ? null
@@ -455,6 +483,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       sortableColumnIds,
       setSortableColumnIds,
       setPinnedColumnsCount,
+      heatmapApplied,
+      applyHeadmap,
     ],
   );
 

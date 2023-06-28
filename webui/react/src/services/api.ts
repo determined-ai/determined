@@ -686,6 +686,12 @@ export const getProjectColumns = generateDetApi<
   Type.ProjectColumn[]
 >(Config.getProjectColumns);
 
+export const getProjectNumericMetricsRange = generateDetApi<
+  Service.GetProjectNumericMetricsRangeParams,
+  Api.V1GetProjectNumericMetricsRangeResponse,
+  Type.ProjectMetricsRange[]
+>(Config.getProjectNumericMetricsRange);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<
