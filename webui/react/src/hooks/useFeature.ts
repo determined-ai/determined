@@ -8,7 +8,7 @@ export type ValidFeature = 'dashboard' | 'explist_v2' | 'chart' | 'rp_binding';
 const FeatureDefault: { [K in ValidFeature]: boolean } = {
   chart: false,
   dashboard: false,
-  explist_v2: false,
+  explist_v2: true,
   rp_binding: false,
 };
 
