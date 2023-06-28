@@ -32,6 +32,11 @@ def make_url(master_address: str, suffix: str) -> str:
     return parse.urljoin(parsed.geturl(), suffix)
 
 
+def make_url_old(master_address: str, suffix: str) -> str:
+    parsed = parse_master_address(master_address)
+    return parse.urljoin(parsed.geturl(), suffix)
+
+
 def maybe_upgrade_ws_scheme(master_address: str) -> str:
     parsed = parse.urlparse(master_address)
     if parsed.scheme == "https":

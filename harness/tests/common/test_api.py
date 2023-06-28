@@ -42,4 +42,4 @@ def test_make_url_old() -> None:
         ),  # invalid path. unexpected case.
     ]
     for base, path, expected in odd_cases:
-        assert request.make_url(base, path) == expected, f"base: {base}, path: {path}"
+        assert request.make_url_old(base, path) == expected, f"base: {base}, path: {path}"
