@@ -28,6 +28,7 @@ def parse_master_address(master_address: str) -> parse.ParseResult:
 
 
 def make_url(master_address: str, suffix: str) -> str:
+    """@deprecated use make_url_new instead"""
     parsed = parse_master_address(master_address)
     return parse.urljoin(parsed.geturl(), suffix)
 
