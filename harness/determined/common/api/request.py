@@ -35,7 +35,7 @@ def make_url(master_address: str, suffix: str) -> str:
 def make_url_new(master_address: str, suffix: str) -> str:
     parsed_suffix = parse.urlparse(suffix)
     if parsed_suffix.scheme and parsed_suffix.netloc:
-        raise ValueError("Suffix should not be an absolute URL")
+        return make_url(master_address, suffix)
     parsed = parse_master_address(master_address)
     return parse.urljoin(parsed.geturl(), suffix)
 

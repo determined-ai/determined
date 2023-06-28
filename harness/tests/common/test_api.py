@@ -23,9 +23,9 @@ def gen_make_url_new_cases() -> List[Case]:
         Case("http://localhost:8080/proxied", f"{path}/", f"{host}/proxied/{path}/"),
         Case("http://localhost:8080/proxied/", f"/{path}", f"{host}/proxied/{path}"),
         Case("http://localhost:8080/proxied/", f"{path}/", f"{host}/proxied/{path}/"),
-        # Case(
-        #     "http://localhost:8080", f"{host}/{path}/", f"{host}/{path}/"
-        # ),  # invalid path. unexpected case.
+        Case(
+            "http://localhost:8080", f"{host}/{path}/", f"{host}/{path}/"
+        ),  # invalid path. unexpected case.
     ]
     return cases
 
