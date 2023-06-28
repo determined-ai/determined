@@ -170,14 +170,21 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
-  const selectedExperimentIds = useMemo(
-    () => (isLoadingSettings ? [] : settings.selectedExperimentIds),
-    [isLoadingSettings, settings.selectedExperimentIds],
-  );
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
+  useEffect(() => {
+    if (!isLoading) { // loading experiment data first
+      setSelectedExperimentIds(settings.selectedExperimentIds);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
   const handleExperimentSelection = useCallback(
-    (selectedExperimentIds: number[]) => {
+    (setIds: number[]) => {
+      if (setIds === selectedExperimentIds) return;
+      setSelectedExperimentIds(setIds);
       updateSettings({
-        selectedExperimentIds,
+        selectedExperimentIds: setIds,
       });
     },
     [updateSettings],
@@ -197,7 +204,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
 

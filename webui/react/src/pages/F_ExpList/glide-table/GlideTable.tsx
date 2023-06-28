@@ -219,19 +219,14 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   }, [clearSelectionTrigger]);
 
   useEffect(() => {
-    if (selection.rows.length !== selectedExperimentIds.length) {
-      setSelection(({ columns, rows }: GridSelection) => {
-        data.forEach((loadableRow, idx) => {
-          Loadable.map(loadableRow, (row) => {
-            if (selectedExperimentIds.includes(row.experiment.id)) {
-              rows = rows.add([idx, idx + 1]);
-            }
-          });
-        });
-        return { columns, rows };
-      });
-    }
-  }, [selection.rows, selectedExperimentIds, data]);
+    const selectedRowIndices = selection.rows.toArray();
+    const selectedIds = selectedRowIndices
+      .map((idx) => data?.[idx])
+      .filter((row) => row !== undefined)
+      .filter(Loadable.isLoaded)
+      .map((record) => record.data.experiment.id);
+    setSelectedExperimentIds(selectedIds);
+  }, [selection.rows, setSelectedExperimentIds, data]);
 
   const columnDefs = useMemo<Record<string, ColumnDef>>(
     () =>
