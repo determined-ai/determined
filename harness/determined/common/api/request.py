@@ -27,12 +27,12 @@ def parse_master_address(master_address: str) -> parse.ParseResult:
     return parsed
 
 
-def make_url(master_address: str, suffix: str) -> str:
+def make_url_new(master_address: str, suffix: str) -> str:
     parsed = parse_master_address(master_address)
     return parse.urljoin(parsed.geturl(), suffix)
 
 
-def make_url_old(master_address: str, suffix: str) -> str:
+def make_url(master_address: str, suffix: str) -> str:
     parsed = parse_master_address(master_address)
     return parse.urljoin(parsed.geturl(), suffix)
 
