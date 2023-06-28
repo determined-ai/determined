@@ -30,6 +30,7 @@ def test_notebook_proxy() -> None:
 
     def get_proxy(session: api.Session, task_id: str):
         url = conf.make_master_url(f"proxy/{task_id}/")
+        print(f"getting {url}")
         session.get(url)
 
     typ = NTSC_Kind.notebook

@@ -1164,11 +1164,15 @@ func (m *Master) Run(ctx context.Context) error {
 
 	handler := proxy.DefaultProxy.NewProxyHandler("service")
 	m.echo.Any("/proxy/:service/*", handler)
+	m.echo.Any("/proxy/*", func(c echo.Context) error {
+		return echo.NewHTTPError(http.StatusNotImplemented, "not implemented")
+	})
 
 	// Catch-all for requests not matched by any above handler
 	// echo does not set the response error on the context if no handler is matched
 	m.echo.Any("/*", func(c echo.Context) error {
-		return echo.ErrNotFound
+		log.Errorf("unmatched request: %s", c.Request().URL.Path)
+		return echo.NewHTTPError(http.StatusNotFound, "api not found")
 	})
 
 	user.RegisterAPIHandler(m.echo, userService)
