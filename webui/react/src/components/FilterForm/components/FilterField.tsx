@@ -67,10 +67,6 @@ const FilterField = ({
 
   const [inputOpen, setInputOpen] = useState(false);
   const [fieldValue, setFieldValue] = useState<FormFieldValue>(field.value);
-  const selectedUser = Loadable.getOrElse(
-    null,
-    useObservable(userStore.getUser(Number(fieldValue))),
-  );
 
   // use this function to update field value
   const updateFieldValue = (fieldId: string, value: FormFieldValue, debounceUpdate = false) => {
@@ -111,7 +107,10 @@ const FilterField = ({
       case 'user':
         return (
           users
-            .map((user) => ({ label: user.displayName || user.username, value: user.id }))
+            .map((user) => ({
+              label: user.displayName || user.username,
+              value: user.id.toString(),
+            }))
             // getUsers sorts the users similarly but uses nullish coalescing
             // which doesn't work because the backend sends null strings in the
             // database as empty strings
@@ -177,14 +176,6 @@ const FilterField = ({
     [field.type, formStore, index, inputOpen, isSpecialColumn, parentId],
   );
 
-  const valueSelectValue =
-    field.columnName === 'user'
-      ? {
-          label: selectedUser?.displayName || selectedUser?.username,
-          value: field.value?.toString() || '',
-        }
-      : field.value?.toString();
-
   return (
     <div className={css.base} ref={(node) => drop(node)}>
       <ConjunctionContainer
@@ -228,7 +219,7 @@ const FilterField = ({
           <div onKeyDownCapture={captureEnterKeyDown}>
             <Select
               options={getSpecialOptions(field.columnName as SpecialColumnNames)}
-              value={valueSelectValue}
+              value={fieldValue ?? undefined}
               width={'100%'}
               onChange={(value) => {
                 const val = value?.toString() ?? null;
