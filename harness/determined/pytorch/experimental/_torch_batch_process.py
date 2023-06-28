@@ -110,24 +110,33 @@ def _initialize_default_inference_context(
 
 
 class TorchBatchProcessor(metaclass=abc.ABCMeta):
-    """
-    User can initialize necessary resources in the init function, such as
-    - model for prediction
-    - storage client (e.g. s3 client)
-    """
-
     @abc.abstractmethod
     def __init__(self, context: TorchBatchProcessorContext) -> None:
+        """
+        User can initialize necessary resources in the init function, such as
+        - model for prediction
+        - storage client (e.g. s3 client)
+
+        Arguments:
+            context: an TorchBatchProcessorContext instance
+        """
         pass
 
     @abc.abstractmethod
     def process_batch(self, batch: Any, batch_idx: int) -> None:
+        """
+        This function will be called with every batch of data in the dataset
+        Arguments:
+            batch: a batch of data of the dataset passed into torch_batch_process
+            batch_idx: index of the batch. Note that index is per worker. For example, if there are
+                8 batches of data to process and 4 workers, each worker would get two batches of
+                data (batch_idx = 0 and batch_idx = 1)
+        """
         pass
 
     def on_checkpoint_start(self) -> None:  # noqa: B027
         """
-        Overwrite this function to run certain logic before checkpointing
-        This function will be called right before each checkpoint.
+        This function will be called right before each checkpoint
         """
         pass
 
