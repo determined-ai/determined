@@ -72,8 +72,6 @@ type (
 		rendezvous *rendezvous
 		// proxy state
 		proxies []string
-		// active all gather state
-		allGather *allGather
 		// records whether the allocation has completed any all gathers.
 		allGatherFinished bool
 
@@ -106,9 +104,7 @@ type (
 		Containers map[sproto.ResourcesID][]cproto.Container
 	}
 	// AllocationReady marks an allocation as ready.
-	AllocationReady struct {
-		Message string
-	}
+	AllocationReady struct{}
 	// AllocationWaiting marks an allocation as waiting.
 	AllocationWaiting struct {
 		Message string
@@ -309,36 +305,6 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			}
 		default:
 			a.Error(ctx, actor.ErrUnexpectedMessage(ctx))
-		}
-	case WatchAllGather, UnwatchAllGather, allGatherTimeout:
-		if a.allGather == nil {
-			switch msg.(type) {
-			case WatchAllGather:
-				a.allGather = newAllGather(ctx)
-			case UnwatchAllGather, allGatherTimeout:
-				// Ignore without active all gather.
-				return nil
-			}
-		}
-
-		switch msg := ctx.Message().(type) {
-		case WatchAllGather:
-			watcher := a.allGather.watch(msg)
-			ctx.Respond(watcher)
-		case UnwatchAllGather:
-			a.allGather.unwatch(msg)
-		case allGatherTimeout:
-			if err := a.allGather.checkTimeout(msg); err != nil {
-				a.sendTaskLog(&model.TaskLog{Log: err.Error()})
-				ctx.Log().WithError(err).Error("performing all gather through master")
-			}
-		default:
-			return actor.ErrUnexpectedMessage(ctx)
-		}
-
-		if a.allGather.done() {
-			a.allGather = nil
-			a.allGatherFinished = true
 		}
 	case sproto.InvalidResourcesRequestError:
 		ctx.Tell(a.req.AllocationRef, msg)

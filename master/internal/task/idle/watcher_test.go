@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 )
 
@@ -25,14 +27,15 @@ func TestIdleTimeoutWatcherUseRunnerState(t *testing.T) {
 
 	RecordActivity(cfg.ServiceID)
 
-	waitForCondition(10*timeout, actionDone.Load)
+	require.True(t, waitForCondition(10*timeout, actionDone.Load))
 }
 
-func waitForCondition(timeout time.Duration, condition func() bool) {
+func waitForCondition(timeout time.Duration, condition func() bool) bool {
 	for i := 0; i < int(timeout/TickInterval); i++ {
 		if condition() {
-			return
+			return true
 		}
 		time.Sleep(TickInterval)
 	}
+	return false
 }
