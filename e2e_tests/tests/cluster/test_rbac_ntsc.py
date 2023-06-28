@@ -288,9 +288,8 @@ def test_ntsc_iface_access() -> None:
 def test_ntsc_proxy() -> None:
     def get_proxy(creds: authentication.Credentials, task_id: str) -> Optional[errors.APIException]:
         session = determined_test_session(creds)
-        url = conf.make_master_url(f"proxy/{task_id}/")
         try:
-            session.get(url)
+            session.get(f"proxy/{task_id}/")
             return None
         except errors.APIException as e:
             return e
