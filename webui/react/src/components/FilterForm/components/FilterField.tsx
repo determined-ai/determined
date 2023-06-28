@@ -106,12 +106,8 @@ const FilterField = ({
         return SEARCHER_TYPE.map((searcher) => ({ label: searcher, value: searcher }));
       case 'user':
         return users
-          .sort((a, b) => alphaNumericSorter(a.username, b.username))
-          .map((user) => ({ label: user.username, value: user.username }));
-      default:
-        // eslint-disable-next-line no-case-declarations, @typescript-eslint/no-unused-vars
-        const _exhaustiveCheck: never = columnName;
-        throw new Error(`${columnName} is not columnName.`);
+          .map((user) => ({ label: user.displayName || user.username, value: user.id }))
+          .sort((a, b) => alphaNumericSorter(a.label, b.label));
     }
   };
 
