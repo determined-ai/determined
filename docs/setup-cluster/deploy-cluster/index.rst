@@ -1,8 +1,14 @@
-###################
- Set Up Determined
-###################
+.. _setup-checklists:
 
-To set up Determined, start by following the cluster deployment guide for your environment.
+#########################################
+ Cluster Deployment Guide by Environment
+#########################################
+
+.. meta::
+   :description: Discover how to set up your Determined cluster on AWS, GCP, Kubernetes, Slurm or On-Prem with an easy checklist.
+
+To set up Determined, start by following the :ref:`basic setup guide <basic-setup>` then consult one
+of the checklists below.
 
 +--------------------------------------------------------+
 | Environment                                            |
@@ -40,6 +46,7 @@ To set up Determined, start by following the cluster deployment guide for your e
 .. toctree::
    :hidden:
 
+   Basic Setup Guide <../basic-setup>
    Deploy on Prem <on-prem/overview>
    Deploy on AWS <aws/overview>
    Deploy on GCP <gcp/overview>

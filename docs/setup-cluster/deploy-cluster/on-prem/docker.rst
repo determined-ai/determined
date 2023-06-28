@@ -6,6 +6,8 @@
 
 This user guide provides step-by-step instructions for installing Determined using Docker.
 
+.. _install-postgres-docker:
+
 *******************
  Preliminary Setup
 *******************

@@ -31,6 +31,8 @@ When TLS is in use, the master will listen on TCP port 8443 by default, rather t
    If the master's certificate is not signed by a well-known CA, then the configured certificate
    file must contain a full certificate chain that goes all the way to a root certificate.
 
+.. _tls-agent-config:
+
 **********************
  Agents Configuration
 **********************

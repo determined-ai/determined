@@ -113,6 +113,8 @@ Install PostgreSQL using ``apt`` or ``yum``
       postgres=# CREATE USER determined WITH ENCRYPTED PASSWORD 'determined-password';
       postgres=# GRANT ALL PRIVILEGES ON DATABASE determined TO determined;
 
+.. _install-det-linux:
+
 Install the Determined Master and Agent
 =======================================
 

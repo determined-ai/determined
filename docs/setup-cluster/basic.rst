@@ -2,6 +2,8 @@
  Basic Setup
 #############
 
+see also: :ref:`basic-setup`
+
 Your training environment can be a local development machine, an on-premise GPU cluster, or cloud
 resources. To set up your training environment, follow the steps below.
 
