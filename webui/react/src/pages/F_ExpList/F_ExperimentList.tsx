@@ -159,7 +159,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, [settings.filterset, isLoadingSettings]);
 
-  const selectAllIfLoaded = useMemo(
+  const selectAll = useMemo(
     () => !isLoadingSettings && settings.selectAll,
     [isLoadingSettings, settings.selectAll],
   );
@@ -170,7 +170,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
-  const selectedExperimentsIfLoaded = useMemo(
+  const selectedExperimentIds = useMemo(
     () => (isLoadingSettings ? [] : settings.selectedExperimentIds),
     [isLoadingSettings, settings.selectedExperimentIds],
   );
@@ -183,17 +183,17 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
-  const excludedExperimentsIfLoaded = useMemo(
+  const excludedExperimentIds = useMemo(
     () => new Set<number>(isLoadingSettings ? [] : settings.excludedExperimentIds),
     [isLoadingSettings, settings.excludedExperimentIds],
   );
   const handleExperimentExclusion = useCallback(
     (callback: (arg0: Set<number>) => Set<number>) => {
       updateSettings({
-        excludedExperimentIds: Array.from(callback(excludedExperimentsIfLoaded)),
+        excludedExperimentIds: Array.from(callback(excludedExperimentIds)),
       });
     },
-    [updateSettings, excludedExperimentsIfLoaded],
+    [updateSettings, excludedExperimentIds],
   );
 
   const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
@@ -201,7 +201,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
 
-  const colorMap = useGlasbey(selectedExperimentsIfLoaded);
+  const colorMap = useGlasbey(selectedExperimentIds);
   const { height: containerHeight, width: containerWidth } = useResize(contentRef);
   const height =
     containerHeight - 2 * parseInt(getCssVar('--theme-stroke-width')) - (isPagedView ? 40 : 0);
@@ -523,12 +523,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const selectedExperiments: ExperimentWithTrial[] = useMemo(() => {
-    if (selectedExperimentsIfLoaded.length === 0) return [];
-    const selectedIdSet = new Set(selectedExperimentsIfLoaded);
+    if (selectedExperimentIds.length === 0) return [];
+    const selectedIdSet = new Set(selectedExperimentIds);
     return Loadable.filterNotLoaded(experiments, (experiment) =>
       selectedIdSet.has(experiment.experiment.id),
     );
-  }, [experiments, selectedExperimentsIfLoaded]);
+  }, [experiments, selectedExperimentIds]);
 
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
@@ -543,7 +543,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   return (
     <>
       <TableActionBar
-        excludedExperimentIds={excludedExperimentsIfLoaded}
+        excludedExperimentIds={excludedExperimentIds}
         experiments={experiments}
         expListView={globalSettings.expListView}
         filters={experimentFilters}
@@ -554,8 +554,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         project={project}
         projectColumns={projectColumns}
         rowHeight={settings.rowHeight}
-        selectAll={selectAllIfLoaded}
-        selectedExperimentIds={selectedExperimentsIfLoaded}
+        selectAll={selectAll}
+        selectedExperimentIds={selectedExperimentIds}
         setExpListView={updateExpListView}
         setIsOpenFilter={onIsOpenFilterChange}
         setVisibleColumns={setVisibleColumns}
@@ -591,7 +591,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 comparisonViewOpen={settings.compare}
                 data={experimentsIfLoaded}
                 dataTotal={isPagedView ? experiments.length : Loadable.getOrElse(0, total)}
-                excludedExperimentIds={excludedExperimentsIfLoaded}
+                excludedExperimentIds={excludedExperimentIds}
                 formStore={formStore}
                 handleScroll={isPagedView ? undefined : handleScroll}
                 handleUpdateExperimentList={handleUpdateExperimentList}
@@ -602,8 +602,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 projectColumns={projectColumns}
                 rowHeight={settings.rowHeight}
                 scrollPositionSetCount={scrollPositionSetCount}
-                selectAll={selectAllIfLoaded}
-                selectedExperimentIds={selectedExperimentsIfLoaded}
+                selectAll={selectAll}
+                selectedExperimentIds={selectedExperimentIds}
                 setColumnWidths={handleColumnWidthChange}
                 setExcludedExperimentIds={handleExperimentExclusion}
                 setPinnedColumnsCount={setPinnedColumnsCount}
