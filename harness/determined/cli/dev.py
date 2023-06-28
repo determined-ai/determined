@@ -5,10 +5,12 @@ import subprocess
 import sys
 from argparse import Namespace
 from typing import Any, List
+from urllib import parse
 
 from termcolor import colored
 
 import determined.cli.render
+from determined.cli import errors
 from determined.common.api import authentication, request
 from determined.common.declarative_argparse import Arg, Cmd
 
@@ -25,6 +27,13 @@ def curl(args: Namespace) -> None:
     if shutil.which("curl") is None:
         print(colored("curl is not installed on this machine", "red"))
         sys.exit(1)
+
+    parsed = parse.urlparse(args.path)
+    if parsed.scheme:
+        raise errors.CliError(
+            "path argument does not support absolute URLs."
+            + " Set the host path through `det` command"
+        )
 
     cmd: List[str] = [
         "curl",
@@ -67,7 +76,7 @@ args_description = [
                     Arg(
                         "-x", help="display the curl command that will be run", action="store_true"
                     ),
-                    Arg("path", help="path to curl (e.g. /api/v1/experiments?x=z)"),
+                    Arg("path", help="relative path to curl (e.g. /api/v1/experiments?x=z)"),
                     Arg("curl_args", nargs=argparse.REMAINDER, help="curl arguments"),
                 ],
             ),
