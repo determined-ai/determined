@@ -27,7 +27,7 @@ def test_basic_notebook_start_and_kill() -> None:
 def test_notebook_proxy() -> None:
     session = determined_test_session(ADMIN_CREDENTIALS)
 
-    def get_proxy(session: api.Session, task_id: str):
+    def get_proxy(session: api.Session, task_id: str) -> None:
         session.get(f"proxy/{task_id}/")
 
     typ = NTSC_Kind.notebook
