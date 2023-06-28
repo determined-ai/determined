@@ -9,8 +9,7 @@ from typing import Any, List
 from termcolor import colored
 
 import determined.cli.render
-from determined.common.api import authentication
-from determined.common.api.request import make_url
+from determined.common.api import authentication, request
 from determined.common.declarative_argparse import Arg, Cmd
 
 
@@ -29,7 +28,7 @@ def curl(args: Namespace) -> None:
 
     cmd: List[str] = [
         "curl",
-        make_url(args.master, args.path),
+        request.make_url_new(args.master, args.path),
         "-H",
         f"Authorization: Bearer {authentication.cli_auth.get_session_token()}",
         "-s",
