@@ -35,9 +35,9 @@ individuals or teams using Determined. This is recommended for larger teams.
 WebUI
 =====
 
-After logging in, the default landing page for the WebUI is **Uncategorized Experiments List**. This
-is where experiments that do not have a configuration file ``workspace`` and ``project`` are put,
-including experiments created before the workspaces feature was released.
+After logging in, the default landing page for the WebUI is the dashboard. This is where experiments
+that do not have a configuration file ``workspace`` and ``project`` are put, including experiments
+created before the workspaces feature was released.
 
 Click the navigation sidebar **Workspaces** button to go to the **Workspaces List** page. This page
 shows all of the workspaces that currently exist on a cluster.
