@@ -3,7 +3,6 @@ from typing import List
 
 import pytest
 
-import tests.config as conf
 from determined.common import api
 from determined.common.api import NTSC_Kind, bindings, get_ntsc_details, wait_for_ntsc_state
 from tests import command as cmd
@@ -29,9 +28,7 @@ def test_notebook_proxy() -> None:
     session = determined_test_session(ADMIN_CREDENTIALS)
 
     def get_proxy(session: api.Session, task_id: str):
-        url = conf.make_master_url(f"proxy/{task_id}/")
-        print(f"getting {url}")
-        session.get(url)
+        session.get(f"proxy/{task_id}/")
 
     typ = NTSC_Kind.notebook
     created_id = launch_ntsc(session, 1, typ)
