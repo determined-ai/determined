@@ -67,6 +67,10 @@ const FilterField = ({
 
   const [inputOpen, setInputOpen] = useState(false);
   const [fieldValue, setFieldValue] = useState<FormFieldValue>(field.value);
+  const selectedUser = Loadable.getOrElse(
+    null,
+    useObservable(userStore.getUser(Number(fieldValue))),
+  );
 
   // use this function to update field value
   const updateFieldValue = (fieldId: string, value: FormFieldValue, debounceUpdate = false) => {
@@ -172,11 +176,6 @@ const FilterField = ({
     },
     [field.type, formStore, index, inputOpen, isSpecialColumn, parentId],
   );
-
-  const selectedUser =
-    field.columnName === 'user'
-      ? Loadable.getOrElse(null, userStore.getUser(Number(field.value)).get())
-      : null;
 
   const valueSelectValue =
     field.columnName === 'user'
