@@ -79,7 +79,7 @@ class Float extends io.Type<number, number | string, unknown> {
   }
 }
 
-export const FloatType = new Float();
+export const float = new Float();
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ValueofC<D extends { [key: string]: unknown }> extends ValueofType<D> {}
@@ -155,9 +155,9 @@ export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
 const ioMetricSummary = io.type({
   count: optional(io.union([io.number, io.undefined])),
   last: optional(io.union([io.number, io.string, io.boolean])),
-  max: optional(FloatType),
-  min: optional(FloatType),
-  sum: optional(FloatType),
+  max: optional(float),
+  min: optional(float),
+  sum: optional(float),
   type: io.union([
     io.literal('string'),
     io.literal('number'),
