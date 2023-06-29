@@ -517,3 +517,12 @@ export interface SearchRolesAssignableToScopeParams {
 export interface GetProjectsByUserActivityParams {
   limit?: number;
 }
+
+export interface GetResourcePoolBindingsParams {
+  resourcePool: string;
+}
+
+export interface ModifyResourcePoolBindingsParams {
+  resourcePoolName: string;
+  workspaceIds: number[];
+}

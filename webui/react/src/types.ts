@@ -926,6 +926,8 @@ export interface Workspace {
   pinnedAt?: Date;
   state: WorkspaceState;
   userId: number;
+  defaultComputePool?: string;
+  defaultAuxPool?: string;
 }
 
 export interface WorkspacePagination extends WithPagination {

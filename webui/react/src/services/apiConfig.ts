@@ -481,6 +481,52 @@ export const getResourceAllocationAggregated: DetApi<
   },
 };
 
+export const getResourcePoolBindings: DetApi<
+  Service.GetResourcePoolBindingsParams,
+  Api.V1ListWorkspacesBoundToRPResponse,
+  Api.V1ListWorkspacesBoundToRPResponse
+> = {
+  name: 'getResourcePoolBindings',
+  postProcess: (response) => {
+    return response;
+  },
+  request: (params, options) =>
+    detApi.Internal.listWorkspacesBoundToRP(params.resourcePool, undefined, undefined, options),
+};
+
+export const deleteResourcePoolBindings: DetApi<
+  Service.ModifyResourcePoolBindingsParams,
+  Api.V1UnbindRPFromWorkspaceResponse,
+  void
+> = {
+  name: 'deleteResourcePoolBindings',
+  postProcess: noOp,
+  request: (params, options) =>
+    detApi.Internal.unbindRPFromWorkspace(params.resourcePoolName, params, options),
+};
+
+export const addResourcePoolBindings: DetApi<
+  Service.ModifyResourcePoolBindingsParams,
+  Api.V1BindRPToWorkspaceResponse,
+  void
+> = {
+  name: 'addResourcePoolBindings',
+  postProcess: noOp,
+  request: (params, options) =>
+    detApi.Internal.bindRPToWorkspace(params.resourcePoolName, params, options),
+};
+
+export const overwriteResourcePoolBindings: DetApi<
+  Service.ModifyResourcePoolBindingsParams,
+  Api.V1OverwriteRPWorkspaceBindingsResponse,
+  void
+> = {
+  name: 'overwriteResourcePoolBindings',
+  postProcess: noOp,
+  request: (params, options) =>
+    detApi.Internal.overwriteRPWorkspaceBindings(params.resourcePoolName, params, options),
+};
+
 /* Trials */
 export const queryTrials: DetApi<
   Api.V1QueryTrialsRequest,

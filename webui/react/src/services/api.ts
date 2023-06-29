@@ -209,6 +209,30 @@ export const getResourceAllocationAggregated = generateDetApi<
   Api.V1ResourceAllocationAggregatedResponse
 >(Config.getResourceAllocationAggregated);
 
+export const getResourcePoolBindings = generateDetApi<
+  Service.GetResourcePoolBindingsParams,
+  Api.V1ListWorkspacesBoundToRPResponse,
+  Api.V1ListWorkspacesBoundToRPResponse
+>(Config.getResourcePoolBindings);
+
+export const deleteResourcePoolBindings = generateDetApi<
+  Service.ModifyResourcePoolBindingsParams,
+  Api.V1UnbindRPFromWorkspaceResponse,
+  void
+>(Config.deleteResourcePoolBindings);
+
+export const addResourcePoolBindings = generateDetApi<
+  Service.ModifyResourcePoolBindingsParams,
+  Api.V1BindRPToWorkspaceResponse,
+  void
+>(Config.addResourcePoolBindings);
+
+export const overwriteResourcePoolBindings = generateDetApi<
+  Service.ModifyResourcePoolBindingsParams,
+  Api.V1OverwriteRPWorkspaceBindingsResponse,
+  void
+>(Config.overwriteResourcePoolBindings);
+
 /* Jobs */
 
 export const getJobQ = generateDetApi<
