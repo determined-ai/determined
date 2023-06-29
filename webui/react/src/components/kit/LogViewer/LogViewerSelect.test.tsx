@@ -104,6 +104,7 @@ describe('LogViewerFilter', () => {
     const agentOption2 = await screen.findByText(agentOptionText2);
     await user.click(agentOption1[1]);
     await user.click(agentOption2);
+    await user.click(agent);
 
     await waitFor(() => {
       expect(handleOnChange).toHaveBeenCalledWith({
