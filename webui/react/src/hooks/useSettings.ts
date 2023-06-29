@@ -96,9 +96,7 @@ const queryParamToType = <T>(
   return undefined;
 };
 
-const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
-  const params = new URLSearchParams(query);
-
+const queryToSettings = <T>(config: SettingsConfig<T>, params: URLSearchParams) => {
   return (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).reduce<Settings>(
     (acc, setting) => {
       /*
@@ -117,6 +115,8 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
         }
 
         if (paramValue !== null) {
+          params.delete(setting.storageKey);
+
           let queryValue: Primitive | Primitive[] | undefined = undefined;
           /*
            * Convert the string-based query params to primitives.
@@ -162,12 +162,7 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
 };
 
 const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
-  const {
-    isLoading: isLoadingOb,
-    querySettings,
-    state: stateOb,
-    clearQuerySettings,
-  } = useContext(UserSettings);
+  const { isLoading: isLoadingOb, querySettings, state: stateOb } = useContext(UserSettings);
   const initialLoading = useObservable(isLoadingOb);
   const derivedOb = useMemo(
     () => stateOb.select((s) => s.get(config.storagePath)),
@@ -176,23 +171,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   const state = useObservable(derivedOb);
   const navigate = useNavigate();
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
-
-  // parse navigation url to state
-  useEffect(() => {
-    if (!querySettings) return;
-
-    const settings = queryToSettings<T>(config, querySettings);
-    const stateSettings = state ?? {};
-
-    if (isEqual(settings, stateSettings)) return;
-
-    Object.keys(settings).forEach((setting) => {
-      stateSettings[setting] = settings[setting];
-    });
-    stateOb.update((s) => s.set(config.storagePath, stateSettings));
-
-    clearQuerySettings();
-  }, [config, querySettings, state, clearQuerySettings, stateOb]);
 
   const settings: SettingsRecord<T> = useMemo(
     () =>
@@ -319,6 +297,14 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     },
     [config, stateOb],
   );
+
+  // parse navigation url to state
+  useEffect(() => {
+    if (!querySettings) return;
+
+    const parsedSettings = queryToSettings<T>(config, querySettings);
+    updateSettings(parsedSettings);
+  }, [config, querySettings, updateSettings]);
 
   useLayoutEffect(() => {
     if (initialLoading) return;
