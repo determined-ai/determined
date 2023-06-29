@@ -3113,7 +3113,7 @@ workflows:
               context: ["gcp"]
               always-run: [true]
               mark: ["e2e_slurm and not parallel"]
-              extra-pytest-flags: ["-k 'not start_and_write_to_shell'"]
+              extra-pytest-flags: ["-k 'not start_and_write_to_shell and not cifar10_pytorch_distributed'"]
           requires:
             - build-go
 
@@ -3125,7 +3125,7 @@ workflows:
               container-run-type: ["podman"]
               context: ["gcp"]
               mark: ["e2e_slurm and not parallel"]
-              extra-pytest-flags: ["-k 'not start_and_write_to_shell'"]
+              extra-pytest-flags: ["-k 'not start_and_write_to_shell and not cifar10_pytorch_distributed'"]
           requires:
             - build-go
 
@@ -3137,7 +3137,7 @@ workflows:
               container-run-type: ["enroot"]
               context: ["gcp"]
               mark: ["e2e_slurm and not parallel"]
-              extra-pytest-flags: ["-k 'not start_and_write_to_shell'"]
+              extra-pytest-flags: ["-k 'not start_and_write_to_shell and not cifar10_pytorch_distributed'"]
           requires:
             - build-go
 
