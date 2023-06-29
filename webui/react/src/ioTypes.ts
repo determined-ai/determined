@@ -118,9 +118,9 @@ export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
 const ioMetricSummary = io.type({
   count: optional(io.union([io.number, io.undefined])),
   last: optional(io.union([io.number, io.string, io.boolean])),
-  max: optional(io.union([io.number, io.string])),
-  min: optional(io.union([io.number, io.string])),
-  sum: optional(io.union([io.number, io.string])),
+  max: optional(io.union([io.number, io.literal('Infinity'), io.literal('-Infinity'), io.literal('NaN')])),
+  min: optional(io.union([io.number, io.literal('Infinity'), io.literal('-Infinity'), io.literal('NaN')])),
+  sum: optional(io.union([io.number, io.literal('Infinity'), io.literal('-Infinity'), io.literal('NaN')])),
   type: io.union([
     io.literal('string'),
     io.literal('number'),
