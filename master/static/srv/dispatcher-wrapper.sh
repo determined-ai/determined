@@ -216,6 +216,12 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
             if [ ! -z "$ROCR_VISIBLE_DEVICES" ]; then
                 export DET_SLOT_IDS="[${ROCR_VISIBLE_DEVICES}]"
                 export DET_UNIQUE_PORT_OFFSET=$(echo $ROCR_VISIBLE_DEVICES | cut -d',' -f1)
+                # With the latest environments:rocm-5.5-pytorch-1.10-tf-2.10-rocm-0.21.2 builds
+                # if both ROCR_VISIBLE_DEVICES and CUDA_VISIBLE_DEVICES are set and do not
+                # include 0, then the error "No HIP GPUs are available" occurs.  Slurm
+                # tends to provide both, so unset CUDA_VISIBLE_DEVICES when running ROCm
+                # and ROCR_VISIBLE_DEVICES is set.
+                unset CUDA_VISIBLE_DEVICES
 
                 # Test if "rocm-smi" exists in the PATH before trying to invoking it.
                 if [ ! type rocm-smi ] >/dev/null 2>&1; then
