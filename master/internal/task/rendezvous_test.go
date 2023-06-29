@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/determined-ai/determined/master/internal/task/tproto"
+
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
@@ -49,7 +51,7 @@ func TestRendezvous(t *testing.T) {
 			var ws []RendezvousWatcher
 			watch := func(rID sproto.ResourcesID) func() {
 				return func() {
-					w, err := r.watch(WatchRendezvousInfo{ResourcesID: rID})
+					w, err := r.watch(tproto.WatchRendezvousInfo{ResourcesID: rID})
 					assert.NilError(t, err, rID)
 					ws = append(ws, w)
 				}
@@ -89,8 +91,8 @@ func TestRendezvous(t *testing.T) {
 				rendezvousArrived(w)
 			}
 
-			r.unwatch(UnwatchRendezvousInfo{ResourcesID: c1})
-			r.unwatch(UnwatchRendezvousInfo{ResourcesID: c2})
+			r.unwatch(tproto.UnwatchRendezvousInfo{ResourcesID: c1})
+			r.unwatch(tproto.UnwatchRendezvousInfo{ResourcesID: c2})
 		})
 	}
 
@@ -109,13 +111,13 @@ func TestRendezvousValidation(t *testing.T) {
 		c1: &taskmodel.ResourcesWithState{Rank: 0},
 	})
 
-	_, err := r.watch(WatchRendezvousInfo{ResourcesID: sproto.ResourcesID(cproto.NewID())})
+	_, err := r.watch(tproto.WatchRendezvousInfo{ResourcesID: sproto.ResourcesID(cproto.NewID())})
 	assert.ErrorContains(t, err, "stale resources")
 
-	_, err = r.watch(WatchRendezvousInfo{ResourcesID: c1})
+	_, err = r.watch(tproto.WatchRendezvousInfo{ResourcesID: c1})
 	assert.NilError(t, err)
 
-	_, err = r.watch(WatchRendezvousInfo{ResourcesID: c1})
+	_, err = r.watch(tproto.WatchRendezvousInfo{ResourcesID: c1})
 	assert.ErrorContains(t, err, "resources already rendezvoused")
 }
 
@@ -131,7 +133,7 @@ func TestTerminationInRendezvous(t *testing.T) {
 		Addresses: addressesFromContainerID(c1),
 	}
 	r.try()
-	_, err := r.watch(WatchRendezvousInfo{ResourcesID: c1})
+	_, err := r.watch(tproto.WatchRendezvousInfo{ResourcesID: c1})
 	assert.NilError(t, err)
 	r.resources[c1].Exited = &sproto.ResourcesStopped{}
 
@@ -139,7 +141,7 @@ func TestTerminationInRendezvous(t *testing.T) {
 		Addresses: addressesFromContainerID(c2),
 	}
 	r.try()
-	_, err = r.watch(WatchRendezvousInfo{ResourcesID: c2})
+	_, err = r.watch(tproto.WatchRendezvousInfo{ResourcesID: c2})
 	assert.NilError(t, err)
 
 	assert.Check(t, !r.ready())
@@ -155,13 +157,13 @@ func TestUnwatchInRendezvous(t *testing.T) {
 
 	r.resources[c1].Started = &sproto.ResourcesStarted{Addresses: addressesFromContainerID(c1)}
 	r.try()
-	_, err := r.watch(WatchRendezvousInfo{ResourcesID: c1})
+	_, err := r.watch(tproto.WatchRendezvousInfo{ResourcesID: c1})
 	assert.NilError(t, err)
-	r.unwatch(UnwatchRendezvousInfo{ResourcesID: c1})
+	r.unwatch(tproto.UnwatchRendezvousInfo{ResourcesID: c1})
 
 	r.resources[c2].Started = &sproto.ResourcesStarted{Addresses: addressesFromContainerID(c2)}
 	r.try()
-	_, err = r.watch(WatchRendezvousInfo{ResourcesID: c2})
+	_, err = r.watch(tproto.WatchRendezvousInfo{ResourcesID: c2})
 	assert.NilError(t, err)
 
 	assert.Check(t, !r.ready())
@@ -177,7 +179,7 @@ func TestRendezvousTimeout(t *testing.T) {
 		c2: &taskmodel.ResourcesWithState{Rank: 1},
 	})
 
-	_, err := r.watch(WatchRendezvousInfo{ResourcesID: c1})
+	_, err := r.watch(tproto.WatchRendezvousInfo{ResourcesID: c1})
 	assert.NilError(t, err)
 	r.resources[c1].Started = &sproto.ResourcesStarted{Addresses: addressesFromContainerID(c1)}
 	r.try()

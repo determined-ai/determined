@@ -13,6 +13,7 @@ import (
 	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -22,7 +23,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -294,11 +294,8 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		})
 		// Kill both slotted and zero-slot tasks, unless draining.
 		if !msg.Drain {
-			for cid := range a.agentState.containerAllocation {
-				ctx.Tell(a.agentState.containerAllocation[cid], sproto.AllocationSignalWithReason{
-					AllocationSignal:    sproto.KillAllocation,
-					InformationalReason: "agent disabled",
-				})
+			for _, aID := range a.agentState.containerAllocation {
+				rmevents.Publish(aID, &sproto.ResourceDisabled{InformationReason: "agent disabled"})
 			}
 		}
 		ctx.Respond(&proto.DisableAgentResponse{Agent: a.summarize(ctx).ToProto()})
@@ -488,7 +485,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 	case msg.ContainerStateChanged != nil:
 		a.containerStateChanged(ctx, *msg.ContainerStateChanged)
 	case msg.ContainerLog != nil:
-		ref, ok := a.agentState.containerAllocation[msg.ContainerLog.ContainerID]
+		aID, ok := a.agentState.containerAllocation[msg.ContainerLog.ContainerID]
 		if !ok {
 			containerID := msg.ContainerLog.ContainerID
 			log.WithField("container-id", containerID).Warnf(
@@ -496,7 +493,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 					"container %s, message: %v", containerID, msg.ContainerLog)
 			return
 		}
-		ctx.Tell(ref, sproto.ContainerLog{
+		rmevents.Publish(aID, &sproto.ContainerLog{
 			ContainerID: msg.ContainerLog.ContainerID,
 			Timestamp:   msg.ContainerLog.Timestamp,
 			PullMessage: msg.ContainerLog.PullMessage,
@@ -544,8 +541,7 @@ func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStart
 }
 
 func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerStateChanged) {
-	taskActor, ok := a.agentState.containerAllocation[sc.Container.ID]
-
+	aID, ok := a.agentState.containerAllocation[sc.Container.ID]
 	if !ok {
 		// We may receieve late terminations when reconnected agent is cleaning up
 		// terminated containers.
@@ -570,7 +566,7 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 		delete(a.agentState.containerAllocation, sc.Container.ID)
 	}
 
-	ctx.Tell(taskActor, sproto.FromContainerStateChanged(sc))
+	rmevents.Publish(aID, sproto.FromContainerStateChanged(sc))
 	a.agentState.containerStateChanged(ctx, sc)
 }
 
@@ -677,46 +673,31 @@ func (a *agent) clearNonReattachedContainers(
 	recovered map[cproto.ID]aproto.ContainerReattachAck,
 	explicitlyDoomed map[cproto.ID]aproto.ContainerReattachAck,
 ) error {
-	for cid, allocation := range a.agentState.containerAllocation {
+	for cid := range a.agentState.containerAllocation {
 		if _, ok := recovered[cid]; ok {
 			continue
 		}
 
-		var containerState *cproto.Container
-		resp := ctx.Ask(allocation, sproto.GetResourcesContainerState{
-			ResourcesID: sproto.ResourcesID(cid),
+		// TODO(!!!): Is this ok? I need to seriously vet this or just put it back.
+		// It may be easiest to hack it back, for now.
+		containerState, ok := a.agentState.containerState[cid]
+		if !ok {
+			continue
+		}
+		containerState.State = cproto.Terminated
+
+		var stopped aproto.ContainerStopped
+		ack, ok := explicitlyDoomed[cid]
+		if ok {
+			stopped = aproto.ContainerStopped{Failure: ack.Failure}
+		} else {
+			stopped = a.defaultReattachFailureMessage()
+		}
+
+		a.containerStateChanged(ctx, aproto.ContainerStateChanged{
+			Container:        *containerState,
+			ContainerStopped: &stopped,
 		})
-		switch {
-		case resp.Error() != nil:
-			// This error can occur when the allocation knowns about our container
-			// but has the ResourcesWithState.Container field nil. We can instead
-			// get the containerState from our agentState and send that.
-			containerState = a.agentState.containerState[cid]
-
-			ctx.Log().Warnf(
-				"allocation GetTaskContainerState id: %s, got error: %s", cid, resp.Error())
-		case resp.Get() == nil:
-			ctx.Log().Warnf("allocation GetTaskContainerState id: %s, is nil", cid)
-		default:
-			containerState = ptrs.Ptr(resp.Get().(cproto.Container))
-		}
-
-		if containerState != nil {
-			containerState.State = cproto.Terminated
-
-			var stopped aproto.ContainerStopped
-			ack, ok := explicitlyDoomed[cid]
-			if ok {
-				stopped = aproto.ContainerStopped{Failure: ack.Failure}
-			} else {
-				stopped = a.defaultReattachFailureMessage()
-			}
-
-			a.containerStateChanged(ctx, aproto.ContainerStateChanged{
-				Container:        *containerState,
-				ContainerStopped: &stopped,
-			})
-		}
 	}
 
 	return a.agentState.clearUnlessRecovered(recovered)

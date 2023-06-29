@@ -20,6 +20,9 @@ var ErrPreemptionDisabled = fmt.Errorf("allocation is not preemptible")
 // DefaultTimeout is the delay before the deadline exceeded callback passed to preempt is called.
 var DefaultTimeout = time.Hour
 
+// TimeoutFn is called when preemption deadlines are exceeded.
+type TimeoutFn func(context.Context, error)
+
 // Watcher contains a channel which can be polled for a preemption signal.
 // TODO(DET-9565): Use of this watcher pattern here is unnecessary.
 type Watcher struct{ C <-chan struct{} }
@@ -74,7 +77,7 @@ func (p *Preemptible) Unwatch(id uuid.UUID) {
 // Preempt preempts all watchers, marks us as preempted and begins the preemption deadline,
 // after which the timeout callback will be called. The preemption deadline callback can
 // fire until Close is called.
-func (p *Preemptible) Preempt(timeoutCallback func(err error)) {
+func (p *Preemptible) Preempt(timeoutCallback TimeoutFn) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -86,7 +89,7 @@ func (p *Preemptible) Preempt(timeoutCallback func(err error)) {
 
 			select {
 			case <-t.C:
-				timeoutCallback(ErrPreemptionTimeoutExceeded)
+				timeoutCallback(ctx, ErrPreemptionTimeoutExceeded)
 			case <-ctx.Done():
 			}
 		})

@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/task/tproto"
+
 	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
@@ -141,7 +143,7 @@ func TestAllocation(t *testing.T) {
 				}
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
 				containerStateChanged.ResourcesStarted = nil
-				require.NoError(t, system.Ask(self, WatchRendezvousInfo{
+				require.NoError(t, system.Ask(self, tproto.WatchRendezvousInfo{
 					ResourcesID: r.Summary().ResourcesID,
 				}).Error())
 			}
@@ -171,7 +173,7 @@ func TestAllocation(t *testing.T) {
 			for _, m := range trialImpl.Messages {
 				// Just clear the state since it's really hard to check (has random stuff in it).
 				if exit, ok := m.(*AllocationExited); ok {
-					exit.FinalState = AllocationState{}
+					exit.FinalState = tproto.AllocationState{}
 				}
 			}
 			require.Contains(t, trialImpl.Messages, tc.exit)

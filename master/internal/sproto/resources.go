@@ -369,8 +369,8 @@ type ResourcesStateChanged struct {
 
 // FromContainerStateChanged converts an aproto.ContainerStateChanged message to
 // ResourcesStateChanged.
-func FromContainerStateChanged(sc aproto.ContainerStateChanged) ResourcesStateChanged {
-	return ResourcesStateChanged{
+func FromContainerStateChanged(sc aproto.ContainerStateChanged) *ResourcesStateChanged {
+	return &ResourcesStateChanged{
 		ResourcesID:      FromContainerID(sc.Container.ID),
 		ResourcesState:   FromContainerState(sc.Container.State),
 		ResourcesStarted: FromContainerStarted(sc.ContainerStarted),

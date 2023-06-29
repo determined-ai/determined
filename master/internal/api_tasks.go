@@ -21,7 +21,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -162,15 +161,8 @@ func (a *apiServer) AllocationReady(
 		return nil, err
 	}
 
-	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
-	if ref == nil {
-		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
-		return nil, err
-	}
-
-	if err := a.ask(ref.Address(), task.AllocationReady{}, nil); err != nil {
+	err := task.SetReady(ctx, model.AllocationID(req.AllocationId))
+	if err != nil {
 		return nil, err
 	}
 	return &apiv1.AllocationReadyResponse{}, nil
@@ -183,15 +175,8 @@ func (a *apiServer) AllocationWaiting(
 		return nil, err
 	}
 
-	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
-	if ref == nil {
-		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
-		return nil, err
-	}
-
-	if err := a.ask(ref.Address(), task.AllocationWaiting{}, nil); err != nil {
+	err := task.SetWaiting(ctx, model.AllocationID(req.AllocationId))
+	if err != nil {
 		return nil, err
 	}
 	return &apiv1.AllocationWaitingResponse{}, nil
@@ -207,21 +192,18 @@ func (a *apiServer) AllocationAllGather(
 		return nil, err
 	}
 
-	allocationID := model.AllocationID(req.AllocationId)
-	ref := allocationmap.GetAllocation(allocationID)
-	if ref == nil {
-		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
-		return nil, err
-	}
-
 	id, err := uuid.Parse(req.RequestUuid)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	data, err := task.AllGather(ctx, a.m.system, allocationID, id, int(req.NumPeers), req.Data)
+	data, err := task.AllGather(
+		ctx,
+		model.AllocationID(req.AllocationId),
+		id,
+		int(req.NumPeers),
+		req.Data,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -243,17 +225,8 @@ func (a *apiServer) PostAllocationProxyAddress(
 		return nil, err
 	}
 
-	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
-	if ref == nil {
-		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
-		return nil, err
-	}
-
-	if err := a.ask(ref.Address(), task.SetAllocationProxyAddress{
-		ProxyAddress: req.ProxyAddress,
-	}, nil); err != nil {
+	err := task.SetProxyAddress(ctx, model.AllocationID(req.AllocationId), req.ProxyAddress)
+	if err != nil {
 		return nil, err
 	}
 	return &apiv1.PostAllocationProxyAddressResponse{}, nil
