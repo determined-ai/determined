@@ -7,10 +7,10 @@ import torch
 import torchvision as tv
 import torchvision.transforms as transforms
 
-from determined.pytorch.experimental import TorchBatchProcessor, torch_batch_process
+from determined.pytorch import experimental
 
 
-class MyProcessor(TorchBatchProcessor):
+class MyProcessor(experimental.TorchBatchProcessor):
     def __init__(self, context):
         self.model = context.prepare_model_for_inference(model.get_model())
         self.context = context
@@ -39,7 +39,7 @@ if __name__ == "__main__":
         inference_data = tv.datasets.CIFAR10(
             root="/data", train=False, download=True, transform=transform
         )
-    torch_batch_process(
+    experimental.torch_batch_process(
         MyProcessor,
         inference_data,
         batch_size=200,
