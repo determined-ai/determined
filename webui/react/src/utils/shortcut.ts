@@ -1,7 +1,5 @@
 import * as t from 'io-ts';
 
-import { optional } from 'ioTypes';
-
 export const KeyboardShortcut = t.type({
   alt: t.boolean,
   ctrl: t.boolean,

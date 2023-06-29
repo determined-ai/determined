@@ -987,7 +987,7 @@ const InputSearchSection: React.FC = () => {
 
 const InputShortcutSection: React.FC = () => {
   const [value, setValue] = useState<KeyboardShortcut>();
-  const onChange = (k: KeyboardShortcut) => {
+  const onChange = (k: KeyboardShortcut | undefined) => {
     setValue(k);
   };
   return (

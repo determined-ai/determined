@@ -1,12 +1,7 @@
 import { Input, InputRef } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  EmptyKeyboardShortcut,
-  formatKey,
-  KeyboardShortcut,
-  shortcutToString,
-} from 'utils/shortcut';
+import { formatKey, KeyboardShortcut, shortcutToString } from 'utils/shortcut';
 
 import Button from './Button';
 import Icon from './Icon';
@@ -14,7 +9,7 @@ import css from './InputShortcut.module.scss';
 
 interface InputShortcutProps {
   disabled?: boolean;
-  onChange?: (k: KeyboardShortcut) => void;
+  onChange?: (k: KeyboardShortcut | undefined) => void;
   placeholder?: string;
   value?: KeyboardShortcut;
 }
@@ -53,9 +48,7 @@ const InputShortcut: React.FC<InputShortcutProps> = ({
   }, [value, onChange, inputRef]);
 
   const onClearInput = useCallback(() => {
-    value
-      ? onChange?.(EmptyKeyboardShortcut)
-      : setInputValue(shortcutToString(EmptyKeyboardShortcut));
+    value ? onChange?.(undefined) : setInputValue(undefined);
   }, [value, onChange]);
   return (
     <div className={css.shortcut_input_conatiner}>
