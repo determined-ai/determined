@@ -13,7 +13,7 @@ import { observable, useObservable, WritableObservable } from 'utils/observable'
  * across the application. Each key identifies a unique part
  * of the interface to store settings for.
  */
-type UserSettingsState = Map<string, Settings>;
+export type UserSettingsState = Map<string, Settings>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Settings = { [key: string]: any }; //TODO: find a way to use a better type here
