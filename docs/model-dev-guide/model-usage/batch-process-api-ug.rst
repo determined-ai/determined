@@ -52,35 +52,34 @@ The main arguments to torch_batch_process are processor class and dataset.
        dataset=dataset
    )
 
-class or function e.g., ``torch_batch_process``
-===============================================
+``TorchBatchProcessorContext``
+==============================
 
-Processor should be a subclass of TorchBatchProcessor. The two functions you must implement are the
-__init__ and process_batch. The other lifecycle functions are optional.
+:class:`~determined.pytorch.experimental.TorchBatchProcessorContext`
+ should be a subclass of :class:`~determined.pytorch.experimental.TorchBatchProcessor`.
+ The two functions you must implement are the
+``__init__`` and ``process_batch``. The other lifecycle functions are optional.
 
-class or function e.g., ``torch_batch_processor``
-=================================================
+``TorchBatchProcessor``
+=======================
 
-During __init__ of TorchBatchProcessor, we pass in a TorchBatchProcessorContext object, which
-contains useful methods that can be used within the TorchBatchProcessor class.
-
-class or function e.g., ``torch_batch_processor``
-=================================================
-
-Add content here and a ref link to the class or function in the reference page.
+During ``__init__`` of :class:`~determined.pytorch.experimental.TorchBatchProcessor`,
+we pass in a :class:`~determined.pytorch.experimental.TorchBatchProcessorContext` object,
+which contains useful methods that can be used within the ``TorchBatchProcessor`` class.
 
 ******************************************
  How To Perform Batch (Offline) Inference
 ******************************************
 
-In this section, we'll learn how to perform batch inference using the ``torch_batch_process`` API.
-For more information about this use case or to obtain the tutorial files, visit this URL.
+In this section, we'll learn how to perform batch inference using the Torch Batch Processing API.
+For more information about this use case or to obtain the tutorial files, visit this [placeholder
+URL].
 
 Step 1: Define a InferenceProcessor
 ===================================
 
-The first step is to Define a InferenceProcessor. You should initialize your model in the __init__
-function of InferenceProcessor.
+The first step is to define an InferenceProcessor. You should initialize your model in the ``__init__``
+function of the InferenceProcessor.
 
 .. code:: python
 

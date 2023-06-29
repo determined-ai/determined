@@ -2,9 +2,9 @@
 
 .. _torch_batch_process_api_ref:
 
-###################################################
- ``name of det torch batch process`` API Reference
-###################################################
+#######################################
+ ``Torch Batch Process`` API Reference
+#######################################
 
 .. meta::
    :description: Familiarize yourself with the Torch Batch Process API.
@@ -27,23 +27,24 @@ The main arguments to torch_batch_process is processor class and dataset.
        batch_processor_cls=MyProcessor
        dataset=dataset
    )
+***************************************************
+ ``determined.pytorch.torch_batch_process``
+***************************************************
 
-********************************************************
- Placeholder for torch_batch_process API docstring pull
-********************************************************
+.. autofunction:: determined.pytorch.experimental.torch_batch_process
 
-Processor should be a subclass of TorchBatchProcessor. The two functions you must implement are the
-__init__ and process_batch. The other lifecycle functions are optional.
+***************************************************
+ ``determined.pytorch.TorchBatchProcessorContext``
+***************************************************
 
-********************************************************
- Placeholder for TorchBatchProcessor API docstring pull
-********************************************************
+.. autoclass:: determined.pytorch.experimental.TorchBatchProcessorContext
+   :members:
+   :member-order: bysource
 
-During __init__ of TorchBatchProcessor, we pass in a TorchBatchProcessorContext object, which
-contains useful methods that can be used within the TorchBatchProcessor class.
+********************************************
+ ``determined.pytorch.TorchBatchProcessor``
+********************************************
 
-***************************************************************
- Placeholder for TorchBatchProcessorContext API docstring pull
-***************************************************************
-
-Add the Sphinx autoclass directive here.
+.. autoclass:: determined.pytorch.experimental.TorchBatchProcessor
+   :members:
+   :member-order: bysource
