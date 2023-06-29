@@ -10,14 +10,6 @@ export const KeyboardShortcut = t.type({
 
 export type KeyboardShortcut = t.TypeOf<typeof KeyboardShortcut>;
 
-export const EmptyKeyboardShortcut = {
-  alt: false,
-  ctrl: false,
-  key: '',
-  meta: false,
-  shift: false,
-};
-
 export const matchesShortcut = (e: KeyboardEvent, shortcut: KeyboardShortcut): boolean =>
   e.ctrlKey === shortcut.ctrl &&
   e.metaKey === shortcut.meta &&
