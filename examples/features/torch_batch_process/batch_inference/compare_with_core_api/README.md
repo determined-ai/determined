@@ -17,7 +17,8 @@ You will see that using the Torch Batch Processing API for the same task is a lo
 low level details and provides useful helper functions.
 ## Detailed on this example
 We are running inference with a simple vision model on the MNIST dataset. We then store the prediction outcome to the
-shared file system.
+file system in the Core API example and to the same storage system used by Determined checkpoints in the 
+`torch_batch_process` example.
 
 To run the Core API example, simply run `det e create core_api_config.yaml .`
 To run the Torch Batch Processing example, simply run `det e create torch_batch_process_config.yaml .`
