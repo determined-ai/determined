@@ -94,16 +94,16 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
     userManagementEnabled && canModifyUsers
       ? rbacEnabled
         ? [
-            { key: MenuKey.Edit, label: 'Edit User' },
-            { key: MenuKey.Groups, label: 'Manage Groups' },
-            { key: MenuKey.Agent, label: 'Configure Agent' },
-            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-          ]
+          { key: MenuKey.Edit, label: 'Edit User' },
+          { key: MenuKey.Groups, label: 'Manage Groups' },
+          { key: MenuKey.Agent, label: 'Configure Agent' },
+          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+        ]
         : [
-            { key: MenuKey.Edit, label: 'Edit User' },
-            { key: MenuKey.Agent, label: 'Configure Agent' },
-            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-          ]
+          { key: MenuKey.Edit, label: 'Edit User' },
+          { key: MenuKey.Agent, label: 'Configure Agent' },
+          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+        ]
       : [{ key: MenuKey.View, label: 'View User' }];
 
   const handleDropdown = useCallback(
@@ -116,7 +116,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
           EditUserModal.open();
           break;
         case MenuKey.Groups: {
-          const response = await getGroups({ userId: user.id });
+          const response = await getGroups({ limit: 500, userId: user.id });
           setSelectedUserGroups(response.groups ?? []);
           ManageGroupsModal.open();
           break;
@@ -159,8 +159,8 @@ const UserManagement: React.FC = () => {
 
   const filteredUsers = settings.name
     ? users.filter((user) => {
-        return settings.name && (user.displayName || user.username).includes(settings.name);
-      })
+      return settings.name && (user.displayName || user.username).includes(settings.name);
+    })
     : users;
 
   const { rbacEnabled } = useObservable(determinedStore.info);
@@ -176,7 +176,7 @@ const UserManagement: React.FC = () => {
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
-      const response = await getGroups({}, { signal: canceler.current.signal });
+      const response = await getGroups({ limit: 500 }, { signal: canceler.current.signal });
 
       setGroups((prev) => {
         if (isEqual(prev, response.groups)) return prev;
