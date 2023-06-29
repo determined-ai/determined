@@ -1,9 +1,11 @@
+import { Map } from 'immutable';
 import { Observable, observable, WritableObservable } from 'micro-observables';
 
 import {
   archiveWorkspace,
   createWorkspace,
   deleteWorkspace,
+  getAvailableResourcePools,
   getWorkspaces,
   pinWorkspace,
   unarchiveWorkspace,
@@ -21,6 +23,7 @@ import PollingStore from './polling';
 
 class WorkspaceStore extends PollingStore {
   #loadableWorkspaces: WritableObservable<Loadable<Workspace[]>> = observable(NotLoaded);
+  #boundResourcePools: WritableObservable<Map<number, string[]>> = observable(Map());
 
   public readonly workspaces = this.#loadableWorkspaces.readOnly();
 
@@ -58,36 +61,36 @@ class WorkspaceStore extends PollingStore {
     });
   }
 
-  public archiveWorkspace(id: number): Promise<void> {
-    return archiveWorkspace({ id }).then(() =>
+  public archiveWorkspace(workspaceId: number): Promise<void> {
+    return archiveWorkspace({ workspaceId }).then(() =>
       this.#loadableWorkspaces.update((loadable) =>
         Loadable.map(loadable, (workspaces) => {
           return workspaces.map((workspace) => {
-            return workspace.id === id ? { ...workspace, archived: true } : workspace;
+            return workspace.id === workspaceId ? { ...workspace, archived: true } : workspace;
           });
         }),
       ),
     );
   }
 
-  public unarchiveWorkspace(id: number): Promise<void> {
-    return unarchiveWorkspace({ id }).then(() =>
+  public unarchiveWorkspace(workspaceId: number): Promise<void> {
+    return unarchiveWorkspace({ workspaceId }).then(() =>
       this.#loadableWorkspaces.update((loadable) =>
         Loadable.map(loadable, (workspaces) => {
           return workspaces.map((workspace) => {
-            return workspace.id === id ? { ...workspace, archived: false } : workspace;
+            return workspace.id === workspaceId ? { ...workspace, archived: false } : workspace;
           });
         }),
       ),
     );
   }
 
-  public pinWorkspace(id: number): Promise<void> {
-    return pinWorkspace({ id }).then(() =>
+  public pinWorkspace(workspaceId: number): Promise<void> {
+    return pinWorkspace({ workspaceId }).then(() =>
       this.#loadableWorkspaces.update((loadable) =>
         Loadable.map(loadable, (workspaces) => {
           return workspaces.map((workspace) => {
-            return workspace.id === id
+            return workspace.id === workspaceId
               ? { ...workspace, pinned: true, pinnedAt: new Date() }
               : workspace;
           });
@@ -96,12 +99,12 @@ class WorkspaceStore extends PollingStore {
     );
   }
 
-  public unpinWorkspace(id: number): Promise<void> {
-    return unpinWorkspace({ id }).then(() =>
+  public unpinWorkspace(workspaceId: number): Promise<void> {
+    return unpinWorkspace({ workspaceId }).then(() =>
       this.#loadableWorkspaces.update((loadable) =>
         Loadable.map(loadable, (workspaces) => {
           return workspaces.map((workspace) => {
-            return workspace.id === id ? { ...workspace, pinned: false } : workspace;
+            return workspace.id === workspaceId ? { ...workspace, pinned: false } : workspace;
           });
         }),
       ),
@@ -117,14 +120,23 @@ class WorkspaceStore extends PollingStore {
     });
   }
 
-  public deleteWorkspace(id: number): Promise<void> {
-    return deleteWorkspace({ id }).then(() =>
+  public deleteWorkspace(workspaceId: number): Promise<void> {
+    return deleteWorkspace({ workspaceId }).then(() =>
       this.#loadableWorkspaces.update((loadable) =>
         Loadable.map(loadable, (workspaces) => {
-          return workspaces.filter((workspace) => workspace.id !== id);
+          return workspaces.filter((workspace) => workspace.id !== workspaceId);
         }),
       ),
     );
+  }
+
+  public readonly boundResourcePools = (workspaceId: number) =>
+    this.#boundResourcePools.select((map) => map.get(workspaceId));
+
+  public fetchAvailableResourcePools(workspaceId: number) {
+    return getAvailableResourcePools({ workspaceId }).then((response) => {
+      this.#boundResourcePools.get().set(workspaceId, response);
+    });
   }
 
   public fetch(signal?: AbortSignal, force = false): () => void {

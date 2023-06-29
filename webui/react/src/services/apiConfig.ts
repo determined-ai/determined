@@ -1378,7 +1378,7 @@ export const getWorkspaces: DetApi<
 };
 
 export const getWorkspace: DetApi<
-  Service.GetWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1GetWorkspaceResponse,
   Type.Workspace
 > = {
@@ -1386,7 +1386,7 @@ export const getWorkspace: DetApi<
   postProcess: (response) => {
     return decoder.mapV1Workspace(response.workspace);
   },
-  request: (params) => detApi.Workspaces.getWorkspace(params.id),
+  request: (params) => detApi.Workspaces.getWorkspace(params.workspaceId),
 };
 
 export const createWorkspace: DetApi<
@@ -1447,13 +1447,13 @@ export const getWorkspaceProjects: DetApi<
 };
 
 export const deleteWorkspace: DetApi<
-  Service.DeleteWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1DeleteWorkspaceResponse,
   Type.DeletionStatus
 > = {
   name: 'deleteWorkspace',
   postProcess: decoder.mapDeletionStatus,
-  request: (params) => detApi.Workspaces.deleteWorkspace(params.id),
+  request: (params) => detApi.Workspaces.deleteWorkspace(params.workspaceId),
 };
 
 export const patchWorkspace: DetApi<
@@ -1475,39 +1475,51 @@ export const patchWorkspace: DetApi<
 };
 
 export const archiveWorkspace: DetApi<
-  Service.ArchiveWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1ArchiveWorkspaceResponse,
   void
 > = {
   name: 'archiveWorkspace',
   postProcess: noOp,
-  request: (params) => detApi.Workspaces.archiveWorkspace(params.id),
+  request: (params) => detApi.Workspaces.archiveWorkspace(params.workspaceId),
 };
 
 export const unarchiveWorkspace: DetApi<
-  Service.UnarchiveWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1UnarchiveWorkspaceResponse,
   void
 > = {
   name: 'unarchiveWorkspace',
   postProcess: noOp,
-  request: (params) => detApi.Workspaces.unarchiveWorkspace(params.id),
+  request: (params) => detApi.Workspaces.unarchiveWorkspace(params.workspaceId),
 };
 
-export const pinWorkspace: DetApi<Service.PinWorkspaceParams, Api.V1PinWorkspaceResponse, void> = {
-  name: 'pinWorkspace',
-  postProcess: noOp,
-  request: (params) => detApi.Workspaces.pinWorkspace(params.id),
-};
+export const pinWorkspace: DetApi<Service.ActionWorkspaceParams, Api.V1PinWorkspaceResponse, void> =
+  {
+    name: 'pinWorkspace',
+    postProcess: noOp,
+    request: (params) => detApi.Workspaces.pinWorkspace(params.workspaceId),
+  };
 
 export const unpinWorkspace: DetApi<
-  Service.UnpinWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1UnpinWorkspaceResponse,
   void
 > = {
   name: 'unpinWorkspace',
   postProcess: noOp,
-  request: (params) => detApi.Workspaces.unpinWorkspace(params.id),
+  request: (params) => detApi.Workspaces.unpinWorkspace(params.workspaceId),
+};
+
+export const getAvailableResourcePools: DetApi<
+  Service.ActionWorkspaceParams,
+  Api.V1ListRPsBoundToWorkspaceResponse,
+  string[]
+> = {
+  name: 'getAvailableResourcePools',
+  postProcess: (response) => response.resourcePools ?? [],
+  request: (params, options) =>
+    detApi.Workspaces.listRPsBoundToWorkspace(params.workspaceId, undefined, undefined, options),
 };
 
 /* Projects */

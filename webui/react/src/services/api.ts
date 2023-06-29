@@ -577,7 +577,7 @@ export const getModelLabels = generateDetApi<
 /* Workspaces */
 
 export const getWorkspace = generateDetApi<
-  Service.GetWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1GetWorkspaceResponse,
   Type.Workspace
 >(Config.getWorkspace);
@@ -607,7 +607,7 @@ export const createWorkspace = generateDetApi<
 >(Config.createWorkspace);
 
 export const deleteWorkspace = generateDetApi<
-  Service.DeleteWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1DeleteWorkspaceResponse,
   Type.DeletionStatus
 >(Config.deleteWorkspace);
@@ -619,28 +619,34 @@ export const patchWorkspace = generateDetApi<
 >(Config.patchWorkspace);
 
 export const archiveWorkspace = generateDetApi<
-  Service.ArchiveWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1ArchiveWorkspaceResponse,
   void
 >(Config.archiveWorkspace);
 
 export const unarchiveWorkspace = generateDetApi<
-  Service.UnarchiveWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1UnarchiveWorkspaceResponse,
   void
 >(Config.unarchiveWorkspace);
 
 export const pinWorkspace = generateDetApi<
-  Service.PinWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1PinWorkspaceResponse,
   void
 >(Config.pinWorkspace);
 
 export const unpinWorkspace = generateDetApi<
-  Service.UnpinWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1UnpinWorkspaceResponse,
   void
 >(Config.unpinWorkspace);
+
+export const getAvailableResourcePools = generateDetApi<
+  Service.ActionWorkspaceParams,
+  Api.V1ListRPsBoundToWorkspaceResponse,
+  string[]
+>(Config.getAvailableResourcePools);
 
 /* Projects */
 
