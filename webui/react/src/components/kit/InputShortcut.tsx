@@ -27,8 +27,8 @@ const InputShortcut: React.FC<InputShortcutProps> = ({
     value && setInputValue(shortcutToString(value));
   }, [value]);
 
-  useEffect(() => {
-    const keyDownListener = (e: KeyboardEvent) => {
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
       e.preventDefault();
       const keys: KeyboardShortcut = {
         alt: e.altKey,
@@ -38,21 +38,22 @@ const InputShortcut: React.FC<InputShortcutProps> = ({
         shift: e.shiftKey,
       };
       value ? onChange?.(keys) : setInputValue(shortcutToString(keys));
-    };
-    const inputContainer = inputRef.current;
-    inputContainer?.input?.addEventListener('keydown', keyDownListener);
-
-    return () => {
-      inputContainer?.input?.removeEventListener('keydown', keyDownListener);
-    };
-  }, [value, onChange, inputRef]);
+    },
+    [onChange, value],
+  );
 
   const onClearInput = useCallback(() => {
     value ? onChange?.(undefined) : setInputValue(undefined);
   }, [value, onChange]);
   return (
     <div className={css.shortcut_input_conatiner}>
-      <Input placeholder={placeholder} ref={inputRef} value={inputValue} {...props} />
+      <Input
+        placeholder={placeholder}
+        ref={inputRef}
+        value={inputValue}
+        onKeyDown={onKeyDown}
+        {...props}
+      />
       <Button icon={<Icon name="checkmark" title="save" />} type="primary" />
       <Button icon={<Icon name="close" title="save" />} onClick={onClearInput} />
     </div>
