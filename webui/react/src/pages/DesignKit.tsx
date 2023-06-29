@@ -948,25 +948,17 @@ const InlineFormSection: React.FC = () => {
       <AntDCard>
         <p>
           The <code>{'<InlineForm>'}</code> allows people to have a simple form with just one input
-          (being either an <code>{'<Input>'}</code> or a <code>{'<Select>'}</code>)) to interact
-          with.
+          to interact with.
         </p>
       </AntDCard>
       <AntDCard title="Usage">
         <p>
-          First you have to choose the <code>{'type'}</code> of your form input, being{' '}
-          <code>{'input'}</code> or <code>{'select'}</code>
-        </p>
-        <p>Each type has its props related to the usage of said component.</p>
-        <p>
-          <code>{'<Input>'}</code> has <code>{'initialInputValue'}</code> which not only sets the
-          initial value for the input, but also reverts back to it in case the user press the cancel
-          button.
+          The <code>{'inputElement'}</code> sets the actual input to be rendered in the form.
         </p>
         <p>
-          <code>{'<Select>'}</code> has <code>{'selectOptions'}</code>,{' '}
-          <code>{'defaultSelectOption'}</code>, which works the same way as the{' '}
-          <code>{'initialInputValue'}</code> and <code>{'selectSearchable'}</code>
+          By default, the <code>{'<InlineForm>'}</code> will render as read only state, to change
+          that you will have to either click in the edit button or overide its initial rendering
+          state by passing the <code>{'forceEdit'}</code> prop.
         </p>
         <br />
         <div style={{ maxWidth: '700px' }}>

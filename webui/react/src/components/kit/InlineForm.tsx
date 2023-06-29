@@ -45,8 +45,7 @@ const InlineForm: React.FC<Props> = ({
         labelCol={{ span: 0 }}
         name="input"
         required={required}>
-        {React.isValidElement(inputElement) &&
-          React.cloneElement(inputElement, { ...inputElement.props, disabled: !isEditing })}
+        {isEditing ? inputElement : <span className={css.readOnlyElement}>{inputValue}</span>}
       </Form.Item>
       <div className={css.buttonsContainer}>
         {isEditing ? (
