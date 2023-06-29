@@ -10,5 +10,8 @@ searcher:
    name: single
    metric: x
    max_length: 100
-
 max_restarts: 2
+bind_mounts:
+    - host_path: /path/to/output
+      container_path: /inference_out
+      read_only: false

@@ -32,8 +32,8 @@ def run_inference(
     model.eval()
     records_processed = 0
 
-    # I set up my AWS cluster with file system, this is where the fs is mounted to my container
-    inference_output_dir = "/run/determined/workdir/shared_fs/inference_out/"
+    inference_output_dir = "inference_out/"
+
     # The first worker will create it, and exist_ok option makes sure subsequent workers
     # do not run into error
     pathlib.Path.mkdir(pathlib.Path(inference_output_dir), parents=True, exist_ok=True)

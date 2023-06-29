@@ -24,6 +24,8 @@ class MyProcessor(TorchBatchProcessor):
             pred = self.model(model_input)
             output = {"predictions": pred, "input": batch}
             output_list.append(output)
+
+        # Automatic upload to output to the same storage used by determined checkpoints
         with self.context.upload_path() as path:
             file_path = pathlib.Path(path, file_name)
             torch.save(output_list, file_path)
