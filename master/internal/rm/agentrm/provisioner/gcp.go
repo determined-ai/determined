@@ -206,8 +206,8 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) error {
 		ctx.Log().WithError(err).Errorf("error inserting GCE instance")
 		return err
 	}
-	tracker := newBatchOperationTracker(c.GCPClusterConfig, c.client, []*compute.Operation{ops})
-	go tracker.start(func(doneOps []*compute.Operation) {
+	tracker := newGCPBatchOperationTracker(c.GCPClusterConfig, c.client, []*compute.Operation{ops})
+	go tracker.startTracker(func(doneOps []*compute.Operation) {
 		ctx.Log().Info("inserted GCE instances")
 	})
 	return nil
@@ -249,8 +249,8 @@ func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
 		return
 	}
 
-	tracker := newBatchOperationTracker(c.GCPClusterConfig, c.client, ops)
-	go tracker.start(func(doneOps []*compute.Operation) {
+	tracker := newGCPBatchOperationTracker(c.GCPClusterConfig, c.client, ops)
+	go tracker.startTracker(func(doneOps []*compute.Operation) {
 		deleted := c.newInstancesFromOperations(doneOps)
 		ctx.Log().Infof(
 			"deleted %d/%d GCE instances: %s",

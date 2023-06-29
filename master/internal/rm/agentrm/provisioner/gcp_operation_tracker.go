@@ -99,7 +99,7 @@ type gcpBatchOperationTracker struct {
 	syslog *logrus.Entry
 }
 
-func newBatchOperationTracker(
+func newGCPBatchOperationTracker(
 	config *provconfig.GCPClusterConfig,
 	client *compute.Service,
 	ops []*compute.Operation,
@@ -113,7 +113,7 @@ func newBatchOperationTracker(
 	}
 }
 
-func (t *gcpBatchOperationTracker) start(postProcess func([]*compute.Operation)) {
+func (t *gcpBatchOperationTracker) startTracker(postProcess func([]*compute.Operation)) {
 	timeout := time.Duration(t.config.OperationTimeoutPeriod)
 	groupCtx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -138,19 +138,6 @@ func (t *gcpBatchOperationTracker) start(postProcess func([]*compute.Operation))
 		successful = append(successful, op.doneOp)
 	}
 	postProcess(successful)
-}
-
-func (t *gcpBatchOperationTracker) trackOperationDone(
-	op *compute.Operation,
-	doneOp *compute.Operation,
-	err error,
-) {
-	t.logErrors(doneOp, err)
-
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	t.doneOps = append(t.doneOps, trackOperationDone{op, doneOp, err})
 }
 
 func (t *gcpBatchOperationTracker) logErrors(doneOp *compute.Operation, err error) {
@@ -179,4 +166,17 @@ func (t *gcpBatchOperationTracker) logErrors(doneOp *compute.Operation, err erro
 			)
 		}
 	}
+}
+
+func (t *gcpBatchOperationTracker) trackOperationDone(
+	op *compute.Operation,
+	doneOp *compute.Operation,
+	err error,
+) {
+	t.logErrors(doneOp, err)
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	t.doneOps = append(t.doneOps, trackOperationDone{op, doneOp, err})
 }
