@@ -114,11 +114,7 @@ def current_project_id() -> str:
 
 
 def cherry_pick_pr(pr_id: str) -> None:
-    if "determined-ee" in run_capture("git", "remote", "get-url", CLONED_REMOTE):
-        # TODO Add the separate logic for running EE-only cherry-picks.
-        print("Skipping EE PR, marking as conflicted for human attention")
-        add_item_to_project(current_project_id(), pr_id, FIX_CONFLICT_STATUS)
-        return
+    is_ee_pr = "determined-ee" in run_capture("git", "remote", "get-url", CLONED_REMOTE)
 
     pr = gql.get_pr_merge_commit_and_url(id=pr_id)["node"]
     pr_commit = pr["mergeCommit"]["oid"]
@@ -132,7 +128,6 @@ def cherry_pick_pr(pr_id: str) -> None:
                 "git", "ls-remote", CLONED_REMOTE, "refs/heads/release-*"
             ).splitlines()
         )[len("refs/heads/") :]
-        ee_release_branch = f"{release_branch}-ee"
         print(f"Found release branch {release_branch}")
 
         run(
@@ -144,9 +139,7 @@ def cherry_pick_pr(pr_id: str) -> None:
             f"{release_branch}:{release_branch}",
         )
 
-        ee_remote = "ee"
-        run("git", "remote", "add", ee_remote, "https://github.com/determined-ai/determined-ee.git")
-        run("cat", ".git/config")
+        # Set up authentication to access EE.
         auth = base64.b64encode(f"x-access-token:{GITHUB_TOKEN}".encode()).decode()
         run(
             "git",
@@ -155,20 +148,31 @@ def cherry_pick_pr(pr_id: str) -> None:
             "http.https://github.com/.extraHeader",
             f"Authorization: Basic {auth}",
         )
-        run("git", "fetch", "--depth=2", ee_remote, f"{ee_release_branch}:{ee_release_branch}")
 
         # Perform both cherry-picks.
         run("git", "config", "user.email", "automation@determined.ai")
         run("git", "config", "user.name", "Determined CI")
         run("git", "checkout", release_branch)
         run("git", "cherry-pick", "-x", pr_commit)
-        run("git", "checkout", ee_release_branch)
-        run("git", "cherry-pick", "-x", pr_commit)
+        if not is_ee_pr:
+            ee_remote = "ee"
+            ee_release_branch = f"{release_branch}-ee"
+            run(
+                "git",
+                "remote",
+                "add",
+                ee_remote,
+                "https://github.com/determined-ai/determined-ee.git",
+            )
+            run("git", "fetch", "--depth=2", ee_remote, f"{ee_release_branch}:{ee_release_branch}")
+            run("git", "checkout", ee_release_branch)
+            run("git", "cherry-pick", "-x", pr_commit)
 
         # Perform both pushes only if both cherry-picks succeeded, so we don't
         # end up with the two branches in different states.
         run("git", "push", CLONED_REMOTE, f"{release_branch}:{release_branch}")
-        run("git", "push", ee_remote, f"{ee_release_branch}:{ee_release_branch}")
+        if not is_ee_pr:
+            run("git", "push", ee_remote, f"{ee_release_branch}:{ee_release_branch}")
 
         print("Cherry-pick succeeded, adding tracking item for testing")
         add_tracking_issue_to_project(current_project_id(), pr_id, NEEDS_TESTING_STATUS)
