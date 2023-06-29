@@ -230,7 +230,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                   <Link path={paths.trialDetails(trial.id, trial.experimentId)}>
                     {Array.isArray(experiment) ? (
                       <Typography.Paragraph ellipsis={{ tooltip: true }}>
-                        {experimentMap[trial.experimentId].name}
+                        {experimentMap[trial.experimentId]?.name}
                       </Typography.Paragraph>
                     ) : (
                       `Trial ${trial.id}`
