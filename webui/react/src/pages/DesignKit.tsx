@@ -933,9 +933,16 @@ const CodeEditorSection: React.FC = () => {
 };
 
 const InlineFormSection: React.FC = () => {
-  const fooCallback = useCallback(() => {
-    return;
+  const [inputValue, setInputValue] = useState<string | number>('test value');
+  const [selectValue, setSelectValue] = useState<string | number>(1);
+
+  const inputCallback = useCallback((newValue: string | number) => {
+    setInputValue(newValue);
   }, []);
+  const selectCallback = useCallback((newValue: string | number) => {
+    setSelectValue(newValue);
+  }, []);
+
   return (
     <ComponentSection id="InlineForm" title="InlineForm">
       <AntDCard>
@@ -963,7 +970,12 @@ const InlineFormSection: React.FC = () => {
         </p>
         <br />
         <div style={{ maxWidth: '700px' }}>
-          <InlineForm inputElement={<Input />} label="Input" onSubmit={fooCallback} />
+          <InlineForm
+            inputElement={<Input />}
+            inputValue={inputValue}
+            label="Input"
+            onSubmit={inputCallback}
+          />
           <InlineForm
             inputElement={
               <Select defaultValue={1} searchable={false}>
@@ -977,8 +989,9 @@ const InlineFormSection: React.FC = () => {
                 ))}
               </Select>
             }
+            inputValue={selectValue}
             label="Select"
-            onSubmit={fooCallback}
+            onSubmit={selectCallback}
           />
         </div>
       </AntDCard>

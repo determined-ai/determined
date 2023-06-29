@@ -8,7 +8,7 @@ import css from './InlineForm.module.scss';
 
 interface Props {
   label: string;
-  initialValue?: string;
+  inputValue?: string | number;
   onSubmit: (inputValue: string | number) => Promise<void> | void;
   inputElement: React.ReactNode;
   required?: boolean;
@@ -20,16 +20,16 @@ const InlineForm: React.FC<Props> = ({
   required,
   forceEdit = false,
   inputElement,
-  initialValue = '',
+  inputValue = '',
   onSubmit,
 }) => {
   const [isEditing, setIsEditing] = useState(forceEdit);
   const [form] = Form.useForm();
 
   const resetForm = useCallback(() => {
-    form.setFieldValue('input', initialValue);
+    form.setFieldValue('input', inputValue);
     setIsEditing(false);
-  }, [initialValue, form]);
+  }, [inputValue, form]);
 
   const submitForm = useCallback(() => {
     onSubmit(form.getFieldValue('input'));
@@ -40,6 +40,7 @@ const InlineForm: React.FC<Props> = ({
     <Form className={css.formBase} form={form} initialValues={{ layout: 'inline' }} layout="inline">
       <Form.Item
         className={css.formItemInput}
+        initialValue={inputValue}
         label={label}
         labelCol={{ span: 0 }}
         name="input"
