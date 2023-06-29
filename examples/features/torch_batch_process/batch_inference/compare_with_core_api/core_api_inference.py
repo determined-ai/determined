@@ -16,11 +16,13 @@ import torchvision.transforms as transforms
 from torch import nn
 
 import determined as det
-from determined import core, pytorch
+from determined import common, core, pytorch
+
+common.set_logger(False)
 
 
 def run_inference(
-    model: nn.module,
+    model: nn.Module,
     data_loader: Any,
     context: core.Context,
     rank: int,
@@ -66,7 +68,6 @@ def run_inference(
                     records_processed += work_completed_this_round
                     checkpoint_metadata = {
                         "steps_completed": batch_idx,
-                        "records_processed": records_processed,
                     }
                     with context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
                         with open(os.path.join(path, "batch_completed.json"), "w") as file_obj:
@@ -124,7 +125,9 @@ def _initialize_distributed_backend() -> Optional[core.DistributedContext]:
 def main(context: core.Context):
     batch_size = 200
     info = det.get_cluster_info()
-    total_worker = len(info.container_addrs)
+    slots_per_node = len(info.slot_ids)
+    num_nodes = len(info.container_addrs)
+    total_worker = num_nodes * slots_per_node
     rank = context.distributed.get_rank()
     latest_checkpoint = info.latest_checkpoint
     skip = 0

@@ -1,4 +1,4 @@
-# Batch inference with Core API
+# Batch inference with Core API & Torch Batch Processing API
 ## Overview
 This example illustrates how to run distributed batch inference with Core API. Determined's Core API is very flexible
 and can be used to run almost anything, including batch inference. 
@@ -13,10 +13,11 @@ However, using Core API directly would require the user to directly handle
 - Determined machinery such as creating and loading checkpoint, preemption and resumption
 - initialization of appropriate distributed context
 
-We include this example here as a comparison against `torch_batch_process` examples.
-
+You will see that using the Torch Batch Processing API for the same task is a lot easier as it abstracted away all the 
+low level details and provides useful helper functions.
 ## Detailed on this example
 We are running inference with a simple vision model on the MNIST dataset. We then store the prediction outcome to the
 shared file system.
 
-To run the example, simply run `det e create config.yaml .`
+To run the Core API example, simply run `det e create core_api_config.yaml .`
+To run the Torch Batch Processing example, simply run `det e create torch_batch_process_config.yaml .`

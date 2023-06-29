@@ -1,0 +1,14 @@
+name: torch_batch_process_batch_inference
+entrypoint: >-
+   python3 -m determined.launch.torch_distributed
+   python3 torch_batch_process_inference.py
+
+resources:
+  slots_per_trial: 2
+
+searcher:
+   name: single
+   metric: x
+   max_length: 100
+
+max_restarts: 2
