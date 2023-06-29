@@ -123,7 +123,8 @@ const LogViewerSelect: React.FC<Props> = ({
   useEffect(() => {
     if (!filters) return;
     throttledChangeFilter(filters);
-  }, [filters, throttledChangeFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.searchText, throttledChangeFilter]);
 
   useEffect(() => {
     return () => {
@@ -144,6 +145,7 @@ const LogViewerSelect: React.FC<Props> = ({
             placeholder={`All ${LABELS.allocationIds}`}
             value={filters.allocationIds}
             width={150}
+            onBlur={() => onChange?.(filters)}
             onChange={handleChange('allocationIds', String)}>
             {selectOptions?.allocationIds?.map((id, index) => (
               <Option key={id || `no-id-${index}`} value={id}>
@@ -159,6 +161,7 @@ const LogViewerSelect: React.FC<Props> = ({
             placeholder={`All ${LABELS.agentIds}`}
             value={filters.agentIds}
             width={150}
+            onBlur={() => onChange?.(filters)}
             onChange={handleChange('agentIds', String)}>
             {selectOptions?.agentIds?.map((id, index) => (
               <Option key={id || `no-id-${index}`} value={id}>
@@ -174,6 +177,7 @@ const LogViewerSelect: React.FC<Props> = ({
             placeholder={`All ${LABELS.containerIds}`}
             value={filters.containerIds}
             width={150}
+            onBlur={() => onChange?.(filters)}
             onChange={handleChange('containerIds', String)}>
             {selectOptions?.containerIds?.map((id, index) => (
               <Option key={id || `no-id-${index}`} value={id}>
@@ -189,6 +193,7 @@ const LogViewerSelect: React.FC<Props> = ({
             placeholder={`All ${LABELS.rankIds}`}
             value={filters.rankIds}
             width={150}
+            onBlur={() => onChange?.(filters)}
             onChange={handleChange('rankIds', Number)}>
             {selectOptions?.rankIds?.map((id, index) => (
               <Option key={id ?? `no-id-${index}`} value={id}>
@@ -203,6 +208,7 @@ const LogViewerSelect: React.FC<Props> = ({
           placeholder={`All ${LABELS.levels}`}
           value={filters.levels}
           width={150}
+          onBlur={() => onChange?.(filters)}
           onChange={handleChange('levels', String)}>
           {selectOptions?.levels.map((level) => (
             <Option key={level.value} value={level.value}>
