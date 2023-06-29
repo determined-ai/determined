@@ -1,13 +1,18 @@
 package rbac
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/usergroup"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 )
 
@@ -215,4 +220,90 @@ type RoleAssignmentScope struct {
 
 	ID          int           `bun:"id,pk,autoincrement" json:"id"`
 	WorkspaceID sql.NullInt32 `bun:"scope_workspace_id"  json:"workspace_id"`
+}
+
+// PermittedScopes returns a set of scopes that the user has the given permission on.
+func PermittedScopes(
+	ctx context.Context, curUser model.User, requestedScope model.AccessScopeID,
+	permission rbacv1.PermissionType,
+) (model.AccessScopeSet, error) {
+	returnScope := model.AccessScopeSet{}
+	var workspaces []int
+
+	// check if user has global permissions
+	err := db.DoesPermissionMatch(ctx, curUser.ID, nil, permission)
+	if err == nil {
+		if requestedScope == 0 {
+			err = db.Bun().NewSelect().Table("workspaces").Column("id").Scan(ctx, &workspaces)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error getting workspaces from db")
+			}
+
+			for _, workspaceID := range workspaces {
+				returnScope[model.AccessScopeID(workspaceID)] = true
+			}
+			return returnScope, nil
+		}
+		return model.AccessScopeSet{requestedScope: true}, nil
+	}
+
+	// get all workspaces user has permissions to
+	workspaces, err = db.GetNonGlobalWorkspacesWithPermission(
+		ctx, curUser.ID, permission)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error getting workspaces from db")
+	}
+
+	if requestedScope == 0 {
+		for _, workspaceID := range workspaces {
+			returnScope[model.AccessScopeID(workspaceID)] = true
+		}
+		return returnScope, nil
+	}
+
+	for _, workspaceID := range workspaces {
+		if requestedScope == model.AccessScopeID(workspaceID) {
+			return model.AccessScopeSet{requestedScope: true}, nil
+		}
+	}
+	return model.AccessScopeSet{}, nil
+}
+
+// CheckForPermission checks if the user has the given permission on the given subject
+// and logging the result.
+func CheckForPermission(
+	ctx context.Context, subject string, curUser *model.User,
+	workspaceID *model.AccessScopeID, permission rbacv1.PermissionType,
+) (permErr error, err error) {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["username"] = curUser.Username
+	fields["permissionsRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{permission},
+			SubjectType:     subject,
+		},
+	}
+
+	defer func() {
+		if err == nil {
+			fields["permissionGranted"] = permErr == nil
+			audit.Log(fields)
+		}
+	}()
+
+	var wid int32
+	if workspaceID != nil {
+		wid = int32(*workspaceID)
+	}
+	if err := db.DoesPermissionMatch(ctx, curUser.ID, &wid,
+		permission); err != nil {
+		switch typedErr := err.(type) {
+		case authz.PermissionDeniedError:
+			return typedErr, nil
+		default:
+			return nil, err
+		}
+	}
+	return nil, nil
 }
