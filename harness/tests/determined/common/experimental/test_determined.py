@@ -123,3 +123,18 @@ def test_default_retry_doesnt_retry_allowed_status(
     with pytest.raises(errors.BadRequestException):
         client.get_model(model_resp.model.name)
     responses.assert_call_count(get_model_url, 1)
+
+
+@responses.activate
+def test_get_trial_includes_summary_metrics(make_client: Callable[[], Determined]) -> None:
+    client = make_client()
+    trial_id = 1
+    tr_resp = api_responses.sample_get_trial(id=trial_id)
+    trial_url = f"{_MASTER}/api/v1/trials/{trial_id}"
+    responses.get(trial_url, json=tr_resp.to_json())
+
+    resp = client.get_trial(trial_id=trial_id)
+
+    assert resp.summary
+    assert resp.summary["avg_metrics"]
+    assert resp.summary["validation_metrics"]

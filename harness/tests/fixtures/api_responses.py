@@ -44,9 +44,11 @@ def sample_get_experiment_trials() -> bindings.v1GetExperimentTrialsResponse:
         return resp
 
 
-def sample_get_trial() -> bindings.v1GetTrialResponse:
+def sample_get_trial(**kwargs: Any) -> bindings.v1GetTrialResponse:
     with open(FIXTURES_DIR / "trial.json") as f:
         resp = bindings.v1GetTrialResponse.from_json(json.load(f))
+        for k, v in kwargs.items():
+            setattr(resp.trial, k, v)
         return resp
 
 
