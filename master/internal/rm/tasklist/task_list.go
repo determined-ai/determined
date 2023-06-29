@@ -176,7 +176,7 @@ func newTaskSummary(
 		TaskID:         request.TaskID,
 		AllocationID:   request.AllocationID,
 		Name:           request.Name,
-		RegisteredTime: request.AllocationRef.RegisteredTime(),
+		RegisteredTime: request.RequestTime,
 		ResourcePool:   request.ResourcePool,
 		SlotsNeeded:    request.SlotsNeeded,
 		Resources:      resourcesSummaries,
@@ -207,8 +207,8 @@ func allocationRequestComparator(a *sproto.AllocateRequest, b *sproto.AllocateRe
 // registerTimeComparator compares AllocateRequests based on when their Allocate actor was
 // registred.
 func registerTimeComparator(t1 *sproto.AllocateRequest, t2 *sproto.AllocateRequest) int {
-	if !t1.AllocationRef.RegisteredTime().Equal(t2.AllocationRef.RegisteredTime()) {
-		if t1.AllocationRef.RegisteredTime().Before(t2.AllocationRef.RegisteredTime()) {
+	if !t1.RequestTime.Equal(t2.RequestTime) {
+		if t1.RequestTime.Before(t2.RequestTime) {
 			return -1
 		}
 		return 1

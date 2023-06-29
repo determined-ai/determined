@@ -1,6 +1,7 @@
 package preemptible_test
 
 import (
+	"context"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -29,7 +30,7 @@ func TestPreemption(t *testing.T) {
 
 	// on preemption, it should receive status.
 	var timedOut atomic.Bool
-	p.Preempt(func(err error) { timedOut.Store(true) })
+	p.Preempt(func(ctx context.Context, err error) { timedOut.Store(true) })
 	select {
 	case <-w.C:
 	default:
@@ -70,7 +71,7 @@ func TestTimeout(t *testing.T) {
 
 	// on preemption, it should receive status.
 	var timedOut atomic.Bool
-	p.Preempt(func(err error) { timedOut.Store(true) })
+	p.Preempt(func(ctx context.Context, err error) { timedOut.Store(true) })
 
 	waitForCondition(t, time.Second, timedOut.Load)
 

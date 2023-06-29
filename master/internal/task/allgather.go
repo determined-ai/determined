@@ -3,10 +3,12 @@ package task
 import (
 	"context"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/sirupsen/logrus"
+
 	"github.com/google/uuid"
 
 	"github.com/determined-ai/determined/master/internal/task/allgather"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -15,17 +17,29 @@ import (
 // reason. Only one call may connect per `id`.
 func AllGather(
 	ctx context.Context,
-	msgr actor.Messenger,
 	allocationID model.AllocationID,
 	id uuid.UUID,
 	numPeers int,
 	data any,
 ) ([]any, error) {
-	w := allgather.Join(
-		allocationID.String(), id, numPeers, data,
-		func() { SetReady(msgr, allocationID) },
-		func(err error) { SendLog(msgr, allocationID, err.Error()) },
-	)
+	err := WaitForRestore(ctx, allocationID)
+	if err != nil {
+		return nil, err
+	}
+
+	readyFn := func() {
+		err := SetReady(ctx, allocationID)
+		if err != nil {
+			logrus.WithError(err).Error("failed to set ready for %s", allocationID)
+		}
+	}
+
+	timeoutFn := func(err error) {
+		msg := err.Error()
+		SendLog(ctx, allocationID, &sproto.ContainerLog{AuxMessage: &msg})
+	}
+
+	w := allgather.Join(allocationID.String(), id, numPeers, data, readyFn, timeoutFn)
 	defer allgather.Leave(allocationID.String(), id)
 
 	select {

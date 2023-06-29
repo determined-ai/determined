@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,7 +24,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
@@ -1070,21 +1070,6 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, errs.ErrorOrNil()
 }
 
-func (a *apiServer) waitForAllocationToBeRestored(ctx context.Context, handler *actor.Ref) error {
-	for i := 0; i < 60; i++ {
-		var restoring bool
-		if err := a.ask(handler.Address(), task.IsAllocationRestoring{}, &restoring); err != nil {
-			return errors.Wrap(err, "failed to ask allocation actor about restoring status")
-		}
-		if !restoring {
-			return nil
-		}
-
-		time.Sleep(time.Second)
-	}
-	return fmt.Errorf("allocation stuck restoring after one minute of retrying")
-}
-
 func (a *apiServer) AllocationPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPreemptionSignalRequest,
@@ -1093,21 +1078,17 @@ func (a *apiServer) AllocationPreemptionSignal(
 		return nil, err
 	}
 
-	allocationID := model.AllocationID(req.AllocationId)
-	ref := allocationmap.GetAllocation(allocationID)
-	if ref == nil {
-		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
+	err := task.WaitForRestore(ctx, model.AllocationID(req.AllocationId))
+	if err != nil {
 		return nil, err
 	}
 
 	id := uuid.New()
-	w, err := preemptible.Watch(allocationID.String(), id)
+	w, err := preemptible.Watch(req.AllocationId, id)
 	if err != nil {
 		return nil, err
 	}
-	defer preemptible.Unwatch(allocationID.String(), id)
+	defer preemptible.Unwatch(req.AllocationId, id)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(req.TimeoutSeconds)*time.Second)
 	defer cancel()
@@ -1126,17 +1107,13 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 		return nil, err
 	}
 
-	allocationID := model.AllocationID(req.AllocationId)
-
-	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
-	if ref == nil {
-		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
+	// TODO(!!!): We may not need a task.WaitForRestore here.
+	err := task.WaitForRestore(ctx, model.AllocationID(req.AllocationId))
+	if err != nil {
 		return nil, err
 	}
 
-	preemptible.Acknowledge(allocationID.String())
+	preemptible.Acknowledge(req.AllocationId)
 	return &apiv1.AckAllocationPreemptionSignalResponse{}, nil
 }
 
@@ -1148,6 +1125,7 @@ func (a *apiServer) AllocationPendingPreemptionSignal(
 		return nil, err
 	}
 
+	// TODO(!!!): Just call `task.Signal`.
 	if err := a.m.rm.ExternalPreemptionPending(
 		a.m.system,
 		sproto.PendingPreemption{AllocationID: model.AllocationID(req.AllocationId)},
@@ -1187,20 +1165,14 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
 	}
-	allocationID := model.AllocationID(req.AllocationId)
 
-	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
-	if ref == nil {
-		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
-		return nil, err
-	}
-
-	if err := a.ask(ref.Address(), task.MarkResourcesDaemon{
-		AllocationID: allocationID,
-		ResourcesID:  sproto.ResourcesID(req.ResourcesId),
-	}, nil); err != nil {
+	// TODO(!!!): protobuf custom string types..?
+	err := task.MarkResourcesDaemon(
+		ctx,
+		model.AllocationID(req.AllocationId),
+		sproto.ResourcesID(req.ResourcesId),
+	)
+	if err != nil {
 		return nil, err
 	}
 	return &apiv1.MarkAllocationResourcesDaemonResponse{}, nil
@@ -1410,23 +1382,18 @@ func (a *apiServer) AllocationRendezvousInfo(
 
 	allocationID := model.AllocationID(req.AllocationId)
 	resourcesID := sproto.ResourcesID(req.ResourcesId)
-	ref := allocationmap.GetAllocation(allocationID)
-	if ref == nil {
-		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
-		return nil, err
-	}
 
-	var w task.RendezvousWatcher
-	if err := a.ask(ref.Address(), task.WatchRendezvousInfo{
-		ResourcesID: resourcesID,
-	}, &w); err != nil {
+	defer func() {
+		// TODO: partial failures are annoying and we should just make them impossible.
+		err := task.UnwatchRendezvous(ctx, allocationID, resourcesID)
+		if err != nil {
+			logrus.Errorf("failed to unwatch rendezvous for %s: %w", allocationID, err)
+		}
+	}()
+	w, err := task.WatchRendezvous(ctx, allocationID, resourcesID)
+	if err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(ref.Address(), task.UnwatchRendezvousInfo{
-		ResourcesID: resourcesID,
-	})
 
 	select {
 	case rsp := <-w.C:

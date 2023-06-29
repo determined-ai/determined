@@ -33,7 +33,7 @@ type checkpointGCTask struct {
 	jobID             model.JobID
 	jobSubmissionTime time.Time
 
-	allocation *actor.Ref
+	allocation *task.Allocation
 
 	logCtx logger.Context
 }
@@ -103,20 +103,19 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			return fmt.Errorf("resolving resource pool: %w", err)
 		}
 
-		allocation := task.NewAllocation(t.logCtx, sproto.AllocateRequest{
+		t.allocation = task.NewAllocation(t.logCtx, sproto.AllocateRequest{
 			TaskID:            t.taskID,
 			JobID:             t.jobID,
+			RequestTime:       time.Now().UTC(),
 			JobSubmissionTime: t.jobSubmissionTime,
 			AllocationID:      t.allocationID,
 			Name:              fmt.Sprintf("Checkpoint GC (Experiment %d)", t.ExperimentID),
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,
 			},
-			AllocationRef: ctx.Self(),
-			ResourcePool:  rp,
-		}, t.db, t.rm, t.GCCkptSpec)
-
-		t.allocation, _ = ctx.ActorOf(t.allocationID, allocation)
+			Group:        ctx.Self(),
+			ResourcePool: rp,
+		}, t.db, t.rm, t.GCCkptSpec, ctx.Self().System(), ctx.Self())
 
 		// t.Base is just a shallow copy of the m.taskSpec on the master, so
 		// use caution when mutating it.

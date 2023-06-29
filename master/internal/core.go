@@ -52,7 +52,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -783,7 +783,7 @@ func (m *Master) restoreNonTerminalExperiments() error {
 }
 
 func (m *Master) closeOpenAllocations() error {
-	allocationIds := allocationmap.GetAllAllocationIds()
+	allocationIds := task.GetAllAllocationIDs()
 	if err := m.db.CloseOpenAllocations(allocationIds); err != nil {
 		return err
 	}

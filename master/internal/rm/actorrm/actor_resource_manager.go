@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -106,8 +108,24 @@ func (r *ResourceManager) ValidateCommandResources(
 }
 
 // Allocate allocates some resources.
-func (r *ResourceManager) Allocate(ctx actor.Messenger, msg sproto.AllocateRequest) error {
-	return r.Ask(ctx, msg, nil)
+func (r *ResourceManager) Allocate(
+	ctx actor.Messenger,
+	msg sproto.AllocateRequest,
+) (resp *sproto.AllocationSubscription, err error) {
+	// We want to subscribe before allocating, but also free
+	// the subscription for the caller if we fail.
+	sub := rmevents.Subscribe(msg.AllocationID)
+	defer func() {
+		if err != nil {
+			sub.Close()
+		}
+	}()
+
+	err = r.Ask(ctx, msg, nil)
+	if err != nil {
+		return nil, err
+	}
+	return sub, nil
 }
 
 // Release releases some resources.
