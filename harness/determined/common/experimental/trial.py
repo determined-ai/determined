@@ -124,8 +124,21 @@ class Trial:
     Attributes:
         trial_id: ID of trial.
         session: HTTP request session.
-        hparams: (Mutable, Optional[Dict]) Hyperparameters for the trial.
-        summary: (Mutable, Optional[Dict]) Summary metrics for the trial.
+        hparams: (Mutable, Optional[Dict]) Dict[name, value] of the trial's hyperparameters.
+            This is an instance of the hyperparameter space defined by the experiment.
+        summary: (Mutable, Optional[Dict]) Summary metrics for the trial. Includes aggregated
+            metrics for training and validation steps for each reported metric name. Example:
+                {
+                    "avg_metrics": {
+                        "loss": {
+                            "count": 100,
+                            "last": 0.2,
+                            "max": 0.4,
+                            "min", 0.2,
+                            "sum": 1.2,
+                            "type": "number",
+                        }
+                }
 
     Note:
         All attributes are cached by default.
