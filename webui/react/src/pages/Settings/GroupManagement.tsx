@@ -154,8 +154,7 @@ const GroupManagement: React.FC = () => {
   useEffect(() => {
     fetchGroups();
     fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchGroups, fetchUsers]);
 
   useEffect(() => (rbacEnabled ? roleStore.fetch() : undefined), [rbacEnabled]);
 
