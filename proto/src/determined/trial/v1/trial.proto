@@ -277,11 +277,11 @@ message TrialSourceInfo {
   // TrialSourceInfoType see \dT+ trial_source_info_type in db
   enum TrialSourceInfoType {
     // The type is unspecified
-    TYPE_UNSPECIFIED = 0;
+    UNSPECIFIED = 0;
     // "Inference" Trial Source Info Type, used for batch inference
-    TYPE_INFERENCE = 1;
+    INFERENCE = 1;
     // "Fine Tuning" Trial Source Info Type, used in model hub
-    TYPE_FINE_TUNING = 2;
+    FINE_TUNING = 2;
   }
 
   // ID of the trial.

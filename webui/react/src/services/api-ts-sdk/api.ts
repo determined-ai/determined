@@ -718,14 +718,14 @@ export const TrialSorterNamespace = {
 } as const
 export type TrialSorterNamespace = ValueOf<typeof TrialSorterNamespace>
 /**
- * - TYPE_UNSPECIFIED: The type is unspecified  - TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+ * - UNSPECIFIED: The type is unspecified  - INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
  * @export
  * @enum {string}
  */
 export const TrialSourceInfoTrialSourceInfoType = {
-    UNSPECIFIED: 'TYPE_UNSPECIFIED',
-    INFERENCE: 'TYPE_INFERENCE',
-    FINETUNING: 'TYPE_FINE_TUNING',
+    UNSPECIFIED: 'UNSPECIFIED',
+    INFERENCE: 'INFERENCE',
+    FINETUNING: 'FINE_TUNING',
 } as const
 export type TrialSourceInfoTrialSourceInfoType = ValueOf<typeof TrialSourceInfoTrialSourceInfoType>
 /**

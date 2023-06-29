@@ -942,69 +942,51 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 	return nil
 }
 
-// // TODO: Add comment
-// func (a *apiServer) CreateTrialSourceInfo(
-// 	ctx context.Context, req *apiv1.CreateTrialSourceInfoRequest,
-// ) (*apiv1.CreateTrialSourceInfoResponse, error) {
-// 	return nil, nil
-// 	// curUser, _, err := grpcutil.GetUser(ctx)
-// 	// if err != nil {
-// 	// 	return nil, fmt.Errorf("failed to create trial source info %w", err)
-// 	// }
+// Create a TrialSourceInfo, which serves as a link between trials and checkpoints
+// used for tracking purposes for fine tuning and inference
+func (a *apiServer) CreateTrialSourceInfo(
+	ctx context.Context, req *apiv1.CreateTrialSourceInfoRequest,
+) (*apiv1.CreateTrialSourceInfoResponse, error) {
+	// TODO: Handle user auth/rbac
+	// curUser, _, err := grpcutil.GetUser(ctx)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to create trial source info %w", err)
+	// }
 
-// 	// container := &apiv1.ComparableTrial{Trial: &trialv1.Trial{}}
-// 	// switch err := a.m.db.QueryProto(
-// 	// 	"insert_trial_source_info",
-// 	// 	container.Trial,
-// 	// 	trialID
-// 	// ); {
-// 	// // case err == db.ErrNotFound:
-// 	// // 	return nil, status.Errorf(codes.NotFound, "trial %d not found:", trialID)
-// 	// case err != nil:
-// 	// 	return nil, errors.Wrapf(err, "failed to get trial %d", trialID)
-// 	// }
+	// TODO: Handle check for whether the checkpoint is v1 or somehow fallback and link it
+	// properly if it is v1?
+	// TODO: Test for failure if you only provide part of the state for the model_version
 
-// 	// return nil, nil
+	resp := &apiv1.CreateTrialSourceInfoResponse{}
+	reqTSI := req.TrialSourceInfo
 
-// 	// OTHER CODE
+	nonZeroValue := func(value int32) *int32 {
+		if value != 0 {
+			return &value
+		}
+		return nil
+	}
 
-// 	// err = checkTrialFiltersEmpty(req.Filters)
-// 	// if err != nil {
-// 	// 	return nil, err
-// 	// }
+	versionId := nonZeroValue(reqTSI.GetSourceModelVersionId())
+	versionVersion := nonZeroValue(reqTSI.GetSourceModelVersionVersion())
 
-// 	// if req.ProjectId == 0 {
-// 	// 	return nil, errors.New("failed to create trials collection: must specify project_id")
-// 	// }
-// 	// err = AuthZProvider.Get().CanCreateTrialCollection(ctx, curUser, req.ProjectId)
-// 	// if authz.IsPermissionDenied(err) {
-// 	// 	return nil, status.Error(
-// 	// 		codes.PermissionDenied,
-// 	// 		"unable to create collection",
-// 	// 	)
-// 	// }
-// 	// if err != nil {
-// 	// 	return nil, fmt.Errorf("unable to create collection %w", err)
-// 	// }
-
-// 	// collection := TrialsCollection{
-// 	// 	UserID:    int32(curUser.ID),
-// 	// 	Name:      req.Name,
-// 	// 	ProjectID: req.ProjectId,
-// 	// 	Filters:   req.Filters,
-// 	// 	Sorter:    req.Sorter,
-// 	// }
-// 	// _, err = db.Bun().NewInsert().
-// 	// 	Model(&collection).
-// 	// 	Returning("*").
-// 	// 	Exec(ctx)
-// 	// if err != nil {
-// 	// 	return nil, fmt.Errorf("error in creating collection %w", err)
-// 	// }
-
-// 	// resp := &apiv1.CreateTrialsCollectionResponse{Collection: collection.Proto()}
-// 	// return resp, nil
-// }
+	switch err := a.m.db.QueryProto(
+		"insert_trial_source_info",
+		resp,
+		reqTSI.TrialId,
+		reqTSI.CheckpointUuid,
+		reqTSI.SourceTrialId,
+		versionId,
+		versionVersion,
+		reqTSI.TrialSourceInfoType.String(),
+		reqTSI.Description,
+		reqTSI.Metadata,
+	); {
+	case err != nil:
+		return nil, errors.Wrapf(err, "failed to create trial_source_info for trial %d", reqTSI.TrialId)
+	}
+	return resp, nil
+}
 
 func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWorkloadsRequest) (
 	*apiv1.GetTrialWorkloadsResponse, error,

@@ -1,8 +1,12 @@
-INSERT INTO public.trial_source_info (trial_id, checkpoint_uuid)
-VALUES ($1, $2, $3)
-RETURNING (trial_id, checkpoint_uuid, trial_source_info_type)
-
--- TODO: Remove this
--- INSERT INTO public.trial_source_info (trial_id, checkpoint_uuid, trial_source_info_type)
--- VALUES (359, '7ba04ce0-73f1-463e-b348-a851a38b15e2', 'INFERENCE')
--- RETURNING (trial_id, checkpoint_uuid, trial_source_info_type)
+INSERT INTO public.trial_source_info (
+    trial_id,
+    checkpoint_uuid,
+    source_trial_id,
+    source_model_version_id,
+    source_model_version_version,
+    trial_source_info_type,
+    description,
+    metadata
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING trial_id, checkpoint_uuid;

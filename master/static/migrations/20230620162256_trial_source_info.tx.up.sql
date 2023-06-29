@@ -12,22 +12,25 @@ CREATE TABLE public.trial_source_info (
     -- Original trial that created the checkpoint (may be null in some inference and fine tuning use cases)
     source_trial_id int REFERENCES public.trials(id) ON DELETE CASCADE NULL,
     -- Source Trial's `model_version` `id` field
-    source_model_version_id int,
+    source_model_version_id int NULL,
     -- Source Trial's `model_version` `version` field
-    source_model_version_version int, 
+    source_model_version_version int NULL,
     -- Type of the `trial_source_info` (inference or fine tuning for now)
     trial_source_info_type trial_source_info_type NOT NULL,
     -- User defined description text
-    description text,
+    description text NULL,
     -- User defined metadata
-    metadata jsonb,
+    metadata jsonb NULL,
 
     CONSTRAINT fk_model_versions FOREIGN KEY (source_model_version_id, source_model_version_version) REFERENCES public.model_versions (model_id, version),
     -- `public.model_version` defines its primary key as the combination of these
     -- two values. Make sure that either they are both present or both missing
     CONSTRAINT check_model_version_valid CHECK (
         (source_model_version_id IS NULL AND source_model_version_version IS NULL) OR
-        (source_model_version_id IS NOT NULL AND source_model_version_version IS NOT NULL)
+        (
+            (source_model_version_id IS NOT NULL AND source_model_version_version IS NOT NULL) AND
+            (source_model_version_id > 0 AND source_model_version_version > 0)
+        )
     )
 );
 

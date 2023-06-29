@@ -278,9 +278,9 @@ class TrialSorterNamespace(DetEnum):
     VALIDATION_METRICS = "NAMESPACE_VALIDATION_METRICS"
 
 class TrialSourceInfoTrialSourceInfoType(DetEnum):
-    UNSPECIFIED = "TYPE_UNSPECIFIED"
-    INFERENCE = "TYPE_INFERENCE"
-    FINE_TUNING = "TYPE_FINE_TUNING"
+    UNSPECIFIED = "UNSPECIFIED"
+    INFERENCE = "INFERENCE"
+    FINE_TUNING = "FINE_TUNING"
 
 class UpdateTrialTagsRequestIds(Printable):
     ids: "typing.Optional[typing.Sequence[int]]" = None
