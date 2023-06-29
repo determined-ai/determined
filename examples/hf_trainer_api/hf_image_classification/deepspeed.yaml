@@ -39,4 +39,5 @@ entrypoint: >-
   --save_steps 20
   --deepspeed ds_configs/ds_config_stage_1.json
   --trust_remote_code false
+  --fp16
 max_restarts: 0
