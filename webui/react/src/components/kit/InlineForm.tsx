@@ -1,7 +1,7 @@
+import { Form } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Button from 'components/kit/Button';
-import Form from 'components/kit/Form';
 import Icon from 'components/kit/Icon';
 
 import css from './InlineForm.module.scss';
@@ -9,7 +9,7 @@ import css from './InlineForm.module.scss';
 interface Props {
   label: string;
   inputValue?: string | number;
-  onSubmit: (inputValue: string | number) => Promise<void> | void;
+  onSubmit: (inputValue: string | number) => Promise<void | Error> | void;
   inputElement: React.ReactNode;
   required?: boolean;
   forceEdit?: boolean;
@@ -37,7 +37,12 @@ const InlineForm: React.FC<Props> = ({
   }, [form, onSubmit]);
 
   return (
-    <Form className={css.formBase} form={form} initialValues={{ layout: 'inline' }} layout="inline">
+    <Form
+      className={css.formBase}
+      colon={false}
+      form={form}
+      initialValues={{ layout: 'inline' }}
+      layout="inline">
       <Form.Item
         className={css.formItemInput}
         initialValue={inputValue}
