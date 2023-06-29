@@ -79,9 +79,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   }, [canceler, isAuthChecked, isLoading, settingsState]);
 
   useEffect(() => {
-    const url = window.location.search.substring(/^\?/.test(location.search) ? 1 : 0);
-
-    querySettings.current = new URLSearchParams(url);
+    querySettings.current = new URLSearchParams(window.location.search);
   }, []);
 
   return (
