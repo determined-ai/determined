@@ -394,8 +394,8 @@ func (a *apiServer) getProjectNumericMetricsRange(
 		Where("experiments.best_trial_id = trials.id")
 
 	type metrics struct {
-		Min   float64
-		Max   float64
+		Min   interface{}
+		Max   interface{}
 		Count *int32
 	}
 
@@ -421,10 +421,13 @@ func (a *apiServer) getProjectNumericMetricsRange(
 				if !r.SmallerIsBetter {
 					metricsValue = value.Max
 				}
-				if _, ok := valMetricsValues[metricsName]; !ok {
-					valMetricsValues[metricsName] = []float64{metricsValue}
-				} else {
-					valMetricsValues[metricsName] = append(valMetricsValues[metricsName], metricsValue)
+				switch v := metricsValue.(type) {
+				case float64:
+					if _, ok := valMetricsValues[metricsName]; !ok {
+						valMetricsValues[metricsName] = []float64{v}
+					} else {
+						valMetricsValues[metricsName] = append(valMetricsValues[metricsName], v)
+					}
 				}
 			}
 		}
@@ -437,10 +440,13 @@ func (a *apiServer) getProjectNumericMetricsRange(
 				if !r.SmallerIsBetter {
 					metricsValue = value.Max
 				}
-				if _, ok := traMetricsValues[metricsName]; !ok {
-					traMetricsValues[metricsName] = []float64{metricsValue}
-				} else {
-					traMetricsValues[metricsName] = append(traMetricsValues[metricsName], metricsValue)
+				switch v := metricsValue.(type) {
+				case float64:
+					if _, ok := traMetricsValues[metricsName]; !ok {
+						traMetricsValues[metricsName] = []float64{v}
+					} else {
+						traMetricsValues[metricsName] = append(traMetricsValues[metricsName], v)
+					}
 				}
 			}
 		}
