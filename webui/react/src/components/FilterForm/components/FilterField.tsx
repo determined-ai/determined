@@ -105,13 +105,17 @@ const FilterField = ({
       case 'searcherType':
         return SEARCHER_TYPE.map((searcher) => ({ label: searcher, value: searcher }));
       case 'user':
-        return users
-          .sort((a, b) => alphaNumericSorter(a.username, b.username))
-          .map((user) => ({ label: user.username, value: user.username }));
-      default:
-        // eslint-disable-next-line no-case-declarations, @typescript-eslint/no-unused-vars
-        const _exhaustiveCheck: never = columnName;
-        throw new Error(`${columnName} is not columnName.`);
+        return (
+          users
+            .map((user) => ({
+              label: user.displayName || user.username,
+              value: user.id.toString(),
+            }))
+            // getUsers sorts the users similarly but uses nullish coalescing
+            // which doesn't work because the backend sends null strings in the
+            // database as empty strings
+            .sort((a, b) => alphaNumericSorter(a.label, b.label))
+        );
     }
   };
 
@@ -215,7 +219,7 @@ const FilterField = ({
           <div onKeyDownCapture={captureEnterKeyDown}>
             <Select
               options={getSpecialOptions(field.columnName as SpecialColumnNames)}
-              value={fieldValue?.toString()}
+              value={fieldValue ?? undefined}
               width={'100%'}
               onChange={(value) => {
                 const val = value?.toString() ?? null;
