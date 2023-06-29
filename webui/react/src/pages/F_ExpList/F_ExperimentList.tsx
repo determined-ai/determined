@@ -174,20 +174,20 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
   useEffect(() => {
-    if (!isLoading) { // loading experiment data first
+    if (!isLoadingSettings) {
+      // loading experiment data first
       setSelectedExperimentIds(settings.selectedExperimentIds);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading]);
+  }, [isLoadingSettings]);
   const handleExperimentSelection = useCallback(
-    (setIds: number[]) => {
-      if (setIds === selectedExperimentIds) return;
-      setSelectedExperimentIds(setIds);
+    (selectedExperimentIds: number[]) => {
+      setSelectedExperimentIds(selectedExperimentIds);
       updateSettings({
-        selectedExperimentIds: setIds,
+        selectedExperimentIds,
       });
     },
-    [updateSettings],
+    [updateSettings, setSelectedExperimentIds],
   );
 
   const excludedExperimentIds = useMemo(

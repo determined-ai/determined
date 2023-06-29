@@ -304,20 +304,25 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const previousData = usePrevious(data, undefined);
   useEffect(() => {
-    if (selectAll && previousData && data.length > previousData.length) {
+    if (previousData && data.length > previousData.length) {
       setSelection(({ columns, rows }: GridSelection) => {
-        rows = rows.add([previousData.length - 1, data.length]);
+        if (selectAll) {
+          rows = rows.add([previousData.length - 1, data.length]);
+        }
         data.forEach((loadableRow, idx) => {
           Loadable.map(loadableRow, (row) => {
-            if (excludedExperimentIds.has(row.experiment.id)) {
+            if (selectAll && excludedExperimentIds.has(row.experiment.id)) {
               rows = rows.remove([idx, idx + 1]);
+            }
+            if (!selectAll && selectedExperimentIds.includes(row.experiment.id)) {
+              rows = rows.add([idx, idx + 1]);
             }
           });
         });
         return { columns, rows };
       });
     }
-  }, [data, excludedExperimentIds, previousData, selectAll]);
+  }, [data, selectedExperimentIds, excludedExperimentIds, previousData, selectAll]);
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, { bounds }: HeaderClickedEventArgs) => {
