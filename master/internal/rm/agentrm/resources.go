@@ -42,7 +42,9 @@ func (c containerResources) Summary() sproto.ResourcesSummary {
 
 // StartContainer notifies the agent to start a container.
 func (c containerResources) Start(
-	ctx *actor.Context, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
+	// TODO(!!!): Remove this `*actor.System`, either by refactor the RM to not be an actor or by
+	// adding a global system before the project's end.
+	ctx *actor.System, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) error {
 	handler := c.agent.Handler
 	spec.ContainerID = string(c.containerID)
@@ -60,13 +62,13 @@ func (c containerResources) Start(
 	spec.Devices = c.devices
 
 	return ctx.Ask(handler, sproto.StartTaskContainer{
-		TaskActor: c.req.AllocationRef,
+		AllocationID: c.req.AllocationID,
 		StartContainer: aproto.StartContainer{
 			Container: cproto.Container{
 				ID:          c.containerID,
 				State:       cproto.Assigned,
 				Devices:     c.devices,
-				Description: c.req.AllocationRef.Address().String(),
+				Description: c.req.Name,
 			},
 			Spec: spec.ToDockerSpec(),
 		},
@@ -75,7 +77,7 @@ func (c containerResources) Start(
 }
 
 // Kill notifies the agent to kill the container.
-func (c containerResources) Kill(ctx *actor.Context, logCtx logger.Context) {
+func (c containerResources) Kill(ctx *actor.System, logCtx logger.Context) {
 	ctx.Tell(c.agent.Handler, sproto.KillTaskContainer{
 		ContainerID: c.containerID,
 		LogContext:  logCtx,

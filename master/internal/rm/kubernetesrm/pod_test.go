@@ -58,15 +58,15 @@ func (m *mockReceiver) Pop() (actor.Message, error) {
 }
 
 func createPod(
-	taskHandler *actor.Ref,
+	allocationID model.AllocationID,
 	clusterHandler *actor.Ref,
 	resourceHandler *requestQueue,
 	task tasks.TaskSpec,
 ) *pod {
 	msg := StartTaskPod{
-		TaskActor: taskHandler,
-		Spec:      task,
-		Slots:     1,
+		AllocationID: allocationID,
+		Spec:         task,
+		Slots:        1,
 	}
 	clusterID := "test"
 	clientSet := k8sClient.Clientset{}

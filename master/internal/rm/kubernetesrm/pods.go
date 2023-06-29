@@ -121,7 +121,6 @@ type SummarizeResources struct {
 type reattachAllocationPods struct {
 	numPods      int
 	allocationID model.AllocationID
-	taskActor    *actor.Ref
 	slots        int
 	logContext   logger.Context
 }
@@ -478,7 +477,7 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 
 	var restoreResponses []reattachPodResponse
 	for i, containerID := range containerIDs {
-		resp, err := p.reattachPod(ctx, msg.taskActor, resourcePool, containerID,
+		resp, err := p.reattachPod(ctx, msg.allocationID, resourcePool, containerID,
 			k8sPods[i], ports[i], msg.slots, msg.logContext)
 		if err != nil {
 			p.deleteKubernetesResources(ctx, pods, configMaps)
@@ -495,7 +494,7 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 
 func (p *pods) reattachPod(
 	ctx *actor.Context,
-	taskActor *actor.Ref,
+	allocationID model.AllocationID,
 	resourcePool string,
 	containerID string,
 	pod *k8sV1.Pod,
@@ -504,7 +503,7 @@ func (p *pods) reattachPod(
 	logContext logger.Context,
 ) (reattachPodResponse, error) {
 	startMsg := StartTaskPod{
-		TaskActor: taskActor,
+		AllocationID: allocationID,
 		Spec: tasks.TaskSpec{
 			ContainerID: containerID,
 		},

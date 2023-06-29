@@ -9,6 +9,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -224,15 +225,8 @@ func (k *kubernetesResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 }
 
 func (k *kubernetesResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) {
-	actors.NotifyOnStop(ctx, msg.AllocationRef, sproto.ResourcesReleased{
-		AllocationID: msg.AllocationID,
-	})
-
 	if len(msg.AllocationID) == 0 {
 		msg.AllocationID = model.AllocationID(uuid.New().String())
-	}
-	if msg.Group == nil {
-		msg.Group = msg.AllocationRef
 	}
 	k.getOrCreateGroup(ctx, msg.Group)
 	if len(msg.Name) == 0 {
@@ -241,7 +235,7 @@ func (k *kubernetesResourcePool) addTask(ctx *actor.Context, msg sproto.Allocate
 
 	ctx.Log().Infof(
 		"resources are requested by %s (Allocation ID: %s)",
-		msg.AllocationRef.Address(), msg.AllocationID,
+		msg.Name, msg.AllocationID,
 	)
 	if msg.IsUserVisible {
 		if _, ok := k.queuePositions[msg.JobID]; !ok {
@@ -496,7 +490,7 @@ func (k *kubernetesResourcePool) assignResources(
 				WithField("allocation-id", req.AllocationID).
 				WithError(err).Error("unable to restore allocation")
 			unknownExit := sproto.ExitCode(-1)
-			ctx.Tell(req.AllocationRef, sproto.ResourcesFailure{
+			rmevents.Publish(req.AllocationID, &sproto.ResourcesFailure{
 				FailureType: sproto.ResourcesMissing,
 				ErrMsg:      errors.Wrap(err, "unable to restore allocation").Error(),
 				ExitCode:    &unknownExit,
@@ -516,17 +510,17 @@ func (k *kubernetesResourcePool) assignResources(
 
 	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Resources: allocations}
 	k.reqList.AddAllocationRaw(req.AllocationID, &assigned)
-	req.AllocationRef.System().Tell(req.AllocationRef, assigned.Clone())
+	rmevents.Publish(req.AllocationID, assigned.Clone())
 
 	if req.Restore {
 		ctx.Log().
 			WithField("allocation-id", req.AllocationID).
-			WithField("task-handler", req.AllocationRef.Address()).
+			WithField("task-handler", req.Name).
 			Infof("resources restored with %d pods", numPods)
 	} else {
 		ctx.Log().
 			WithField("allocation-id", req.AllocationID).
-			WithField("task-handler", req.AllocationRef.Address()).
+			WithField("task-handler", req.Name).
 			Infof("resources assigned with %d pods", numPods)
 	}
 }
@@ -555,7 +549,6 @@ func (k *kubernetesResourcePool) restoreResources(
 	resp := ctx.Ask(k.podsActor, reattachAllocationPods{
 		allocationID: req.AllocationID,
 		numPods:      numPods,
-		taskActor:    req.AllocationRef,
 		slots:        slotsPerPod,
 		logContext:   req.LogContext,
 	})
@@ -678,7 +671,7 @@ func (p k8sPodResources) Summary() sproto.ResourcesSummary {
 
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
 func (p k8sPodResources) Start(
-	ctx *actor.Context, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
+	ctx *actor.System, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) error {
 	p.setPosition(&spec)
 	spec.ContainerID = string(p.containerID)
@@ -696,12 +689,12 @@ func (p k8sPodResources) Start(
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sPod)
 	spec.ExtraEnvVars[resourcePoolEnvVar] = p.req.ResourcePool
 	return ctx.Ask(p.podsActor, StartTaskPod{
-		TaskActor:  p.req.AllocationRef,
-		Spec:       spec,
-		Slots:      p.slots,
-		Rank:       rri.AgentRank,
-		Namespace:  p.namespace,
-		LogContext: logCtx,
+		AllocationID: p.req.AllocationID,
+		Spec:         spec,
+		Slots:        p.slots,
+		Rank:         rri.AgentRank,
+		Namespace:    p.namespace,
+		LogContext:   logCtx,
 	}).Error()
 }
 
@@ -718,7 +711,7 @@ func (p k8sPodResources) setPosition(spec *tasks.TaskSpec) {
 }
 
 // Kill notifies the pods actor that it should stop the pod.
-func (p k8sPodResources) Kill(ctx *actor.Context, _ logger.Context) {
+func (p k8sPodResources) Kill(ctx *actor.System, _ logger.Context) {
 	ctx.Tell(p.podsActor, KillTaskPod{
 		PodID: p.containerID,
 	})

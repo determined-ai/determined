@@ -29,7 +29,7 @@ func NewPriorityScheduler(config *config.SchedulerConfig) Scheduler {
 	}
 }
 
-func (p priorityScheduler) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
+func (p priorityScheduler) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []model.AllocationID) {
 	return p.prioritySchedule(
 		rp.taskList,
 		rp.groups,
@@ -51,9 +51,9 @@ func (p priorityScheduler) prioritySchedule(
 	jobPositions tasklist.JobSortState,
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
-) ([]*sproto.AllocateRequest, []*actor.Ref) {
+) ([]*sproto.AllocateRequest, []model.AllocationID) {
 	toAllocate := make([]*sproto.AllocateRequest, 0)
-	toRelease := make([]*actor.Ref, 0)
+	toRelease := make([]model.AllocationID, 0)
 
 	// Schedule zero-slot and non-zero-slot tasks independently of each other, e.g., a lower priority
 	// zero-slot task can be started while a higher priority non-zero-slot task is pending, and
@@ -85,9 +85,9 @@ func (p priorityScheduler) prioritySchedulerWithFilter(
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
 	filter func(*sproto.AllocateRequest) bool,
-) ([]*sproto.AllocateRequest, []*actor.Ref) {
+) ([]*sproto.AllocateRequest, []model.AllocationID) {
 	toAllocate := make([]*sproto.AllocateRequest, 0)
-	toRelease := make(map[*actor.Ref]bool)
+	toRelease := make(map[model.AllocationID]bool)
 
 	// Sort tasks by priorities and timestamps. This sort determines the order in which
 	// tasks are scheduled and preempted.
@@ -174,8 +174,11 @@ func (p priorityScheduler) prioritySchedulerWithFilter(
 				if taskPlaced {
 					localAgentsState = updatedLocalAgentState
 					for preemptedTask := range preemptedTasks {
-						log.Debugf("preempting task %s for task %s",
-							preemptedTask.Address().Local(), prioritizedAllocation.Name)
+						log.Debugf(
+							"preempting task %s for task %s",
+							preemptedTask.ToTaskID(),
+							prioritizedAllocation.Name,
+						)
 						toRelease[preemptedTask] = true
 					}
 				}
@@ -183,7 +186,7 @@ func (p priorityScheduler) prioritySchedulerWithFilter(
 		}
 	}
 
-	toReleaseSlice := make([]*actor.Ref, 0)
+	toReleaseSlice := make([]model.AllocationID, 0)
 	for r := range toRelease {
 		toReleaseSlice = append(toReleaseSlice, r)
 	}
@@ -200,11 +203,11 @@ func (p priorityScheduler) trySchedulingTaskViaPreemption(
 	fittingMethod SoftConstraint,
 	agents map[*actor.Ref]*agentState,
 	priorityToScheduledTaskMap map[int][]*sproto.AllocateRequest,
-	tasksAlreadyPreempted map[*actor.Ref]bool,
+	tasksAlreadyPreempted map[model.AllocationID]bool,
 	filter func(*sproto.AllocateRequest) bool,
-) (bool, map[*actor.Ref]*agentState, map[*actor.Ref]bool) {
+) (bool, map[*actor.Ref]*agentState, map[model.AllocationID]bool) {
 	localAgentsState := deepCopyAgents(agents)
-	preemptedTasks := make(map[*actor.Ref]bool)
+	preemptedTasks := make(map[model.AllocationID]bool)
 	log.Debugf("trying to schedule task %s by preempting other tasks", allocationRequest.Name)
 
 	for priority := model.MaxUserSchedulingPriority; priority >= allocationPriority; priority-- {
@@ -220,13 +223,13 @@ func (p priorityScheduler) trySchedulingTaskViaPreemption(
 				continue
 			}
 
-			if _, ok := tasksAlreadyPreempted[preemptionCandidate.AllocationRef]; ok {
+			if _, ok := tasksAlreadyPreempted[preemptionCandidate.AllocationID]; ok {
 				continue
 			}
 
 			allocated := taskList.Allocation(preemptionCandidate.AllocationID)
 			removeTaskFromAgents(localAgentsState, allocated)
-			preemptedTasks[preemptionCandidate.AllocationRef] = true
+			preemptedTasks[preemptionCandidate.AllocationID] = true
 
 			if fits := findFits(
 				allocationRequest,

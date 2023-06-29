@@ -26,6 +26,7 @@ type (
 		AllocationID      model.AllocationID
 		TaskID            model.TaskID
 		JobID             model.JobID
+		RequestTime       time.Time
 		JobSubmissionTime time.Time
 		// IsUserVisible determines whether the AllocateRequest should
 		// be considered in user-visible reports.
@@ -33,8 +34,7 @@ type (
 		State         SchedulingState
 		Name          string
 		// Allocation actor
-		AllocationRef *actor.Ref
-		Group         *actor.Ref
+		Group *actor.Ref
 
 		// Resource configuration.
 		SlotsNeeded         int
@@ -111,15 +111,39 @@ type (
 		// - true: ok or unknown
 		Fulfillable bool
 	}
-	// AllocationSignal is an interface for signals that can be sent to an allocation.
-	AllocationSignal string
-	// AllocationSignalWithReason is an message for signals that can be sent to an allocation
-	// along with an informational reason about why the signal was sent.
-	AllocationSignalWithReason struct {
-		AllocationSignal    AllocationSignal
-		InformationalReason string
-	}
+	// TODO(!!!): Let's separate all these into some files, `events.go`.
+	ResourceDisabled struct{ InformationReason string }
 )
+
+type AllocationEvent interface{ AllocationEvent() }
+
+func (ResourcesAllocated) AllocationEvent()           {}
+func (InvalidResourcesRequestError) AllocationEvent() {}
+func (ReleaseResources) AllocationEvent()             {}
+func (ResourcesStateChanged) AllocationEvent()        {}
+func (ResourcesFailure) AllocationEvent()             {}
+func (ContainerLog) AllocationEvent()                 {}
+func (ResourceDisabled) AllocationEvent()             {}
+
+type AllocationUnsubscribeFn func()
+
+type AllocationSubscription struct {
+	// C is never closed, because only the consumer knows, by aggregating events, when events will stop.
+	C     <-chan AllocationEvent
+	unsub AllocationUnsubscribeFn
+}
+
+func NewAllocationSubscription(updates <-chan AllocationEvent, cl func()) *AllocationSubscription {
+	return &AllocationSubscription{
+		C:     updates,
+		unsub: cl,
+	}
+}
+
+// Close unsubscribes us from further updates.
+func (a *AllocationSubscription) Close() {
+	a.unsub()
+}
 
 // Proto returns the proto representation of ProxyPortConfig.
 func (p *ProxyPortConfig) Proto() *taskv1.ProxyPortConfig {
@@ -174,13 +198,6 @@ func (a *AllocationSummary) Proto() *taskv1.AllocationSummary {
 
 	return &pbAllocationSummary
 }
-
-const (
-	// KillAllocation is the signal to kill an allocation; analogous to in SIGKILL.
-	KillAllocation AllocationSignal = "kill"
-	// TerminateAllocation is the signal to kill an allocation; analogous to in SIGTERM.
-	TerminateAllocation AllocationSignal = "terminate"
-)
 
 // Incoming task actor messages; task actors must accept these messages.
 type (
@@ -244,8 +261,8 @@ const (
 )
 
 // Clone clones ResourcesAllocated. Used to not pass mutable refs to other actors.
-func (ra ResourcesAllocated) Clone() ResourcesAllocated {
-	return ResourcesAllocated{
+func (ra ResourcesAllocated) Clone() *ResourcesAllocated {
+	return &ResourcesAllocated{
 		ID:                ra.ID,
 		ResourcePool:      ra.ResourcePool,
 		Resources:         maps.Clone(ra.Resources),
@@ -319,8 +336,9 @@ func (s ResourcesSummary) Slots() int {
 // to start tasks on assigned resources.
 type Resources interface {
 	Summary() ResourcesSummary
-	Start(*actor.Context, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo) error
-	Kill(*actor.Context, logger.Context)
+	// TODO(!!!): Remove `*actor.System` from this interface.
+	Start(*actor.System, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo) error
+	Kill(*actor.System, logger.Context)
 }
 
 // ResourceList is a wrapper for a list of resources.

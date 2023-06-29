@@ -5,14 +5,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
-
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 
 	apiutils "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -32,57 +29,32 @@ const (
 // rendezvousTimeoutDuration is the default timeout for rendezvous.
 var rendezvousTimeoutDuration = 10 * time.Minute
 
-type (
-	// WatchRendezvousInfo begins watching for rendezvous info.
-	// When all the containers are ready, the trial will send all the
-	// peer addresses on the channel in the response.
-	WatchRendezvousInfo struct {
-		ResourcesID sproto.ResourcesID
-	}
-	// RendezvousInfoOrError contains either rendezvous info or an error from failing
-	// to materialize it.
-	RendezvousInfoOrError struct {
-		Info *trialv1.RendezvousInfo
-		Err  error
-	}
-	// RendezvousWatcher contains a channel which can be polled for rendezvous info.
-	RendezvousWatcher struct {
-		C <-chan RendezvousInfoOrError
-	}
-	// UnwatchRendezvousInfo removes the watcher for the given container.
-	UnwatchRendezvousInfo struct {
-		ResourcesID sproto.ResourcesID
-	}
+// RendezvousInfoOrError contains either rendezvous info or an error from failing
+// to materialize it.
+type RendezvousInfoOrError struct {
+	Info *trialv1.RendezvousInfo
+	Err  error
+}
 
-	// rendezvousTimeout tracks the timeout of the allocation resources rendezvousing.
-	// It is possible that it takes very long for all containers to be connected after the first
-	// container is connected. This might happen when the k8s cluster waits for new instances
-	// to spin up, which might not happen at all. At the same time, taking up part of all
-	// the resources and waiting is wasteful. So we need to detect this situation.
-	rendezvousTimeout struct{ AllocationID model.AllocationID }
+// RendezvousWatcher contains a channel which can be polled for rendezvous info.
+type RendezvousWatcher struct {
+	C <-chan RendezvousInfoOrError
+}
 
-	// rendezvous encapsulates the rendezvous state of a trial.
-	rendezvous struct {
-		allocationID      model.AllocationID
-		watchers          map[sproto.ResourcesID]chan<- RendezvousInfoOrError
-		resources         resourcesList
-		lastWatchTime     time.Time
-		allReadySucceeded bool
-	}
-)
+// rendezvous encapsulates the rendezvous state of a trial.
+type rendezvous struct {
+	allocationID      model.AllocationID
+	watchers          map[sproto.ResourcesID]chan<- RendezvousInfoOrError
+	resources         resourcesList
+	lastWatchTime     time.Time
+	allReadySucceeded bool
+}
 
 // newRendezvous returns a new rendezvous component.
 func newRendezvous(
-	ctx *actor.Context,
 	allocationID model.AllocationID,
 	rs resourcesList,
 ) *rendezvous {
-	if ctx != nil {
-		actors.NotifyAfter(ctx, rendezvousTimeoutDuration, rendezvousTimeout{
-			AllocationID: allocationID,
-		})
-	}
-
 	return &rendezvous{
 		allocationID: allocationID,
 		resources:    rs,
@@ -90,19 +62,17 @@ func newRendezvous(
 	}
 }
 
-func (r *rendezvous) watch(msg WatchRendezvousInfo) (RendezvousWatcher, error) {
-	if _, ok := r.resources[msg.ResourcesID]; !ok {
-		err := ErrStaleResources{ID: msg.ResourcesID}
+func (r *rendezvous) watch(rID sproto.ResourcesID) (RendezvousWatcher, error) {
+	if _, ok := r.resources[rID]; !ok {
+		err := ErrStaleResources{ID: rID}
 		return RendezvousWatcher{}, apiutils.AsValidationError(err.Error())
-	} else if _, ok := r.watchers[msg.ResourcesID]; ok {
-		return RendezvousWatcher{}, apiutils.AsValidationError(
-			"resources already rendezvoused: %s", msg.ResourcesID,
-		)
+	} else if _, ok := r.watchers[rID]; ok {
+		return RendezvousWatcher{}, apiutils.AsValidationError("resources already rendezvoused: %s", rID)
 	}
 
 	// Channel is size 1 since rendezvous info will only ever be sent once.
 	w := make(chan RendezvousInfoOrError, 1)
-	r.watchers[msg.ResourcesID] = w
+	r.watchers[rID] = w
 	r.lastWatchTime = time.Now()
 	if r.ready() {
 		r.push()
@@ -110,11 +80,11 @@ func (r *rendezvous) watch(msg WatchRendezvousInfo) (RendezvousWatcher, error) {
 	return RendezvousWatcher{C: w}, nil
 }
 
-func (r *rendezvous) unwatch(msg UnwatchRendezvousInfo) {
+func (r *rendezvous) unwatch(rID sproto.ResourcesID) {
 	if r == nil {
 		return
 	}
-	delete(r.watchers, msg.ResourcesID)
+	delete(r.watchers, rID)
 }
 
 func (r *rendezvous) try() bool {
@@ -172,13 +142,13 @@ func (r rendezvous) push() bool {
 }
 
 // checkTimeout checks if the task should timeout waiting for rendezvous.
-func (r *rendezvous) checkTimeout(msg rendezvousTimeout) error {
+func (r *rendezvous) checkTimeout() error {
 	if r == nil || r.allReadySucceeded {
 		return nil
 	}
 
 	exceededTimeout := time.Now().After(r.lastWatchTime.Add(rendezvousTimeoutDuration))
-	if r.allocationID == msg.AllocationID && exceededTimeout {
+	if exceededTimeout {
 		return ErrTimeoutExceeded{
 			Message: "some containers are taking a long time to " +
 				"connect to master; when running on kubernetes this may happen " +

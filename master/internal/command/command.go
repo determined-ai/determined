@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/task/tproto"
+
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 
 	"golang.org/x/exp/slices"
@@ -216,8 +218,8 @@ type command struct {
 	jobType        model.JobType
 	jobID          model.JobID
 	allocationID   model.AllocationID
-	allocation     *actor.Ref
-	lastState      task.AllocationState
+	allocation     *task.Allocation
+	lastState      tproto.AllocationState
 	exitStatus     *task.AllocationExited
 	restored       bool
 
@@ -269,14 +271,14 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		allocation := task.NewAllocation(c.logCtx, sproto.AllocateRequest{
+		c.allocation = task.NewAllocation(c.logCtx, sproto.AllocateRequest{
 			AllocationID:      c.allocationID,
 			TaskID:            c.taskID,
 			JobID:             c.jobID,
+			RequestTime:       time.Now().UTC(),
 			JobSubmissionTime: c.registeredTime,
 			IsUserVisible:     true,
 			Name:              c.Config.Description,
-			AllocationRef:     ctx.Self(),
 			Group:             ctx.Self(),
 
 			SlotsNeeded:  c.Config.Resources.Slots,
@@ -288,12 +290,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ProxyPorts:  sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), c.taskID),
 			IdleTimeout: idleWatcherConfig,
 			Restore:     c.restored,
-		}, c.db, c.rm, c.GenericCommandSpec)
-		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
+		}, c.db, c.rm, c.GenericCommandSpec, ctx.Self().System(), ctx.Self())
 
 		jobservice.Default.RegisterJob(c.jobID, ctx.Self())
 
-		ctx.Ask(c.allocation, actor.Ping{}).Get()
 		if err := c.persist(); err != nil {
 			ctx.Log().WithError(err).Warnf("command persist failure")
 		}
@@ -311,18 +311,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Errorf(
 				"failure to delete user session for task: %v", c.taskID)
 		}
-	case actor.ChildStopped:
-	case actor.ChildFailed:
-		if msg.Child.Address().Local() == c.allocationID.String() && c.exitStatus == nil {
-			c.exitStatus = &task.AllocationExited{
-				FinalState: task.AllocationState{State: model.AllocationStateTerminated},
-				Err:        errors.New("command allocation actor failed"),
-			}
-			if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
-				ctx.Log().WithError(err).Error("marking task complete")
-			}
-		}
 	case *task.AllocationExited:
+		// TODO(!!!): Synchronize with the allocation background loop's exit. Instead, like the
+		// the comment in trial.go, just use this instead of `ctx.Tell(*task.AllocationExited)`
+		// to get the exit.
+		_ = c.allocation.AwaitTermination()
 		c.exitStatus = msg
 		if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 			ctx.Log().WithError(err).Error("marking task complete")
@@ -347,10 +340,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 	case *apiv1.KillNotebookRequest:
 		// TODO(Brad): Do the same thing to allocations that we are doing to RMs.
-		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
-			AllocationSignal:    sproto.KillAllocation,
-			InformationalReason: "user requested kill",
-		})
+		c.allocation.HandleSignal(tproto.KillAllocation, "user requested kill")
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
 	case *apiv1.SetNotebookPriorityRequest:
 		err := c.setPriority(ctx, int(msg.Priority), true)
@@ -370,10 +360,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillCommandRequest:
-		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
-			AllocationSignal:    sproto.KillAllocation,
-			InformationalReason: "user requested kill",
-		})
+		c.allocation.HandleSignal(tproto.KillAllocation, "user requested kill")
 		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
 
 	case *apiv1.SetCommandPriorityRequest:
@@ -394,10 +381,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillShellRequest:
-		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
-			AllocationSignal:    sproto.KillAllocation,
-			InformationalReason: "user requested kill",
-		})
+		c.allocation.HandleSignal(tproto.KillAllocation, "user requested kill")
 		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
 
 	case *apiv1.SetShellPriorityRequest:
@@ -418,10 +402,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillTensorboardRequest:
-		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
-			AllocationSignal:    sproto.KillAllocation,
-			InformationalReason: "user requested kill",
-		})
+		c.allocation.HandleSignal(tproto.KillAllocation, "user requested kill")
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
 
 	case *apiv1.SetTensorboardPriorityRequest:
@@ -434,10 +415,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case *apiv1.DeleteWorkspaceRequest:
 		if c.Metadata.WorkspaceID == model.AccessScopeID(msg.Id) {
-			ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
-				AllocationSignal:    sproto.KillAllocation,
-				InformationalReason: "user requested workspace delete",
-			})
+			c.allocation.HandleSignal(tproto.KillAllocation, "user requested workspace delete")
 		}
 
 	case sproto.NotifyRMPriorityChange:
@@ -613,19 +591,12 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 // we don't ask for a refresh because it won't respond. Otherwise, ask with a timeout
 // since there is another ask in the opposite direction, and even though it's probably
 // 1 in a million runs, we don't want to deadlock.
-func (c *command) refreshAllocationState(ctx *actor.Context) task.AllocationState {
+func (c *command) refreshAllocationState(ctx *actor.Context) tproto.AllocationState {
 	if c.exitStatus != nil {
 		return c.exitStatus.FinalState
 	}
 
-	resp, ok := ctx.Ask(c.allocation, task.AllocationState{}).GetOrTimeout(5 * time.Second)
-	state, sOk := resp.(task.AllocationState)
-	if !(ok && sOk) {
-		ctx.Log().WithField("resp", resp).Warnf("getting allocation state")
-	} else {
-		c.lastState = state
-	}
-
+	c.lastState = c.allocation.State()
 	return c.lastState
 }
 
