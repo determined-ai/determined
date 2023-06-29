@@ -3,21 +3,19 @@ package provisioner
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/api/compute/v1"
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
-	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
 )
 
 type (
-	trackerTimeout     struct{}
-	trackerTick        struct{}
 	trackOperationDone struct {
 		op *compute.Operation
 
@@ -26,171 +24,159 @@ type (
 	}
 )
 
+type doneCallback func(
+	op *compute.Operation,
+	doneOp *compute.Operation,
+	err error,
+)
+
 // gcpOperationTracker is an actor that tracks GCP zone operation. Its lifecycle is bound
 // with the operation the actor tracks. If the actor is alive, it tracks a GCP operation
 // every one second.
 type gcpOperationTracker struct {
 	config *provconfig.GCPClusterConfig
 	client *compute.Service
-
-	op      *compute.Operation
-	timeout time.Duration
+	op     *compute.Operation
 }
 
-func (t *gcpOperationTracker) Receive(ctx *actor.Context) error {
-	switch ctx.Message().(type) {
-	case actor.PreStart:
-		ctx.Tell(ctx.Self(), trackerTick{})
-		actors.NotifyAfter(ctx, t.timeout, trackerTimeout{})
-
-	case trackerTimeout:
-		ctx.Tell(ctx.Self().Parent(), trackOperationDone{
-			op:  t.op,
-			err: errors.New("tracking GCP operation is timeout"),
-		})
-		ctx.Self().Stop()
-
-	case trackerTick:
-		switch res, err := t.pollOperation(); {
-		case err != nil:
-			ctx.Log().WithError(err).Error("")
-			ctx.Self().Stop()
-		case res != nil:
-			ctx.Tell(ctx.Self().Parent(), *res)
-			ctx.Self().Stop()
+func (t *gcpOperationTracker) pollOperation(ctx context.Context, done doneCallback) error {
+	for {
+		select {
+		case <-ctx.Done():
+			done(t.op, nil, errors.New("tracking GCP operation timeout"))
+			return nil
 		default:
-			actors.NotifyAfter(ctx, time.Second, trackerTick{})
 		}
 
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
-}
+		resp, respErr := t.client.ZoneOperations.
+			Get(t.config.Project, t.config.Zone, strconv.FormatUint(t.op.Id, 10)).Context(ctx).Do()
 
-func (t *gcpOperationTracker) pollOperation() (*trackOperationDone, error) {
-	callCtx, cancel := context.WithTimeout(context.Background(), t.timeout)
-	defer cancel()
-	resp, respErr := t.client.ZoneOperations.
-		Get(t.config.Project, t.config.Zone, strconv.FormatUint(t.op.Id, 10)).Context(callCtx).Do()
-	switch {
-	case respErr != nil:
-		return &trackOperationDone{
-			op: t.op,
-			err: errors.Wrapf(
+		switch {
+		case respErr != nil:
+			err := errors.Wrapf(
 				respErr,
 				"GCE cannot track %q operation %q targeting %q",
 				t.op.OperationType,
 				strconv.FormatUint(t.op.Id, 10),
 				t.op.TargetLink,
-			),
-		}, nil
-	case resp.Error != nil:
-		// Stop tracking a operation even if it is still running as long as it has error.
-		return &trackOperationDone{
-			op: t.op,
-			err: errors.Errorf(
+			)
+			done(t.op, nil, err)
+			return nil
+		case resp.Error != nil:
+			// Stop tracking a operation even if it is still running as long as it has error.
+			err := errors.Errorf(
 				"GCE cannot finish %q operation %q targeting %q",
 				resp.OperationType,
 				strconv.FormatUint(t.op.Id, 10),
 				t.op.TargetLink,
-			),
-			doneOp: resp,
-		}, nil
-	case resp.Status == "DONE":
-		// Stop tracking a operation when it's done and has no errors.
-		return &trackOperationDone{
-			op:     t.op,
-			doneOp: resp,
-		}, nil
-	case resp.Status == "RUNNING" || resp.Status == "PENDING":
-		return nil, nil
-	default:
-		errOp, _ := json.Marshal(resp)
-		return nil, errors.Errorf("unexpected message: %s", errOp)
+			)
+			done(t.op, resp, err)
+			return nil
+		case resp.Status == "DONE":
+			// Stop tracking a operation when it's done and has no errors.
+			done(t.op, resp, nil)
+			return nil
+		case resp.Status == "RUNNING" || resp.Status == "PENDING":
+			// Do nothing, keep tracking the operation.
+		default:
+			errOp, _ := json.Marshal(resp)
+			return errors.Errorf("unexpected message: %s", errOp)
+		}
+		// Slow down the polling rate.
+		time.Sleep(time.Second)
 	}
 }
 
 type gcpBatchOperationTracker struct {
+	mu sync.Mutex
+
 	config *provconfig.GCPClusterConfig
 	client *compute.Service
 
-	ops         []*compute.Operation
-	postProcess func(doneOps []*compute.Operation)
-	doneOps     []trackOperationDone
+	ops     []*compute.Operation
+	doneOps []trackOperationDone
+
+	syslog *logrus.Entry
 }
 
-func (t *gcpBatchOperationTracker) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		//nolint:lll // There isn't a great way to break this line that makes it more readable.
-		batchOperationTimeoutPeriod := time.Duration(len(t.ops)) * time.Duration(t.config.OperationTimeoutPeriod)
-		actors.NotifyAfter(ctx, batchOperationTimeoutPeriod, trackerTimeout{})
-		t.doneOps = make([]trackOperationDone, 0, len(t.ops))
-		for _, op := range t.ops {
-			if _, ok := ctx.ActorOf(
-				fmt.Sprintf("track-operation-%d", op.Id),
-				&gcpOperationTracker{
-					config:  t.config,
-					client:  t.client,
-					op:      op,
-					timeout: time.Duration(t.config.OperationTimeoutPeriod),
-				},
-			); !ok {
-				return errors.New("internal error tracking GCP operation")
-			}
-		}
+func newBatchOperationTracker(
+	config *provconfig.GCPClusterConfig,
+	client *compute.Service,
+	ops []*compute.Operation,
+) *gcpBatchOperationTracker {
+	return &gcpBatchOperationTracker{
+		config:  config,
+		client:  client,
+		ops:     ops,
+		doneOps: make([]trackOperationDone, 0, len(ops)),
+		syslog:  logrus.WithField("component", "gcp-batch-operation-tracker"),
+	}
+}
 
-	case trackOperationDone:
-		if msg.err != nil {
-			ctx.Log().WithError(msg.err).Error("")
+func (t *gcpBatchOperationTracker) start(postProcess func([]*compute.Operation)) {
+	timeout := time.Duration(t.config.OperationTimeoutPeriod)
+	groupCtx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	g := new(errgroup.Group)
+	t.doneOps = make([]trackOperationDone, 0, len(t.ops))
+	for _, op := range t.ops {
+		o := &gcpOperationTracker{t.config, t.client, op}
+		g.Go(func() error {
+			return o.pollOperation(groupCtx, t.trackOperationDone)
+		})
+	}
+	err := g.Wait()
+	if err != nil {
+		t.syslog.WithError(err).Error("tracking batch GCP operation failed")
+	}
+	successful := make([]*compute.Operation, 0, len(t.doneOps))
+	for _, op := range t.doneOps {
+		if op.doneOp == nil {
+			continue
 		}
-		if msg.doneOp != nil {
-			if msg.doneOp.Error != nil {
-				for _, err := range msg.doneOp.Error.Errors {
-					ctx.Log().Errorf(
-						"GCE throws out error (code %s) for operation %q targeting %q: %s",
-						err.Code,
-						strconv.FormatUint(msg.doneOp.Id, 10),
-						msg.doneOp.TargetLink,
-						err.Message,
-					)
-				}
-			}
-			for _, warning := range msg.doneOp.Warnings {
-				ctx.Log().Warnf(
-					"GCE throws out warning (code %s) for operation %q targeting %q: %s",
-					warning.Code,
-					strconv.FormatUint(msg.doneOp.Id, 10),
-					msg.doneOp.TargetLink,
-					warning.Message,
+		successful = append(successful, op.doneOp)
+	}
+	postProcess(successful)
+}
+
+func (t *gcpBatchOperationTracker) trackOperationDone(
+	op *compute.Operation,
+	doneOp *compute.Operation,
+	err error,
+) {
+	t.logErrors(doneOp, err)
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	t.doneOps = append(t.doneOps, trackOperationDone{op, doneOp, err})
+}
+
+func (t *gcpBatchOperationTracker) logErrors(doneOp *compute.Operation, err error) {
+	if err != nil {
+		t.syslog.WithError(err).Error("")
+	}
+	if doneOp != nil {
+		if doneOp.Error != nil {
+			for _, err := range doneOp.Error.Errors {
+				t.syslog.Errorf(
+					"GCE throws out error (code %s) for operation %q targeting %q: %s",
+					err.Code,
+					strconv.FormatUint(doneOp.Id, 10),
+					doneOp.TargetLink,
+					err.Message,
 				)
 			}
 		}
-		t.doneOps = append(t.doneOps, msg)
-		if len(t.doneOps) == len(t.ops) {
-			ctx.Self().Stop()
+		for _, warning := range doneOp.Warnings {
+			t.syslog.Warnf(
+				"GCE throws out warning (code %s) for operation %q targeting %q: %s",
+				warning.Code,
+				strconv.FormatUint(doneOp.Id, 10),
+				doneOp.TargetLink,
+				warning.Message,
+			)
 		}
-
-	case trackerTimeout:
-		ctx.Log().Error("tracking batch GCP operation is timeout")
-		ctx.Self().Stop()
-
-	case actor.ChildFailed:
-		ctx.Log().WithError(msg.Error).Error("internal error")
-
-	case actor.PostStop:
-		successful := make([]*compute.Operation, 0, len(t.doneOps))
-		for _, op := range t.doneOps {
-			if op.doneOp == nil {
-				continue
-			}
-			successful = append(successful, op.doneOp)
-		}
-		t.postProcess(successful)
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
 	}
-	return nil
 }
