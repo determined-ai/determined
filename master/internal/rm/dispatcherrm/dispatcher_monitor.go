@@ -742,17 +742,17 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job *launcherJob) 
 			exitMessages = filteredMessages
 		}
 
-		if exitStatus != 0 && len(exitMessages) == 0 {
-			// If we have no messages, it may be a connection failure from the container
-			// and we will have no logs to assist in diagnosis, so insert the last
-			// few lines of the error log into the failure message.
-			exitMessages, _ = m.getTaskLogsFromDispatcher(ctx, job, "error.log", errorLinesToRetrieve)
+		// Insert the last few lines of the error log into the failure message.
+		if exitStatus != 0 {
+			var errMessages []string
+			errMessages, _ = m.getTaskLogsFromDispatcher(ctx, job, "error.log", errorLinesToRetrieve)
 			if m.allContainersRunning(job) {
 				// If all containers are running, then show limited output.
 				// Otherwise show all collected lines which would include the
 				// container downloading logs.
-				exitMessages = minimizeErrorLog(exitMessages)
+				errMessages = minimizeErrorLog(errMessages)
 			}
+			exitMessages = append(exitMessages, errMessages...)
 		}
 
 		//nolint:lll
