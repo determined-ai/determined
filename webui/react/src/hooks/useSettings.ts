@@ -96,9 +96,7 @@ const queryParamToType = <T>(
   return undefined;
 };
 
-const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
-  const params = new URLSearchParams(query);
-
+const queryToSettings = <T>(config: SettingsConfig<T>, params: URLSearchParams) => {
   return (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).reduce<Settings>(
     (acc, setting) => {
       /*
@@ -117,6 +115,8 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
         }
 
         if (paramValue !== null) {
+          params.delete(setting.storageKey);
+
           let queryValue: Primitive | Primitive[] | undefined = undefined;
           /*
            * Convert the string-based query params to primitives.
@@ -162,12 +162,7 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
 };
 
 const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
-  const {
-    isLoading: isLoadingOb,
-    querySettings,
-    state: stateOb,
-    clearQuerySettings,
-  } = useContext(UserSettings);
+  const { isLoading: isLoadingOb, querySettings, state: stateOb } = useContext(UserSettings);
   const initialLoading = useObservable(isLoadingOb);
   const derivedOb = useMemo(
     () => stateOb.select((s) => s.get(config.storagePath)),
@@ -313,7 +308,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   useLayoutEffect(() => {
     if (initialLoading) return;
-    clearQuerySettings();
     return derivedOb.subscribe(async (cur, prev) => {
       if (!cur || !currentUser || isEqual(cur, prev)) return;
 
@@ -330,7 +324,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       const url = mappedSettings ? `?${mappedSettings}` : '';
       navigate(url, { replace: true });
     });
-  }, [currentUser, clearQuerySettings, derivedOb, navigate, config, updateDB, initialLoading]);
+  }, [currentUser, derivedOb, navigate, config, updateDB, initialLoading]);
 
   return {
     activeSettings,

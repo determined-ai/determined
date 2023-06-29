@@ -1,6 +1,6 @@
 import { Map } from 'immutable';
 import { observable, useObservable, WritableObservable } from 'micro-observables';
-import React, { createContext, useCallback, useEffect, useRef, useState } from 'react';
+import React, { createContext, useEffect, useRef, useState } from 'react';
 
 import Spinner from 'components/Spinner';
 import { getUserSetting } from 'services/api';
@@ -21,16 +21,14 @@ type UserSettingsState = Map<string, Settings>;
 export type Settings = { [key: string]: any }; //TODO: find a way to use a better type here
 
 type UserSettingsContext = {
-  clearQuerySettings: () => void;
   isLoading: WritableObservable<boolean>;
-  querySettings: string;
+  querySettings: URLSearchParams;
   state: WritableObservable<UserSettingsState>;
 };
 
 export const UserSettings = createContext<UserSettingsContext>({
-  clearQuerySettings: () => undefined,
   isLoading: observable(false),
-  querySettings: '',
+  querySettings: new URLSearchParams(''),
   state: observable(Map<string, Settings>()),
 });
 
@@ -39,7 +37,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   const isAuthChecked = useObservable(authStore.isChecked);
   const [canceler] = useState(new AbortController());
   const [isLoading] = useState(() => observable(true));
-  const querySettings = useRef('');
+  const querySettings = useRef(new URLSearchParams(''));
   const [settingsState] = useState(() => observable(Map<string, Settings>()));
 
   useEffect(() => {
@@ -83,11 +81,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   useEffect(() => {
     const url = window.location.search.substring(/^\?/.test(location.search) ? 1 : 0);
 
-    querySettings.current = url;
-  }, []);
-
-  const clearQuerySettings = useCallback(() => {
-    querySettings.current = '';
+    querySettings.current = new URLSearchParams(url);
   }, []);
 
   return (
@@ -96,7 +90,6 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
       tip="Loading Page">
       <UserSettings.Provider
         value={{
-          clearQuerySettings,
           isLoading: isLoading,
           querySettings: querySettings.current,
           state: settingsState,
