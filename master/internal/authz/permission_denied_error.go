@@ -29,7 +29,13 @@ func (p PermissionDeniedError) Error() string {
 
 // IsPermissionDenied checks if err is of type PermissionDeniedError.
 func IsPermissionDenied(err error) bool {
+	if err == nil {
+		return false
+	}
 	if _, ok := err.(PermissionDeniedError); ok {
+		return true
+	}
+	if strings.Contains(err.Error(), "access denied") {
 		return true
 	}
 	return false

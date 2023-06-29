@@ -1,7 +1,6 @@
-name: test_template
 resources:
-  slots: 0
-  weight: 1
+  agent_label: ""
+  slots: 100
 environment:
   environment_variables:
     - SHOULDBE=SET
