@@ -963,16 +963,21 @@ const InlineFormSection: React.FC = () => {
         </p>
         <br />
         <div style={{ maxWidth: '700px' }}>
-          <InlineForm label="Input" type="input" onSubmit={fooCallback} />
+          <InlineForm inputElement={<Input />} label="Input" onSubmit={fooCallback} />
           <InlineForm
-            defaultSelectOption={1}
+            inputElement={
+              <Select defaultValue={1} searchable={false}>
+                {[
+                  { label: 'off', value: 1 },
+                  { label: 'on', value: 2 },
+                ].map((opt) => (
+                  <Option key={opt.value as React.Key} value={opt.value}>
+                    {opt.label}
+                  </Option>
+                ))}
+              </Select>
+            }
             label="Select"
-            selectOptions={[
-              { label: 'off', value: 1 },
-              { label: 'on', value: 2 },
-            ]}
-            selectSearchable={false}
-            type="select"
             onSubmit={fooCallback}
           />
         </div>

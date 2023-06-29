@@ -1,71 +1,35 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
 import Icon from 'components/kit/Icon';
-import Input from 'components/kit/Input';
-import Select, { Option, SelectValue } from 'components/kit/Select';
 
 import css from './InlineForm.module.scss';
 
-type Option = {
-  label: string;
-  value: SelectValue;
-};
-
 interface Props {
   label: string;
-  initialInputValue?: string;
+  initialValue?: string;
   onSubmit: (inputValue: string | number) => Promise<void> | void;
+  inputElement: React.ReactNode;
   required?: boolean;
-  type: 'input' | 'select';
-  defaultSelectOption?: SelectValue;
-  selectOptions?: Option[];
-  selectSearchable?: boolean;
+  forceEdit?: boolean;
 }
 
 const InlineForm: React.FC<Props> = ({
   label,
   required,
-  type,
-  selectOptions,
-  defaultSelectOption,
-  selectSearchable,
-  initialInputValue = '',
+  forceEdit = false,
+  inputElement,
+  initialValue = '',
   onSubmit,
 }) => {
-  const [isEditing, setIsEditing] = useState(() => {
-    if (type === 'input' && !initialInputValue) return true;
-
-    return false;
-  });
+  const [isEditing, setIsEditing] = useState(forceEdit);
   const [form] = Form.useForm();
 
-  const element = useMemo(() => {
-    if (type === 'input') return <Input disabled={!isEditing} />;
-
-    if (!selectOptions) {
-      throw new Error("No 'selectOptions' prop present.");
-    }
-
-    return (
-      <Select
-        defaultValue={defaultSelectOption}
-        disabled={!isEditing}
-        searchable={selectSearchable}>
-        {selectOptions.map((opt) => (
-          <Option key={opt.value as React.Key} value={opt.value}>
-            {opt.label}
-          </Option>
-        ))}
-      </Select>
-    );
-  }, [isEditing, type, selectOptions, defaultSelectOption, selectSearchable]);
-
   const resetForm = useCallback(() => {
-    form.setFieldValue('input', type === 'input' ? initialInputValue : defaultSelectOption);
+    form.setFieldValue('input', initialValue);
     setIsEditing(false);
-  }, [type, initialInputValue, defaultSelectOption, form]);
+  }, [initialValue, form]);
 
   const submitForm = useCallback(() => {
     onSubmit(form.getFieldValue('input'));
@@ -80,7 +44,8 @@ const InlineForm: React.FC<Props> = ({
         labelCol={{ span: 0 }}
         name="input"
         required={required}>
-        {element}
+        {React.isValidElement(inputElement) &&
+          React.cloneElement(inputElement, { ...inputElement.props, disabled: !isEditing })}
       </Form.Item>
       <div className={css.buttonsContainer}>
         {isEditing ? (
