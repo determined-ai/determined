@@ -43,7 +43,8 @@ inference.
  Usage
 *******
 
-The main arguments to :meth:`~determined.pytorch.experimental.torch_batch_process`  are processor class and dataset.
+The main arguments to :meth:`~determined.pytorch.experimental.torch_batch_process` are processor
+class and dataset.
 
 .. code:: python
 
@@ -52,20 +53,19 @@ The main arguments to :meth:`~determined.pytorch.experimental.torch_batch_proces
        dataset=dataset
    )
 
-
 ``TorchBatchProcessorContext``
 ==============================
 
-:class:`~determined.pytorch.experimental.TorchBatchProcessorContext`
-should be a subclass of :class:`~determined.pytorch.experimental.TorchBatchProcessor`.
-The two functions you must implement are the ``__init__`` and ``process_batch``. The other lifecycle functions are optional.
+:class:`~determined.pytorch.experimental.TorchBatchProcessorContext` should be a subclass of
+:class:`~determined.pytorch.experimental.TorchBatchProcessor`. The two functions you must implement
+are the ``__init__`` and ``process_batch``. The other lifecycle functions are optional.
 
 ``TorchBatchProcessor``
 =======================
 
-During ``__init__`` of :class:`~determined.pytorch.experimental.TorchBatchProcessor`,
-we pass in a :class:`~determined.pytorch.experimental.TorchBatchProcessorContext` object,
-which contains useful methods that can be used within the ``TorchBatchProcessor`` class.
+During ``__init__`` of :class:`~determined.pytorch.experimental.TorchBatchProcessor`, we pass in a
+:class:`~determined.pytorch.experimental.TorchBatchProcessorContext` object, which contains useful
+methods that can be used within the ``TorchBatchProcessor`` class.
 
 :class:`~determined.pytorch.experimental.TorchBatchProcessor` is compatible with Determined's
 :class:`~determined.pytorch.MetricReducer`. You can pass MetricReducer to
@@ -73,12 +73,9 @@ which contains useful methods that can be used within the ``TorchBatchProcessor`
 
 .. code:: python
 
-    class MyProcessor(TorchBatchProcessor):
-        def __init__(self, context):
-            self.reducer = context.wrap_reducer(reducer=AccuracyMetricReducer(), name="accuracy")
-
-
-
+   class MyProcessor(TorchBatchProcessor):
+       def __init__(self, context):
+           self.reducer = context.wrap_reducer(reducer=AccuracyMetricReducer(), name="accuracy")
 
 ******************************************
  How To Perform Batch (Offline) Inference
@@ -91,8 +88,8 @@ URL].
 Step 1: Define a InferenceProcessor
 ===================================
 
-The first step is to define an InferenceProcessor. You should initialize your model in the ``__init__``
-function of the InferenceProcessor.
+The first step is to define an InferenceProcessor. You should initialize your model in the
+``__init__`` function of the InferenceProcessor.
 
 .. code:: python
 
