@@ -3,11 +3,15 @@ from typing import Optional, Tuple
 import pytest
 
 from determined.common import util
-from determined.common.api import Session, bindings, errors
+from determined.common.api import NTSC_Kind, Session, bindings, errors
+from determined.common.api._util import all_ntsc
 from tests import api_utils
 from tests import command as cmd
 from tests import config as conf
+from tests import experiment as exp
 from tests import template as tpl
+from tests.cluster import test_rbac as rbac
+from tests.cluster import test_users as user
 
 
 @pytest.mark.e2e_cpu
@@ -115,3 +119,192 @@ def test_delete_template() -> None:
     with pytest.raises(errors.NotFoundException):
         bindings.get_GetTemplate(session, templateName=tpl.name)
         pytest.fail("template should have been deleted")
+
+
+@pytest.mark.e2e_cpu_rbac
+@pytest.mark.skipif(rbac.rbac_disabled(), reason="ee rbac is required for this test")
+def test_rbac_template_create() -> None:
+    with rbac.create_workspaces_with_users(
+        [
+            [  # can create
+                (0, ["Editor"]),
+                (1, ["WorkspaceAdmin"]),
+            ],
+            [  # cannot create
+                (0, ["Viewer"]),
+            ],
+        ]
+    ) as (workspaces, creds):
+        for uid in creds:
+            setup_template_test(api_utils.determined_test_session(creds[uid]), workspaces[0].id)
+            with pytest.raises(errors.ForbiddenException):
+                setup_template_test(api_utils.determined_test_session(creds[uid]), workspaces[1].id)
+
+
+@pytest.mark.e2e_cpu_rbac
+@pytest.mark.skipif(rbac.rbac_disabled(), reason="ee rbac is required for this test")
+def test_rbac_template_delete() -> None:
+    admin_session = api_utils.determined_test_session(rbac.ADMIN_CREDENTIALS)
+    with rbac.create_workspaces_with_users(
+        [
+            [  # can delete
+                (0, ["Editor"]),
+                (1, ["WorkspaceAdmin"]),
+            ],
+            [  # cannot delete
+                (0, ["Viewer"]),
+                (1, []),
+            ],
+        ]
+    ) as (workspaces, creds):
+        for uid in creds:
+            _, tpl = setup_template_test(admin_session, workspaces[0].id)
+            bindings.delete_DeleteTemplate(
+                api_utils.determined_test_session(creds[uid]), templateName=tpl.name
+            )
+
+        _, tpl = setup_template_test(admin_session, workspaces[1].id)
+        with pytest.raises(errors.ForbiddenException):
+            bindings.delete_DeleteTemplate(
+                api_utils.determined_test_session(creds[0]), templateName=tpl.name
+            )
+        with pytest.raises(errors.NotFoundException):
+            bindings.delete_DeleteTemplate(
+                api_utils.determined_test_session(creds[1]), templateName=tpl.name
+            )
+
+
+@pytest.mark.e2e_cpu_rbac
+@pytest.mark.skipif(rbac.rbac_disabled(), reason="ee rbac is required for this test")
+def test_rbac_template_view() -> None:
+    admin_session = api_utils.determined_test_session(rbac.ADMIN_CREDENTIALS)
+    with rbac.create_workspaces_with_users(
+        [
+            [  # can view
+                (0, ["Editor"]),
+                (1, ["WorkspaceAdmin"]),
+            ],
+            [],  # none can view
+        ]
+    ) as (workspaces, creds):
+        _, tpl0 = setup_template_test(admin_session, workspaces[0].id)
+        _, tpl1 = setup_template_test(admin_session, workspaces[1].id)
+        for uid in creds:
+            usession = api_utils.determined_test_session(creds[uid])
+            bindings.get_GetTemplate(usession, templateName=tpl0.name)
+            with pytest.raises(errors.NotFoundException):
+                bindings.get_GetTemplate(usession, templateName=tpl1.name)
+
+
+@pytest.mark.e2e_cpu_rbac
+@pytest.mark.skipif(rbac.rbac_disabled(), reason="ee rbac is required for this test")
+def test_rbac_template_patch_config() -> None:
+    admin_session = api_utils.determined_test_session(rbac.ADMIN_CREDENTIALS)
+    with rbac.create_workspaces_with_users(
+        [
+            [  # can update
+                (0, ["Editor"]),
+                (1, ["WorkspaceAdmin"]),
+            ],
+            [  # cannot update
+                (0, ["Viewer"]),
+                (1, ["Viewer"]),
+            ],
+        ]
+    ) as (workspaces, creds):
+        _, tpl0 = setup_template_test(admin_session, workspaces[0].id)
+        _, tpl1 = setup_template_test(admin_session, workspaces[1].id)
+        for uid in creds:
+            tpl0.config["description"] = "updated description"
+            bindings.patch_PatchTemplateConfig(
+                api_utils.determined_test_session(creds[uid]),
+                body=tpl0.config,
+                templateName=tpl0.name,
+            )
+            with pytest.raises(errors.ForbiddenException):
+                bindings.patch_PatchTemplateConfig(
+                    api_utils.determined_test_session(creds[uid]),
+                    body=tpl1.config,
+                    templateName=tpl1.name,
+                )
+
+
+@pytest.mark.e2e_cpu_rbac
+@pytest.mark.skipif(rbac.rbac_disabled(), reason="ee rbac is required for this test")
+@pytest.mark.parametrize("kind", all_ntsc)
+def test_rbac_template_ntsc_create(kind: NTSC_Kind) -> None:
+    admin_session = api_utils.determined_test_session(rbac.ADMIN_CREDENTIALS)
+    with rbac.create_workspaces_with_users(
+        [
+            [
+                (0, ["Editor"]),
+                (1, ["WorkspaceAdmin"]),
+            ],
+            [],
+        ]
+    ) as (workspaces, creds):
+        _, tpl0 = setup_template_test(admin_session, workspaces[0].id, name="ntsc")
+        _, tpl1 = setup_template_test(admin_session, workspaces[1].id, name="ntsc")
+
+        experiment_id = None
+        pid = bindings.post_PostProject(
+            admin_session,
+            body=bindings.v1PostProjectRequest(name="test", workspaceId=workspaces[0].id),
+            workspaceId=workspaces[0].id,
+        ).project.id
+        with user.logged_in_user(rbac.ADMIN_CREDENTIALS):
+            experiment_id = exp.create_experiment(
+                conf.fixtures_path("no_op/single.yaml"),
+                conf.fixtures_path("no_op"),
+                ["--project_id", str(pid)],
+            )
+
+        for uid in creds:
+            usession = api_utils.determined_test_session(creds[uid])
+            api_utils.launch_ntsc(
+                usession, workspaces[0].id, kind, exp_id=experiment_id, template=tpl0.name
+            )
+            e = None
+            with pytest.raises(errors.APIException) as e:
+                api_utils.launch_ntsc(
+                    usession, workspaces[0].id, kind, exp_id=experiment_id, template=tpl1.name
+                )
+            assert e.value.status_code == 400, e.value.message
+
+
+@pytest.mark.e2e_cpu_rbac
+@pytest.mark.skipif(rbac.rbac_disabled(), reason="ee rbac is required for this test")
+def test_rbac_template_exp_create() -> None:
+    admin_session = api_utils.determined_test_session(rbac.ADMIN_CREDENTIALS)
+    with rbac.create_workspaces_with_users(
+        [
+            [
+                (0, ["Editor"]),
+                (1, ["WorkspaceAdmin"]),
+            ],
+            [],
+        ]
+    ) as (workspaces, creds):
+        _, tpl0 = setup_template_test(admin_session, workspaces[0].id)
+        _, tpl1 = setup_template_test(admin_session, workspaces[1].id)
+
+        pid = bindings.post_PostProject(
+            admin_session,
+            body=bindings.v1PostProjectRequest(name="test", workspaceId=workspaces[0].id),
+            workspaceId=workspaces[0].id,
+        ).project.id
+
+        for uid in creds:
+            with user.logged_in_user(creds[uid]):
+                exp.create_experiment(
+                    conf.fixtures_path("no_op/single.yaml"),
+                    conf.fixtures_path("no_op"),
+                    ["--project_id", str(pid), "--template", tpl0.name],
+                )
+                proc = exp.maybe_create_experiment(
+                    conf.fixtures_path("no_op/single.yaml"),
+                    conf.fixtures_path("no_op"),
+                    ["--project_id", str(pid), "--template", tpl1.name],
+                )
+                assert proc.returncode == 1
+                assert "not found" in proc.stderr

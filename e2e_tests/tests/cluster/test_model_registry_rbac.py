@@ -70,13 +70,13 @@ def user_with_view_perms_test(
 ) -> None:
     view_operations(determined_obj=determined_obj, model=model, workspace_name=workspace_name)
     # fail edit model
-    with pytest.raises(errors.APIException) as e:
+    with pytest.raises(errors.ForbiddenException) as e:
         # model object needs to have the same sess as det obj with logged in user.
         model = determined_obj.get_model(model.name)
         model.set_description("abcde")
     assert "access denied" in str(e.value)
     # fail create model
-    with pytest.raises(errors.APIException) as e:
+    with pytest.raises(errors.ForbiddenException) as e:
         determined_obj.create_model(name=get_random_string(), workspace_name=workspace_name)
     assert "access denied" in str(e.value)
 
@@ -284,7 +284,7 @@ def test_model_registry_rbac() -> None:
             model = d.get_model(model_2.name)
             assert current_model_workspace == "Uncategorized"
             # move model to test_workspace should fail.
-            with pytest.raises(errors.APIException) as e:
+            with pytest.raises(errors.ForbiddenException) as e:
                 model.move_to_workspace(workspace_name=test_workspace.name)
             assert "access denied" in str(e.value)
             model.delete()
