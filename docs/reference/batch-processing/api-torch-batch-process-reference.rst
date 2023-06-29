@@ -27,6 +27,7 @@ The main arguments to torch_batch_process is processor class and dataset.
        batch_processor_cls=MyProcessor
        dataset=dataset
    )
+
 ***************************************************
  ``determined.pytorch.torch_batch_process``
 ***************************************************

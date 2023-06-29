@@ -56,9 +56,8 @@ The main arguments to torch_batch_process are processor class and dataset.
 ==============================
 
 :class:`~determined.pytorch.experimental.TorchBatchProcessorContext`
- should be a subclass of :class:`~determined.pytorch.experimental.TorchBatchProcessor`.
- The two functions you must implement are the
-``__init__`` and ``process_batch``. The other lifecycle functions are optional.
+should be a subclass of :class:`~determined.pytorch.experimental.TorchBatchProcessor`.
+The two functions you must implement are the ``__init__`` and ``process_batch``. The other lifecycle functions are optional.
 
 ``TorchBatchProcessor``
 =======================
@@ -66,6 +65,7 @@ The main arguments to torch_batch_process are processor class and dataset.
 During ``__init__`` of :class:`~determined.pytorch.experimental.TorchBatchProcessor`,
 we pass in a :class:`~determined.pytorch.experimental.TorchBatchProcessorContext` object,
 which contains useful methods that can be used within the ``TorchBatchProcessor`` class.
+
 
 ******************************************
  How To Perform Batch (Offline) Inference
