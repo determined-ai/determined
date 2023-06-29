@@ -43,7 +43,7 @@ inference.
  Usage
 *******
 
-The main arguments to torch_batch_process are processor class and dataset.
+The main arguments to :meth:`~determined.pytorch.experimental.torch_batch_process`  are processor class and dataset.
 
 .. code:: python
 
@@ -51,6 +51,7 @@ The main arguments to torch_batch_process are processor class and dataset.
        batch_processor_cls=MyProcessor
        dataset=dataset
    )
+
 
 ``TorchBatchProcessorContext``
 ==============================
@@ -65,6 +66,18 @@ The two functions you must implement are the ``__init__`` and ``process_batch``.
 During ``__init__`` of :class:`~determined.pytorch.experimental.TorchBatchProcessor`,
 we pass in a :class:`~determined.pytorch.experimental.TorchBatchProcessorContext` object,
 which contains useful methods that can be used within the ``TorchBatchProcessor`` class.
+
+:class:`~determined.pytorch.experimental.TorchBatchProcessor` is compatible with Determined's
+:class:`~determined.pytorch.MetricReducer`. You can pass MetricReducer to
+:class:`~determined.pytorch.experimental.TorchBatchProcessor` as follow:
+
+.. code:: python
+
+    class MyProcessor(TorchBatchProcessor):
+        def __init__(self, context):
+            self.reducer = context.wrap_reducer(reducer=AccuracyMetricReducer(), name="accuracy")
+
+
 
 
 ******************************************
