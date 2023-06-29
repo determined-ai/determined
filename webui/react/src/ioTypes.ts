@@ -44,6 +44,32 @@ export class ValueofType<D extends { [key: string]: unknown }> extends io.Type<V
   }
 }
 
+export class Float extends io.Type<number> {
+  readonly _tag: 'FloatType' = 'FloatType' as const;
+  constructor() {
+    super(
+      'float',
+      (u): u is number => io.number.is(u),
+      (u, c) => {
+        let u_ = u;
+        if (u === 'Infinity') {
+          u_ = Infinity;
+        }
+        if (u === '-Infinity') {
+          u_ = -Infinity;
+        }
+        if (u === 'NaN') {
+          u_ = NaN;
+        }
+        return io.number.validate(u_, c);
+      },
+      (f) => {
+        return io.number.encode(f);
+      },
+    );
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ValueofC<D extends { [key: string]: unknown }> extends ValueofType<D> {}
 
@@ -118,9 +144,9 @@ export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
 const ioMetricSummary = io.type({
   count: optional(io.union([io.number, io.undefined])),
   last: optional(io.union([io.number, io.string, io.boolean])),
-  max: optional(io.union([io.number, io.literal('Infinity'), io.literal('-Infinity'), io.literal('NaN')])),
-  min: optional(io.union([io.number, io.literal('Infinity'), io.literal('-Infinity'), io.literal('NaN')])),
-  sum: optional(io.union([io.number, io.literal('Infinity'), io.literal('-Infinity'), io.literal('NaN')])),
+  max: optional(new Float()),
+  min: optional(new Float()),
+  sum: optional(new Float()),
   type: io.union([
     io.literal('string'),
     io.literal('number'),
