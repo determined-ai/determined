@@ -3,6 +3,7 @@ import {
   DataEditorProps,
   GridCell,
   GridCellKind,
+  Theme as GTheme,
   SizedGridColumn,
 } from '@glideapps/glide-data-grid';
 
@@ -63,6 +64,13 @@ export type ColumnDef = SizedGridColumn & {
 };
 
 export type ColumnDefs = Record<string, ColumnDef>;
+
+interface HeatmapProps {
+  min: number;
+  max: number;
+  color: (opacity: number) => string;
+}
+
 interface Params {
   appTheme: Theme;
   columnWidths: Record<string, number>;
@@ -429,20 +437,36 @@ export const defaultTextColumn = (
   };
 };
 
+const getHeatmapOpacity = (min: number, max: number, value: number): number => {
+  if (min >= max || value >= max) return 0.2;
+  const d = max - min;
+  if (value >= 0.75 * d + min) return 0.14;
+  if (value >= 0.5 * d + min) return 0.8;
+  if (value >= 0.25 * d + min) return 0.2;
+  return 0.04;
+};
+
 export const defaultNumberColumn = (
   column: ProjectColumn,
   columnWidths?: Record<string, number>,
   dataPath?: string,
+  heatmapProps?: HeatmapProps,
 ): ColumnDef => {
   return {
     id: column.column,
     renderer: (record: ExperimentWithTrial) => {
       const data = isString(dataPath) ? getPath<number>(record, dataPath) : undefined;
+      let theme: Partial<GTheme> = {};
+      if (heatmapProps && data) {
+        const { min, max, color } = heatmapProps;
+        theme = { bgCell: color(getHeatmapOpacity(min, max, data)) };
+      }
       return {
         allowOverlay: false,
         data: Number(data),
         displayData: data !== undefined ? String(data) : '',
         kind: GridCellKind.Number,
+        themeOverride: theme,
       };
     },
     title: column.displayName || column.column,

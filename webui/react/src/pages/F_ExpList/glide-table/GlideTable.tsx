@@ -70,7 +70,6 @@ import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
 import { BatchAction } from './TableActionBar';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
-import { isEmpty } from 'fp-ts/lib/ReadonlyRecord';
 
 export interface GlideTableProps {
   clearSelectionTrigger?: number;
@@ -285,7 +284,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           colorMap[record.experiment.id] ? { accentColor: colorMap[record.experiment.id] } : {},
         NotLoaded: () => ({}),
       });
-      !isEmpty(rowColorTheme) && console.log({rowColorTheme})
       return { ...rowColorTheme, ...hoverStyle };
     },
     [colorMap, data, hoveredRow],
@@ -325,15 +323,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   }, [data, previousData, selectAll]);
 
   const applyHeadmap = useCallback((col: string) => {
-    setHeatmapApplied((prev) => (
-      prev.includes(col) ? prev.filter(p => p !== col) : [...prev, col]
-    )
+    setHeatmapApplied((prev) =>
+      prev.includes(col) ? prev.filter((p) => p !== col) : [...prev, col],
     );
   }, []);
-
-  useEffect(() => {
-    console.log({heatmapApplied, projectHeatmap})
-  }, [heatmapApplied, projectHeatmap])
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, { bounds }: HeaderClickedEventArgs) => {
@@ -715,13 +708,28 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             break;
         }
         switch (currentColumn.type) {
-          case V1ColumnType.NUMBER:
-            columnDefs[currentColumn.column] = defaultNumberColumn(
-              currentColumn,
-              columnWidths,
-              dataPath,
-            );
+          case V1ColumnType.NUMBER: {
+            const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
+            if (heatmapApplied.includes(currentColumn.column) && heatmap) {
+              columnDefs[currentColumn.column] = defaultNumberColumn(
+                currentColumn,
+                columnWidths,
+                dataPath,
+                {
+                  color: (o: number) => `rgba(0,0,255,${o})`,
+                  max: heatmap.max,
+                  min: heatmap.min,
+                },
+              );
+            } else {
+              columnDefs[currentColumn.column] = defaultNumberColumn(
+                currentColumn,
+                columnWidths,
+                dataPath,
+              );
+            }
             break;
+          }
           case V1ColumnType.DATE:
             columnDefs[currentColumn.column] = defaultDateColumn(
               currentColumn,
@@ -742,7 +750,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       })
       .flatMap((col) => (col ? [col] : []));
     return gridColumns;
-  }, [columnIds, columnDefs, projectColumnsMap, columnWidths]);
+  }, [columnIds, columnDefs, projectColumnsMap, columnWidths, heatmapApplied, projectHeatmap]);
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(
     (col: number) => !comparisonViewOpen && col === staticColumns.length + pinnedColumnsCount,
