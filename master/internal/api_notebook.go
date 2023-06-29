@@ -176,16 +176,11 @@ func (a *apiServer) SetNotebookPriority(
 // isNTSCPermittedToLaunch checks authorization to launch in a given
 // workspace.
 func (a *apiServer) isNTSCPermittedToLaunch(
-	ctx context.Context, spec *tasks.GenericCommandSpec,
+	ctx context.Context, spec *tasks.GenericCommandSpec, user *model.User,
 ) error {
 	workspaceID := spec.Metadata.WorkspaceID
 	if workspaceID == 0 {
 		return status.Errorf(codes.InvalidArgument, "workspace_id is required")
-	}
-
-	user, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
 	w := &workspacev1.Workspace{}
@@ -220,21 +215,23 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
 	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
+		WorkspaceID:  req.WorkspaceId,
 		Config:       req.Config,
 		Files:        req.Files,
-	})
+	}, user)
 	if err != nil {
-		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
+		return nil, api.WrapWithFallbackCode(err, codes.InvalidArgument,
+			"failed to prepare launch params")
 	}
 
-	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
-	if req.WorkspaceId != 0 {
-		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
-	}
-
-	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
+	if err = a.isNTSCPermittedToLaunch(ctx, spec, user); err != nil {
 		return nil, err
 	}
 
