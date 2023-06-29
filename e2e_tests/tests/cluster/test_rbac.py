@@ -5,13 +5,40 @@ import pytest
 
 from determined import cli
 from determined.cli.user_groups import group_name_to_group_id, usernames_to_user_ids
-from determined.common.api import authentication, bindings
+from determined.common.api import authentication, bindings, errors
 from tests import api_utils, utils
-from tests.api_utils import ADMIN_CREDENTIALS, configure_token_store, create_test_user
-from tests.cluster.utils import rbac_disabled, setup_workspaces
-from tests.utils import det_cmd, det_cmd_expect_error, det_cmd_json
+from tests.api_utils import configure_token_store, create_test_user, determined_test_session
+from tests.cluster.test_workspace_org import setup_workspaces
 
-from .test_users import get_random_string, logged_in_user
+from .test_groups import det_cmd, det_cmd_expect_error, det_cmd_json
+from .test_users import ADMIN_CREDENTIALS, get_random_string, logged_in_user
+
+
+def roles_not_implemented() -> bool:
+    return "Unimplemented" in det_cmd(["rbac", "my-permissions"]).stderr.decode()
+
+
+def rbac_disabled() -> bool:
+    if roles_not_implemented():
+        return True
+    try:
+        return not bindings.get_GetMaster(determined_test_session()).rbacEnabled
+    except (errors.APIException, errors.MasterNotFoundException):
+        return True
+
+
+@pytest.fixture(scope="session")
+def cluster_admin_creds() -> authentication.Credentials:
+    user = bindings.v1User(username=api_utils.get_random_string(), admin=True, active=True)
+    creds = api_utils.create_test_user(True, user=user)
+    cli.rbac.assign_role(
+        utils.CliArgsMock(
+            username_to_assign=creds.username,
+            workspace_name="Uncategorized",
+            role_name="ClusterAdmin",
+        )
+    )
+    return creds
 
 
 @contextlib.contextmanager
@@ -54,8 +81,8 @@ def create_workspaces_with_users(
         yield workspaces, rid_to_creds
 
 
-@pytest.mark.e2e_cpu_rbac
-@pytest.mark.skipif(rbac_disabled(), reason="ee with enabled rbac is required for this test")
+@pytest.mark.e2e_cpu
+@pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_user_role_setup() -> None:
     perm_assigments = [
         [
@@ -71,8 +98,8 @@ def test_user_role_setup() -> None:
         assert len(workspaces) == 2
 
 
-@pytest.mark.e2e_cpu_rbac
-@pytest.mark.skipif(rbac_disabled(), reason="ee with enabled rbac is required for this test")
+@pytest.mark.e2e_cpu
+@pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_rbac_permission_assignment() -> None:
     api_utils.configure_token_store(ADMIN_CREDENTIALS)
     test_user_creds = api_utils.create_test_user()
@@ -214,8 +241,8 @@ def test_rbac_permission_assignment() -> None:
         assert json_out["assignments"] == []
 
 
-@pytest.mark.e2e_cpu_rbac
-@pytest.mark.skipif(rbac_disabled(), reason="ee with enabled rbac is required for this test")
+@pytest.mark.e2e_cpu
+@pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_rbac_permission_assignment_errors() -> None:
     # Specifying args incorrectly.
     det_cmd_expect_error(["rbac", "assign-role", "Viewer"], "must provide exactly one of")
@@ -354,8 +381,8 @@ def test_rbac_permission_assignment_errors() -> None:
         )
 
 
-@pytest.mark.e2e_cpu_rbac
-@pytest.mark.skipif(rbac_disabled(), reason="ee with enabled rbac is required for this test")
+@pytest.mark.e2e_cpu
+@pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_rbac_list_roles() -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
         det_cmd(["rbac", "list-roles"], check=True)
@@ -474,8 +501,8 @@ def test_rbac_list_roles() -> None:
         assert json_out["assignments"][0]["scopeCluster"]
 
 
-@pytest.mark.e2e_cpu_rbac
-@pytest.mark.skipif(rbac_disabled(), reason="ee with enabled rbac is required for this test")
+@pytest.mark.e2e_cpu
+@pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_rbac_describe_role() -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
         # Role doesn't exist.
@@ -546,8 +573,8 @@ def test_rbac_describe_role() -> None:
         assert user_assign[1]["roleAssignment"]["scopeWorkspaceId"] == 1
 
 
-@pytest.mark.e2e_cpu_rbac
-@pytest.mark.skipif(rbac_disabled(), reason="ee with enabled rbac is required for this test")
+@pytest.mark.e2e_cpu
+@pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_group_access() -> None:
     # create relevant workspace and project, with group having access
     group_name = get_random_string()

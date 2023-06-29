@@ -36,6 +36,7 @@ export interface SelectProps<T extends SelectValue = SelectValue> {
   searchable?: boolean;
   value?: T;
   width?: React.CSSProperties['width'];
+  onDropdownVisibleChange?: (open: boolean) => void;
 }
 
 const countOptions = (children: React.ReactNode, options?: Options): number => {

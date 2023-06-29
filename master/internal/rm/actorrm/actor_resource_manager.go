@@ -72,14 +72,6 @@ func (r *ResourceManager) Ref() *actor.Ref {
 	return r.ref
 }
 
-// GetAllocationHandler requests the allocation actor for the given allocation.
-func (r *ResourceManager) GetAllocationHandler(
-	ctx actor.Messenger,
-	msg sproto.GetAllocationHandler,
-) (resp *actor.Ref, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
-}
-
 // GetAllocationSummary requests a summary of the given allocation.
 func (r *ResourceManager) GetAllocationSummary(
 	ctx actor.Messenger,

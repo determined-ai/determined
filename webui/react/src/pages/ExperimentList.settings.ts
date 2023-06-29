@@ -65,7 +65,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
   startTime: 118,
   state: 106,
   tags: 106,
-  user: 85,
+  user: 95,
 };
 
 export interface ExperimentListSettings extends InteractiveTableSettings {

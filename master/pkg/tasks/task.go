@@ -2,7 +2,6 @@ package tasks
 
 import (
 	"archive/tar"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -65,7 +64,7 @@ type TaskSpec struct {
 	// Fields that are set on the cluster level.
 	ClusterID   string
 	HarnessPath string
-	MasterCert  *tls.Certificate
+	MasterCert  []byte
 	SSHRsaSize  int
 
 	SegmentEnabled bool
@@ -197,7 +196,7 @@ func (t TaskSpec) EnvVars() map[string]string {
 		e["DET_INTER_NODE_NETWORK_INTERFACE"] = networkInterface
 	}
 
-	if t.MasterCert != nil {
+	if len(t.MasterCert) != 0 {
 		e["DET_USE_TLS"] = "true"
 		e["DET_MASTER_CERT_FILE"] = certPath
 	} else {

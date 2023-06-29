@@ -21,9 +21,13 @@ import { getDisplayName } from 'utils/user';
 
 import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
+export const MIN_COLUMN_WIDTH = 40;
+
+export const MULTISELECT = 'selected';
+
 // order used in ColumnPickerMenu
 export const experimentColumns = [
-  'selected',
+  MULTISELECT,
   'archived',
   'name',
   'id',
@@ -321,7 +325,7 @@ export const getColumnDefs = ({
   },
   selected: {
     icon: selectAll ? 'allSelected' : rowSelection.length ? 'someSelected' : 'noneSelected',
-    id: 'selected',
+    id: MULTISELECT,
     renderer: (_: ExperimentWithTrial, idx) => ({
       allowOverlay: false,
       contentAlign: 'left',
@@ -417,7 +421,7 @@ export const getColumnDefs = ({
 
 export const defaultTextColumn = (
   column: ProjectColumn,
-  columnWidths?: Record<string, number>,
+  columnWidth?: number,
   dataPath?: string,
 ): ColumnDef => {
   return {
@@ -433,7 +437,7 @@ export const defaultTextColumn = (
     },
     title: column.displayName || column.column,
     tooltip: () => undefined,
-    width: columnWidths?.[column.column] ?? 140,
+    width: columnWidth ?? 140,
   };
 };
 
@@ -448,7 +452,7 @@ const getHeatmapOpacity = (min: number, max: number, value: number): number => {
 
 export const defaultNumberColumn = (
   column: ProjectColumn,
-  columnWidths?: Record<string, number>,
+  columnWidth?: number,
   dataPath?: string,
   heatmapProps?: HeatmapProps,
 ): ColumnDef => {
@@ -471,13 +475,13 @@ export const defaultNumberColumn = (
     },
     title: column.displayName || column.column,
     tooltip: () => undefined,
-    width: columnWidths?.[column.column] ?? 140,
+    width: columnWidth ?? 140,
   };
 };
 
 export const defaultDateColumn = (
   column: ProjectColumn,
-  columnWidths?: Record<string, number>,
+  columnWidth?: number,
   dataPath?: string,
 ): ColumnDef => {
   return {
@@ -493,7 +497,7 @@ export const defaultDateColumn = (
     },
     title: column.displayName || column.column,
     tooltip: () => undefined,
-    width: columnWidths?.[column.column] ?? 140,
+    width: columnWidth ?? 140,
   };
 };
 

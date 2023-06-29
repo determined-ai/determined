@@ -24,6 +24,7 @@ from tests import experiment as exp
 from tests.filetree import FileTree
 
 EXPECT_TIMEOUT = 5
+ADMIN_CREDENTIALS = authentication.Credentials("admin", "")
 logger = logging.getLogger(__name__)
 
 
@@ -40,7 +41,7 @@ def clean_auth() -> Iterator[None]:
 
 @pytest.fixture()
 def login_admin() -> None:
-    a_username, a_password = api_utils.ADMIN_CREDENTIALS
+    a_username, a_password = ADMIN_CREDENTIALS
     child = det_spawn(["user", "login", a_username])
     child.setecho(True)
     expected = f"Password for user '{a_username}':"
@@ -267,7 +268,7 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     log_out_user()
 
     # login admin again.
-    api_utils.configure_token_store(api_utils.ADMIN_CREDENTIALS)
+    api_utils.configure_token_store(ADMIN_CREDENTIALS)
 
     # Deactivate user.
     activate_deactivate_user(False, creds.username)
@@ -282,7 +283,7 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     api_utils.configure_token_store(creds)
 
     # SDK testing for activating and deactivating.
-    api_utils.configure_token_store(api_utils.ADMIN_CREDENTIALS)
+    api_utils.configure_token_store(ADMIN_CREDENTIALS)
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=creds.username)
     user.deactivate()
@@ -307,7 +308,7 @@ def test_change_password(clean_auth: None, login_admin: None) -> None:
     log_out_user()
 
     # login admin
-    api_utils.configure_token_store(api_utils.ADMIN_CREDENTIALS)
+    api_utils.configure_token_store(ADMIN_CREDENTIALS)
 
     new_password = get_random_string()
     assert change_user_password(creds.username, new_password) == 0
@@ -382,7 +383,7 @@ def test_experiment_creation_and_listing(clean_auth: None, login_admin: None) ->
         assert (experiment_id1, creds1.username) in output
         assert (experiment_id2, creds2.username) in output
 
-    with logged_in_user(api_utils.ADMIN_CREDENTIALS):
+    with logged_in_user(ADMIN_CREDENTIALS):
         # Clean up.
         delete_experiments(experiment_id1, experiment_id2)
 
@@ -439,9 +440,9 @@ def test_login_with_environment_variables(clean_auth: None, login_admin: None) -
         assert child.exitstatus == 0
 
         # Can still override with -u.
-        with logged_in_user(api_utils.ADMIN_CREDENTIALS):
-            child = det_spawn(["-u", api_utils.ADMIN_CREDENTIALS.username, "user", "whoami"])
-            child.expect(api_utils.ADMIN_CREDENTIALS.username)
+        with logged_in_user(ADMIN_CREDENTIALS):
+            child = det_spawn(["-u", ADMIN_CREDENTIALS.username, "user", "whoami"])
+            child.expect(ADMIN_CREDENTIALS.username)
             child.read()
             child.wait()
             assert child.exitstatus == 0
@@ -474,14 +475,12 @@ def test_auth_inside_shell(clean_auth: None, login_admin: None) -> None:
         check_whoami(creds.username)
 
         # log in as admin
-        child.sendline(f"det user login {api_utils.ADMIN_CREDENTIALS.username}")
-        child.expect(
-            f"Password for user '{api_utils.ADMIN_CREDENTIALS.username}'", timeout=EXPECT_TIMEOUT
-        )
-        child.sendline(api_utils.ADMIN_CREDENTIALS.password)
+        child.sendline(f"det user login {ADMIN_CREDENTIALS.username}")
+        child.expect(f"Password for user '{ADMIN_CREDENTIALS.username}'", timeout=EXPECT_TIMEOUT)
+        child.sendline(ADMIN_CREDENTIALS.password)
 
         # check that whoami responds with the new user
-        check_whoami(api_utils.ADMIN_CREDENTIALS.username)
+        check_whoami(ADMIN_CREDENTIALS.username)
 
         # log out
         child.sendline("det user logout")
@@ -726,7 +725,7 @@ def test_tensorboard_creation_and_listing(clean_auth: None, login_admin: None) -
 
     kill_tensorboards(tensorboard_id1, tensorboard_id2)
 
-    with logged_in_user(api_utils.ADMIN_CREDENTIALS):
+    with logged_in_user(ADMIN_CREDENTIALS):
         delete_experiments(experiment_id1, experiment_id2)
 
 
@@ -805,7 +804,7 @@ def test_link_with_agent_user(clean_auth: None, login_admin: None) -> None:
     expected_output = "someuser:200:somegroup:300"
     check_link_with_agent_output(user, expected_output)
 
-    with logged_in_user(api_utils.ADMIN_CREDENTIALS):
+    with logged_in_user(ADMIN_CREDENTIALS):
         user_sdk = create_linked_user_sdk(210, "anyuser", 310, "anygroup")
         expected_output = "anyuser:210:anygroup:310"
         check_link_with_agent_output(user_sdk, expected_output)

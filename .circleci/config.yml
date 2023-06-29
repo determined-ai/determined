@@ -2572,6 +2572,18 @@ workflows:
               executor-name:
                 ["python-37", "python-38", "python-39", "win/default"]
 
+  test-unit-gpu:
+    jobs:
+      - test-unit-harness-cpu-tf1
+      - test-unit-harness-gpu
+      - test-unit-harness-gpu-lightning
+      - test-unit-harness-gpu-deepspeed
+      - test-unit-harness-gpu-parallel
+      - python-coverage:
+          requires:
+            - test-unit-harness-gpu
+            - test-unit-harness-gpu-parallel
+
   test-unit:
     jobs:
       - test-unit-go
@@ -2580,11 +2592,6 @@ workflows:
           context: github-write
           filters: *any-upstream
       - test-unit-harness-cpu
-      - test-unit-harness-cpu-tf1
-      - test-unit-harness-gpu
-      - test-unit-harness-gpu-lightning
-      - test-unit-harness-gpu-deepspeed
-      - test-unit-harness-gpu-parallel
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-unit-storage:
@@ -2593,10 +2600,8 @@ workflows:
       - test-examples
       - python-coverage:
           requires:
-            - test-unit-harness-gpu
             - test-unit-harness-cpu
             - test-unit-harness-tf2
-            - test-unit-harness-gpu-parallel
             - test-unit-model-hub
             - test-unit-storage
 

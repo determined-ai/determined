@@ -5,6 +5,7 @@ import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
 import Empty from 'components/kit/Empty';
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/Spinner';
@@ -193,7 +194,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
       placement="bottom"
       trigger="click"
       onOpenChange={handleOpenChange}>
-      <Button>Columns</Button>
+      <Button icon={<Icon name="columns" title="column picker" />}>Columns</Button>
     </Popover>
   );
 };

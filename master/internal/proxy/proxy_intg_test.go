@@ -1,19 +1,24 @@
 package proxy
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var (
-	proxyAuth = func(c echo.Context) (done bool, err error) {
+	tickInterval = 100 * time.Millisecond
+	proxyAuth    = func(c echo.Context) (done bool, err error) {
 		return true, nil
 	}
 	serviceIDs = []string{"a", "b", "c"}
-	u          = url.URL{}
+	u          = url.URL{Path: "localhost:8082"}
 )
 
 func register(t *testing.T, prTCP bool, unauth bool) {
@@ -38,6 +43,25 @@ func unregister(t *testing.T) {
 			t.Errorf("failed to unregister service %s", id)
 		}
 	}
+}
+
+// TODO carolina/bradley: add to utils.
+func waitForCondition(timeout time.Duration, condition func() bool) bool {
+	for i := 0; i < int(timeout/tickInterval); i++ {
+		if condition() {
+			return true
+		}
+		time.Sleep(tickInterval)
+	}
+	return false
+}
+
+func conditionServerUp() bool {
+	resp, err := http.Get("http://" + u.Path + "/proxy")
+	if err == nil {
+		resp.Body.Close() //nolint:errcheck
+	}
+	return err == nil
 }
 
 func TestProxyLifecycle(t *testing.T) {
@@ -103,4 +127,42 @@ func TestProxyLifecycle(t *testing.T) {
 		t.Errorf("failed to clear all proxy services.")
 	}
 	require.Equal(t, 0, len(DefaultProxy.Summaries()))
+}
+
+func TestNewProxyHandler(t *testing.T) {
+	// First init the new Proxy
+	InitProxy(proxyAuth)
+	// And check that the Proxy struct is set up correctly
+	require.NotNil(t, DefaultProxy.HTTPAuth)
+	require.Equal(t, map[string]*Service{}, DefaultProxy.services)
+	require.Equal(t, "", DefaultProxy.syslog.Message)
+
+	e := echo.New()
+	// Create http test recorder
+	req := httptest.NewRequest(http.MethodGet, u.Path+"/proxy", nil)
+	// Create new echo context
+	c := e.NewContext(req, httptest.NewRecorder())
+
+	go func() {
+		if err := e.Start(u.Path); err != nil && err != http.ErrServerClosed {
+			t.Logf("failed to start server: %s", err)
+		}
+	}()
+
+	ok := waitForCondition(5*time.Second, conditionServerUp)
+	if !ok {
+		t.FailNow()
+	}
+	// Case 1: handler returns OK because service name is registered/found
+	register(t, true, true)
+	c.SetPath("/:service")
+	c.SetParamNames("service")
+	c.SetParamValues("a")
+
+	handler := DefaultProxy.NewProxyHandler("service")
+	assert.NoError(t, handler(c))
+
+	// Case 2: handler returns error because service name not found
+	handler = DefaultProxy.NewProxyHandler("wrong")
+	assert.Error(t, handler(c))
 }
