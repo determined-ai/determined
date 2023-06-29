@@ -1,4 +1,13 @@
-import { getAgents, getResourcePools } from 'services/api';
+import { Map } from 'immutable';
+
+import {
+  addResourcePoolBindings,
+  deleteResourcePoolBindings,
+  getAgents,
+  getResourcePoolBindings,
+  getResourcePools,
+  overwriteResourcePoolBindings,
+} from 'services/api';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { Agent, ClusterOverview, ClusterOverviewResource, ResourcePool, ResourceType } from 'types';
 import { clone, isEqual } from 'utils/data';
@@ -89,9 +98,11 @@ const updateIfChanged = <T, V extends WritableObservable<T>>(o: V, next: T) =>
 class ClusterStore extends PollingStore {
   #agents: WritableObservable<Loadable<Agent[]>> = observable(NotLoaded);
   #resourcePools: WritableObservable<Loadable<ResourcePool[]>> = observable(NotLoaded);
+  #resourcePoolBindings: WritableObservable<Map<string, number[]>> = observable(Map());
 
   public readonly agents = this.#agents.readOnly();
   public readonly resourcePools = this.#resourcePools.readOnly();
+  public readonly resourcePoolBindings = this.#resourcePoolBindings.readOnly();
 
   public readonly clusterOverview = this.#agents.select((agents) =>
     Loadable.map(agents, (agents) => {
@@ -162,6 +173,100 @@ class ClusterStore extends PollingStore {
     const [agents, resourcePools] = await Promise.all([agentRequest, poolsRequest]);
     updateIfChanged(this.#resourcePools, Loaded(resourcePools));
     updateIfChanged(this.#agents, Loaded(agents));
+  }
+
+  public readonly boundWorkspaces = (resourcePool: string) =>
+    this.#resourcePoolBindings.select((map) => map.get(resourcePool));
+
+  public fetchResourcePoolBindings(resourcePool: string, signal?: AbortSignal): () => void {
+    const canceler = new AbortController();
+
+    getResourcePoolBindings({ resourcePool }, { signal: signal ?? canceler.signal })
+      .then((response) => {
+        updateIfChanged(
+          this.#resourcePoolBindings,
+          this.#resourcePoolBindings.get().set(resourcePool, response.workspaceIds ?? []),
+        );
+      })
+      .catch(handleError);
+
+    return () => canceler.abort();
+  }
+
+  public addResourcePoolBindings(
+    resourcePool: string,
+    workspaceIds: number[],
+    signal?: AbortSignal,
+  ): () => void {
+    const canceler = new AbortController();
+
+    addResourcePoolBindings(
+      { resourcePoolName: resourcePool, workspaceIds },
+      { signal: signal ?? canceler.signal },
+    )
+      .then(() => {
+        updateIfChanged(
+          this.#resourcePoolBindings,
+          this.#resourcePoolBindings
+            .get()
+            .update(resourcePool, (prevWorkspaceIds) =>
+              prevWorkspaceIds
+                ? [...new Set([...prevWorkspaceIds, ...workspaceIds])]
+                : workspaceIds,
+            ),
+        );
+      })
+      .catch(handleError);
+
+    return () => canceler.abort();
+  }
+
+  public deleteResourcePoolBindings(
+    resourcePool: string,
+    workspaceIds: number[],
+    signal?: AbortSignal,
+  ): () => void {
+    const canceler = new AbortController();
+
+    deleteResourcePoolBindings(
+      { resourcePoolName: resourcePool, workspaceIds },
+      { signal: signal ?? canceler.signal },
+    )
+      .then(() => {
+        updateIfChanged(
+          this.#resourcePoolBindings,
+          this.#resourcePoolBindings
+            .get()
+            .update(resourcePool, (prevWorkspaceIds) =>
+              prevWorkspaceIds?.filter((id) => !workspaceIds.includes(id)),
+            ),
+        );
+      })
+      .catch(handleError);
+
+    return () => canceler.abort();
+  }
+
+  public overwriteResourcePoolBindings(
+    resourcePool: string,
+    workspaceIds: number[],
+    signal?: AbortSignal,
+  ): () => void {
+    const canceler = new AbortController();
+
+    overwriteResourcePoolBindings(
+      { resourcePoolName: resourcePool, workspaceIds },
+      { signal: signal ?? canceler.signal },
+    )
+      .then(() => {
+        updateIfChanged(
+          this.#resourcePoolBindings,
+          this.#resourcePoolBindings.get().set(resourcePool, workspaceIds),
+        );
+      })
+      .catch(handleError);
+
+    return () => canceler.abort();
   }
 }
 
