@@ -7,11 +7,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rbac"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
@@ -20,52 +20,6 @@ import (
 
 // NSCAuthZRBAC is the RBAC implementation of the NSCAuthZ interface.
 type NSCAuthZRBAC struct{}
-
-func (a *NSCAuthZRBAC) accessibleScopes(
-	ctx context.Context, curUser model.User, requestedScope model.AccessScopeID,
-	permission rbacv1.PermissionType,
-) (model.AccessScopeSet, error) {
-	returnScope := model.AccessScopeSet{}
-	var workspaces []int
-
-	// check if user has global permissions
-	err := db.DoesPermissionMatch(ctx, curUser.ID, nil, permission)
-	if err == nil {
-		if requestedScope == 0 {
-			err = db.Bun().NewSelect().Table("workspaces").Column("id").Scan(ctx, &workspaces)
-			if err != nil {
-				return nil, errors.Wrapf(err, "error getting workspaces from db")
-			}
-
-			for _, workspaceID := range workspaces {
-				returnScope[model.AccessScopeID(workspaceID)] = true
-			}
-			return returnScope, nil
-		}
-		return model.AccessScopeSet{requestedScope: true}, nil
-	}
-
-	// get all workspaces user has permissions to
-	workspaces, err = db.GetNonGlobalWorkspacesWithPermission(
-		ctx, curUser.ID, permission)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error getting workspaces from db")
-	}
-
-	if requestedScope == 0 {
-		for _, workspaceID := range workspaces {
-			returnScope[model.AccessScopeID(workspaceID)] = true
-		}
-		return returnScope, nil
-	}
-
-	for _, workspaceID := range workspaces {
-		if requestedScope == model.AccessScopeID(workspaceID) {
-			return model.AccessScopeSet{requestedScope: true}, nil
-		}
-	}
-	return model.AccessScopeSet{}, nil
-}
 
 func (a *NSCAuthZRBAC) addLogInfo(
 	fields *log.Fields, curUser model.User, permission rbacv1.PermissionType,
@@ -190,7 +144,7 @@ func (a *NSCAuthZRBAC) CanSetNSCsPriority(
 func (a *NSCAuthZRBAC) AccessibleScopes(
 	ctx context.Context, curUser model.User, requestedScope model.AccessScopeID,
 ) (model.AccessScopeSet, error) {
-	return a.accessibleScopes(ctx, curUser, requestedScope,
+	return rbac.PermittedScopes(ctx, curUser, requestedScope,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_NSC)
 }
 
@@ -200,7 +154,7 @@ func (a *NSCAuthZRBAC) FilterTensorboards(
 	tensorboards []*tensorboardv1.Tensorboard,
 ) ([]*tensorboardv1.Tensorboard, error) {
 	var filteredTensorboards []*tensorboardv1.Tensorboard
-	filteredScopes, err := a.accessibleScopes(ctx, curUser, requestedScope,
+	filteredScopes, err := rbac.PermittedScopes(ctx, curUser, requestedScope,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS)
 	if err != nil {
 		return nil, err
