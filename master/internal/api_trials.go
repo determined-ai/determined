@@ -1445,7 +1445,7 @@ func (a *apiServer) AllocationRendezvousInfo(
 		// TODO: partial failures are annoying and we should just make them impossible.
 		err := task.DefaultService.UnwatchRendezvous(ctx, allocationID, resourcesID)
 		if err != nil {
-			logrus.Errorf("failed to unwatch rendezvous for %s: %w", allocationID, err)
+			logrus.Errorf("failed to unwatch rendezvous for %s: %s", allocationID, err)
 		}
 	}()
 	w, err := task.DefaultService.WatchRendezvous(ctx, allocationID, resourcesID)
