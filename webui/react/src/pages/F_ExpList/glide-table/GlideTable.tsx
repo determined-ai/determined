@@ -91,9 +91,9 @@ export interface GlideTableProps {
   project?: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
-  selectedExperimentIds: number[];
+  selection: GridSelection;
+  setSelection: Dispatch<SetStateAction<GridSelection>>;
   setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
-  setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
   selectAll: boolean;
   staticColumns: string[];
   setColumnWidths: (newWidths: Record<string, number>) => void;
@@ -134,7 +134,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   data,
   dataTotal,
   clearSelectionTrigger,
-  setSelectedExperimentIds,
+  selection,
+  setSelection,
   sortableColumnIds,
   setSortableColumnIds,
   colorMap,
@@ -213,11 +214,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [comparisonViewOpen, pinnedColumnsCount, sortableColumnIds, staticColumns],
   );
 
-  const [selection, setSelection] = React.useState<GridSelection>({
-    columns: CompactSelection.empty(),
-    rows: CompactSelection.empty(),
-  });
-
   // Detect if user just click a row away from current selected group.
   // If this stand alone select is set, use it as the base when doing multi select.
   const [standAloneSelect, setStandAloneSelect] = React.useState<number>();
@@ -226,19 +222,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     if (clearSelectionTrigger === 0) return;
     setSelection({ columns: CompactSelection.empty(), rows: CompactSelection.empty() });
   }, [clearSelectionTrigger]);
-
-  useEffect(() => {
-    const selectedRowIndices = selection.rows.toArray();
-    setSelectedExperimentIds((prevIds) => {
-      const selectedIds = selectedRowIndices
-        .map((idx) => data?.[idx])
-        .filter((row) => row !== undefined)
-        .filter(Loadable.isLoaded)
-        .map((record) => record.data.experiment.id);
-      if (prevIds === selectedIds) return prevIds;
-      return selectedIds;
-    });
-  }, [selection.rows, setSelectedExperimentIds, data]);
 
   const columnDefs = useMemo<Record<string, ColumnDef>>(
     () =>

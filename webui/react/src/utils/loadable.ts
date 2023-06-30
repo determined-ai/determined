@@ -55,6 +55,21 @@ const forEach = <T, U>(l: Loadable<T>, fn: (_: T) => U): void => {
 };
 
 /**
+ * The exists() function checks a predicate against the contained value
+ * in the passed Loadable.
+ *
+ * If the passed Loadable is NotLoaded then the return value is false
+ */
+const exists = <T>(l: Loadable<T>, fn: (_: T) => boolean): boolean => {
+  switch (l._tag) {
+    case 'Loaded':
+      return fn(l.data);
+    case 'NotLoaded':
+      return false;
+  }
+};
+
+/**
  * If the passed Loadable is Loaded this returns the data, otherwise
  * it returns the default value.
  */
@@ -164,6 +179,7 @@ const waitFor = <T>(l: Loadable<T>): T => {
 // exported immediately because of name collision
 export const Loadable = {
   all,
+  exists,
   filterNotLoaded,
   flatMap,
   forEach,

@@ -24,6 +24,7 @@ export interface F_ExperimentListSettings {
   sortString: string;
   pageLimit: number;
   pinnedColumnsCount: number;
+  selectedExperiments: Array<number>;
 }
 export const settingsConfigForProject = (id: number): SettingsConfig<F_ExperimentListSettings> => ({
   settings: {
@@ -61,6 +62,12 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       skipUrlEncoding: true,
       storageKey: 'pinnedColumnsCount',
       type: number,
+    },
+    selectedExperiments: {
+      defaultValue: [],
+      skipUrlEncoding: true,
+      storageKey: 'selectedExperiments',
+      type: array(number),
     },
     sortString: {
       defaultValue: '',
