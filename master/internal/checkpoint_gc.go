@@ -103,7 +103,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			return fmt.Errorf("resolving resource pool: %w", err)
 		}
 
-		t.allocation = task.NewAllocation(t.logCtx, sproto.AllocateRequest{
+		t.allocation = task.DefaultService.StartAllocation(t.logCtx, sproto.AllocateRequest{
 			TaskID:            t.taskID,
 			JobID:             t.jobID,
 			RequestTime:       time.Now().UTC(),
