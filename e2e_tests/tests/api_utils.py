@@ -5,8 +5,7 @@ from determined.common import api
 from determined.common.api import Session, authentication, bindings, certs
 from determined.common.api._util import AnyNTSC, NTSC_Kind
 from tests import config as conf
-
-ADMIN_CREDENTIALS = authentication.Credentials("admin", "")
+from tests.cluster import test_users
 
 
 def get_random_string() -> str:
@@ -21,7 +20,7 @@ def determined_test_session(
 
     if credentials is None:
         if admin:
-            credentials = ADMIN_CREDENTIALS
+            credentials = test_users.ADMIN_CREDENTIALS
         else:
             credentials = authentication.Credentials("determined", "")
 
@@ -57,23 +56,29 @@ def configure_token_store(credentials: authentication.Credentials) -> None:
 
 
 def launch_ntsc(
-    session: Session, workspace_id: int, typ: NTSC_Kind, exp_id: Optional[int] = None
+    session: Session,
+    workspace_id: int,
+    typ: NTSC_Kind,
+    exp_id: Optional[int] = None,
+    template: Optional[str] = None,
 ) -> str:
     if typ == NTSC_Kind.notebook:
         return bindings.post_LaunchNotebook(
-            session, body=bindings.v1LaunchNotebookRequest(workspaceId=workspace_id)
+            session,
+            body=bindings.v1LaunchNotebookRequest(workspaceId=workspace_id, templateName=template),
         ).notebook.id
     elif typ == NTSC_Kind.tensorboard:
         experiment_ids = [exp_id] if exp_id else []
         return bindings.post_LaunchTensorboard(
             session,
             body=bindings.v1LaunchTensorboardRequest(
-                workspaceId=workspace_id, experimentIds=experiment_ids
+                workspaceId=workspace_id, experimentIds=experiment_ids, templateName=template
             ),
         ).tensorboard.id
     elif typ == NTSC_Kind.shell:
         return bindings.post_LaunchShell(
-            session, body=bindings.v1LaunchShellRequest(workspaceId=workspace_id)
+            session,
+            body=bindings.v1LaunchShellRequest(workspaceId=workspace_id, templateName=template),
         ).shell.id
     elif typ == NTSC_Kind.command:
         return bindings.post_LaunchCommand(
@@ -83,6 +88,7 @@ def launch_ntsc(
                 config={
                     "entrypoint": ["sleep", "100"],
                 },
+                templateName=template,
             ),
         ).command.id
     else:

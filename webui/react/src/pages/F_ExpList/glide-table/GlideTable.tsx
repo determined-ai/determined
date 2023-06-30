@@ -1,4 +1,3 @@
-import { FilterOutlined } from '@ant-design/icons';
 import DataEditor, {
   CellClickedEventArgs,
   CompactSelection,
@@ -35,6 +34,7 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import { MenuItem } from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
 import usePrevious from 'hooks/usePrevious';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
@@ -59,6 +59,8 @@ import {
   defaultTextColumn,
   getColumnDefs,
   getHeaderIcons,
+  MIN_COLUMN_WIDTH,
+  MULTISELECT,
 } from './columns';
 import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
@@ -288,7 +290,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   const onColumnResize: DataEditorProps['onColumnResize'] = useCallback(
     (column: GridColumn, width: number) => {
       const columnId = column.id;
-      if (columnId === undefined || columnId === 'selected') return;
+      if (columnId === undefined || columnId === MULTISELECT) return;
       setColumnWidths({ ...columnWidths, [columnId]: width });
     },
     [columnWidths, setColumnWidths],
@@ -322,7 +324,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     (col: number, { bounds }: HeaderClickedEventArgs) => {
       const columnId = columnIds[col];
 
-      if (columnId === 'selected') {
+      if (columnId === MULTISELECT) {
         const items: MenuItem[] = [
           selection.rows.length > 0
             ? {
@@ -399,7 +401,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               ...sortMenuItemsForColumn(column, sorts, onSortChange),
               { type: 'divider' as const },
               {
-                icon: <FilterOutlined />,
+                icon: <Icon name="filter" title="filter" />,
                 key: 'filter',
                 label: 'Filter by this column',
                 onClick: () => {
@@ -688,14 +690,14 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           case V1ColumnType.NUMBER:
             columnDefs[currentColumn.column] = defaultNumberColumn(
               currentColumn,
-              columnWidths,
+              columnWidths[currentColumn.column],
               dataPath,
             );
             break;
           case V1ColumnType.DATE:
             columnDefs[currentColumn.column] = defaultDateColumn(
               currentColumn,
-              columnWidths,
+              columnWidths[currentColumn.column],
               dataPath,
             );
             break;
@@ -704,7 +706,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           default:
             columnDefs[currentColumn.column] = defaultTextColumn(
               currentColumn,
-              columnWidths,
+              columnWidths[currentColumn.column],
               dataPath,
             );
         }
@@ -728,7 +730,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const drawHeader: DrawHeaderCallback = useCallback(
     ({ ctx, column, rect, theme }) => {
-      if (!column.id || column.id === 'selected') return false;
+      if (!column.id || column.id === MULTISELECT) return false;
 
       const sortDirection = column.id && sortMap[column.id];
       if (sortDirection) {
@@ -761,18 +763,19 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       {tooltip}
       <div className={css.base}>
         <DataEditor
+          className={comparisonViewOpen ? css.compareTable : undefined}
           columns={columns}
           customRenderers={customRenderers}
           drawHeader={drawHeader}
           freezeColumns={staticColumns.length + pinnedColumnsCount}
           getCellContent={getCellContent}
-          // `getCellsForSelection` is required for double click column resize to content.
-          getCellsForSelection
+          getCellsForSelection // `getCellsForSelection` is required for double click column resize to content.
           getRowThemeOverride={getRowThemeOverride}
           gridSelection={selection}
           headerHeight={36}
           headerIcons={headerIcons}
           height={height}
+          minColumnWidth={MIN_COLUMN_WIDTH}
           ref={gridRef}
           rowHeight={rowHeightMap[rowHeight]}
           rows={dataTotal}

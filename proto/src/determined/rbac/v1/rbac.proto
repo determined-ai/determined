@@ -131,6 +131,15 @@ enum PermissionType {
   // Ability to view sensitive subset of agent info.
   PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO = 8004;
 
+  // Ability to view templates.
+  PERMISSION_TYPE_VIEW_TEMPLATES = 9001;
+  // Ability to update templates.
+  PERMISSION_TYPE_UPDATE_TEMPLATES = 9002;
+  // Ability to create templates.
+  PERMISSION_TYPE_CREATE_TEMPLATES = 9003;
+  // Ability to delete templates.
+  PERMISSION_TYPE_DELETE_TEMPLATES = 9004;
+
   // Ability to create and update role definitions.
   PERMISSION_TYPE_UPDATE_ROLES = 96001;
 

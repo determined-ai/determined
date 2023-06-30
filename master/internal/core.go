@@ -21,6 +21,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
+
 	"github.com/coreos/go-systemd/activation"
 	"github.com/google/uuid"
 	"github.com/labstack/echo-contrib/prometheus"
@@ -864,7 +866,7 @@ func (m *Master) Run(ctx context.Context) error {
 		ClusterID:             m.ClusterID,
 		HarnessPath:           filepath.Join(m.config.Root, "wheels"),
 		TaskContainerDefaults: m.config.TaskContainerDefaults,
-		MasterCert:            cert,
+		MasterCert:            config.GetCertPEM(cert),
 		SSHRsaSize:            m.config.Security.SSH.RsaKeySize,
 		SegmentEnabled:        m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "",
 		SegmentAPIKey:         m.config.Telemetry.SegmentMasterKey,
@@ -918,7 +920,6 @@ func (m *Master) Run(ctx context.Context) error {
 	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
 	userService := user.GetService()
 
-	allocationmap.InitAllocationMap()
 	proxy.InitProxy(processProxyAuthentication)
 	portregistry.InitPortRegistry()
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
@@ -1009,7 +1010,7 @@ func (m *Master) Run(ctx context.Context) error {
 		},
 		cert,
 	)
-	job.DefaultManager = job.NewManager(m.rm, m.system)
+	jobservice.SetDefaultService(job.NewManager(m.rm, m.system))
 
 	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))

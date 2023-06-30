@@ -482,6 +482,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'tags',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
         filterDropdown: labelFilterDropdown,
+        filterIcon: <Icon name="filter" title="filter" />,
         filters: labels.map((label) => ({ text: label, value: label })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.label,
         key: 'labels',
@@ -531,6 +532,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
+        filterIcon: <Icon name="filter" title="filter" />,
         filters: [
           RunState.Active,
           RunState.Paused,
@@ -600,6 +602,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
+        filterIcon: <Icon name="filter" title="filter" />,
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,

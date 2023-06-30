@@ -224,8 +224,8 @@ func (p priorityScheduler) trySchedulingTaskViaPreemption(
 				continue
 			}
 
-			resourcesAllocated := taskList.Allocation(preemptionCandidate.AllocationRef)
-			removeTaskFromAgents(localAgentsState, resourcesAllocated)
+			allocated := taskList.Allocation(preemptionCandidate.AllocationID)
+			removeTaskFromAgents(localAgentsState, allocated)
 			preemptedTasks[preemptionCandidate.AllocationRef] = true
 
 			if fits := findFits(
@@ -290,8 +290,7 @@ func sortTasksByPriorityAndPositionAndTimestamp(
 			panic(fmt.Sprintf("priority not set for task %s", req.Name))
 		}
 
-		assigned := taskList.Allocation(req.AllocationRef)
-		if tasklist.AssignmentIsScheduled(assigned) {
+		if taskList.IsScheduled(req.AllocationID) {
 			priorityToScheduledTaskMap[*priority] = append(
 				priorityToScheduledTaskMap[*priority],
 				req,

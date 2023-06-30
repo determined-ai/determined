@@ -22,6 +22,7 @@ import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
+import InputShortcut from 'components/kit/InputShortcut';
 import { TypographySize } from 'components/kit/internal/fonts';
 import { LineChart, Serie } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
@@ -69,6 +70,7 @@ import handleError from 'utils/error';
 import { Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum from 'utils/loremIpsum';
 import { noOp } from 'utils/service';
+import { KeyboardShortcut } from 'utils/shortcut';
 
 import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 
@@ -94,6 +96,7 @@ const ComponentTitles = {
   Input: 'Input',
   InputNumber: 'InputNumber',
   InputSearch: 'InputSearch',
+  InputShortcut: 'InputShortcut',
   Lists: 'Lists (tables)',
   LogViewer: 'LogViewer',
   Modals: 'Modals',
@@ -977,6 +980,28 @@ const InputSearchSection: React.FC = () => {
         <hr />
         <strong>Search box with scopes</strong>
         <p>Not implemented</p>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const InputShortcutSection: React.FC = () => {
+  const [value, setValue] = useState<KeyboardShortcut>();
+  const onChange = (k: KeyboardShortcut | undefined) => {
+    setValue(k);
+  };
+  return (
+    <ComponentSection id="InputShortcut" title="InputShortcut">
+      <AntDCard>
+        <p>
+          An input box (<code>{'<InputShortcut>'}</code>) for keyboard shortcuts.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Default Input for Shortcut</strong>
+        <InputShortcut />
+        <strong>Controlled Input for Shortcut</strong>
+        <InputShortcut value={value} onChange={onChange} />
       </AntDCard>
     </ComponentSection>
   );
@@ -2762,6 +2787,7 @@ const Components = {
   Input: <InputSection />,
   InputNumber: <InputNumberSection />,
   InputSearch: <InputSearchSection />,
+  InputShortcut: <InputShortcutSection />,
   Lists: <ListsSection />,
   LogViewer: <LogViewerSection />,
   Modals: <ModalSection />,
