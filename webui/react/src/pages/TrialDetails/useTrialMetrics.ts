@@ -74,11 +74,9 @@ const summarizedMetricToSeries = (
   // Record whether or not each metric contains at least one value for any
   // xAxis option.
   Object.keys(trialData).forEach((key) => {
-    if (!metricHasData?.[key]) {
-      metricHasData[key] = xAxisOptions.some(
-        (xAxis) => (trialData?.[key]?.data?.[xAxis]?.length ?? 0) > 0,
-      );
-    }
+    metricHasData[key] ||= xAxisOptions.some(
+      (xAxis) => (trialData?.[key]?.data?.[xAxis]?.length ?? 0) > 0,
+    );
   });
   return { data: trialData, metricHasData };
 };
@@ -147,9 +145,7 @@ export const useTrialMetrics = (
         response.forEach((r) => {
           const { data: trialData, metricHasData } = summarizedMetricToSeries(r?.metrics, metrics);
           Object.keys(metricHasData).forEach((key) => {
-            if (!metricsHaveData?.[key]) {
-              metricsHaveData[key] = metricHasData[key];
-            }
+            metricsHaveData[key] ||= metricHasData[key];
           });
           newData[r.id] = trialData;
         });
