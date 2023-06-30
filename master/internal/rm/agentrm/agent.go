@@ -15,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task/allocationservice"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	ws "github.com/determined-ai/determined/master/pkg/actor/api"
@@ -673,31 +674,44 @@ func (a *agent) clearNonReattachedContainers(
 	recovered map[cproto.ID]aproto.ContainerReattachAck,
 	explicitlyDoomed map[cproto.ID]aproto.ContainerReattachAck,
 ) error {
-	for cid := range a.agentState.containerAllocation {
-		if _, ok := recovered[cid]; ok {
+	for cID, aID := range a.agentState.containerAllocation {
+		if _, ok := recovered[cID]; ok {
 			continue
 		}
 
-		// TODO(!!!): Is this ok? I need to seriously vet this or just put it back.
-		// It may be easiest to hack it back, for now.
-		containerState, ok := a.agentState.containerState[cid]
-		if !ok {
-			continue
-		}
-		containerState.State = cproto.Terminated
-
-		var stopped aproto.ContainerStopped
-		ack, ok := explicitlyDoomed[cid]
-		if ok {
-			stopped = aproto.ContainerStopped{Failure: ack.Failure}
+		var containerState *cproto.Container
+		allocationState, err := allocationservice.DefaultService.State(aID)
+		if err != nil {
+			ctx.Log().WithError(err).Error("failed to get container state")
+			containerState = a.agentState.containerState[cID]
 		} else {
-			stopped = a.defaultReattachFailureMessage()
+			cs, ok := allocationState.Containers[sproto.FromContainerID(cID)]
+			if !ok {
+				break
+			}
+			for _, c := range cs {
+				if c.ID == cID {
+					containerState = &c
+					break
+				}
+			}
+			containerState = a.agentState.containerState[cID]
 		}
 
-		a.containerStateChanged(ctx, aproto.ContainerStateChanged{
-			Container:        *containerState,
-			ContainerStopped: &stopped,
-		})
+		if containerState != nil {
+			var stopped aproto.ContainerStopped
+			ack, ok := explicitlyDoomed[cID]
+			if ok {
+				stopped = aproto.ContainerStopped{Failure: ack.Failure}
+			} else {
+				stopped = a.defaultReattachFailureMessage()
+			}
+
+			a.containerStateChanged(ctx, aproto.ContainerStateChanged{
+				Container:        *containerState,
+				ContainerStopped: &stopped,
+			})
+		}
 	}
 
 	return a.agentState.clearUnlessRecovered(recovered)

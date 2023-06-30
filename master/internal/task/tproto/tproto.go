@@ -39,7 +39,7 @@ type AllocationState struct {
 	Ready     bool
 
 	Addresses  map[sproto.ResourcesID][]cproto.Address
-	Containers map[sproto.ResourcesID][]cproto.Container
+	Containers map[sproto.ResourcesID][]cproto.Container // TODO(!!!): Why multiple containers?
 }
 
 // FirstContainer returns the first container in the allocation state.

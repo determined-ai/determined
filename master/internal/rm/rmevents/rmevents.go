@@ -9,12 +9,10 @@ import (
 
 // TODO(!!!): Must add tests and review intensely.
 
-const bufferSize = 64
-
-type eventWithTopic struct {
-	topic model.AllocationID
-	event sproto.AllocationEvent
-}
+const (
+	mainBufferSize        = 1024
+	perConsumerBufferSize = 64
+)
 
 type subscribeRequest struct {
 	topic   model.AllocationID
@@ -27,30 +25,31 @@ type unsubscribeRequest struct {
 	id    int
 }
 
-type changeSubRequest interface{ SubEvent() }
-
-func (subscribeRequest) SubEvent()   {}
-func (unsubscribeRequest) SubEvent() {}
+type eventWithTopic struct {
+	topic model.AllocationID
+	event sproto.AllocationEvent
+}
 
 type manager struct {
-	id        sequence
-	events    chan<- eventWithTopic
-	subEvents chan<- changeSubRequest // sub or unsub request
+	id          sequence
+	events      chan<- eventWithTopic
+	subEvents   chan<- subscribeRequest
+	unsubEvents chan<- unsubscribeRequest
 }
 
 func newManager() *manager {
-	in := make(chan eventWithTopic, bufferSize)
+	in := make(chan eventWithTopic, mainBufferSize)
 	// This channel is used to synchronize receipt of unsubscription
 	// with draining our updates channel, do not buffer it.
-	subs := make(chan changeSubRequest)
-	m := &manager{events: in, subEvents: subs}
-	go fanOut(in, subs)
-	return m
+	subs := make(chan subscribeRequest)
+	unsubs := make(chan unsubscribeRequest)
+	go fanOut(in, subs, unsubs)
+	return &manager{events: in, subEvents: subs, unsubEvents: unsubs}
 }
 
 func (m *manager) subscribe(topic model.AllocationID) *sproto.AllocationSubscription {
 	id := m.id.next()
-	updates := make(chan sproto.AllocationEvent, bufferSize)
+	updates := make(chan sproto.AllocationEvent, perConsumerBufferSize)
 	m.subEvents <- subscribeRequest{topic: topic, id: id, updates: updates}
 	return sproto.NewAllocationSubscription(updates, func() {
 		// fire off the unsub request asynchronously and drain the channel, in the event
@@ -58,7 +57,7 @@ func (m *manager) subscribe(topic model.AllocationID) *sproto.AllocationSubscrip
 		// sending to us.
 		done := make(chan struct{})
 		go func() {
-			m.subEvents <- unsubscribeRequest{topic: topic, id: id}
+			m.unsubEvents <- unsubscribeRequest{topic: topic, id: id}
 			close(done)
 		}()
 		for {
@@ -75,19 +74,28 @@ func (m *manager) publish(topic model.AllocationID, event sproto.AllocationEvent
 	m.events <- eventWithTopic{topic: topic, event: event}
 }
 
-func fanOut(in <-chan eventWithTopic, subs <-chan changeSubRequest) {
+func fanOut(
+	in <-chan eventWithTopic,
+	subs <-chan subscribeRequest,
+	unsubs <-chan unsubscribeRequest,
+) {
 	subsByTopicByID := map[model.AllocationID]map[int]chan<- sproto.AllocationEvent{}
 	for {
 		select {
 		case msg := <-in:
 			send(subsByTopicByID, msg)
 		case msg := <-subs:
-			changeSubs(subsByTopicByID, msg)
+			sub(subsByTopicByID, msg)
+		case msg := <-unsubs:
+			unsub(subsByTopicByID, msg)
 		}
 	}
 }
 
-func send(subsByTopicByID map[model.AllocationID]map[int]chan<- sproto.AllocationEvent, msg eventWithTopic) {
+func send(
+	subsByTopicByID map[model.AllocationID]map[int]chan<- sproto.AllocationEvent,
+	msg eventWithTopic,
+) {
 	subs, ok := subsByTopicByID[msg.topic]
 	if !ok {
 		return
@@ -97,23 +105,20 @@ func send(subsByTopicByID map[model.AllocationID]map[int]chan<- sproto.Allocatio
 	}
 }
 
-func changeSubs(subsByTopicByID map[model.AllocationID]map[int]chan<- sproto.AllocationEvent, msg changeSubRequest) {
-	switch msg := msg.(type) {
-	case subscribeRequest:
-		sub(subsByTopicByID, msg)
-	case unsubscribeRequest:
-		unsub(subsByTopicByID, msg)
-	}
-}
-
-func sub(subsByTopicByID map[model.AllocationID]map[int]chan<- sproto.AllocationEvent, msg subscribeRequest) {
+func sub(
+	subsByTopicByID map[model.AllocationID]map[int]chan<- sproto.AllocationEvent,
+	msg subscribeRequest,
+) {
 	if _, ok := subsByTopicByID[msg.topic]; !ok {
 		subsByTopicByID[msg.topic] = map[int]chan<- sproto.AllocationEvent{}
 	}
 	subsByTopicByID[msg.topic][msg.id] = msg.updates
 }
 
-func unsub(subsByTopicByID map[model.AllocationID]map[int]chan<- sproto.AllocationEvent, msg unsubscribeRequest) {
+func unsub(
+	subsByTopicByID map[model.AllocationID]map[int]chan<- sproto.AllocationEvent,
+	msg unsubscribeRequest,
+) {
 	updates, ok := subsByTopicByID[msg.topic][msg.id]
 	if !ok {
 		return
