@@ -26,7 +26,7 @@ const summarizedMetricToSeries = (
   selectedMetrics: Metric[],
 ): {
   data: Record<MetricName, Serie>;
-  hasData: boolean;
+  metricHasData: Record<MetricName, boolean>;
 } => {
   const rawBatchValuesMap: Record<string, [number, number][]> = {};
   const rawBatchTimesMap: Record<string, [number, number][]> = {};
@@ -54,6 +54,7 @@ const summarizedMetricToSeries = (
     });
   });
   const trialData: Record<string, Serie> = {};
+  const metricHasData: Record<string, boolean> = {};
   selectedMetrics.forEach((metric) => {
     const data: Partial<Record<XAxisDomain, [number, number][]>> = {};
     if (rawBatchValuesMap[metric.name]) data[XAxisDomain.Batches] = rawBatchValuesMap[metric.name];
@@ -69,13 +70,17 @@ const summarizedMetricToSeries = (
     };
     trialData[metricToKey(metric)] = series;
   });
-  // Check to see if any metric contains at least one value for any
-  // xAxis option.
   const xAxisOptions = Object.values(XAxisDomain);
-  const hasData = Object.keys(trialData).some((key) =>
-    xAxisOptions.some((xAxis) => (trialData?.[key]?.data?.[xAxis]?.length ?? 0) > 0),
-  );
-  return { data: trialData, hasData };
+  // Record whether or not each metric contains at least one value for any
+  // xAxis option.
+  Object.keys(trialData).forEach((key) => {
+    if (!metricHasData?.[key]) {
+      metricHasData[key] = xAxisOptions.some(
+        (xAxis) => (trialData?.[key]?.data?.[xAxis]?.length ?? 0) > 0,
+      );
+    }
+  });
+  return { data: trialData, metricHasData };
 };
 
 export const useTrialMetrics = (
@@ -86,7 +91,7 @@ export const useTrialMetrics = (
   metrics: Metric[];
   scale: Scale;
   setScale: React.Dispatch<React.SetStateAction<Scale>>;
-  hasData: boolean;
+  metricHasData: Record<string, boolean>;
 } => {
   const trialTerminated = trials?.every((trial) =>
     terminalRunStates.has(trial?.state ?? RunState.Active),
@@ -114,7 +119,7 @@ export const useTrialMetrics = (
   const [loadableData, setLoadableData] =
     useState<Loadable<Record<number, Record<string, Serie>>>>(NotLoaded);
   const [scale, setScale] = useState<Scale>(Scale.Linear);
-  const [hasData, setHasData] = useState<boolean>(true);
+  const [metricHasData, setMetricHasData] = useState<Record<string, boolean>>({});
 
   const previousTrials = usePrevious(trials, []);
 
@@ -126,12 +131,11 @@ export const useTrialMetrics = (
     if (trials.length === 0) {
       // If there are no trials selected then
       // no data is available.
-      setHasData(false);
       return;
     }
-    let anyTrialHasData = false;
     if (trials.length > 0) {
       try {
+        const metricsHaveData: Record<string, boolean> = {};
         const response = await timeSeries({
           maxDatapoints: screen.width > 1600 ? 1500 : 1000,
           metricNames: metrics,
@@ -141,10 +145,12 @@ export const useTrialMetrics = (
         });
         const newData: Record<number, Record<string, Serie>> = {};
         response.forEach((r) => {
-          const { data: trialData, hasData } = summarizedMetricToSeries(r?.metrics, metrics);
-          if (hasData) {
-            anyTrialHasData = true;
-          }
+          const { data: trialData, metricHasData } = summarizedMetricToSeries(r?.metrics, metrics);
+          Object.keys(metricHasData).forEach((key) => {
+            if (!metricsHaveData?.[key]) {
+              metricsHaveData[key] = metricHasData[key];
+            }
+          });
           newData[r.id] = trialData;
         });
         setLoadableData((prev) =>
@@ -152,7 +158,9 @@ export const useTrialMetrics = (
         );
         // Wait until the metric names are loaded
         // to determine if trials have data for any metric
-        setHasData(Loadable.isLoaded(loadableMetrics) ? anyTrialHasData : true);
+        if (Loadable.isLoaded(loadableMetrics)) {
+          setMetricHasData(metricsHaveData);
+        }
       } catch (e) {
         message.error('Error fetching metrics');
       }
@@ -177,8 +185,8 @@ export const useTrialMetrics = (
 
   return {
     data: Loadable.getOrElse({}, loadableData),
-    hasData,
     isLoaded: metricNamesLoaded && Loadable.isLoaded(loadableData),
+    metricHasData,
     metrics,
     scale,
     setScale,
