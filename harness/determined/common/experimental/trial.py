@@ -126,8 +126,9 @@ class Trial:
         session: HTTP request session.
         hparams: (Mutable, Optional[Dict]) Dict[name, value] of the trial's hyperparameters.
             This is an instance of the hyperparameter space defined by the experiment.
-        summary: (Mutable, Optional[Dict]) Summary metrics for the trial. Includes aggregated
-            metrics for training and validation steps for each reported metric name. Example:
+        summary_metrics: (Mutable, Optional[Dict]) Summary metrics for the trial. Includes
+            aggregated metrics for training and validation steps for each reported metric name.
+            Example:
                 {
                     "avg_metrics": {
                         "loss": {
@@ -153,7 +154,7 @@ class Trial:
         self._session = session
 
         self.hparams: Optional[Dict[str, Any]] = None
-        self.summary: Optional[Dict[str, Any]] = None
+        self.summary_metrics: Optional[Dict[str, Any]] = None
 
     def logs(
         self,
@@ -384,7 +385,7 @@ class Trial:
 
     def _hydrate(self, trial: bindings.trialv1Trial) -> None:
         self.hparams = trial.hparams
-        self.summary = trial.summaryMetrics
+        self.summary_metrics = trial.summaryMetrics
 
     def reload(self) -> None:
         """

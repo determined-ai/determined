@@ -135,6 +135,4 @@ def test_get_trial_includes_summary_metrics(make_client: Callable[[], Determined
 
     resp = client.get_trial(trial_id=trial_id)
 
-    assert resp.summary
-    assert resp.summary["avg_metrics"]
-    assert resp.summary["validation_metrics"]
+    assert resp.summary_metrics
