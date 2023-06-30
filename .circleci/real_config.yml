@@ -2111,7 +2111,7 @@ jobs:
             or:
               - equal: [ true, <<parameters.always-run>> ]
               - equal: [ "main", <<pipeline.git.branch>> ]
-              - matches: { pattern: "^/release-.*/$", value: <<pipeline.git.branch>> }
+              - matches: { pattern: "^release-.*$", value: <<pipeline.git.branch>> }
           steps:
             - set-commit-message
             - skip-on-dev-branch
@@ -2124,7 +2124,13 @@ jobs:
       - run: 
           name: Create instance name hash and set OPT_DEVBOX_PREFIX env var
           command: |
-            echo "export OPT_DEVBOX_PREFIX=circleci-job-$(echo -n "${CIRCLE_BRANCH}-${CIRCLE_JOB}" | md5sum | awk '{print $1}')" >> "$BASH_ENV"
+            # This check is for the scenario when two pushes to main are running concurrently (we don't want this).
+            # In this case, we need more specificity to the hash information to make two separate VMs.
+            if [[ $CIRCLE_BRANCH == "main" ]]; then
+              echo "export OPT_DEVBOX_PREFIX=circleci-job-$(echo -n "${CIRCLE_USERNAME}-${CIRCLE_BRANCH}-${CIRCLE_JOB}-${CIRCLE_WORKFLOW_JOB_ID}" | md5sum | awk '{print $1}')" >> "$BASH_ENV"
+            else
+              echo "export OPT_DEVBOX_PREFIX=circleci-job-$(echo -n "${CIRCLE_USERNAME}-${CIRCLE_BRANCH}-${CIRCLE_JOB}" | md5sum | awk '{print $1}')" >> "$BASH_ENV"
+            fi
 
       - attach_workspace:
           at: . 
@@ -2159,18 +2165,29 @@ jobs:
       - set-google-application-credentials
 
       - run:
+          name: Delete existing instance (if it exists)
+          command: |
+            yes | gcloud compute instances delete ${OPT_DEVBOX_PREFIX}-dev-box --zone=$(grep \
+            -A2 'variable "zone"' ~/project/tools/slurm/terraform/variables.tf | grep 'default' \
+            | awk -F' = ' '{ print $2 }' | tr -d '\"') || true
+
+      - run:
           name: Make slurmcluster
           # Breaks without apt-get installs for some reason
+          # NOTE: tf_lock is set to 'false' to catch the case where a developer triggered a workflow and did not
+          # let it run completely. This should not be an issue since we delete the instance already in the previous
+          # step (this is precautionary). See a similar thing in the 'make unslurmcluster' step.
           command: |
             sudo apt-get update
             sudo apt-get install gettext
             sudo apt-get install iproute2
-            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster cont=<<parameters.container-run-type>>
+            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster cont=<<parameters.container-run-type>> tf_lock=false
           background: true
 
       - run:
           name: Wait for VM creation
-          command: sleep 3m
+          command: |
+            sleep 3m
             
       - run-e2e-tests:
           mark: <<parameters.mark>>
@@ -2181,7 +2198,9 @@ jobs:
           name: Make Unslurmcluster
           when: always
           command: |
-            (yes yes || true) | make unslurmcluster
+            ps -e
+            pkill determined-mast
+            (yes yes || true) | make unslurmcluster tf_lock=false
             # For some reason, even when `make unslurmcluster` is successful, CircleCI
             # receives exit code 141, so ignore that.
             EXIT_STATUS=$?

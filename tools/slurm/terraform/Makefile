@@ -1,4 +1,5 @@
 # Commands for managing (creating/destroying/etc) resources.
+TF_LOCK ?= true
 
 build/backend.conf: scripts/generate-backendconf.sh
 	mkdir -p build
@@ -27,11 +28,11 @@ build/default.tfvars: scripts/generate-tfvars.sh build/generate-sshkeys
 
 .PHONY: build
 build: init build/default.tfvars
-	terraform apply --var-file build/default.tfvars
+	terraform apply --var-file build/default.tfvars -lock=$(TF_LOCK)
 
 .PHONY: clean
 clean: build/default.tfvars
-	terraform destroy --var-file build/default.tfvars
+	terraform destroy --var-file build/default.tfvars -lock=$(TF_LOCK)
 	rm -rf build
 
 # Commands for interacting with created resources.

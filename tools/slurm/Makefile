@@ -25,9 +25,9 @@ usage:
 .PHONY: slurmcluster
 slurmcluster:
 	mkdir -p ~/.slurmcluster
-	$(MAKE) -C terraform build VMTIME=$(vmtime)
+	$(MAKE) -C terraform build VMTIME=$(vmtime) TF_LOCK=$(tf_lock)
 	- ./scripts/slurmcluster.sh -c $(cont) || ./scripts/slurmcluster.sh -c singularity
 
 .PHONY: unslurmcluster
 unslurmcluster:
-	$(MAKE) -C terraform clean
+	$(MAKE) -C terraform clean TF_LOCK=$(tf_lock)
