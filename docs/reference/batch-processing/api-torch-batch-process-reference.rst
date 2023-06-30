@@ -1,6 +1,6 @@
 :orphan:
 
-.. _torch_batch_process_api_ref:
+.. _torch-batch-process-api-ref:
 
 #######################################
  ``Torch Batch Process`` API Reference
@@ -12,14 +12,14 @@
 +--------------------------------------------+
 | User Guide                                 |
 +============================================+
-| :ref:`torch_batch_processing_ug`           |
+| :ref:`torch-batch-processing-ug`           |
 +--------------------------------------------+
 
 .. caution::
 
    This is an experimental API and may change at any time.
 
-The main arguments to torch_batch_process is processor class and dataset.
+The main arguments to ``torch_batch_process`` is processor class and dataset.
 
 .. code:: python
 
@@ -49,3 +49,4 @@ The main arguments to torch_batch_process is processor class and dataset.
 .. autoclass:: determined.pytorch.experimental.TorchBatchProcessor
    :members:
    :member-order: bysource
+

@@ -1,6 +1,4 @@
-:orphan:
-
-.. _torch_batch_processing_ug:
+.. _torch-batch-processing-ug:
 
 ############################
  Torch Batch Processing API
@@ -9,13 +7,13 @@
 .. meta::
    :description: Learn how to use the Torch Batch Processing API.
 
-In this guide, you'll learn about the :ref:`torch_batch_process_api_ref` and how to perform batch
-inference (also known as offline inference).
+In this guide, you'll learn about the :ref:`Torch Batch Process API <torch-batch-process-api-ref>`
+and how to perform batch inference (also known as offline inference).
 
 +---------------------------------------------------------------------+
 | Visit the API reference                                             |
 +=====================================================================+
-| :ref:`torch_batch_process_api_ref`                                  |
+| :ref:`torch-batch-process-api-ref`                                  |
 +---------------------------------------------------------------------+
 
 .. caution::
@@ -82,8 +80,6 @@ methods that can be used within the ``TorchBatchProcessor`` class.
 ******************************************
 
 In this section, we'll learn how to perform batch inference using the Torch Batch Processing API.
-For more information about this use case or to obtain the tutorial files, visit this [placeholder
-URL].
 
 Step 1: Define a InferenceProcessor
 ===================================

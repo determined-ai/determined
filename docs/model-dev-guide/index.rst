@@ -63,5 +63,11 @@
                  <p class="tile-description">General tips for the trial definition, and best practices for separating configuration from code.</p>
              </a>
          </div>
+         <div class="tile-container">
+             <a class="tile" href="../model-dev-guide/model-usage/overview.html">
+                 <h2 class="tile-title">Model Usage</h2>
+                 <p class="tile-description">Try the experimental Batch Processing API.</p>
+             </a>
+         </div>
       </div>
    </div>
