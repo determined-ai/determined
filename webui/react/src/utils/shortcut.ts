@@ -15,7 +15,7 @@ export const matchesShortcut = (e: KeyboardEvent, shortcut: KeyboardShortcut): b
   e.metaKey === shortcut.meta &&
   e.altKey === shortcut.alt &&
   e.shiftKey === shortcut.shift &&
-  e.key === shortcut.key;
+  formatKey(e.code, e.key) === shortcut.key;
 
 export const shortcutToString = (shortcut: KeyboardShortcut): string => {
   const os = window.navigator.userAgent;
