@@ -6,6 +6,9 @@ import (
 
 	"golang.org/x/exp/maps"
 
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
+
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
@@ -15,8 +18,6 @@ import (
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 var syslog = logrus.WithField("component", "allocation_service")

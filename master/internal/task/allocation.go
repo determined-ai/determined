@@ -10,8 +10,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/task/tproto"
 	"github.com/hashicorp/go-multierror"
+
+	"github.com/determined-ai/determined/master/internal/task/tproto"
+
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -32,8 +36,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -53,7 +55,7 @@ type Allocation struct {
 	syslog *logrus.Entry
 	system *actor.System
 	parent *actor.Ref
-	//requestQueue *queue.Queue[tproto.Request]
+	// requestQueue *queue.Queue[tproto.Request]
 	wg waitgroupx.Group
 
 	// The request to create the allocation, essentially our configuration.
