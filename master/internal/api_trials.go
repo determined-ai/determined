@@ -1078,7 +1078,7 @@ func (a *apiServer) AllocationPreemptionSignal(
 		return nil, err
 	}
 
-	err := task.WaitForRestore(ctx, model.AllocationID(req.AllocationId))
+	err := task.DefaultService.WaitForRestore(ctx, model.AllocationID(req.AllocationId))
 	if err != nil {
 		return nil, err
 	}
@@ -1108,7 +1108,7 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 	}
 
 	// TODO(!!!): We may not need a task.WaitForRestore here.
-	err := task.WaitForRestore(ctx, model.AllocationID(req.AllocationId))
+	err := task.DefaultService.WaitForRestore(ctx, model.AllocationID(req.AllocationId))
 	if err != nil {
 		return nil, err
 	}
@@ -1167,7 +1167,7 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 	}
 
 	// TODO(!!!): protobuf custom string types..?
-	err := task.MarkResourcesDaemon(
+	err := task.DefaultService.MarkResourcesDaemon(
 		ctx,
 		model.AllocationID(req.AllocationId),
 		sproto.ResourcesID(req.ResourcesId),
@@ -1385,12 +1385,12 @@ func (a *apiServer) AllocationRendezvousInfo(
 
 	defer func() {
 		// TODO: partial failures are annoying and we should just make them impossible.
-		err := task.UnwatchRendezvous(ctx, allocationID, resourcesID)
+		err := task.DefaultService.UnwatchRendezvous(ctx, allocationID, resourcesID)
 		if err != nil {
 			logrus.Errorf("failed to unwatch rendezvous for %s: %w", allocationID, err)
 		}
 	}()
-	w, err := task.WatchRendezvous(ctx, allocationID, resourcesID)
+	w, err := task.DefaultService.WatchRendezvous(ctx, allocationID, resourcesID)
 	if err != nil {
 		return nil, err
 	}

@@ -268,7 +268,7 @@ func (t *trial) recover() error {
 }
 
 // To change in testing.
-var taskAllocator = task.NewAllocation
+var taskAllocator = task.DefaultService.StartAllocation
 
 // maybeAllocateTask checks if the trial should allocate state and allocates it if so.
 func (t *trial) maybeAllocateTask(ctx *actor.Context) error {

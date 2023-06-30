@@ -271,7 +271,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		c.allocation = task.NewAllocation(c.logCtx, sproto.AllocateRequest{
+		c.allocation = task.DefaultService.StartAllocation(c.logCtx, sproto.AllocateRequest{
 			AllocationID:      c.allocationID,
 			TaskID:            c.taskID,
 			JobID:             c.jobID,

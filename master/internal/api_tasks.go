@@ -161,7 +161,7 @@ func (a *apiServer) AllocationReady(
 		return nil, err
 	}
 
-	err := task.SetReady(ctx, model.AllocationID(req.AllocationId))
+	err := task.DefaultService.SetReady(ctx, model.AllocationID(req.AllocationId))
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func (a *apiServer) AllocationWaiting(
 		return nil, err
 	}
 
-	err := task.SetWaiting(ctx, model.AllocationID(req.AllocationId))
+	err := task.DefaultService.SetWaiting(ctx, model.AllocationID(req.AllocationId))
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +197,7 @@ func (a *apiServer) AllocationAllGather(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	data, err := task.AllGather(
+	data, err := task.DefaultService.AllGather(
 		ctx,
 		model.AllocationID(req.AllocationId),
 		id,
@@ -225,7 +225,11 @@ func (a *apiServer) PostAllocationProxyAddress(
 		return nil, err
 	}
 
-	err := task.SetProxyAddress(ctx, model.AllocationID(req.AllocationId), req.ProxyAddress)
+	err := task.DefaultService.SetProxyAddress(
+		ctx,
+		model.AllocationID(req.AllocationId),
+		req.ProxyAddress,
+	)
 	if err != nil {
 		return nil, err
 	}
