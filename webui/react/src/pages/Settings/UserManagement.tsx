@@ -116,7 +116,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
           EditUserModal.open();
           break;
         case MenuKey.Groups: {
-          const response = await getGroups({ userId: user.id });
+          const response = await getGroups({ limit: 500, userId: user.id });
           setSelectedUserGroups(response.groups ?? []);
           ManageGroupsModal.open();
           break;
@@ -176,7 +176,7 @@ const UserManagement: React.FC = () => {
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
-      const response = await getGroups({}, { signal: canceler.current.signal });
+      const response = await getGroups({ limit: 500 }, { signal: canceler.current.signal });
 
       setGroups((prev) => {
         if (isEqual(prev, response.groups)) return prev;
