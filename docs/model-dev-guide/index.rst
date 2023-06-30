@@ -64,7 +64,7 @@
              </a>
          </div>
          <div class="tile-container">
-             <a class="tile" href="../model-dev-guide/model-usage/overview.html">
+             <a class="tile" href="../model-dev-guide/batch-processing/batch-process-api-ug.html">
                  <h2 class="tile-title">Batch Inference</h2>
                  <p class="tile-description">Try the experimental Batch Processing API for batch inference.</p>
              </a>

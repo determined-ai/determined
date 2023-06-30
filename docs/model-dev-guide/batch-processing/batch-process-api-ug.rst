@@ -27,7 +27,7 @@ and how to perform batch inference (also known as offline inference).
 The Torch Batch Processing API takes in (1) a dataset and (2) a user-defined processor class and
 runs distributed data processing.
 
-With this API, you can perform the following tasks:
+This API automatically handles the following for you:
 
 -  shard a dataset by number of workers available
 -  apply user-defined logic to each batch of data
@@ -51,23 +51,25 @@ class and dataset.
        dataset=dataset
    )
 
+``TorchBatchProcessor``
+=======================
+
+During :meth:`~determined.pytorch.experimental.TorchBatchProcessor.__init__` of
+:class:`~determined.pytorch.experimental.TorchBatchProcessor`, we pass in a
+:class:`~determined.pytorch.experimental.TorchBatchProcessorContext` object, which contains useful
+methods that can be used within the :class:`~determined.pytorch.experimental.TorchBatchProcessor` class.
+
+:class:`~determined.pytorch.experimental.TorchBatchProcessor` is compatible with Determined's
+:class:`~determined.pytorch.MetricReducer`. You can pass MetricReducer to
+:class:`~determined.pytorch.experimental.TorchBatchProcessor` as follow:
+
 ``TorchBatchProcessorContext``
 ==============================
 
 :class:`~determined.pytorch.experimental.TorchBatchProcessorContext` should be a subclass of
 :class:`~determined.pytorch.experimental.TorchBatchProcessor`. The two functions you must implement
-are the ``__init__`` and ``process_batch``. The other lifecycle functions are optional.
-
-``TorchBatchProcessor``
-=======================
-
-During ``__init__`` of :class:`~determined.pytorch.experimental.TorchBatchProcessor`, we pass in a
-:class:`~determined.pytorch.experimental.TorchBatchProcessorContext` object, which contains useful
-methods that can be used within the ``TorchBatchProcessor`` class.
-
-:class:`~determined.pytorch.experimental.TorchBatchProcessor` is compatible with Determined's
-:class:`~determined.pytorch.MetricReducer`. You can pass MetricReducer to
-:class:`~determined.pytorch.experimental.TorchBatchProcessor` as follow:
+are the :meth:`~determined.pytorch.experimental.TorchBatchProcessor.__init__` and
+:meth:`~determined.pytorch.experimental.TorchBatchProcessor.process_batch`. The other lifecycle functions are optional.
 
 .. code:: python
 
@@ -85,7 +87,13 @@ Step 1: Define a InferenceProcessor
 ===================================
 
 The first step is to define an InferenceProcessor. You should initialize your model in the
-``__init__`` function of the InferenceProcessor.
+:meth:`~determined.pytorch.experimental.TorchBatchProcessor.__init__` function of the InferenceProcessor.
+You should implement :meth:`~determined.pytorch.experimental.TorchBatchProcessor.process_batch`
+function with inference logic.
+
+You can optionally implement :meth:`~determined.pytorch.experimental.TorchBatchProcessor.on_checkpoint_start`
+and :meth:`~determined.pytorch.experimental.TorchBatchProcessor.on_finish` function to be run before every checkpoint
+and after all the data are processed respectively.
 
 .. code:: python
 
@@ -113,7 +121,9 @@ The first step is to define an InferenceProcessor. You should initialize your mo
            self.last_index = batch_idx
 
        def on_checkpoint_start(self):
-           # During checkpoint, we persist prediction result
+           """
+           During checkpoint, we persist prediction result
+           """
            if len(self.output) == 0:
                return
            file_name = f"prediction_output_{self.last_index}"
@@ -122,6 +132,7 @@ The first step is to define an InferenceProcessor. You should initialize your mo
                torch.save(self.output, file_path)
 
            self.output = []
+
 
 Step 2: Initialize the Dataset
 ==============================
