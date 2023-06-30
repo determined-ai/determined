@@ -1167,7 +1167,7 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 	}
 
 	// TODO(!!!): protobuf custom string types..?
-	err := task.DefaultService.MarkResourcesDaemon(
+	err := task.DefaultService.SetResourcesAsDaemon(
 		ctx,
 		model.AllocationID(req.AllocationId),
 		sproto.ResourcesID(req.ResourcesId),
