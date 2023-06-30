@@ -42,7 +42,7 @@
    Submit Experiment <model-dev-guide/submit-experiment>
    How to Debug Models <model-dev-guide/debug-models>
    Model Management <model-dev-guide/model-management/overview>
-   Model Usage <model-dev-guide/model-usage/overview>
+   Batch inference <model-dev-guide/batch-processing/overview>
    Best Practices <model-dev-guide/best-practices/overview>
 
 .. toctree::
