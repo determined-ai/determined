@@ -13,7 +13,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -117,8 +116,8 @@ type spotState struct {
 //
 // This function does more than just list spot instances. Because this function is called every
 // provisioner tick, we have it also handle several aspects of the spot provisioner lifecycle.
-func (c *awsCluster) listSpot(ctx *actor.Context) ([]*model.Instance, error) {
-	activeReqsInAPI, err := c.listActiveSpotInstanceRequests(ctx, false)
+func (c *awsCluster) listSpot() ([]*model.Instance, error) {
+	activeReqsInAPI, err := c.listActiveSpotInstanceRequests(false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
 	}
@@ -128,9 +127,9 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*model.Instance, error) {
 		c.spot.trackedReqs.add(req)
 	}
 
-	err = c.setTagsOnInstances(ctx, activeReqsInAPI)
+	err = c.setTagsOnInstances(activeReqsInAPI)
 	if err != nil {
-		ctx.Log().
+		c.syslog.
 			WithError(err).
 			Error("unable to create tags on ec2 instances created by spot")
 	}
@@ -152,7 +151,7 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*model.Instance, error) {
 	missingReqs := c.spot.trackedReqs.copy()
 	missingReqs.deleteIntersection(*activeReqsInAPI)
 
-	newOrInactiveReqs, err := c.listSpotRequestsByID(ctx, missingReqs.idsAsListOfPointers(), false)
+	newOrInactiveReqs, err := c.listSpotRequestsByID(missingReqs.idsAsListOfPointers(), false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
 	}
@@ -176,7 +175,7 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*model.Instance, error) {
 	}
 
 	for _, req := range reqsToNotifyUserAbout.asListInChronologicalOrder() {
-		ctx.Log().
+		c.syslog.
 			WithField("spot-request-status-code", *req.StatusCode).
 			WithField("spot-request-status-message", *req.StatusMessage).
 			WithField("spot-request-creation-time", req.CreationTime.String()).
@@ -184,7 +183,7 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*model.Instance, error) {
 	}
 
 	// Canonical log line for debugging
-	ctx.Log().
+	c.syslog.
 		WithField("log-type", "listSpot.summary").
 		WithField("total-num-requests-being-tracked", c.spot.trackedReqs.numReqs()).
 		WithField("num-visible-as-active-in-api", activeReqsInAPI.numReqs()).
@@ -198,32 +197,32 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*model.Instance, error) {
 
 	// Cleanup CanceledButInstanceRunningRequests because an instance could have been
 	// created between listing and terminating spot requests.
-	canceledButInstanceRunningReqs, err := c.listCanceledButInstanceRunningSpotRequests(ctx, false)
+	canceledButInstanceRunningReqs, err := c.listCanceledButInstanceRunningSpotRequests(false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
 	}
 
 	if canceledButInstanceRunningReqs.numReqs() > 0 {
-		ctx.Log().Debugf(
+		c.syslog.Debugf(
 			"terminating EC2 instances associated with canceled spot requests: %s",
 			strings.Join(canceledButInstanceRunningReqs.idsAsList(), ","),
 		)
 		_, err = c.terminateInstances(canceledButInstanceRunningReqs.instanceIds())
 		if err != nil {
-			ctx.Log().
+			c.syslog.
 				WithError(err).
 				Debugf("cannot terminate EC2 instances associated with canceled spot requests")
 		}
 	}
 
-	instances, err := c.buildInstanceListFromTrackedReqs(ctx)
+	instances, err := c.buildInstanceListFromTrackedReqs()
 	if err != nil {
 		return nil, err
 	}
 	return instances, nil
 }
 
-func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
+func (c *awsCluster) terminateSpot(instanceIDs []*string) {
 	if len(instanceIDs) == 0 {
 		return
 	}
@@ -240,7 +239,7 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 		}
 	}
 
-	ctx.Log().
+	c.syslog.
 		WithField("log-type", "terminateSpot.start").
 		Debugf(
 			"terminating %d EC2 instances and %d spot requests: %s,  %s",
@@ -251,20 +250,18 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 		)
 
 	if instancesToTerminate.length() > 0 {
-		ctx.Log().Infof(
+		c.syslog.Infof(
 			"terminating EC2 instances associated with fulfilled spot requests: %s",
 			instancesToTerminate.string(),
 		)
-		c.terminateOnDemand(ctx, instancesToTerminate.asListOfPointers())
+		c.terminateOnDemand(instancesToTerminate.asListOfPointers())
 	}
 
-	_, err := c.terminateSpotInstanceRequests(
-		ctx, pendingSpotReqsToTerminate.asListOfPointers(), false,
-	)
+	_, err := c.terminateSpotInstanceRequests(pendingSpotReqsToTerminate.asListOfPointers(), false)
 	if err != nil {
-		ctx.Log().WithError(err).Error("cannot terminate spot requests")
+		c.syslog.WithError(err).Error("cannot terminate spot requests")
 	} else {
-		ctx.Log().
+		c.syslog.
 			WithField("log-type", "terminateSpot.terminatedSpotRequests").
 			Debugf(
 				"terminated %d spot requests: %s",
@@ -275,19 +272,18 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 }
 
 func (c *awsCluster) launchSpot(
-	ctx *actor.Context,
 	instanceNum int,
 ) error {
 	if instanceNum <= 0 {
 		return nil
 	}
 
-	ctx.Log().
+	c.syslog.
 		WithField("log-type", "launchSpot.start").
 		Infof("launching %d EC2 spot requests", instanceNum)
-	resp, err := c.createSpotInstanceRequestsCorrectingForClockSkew(ctx, instanceNum, false)
+	resp, err := c.createSpotInstanceRequestsCorrectingForClockSkew(instanceNum, false)
 	if err != nil {
-		ctx.Log().WithError(err).Error("cannot launch EC2 spot requests")
+		c.syslog.WithError(err).Error("cannot launch EC2 spot requests")
 		return err
 	}
 
@@ -304,7 +300,7 @@ func (c *awsCluster) launchSpot(
 			InstanceID:    nil,
 		})
 
-		ctx.Log().
+		c.syslog.
 			WithField("log-type", "launchSpot.creatingRequest").
 			Infof(
 				"creating spot request: %s (state %s)",
@@ -315,7 +311,7 @@ func (c *awsCluster) launchSpot(
 	return nil
 }
 
-func (c *awsCluster) setTagsOnInstances(ctx *actor.Context, activeReqs *setOfSpotRequests) error {
+func (c *awsCluster) setTagsOnInstances(activeReqs *setOfSpotRequests) error {
 	instanceIDs := activeReqs.instanceIds()
 	if len(instanceIDs) == 0 {
 		return nil
@@ -353,14 +349,14 @@ func (c *awsCluster) setTagsOnInstances(ctx *actor.Context, activeReqs *setOfSpo
 // will also include the time it takes from creating the request to AWS receiving
 // the request, but that is fine. Finally, the function will delete that spot
 // request so it isn't fulfilled.
-func (c *awsCluster) attemptToApproximateClockSkew(ctx *actor.Context) {
-	ctx.Log().Debug("new AWS spot provisioner. launching spot request to determined approximate " +
+func (c *awsCluster) attemptToApproximateClockSkew() {
+	c.syslog.Debug("new AWS spot provisioner. launching spot request to determined approximate " +
 		"clock skew between local machine and AWS API.")
 	localCreateTime := time.Now()
-	resp, err := c.createSpotInstanceRequest(ctx, 1, c.AWSClusterConfig.InstanceType,
+	resp, err := c.createSpotInstanceRequest(1, c.AWSClusterConfig.InstanceType,
 		time.Hour*100, false)
 	if err != nil {
-		ctx.Log().
+		c.syslog.
 			WithError(err).
 			Infof("error while launching spot request during clock skew approximation. Non-fatal error, " +
 				"defaulting to assumption that AWS clock and local clock have minimal clock skew")
@@ -368,19 +364,20 @@ func (c *awsCluster) attemptToApproximateClockSkew(ctx *actor.Context) {
 	}
 	awsCreateTime := resp.SpotInstanceRequests[0].CreateTime
 	approxClockSkew := awsCreateTime.Sub(localCreateTime)
-	ctx.Log().Infof("AWS API clock is approximately %s ahead of local machine clock",
+	c.syslog.Infof("AWS API clock is approximately %s ahead of local machine clock",
 		approxClockSkew.String())
 	for {
-		ctx.Log().Debugf("attempting to clean up spot request used to approximate clock skew")
-		_, err = c.terminateSpotInstanceRequests(ctx,
+		c.syslog.Debugf("attempting to clean up spot request used to approximate clock skew")
+		_, err = c.terminateSpotInstanceRequests(
 			[]*string{resp.SpotInstanceRequests[0].SpotInstanceRequestId},
-			false)
+			false,
+		)
 		if err == nil {
-			ctx.Log().Debugf("Successfully cleaned up spot request used to approximate clock skew")
+			c.syslog.Debugf("Successfully cleaned up spot request used to approximate clock skew")
 			break
 		}
 		if awsErr, ok := err.(awserr.Error); ok {
-			ctx.Log().
+			c.syslog.
 				Debugf(
 					"AWS error while terminating spot request used for clock skew approximation, %s, %s",
 					awsErr.Code(),
@@ -389,7 +386,7 @@ func (c *awsCluster) attemptToApproximateClockSkew(ctx *actor.Context) {
 				return
 			}
 		} else {
-			ctx.Log().Errorf("unknown error while launch spot instances, %s", err.Error())
+			c.syslog.Errorf("unknown error while launch spot instances, %s", err.Error())
 			return
 		}
 		time.Sleep(time.Second * 2)
@@ -400,9 +397,7 @@ func (c *awsCluster) attemptToApproximateClockSkew(ctx *actor.Context) {
 
 // Convert c.spot.trackedReqs to a list of Instances. For the requests that have
 // been fulfilled, this requires querying the EC2 API to find the instance state.
-func (c *awsCluster) buildInstanceListFromTrackedReqs(
-	ctx *actor.Context,
-) ([]*model.Instance, error) {
+func (c *awsCluster) buildInstanceListFromTrackedReqs() ([]*model.Instance, error) {
 	runningSpotInstanceIds := newSetOfStrings()
 	pendingSpotRequestsAsInstances := make([]*model.Instance, 0)
 
@@ -444,13 +439,13 @@ func (c *awsCluster) buildInstanceListFromTrackedReqs(
 	realInstances := c.newInstances(nonTerminalInstances)
 	for _, inst := range realInstances {
 		if inst.State == model.Unknown {
-			ctx.Log().Errorf("unknown instance state for instance %v", inst.ID)
+			c.syslog.Errorf("unknown instance state for instance %v", inst.ID)
 		}
 	}
 
 	combined := realInstances
 	combined = append(combined, pendingSpotRequestsAsInstances...)
-	ctx.Log().
+	c.syslog.
 		WithField("log-type", "listSpot.returnCombinedList").
 		Debugf("Returning list of instances: %d EC2 instances and %d dummy spot instances for %d total.",
 			len(realInstances), len(pendingSpotRequestsAsInstances), len(combined))
@@ -474,31 +469,30 @@ func roundDurationUp(d time.Duration) time.Duration {
 // This can happen a maximum of 5 times before exiting with an error, to ensure that this
 // function doesn't block for too long.
 func (c *awsCluster) createSpotInstanceRequestsCorrectingForClockSkew(
-	ctx *actor.Context,
 	numInstances int,
 	dryRun bool,
 ) (resp *ec2.RequestSpotInstancesOutput, err error) {
 	maxRetries := 5
 	for numRetries := 0; numRetries <= maxRetries; numRetries++ {
 		offset := c.spot.approximateClockSkew + c.spot.launchTimeOffset
-		resp, err = c.createSpotInstanceRequest(ctx, numInstances, c.InstanceType, offset, dryRun)
+		resp, err = c.createSpotInstanceRequest(numInstances, c.InstanceType, offset, dryRun)
 		if err == nil {
 			return resp, nil
 		}
 
 		if awsErr, ok := err.(awserr.Error); ok {
-			ctx.Log().
+			c.syslog.
 				Infof("AWS error while launching spot instances, %s, %s",
 					awsErr.Code(),
 					awsErr.Message())
 			if awsErr.Code() == "InvalidTime" {
 				c.spot.launchTimeOffset += launchTimeOffsetGrowth
-				ctx.Log().Infof("AWS error while launch spot instances - InvalidTime. Increasing "+
+				c.syslog.Infof("AWS error while launch spot instances - InvalidTime. Increasing "+
 					"launchOffset to %s to correct for clock skew",
 					c.spot.launchTimeOffset.String())
 			}
 		} else {
-			ctx.Log().Errorf("unknown error while launch spot instances, %s", err.Error())
+			c.syslog.Errorf("unknown error while launch spot instances, %s", err.Error())
 			return nil, err
 		}
 	}
@@ -506,14 +500,13 @@ func (c *awsCluster) createSpotInstanceRequestsCorrectingForClockSkew(
 }
 
 func (c *awsCluster) createSpotInstanceRequest(
-	ctx *actor.Context,
 	numInstances int,
 	instanceType provconfig.Ec2InstanceType,
 	launchTimeOffset time.Duration,
 	dryRun bool,
 ) (*ec2.RequestSpotInstancesOutput, error) {
 	if dryRun {
-		ctx.Log().Debug("dry run of createSpotInstanceRequest.")
+		c.syslog.Debug("dry run of createSpotInstanceRequest.")
 	}
 	idempotencyToken := uuid.New().String()
 
@@ -599,11 +592,10 @@ func (c *awsCluster) createSpotInstanceRequest(
 }
 
 func (c *awsCluster) listCanceledButInstanceRunningSpotRequests(
-	ctx *actor.Context,
 	dryRun bool,
 ) (reqs *setOfSpotRequests, err error) {
 	if dryRun {
-		ctx.Log().Debug("dry run of listCanceledButInstanceRunningSpotInstanceRequests.")
+		c.syslog.Debug("dry run of listCanceledButInstanceRunningSpotInstanceRequests.")
 	}
 
 	input := &ec2.DescribeSpotInstanceRequestsInput{
@@ -649,11 +641,10 @@ func (c *awsCluster) listCanceledButInstanceRunningSpotRequests(
 }
 
 func (c *awsCluster) listActiveSpotInstanceRequests(
-	ctx *actor.Context,
 	dryRun bool,
 ) (reqs *setOfSpotRequests, err error) {
 	if dryRun {
-		ctx.Log().Debug("dry run of listActiveSpotInstanceRequests.")
+		c.syslog.Debug("dry run of listActiveSpotInstanceRequests.")
 	}
 
 	input := &ec2.DescribeSpotInstanceRequestsInput{
@@ -704,12 +695,11 @@ func (c *awsCluster) listActiveSpotInstanceRequests(
 // yet exist in the AWS API (due to eventual consistency) and we don't want the API call
 // to fail - we want it to return successfully, just excluding those requests.
 func (c *awsCluster) listSpotRequestsByID(
-	ctx *actor.Context,
 	spotRequestIds []*string,
 	dryRun bool,
 ) (*setOfSpotRequests, error) {
 	if dryRun {
-		ctx.Log().Debug("dry run of listSpotRequestsByID.")
+		c.syslog.Debug("dry run of listSpotRequestsByID.")
 	}
 
 	if len(spotRequestIds) == 0 {
@@ -758,7 +748,6 @@ func (c *awsCluster) listSpotRequestsByID(
 }
 
 func (c *awsCluster) terminateSpotInstanceRequests(
-	ctx *actor.Context,
 	spotRequestIds []*string,
 	dryRun bool,
 ) (*ec2.CancelSpotInstanceRequestsOutput, error) {

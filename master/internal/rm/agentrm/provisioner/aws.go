@@ -12,9 +12,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -30,6 +30,8 @@ type awsCluster struct {
 
 	// State that is only used if spot instances are enabled
 	spot *spotState
+
+	syslog *logrus.Entry
 }
 
 //nolint:lll  // See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
@@ -117,6 +119,7 @@ func newAWSCluster(
 			ResourcePool:                 resourcePool,
 			LogOptions:                   config.AWS.BuildDockerLogString(),
 		}),
+		syslog: logrus.WithField("aws-cluster", resourcePool),
 	}
 
 	if cluster.SpotEnabled {
@@ -158,31 +161,28 @@ func (c *awsCluster) stateFromEC2State(state *ec2.InstanceState) model.InstanceS
 	return model.Unknown
 }
 
-func (c *awsCluster) prestart(ctx *actor.Context) {
+func (c *awsCluster) prestart() {
 	if c.SpotEnabled {
-		c.attemptToApproximateClockSkew(ctx)
-		c.cleanupLegacySpotInstances(ctx)
+		c.attemptToApproximateClockSkew()
+		c.cleanupLegacySpotInstances()
 	}
 }
 
-func (c *awsCluster) list(ctx *actor.Context) ([]*model.Instance, error) {
+func (c *awsCluster) list() ([]*model.Instance, error) {
 	if c.SpotEnabled {
-		return c.listSpot(ctx)
+		return c.listSpot()
 	}
-	return c.listOnDemand(ctx)
+	return c.listOnDemand()
 }
 
-func (c *awsCluster) launch(
-	ctx *actor.Context,
-	instanceNum int,
-) error {
+func (c *awsCluster) launch(instanceNum int) error {
 	if c.SpotEnabled {
-		return c.launchSpot(ctx, instanceNum)
+		return c.launchSpot(instanceNum)
 	}
-	return c.launchOnDemand(ctx, instanceNum)
+	return c.launchOnDemand(instanceNum)
 }
 
-func (c *awsCluster) terminate(ctx *actor.Context, instanceIDs []string) {
+func (c *awsCluster) terminate(instanceIDs []string) {
 	ids := make([]*string, 0, len(instanceIDs))
 	for _, id := range instanceIDs {
 		idCopy := id
@@ -190,13 +190,13 @@ func (c *awsCluster) terminate(ctx *actor.Context, instanceIDs []string) {
 	}
 
 	if c.SpotEnabled {
-		c.terminateSpot(ctx, ids)
+		c.terminateSpot(ids)
 	} else {
-		c.terminateOnDemand(ctx, ids)
+		c.terminateOnDemand(ids)
 	}
 }
 
-func (c *awsCluster) listOnDemand(ctx *actor.Context) ([]*model.Instance, error) {
+func (c *awsCluster) listOnDemand() ([]*model.Instance, error) {
 	instances, err := c.describeInstances(false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 instances")
@@ -204,23 +204,23 @@ func (c *awsCluster) listOnDemand(ctx *actor.Context) ([]*model.Instance, error)
 	res := c.newInstances(instances)
 	for _, inst := range res {
 		if inst.State == model.Unknown {
-			ctx.Log().Errorf("unknown instance state for instance %v", inst.ID)
+			c.syslog.Errorf("unknown instance state for instance %v", inst.ID)
 		}
 	}
 	return res, nil
 }
 
-func (c *awsCluster) launchOnDemand(ctx *actor.Context, instanceNum int) error {
+func (c *awsCluster) launchOnDemand(instanceNum int) error {
 	if instanceNum <= 0 {
 		return nil
 	}
 	instances, err := c.launchInstances(instanceNum, false)
 	if err != nil {
-		ctx.Log().WithError(err).Error("cannot launch EC2 instances")
+		c.syslog.WithError(err).Error("cannot launch EC2 instances")
 		return err
 	}
 	launched := c.newInstances(instances.Instances)
-	ctx.Log().Infof(
+	c.syslog.Infof(
 		"launched %d/%d EC2 instances: %s",
 		len(launched),
 		instanceNum,
@@ -229,18 +229,18 @@ func (c *awsCluster) launchOnDemand(ctx *actor.Context, instanceNum int) error {
 	return nil
 }
 
-func (c *awsCluster) terminateOnDemand(ctx *actor.Context, instanceIDs []*string) {
+func (c *awsCluster) terminateOnDemand(instanceIDs []*string) {
 	if len(instanceIDs) == 0 {
 		return
 	}
 
 	res, err := c.terminateInstances(instanceIDs)
 	if err != nil {
-		ctx.Log().WithError(err).Error("cannot terminate EC2 instances")
+		c.syslog.WithError(err).Error("cannot terminate EC2 instances")
 		return
 	}
 	terminated := c.newInstancesFromTerminateInstancesOutput(res)
-	ctx.Log().Infof(
+	c.syslog.Infof(
 		"terminated %d/%d EC2 instances: %s",
 		len(terminated),
 		len(instanceIDs),

@@ -11,11 +11,11 @@ import (
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/api/compute/v1"
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -29,6 +29,8 @@ type gcpCluster struct {
 	metadata     []*compute.MetadataItems
 
 	client *compute.Service
+
+	syslog *logrus.Entry
 }
 
 func newGCPCluster(
@@ -110,6 +112,7 @@ func newGCPCluster(
 			},
 		},
 		client: computeService,
+		syslog: logrus.WithField("gcp-cluster", resourcePool),
 	}
 
 	return cluster, nil
@@ -159,11 +162,11 @@ func (c *gcpCluster) generateInstanceNamePattern() string {
 	return c.NamePrefix + petname.Generate(2, "-") + "-#####"
 }
 
-func (c *gcpCluster) prestart(ctx *actor.Context) {
+func (c *gcpCluster) prestart() {
 	petname.NonDeterministicMode()
 }
 
-func (c *gcpCluster) list(ctx *actor.Context) ([]*model.Instance, error) {
+func (c *gcpCluster) list() ([]*model.Instance, error) {
 	clientCtx := context.Background()
 	var instances []*compute.Instance
 	filter := fmt.Sprintf(
@@ -183,14 +186,14 @@ func (c *gcpCluster) list(ctx *actor.Context) ([]*model.Instance, error) {
 	res := c.newInstances(instances)
 	for i, inst := range res {
 		if inst.State == model.Unknown {
-			ctx.Log().Errorf("unknown instance state for instance %v: %v",
+			c.syslog.Errorf("unknown instance state for instance %v: %v",
 				inst.ID, instances[i])
 		}
 	}
 	return res, nil
 }
 
-func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) error {
+func (c *gcpCluster) launch(instanceNum int) error {
 	if instanceNum <= 0 {
 		return nil
 	}
@@ -203,12 +206,12 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) error {
 	}
 	ops, err := c.client.Instances.BulkInsert(c.Project, c.Zone, bulk).Context(clientCtx).Do()
 	if err != nil {
-		ctx.Log().WithError(err).Errorf("error inserting GCE instance")
+		c.syslog.WithError(err).Errorf("error inserting GCE instance")
 		return err
 	}
 	tracker := newGCPBatchOperationTracker(c.GCPClusterConfig, c.client, []*compute.Operation{ops})
 	go tracker.startTracker(func(doneOps []*compute.Operation) {
-		ctx.Log().Info("inserted GCE instances")
+		c.syslog.Info("inserted GCE instances")
 	})
 	return nil
 }
@@ -229,7 +232,7 @@ func (c *gcpCluster) clusterInstanceProperties() *compute.InstanceProperties {
 	return rb
 }
 
-func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
+func (c *gcpCluster) terminate(instances []string) {
 	if len(instances) == 0 {
 		return
 	}
@@ -239,7 +242,7 @@ func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
 		ClientCtx := context.Background()
 		resp, err := c.client.Instances.Delete(c.Project, c.Zone, inst).Context(ClientCtx).Do()
 		if err != nil {
-			ctx.Log().WithError(err).Errorf("cannot delete GCE instance: %s", inst)
+			c.syslog.WithError(err).Errorf("cannot delete GCE instance: %s", inst)
 		} else {
 			ops = append(ops, resp)
 		}
@@ -252,7 +255,7 @@ func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
 	tracker := newGCPBatchOperationTracker(c.GCPClusterConfig, c.client, ops)
 	go tracker.startTracker(func(doneOps []*compute.Operation) {
 		deleted := c.newInstancesFromOperations(doneOps)
-		ctx.Log().Infof(
+		c.syslog.Infof(
 			"deleted %d/%d GCE instances: %s",
 			len(deleted),
 			len(instances),

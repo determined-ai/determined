@@ -7,13 +7,13 @@ import (
 	"golang.org/x/time/rate"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	errInfo "github.com/determined-ai/determined/master/pkg/errors"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -23,9 +23,6 @@ const (
 	telemetryCooldown = 90 * time.Second
 	secureScheme      = "https"
 )
-
-// provisionerTick periodically triggers the provisioner to act.
-type provisionerTick struct{}
 
 // Provisioner implements an actor to provision and terminate agent instances.
 // It is composed of four parts: a provisioner actor, a scaling decision maker,
@@ -44,19 +41,24 @@ type Provisioner struct {
 	scaleDecider     *scaleDecider
 	telemetryLimiter *rate.Limiter
 	launchErr        *errInfo.StickyError
+
+	syslog *logrus.Entry
+
+	system *actor.System
 }
 
 type provider interface {
 	instanceType() model.InstanceType
 	slotsPerInstance() int
-	prestart(ctx *actor.Context)
-	list(ctx *actor.Context) ([]*model.Instance, error)
-	launch(ctx *actor.Context, instanceNum int) error
-	terminate(ctx *actor.Context, instanceIDs []string)
+	prestart()
+	list() ([]*model.Instance, error)
+	launch(instanceNum int) error
+	terminate(instanceIDs []string)
 }
 
 // New creates a new Provisioner.
 func New(
+	system *actor.System,
 	resourcePool string, config *provconfig.Config, cert *tls.Certificate, db db.DB,
 ) (*Provisioner, error) {
 	if err := config.InitMasterAddress(); err != nil {
@@ -75,6 +77,7 @@ func New(
 			return nil, errors.Wrap(err, "cannot create a GCP cluster")
 		}
 	}
+	cluster.prestart()
 
 	var launchErrorTimeout time.Duration
 	if config != nil && config.LaunchErrorTimeout != nil {
@@ -94,29 +97,23 @@ func New(
 		),
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
 		launchErr:        errInfo.NewStickyError(launchErrorTimeout, config.LaunchErrorRetries),
+		syslog:           logrus.WithField("provisioner", resourcePool),
+		system:           system,
 	}, nil
 }
 
-// Receive implements the actor.Actor interface.
-func (p *Provisioner) Receive(ctx *actor.Context) error {
-	ctx.AddLabel("resource-pool", ctx.Self().Parent().Address().Local())
-
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		p.provider.prestart(ctx)
-		actors.NotifyAfter(ctx, actionCooldown, provisionerTick{})
-
-	case provisionerTick:
-		p.provision(ctx)
-		actors.NotifyAfter(ctx, actionCooldown, provisionerTick{})
-
-	case sproto.ScalingInfo:
-		p.scaleDecider.updateScalingInfo(&msg)
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
+// StartProvisioner starts the provisioner.
+func (p *Provisioner) StartProvisioner() {
+	for {
+		// Cooldown period before the provisioner starts.
+		time.Sleep(actionCooldown)
+		p.provision()
 	}
-	return nil
+}
+
+// UpdateScalingInfo updates the scaling info for the provisioner.
+func (p *Provisioner) UpdateScalingInfo(info *sproto.ScalingInfo) {
+	p.scaleDecider.UpdateScalingInfo(info)
 }
 
 // SlotsPerInstance returns the number of Slots per instance the provisioner launches.
@@ -125,10 +122,10 @@ func (p *Provisioner) SlotsPerInstance() int {
 }
 
 // CurrentSlotCount returns the number of Slots available in the cluster.
-func (p *Provisioner) CurrentSlotCount(ctx *actor.Context) (int, error) {
-	nodes, err := p.provider.list(ctx)
+func (p *Provisioner) CurrentSlotCount() (int, error) {
+	nodes, err := p.provider.list()
 	if err != nil {
-		ctx.Log().WithError(err).Error("cannot list instances for current slot count")
+		p.syslog.WithError(err).Error("cannot list instances for current slot count")
 		return 0, err
 	}
 	return p.SlotsPerInstance() * len(nodes), nil
@@ -139,15 +136,15 @@ func (p *Provisioner) InstanceType() string {
 	return p.provider.instanceType().Name()
 }
 
-func (p *Provisioner) provision(ctx *actor.Context) {
-	instances, err := p.provider.list(ctx)
+func (p *Provisioner) provision() {
+	instances, err := p.provider.list()
 	if err != nil {
-		ctx.Log().WithError(err).Error("cannot list instances for provisioning")
+		p.syslog.WithError(err).Error("cannot list instances for provisioning")
 		return
 	}
 	updated := p.scaleDecider.updateInstanceSnapshot(instances)
 	if updated {
-		ctx.Log().Infof("found state changes in %d instances: %s",
+		p.syslog.Infof("found state changes in %d instances: %s",
 			len(instances), model.FmtInstances(instances))
 	}
 
@@ -156,40 +153,38 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	if updated {
 		err = p.scaleDecider.recordInstanceStats(p.SlotsPerInstance())
 		if err != nil {
-			ctx.Log().WithError(err).Error("cannot record instance stats")
+			p.syslog.WithError(err).Error("cannot record instance stats")
 		}
 	}
 
 	if toTerminate := p.scaleDecider.findInstancesToTerminate(); len(toTerminate.InstanceIDs) > 0 {
-		ctx.Log().Infof("decided to terminate %d instances: %s",
+		p.syslog.Infof("decided to terminate %d instances: %s",
 			len(toTerminate.InstanceIDs), toTerminate.String())
-		p.provider.terminate(ctx, toTerminate.InstanceIDs)
+		p.provider.terminate(toTerminate.InstanceIDs)
 		err = p.scaleDecider.updateInstancesEndStats(toTerminate.InstanceIDs)
 		if err != nil {
-			ctx.Log().WithError(err).Error("cannot update end stats for terminated instance")
+			p.syslog.WithError(err).Error("cannot update end stats for terminated instance")
 		}
 	}
 
 	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {
-		ctx.Log().Infof("decided to launch %d instances (type %s)",
+		p.syslog.Infof("decided to launch %d instances (type %s)",
 			numToLaunch, p.provider.instanceType().Name())
-		if err := p.launch(ctx, numToLaunch); err != nil {
-			ctx.Log().WithError(err).Error("failure launching instances")
+		if err := p.launch(numToLaunch); err != nil {
+			p.syslog.WithError(err).Error("failure launching instances")
 		}
 	}
 
 	if p.telemetryLimiter.Allow() {
-		telemetry.ReportProvisionerTick(ctx.Self().System(),
-			instances,
-			p.InstanceType())
+		telemetry.ReportProvisionerTick(p.system, instances, p.InstanceType())
 	}
 }
 
-func (p *Provisioner) launch(ctx *actor.Context, numToLaunch int) error {
+func (p *Provisioner) launch(numToLaunch int) error {
 	if err := p.launchErr.Error(); err != nil {
 		return err
 	}
-	return p.launchErr.SetError(p.provider.launch(ctx, numToLaunch))
+	return p.launchErr.SetError(p.provider.launch(numToLaunch))
 }
 
 // LaunchError returns the current launch error sent from the provider.

@@ -10,14 +10,14 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-// Setup initializes and registers the actor for the provisioner.
+// Setup initializes the provisioner.
 func Setup(
 	ctx *actor.Context,
 	config *provconfig.Config,
 	resourcePool string,
 	cert *tls.Certificate,
 	db db.DB,
-) (*Provisioner, *actor.Ref, error) {
+) (*Provisioner, error) {
 	ctx.Log().Info("found provisioner configuration")
 	if config.AWS != nil {
 		ctx.Log().Info("connecting to AWS")
@@ -25,10 +25,10 @@ func Setup(
 	if config.GCP != nil {
 		ctx.Log().Info("connecting to GCP")
 	}
-	provisioner, err := New(resourcePool, config, cert, db)
+	provisioner, err := New(ctx.Self().System(), resourcePool, config, cert, db)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "error creating provisioner")
+		return nil, errors.Wrap(err, "error creating provisioner")
 	}
-	provisionerActor, _ := ctx.ActorOf("provisioner", provisioner)
-	return provisioner, provisionerActor, nil
+	go provisioner.StartProvisioner()
+	return provisioner, nil
 }

@@ -36,7 +36,6 @@ type resourcePool struct {
 	slotsPerInstance int
 
 	provisioner      *provisioner.Provisioner
-	provisionerActor *actor.Ref
 	provisionerError error
 
 	agents           map[*actor.Ref]bool
@@ -101,13 +100,12 @@ func (rp *resourcePool) setupProvisioner(ctx *actor.Context) error {
 		ctx.Log().Infof("not enabling provisioner for resource pool: %s", rp.config.PoolName)
 		return nil
 	}
-	p, pRef, err := provisioner.Setup(ctx, rp.config.Provider, rp.config.PoolName, rp.cert, rp.db)
+	p, err := provisioner.Setup(ctx, rp.config.Provider, rp.config.PoolName, rp.cert, rp.db)
 	if err != nil {
 		return errors.Wrapf(err, "cannot create resource pool: %s", rp.config.PoolName)
 	}
 	rp.slotsPerInstance = p.SlotsPerInstance()
 	rp.provisioner = p
-	rp.provisionerActor = pRef
 	return nil
 }
 
@@ -415,8 +413,8 @@ func (rp *resourcePool) updateScalingInfo() bool {
 }
 
 func (rp *resourcePool) sendScalingInfo(ctx *actor.Context) {
-	if rp.provisionerActor != nil && rp.updateScalingInfo() {
-		ctx.Tell(rp.provisionerActor, *rp.scalingInfo)
+	if rp.provisioner != nil && rp.updateScalingInfo() {
+		rp.provisioner.UpdateScalingInfo(rp.scalingInfo)
 	}
 }
 
@@ -484,6 +482,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		ctx.Respond(resourceSummaryFromAgentStates(rp.agentStatesCache))
 
 	case sproto.CapacityCheck:
+		// FIXME(MAR): reschedule = false?
 		var totalSlots int
 		switch {
 		case rp.config.Provider == nil:
@@ -845,7 +844,7 @@ func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
 	}
 
 	before := rp.taskList.Len()
-	slotCount, err := rp.provisioner.CurrentSlotCount(ctx)
+	slotCount, err := rp.provisioner.CurrentSlotCount()
 	if err != nil {
 		return
 	}

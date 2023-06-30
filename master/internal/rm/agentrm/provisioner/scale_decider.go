@@ -82,7 +82,7 @@ func newScaleDecider(
 	}
 }
 
-func (s *scaleDecider) updateScalingInfo(info *sproto.ScalingInfo) {
+func (s *scaleDecider) UpdateScalingInfo(info *sproto.ScalingInfo) {
 	s.desiredNewInstances = info.DesiredNewInstances
 	s.idleAgentSnapshot = make(map[string]sproto.AgentSummary)
 	s.connectedAgentSnapshot = make(map[string]sproto.AgentSummary, len(info.Agents))

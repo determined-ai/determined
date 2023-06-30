@@ -7,8 +7,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
-
-	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 // There was a bug where spot requests and instances were not being tagged with
@@ -19,29 +17,29 @@ import (
 // format and clean them up. Because the spot API is eventually consistent, we
 // repeat the cleanup after 5 minutes. This function can be removed once all users
 // are on versions newer than 0.15.5.
-func (c *awsCluster) cleanupLegacySpotInstances(ctx *actor.Context) {
-	loggerSpotLegacy := ctx.Log().WithField("codepath", "spotLegacy")
+func (c *awsCluster) cleanupLegacySpotInstances() {
+	loggerSpotLegacy := c.syslog.WithField("codepath", "spotLegacy")
 
 	// Repeat after 5 minutes to handle the fact that the AWS API is eventually consistent.
 	go func() {
 		loggerSpotLegacy.Infof("starting legacy spot cleanup operation")
-		c.legacyCleanupActiveSpotRequestsAndInstances(ctx)
-		c.legacyCleanupCanceledButInstanceRunningSpot(ctx)
+		c.legacyCleanupActiveSpotRequestsAndInstances()
+		c.legacyCleanupCanceledButInstanceRunningSpot()
 
 		time.Sleep(5 * time.Minute)
 
 		loggerSpotLegacy.Debugf("starting second pass of legacy spot cleanup")
-		c.legacyCleanupActiveSpotRequestsAndInstances(ctx)
-		c.legacyCleanupCanceledButInstanceRunningSpot(ctx)
+		c.legacyCleanupActiveSpotRequestsAndInstances()
+		c.legacyCleanupCanceledButInstanceRunningSpot()
 		loggerSpotLegacy.Debugf("completed legacy spot cleanup")
 	}()
 }
 
-func (c *awsCluster) legacyCleanupActiveSpotRequestsAndInstances(ctx *actor.Context) {
-	loggerSpotLegacy := ctx.Log().WithField("codepath", "spotLegacy")
+func (c *awsCluster) legacyCleanupActiveSpotRequestsAndInstances() {
+	loggerSpotLegacy := c.syslog.WithField("codepath", "spotLegacy")
 
 	// List spot requests with the old format
-	activeSpotReqs, err := c.legacyListActiveSpotInstanceRequests(ctx)
+	activeSpotReqs, err := c.legacyListActiveSpotInstanceRequests()
 	if err != nil {
 		loggerSpotLegacy.
 			WithError(err).
@@ -58,7 +56,7 @@ func (c *awsCluster) legacyCleanupActiveSpotRequestsAndInstances(ctx *actor.Cont
 		activeSpotReqs.numReqs(),
 		strings.Join(activeSpotReqs.idsAsList(), ","))
 
-	_, err = c.terminateSpotInstanceRequests(ctx, activeSpotReqs.idsAsListOfPointers(), false)
+	_, err = c.terminateSpotInstanceRequests(activeSpotReqs.idsAsListOfPointers(), false)
 	if err != nil {
 		loggerSpotLegacy.
 			WithError(err).
@@ -94,13 +92,11 @@ func (c *awsCluster) legacyCleanupActiveSpotRequestsAndInstances(ctx *actor.Cont
 	}
 }
 
-func (c *awsCluster) legacyCleanupCanceledButInstanceRunningSpot(ctx *actor.Context) {
-	loggerSpotLegacy := ctx.Log().WithField("codepath", "spotLegacy")
+func (c *awsCluster) legacyCleanupCanceledButInstanceRunningSpot() {
+	loggerSpotLegacy := c.syslog.WithField("codepath", "spotLegacy")
 
 	loggerSpotLegacy.Debugf("listing CanceledButInstanceRunning requests")
-	canceledButInstanceRunningSpotReqs, err := c.legacyListCanceledButInstanceRunningSpotRequests(
-		ctx,
-	)
+	canceledButInstanceRunningSpotReqs, err := c.legacyListCanceledButInstanceRunningSpotRequests()
 	if err != nil {
 		loggerSpotLegacy.
 			WithError(err).
@@ -137,9 +133,9 @@ func isLegacy(request *ec2.SpotInstanceRequest) bool {
 	return true
 }
 
-func (c *awsCluster) legacyListCanceledButInstanceRunningSpotRequests(
-	ctx *actor.Context,
-) (reqs *setOfSpotRequests, err error) {
+func (c *awsCluster) legacyListCanceledButInstanceRunningSpotRequests() (
+	reqs *setOfSpotRequests, err error,
+) {
 	input := &ec2.DescribeSpotInstanceRequestsInput{
 		Filters: []*ec2.Filter{
 			{
@@ -179,9 +175,7 @@ func (c *awsCluster) legacyListCanceledButInstanceRunningSpotRequests(
 	return &ret, nil
 }
 
-func (c *awsCluster) legacyListActiveSpotInstanceRequests(
-	ctx *actor.Context,
-) (reqs *setOfSpotRequests, err error) {
+func (c *awsCluster) legacyListActiveSpotInstanceRequests() (reqs *setOfSpotRequests, err error) {
 	input := &ec2.DescribeSpotInstanceRequestsInput{
 		Filters: []*ec2.Filter{
 			{
