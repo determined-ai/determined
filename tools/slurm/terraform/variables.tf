@@ -8,6 +8,8 @@ variable "region" {
   default = "us-west1"
 }
 
+# Note: The default value for this variable is extracted during some
+# CircleCI workflows. Modify with caution.
 variable "zone" {
   type    = string
   default = "us-west1-b"
