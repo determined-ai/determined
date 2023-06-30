@@ -38,6 +38,8 @@ stages:
             curl -H "Authorization: Bearer $(cat /tmp/slurmcluster-token)" -X PATCH -d '{"agent_user_group": {"agent_uid": $OPT_REMOTE_UID, "agent_gid": $OPT_REMOTE_GID, "agent_user": "$OPT_REMOTE_USER", "agent_group": "$OPT_REMOTE_GROUP"}}' localhost:8080/api/v1/users/1
         - sh: >
             curl -H "Authorization: Bearer $(cat /tmp/slurmcluster-token)" -X PATCH -d '{"agent_user_group": {"agent_uid": $OPT_REMOTE_UID, "agent_gid": $OPT_REMOTE_GID, "agent_user": "$OPT_REMOTE_USER", "agent_group": "$OPT_REMOTE_GROUP"}}' localhost:8080/api/v1/users/2
+        - sh: >
+            echo -e "Determined user list from master '$(hostname):8080'\n" && curl -H "Authorization: Bearer $(cat /tmp/slurmcluster-token)" -X GET localhost:8080/api/v1/users
       cmdline:
         - $OPT_PROJECT_ROOT/master/build/determined-master
         - --config-file
