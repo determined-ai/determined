@@ -164,14 +164,17 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     if (ui.isPageHidden) return;
     if (!trial?.id) return;
 
-    const canceler = new AbortController();
+    const fieldCanceler = new AbortController();
 
     readStream(
-      detApi.StreamingExperiments.trialLogsFields(trial.id, true, { signal: canceler.signal }),
+      detApi.StreamingExperiments.trialLogsFields(trial.id, true, { signal: fieldCanceler.signal }),
       (event) => setFilterOptions(event as Filters),
     );
 
-    return () => canceler.abort();
+    return () => {
+      fieldCanceler.abort();
+      canceler.current.abort();
+    };
   }, [trial?.id, ui.isPageHidden]);
 
   const logFilters = (
