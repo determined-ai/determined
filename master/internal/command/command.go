@@ -313,7 +313,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				"failure to delete user session for task: %v", c.taskID)
 		}
 	case *task.AllocationExited:
-		// TODO(!!!): Synchronize with the allocation background loop's exit. Instead, like the
+		// TODO(!!!): Synchronize with the allocation background loop's exit. Instead, like
 		// the comment in trial.go, just use this instead of `ctx.Tell(*task.AllocationExited)`
 		// to get the exit.
 		_ = c.allocation.AwaitTermination()

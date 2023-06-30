@@ -14,6 +14,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/allgather"
+	"github.com/determined-ai/determined/master/internal/task/allocationservice"
+	"github.com/determined-ai/determined/master/internal/task/tproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -22,8 +24,12 @@ import (
 
 var syslog = logrus.WithField("component", "allocation_service")
 
-// TODO(!!!): TBH, a service struct is probably better long term.
-var DefaultService = NewAllocationService()
+var DefaultService *AllocationService
+
+func init() {
+	DefaultService = NewAllocationService()
+	allocationservice.SetDefaultService(DefaultService)
+}
 
 type AllocationService struct {
 	mu          sync.RWMutex
@@ -193,6 +199,14 @@ func (as *AllocationService) MarkResourcesDaemon(
 	return ref.SetResourcesAsDaemon(ctx, rID)
 }
 
+func (as *AllocationService) State(id model.AllocationID) (tproto.AllocationState, error) {
+	ref := as.GetAllocation(id)
+	if ref == nil {
+		return tproto.AllocationState{}, api.NotFoundErrs("allocation", id.String(), true)
+	}
+	return ref.State(), nil
+}
+
 // AllGather blocks until `numPeers` with the same `allocationID` are waiting and then returns the
 // data from all those peers. It returns an error if the call returns early without data for any
 // reason. Only one call may connect per `id`.
@@ -211,7 +225,7 @@ func (as *AllocationService) AllGather(
 	readyFn := func() {
 		err := as.SetReady(ctx, allocationID)
 		if err != nil {
-			syslog.WithError(err).Error("failed to set ready for %s", allocationID)
+			syslog.WithError(err).Errorf("failed to set ready for %s", allocationID)
 		}
 	}
 
