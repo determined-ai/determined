@@ -178,13 +178,13 @@ class ClusterStore extends PollingStore {
   public readonly boundWorkspaces = (resourcePool: string) =>
     this.#resourcePoolBindings.select((map) => map.get(resourcePool));
 
-  public fetchResourcePoolBindings(resourcePool: string, signal?: AbortSignal): () => void {
+  public fetchResourcePoolBindings(resourcePoolName: string, signal?: AbortSignal): () => void {
     const canceler = new AbortController();
 
-    getResourcePoolBindings({ resourcePool }, { signal: signal ?? canceler.signal })
+    getResourcePoolBindings({ resourcePoolName }, { signal: signal ?? canceler.signal })
       .then((response) => {
         this.#resourcePoolBindings.update((map) =>
-          map.set(resourcePool, response.workspaceIds ?? []),
+          map.set(resourcePoolName, response.workspaceIds ?? []),
         );
       })
       .catch(handleError);

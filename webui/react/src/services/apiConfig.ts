@@ -491,7 +491,7 @@ export const getResourcePoolBindings: DetApi<
     return response;
   },
   request: (params, options) =>
-    detApi.Internal.listWorkspacesBoundToRP(params.resourcePool, undefined, undefined, options),
+    detApi.Internal.listWorkspacesBoundToRP(params.resourcePoolName, undefined, undefined, options),
 };
 
 export const deleteResourcePoolBindings: DetApi<

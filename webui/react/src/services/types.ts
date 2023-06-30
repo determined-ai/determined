@@ -503,7 +503,7 @@ export interface GetProjectsByUserActivityParams {
 }
 
 export interface GetResourcePoolBindingsParams {
-  resourcePool: string;
+  resourcePoolName: string;
 }
 
 export interface ModifyResourcePoolBindingsParams {
