@@ -1,10 +1,13 @@
 package db
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/config"
 )
@@ -48,4 +51,48 @@ func Setup(opts *config.DBConfig) (*PgDB, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+// ValidateRPWorkspaceBindings checks if rp-workspace bindings pertain to valid resource pools.
+// Bindings with resource pools that don't exist have the "valid" column set to false.
+func ValidateRPWorkspaceBindings(pools []config.ResourcePoolConfig) error {
+	var poolNames []string
+	for _, pool := range pools {
+		poolNames = append(poolNames, pool.PoolName)
+	}
+
+	ctx := context.Background()
+	tx, err := Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %t", err)
+	}
+	defer func() {
+		txErr := tx.Rollback()
+		if txErr != nil && txErr != sql.ErrTxDone {
+			log.WithError(txErr).Error("error rolling back transaction in AddExperiment")
+		}
+	}()
+
+	_, err = tx.NewUpdate().Table("rp_workspace_bindings").
+		Set("valid = false").
+		Where("pool_name NOT IN (?)", bun.In(poolNames)).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("error while invalidating rp-workspace bindings: %t", err)
+	}
+
+	_, err = tx.NewUpdate().Table("rp_workspace_bindings").
+		Set("valid = true").
+		Where("pool_name IN (?)", bun.In(poolNames)).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("error while validating rp-workspace bindings: %t", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("error committing transaction: %t", err)
+	}
+
+	return nil
 }
