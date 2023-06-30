@@ -10,6 +10,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/determined-ai/determined/master/internal/authz"
 )
 
 // UnimplementedError is the error return by API endpoints that are not yet implemented.
@@ -37,11 +39,14 @@ func errorHandler(
 	w http.ResponseWriter, _ *http.Request, e error,
 ) {
 	w.Header().Set("Content-type", m.ContentType())
-	w.WriteHeader(runtime.HTTPStatusFromCode(status.Code(e)))
 
 	s := status.Convert(e)
 	if s.Code() == codes.Unknown {
-		s = status.New(codes.Internal, s.Message())
+		if authz.IsPermissionDenied(e) {
+			s = status.New(codes.PermissionDenied, s.Message())
+		} else {
+			s = status.New(codes.Internal, s.Message())
+		}
 	}
 
 	response := errorBody{
@@ -51,7 +56,7 @@ func errorHandler(
 			Message: s.Message(),
 		},
 	}
-
+	w.WriteHeader(runtime.HTTPStatusFromCode(s.Code()))
 	encoder := json.NewEncoder(w)
 	if err := encoder.Encode(response); err != nil {
 		if err = encoder.Encode(fallbackError); err != nil {

@@ -113,7 +113,7 @@ func (rp *resourcePool) setupProvisioner(ctx *actor.Context) error {
 
 func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateRequest) {
 	rp.notifyOnStop(ctx, msg.AllocationRef, sproto.ResourcesReleased{
-		AllocationRef: msg.AllocationRef,
+		AllocationID: msg.AllocationID,
 	})
 	log := ctx.Log().
 		WithField("allocation-id", msg.AllocationID).
@@ -221,14 +221,14 @@ func (rp *resourcePool) restoreResources(
 	}
 
 	rp.taskList.AddTask(req)
-	rp.taskList.AddAllocation(req.AllocationRef, &allocated)
+	rp.taskList.AddAllocation(req.AllocationID, &allocated)
 	ctx.Tell(req.AllocationRef, allocated.Clone())
 
 	return nil
 }
 
 func (rp *resourcePool) receiveSetTaskName(ctx *actor.Context, msg sproto.SetAllocationName) {
-	if task, found := rp.taskList.TaskByHandler(msg.AllocationRef); found {
+	if task, found := rp.taskList.TaskByID(msg.AllocationID); found {
 		task.Name = msg.Name
 	}
 }
@@ -321,7 +321,7 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		Resources:         sprotoResources,
 		JobSubmissionTime: req.JobSubmissionTime,
 	}
-	rp.taskList.AddAllocation(req.AllocationRef, &allocated)
+	rp.taskList.AddAllocation(req.AllocationID, &allocated)
 	ctx.Tell(req.AllocationRef, allocated)
 
 	// Refresh state for the updated agents.
@@ -346,30 +346,28 @@ func (rp *resourcePool) resourcesReleased(
 	ctx *actor.Context,
 	msg sproto.ResourcesReleased,
 ) {
-	switch a := rp.taskList.Allocation(msg.AllocationRef); {
-	case a == nil:
-		rp.taskList.RemoveTaskByHandler(msg.AllocationRef)
+	switch allocated := rp.taskList.Allocation(msg.AllocationID); {
+	case allocated == nil:
+		rp.taskList.RemoveTaskByID(msg.AllocationID)
 	case msg.ResourcesID != nil:
-		ctx.Log().Infof(
-			"resources %v are released for %s",
-			*msg.ResourcesID, msg.AllocationRef.Address())
-		for rID, r := range a.Resources {
+		ctx.Log().Infof("resources %v are released for %s", *msg.ResourcesID, msg.AllocationID)
+		for rID, r := range allocated.Resources {
 			if r.Summary().ResourcesID != *msg.ResourcesID {
 				continue
 			}
 
 			typed := r.(*containerResources)
 			ctx.Tell(typed.agent.Handler, deallocateContainer{containerID: typed.containerID})
-			delete(a.Resources, rID)
+			delete(allocated.Resources, rID)
 			break
 		}
 	default:
-		ctx.Log().Infof("all resources are released for %s", msg.AllocationRef.Address())
-		for _, r := range a.Resources {
+		ctx.Log().Infof("all resources are released for %s", msg.AllocationID)
+		for _, r := range allocated.Resources {
 			typed := r.(*containerResources)
 			ctx.Tell(typed.agent.Handler, deallocateContainer{containerID: typed.containerID})
 		}
-		rp.taskList.RemoveTaskByHandler(msg.AllocationRef)
+		rp.taskList.RemoveTaskByID(msg.AllocationID)
 	}
 }
 
@@ -465,10 +463,6 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		sproto.RecoverJobPosition,
 		sproto.DeleteJob:
 		return rp.receiveJobQueueMsg(ctx)
-
-	case sproto.GetAllocationHandler:
-		reschedule = false
-		ctx.Respond(rp.taskList.TaskHandler(msg.ID))
 
 	case sproto.GetAllocationSummary:
 		reschedule = false
@@ -865,7 +859,7 @@ func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
 	for it := rp.taskList.Iterator(); it.Next(); {
 		task := it.Value()
 		ref := task.AllocationRef
-		if tasklist.AssignmentIsScheduled(rp.taskList.Allocation(ref)) {
+		if rp.taskList.IsScheduled(task.AllocationID) {
 			ctx.Log().Debugf("task %s already in progress", task.AllocationID)
 			continue
 		}

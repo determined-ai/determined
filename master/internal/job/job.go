@@ -18,9 +18,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// DefaultManager is the global singleton for managing jobs.
-var DefaultManager *Manager
-
 // Manager manages jobs.
 type Manager struct {
 	mu        sync.Mutex

@@ -1,39 +1,85 @@
 .base {
+  align-items: center;
+  display: inline-flex;
   user-select: none;
   width: fit-content;
 }
 .tiny {
   font-size: var(--icon-tiny);
+
+  svg {
+    width: var(--icon-tiny);
+  }
 }
 .small {
   font-size: var(--icon-small);
+
+  svg {
+    width: var(--icon-small);
+  }
 }
 .medium {
   font-size: var(--icon-medium);
+
+  svg {
+    width: var(--icon-medium);
+  }
 }
 .large {
   font-size: var(--icon-large);
+
+  svg {
+    width: var(--icon-large);
+  }
 }
 .big {
   font-size: var(--icon-big);
+
+  svg {
+    width: var(--icon-big);
+  }
 }
 .great {
   font-size: var(--icon-great);
+
+  svg {
+    width: var(--icon-great);
+  }
 }
 .huge {
   font-size: var(--icon-huge);
+
+  svg {
+    width: var(--icon-huge);
+  }
 }
 .enormous {
   font-size: var(--icon-enormous);
+
+  svg {
+    width: var(--icon-enormous);
+  }
 }
 .giant {
   font-size: var(--icon-giant);
+
+  svg {
+    width: var(--icon-giant);
+  }
 }
 .jumbo {
   font-size: var(--icon-jumbo);
+
+  svg {
+    width: var(--icon-jumbo);
+  }
 }
 .mega {
   font-size: var(--icon-mega);
+
+  svg {
+    width: var(--icon-mega);
+  }
 }
 .cancel {
   color: var(--theme-ix-cancel);
@@ -43,4 +89,7 @@
 }
 .success {
   color: var(--theme-status-success);
+}
+.filter {
+  margin-top: 1px;
 }

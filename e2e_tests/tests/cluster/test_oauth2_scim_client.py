@@ -6,7 +6,7 @@ from determined.errors import EnterpriseOnlyError
 from determined.experimental import Determined
 from tests import api_utils
 from tests import config as conf
-from tests.api_utils import ADMIN_CREDENTIALS
+from tests.cluster.test_users import ADMIN_CREDENTIALS
 
 
 @pytest.mark.e2e_cpu

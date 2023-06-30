@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Optional, Tuple
 
 import pytest
 
@@ -24,7 +24,7 @@ def test_set_template() -> None:
 @pytest.mark.e2e_cpu_cross_version
 def test_start_notebook_with_template() -> None:
     template_name = "test_start_notebook_with_template"
-    tpl.set_template(template_name, conf.fixtures_path("templates/template.yaml"))
+    tpl.set_template(template_name, conf.fixtures_path("templates/ntsc.yaml"))
 
     with cmd.interactive_command(
         "notebook", "start", "--template", template_name, "--detach"
@@ -37,7 +37,7 @@ def test_start_notebook_with_template() -> None:
 @pytest.mark.e2e_cpu_cross_version
 def test_start_command_with_template() -> None:
     template_name = "test_start_command_with_template"
-    tpl.set_template(template_name, conf.fixtures_path("templates/template.yaml"))
+    tpl.set_template(template_name, conf.fixtures_path("templates/ntsc.yaml"))
 
     with cmd.interactive_command(
         "command", "run", "--template", template_name, "--detach", "sleep infinity"
@@ -50,7 +50,7 @@ def test_start_command_with_template() -> None:
 @pytest.mark.e2e_cpu_cross_version
 def test_start_shell_with_template() -> None:
     template_name = "test_start_shell_with_template"
-    tpl.set_template(template_name, conf.fixtures_path("templates/template.yaml"))
+    tpl.set_template(template_name, conf.fixtures_path("templates/ntsc.yaml"))
 
     with cmd.interactive_command(
         "shell", "start", "--template", template_name, "--detach"
@@ -64,12 +64,16 @@ def assert_templates_equal(t1: bindings.v1Template, t2: bindings.v1Template) -> 
     assert t1.workspaceId == t2.workspaceId
 
 
-def setup_template_test() -> Tuple[Session, bindings.v1Template]:
-    session = api_utils.determined_test_session()
+def setup_template_test(
+    session: Optional[Session] = None,
+    workspace_id: Optional[int] = None,
+    name: str = "template",
+) -> Tuple[Session, bindings.v1Template]:
+    session = api_utils.determined_test_session() if session is None else session
     tpl = bindings.v1Template(
         name=api_utils.get_random_string(),
-        config=conf.load_config(conf.fixtures_path("templates/template.yaml")),
-        workspaceId=1,
+        config=conf.load_config(conf.fixtures_path(f"templates/{name}.yaml")),
+        workspaceId=workspace_id if workspace_id is not None else 1,
     )
 
     # create

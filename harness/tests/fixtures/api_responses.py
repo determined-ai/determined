@@ -12,7 +12,6 @@ FIXTURES_DIR = pathlib.Path(__file__).resolve().parent
 # Generic for all types that can be paginated
 P = TypeVar("P", bound=bindings.Paginated)
 
-
 # Default constants.
 USERNAME = "determined"
 PASSWORD = "password"
@@ -73,6 +72,12 @@ def sample_get_user(username: str = USERNAME) -> bindings.v1GetUserResponse:
     )
 
     return bindings.v1GetUserResponse(user=user)
+
+
+def sample_get_checkpoint() -> bindings.v1GetCheckpointResponse:
+    with open(FIXTURES_DIR / "checkpoint.json") as f:
+        resp = bindings.v1GetCheckpointResponse.from_json(json.load(f))
+        return resp
 
 
 def sample_get_pagination() -> bindings.v1Pagination:

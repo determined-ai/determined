@@ -147,7 +147,7 @@ const TableFilterMultiSearch: React.FC<Props> = ({
           style={style}
           onClick={handleOptionClick}>
           {isJSX ? data[index].text : <span>{data[index].text}</span>}
-          <Icon name="checkmark" title="" />
+          <Icon name="checkmark" title="checkmark" />
         </div>
       );
     },

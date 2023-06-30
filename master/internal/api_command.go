@@ -9,7 +9,6 @@ import (
 	"math/rand"
 
 	petname "github.com/dustinkirkland/golang-petname"
-	"github.com/ghodss/yaml"
 	pstruct "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
 
@@ -56,15 +55,23 @@ func getRandomPort(min, max int) int {
 
 type protoCommandParams struct {
 	TemplateName string
+	WorkspaceID  int32
 	Config       *pstruct.Struct
 	Files        []*utilv1.File
 	MustZeroSlot bool
 }
 
-func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoCommandParams) (
+func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoCommandParams,
+	aUser *model.User) (
 	*tasks.GenericCommandSpec, []pkgCommand.LaunchWarning, error,
 ) {
 	var err error
+	cmdSpec := tasks.GenericCommandSpec{}
+
+	cmdSpec.Metadata.WorkspaceID = model.DefaultWorkspaceID
+	if req.WorkspaceID != 0 {
+		cmdSpec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceID)
+	}
 
 	// Validate the userModel and get the agent userModel group.
 	userModel, _, err := grpcutil.GetUser(ctx)
@@ -132,19 +139,13 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 
 	// Get the full configuration.
 	config := model.DefaultConfig(&taskSpec.TaskContainerDefaults)
-
-	workDirInDefaults := config.WorkDir
 	if req.TemplateName != "" {
-		template, err := a.m.db.TemplateByName(req.TemplateName)
+		err := a.m.unmarshalTemplateConfig(ctx, req.TemplateName, aUser, &config, false)
 		if err != nil {
-			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
-				errors.Wrapf(err, "failed to find template: %s", req.TemplateName).Error())
-		}
-		if err := yaml.Unmarshal(template.Config, &config); err != nil {
-			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
-				errors.Wrapf(err, "failed to unmarshal template: %s", req.TemplateName).Error())
+			return nil, launchWarnings, err
 		}
 	}
+	workDirInDefaults := config.WorkDir
 	if len(configBytes) != 0 {
 		dec := json.NewDecoder(bytes.NewBuffer(configBytes))
 		dec.DisallowUnknownFields()
@@ -205,11 +206,10 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	}
 	taskSpec.UserSessionToken = token
 
-	return &tasks.GenericCommandSpec{
-		Base:      taskSpec,
-		Config:    config,
-		UserFiles: userFiles,
-	}, launchWarnings, nil
+	cmdSpec.Base = taskSpec
+	cmdSpec.Config = config
+	cmdSpec.UserFiles = userFiles
+	return &cmdSpec, launchWarnings, nil
 }
 
 func (a *apiServer) GetCommands(
@@ -337,20 +337,23 @@ func (a *apiServer) SetCommandPriority(
 func (a *apiServer) LaunchCommand(
 	ctx context.Context, req *apiv1.LaunchCommandRequest,
 ) (*apiv1.LaunchCommandResponse, error) {
-	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
-		TemplateName: req.TemplateName,
-		Config:       req.Config,
-		Files:        req.Files,
-	})
+	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, api.APIErrToGRPC(err)
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
-	if req.WorkspaceId != 0 {
-		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
+	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
+		TemplateName: req.TemplateName,
+		WorkspaceID:  req.WorkspaceId,
+		Config:       req.Config,
+		Files:        req.Files,
+	}, user)
+	if err != nil {
+		return nil, api.WrapWithFallbackCode(err, codes.InvalidArgument,
+			"failed to prepare launch params")
 	}
-	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
+
+	if err = a.isNTSCPermittedToLaunch(ctx, spec, user); err != nil {
 		return nil, err
 	}
 

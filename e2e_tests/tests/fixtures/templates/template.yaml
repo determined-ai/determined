@@ -1,8 +1,6 @@
 name: test_template
 resources:
-  agent_label: ""
-  slots: 100
-  slots_per_trial: 100
+  slots: 0
   weight: 1
 environment:
   environment_variables:

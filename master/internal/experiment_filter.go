@@ -98,7 +98,7 @@ func expColumnNameToSQL(columnName string) (string, error) {
 		"state":           "e.state",
 		"numTrials":       "(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id)",
 		"progress":        "COALESCE(progress, 0)",
-		"user":            "COALESCE(u.display_name, u.username)",
+		"user":            "e.owner_id",
 		"forkedFrom":      "e.parent_id",
 		"resourcePool":    "e.config->'resources'->>'resource_pool'",
 		"projectId":       "project_id",

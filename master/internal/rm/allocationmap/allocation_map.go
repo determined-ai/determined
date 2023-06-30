@@ -10,14 +10,9 @@ import (
 )
 
 var (
-	allocationMap      map[model.AllocationID]*actor.Ref
+	allocationMap      = map[model.AllocationID]*actor.Ref{}
 	allocationMapMutex sync.RWMutex
 )
-
-// InitAllocationMap initializes the global allocation_id -> allocation actor map.
-func InitAllocationMap() {
-	allocationMap = map[model.AllocationID]*actor.Ref{}
-}
 
 // GetAllocation returns allocation actor by allocation id.
 func GetAllocation(allocationID model.AllocationID) *actor.Ref {
