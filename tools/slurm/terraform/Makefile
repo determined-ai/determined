@@ -1,5 +1,4 @@
 # Commands for managing (creating/destroying/etc) resources.
-TF_LOCK ?= true
 
 build/backend.conf: scripts/generate-backendconf.sh
 	mkdir -p build
