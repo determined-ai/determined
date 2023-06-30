@@ -276,22 +276,19 @@ func setupRPSamePriority(t *testing.T) *resourcePool {
 	}
 
 	rp.taskList.AddTask(&sproto.AllocateRequest{
-		AllocationID:  "allocation1",
-		AllocationRef: groupRefOne,
-		JobID:         "job1",
-		Group:         groupRefOne,
+		AllocationID: "allocation1",
+		JobID:        "job1",
+		Group:        groupRefOne,
 	})
 	rp.taskList.AddTask(&sproto.AllocateRequest{
-		AllocationID:  "allocation2",
-		AllocationRef: groupRefTwo,
-		JobID:         "job2",
-		Group:         groupRefTwo,
+		AllocationID: "allocation2",
+		JobID:        "job2",
+		Group:        groupRefTwo,
 	})
 	rp.taskList.AddTask(&sproto.AllocateRequest{
-		AllocationID:  "allocation3",
-		AllocationRef: groupRefThree,
-		JobID:         "job3",
-		Group:         groupRefThree,
+		AllocationID: "allocation3",
+		JobID:        "job3",
+		Group:        groupRefThree,
 	})
 
 	return rp
@@ -410,22 +407,19 @@ func TestMoveMessagesAcrossPrioLanes(t *testing.T) {
 	}
 
 	rp.taskList.AddTask(&sproto.AllocateRequest{
-		AllocationID:  "allocation1",
-		AllocationRef: groupRefOne,
-		JobID:         "job1",
-		Group:         groupRefOne,
+		AllocationID: "allocation1",
+		JobID:        "job1",
+		Group:        groupRefOne,
 	})
 	rp.taskList.AddTask(&sproto.AllocateRequest{
-		AllocationID:  "allocation2",
-		AllocationRef: groupRefTwo,
-		JobID:         "job2",
-		Group:         groupRefTwo,
+		AllocationID: "allocation2",
+		JobID:        "job2",
+		Group:        groupRefTwo,
 	})
 	rp.taskList.AddTask(&sproto.AllocateRequest{
-		AllocationID:  "allocation3",
-		AllocationRef: groupRefThree,
-		JobID:         "job3",
-		Group:         groupRefThree,
+		AllocationID: "allocation3",
+		JobID:        "job3",
+		Group:        groupRefThree,
 	})
 
 	// move job2 ahead of job1
@@ -481,22 +475,19 @@ func TestMoveMessagesAcrossPrioLanesBehind(t *testing.T) {
 	}
 
 	rp.taskList.AddTask(&sproto.AllocateRequest{
-		AllocationID:  "allocation1",
-		AllocationRef: groupRefOne,
-		JobID:         "job1",
-		Group:         groupRefOne,
+		AllocationID: "allocation1",
+		JobID:        "job1",
+		Group:        groupRefOne,
 	})
 	rp.taskList.AddTask(&sproto.AllocateRequest{
-		AllocationID:  "allocation2",
-		AllocationRef: groupRefTwo,
-		JobID:         "job2",
-		Group:         groupRefTwo,
+		AllocationID: "allocation2",
+		JobID:        "job2",
+		Group:        groupRefTwo,
 	})
 	rp.taskList.AddTask(&sproto.AllocateRequest{
-		AllocationID:  "allocation3",
-		AllocationRef: groupRefThree,
-		JobID:         "job3",
-		Group:         groupRefThree,
+		AllocationID: "allocation3",
+		JobID:        "job3",
+		Group:        groupRefThree,
 	})
 
 	// move job1 behind job2

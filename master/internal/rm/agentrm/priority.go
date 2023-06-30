@@ -176,7 +176,7 @@ func (p priorityScheduler) prioritySchedulerWithFilter(
 					for preemptedTask := range preemptedTasks {
 						log.Debugf(
 							"preempting task %s for task %s",
-							preemptedTask.ToTaskID(),
+							preemptedTask,
 							prioritizedAllocation.Name,
 						)
 						toRelease[preemptedTask] = true
