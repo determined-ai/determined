@@ -183,9 +183,8 @@ class ClusterStore extends PollingStore {
 
     getResourcePoolBindings({ resourcePool }, { signal: signal ?? canceler.signal })
       .then((response) => {
-        updateIfChanged(
-          this.#resourcePoolBindings,
-          this.#resourcePoolBindings.get().set(resourcePool, response.workspaceIds ?? []),
+        this.#resourcePoolBindings.update((map) =>
+          map.set(resourcePool, response.workspaceIds ?? []),
         );
       })
       .catch(handleError);
@@ -205,15 +204,10 @@ class ClusterStore extends PollingStore {
       { signal: signal ?? canceler.signal },
     )
       .then(() => {
-        updateIfChanged(
-          this.#resourcePoolBindings,
-          this.#resourcePoolBindings
-            .get()
-            .update(resourcePool, (prevWorkspaceIds) =>
-              prevWorkspaceIds
-                ? [...new Set([...prevWorkspaceIds, ...workspaceIds])]
-                : workspaceIds,
-            ),
+        this.#resourcePoolBindings.update((map) =>
+          map.update(resourcePool, (prevWorkspaceIds) =>
+            prevWorkspaceIds ? [...new Set([...prevWorkspaceIds, ...workspaceIds])] : workspaceIds,
+          ),
         );
       })
       .catch(handleError);
@@ -233,13 +227,10 @@ class ClusterStore extends PollingStore {
       { signal: signal ?? canceler.signal },
     )
       .then(() => {
-        updateIfChanged(
-          this.#resourcePoolBindings,
-          this.#resourcePoolBindings
-            .get()
-            .update(resourcePool, (prevWorkspaceIds) =>
-              prevWorkspaceIds?.filter((id) => !workspaceIds.includes(id)),
-            ),
+        this.#resourcePoolBindings.update((map) =>
+          map.update(resourcePool, (oldWorkspaceIds) =>
+            oldWorkspaceIds?.filter((id) => !workspaceIds.includes(id)),
+          ),
         );
       })
       .catch(handleError);
@@ -259,10 +250,7 @@ class ClusterStore extends PollingStore {
       { signal: signal ?? canceler.signal },
     )
       .then(() => {
-        updateIfChanged(
-          this.#resourcePoolBindings,
-          this.#resourcePoolBindings.get().set(resourcePool, workspaceIds),
-        );
+        this.#resourcePoolBindings.update((map) => map.set(resourcePool, workspaceIds));
       })
       .catch(handleError);
 

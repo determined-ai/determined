@@ -135,7 +135,7 @@ class WorkspaceStore extends PollingStore {
 
   public fetchAvailableResourcePools(workspaceId: number) {
     return getAvailableResourcePools({ workspaceId }).then((response) => {
-      this.#boundResourcePools.get().set(workspaceId, response);
+      this.#boundResourcePools.update((map) => map.set(workspaceId, response));
     });
   }
 
