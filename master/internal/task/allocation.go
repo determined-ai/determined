@@ -195,19 +195,23 @@ func (a *Allocation) run(ctx context.Context, updates *sproto.AllocationSubscrip
 	}
 }
 
-// State returns a deepcopy of our state.
+// State returns a copy of the current state of the allocation.
 func (a *Allocation) State() tproto.AllocationState {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	return a.state()
 }
 
+// IsRestoring returns if the allocation has been restored by the resource manager.
 func (a *Allocation) IsRestoring() bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	return a.req.Restore && !a.restored
 }
 
+// WaitForRestore waits until the allocation has been restored by the resource manager or a minute
+// has passed. If a minute passes, an error is returned. The allocation must exist otherwise this
+// will return a not found error.
 func (a *Allocation) WaitForRestore(ctx context.Context) error {
 	for i := 0; i < 60; i++ {
 		switch {
@@ -235,6 +239,8 @@ func (a *Allocation) HandleSignal(sig tproto.AllocationSignal, reason string) {
 	}
 }
 
+// SetProxyAddress sets the proxy address of the allocation and sets up proxies for any services
+// it provides.
 func (a *Allocation) SetProxyAddress(_ context.Context, address string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -251,12 +257,14 @@ func (a *Allocation) SetProxyAddress(_ context.Context, address string) error {
 	return nil
 }
 
+// SendLog sends a container log, enriched with metadata from the allocation.
 func (a *Allocation) SendLog(log *sproto.ContainerLog) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.sendTaskLog(log.ToTaskLog())
 }
 
+// SetWaiting moves the allocation to the waiting state if it has not progressed past it yet.
 func (a *Allocation) SetWaiting(_ context.Context) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -269,6 +277,8 @@ func (a *Allocation) SetWaiting(_ context.Context) error {
 	return nil
 }
 
+// SetReady sets the ready bit and moves the allocation to the running state if it has not
+// progressed past it already.
 func (a *Allocation) SetReady(_ context.Context) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -286,8 +296,8 @@ func (a *Allocation) SetReady(_ context.Context) error {
 	return nil
 }
 
-// SetResourcesAsDaemon sets the reservation as a daemon reservation. This means we won't wait for
-// it to exit in errorless exits and instead will kill the forcibly.
+// SetResourcesAsDaemon marks the resources as daemons. If all non-daemon resources exit, the
+// allocation will kill the remaining daemon resources.
 func (a *Allocation) SetResourcesAsDaemon(_ context.Context, rID sproto.ResourcesID) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -317,6 +327,10 @@ func (a *Allocation) SetResourcesAsDaemon(_ context.Context, rID sproto.Resource
 	return nil
 }
 
+// WatchRendezvous returns a watcher for the caller to wait for rendezvous to complete. When a
+// process from each resource in the allocation connects and the resource manager sends each
+// resource's state, each watcher will receive a copy of the rendezvous info for communicating
+// with its peers.
 func (a *Allocation) WatchRendezvous(rID sproto.ResourcesID) (RendezvousWatcher, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -347,6 +361,7 @@ func (a *Allocation) WatchRendezvous(rID sproto.ResourcesID) (RendezvousWatcher,
 	return a.rendezvous.watch(rID)
 }
 
+// UnwatchRendezvous removes a rendezvous watcher.
 func (a *Allocation) UnwatchRendezvous(rID sproto.ResourcesID) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -378,6 +393,7 @@ func (a *Allocation) validateRendezvous() error {
 	return nil
 }
 
+// AwaitTermination waits for the allocation and any goroutines associated with to exit.
 func (a *Allocation) AwaitTermination() *AllocationExited {
 	a.wg.Wait()
 	return a.exited
@@ -771,7 +787,7 @@ func (a *Allocation) crash(err error) {
 	a.tryExitOrKill(err.Error())
 }
 
-// tryExitOrTerminate attempts to close an allocation by gracefully stopping it (though a kill are possible).
+// tryExitOrTerminate attempts to close an allocation by gracefully stopping it.
 func (a *Allocation) tryExitOrTerminate(reason string, forcePreemption bool) {
 	if exited := a.tryExit(reason); exited {
 		return

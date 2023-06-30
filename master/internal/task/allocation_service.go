@@ -24,6 +24,7 @@ import (
 
 var syslog = logrus.WithField("component", "allocation_service")
 
+// DefaultService is the singleton default AllocationService.
 var DefaultService *AllocationService
 
 func init() {
@@ -31,17 +32,20 @@ func init() {
 	allocationservice.SetDefaultService(DefaultService)
 }
 
+// AllocationService is used to launch, track and interact with allocations.
 type AllocationService struct {
 	mu          sync.RWMutex
 	allocations map[model.AllocationID]*Allocation
 }
 
+// NewAllocationService creates a new AllocationService.
 func NewAllocationService() *AllocationService {
 	return &AllocationService{
 		allocations: map[model.AllocationID]*Allocation{},
 	}
 }
 
+// StartAllocation starts an allocation and returns a handle to it.
 func (as *AllocationService) StartAllocation(
 	logCtx detLogger.Context,
 	req sproto.AllocateRequest,
@@ -86,6 +90,7 @@ func (as *AllocationService) GetAllAllocationIDs() []model.AllocationID {
 	return maps.Keys(as.allocations)
 }
 
+// SendLog sends a container log, enriched with metadata from the allocation.
 func (as *AllocationService) SendLog(
 	ctx context.Context,
 	id model.AllocationID,
@@ -93,12 +98,14 @@ func (as *AllocationService) SendLog(
 ) {
 	ref := as.GetAllocation(id)
 	if ref == nil {
-		// TODO(!!!): Something, something errors.
+		syslog.Warnf("dropped log for unknown allocation: %s", id)
 		return
 	}
 	ref.SendLog(log)
 }
 
+// SetReady sets the ready bit and moves the allocation to the running state if it has not
+// progressed past it already.
 func (as *AllocationService) SetReady(ctx context.Context, id model.AllocationID) error {
 	ref := as.GetAllocation(id)
 	if ref == nil {
@@ -113,6 +120,7 @@ func (as *AllocationService) SetReady(ctx context.Context, id model.AllocationID
 	return ref.SetReady(ctx)
 }
 
+// SetWaiting moves the allocation to the waiting state if it has not progressed past it yet.
 func (as *AllocationService) SetWaiting(ctx context.Context, id model.AllocationID) error {
 	ref := as.GetAllocation(id)
 	if ref == nil {
@@ -127,6 +135,8 @@ func (as *AllocationService) SetWaiting(ctx context.Context, id model.Allocation
 	return ref.SetWaiting(ctx)
 }
 
+// SetProxyAddress sets the proxy address of the allocation and sets up proxies for any services
+// it provides.
 func (as *AllocationService) SetProxyAddress(
 	ctx context.Context,
 	id model.AllocationID,
@@ -145,6 +155,10 @@ func (as *AllocationService) SetProxyAddress(
 	return ref.SetProxyAddress(ctx, addr)
 }
 
+// WatchRendezvous returns a watcher for the caller to wait for rendezvous to complete. When a
+// process from each resource in the allocation connects and the resource manager sends each
+// resource's state, each watcher will receive a copy of the rendezvous info for communicating
+// with its peers.
 func (as *AllocationService) WatchRendezvous(
 	ctx context.Context,
 	id model.AllocationID,
@@ -163,6 +177,7 @@ func (as *AllocationService) WatchRendezvous(
 	return ref.WatchRendezvous(rID)
 }
 
+// UnwatchRendezvous removes a rendezvous watcher.
 func (as *AllocationService) UnwatchRendezvous(
 	ctx context.Context,
 	id model.AllocationID,
@@ -181,7 +196,9 @@ func (as *AllocationService) UnwatchRendezvous(
 	return ref.UnwatchRendezvous(rID)
 }
 
-func (as *AllocationService) MarkResourcesDaemon(
+// SetResourcesAsDaemon marks the resources as daemons. If all non-daemon resources exit, the
+// allocation will kill the remaining daemon resources.
+func (as *AllocationService) SetResourcesAsDaemon(
 	ctx context.Context,
 	id model.AllocationID,
 	rID sproto.ResourcesID,
@@ -199,6 +216,7 @@ func (as *AllocationService) MarkResourcesDaemon(
 	return ref.SetResourcesAsDaemon(ctx, rID)
 }
 
+// State returns a copy of the current state of the allocation.
 func (as *AllocationService) State(id model.AllocationID) (tproto.AllocationState, error) {
 	ref := as.GetAllocation(id)
 	if ref == nil {
@@ -248,6 +266,8 @@ func (as *AllocationService) AllGather(
 	}
 }
 
+// WaitForRestore waits until the allocation has been restored by the resource manager. The
+// allocation must exist otherwise this will return a not found error.
 func (as *AllocationService) WaitForRestore(ctx context.Context, id model.AllocationID) error {
 	ref := as.GetAllocation(id)
 	if ref == nil {
