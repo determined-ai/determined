@@ -676,8 +676,7 @@ func (a *apiServer) parseMetricTypeArgs(
 
 func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 	metricType model.MetricType, maxDatapoints int, startBatches int,
-	endBatches int, logScale bool,
-	timeSeriesFilter *commonv1.PolymorphicFilter,
+	endBatches int, timeSeriesFilter *commonv1.PolymorphicFilter,
 	metricIds []string,
 ) ([]*apiv1.DownsampledMetrics, error) {
 	var startTime time.Time
@@ -803,7 +802,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 
 		tsample, err := a.multiTrialSample(trialID, req.MetricNames, metricType,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-			(req.Scale == apiv1.Scale_SCALE_LOG), req.TimeSeriesFilter, req.MetricIds)
+			req.TimeSeriesFilter, req.MetricIds)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed sampling")
 		}
