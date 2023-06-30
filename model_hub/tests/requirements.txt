@@ -4,7 +4,7 @@ mypy==0.910
 coverage
 
 # install transformers and datasets
-transformers==4.8.2
+transformers==4.30.0
 datasets==1.9.0
 
 # install mmcv and mmdet
