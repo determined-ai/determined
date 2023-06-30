@@ -787,7 +787,7 @@ func (m *Master) restoreNonTerminalExperiments() error {
 }
 
 func (m *Master) closeOpenAllocations() error {
-	allocationIds := task.GetAllAllocationIDs()
+	allocationIds := task.DefaultService.GetAllAllocationIDs()
 	if err := m.db.CloseOpenAllocations(allocationIds); err != nil {
 		return err
 	}

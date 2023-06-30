@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/task/tproto"
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -102,8 +103,8 @@ type AllocationExited struct {
 	FinalState        tproto.AllocationState
 }
 
-// NewAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
-func NewAllocation(
+// startAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
+func startAllocation(
 	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
 	specifier tasks.TaskSpecifier, system *actor.System, parent *actor.Ref,
 ) *Allocation {
@@ -171,7 +172,14 @@ func NewAllocation(
 // the error is never returned by Receive, and that a.Error(ctx, err) is called,
 // that way the allocation can cleanup properly.
 func (a *Allocation) run(ctx context.Context, updates *sproto.AllocationSubscription) {
-	defer a.Cleanup()
+	defer func() {
+		if rec := recover(); rec != nil {
+			a.syslog.Error(rec, "\n", string(debug.Stack()))
+			if a.exitErr == nil {
+				a.exitErr = errors.Errorf("unexpected panic: %v", rec)
+			}
+		}
+	}()
 	defer updates.Close()
 	for {
 		select {
@@ -402,10 +410,6 @@ func (a *Allocation) handleRMEvent(msg sproto.AllocationEvent) {
 
 // RequestResources sets up the allocation.
 func (a *Allocation) RequestResources() (*sproto.AllocationSubscription, error) {
-	// TODO(!!!): This kinda gross; the service should probably wrap `NewAllocation` and that should
-	// probably do this. But, in my opinion, it is fine for now, to minimize the change.
-	registerAllocation(a.model.AllocationID, a)
-
 	if a.req.Restore {
 		// Load allocation.
 		a.syslog.Debug("RequestResources load allocation")
@@ -435,19 +439,19 @@ func (a *Allocation) RequestResources() (*sproto.AllocationSubscription, error) 
 	return sub, nil
 }
 
-// Cleanup ensures an allocation is properly closed. It tries to do everything before failing and
+// Close ensures an allocation is properly closed. It tries to do everything before failing and
 // ensures we don't leave any resources running.
-func (a *Allocation) Cleanup() {
-	defer a.wg.Cancel()
-	defer unregisterAllocation(a.model.AllocationID)
+func (a *Allocation) Close() error {
+	var err *multierror.Error
 
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	if rec := recover(); rec != nil {
-		a.syslog.Error(rec, "\n", string(debug.Stack()))
-		if a.exitErr == nil {
-			a.exitErr = errors.Errorf("unexpected panic: %v", rec)
+	// a.portsRegistered  is set to true right after ports are registered.
+	// This variable ensures to release ports even if there's a failure after restoring ports.
+	if a.portsRegistered {
+		for _, port := range a.model.Ports {
+			portregistry.ReleasePort(port)
 		}
 	}
 
@@ -457,7 +461,14 @@ func (a *Allocation) Cleanup() {
 	// consolidate "deferred" closers in a state machine.
 	// Just in-case code.
 	if a.exited == nil {
-		a.syslog.Info("exit did not run properly")
+		if a.exitErr == nil {
+			a.exitErr = errors.New("unknown error occurred")
+		}
+		a.syslog.WithError(a.exitErr).Info("exit did not run properly")
+		a.sendTaskLog(&model.TaskLog{
+			Log: fmt.Sprintf("%s was terminated: %s", a.req.Name, a.exitErr.Error()),
+		})
+
 		for _, r := range a.resources {
 			if r.Exited == nil {
 				a.syslog.Infof("allocation exited with unterminated reservation: %v", r.Summary())
@@ -468,35 +479,30 @@ func (a *Allocation) Cleanup() {
 			a.markResourcesReleased()
 		}
 
-		if err := a.purgeRestorableResources(); err != nil {
-			a.syslog.WithError(err).Error("failed to purge restorable resources")
-		}
-
-		a.sendTaskLog(&model.TaskLog{
-			Log: fmt.Sprintf("%s was terminated: %s", a.req.Name, "allocation did not exit correctly"),
-		})
-		// TODO(!!!): Maybe these should be in defers.
 		a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
 		a.system.Tell(a.parent, &AllocationExited{
-			Err:        errors.New("exit did not run properly"),
+			Err:        a.exitErr,
 			FinalState: a.state(),
 		})
-	}
 
-	// a.portsRegistered  is set to true right after ports are registered.
-	// This variable ensures to release ports even if there's a failure after restoring ports.
-	if a.portsRegistered {
-		for _, port := range a.model.Ports {
-			portregistry.ReleasePort(port)
+		if a.req.Preemptible {
+			preemptible.Unregister(a.req.AllocationID.String())
+		}
+		if cfg := a.req.IdleTimeout; cfg != nil {
+			idle.Unregister(cfg.ServiceID)
+		}
+		if a.rendezvous != nil {
+			a.rendezvous.close()
+		}
+		if cfg := a.req.IdleTimeout; cfg != nil {
+			idle.Unregister(cfg.ServiceID)
+		}
+
+		if pErr := a.purgeRestorableResources(); pErr != nil {
+			err = multierror.Append(err, fmt.Errorf("purging restorable resources: %w", pErr))
 		}
 	}
-	if a.req.Preemptible {
-		preemptible.Unregister(a.req.AllocationID.String())
-	}
-	if cfg := a.req.IdleTimeout; cfg != nil {
-		idle.Unregister(cfg.ServiceID)
-	}
-
+	return err.ErrorOrNil()
 }
 
 // ResourcesAllocated handles receiving resources from the resource manager. Note: it makes a single
