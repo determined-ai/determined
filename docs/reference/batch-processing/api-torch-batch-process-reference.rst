@@ -2,9 +2,9 @@
 
 .. _torch-batch-process-api-ref:
 
-#######################################
- ``Torch Batch Process`` API Reference
-#######################################
+######################################################
+pytorch.experimental.torch_batch_process API Reference
+######################################################
 
 .. meta::
    :description: Familiarize yourself with the Torch Batch Process API.
@@ -19,7 +19,8 @@
 
    This is an experimental API and may change at any time.
 
-The main arguments to ``torch_batch_process`` is processor class and dataset.
+The main arguments to ``torch_batch_process`` are `batch_processor_cls`, a subclass of
+:class:`~determined.pytorch.experimental.TorchBatchProcessor` and `dataset`.
 
 .. code:: python
 

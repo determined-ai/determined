@@ -29,10 +29,10 @@ runs distributed data processing.
 
 This API automatically handles the following for you:
 
--  shard a dataset by number of workers available
--  apply user-defined logic to each batch of data
--  handle synchronization between workers
--  track job progress to enable preemption and resumption of trial
+-  shards a dataset by number of workers available
+-  applies user-defined logic to each batch of data
+-  handles synchronization between workers
+-  tracks job progress to enable preemption and resumption of trial
 
 This is a flexible API that can be used for many different tasks, including batch (offline)
 inference.
@@ -85,8 +85,8 @@ functions are optional.
 
 In this section, we'll learn how to perform batch inference using the Torch Batch Processing API.
 
-Step 1: Define a InferenceProcessor
-===================================
+Step 1: Define an InferenceProcessor
+====================================
 
 The first step is to define an InferenceProcessor. You should initialize your model in the
 :meth:`~determined.pytorch.experimental.TorchBatchProcessor.__init__` function of the
@@ -96,8 +96,8 @@ logic.
 
 You can optionally implement
 :meth:`~determined.pytorch.experimental.TorchBatchProcessor.on_checkpoint_start` and
-:meth:`~determined.pytorch.experimental.TorchBatchProcessor.on_finish` function to be run before
-every checkpoint and after all the data are processed respectively.
+:meth:`~determined.pytorch.experimental.TorchBatchProcessor.on_finish` to be run before
+every checkpoint and after all the data has been processed, respectively.
 
 .. code:: python
 
