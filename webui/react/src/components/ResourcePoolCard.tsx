@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo } from 'react';
+import React, { Suspense, useEffect, useMemo, useCallback } from 'react';
 
 import awsLogoOnDark from 'assets/images/aws-logo-on-dark.svg';
 import awsLogo from 'assets/images/aws-logo.svg';
@@ -128,8 +128,12 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
     }, {} as SafeRawJson);
   }, [processedPool, isAux, pool]);
 
+  const onDropdown = useCallback(() => {
+    
+  }, [])
+
   return (
-    <Card href={paths.resourcePool(pool.name)} size="medium">
+    <Card href={paths.resourcePool(pool.name)} size="medium" actionMenu={[{ key: 'bindings', label: 'Manage bindings' }]} onDropdown={onDropdown}>
       <div className={css.base}>
         <div className={css.header}>
           <div className={css.info}>
@@ -137,7 +141,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
           </div>
           <div className={css.default}>
             {(pool.defaultAuxPool || pool.defaultComputePool) && <span>Default</span>}
-            {pool.description && <Icon name="info" title={pool.description} />}
+            {pool.description && <Icon name="info" showTooltip title={pool.description} />}
           </div>
         </div>
         <Suspense fallback={<Spinner center />}>
