@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/determined-ai/determined/master/internal/task/tproto"
-
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
@@ -37,7 +35,7 @@ func TestRendezvous(t *testing.T) {
 			// "task" with ranks is started.
 			t1 := model.AllocationID(uuid.New().String())
 			c1, c2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
-			r := newRendezvous(nil, t1, resourcesList{
+			r := newRendezvous(t1, resourcesList{
 				c1: &taskmodel.ResourcesWithState{
 					Resources: res,
 					Rank:      0,
@@ -51,7 +49,7 @@ func TestRendezvous(t *testing.T) {
 			var ws []RendezvousWatcher
 			watch := func(rID sproto.ResourcesID) func() {
 				return func() {
-					w, err := r.watch(tproto.WatchRendezvousInfo{ResourcesID: rID})
+					w, err := r.watch(rID)
 					assert.NilError(t, err, rID)
 					ws = append(ws, w)
 				}
@@ -91,8 +89,8 @@ func TestRendezvous(t *testing.T) {
 				rendezvousArrived(w)
 			}
 
-			r.unwatch(tproto.UnwatchRendezvousInfo{ResourcesID: c1})
-			r.unwatch(tproto.UnwatchRendezvousInfo{ResourcesID: c2})
+			r.unwatch(c1)
+			r.unwatch(c2)
 		})
 	}
 
@@ -107,24 +105,24 @@ func TestRendezvous(t *testing.T) {
 func TestRendezvousValidation(t *testing.T) {
 	t1 := model.AllocationID(uuid.New().String())
 	c1 := sproto.ResourcesID(cproto.NewID())
-	r := newRendezvous(nil, t1, resourcesList{
+	r := newRendezvous(t1, resourcesList{
 		c1: &taskmodel.ResourcesWithState{Rank: 0},
 	})
 
-	_, err := r.watch(tproto.WatchRendezvousInfo{ResourcesID: sproto.ResourcesID(cproto.NewID())})
+	_, err := r.watch(sproto.ResourcesID(cproto.NewID()))
 	assert.ErrorContains(t, err, "stale resources")
 
-	_, err = r.watch(tproto.WatchRendezvousInfo{ResourcesID: c1})
+	_, err = r.watch(c1)
 	assert.NilError(t, err)
 
-	_, err = r.watch(tproto.WatchRendezvousInfo{ResourcesID: c1})
+	_, err = r.watch(c1)
 	assert.ErrorContains(t, err, "resources already rendezvoused")
 }
 
 func TestTerminationInRendezvous(t *testing.T) {
 	t1 := model.AllocationID(uuid.New().String())
 	c1, c2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
-	r := newRendezvous(nil, t1, resourcesList{
+	r := newRendezvous(t1, resourcesList{
 		c1: &taskmodel.ResourcesWithState{Rank: 0},
 		c2: &taskmodel.ResourcesWithState{Rank: 1},
 	})
@@ -133,7 +131,7 @@ func TestTerminationInRendezvous(t *testing.T) {
 		Addresses: addressesFromContainerID(c1),
 	}
 	r.try()
-	_, err := r.watch(tproto.WatchRendezvousInfo{ResourcesID: c1})
+	_, err := r.watch(c1)
 	assert.NilError(t, err)
 	r.resources[c1].Exited = &sproto.ResourcesStopped{}
 
@@ -141,7 +139,7 @@ func TestTerminationInRendezvous(t *testing.T) {
 		Addresses: addressesFromContainerID(c2),
 	}
 	r.try()
-	_, err = r.watch(tproto.WatchRendezvousInfo{ResourcesID: c2})
+	_, err = r.watch(c2)
 	assert.NilError(t, err)
 
 	assert.Check(t, !r.ready())
@@ -150,20 +148,20 @@ func TestTerminationInRendezvous(t *testing.T) {
 func TestUnwatchInRendezvous(t *testing.T) {
 	t1 := model.AllocationID(uuid.New().String())
 	c1, c2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
-	r := newRendezvous(nil, t1, resourcesList{
+	r := newRendezvous(t1, resourcesList{
 		c1: &taskmodel.ResourcesWithState{Rank: 0},
 		c2: &taskmodel.ResourcesWithState{Rank: 1},
 	})
 
 	r.resources[c1].Started = &sproto.ResourcesStarted{Addresses: addressesFromContainerID(c1)}
 	r.try()
-	_, err := r.watch(tproto.WatchRendezvousInfo{ResourcesID: c1})
+	_, err := r.watch(c1)
 	assert.NilError(t, err)
-	r.unwatch(tproto.UnwatchRendezvousInfo{ResourcesID: c1})
+	r.unwatch(c1)
 
 	r.resources[c2].Started = &sproto.ResourcesStarted{Addresses: addressesFromContainerID(c2)}
 	r.try()
-	_, err = r.watch(tproto.WatchRendezvousInfo{ResourcesID: c2})
+	_, err = r.watch(c2)
 	assert.NilError(t, err)
 
 	assert.Check(t, !r.ready())
@@ -174,17 +172,17 @@ func TestRendezvousTimeout(t *testing.T) {
 
 	t1 := model.AllocationID(uuid.New().String())
 	c1, c2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
-	r := newRendezvous(nil, t1, resourcesList{
+	r := newRendezvous(t1, resourcesList{
 		c1: &taskmodel.ResourcesWithState{Rank: 0},
 		c2: &taskmodel.ResourcesWithState{Rank: 1},
 	})
 
-	_, err := r.watch(tproto.WatchRendezvousInfo{ResourcesID: c1})
+	_, err := r.watch(c1)
 	assert.NilError(t, err)
 	r.resources[c1].Started = &sproto.ResourcesStarted{Addresses: addressesFromContainerID(c1)}
 	r.try()
 
-	assert.ErrorContains(t, r.checkTimeout(rendezvousTimeout{AllocationID: t1}),
+	assert.ErrorContains(t, r.checkTimeout(),
 		"some containers are taking a long time")
 }
 
