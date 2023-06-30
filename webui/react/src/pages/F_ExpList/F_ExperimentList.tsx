@@ -172,7 +172,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
+  const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>(
+    settings.selectedExperimentIds,
+  );
   useEffect(() => {
     if (!isLoadingSettings) {
       // loading experiment data first
