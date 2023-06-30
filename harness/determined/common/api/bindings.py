@@ -10980,11 +10980,6 @@ class v1SSOProvider(Printable):
         }
         return out
 
-class v1Scale(DetEnum):
-    UNSPECIFIED = "SCALE_UNSPECIFIED"
-    LINEAR = "SCALE_LINEAR"
-    LOG = "SCALE_LOG"
-
 class v1SchedulerType(DetEnum):
     UNSPECIFIED = "SCHEDULER_TYPE_UNSPECIFIED"
     PRIORITY = "SCHEDULER_TYPE_PRIORITY"
@@ -11788,32 +11783,6 @@ class v1Slot(Printable):
             out["enabled"] = self.enabled
         if not omit_unset or "id" in vars(self):
             out["id"] = self.id
-        return out
-
-class v1SummarizeTrialResponse(Printable):
-
-    def __init__(
-        self,
-        *,
-        metrics: "typing.Sequence[v1DownsampledMetrics]",
-        trial: "trialv1Trial",
-    ):
-        self.metrics = metrics
-        self.trial = trial
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1SummarizeTrialResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "metrics": [v1DownsampledMetrics.from_json(x) for x in obj["metrics"]],
-            "trial": trialv1Trial.from_json(obj["trial"]),
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "metrics": [x.to_json(omit_unset) for x in self.metrics],
-            "trial": self.trial.to_json(omit_unset),
-        }
         return out
 
 class v1Task(Printable):
@@ -14234,7 +14203,6 @@ def get_CompareTrials(
     metricIds: "typing.Optional[typing.Sequence[str]]" = None,
     metricNames: "typing.Optional[typing.Sequence[str]]" = None,
     metricType: "typing.Optional[v1MetricType]" = None,
-    scale: "typing.Optional[v1Scale]" = None,
     startBatches: "typing.Optional[int]" = None,
     timeSeriesFilter_doubleRange_gt: "typing.Optional[float]" = None,
     timeSeriesFilter_doubleRange_gte: "typing.Optional[float]" = None,
@@ -14260,7 +14228,6 @@ def get_CompareTrials(
         "metricIds": metricIds,
         "metricNames": metricNames,
         "metricType": metricType.value if metricType is not None else None,
-        "scale": scale.value if scale is not None else None,
         "startBatches": startBatches,
         "timeSeriesFilter.doubleRange.gt": dump_float(timeSeriesFilter_doubleRange_gt) if timeSeriesFilter_doubleRange_gt is not None else None,
         "timeSeriesFilter.doubleRange.gte": dump_float(timeSeriesFilter_doubleRange_gte) if timeSeriesFilter_doubleRange_gte is not None else None,
@@ -18074,41 +18041,6 @@ def post_SetUserPassword(
     if _resp.status_code == 200:
         return v1SetUserPasswordResponse.from_json(_resp.json())
     raise APIHttpError("post_SetUserPassword", _resp)
-
-def get_SummarizeTrial(
-    session: "api.Session",
-    *,
-    trialId: int,
-    customType: "typing.Optional[str]" = None,
-    endBatches: "typing.Optional[int]" = None,
-    maxDatapoints: "typing.Optional[int]" = None,
-    metricNames: "typing.Optional[typing.Sequence[str]]" = None,
-    metricType: "typing.Optional[v1MetricType]" = None,
-    scale: "typing.Optional[v1Scale]" = None,
-    startBatches: "typing.Optional[int]" = None,
-) -> "v1SummarizeTrialResponse":
-    _params = {
-        "customType": customType,
-        "endBatches": endBatches,
-        "maxDatapoints": maxDatapoints,
-        "metricNames": metricNames,
-        "metricType": metricType.value if metricType is not None else None,
-        "scale": scale.value if scale is not None else None,
-        "startBatches": startBatches,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/trials/{trialId}/summarize",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1SummarizeTrialResponse.from_json(_resp.json())
-    raise APIHttpError("get_SummarizeTrial", _resp)
 
 def get_TaskLogs(
     session: "api.Session",

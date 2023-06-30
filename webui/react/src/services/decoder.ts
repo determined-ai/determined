@@ -650,7 +650,7 @@ const decodeDownsampledMetrics = (data: Sdk.V1DownsampledMetrics[]): types.Metri
   });
 };
 
-export const decodeTrialSummary = (data: Sdk.V1SummarizeTrialResponse): types.TrialSummary => {
+export const decodeTrialSummary = (data: Sdk.V1ComparableTrial): types.TrialSummary => {
   const trialItem = decodeV1TrialToTrialItem(data.trial);
 
   return {
