@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+	"github.com/determined-ai/determined/master/internal/task/tproto"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/ssh"
@@ -36,7 +37,7 @@ import (
 )
 
 func TestTrial(t *testing.T) {
-	system, db, rID, tr, self := setup(t)
+	system, db, rID, tr, self, alloc := setup(t)
 
 	// Pre-scheduled stage.
 	db.On("UpdateTrialRunID", 0, 1).Return(nil)
@@ -70,18 +71,14 @@ func TestTrial(t *testing.T) {
 
 	// Terminating stage.
 	db.On("UpdateTrial", 0, model.CompletedState).Return(nil)
-	system.Tell(tr.allocation, actors.ForwardThroughMock{
-		To:  self,
-		Msg: &task.AllocationExited{},
-	})
-	require.NoError(t, tr.allocation.StopAndAwaitTermination())
+	alloc.setTermination(&task.AllocationExited{})
 	require.NoError(t, self.AwaitTermination())
 	require.True(t, model.TerminalStates[tr.state])
 	require.True(t, db.AssertExpectations(t))
 }
 
 func TestTrialRestarts(t *testing.T) {
-	system, db, rID, tr, self := setup(t)
+	system, db, rID, tr, self, alloc := setup(t)
 
 	// Pre-scheduled stage.
 	db.On("UpdateTrialRunID", 0, 1).Return(nil)
@@ -111,11 +108,7 @@ func TestTrialRestarts(t *testing.T) {
 			db.On("UpdateTrialRunID", 0, i+2).Return(nil)
 		}
 
-		system.Tell(tr.allocation, actors.ForwardThroughMock{
-			To:  self,
-			Msg: &task.AllocationExited{Err: errors.New("bad stuff went down")},
-		})
-		require.NoError(t, tr.allocation.StopAndAwaitTermination())
+		alloc.setTermination(&task.AllocationExited{Err: errors.New("bad stuff went down")})
 		system.Ask(self, actor.Ping{}).Get() // sync
 
 		require.True(t, db.AssertExpectations(t))
@@ -124,7 +117,34 @@ func TestTrialRestarts(t *testing.T) {
 	require.True(t, model.TerminalStates[tr.state])
 }
 
-func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *actor.Ref) {
+type mockAllocation struct {
+	exit chan *task.AllocationExited
+}
+
+func newMockAllocation() *mockAllocation {
+	return &mockAllocation{
+		exit: make(chan *task.AllocationExited, 1),
+	}
+}
+
+func (ma mockAllocation) setTermination(exit *task.AllocationExited) {
+	ma.exit <- exit
+}
+
+func (ma mockAllocation) AwaitTermination() *task.AllocationExited {
+	return <-ma.exit
+}
+
+func (ma mockAllocation) HandleSignal(sig tproto.AllocationSignal, reason string) {}
+
+func setup(t *testing.T) (
+	*actor.System,
+	*mocks.DB,
+	model.RequestID,
+	*trial,
+	*actor.Ref,
+	*mockAllocation,
+) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
 
@@ -133,12 +153,12 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 	rmImpl := actorrm.Wrap(system.MustActorOf(actor.Addr("rm"), &rmActor))
 
 	// mock allocation
-	allocImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
+	allocImpl := newMockAllocation()
 	taskAllocator = func(
 		logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
-		specifier tasks.TaskSpecifier,
-	) actor.Actor {
-		return &allocImpl
+		specifier tasks.TaskSpecifier, system *actor.System, ref *actor.Ref,
+	) trialRunAllocation {
+		return allocImpl
 	}
 
 	// mock db.
@@ -177,5 +197,5 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 		false,
 	)
 	self := system.MustActorOf(actor.Addr("trial"), tr)
-	return system, db, rID, tr, self
+	return system, db, rID, tr, self, allocImpl
 }

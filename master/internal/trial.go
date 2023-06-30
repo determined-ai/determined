@@ -17,6 +17,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 
@@ -38,6 +39,12 @@ import (
 var nonRetryableErrors = []*regexp.Regexp{
 	// This error is typically seen when you request resources that SLURM is not able to satisfy.
 	regexp.MustCompile("sbatch: error: Batch job submission failed"),
+}
+
+// trialRunAllocation is the slice of the *task.Allocation interface that trial.go uses.
+type trialRunAllocation interface {
+	HandleSignal(sig tproto.AllocationSignal, reason string)
+	AwaitTermination() *task.AllocationExited
 }
 
 // A trial is a task actor which is responsible for handling:
@@ -82,7 +89,7 @@ type trial struct {
 	runID int
 
 	// a ref to the current allocation
-	allocation *task.Allocation
+	allocation trialRunAllocation
 	// a note of the user initated exit reason, if any.
 	userInitiatedExit *model.ExitedReason
 
@@ -268,7 +275,17 @@ func (t *trial) recover() error {
 }
 
 // To change in testing.
-var taskAllocator = task.DefaultService.StartAllocation
+var taskAllocator = func(
+	logCtx detLogger.Context,
+	req sproto.AllocateRequest,
+	db db.DB,
+	rm rm.ResourceManager,
+	specifier tasks.TaskSpecifier,
+	system *actor.System,
+	parent *actor.Ref,
+) trialRunAllocation {
+	return task.DefaultService.StartAllocation(logCtx, req, db, rm, specifier, system, parent)
+}
 
 // maybeAllocateTask checks if the trial should allocate state and allocates it if so.
 func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
