@@ -21,6 +21,7 @@ usage:
 	@echo "                                    7200 seconds. One must run 'make unslurmcluster' before changing the time."
 	@echo ""
 
+tf_lock ?= true
 
 .PHONY: slurmcluster
 slurmcluster:
