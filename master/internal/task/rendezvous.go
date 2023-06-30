@@ -51,10 +51,7 @@ type rendezvous struct {
 }
 
 // newRendezvous returns a new rendezvous component.
-func newRendezvous(
-	allocationID model.AllocationID,
-	rs resourcesList,
-) *rendezvous {
+func newRendezvous(allocationID model.AllocationID, rs resourcesList) *rendezvous {
 	return &rendezvous{
 		allocationID: allocationID,
 		resources:    rs,

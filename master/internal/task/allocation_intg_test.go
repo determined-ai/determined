@@ -70,7 +70,7 @@ func TestAllocation(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			system, _, rm, trialImpl, trial, _, a, self := setup(t)
+			system, _, _, trialImpl, trial, _, a := setup(t)
 
 			// Pre-allocated stage.
 			mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
@@ -92,15 +92,12 @@ func TestAllocation(t *testing.T) {
 				rID1: mockRsvn(rID1, "agent-1"),
 				rID2: mockRsvn(rID2, "agent-2"),
 			}
-			require.NoError(t, system.Ask(rm.Ref(), actors.ForwardThroughMock{
-				To: self,
-				Msg: sproto.ResourcesAllocated{
-					ID:           a.req.AllocationID,
-					ResourcePool: "default",
-					Resources:    resources,
-				},
-			}).Error())
-			system.Ask(rm.Ref(), actors.ForwardThroughMock{To: self, Msg: actor.Ping{}}).Get()
+
+			a.handleRMEvent(&sproto.ResourcesAllocated{
+				ID:           a.req.AllocationID,
+				ResourcePool: "default",
+				Resources:    resources,
+			})
 			require.Nil(t, trialImpl.AssertExpectations())
 
 			// Pre-ready stage.
@@ -111,11 +108,13 @@ func TestAllocation(t *testing.T) {
 					ResourcesID:    summary.ResourcesID,
 					ResourcesState: sproto.Assigned,
 				}
-				require.NoError(t, system.Ask(self, containerStateChanged).Error())
+				a.handleRMEvent(&containerStateChanged)
+				require.Nil(t, a.exited)
 
 				beforePulling := time.Now().UTC().Truncate(time.Millisecond)
 				containerStateChanged.ResourcesState = sproto.Pulling
-				require.NoError(t, system.Ask(self, containerStateChanged).Error())
+				a.handleRMEvent(&containerStateChanged)
+				require.Nil(t, a.exited)
 				afterPulling := time.Now().UTC().Truncate(time.Millisecond)
 
 				if first {
@@ -129,7 +128,8 @@ func TestAllocation(t *testing.T) {
 				}
 
 				containerStateChanged.ResourcesState = sproto.Starting
-				require.NoError(t, system.Ask(self, containerStateChanged).Error())
+				a.handleRMEvent(&containerStateChanged)
+				require.Nil(t, a.exited)
 				containerStateChanged.ResourcesState = sproto.Running
 				containerStateChanged.ResourcesStarted = &sproto.ResourcesStarted{
 					Addresses: []cproto.Address{
@@ -141,11 +141,12 @@ func TestAllocation(t *testing.T) {
 						},
 					},
 				}
-				require.NoError(t, system.Ask(self, containerStateChanged).Error())
+				a.handleRMEvent(&containerStateChanged)
+				require.Nil(t, a.exited)
 				containerStateChanged.ResourcesStarted = nil
-				require.NoError(t, system.Ask(self, tproto.WatchRendezvousInfo{
-					ResourcesID: r.Summary().ResourcesID,
-				}).Error())
+
+				_, err := a.WatchRendezvous(r.Summary().ResourcesID)
+				require.NoError(t, err)
 			}
 			require.True(t, a.rendezvous.ready())
 
@@ -164,11 +165,11 @@ func TestAllocation(t *testing.T) {
 						Failure: tc.err,
 					},
 				}
-				require.NoError(t, system.Ask(self, containerStateChanged).Error())
+				a.handleRMEvent(&containerStateChanged)
 			}
-			system.Ask(rm.Ref(), actors.ForwardThroughMock{To: self, Msg: actor.Ping{}}).Get()
-			require.NoError(t, self.AwaitTermination())
-			require.True(t, a.exited)
+			require.Equal(t, tc.exit.Err, a.exited.Err)
+			require.Equal(t, tc.exit.UserRequestedStop, a.exited.UserRequestedStop)
+			require.NotNil(t, a.exited)
 			system.Ask(trial, actor.Ping{}).Get()
 			for _, m := range trialImpl.Messages {
 				// Just clear the state since it's really hard to check (has random stuff in it).
@@ -184,7 +185,7 @@ func TestAllocation(t *testing.T) {
 
 func setup(t *testing.T) (
 	*actor.System, *actors.MockActor, rm.ResourceManager, *actors.MockActor,
-	*actor.Ref, *db.PgDB, *Allocation, *actor.Ref,
+	*actor.Ref, *db.PgDB, *Allocation,
 ) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
@@ -205,7 +206,7 @@ func setup(t *testing.T) (
 	// instantiate the allocation
 	task := db.RequireMockTask(t, pgDB, nil)
 
-	a := NewAllocation(
+	a := DefaultService.StartAllocation(
 		detLogger.Context{},
 		sproto.AllocateRequest{
 			TaskID:       task.TaskID,
@@ -217,11 +218,10 @@ func setup(t *testing.T) (
 		pgDB,
 		rm,
 		mockTaskSpecifier{},
+		system,
+		trial,
 	)
-	self := system.MustActorOf(actor.Addr(trialAddr, "allocation"), a)
-	// Pre-scheduled stage.
-	system.Ask(self, actor.Ping{}).Get()
-	require.Contains(t, rmActor.Messages, a.(*Allocation).req)
+	require.Contains(t, rmActor.Messages, a.req)
 
-	return system, &rmActor, rm, &trialImpl, trial, pgDB, a.(*Allocation), self
+	return system, &rmActor, rm, &trialImpl, trial, pgDB, a
 }
