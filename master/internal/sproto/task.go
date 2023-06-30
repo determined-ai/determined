@@ -112,29 +112,55 @@ type (
 		// - true: ok or unknown
 		Fulfillable bool
 	}
-	// TODO(!!!): Let's separate all these into some files, `events.go`.
+	// ResourceDisabled informs the allocation its resources have been disabled. It just causes
+	// the allocation to kill its reasons. This probably shouldn't be an event, but the RM
+	// should take the kill action since it knows it wants to (but that is difficult, because
+	// it surfaces to the allocation as just a 137 exit). TODO(!!!): Let's separate all these
+	// into some files, `events.go`.
 	ResourceDisabled struct{ InformationReason string }
 )
 
+// AllocationEvent describes a change in status or state of an allocation or its resources.
 type AllocationEvent interface{ AllocationEvent() }
 
-func (ResourcesAllocated) AllocationEvent()           {}
-func (InvalidResourcesRequestError) AllocationEvent() {}
-func (ReleaseResources) AllocationEvent()             {}
-func (ResourcesStateChanged) AllocationEvent()        {}
-func (ResourcesFailure) AllocationEvent()             {}
-func (ContainerLog) AllocationEvent()                 {}
-func (ResourceDisabled) AllocationEvent()             {}
+// AllocationEvent implements AllocationEvent.
+func (ResourcesAllocated) AllocationEvent() {}
 
+// AllocationEvent implements AllocationEvent.
+func (InvalidResourcesRequestError) AllocationEvent() {}
+
+// AllocationEvent implements AllocationEvent.
+func (ReleaseResources) AllocationEvent() {}
+
+// AllocationEvent implements AllocationEvent.
+func (ResourcesStateChanged) AllocationEvent() {}
+
+// AllocationEvent implements AllocationEvent.
+func (ResourcesFailure) AllocationEvent() {}
+
+// AllocationEvent implements AllocationEvent.
+func (ContainerLog) AllocationEvent() {}
+
+// AllocationEvent implements AllocationEvent.
+func (ResourceDisabled) AllocationEvent() {}
+
+// AllocationUnsubscribeFn closes a subscription.
 type AllocationUnsubscribeFn func()
 
+// AllocationSubscription is a subscription for streaming AllocationEvent's. It must be closed when
+// you are finished consuming events. Blocking on C forever can cause the publisher to backup
+// and adversely affect the system.
 type AllocationSubscription struct {
-	// C is never closed, because only the consumer knows, by aggregating events, when events will stop.
+	// C is never closed, because only the consumer knows, by aggregating events, when events stop.
 	C     <-chan AllocationEvent
 	unsub AllocationUnsubscribeFn
 }
 
-func NewAllocationSubscription(updates <-chan AllocationEvent, cl func()) *AllocationSubscription {
+// NewAllocationSubscription create a new subcription.
+func NewAllocationSubscription(
+	updates <-chan AllocationEvent,
+	cl AllocationUnsubscribeFn,
+) *AllocationSubscription {
 	return &AllocationSubscription{
 		C:     updates,
 		unsub: cl,
