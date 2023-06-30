@@ -49,4 +49,3 @@ The main arguments to ``torch_batch_process`` is processor class and dataset.
 .. autoclass:: determined.pytorch.experimental.TorchBatchProcessor
    :members:
    :member-order: bysource
-
