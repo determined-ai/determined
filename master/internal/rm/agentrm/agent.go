@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/task/allocationservice"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	ws "github.com/determined-ai/determined/master/pkg/actor/api"
@@ -677,44 +676,29 @@ func (a *agent) clearNonReattachedContainers(
 	recovered map[cproto.ID]aproto.ContainerReattachAck,
 	explicitlyDoomed map[cproto.ID]aproto.ContainerReattachAck,
 ) error {
-	for cID, aID := range a.agentState.containerAllocation {
+	for cID := range a.agentState.containerAllocation {
 		if _, ok := recovered[cID]; ok {
 			continue
 		}
 
-		var containerState *cproto.Container
-		allocationState, err := allocationservice.DefaultService.State(aID)
-		if err != nil {
-			ctx.Log().WithError(err).Error("failed to get container state")
-			containerState = a.agentState.containerState[cID]
+		containerState := a.agentState.containerState[cID]
+		if containerState == nil {
+			containerState = &cproto.Container{ID: cID}
+		}
+		containerState.State = cproto.Terminated
+
+		var stopped aproto.ContainerStopped
+		ack, ok := explicitlyDoomed[cID]
+		if ok {
+			stopped = aproto.ContainerStopped{Failure: ack.Failure}
 		} else {
-			cs, ok := allocationState.Containers[sproto.FromContainerID(cID)]
-			if !ok {
-				break
-			}
-			for _, c := range cs {
-				if c.ID == cID {
-					containerState = &c
-					break
-				}
-			}
-			containerState = a.agentState.containerState[cID]
+			stopped = a.defaultReattachFailureMessage()
 		}
 
-		if containerState != nil {
-			var stopped aproto.ContainerStopped
-			ack, ok := explicitlyDoomed[cID]
-			if ok {
-				stopped = aproto.ContainerStopped{Failure: ack.Failure}
-			} else {
-				stopped = a.defaultReattachFailureMessage()
-			}
-
-			a.containerStateChanged(ctx, aproto.ContainerStateChanged{
-				Container:        *containerState,
-				ContainerStopped: &stopped,
-			})
-		}
+		a.containerStateChanged(ctx, aproto.ContainerStateChanged{
+			Container:        *containerState,
+			ContainerStopped: &stopped,
+		})
 	}
 
 	return a.agentState.clearUnlessRecovered(recovered)
