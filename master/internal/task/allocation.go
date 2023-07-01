@@ -52,11 +52,11 @@ type Allocation struct {
 	db db.DB
 	rm rm.ResourceManager
 
-	syslog *logrus.Entry
-	system *actor.System
-	parent *actor.Ref
-	// requestQueue *queue.Queue[tproto.Request]
-	wg waitgroupx.Group
+	syslog         *logrus.Entry
+	system         *actor.System
+	parent         *actor.Ref
+	resourceEvents *sproto.AllocationSubscription
+	wg             waitgroupx.Group
 
 	// The request to create the allocation, essentially our configuration.
 	req sproto.AllocateRequest
@@ -138,7 +138,7 @@ func startAllocation(
 		logCtx: req.LogContext,
 	}
 
-	updates, err := a.RequestResources()
+	rmEvents, err := a.RequestResources()
 	if err != nil {
 		// TODO(!!!): Very awkward to not just return the error here; we should figure this out
 		// but it requires some work. A way to approach it would be to let `a.crash`
@@ -147,8 +147,9 @@ func startAllocation(
 		// that makes us terminal.
 		a.crash(err)
 	}
+	a.resourceEvents = rmEvents
 
-	a.wg.Go(func(ctx context.Context) { a.run(ctx, updates) })
+	a.wg.Go(a.run)
 
 	return a
 }
@@ -173,25 +174,16 @@ func startAllocation(
 // and move on. If an error occurs that should force a stop, it is imperative
 // the error is never returned by Receive, and that a.Error(ctx, err) is called,
 // that way the allocation can cleanup properly.
-func (a *Allocation) run(ctx context.Context, updates *sproto.AllocationSubscription) {
-	defer func() {
-		if rec := recover(); rec != nil {
-			a.syslog.Error(rec, "\n", string(debug.Stack()))
-			if a.exitErr == nil {
-				a.exitErr = errors.Errorf("unexpected panic: %v", rec)
-			}
-		}
-	}()
-	defer updates.Close()
+func (a *Allocation) run(ctx context.Context) {
+	defer a.wg.Cancel()
+	defer a.recover()
+
 	for {
-		select {
-		case update := <-updates.C:
-			// TODO(!!!): Handle event should probably return whether we are terminal or not, rather
-			// than awkwardly relying on a context cancellation.
-			a.handleRMEvent(update)
-		case <-ctx.Done():
+		event := a.resourceEvents.Get()
+		if event == (sproto.SentinelAllocationEvent{}) {
 			return
 		}
+		a.handleRMEvent(event)
 	}
 }
 
@@ -789,6 +781,16 @@ func (a *Allocation) ReleaseResources(msg *sproto.ReleaseResources) {
 	a.tryExitOrTerminate(msg.Reason, msg.ForcePreemption)
 }
 
+// recover recovers a crash and stops the allocation.
+func (a *Allocation) recover() {
+	if rec := recover(); rec != nil {
+		a.syslog.Error(rec, "\n", string(debug.Stack()))
+		if a.exitErr == nil {
+			a.exitErr = errors.Errorf("unexpected panic: %v", rec)
+		}
+	}
+}
+
 // crash closes the allocation due to an error, beginning the kill flow.
 func (a *Allocation) crash(err error) {
 	a.syslog.WithError(err).Errorf("allocation encountered fatal error")
@@ -999,10 +1001,6 @@ func (a *Allocation) containerProxyAddresses() []cproto.Address {
 }
 
 func (a *Allocation) terminated(reason string) {
-	defer a.wg.Cancel()
-
-	a.setMostProgressedModelState(model.AllocationStateTerminated)
-	exit := &AllocationExited{FinalState: a.state()}
 	if a.exited != nil {
 		// Never exit twice. If this were allowed, a trial could receive two task.AllocationExited
 		// messages. On receipt of the first message, the trial awaits our exit. Once we exit, it
@@ -1012,8 +1010,14 @@ func (a *Allocation) terminated(reason string) {
 		// This occurred when an allocation completed and was preempted in quick succession.
 		return
 	}
+
+	a.wg.Cancel()
+	a.resourceEvents.Close()
+	a.setMostProgressedModelState(model.AllocationStateTerminated)
+	exit := &AllocationExited{FinalState: a.state()}
 	a.exited = exit
 	exitReason := fmt.Sprintf("allocation terminated after %s", reason)
+
 	defer a.system.Tell(a.parent, exit)
 	defer a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
 	defer a.unregisterProxies()
