@@ -296,7 +296,10 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		// Kill both slotted and zero-slot tasks, unless draining.
 		if !msg.Drain {
 			for _, aID := range a.agentState.containerAllocation {
-				rmevents.Publish(aID, &sproto.ResourceDisabled{InformationReason: "agent disabled"})
+				rmevents.Publish(aID, sproto.ReleaseResources{
+					Reason:    "agent disabled",
+					ForceKill: true,
+				})
 			}
 		}
 		ctx.Respond(&proto.DisableAgentResponse{Agent: a.summarize(ctx).ToProto()})

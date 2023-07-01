@@ -404,8 +404,9 @@ func (a *agentState) updateSlotDeviceView(ctx *actor.Context, deviceID device.ID
 		// On `PostStop`, draining will be already set to false, and we'll kill the container
 		// whether we have the device or not.
 		if !s.enabled.draining && s.containerID != nil {
-			rmevents.Publish(a.containerAllocation[*s.containerID], &sproto.ResourceDisabled{
-				InformationReason: "slot disabled",
+			rmevents.Publish(a.containerAllocation[*s.containerID], sproto.ReleaseResources{
+				Reason:    "slot disabled",
+				ForceKill: true,
 			})
 		}
 	}
