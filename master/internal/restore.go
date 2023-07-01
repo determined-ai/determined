@@ -84,6 +84,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	poolName, err := m.rm.ResolveResourcePool(
 		m.system,
 		activeConfig.Resources().ResourcePool(),
+		"",
 		activeConfig.Resources().SlotsPerTrial(),
 	)
 	if err != nil {

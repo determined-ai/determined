@@ -98,7 +98,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 
 		t.allocationID = model.AllocationID(fmt.Sprintf("%s.%d", t.taskID, 1))
 
-		rp, err := t.rm.ResolveResourcePool(ctx, "", 0)
+		rp, err := t.rm.ResolveResourcePool(ctx, "", "", 0)
 		if err != nil {
 			return fmt.Errorf("resolving resource pool: %w", err)
 		}

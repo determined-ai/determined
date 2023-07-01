@@ -35,7 +35,8 @@ func (r *ResourceManager) GetResourcePoolRef(
 // ResolveResourcePool is a default implementation to satisfy the interface, mostly for tests.
 func (r *ResourceManager) ResolveResourcePool(
 	ctx actor.Messenger,
-	name string,
+	name,
+	workspace string,
 	slots int,
 ) (string, error) {
 	return name, nil

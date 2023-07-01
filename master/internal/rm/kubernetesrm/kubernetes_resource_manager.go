@@ -84,7 +84,8 @@ func (k ResourceManager) GetResourcePoolRef(
 // ResolveResourcePool resolves the resource pool completely.
 func (k ResourceManager) ResolveResourcePool(
 	ctx actor.Messenger,
-	name string,
+	name,
+	workspace string,
 	slots int,
 ) (string, error) {
 	// If the resource pool isn't set, fill in the default at creation time.

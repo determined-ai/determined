@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
@@ -277,4 +278,15 @@ func ReadRPsAvailableToWorkspace(
 	}
 
 	return rpNames, pagination, nil
+}
+
+func GetDefaultPoolsForWorkspace(ctx context.Context, workspaceName string,
+) (computePool, auxPool string, err error) {
+	var target model.Workspace
+	err = Bun().NewSelect().Model(&target).Where("Name = ?", workspaceName).Scan(ctx)
+	if err != nil {
+		return "", "", err
+	}
+
+	return target.DefaultComputePool, target.DefaultAuxPool, nil
 }

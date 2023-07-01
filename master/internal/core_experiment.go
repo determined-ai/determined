@@ -290,7 +290,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 	defaulted := schemas.WithDefaults(config)
 	resources := defaulted.Resources()
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system, resources.ResourcePool(), resources.SlotsPerTrial())
+		m.system, resources.ResourcePool(), "", resources.SlotsPerTrial())
 	if err != nil {
 		return nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
 	}

@@ -131,7 +131,7 @@ func newExperiment(
 ) (*experiment, []command.LaunchWarning, error) {
 	resources := activeConfig.Resources()
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system, resources.ResourcePool(), resources.SlotsPerTrial(),
+		m.system, resources.ResourcePool(), "", resources.SlotsPerTrial(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create an experiment: %w", err)
@@ -156,6 +156,7 @@ func newExperiment(
 		}
 	}
 	resources.SetResourcePool(poolName)
+
 	activeConfig.SetResources(resources)
 
 	method := searcher.NewSearchMethod(activeConfig.Searcher())
@@ -925,7 +926,7 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 	resources := e.activeConfig.Resources()
 	oldRP := resources.ResourcePool()
 	rp, err := e.rm.ResolveResourcePool(
-		ctx, msg.ResourcePool, e.activeConfig.Resources().SlotsPerTrial(),
+		ctx, msg.ResourcePool, "", e.activeConfig.Resources().SlotsPerTrial(),
 	)
 	switch {
 	case err != nil:
