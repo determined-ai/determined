@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/task/tproto"
-
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -43,7 +41,7 @@ var nonRetryableErrors = []*regexp.Regexp{
 
 // trialRunAllocation is the slice of the *task.Allocation interface that trial.go uses.
 type trialRunAllocation interface {
-	HandleSignal(sig tproto.AllocationSignal, reason string)
+	HandleSignal(sig task.AllocationSignal, reason string)
 	AwaitTermination() *task.AllocationExited
 }
 
@@ -200,7 +198,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		resources.SetResourcePool(msg.ResourcePool)
 		t.config.SetResources(resources)
 		if t.allocation != nil {
-			t.allocation.HandleSignal(tproto.TerminateAllocation, "allocation resource pool changed")
+			t.allocation.HandleSignal(task.TerminateAllocation, "allocation resource pool changed")
 		}
 	case userInitiatedEarlyExit:
 		if err := t.handleUserInitiatedStops(ctx, msg); err != nil {
@@ -578,7 +576,7 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 	case t.state == model.PausedState:
 		if t.allocation != nil {
 			ctx.Log().Info("decided to terminate trial due to pause")
-			t.allocation.HandleSignal(tproto.TerminateAllocation, s.InformationalReason)
+			t.allocation.HandleSignal(task.TerminateAllocation, s.InformationalReason)
 		}
 	case model.StoppingStates[t.state]:
 		switch {
@@ -589,10 +587,10 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 				InformationalReason: s.InformationalReason,
 			})
 		default:
-			if action, ok := map[model.State]tproto.AllocationSignal{
-				model.StoppingCanceledState: tproto.TerminateAllocation,
-				model.StoppingKilledState:   tproto.KillAllocation,
-				model.StoppingErrorState:    tproto.KillAllocation,
+			if action, ok := map[model.State]task.AllocationSignal{
+				model.StoppingCanceledState: task.TerminateAllocation,
+				model.StoppingKilledState:   task.KillAllocation,
+				model.StoppingErrorState:    task.KillAllocation,
 			}[t.state]; ok {
 				ctx.Log().Infof("decided to %s trial", action)
 				t.allocation.HandleSignal(action, s.InformationalReason)

@@ -12,8 +12,6 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
-	"github.com/determined-ai/determined/master/internal/task/tproto"
-
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -43,6 +41,44 @@ const (
 	okExitMessage      = "allocation exited successfully"
 	missingExitMessage = ""
 )
+
+const (
+	// KillAllocation is the signal to kill an allocation; analogous to in SIGKILL.
+	KillAllocation AllocationSignal = "kill"
+	// TerminateAllocation is the signal to kill an allocation; analogous to in SIGTERM.
+	TerminateAllocation AllocationSignal = "terminate"
+)
+
+// AllocationSignal is an interface for signals that can be sent to an allocation.
+type AllocationSignal string
+
+// AllocationState requests allocation state. A copy is filled and returned.
+type AllocationState struct {
+	State     model.AllocationState
+	Resources map[sproto.ResourcesID]sproto.ResourcesSummary
+	Ready     bool
+
+	Addresses  map[sproto.ResourcesID][]cproto.Address
+	Containers map[sproto.ResourcesID][]cproto.Container // TODO(!!!): Why multiple containers?
+}
+
+// FirstContainer returns the first container in the allocation state.
+func (a AllocationState) FirstContainer() *cproto.Container {
+	for _, cs := range a.Containers {
+		for _, c := range cs {
+			return &c
+		}
+	}
+	return nil
+}
+
+// FirstContainerAddresses returns the first container's addresses in the allocation state.
+func (a AllocationState) FirstContainerAddresses() []cproto.Address {
+	for _, ca := range a.Addresses {
+		return ca
+	}
+	return nil
+}
 
 // Allocation encapsulates all the state of a single allocation.
 type Allocation struct {
@@ -102,7 +138,7 @@ type AllocationExited struct {
 	// userRequestedStop is when a container unexpectedly exits with 0.
 	UserRequestedStop bool
 	Err               error
-	FinalState        tproto.AllocationState
+	FinalState        AllocationState
 }
 
 // startAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
@@ -188,7 +224,7 @@ func (a *Allocation) run(ctx context.Context) {
 }
 
 // State returns a copy of the current state of the allocation.
-func (a *Allocation) State() tproto.AllocationState {
+func (a *Allocation) State() AllocationState {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	return a.state()
@@ -219,14 +255,14 @@ func (a *Allocation) WaitForRestore(ctx context.Context) error {
 }
 
 // HandleSignal handles an external signal to kill or terminate the allocation.
-func (a *Allocation) HandleSignal(sig tproto.AllocationSignal, reason string) {
+func (a *Allocation) HandleSignal(sig AllocationSignal, reason string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
 	switch sig {
-	case tproto.KillAllocation:
+	case KillAllocation:
 		a.tryExitOrKill(reason)
-	case tproto.TerminateAllocation:
+	case TerminateAllocation:
 		a.tryExitOrTerminate(reason, false)
 	}
 }
@@ -251,8 +287,6 @@ func (a *Allocation) SetProxyAddress(_ context.Context, address string) error {
 
 // SendLog sends a container log, enriched with metadata from the allocation.
 func (a *Allocation) SendLog(log *sproto.ContainerLog) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
 	a.sendTaskLog(log.ToTaskLog())
 }
 
@@ -561,7 +595,7 @@ func (a *Allocation) ResourcesAllocated(msg *sproto.ResourcesAllocated) error {
 	if cfg := a.req.IdleTimeout; cfg != nil {
 		idle.Register(*cfg, func(ctx context.Context, err error) {
 			a.syslog.WithError(err).Infof("killing %s due to inactivity", a.req.Name)
-			a.HandleSignal(tproto.TerminateAllocation, err.Error())
+			a.HandleSignal(TerminateAllocation, err.Error())
 		})
 	}
 
@@ -854,7 +888,7 @@ func (a *Allocation) preempt(reason string) {
 	})
 
 	preemptible.Preempt(a.req.AllocationID.String(), func(ctx context.Context, err error) {
-		a.HandleSignal(tproto.KillAllocation, err.Error())
+		a.HandleSignal(KillAllocation, err.Error())
 	})
 }
 
@@ -895,7 +929,7 @@ func (a *Allocation) kill(reason string) {
 			return
 		}
 
-		a.HandleSignal(tproto.KillAllocation, "killing again after 30s without all container exits")
+		a.HandleSignal(KillAllocation, "killing again after 30s without all container exits")
 	})
 }
 
@@ -1178,11 +1212,12 @@ func (a *Allocation) enrichLog(log *model.TaskLog) *model.TaskLog {
 	return log
 }
 
+// sendTaskLog is called without a lock.
 func (a *Allocation) sendTaskLog(log *model.TaskLog) {
 	tasklogger.Insert(a.enrichLog(log))
 }
 
-func (a *Allocation) state() tproto.AllocationState {
+func (a *Allocation) state() AllocationState {
 	addresses := map[sproto.ResourcesID][]cproto.Address{}
 	containers := map[sproto.ResourcesID][]cproto.Container{}
 	resources := map[sproto.ResourcesID]sproto.ResourcesSummary{}
@@ -1204,7 +1239,7 @@ func (a *Allocation) state() tproto.AllocationState {
 		}
 	}
 
-	return tproto.AllocationState{
+	return AllocationState{
 		State:      a.getModelState(),
 		Resources:  resources,
 		Addresses:  addresses,
