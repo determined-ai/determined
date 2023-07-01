@@ -14,7 +14,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/allgather"
-	"github.com/determined-ai/determined/master/internal/task/allocationservice"
 	"github.com/determined-ai/determined/master/internal/task/tproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
@@ -25,12 +24,7 @@ import (
 var syslog = logrus.WithField("component", "allocation_service")
 
 // DefaultService is the singleton default AllocationService.
-var DefaultService *AllocationService
-
-func init() {
-	DefaultService = NewAllocationService()
-	allocationservice.SetDefaultService(DefaultService)
-}
+var DefaultService = NewAllocationService()
 
 // AllocationService is used to launch, track and interact with allocations.
 type AllocationService struct {
