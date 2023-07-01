@@ -121,6 +121,12 @@ enum PermissionType {
   PERMISSION_TYPE_CREATE_MODEL_REGISTRY = 7003;
   // Ability to delete model registry.
   PERMISSION_TYPE_DELETE_MODEL_REGISTRY = 7004;
+  // Ability to delete model version.
+  PERMISSION_TYPE_DELETE_MODEL_VERSION = 7005;
+  // Ability to delete another user's model registry.
+  PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY = 7006;
+  // Ability to delete another user's model version.
+  PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION = 7007;
 
   // Ability to view master logs.
   PERMISSION_TYPE_VIEW_MASTER_LOGS = 8001;

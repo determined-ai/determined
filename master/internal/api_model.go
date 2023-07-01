@@ -525,11 +525,6 @@ func (a *apiServer) DeleteModel(
 	ctx context.Context, req *apiv1.DeleteModelRequest) (*apiv1.DeleteModelResponse,
 	error,
 ) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
-	if err != nil {
-		return nil, err
-	}
-
 	currModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
@@ -544,8 +539,7 @@ func (a *apiServer) DeleteModel(
 		return nil, err
 	}
 	holder := &modelv1.Model{}
-	err = a.m.db.QueryProto("delete_model", holder, currModel.Name, user.User.Id,
-		user.User.Admin)
+	err = a.m.db.QueryProto("delete_model", holder, currModel.Name)
 
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "model %q does not exist or not deletable by this user",
@@ -789,11 +783,6 @@ func (a *apiServer) DeleteModelVersion(
 	ctx context.Context, req *apiv1.DeleteModelVersionRequest) (*apiv1.DeleteModelVersionResponse,
 	error,
 ) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
-	if err != nil {
-		return nil, err
-	}
-
 	modelVersion, err := a.ModelVersionFromID(req.ModelName, req.ModelVersionNum)
 	if err != nil {
 		return nil, err
@@ -807,14 +796,13 @@ func (a *apiServer) DeleteModelVersion(
 	if err != nil {
 		return nil, err
 	}
-	if err := modelauth.AuthZProvider.Get().CanDeleteModel(ctx, *curUser, currModel,
-		currModel.WorkspaceId); err != nil {
+	if err := modelauth.AuthZProvider.Get().CanDeleteModelVersion(ctx, *curUser,
+		modelVersion, currModel.WorkspaceId); err != nil {
 		return nil, err
 	}
 
 	holder := &modelv1.ModelVersion{}
-	err = a.m.db.QueryProto("delete_model_version", holder, modelVersion.Id,
-		user.User.Id, user.User.Admin)
+	err = a.m.db.QueryProto("delete_model_version", holder, modelVersion.Id)
 
 	modelVersionName := fmt.Sprintf("%v:%v", req.ModelName, req.ModelVersionNum)
 	if holder.Id == 0 {

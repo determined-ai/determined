@@ -132,7 +132,7 @@ const NavigationSideBar: React.FC = () => {
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const {
-    settings: { navbarCollapsed },
+    settings: { navbarCollapsed: navbarCollapsedShortcut },
   } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
@@ -204,7 +204,7 @@ const NavigationSideBar: React.FC = () => {
 
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
-      if (matchesShortcut(e, navbarCollapsed)) {
+      if (matchesShortcut(e, navbarCollapsedShortcut)) {
         handleCollapse();
       }
     };
@@ -214,7 +214,7 @@ const NavigationSideBar: React.FC = () => {
     return () => {
       keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
     };
-  }, [handleCollapse, navbarCollapsed]);
+  }, [handleCollapse, navbarCollapsedShortcut]);
 
   const { canAdministrateUsers } = usePermissions();
 
@@ -356,8 +356,8 @@ const NavigationSideBar: React.FC = () => {
               label={settings.navbarCollapsed ? 'Expand' : 'Collapse'}
               tooltip={
                 settings.navbarCollapsed
-                  ? `Expand (${shortcutToString(navbarCollapsed)})`
-                  : `Collapse (${shortcutToString(navbarCollapsed)})`
+                  ? `Expand (${shortcutToString(navbarCollapsedShortcut)})`
+                  : `Collapse (${shortcutToString(navbarCollapsedShortcut)})`
               }
               onClick={handleCollapse}
             />
