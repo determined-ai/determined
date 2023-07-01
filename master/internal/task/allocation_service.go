@@ -14,7 +14,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/allgather"
-	"github.com/determined-ai/determined/master/internal/task/tproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -211,10 +210,10 @@ func (as *AllocationService) SetResourcesAsDaemon(
 }
 
 // State returns a copy of the current state of the allocation.
-func (as *AllocationService) State(id model.AllocationID) (tproto.AllocationState, error) {
+func (as *AllocationService) State(id model.AllocationID) (AllocationState, error) {
 	ref := as.GetAllocation(id)
 	if ref == nil {
-		return tproto.AllocationState{}, api.NotFoundErrs("allocation", id.String(), true)
+		return AllocationState{}, api.NotFoundErrs("allocation", id.String(), true)
 	}
 	return ref.State(), nil
 }

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/task/tproto"
-
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 
 	"golang.org/x/exp/slices"
@@ -219,7 +217,7 @@ type command struct {
 	jobID          model.JobID
 	allocationID   model.AllocationID
 	allocation     *task.Allocation
-	lastState      tproto.AllocationState
+	lastState      task.AllocationState
 	exitStatus     *task.AllocationExited
 	restored       bool
 
@@ -341,7 +339,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 	case *apiv1.KillNotebookRequest:
 		// TODO(Brad): Do the same thing to allocations that we are doing to RMs.
-		c.allocation.HandleSignal(tproto.KillAllocation, "user requested kill")
+		c.allocation.HandleSignal(task.KillAllocation, "user requested kill")
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
 	case *apiv1.SetNotebookPriorityRequest:
 		err := c.setPriority(ctx, int(msg.Priority), true)
@@ -361,7 +359,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillCommandRequest:
-		c.allocation.HandleSignal(tproto.KillAllocation, "user requested kill")
+		c.allocation.HandleSignal(task.KillAllocation, "user requested kill")
 		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
 
 	case *apiv1.SetCommandPriorityRequest:
@@ -382,7 +380,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillShellRequest:
-		c.allocation.HandleSignal(tproto.KillAllocation, "user requested kill")
+		c.allocation.HandleSignal(task.KillAllocation, "user requested kill")
 		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
 
 	case *apiv1.SetShellPriorityRequest:
@@ -403,7 +401,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillTensorboardRequest:
-		c.allocation.HandleSignal(tproto.KillAllocation, "user requested kill")
+		c.allocation.HandleSignal(task.KillAllocation, "user requested kill")
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
 
 	case *apiv1.SetTensorboardPriorityRequest:
@@ -416,7 +414,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case *apiv1.DeleteWorkspaceRequest:
 		if c.Metadata.WorkspaceID == model.AccessScopeID(msg.Id) {
-			c.allocation.HandleSignal(tproto.KillAllocation, "user requested workspace delete")
+			c.allocation.HandleSignal(task.KillAllocation, "user requested workspace delete")
 		}
 
 	case sproto.NotifyRMPriorityChange:
@@ -592,7 +590,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 // we don't ask for a refresh because it won't respond. Otherwise, ask with a timeout
 // since there is another ask in the opposite direction, and even though it's probably
 // 1 in a million runs, we don't want to deadlock.
-func (c *command) refreshAllocationState(ctx *actor.Context) tproto.AllocationState {
+func (c *command) refreshAllocationState(ctx *actor.Context) task.AllocationState {
 	if c.exitStatus != nil {
 		return c.exitStatus.FinalState
 	}

@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
-	"github.com/determined-ai/determined/master/internal/task/tproto"
-
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 
@@ -135,7 +133,7 @@ func (ma mockAllocation) AwaitTermination() *task.AllocationExited {
 	return <-ma.exit
 }
 
-func (ma mockAllocation) HandleSignal(sig tproto.AllocationSignal, reason string) {}
+func (ma mockAllocation) HandleSignal(sig task.AllocationSignal, reason string) {}
 
 func setup(t *testing.T) (
 	*actor.System,
