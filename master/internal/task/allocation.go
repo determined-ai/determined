@@ -414,11 +414,13 @@ func (a *Allocation) handleRMEvent(msg sproto.AllocationEvent) {
 	case *sproto.ResourcesFailure:
 		a.RestoreResourceFailure(msg)
 	case *sproto.ReleaseResources:
+		if msg.ForceKill {
+			a.tryExitOrKill(msg.Reason)
+			return
+		}
 		a.tryExitOrTerminate("allocation being preempted by the scheduler", msg.ForcePreemption)
 	case *sproto.ContainerLog:
 		a.sendTaskLog(msg.ToTaskLog())
-	case *sproto.ResourceDisabled:
-		a.tryExitOrKill(msg.InformationReason)
 	case *sproto.InvalidResourcesRequestError:
 		a.crash(msg.Cause)
 	default:
@@ -778,6 +780,15 @@ func (a *Allocation) RestoreResourceFailure(msg *sproto.ResourcesFailure) {
 	a.crash(msg)
 }
 
+// ReleaseResources prompts the allocate to release resources.
+func (a *Allocation) ReleaseResources(msg *sproto.ReleaseResources) {
+	if msg.ForceKill {
+		a.tryExitOrKill(msg.Reason)
+		return
+	}
+	a.tryExitOrTerminate(msg.Reason, msg.ForcePreemption)
+}
+
 // crash closes the allocation due to an error, beginning the kill flow.
 func (a *Allocation) crash(err error) {
 	a.syslog.WithError(err).Errorf("allocation encountered fatal error")
@@ -785,6 +796,14 @@ func (a *Allocation) crash(err error) {
 		a.exitErr = err
 	}
 	a.tryExitOrKill(err.Error())
+}
+
+// tryExitOrKill attempts to close an allocation by killing it.
+func (a *Allocation) tryExitOrKill(reason string) {
+	if exited := a.tryExit(reason); exited {
+		return
+	}
+	a.kill(reason)
 }
 
 // tryExitOrTerminate attempts to close an allocation by gracefully stopping it.
@@ -799,14 +818,6 @@ func (a *Allocation) tryExitOrTerminate(reason string, forcePreemption bool) {
 	default:
 		a.kill(reason)
 	}
-}
-
-// tryExitOrKill attempts to close an allocation by killing it.
-func (a *Allocation) tryExitOrKill(reason string) {
-	if exited := a.tryExit(reason); exited {
-		return
-	}
-	a.kill(reason)
 }
 
 // tryExit attempts to exit an allocation while not killing or preempting it.

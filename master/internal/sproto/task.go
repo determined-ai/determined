@@ -112,12 +112,6 @@ type (
 		// - true: ok or unknown
 		Fulfillable bool
 	}
-	// ResourceDisabled informs the allocation its resources have been disabled. It just causes
-	// the allocation to kill its reasons. This probably shouldn't be an event, but the RM
-	// should take the kill action since it knows it wants to (but that is difficult, because
-	// it surfaces to the allocation as just a 137 exit). TODO(!!!): Let's separate all these
-	// into some files, `events.go`.
-	ResourceDisabled struct{ InformationReason string }
 )
 
 // AllocationEvent describes a change in status or state of an allocation or its resources.
@@ -140,9 +134,6 @@ func (ResourcesFailure) AllocationEvent() {}
 
 // AllocationEvent implements AllocationEvent.
 func (ContainerLog) AllocationEvent() {}
-
-// AllocationEvent implements AllocationEvent.
-func (ResourceDisabled) AllocationEvent() {}
 
 // AllocationUnsubscribeFn closes a subscription.
 type AllocationUnsubscribeFn func()
@@ -257,10 +248,11 @@ type (
 
 	// ReleaseResources notifies the task actor to release resources.
 	ReleaseResources struct {
-		ResourcePool string
+		Reason string
 		// If specified as true (default false), Requestor wants to force
 		// a preemption attempt instead of an immediate kill.
 		ForcePreemption bool
+		ForceKill       bool
 	}
 	// ResourcesRuntimeInfo is all the inforamation provided at runtime to make a task spec.
 	ResourcesRuntimeInfo struct {

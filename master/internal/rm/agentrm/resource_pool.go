@@ -332,7 +332,7 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 
 func (rp *resourcePool) releaseResource(ctx *actor.Context, allocationID model.AllocationID) {
 	ctx.Log().Infof("releasing resources taken by %s", allocationID)
-	rmevents.Publish(allocationID, &sproto.ReleaseResources{ResourcePool: rp.config.PoolName})
+	rmevents.Publish(allocationID, &sproto.ReleaseResources{Reason: "preempted by the scheduler"})
 }
 
 func (rp *resourcePool) resourcesReleased(
