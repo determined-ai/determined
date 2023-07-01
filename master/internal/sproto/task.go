@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
@@ -117,6 +118,12 @@ type (
 // AllocationEvent describes a change in status or state of an allocation or its resources.
 type AllocationEvent interface{ AllocationEvent() }
 
+// SentinelAllocationEvent can be used as a marker in the event stream.
+type SentinelAllocationEvent struct{}
+
+// AllocationEvent implements AllocationEvent.
+func (SentinelAllocationEvent) AllocationEvent() {}
+
 // AllocationEvent implements AllocationEvent.
 func (ResourcesAllocated) AllocationEvent() {}
 
@@ -143,24 +150,29 @@ type AllocationUnsubscribeFn func()
 // and adversely affect the system.
 type AllocationSubscription struct {
 	// C is never closed, because only the consumer knows, by aggregating events, when events stop.
-	C     <-chan AllocationEvent
+	inbox *queue.Queue[AllocationEvent]
 	unsub AllocationUnsubscribeFn
 }
 
 // NewAllocationSubscription create a new subcription.
 func NewAllocationSubscription(
-	updates <-chan AllocationEvent,
+	inbox *queue.Queue[AllocationEvent],
 	cl AllocationUnsubscribeFn,
 ) *AllocationSubscription {
 	return &AllocationSubscription{
-		C:     updates,
+		inbox: inbox,
 		unsub: cl,
 	}
+}
+
+func (a *AllocationSubscription) Get() AllocationEvent {
+	return a.inbox.Get()
 }
 
 // Close unsubscribes us from further updates.
 func (a *AllocationSubscription) Close() {
 	a.unsub()
+	a.inbox.Put(SentinelAllocationEvent{})
 }
 
 // Proto returns the proto representation of ProxyPortConfig.

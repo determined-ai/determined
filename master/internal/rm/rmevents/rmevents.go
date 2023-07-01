@@ -5,6 +5,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 )
 
 // TODO(!!!): Must add tests and review intensely.
@@ -15,9 +16,9 @@ const (
 )
 
 type subscribeRequest struct {
-	topic   model.AllocationID
-	id      int
-	updates chan<- sproto.AllocationEvent
+	topic model.AllocationID
+	id    int
+	inbox *queue.Queue[sproto.AllocationEvent]
 }
 
 type unsubscribeRequest struct {
@@ -49,24 +50,10 @@ func newManager() *manager {
 
 func (m *manager) subscribe(topic model.AllocationID) *sproto.AllocationSubscription {
 	id := m.id.next()
-	updates := make(chan sproto.AllocationEvent, perConsumerBufferSize)
-	m.subEvents <- subscribeRequest{topic: topic, id: id, updates: updates}
-	return sproto.NewAllocationSubscription(updates, func() {
-		// fire off the unsub request asynchronously and drain the channel, in the event
-		// we stopped consuming, our channel was full, and the fanOut routine is blocked
-		// sending to us.
-		done := make(chan struct{})
-		go func() {
-			m.unsubEvents <- unsubscribeRequest{topic: topic, id: id}
-			close(done)
-		}()
-		for {
-			select {
-			case <-updates:
-			case <-done:
-				return
-			}
-		}
+	inbox := queue.New[sproto.AllocationEvent]()
+	m.subEvents <- subscribeRequest{topic: topic, id: id, inbox: inbox}
+	return sproto.NewAllocationSubscription(inbox, func() {
+		m.unsubEvents <- unsubscribeRequest{topic: topic, id: id}
 	})
 }
 
@@ -79,7 +66,7 @@ func fanOut(
 	subs <-chan subscribeRequest,
 	unsubs <-chan unsubscribeRequest,
 ) {
-	subsByTopicByID := map[model.AllocationID]map[int]chan<- sproto.AllocationEvent{}
+	subsByTopicByID := map[model.AllocationID]map[int]*queue.Queue[sproto.AllocationEvent]{}
 	for {
 		select {
 		case msg := <-in:
@@ -93,7 +80,7 @@ func fanOut(
 }
 
 func send(
-	subsByTopicByID map[model.AllocationID]map[int]chan<- sproto.AllocationEvent,
+	subsByTopicByID map[model.AllocationID]map[int]*queue.Queue[sproto.AllocationEvent],
 	msg eventWithTopic,
 ) {
 	subs, ok := subsByTopicByID[msg.topic]
@@ -101,30 +88,29 @@ func send(
 		return
 	}
 	for _, c := range subs {
-		c <- msg.event // TODO: some kind of fail-safe. Timeout?
+		c.Put(msg.event)
 	}
 }
 
 func sub(
-	subsByTopicByID map[model.AllocationID]map[int]chan<- sproto.AllocationEvent,
+	subsByTopicByID map[model.AllocationID]map[int]*queue.Queue[sproto.AllocationEvent],
 	msg subscribeRequest,
 ) {
 	if _, ok := subsByTopicByID[msg.topic]; !ok {
-		subsByTopicByID[msg.topic] = map[int]chan<- sproto.AllocationEvent{}
+		subsByTopicByID[msg.topic] = map[int]*queue.Queue[sproto.AllocationEvent]{}
 	}
-	subsByTopicByID[msg.topic][msg.id] = msg.updates
+	subsByTopicByID[msg.topic][msg.id] = msg.inbox
 }
 
 func unsub(
-	subsByTopicByID map[model.AllocationID]map[int]chan<- sproto.AllocationEvent,
+	subsByTopicByID map[model.AllocationID]map[int]*queue.Queue[sproto.AllocationEvent],
 	msg unsubscribeRequest,
 ) {
-	updates, ok := subsByTopicByID[msg.topic][msg.id]
+	_, ok := subsByTopicByID[msg.topic][msg.id]
 	if !ok {
 		return
 	}
 
-	close(updates)
 	delete(subsByTopicByID[msg.topic], msg.id)
 	if len(subsByTopicByID[msg.topic]) == 0 {
 		delete(subsByTopicByID, msg.topic)
