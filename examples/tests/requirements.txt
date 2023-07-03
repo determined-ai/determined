@@ -10,4 +10,7 @@ torchvision==0.10.0
 pandas
 tensorflow_datasets
 scipy
+
+# these tests should be run in the environment repo before pushing images
+# pillow<10.0.0 is required for pytorch<1.13.0
 pillow<10.0.0
