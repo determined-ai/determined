@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -117,6 +118,22 @@ func customMetricTypeToPartitionType(mType model.MetricType) MetricPartitionType
 	default:
 		return GenericMetric
 	}
+}
+
+// addTrialMetrics inserts a set of trial metrics to the database.
+func (db *PgDB) addTrialMetrics(
+	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricType,
+) (rollbacks int, err error) {
+	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
+	case float64, nil:
+	default:
+		return 0, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
+	}
+	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", mType),
+		func(tx *sqlx.Tx) error {
+			rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, mType)
+			return err
+		})
 }
 
 // AddTrainingMetrics [DEPRECATED] adds a completed step to the database with the given training

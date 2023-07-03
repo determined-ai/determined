@@ -357,22 +357,6 @@ WHERE id = $1;
 	return rollbacks, nil
 }
 
-// addTrialMetrics inserts a set of trial metrics to the database.
-func (db *PgDB) addTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricType,
-) (rollbacks int, err error) {
-	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
-	case float64, nil:
-	default:
-		return 0, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
-	}
-	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", mType),
-		func(tx *sqlx.Tx) error {
-			rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, mType)
-			return err
-		})
-}
-
 const (
 	// InfPostgresString how we store infinity in JSONB in postgres.
 	InfPostgresString = "Infinity"
