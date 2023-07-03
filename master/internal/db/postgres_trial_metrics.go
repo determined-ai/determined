@@ -161,19 +161,46 @@ AND custom_type = $4`,
 		return 0, nil, nil, err
 	}
 	addedBody = mergeMetrics(replacedBody, mBody)
-	id, err = db.addRawMetrics(ctx, tx, addedBody, runID, trialID, lastProcessedBatch, mType)
+	id, err = db.updateRawMetrics(ctx, tx, addedBody, runID, trialID, lastProcessedBatch, mType)
 	return id, addedBody, replacedBody, err
+}
+
+func (db *PgDB) updateRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
+	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
+) (int, error) {
+	if err := mType.Validate(); err != nil {
+		return 0, err
+	}
+	pType := customMetricTypeToPartitionType(mType)
+	var metricRowID int
+	if err := tx.QueryRowContext(ctx, `
+UPDATE metrics
+SET metrics = $1
+WHERE archived = false
+AND trial_id = $2
+AND partition_type = $3
+AND custom_type = $4
+AND total_batches = $5
+RETURNING id`,
+		*mBody.ToJSONObj(), trialID, pType, mType, lastProcessedBatch,
+	).Scan(&metricRowID); err != nil {
+		if err == sql.ErrNoRows {
+			return 0, errors.New("no matching metrics row found to update")
+		}
+		return 0, errors.Wrap(err, "updating metrics")
+	}
+
+	return metricRowID, nil
 }
 
 // addRawMetrics inserts a set of raw metrics to the database and returns the metric id.
 func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
 	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
 ) (int, error) {
-	pType := customMetricTypeToPartitionType(mType)
-
 	if err := mType.Validate(); err != nil {
 		return 0, err
 	}
+	pType := customMetricTypeToPartitionType(mType)
 
 	var metricRowID int
 	//nolint:execinquery // we want to get the id.
