@@ -118,7 +118,7 @@ interacts with Slurm, we recommend the following steps:
    Determined maps Slurm partitions to Determined resource pools. It is recommended that the nodes
    within a partition be homogeneous for Determined to effectively schedule GPU jobs.
 
-   -  A Slurm partition with GPUs is identified as a CUDA/ROCM resource pool. The type is inherited
+   -  A Slurm partition with GPUs is identified as a CUDA/ROCm resource pool. The type is inherited
       from the ``resource_manager.slot_type`` configuration. It can be also be specified-per
       partition using ``resource_manager.partition_overrides``
 
@@ -143,6 +143,44 @@ interacts with Slurm, we recommend the following steps:
    the job will remain in state ``PENDING`` with reason code ``PartitionNodelimit``. Make sure that
    all partitions that have ``MaxNodes`` specified use a value larger than the number of GPUs in the
    partition.
+
+-  Enable multiple jobs per compute node.
+
+   Determined uses GPU or CPU resource requests to Slurm. When Slurm schedules jobs, however, it
+   also considers the memory requirements of the job. In order to enable multiple jobs to be
+   scheduled on a node concurrently, configuration is required in `slurm.conf
+   <https://slurm.schedmd.com/slurm.conf.html>`__.
+
+   The default memory allocated for a job is ``UNLIMITED``. This prevents multiple jobs from
+   executing on the same node unless this value is reduced. The default memory allocation for a job
+   is derived from one of the `slurm.conf` configuration variables ``DefMemPerNode``,
+   ``DefMemPerGPU``, or ``DefMemPerCPU``. In order to enable individual GPUs/CPUs scheduling by
+   default configure ``DefMemPerNode`` (which provides a total amount of memory for each job) or
+   ``DefMemPerGPU`` and ``DefMemPerCPU`` (which derives the memory allocation from the number of GPU
+   or CPU associated with the job). Configure one or more of these values to reduce the default
+   memory allocation and enable jobs to divide up the available memory on compute nodes.
+
+   An alternative to changing the default memory configuration via `slurm.conf
+   <https://slurm.schedmd.com/slurm.conf.html>`__, is to provide explicit options on each job via
+   the Determined configuration (:ref:`task_container_defaults <master-task-container-defaults>`,
+   :ref:`resource pool <cluster-resource-pools>` configuration, or experiment configuration
+   :ref:`slurm.sbatch_args <sbatch-args>`).
+
+   For details about how those requests are derived, see :ref:`hpc_launching_architecture`.
+
+-  Enable resource separation using cgroups.
+
+   While Slurm always allocates distinct resources for each job, by default there is no enforced
+   separation when the resources are co-located in the same compute node. Such enforcement can be
+   enabled using `cgroups <https://slurm.schedmd.com/cgroups.html>`__. GPU allocation is
+   communicated to the application via the environment variables ``CUDA_VISIBLE_DEVICES`` or
+   ``ROCR_VISIBLE_DEVICES``. Determined uses those specifications to utilize only the GPU resources
+   scheduled by Slurm for the job, but CPU and memory have no enforcement. If desired, you can
+   enable such enforcement with the Slurm `cgroups <https://slurm.schedmd.com/cgroups.html>`__
+   configuration. Enable cgroups support in `slurm.conf
+   <https://slurm.schedmd.com/slurm.conf.html>`__, then enable enforcement of specific resource
+   classes in `cgroup.conf <https://slurm.schedmd.com/cgroup.conf.html>`__ (``ConstrainCores`` for
+   CPU, ``ConstrainDevices`` for GPU, and ``ConstrainRAMSpace`` for memory).
 
 -  Tune the Slurm configuration for Determined job preemption.
 
@@ -223,7 +261,7 @@ interacts with PBS, we recommend the following steps:
    Determined maps PBS queues to Determined resource pools. It is recommended that the nodes within
    a queue be homogeneous for Determined to effectively schedule GPU jobs.
 
-   -  A PBS queue with GPUs is identified as a CUDA/ROCM resource pool. The type is inherited from
+   -  A PBS queue with GPUs is identified as a CUDA/ROCm resource pool. The type is inherited from
       the ``resource_manager.slot_type`` configuration. It can be also be specified per partition
       using ``resource_manager.partition_overrides``.
 
