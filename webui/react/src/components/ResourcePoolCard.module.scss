@@ -45,7 +45,7 @@ $font-size-content: 12px;
     }
     .default {
       color: var(--theme-surface-on);
-      display: flex;
+      margin-left: 8px;
 
       span {
         font-size: $font-size-content;

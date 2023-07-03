@@ -26,6 +26,8 @@ import { useObservable } from 'utils/observable';
 import { DarkLight } from 'utils/themes';
 
 import Json from './Json';
+import { useModal } from './kit/Modal';
+import ResourcePoolBindingModalComponent from './ResourcePoolBindingModal';
 import css from './ResourcePoolCard.module.scss';
 
 interface Props {
@@ -89,6 +91,8 @@ export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
 
 const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
+  const ColumnsCustomizeModal = useModal(ResourcePoolBindingModalComponent);
+
   const descriptionClasses = [css.description];
   const { rbacEnabled } = useObservable(determinedStore.info);
   const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
@@ -129,20 +133,35 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
   }, [processedPool, isAux, pool]);
 
   const onDropdown = useCallback(() => {
-    
-  }, [])
+    ColumnsCustomizeModal.open();
+  }, [ColumnsCustomizeModal]);
 
   return (
-    <Card href={paths.resourcePool(pool.name)} size="medium" actionMenu={[{ key: 'bindings', label: 'Manage bindings' }]} onDropdown={onDropdown}>
-      <div className={css.base}>
-        <div className={css.header}>
-          <div className={css.info}>
-            <div className={css.name}>{pool.name}</div>
+    <>
+      <Card
+        actionMenu={[{ key: 'bindings', label: 'Manage bindings' }]}
+        href={paths.resourcePool(pool.name)}
+        size="medium"
+        onDropdown={onDropdown}>
+        <div className={css.base}>
+          <div className={css.header}>
+            <div className={css.info}>
+              <div className={css.name}>{pool.name}</div>
+            </div>
+            <div className={css.default}>
+              {(pool.defaultAuxPool || pool.defaultComputePool) && <span>Default</span>}
+              {pool.description && <Icon name="info" showTooltip title={pool.description} />}
+            </div>
           </div>
-          <div className={css.default}>
-            {(pool.defaultAuxPool || pool.defaultComputePool) && <span>Default</span>}
-            {pool.description && <Icon name="info" showTooltip title={pool.description} />}
-          </div>
+          <Suspense fallback={<Spinner center />}>
+            <div className={css.body}>
+              <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
+              <section className={css.details}>
+                <Json hideDivider json={shortDetails} />
+              </section>
+              <div />
+            </div>
+          </Suspense>
         </div>
         <Suspense fallback={<Spinner center />}>
           <div className={css.body}>
@@ -162,8 +181,9 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
             <div />
           </div>
         </Suspense>
-      </div>
     </Card>
+    <ColumnsCustomizeModal.Component bindings={[]} pool={pool.name} />
+    </>
   );
 };
 
