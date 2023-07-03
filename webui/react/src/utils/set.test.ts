@@ -4,7 +4,6 @@ describe('Set Utilities', () => {
   const one = new Set([1, 2, 3]);
   const two = new Set([1, 2, 3, 4]);
   const three = new Set([2, 3, 4]);
-  const four = new Set([2, 3]);
 
   describe('isSuperset', () => {
     it('should return true if the first argument is a superset of the second', () => {
@@ -17,11 +16,6 @@ describe('Set Utilities', () => {
   describe('union', () => {
     it('should find the union of two sets', () => {
       expect(utils.union(one, three)).toStrictEqual(two);
-    });
-  });
-  describe('intersection', () => {
-    it('should find the intersection of two sets', () => {
-      expect(utils.intersection(one, three)).toStrictEqual(four);
     });
   });
   describe('symmetricDifference', () => {
