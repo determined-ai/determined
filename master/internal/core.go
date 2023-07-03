@@ -848,7 +848,7 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 	defer closeWithErrCheck("db", m.db)
 
-	err = db.ValidateRPWorkspaceBindings(m.config.ResourcePools)
+	err = db.ValidateRPWorkspaceBindings(ctx, m.config.ResourcePools)
 	if err != nil {
 		return err
 	}

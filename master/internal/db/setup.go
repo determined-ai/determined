@@ -55,13 +55,12 @@ func Setup(opts *config.DBConfig) (*PgDB, error) {
 
 // ValidateRPWorkspaceBindings checks if rp-workspace bindings pertain to valid resource pools.
 // Bindings with resource pools that don't exist have the "valid" column set to false.
-func ValidateRPWorkspaceBindings(pools []config.ResourcePoolConfig) error {
+func ValidateRPWorkspaceBindings(ctx context.Context, pools []config.ResourcePoolConfig) error {
 	var poolNames []string
 	for _, pool := range pools {
 		poolNames = append(poolNames, pool.PoolName)
 	}
 
-	ctx := context.Background()
 	tx, err := Bun().BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("error beginning transaction: %t", err)
