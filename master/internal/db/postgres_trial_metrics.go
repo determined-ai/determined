@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -138,9 +139,14 @@ func (db *PgDB) addMetricsWithMerge(ctx context.Context, tx *sqlx.Tx, mBody *met
 	if err == nil {
 		return id, mBody, nil, nil
 	} else if err != sql.ErrNoRows {
-		return 0, nil, nil, err
+		if pgErr, ok := err.(*pq.Error); ok {
+			if pgErr.Code != "23505" {
+				return 0, nil, nil, err
+			}
+		}
 	} // else we need to merge.
 	replacedBodyJSON := model.JSONObj{}
+	fmt.Println("merging")
 
 	// get the old metrics
 	err = tx.QueryRowContext(ctx, `
@@ -153,14 +159,18 @@ AND custom_type = $4`,
 		lastProcessedBatch, trialID,
 		customMetricTypeToPartitionType(mType), mType).Scan(&replacedBodyJSON)
 	if err != nil {
+		fmt.Println("error fetching existing metric body", err)
 		return 0, nil, nil, err
 	}
+	fmt.Println("fetched existing metric body", replacedBodyJSON)
 	replacedBody = &metricsBody{Type: mType}
 	// CHECK: how do we avoid this copy?
 	if err = replacedBody.LoadJSON(&replacedBodyJSON); err != nil {
 		return 0, nil, nil, err
 	}
+	fmt.Println(replacedBody)
 	addedBody = mergeMetrics(replacedBody, mBody)
+	fmt.Println(addedBody)
 	id, err = db.updateRawMetrics(ctx, tx, addedBody, runID, trialID, lastProcessedBatch, mType)
 	return id, addedBody, replacedBody, err
 }
@@ -184,9 +194,6 @@ AND total_batches = $5
 RETURNING id`,
 		*mBody.ToJSONObj(), trialID, pType, mType, lastProcessedBatch,
 	).Scan(&metricRowID); err != nil {
-		if err == sql.ErrNoRows {
-			return 0, errors.New("no matching metrics row found to update")
-		}
 		return 0, errors.Wrap(err, "updating metrics")
 	}
 
@@ -203,6 +210,7 @@ func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metricsBo
 	pType := customMetricTypeToPartitionType(mType)
 
 	var metricRowID int
+	// ON CONFLICT clause is not supported with partitioned tables (SQLSTATE 0A000)
 	//nolint:execinquery // we want to get the id.
 	if err := tx.QueryRowContext(ctx, `
 INSERT INTO metrics
@@ -212,9 +220,7 @@ VALUES
 RETURNING id`,
 		trialID, runID, *mBody.ToJSONObj(), lastProcessedBatch, pType, mType,
 	).Scan(&metricRowID); err != nil {
-		if err == sql.ErrNoRows {
-			return 0, err
-		}
+		fmt.Println(err)
 		return 0, errors.Wrap(err, "inserting metrics")
 	}
 
