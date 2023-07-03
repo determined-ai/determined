@@ -326,7 +326,7 @@ func (db *PgDB) _addTrialMetricsTx(
 	default: // no rollbacks happened.
 		summaryMetricsJSONPath := model.TrialSummaryMetricsJSONPath(mType)
 		if _, ok := summaryMetrics[summaryMetricsJSONPath]; !ok {
-			summaryMetrics[summaryMetricsJSONPath] = model.JSONObj{}
+			summaryMetrics[summaryMetricsJSONPath] = map[string]any{}
 			// CHECK: assert no merge happened.
 		}
 		var replacedAvgMetrics *structpb.Struct = nil
@@ -334,7 +334,7 @@ func (db *PgDB) _addTrialMetricsTx(
 			replacedAvgMetrics = replacedMetrics.AvgMetrics
 		}
 		summaryMetrics[summaryMetricsJSONPath] = calculateNewSummaryMetrics(
-			summaryMetrics[summaryMetricsJSONPath].(model.JSONObj),
+			summaryMetrics[summaryMetricsJSONPath].(map[string]any),
 			addedMetrics.AvgMetrics, replacedAvgMetrics,
 		)
 

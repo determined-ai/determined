@@ -2,11 +2,9 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -47,19 +45,57 @@ func (b metricsBody) ToJSONObj() *model.JSONObj {
 	return &body
 }
 
-func (b metricsBody) LoadJSON(body *model.JSONObj) error {
+func (b *metricsBody) LoadJSON(body *model.JSONObj) error {
 	isValidation := b.Type == model.ValidationMetricType
 	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
-	if avgMetrics, ok := (*body)[metricsJSONPath].(*structpb.Struct); ok {
+
+	val, exists := (*body)[metricsJSONPath]
+	if !exists {
+		return fmt.Errorf("expected key %s in JSON body", metricsJSONPath)
+	}
+
+	if isValidation {
+		avgMetrics, ok := val.(*structpb.Struct)
+		if !ok {
+			return fmt.Errorf("value at key %s should be a pointer to structpb.Struct", metricsJSONPath)
+		}
 		b.AvgMetrics = avgMetrics
 	} else {
-		return errors.Errorf("avg metrics not found in %s", metricsJSONPath)
+		// Handle BatchMetrics only if they are present.
+		batchMetrics, ok := val.([]*structpb.Struct)
+		if ok {
+			b.BatchMetrics = batchMetrics
+		}
 	}
-	if batchMetrics, ok := (*body)[metricsJSONPath].([]*structpb.Struct); ok {
-		b.BatchMetrics = batchMetrics
-	}
+
 	return nil
 }
+
+// func (b metricsBody) LoadJSON(body *model.JSONObj) error {
+// 	isValidation := b.Type == model.ValidationMetricType
+// 	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
+// 	val, exists := body[metricsJSONPath]
+// 	if !exists {
+// 		return fmt.Errorf("expected key %s in JSON body", metricsJSONPath)
+// 	}
+
+// 	switch b.Type {
+// 	case model.ValidationMetricType:
+// 		var ok bool
+// 		b.AvgMetrics, ok = val.(*structpb.Struct)
+// 		if !ok {
+// 			return fmt.Errorf("value at key %s should be a pointer to structpb.Struct", metricsJSONPath)
+// 		}
+// 	default:
+// 		arr, ok := val.([]*structpb.Struct)
+// 		if !ok {
+// 			return fmt.Errorf("value at key %s should be a slice of pointers to structpb.Struct", metricsJSONPath)
+// 		}
+// 		b.BatchMetrics = arr
+// 	}
+
+// 	return nil
+// }
 
 func newMetricsBody(
 	batchMetrics []*structpb.Struct,
@@ -135,43 +171,36 @@ WHERE trial_id = $1
 func (db *PgDB) addMetricsWithMerge(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
 	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
 ) (metricID int, addedBody *metricsBody, replacedBody *metricsBody, err error) {
-	id, err := db.addRawMetrics(ctx, tx, mBody, runID, trialID, lastProcessedBatch, mType)
-	if err == nil {
-		return id, mBody, nil, nil
-	} else if err != sql.ErrNoRows {
-		if pgErr, ok := err.(*pq.Error); ok {
-			if pgErr.Code != "23505" {
-				return 0, nil, nil, err
-			}
-		}
-	} // else we need to merge.
-	replacedBodyJSON := model.JSONObj{}
-	fmt.Println("merging")
-
-	// get the old metrics
+	var replacedBodyJSON model.JSONObj
 	err = tx.QueryRowContext(ctx, `
-SELECT metrics FROM metrics
+SELECT COALESCE((SELECT metrics FROM metrics
 WHERE archived = false
 AND total_batches = $1
 AND trial_id = $2
 AND partition_type = $3
-AND custom_type = $4`,
+AND custom_type = $4), NULL)`,
 		lastProcessedBatch, trialID,
 		customMetricTypeToPartitionType(mType), mType).Scan(&replacedBodyJSON)
 	if err != nil {
-		fmt.Println("error fetching existing metric body", err)
-		return 0, nil, nil, err
+		return 0, nil, nil, errors.Wrap(err, "getting old metrics")
 	}
-	fmt.Println("fetched existing metric body", replacedBodyJSON)
+	needsMerge := replacedBodyJSON != nil
+
+	fmt.Println("replaced body", replacedBodyJSON)
+	fmt.Println("needs merge", needsMerge)
+
+	if !needsMerge {
+		id, err := db.addRawMetrics(ctx, tx, mBody, runID, trialID, lastProcessedBatch, mType)
+		return id, mBody, nil, err
+	}
+
 	replacedBody = &metricsBody{Type: mType}
 	// CHECK: how do we avoid this copy?
 	if err = replacedBody.LoadJSON(&replacedBodyJSON); err != nil {
 		return 0, nil, nil, err
 	}
-	fmt.Println(replacedBody)
 	addedBody = mergeMetrics(replacedBody, mBody)
-	fmt.Println(addedBody)
-	id, err = db.updateRawMetrics(ctx, tx, addedBody, runID, trialID, lastProcessedBatch, mType)
+	id, err := db.updateRawMetrics(ctx, tx, addedBody, runID, trialID, lastProcessedBatch, mType)
 	return id, addedBody, replacedBody, err
 }
 
@@ -182,6 +211,8 @@ func (db *PgDB) updateRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metric
 		return 0, err
 	}
 	pType := customMetricTypeToPartitionType(mType)
+	fmt.Println("updating metrics", mBody)
+
 	var metricRowID int
 	if err := tx.QueryRowContext(ctx, `
 UPDATE metrics
