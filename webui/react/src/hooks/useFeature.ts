@@ -4,7 +4,6 @@ import determinedStore, { DeterminedInfo } from 'stores/determinedInfo';
 
 // Add new feature switches below using `|`
 export type ValidFeature =
-  | 'trials_comparison'
   | 'dashboard'
   | 'explist_v2'
   | 'chart'
@@ -15,7 +14,6 @@ const FeatureDefault: { [K in ValidFeature]: boolean } = {
   dashboard: false,
   explist_v2: false,
   rp_binding: false,
-  trials_comparison: false,
 };
 
 const queryParams = new URLSearchParams(window.location.search);
