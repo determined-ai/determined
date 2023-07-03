@@ -26,6 +26,36 @@ const (
 	GenericMetric MetricPartitionType = "GENERIC"
 )
 
+type metricsBody struct {
+	BatchMetrics []*structpb.Struct
+	AvgMetrics   *structpb.Struct
+	Type         model.MetricType
+}
+
+func (b metricsBody) ToJSONObj() *model.JSONObj {
+	isValidation := b.Type == model.ValidationMetricType
+	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
+	body := model.JSONObj{
+		metricsJSONPath: b.AvgMetrics,
+	}
+	if b.BatchMetrics != nil {
+		body[metricsJSONPath] = b.BatchMetrics
+	}
+	return &body
+}
+
+func newMetricsBody(
+	batchMetrics []*structpb.Struct,
+	avgMetrics *structpb.Struct,
+	mType model.MetricType,
+) *metricsBody {
+	return &metricsBody{
+		AvgMetrics:   avgMetrics,
+		BatchMetrics: batchMetrics,
+		Type:         mType,
+	}
+}
+
 // BunSelectMetricsQuery sets up a bun select query for based on new metrics table
 // simplifying some weirdness we set up for pg10 support.
 func BunSelectMetricsQuery(metricType model.MetricType, inclArchived bool) *bun.SelectQuery {
@@ -84,22 +114,22 @@ WHERE trial_id = $1
 }
 
 // addMetricsWithMerge inserts a set of metrics to the database and returns the metric id,
-// the new metrics, and the previous metrics in case of a merge.
-func (db *PgDB) addMetricsWithMerge(ctx context.Context, tx *sqlx.Tx, metricsBody *model.JSONObj,
+// and the results.
+func (db *PgDB) addMetricsWithMerge(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
 	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
-) (metricID int, mergedBody *model.JSONObj, oldBody *model.JSONObj, err error) {
+) (metricID int, addedBody *metricsBody, replacedBody *metricsBody, err error) {
 	// TODO: fetch previous metrics
 	// TODO: merge previous metrics with new metrics
 	// TODO: addRawMetrics new metrics
 	// TODO: merge separately on avgMetrics and batchMetrics
-	mergedBody = mergeMetrics(oldBody, metricsBody)
-	id, err := db.addRawMetrics(ctx, tx, mergedBody, runID, trialID, lastProcessedBatch, mType)
+	addedBody = mergeMetrics(replacedBody, mBody)
+	id, err := db.addRawMetrics(ctx, tx, addedBody, runID, trialID, lastProcessedBatch, mType)
 
-	return id, mergedBody, oldBody, err
+	return id, addedBody, replacedBody, err
 }
 
 // addRawMetrics inserts a set of raw metrics to the database and returns the metric id.
-func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *model.JSONObj,
+func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
 	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
 ) (int, error) {
 	pType := customMetricTypeToPartitionType(mType)
@@ -116,7 +146,7 @@ INSERT INTO metrics
 VALUES
 	($1, $2, now(), $3, $4, $5, $6)
 RETURNING id`,
-		trialID, runID, *metricsBody, lastProcessedBatch, pType, mType,
+		trialID, runID, *mBody.ToJSONObj(), lastProcessedBatch, pType, mType,
 	).Scan(&metricRowID); err != nil {
 		return metricRowID, errors.Wrap(err, "inserting metrics")
 	}
@@ -235,7 +265,7 @@ AND custom_type = $4
 	return false, nil
 }
 
-func mergeMetrics(oldBody, newBody *model.JSONObj) *model.JSONObj {
+func mergeMetrics(oldBody, newBody *metricsBody) *metricsBody {
 	// TODO
 	// can this be done in db? should it?
 	return newBody

@@ -266,16 +266,7 @@ func (db *PgDB) _addTrialMetricsTx(
 	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mType model.MetricType,
 ) (rollbacks int, err error) {
 	isValidation := mType == model.ValidationMetricType
-	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
-	metricsBody := model.JSONObj{
-		metricsJSONPath: m.Metrics.AvgMetrics,
-		"batch_metrics": m.Metrics.BatchMetrics,
-	}
-	if isValidation {
-		metricsBody = model.JSONObj{
-			metricsJSONPath: m.Metrics.AvgMetrics,
-		}
-	}
+	mBody := newMetricsBody(m.Metrics.BatchMetrics, m.Metrics.AvgMetrics, mType)
 
 	if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
 		return rollbacks, err
@@ -312,8 +303,8 @@ func (db *PgDB) _addTrialMetricsTx(
 		return rollbacks, fmt.Errorf("error getting summary metrics from trials: %w", err)
 	}
 
-	metricRowID, mergedMetrics, oldMetrics, err := db.addMetricsWithMerge(ctx, tx,
-		&metricsBody, m.TrialRunId, m.TrialId, m.StepsCompleted, mType)
+	metricRowID, addedMetrics, replacedMetrics, err := db.addMetricsWithMerge(ctx, tx,
+		mBody, m.TrialRunId, m.TrialId, m.StepsCompleted, mType)
 	if err != nil {
 		return rollbacks, err
 	}
@@ -338,19 +329,13 @@ func (db *PgDB) _addTrialMetricsTx(
 			summaryMetrics[summaryMetricsJSONPath] = model.JSONObj{}
 			// CHECK: assert no merge happened.
 		}
-		var addedAvgMetricsPB *structpb.Struct
-		var oldAvgMetrics *model.JSONObj
-		if mergedMetrics != nil {
-			addedAvgMetricsPB, err = structpb.NewStruct(*mergedMetrics)
-			// FIXME: isn't there be a better way to get a reference to this here?
-			_oldAvgMetrics := (*oldMetrics)[metricsJSONPath].(model.JSONObj)
-			oldAvgMetrics = &_oldAvgMetrics
-		} else {
-			addedAvgMetricsPB = m.Metrics.AvgMetrics
+		var replacedAvgMetrics *structpb.Struct = nil
+		if replacedMetrics != nil {
+			replacedAvgMetrics = replacedMetrics.AvgMetrics
 		}
 		summaryMetrics[summaryMetricsJSONPath] = calculateNewSummaryMetrics(
 			summaryMetrics[summaryMetricsJSONPath].(model.JSONObj),
-			addedAvgMetricsPB, oldAvgMetrics,
+			addedMetrics.AvgMetrics, replacedAvgMetrics,
 		)
 
 		var latestValidationID *int
@@ -463,7 +448,7 @@ var pythonISOFormatRegex = regexp.MustCompile(
 // metrics and the existing summary metrics.
 func calculateNewSummaryMetrics(
 	summaryMetrics model.JSONObj, mAdded *structpb.Struct,
-	mRemoved *model.JSONObj,
+	mRemoved *structpb.Struct,
 ) model.JSONObj {
 	if mRemoved != nil {
 		// mAdded: merged final ver, or the diff?
