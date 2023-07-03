@@ -280,11 +280,11 @@ func ReadRPsAvailableToWorkspace(
 	return rpNames, pagination, nil
 }
 
-func GetDefaultPoolsForWorkspace(ctx context.Context, workspaceName string,
+func GetDefaultPoolsForWorkspace(ctx context.Context, workspaceId int,
 ) (computePool, auxPool string, err error) {
 	var target model.Workspace
-	err = Bun().NewSelect().Model(&target).Where("Name = ?", workspaceName).Scan(ctx)
-	if err != nil {
+	err = Bun().NewSelect().Model(&target).Where("id = ?", workspaceId).Scan(ctx)
+	if err != nil && err != sql.ErrNoRows {
 		return "", "", err
 	}
 

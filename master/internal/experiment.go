@@ -130,8 +130,17 @@ func newExperiment(
 	taskSpec *tasks.TaskSpec,
 ) (*experiment, []command.LaunchWarning, error) {
 	resources := activeConfig.Resources()
+	fmt.Println()
+	fmt.Println()
+	fmt.Println("activeconfig workspace:", activeConfig.Workspace())
+	fmt.Println("taskSpec workspace:", taskSpec.Workspace)
+	fmt.Println()
+	workspaceModel, err := workspace.WorkspaceByName(context.TODO(), taskSpec.Workspace)
+	if err != nil {
+		return nil, nil, err
+	}
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system, resources.ResourcePool(), "", resources.SlotsPerTrial(),
+		m.system, resources.ResourcePool(), workspaceModel.ID, resources.SlotsPerTrial(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create an experiment: %w", err)
@@ -925,8 +934,12 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error {
 	resources := e.activeConfig.Resources()
 	oldRP := resources.ResourcePool()
+	workspaceModel, err := workspace.WorkspaceByName(context.TODO(), e.activeConfig.Workspace())
+	if err != nil {
+		return err
+	}
 	rp, err := e.rm.ResolveResourcePool(
-		ctx, msg.ResourcePool, "", e.activeConfig.Resources().SlotsPerTrial(),
+		ctx, msg.ResourcePool, workspaceModel.ID, e.activeConfig.Resources().SlotsPerTrial(),
 	)
 	switch {
 	case err != nil:

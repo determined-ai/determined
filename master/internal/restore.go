@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/determined-ai/determined/master/internal/workspace"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -81,10 +83,14 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		)
 	}
 
+	workspaceModel, err := workspace.WorkspaceByName(context.TODO(), activeConfig.Workspace())
+	if err != nil {
+		return err
+	}
 	poolName, err := m.rm.ResolveResourcePool(
 		m.system,
 		activeConfig.Resources().ResourcePool(),
-		"",
+		workspaceModel.ID,
 		activeConfig.Resources().SlotsPerTrial(),
 	)
 	if err != nil {

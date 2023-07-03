@@ -59,6 +59,7 @@ type protoCommandParams struct {
 	Config       *pstruct.Struct
 	Files        []*utilv1.File
 	MustZeroSlot bool
+	WorkspaceId  int
 }
 
 func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoCommandParams) (
@@ -95,7 +96,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		resources.Slots = 0
 	}
 	poolName, err := a.m.rm.ResolveResourcePool(
-		a.m.system, resources.ResourcePool, "", resources.Slots)
+		a.m.system, resources.ResourcePool, req.WorkspaceId, resources.Slots)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
@@ -341,6 +342,7 @@ func (a *apiServer) LaunchCommand(
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
 		Files:        req.Files,
+		WorkspaceId:  int(req.WorkspaceId),
 	})
 	if err != nil {
 		return nil, api.APIErrToGRPC(err)

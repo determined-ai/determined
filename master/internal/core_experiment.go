@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/workspace"
+
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 
@@ -289,8 +291,13 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 
 	defaulted := schemas.WithDefaults(config)
 	resources := defaulted.Resources()
+	workspaceModel, err := workspace.WorkspaceByName(context.TODO(), defaulted.Workspace())
+	if err != nil {
+		return nil, config, nil, nil, err
+	}
+
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system, resources.ResourcePool(), "", resources.SlotsPerTrial())
+		m.system, resources.ResourcePool(), workspaceModel.ID, resources.SlotsPerTrial())
 	if err != nil {
 		return nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
 	}

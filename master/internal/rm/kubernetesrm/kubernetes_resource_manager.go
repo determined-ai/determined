@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	workspace2 "github.com/determined-ai/determined/master/internal/workspace"
-
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
@@ -86,12 +84,12 @@ func (k ResourceManager) GetResourcePoolRef(
 // ResolveResourcePool resolves the resource pool completely.
 func (k ResourceManager) ResolveResourcePool(
 	ctx actor.Messenger,
-	name,
-	workspaceName string,
+	name string,
+	workspaceID int,
 	slots int,
 ) (string, error) {
 	ctxTODO := context.TODO()
-	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctxTODO, workspaceName)
+	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctxTODO, workspaceID)
 	if err != nil {
 		return "", err
 	}
@@ -126,12 +124,8 @@ func (k ResourceManager) ResolveResourcePool(
 		return defaultComputePool, nil
 	}
 
-	workspaceModel, err := workspace2.WorkspaceByName(ctxTODO, workspaceName)
-	if err != nil {
-		return "", err
-	}
 	poolNames, _, err := db.ReadRPsAvailableToWorkspace(
-		context.TODO(), int32(workspaceModel.ID), 0, -1, config.GetMasterConfig().ResourcePools)
+		context.TODO(), int32(workspaceID), 0, -1, config.GetMasterConfig().ResourcePools)
 	if err != nil {
 		return "", err
 	}
@@ -144,8 +138,8 @@ func (k ResourceManager) ResolveResourcePool(
 	}
 	if !found {
 		return "", fmt.Errorf(
-			"resource pool %s does not exist or is not available to workspace %s",
-			name, workspaceName)
+			"resource pool %s does not exist or is not available to workspace ID %d",
+			name, workspaceID)
 	}
 
 	if err := k.ValidateResourcePool(ctx, name); err != nil {

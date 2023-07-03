@@ -6,23 +6,18 @@ import (
 	"fmt"
 	"time"
 
-	workspace2 "github.com/determined-ai/determined/master/internal/workspace"
-
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
-
 	"github.com/labstack/echo/v4"
-
-	"github.com/determined-ai/determined/master/pkg/aproto"
-	"github.com/determined-ai/determined/master/pkg/model"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
@@ -105,10 +100,10 @@ func (a ResourceManager) CheckMaxSlotsExceeded(
 
 // ResolveResourcePool fully resolves the resource pool name.
 func (a ResourceManager) ResolveResourcePool(
-	ctx actor.Messenger, name, workspaceName string, slots int,
+	ctx actor.Messenger, name string, workspaceID, slots int,
 ) (string, error) {
 	ctxTODO := context.TODO()
-	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctxTODO, workspaceName)
+	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctxTODO, workspaceID)
 	if err != nil {
 		return "", err
 	}
@@ -143,12 +138,8 @@ func (a ResourceManager) ResolveResourcePool(
 		return defaultComputePool, nil
 	}
 
-	workspaceModel, err := workspace2.WorkspaceByName(ctxTODO, workspaceName)
-	if err != nil {
-		return "", err
-	}
 	poolNames, _, err := db.ReadRPsAvailableToWorkspace(
-		context.TODO(), int32(workspaceModel.ID), 0, -1, config.GetMasterConfig().ResourcePools)
+		context.TODO(), int32(workspaceID), 0, -1, config.GetMasterConfig().ResourcePools)
 	if err != nil {
 		return "", err
 	}
@@ -161,8 +152,8 @@ func (a ResourceManager) ResolveResourcePool(
 	}
 	if !found {
 		return "", fmt.Errorf(
-			"resource pool %s does not exist or is not available to workspace %s",
-			name, workspaceName)
+			"resource pool %s does not exist or is not available to workspace id %d",
+			name, workspaceID)
 	}
 
 	if err := a.ValidateResourcePool(ctx, name); err != nil {
