@@ -962,29 +962,21 @@ const InlineFormSection: React.FC = () => {
         </p>
         <br />
         <div style={{ maxWidth: '700px' }}>
-          <InlineForm
-            inputElement={<Input />}
-            inputValue={inputValue}
-            label="Input"
-            onSubmit={inputCallback}
-          />
-          <InlineForm
-            inputElement={
-              <Select defaultValue={1} searchable={false}>
-                {[
-                  { label: 'off', value: 1 },
-                  { label: 'on', value: 2 },
-                ].map((opt) => (
-                  <Option key={opt.value as React.Key} value={opt.value}>
-                    {opt.label}
-                  </Option>
-                ))}
-              </Select>
-            }
-            inputValue={selectValue}
-            label="Select"
-            onSubmit={selectCallback}
-          />
+          <InlineForm inputValue={inputValue} label="Input" onSubmit={inputCallback}>
+            <Input />
+          </InlineForm>
+          <InlineForm inputValue={selectValue} label="Select" onSubmit={selectCallback}>
+            <Select defaultValue={1} searchable={false}>
+              {[
+                { label: 'off', value: 1 },
+                { label: 'on', value: 2 },
+              ].map((opt) => (
+                <Option key={opt.value as React.Key} value={opt.value}>
+                  {opt.label}
+                </Option>
+              ))}
+            </Select>
+          </InlineForm>
         </div>
       </AntDCard>
     </ComponentSection>

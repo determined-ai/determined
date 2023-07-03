@@ -72,24 +72,22 @@ const SettingsAccount: React.FC = () => {
       </div>
       <Divider />
       <InlineForm
-        inputElement={<Input maxLength={32} placeholder="Add username" />}
         inputValue={currentUser?.username}
         label="Username"
         required
         rules={[{ message: 'Please input your username', required: true }]}
         testId="username"
-        onSubmit={handleSaveUsername}
-      />
+        onSubmit={handleSaveUsername}>
+        <Input maxLength={32} placeholder="Add username" />
+      </InlineForm>
       <Divider />
       <InlineForm
-        inputElement={
-          <Input maxLength={32} placeholder="Add display name" style={{ widows: '80%' }} />
-        }
         inputValue={currentUser?.displayName}
         label="Display Name"
         testId="displayname"
-        onSubmit={handleSaveDisplayName}
-      />
+        onSubmit={handleSaveDisplayName}>
+        <Input maxLength={32} placeholder="Add display name" style={{ widows: '80%' }} />
+      </InlineForm>
       {info.userManagementEnabled && (
         <>
           <Divider />

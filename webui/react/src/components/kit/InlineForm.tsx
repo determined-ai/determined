@@ -1,28 +1,27 @@
 import { Form } from 'antd';
 import { Rule } from 'antd/es/form';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
+import { Primitive } from 'components/kit/internal/types';
 
 import css from './InlineForm.module.scss';
 
-interface Props {
+interface Props extends React.PropsWithChildren {
   label: string;
-  inputValue?: string | number;
+  inputValue?: Primitive;
   onSubmit: (inputValue: string | number) => Promise<void | Error> | void;
-  inputElement: React.ReactNode;
   required?: boolean;
-  forceEdit?: boolean;
+  forceEdit?: boolean; // in case we want to start as "edit mode"/isEditing state === true
   rules?: Rule[];
   testId?: string;
 }
 
 const InlineForm: React.FC<Props> = ({
   label,
-
   forceEdit = false,
-  inputElement,
+  children,
   inputValue = '',
   rules,
   required,
@@ -33,9 +32,9 @@ const InlineForm: React.FC<Props> = ({
   const [form] = Form.useForm();
 
   const resetForm = useCallback(() => {
-    form.resetFields();
+    form.setFieldValue('input', inputValue);
     setIsEditing(false);
-  }, [form]);
+  }, [form, inputValue]);
 
   const submitForm = useCallback(async () => {
     try {
@@ -43,11 +42,17 @@ const InlineForm: React.FC<Props> = ({
 
       onSubmit(formValues.input);
     } catch (error) {
-      form.resetFields();
+      form.setFieldValue('input', inputValue);
     }
 
     setIsEditing(false);
-  }, [form, onSubmit]);
+  }, [form, onSubmit, inputValue]);
+
+  useEffect(() => {
+    const fieldValue = form.getFieldValue('input');
+
+    if (fieldValue !== inputValue) form.setFieldValue('input', inputValue);
+  }, [form, inputValue]);
 
   return (
     <Form
@@ -59,14 +64,13 @@ const InlineForm: React.FC<Props> = ({
       requiredMark={false}>
       <Form.Item
         className={css.formItemInput}
-        initialValue={inputValue}
         label={label}
         labelCol={{ span: 0 }}
         name="input"
         required={required}
         rules={rules}>
         {isEditing ? (
-          inputElement
+          children
         ) : (
           <span className={css.readOnlyElement} data-testid={`value-${testId}`}>
             {inputValue}
@@ -79,9 +83,13 @@ const InlineForm: React.FC<Props> = ({
             <Form.Item>
               <Button
                 data-testid={`submit-${testId}`}
+                htmlType="submit"
                 icon={<Icon name="checkmark" title="confirm" />}
                 type="primary"
-                onClick={() => submitForm()}
+                onClick={() => {
+                  form.submit();
+                  submitForm();
+                }}
               />
             </Form.Item>
             <Form.Item>
