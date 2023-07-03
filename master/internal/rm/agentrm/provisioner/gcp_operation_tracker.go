@@ -15,14 +15,12 @@ import (
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 )
 
-type (
-	trackOperationDone struct {
-		op *compute.Operation
+type trackOperationDone struct {
+	op *compute.Operation
 
-		doneOp *compute.Operation
-		err    error
-	}
-)
+	doneOp *compute.Operation
+	err    error
+}
 
 type doneCallback func(
 	op *compute.Operation,
@@ -30,9 +28,8 @@ type doneCallback func(
 	err error,
 )
 
-// gcpOperationTracker is an actor that tracks GCP zone operation. Its lifecycle is bound
-// with the operation the actor tracks. If the actor is alive, it tracks a GCP operation
-// every one second.
+// gcpOperationTracker tracks GCP zone operations, its lifecycle is bound with a context.
+// While the context is valid it waits a second between polling operations.
 type gcpOperationTracker struct {
 	config *provconfig.GCPClusterConfig
 	client *compute.Service
@@ -41,11 +38,13 @@ type gcpOperationTracker struct {
 
 func (t *gcpOperationTracker) pollOperation(ctx context.Context, done doneCallback) error {
 	for {
+		// Check for expired context and slow down the polling rate.
 		select {
 		case <-ctx.Done():
 			done(t.op, nil, errors.New("tracking GCP operation timeout"))
 			return nil
-		default:
+		case <-time.After(time.Second):
+			// Keep tracking the operation.
 		}
 
 		resp, respErr := t.client.ZoneOperations.
@@ -82,8 +81,6 @@ func (t *gcpOperationTracker) pollOperation(ctx context.Context, done doneCallba
 			errOp, _ := json.Marshal(resp)
 			return errors.Errorf("unexpected message: %s", errOp)
 		}
-		// Slow down the polling rate.
-		time.Sleep(time.Second)
 	}
 }
 
@@ -118,7 +115,7 @@ func (t *gcpBatchOperationTracker) startTracker(postProcess func([]*compute.Oper
 	groupCtx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	g := new(errgroup.Group)
+	var g errgroup.Group
 	t.doneOps = make([]trackOperationDone, 0, len(t.ops))
 	for _, op := range t.ops {
 		o := &gcpOperationTracker{t.config, t.client, op}
