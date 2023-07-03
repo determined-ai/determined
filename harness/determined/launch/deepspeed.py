@@ -6,11 +6,12 @@ It launches the entrypoint script using DeepSpeed's launch process.
 import argparse
 import logging
 import os
+import re
 import shlex
 import subprocess
 import sys
 import time
-from typing import List, Optional
+from typing import List, Mapping, Optional
 
 import deepspeed
 import filelock
@@ -129,36 +130,43 @@ def create_sshd_cmd() -> List[str]:
     ]
 
 
-def create_deepspeed_env_file() -> None:
-    """Create an env var export file to pass Determined vars to the deepspeed launcher.
+def filter_env_vars(env: Mapping[str, str]) -> Mapping[str, str]:
+    """
+    Calculate all non-dangerous environment variables that we can pass to training workers.
 
     By default, the deepspeed launcher only keeps env vars that start with one of the following
     ["NCCL", "PYTHON", "MV2", "UCX"].
 
-    There are certain variables that we need to be set that we can pass to deepspeed using
-    a custom env vars file.
+    We modify this behavior to include all environment variables except for ones we know to be
+    problematic.  This is the same strategy taken by horovodrun.
     """
-    INCLUDE = [
-        "PATH",
-        "LD_LIBRARY_PATH",
-        "USE_DEEPSPEED",
-        "DET_CHIEF_IP",
-        "DET_MANUAL_INIT_DISTRIBUTED",
-        "DET_DEEPSPEED_HOSTFILE_PATH",
-        "DET_MASTER_CERT_FILE",
-        "DET_MASTER_CERT_NAME",
+
+    EXCLUDE_REGEX = [
+        "BASH_FUNC_.*",
+        "OLDPWD",
+        "HOSTNAME",
+        ".*CUDA_VISIBLE_DEVICES",
+        "SLURM_PROCID",
+        "DET_SLOT_IDS",
+        "DET_AGENT_ID",
     ]
+
+    excludes = [re.compile(x) for x in EXCLUDE_REGEX]
+
+    return {k: v for k, v in env.items() if not any(x.match(k) for x in excludes)}
+
+
+def create_deepspeed_env_file() -> None:
+    """Create an env var export file to pass Determined vars to the deepspeed launcher."""
     with open(DEEPSPEED_ENVIRONMENT_NAME, "w") as f:
-        environ = os.environ.copy()
-        for k, v in environ.items():
-            if k in INCLUDE:
-                # We need to turn our envvars into shell-escaped strings to export them correctly
-                # since values may contain spaces and quotes.  shlex.quote was removed from the
-                # deepspeed launcher in 0.6.2 so we add it here for this version onwards.
-                if deepspeed_version >= version.parse("0.6.2"):
-                    f.write(f"{k}={shlex.quote(v)}\n")
-                else:
-                    f.write(f"{k}={v}\n")
+        for k, v in filter_env_vars(os.environ).items():
+            # We need to turn our envvars into shell-escaped strings to export them correctly
+            # since values may contain spaces and quotes.  shlex.quote was removed from the
+            # deepspeed launcher in 0.6.2 so we add it here for this version onwards.
+            if deepspeed_version >= version.parse("0.6.2"):
+                f.write(f"{k}={shlex.quote(v)}\n")
+            else:
+                f.write(f"{k}={v}\n")
 
 
 def create_run_command(master_address: str, hostfile_path: Optional[str]) -> List[str]:
