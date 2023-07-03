@@ -44,12 +44,20 @@ func (a *ModelAuthZPermissive) CanCreateModel(ctx context.Context,
 	return (&ModelAuthZBasic{}).CanCreateModel(ctx, curUser, workspaceID)
 }
 
-// CanDeleteModel calls RBAC authz but enforces basic authz..
+// CanDeleteModel calls RBAC authz but enforces basic authz.
 func (a *ModelAuthZPermissive) CanDeleteModel(ctx context.Context, curUser model.User,
 	m *modelv1.Model, workspaceID int32,
 ) error {
 	_ = (&ModelAuthZRBAC{}).CanDeleteModel(ctx, curUser, m, workspaceID)
 	return (&ModelAuthZBasic{}).CanDeleteModel(ctx, curUser, m, workspaceID)
+}
+
+// CanDeleteModelVersion calls RBAC authz but enforces basic authz.
+func (a *ModelAuthZPermissive) CanDeleteModelVersion(ctx context.Context, curUser model.User,
+	modelVersion *modelv1.ModelVersion, workspaceID int32,
+) error {
+	_ = (&ModelAuthZRBAC{}).CanDeleteModelVersion(ctx, curUser, modelVersion, workspaceID)
+	return (&ModelAuthZBasic{}).CanDeleteModelVersion(ctx, curUser, modelVersion, workspaceID)
 }
 
 // CanMoveModel always returns true.
