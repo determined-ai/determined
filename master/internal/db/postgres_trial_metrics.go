@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -43,6 +44,20 @@ func (b metricsBody) ToJSONObj() *model.JSONObj {
 		body[metricsJSONPath] = b.BatchMetrics
 	}
 	return &body
+}
+
+func (b metricsBody) LoadJSON(body *model.JSONObj) error {
+	isValidation := b.Type == model.ValidationMetricType
+	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
+	if avgMetrics, ok := (*body)[metricsJSONPath].(*structpb.Struct); ok {
+		b.AvgMetrics = avgMetrics
+	} else {
+		return errors.Errorf("avg metrics not found in %s", metricsJSONPath)
+	}
+	if batchMetrics, ok := (*body)[metricsJSONPath].([]*structpb.Struct); ok {
+		b.BatchMetrics = batchMetrics
+	}
+	return nil
 }
 
 func newMetricsBody(
@@ -119,13 +134,34 @@ WHERE trial_id = $1
 func (db *PgDB) addMetricsWithMerge(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
 	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
 ) (metricID int, addedBody *metricsBody, replacedBody *metricsBody, err error) {
-	// TODO: fetch previous metrics
-	// TODO: merge previous metrics with new metrics
-	// TODO: addRawMetrics new metrics
-	// TODO: merge separately on avgMetrics and batchMetrics
-	addedBody = mergeMetrics(replacedBody, mBody)
-	id, err := db.addRawMetrics(ctx, tx, addedBody, runID, trialID, lastProcessedBatch, mType)
+	id, err := db.addRawMetrics(ctx, tx, mBody, runID, trialID, lastProcessedBatch, mType)
+	if err == nil {
+		return id, mBody, nil, nil
+	} else if err != sql.ErrNoRows {
+		return 0, nil, nil, err
+	} // else we need to merge.
+	replacedBodyJSON := model.JSONObj{}
 
+	// get the old metrics
+	err = tx.QueryRowContext(ctx, `
+SELECT metrics FROM metrics
+WHERE archived = false
+AND total_batches = $1
+AND trial_id = $2
+AND partition_type = $3
+AND custom_type = $4`,
+		lastProcessedBatch, trialID,
+		customMetricTypeToPartitionType(mType), mType).Scan(&replacedBodyJSON)
+	if err != nil {
+		return 0, nil, nil, err
+	}
+	replacedBody = &metricsBody{Type: mType}
+	// CHECK: how do we avoid this copy?
+	if err = replacedBody.LoadJSON(&replacedBodyJSON); err != nil {
+		return 0, nil, nil, err
+	}
+	addedBody = mergeMetrics(replacedBody, mBody)
+	id, err = db.addRawMetrics(ctx, tx, addedBody, runID, trialID, lastProcessedBatch, mType)
 	return id, addedBody, replacedBody, err
 }
 
@@ -149,7 +185,10 @@ VALUES
 RETURNING id`,
 		trialID, runID, *mBody.ToJSONObj(), lastProcessedBatch, pType, mType,
 	).Scan(&metricRowID); err != nil {
-		return metricRowID, errors.Wrap(err, "inserting metrics")
+		if err == sql.ErrNoRows {
+			return 0, err
+		}
+		return 0, errors.Wrap(err, "inserting metrics")
 	}
 
 	return metricRowID, nil
