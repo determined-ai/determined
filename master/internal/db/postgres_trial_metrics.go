@@ -17,8 +17,6 @@ import (
 // once we upgrade to pg11 and can use DEFAULT partitioning.
 type MetricPartitionType string
 
-type metricsBody map[string]interface{}
-
 const (
 	// TrainingMetric designates metrics from training steps.
 	TrainingMetric MetricPartitionType = "TRAINING"
@@ -85,18 +83,22 @@ WHERE trial_id = $1
 	return int(affectedRows), nil
 }
 
-func (db *PgDB) addMetricsWithMerge(ctx context.Context, tx *sqlx.Tx, metricsBody *map[string]interface{},
+// addMetricsWithMerge inserts a set of metrics to the database and returns the metric id,
+// the new metrics, and the previous metrics in case of a merge.
+func (db *PgDB) addMetricsWithMerge(ctx context.Context, tx *sqlx.Tx, metricsBody *model.JSONObj,
 	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
-) (int, error) {
+) (int, *model.JSONObj, *model.JSONObj, error) {
 	// TODO: fetch previous metrics
 	// TODO: merge previous metrics with new metrics
 	// TODO: addRawMetrics new metrics
 	newMetricsBody := *metricsBody
-	return db.addRawMetrics(ctx, tx, &newMetricsBody, runID, trialID, lastProcessedBatch, mType)
+	id, err := db.addRawMetrics(ctx, tx, &newMetricsBody, runID, trialID, lastProcessedBatch, mType)
+
+	return id, &newMetricsBody, metricsBody, err
 }
 
 // addRawMetrics inserts a set of raw metrics to the database and returns the metric id.
-func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map[string]interface{},
+func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *model.JSONObj,
 	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
 ) (int, error) {
 	pType := customMetricTypeToPartitionType(mType)

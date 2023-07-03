@@ -267,12 +267,12 @@ func (db *PgDB) _addTrialMetricsTx(
 ) (rollbacks int, err error) {
 	isValidation := mType == model.ValidationMetricType
 	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
-	metricsBody := map[string]interface{}{
+	metricsBody := model.JSONObj{
 		metricsJSONPath: m.Metrics.AvgMetrics,
 		"batch_metrics": m.Metrics.BatchMetrics,
 	}
 	if isValidation {
-		metricsBody = map[string]interface{}{
+		metricsBody = model.JSONObj{
 			metricsJSONPath: m.Metrics.AvgMetrics,
 		}
 	}
@@ -312,8 +312,8 @@ func (db *PgDB) _addTrialMetricsTx(
 		return rollbacks, fmt.Errorf("error getting summary metrics from trials: %w", err)
 	}
 
-	metricRowID, err := db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
-		m.TrialId, m.StepsCompleted, mType)
+	metricRowID, newMetricsBody, oldMetricsBody, err := db.addMetricsWithMerge(ctx, tx,
+		&metricsBody, m.TrialRunId, m.TrialId, m.StepsCompleted, mType)
 	if err != nil {
 		return rollbacks, err
 	}
@@ -335,10 +335,11 @@ func (db *PgDB) _addTrialMetricsTx(
 	default: // no rollbacks happened.
 		summaryMetricsJSONPath := model.TrialSummaryMetricsJSONPath(mType)
 		if _, ok := summaryMetrics[summaryMetricsJSONPath]; !ok {
-			summaryMetrics[summaryMetricsJSONPath] = map[string]any{}
+			summaryMetrics[summaryMetricsJSONPath] = model.JSONObj{}
+			// CHECK: assert no merge happened.
 		}
 		summaryMetrics[summaryMetricsJSONPath] = calculateNewSummaryMetrics(
-			summaryMetrics[summaryMetricsJSONPath].(map[string]any),
+			summaryMetrics[summaryMetricsJSONPath].(model.JSONObj),
 			m.Metrics.AvgMetrics,
 		)
 
