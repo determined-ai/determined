@@ -556,6 +556,60 @@ func getLatestValidation(ctx context.Context, t *testing.T, trialID int) (*int, 
 	return res[0].ID, res[0].Metric
 }
 
+func TestMetricMerge(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	mType := model.TrainingMetricType
+
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
+
+	addMetricAt := func(batchNumber int, metricsJSON string, trialID int) error {
+		trialRunID := 0
+		var rawMetrics map[string]any
+		require.NoError(t, json.Unmarshal([]byte(metricsJSON), &rawMetrics))
+		metrics, err := structpb.NewStruct(rawMetrics)
+		require.NoError(t, err)
+		require.NoError(t, db.AddTrialMetrics(ctx, &trialv1.TrialMetrics{
+			TrialId:        int32(trialID),
+			TrialRunId:     int32(trialRunID),
+			StepsCompleted: int32(batchNumber),
+			Metrics: &commonv1.Metrics{
+				AvgMetrics: metrics,
+			},
+		}, mType))
+		return nil
+	}
+
+	cases := []struct {
+		reports []string
+		merged  string
+	}{
+		{[]string{`{"a":1.0}`}, `{"a":1.0}`},
+		// {[]string{`{"a":1.0}`, `{"a":2.0}`}, `{"a":2.0}`},
+		// {[]string{`{"a":1.0}`, `{"b":2.0}`}, `{"a":1.0,"b":2.0}`},
+	}
+
+	for _, c := range cases {
+		trialID := RequireMockTrial(t, db, exp).ID
+		for _, metricReport := range c.reports {
+			err := addMetricAt(1, metricReport, trialID)
+			require.NoError(t, err)
+			metrics, err := GetMetrics(ctx, trialID, 0, 100, mType)
+			require.NoError(t, err)
+			require.Len(t, metrics, 1)
+		}
+		metrics, err := GetMetrics(ctx, trialID, 0, 100, mType)
+		require.NoError(t, err)
+		require.Len(t, metrics, 1)
+		deserializedMetrics := map[string]any{}
+		require.NoError(t, json.Unmarshal([]byte(c.merged), &deserializedMetrics))
+		require.EqualValues(t, deserializedMetrics, metrics[0].Metrics.AsMap()["avg_metrics"])
+	}
+}
+
 func TestLatestMetricID(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
