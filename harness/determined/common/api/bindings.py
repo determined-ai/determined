@@ -277,11 +277,6 @@ class TrialSorterNamespace(DetEnum):
     TRAINING_METRICS = "NAMESPACE_TRAINING_METRICS"
     VALIDATION_METRICS = "NAMESPACE_VALIDATION_METRICS"
 
-class TrialSourceInfoTrialSourceInfoType(DetEnum):
-    UNSPECIFIED = "UNSPECIFIED"
-    INFERENCE = "INFERENCE"
-    FINE_TUNING = "FINE_TUNING"
-
 class UpdateTrialTagsRequestIds(Printable):
     ids: "typing.Optional[typing.Sequence[int]]" = None
 
@@ -12971,7 +12966,7 @@ class v1TrialSourceInfo(Printable):
         *,
         checkpointUuid: str,
         trialId: int,
-        trialSourceInfoType: "TrialSourceInfoTrialSourceInfoType",
+        trialSourceInfoType: "v1TrialSourceInfoType",
         description: "typing.Union[str, None, Unset]" = _unset,
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         sourceModelVersionId: "typing.Union[int, None, Unset]" = _unset,
@@ -12997,7 +12992,7 @@ class v1TrialSourceInfo(Printable):
         kwargs: "typing.Dict[str, typing.Any]" = {
             "checkpointUuid": obj["checkpointUuid"],
             "trialId": obj["trialId"],
-            "trialSourceInfoType": TrialSourceInfoTrialSourceInfoType(obj["trialSourceInfoType"]),
+            "trialSourceInfoType": v1TrialSourceInfoType(obj["trialSourceInfoType"]),
         }
         if "description" in obj:
             kwargs["description"] = obj["description"]
@@ -13028,6 +13023,11 @@ class v1TrialSourceInfo(Printable):
         if not omit_unset or "sourceTrialId" in vars(self):
             out["sourceTrialId"] = self.sourceTrialId
         return out
+
+class v1TrialSourceInfoType(DetEnum):
+    UNSPECIFIED = "UNSPECIFIED"
+    INFERENCE = "INFERENCE"
+    FINE_TUNING = "FINE_TUNING"
 
 class v1TrialTag(Printable):
 

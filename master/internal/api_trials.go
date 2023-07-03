@@ -960,32 +960,52 @@ func (a *apiServer) CreateTrialSourceInfo(
 	resp := &apiv1.CreateTrialSourceInfoResponse{}
 	reqTSI := req.TrialSourceInfo
 
-	nonZeroValue := func(value int32) *int32 {
-		if value != 0 {
-			return &value
-		}
-		return nil
-	}
+	// nonZeroValue := func(value int32) *int32 {
+	// 	if value != 0 {
+	// 		return &value
+	// 	}
+	// 	return nil
+	// }
 
-	versionId := nonZeroValue(reqTSI.GetSourceModelVersionId())
-	versionVersion := nonZeroValue(reqTSI.GetSourceModelVersionVersion())
+	// versionId := nonZeroValue(reqTSI.GetSourceModelVersionId())
+	// versionVersion := nonZeroValue(reqTSI.GetSourceModelVersionVersion())
 
-	switch err := a.m.db.QueryProto(
-		"insert_trial_source_info",
-		resp,
-		reqTSI.TrialId,
-		reqTSI.CheckpointUuid,
-		reqTSI.SourceTrialId,
-		versionId,
-		versionVersion,
-		reqTSI.TrialSourceInfoType.String(),
-		reqTSI.Description,
-		reqTSI.Metadata,
-	); {
-	case err != nil:
-		return nil, errors.Wrapf(err, "failed to create trial_source_info for trial %d", reqTSI.TrialId)
-	}
-	return resp, nil
+	// query := Bun().NewInsert().Model("trial_source_info").
+	// 	Column("trial_id", "checkpoint_uuid", "source_trial_id", "source_model_version_id",
+	// 		"source_model_version_version", "trial_source_info_type", "description", "metadata").
+	// 	Values(
+	// 		reqTSI.TrialId,
+	// 		reqTSI.CheckpointUuid,
+	// 		reqTSI.SourceTrialId,
+	// 		versionId,
+	// 		versionVersion,
+	// 		reqTSI.TrialSourceInfoType.String(),
+	// 		reqTSI.Description,
+	// 		reqTSI.Metadata,
+	// 	).
+	// 	Returning("trial_id", "checkpoint_uuid").
+	// 	Scan(&resp)
+
+	query := db.InsertTrialSourceInfo(ctx, reqTSI)
+	_, err := query.Exec(ctx, resp)
+	// ) *bun.InsertQuery {
+
+	// switch err := a.m.db.QueryProto(
+	// 	"insert_trial_source_info",
+	// 	resp,
+	// 	reqTSI.TrialId,
+	// 	reqTSI.CheckpointUuid,
+	// 	reqTSI.SourceTrialId,
+	// 	versionId,
+	// 	versionVersion,
+	// 	reqTSI.TrialSourceInfoType.String(),
+	// 	reqTSI.Description,
+	// 	reqTSI.Metadata,
+	// ); {
+	// case err != nil:
+	// 	return nil, errors.Wrapf(err, "failed to create trial_source_info for trial %d", reqTSI.TrialId)
+	// }
+	return resp, err
 }
 
 func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWorkloadsRequest) (

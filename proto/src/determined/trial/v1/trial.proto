@@ -266,6 +266,16 @@ message MetricsReport {
   int32 trial_run_id = 7;
 }
 
+// TrialSourceInfoType see \dT+ trial_source_info_type in db
+enum TrialSourceInfoType {
+  // The type is unspecified
+  UNSPECIFIED = 0;
+  // "Inference" Trial Source Info Type, used for batch inference
+  INFERENCE = 1;
+  // "Fine Tuning" Trial Source Info Type, used in model hub
+  FINE_TUNING = 2;
+}
+
 // Denotes a connection between a given trial and a
 // checkpoint/source_trial/model_version
 message TrialSourceInfo {
@@ -274,16 +284,6 @@ message TrialSourceInfo {
       required: [ "trial_id", "checkpoint_uuid", "trial_source_info_type" ]
     }
   };
-  // TrialSourceInfoType see \dT+ trial_source_info_type in db
-  enum TrialSourceInfoType {
-    // The type is unspecified
-    UNSPECIFIED = 0;
-    // "Inference" Trial Source Info Type, used for batch inference
-    INFERENCE = 1;
-    // "Fine Tuning" Trial Source Info Type, used in model hub
-    FINE_TUNING = 2;
-  }
-
   // ID of the trial.
   int32 trial_id = 1;
   // UUID of the checkpoint.

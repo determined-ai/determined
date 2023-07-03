@@ -702,7 +702,7 @@ func TestCreateTrialSourceInfo(t *testing.T) {
 		TrialId:             int32(infTrial.ID),
 		CheckpointUuid:      checkpointUuid,
 		SourceTrialId:       int32(sourceTrial.ID),
-		TrialSourceInfoType: trialv1.TrialSourceInfo_INFERENCE,
+		TrialSourceInfoType: trialv1.TrialSourceInfoType_INFERENCE,
 	}
 	req := &apiv1.CreateTrialSourceInfoRequest{TrialSourceInfo: trial_source_info}
 	resp, err := api.CreateTrialSourceInfo(ctx, req)

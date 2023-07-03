@@ -4,7 +4,7 @@ CREATE TYPE public.trial_source_info_type AS ENUM (
 );
 
 -- Denotes a connection between a given trial and a checkpoint/source trial/model version
-CREATE TABLE public.trial_source_info (
+CREATE TABLE public.trial_source_infos (
     -- Inference/Fine Tuning trial
     trial_id int REFERENCES public.trials(id) ON DELETE CASCADE NOT NULL,
     -- Checkpoint in question. Lifted from referred source_trial_id/source_model_version_id
@@ -34,7 +34,7 @@ CREATE TABLE public.trial_source_info (
     )
 );
 
-CREATE INDEX ix_trial_source_info_trial_id ON public.trial_source_info USING btree (trial_id);
-CREATE INDEX ix_trial_source_info_checkpoint_uuid ON public.trial_source_info USING btree (checkpoint_uuid);
-CREATE INDEX ix_trial_source_info_source_trial_id ON public.trial_source_info USING btree (source_trial_id);
-CREATE INDEX ix_trial_source_info_source_model_version ON public.trial_source_info USING btree (source_model_version_id, source_model_version_version);
+CREATE INDEX ix_trial_source_infos_trial_id ON public.trial_source_infos USING btree (trial_id);
+CREATE INDEX ix_trial_source_infos_checkpoint_uuid ON public.trial_source_infos USING btree (checkpoint_uuid);
+CREATE INDEX ix_trial_source_infos_source_trial_id ON public.trial_source_infos USING btree (source_trial_id);
+CREATE INDEX ix_trial_source_infos_source_model_version ON public.trial_source_infos USING btree (source_model_version_id, source_model_version_version);

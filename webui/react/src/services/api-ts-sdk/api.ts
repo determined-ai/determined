@@ -718,17 +718,6 @@ export const TrialSorterNamespace = {
 } as const
 export type TrialSorterNamespace = ValueOf<typeof TrialSorterNamespace>
 /**
- * - UNSPECIFIED: The type is unspecified  - INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
- * @export
- * @enum {string}
- */
-export const TrialSourceInfoTrialSourceInfoType = {
-    UNSPECIFIED: 'UNSPECIFIED',
-    INFERENCE: 'INFERENCE',
-    FINETUNING: 'FINE_TUNING',
-} as const
-export type TrialSourceInfoTrialSourceInfoType = ValueOf<typeof TrialSourceInfoTrialSourceInfoType>
-/**
  * - STATE_UNSPECIFIED: The trial is in an unspecified state.  - STATE_ACTIVE: The trial is in an active state.  - STATE_PAUSED: The trial is in a paused state  - STATE_STOPPING_CANCELED: The trial is canceled and is shutting down.  - STATE_STOPPING_KILLED: The trial is killed and is shutting down.  - STATE_STOPPING_COMPLETED: The trial is completed and is shutting down.  - STATE_STOPPING_ERROR: The trial is errored and is shutting down.  - STATE_CANCELED: The trial is canceled and is shut down.  - STATE_COMPLETED: The trial is completed and is shut down.  - STATE_ERROR: The trial is errored and is shut down.
  * @export
  * @enum {string}
@@ -10177,10 +10166,10 @@ export interface V1TrialSourceInfo {
     sourceModelVersionVersion?: number;
     /**
      * Type for this trial_source_info
-     * @type {TrialSourceInfoTrialSourceInfoType}
+     * @type {V1TrialSourceInfoType}
      * @memberof V1TrialSourceInfo
      */
-    trialSourceInfoType: TrialSourceInfoTrialSourceInfoType;
+    trialSourceInfoType: V1TrialSourceInfoType;
     /**
      * User defined description text
      * @type {string}
@@ -10194,6 +10183,17 @@ export interface V1TrialSourceInfo {
      */
     metadata?: any;
 }
+/**
+ * - UNSPECIFIED: The type is unspecified  - INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+ * @export
+ * @enum {string}
+ */
+export const V1TrialSourceInfoType = {
+    UNSPECIFIED: 'UNSPECIFIED',
+    INFERENCE: 'INFERENCE',
+    FINETUNING: 'FINE_TUNING',
+} as const
+export type V1TrialSourceInfoType = ValueOf<typeof V1TrialSourceInfoType>
 /**
  * 
  * @export

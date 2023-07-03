@@ -1,4 +1,4 @@
-DROP TABLE public.trial_source_info;
+DROP TABLE public.trial_source_infos;
 DROP TYPE public.trial_source_info_type;
 
 DROP INDEX IF EXISTS ix_trial_source_info_trial_id;
