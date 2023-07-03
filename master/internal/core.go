@@ -846,12 +846,12 @@ func (m *Master) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	defer closeWithErrCheck("db", m.db)
 
 	err = db.ValidateRPWorkspaceBindings(m.config.ResourcePools)
 	if err != nil {
 		return err
 	}
-	defer closeWithErrCheck("db", m.db)
 
 	m.ClusterID, err = m.db.GetOrCreateClusterID()
 	if err != nil {
