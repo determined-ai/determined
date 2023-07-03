@@ -70,6 +70,7 @@
    Jupyter Notebooks <interfaces/notebooks>
    TensorBoards <interfaces/tensorboard>
    Exposing Custom Ports <interfaces/proxy-ports>
+   Swarm Learning <swarm/index>
 
 .. toctree::
    :caption: Integrations
