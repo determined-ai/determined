@@ -151,7 +151,7 @@ UPDATE trials SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
 	SELECT trial_id, sum(size) as size, sum(count) as count
 	FROM (
 		WITH trial_ids AS (
-			SELECT t.id
+			SELECT t.id AS trial_id
 			FROM checkpoints_v2 INNER JOIN trials t ON checkpoints_v2.task_id = t.task_id
 			WHERE uuid IN (?)
 		)

@@ -909,7 +909,7 @@ func (db *PgDB) DeleteExperiments(ctx context.Context, ids []int) error {
 	}
 
 	// Even with migration away from checkpoints_v1,
-	// Keeping this to keep behaviour of fully deleting checkpoints.
+	// Keeping this to keep behavior of fully deleting checkpoints.
 	if _, err = tx.NewDelete().Model(&delIDs).Table("raw_checkpoints").
 		Where("trial_id IN (SELECT id FROM trials WHERE experiment_id IN (?))", bun.In(ids)).
 		Returning("id").

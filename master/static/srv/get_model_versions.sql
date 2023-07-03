@@ -33,5 +33,5 @@ SELECT
     mv.creation_time, mv.notes,
     mv.username, mv.user_id,
     mv.name, mv.comment, mv.metadata, mv.last_updated_time
-    FROM proto_checkpoint_view c, mv, m
+    FROM proto_checkpoints_view c, mv, m
     WHERE c.uuid = mv.checkpoint_uuid::text;
