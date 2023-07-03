@@ -1,5 +1,4 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
-import { Trialv1State } from 'services/api-ts-sdk';
 import { BrandingType } from 'stores/determinedInfo';
 import { ValueOf } from 'types';
 import {
@@ -71,16 +70,6 @@ const stateColorMapping = {
   [JobState.SCHEDULEDBACKFILLED]: 'active',
   [JobState.QUEUED]: 'warning',
   [JobState.UNSPECIFIED]: 'inactive',
-  [Trialv1State.ACTIVE]: 'active',
-  [Trialv1State.PAUSED]: 'warning',
-  [Trialv1State.STOPPINGCANCELED]: 'inactive',
-  [Trialv1State.STOPPINGKILLED]: 'inactive',
-  [Trialv1State.STOPPINGCOMPLETED]: 'success',
-  [Trialv1State.STOPPINGERROR]: 'critical',
-  [Trialv1State.CANCELED]: 'inactive',
-  [Trialv1State.COMPLETED]: 'success',
-  [Trialv1State.ERROR]: 'critical',
-  [Trialv1State.UNSPECIFIED]: 'inactive',
 };
 
 export type StateOfUnion =
@@ -90,8 +79,7 @@ export type StateOfUnion =
   | CheckpointState
   | SlotState
   | JobState
-  | WorkspaceState
-  | Trialv1State;
+  | WorkspaceState;
 
 export const getStateColorCssVar = (
   state: StateOfUnion | undefined,

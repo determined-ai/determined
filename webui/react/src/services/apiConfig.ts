@@ -45,7 +45,6 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
     Tasks: new Api.TasksApi(config),
     Templates: new Api.TemplatesApi(config),
     TensorBoards: new Api.TensorboardsApi(config),
-    TrialsComparison: new Api.TrialComparisonApi(config),
     Users: new Api.UsersApi(config),
     Webhooks: new Api.WebhooksApi(config),
     Workspaces: new Api.WorkspacesApi(config),
