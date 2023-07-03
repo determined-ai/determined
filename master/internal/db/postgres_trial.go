@@ -163,6 +163,9 @@ WHERE id = $1`, id, restartCount); err != nil {
 func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	ctx context.Context, tx *sqlx.Tx, trialID int,
 ) error {
+	/*
+		can we limit this to recompute only a single metric type?
+	*/
 	updatedSummaryMetrics := model.JSONObj{}
 	metricTypes := []model.MetricType{}
 	if err := tx.SelectContext(ctx, &metricTypes, `
@@ -282,6 +285,25 @@ func (db *PgDB) _addTrialMetricsTx(
 		mType); err != nil {
 		return rollbacks, err
 	}
+
+	/*
+		isMerge. at any position.
+			if last: we can do it incrementally
+		- cannot happen with a rollback. it won't be treated as a merge
+		- can only add new metric names.
+		- can change metric name's type. (how do we deal with this normally when us?) it doesn't matter
+			- non scalar is thrown out
+		- it's only a single datapoint change in all cases :thinking:
+
+
+		strategies:
+		- on any merge full recompute all types
+		- on any merge full recompute the affected type
+		- on conflict, pull the metric entry and incrementally update.
+			- equals => delete the old metric, update the summary values and back to normal flow?
+			- or break the flow and do a single summary update.
+	*/
+
 	var summaryMetrics model.JSONObj
 	err = tx.QueryRowContext(ctx, `
 		SELECT summary_metrics FROM trials WHERE id = $1 FOR UPDATE;
@@ -426,6 +448,8 @@ func replaceSpecialFloatsWithString(v any) any {
 var pythonISOFormatRegex = regexp.MustCompile(
 	`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$`)
 
+// calculateNewSummaryMetrics calculates new summary metrics from the newly added
+// metrics and the existing summary metrics.
 func calculateNewSummaryMetrics(
 	summaryMetrics model.JSONObj, metrics *structpb.Struct,
 ) model.JSONObj {
@@ -535,6 +559,7 @@ func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
 	return nil
 }
 
+// checkTrialRunID checks that the trial is currently on the given run.
 func checkTrialRunID(ctx context.Context, tx *sqlx.Tx, trialID, runID int32) error {
 	var cRunID int
 	switch err := tx.QueryRowxContext(ctx, `

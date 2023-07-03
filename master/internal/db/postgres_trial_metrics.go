@@ -7,6 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -15,6 +16,8 @@ import (
 // MetricPartitionType denotes what type the metric is. This is planned to be deprecated
 // once we upgrade to pg11 and can use DEFAULT partitioning.
 type MetricPartitionType string
+
+type metricsBody map[string]interface{}
 
 const (
 	// TrainingMetric designates metrics from training steps.
@@ -82,6 +85,17 @@ WHERE trial_id = $1
 	return int(affectedRows), nil
 }
 
+func (db *PgDB) addMetricsWithMerge(ctx context.Context, tx *sqlx.Tx, metricsBody *map[string]interface{},
+	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
+) (int, error) {
+	// TODO: fetch previous metrics
+	// TODO: merge previous metrics with new metrics
+	// TODO: addRawMetrics new metrics
+	newMetricsBody := *metricsBody
+	return db.addRawMetrics(ctx, tx, &newMetricsBody, runID, trialID, lastProcessedBatch, mType)
+}
+
+// addRawMetrics inserts a set of raw metrics to the database and returns the metric id.
 func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map[string]interface{},
 	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
 ) (int, error) {
@@ -188,4 +202,32 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 		Scan(ctx, &res)
 
 	return res, err
+}
+
+// removeMetricsFromSummary removes metrics from the summary that is already
+// computed.
+func removeMetricsFromSummary(
+	summaryMetrics model.JSONObj, metrics *structpb.Struct,
+) model.JSONObj {
+	// TODO
+	return summaryMetrics
+}
+
+func removeDuplicateEntry(ctx context.Context, tx *sqlx.Tx,
+	m *trialv1.TrialMetrics, mType model.MetricType,
+) (bool, error) {
+	_, err := tx.ExecContext(ctx, `
+DELETE FROM metrics
+WHERE archived = false
+AND total_batches = $1
+AND trial_id = $2
+AND partition_type = $3
+AND custom_type = $4
+`, m.StepsCompleted, m.TrialId, customMetricTypeToPartitionType(mType), mType)
+	if err != nil {
+		return false, errors.Wrap(err, "updating duplicate metric")
+	}
+	// TODO. return deleted metric if any.
+	// TODO update summary.
+	return false, nil
 }
