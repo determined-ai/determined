@@ -46,6 +46,7 @@ func (a *ModelAuthZBasic) CanCreateModel(ctx context.Context,
 func (a *ModelAuthZBasic) CanDeleteModel(ctx context.Context, curUser model.User,
 	m *modelv1.Model, workspaceID int32,
 ) error {
+	// TODO: Modify model UserID to use UserID
 	curUserIsOwner := m.UserId == int32(curUser.ID)
 	if !curUser.Admin && !curUserIsOwner {
 		return authz.PermissionDeniedError{}.WithPrefix(

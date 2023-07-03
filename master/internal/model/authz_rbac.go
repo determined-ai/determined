@@ -150,23 +150,67 @@ func (a *ModelAuthZRBAC) CanCreateModel(ctx context.Context,
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_MODEL_REGISTRY)
 }
 
-// CanDeleteModel checks if users has permission to delete models.
+// CanDeleteModel checks if user has permission to delete model.
 func (a *ModelAuthZRBAC) CanDeleteModel(ctx context.Context, curUser model.User,
 	m *modelv1.Model, workspaceID int32,
 ) (err error) {
+	var expectedPermissions []rbacv1.PermissionType
+	userIsOwner := m.UserId == int32(curUser.ID)
+	if userIsOwner {
+		expectedPermissions = []rbacv1.PermissionType{
+			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_MODEL_REGISTRY,
+		}
+	} else {
+		expectedPermissions = []rbacv1.PermissionType{
+			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_MODEL_REGISTRY,
+			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY,
+		}
+	}
+
 	fields := audit.ExtractLogFields(ctx)
-	addExpInfo(curUser, fields, string(m.Id),
-		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_DELETE_MODEL_REGISTRY})
+	addExpInfo(curUser, fields, string(m.Id), expectedPermissions)
 	defer func() {
 		audit.LogFromErr(fields, err)
 	}()
 
-	return db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
-		rbacv1.PermissionType_PERMISSION_TYPE_DELETE_MODEL_REGISTRY)
+	for _, perm := range expectedPermissions {
+		if err := db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID, perm); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func init() {
-	AuthZProvider.Register("rbac", &ModelAuthZRBAC{})
+// CanDeleteModelVersion checks if user has permission to delete model version.
+func (a *ModelAuthZRBAC) CanDeleteModelVersion(ctx context.Context, curUser model.User,
+	modelVersion *modelv1.ModelVersion, workspaceID int32,
+) (err error) {
+	var expectedPermissions []rbacv1.PermissionType
+	userIsOwner := modelVersion.UserId == int32(curUser.ID) ||
+		modelVersion.Model.UserId == int32(curUser.ID)
+	if userIsOwner {
+		expectedPermissions = []rbacv1.PermissionType{
+			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_MODEL_VERSION,
+		}
+	} else {
+		expectedPermissions = []rbacv1.PermissionType{
+			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_MODEL_VERSION,
+			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION,
+		}
+	}
+
+	fields := audit.ExtractLogFields(ctx)
+	addExpInfo(curUser, fields, string(modelVersion.Model.Id), expectedPermissions)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
+
+	for _, perm := range expectedPermissions {
+		if err := db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID, perm); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // CanMoveModel checks for edit permission in origin and create permission in destination.
@@ -244,4 +288,8 @@ func (a *ModelAuthZRBAC) FilterReadableModelsQuery(
 	query = query.Where("workspace_id IN (?)", bun.In(workspaces))
 
 	return query, nil
+}
+
+func init() {
+	AuthZProvider.Register("rbac", &ModelAuthZRBAC{})
 }
