@@ -3,6 +3,7 @@ import json
 import re
 from argparse import ArgumentError, Namespace
 from collections import OrderedDict, namedtuple
+from functools import reduce
 from pathlib import Path
 from typing import IO, Any, Dict, Iterable, List, Optional, Tuple, Union
 
@@ -13,6 +14,7 @@ from determined import cli
 from determined.cli import render
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication
+from determined.util import merge_dicts
 
 yaml = yaml.YAML(typ="safe", pure=True)  # type: ignore
 
@@ -282,15 +284,32 @@ def config(args: Namespace) -> None:
     print(render.format_object_as_yaml(res_json["config"]))
 
 
-def _set_nested_config(config: Dict[str, Any], key_path: List[str], value: Any) -> Dict[str, Any]:
-    current = config
-    for key in key_path[:-1]:
-        current = current.setdefault(key, {})
-    current[key_path[-1]] = value
-    return config
+# Convert config overrides in dot notation to json path
+# For example the caller of this func will break down the config override
+#   --config slurm.sbatch_args=[--time=05:00]
+# into key slurm.sbatch_args, value [--time=05:00]
+# And this func will return string in json form:
+# 'slurm': {'sbatch_args': ['--time=05:00']}
+def _dot_to_json(key: Any, value: Any) -> Any:
+    json_output: Any = {}
+    path = key.split(".")
+    target = reduce(lambda d, k: d.setdefault(k, {}), path[:-1], json_output)
+    target[path[-1]] = value
+    return json_output
 
 
-def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> None:
+# A recursive function to replace value val in a Dict with a new value rval for override keys
+def _replace_value(
+    data_dict: Dict[str, Any], override_key_path: List[str], val: Any, rval: Any
+) -> None:
+    for key in data_dict.keys():
+        if data_dict[key] == val and key in override_key_path:
+            data_dict[key] = rval
+        elif type(data_dict[key]) is dict:
+            _replace_value(data_dict[key], override_key_path, val, rval)
+
+
+def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> Dict[str, Any]:
     for config_arg in overrides:
         if "=" not in config_arg:
             raise ValueError(
@@ -319,9 +338,18 @@ def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> 
             if key in _CONFIG_PATHS_COERCE_TO_LIST:
                 value = [value]
 
-        # TODO(#2703): Consider using full JSONPath spec instead of dot
-        # notation.
-        config = _set_nested_config(config, key.split("."), value)
+        # Convert config override in dot notation to json path
+        config_arg_in_json = _dot_to_json(key, value)
+        # Some key may have value None of NoneType and will raise TypeError if used.
+        # For example:
+        # TypeError: argument of type 'NoneType' is not iterable
+        # TypeError: 'NoneType' object does not support item assignment
+        # Convert NoneType value None in config to empty string {} for overrided key
+        _replace_value(config, key.split("."), None, {})
+        # Merge two objects in json format
+        config = merge_dicts(config, config_arg_in_json)
+
+    return config
 
 
 def parse_config(
@@ -335,7 +363,7 @@ def parse_config(
         with config_file:
             config = util.safe_load_yaml_with_exceptions(config_file)
 
-    parse_config_overrides(config, overrides)
+    config = parse_config_overrides(config, overrides)
 
     for volume_arg in volumes:
         if ":" not in volume_arg:
