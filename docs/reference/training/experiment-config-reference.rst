@@ -1454,6 +1454,8 @@ GPU type with:
    slurm:
       gpu_type: tesla
 
+.. _sbatch-args:
+
 ``sbatch_args``
 ===============
 
@@ -1467,6 +1469,8 @@ required memory per CPU and exclusive access to an entire node when scheduled, y
       sbatch_args:
          - --mem-per-cpu=10
          - --exclusive
+
+.. _slots-per-node:
 
 ``slots_per_node``
 ==================
@@ -1486,6 +1490,8 @@ the experiment configuration.
 
 The ``pbs`` section specifies configuration options applicable when the cluster is configured with
 :ref:`resource_manager.type: pbs <cluster-configuration-slurm>`.
+
+.. _pbsbatch-args:
 
 ``pbsbatch_args``
 =================
