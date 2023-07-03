@@ -451,8 +451,7 @@ func calculateNewSummaryMetrics(
 	mRemoved *structpb.Struct,
 ) model.JSONObj {
 	if mRemoved != nil {
-		// mAdded: merged final ver, or the diff?
-		// TODO
+		summaryMetrics = removeMetricsFromSummary(summaryMetrics, mRemoved)
 	}
 	// Calculate numeric metrics.
 	for metricName, metric := range mAdded.Fields {

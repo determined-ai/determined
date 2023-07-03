@@ -33,6 +33,7 @@ type metricsBody struct {
 }
 
 func (b metricsBody) ToJSONObj() *model.JSONObj {
+	// we should probably move to avoid relying on metric type here.
 	isValidation := b.Type == model.ValidationMetricType
 	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
 	body := model.JSONObj{
@@ -248,7 +249,7 @@ func removeMetricsFromSummary(
 
 func removeDuplicateEntry(ctx context.Context, tx *sqlx.Tx,
 	m *trialv1.TrialMetrics, mType model.MetricType,
-) (bool, error) {
+) (*metricsBody, error) {
 	_, err := tx.ExecContext(ctx, `
 DELETE FROM metrics
 WHERE archived = false
@@ -258,11 +259,11 @@ AND partition_type = $3
 AND custom_type = $4
 `, m.StepsCompleted, m.TrialId, customMetricTypeToPartitionType(mType), mType)
 	if err != nil {
-		return false, errors.Wrap(err, "updating duplicate metric")
+		return nil, errors.Wrap(err, "updating duplicate metric")
 	}
 	// TODO. return deleted metric if any.
 	// TODO update summary.
-	return false, nil
+	return nil, nil
 }
 
 func mergeMetrics(oldBody, newBody *metricsBody) *metricsBody {
