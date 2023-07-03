@@ -1,4 +1,4 @@
-import React, { Suspense, useMemo } from 'react';
+import React, { Suspense, useEffect, useMemo } from 'react';
 
 import awsLogoOnDark from 'assets/images/aws-logo-on-dark.svg';
 import awsLogo from 'assets/images/aws-logo.svg';
@@ -10,11 +10,13 @@ import Icon from 'components/kit/Icon';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import Spinner from 'components/Spinner';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
+import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import { maxPoolSlotCapacity } from 'stores/cluster';
 import clusterStore from 'stores/cluster';
 import useUI from 'stores/contexts/UI';
+import determinedStore from 'stores/determinedInfo';
 import { ShirtSize } from 'themes';
 import { isDeviceType, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
@@ -86,7 +88,15 @@ export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
 };
 
 const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
+  const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const descriptionClasses = [css.description];
+  const { rbacEnabled } = useObservable(determinedStore.info);
+  const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
+  const resourcePoolBindings: number[] = resourcePoolBindingMap.get(pool.name, []);
+
+  useEffect(() => {
+    return clusterStore.fetchResourcePoolBindings(pool.name);
+  }, [pool.name]);
 
   if (!pool.description) descriptionClasses.push(css.empty);
 
@@ -133,6 +143,15 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
         <Suspense fallback={<Spinner center />}>
           <div className={css.body}>
             <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
+            {rpBindingFlagOn && rbacEnabled && resourcePoolBindings.length > 0 && (
+              <section className={css.resoucePoolBoundContainer}>
+                <div>Bound to:</div>
+                <div className={css.resoucePoolBoundCount}>
+                  <Icon name="lock" title="lock" />
+                  {resourcePoolBindings.length} workspace
+                </div>
+              </section>
+            )}
             <section className={css.details}>
               <Json hideDivider json={shortDetails} />
             </section>
