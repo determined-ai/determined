@@ -72,7 +72,8 @@ const SettingsAccount: React.FC = () => {
       </div>
       <Divider />
       <InlineForm
-        inputValue={currentUser?.username}
+        displayValue={currentUser?.username}
+        initialValue={currentUser?.username}
         label="Username"
         required
         rules={[{ message: 'Please input your username', required: true }]}
@@ -82,7 +83,8 @@ const SettingsAccount: React.FC = () => {
       </InlineForm>
       <Divider />
       <InlineForm
-        inputValue={currentUser?.displayName}
+        displayValue={currentUser?.displayName}
+        initialValue={currentUser?.displayName}
         label="Display Name"
         testId="displayname"
         onSubmit={handleSaveDisplayName}>

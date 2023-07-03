@@ -10,7 +10,8 @@ import css from './InlineForm.module.scss';
 
 interface Props extends React.PropsWithChildren {
   label: string;
-  inputValue?: Primitive;
+  displayValue?: Primitive;
+  initialValue?: Primitive;
   onSubmit: (inputValue: string | number) => Promise<void | Error> | void;
   required?: boolean;
   forceEdit?: boolean; // in case we want to start as "edit mode"/isEditing state === true
@@ -22,7 +23,7 @@ const InlineForm: React.FC<Props> = ({
   label,
   forceEdit = false,
   children,
-  inputValue = '',
+  displayValue = '',
   rules,
   required,
   testId = '',
@@ -32,48 +33,41 @@ const InlineForm: React.FC<Props> = ({
   const [form] = Form.useForm();
 
   const resetForm = useCallback(() => {
-    form.setFieldValue('input', inputValue);
+    form.setFieldValue('input', displayValue);
     setIsEditing(false);
-  }, [form, inputValue]);
+  }, [form, displayValue]);
 
   const submitForm = useCallback(async () => {
     try {
       const formValues = await form.validateFields();
-
       onSubmit(formValues.input);
     } catch (error) {
-      form.setFieldValue('input', inputValue);
+      form.setFieldValue('input', displayValue);
     }
 
     setIsEditing(false);
-  }, [form, onSubmit, inputValue]);
+  }, [form, onSubmit, displayValue]);
 
   useEffect(() => {
-    const fieldValue = form.getFieldValue('input');
-
-    if (fieldValue !== inputValue) form.setFieldValue('input', inputValue);
-  }, [form, inputValue]);
+    form.setFieldValue('input', displayValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayValue]);
 
   return (
-    <Form
-      className={css.formBase}
-      colon={false}
-      form={form}
-      initialValues={{ layout: 'inline' }}
-      layout="inline"
-      requiredMark={false}>
+    <Form className={css.formBase} colon={false} form={form} layout="inline" requiredMark={false}>
       <Form.Item
         className={css.formItemInput}
         label={label}
         labelCol={{ span: 0 }}
         name="input"
         required={required}
-        rules={rules}>
+        rules={rules}
+        validateTrigger={['onSubmit']}>
         {isEditing ? (
           children
         ) : (
           <span className={css.readOnlyElement} data-testid={`value-${testId}`}>
-            {inputValue}
+            {displayValue}
           </span>
         )}
       </Form.Item>
@@ -83,7 +77,6 @@ const InlineForm: React.FC<Props> = ({
             <Form.Item>
               <Button
                 data-testid={`submit-${testId}`}
-                htmlType="submit"
                 icon={<Icon name="checkmark" title="confirm" />}
                 type="primary"
                 onClick={() => {

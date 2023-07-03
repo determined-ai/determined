@@ -962,10 +962,10 @@ const InlineFormSection: React.FC = () => {
         </p>
         <br />
         <div style={{ maxWidth: '700px' }}>
-          <InlineForm inputValue={inputValue} label="Input" onSubmit={inputCallback}>
+          <InlineForm displayValue={inputValue} label="Input" onSubmit={inputCallback}>
             <Input />
           </InlineForm>
-          <InlineForm inputValue={selectValue} label="Select" onSubmit={selectCallback}>
+          <InlineForm displayValue={selectValue} label="Select" onSubmit={selectCallback}>
             <Select defaultValue={1} searchable={false}>
               {[
                 { label: 'off', value: 1 },
