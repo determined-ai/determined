@@ -9,14 +9,11 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 const (
@@ -50,55 +47,6 @@ type TrialsAugmented struct {
 	RankWithinExp int32 `bun:"rank,scanonly"`
 }
 
-// Proto converts an Augmented Trial to its protobuf representation.
-func (t *TrialsAugmented) Proto() *apiv1.AugmentedTrial {
-	return &apiv1.AugmentedTrial{
-		TrialId:               t.TrialID,
-		State:                 trialv1.State(trialv1.State_value["STATE_"+t.State]),
-		Hparams:               protoutils.ToStruct(t.Hparams),
-		TrainingMetrics:       protoutils.ToStruct(t.TrainingMetrics),
-		ValidationMetrics:     protoutils.ToStruct(t.ValidationMetrics),
-		Tags:                  protoutils.ToStruct(t.Tags),
-		StartTime:             protoutils.ToTimestamp(t.StartTime),
-		EndTime:               protoutils.ToTimestamp(t.EndTime),
-		SearcherType:          t.SearcherType,
-		ExperimentId:          t.ExperimentID,
-		ExperimentName:        t.ExperimentName,
-		ExperimentDescription: t.ExperimentDescription,
-		ExperimentLabels:      t.ExperimentLabels,
-		UserId:                t.UserID,
-		ProjectId:             t.ProjectID,
-		WorkspaceId:           t.WorkspaceID,
-		TotalBatches:          t.TotalBatches,
-		RankWithinExp:         t.RankWithinExp,
-		SearcherMetric:        t.SearcherMetric,
-		SearcherMetricValue:   t.SearcherMetricValue,
-		SearcherMetricLoss:    t.SearcherMetricLoss,
-	}
-}
-
-// TrialsCollection is a collection of Trials matching a set of TrialFilters.
-type TrialsCollection struct {
-	ID        int32               `bun:"id,pk,autoincrement"`
-	UserID    int32               `bun:"user_id"`
-	ProjectID int32               `bun:"project_id"`
-	Name      string              `bun:"name"`
-	Filters   *apiv1.TrialFilters `bun:"filters,type:jsonb"`
-	Sorter    *apiv1.TrialSorter  `bun:"sorter,type:jsonb"`
-}
-
-// Proto converts TrialsCollection to proto representation.
-func (tc *TrialsCollection) Proto() *apiv1.TrialsCollection {
-	return &apiv1.TrialsCollection{
-		Id:        tc.ID,
-		UserId:    tc.UserID,
-		ProjectId: tc.ProjectID,
-		Name:      tc.Name,
-		Filters:   tc.Filters,
-		Sorter:    tc.Sorter,
-	}
-}
-
 // QueryTrialsOrderMap is a map of OrderBy choices to Sort Choices.
 var QueryTrialsOrderMap = map[apiv1.OrderBy]db.SortDirection{
 	apiv1.OrderBy_ORDER_BY_UNSPECIFIED: db.SortDirectionAsc,
@@ -121,26 +69,6 @@ func hParamAccessor(hp string) string {
 	return fmt.Sprintf("(%s->>%s)::float8", path, key)
 }
 
-// BuildTrialPatchQuery creates an UpdateQuery according to the provided patch.
-func BuildTrialPatchQuery(payload *apiv1.TrialPatch) (*bun.UpdateQuery, error) {
-	q := db.Bun().NewUpdate().Table("trials")
-
-	if len(payload.AddTag) > 0 || len(payload.RemoveTag) > 0 {
-		addTags := map[string]string{}
-		for _, tag := range payload.AddTag {
-			addTags[tag.Key] = ""
-		}
-
-		removeTags := []string{}
-		for _, tag := range payload.RemoveTag {
-			removeTags = append(removeTags, tag.Key)
-		}
-
-		q = q.Set("tags = (tags || ?) - ?::text[]", addTags, pgdialect.Array(removeTags))
-	}
-	return q, nil
-}
-
 // TrialsColumnForNamespace returns the correct namespace for a TrialSorter.
 func TrialsColumnForNamespace(namespace apiv1.TrialSorter_Namespace,
 	field string,
@@ -160,163 +88,6 @@ func TrialsColumnForNamespace(namespace apiv1.TrialSorter_Namespace,
 	default:
 		return field, nil
 	}
-}
-
-// BuildFilterTrialsQuery queries for Trials matching the supplied TrialFilters.
-func BuildFilterTrialsQuery(filters *apiv1.TrialFilters, selectAll bool) (*bun.SelectQuery, error) {
-	// FilterTrials filters trials according to filters
-
-	q := db.Bun().NewSelect().Model((*TrialsAugmented)(nil))
-
-	rankFilterApplied := filters.RankWithinExp != nil && filters.RankWithinExp.Rank != 0
-
-	if rankFilterApplied || selectAll {
-		r := filters.RankWithinExp
-
-		if r == nil {
-			r = &apiv1.TrialFilters_RankWithinExp{
-				Rank: 0,
-				Sorter: &apiv1.TrialSorter{
-					Namespace: apiv1.TrialSorter_NAMESPACE_UNSPECIFIED,
-					Field:     "trial_id",
-					OrderBy:   apiv1.OrderBy_ORDER_BY_ASC,
-				},
-			}
-		}
-
-		columnExpr, err := TrialsColumnForNamespace(r.Sorter.Namespace, r.Sorter.Field)
-		if err != nil {
-			return nil, fmt.Errorf("possible unsafe filters, %f", err)
-		}
-		rankExpr := fmt.Sprintf(
-			`ROW_NUMBER() OVER(PARTITION BY experiment_id ORDER BY %s  %s) as rank`,
-			columnExpr,
-			QueryTrialsOrderMap[r.Sorter.OrderBy])
-
-		rankQ := db.Bun().NewSelect().
-			Model((*TrialsAugmented)(nil)).
-			ColumnExpr("trial_id as t_id").
-			ColumnExpr(rankExpr)
-
-		q.With("ranking", rankQ).
-			Join("join ranking on ranking.t_id = trials_augmented_view.trial_id")
-
-		if rankFilterApplied {
-			q.Where("ranking.rank <= ?", r.Rank)
-		}
-		if selectAll {
-			q.ColumnExpr("trials_augmented_view.*, ranking.rank")
-		}
-	}
-
-	if len(filters.Tags) > 0 {
-		tagKeys := []string{}
-		for _, tag := range filters.Tags {
-			tagKeys = append(tagKeys, tag.Key)
-		}
-		// bun please ignore the first question mark,
-		// it is an operator, not a placeholder
-		q.Where("tags ?| ?", bun.Safe("?"), pgdialect.Array(tagKeys))
-	}
-
-	if len(filters.TrialIds) > 0 {
-		q.Where("trial_id IN (?)", bun.In(filters.TrialIds))
-	}
-
-	if len(filters.ExperimentIds) > 0 {
-		q.Where("experiment_id IN (?)", bun.In(filters.ExperimentIds))
-	}
-	if len(filters.ProjectIds) > 0 {
-		q.Where("project_id IN (?)", bun.In(filters.ProjectIds))
-	}
-	if len(filters.WorkspaceIds) > 0 {
-		q.Where("workspace_id IN (?)", bun.In(filters.WorkspaceIds))
-	}
-
-	for _, f := range filters.ValidationMetrics {
-		if !safeString.MatchString(f.Name) {
-			return nil, fmt.Errorf("metric filter %s contains possible SQL injection", f.Name)
-		}
-		_, err := db.ApplyDoubleFieldFilter(
-			q,
-			fmt.Sprintf("(validation_metrics->>'%s')::float8", f.Name),
-			f.Filter,
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	for _, f := range filters.TrainingMetrics {
-		if !safeString.MatchString(f.Name) {
-			return nil, fmt.Errorf("metric filter %s contains possible SQL injection", f.Name)
-		}
-		_, err := db.ApplyDoubleFieldFilter(
-			q,
-			fmt.Sprintf("(training_metrics->>'%s')::float8", f.Name),
-			f.Filter,
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	for _, f := range filters.Hparams {
-		_, err := db.ApplyDoubleFieldFilter(
-			q,
-			fmt.Sprintf("(%s)::float8", hParamAccessor(f.Name)),
-			f.Filter,
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if filters.Searcher != "" {
-		q.Where("searcher_type = ?", filters.Searcher)
-	}
-	if len(filters.UserIds) > 0 {
-		q.Where("user_id IN (?)", bun.In(filters.UserIds))
-	}
-
-	if filters.StartTime != nil {
-		_, err := db.ApplyTimestampFieldFilter(q, bun.Ident("start_time"), filters.StartTime)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if filters.EndTime != nil {
-		_, err := db.ApplyTimestampFieldFilter(q, bun.Ident("end_time"), filters.EndTime)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if len(filters.States) > 0 {
-		states := []string{}
-		for _, s := range filters.States {
-			states = append(states, strings.TrimPrefix(s.String(), "STATE_"))
-		}
-		q.Where("state in (?)", bun.In(states))
-	}
-
-	if filters.SearcherMetric != "" {
-		q.Where("searcher_metric = ?", filters.SearcherMetric)
-	}
-
-	if filters.SearcherMetricValue != nil {
-		_, err := db.ApplyDoubleFieldFilter(
-			q,
-			bun.Ident("searcher_metric_value"),
-			filters.SearcherMetricValue,
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return q, nil
 }
 
 // MetricsTimeSeries returns a time-series of the specified metric in the specified
