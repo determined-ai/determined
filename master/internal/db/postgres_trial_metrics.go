@@ -233,3 +233,9 @@ AND custom_type = $4
 	// TODO update summary.
 	return false, nil
 }
+
+func mergeMetrics(oldBody, newBody *model.JSONObj) *model.JSONObj {
+	// TODO
+	// can this be done in db? should it?
+	return newBody
+}

@@ -340,7 +340,7 @@ func (db *PgDB) _addTrialMetricsTx(
 		}
 		summaryMetrics[summaryMetricsJSONPath] = calculateNewSummaryMetrics(
 			summaryMetrics[summaryMetricsJSONPath].(model.JSONObj),
-			m.Metrics.AvgMetrics,
+			m.Metrics.AvgMetrics, oldMetricsBody,
 		)
 
 		var latestValidationID *int
@@ -452,10 +452,15 @@ var pythonISOFormatRegex = regexp.MustCompile(
 // calculateNewSummaryMetrics calculates new summary metrics from the newly added
 // metrics and the existing summary metrics.
 func calculateNewSummaryMetrics(
-	summaryMetrics model.JSONObj, metrics *structpb.Struct,
+	summaryMetrics model.JSONObj, mAdded *structpb.Struct,
+	mRemoved *model.JSONObj,
 ) model.JSONObj {
+	if mRemoved != nil {
+		// mAdded: merged final ver, or the diff?
+		// TODO
+	}
 	// Calculate numeric metrics.
-	for metricName, metric := range metrics.Fields {
+	for metricName, metric := range mAdded.Fields {
 		// Get type of provided metric.
 		metricFloatValue := 0.0
 		metricType := ""
@@ -528,7 +533,7 @@ func calculateNewSummaryMetrics(
 			continue
 		}
 
-		metric["last"] = replaceSpecialFloatsWithString(metrics.Fields[metricName])
+		metric["last"] = replaceSpecialFloatsWithString(mAdded.Fields[metricName])
 	}
 
 	return summaryMetrics
