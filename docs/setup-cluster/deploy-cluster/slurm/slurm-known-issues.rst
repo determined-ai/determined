@@ -287,14 +287,59 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
    <https://bugs.schedmd.com/show_bug.cgi?id=15857>`__. The bug was addressed in 22.05.09 or
    23.02.00.
 
--  A Determined experiment remains ``QUEUEUED`` for an extended period of time:
+-  A Determined experiment remains ``QUEUEUED`` for an extended period:
 
-   Inspect the details of your queued jobs using the Slurm ``scontrol show jobs`` command. If the
-   Slurm job is ``PENDING`` review the ``Reason`` code provided. See `JOB REASON CODES
-   <https://slurm.schedmd.com/squeue.html#SECTION_JOB-REASON-CODES>`__. Some common reasons are:
+   If Slurm provides a reason code for the ``QUEUEUED`` state of the job, the reason description
+   from `JOB REASON CODES <https://slurm.schedmd.com/squeue.html#SECTION_JOB-REASON-CODES>`__ will
+   be added to the experiment/task log as an informational message such as:
 
-   -  ``Resources``: Expected when resources are in use by other jobs. Otherwise, verify you have
-      not requested more resources (GPUs, CPUs, nodes, memory) than are available in your cluster.
+   .. code::
+
+      INFO: HPC job waiting to be scheduled: Nodes required for job are DOWN, DRAINED or reserved for jobs in higher priority partitions
+
+   In some cases, it may be helpful to inspect the details of your queued jobs using the Slurm
+   ``scontrol show jobs`` command using the ``HPC Job ID`` displayed in the experiment/task log. An
+   example of the command output is shown below.
+
+   .. code::
+
+      $ scontrol show job 109084
+      JobId=109084 JobName=det-ai_exp-2221-trial-15853-2221.33b6fcca-564d-47a7-ab2e-0d2a4a90a0f1.1
+      UserId=user(1234) GroupId=users(100) MCS_label=N/A
+      Priority=4294866349 Nice=0 Account=(null) QOS=normal
+      JobState=PENDING Reason=Priority Dependency=(null)
+      Requeue=0 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
+      RunTime=00:00:00 TimeLimit=1-00:00:00 TimeMin=N/A
+      SubmitTime=2023-07-03T16:01:35 EligibleTime=2023-07-03T16:01:35
+      AccrueTime=2023-07-03T16:01:35
+      StartTime=Unknown EndTime=Unknown Deadline=N/A
+      SuspendTime=None SecsPreSuspend=0 LastSchedEval=2023-07-03T16:06:15 Scheduler=Backfill:*
+      Partition=mlde_rocm AllocNode:Sid=o184i054:755599
+      ReqNodeList=o186i[122-123] ExcNodeList=(null)
+      NodeList=
+      NumNodes=1-1 NumCPUs=1 NumTasks=1 CPUs/Task=1 ReqB:S:C:T=0:0:*:*
+      ReqTRES=cpu=1,mem=256G,node=1,billing=1,gres/gpu=1
+      AllocTRES=(null)
+      Socks/Node=* NtasksPerN:B:S:C=1:0:*:* CoreSpec=*
+      MinCPUsNode=1 MinMemoryNode=0 MinTmpDiskNode=0
+      Features=(null) DelayBoot=00:00:00
+      OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)
+      Command=/cstor/determined/o184i054-jobs/jobs/environments/vishnu/2221.33b6fcca-564d-47a7-ab2e-0d2a4a90a0f1.1/ai_exp-2221-trial-15853-job.sh
+      WorkDir=/var/tmp
+      StdErr=/cstor/determined/o184i054-jobs/jobs/environments/vishnu/2221.33b6fcca-564d-47a7-ab2e-0d2a4a90a0f1.1/ai_exp-2221-trial-15853-error.log
+      StdIn=/dev/null
+      StdOut=/cstor/determined/o184i054-jobs/jobs/environments/vishnu/2221.33b6fcca-564d-47a7-ab2e-0d2a4a90a0f1.1/ai_exp-2221-trial-15853-output.log
+      Power=
+      CpusPerTres=gres:gpu:64
+      MemPerTres=gres:gpu:262144
+      TresPerJob=gres:gpu:1
+
+   The Slurm job state (See `JOB STATE CODES
+   <https://slurm.schedmd.com/squeue.html#SECTION_JOB-STATE-CODES>`__) may help identify the delay
+   in scheduling. If the Slurm job state is ``PENDING``, review the resources being requested and
+   the ``Reason`` code to identify the cause. To better understand how resource requests are derived
+   by Determined, see :ref:`hpc_launching_architecture`. Some common reason codes for ``PENDING``
+   are:
 
    -  ``PartitionNodeLimit``: Ensure that the job is not requesting more nodes than ``MaxNodes`` of
       the partition.
@@ -317,6 +362,12 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
       Determined cluster is configured with ``gres_supported: false`` ), without specifying
       ``slurm.slots_per_node`` to enable multiple CPUs to be used on each node. Without
       ``slurm.slots_per_node`` the job will request ``slots_per_trial`` nodes.
+
+   -  ``Priority``: One or more higher priority jobs exist for this partition or advanced
+      reservation.
+
+   -  ``Resources``: Expected when resources are in use by other jobs. Otherwise, verify you have
+      not requested more resources (GPUs, CPUs, nodes, memory) than are available in your cluster.
 
 ***********************
  AMD/ROCm Known Issues
@@ -352,12 +403,11 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
 
 Ensure that the following requirements are met in your experiment configuration.
 
-Distributed jobs must allocate the same number of resources on each compute node. Specify the
-``slots_per_trial`` as a multiple of the GPUs available on a single compute node. For example, if
-the compute nodes have four GPUs each, ``slots_per_trial`` must be set to a multiple of four, such
-as 8, 12, 16, and 20. You cannot use six, for example, because Slurm might allocate four GPUs on the
-first compute node and two GPUs on the second node and the experiment can fail because it expects
-the GPUs used for the experiment to be evenly distributed among the compute nodes.
+Distributed jobs *must* allocate the same number of resources on each compute node. Slurm/PBS will
+not enforce this constraint by default. It is, therefore, recommended that you include a
+``slots_per_node`` in your experiment configuration to ensure that Slurm/PBS provides a consistent
+allocation on each node. Your ``slots_per_trial`` configuration should then be a multiple of
+``slots_per_node``.
 
 *************************
  Additional Known issues
