@@ -2,6 +2,7 @@ package provisioner
 
 import (
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -28,6 +29,8 @@ const (
 //     b. The instances are already running but agents on them are starting up.
 //     c. The agents are disconnected to the master due to misconfiguration or some unknown reason.
 type scaleDecider struct {
+	mu sync.Mutex
+
 	maxIdlePeriod       time.Duration
 	maxStartingPeriod   time.Duration
 	maxDisconnectPeriod time.Duration
@@ -83,6 +86,9 @@ func newScaleDecider(
 }
 
 func (s *scaleDecider) UpdateScalingInfo(info *sproto.ScalingInfo) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.desiredNewInstances = info.DesiredNewInstances
 	s.idleAgentSnapshot = make(map[string]sproto.AgentSummary)
 	s.connectedAgentSnapshot = make(map[string]sproto.AgentSummary, len(info.Agents))
@@ -94,7 +100,10 @@ func (s *scaleDecider) UpdateScalingInfo(info *sproto.ScalingInfo) {
 	}
 }
 
-func (s *scaleDecider) updateInstanceSnapshot(instances []*model.Instance) bool {
+func (s *scaleDecider) UpdateInstanceSnapshot(instances []*model.Instance) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	updateSnapshot := func() {
 		now := time.Now()
 		pastSnapshot := s.instanceSnapshot
@@ -121,7 +130,10 @@ func (s *scaleDecider) updateInstanceSnapshot(instances []*model.Instance) bool 
 	return false
 }
 
-func (s *scaleDecider) recordInstanceStats(slots int) error {
+func (s *scaleDecider) RecordInstanceStats(slots int) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if s.db == nil {
 		return nil
 	}
@@ -161,7 +173,10 @@ func (s *scaleDecider) updateInstanceEndStats(instID string) error {
 	})
 }
 
-func (s *scaleDecider) updateInstancesEndStats(instIDs []string) error {
+func (s *scaleDecider) UpdateInstancesEndStats(instIDs []string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if s.db == nil {
 		return nil
 	}
@@ -177,7 +192,10 @@ func (s *scaleDecider) updateInstancesEndStats(instIDs []string) error {
 	return nil
 }
 
-func (s *scaleDecider) calculateInstanceStates() {
+func (s *scaleDecider) CalculateInstanceStates() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	now := time.Now()
 	pastDisconnected := s.disconnected
 	pastIdle := s.idle
@@ -236,7 +254,10 @@ func (s *scaleDecider) calculateInstanceStates() {
 	}
 }
 
-func (s *scaleDecider) findInstancesToTerminate() sproto.TerminateDecision {
+func (s *scaleDecider) FindInstancesToTerminate() sproto.TerminateDecision {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	toTerminate := make(map[string]string)
 
 	// Terminate stopped instances and find idle and disconnected instances.
@@ -308,7 +329,10 @@ func (s *scaleDecider) findInstancesToTerminate() sproto.TerminateDecision {
 	return res
 }
 
-func (s *scaleDecider) calculateNumInstancesToLaunch() int {
+func (s *scaleDecider) CalculateNumInstancesToLaunch() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	return mathx.Max(0, mathx.Clamp(
 		s.minInstanceNum-len(s.instances),
 		s.desiredNewInstances-len(s.recentlyLaunched),

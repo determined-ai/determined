@@ -165,9 +165,9 @@ func TestCalculateInstanceStates(t *testing.T) {
 		},
 	}
 	for idx := range tcs {
-		tc := tcs[idx]
+		tc := &tcs[idx]
 		t.Run(tc.name, func(t *testing.T) {
-			tc.scaleDecider.calculateInstanceStates()
+			tc.scaleDecider.CalculateInstanceStates()
 			assertEqualInstancesMarked(t, tc.scaleDecider.disconnected, tc.disconnected)
 			assertEqualInstancesMarked(t, tc.scaleDecider.idle, tc.idle)
 			assert.DeepEqual(t, tc.scaleDecider.longDisconnected, tc.longDisconnected)
@@ -295,9 +295,9 @@ func TestFindInstancesToTerminate(t *testing.T) {
 		},
 	}
 	for idx := range tcs {
-		tc := tcs[idx]
+		tc := &tcs[idx]
 		t.Run(tc.name, func(t *testing.T) {
-			toTerminate := tc.scaleDecider.findInstancesToTerminate()
+			toTerminate := tc.scaleDecider.FindInstancesToTerminate()
 			assert.DeepEqual(
 				t,
 				newInstanceIDSet(toTerminate.InstanceIDs),
@@ -397,9 +397,9 @@ func TestCalculateNumInstancesToLaunch(t *testing.T) {
 	}
 
 	for idx := range tcs {
-		tc := tcs[idx]
+		tc := &tcs[idx]
 		t.Run(tc.name, func(t *testing.T) {
-			actual := tc.scaleDecider.calculateNumInstancesToLaunch()
+			actual := tc.scaleDecider.CalculateNumInstancesToLaunch()
 			assert.Equal(t, actual, tc.numToLaunch)
 		})
 	}
@@ -432,6 +432,6 @@ func TestRecordInstanceStats(t *testing.T) {
 	}
 	db.On("RecordInstanceStats", mock.Anything).Return(nil)
 	db.On("EndInstanceStats", mock.Anything).Return(nil)
-	err := sd.recordInstanceStats(2)
+	err := sd.RecordInstanceStats(2)
 	assert.NilError(t, err)
 }

@@ -142,32 +142,32 @@ func (p *Provisioner) provision() {
 		p.syslog.WithError(err).Error("cannot list instances for provisioning")
 		return
 	}
-	updated := p.scaleDecider.updateInstanceSnapshot(instances)
+	updated := p.scaleDecider.UpdateInstanceSnapshot(instances)
 	if updated {
 		p.syslog.Infof("found state changes in %d instances: %s",
 			len(instances), model.FmtInstances(instances))
 	}
 
-	p.scaleDecider.calculateInstanceStates()
+	p.scaleDecider.CalculateInstanceStates()
 
 	if updated {
-		err = p.scaleDecider.recordInstanceStats(p.SlotsPerInstance())
+		err = p.scaleDecider.RecordInstanceStats(p.SlotsPerInstance())
 		if err != nil {
 			p.syslog.WithError(err).Error("cannot record instance stats")
 		}
 	}
 
-	if toTerminate := p.scaleDecider.findInstancesToTerminate(); len(toTerminate.InstanceIDs) > 0 {
+	if toTerminate := p.scaleDecider.FindInstancesToTerminate(); len(toTerminate.InstanceIDs) > 0 {
 		p.syslog.Infof("decided to terminate %d instances: %s",
 			len(toTerminate.InstanceIDs), toTerminate.String())
 		p.provider.terminate(toTerminate.InstanceIDs)
-		err = p.scaleDecider.updateInstancesEndStats(toTerminate.InstanceIDs)
+		err = p.scaleDecider.UpdateInstancesEndStats(toTerminate.InstanceIDs)
 		if err != nil {
 			p.syslog.WithError(err).Error("cannot update end stats for terminated instance")
 		}
 	}
 
-	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {
+	if numToLaunch := p.scaleDecider.CalculateNumInstancesToLaunch(); numToLaunch > 0 {
 		p.syslog.Infof("decided to launch %d instances (type %s)",
 			numToLaunch, p.provider.instanceType().Name())
 		if err := p.launch(numToLaunch); err != nil {
