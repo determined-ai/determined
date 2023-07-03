@@ -37,7 +37,7 @@ const shortCutSettingsConfig: SettingsConfig<Settings> = {
       defaultValue: {
         alt: false,
         ctrl: true,
-        key: ' ',
+        key: 'Space',
         meta: false,
         shift: false,
       },
