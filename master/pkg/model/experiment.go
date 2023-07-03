@@ -569,39 +569,10 @@ func MostProgressedExperimentState(
 	return state2
 }
 
-// CheckpointVersion describes the format in which some checkpoint metadata is saved.
-type CheckpointVersion int
-
 const (
-	// CheckpointVersionV1 was the original way checkpoints were stored, in a trial-attached
-	// checkpoint table.
-	CheckpointVersionV1 = 1
-	// CheckpointVersionV2 changed checkpoints to be non-trial-attached and generic.
-	CheckpointVersionV2 = 2
-	// CurrentCheckpointVersion is the current way checkpoints are stored.
-	CurrentCheckpointVersion = CheckpointVersionV2
-
 	// StepsCompletedMetadataKey is the key within metadata to find steps completed now, if it exists.
 	StepsCompletedMetadataKey = "steps_completed"
 )
-
-// CheckpointV1 represents a row from the `raw_checkpoints` table.
-type CheckpointV1 struct {
-	bun.BaseModel     `bun:"table:raw_checkpoints"`
-	ID                int        `db:"id" json:"id" bun:"id,pk,autoincrement"`
-	TrialID           int        `db:"trial_id" json:"trial_id"`
-	TrialRunID        int        `db:"trial_run_id" json:"-"`
-	TotalBatches      int        `db:"total_batches" json:"total_batches"`
-	State             State      `db:"state" json:"state"`
-	EndTime           *time.Time `db:"end_time" json:"end_time"`
-	UUID              *string    `db:"uuid" json:"uuid"`
-	Resources         JSONObj    `db:"resources" json:"resources"`
-	Metadata          JSONObj    `db:"metadata" json:"metadata"`
-	Framework         string     `db:"framework" json:"framework"`
-	Format            string     `db:"format" json:"format"`
-	DeterminedVersion string     `db:"determined_version" json:"determined_version"`
-	Size              int64      `db:"size"`
-}
 
 // CheckpointV2 represents a row from the `checkpoints_v2` table.
 type CheckpointV2 struct {
@@ -644,8 +615,6 @@ type Checkpoint struct {
 	Size         int64         `db:"size"`
 
 	CheckpointTrainingMetadata
-
-	CheckpointVersion CheckpointVersion `db:"checkpoint_version"`
 }
 
 // TrialLog represents a row from the `trial_logs` table.

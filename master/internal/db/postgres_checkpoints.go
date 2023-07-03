@@ -82,13 +82,6 @@ func MarkCheckpointsDeleted(ctx context.Context, deleteCheckpoints []uuid.UUID) 
 	}
 
 	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewUpdate().Model(&model.CheckpointV1{}).
-			Set("state = ?", model.DeletedState).
-			Where("uuid IN (?)", bun.In(deleteCheckpoints)).
-			Exec(ctx); err != nil {
-			return fmt.Errorf("deleting checkpoints from raw_checkpoints: %w", err)
-		}
-
 		if _, err := tx.NewUpdate().Model(&model.CheckpointV2{}).
 			Set("state = ?", model.DeletedState).
 			Where("uuid IN (?)", bun.In(deleteCheckpoints)).
@@ -158,19 +151,10 @@ UPDATE trials SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
 	SELECT trial_id, sum(size) as size, sum(count) as count
 	FROM (
 		WITH trial_ids AS (
-			SELECT trial_id FROM raw_checkpoints WHERE uuid IN (?)
-			UNION
 			SELECT t.id
 			FROM checkpoints_v2 INNER JOIN trials t ON checkpoints_v2.task_id = t.task_id
 			WHERE uuid IN (?)
 		)
-		SELECT t.id AS trial_id,
-		COALESCE(SUM(size) FILTER (WHERE c.state != 'DELETED'), 0) AS size,
-		COUNT(*) FILTER (WHERE c.state != 'DELETED') AS count
-		FROM raw_checkpoints c INNER JOIN trials t on c.trial_id = t.id
-		WHERE t.id IN (SELECT trial_id FROM trial_ids)
-		GROUP BY t.id
-		UNION ALL
 		SELECT t.id AS trial_id,
 		COALESCE(SUM(size) FILTER (WHERE checkpoints_v2.state != 'DELETED'), 0) AS size,
 		COUNT(*) FILTER (WHERE checkpoints_v2.state != 'DELETED') AS count

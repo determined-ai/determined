@@ -74,6 +74,9 @@ workloads AS (
                             FROM
                                 raw_validations
                             UNION ALL
+                            -- I am confused at this query.
+                            -- Why does this not look at checkpoints_v2?
+                            -- Can we leave this then?
                             SELECT
                                 'checkpointing' AS kind,
                                 trial_id,
