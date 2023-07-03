@@ -312,7 +312,7 @@ func (db *PgDB) _addTrialMetricsTx(
 		return rollbacks, fmt.Errorf("error getting summary metrics from trials: %w", err)
 	}
 
-	metricRowID, newMetricsBody, oldMetricsBody, err := db.addMetricsWithMerge(ctx, tx,
+	metricRowID, mergedMetrics, oldMetrics, err := db.addMetricsWithMerge(ctx, tx,
 		&metricsBody, m.TrialRunId, m.TrialId, m.StepsCompleted, mType)
 	if err != nil {
 		return rollbacks, err
@@ -338,9 +338,19 @@ func (db *PgDB) _addTrialMetricsTx(
 			summaryMetrics[summaryMetricsJSONPath] = model.JSONObj{}
 			// CHECK: assert no merge happened.
 		}
+		var addedAvgMetricsPB *structpb.Struct
+		var oldAvgMetrics *model.JSONObj
+		if mergedMetrics != nil {
+			addedAvgMetricsPB, err = structpb.NewStruct(*mergedMetrics)
+			// FIXME: isn't there be a better way to get a reference to this here?
+			_oldAvgMetrics := (*oldMetrics)[metricsJSONPath].(model.JSONObj)
+			oldAvgMetrics = &_oldAvgMetrics
+		} else {
+			addedAvgMetricsPB = m.Metrics.AvgMetrics
+		}
 		summaryMetrics[summaryMetricsJSONPath] = calculateNewSummaryMetrics(
 			summaryMetrics[summaryMetricsJSONPath].(model.JSONObj),
-			m.Metrics.AvgMetrics, oldMetricsBody,
+			addedAvgMetricsPB, oldAvgMetrics,
 		)
 
 		var latestValidationID *int

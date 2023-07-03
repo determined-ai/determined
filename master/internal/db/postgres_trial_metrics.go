@@ -87,14 +87,15 @@ WHERE trial_id = $1
 // the new metrics, and the previous metrics in case of a merge.
 func (db *PgDB) addMetricsWithMerge(ctx context.Context, tx *sqlx.Tx, metricsBody *model.JSONObj,
 	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
-) (int, *model.JSONObj, *model.JSONObj, error) {
+) (metricID int, mergedBody *model.JSONObj, oldBody *model.JSONObj, err error) {
 	// TODO: fetch previous metrics
 	// TODO: merge previous metrics with new metrics
 	// TODO: addRawMetrics new metrics
-	newMetricsBody := *metricsBody
-	id, err := db.addRawMetrics(ctx, tx, &newMetricsBody, runID, trialID, lastProcessedBatch, mType)
+	// TODO: merge separately on avgMetrics and batchMetrics
+	mergedBody = mergeMetrics(oldBody, metricsBody)
+	id, err := db.addRawMetrics(ctx, tx, mergedBody, runID, trialID, lastProcessedBatch, mType)
 
-	return id, &newMetricsBody, metricsBody, err
+	return id, mergedBody, oldBody, err
 }
 
 // addRawMetrics inserts a set of raw metrics to the database and returns the metric id.
