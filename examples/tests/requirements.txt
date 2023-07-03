@@ -10,3 +10,4 @@ torchvision==0.10.0
 pandas
 tensorflow_datasets
 scipy
+pillow<10.0.0

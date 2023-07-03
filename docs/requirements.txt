@@ -1,6 +1,6 @@
 # pin docutils at 0.15.2 to avoid transitive dependency conflict with botocore (requires < 0.16)
 docutils==0.15.2
-pillow
+pillow<10.0.0
 rstfmt==0.0.12
 
 # Plugins
