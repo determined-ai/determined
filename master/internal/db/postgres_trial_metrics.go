@@ -369,8 +369,28 @@ AND custom_type = $4
 	return nil, nil
 }
 
+// mergeMetrics merges AvgMetrics of two metrics bodies.
 func mergeMetrics(oldBody, newBody *metricsBody) *metricsBody {
-	// TODO
-	// can this be done in db? should it?
-	return newBody
+	if oldBody == nil {
+		return newBody
+	}
+
+	if newBody == nil {
+		return oldBody
+	}
+
+	// FIXME: We don't need to convert this
+	oldAvgMetricsMap := oldBody.AvgMetrics.AsMap()
+	newAvgMetricsMap := newBody.AvgMetrics.AsMap()
+	for key, newValue := range newAvgMetricsMap {
+		oldAvgMetricsMap[key] = newValue
+	}
+
+	mergedAvgMetrics, err := structpb.NewStruct(oldAvgMetricsMap)
+	if err != nil {
+		// handle error
+	}
+	oldBody.AvgMetrics = mergedAvgMetrics
+
+	return oldBody
 }

@@ -556,6 +556,35 @@ func getLatestValidation(ctx context.Context, t *testing.T, trialID int) (*int, 
 	return res[0].ID, res[0].Metric
 }
 
+func jsonToStruct(t *testing.T, jsonStr string) *structpb.Struct {
+	var rawMetrics map[string]any
+	require.NoError(t, json.Unmarshal([]byte(jsonStr), &rawMetrics))
+	metrics, err := structpb.NewStruct(rawMetrics)
+	require.NoError(t, err)
+	return metrics
+}
+
+func TestMetricMergeUtil(t *testing.T) {
+	cases := []struct {
+		reports []string
+		merged  string
+	}{
+		{[]string{`{"a":1.0}`}, `{"a":1.0}`},
+		{[]string{`{"a":1.0}`, `{"a":2.0}`}, `{"a":2.0}`},
+		{[]string{`{"a":1.0}`, `{"b":2.0}`}, `{"a":1.0,"b":2.0}`},
+	}
+	for _, c := range cases {
+		var merged *metricsBody
+		for _, report := range c.reports {
+			newBody := newMetricsBody(nil, jsonToStruct(t, report), model.TrainingMetricType)
+			merged = mergeMetrics(merged, newBody)
+		}
+		deserializedMetrics := map[string]any{}
+		require.NoError(t, json.Unmarshal([]byte(c.merged), &deserializedMetrics))
+		require.EqualValues(t, deserializedMetrics, merged.AvgMetrics.AsMap())
+	}
+}
+
 func TestMetricMerge(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
@@ -568,16 +597,12 @@ func TestMetricMerge(t *testing.T) {
 
 	addMetricAt := func(batchNumber int, metricsJSON string, trialID int) error {
 		trialRunID := 0
-		var rawMetrics map[string]any
-		require.NoError(t, json.Unmarshal([]byte(metricsJSON), &rawMetrics))
-		metrics, err := structpb.NewStruct(rawMetrics)
-		require.NoError(t, err)
 		require.NoError(t, db.AddTrialMetrics(ctx, &trialv1.TrialMetrics{
 			TrialId:        int32(trialID),
 			TrialRunId:     int32(trialRunID),
 			StepsCompleted: int32(batchNumber),
 			Metrics: &commonv1.Metrics{
-				AvgMetrics: metrics,
+				AvgMetrics: jsonToStruct(t, metricsJSON),
 			},
 		}, mType))
 		return nil
@@ -589,7 +614,7 @@ func TestMetricMerge(t *testing.T) {
 	}{
 		{[]string{`{"a":1.0}`}, `{"a":1.0}`},
 		{[]string{`{"a":1.0}`, `{"a":2.0}`}, `{"a":2.0}`},
-		// {[]string{`{"a":1.0}`, `{"b":2.0}`}, `{"a":1.0,"b":2.0}`},
+		{[]string{`{"a":1.0}`, `{"b":2.0}`}, `{"a":1.0,"b":2.0}`},
 	}
 
 	for _, c := range cases {
