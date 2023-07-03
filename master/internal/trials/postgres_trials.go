@@ -3,8 +3,6 @@ package trials
 import (
 	"context"
 	"fmt"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -12,83 +10,12 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 )
 
 const (
 	batches = "batches"
 )
-
-// TrialsAugmented shows provides information about a Trial.
-type TrialsAugmented struct {
-	bun.BaseModel         `bun:"table:trials_augmented_view,alias:trials_augmented_view"`
-	TrialID               int32              `bun:"trial_id"`
-	State                 string             `bun:"state"`
-	Hparams               model.JSONObj      `bun:"hparams"`
-	TrainingMetrics       map[string]float64 `bun:"training_metrics,json_use_number"`
-	ValidationMetrics     map[string]float64 `bun:"validation_metrics,json_use_number"`
-	Tags                  map[string]string  `bun:"tags"`
-	StartTime             time.Time          `bun:"start_time"`
-	EndTime               time.Time          `bun:"end_time"`
-	SearcherType          string             `bun:"searcher_type"`
-	ExperimentID          int32              `bun:"experiment_id"`
-	ExperimentName        string             `bun:"experiment_name"`
-	ExperimentDescription string             `bun:"experiment_description"`
-	ExperimentLabels      []string           `bun:"experiment_labels"`
-	UserID                int32              `bun:"user_id"`
-	ProjectID             int32              `bun:"project_id"`
-	WorkspaceID           int32              `bun:"workspace_id"`
-	TotalBatches          int32              `bun:"total_batches"`
-	SearcherMetric        string             `bun:"searcher_metric"`
-	SearcherMetricValue   float64            `bun:"searcher_metric_value"`
-	SearcherMetricLoss    float64            `bun:"searcher_metric_loss"`
-
-	RankWithinExp int32 `bun:"rank,scanonly"`
-}
-
-// QueryTrialsOrderMap is a map of OrderBy choices to Sort Choices.
-var QueryTrialsOrderMap = map[apiv1.OrderBy]db.SortDirection{
-	apiv1.OrderBy_ORDER_BY_UNSPECIFIED: db.SortDirectionAsc,
-	apiv1.OrderBy_ORDER_BY_ASC:         db.SortDirectionAsc,
-	apiv1.OrderBy_ORDER_BY_DESC:        db.SortDirectionDescNullsLast,
-}
-
-// This allows dot on top of whats allowed in existing regex validField.
-var safeString = regexp.MustCompile(`^[a-zA-Z0-9_\.\-]+$`)
-
-func hParamAccessor(hp string) string {
-	pathElementsRaw := strings.Split(hp, ".")
-	pathElements := []string{"hparams"}
-	for _, n := range pathElementsRaw {
-		pathElements = append(pathElements, fmt.Sprintf("'%s'", n))
-	}
-	path := strings.Join(pathElements[:len(pathElements)-1], "->")
-	key := pathElements[len(pathElements)-1]
-
-	return fmt.Sprintf("(%s->>%s)::float8", path, key)
-}
-
-// TrialsColumnForNamespace returns the correct namespace for a TrialSorter.
-func TrialsColumnForNamespace(namespace apiv1.TrialSorter_Namespace,
-	field string,
-) (string, error) {
-	if !safeString.MatchString(field) {
-		return "", fmt.Errorf("%s filter %s contains possible SQL injection", namespace, field)
-	}
-	switch namespace {
-	case apiv1.TrialSorter_NAMESPACE_UNSPECIFIED:
-		return field, nil
-	case apiv1.TrialSorter_NAMESPACE_HPARAMS:
-		return hParamAccessor(field), nil
-	case apiv1.TrialSorter_NAMESPACE_TRAINING_METRICS:
-		return fmt.Sprintf("(training_metrics->>'%s')::float8", field), nil
-	case apiv1.TrialSorter_NAMESPACE_VALIDATION_METRICS:
-		return fmt.Sprintf("(validation_metrics->>'%s')::float8", field), nil
-	default:
-		return field, nil
-	}
-}
 
 // MetricsTimeSeries returns a time-series of the specified metric in the specified
 // trial.
