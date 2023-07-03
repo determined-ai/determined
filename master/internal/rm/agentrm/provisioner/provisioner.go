@@ -24,10 +24,11 @@ const (
 	secureScheme      = "https"
 )
 
-// Provisioner implements an actor to provision and terminate agent instances.
-// It is composed of four parts: a provisioner actor, a scaling decision maker,
-// a provider, and a rate limiter.
-//  1. The provisioner actor accepts actor messages with pending tasks and idle agents.
+// Provisioner implements the ability to provision and terminate agent instances.
+// It is composed of four parts: a provisioner, a scaling decision maker, a provider,
+// and a rate limiter.
+//
+//  1. The provisioner is capable of reporting provider information and updating scaling info.
 //     1.1. `Scheduler` pushes an immutable view of agents and tasks to `Provisioner`. `Provisioner`
 //     pulls instance data from instance providers.
 //  2. Based on the pending tasks, the scaleDecider chooses how many new instances to launch and
