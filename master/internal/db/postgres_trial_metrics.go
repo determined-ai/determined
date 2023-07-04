@@ -27,7 +27,7 @@ const (
 )
 
 type metricsBody struct {
-	BatchMetrics []*structpb.Struct
+	BatchMetrics any
 	AvgMetrics   *structpb.Struct
 	Type         model.MetricType
 }
@@ -40,7 +40,7 @@ func (b metricsBody) ToJSONObj() *model.JSONObj {
 		metricsJSONPath: b.AvgMetrics,
 	}
 	if b.BatchMetrics != nil {
-		body[metricsJSONPath] = b.BatchMetrics
+		body["batch_metrics"] = b.BatchMetrics
 	}
 	return &body
 }
@@ -61,12 +61,17 @@ func (b *metricsBody) LoadJSON(body *model.JSONObj) (err error) {
 		return errors.Wrapf(err, "failed to convert avg metrics to structpb.Struct")
 	}
 
+	batchMetricsVal, exists := (*body)["batch_metrics"]
+	if exists {
+		b.BatchMetrics = batchMetricsVal
+	}
+
 	return nil
 }
 
 func newMetricsBody(
-	batchMetrics []*structpb.Struct,
 	avgMetrics *structpb.Struct,
+	batchMetrics any,
 	mType model.MetricType,
 ) *metricsBody {
 	return &metricsBody{

@@ -576,7 +576,7 @@ func TestMetricMergeUtil(t *testing.T) {
 	for _, c := range cases {
 		var merged *metricsBody
 		for _, report := range c.reports {
-			newBody := newMetricsBody(nil, jsonToStruct(t, report), model.TrainingMetricType)
+			newBody := newMetricsBody(jsonToStruct(t, report), nil, model.TrainingMetricType)
 			merged = mergeMetrics(merged, newBody)
 		}
 		deserializedMetrics := map[string]any{}
@@ -631,6 +631,7 @@ func TestMetricMerge(t *testing.T) {
 		require.Len(t, metrics, 1)
 		deserializedMetrics := map[string]any{}
 		require.NoError(t, json.Unmarshal([]byte(c.merged), &deserializedMetrics))
+		fmt.Println(metrics[0].Metrics.AsMap())
 		require.EqualValues(t, deserializedMetrics, metrics[0].Metrics.AsMap()["avg_metrics"])
 	}
 }
