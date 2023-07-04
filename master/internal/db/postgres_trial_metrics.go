@@ -45,27 +45,20 @@ func (b metricsBody) ToJSONObj() *model.JSONObj {
 	return &body
 }
 
-func (b *metricsBody) LoadJSON(body *model.JSONObj) error {
+func (b *metricsBody) LoadJSON(body *model.JSONObj) (err error) {
 	isValidation := b.Type == model.ValidationMetricType
 	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
 
-	val, exists := (*body)[metricsJSONPath]
+	avgMetricsVal, exists := (*body)[metricsJSONPath]
 	if !exists {
 		return fmt.Errorf("expected key %s in JSON body", metricsJSONPath)
 	}
-
-	if isValidation {
-		avgMetrics, ok := val.(*structpb.Struct)
-		if !ok {
-			return fmt.Errorf("value at key %s should be a pointer to structpb.Struct", metricsJSONPath)
-		}
-		b.AvgMetrics = avgMetrics
-	} else {
-		// Handle BatchMetrics only if they are present.
-		batchMetrics, ok := val.([]*structpb.Struct)
-		if ok {
-			b.BatchMetrics = batchMetrics
-		}
+	avgMetrics, ok := avgMetricsVal.(map[string]any)
+	if !ok {
+		return fmt.Errorf("failed to deserialize %s", metricsJSONPath)
+	}
+	if b.AvgMetrics, err = structpb.NewStruct(avgMetrics); err != nil {
+		return errors.Wrapf(err, "failed to convert avg metrics to structpb.Struct")
 	}
 
 	return nil
@@ -199,6 +192,7 @@ AND custom_type = $4), NULL)`,
 	if err = replacedBody.LoadJSON(&replacedBodyJSON); err != nil {
 		return 0, nil, nil, err
 	}
+	fmt.Println("replaced body avg", replacedBody.AvgMetrics)
 	addedBody = mergeMetrics(replacedBody, mBody)
 	id, err := db.updateRawMetrics(ctx, tx, addedBody, runID, trialID, lastProcessedBatch, mType)
 	return id, addedBody, replacedBody, err
