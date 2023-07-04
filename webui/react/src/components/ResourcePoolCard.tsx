@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo, useCallback } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo } from 'react';
 
 import awsLogoOnDark from 'assets/images/aws-logo-on-dark.svg';
 import awsLogo from 'assets/images/aws-logo.svg';
@@ -17,6 +17,7 @@ import { maxPoolSlotCapacity } from 'stores/cluster';
 import clusterStore from 'stores/cluster';
 import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
+import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
 import { isDeviceType, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
@@ -97,6 +98,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
   const { rbacEnabled } = useObservable(determinedStore.info);
   const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
   const resourcePoolBindings: number[] = resourcePoolBindingMap.get(pool.name, []);
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
 
   useEffect(() => {
     return clusterStore.fetchResourcePoolBindings(pool.name);
@@ -136,10 +138,20 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
     ColumnsCustomizeModal.open();
   }, [ColumnsCustomizeModal]);
 
+  const onSaveBindings = useCallback(
+    (bindings: string[]) => {
+      const workspaceIds = workspaces.filter((w) => bindings.includes(w.name)).map((w) => w.id);
+      clusterStore.overwriteResourcePoolBindings(pool.name, workspaceIds);
+    },
+    [workspaces, pool],
+  );
+
   return (
     <>
       <Card
-        actionMenu={[{ key: 'bindings', label: 'Manage bindings' }]}
+        actionMenu={
+          rpBindingFlagOn && rbacEnabled ? [{ key: 'bindings', label: 'Manage bindings' }] : []
+        }
         href={paths.resourcePool(pool.name)}
         size="medium"
         onDropdown={onDropdown}>
@@ -156,6 +168,15 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
           <Suspense fallback={<Spinner center />}>
             <div className={css.body}>
               <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
+              {rpBindingFlagOn && rbacEnabled && resourcePoolBindings.length > 0 && (
+                <section className={css.resoucePoolBoundContainer}>
+                  <div>Bound to:</div>
+                  <div className={css.resoucePoolBoundCount}>
+                    <Icon name="lock" title="lock" />
+                    {resourcePoolBindings.length} workspace
+                  </div>
+                </section>
+              )}
               <section className={css.details}>
                 <Json hideDivider json={shortDetails} />
               </section>
@@ -163,26 +184,13 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
             </div>
           </Suspense>
         </div>
-        <Suspense fallback={<Spinner center />}>
-          <div className={css.body}>
-            <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
-            {rpBindingFlagOn && rbacEnabled && resourcePoolBindings.length > 0 && (
-              <section className={css.resoucePoolBoundContainer}>
-                <div>Bound to:</div>
-                <div className={css.resoucePoolBoundCount}>
-                  <Icon name="lock" title="lock" />
-                  {resourcePoolBindings.length} workspace
-                </div>
-              </section>
-            )}
-            <section className={css.details}>
-              <Json hideDivider json={shortDetails} />
-            </section>
-            <div />
-          </div>
-        </Suspense>
-    </Card>
-    <ColumnsCustomizeModal.Component bindings={[]} pool={pool.name} />
+      </Card>
+      <ColumnsCustomizeModal.Component
+        bindings={workspaces.filter((w) => resourcePoolBindings.includes(w.id)).map((w) => w.name)}
+        pool={pool.name}
+        workspaces={workspaces.map((w) => w.name)}
+        onSave={onSaveBindings}
+      />
     </>
   );
 };

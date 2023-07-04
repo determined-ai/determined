@@ -7,10 +7,16 @@ import handleError from 'utils/error';
 interface Props {
   pool: string;
   bindings: string[];
+  workspaces: string[];
   onSave?: (bindings: string[]) => void;
 }
 
-const ResourcePoolBindingModalComponent: React.FC<Props> = ({ pool, bindings, onSave }: Props) => {
+const ResourcePoolBindingModalComponent: React.FC<Props> = ({
+  pool,
+  bindings,
+  onSave,
+  workspaces,
+}: Props) => {
   const bindingList = useRef(bindings).current; // This is only to prevent rerendering
   const [visibleBindings, setVisibleBindings] = useState<string[]>(bindings);
 
@@ -28,7 +34,7 @@ const ResourcePoolBindingModalComponent: React.FC<Props> = ({ pool, bindings, on
       title="Manage resource pool bindings">
       <Transfer
         defaultTargetEntries={bindingList}
-        entries={bindingList}
+        entries={workspaces}
         initialTargetEntries={visibleBindings}
         sourceListTitle={`Bound to ${pool}`}
         targetListTitle="Available workspaces"
