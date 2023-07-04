@@ -64,32 +64,6 @@ func (b *metricsBody) LoadJSON(body *model.JSONObj) (err error) {
 	return nil
 }
 
-// func (b metricsBody) LoadJSON(body *model.JSONObj) error {
-// 	isValidation := b.Type == model.ValidationMetricType
-// 	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
-// 	val, exists := body[metricsJSONPath]
-// 	if !exists {
-// 		return fmt.Errorf("expected key %s in JSON body", metricsJSONPath)
-// 	}
-
-// 	switch b.Type {
-// 	case model.ValidationMetricType:
-// 		var ok bool
-// 		b.AvgMetrics, ok = val.(*structpb.Struct)
-// 		if !ok {
-// 			return fmt.Errorf("value at key %s should be a pointer to structpb.Struct", metricsJSONPath)
-// 		}
-// 	default:
-// 		arr, ok := val.([]*structpb.Struct)
-// 		if !ok {
-// 			return fmt.Errorf("value at key %s should be a slice of pointers to structpb.Struct", metricsJSONPath)
-// 		}
-// 		b.BatchMetrics = arr
-// 	}
-
-// 	return nil
-// }
-
 func newMetricsBody(
 	batchMetrics []*structpb.Struct,
 	avgMetrics *structpb.Struct,
