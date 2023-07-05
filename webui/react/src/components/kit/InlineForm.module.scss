@@ -12,7 +12,7 @@
     justify-content: end;
 
     & > button {
-      margin-inline-end: 0;
+      transition: none; // there's a transition (RTL slide) when enabling edit mode...
 
       &:last-of-type {
         grid-column: 3 / 4;
