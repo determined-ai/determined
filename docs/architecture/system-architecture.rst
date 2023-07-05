@@ -5,11 +5,11 @@
 Determined consists of a single **master** and one or more **agents**. There is typically one agent
 per compute server; a single machine can serve as both a master and an agent.
 
-.. image:: /assets/images/det-ai-sys-arch-01-dark.png
+.. image:: /assets/images/_det-ai-sys-arch-01-dark.png
    :class: only-dark
    :alt: Determined AI system architecture diagram describing master and agent components in dark mode
 
-.. image:: /assets/images/det-ai-sys-arch-01-light.png
+.. image:: /assets/images/_det-ai-sys-arch-01-light.png
    :class: only-light
    :alt: Determined AI system architecture diagram describing master and agent components in light mode
 
