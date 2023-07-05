@@ -10147,12 +10147,6 @@ export interface V1TrialSourceInfo {
      */
     checkpointUuid: string;
     /**
-     * Source Trial which generated the checkpoint (if applicable)
-     * @type {number}
-     * @memberof V1TrialSourceInfo
-     */
-    sourceTrialId?: number;
-    /**
      * Source model_version id which generated the checkpoint (if applicable)
      * @type {number}
      * @memberof V1TrialSourceInfo

@@ -288,16 +288,14 @@ message TrialSourceInfo {
   int32 trial_id = 1;
   // UUID of the checkpoint.
   string checkpoint_uuid = 2;
-  // Source Trial which generated the checkpoint (if applicable)
-  int32 source_trial_id = 3;
   // Source model_version id which generated the checkpoint (if applicable)
-  int32 source_model_version_id = 4;
+  int32 source_model_version_id = 3;
   // Source model_version version which generated the checkpoint (if applicable)
-  int32 source_model_version_version = 5;
+  int32 source_model_version_version = 4;
   // Type for this trial_source_info
-  TrialSourceInfoType trial_source_info_type = 6;
+  TrialSourceInfoType trial_source_info_type = 5;
   // User defined description text
-  string description = 7;
+  string description = 6;
   // Struct of the user defined metadata
-  google.protobuf.Struct metadata = 8;
+  google.protobuf.Struct metadata = 7;
 }

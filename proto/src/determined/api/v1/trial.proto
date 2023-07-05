@@ -1098,20 +1098,23 @@ message CreateTrialSourceInfoResponse {
   // TrialSourceInfoType trial_source_info_type = 3;
 }
 
-// // TODO: How exactly does the frontend want to use this data?
-// // How do they want to query it?
-// // Do they want the actual trial_source_info information or just the metrics that go along with it?
-// message GetTrialSourceInfoRequest {
-//   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-//     json_schema: {
-//       required: [ "trial_id", "checkpoint_uuid" ]
-//       // "trial_source_info_type" ]
-//     }
-//   };
-//   // Trial ID 
-//   int32 trial_id = 1;
-//   // UUID of the checkpoint.
-//   string checkpoint_uuid = 2;
-//   // Type for this trial_source_info
-//   // TrialSourceInfoType trial_source_info_type = 3;
-// }
+message GetTrialsUsingCheckpointRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "checkpoint_uuid" ]
+      // "trial_source_info_type" ]
+    }
+  };
+  // UUID of the checkpoint.
+  string checkpoint_uuid = 1;
+}
+
+message GetTrialsUsingCheckpointResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "trial_id" ]
+    }
+  };
+  // Trial ID that uses the given checkpoint
+  repeated int32 trial_id = 1;
+}

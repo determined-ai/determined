@@ -1008,6 +1008,30 @@ func (a *apiServer) CreateTrialSourceInfo(
 	return resp, err
 }
 
+// Create a TrialSourceInfo, which serves as a link between trials and checkpoints
+// used for tracking purposes for fine tuning and inference
+func (a *apiServer) GetTrialsUsingCheckpoint(
+	ctx context.Context, req *apiv1.GetTrialsUsingCheckpointRequest,
+) (*apiv1.GetTrialsUsingCheckpointResponse, error) {
+	// TODO: Handle user auth/rbac
+	// curUser, _, err := grpcutil.GetUser(ctx)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to create trial source info %w", err)
+	// }
+
+	resp := &apiv1.GetTrialsUsingCheckpointResponse{}
+	query := db.GetTrialsUsingCheckpoint(ctx, req.CheckpointUuid)
+	var trialIds []int32
+
+	// _, err := query.Exec(ctx, resp)
+	err := query.Scan(ctx, &trialIds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get trial source info %w", err)
+	}
+	resp.TrialId = trialIds
+	return resp, err
+}
+
 func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWorkloadsRequest) (
 	*apiv1.GetTrialWorkloadsResponse, error,
 ) {

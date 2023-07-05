@@ -12959,7 +12959,6 @@ class v1TrialSourceInfo(Printable):
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     sourceModelVersionId: "typing.Optional[int]" = None
     sourceModelVersionVersion: "typing.Optional[int]" = None
-    sourceTrialId: "typing.Optional[int]" = None
 
     def __init__(
         self,
@@ -12971,7 +12970,6 @@ class v1TrialSourceInfo(Printable):
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         sourceModelVersionId: "typing.Union[int, None, Unset]" = _unset,
         sourceModelVersionVersion: "typing.Union[int, None, Unset]" = _unset,
-        sourceTrialId: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.checkpointUuid = checkpointUuid
         self.trialId = trialId
@@ -12984,8 +12982,6 @@ class v1TrialSourceInfo(Printable):
             self.sourceModelVersionId = sourceModelVersionId
         if not isinstance(sourceModelVersionVersion, Unset):
             self.sourceModelVersionVersion = sourceModelVersionVersion
-        if not isinstance(sourceTrialId, Unset):
-            self.sourceTrialId = sourceTrialId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialSourceInfo":
@@ -13002,8 +12998,6 @@ class v1TrialSourceInfo(Printable):
             kwargs["sourceModelVersionId"] = obj["sourceModelVersionId"]
         if "sourceModelVersionVersion" in obj:
             kwargs["sourceModelVersionVersion"] = obj["sourceModelVersionVersion"]
-        if "sourceTrialId" in obj:
-            kwargs["sourceTrialId"] = obj["sourceTrialId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -13020,8 +13014,6 @@ class v1TrialSourceInfo(Printable):
             out["sourceModelVersionId"] = self.sourceModelVersionId
         if not omit_unset or "sourceModelVersionVersion" in vars(self):
             out["sourceModelVersionVersion"] = self.sourceModelVersionVersion
-        if not omit_unset or "sourceTrialId" in vars(self):
-            out["sourceTrialId"] = self.sourceTrialId
         return out
 
 class v1TrialSourceInfoType(DetEnum):

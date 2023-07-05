@@ -689,7 +689,7 @@ func TestCreateTrialSourceInfo(t *testing.T) {
 
 	infTrial, _, _ := createTestTrialWithMetrics(
 		ctx, t, api, curUser, false)
-	sourceTrial, _, _ := createTestTrialWithMetrics(
+	infTrial2, _, _ := createTestTrialWithMetrics(
 		ctx, t, api, curUser, false)
 
 	startingResources := map[string]int64{
@@ -699,9 +699,9 @@ func TestCreateTrialSourceInfo(t *testing.T) {
 
 	// Basic TrialSourceInfo
 	trial_source_info := &trialv1.TrialSourceInfo{
-		TrialId:             int32(infTrial.ID),
-		CheckpointUuid:      checkpointUuid,
-		SourceTrialId:       int32(sourceTrial.ID),
+		TrialId:        int32(infTrial.ID),
+		CheckpointUuid: checkpointUuid,
+		// SourceTrialId:       int32(sourceTrial.ID),
 		TrialSourceInfoType: trialv1.TrialSourceInfoType_INFERENCE,
 	}
 	req := &apiv1.CreateTrialSourceInfoRequest{TrialSourceInfo: trial_source_info}
@@ -709,4 +709,23 @@ func TestCreateTrialSourceInfo(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, resp.TrialId, int32(infTrial.ID))
 	require.Equal(t, resp.CheckpointUuid, checkpointUuid)
+
+	trial_source_info2 := &trialv1.TrialSourceInfo{
+		TrialId:        int32(infTrial2.ID),
+		CheckpointUuid: checkpointUuid,
+		// SourceTrialId:       int32(sourceTrial.ID),
+		TrialSourceInfoType: trialv1.TrialSourceInfoType_INFERENCE,
+	}
+	req = &apiv1.CreateTrialSourceInfoRequest{TrialSourceInfo: trial_source_info2}
+	resp, err = api.CreateTrialSourceInfo(ctx, req)
+	require.NoError(t, err)
+	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
+	require.Equal(t, resp.CheckpointUuid, checkpointUuid)
+
+	// Get the trials
+	get_req := &apiv1.GetTrialsUsingCheckpointRequest{CheckpointUuid: checkpointUuid}
+	get_resp, get_err := api.GetTrialsUsingCheckpoint(ctx, get_req)
+	require.NoError(t, get_err)
+	require.Equal(t, len(get_resp.TrialId), 2)
+	// require.Equal(t, resp.CheckpointUuid, checkpointUuid)
 }
