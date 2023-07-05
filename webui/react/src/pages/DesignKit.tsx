@@ -934,6 +934,7 @@ const CodeEditorSection: React.FC = () => {
 
 const InlineFormSection: React.FC = () => {
   const [inputValue, setInputValue] = useState<Primitive>('test value');
+  const [inputWithValidatorValue, setInputWithValidatorValue] = useState<Primitive>('');
   const [textAreaValue, setTextAreaValue] = useState<Primitive>(
     'Lorem ipsum dolor sit amet consectetur adipisicing elit. Id tempora harum animi, provident explicabo in esse, hic qui cumque maiores ipsa, praesentium ad repellat dolorem voluptates! Eligendi magnam blanditiis velit.',
   );
@@ -944,6 +945,9 @@ const InlineFormSection: React.FC = () => {
 
   const inputCallback = useCallback((newValue: Primitive) => {
     setInputValue(newValue);
+  }, []);
+  const inputWithValidatorCallback = useCallback((newValue: Primitive) => {
+    setInputWithValidatorValue(newValue);
   }, []);
   const textAreaCallback = useCallback((newValue: Primitive) => {
     setTextAreaValue(newValue);
@@ -981,6 +985,14 @@ const InlineFormSection: React.FC = () => {
         <div style={{ maxWidth: '700px' }}>
           <InlineForm displayValue={inputValue} label="Input" onSubmit={inputCallback}>
             <Input />
+          </InlineForm>
+          <hr />
+          <InlineForm
+            displayValue={inputWithValidatorValue}
+            label="Input with validator"
+            rules={[{ message: 'Please input something here!', required: true }]}
+            onSubmit={inputWithValidatorCallback}>
+            <Input maxLength={32} />
           </InlineForm>
           <hr />
           <InlineForm displayValue={textAreaValue} label="Text Area" onSubmit={textAreaCallback}>
