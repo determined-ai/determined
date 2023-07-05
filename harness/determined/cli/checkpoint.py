@@ -92,7 +92,7 @@ def list_checkpoints(args: Namespace) -> None:
 
 
 def download(args: Namespace) -> None:
-    checkpoint = experimental.Determined(args.master, None).get_checkpoint(args.uuid)
+    checkpoint = experimental.Determined(args.master, args.user).get_checkpoint(args.uuid)
 
     try:
         path = checkpoint.download(path=args.output_dir, mode=args.mode)
@@ -106,7 +106,7 @@ def download(args: Namespace) -> None:
 
 
 def describe(args: Namespace) -> None:
-    checkpoint = experimental.Determined(args.master, None).get_checkpoint(args.uuid)
+    checkpoint = experimental.Determined(args.master, args.user).get_checkpoint(args.uuid)
     render_checkpoint(checkpoint)
 
 
