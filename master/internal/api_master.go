@@ -41,6 +41,7 @@ func (a *apiServer) GetMaster(
 		ExternalLogoutUri:     a.m.config.InternalConfig.ExternalSessions.LogoutURI,
 		Branding:              "determined",
 		RbacEnabled:           config.GetAuthZConfig().IsRBACUIEnabled(),
+		StrictJobQueueControl: config.GetAuthZConfig().StrictJobQueueControl,
 		Product:               product,
 		UserManagementEnabled: !a.m.config.InternalConfig.ExternalSessions.Enabled(),
 		FeatureSwitches:       a.m.config.FeatureSwitches,
