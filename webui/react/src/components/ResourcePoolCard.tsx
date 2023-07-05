@@ -92,7 +92,7 @@ export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
 
 const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
-  const ColumnsCustomizeModal = useModal(ResourcePoolBindingModalComponent);
+  const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
 
   const descriptionClasses = [css.description];
   const { rbacEnabled } = useObservable(determinedStore.info);
@@ -135,8 +135,8 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
   }, [processedPool, isAux, pool]);
 
   const onDropdown = useCallback(() => {
-    ColumnsCustomizeModal.open();
-  }, [ColumnsCustomizeModal]);
+    ResourcePoolBindingModal.open();
+  }, [ResourcePoolBindingModal]);
 
   const onSaveBindings = useCallback(
     (bindings: string[]) => {
@@ -193,7 +193,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
           </Suspense>
         </div>
       </Card>
-      <ColumnsCustomizeModal.Component
+      <ResourcePoolBindingModal.Component
         bindings={workspaces.filter((w) => resourcePoolBindings.includes(w.id)).map((w) => w.name)}
         pool={pool.name}
         workspaces={workspaces.map((w) => w.name)}
