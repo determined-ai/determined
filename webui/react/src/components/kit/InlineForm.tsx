@@ -1,6 +1,6 @@
 import { Form } from 'antd';
 import { Rule } from 'antd/es/form';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
@@ -14,6 +14,7 @@ interface Props extends React.PropsWithChildren {
   initialValue?: Primitive;
   onSubmit: (inputValue: string | number) => Promise<void | Error> | void;
   required?: boolean;
+  isPassword?: boolean;
   rules?: Rule[];
   testId?: string;
 }
@@ -22,6 +23,7 @@ const InlineForm: React.FC<Props> = ({
   label,
   children,
   displayValue = '',
+  isPassword = false,
   rules,
   required,
   testId = '',
@@ -29,6 +31,13 @@ const InlineForm: React.FC<Props> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [form] = Form.useForm();
+  const shouldColapseText = useMemo(() => String(displayValue).length >= 45, [displayValue]); // prevents layout breaking, specially if using Input.TextArea.
+  const readOnlyText = useMemo(() => {
+    if (isPassword) return String(displayValue).replace(/\S/g, '*');
+    if (shouldColapseText) return String(displayValue).slice(0, 50).concat('...');
+
+    return displayValue;
+  }, [shouldColapseText, displayValue, isPassword]);
 
   const resetForm = useCallback(() => {
     form.setFieldValue('input', displayValue);
@@ -65,7 +74,7 @@ const InlineForm: React.FC<Props> = ({
           children
         ) : (
           <span className={css.readOnlyElement} data-testid={`value-${testId}`}>
-            {displayValue}
+            {readOnlyText}
           </span>
         )}
       </Form.Item>

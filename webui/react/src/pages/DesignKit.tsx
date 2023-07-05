@@ -54,7 +54,7 @@ import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'stores/contexts/UI';
 import { BrandingType } from 'stores/determinedInfo';
-import { ValueOf } from 'types';
+import { Primitive, ValueOf } from 'types';
 import { Note } from 'types';
 import { MetricType, User } from 'types';
 import {
@@ -933,14 +933,32 @@ const CodeEditorSection: React.FC = () => {
 };
 
 const InlineFormSection: React.FC = () => {
-  const [inputValue, setInputValue] = useState<string | number>('test value');
-  const [selectValue, setSelectValue] = useState<string | number>(1);
+  const [inputValue, setInputValue] = useState<Primitive>('test value');
+  const [textAreaValue, setTextAreaValue] = useState<Primitive>(
+    'Lorem ipsum dolor sit amet consectetur adipisicing elit. Id tempora harum animi, provident explicabo in esse, hic qui cumque maiores ipsa, praesentium ad repellat dolorem voluptates! Eligendi magnam blanditiis velit.',
+  );
+  const [passwordInputValue, setPasswordInputValue] = useState<Primitive>('123456789');
+  const [inputSearchValue, setInputSearchValue] = useState<Primitive>('Some fancy search');
+  const [inputNumberValue, setInputNumberValue] = useState<Primitive>(1234);
+  const [selectValue, setSelectValue] = useState<Primitive>('off');
 
-  const inputCallback = useCallback((newValue: string | number) => {
+  const inputCallback = useCallback((newValue: Primitive) => {
     setInputValue(newValue);
   }, []);
-  const selectCallback = useCallback((newValue: string | number) => {
-    setSelectValue(newValue);
+  const textAreaCallback = useCallback((newValue: Primitive) => {
+    setTextAreaValue(newValue);
+  }, []);
+  const passwordInputCallback = useCallback((newValue: Primitive) => {
+    setPasswordInputValue(newValue);
+  }, []);
+  const InputNumberCallback = useCallback((newValue: Primitive) => {
+    setInputSearchValue(newValue);
+  }, []);
+  const InputSearchCallback = useCallback((newValue: Primitive) => {
+    setInputNumberValue(newValue);
+  }, []);
+  const selectCallback = useCallback((newValue: Primitive) => {
+    setSelectValue(newValue === '1' ? 'off' : 'on');
   }, []);
 
   return (
@@ -956,15 +974,41 @@ const InlineFormSection: React.FC = () => {
           The <code>{'inputElement'}</code> sets the actual input to be rendered in the form.
         </p>
         <p>
-          By default, the <code>{'<InlineForm>'}</code> will render as read only state, to change
-          that you will have to either click in the edit button or overide its initial rendering
-          state by passing the <code>{'forceEdit'}</code> prop.
+          If using the <code>{'Input.Password'}</code> component, is important to pass the{' '}
+          <code>{'isPassword'}</code> prop.
         </p>
         <br />
         <div style={{ maxWidth: '700px' }}>
           <InlineForm displayValue={inputValue} label="Input" onSubmit={inputCallback}>
             <Input />
           </InlineForm>
+          <hr />
+          <InlineForm displayValue={textAreaValue} label="Text Area" onSubmit={textAreaCallback}>
+            <Input.TextArea />
+          </InlineForm>
+          <hr />
+          <InlineForm
+            displayValue={passwordInputValue}
+            isPassword
+            label="Password"
+            onSubmit={passwordInputCallback}>
+            <Input.Password />
+          </InlineForm>
+          <hr />
+          <InlineForm
+            displayValue={inputNumberValue}
+            label="Input Number"
+            onSubmit={InputNumberCallback}>
+            <InputNumber />
+          </InlineForm>
+          <hr />
+          <InlineForm
+            displayValue={inputSearchValue}
+            label="Input Search"
+            onSubmit={InputSearchCallback}>
+            <InputSearch allowClear enterButton placeholder="Input Search" />
+          </InlineForm>
+          <hr />
           <InlineForm displayValue={selectValue} label="Select" onSubmit={selectCallback}>
             <Select defaultValue={1} searchable={false}>
               {[
