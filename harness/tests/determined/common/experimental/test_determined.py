@@ -126,7 +126,11 @@ def test_default_retry_doesnt_retry_allowed_status(
 
 
 @responses.activate
-def test_get_trial_populates_all_parameters(make_client: Callable[[], Determined]) -> None:
+@pytest.mark.parametrize("attributes", ["summary_metrics", "status", "hparams"])
+def test_get_trial_populates_all_parameters(
+    make_client: Callable[[], Determined],
+    attributes: List[str],
+) -> None:
     client = make_client()
     trial_id = 1
     tr_resp = api_responses.sample_get_trial(id=trial_id)
@@ -135,6 +139,6 @@ def test_get_trial_populates_all_parameters(make_client: Callable[[], Determined
 
     resp = client.get_trial(trial_id=trial_id)
 
-    assert resp.summary_metrics
-    assert resp.status
-    assert resp.hparams
+    for attr_name in attributes:
+        attr = getattr(resp, attr_name)
+        assert attr is not None
