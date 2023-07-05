@@ -1,4 +1,4 @@
-## Building the image
+# Building Images with Packer
 
 This sub-repository builds the image `make slurmcluster` uses. The Makefile is the best
 documentation for interacting with and building this code. To build, you will need to install
@@ -6,13 +6,17 @@ documentation for interacting with and building this code. To build, you will ne
 
 It was last built with `Packer v1.8.6`.
 
+## How to Build an Image
+
+After the pre-requisite software is installed, one can run `make build WORKLOAD_MANAGER=[type]` where `type` is either `slurm` or `pbs` (default value is `slurm`) to build a SLURM or PBS image, respectively. Upon succesful completion of the build, the image name will be placed in the appropriate value in `../terraform/images.conf` (either `slurm` or `pbs` depending on what was specified).
+
 ## 'Publishing' the updated image
 
-When building a new image for `make slurmcluster` the build will use the `hpe-hpc-launcher-*.deb` debian located in `tools/slurm/packer/build`. If there is none present, a script will download and build with the latest launcher version. The value for `vars.boot_disk` in `../terraform/variables.tf` is automatically updated with the newly built image after the build finishes. The workflow for building and updating the image with the latest released launcher should be as follows:
+When building a new image for `make slurmcluster WORKLOAD_MANAGER=[type]` the build will use the `hpe-hpc-launcher-*.deb` debian located in `tools/slurm/packer/build`. If there is none present, a script will download and build with the latest launcher version. The value for the generated image (either SLURM or PBS) in `../terraform/images.conf` is automatically updated with the newly built image after the build finishes (depending on the workload manager specified). The workflow for building and updating the image with the latest released launcher should be as follows:
 
 1. Checkout clean branch
 2. make -C tools/slurm/packer clean build
-3. git add  tools/slurm/terraform/variables.tf
+3. git add  tools/slurm/terraform/images.conf
 4. git commit
 5. Post PR to update the default image.
 

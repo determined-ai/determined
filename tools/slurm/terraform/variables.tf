@@ -31,6 +31,11 @@ variable "name" {
   type = string
 }
 
+variable "workload_manager" {
+  type = string
+  default = "slurm"
+}
+
 variable "vmLifetimeSeconds"{
   type = number
   default = 7200
@@ -43,5 +48,4 @@ variable "machine_type" {
 
 variable "boot_disk" {
   type    = string
-  default = "projects/determined-ai/global/images/det-environments-slurm-ci-1687962155"
 }

@@ -73,5 +73,5 @@ resource "google_compute_instance" "vm_instance" {
     instance_termination_action = "DELETE"
   }
 
-  metadata_startup_script = file("${path.module}/scripts/startup-script.sh")
+  metadata_startup_script = templatefile("${path.module}/scripts/startup-script.sh", { workload_manager = var.workload_manager })
 }

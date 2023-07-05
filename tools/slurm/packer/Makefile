@@ -15,10 +15,15 @@ build-debug: main.pkr.hcl
 	PACKER_LOG=10 packer build -debug main.pkr.hcl
 
 .PHONY: clean
-clean: rm -rf build/
+clean: 
+	rm -rf build/
+
+# Dfeaults to "slurm"
+WORKLOAD_MANAGER ?= slurm	
 
 .PHONY: build
 build: main.pkr.hcl
 	mkdir -p build/
-	packer build -var='launcher_deb_name=$(shell ./scripts/get-launcher-image.sh)' main.pkr.hcl 
-	./scripts/update-variables.sh
+	./scripts/generate-pkr-vars.sh $(WORKLOAD_MANAGER) > build/variables.pkrvars.hcl
+	packer build -var-file="build/variables.pkrvars.hcl" main.pkr.hcl 
+	WORKLOAD_MANAGER=$(WORKLOAD_MANAGER) ./scripts/update-variables.sh

@@ -2088,7 +2088,7 @@ jobs:
   # By default, this job only runs on the main branch unless 
   # oterhwise specified. To invoke this job on a developer branch, the
   # "[ALLGCP]" keyword must be included in the commit message.
-  test-e2e-slurm-gcp:
+  test-e2e-hpc-gcp:
     parameters:
       mark:
         type: string
@@ -2110,6 +2110,9 @@ jobs:
       container-run-type: 
         type: string
         default: singularity
+      workload-manager:
+        type: string
+        default: slurm
       gcloud-service-key:
         default: GCLOUD_SERVICE_KEY
         description: The gcloud service key
@@ -2190,23 +2193,27 @@ jobs:
       - set-google-application-credentials
 
       - run:
-          name: Delete existing instance (if it exists)
+          name: Delete existing resources (if they exist)
           command: |
-            yes | gcloud compute instances delete ${OPT_DEVBOX_PREFIX}-dev-box --zone=$(grep \
-            -A2 'variable "zone"' ~/project/tools/slurm/terraform/variables.tf | grep 'default' \
-            | awk -F' = ' '{ print $2 }' | tr -d '\"') || true
+            # This grabs the zone.default from tools/slurm/terraform/variables.tf used to specify the zone (as this 
+            # is not set at this point since no terraform initiation has happened. See workaround section in README) 
+            GCLOUD_ZONE=$(grep -A2 'variable "zone"' ~/project/tools/slurm/terraform/variables.tf | grep 'default' \
+            | awk -F' = ' '{ print $2 }' | tr -d '\"')
+            gcloud compute instances delete ${OPT_DEVBOX_PREFIX}-dev-box --zone=$GCLOUD_ZONE --quiet || true
+            gcloud compute firewall-rules delete ${OPT_DEVBOX_PREFIX}-dev-box --quiet || true
+            gcloud compute networks delete ${OPT_DEVBOX_PREFIX}-dev-box --quiet || true
 
       - run:
           name: Make slurmcluster
           # Breaks without apt-get installs for some reason
-          # NOTE: tf_lock is set to 'false' to catch the case where a developer triggered a workflow and did not
+          # NOTE: TF_LOCK is set to 'false' to catch the case where a developer triggered a workflow and did not
           # let it run completely. This should not be an issue since we delete the instance already in the previous
           # step (this is precautionary). See a similar thing in the 'make unslurmcluster' step.
           command: |
             sudo apt-get update
             sudo apt-get install gettext
             sudo apt-get install iproute2
-            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster cont=<<parameters.container-run-type>> tf_lock=false
+            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster flags="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>>" TF_LOCK=false
           background: true
 
       - run:
@@ -2223,9 +2230,8 @@ jobs:
           name: Make Unslurmcluster
           when: always
           command: |
-            ps -e
             pkill determined-mast
-            (yes yes || true) | make unslurmcluster tf_lock=false
+            (yes yes || true) | make unslurmcluster TF_LOCK=false
             # For some reason, even when `make unslurmcluster` is successful, CircleCI
             # receives exit code 141, so ignore that.
             EXIT_STATUS=$?
@@ -3322,8 +3328,8 @@ workflows:
           requires:
             - package-and-push-system-local
 
-    # Singularity test on GCP
-      - test-e2e-slurm-gcp:
+    # Singularity over SLURM test on GCP
+      - test-e2e-hpc-gcp:
           matrix:
             parameters:
               name: [test-e2e-slurm-singularity-gcp]
@@ -3334,8 +3340,8 @@ workflows:
           requires:
             - build-go
 
-    # Podman test on GCP
-      - test-e2e-slurm-gcp:
+    # Podman over SLURM test on GCP
+      - test-e2e-hpc-gcp:
           matrix:
             parameters:
               name: [test-e2e-slurm-podman-gcp]
@@ -3346,8 +3352,8 @@ workflows:
           requires:
             - build-go
 
-    # Enroot test on GCP
-      - test-e2e-slurm-gcp:
+    # Enroot over SLURM test on GCP
+      - test-e2e-hpc-gcp:
           matrix:
             parameters:
               name: [test-e2e-slurm-enroot-gcp]
@@ -3355,6 +3361,45 @@ workflows:
               context: ["gcp"]
               mark: ["e2e_slurm and not parallel"]
               extra-pytest-flags: ["-k 'not start_and_write_to_shell and not cifar10_pytorch_distributed'"]
+          requires:
+            - build-go
+
+    # Singularity over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-singularity-gcp]
+              context: ["gcp"]
+              workload-manager: ["pbs"]
+              always-run: [true]
+              mark: ["e2e_slurm and not parallel"]
+              extra-pytest-flags: ["-k 'not start_and_write_to_shell and not cifar10_pytorch_distributed and not test_docker_image and not test_bad_slurm_option and not test_launch_layer_exit'"]
+          requires:
+            - build-go
+
+    # Podman over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-podman-gcp]
+              container-run-type: ["podman"]
+              workload-manager: ["pbs"]
+              context: ["gcp"]
+              mark: ["e2e_slurm and not parallel"]
+              extra-pytest-flags: ["-k 'not start_and_write_to_shell and not cifar10_pytorch_distributed and not test_docker_image and not test_bad_slurm_option and not test_launch_layer_exit'"]
+          requires:
+            - build-go
+
+    # Enroot over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-enroot-gcp]
+              container-run-type: ["enroot"]
+              workload-manager: ["pbs"]
+              context: ["gcp"]
+              mark: ["e2e_slurm and not parallel"]
+              extra-pytest-flags: ["-k 'not start_and_write_to_shell and not cifar10_pytorch_distributed and not test_docker_image and not test_bad_slurm_option and not test_launch_layer_exit'"]       
           requires:
             - build-go
 

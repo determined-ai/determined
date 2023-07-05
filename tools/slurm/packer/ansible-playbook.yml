@@ -2,10 +2,19 @@
 - hosts: all
   become: true
 
+  # The OpenPBS version number that will be downloaded from https://github.com/openpbs/openpbs/releases
+  # and built into the generated image for the PBS testing environment image.
+  # The release will downloaded using the Asset "Source code (tar.gz)"
+  # Select the release remove the leading `v` and specify it here.   It will be downloaded from github from the
+  # https://github.com/openpbs/openpbs/archive/refs/tags/v{{ openpbs_version_number }}.tar.gz
+  vars:
+    openpbs_version_number: "22.05.11"
+
   tasks:
     # Our base image comes preinstalled with slurm, but if you are following this to setup
-    # a cluster from scratch, you will need to install slurm.
-
+    # a cluster from scratch, you will need to install slurm. For instance, when the user
+    # specifies a PBS image, PBS is installed from scratch.
+    
     - name: apt-get update, apt-get upgrade.
       apt:
         update_cache: yes
@@ -14,30 +23,63 @@
     - name: Install utility packages.
       apt:
         name:
+        - apt-transport-https
+        - autoconf
+        - automake
+        - ca-certificates
+        - curl
         - curl
         - default-jre
+        - expat
+        - g++
+        - gcc
         - git
         - htop
         - hwloc
         - iftop
         - iotop
         - jq
+        - libedit-dev
+        - libedit2
+        - libexpat-dev
+        - libhwloc-dev
+        - libical-dev
+        - libical3
+        - libssl-dev
+        - libtool
+        - libx11-dev
+        - libxext-dev
+        - libxft-dev
+        - libxt-dev
         - lsof
+        - make
+        - ncurses-dev
         - net-tools
+        - nfs-common
+        - perl
+        - postgresql
+        - postgresql-contrib
+        - postgresql-server-dev-all
+        - postgresql-server-dev-all
+        - python3
+        - python3-dev
+        - python3-pip
+        - python3-setuptools
         - screen
+        - sendmail-bin
+        - software-properties-common
+        - sudo
+        - swig
+        - tcl
+        - tcl-dev
+        - tk
+        - tk-dev
         - tmux
         - tree
         - unzip
+        - virtualenv
         - wget
         - zip
-        - nfs-common
-        - apt-transport-https
-        - ca-certificates
-        - curl
-        - software-properties-common
-        - python3-pip
-        - virtualenv
-        - python3-setuptools
         state: latest
 
     - name: Add Docker GPG apt Key
@@ -53,6 +95,58 @@
         name: docker-ce
         state: latest
         update_cache: true
+
+    # Start PBS Installation
+    - name: Download PBS tarball
+      get_url:
+        url: https://github.com/openpbs/openpbs/archive/refs/tags/v{{ openpbs_version_number }}.tar.gz
+        dest: /tmp/openpbs-{{ openpbs_version_number }}.tar.gz
+      when: workload_manager == "pbs"
+
+    - name: Extract PBS tarball
+      unarchive:
+        src: /tmp/openpbs-{{ openpbs_version_number }}.tar.gz
+        dest: /tmp/
+        remote_src: yes
+      when: workload_manager == "pbs"
+
+    - name: Rename OpenPBS directory
+      command: 
+        cmd: mv /tmp/openpbs-{{ openpbs_version_number }} /tmp/openpbs
+      when: workload_manager == "pbs"
+
+    - name: Generate configure script and Makefiles
+      command: ./autogen.sh
+      args:
+        chdir: /tmp/openpbs/
+      when: workload_manager == "pbs"
+
+    - name: Configure build environment
+      command: ./configure --prefix=/opt/pbs
+      args:
+        chdir: /tmp/openpbs/
+      when: workload_manager == "pbs"
+
+    - name: Build PBS
+      command: make
+      args:
+        chdir: /tmp/openpbs/
+      when: workload_manager == "pbs"
+
+    - name: Install PBS
+      command: make install
+      args:
+        chdir: /tmp/openpbs/
+      when: workload_manager == "pbs"
+
+    - name: Execute post-install script
+      command: /opt/pbs/libexec/pbs_postinstall
+      when: workload_manager == "pbs"
+
+    - name: Change permissions to add SUID privilege
+      command: chmod 4755 /opt/pbs/sbin/pbs_iff /opt/pbs/sbin/pbs_rcp
+      when: workload_manager == "pbs"
+    # End PBS Installation
 
     - name: Install Podman
       apt:
@@ -74,6 +168,7 @@
     - name: Install Launcher
       apt:
         deb: "{{ launcher_deb }}"
+
     - name: Enable launcher.service
       systemd:
         name: launcher.service
@@ -83,21 +178,28 @@
       apt:
         name: munge
         state: absent
+      when: workload_manager == "slurm"
+
     - name: Reinstall Munge (install)
       apt:
         name: munge
         state: latest
+      when: workload_manager == "slurm"
 
     - name: Enable slurmctld.service
       systemd:
         name: slurmctld.service
         enabled: yes
+      when: workload_manager == "slurm"
+
     - name: Enable slurmd.service
       systemd:
         name: slurmd.service
         enabled: yes
+      when: workload_manager == "slurm"
 
     - name: Restore motd (Slurm image adds a 'slurm not setup' warning if their scripts haven't run)
       ansible.builtin.copy:
         src: /etc/motd.bak
         dest: /etc/motd
+      when: workload_manager == "slurm"

@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
-set -ex
+set -e
+
+# This script is invoked by `make slurmcluster`. It should never be necessary to run it directly.
+
+# Default values
+export OPT_CONTAINER_RUN_TYPE="singularity"
+export OPT_WORKLOAD_MANAGER="slurm"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -c)
+        -c | --container-run-type)
             export OPT_CONTAINER_RUN_TYPE=$2
             if [[ -z $OPT_CONTAINER_RUN_TYPE ]]; then
                 echo >&2 "usage $0:  Missing -c {container_type}"
@@ -11,25 +17,47 @@ while [[ $# -gt 0 ]]; do
             fi
             shift 2
             ;;
+        -w | --resource-manager)
+            export OPT_WORKLOAD_MANAGER=$2
+            if [[ -z $OPT_WORKLOAD_MANAGER ]]; then
+                echo >&2 "usage $0:  Missing -r {workload_manager}"
+                exit 1
+            fi
+            shift 2
+            ;;
+        # The Makefile that calls this script may pass in additional flags used for other scritps
+        # which can be ignored.
+        -t)
+            shift 2
+            ;;
         -h | --help)
-            set +ex
-            echo "Usage: $0 [-c {container_run_type}]"
+            echo "Usage: $0 [flags=\"options\"]"
             echo ""
-            echo "Description:"
-            echo "  This script launches a compute instance with Slurm, Singularity (Apptainer),"
-            echo "  the Cray Launcher component and many other dependencies pre-installed."
-            echo "  Then, SSH tunnels are opened so that localhost:8081 on your machine points"
-            echo "  at port 8081 on the compute instance and 8080 on the compute"
-            echo "  instance points at localhost:8080 on your machine. Lastly, devcluster is"
-            echo "  started with the Slurm RM pointed at the remote instance, and local"
-            echo "  development with devcluster works from here as always."
+            echo "Launches a compute instance with Slurm, Singularity (Apptainer), the Cray"
+            echo "Launcher component, and many other dependencies pre-installed. Then, SSH tunnels"
+            echo "are opened so that localhost:8081 on your machine points at port 8081 on"
+            echo "the compute instance and port 8080 on the compute instance points at"
+            echo "localhost:8080 on your machine. Lastly, devcluster is started with the Slurm"
+            echo "RM pointed at the remote instance, and local development with devcluster works"
+            echo "as always."
             echo ""
-            echo "Options:"
-            echo "  -h      Display this help message."
-            echo "  -c {container_run_type}     The container type to use: podman, apptainer, singularity, or enroot"
+            echo "flags:"
+            echo '  -A: '
+            echo "           Description: Invokes a slurmcluster that uses agents instead of the launcher."
+            echo "           Example: $0 -A"
+            echo '  -c: '
+            echo "           Description: Invokes a slurmcluster using the specified container run type."
+            echo "           Options are 'enroot', 'podman', or 'singularity'. Default is 'singularity'."
+            echo "           Example: $0 -c podman"
+            echo '  -w: '
+            echo "           Description: Invokes a slurmcluster using the specified workload manager."
+            echo "           Options are 'slurm' or 'pbs'. Default is 'slurm'."
+            echo "           Example: $0 -w pbs"
             echo ""
-            set -ex
-            exit 1
+            echo "You can also combine the flags."
+            echo "Example: $0 -A -c enroot"
+            echo ""
+            exit 0
             ;;
         -* | --*)
             set +ex
@@ -42,6 +70,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 echo "Using ${OPT_CONTAINER_RUN_TYPE} as a container host"
+echo "Using ${OPT_WORKLOAD_MANAGER} as a workload manager"
 
 ZONE=$(terraform -chdir=terraform output --raw zone)
 INSTANCE_NAME=$(terraform -chdir=terraform output --raw instance_name)
@@ -95,9 +124,11 @@ export OPT_AUTHFILE=$LOCAL_TOKEN_DEST
 CPU_IMAGE_STRING=$(grep "CPUImage" ../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
 CPU_IMAGE_FMT=${CPU_IMAGE_STRING//[\/:]/+}.sqsh
 
+# Configuration needed for PBS + Enroot
 if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
     gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "sudo ENROOT_RUNTIME_PATH=/tmp ENROOT_TEMP_PATH=/tmp manage-enroot-cache -s /tmp ${CPU_IMAGE_STRING}"
-    gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "enroot create /tmp/${CPU_IMAGE_FMT}"
+    gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "enroot create --force /tmp/${CPU_IMAGE_FMT}"
+    gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "sudo sed -i '/^#ENROOT_RUNTIME_PATH/c\ENROOT_RUNTIME_PATH        /tmp/\$\(whoami\)' /etc/enroot/enroot.conf"
 fi
 
 TEMPYAML=$TEMPDIR/slurmcluster.yaml
