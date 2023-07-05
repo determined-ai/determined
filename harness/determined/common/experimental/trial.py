@@ -60,7 +60,30 @@ class Trial:
     Attributes:
         trial_id: ID of trial.
         session: HTTP request session.
-        hparams: (Mutable, Optional[Dict]) Hyperparameters for the trial.
+        hparams: (Mutable, Optional[Dict]) Dict[name, value] of the trial's hyperparameters.
+            This is an instance of the hyperparameter space defined by the experiment.
+        summary_metrics: (Mutable, Optional[Dict]) Summary metrics for the trial. Includes
+            aggregated metrics for training and validation steps for each reported metric name.
+            Example:
+            .. code::
+
+                {
+                    "avg_metrics": {
+                        "loss": {
+                            "count": 100,
+                            "last": 0.2,
+                            "max": 0.4,
+                            "min", 0.2,
+                            "sum": 1.2,
+                            "type": "number",
+                        }
+                }
+
+    Note:
+        All attributes are cached by default.
+
+        The `hparams` and `summary` attributes are mutable and may be changed by methods that
+        update these values, either automatically or explicitly with `reload()`.
 
     """
 
@@ -69,6 +92,7 @@ class Trial:
         self._session = session
 
         self.hparams: Optional[Dict[str, Any]] = None
+        self.summary_metrics: Optional[Dict[str, Any]] = None
 
     def logs(
         self,
@@ -312,6 +336,7 @@ class Trial:
 
     def _hydrate(self, trial: bindings.trialv1Trial) -> None:
         self.hparams = trial.hparams
+        self.summary_metrics = trial.summaryMetrics
 
     def reload(self) -> None:
         """
