@@ -182,6 +182,7 @@ func (a *apiServer) LaunchShell(
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
 		Files:        req.Files,
+		WorkspaceId:  int(req.WorkspaceId),
 	})
 	if err != nil {
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
