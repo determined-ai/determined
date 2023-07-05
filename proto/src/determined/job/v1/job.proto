@@ -22,6 +22,8 @@ enum Type {
   TYPE_COMMAND = 5;
   // CheckpointGC Job.
   TYPE_CHECKPOINT_GC = 6;
+  // Non-DAI Job.
+  TYPE_NON_DAI = 7;
 }
 
 // Job state.

@@ -102,7 +102,7 @@ func (j *Manager) GetJobs(
 		return nil, err
 	}
 
-	nonDaiJobs, _ := j.rm.GetNonDaiJobs(ctx, sproto.GetNonDaiJobs{
+	nonDaiJobs, _ := j.rm.GetNonDaiJobs(j.system, sproto.GetNonDaiJobs{
 		ResourcePool: resourcePool,
 	})
 
@@ -122,8 +122,6 @@ func (j *Manager) GetJobs(
 		}
 	}
 
-	jobsInRM = append(jobsInRM, nonDaiJobs...)
-
 	// order by jobsAhead first and JobId second.
 	sort.SliceStable(jobsInRM, func(i, j int) bool {
 		if desc {
@@ -140,6 +138,8 @@ func (j *Manager) GetJobs(
 		}
 		return jobsInRM[i].JobId < jobsInRM[j].JobId
 	})
+
+	jobsInRM = append(jobsInRM, nonDaiJobs...)
 
 	return jobsInRM, nil
 }
