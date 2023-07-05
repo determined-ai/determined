@@ -13,11 +13,11 @@ deep learning consists of a set of workers, where each worker is assigned to a u
 accelerator such as a GPU or a TPU. Each worker maintains a copy of the model parameters (weights
 that are being trained), which is synchronized across all the workers at the start of training.
 
-.. image:: /assets/images/dtrain-loop-dark.png
+.. image:: /assets/images/_dtrain-loop-dark.png
    :class: only-dark
    :alt: Determined AI distributed training loop diagram
 
-.. image:: /assets/images/dtrain-loop-light.png
+.. image:: /assets/images/_dtrain-loop-light.png
    :class: only-light
    :alt: Determined AI distributed training loop diagram
 
