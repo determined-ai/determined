@@ -129,6 +129,8 @@ class Trial:
         summary_metrics: (Mutable, Optional[Dict]) Summary metrics for the trial. Includes
             aggregated metrics for training and validation steps for each reported metric name.
             Example:
+            .. code::
+
                 {
                     "avg_metrics": {
                         "loss": {
