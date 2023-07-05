@@ -384,8 +384,8 @@ func (s *SingularityClient) setCommandEnvironment(
 ) {
 	// Per https://pkg.go.dev/os/exec#Cmd.Env, if cmd.Env is nil, the new process uses the current
 	// process's environment. If this in not the case, for example because we specify something to
-	// control Singularity operation, then we need to specify everything needed from the current
-	// environment,
+	// control Singularity operation, then we need to explicitly specify any value needed from the
+	// current environment.
 	if req.DeviceType == device.CUDA {
 		cudaVisibleDevicesVar := strings.Join(cudaVisibleDevices, ",")
 		cmd.Env = append(cmd.Env,
@@ -396,7 +396,7 @@ func (s *SingularityClient) setCommandEnvironment(
 	if req.DeviceType == device.ROCM {
 		// Avoid this problem: https://github.com/determined-ai/determined-ee/pull/922
 		// by not setting both ROCR_VISIBLE_DEVICES & CUDA_VISIBLE_DEVICES
-		s.addToCommandEnvironment(cmd, "ROCR_VISIBLE_DEVICES")
+		s.addToTargetCommandEnvironmentIfSet(cmd, "ROCR_VISIBLE_DEVICES")
 	}
 
 	s.addOptionalRegistryAuthCredentials(req, cmd)
@@ -407,14 +407,16 @@ func (s *SingularityClient) setCommandEnvironment(
 	//   docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0 nvidia-smi
 	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
 
-	s.addToCommandEnvironment(cmd, "http_proxy")
-	s.addToCommandEnvironment(cmd, "https_proxy")
-	s.addToCommandEnvironment(cmd, "no_proxy")
-	s.addToCommandEnvironment(cmd, "APPTAINER_CACHEDIR")
-	s.addToCommandEnvironment(cmd, "SINGULARITY_CACHEDIR")
+	s.addToTargetCommandEnvironmentIfSet(cmd, "http_proxy")
+	s.addToTargetCommandEnvironmentIfSet(cmd, "https_proxy")
+	s.addToTargetCommandEnvironmentIfSet(cmd, "no_proxy")
+	s.addToTargetCommandEnvironmentIfSet(cmd, "APPTAINER_CACHEDIR")
+	s.addToTargetCommandEnvironmentIfSet(cmd, "SINGULARITY_CACHEDIR")
 }
 
-func (s *SingularityClient) addToCommandEnvironment(cmd *exec.Cmd, variable string) {
+// addToTargetCommandEnvironmentIfSet adds to the target command environment the value of
+// the specified environment variable from the current process, if set.
+func (s *SingularityClient) addToTargetCommandEnvironmentIfSet(cmd *exec.Cmd, variable string) {
 	if value, present := os.LookupEnv(variable); present {
 		s.log.Debugf("Forwarding %s=%s", variable, value)
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", variable, value))
