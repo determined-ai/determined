@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterable, List, Optional, Union
 
 from determined.common import api, util
 from determined.common.api import bindings, logs
-from determined.common.experimental import checkpoint
+from determined.common.experimental import checkpoint, experiment
 
 
 class LogLevel(enum.Enum):
@@ -157,7 +157,7 @@ class Trial:
 
         self.hparams: Optional[Dict[str, Any]] = None
         self.summary_metrics: Optional[Dict[str, Any]] = None
-        self.status: Optional[bindings.experimentv1State] = None
+        self.status: Optional[experiment.ExperimentState] = None
 
     def logs(
         self,
@@ -389,7 +389,7 @@ class Trial:
     def _hydrate(self, trial: bindings.trialv1Trial) -> None:
         self.hparams = trial.hparams
         self.summary_metrics = trial.summaryMetrics
-        self.status = trial.state
+        self.status = experiment.ExperimentState._from_bindings(trial.state)
 
     def reload(self) -> None:
         """

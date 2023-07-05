@@ -31,6 +31,10 @@ class ExperimentState(enum.Enum):
     def _to_bindings(self) -> bindings.experimentv1State:
         return bindings.experimentv1State(self.value)
 
+    @classmethod
+    def _from_bindings(cls, b: bindings.experimentv1State) -> "ExperimentState":
+        return cls(b.value)
+
 
 class Experiment:
     """
