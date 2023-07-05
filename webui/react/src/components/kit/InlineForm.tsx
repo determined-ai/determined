@@ -14,14 +14,12 @@ interface Props extends React.PropsWithChildren {
   initialValue?: Primitive;
   onSubmit: (inputValue: string | number) => Promise<void | Error> | void;
   required?: boolean;
-  forceEdit?: boolean; // in case we want to start as "edit mode"/isEditing state === true
   rules?: Rule[];
   testId?: string;
 }
 
 const InlineForm: React.FC<Props> = ({
   label,
-  forceEdit = false,
   children,
   displayValue = '',
   rules,
@@ -29,7 +27,7 @@ const InlineForm: React.FC<Props> = ({
   testId = '',
   onSubmit,
 }) => {
-  const [isEditing, setIsEditing] = useState(forceEdit);
+  const [isEditing, setIsEditing] = useState(false);
   const [form] = Form.useForm();
 
   const resetForm = useCallback(() => {
