@@ -6,16 +6,17 @@
   width: 100%;
 
   .buttonsContainer {
-    display: inline-grid;
+    display: inline-flex;
     grid-column: 3 / 4;
     grid-template-columns: max-content 10px max-content;
     justify-content: end;
 
-    & > div {
+    & > button {
       margin-inline-end: 0;
 
       &:last-of-type {
         grid-column: 3 / 4;
+        margin-left: 10px;
       }
     }
   }

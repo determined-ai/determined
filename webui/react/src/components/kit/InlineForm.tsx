@@ -72,35 +72,29 @@ const InlineForm: React.FC<Props> = ({
       <div className={css.buttonsContainer}>
         {isEditing ? (
           <>
-            <Form.Item>
-              <Button
-                data-testid={`submit-${testId}`}
-                icon={<Icon name="checkmark" title="confirm" />}
-                type="primary"
-                onClick={() => {
-                  form.submit();
-                  submitForm();
-                }}
-              />
-            </Form.Item>
-            <Form.Item>
-              <Button
-                data-testid={`reset-${testId}`}
-                icon={<Icon name="close-small" size="tiny" title="cancel" />}
-                type="default"
-                onClick={() => resetForm()}
-              />
-            </Form.Item>
+            <Button
+              data-testid={`submit-${testId}`}
+              icon={<Icon name="checkmark" title="confirm" />}
+              type="primary"
+              onClick={() => {
+                form.submit();
+                submitForm();
+              }}
+            />
+            <Button
+              data-testid={`reset-${testId}`}
+              icon={<Icon name="close-small" size="tiny" title="cancel" />}
+              type="default"
+              onClick={() => resetForm()}
+            />
           </>
         ) : (
-          <Form.Item>
-            <Button
-              data-testid={`edit-${testId}`}
-              icon={<Icon name="pencil" size="small" title="edit" />}
-              type="default"
-              onClick={() => setIsEditing(true)}
-            />
-          </Form.Item>
+          <Button
+            data-testid={`edit-${testId}`}
+            icon={<Icon name="pencil" size="small" title="edit" />}
+            type="default"
+            onClick={() => setIsEditing(true)}
+          />
         )}
       </div>
     </Form>
