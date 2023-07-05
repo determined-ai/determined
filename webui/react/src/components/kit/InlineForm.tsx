@@ -1,4 +1,4 @@
-import { Form } from 'antd';
+import { Form, FormProps } from 'antd';
 import { Rule } from 'antd/es/form';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -8,8 +8,8 @@ import { Primitive } from 'components/kit/internal/types';
 
 import css from './InlineForm.module.scss';
 
-interface Props extends React.PropsWithChildren {
-  label: string;
+interface Props extends React.PropsWithChildren, Omit<FormProps, 'children'> {
+  label?: string;
   displayValue?: Primitive;
   initialValue?: Primitive;
   onSubmit: (inputValue: string | number) => Promise<void | Error> | void;
@@ -28,6 +28,7 @@ const InlineForm: React.FC<Props> = ({
   required,
   testId = '',
   onSubmit,
+  ...formProps
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [form] = Form.useForm();
@@ -61,7 +62,13 @@ const InlineForm: React.FC<Props> = ({
   }, [displayValue]);
 
   return (
-    <Form className={css.formBase} colon={false} form={form} layout="inline" requiredMark={false}>
+    <Form
+      className={css.formBase}
+      colon={false}
+      form={form}
+      layout="inline"
+      requiredMark={false}
+      {...formProps}>
       <Form.Item
         className={css.formItemInput}
         label={label}
