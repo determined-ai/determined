@@ -464,12 +464,12 @@ def _get_singleton_session() -> Session:
 
 
 @_require_singleton
-def bind_rp_workspace(
+def bind_rps_to_workspaces(
     resource_pool_names: List[str],
     workspace_names: List[str],
 ) -> None:
     """
-    Bind resource pool to workspaces. It's a many-to-many relationship.
+    Bind resource pools to workspaces.
 
     Arguments:
         resource_pool_names (list(str)): The names of the resouce pools to be
@@ -477,11 +477,47 @@ def bind_rp_workspace(
         workspace_names (list(str)): The names of the workspaces to be bound.
     """
     assert _determined is not None
-    _determined.bind_rp_workspace(resource_pool_names, workspace_names)
+    _determined.bind_rps_to_workspaces(resource_pool_names, workspace_names)
+
+
+# TODO:
+# In PRD: unbind_rps_from_workspaces(resource_pool_names[]string, workspace_names[]string)
+# Do we want to go with this?
+@_require_singleton
+def unbind_rp_from_workspaces(
+    resource_pool_name: str,
+    workspace_names: List[str],
+) -> None:
+    """
+    Unbind a resource pool from workspaces.
+
+    Arguments:
+        resource_pool_name (str): The name of the resouce pool to be
+            unbound.
+        workspace_names (list(str)): The names of the workspaces to be unbound.
+    """
+    assert _determined is not None
+    return _determined.unbind_rp_from_workspaces(resource_pool_name, workspace_names)
 
 
 @_require_singleton
-def list_workspaces(
+def list_rps_bound_to_workspace(
+    workspace_name: str,
+) -> List[str]:
+    """
+    List resource pools bound to a workspace.
+
+    Arguments:
+        workspace_name (str): The name of a workspace.
+    Returns:
+        (str) The names of resource pools bound to the workspace.
+    """
+    assert _determined is not None
+    return _determined.list_rps_bound_to_workspace(workspace_name)
+
+
+@_require_singleton
+def list_workspaces_bound_to_rp(
     resource_pool_name: str,
 ) -> List[str]:
     """
@@ -490,7 +526,21 @@ def list_workspaces(
     Arguments:
         resource_pool_name (str): The name of a resouce pool.
     Returns:
-        (str) The names of workspaces bound to the resource pool.
+        (List(str)) The names of workspaces bound to the resource pool.
     """
     assert _determined is not None
-    return _determined.list_workspaces(resource_pool_name)
+    return _determined.list_workspaces_bound_to_rp(resource_pool_name)
+
+
+def overwrite_rp_workspace_bindings(resource_pool_name: str, workspace_names: List[str]) -> None:
+    """
+    Overwrite the workspaces bound to a resource pool.
+
+    Arguments:
+        resource_pool_name (str): The name of the resource pool to be
+            bound.
+        workspace_names (list(str)): The names of the workspaces to overwrite
+            existing workspaces bound to the resource pool.
+    """
+    assert _determined is not None
+    return _determined.overwrite_rp_workspace_bindings(resource_pool_name, workspace_names)

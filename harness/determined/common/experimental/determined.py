@@ -417,43 +417,106 @@ class Determined:
         """
         return trial._stream_validation_metrics(self._session, trial_ids)
 
-    def bind_rp_workspace(
+    def get_workspace_ids(
+        self,
+        session: api.Session,
+        workspace_names: List[str],
+    ) -> List[int]:
+        wnSet = set(workspace_names)
+        workspace_ids = []
+
+        def get_with_offset(offset: int) -> bindings.v1GetWorkspacesResponse:
+            return bindings.get_GetWorkspaces(
+                session=self._session,
+                offset=offset,
+            )
+
+        resps = api.read_paginated(get_with_offset)
+        workspaces = [w for r in resps for w in r.workspaces]
+
+        for w in workspaces:
+            if w.name in wnSet:
+                if w.archived:
+                    raise Exception(f'Workspace "{w.name}" is archived.')
+                workspace_ids.append(w.id)
+        return workspace_ids
+
+    def bind_rps_to_workspaces(
         self,
         resource_pool_names: List[str],
         workspace_names: List[str],
     ) -> None:
         """
-        Bind resource pool to workspaces. It's a many-to-many relationship.
+        Bind resource pools to workspaces.
 
         Arguments:
             resource_pool_names (list(str)): The names of the resouce pools to be
                 bound.
             workspace_names (list(str)): The names of the workspaces to be bound.
         """
-        wnSet = set(workspace_names)
+        workspace_ids = self.get_workspace_ids(self._session, workspace_names)
 
-        workspace_ids = []
-        # TODO: pagination handle
-        resp = bindings.get_GetWorkspaces(self._session)
-        for w in resp.workspaces:
-            if w.name in wnSet:
-                if w.archived:
-                    raise Exception(f'Workspace "{w.name}" is archived.')
-                workspace_ids.append(w.id)
-
-
-        workspace_id_to_name = det.cli.workspace.get_workspace_names(
-            self._session,
-        )
         for resource_pool_name in resource_pool_names:
             req = bindings.v1BindRPToWorkspaceRequest(
                 resourcePoolName=resource_pool_name,
                 workspaceIds=workspace_ids,
             )
 
-            bindings.post_BindRPToWorkspace(self._session, body=req, resourcePoolName=resource_pool_name)
+            bindings.post_BindRPToWorkspace(
+                self._session, body=req, resourcePoolName=resource_pool_name
+            )
 
-    def list_workspaces(
+    def unbind_rp_from_workspaces(
+        self,
+        resource_pool_name: str,
+        workspace_names: List[str],
+    ) -> None:
+        """
+        Unbind a resource pool from workspaces.
+
+        Arguments:
+            resource_pool_name (str): The name of the resouce pool to be
+                unbound.
+            workspace_names (list(str)): The names of the workspaces to be unbound.
+        """
+        workspace_ids = self.get_workspace_ids(self._session, workspace_names)
+
+        req = bindings.v1UnbindRPFromWorkspaceRequest(
+            resourcePoolName=resource_pool_name,
+            workspaceIds=workspace_ids,
+        )
+
+        bindings.delete_UnbindRPFromWorkspace(
+            self._session, body=req, resourcePoolName=resource_pool_name
+        )
+
+    def list_rps_bound_to_workspace(
+        self,
+        workspace_name: str,
+    ) -> List[str]:
+        """
+        List resource pools bound to a workspace.
+
+        Arguments:
+            workspace_name (str): The name of a workspace.
+        Returns:
+            (str) The names of resource pools bound to the workspace.
+        """
+
+        def get_with_offset(offset: int) -> bindings.v1ListRPsBoundToWorkspaceResponse:
+            return bindings.get_ListRPsBoundToWorkspace(
+                session=self._session,
+                offset=offset,
+                workspaceId=self.get_workspace_ids(self._session, [workspace_name])[0],
+            )
+
+        resps = api.read_paginated(get_with_offset)
+        rp_names = [rp for r in resps if r.resourcePools is not None for rp in r.resourcePools]
+
+        return rp_names
+
+    def list_workspaces_bound_to_rp(
+        self,
         resource_pool_name: str,
     ) -> List[str]:
         """
@@ -462,12 +525,48 @@ class Determined:
         Arguments:
             resource_pool_name (str): The name of a resouce pool.
         Returns:
-            (str) The names of workspaces bound to the resource pool.
+            (List(str)) The names of workspaces bound to the resource pool.
         """
-        workspace_id_to_name = det.cli.workspace.get_workspace_names
-        # TODO: pagination handle
-        resp = bindings.get_ListWorkspacesBoundToRP(resourcePoolName=resource_pool_name)
-        workspace_names = []
-        for workspace_id in resp.workspaceIds:
-            workspace_names.append(workspace_id_to_name[workspace_id])
+        workspace_id_to_name = det.cli.workspace.get_workspace_names(self._session)
+
+        def get_with_offset(offset: int) -> bindings.v1ListWorkspacesBoundToRPResponse:
+            return bindings.get_ListWorkspacesBoundToRP(
+                session=self._session,
+                offset=offset,
+                resourcePoolName=resource_pool_name,
+            )
+
+        resps = api.read_paginated(get_with_offset)
+        workspace_names = [
+            workspace_id_to_name[w]
+            for r in resps
+            if r.workspaceIds is not None
+            for w in r.workspaceIds
+        ]
+
         return workspace_names
+
+    def overwrite_rp_workspace_bindings(
+        self,
+        resource_pool_name: str,
+        workspace_names: List[str],
+    ) -> None:
+        """
+        Overwrite the workspaces bound to a resource pool.
+
+        Arguments:
+            resource_pool_name (str): The name of the resource pool to be
+                bound.
+            workspace_names (list(str)): The names of the workspaces to overwrite
+                existing workspaces bound to the resource pool.
+        """
+        workspace_ids = self.get_workspace_ids(self._session, workspace_names)
+
+        req = bindings.v1OverwriteRPWorkspaceBindingsRequest(
+            resourcePoolName=resource_pool_name,
+            workspaceIds=workspace_ids,
+        )
+
+        bindings.put_OverwriteRPWorkspaceBindings(
+            self._session, body=req, resourcePoolName=resource_pool_name
+        )

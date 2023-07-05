@@ -423,20 +423,41 @@ def test_model_versions(client: _client.Determined) -> None:
 @pytest.mark.e2e_cpu
 def test_rp_workspace_mapping(client: _client.Determined) -> None:
     workspace_names = ["Workspace A", "Workspace B"]
-    rp_name = "default"
+    overwrite_workspace_names = ["Workspace C", "Workspace D"]
+    rp_names = ["default"]  # TODO: not sure how to add more rp
+    workspace_ids = []
 
-    req = bindings.v1PostWorkspaceRequest(
-        name=workspace_names[0]
-    )
-    bindings.post_PostWorkspace(session=client._session, body=req)
-    req = bindings.v1PostWorkspaceRequest(
-        name=workspace_names[1]
-    )
-    bindings.post_PostWorkspace(session=client._session, body=req)
+    for wn in workspace_names + overwrite_workspace_names:
+        req = bindings.v1PostWorkspaceRequest(name=wn)
+        workspace_ids.append(
+            bindings.post_PostWorkspace(session=client._session, body=req).workspace.id
+        )
 
-    client.bind_rp_workspace(rp_name, workspace_names)
+    try:
+        with pytest.raises(
+            errors.APIException,
+            match="only admin privileged users can bind resource pool to a workspace",
+        ):
+            client.bind_rps_to_workspaces(rp_names, workspace_names)
 
-    workspace_names = client.list_workspaces(rp_name)
-    assert sorted(workspace_names) == workspace_names
+        client = _client.Determined(user="admin", password="")
+        client.bind_rps_to_workspaces(rp_names, workspace_names)
 
-    # Test determined.common.api.errors.APIException: {"error":{"code":13,"reason":"Internal","error":"only admin privileged users can bind resource pool to a workspace"}}
+        resp_workspace_names = client.list_workspaces_bound_to_rp(rp_names[0])
+        assert sorted(resp_workspace_names) == workspace_names
+
+        for wn in workspace_names:
+            resp_rp_names = client.list_rps_bound_to_workspace(wn)
+            assert sorted(resp_rp_names) == rp_names
+
+        client.overwrite_rp_workspace_bindings(rp_names[0], overwrite_workspace_names)
+
+        resp_workspace_names = client.list_workspaces_bound_to_rp(rp_names[0])
+        assert sorted(resp_workspace_names) == overwrite_workspace_names
+
+        client.unbind_rp_from_workspaces(rp_names[0], overwrite_workspace_names)
+        workspace_names = client.list_workspaces_bound_to_rp(rp_names[0])
+        assert workspace_names == []
+    finally:
+        for id in workspace_ids:
+            bindings.delete_DeleteWorkspace(session=client._session, id=id)
