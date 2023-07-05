@@ -109,6 +109,14 @@ func (a *JobAuthZRBAC) FilterJobs(
 	return viewableJobs, nil
 }
 
+// CanControlJobQueue returns an error if the user is not authorized to manipulate the
+// job queue.
+func (a *JobAuthZRBAC) CanControlJobQueue(
+	ctx context.Context, curUser *model.User,
+) (permErr error, err error) {
+	return nil, nil
+}
+
 func init() {
 	AuthZProvider.Register("rbac", &JobAuthZRBAC{})
 }
