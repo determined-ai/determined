@@ -126,7 +126,7 @@ def test_default_retry_doesnt_retry_allowed_status(
 
 
 @responses.activate
-def test_get_trial_populates_summary_metrics(make_client: Callable[[], Determined]) -> None:
+def test_get_trial_populates_all_parameters(make_client: Callable[[], Determined]) -> None:
     client = make_client()
     trial_id = 1
     tr_resp = api_responses.sample_get_trial(id=trial_id)
@@ -136,3 +136,5 @@ def test_get_trial_populates_summary_metrics(make_client: Callable[[], Determine
     resp = client.get_trial(trial_id=trial_id)
 
     assert resp.summary_metrics
+    assert resp.status
+    assert resp.hparams

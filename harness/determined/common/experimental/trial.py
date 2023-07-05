@@ -157,6 +157,7 @@ class Trial:
 
         self.hparams: Optional[Dict[str, Any]] = None
         self.summary_metrics: Optional[Dict[str, Any]] = None
+        self.status: Optional[bindings.experimentv1State] = None
 
     def logs(
         self,
@@ -388,6 +389,7 @@ class Trial:
     def _hydrate(self, trial: bindings.trialv1Trial) -> None:
         self.hparams = trial.hparams
         self.summary_metrics = trial.summaryMetrics
+        self.status = trial.state
 
     def reload(self) -> None:
         """
