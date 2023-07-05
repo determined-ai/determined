@@ -122,7 +122,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.23.2-rc2
+    Default: 0.23.2-rc3
 
   DBPassword:
     Type: String
