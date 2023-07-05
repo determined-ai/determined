@@ -2,4 +2,8 @@
 :global(.ant-popover-content > .ant-popover-inner) {
   border: solid var(--theme-stroke-width) var(--theme-float-border);
   border-radius: var(--theme-border-radius);
+
+  span {
+    margin-right: 4px;
+  }
 }

@@ -150,7 +150,15 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
     <>
       <Card
         actionMenu={
-          rpBindingFlagOn && rbacEnabled ? [{ key: 'bindings', label: 'Manage bindings' }] : []
+          rpBindingFlagOn && rbacEnabled
+            ? [
+                {
+                  icon: <Icon name="four-squares" title="manage-bindings" />,
+                  key: 'bindings',
+                  label: 'Manage bindings',
+                },
+              ]
+            : []
         }
         href={paths.resourcePool(pool.name)}
         size="medium"
