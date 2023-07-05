@@ -1,11 +1,20 @@
+# Starting up a slurmcluster on GCP
+
 ## Quick start
 
 1. Install Terraform following [these instructions](https://developer.hashicorp.com/terraform/downloads).
 2. Download the [GCP CLI](https://cloud.google.com/sdk/docs/install-sdk) and run `gcloud auth application-default login` to get credentials.
 3. Run `make slurmcluster` from the root of the repo and wait (up to 10 minutes) for it to start.
-   1. To specify which container run time environment to use, pass in the `cont=[container_run_type]` to `make slurmcluster`. Choose from either `singularity` (default), `podman`, or `enroot`.
+   - To specify which container run time environment to use, pass in `flags="-c {container_run_type}"` to `make slurmcluster`. Choose from either `singularity` (default), `podman`, or `enroot`.
+   - To specify which workload manager to use, pass in `flags="-w {workload_manager}"` to `make slurmcluster`. Choose from either `slurm` (default) or `pbs`. Note: in specifying the workload manager, `make slurmcluster` will automatically load the appropriate boot disk image (found in `terraform/images.conf`).
+   - By default, all VMs created with `make slurmcluster` will be destroyed after 7200 seconds (2 hours). To sepcify a different amount of time, pass in `flags="-t {time_seconds}"` to `make slurmcluster`.
 4. Step 2 will ultimately launch a local devcluster. Use this as you typically would [1].
 5. Release the resources with `make unslurmcluster` when you are done.
+
+Once the VM is created and SSH connection is established, one can also directly connect to the created instance with the command 
+```
+gcloud compute ssh --zone <zone_name> <instance_name> --project <project_name>
+```
 
 [1] It is fine to exit this and restart it with `make slurmcluster` again as you please.
 
@@ -44,24 +53,24 @@ By default, each devbox invoked by `make slurmcluster` will automatically delete
 ## In Development
 
 To locally invoke pytests that run on your slurmcluster,
-  1.  Run `make slurmcluster cont=[container_run_type]` and wait for the `devcluster` to spin up.
+  1.  Run `make slurmcluster [flags="options"]` and wait for the `devcluster` to spin up.
   2.  Set `export DET_MASTER="http://localhost:8080"` *or* run `unset DET_MASTER` (since `make slurmcluster` listens on `localhost:8080` by default). **Note**: this is *different* than the master port when running `tools/slurmcluster.sh` (8081). Be careful to set/unset accordingly.
   3.  Login as `determined` by running `det user login determined`. **Note**: `make slurmcluster` automatically links your user account with the agent.
   4.  `cd` to `determined-ee/e2e_tests`.
   5.  Run the following command which will run all tests with the `e2e_slurm` mark that *do not also* have the `parallel` mark. **Note**: The *pytest* command invocation for each `container_run_type` is the same.
 ```
-  pytest --capture=tee-sys -vv \                                                                                                 
+pytest --capture=tee-sys -vv \                                              
 -m 'e2e_slurm and not parallel' \
 --durations=0 \
 --master-scheme="http" \
 --master-host="localhost" \
 --master-port="8080" \
--k 'not start_and_write_to_shell'
+-k 'not start_and_write_to_shell and not cifar10_pytorch_distributed'
 ```
 
 ## On CircleCI
 
-Upon each commit and push, CircleCI invokes three test suites: `test-e2e-singularity-gcp`, `test-e2e-podman-gcp`, and `test-e2e-enroot-gcp`. Each of these CircleCI jobs actually invoke the same exact tests, only in different container runtime environments (see section 3.1 of [Quick start](#quick-start)). The pytests on CircleCI are invoked by the following command:
+Upon each commit and push, CircleCI invokes three test suites: `test-e2e-singularity-gcp`, `test-e2e-podman-gcp`, and `test-e2e-enroot-gcp`. Each of these CircleCI jobs actually invoke the same exact tests, only in different container runtime environments (see section 3.1 of [Quick start](#quick-start)). The pytests on CircleCI are invoked by the following command [2]:
 
 ```
 pytest --capture=tee-sys -vv \
@@ -72,16 +81,18 @@ pytest --capture=tee-sys -vv \
 --master-port="8080" \
 -o junit_family=xunit1 \
 --junit-xml="/tmp/test-results/e2e/tests.xml" \
--k 'not start_and_write_to_shell' \
+-k 'not start_and_write_to_shell and not cifar10_pytorch_distributed'
 ```
-This invocation specifies that all tests are to be run via the remote launcher running on `localhost:8080`. The command specifies that all pytests with the `e2e_slurm` mark should be run except those that have the `parallel` mark as well (this is due to the fact that there are no GPUs and only 1 node on the GCP compute instances). The `-k 'not start_and_write_to_shell'` specifies to not run the `start_and_write_to_shell` function in `e2e_tests/tests/command/test_shell.py`. This test is currently skipped due to a proxy issue on GCP.
+[2]: When invoking `make slurmcluster flags="-w pbs"`, append `and not test_docker_image and not test_bad_slurm_option and not test_launch_layer_exit` to the end of the existing `-k` argument string. These tests do not currently run on PBS instances.
+
+This invocation specifies that all tests are to be run via the remote launcher running on `localhost:8080`. The command specifies that all pytests with the `e2e_slurm` mark should be run except those that have the `parallel` mark as well (this is due to the fact that there are no GPUs and only 1 node on the GCP compute instances). The `-k 'not start_and_write_to_shell'` specifies to not run the `start_and_write_to_shell` function in `e2e_tests/tests/command/test_shell.py`. This test is currently skipped due to a proxy issue on GCP. Similarly, the `and not cifar10_pytorch_distributed` specifies also not to run the `cifar10_pytorch_distributed` test. This test is omitted because it takes too long to run on instances with only one node.
 
 # Notes on `make slurmcluster` tests on CircleCI 
 
-By default, the `test-e2e-slurm-*-gcp` jobs are not run within the `test-e2e` workflow on a **developer branch**. If you would like to invoke these jobs on a certain commit, you must add the "[ALLGCP]" keyword to the commit message. For example,
+By default, the `test-e2e-*-gcp` jobs are not run within the `test-e2e` workflow on a **developer branch**. If you would like to invoke these jobs on a certain commit, you must add the "[ALLGCP]" keyword to the commit message. For example,
 ```
 git add --all
-git commit -m "[ALLGCP] This is my commit where all slurm-gcp jobs will run."
+git commit -m "[ALLGCP] This is my commit where all hpc-gcp jobs will run."
 git push
 ```
 will invoke the slurm-gcp jobs within the `test-e2e` workflow.

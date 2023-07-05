@@ -101,9 +101,11 @@ local: build-bindings get-deps-webui
 devcluster:
 	devcluster -c tools/devcluster.yaml
 
+TF_LOCK ?= true
+
 .PHONY: slurmcluster
 slurmcluster:
-	$(MAKE) -C tools/slurm slurmcluster
+	$(MAKE) -C tools/slurm slurmcluster FLAGS="$(FLAGS)" TF_LOCK=$(TF_LOCK)
 
 .PHONY: unslurmcluster
 unslurmcluster:

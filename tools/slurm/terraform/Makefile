@@ -23,11 +23,15 @@ build/generate-sshkeys: scripts/generate-sshkeys.sh
 
 build/default.tfvars: scripts/generate-tfvars.sh build/generate-sshkeys
 	mkdir -p build
-	./scripts/generate-tfvars.sh $(VMTIME) > build/default.tfvars
+	./scripts/generate-tfvars.sh $(FLAGS) > build/default.tfvars
 
 .PHONY: build
-build: init build/default.tfvars
+build: clean-default-tfvars init build/default.tfvars
 	terraform apply --var-file build/default.tfvars -lock=$(TF_LOCK)
+
+.PHONY: clean-default-tfvars
+clean-default-tfvars:
+	rm -f -- build/default.tfvars
 
 .PHONY: clean
 clean: build/default.tfvars

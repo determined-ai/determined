@@ -8,18 +8,17 @@ packer {
 }
 
 variables {
-  ssh_username = "packer2"
-}
-
-variable "launcher_deb_name" {
-  type        = string
-  description = "The name of the hpe-hpc-launcher*.deb file in the build directory."
+  ssh_username      = ""
+  workload_manager  = ""
+  image_project_id  = ""
+  image_family      = ""
+  launcher_deb_name = ""
 }
 
 locals {
   static_source_path = "static"
   static_dest_path   = "/tmp/static"
-  reg_conf_dir      = "/etc/containers" 
+  reg_conf_dir       = "/etc/containers"
   det_conf_dir       = "/etc/determined"
   slurm_sysconfdir   = "/usr/local/etc/slurm"
   launcher_job_root  = "/var/tmp/launcher"
@@ -36,10 +35,14 @@ locals {
   slurm_cgroup_conf_tmp_path  = "${local.static_dest_path}/${local.slurm_cgroup_conf_name}"
   slurm_cgroup_conf_dest_path = "${local.slurm_sysconfdir}/${local.slurm_cgroup_conf_name}"
 
+  pbs_motd_name      = "motd"
+  pbs_motd_tmp_path  = "${local.static_dest_path}/${local.pbs_motd_name}"
+  pbs_motd_dest_path = "/etc/${local.pbs_motd_name}"
+
   det_master_conf_name      = "master.yaml"
   det_master_conf_tmp_path  = "${local.static_dest_path}/${local.det_master_conf_name}"
   det_master_conf_dest_path = "${local.det_conf_dir}/${local.det_master_conf_name}"
-  
+
   container_registries_name      = "registries.conf"
   container_registries_tmp_path  = "${local.static_dest_path}/${local.container_registries_name}"
   container_registries_dest_path = "${local.reg_conf_dir}/${local.container_registries_name}"
@@ -47,11 +50,11 @@ locals {
 
 source "googlecompute" "determined-hpc-image" {
   project_id              = "determined-ai"
-  source_image_project_id = ["schedmd-slurm-public"]
-  source_image_family     = "schedmd-v5-slurm-22-05-8-ubuntu-2204-lts"
+  source_image_project_id = [var.image_project_id]
+  source_image_family     = var.image_family
 
   image_family      = "det-environments-slurm-ci"
-  image_name        = "det-environments-slurm-ci-{{timestamp}}"
+  image_name        = "det-environments-${var.workload_manager}-ci-{{timestamp}}"
   image_description = "det environments with hpc tools to test hpc deployments"
 
   machine_type = "n1-standard-1"
@@ -89,13 +92,14 @@ build {
 
   provisioner "shell" {
     inline = [
-      "sudo mv ${local.slurm_conf_tmp_path} ${local.slurm_conf_dest_path}",
-      "sudo mv ${local.slurm_cgroup_conf_tmp_path} ${local.slurm_cgroup_conf_dest_path}",
+      "bash -c 'if [[ ${var.workload_manager} == slurm  ]]; then sudo mv ${local.slurm_conf_tmp_path} ${local.slurm_conf_dest_path}; fi'",
+      "bash -c 'if [[ ${var.workload_manager} == slurm  ]]; then sudo mv ${local.slurm_cgroup_conf_tmp_path} ${local.slurm_cgroup_conf_dest_path}; fi'",
+      "bash -c 'if [[ ${var.workload_manager} == pbs ]]; then sudo mv ${local.pbs_motd_tmp_path} ${local.pbs_motd_dest_path}; fi'",
       "sudo mkdir -p ${local.det_conf_dir}",
       "sudo mv ${local.det_master_conf_tmp_path} ${local.det_master_conf_dest_path}",
       "sudo mkdir -p ${local.launcher_job_root}",
       "sudo mkdir -p ${local.reg_conf_dir}",
-      "sudo mv -f ${local.container_registries_tmp_path} ${local.container_registries_dest_path}"  
+      "sudo mv -f ${local.container_registries_tmp_path} ${local.container_registries_dest_path}"
     ]
   }
 
@@ -110,6 +114,6 @@ build {
 
   provisioner "ansible-local" {
     playbook_file   = "ansible-playbook.yml"
-    extra_arguments = ["--verbose", "--extra-vars \"launcher_deb=${local.launcher_deb_dest_path}\""]
+    extra_arguments = ["--verbose", "-e \"launcher_deb=${local.launcher_deb_dest_path}\"", "-e \"workload_manager=${var.workload_manager}\""]
   }
 }
