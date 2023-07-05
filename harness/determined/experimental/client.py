@@ -461,3 +461,36 @@ def stream_trials_validation_metrics(trial_ids: List[int]) -> Iterable[Validatio
 def _get_singleton_session() -> Session:
     assert _determined is not None
     return _determined._session
+
+
+@_require_singleton
+def bind_rp_workspace(
+    resource_pool_names: List[str],
+    workspace_names: List[str],
+) -> None:
+    """
+    Bind resource pool to workspaces. It's a many-to-many relationship.
+
+    Arguments:
+        resource_pool_names (list(str)): The names of the resouce pools to be
+            bound.
+        workspace_names (list(str)): The names of the workspaces to be bound.
+    """
+    assert _determined is not None
+    _determined.bind_rp_workspace(resource_pool_names, workspace_names)
+
+
+@_require_singleton
+def list_workspaces(
+    resource_pool_name: str,
+) -> List[str]:
+    """
+    List workspaces bound to a resource pool.
+
+    Arguments:
+        resource_pool_name (str): The name of a resouce pool.
+    Returns:
+        (str) The names of workspaces bound to the resource pool.
+    """
+    assert _determined is not None
+    return _determined.list_workspaces(resource_pool_name)

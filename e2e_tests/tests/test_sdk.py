@@ -418,3 +418,25 @@ def test_model_versions(client: _client.Determined) -> None:
 
     finally:
         model.delete()
+
+
+@pytest.mark.e2e_cpu
+def test_rp_workspace_mapping(client: _client.Determined) -> None:
+    workspace_names = ["Workspace A", "Workspace B"]
+    rp_name = "default"
+
+    req = bindings.v1PostWorkspaceRequest(
+        name=workspace_names[0]
+    )
+    bindings.post_PostWorkspace(session=client._session, body=req)
+    req = bindings.v1PostWorkspaceRequest(
+        name=workspace_names[1]
+    )
+    bindings.post_PostWorkspace(session=client._session, body=req)
+
+    client.bind_rp_workspace(rp_name, workspace_names)
+
+    workspace_names = client.list_workspaces(rp_name)
+    assert sorted(workspace_names) == workspace_names
+
+    # Test determined.common.api.errors.APIException: {"error":{"code":13,"reason":"Internal","error":"only admin privileged users can bind resource pool to a workspace"}}

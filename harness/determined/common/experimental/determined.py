@@ -416,3 +416,58 @@ class Determined:
             trial_ids: List of trial IDs to get metrics for.
         """
         return trial._stream_validation_metrics(self._session, trial_ids)
+
+    def bind_rp_workspace(
+        self,
+        resource_pool_names: List[str],
+        workspace_names: List[str],
+    ) -> None:
+        """
+        Bind resource pool to workspaces. It's a many-to-many relationship.
+
+        Arguments:
+            resource_pool_names (list(str)): The names of the resouce pools to be
+                bound.
+            workspace_names (list(str)): The names of the workspaces to be bound.
+        """
+        wnSet = set(workspace_names)
+
+        workspace_ids = []
+        # TODO: pagination handle
+        resp = bindings.get_GetWorkspaces(self._session)
+        for w in resp.workspaces:
+            if w.name in wnSet:
+                if w.archived:
+                    raise Exception(f'Workspace "{w.name}" is archived.')
+                workspace_ids.append(w.id)
+
+
+        workspace_id_to_name = det.cli.workspace.get_workspace_names(
+            self._session,
+        )
+        for resource_pool_name in resource_pool_names:
+            req = bindings.v1BindRPToWorkspaceRequest(
+                resourcePoolName=resource_pool_name,
+                workspaceIds=workspace_ids,
+            )
+
+            bindings.post_BindRPToWorkspace(self._session, body=req, resourcePoolName=resource_pool_name)
+
+    def list_workspaces(
+        resource_pool_name: str,
+    ) -> List[str]:
+        """
+        List workspaces bound to a resource pool.
+
+        Arguments:
+            resource_pool_name (str): The name of a resouce pool.
+        Returns:
+            (str) The names of workspaces bound to the resource pool.
+        """
+        workspace_id_to_name = det.cli.workspace.get_workspace_names
+        # TODO: pagination handle
+        resp = bindings.get_ListWorkspacesBoundToRP(resourcePoolName=resource_pool_name)
+        workspace_names = []
+        for workspace_id in resp.workspaceIds:
+            workspace_names.append(workspace_id_to_name[workspace_id])
+        return workspace_names
