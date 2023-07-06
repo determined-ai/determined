@@ -99,7 +99,7 @@ def main(override_args: List[str], script: List[str]) -> int:
 
     logging.debug(f"Torch distributed launching with: {launch_cmd}")
 
-    p = subprocess.Popen(launch_cmd)
+    p = subprocess.Popen(launch_cmd, start_new_session=True)
     with det.util.forward_signals(p):
         return p.wait()
 

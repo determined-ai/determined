@@ -408,14 +408,23 @@ def force_create_symlink(src: str, dst: str) -> None:
 
 @contextlib.contextmanager
 def forward_signals(p: subprocess.Popen, *signums: signal.Signals) -> Iterator[None]:
-    """Forward a list of signals to a subprocess, restoring the original handlers afterwards."""
+    """Forward a list of signals to a process group of the subprocess,
+    restoring the original handlers afterwards.   NOTE: Ensure that the target
+    subprocess has a new process group to avoid signaling parent processes as well.
+    This is typically done by adding start_new_session=true to the subprocess.Popen
+    call.
+    """
     if not signums:
         # Pick a useful default for wrapper processes.
         names = ["SIGINT", "SIGTERM", "SIGHUP", "SIGUSR1", "SIGUSR2", "SIGWINCH", "SIGBREAK"]
         signums = tuple(getattr(signal, name) for name in names if hasattr(signal, name))
 
     def signal_passthru(signum: Any, frame: Any) -> None:
-        p.send_signal(signum)
+        # Forward the signal to the process group of the target process.
+        # This was specifically added for SIGTERM which may leave some children running due
+        # to multiple layers of processes.   We treat other signals similarly, but likely
+        # not as relevant for them.
+        os.killpg(os.getpgid(p.pid), signum)
 
     old_handlers = [None for n in signums]  # type: List[Any]
     try:

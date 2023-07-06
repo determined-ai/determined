@@ -54,7 +54,7 @@ def launch(experiment_config: det.ExperimentConfig) -> int:
 
     logging.info(f"Launching: {entrypoint}")
 
-    p = subprocess.Popen(entrypoint)
+    p = subprocess.Popen(entrypoint, start_new_session=True)
     # Convert from signal names to Signal enums because SIGBREAK is windows-specific
     forwaded_signals = [getattr(signal, name) for name in sig_names if hasattr(signal, name)]
     with det.util.forward_signals(p, *forwaded_signals):

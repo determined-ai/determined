@@ -11,8 +11,24 @@ epoch_seconds() {
     printf '%(%s)T\n' -1
 }
 
-# Wait for 30 seconds total for the logging to finish, otherwise just exit.
+# Wait for up to DET_LOG_WAIT_TIME seconds for the logging to finish
+# At this point the launching entry point script has exited and we are
+# waiting for the child logging processes to complete.  The child
+# processes will exit when reaching EOF of the log stream they are
+# processing, so in the normal case they terminate quickly and
+# each stream processor writes a single character to the DET_LOG_WAIT_FIFO
+# to indicate they are no longer waiting.
+#
+# This wait time it to handle the case when log stream procesors have
+# not exited yet -- either becuase someone is still writing to the stream,
+# or the DET_MASTER is not reachable and therefore we are slow in flushing
+# the logs to the master.
+#
+# After this wait, the container entrypoint immediately exits and all
+# processing within the container is SIGKILLed without any opportunity
+# for any furhter processing, so avoiding a premature exit is important.
 waitfor="${DET_LOG_WAIT_TIME:-30}"
+
 deadline="$(($(epoch_seconds) + waitfor))"
 timeout="$((deadline - $(epoch_seconds)))"
 

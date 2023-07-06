@@ -92,7 +92,9 @@ def main() -> int:
     if cwd.endswith("/run/determined/workdir"):
         os.chdir("/run/determined/workdir")
 
-    proc = subprocess.Popen(args.script, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        args.script, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True
+    )
     with det.util.forward_signals(proc):
         with contextlib.ExitStack() as exit_stack:
             if os.path.exists(constants.CONTAINER_STDOUT) and not args.no_redirect_stdio:

@@ -128,7 +128,7 @@ def start_tensorboard(
         # Build Tensorboard args and launch process.
         tb_args = get_tensorboard_args(tb_version, local_dir, add_tb_args)
         logger.debug(f"tensorboard args: {tb_args}")
-        tensorboard_process = subprocess.Popen(tb_args)
+        tensorboard_process = subprocess.Popen(tb_args, start_new_session=True)
         tb_fetch_manager = TBFetchManager()
         work_queue: queue.Queue = queue.Queue(maxsize=WORK_QUEUE_MAX_SIZE)
 

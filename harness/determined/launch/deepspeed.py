@@ -281,7 +281,7 @@ def main(script: List[str]) -> int:
             f"Non-chief [{info.container_rank}] training process launch "
             f"command: {run_sshd_command}."
         )
-        p = subprocess.Popen(pid_server_cmd + run_sshd_command)
+        p = subprocess.Popen(pid_server_cmd + run_sshd_command, start_new_session=True)
         with det.util.forward_signals(p):
             return p.wait()
 
@@ -311,7 +311,7 @@ def main(script: List[str]) -> int:
     full_cmd = pid_server_cmd + cmd + pid_client_cmd + log_redirect_cmd + harness_cmd
 
     if not multi_machine:
-        p = subprocess.Popen(full_cmd)
+        p = subprocess.Popen(full_cmd, start_new_session=True)
         with det.util.forward_signals(p):
             return p.wait()
 
@@ -337,7 +337,7 @@ def main(script: List[str]) -> int:
         for peer_addr in info.container_addrs:
             util.check_sshd(peer_addr, deadline, constants.DTRAIN_SSH_PORT)
 
-        p = subprocess.Popen(full_cmd)
+        p = subprocess.Popen(full_cmd, start_new_session=True)
         with det.util.forward_signals(p):
             return p.wait()
     finally:

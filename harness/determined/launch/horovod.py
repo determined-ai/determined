@@ -143,7 +143,7 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
             f"Non-chief [{info.container_rank}] training process launch "
             f"command: {run_sshd_command}."
         )
-        p = subprocess.Popen(pid_server_cmd + run_sshd_command)
+        p = subprocess.Popen(pid_server_cmd + run_sshd_command, start_new_session=True)
         with det.util.forward_signals(p):
             return p.wait()
 
@@ -196,7 +196,9 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
     # up wanting to launch all -np# processes on the local causing an oversubscription
     # error ("There are not enough slots available in the system").
     os.environ.pop("SLURM_JOBID", None)
-    p = subprocess.Popen(pid_server_cmd + hvd_cmd + worker_wrapper_cmd + script)
+    p = subprocess.Popen(
+        pid_server_cmd + hvd_cmd + worker_wrapper_cmd + script, start_new_session=True
+    )
     with det.util.forward_signals(p):
         return p.wait()
 

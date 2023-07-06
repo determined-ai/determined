@@ -445,7 +445,7 @@ class PIDServer:
         on_exit: Optional[signal.Signals] = None,
         grace_period: int = 3,
     ) -> int:
-        p = subprocess.Popen(cmd)
+        p = subprocess.Popen(cmd, start_new_session=True)
 
         class HealthCheckFail(Exception):
             def __init__(self, exit_code: int):
@@ -538,7 +538,7 @@ class PIDClient:
         self.sock.send(b"k")
 
     def run_subprocess(self, cmd: List[str]) -> int:
-        p = subprocess.Popen(cmd)
+        p = subprocess.Popen(cmd, start_new_session=True)
 
         with det.util.forward_signals(p):
             while True:
