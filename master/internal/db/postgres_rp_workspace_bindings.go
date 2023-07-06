@@ -91,26 +91,36 @@ func ReadWorkspacesBoundToRP(
 	query := Bun().NewSelect().Model(&rpWorkspaceBindings).Where("pool_name = ?",
 		poolName)
 
-	pagination, err := runPagedBunQuery(ctx, query, int(offset), int(limit))
+	pagination, query, err := getPagedBunQuery(ctx, query, int(offset), int(limit))
 	if err != nil {
-		if errors.Cause(err) == sql.ErrNoRows {
-			return rpWorkspaceBindings, pagination, nil
-		}
-
 		return nil, nil, err
+	}
+	// Bun bug treating limit=0 as no limit when it
+	// should be the exact opposite of no records returned.
+	// TODO: revisit and check this for commonality.
+	// We may put pagination.StartIndex-pagination.EndIndex != 0
+	// back to the function and return a nil query if StartIndex = EndIndex. This is for
+	// limit = -2, we don't run the query, return pagination only.
+	if pagination.StartIndex-pagination.EndIndex != 0 {
+		if err = query.Scan(ctx); err != nil {
+			if errors.Cause(err) == sql.ErrNoRows {
+				return rpWorkspaceBindings, pagination, nil
+			}
+			return nil, nil, err
+		}
 	}
 
 	return rpWorkspaceBindings, pagination, nil
 }
 
 // TODO find a good house for this function.
-func runPagedBunQuery(
+func getPagedBunQuery(
 	ctx context.Context, query *bun.SelectQuery, offset, limit int,
-) (*apiv1.Pagination, error) {
+) (*apiv1.Pagination, *bun.SelectQuery, error) {
 	// Count number of items without any limits or offsets.
 	total, err := query.Count(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Calculate end and start indexes.
@@ -140,21 +150,13 @@ func runPagedBunQuery(
 	query.Offset(startIndex)
 	query.Limit(endIndex - startIndex)
 
-	// Bun bug treating limit=0 as no limit when it
-	// should be the exact opposite of no records returned.
-	if endIndex-startIndex != 0 {
-		if err = query.Scan(ctx); err != nil {
-			return nil, err
-		}
-	}
-
 	return &apiv1.Pagination{
 		Offset:     int32(offset),
 		Limit:      int32(limit),
 		Total:      int32(total),
 		StartIndex: int32(startIndex),
 		EndIndex:   int32(endIndex),
-	}, nil
+	}, query, nil
 }
 
 // OverwriteRPWorkspaceBindings overwrites the bindings between workspaceIds and poolName.
@@ -181,4 +183,98 @@ func OverwriteRPWorkspaceBindings(ctx context.Context,
 
 	err = AddRPWorkspaceBindings(ctx, workspaceIds, poolName, resourcePools)
 	return err
+}
+
+// GetUnboundRPs get unbound resource pools.
+func GetUnboundRPs(
+	ctx context.Context, resourcePools []config.ResourcePoolConfig,
+) ([]string, error) {
+	var boundResourcePools []string
+	_, err := Bun().NewSelect().
+		Column("pool_name").
+		Table("rp_workspace_bindings").
+		Distinct().
+		Exec(ctx, &boundResourcePools)
+	if err != nil {
+		return nil, err
+	}
+
+	boundRPsMap := map[string]bool{}
+	for _, boundRP := range boundResourcePools {
+		boundRPsMap[boundRP] = true
+	}
+
+	unboundRPs := []string{}
+	for _, resourcePool := range resourcePools {
+		if !boundRPsMap[resourcePool.PoolName] {
+			unboundRPs = append(unboundRPs, resourcePool.PoolName)
+		}
+	}
+
+	return unboundRPs, nil
+}
+
+// RP is a helper strct for Bun query.
+type RP struct {
+	Name string
+}
+
+// ReadRPsAvailableToWorkspace returns the names of resource pool bound to a
+// workspace.
+func ReadRPsAvailableToWorkspace(
+	ctx context.Context,
+	workspaceID int32,
+	offset int32,
+	limit int32,
+	resourcePoolConfig []config.ResourcePoolConfig,
+) ([]string, *apiv1.Pagination, error) {
+	unboundRPNames, err := GetUnboundRPs(ctx, resourcePoolConfig)
+	if err != nil {
+		return nil, nil, err
+	}
+	unboundRPs := []*RP{}
+	for _, unboundRPName := range unboundRPNames {
+		unboundRPs = append(unboundRPs, &RP{unboundRPName})
+	}
+
+	var rpNames []string
+	var query *bun.SelectQuery
+	if len(unboundRPs) > 0 {
+		// TODO: The elements in unboundRPs are structs with a string field.
+		// Is there a better way to do this?
+		values := Bun().NewValues(&unboundRPs)
+		boundAndUnboundRPSubTable := Bun().NewSelect().
+			ColumnExpr("pool_name AS Name").
+			Table("rp_workspace_bindings").
+			Where("workspace_id = ?", workspaceID).
+			UnionAll(Bun().NewSelect().With("unboundRP", values).Table("unboundRP"))
+		query = Bun().NewSelect().
+			TableExpr("(?) AS rp", boundAndUnboundRPSubTable)
+	} else {
+		query = Bun().NewSelect().
+			ColumnExpr("pool_name AS Name").
+			Table("rp_workspace_bindings").
+			Where("workspace_id = ?", workspaceID)
+	}
+
+	pagination, query, err := getPagedBunQuery(ctx, query, int(offset), int(limit))
+	if err != nil {
+		return nil, nil, err
+	}
+	// Bun bug treating limit=0 as no limit when it
+	// should be the exact opposite of no records returned.
+	// TODO: revisit and check this for commonality.
+	// We may put pagination.StartIndex-pagination.EndIndex != 0
+	// back to the function and return a nil query if StartIndex = EndIndex. This is for
+	// limit = -2, we don't run the query, return pagination only.
+	if pagination.StartIndex-pagination.EndIndex != 0 {
+		if err = query.Scan(ctx, &rpNames); err != nil {
+			if errors.Cause(err) == sql.ErrNoRows {
+				return rpNames, pagination, nil
+			}
+			return nil, nil, err
+		}
+	}
+
+	return rpNames, pagination, nil
 }
