@@ -120,6 +120,20 @@ func (c *DispatcherResourceManagerConfig) UnmarshalJSON(data []byte) error {
 // ResolveSlotType resolves the slot type by first looking for a partition-specific setting,
 // then falling back to the master config, and finally falling back to what we can infer.
 func (c DispatcherResourceManagerConfig) ResolveSlotType(partition string) *device.Type {
+	return c.resolveSlotTypeWithDefault(partition, c.SlotType)
+}
+
+// ResolveSlotTypeFromOverrides scans the available partition overrides for a slot type
+// definition for the specified partition.
+func (c DispatcherResourceManagerConfig) ResolveSlotTypeFromOverrides(
+	partition string,
+) *device.Type {
+	return c.resolveSlotTypeWithDefault(partition, nil)
+}
+
+func (c DispatcherResourceManagerConfig) resolveSlotTypeWithDefault(
+	partition string, defaultResult *device.Type,
+) *device.Type {
 	for name, overrides := range c.PartitionOverrides {
 		if name != partition {
 			continue
@@ -129,7 +143,7 @@ func (c DispatcherResourceManagerConfig) ResolveSlotType(partition string) *devi
 		}
 		return overrides.SlotType
 	}
-	return c.SlotType
+	return defaultResult
 }
 
 // ResolveRendezvousNetworkInterface resolves the rendezvous network interface by first looking for

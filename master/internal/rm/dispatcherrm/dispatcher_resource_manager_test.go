@@ -33,7 +33,7 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 	}
 
 	n2 := hpcNodeDetails{
-		Partitions:    []string{"Partition 1", "Partition 2"},
+		Partitions:    []string{"NoOverride", "Partition 1", "Partition 2"},
 		Addresses:     []string{"address 3", "address 4"},
 		Draining:      false,
 		Allocated:     true,
@@ -84,7 +84,7 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 	// Expect each agent to participate in resource pools as follows:
 	expectedResourcePools := [][]string{
 		{"Partition 1"},
-		{"Partition 1", "Partition 2", "launcher-provided-pool"},
+		{"NoOverride", "Partition 1", "Partition 2", "launcher-provided-pool"},
 		{"Partition 1", "Partition 3"},
 	}
 
