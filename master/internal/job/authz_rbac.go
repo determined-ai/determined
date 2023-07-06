@@ -7,7 +7,9 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rbac"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
@@ -114,7 +116,11 @@ func (a *JobAuthZRBAC) FilterJobs(
 func (a *JobAuthZRBAC) CanControlJobQueue(
 	ctx context.Context, curUser *model.User,
 ) (permErr error, err error) {
-	return nil, nil
+	if !config.GetMasterConfig().Security.AuthZ.StrictJobQueueControl {
+		return nil, nil
+	}
+	return rbac.CheckForPermission(ctx, "job", curUser, nil,
+		rbacv1.PermissionType_PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE)
 }
 
 func init() {
