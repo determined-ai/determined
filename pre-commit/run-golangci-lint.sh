@@ -8,8 +8,12 @@ set -xeo pipefail
 
 CHANGED_DIRS=$(xargs -n1 dirname <<<"$*" | sort -u)
 
+dir-filter() {
+    (grep "^$1/" <<<"$2" | sed -e "s|^$1/||g") || true
+}
+
 golint() {
-    dirs=$(grep "^$1/" <<<"$CHANGED_DIRS" | sed -e "s|^$1/||g")
+    dirs=$(dir-filter "$1" "$CHANGED_DIRS")
     if [ -z "$dirs" ]; then
         echo "No files to lint in $1, skipping."
         return
