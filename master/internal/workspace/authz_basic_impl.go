@@ -19,6 +19,13 @@ func (a *WorkspaceAuthZBasic) CanGetWorkspace(
 	return nil
 }
 
+// CanGetWorkspaceID always return true and a nil error.
+func (a *WorkspaceAuthZBasic) CanGetWorkspaceID(
+	ctx context.Context, curUser model.User, workspaceID int32,
+) error {
+	return nil
+}
+
 // CanModifyRPWorkspaceBindings requires user to be an admin.
 func (a *WorkspaceAuthZBasic) CanModifyRPWorkspaceBindings(
 	ctx context.Context, curUser model.User, workspaceIDs []int32,
