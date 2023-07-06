@@ -91,7 +91,7 @@ best_checkpoint AS (
               ORDER BY v.signed_searcher_metric ASC
             ) AS rank
           FROM trial_validations v
-          INNER JOIN checkpoints_new_view c ON (
+          INNER JOIN checkpoints_view c ON (
             c.steps_completed = v.total_batches
             AND c.trial_id = v.trial_id
           )
