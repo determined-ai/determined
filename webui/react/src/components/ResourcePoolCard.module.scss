@@ -34,7 +34,7 @@ $font-size-content: 12px;
     align-items: center;
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    gap: 8px;
     padding-top: 8px;
 
     .info {
@@ -46,7 +46,6 @@ $font-size-content: 12px;
     }
     .default {
       color: var(--theme-surface-on);
-      display: flex;
 
       span {
         font-size: $font-size-content;
