@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/uptrace/bun"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -157,15 +159,17 @@ func (a *apiServer) getProjectColumnsByID(
 	}
 
 	hyperparameters := []struct {
+		ExperimentID    int
 		WorkspaceID     int
 		Hyperparameters expconf.HyperparametersV0
 	}{}
 
 	// get all experiments in project
 	experimentQuery := db.Bun().NewSelect().
+		ColumnExpr("id as experiment_id").
 		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
 		ColumnExpr("config->'hyperparameters' as hyperparameters").
-		TableExpr("experiments").
+		Table("experiments").
 		Where("config->>'hyperparameters' IS NOT NULL").
 		Where("project_id = ?", id).
 		Order("id")
@@ -175,6 +179,7 @@ func (a *apiServer) getProjectColumnsByID(
 		curUser,
 		p,
 		experimentQuery,
+		// TODO: should we use a different permission for summary metrics?
 		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
 	)
 	if err != nil {
@@ -184,6 +189,79 @@ func (a *apiServer) getProjectColumnsByID(
 	err = experimentQuery.Scan(ctx, &hyperparameters)
 	if err != nil {
 		return nil, err
+	}
+
+	experimentIds := make([]int, len(hyperparameters))
+	for _, hparam := range hyperparameters {
+		experimentIds = append(experimentIds, hparam.ExperimentID)
+	}
+	summaryMetrics := []struct {
+		ExperimentID   int
+		SummaryMetrics model.JSONObj
+	}{}
+
+	trialsQuery := db.Bun().NewSelect().
+		Column("experiment_id").
+		Column("summary_metrics").
+		Table("trials").
+		Where("experiment_id IN (?)", bun.In(experimentIds)).
+		Order("experiment_id")
+	err = trialsQuery.Scan(ctx, &summaryMetrics)
+	if err != nil {
+		return nil, err
+	}
+
+	summaryMetricsSet := make(map[string]struct{})
+	for _, trial := range summaryMetrics {
+		if rawMetrics, ok := trial.SummaryMetrics["training"]; ok {
+			// iterate in order
+			metrics := rawMetrics.(map[string]interface{})
+			metricsKeys := make([]string, 0, len(metrics))
+			for metricKey := range metrics {
+				metricsKeys = append(metricsKeys, metricKey)
+			}
+			sort.Strings(metricsKeys)
+
+			for _, key := range metricsKeys {
+				if _, seen := summaryMetricsSet[key]; !seen {
+					summaryMetricsSet[key] = struct{}{}
+					var columnType projectv1.ColumnType
+					metric := metrics[key].(map[string]interface{})
+					if metricType, ok := metric["type"]; ok {
+						switch metricType.(string) {
+						case db.MetricTypeString:
+							columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
+						case db.MetricTypeNumber:
+							columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
+						case db.MetricTypeDate:
+							columnType = projectv1.ColumnType_COLUMN_TYPE_DATE
+						case db.MetricTypeBool:
+							columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
+						default:
+							// unsure of how to treat arrays/objects/nulls
+							columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+						}
+						// don't surface aggregates that don't make sense for non-numbers
+						if columnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER {
+							aggregates := []string{"count", "latest", "max", "min", "sum"}
+							for _, aggregate := range aggregates {
+								columns = append(columns, &projectv1.ProjectColumn{
+									Column:   fmt.Sprintf("training.%s.%s", key, aggregate),
+									Location: projectv1.LocationType_LOCATION_TYPE_TRAINING,
+									Type:     columnType,
+								})
+							}
+						} else {
+							columns = append(columns, &projectv1.ProjectColumn{
+								Column:   fmt.Sprintf("training.%s.latest", key),
+								Location: projectv1.LocationType_LOCATION_TYPE_TRAINING,
+								Type:     columnType,
+							})
+						}
+					}
+				}
+			}
+		}
 	}
 	hparamSet := make(map[string]struct{})
 	for _, hparam := range hyperparameters {
