@@ -790,7 +790,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           onColumnMoved={onColumnMoved}
           onColumnResize={onColumnResize}
           onHeaderClicked={onHeaderClicked}
-          onHeaderContextMenu={onHeaderClicked}
+          onHeaderContextMenu={onHeaderClicked} // right-click
           onItemHovered={onColumnHovered}
           onVisibleRegionChanged={handleScroll}
         />
