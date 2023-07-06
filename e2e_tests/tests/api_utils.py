@@ -61,12 +61,12 @@ def launch_ntsc(
     typ: NTSC_Kind,
     exp_id: Optional[int] = None,
     template: Optional[str] = None,
-) -> str:
+) -> AnyNTSC:
     if typ == NTSC_Kind.notebook:
         return bindings.post_LaunchNotebook(
             session,
             body=bindings.v1LaunchNotebookRequest(workspaceId=workspace_id, templateName=template),
-        ).notebook.id
+        ).notebook
     elif typ == NTSC_Kind.tensorboard:
         experiment_ids = [exp_id] if exp_id else []
         return bindings.post_LaunchTensorboard(
@@ -74,12 +74,12 @@ def launch_ntsc(
             body=bindings.v1LaunchTensorboardRequest(
                 workspaceId=workspace_id, experimentIds=experiment_ids, templateName=template
             ),
-        ).tensorboard.id
+        ).tensorboard
     elif typ == NTSC_Kind.shell:
         return bindings.post_LaunchShell(
             session,
             body=bindings.v1LaunchShellRequest(workspaceId=workspace_id, templateName=template),
-        ).shell.id
+        ).shell
     elif typ == NTSC_Kind.command:
         return bindings.post_LaunchCommand(
             session,
@@ -90,7 +90,7 @@ def launch_ntsc(
                 },
                 templateName=template,
             ),
-        ).command.id
+        ).command
     else:
         raise ValueError("unknown type")
 

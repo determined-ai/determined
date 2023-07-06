@@ -121,6 +121,12 @@ enum PermissionType {
   PERMISSION_TYPE_CREATE_MODEL_REGISTRY = 7003;
   // Ability to delete model registry.
   PERMISSION_TYPE_DELETE_MODEL_REGISTRY = 7004;
+  // Ability to delete model version.
+  PERMISSION_TYPE_DELETE_MODEL_VERSION = 7005;
+  // Ability to delete another user's model registry.
+  PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY = 7006;
+  // Ability to delete another user's model version.
+  PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION = 7007;
 
   // Ability to view master logs.
   PERMISSION_TYPE_VIEW_MASTER_LOGS = 8001;
@@ -130,6 +136,9 @@ enum PermissionType {
   PERMISSION_TYPE_UPDATE_AGENTS = 8003;
   // Ability to view sensitive subset of agent info.
   PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO = 8004;
+
+  // Ability to control strict job queue.
+  PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE = 8101;
 
   // Ability to view templates.
   PERMISSION_TYPE_VIEW_TEMPLATES = 9001;

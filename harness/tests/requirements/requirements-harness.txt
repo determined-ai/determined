@@ -9,3 +9,5 @@ deepspeed==0.8.3
 transformers>=4.8.2,<4.29.0
 attrdict
 moto
+# Pydantic V2 has changes that break existing tests
+pydantic<2

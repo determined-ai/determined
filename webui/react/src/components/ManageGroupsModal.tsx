@@ -40,10 +40,11 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
     }
   }, [form, userGroups]);
 
-  const handleSubmit = async (userGroupIds?: (number | undefined)[]) => {
+  const handleSubmit = async () => {
     await form.validateFields();
 
     const formData = form.getFieldsValue();
+    const userGroupIds = userGroups.map((ug) => ug.group.groupId);
 
     try {
       if (user) {

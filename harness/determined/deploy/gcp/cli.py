@@ -215,11 +215,11 @@ def handle_list(args: argparse.Namespace) -> Any:
         bucket_name = args.project_id + "-determined-deploy"
 
     if args.json:
-        return gcp.list_clusters(bucket_name, "json")
+        return gcp.list_clusters(bucket_name, args.project_id, "json")
     elif args.yaml:
-        return gcp.list_clusters(bucket_name, "yaml")
+        return gcp.list_clusters(bucket_name, args.project_id, "yaml")
     else:
-        return gcp.list_clusters(bucket_name)
+        return gcp.list_clusters(bucket_name, args.project_id)
 
 
 def handle_down(args: argparse.Namespace) -> None:

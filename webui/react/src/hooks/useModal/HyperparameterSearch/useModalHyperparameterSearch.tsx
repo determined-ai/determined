@@ -359,7 +359,7 @@ const useModalHyperparameterSearch = ({
         Object.values(SEARCH_METHODS).find((searcher) => searcher.name === searcherName) ??
         SEARCH_METHODS.ASHA;
       setSearcher(searcher);
-      form.setFieldValue('searcher', searcher);
+      form.setFieldValue('searcher', searcher.name);
     },
     [form],
   );
