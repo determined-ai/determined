@@ -100,7 +100,7 @@ interface Props {
   setExpListView: (view: ExpListView) => void;
   rowHeight: RowHeight;
   onRowHeightChange: (r: RowHeight) => void;
-  setHeatmapApplied: React.Dispatch<React.SetStateAction<string[] | 'all'>>;
+  setHeatmapApplied: (selection: string[] | 'all') => void;
   heatmapApplied: string[] | 'all';
 }
 
@@ -384,7 +384,7 @@ const TableActionBar: React.FC<Props> = ({
           <Tooltip content={`${heatmapApplied === 'all' ? 'Cancel' : 'Apply'} Heatmap`}>
             <Button
               type={heatmapApplied === 'all' ? 'primary' : 'default'}
-              onClick={() => setHeatmapApplied((prev) => (prev === 'all' ? [] : 'all'))}>
+              onClick={() => setHeatmapApplied(heatmapApplied === 'all' ? [] : 'all')}>
               <Icon name="cluster" title="heatmap" />
             </Button>
           </Tooltip>

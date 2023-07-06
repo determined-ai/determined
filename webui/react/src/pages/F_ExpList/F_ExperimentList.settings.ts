@@ -25,6 +25,7 @@ export interface F_ExperimentListSettings {
   pageLimit: number;
   rowHeight: RowHeight;
   pinnedColumnsCount: number;
+  heatmapApplied: string[] | 'all';
 }
 export const settingsConfigForProject = (id: number): SettingsConfig<F_ExperimentListSettings> => ({
   settings: {
@@ -50,6 +51,12 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       skipUrlEncoding: true,
       storageKey: 'filterset',
       type: string,
+    },
+    heatmapApplied: {
+      defaultValue: [],
+      skipUrlEncoding: true,
+      storageKey: 'heatmapApplied',
+      type: union([array(string), literal('all')]),
     },
     pageLimit: {
       defaultValue: 20,

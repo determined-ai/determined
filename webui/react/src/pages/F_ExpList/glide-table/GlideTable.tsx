@@ -91,7 +91,7 @@ export interface GlideTableProps {
   projectColumns: Loadable<ProjectColumn[]>;
   projectHeatmap: ProjectMetricsRange[];
   heatmapApplied: string[] | 'all';
-  setHeatmapApplied: Dispatch<React.SetStateAction<string[] | 'all'>>;
+  setHeatmapApplied: (selection: string[] | 'all') => void;
   rowHeight: RowHeight;
   selectedExperimentIds: number[];
   setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
@@ -328,23 +328,20 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const applyHeadmap = useCallback(
     (col: string) => {
-      setHeatmapApplied((prev) => {
-        const cols =
-          prev === 'all'
-            ? Loadable.getOrElse([], projectColumns)
-                .filter(
-                  (col) =>
-                    col.type === V1ColumnType.NUMBER &&
-                    (col.location === V1LocationType.VALIDATIONS ||
-                      col.location === V1LocationType.TRAINING),
-                )
-                .map((c) => c.column)
-            : prev;
-
-        return cols.includes(col) ? cols.filter((p) => p !== col) : [...cols, col];
-      });
+      const cols =
+        heatmapApplied === 'all'
+          ? Loadable.getOrElse([], projectColumns)
+              .filter(
+                (col) =>
+                  col.type === V1ColumnType.NUMBER &&
+                  (col.location === V1LocationType.VALIDATIONS ||
+                    col.location === V1LocationType.TRAINING),
+              )
+              .map((c) => c.column)
+          : heatmapApplied;
+      setHeatmapApplied(cols.includes(col) ? cols.filter((p) => p !== col) : [...cols, col]);
     },
-    [projectColumns, setHeatmapApplied],
+    [projectColumns, setHeatmapApplied, heatmapApplied],
   );
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(

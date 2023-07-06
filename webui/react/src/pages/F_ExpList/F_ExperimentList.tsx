@@ -113,7 +113,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
   const [projectHeatmap, setProjectHeatmap] = useState<ProjectMetricsRange[]>([]);
-  const [heatmapApplied, setHeatmapApplied] = React.useState<string[] | 'all'>([]);
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const filtersString = useObservable(formStore.asJsonString);
   const loadableFormset = useObservable(formStore.formset);
@@ -496,6 +495,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
+  const handleHeatmapChange = useCallback(
+    (selection: string[] | 'all') => {
+      updateSettings({ heatmapApplied: selection });
+    },
+    [updateSettings],
+  );
+
   const selectedExperiments: ExperimentWithTrial[] = useMemo(() => {
     if (selectedExperimentIds.length === 0) return [];
     const selectedIdSet = new Set(selectedExperimentIds);
@@ -523,7 +529,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         filters={experimentFilters}
         formStore={formStore}
         handleUpdateExperimentList={handleUpdateExperimentList}
-        heatmapApplied={heatmapApplied}
+        heatmapApplied={settings.heatmapApplied}
         initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}
         project={project}
@@ -532,7 +538,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         selectAll={selectAll}
         selectedExperimentIds={selectedExperimentIds}
         setExpListView={updateExpListView}
-        setHeatmapApplied={setHeatmapApplied}
+        setHeatmapApplied={handleHeatmapChange}
         setIsOpenFilter={onIsOpenFilterChange}
         setVisibleColumns={setVisibleColumns}
         sorts={sorts}
@@ -571,7 +577,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 formStore={formStore}
                 handleScroll={isPagedView ? undefined : handleScroll}
                 handleUpdateExperimentList={handleUpdateExperimentList}
-                heatmapApplied={heatmapApplied}
+                heatmapApplied={settings.heatmapApplied}
                 height={height}
                 page={page}
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
@@ -584,7 +590,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 selectedExperimentIds={selectedExperimentIds}
                 setColumnWidths={handleColumnWidthChange}
                 setExcludedExperimentIds={setExcludedExperimentIds}
-                setHeatmapApplied={setHeatmapApplied}
+                setHeatmapApplied={handleHeatmapChange}
                 setPinnedColumnsCount={setPinnedColumnsCount}
                 setSelectAll={setSelectAll}
                 setSelectedExperimentIds={setSelectedExperimentIds}
