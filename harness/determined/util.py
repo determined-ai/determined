@@ -34,6 +34,8 @@ from typing import (
     cast,
 )
 
+import psutil
+
 import determined as det
 from determined import constants
 from determined.common import check, util
@@ -408,13 +410,26 @@ def force_create_symlink(src: str, dst: str) -> None:
 
 @contextlib.contextmanager
 def forward_signals(p: subprocess.Popen, *signums: signal.Signals) -> Iterator[None]:
-    """Forward a list of signals to a subprocess, restoring the original handlers afterwards."""
+    """Forward a list of signals to a subprocess (and children),
+    restoring the original handlers afterwards.
+    """
     if not signums:
         # Pick a useful default for wrapper processes.
         names = ["SIGINT", "SIGTERM", "SIGHUP", "SIGUSR1", "SIGUSR2", "SIGWINCH", "SIGBREAK"]
         signums = tuple(getattr(signal, name) for name in names if hasattr(signal, name))
 
     def signal_passthru(signum: Any, frame: Any) -> None:
+        # Forward the signal to the target process and all its children.
+        # This was specifically added for SIGTERM which may leave some children running due
+        # to multiple layers of processes.   We treat other signals similarly, but likely
+        # not as relevant for them.
+        try:
+            children = psutil.Process(p.pid).children(recursive=True)
+            for cp in children:
+                cp.send_signal(signum)
+        except Exception as err:
+            logging.error(f"{err} trying to forward signal {signum} to children")
+            pass
         p.send_signal(signum)
 
     old_handlers = [None for n in signums]  # type: List[Any]
