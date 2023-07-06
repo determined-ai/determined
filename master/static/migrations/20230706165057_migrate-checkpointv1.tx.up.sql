@@ -3,16 +3,8 @@
 -- checkpoints_v2 has checkpoint_v2s and unarchived checkpoint_v1s.
 -- checkpoints_view has all unarchived checkpoints pulling from checkpoints_v2.
 -- proto_checkpoints_view is the proto version of checkpoints_view.
-
---ALTER TABLE public.checkpoints_v2
---    ADD COLUMN is_version_one boolean NOT NULL DEFAULT false; -- Allow migrate down.
-
--- TODO archived checkpoints_v1?
-
--- Insert unarchived checkpoints_v1 into checkpoints_v2. 
--- TODO using the view makes this easy but we join on steps and validations, which isn't ideal
---     we might need this join anyway so
---     I don't think we can get around it just by using the raw table.
+--
+-- Note we just leave checkpoints_v1 data so we can reverse this migration.
 INSERT INTO public.checkpoints_v2 (
     uuid,
     task_id,
@@ -37,14 +29,6 @@ SELECT
     c.size
 FROM public.checkpoints_old_view c
 LEFT JOIN public.allocations a ON c.allocation_id = a.allocation_id;
-
--- Note we just leave checkpoints_v1 data so we can reverse this migration.
-
-
--- Delete data that was migrated over.
---DELETE FROM public.checkpoints WHERE uuid IN (
---    SELECT uuid FROM public.checkpoints_v2 WHERE is_version_one
---);
 
 DROP VIEW public.proto_checkpoints_view;
 DROP VIEW public.checkpoints_view;
