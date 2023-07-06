@@ -182,7 +182,7 @@ def test_ntsc_iface_access() -> None:
 
             created_id = launch_ntsc(
                 determined_test_session(creds[0]), workspaces[0].id, typ, experiment_id
-            )
+            ).id
 
             # user 0
             assert can_access_logs(
@@ -257,7 +257,7 @@ def test_ntsc_iface_access() -> None:
             # test visibility
             created_id2 = launch_ntsc(
                 determined_test_session(creds[0]), workspaces[2].id, typ, experiment_id
-            )
+            ).id
 
             # none of the users should be able to get details
             for cred in [creds[1], creds[2]]:
@@ -325,7 +325,7 @@ def test_ntsc_proxy() -> None:
 
             created_id = launch_ntsc(
                 determined_test_session(creds[0]), workspaces[0].id, typ, experiment_id
-            )
+            ).id
 
             print(f"created {typ} {created_id}")
             wait_for_ntsc_state(
@@ -380,7 +380,7 @@ def test_tsb_listed() -> None:
                 ["--project_id", str(pid)],
             )
 
-            created_id = launch_ntsc(session, workspace.id, NTSC_Kind.tensorboard, experiment_id)
+            created_id = launch_ntsc(session, workspace.id, NTSC_Kind.tensorboard, experiment_id).id
 
             # list tensorboards and make sure it's included in the response.
             tsbs = bindings.get_GetTensorboards(session, workspaceId=workspace.id).tensorboards
