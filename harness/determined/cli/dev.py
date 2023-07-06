@@ -52,8 +52,8 @@ def curl(args: Namespace) -> None:
         cmd += args.curl_args
 
     if args.x:
-        if hasattr(shlex, "join"):  # added in py 3.8
-            print(shlex.join(cmd))  # type: ignore
+        if hasattr(shlex, "join"):
+            print(shlex.join(cmd))
         else:
             print(" ".join(shlex.quote(arg) for arg in cmd))
 
