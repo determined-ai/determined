@@ -129,6 +129,17 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     rows: CompactSelection.empty(),
   });
 
+  const selectAll = useMemo(
+    () => !isLoadingSettings && settings.selectAll,
+    [isLoadingSettings, settings.selectAll],
+  );
+  const setSelectAll = useCallback(
+    (selectAll: boolean) => {
+      updateSettings({ selectAll });
+    },
+    [updateSettings],
+  );
+
   const setPinnedColumnsCount = useCallback(
     (newCount: number) => {
       updateSettings({ pinnedColumnsCount: newCount });
@@ -178,7 +189,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [excludedExperimentIds, setExcludedExperimentIds] = useState<Set<number>>(
     new Set<number>(),
   );
-  const [selectAll, setSelectAll] = useState(false);
   const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error] = useState(false);
@@ -191,7 +201,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [scrollPositionSetCount] = useState(observable(0));
 
   useEffect(() => {
-    if (!isLoadingSettings && !isLoading && experiments.some(Loadable.isLoaded)) {
+    if (experiments.some(Loadable.isLoaded)) {
       let rows = CompactSelection.empty();
       experiments.forEach((ex, ix) => {
         if (
@@ -207,7 +217,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         rows: rows,
       });
     }
-  }, [isLoadingSettings, experiments, isLoading]);
+  }, [experiments, settings.selectedExperiments]);
 
   useEffect(() => {
     if (isLoading) {
@@ -223,7 +233,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       if (prevIds === selectedIds) return prevIds;
       return selectedIds;
     });
-  }, [selection.rows, setSelectedExperimentIds, experiments]);
+  }, [selection.rows, setSelectedExperimentIds, experiments, isLoading]);
 
   useEffect(() => {
     updateSettings({
@@ -395,7 +405,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
     // Refetch experiment list to get updates based on batch action.
     await fetchExperiments();
-  }, [fetchExperiments]);
+  }, [fetchExperiments, setSelectAll]);
 
   const handleUpdateExperimentList = useCallback(
     (action: BatchAction, successfulIds: number[]) => {
@@ -474,7 +484,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     return () => {
       window.removeEventListener('keydown', handleEsc);
     };
-  }, []);
+  }, [setSelectAll]);
 
   const updateExpListView = useCallback(
     (view: ExpListView) => {

@@ -221,7 +221,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   useEffect(() => {
     if (clearSelectionTrigger === 0) return;
     setSelection({ columns: CompactSelection.empty(), rows: CompactSelection.empty() });
-  }, [clearSelectionTrigger]);
+  }, [clearSelectionTrigger, setSelection]);
 
   const columnDefs = useMemo<Record<string, ColumnDef>>(
     () =>
@@ -310,7 +310,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         rows: rows.add([previousData.length, data.length]),
       }));
     }
-  }, [data, previousData, selectAll]);
+  }, [data, previousData, selectAll, setSelection]);
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, { bounds, preventDefault }: HeaderClickedEventArgs) => {
@@ -451,6 +451,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       sortableColumnIds,
       setSortableColumnIds,
       setPinnedColumnsCount,
+      setSelection,
     ],
   );
 
@@ -581,7 +582,16 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         }
       });
     },
-    [data, columnIds, columnDefs, selection, selectAll, setExcludedExperimentIds, standAloneSelect],
+    [
+      data,
+      columnIds,
+      columnDefs,
+      selection,
+      selectAll,
+      setExcludedExperimentIds,
+      standAloneSelect,
+      setSelection,
+    ],
   );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(
