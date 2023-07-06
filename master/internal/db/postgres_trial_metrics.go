@@ -172,7 +172,10 @@ AND custom_type = $4), NULL)`,
 		return 0, nil, nil, err
 	}
 	fmt.Println("replaced body avg", replacedBody.AvgMetrics)
-	addedBody = mergeMetrics(replacedBody, mBody)
+	addedBody, err = mergeMetrics(replacedBody, mBody)
+	if err != nil {
+		return 0, nil, nil, err
+	}
 	id, err := db.updateRawMetrics(ctx, tx, addedBody, runID, trialID, lastProcessedBatch, mType)
 	return id, addedBody, replacedBody, err
 }
@@ -323,47 +326,33 @@ func removeMetricsFromSummary(
 	return summaryMetrics
 }
 
-func removeDuplicateEntry(ctx context.Context, tx *sqlx.Tx,
-	m *trialv1.TrialMetrics, mType model.MetricType,
-) (*metricsBody, error) {
-	_, err := tx.ExecContext(ctx, `
-DELETE FROM metrics
-WHERE archived = false
-AND total_batches = $1
-AND trial_id = $2
-AND partition_type = $3
-AND custom_type = $4
-`, m.StepsCompleted, m.TrialId, customMetricTypeToPartitionType(mType), mType)
-	if err != nil {
-		return nil, errors.Wrap(err, "updating duplicate metric")
-	}
-	// TODO. return deleted metric if any.
-	// TODO update summary.
-	return nil, nil
-}
-
 // mergeMetrics merges AvgMetrics of two metrics bodies.
-func mergeMetrics(oldBody, newBody *metricsBody) *metricsBody {
+func mergeMetrics(oldBody, newBody *metricsBody) (*metricsBody, error) {
 	if oldBody == nil {
-		return newBody
+		return newBody, nil
 	}
 
 	if newBody == nil {
-		return oldBody
+		return oldBody, nil
 	}
 
 	// FIXME: We don't need to convert this
 	oldAvgMetricsMap := oldBody.AvgMetrics.AsMap()
 	newAvgMetricsMap := newBody.AvgMetrics.AsMap()
 	for key, newValue := range newAvgMetricsMap {
+		// we cannot calculate min/max efficiently for replaced metric values
+		// so we disallow it.
+		if _, ok := oldAvgMetricsMap[key]; ok {
+			return nil, errors.Errorf("replacing existing metric values is not implemented %s", key)
+		}
 		oldAvgMetricsMap[key] = newValue
 	}
 
 	mergedAvgMetrics, err := structpb.NewStruct(oldAvgMetricsMap)
 	if err != nil {
-		// handle error
+		return nil, errors.Wrap(err, "merging metrics")
 	}
 	oldBody.AvgMetrics = mergedAvgMetrics
 
-	return oldBody
+	return oldBody, nil
 }
