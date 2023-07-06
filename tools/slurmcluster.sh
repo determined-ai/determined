@@ -483,6 +483,7 @@ OPT_CHECKPOINTPATH_o184i054=/cstor/determined/checkpoints
 OPT_MASTERHOST_o184i054=o184i054.gre.smktg.hpecorp.net
 OPT_MASTERPORT_o184i054=$USERPORT
 OPT_PROTOCOL_o184i054=http
+OPT_SLOTTYPE_o184i054=cuda
 OPT_DEFAULTCOMPUTERESOURCEPOOL_o184i054=mlde_cuda
 # Indentation of task_container_defaults must match devcluster-slurm.yaml
 OPT_TASKCONTAINERDEFAULTS_o184i054=$(
@@ -497,6 +498,12 @@ OPT_PARTITIONOVERRIDES_o184i054=$(
     cat <<EOF
             mlde_rocm:
                 slot_type: rocm
+            mlde_rocm_preempt:
+                slot_type: rocm
+            mlde_cpus:
+                slot_type: cpu
+            mlde_cpus_preempt:
+                slot_type: cpu
             gre1:
                 slot_type: cpu
             gre2:
@@ -511,6 +518,33 @@ OPT_PARTITIONOVERRIDES_o184i054=$(
                 slot_type: cpu
             misc_cpus:
                 slot_type: cpu
+EOF
+)
+# Indentation of resource_pools must match devcluster-slurm.yaml
+OPT_RESOURCEPOOLS_o184i054=$(
+    cat <<EOF
+        - pool_name: mlde_rocm_XL675d
+          description: Use the o184i082 node with 8 AMD MI210 GPUs, 128 Cores, and 1 TiB of Memory
+          provider:
+            type: hpc
+            partition: mlde_rocm
+          task_container_defaults:
+            slurm:
+            #slots_per_node: 8
+              sbatch_args:
+                - --cpus-per-gpu=16
+                - --mem-per-gpu=131072
+                - --nodelist=o184i082
+        - pool_name: mlde_cpus_XL225n
+          description: Use the o184i[060-061] nodes with 256 AMD EPYC Milan 7713 Cores, and 512 GiB of Memory
+          provider:
+            type: hpc
+            partition: mlde_cpus
+          task_container_defaults:
+            slurm:
+            #slots_per_node: 256
+              sbatch_args:
+                - --nodelist=o184i[060-061]
 EOF
 )
 
