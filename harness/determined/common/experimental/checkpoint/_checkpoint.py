@@ -4,6 +4,7 @@ import json
 import logging
 import pathlib
 import shutil
+import sys
 import tarfile
 from typing import Any, Dict, List, Optional
 
@@ -229,7 +230,15 @@ class Checkpoint:
     ) -> None:
         if checkpoint_storage["type"] == "shared_fs":
             src_ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
-            shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir), dirs_exist_ok=True)
+            # TODO: remove version check once we drop support for Python 3.7
+            if sys.version_info.minor >= 8:
+                shutil.copytree(
+                    str(src_ckpt_dir),
+                    str(local_ckpt_dir),
+                    dirs_exist_ok=True,
+                )  # type: ignore
+            else:
+                shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
         else:
             local_ckpt_dir.mkdir(parents=True, exist_ok=True)
             manager = storage.build(
