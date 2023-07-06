@@ -445,9 +445,9 @@ const getHeatmapOpacity = (min: number, max: number, value: number): number => {
   if (min >= max || value >= max) return 0.2;
   const d = max - min;
   if (value >= 0.75 * d + min) return 0.14;
-  if (value >= 0.5 * d + min) return 0.8;
-  if (value >= 0.25 * d + min) return 0.2;
-  return 0.04;
+  if (value >= 0.5 * d + min) return 0.08;
+  if (value >= 0.25 * d + min) return 0.02;
+  return 0.01;
 };
 
 export const defaultNumberColumn = (

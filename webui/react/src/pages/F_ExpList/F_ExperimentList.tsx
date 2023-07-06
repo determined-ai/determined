@@ -289,6 +289,17 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const onContextMenuComplete = useCallback(fetchExperiments, [fetchExperiments]);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const heatMap = await getProjectNumericMetricsRange({ id: project.id });
+        setProjectHeatmap(heatMap);
+      } catch (e) {
+        handleError(e, { publicSubject: 'Unable to fetch project heatmap' });
+      }
+    })();
+  }, [project.id]);
+
   // TODO: poll?
   useEffect(() => {
     let mounted = true;
@@ -302,14 +313,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             : 0,
         );
 
-        const heatMap = await getProjectNumericMetricsRange({ id: project.id });
-        setProjectHeatmap(heatMap);
-
         if (mounted) {
           setProjectColumns(Loaded(columns));
         }
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to fetch project columns or heatmap' });
+        handleError(e, { publicSubject: 'Unable to fetch project columns' });
       }
     })();
     return () => {
