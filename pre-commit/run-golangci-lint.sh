@@ -1,19 +1,16 @@
 #!/bin/bash
 
+PRECOMMIT_GOLANGCI_LINT_NOT_FOUND_EXIT_CODE=${PRECOMMIT_GOLANGCI_LINT_NOT_FOUND_EXIT_CODE:-1}
 if ! command -v golangci-lint >/dev/null; then
     echo "golangci-lint could not be found (try ./master/get-deps.sh)" >&2
-    exit 1
+    exit $PRECOMMIT_GOLANGCI_LINT_NOT_FOUND_EXIT_CODE
 fi
 set -xeo pipefail
 
 CHANGED_DIRS=$(xargs -n1 dirname <<<"$*" | sort -u)
 
-filter() {
-    grep "$1" <<<"$2" | sed -e "s|$1||g"
-}
-
 golint() {
-    dirs=$(filter "^$1/" "$CHANGED_DIRS")
+    dirs=$(grep "^$1/" <<<"$CHANGED_DIRS" | sed -e "s|^$1/||g")
     if [ -z "$dirs" ]; then
         echo "No files to lint in $1, skipping."
         return
