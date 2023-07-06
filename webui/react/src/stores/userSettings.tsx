@@ -25,7 +25,7 @@ function isTypeC(codec: t.Encoder<any, any>): codec is t.TypeC<t.Props> {
 }
 
 class UserSettingsStore extends PollingStore {
-  #settings: WritableObservable<Loadable<State>> = observable(NotLoaded);
+  readonly #settings: WritableObservable<Loadable<State>> = observable(NotLoaded);
 
   public get<T>(type: t.Type<T>, key: string): Observable<Loadable<T | null>> {
     return this.#settings.select((settings) => {
@@ -178,7 +178,7 @@ class UserSettingsStore extends PollingStore {
     );
   }
 
-  public _forUserSettingsOnly(): WritableObservable<Loadable<State>> {
+  public _forUseSettingsOnly(): WritableObservable<Loadable<State>> {
     return this.#settings;
   }
 }

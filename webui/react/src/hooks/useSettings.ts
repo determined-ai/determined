@@ -163,14 +163,13 @@ const queryToSettings = <T>(config: SettingsConfig<T>, params: URLSearchParams) 
 };
 
 const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
-  const { isLoading: isLoading, querySettings, state: rawState } = useContext(UserSettings);
-  const stateOb = rawState.select((settings) =>
-    Loadable.getOrElse(Map<string, Settings>(), settings),
-  );
-  const initialLoading = isLoading;
+  const { isLoading: initialLoading, querySettings, state: rawState } = useContext(UserSettings);
   const derivedOb = useMemo(
-    () => stateOb.select((s) => s.get(config.storagePath)),
-    [stateOb, config.storagePath],
+    () =>
+      rawState.select((s) =>
+        Loadable.getOrElse(Map<string, Settings>(), s).get(config.storagePath),
+      ),
+    [rawState, config.storagePath],
   );
   const state = useObservable(derivedOb);
   const navigate = useNavigate();
