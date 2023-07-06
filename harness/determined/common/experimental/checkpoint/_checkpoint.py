@@ -229,7 +229,7 @@ class Checkpoint:
     ) -> None:
         if checkpoint_storage["type"] == "shared_fs":
             src_ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
-            shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
+            shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir), dirs_exist_ok=True)
         else:
             local_ckpt_dir.mkdir(parents=True, exist_ok=True)
             manager = storage.build(
