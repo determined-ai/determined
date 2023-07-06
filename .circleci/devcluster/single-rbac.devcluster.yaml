@@ -25,6 +25,7 @@ stages:
           authz:
             type: rbac
             rbac_ui_enabled: true
+            strict_job_queue_control: true
         scim:
           enabled: true
           auth:
