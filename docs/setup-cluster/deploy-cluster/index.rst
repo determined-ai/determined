@@ -1,3 +1,5 @@
+.. _setup-via-cli-index:
+
 ###################
  Set Up Determined
 ###################
@@ -15,9 +17,15 @@ To set up Determined, start by following the cluster deployment guide for your e
 | -  :doc:`on-prem/homebrew`                             |
 | -  :doc:`on-prem/wsl`                                  |
 +--------------------------------------------------------+
-| :doc:`aws/overview`                                    |
+| :ref:`topic_guide_aws`                                 |
+|                                                        |
+| -  :ref:`Cloud <deploy-aws-cloud>`                     |
+| -  :ref:`CLI <install-aws>`                            |
 +--------------------------------------------------------+
-| :doc:`gcp/overview`                                    |
+| :ref:`topic_guide_gcp`                                 |
+|                                                        |
+| -  :ref:`Cloud <deploy-gcp-cloud>`                     |
+| -  :ref:`CLI <install-gcp>`                            |
 +--------------------------------------------------------+
 | :doc:`k8s/overview`                                    |
 |                                                        |

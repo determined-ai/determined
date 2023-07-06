@@ -20,6 +20,7 @@
 
    Basic Setup <setup-cluster/basic>
    Setup Guides <setup-cluster/deploy-cluster/index>
+   Bring Your Own Cloud <saas/index>
    Security <setup-cluster/security/overview>
    User Accounts <setup-cluster/users>
    Workspaces and Projects <setup-cluster/workspaces>
