@@ -616,7 +616,7 @@ func (m *dispatcherResourceManager) updateAgentWithAnyProvidedResourcePools(
 // falling back to CUDA if nothing found.
 func computeSlotType(node hpcNodeDetails, m *dispatcherResourceManager) devicev1.Type {
 	for _, partition := range node.Partitions {
-		slotType := m.rmConfig.ResolveSlotType(partition)
+		slotType := m.rmConfig.ResolveSlotTypeFromOverrides(partition)
 		if slotType != nil {
 			return slotType.Proto()
 		}
