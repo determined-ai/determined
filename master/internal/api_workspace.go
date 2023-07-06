@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/workspace"
@@ -615,7 +616,29 @@ func (a *apiServer) UnpinWorkspace(
 }
 
 func (a *apiServer) ListRPsBoundToWorkspace(
-	ctx context.Context, request *apiv1.ListRPsBoundToWorkspaceRequest,
+	ctx context.Context, req *apiv1.ListRPsBoundToWorkspaceRequest,
 ) (*apiv1.ListRPsBoundToWorkspaceResponse, error) {
-	return &apiv1.ListRPsBoundToWorkspaceResponse{}, nil
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = workspace.AuthZProvider.Get().CanGetWorkspaceID(
+		ctx, *curUser, req.WorkspaceId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	masterConfig := config.GetMasterConfig()
+	rpNames, pagination, err := db.ReadRPsAvailableToWorkspace(
+		ctx, req.WorkspaceId, req.Offset, req.Limit, masterConfig.ResourceConfig.ResourcePools,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.ListRPsBoundToWorkspaceResponse{
+		ResourcePools: rpNames,
+		Pagination:    pagination,
+	}, nil
 }
