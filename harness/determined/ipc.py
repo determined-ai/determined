@@ -444,6 +444,7 @@ class PIDServer:
         on_fail: Optional[signal.Signals] = None,
         on_exit: Optional[signal.Signals] = None,
         grace_period: int = 3,
+        signal_children: bool = False,
     ) -> int:
         p = subprocess.Popen(cmd)
 
@@ -457,7 +458,7 @@ class PIDServer:
             if ret is not None:
                 raise HealthCheckFail(ret)
 
-        with det.util.forward_signals(p):
+        with det.util.forward_signals(p, signal_children=signal_children):
             try:
                 self.run(health_check)
             except HealthCheckFail as e:
@@ -467,6 +468,8 @@ class PIDServer:
                 if on_fail is not None:
                     # Let things finish logging, exiting on their own, etc.
                     time.sleep(grace_period)
+                    if signal_children:
+                        det.util.signal_process_tree(p, on_fail)
                     p.send_signal(on_fail)
                     if on_fail != signal.SIGKILL:
                         try:
