@@ -1,4 +1,4 @@
 <div class="version centered"><i id="versions">version {%- include 'version-switcher.html' -%}</i></div>
 <script>
-!window.location.host.includes("docs.determined.ai/latest") && (document.getElementById("versions").innerHTML = "version  {{ version }}");
+!window.location.href.includes("docs.determined.ai/latest") && (document.getElementById("versions").innerHTML = "version  {{ version }}");
 </script>
