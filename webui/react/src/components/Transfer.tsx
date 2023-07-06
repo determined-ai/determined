@@ -219,7 +219,7 @@ const Transfer: React.FC<Props> = ({
             onClick={() => {
               moveToLeft(filteredVisibleEntries);
               // removing everything was keeping the columns out of sync with the UI...
-              persistentEntries && moveToRight(persistentEntries);
+              if (persistentEntries && persistentEntries.length > 0) moveToRight(persistentEntries);
             }}>
             Remove All
           </Link>

@@ -27,7 +27,7 @@ const ResourcePoolBindingModalComponent: React.FC<Props> = ({
       submit={{
         handleError,
         handler: async () => {
-          return await onSave?.(visibleBindings);
+          await onSave?.(visibleBindings);
         },
         text: 'Apply',
       }}
