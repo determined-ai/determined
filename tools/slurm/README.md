@@ -65,7 +65,7 @@ pytest --capture=tee-sys -vv \
 --master-scheme="http" \
 --master-host="localhost" \
 --master-port="8080" \
--k 'not start_and_write_to_shell and not cifar10_pytorch_distributed'
+-k 'not cifar10_pytorch_distributed'
 ```
 
 ## On CircleCI
@@ -81,11 +81,11 @@ pytest --capture=tee-sys -vv \
 --master-port="8080" \
 -o junit_family=xunit1 \
 --junit-xml="/tmp/test-results/e2e/tests.xml" \
--k 'not start_and_write_to_shell and not cifar10_pytorch_distributed'
+-k 'not cifar10_pytorch_distributed'
 ```
 [2]: When invoking `make slurmcluster flags="-w pbs"`, append `and not test_docker_image and not test_bad_slurm_option and not test_launch_layer_exit` to the end of the existing `-k` argument string. These tests do not currently run on PBS instances.
 
-This invocation specifies that all tests are to be run via the remote launcher running on `localhost:8080`. The command specifies that all pytests with the `e2e_slurm` mark should be run except those that have the `parallel` mark as well (this is due to the fact that there are no GPUs and only 1 node on the GCP compute instances). The `-k 'not start_and_write_to_shell'` specifies to not run the `start_and_write_to_shell` function in `e2e_tests/tests/command/test_shell.py`. This test is currently skipped due to a proxy issue on GCP. Similarly, the `and not cifar10_pytorch_distributed` specifies also not to run the `cifar10_pytorch_distributed` test. This test is omitted because it takes too long to run on instances with only one node.
+This invocation specifies that all tests are to be run via the remote launcher running on `localhost:8080`. The command specifies that all pytests with the `e2e_slurm` mark should be run except those that have the `parallel` mark as well (this is due to the fact that there are no GPUs and only 1 node on the GCP compute instances). The `and not cifar10_pytorch_distributed` specifies also not to run the `cifar10_pytorch_distributed` test. This test is omitted because it takes too long to run on instances with only one node.
 
 # Notes on `make slurmcluster` tests on CircleCI 
 

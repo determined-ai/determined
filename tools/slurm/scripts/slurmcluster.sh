@@ -84,7 +84,7 @@ echo "Using tempdir $TEMPDIR"
 
 # Wait for SSH (terraform returns before ssh is up).
 echo "Trying SSH connection..."
-until gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- ls; do
+until gcloud compute ssh --quiet --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- ls; do
     echo "Waiting 5s to try SSH again..."
     sleep 5
     echo "Retrying SSH connection..."
@@ -97,7 +97,7 @@ SOCKS5_PROXY_TUNNEL_OPTS="-D ${SOCKS5_PROXY_PORT} -nNT"
 
 # Launch SSH tunnels.
 echo "Launching SSH tunnels"
-gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- -NL 8081:localhost:8081 -NR 8080:localhost:8080 ${SOCKS5_PROXY_TUNNEL_OPTS} &
+gcloud compute ssh --quiet --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- -NL 8081:localhost:8081 -NR 8080:localhost:8080 ${SOCKS5_PROXY_TUNNEL_OPTS} &
 TUNNEL_PID=$!
 trap 'kill $TUNNEL_PID' EXIT
 echo "Started bidirectional tunnels to $INSTANCE_NAME"
@@ -105,7 +105,7 @@ echo "Started bidirectional tunnels to $INSTANCE_NAME"
 # Grab launcher token.
 REMOTE_TOKEN_SOURCE=/opt/launcher/jetty/base/etc/.launcher.token
 LOCAL_TOKEN_DEST=$TEMPDIR/.launcher.token
-gcloud compute scp --zone "us-west1-b" --project "determined-ai" root@$INSTANCE_NAME:$REMOTE_TOKEN_SOURCE $LOCAL_TOKEN_DEST
+gcloud compute scp --quiet --zone "us-west1-b" --project "determined-ai" root@$INSTANCE_NAME:$REMOTE_TOKEN_SOURCE $LOCAL_TOKEN_DEST
 echo "Copied launcher token to $LOCAL_TOKEN_DEST"
 
 # Build devcluster.yaml.
