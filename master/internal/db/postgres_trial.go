@@ -451,6 +451,8 @@ func calculateNewSummaryMetrics(
 	mRemoved *structpb.Struct,
 ) model.JSONObj {
 	if mRemoved != nil {
+		// PERF: maybe there's a smarter way to process this w/o looking at them as separate
+		// operations.
 		summaryMetrics = removeMetricsFromSummary(summaryMetrics, mRemoved)
 	}
 	// Calculate numeric metrics.
