@@ -15,7 +15,7 @@ def do_test_launch(config: Dict[str, Any], cmd: List[str], mock_popen: mock.Magi
     mock_proc.wait.return_value = 99
     mock_popen.return_value = mock_proc
     assert launch.launch(det.ExperimentConfig(config)) == 99
-    mock_popen.assert_called_once_with(cmd)
+    mock_popen.assert_called_once_with(cmd, start_new_session=True)
 
 
 def test_launch_trial() -> None:

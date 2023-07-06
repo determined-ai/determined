@@ -89,7 +89,7 @@ def test_horovod_chief(
 
     if autohorovod and nnodes == 1 and nslots == 1:
         # Single-slot --autohorovod: we should have just called the script directly.
-        mock_popen.assert_has_calls([mock.call(script)])
+        mock_popen.assert_has_calls([mock.call(script, start_new_session=True)])
         mock_check_sshd.assert_not_called()
     else:
         # Multi-slot or non --autohorovod: expect a full horovodrun command.
@@ -97,7 +97,7 @@ def test_horovod_chief(
         assert os.environ["DET_CHIEF_IP"] == info.container_addrs[0]
         assert os.environ["USE_HOROVOD"] == "1"
 
-        mock_popen.assert_has_calls([mock.call(launch_cmd)])
+        mock_popen.assert_has_calls([mock.call(launch_cmd, start_new_session=True)])
 
         assert mock_check_sshd.call_count == len(info.container_addrs[1:])
         mock_check_sshd.assert_has_calls(
@@ -142,7 +142,7 @@ def test_sshd_worker(
     assert os.environ["DET_CHIEF_IP"] == info.container_addrs[0]
     assert os.environ["USE_HOROVOD"] == "1"
 
-    mock_popen.assert_has_calls([mock.call(launch_cmd)])
+    mock_popen.assert_has_calls([mock.call(launch_cmd, start_new_session=True)])
 
     mock_api_post.assert_has_calls(
         [

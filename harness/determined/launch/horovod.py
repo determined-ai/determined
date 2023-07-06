@@ -97,7 +97,7 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
 
     # When --autohorovod was set, detect single-slot and zero-slot trials.
     if autohorovod and len(info.container_addrs) == 1 and len(info.slot_ids) <= 1:
-        p = subprocess.Popen(script)
+        p = subprocess.Popen(script, start_new_session=True)
         with det.util.forward_signals(p):
             return p.wait()
 

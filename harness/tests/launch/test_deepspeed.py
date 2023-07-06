@@ -90,7 +90,9 @@ def test_launch_multi_slot_chief(
         f"-p {constants.DTRAIN_SSH_PORT} -2 -a -x %h"
     )
 
-    mock_subprocess.assert_has_calls([mock.call(sshd_cmd), mock.call(launch_cmd)])
+    mock_subprocess.assert_has_calls(
+        [mock.call(sshd_cmd), mock.call(launch_cmd, start_new_session=True)]
+    )
 
     assert mock_check_sshd.call_count == len(cluster_info.container_addrs)
     mock_check_sshd.assert_has_calls(
@@ -210,7 +212,7 @@ def test_launch_one_slot(
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
     assert os.environ["USE_DEEPSPEED"] == "1"
 
-    mock_subprocess.assert_called_once_with(launch_cmd)
+    mock_subprocess.assert_called_once_with(launch_cmd, start_new_session=True)
 
 
 @mock.patch("subprocess.Popen")
@@ -240,7 +242,7 @@ def test_launch_fail(mock_cluster_info: mock.MagicMock, mock_subprocess: mock.Ma
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
     assert os.environ["USE_DEEPSPEED"] == "1"
 
-    mock_subprocess.assert_called_once_with(launch_cmd)
+    mock_subprocess.assert_called_once_with(launch_cmd, start_new_session=True)
 
 
 @mock.patch("subprocess.Popen")
@@ -265,7 +267,7 @@ def test_launch_worker(
     sshd_cmd = launch.deepspeed.create_sshd_cmd()
 
     expected_cmd = pid_server_cmd + sshd_cmd
-    mock_subprocess.assert_called_once_with(expected_cmd)
+    mock_subprocess.assert_called_once_with(expected_cmd, start_new_session=True)
 
 
 def test_filter_env_vars() -> None:

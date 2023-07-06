@@ -56,7 +56,7 @@ def test_launch_single_slot(
     launch_cmd += launch.torch_distributed.create_log_redirect_cmd()
     launch_cmd += script
 
-    mock_subprocess.assert_called_once_with(launch_cmd)
+    mock_subprocess.assert_called_once_with(launch_cmd, start_new_session=True)
 
     assert os.environ.get("USE_TORCH_DISTRIBUTED") == "True"
 
@@ -96,7 +96,7 @@ def test_launch_distributed(
     launch_cmd += launch.torch_distributed.create_log_redirect_cmd()
     launch_cmd += script
 
-    mock_subprocess.assert_called_once_with(launch_cmd)
+    mock_subprocess.assert_called_once_with(launch_cmd, start_new_session=True)
 
     assert os.environ["USE_TORCH_DISTRIBUTED"] == "True"
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
