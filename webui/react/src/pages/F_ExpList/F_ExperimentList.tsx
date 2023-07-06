@@ -113,6 +113,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
   const [projectHeatmap, setProjectHeatmap] = useState<ProjectMetricsRange[]>([]);
+  const [heatmapApplied, setHeatmapApplied] = React.useState<string[] | 'all'>([]);
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const filtersString = useObservable(formStore.asJsonString);
   const loadableFormset = useObservable(formStore.formset);
@@ -522,6 +523,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         filters={experimentFilters}
         formStore={formStore}
         handleUpdateExperimentList={handleUpdateExperimentList}
+        heatmapApplied={heatmapApplied}
         initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}
         project={project}
@@ -530,6 +532,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         selectAll={selectAll}
         selectedExperimentIds={selectedExperimentIds}
         setExpListView={updateExpListView}
+        setHeatmapApplied={setHeatmapApplied}
         setIsOpenFilter={onIsOpenFilterChange}
         setVisibleColumns={setVisibleColumns}
         sorts={sorts}
@@ -568,6 +571,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 formStore={formStore}
                 handleScroll={isPagedView ? undefined : handleScroll}
                 handleUpdateExperimentList={handleUpdateExperimentList}
+                heatmapApplied={heatmapApplied}
                 height={height}
                 page={page}
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
@@ -580,6 +584,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 selectedExperimentIds={selectedExperimentIds}
                 setColumnWidths={handleColumnWidthChange}
                 setExcludedExperimentIds={setExcludedExperimentIds}
+                setHeatmapApplied={setHeatmapApplied}
                 setPinnedColumnsCount={setPinnedColumnsCount}
                 setSelectAll={setSelectAll}
                 setSelectedExperimentIds={setSelectedExperimentIds}

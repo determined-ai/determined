@@ -90,6 +90,8 @@ export interface GlideTableProps {
   project?: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   projectHeatmap: ProjectMetricsRange[];
+  heatmapApplied: string[] | 'all';
+  setHeatmapApplied: Dispatch<React.SetStateAction<string[] | 'all'>>;
   rowHeight: RowHeight;
   selectedExperimentIds: number[];
   setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
@@ -161,6 +163,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   pinnedColumnsCount,
   setPinnedColumnsCount,
   projectHeatmap,
+  heatmapApplied,
+  setHeatmapApplied,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
   const [hoveredRow, setHoveredRow] = useState<number>();
@@ -220,8 +224,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   // Detect if user just click a row away from current selected group.
   // If this stand alone select is set, use it as the base when doing multi select.
   const [standAloneSelect, setStandAloneSelect] = React.useState<number>();
-
-  const [heatmapApplied, setHeatmapApplied] = React.useState<string[]>([]);
 
   useEffect(() => {
     if (clearSelectionTrigger === 0) return;
@@ -324,11 +326,26 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     }
   }, [data, previousData, selectAll]);
 
-  const applyHeadmap = useCallback((col: string) => {
-    setHeatmapApplied((prev) =>
-      prev.includes(col) ? prev.filter((p) => p !== col) : [...prev, col],
-    );
-  }, []);
+  const applyHeadmap = useCallback(
+    (col: string) => {
+      setHeatmapApplied((prev) => {
+        const cols =
+          prev === 'all'
+            ? Loadable.getOrElse([], projectColumns)
+                .filter(
+                  (col) =>
+                    col.type === V1ColumnType.NUMBER &&
+                    (col.location === V1LocationType.VALIDATIONS ||
+                      col.location === V1LocationType.TRAINING),
+                )
+                .map((c) => c.column)
+            : prev;
+
+        return cols.includes(col) ? cols.filter((p) => p !== col) : [...cols, col];
+      });
+    },
+    [projectColumns, setHeatmapApplied],
+  );
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, { bounds }: HeaderClickedEventArgs) => {
@@ -426,7 +443,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           column.location === V1LocationType.TRAINING)
           ? {
               key: 'heatmap',
-              label: heatmapApplied.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
+              label:
+                heatmapApplied === 'all' || heatmapApplied.includes(column.column)
+                  ? 'Cancel heatmap'
+                  : 'Apply heatmap',
               onClick: () => {
                 applyHeadmap(column.column);
               },
@@ -700,7 +720,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             )}.val`;
             break;
           case V1LocationType.VALIDATIONS:
-            dataPath = `bestTrial.bestValidationMetric.metrics.${currentColumn.column.replace(
+            dataPath = `bestTrial.summaryValidationMetrics.metrics.${currentColumn.column.replace(
               'validation.',
               '',
             )}`;
@@ -712,7 +732,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         switch (currentColumn.type) {
           case V1ColumnType.NUMBER: {
             const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
-            if (heatmapApplied.includes(currentColumn.column) && heatmap) {
+            if (
+              (heatmapApplied === 'all' || heatmapApplied.includes(currentColumn.column)) &&
+              heatmap
+            ) {
               columnDefs[currentColumn.column] = defaultNumberColumn(
                 currentColumn,
                 columnWidths[currentColumn.column],

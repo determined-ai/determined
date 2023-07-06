@@ -100,6 +100,8 @@ interface Props {
   setExpListView: (view: ExpListView) => void;
   rowHeight: RowHeight;
   onRowHeightChange: (r: RowHeight) => void;
+  setHeatmapApplied: React.Dispatch<React.SetStateAction<string[] | 'all'>>;
+  heatmapApplied: string[] | 'all';
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -125,6 +127,8 @@ const TableActionBar: React.FC<Props> = ({
   toggleComparisonView,
   rowHeight,
   onRowHeightChange,
+  setHeatmapApplied,
+  heatmapApplied,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -377,6 +381,13 @@ const TableActionBar: React.FC<Props> = ({
       <Column align="right">
         <Columns>
           <RowHeightMenu rowHeight={rowHeight} onRowHeightChange={onRowHeightChange} />
+          <Tooltip content={`${heatmapApplied === 'all' ? 'Cancel' : 'Apply'} Heatmap`}>
+            <Button
+              type={heatmapApplied === 'all' ? 'primary' : 'default'}
+              onClick={() => setHeatmapApplied((prev) => (prev === 'all' ? [] : 'all'))}>
+              <Icon name="cluster" title="heatmap" />
+            </Button>
+          </Tooltip>
           <Dropdown content={settingContent}>
             <Tooltip content="Table Settings">
               <Button>
