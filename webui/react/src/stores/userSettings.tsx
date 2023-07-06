@@ -1,9 +1,10 @@
-import * as t from 'io-ts';
+import { isRight } from 'fp-ts/Either';
+import { Map } from 'immutable';
+import { Type } from 'io-ts';
 import { Observable, WritableObservable } from 'micro-observables';
 
 import { getUserSetting, updateUserSetting } from 'services/api';
 import { V1GetUserSettingResponse } from 'services/api-ts-sdk';
-import { isEqual } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { observable } from 'utils/observable';
@@ -18,46 +19,64 @@ const DEFAULT_PATH = 'global';
 class UserSettingsStore extends PollingStore {
   #settings: WritableObservable<Loadable<UserSettingsMap>> = observable(NotLoaded);
 
-  public get<T>(
-    path: string | undefined,
-    key: string,
-    type: t.Type<T>,
-    defaultValue?: T,
-  ): Observable<T | undefined> {
+  public get<T>(path: string | undefined, key: string, type: Type<T>): Observable<T | undefined> {
     return this.#settings.select((loadable) => {
-      return Loadable.quickMatch(loadable, defaultValue, (map) => {
+      return Loadable.quickMatch(loadable, undefined, (map) => {
         const pathKey = path || DEFAULT_PATH;
         const pathSettings = map.get(pathKey) || {};
         const value = pathSettings[key] as T | undefined;
-        return UserSettingsStore.validateValue<T>(type, value) ?? defaultValue;
+        return UserSettingsStore.validateValue<T>(type, value);
       });
     });
   }
 
-  public set<T>(
-    path: string | undefined,
-    key: string,
-    type: t.Type<T>,
-    value?: T,
-    defaultValue?: T,
-  ): boolean {
+  public set<T>(path: string | undefined, key: string, type: Type<T>, value: T) {
     this.#settings.update((loadable) => {
       return Loadable.map(loadable, (map) => {
         const pathKey = path || DEFAULT_PATH;
         const pathSettings = map.get(pathKey) || {};
         const validatedValue = UserSettingsStore.validateValue<T>(type, value);
-        const isValid = validatedValue === value;
-        const isDefault = validatedValue === defaultValue;
-        const oldValue = pathSettings[key] as T | undefined;
-        const newValue = isValid && !isDefault ? validatedValue : undefined;
-        if (!isEqual(oldValue, newValue)) {
-          map.set(pathKey, { ...pathSettings, key: newValue });
-          this.updateUserSetting<T>(pathKey, key, newValue);
-        }
-        return map;
+        const newValue = validatedValue === value ? validatedValue : undefined;
+        this.updateUserSetting<T>(pathKey, key, newValue);
+        return map.set(pathKey, { ...pathSettings, [key]: newValue });
       });
     });
-    return false;
+  }
+
+  public setBatch(
+    path: string | undefined,
+    batches: Array<{
+      key: string;
+      type: Type<unknown>;
+      value: unknown;
+    }> = [],
+  ) {
+    this.#settings.update((loadable) => {
+      return Loadable.map(loadable, (map) => {
+        const pathKey = path || DEFAULT_PATH;
+        const pathSettings = map.get(pathKey) || {};
+        const newSettings: UserSettings = {};
+        for (const batch of batches) {
+          const validatedValue = UserSettingsStore.validateValue(batch.type, batch.value);
+          const newValue = validatedValue === batch.value ? validatedValue : undefined;
+          this.updateUserSetting(pathKey, batch.key, newValue);
+          newSettings[batch.key] = newValue;
+        }
+        return map.set(pathKey, { ...pathSettings, ...newSettings });
+      });
+    });
+  }
+
+  public remove(path: string | undefined, key: string) {
+    this.removeBatch(path, [key]);
+  }
+
+  public removeBatch(path: string | undefined, keys: string[]) {
+    this.#settings.update((loadable) => {
+      return Loadable.map(loadable, (map) => {
+        return map.removeAll(keys);
+      });
+    });
   }
 
   public reset() {
@@ -71,7 +90,7 @@ class UserSettingsStore extends PollingStore {
 
   protected updateSettingsFromResponse(response: V1GetUserSettingResponse) {
     this.#settings.update((loadable) => {
-      const newSettings: UserSettingsMap = Loadable.getOrElse(new Map(), loadable);
+      const newSettings: UserSettingsMap = Loadable.getOrElse(Map(), loadable);
 
       for (const setting of response.settings) {
         const pathKey = (setting.storagePath || DEFAULT_PATH).replace(/u:2\//g, '');
@@ -101,13 +120,8 @@ class UserSettingsStore extends PollingStore {
     );
   }
 
-  protected static validateValue<T>(type: t.Type<T>, value?: T): T | undefined {
-    try {
-      type.decode(value);
-    } catch (e) {
-      return undefined;
-    }
-    return value;
+  protected static validateValue<T>(type: Type<T>, value?: T): T | undefined {
+    return isRight(type.decode(value)) ? value : undefined;
   }
 }
 
