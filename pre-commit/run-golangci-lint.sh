@@ -1,9 +1,8 @@
 #!/bin/bash
 
-PRECOMMIT_GOLANGCI_LINT_NOT_FOUND_EXIT_CODE=${PRECOMMIT_GOLANGCI_LINT_NOT_FOUND_EXIT_CODE:-1}
 if ! command -v golangci-lint >/dev/null; then
     echo "golangci-lint could not be found (try ./master/get-deps.sh)" >&2
-    exit $PRECOMMIT_GOLANGCI_LINT_NOT_FOUND_EXIT_CODE
+    exit 1
 fi
 set -xeo pipefail
 
