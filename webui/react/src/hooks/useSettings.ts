@@ -1,3 +1,4 @@
+import { Map } from 'immutable';
 import * as t from 'io-ts';
 import { useObservable } from 'micro-observables';
 import { useCallback, useContext, useEffect, useLayoutEffect, useMemo } from 'react';
@@ -162,8 +163,11 @@ const queryToSettings = <T>(config: SettingsConfig<T>, params: URLSearchParams) 
 };
 
 const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
-  const { isLoading: isLoadingOb, querySettings, state: stateOb } = useContext(UserSettings);
-  const initialLoading = useObservable(isLoadingOb);
+  const { isLoading: isLoading, querySettings, state: rawState } = useContext(UserSettings);
+  const stateOb = rawState.select((settings) =>
+    Loadable.getOrElse(Map<string, Settings>(), settings),
+  );
+  const initialLoading = isLoading;
   const derivedOb = useMemo(
     () => stateOb.select((s) => s.get(config.storagePath)),
     [stateOb, config.storagePath],
@@ -257,45 +261,49 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       const array = settingsArray ?? Object.keys(config.settings);
 
-      stateOb.update((s) => {
-        return s.update(config.storagePath, (old) => {
-          const news = { ...old };
-          array.forEach((setting) => {
-            let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined =
-              undefined;
+      rawState.update((s) => {
+        return Loadable.map(s, (s) => {
+          return s.update(config.storagePath, (old) => {
+            const news = { ...old };
+            array.forEach((setting) => {
+              let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined =
+                undefined;
 
-            for (const key in config.settings) {
-              const conf = config.settings[key];
+              for (const key in config.settings) {
+                const conf = config.settings[key];
 
-              if (conf.storageKey === setting) {
-                defaultSetting = conf;
-                break;
+                if (conf.storageKey === setting) {
+                  defaultSetting = conf;
+                  break;
+                }
               }
-            }
 
-            if (!defaultSetting || !news) return;
+              if (!defaultSetting || !news) return;
 
-            news[setting] = defaultSetting.defaultValue;
+              news[setting] = defaultSetting.defaultValue;
+            });
+            return news;
           });
-          return news;
         });
       });
     },
-    [config, currentUser, stateOb],
+    [config, currentUser, rawState],
   );
 
   const updateSettings = useCallback(
     (updates: Partial<Settings>) => {
-      stateOb.update((s) => {
-        const oldSettings = s.get(config.storagePath) ?? {};
-        const newSettings = { ...s.get(config.storagePath), ...updates };
-        return s.set(
-          config.storagePath,
-          isEqual(oldSettings, newSettings) ? oldSettings : newSettings,
-        );
+      rawState.update((s) => {
+        return Loadable.map(s, (s) => {
+          const oldSettings = s.get(config.storagePath) ?? {};
+          const newSettings = { ...s.get(config.storagePath), ...updates };
+          return s.set(
+            config.storagePath,
+            isEqual(oldSettings, newSettings) ? oldSettings : newSettings,
+          );
+        });
       });
     },
-    [config, stateOb],
+    [config, rawState],
   );
 
   // parse navigation url to state

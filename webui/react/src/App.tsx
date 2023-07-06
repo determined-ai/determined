@@ -31,6 +31,7 @@ import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
+import userSettings from 'stores/userSettings';
 import workspaceStore from 'stores/workspaces';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { notification } from 'utils/dialogApi';
@@ -63,6 +64,7 @@ const AppView: React.FC = () => {
 
   useEffect(() => (isAuthenticated ? userStore.fetchCurrentUser() : undefined), [isAuthenticated]);
   useEffect(() => (isAuthenticated ? clusterStore.startPolling() : undefined), [isAuthenticated]);
+  useEffect(() => (isAuthenticated ? userSettings.startPolling() : undefined), [isAuthenticated]);
   useEffect(
     () => (isAuthenticated ? userStore.startPolling({ delay: 60_000 }) : undefined),
     [isAuthenticated],
