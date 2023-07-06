@@ -186,9 +186,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     }
     return settings.selectedExperiments;
   });
-  const [excludedExperimentIds, setExcludedExperimentIds] = useState<Set<number>>(
-    new Set<number>(),
-  );
+  const [excludedExperimentIds, setExcludedExperimentIds] = useState<Set<number>>(() => {
+    if (isLoadingSettings) {
+      return new Set();
+    }
+    return new Set(settings.excludedExperiments);
+  });
   const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error] = useState(false);
@@ -206,7 +209,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       experiments.forEach((ex, ix) => {
         if (
           Loadable.exists(ex, (e) =>
-            settings.selectedExperiments.some((id) => id === e.experiment.id),
+            selectAll
+              ? !settings.excludedExperiments.some((id) => id === e.experiment.id)
+              : settings.selectedExperiments.some((id) => id === e.experiment.id),
           )
         ) {
           rows = rows.add(ix);
@@ -217,7 +222,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         rows: rows,
       });
     }
-  }, [experiments, settings.selectedExperiments]);
+  }, [experiments, selectAll, settings.selectedExperiments, settings.excludedExperiments]);
 
   useEffect(() => {
     if (isLoading) {
@@ -239,7 +244,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     updateSettings({
       selectedExperiments: selectedExperimentIds,
     });
-  }, [updateSettings, selectedExperimentIds, setSelectedExperimentIds]);
+  }, [updateSettings, selectedExperimentIds]);
+
+  useEffect(() => {
+    updateSettings({
+      excludedExperiments: Array.from(excludedExperimentIds),
+    });
+  }, [updateSettings, excludedExperimentIds]);
 
   const handleScroll = useCallback(
     ({ y, height }: Rectangle) => {
@@ -475,8 +486,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setClearSelectionTrigger((prev) => prev + 1);
         setSelectAll(false);
+        setClearSelectionTrigger((prev) => prev + 1);
       }
     };
     window.addEventListener('keydown', handleEsc);

@@ -97,7 +97,7 @@ export interface GlideTableProps {
   selectAll: boolean;
   staticColumns: string[];
   setColumnWidths: (newWidths: Record<string, number>) => void;
-  setSelectAll: Dispatch<SetStateAction<boolean>>;
+  setSelectAll: (arg0: boolean) => void;
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   sorts: Sort[];
   onSortChange: (sorts: Sort[]) => void;
@@ -290,8 +290,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const deselectAllRows = useCallback(() => {
     setSelectAll(false);
+    setExcludedExperimentIds(new Set());
     setSelection((prev) => ({ ...prev, rows: CompactSelection.empty() }));
-  }, [setSelectAll, setSelection]);
+  }, [setSelectAll, setSelection, setExcludedExperimentIds]);
 
   const selectAllRows = useCallback(() => {
     setExcludedExperimentIds(new Set());
@@ -307,7 +308,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     if (selectAll && previousData && data.length > previousData.length) {
       setSelection(({ columns, rows }: GridSelection) => ({
         columns,
-        rows: rows.add([previousData.length, data.length]),
+        rows: rows.add([previousData.length - 1, data.length]),
       }));
     }
   }, [data, previousData, selectAll, setSelection]);
