@@ -13,7 +13,7 @@
 -- TODO using the view makes this easy but we join on steps and validations, which isn't ideal
 --     we might need this join anyway so
 --     I don't think we can get around it just by using the raw table.
-INSERT INTO public.checkpoints_v2(
+INSERT INTO public.checkpoints_v2 (
     uuid,
     task_id,
     allocation_id,
@@ -22,16 +22,21 @@ INSERT INTO public.checkpoints_v2(
     resources,
     metadata,
     size
-) SELECT
-    uuid,
-    task_id,
-    allocation_id,
-    report_time,
-    state,
-    resources,
-    metadata,
-    size
-FROM public.checkpoints_old_view;
+)
+SELECT
+    c.uuid,
+    c.task_id,
+    CASE -- TODO is this behaviour okay? Or should we backfill and insert into allocations.
+        WHEN a.allocation_id IS NULL THEN NULL
+        ELSE c.allocation_id
+    END,
+    c.report_time,
+    c.state,
+    c.resources,
+    c.metadata,
+    c.size
+FROM public.checkpoints_old_view c
+LEFT JOIN public.allocations a ON c.allocation_id = a.allocation_id;
 
 -- Note we just leave checkpoints_v1 data so we can reverse this migration.
 
