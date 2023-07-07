@@ -27,18 +27,22 @@ const (
 )
 
 type metricsBody struct {
-	BatchMetrics any
+	BatchMetrics interface{}
 	AvgMetrics   *structpb.Struct
 	Type         model.MetricType
 }
 
 func (b metricsBody) ToJSONObj() *model.JSONObj {
-	// we should probably move to avoid relying on metric type here.
-	isValidation := b.Type == model.ValidationMetricType
-	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
+	// we should probably move to avoid special casing based on metric type here.
+	metricsJSONPath := model.TrialMetricsJSONPath(b.Type == model.ValidationMetricType)
 	body := model.JSONObj{
 		metricsJSONPath: b.AvgMetrics,
 	}
+
+	if b.Type == model.ValidationMetricType {
+		return &body
+	}
+
 	if b.BatchMetrics != nil {
 		body["batch_metrics"] = b.BatchMetrics
 	}
@@ -46,19 +50,22 @@ func (b metricsBody) ToJSONObj() *model.JSONObj {
 }
 
 func (b *metricsBody) LoadJSON(body *model.JSONObj) (err error) {
-	isValidation := b.Type == model.ValidationMetricType
-	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
+	metricsJSONPath := model.TrialMetricsJSONPath(b.Type == model.ValidationMetricType)
 
 	avgMetricsVal, exists := (*body)[metricsJSONPath]
 	if !exists {
 		return fmt.Errorf("expected key %s in JSON body", metricsJSONPath)
 	}
-	avgMetrics, ok := avgMetricsVal.(map[string]any)
+	avgMetrics, ok := avgMetricsVal.(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("failed to deserialize %s", metricsJSONPath)
 	}
 	if b.AvgMetrics, err = structpb.NewStruct(avgMetrics); err != nil {
 		return errors.Wrapf(err, "failed to convert avg metrics to structpb.Struct")
+	}
+
+	if b.Type == model.ValidationMetricType {
+		return nil
 	}
 
 	batchMetricsVal, exists := (*body)["batch_metrics"]
@@ -72,13 +79,12 @@ func (b *metricsBody) LoadJSON(body *model.JSONObj) (err error) {
 func newMetricsBody(
 	avgMetrics *structpb.Struct,
 	batchMetrics []*structpb.Struct,
-	mType model.MetricType,
+	mType model.MetricType, // could be just isValidation bool
 ) *metricsBody {
 	var bMetrics any = nil
 	if len(batchMetrics) != 0 && mType != model.ValidationMetricType {
 		bMetrics = batchMetrics
 	}
-	fmt.Println("new metrics body", mType, bMetrics)
 	return &metricsBody{
 		AvgMetrics:   avgMetrics,
 		BatchMetrics: bMetrics,
