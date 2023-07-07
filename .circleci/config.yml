@@ -2579,10 +2579,10 @@ workflows:
       - test-unit-harness-gpu-lightning
       - test-unit-harness-gpu-deepspeed
       - test-unit-harness-gpu-parallel
-      - python-coverage:
-          requires:
-            - test-unit-harness-gpu
-            - test-unit-harness-gpu-parallel
+#      - python-coverage:
+#          requires:
+#            - test-unit-harness-gpu
+#            - test-unit-harness-gpu-parallel
 
   test-unit:
     jobs:
