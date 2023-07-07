@@ -12,14 +12,15 @@ import ThemeProvider from '../src/components/ThemeProvider';
 import { Settings, UserSettings } from '../src/hooks/useSettingsProvider';
 import DesignKit from '../src/pages/DesignKit';
 import { StoreProvider as UIProvider } from '../src/stores/contexts/UI';
+import { Loaded } from '../src/utils/loadable';
 
 import 'antd/dist/reset.css';
 
 const fakeSettingsContext = {
   clearQuerySettings: () => undefined,
-  isLoading: observable(false),
+  isLoading: false,
   querySettings: '',
-  state: observable(Map<string, Settings>()),
+  state: observable(Loaded(Map<string, Settings>())),
 };
 
 const router = createBrowserRouter([
