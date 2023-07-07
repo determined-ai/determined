@@ -326,7 +326,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     }
   }, [data, previousData, selectAll]);
 
-  const applyHeadmap = useCallback(
+  const toogleHeadmap = useCallback(
     (col: string) => {
       const cols =
         heatmapApplied === 'all'
@@ -445,7 +445,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                   ? 'Cancel heatmap'
                   : 'Apply heatmap',
               onClick: () => {
-                applyHeadmap(column.column);
+                toogleHeadmap(column.column);
               },
             }
           : null,
@@ -496,7 +496,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       setSortableColumnIds,
       setPinnedColumnsCount,
       heatmapApplied,
-      applyHeadmap,
+      toogleHeadmap,
     ],
   );
 
