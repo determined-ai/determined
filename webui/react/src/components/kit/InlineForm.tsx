@@ -58,11 +58,11 @@ function InlineForm<T>({
     try {
       const formValues = await form.validateFields();
       onSubmit?.(formValues.input);
+
+      setIsEditing(false);
     } catch (error) {
       form.setFieldValue('input', initialValue);
     }
-
-    setIsEditing(false);
   }, [form, onSubmit, initialValue]);
 
   useEffect(() => {

@@ -973,7 +973,7 @@ const InlineFormSection: React.FC = () => {
         <h5>Controlled</h5>
         <div style={{ maxWidth: '700px' }}>
           <InlineForm<string>
-            initialValue={'initial value'}
+            initialValue={''}
             label="Input with validator"
             rules={[{ message: 'Please input something here!', required: true }]}
             value={inputWithValidatorValue}
