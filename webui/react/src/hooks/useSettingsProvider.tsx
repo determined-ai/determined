@@ -46,7 +46,11 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
         value={{
           isLoading,
           querySettings: querySettings.current,
-          state: userSettings._forUseSettingsOnly(),
+          // Note that this cast fails when a setting is anything other than a JsonObject.
+          // Settings that are not JsonObjects should only be accessed via the new store.
+          state: userSettings._forUseSettingsOnly() as unknown as WritableObservable<
+            Loadable<UserSettingsState>
+          >,
         }}>
         {children}
       </UserSettings.Provider>
