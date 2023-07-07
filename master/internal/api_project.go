@@ -243,7 +243,7 @@ func (a *apiServer) getProjectColumnsByID(
 						}
 						// don't surface aggregates that don't make sense for non-numbers
 						if columnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER {
-							aggregates := []string{"count", "latest", "max", "min", "sum"}
+							aggregates := []string{"count", "last", "max", "min", "sum"}
 							for _, aggregate := range aggregates {
 								columns = append(columns, &projectv1.ProjectColumn{
 									Column:   fmt.Sprintf("training.%s.%s", key, aggregate),
@@ -253,7 +253,7 @@ func (a *apiServer) getProjectColumnsByID(
 							}
 						} else {
 							columns = append(columns, &projectv1.ProjectColumn{
-								Column:   fmt.Sprintf("training.%s.latest", key),
+								Column:   fmt.Sprintf("training.%s.last", key),
 								Location: projectv1.LocationType_LOCATION_TYPE_TRAINING,
 								Type:     columnType,
 							})
