@@ -983,16 +983,11 @@ const InlineFormSection: React.FC = () => {
         </p>
         <br />
         <div style={{ maxWidth: '700px' }}>
-          <InlineForm<string>
-            displayValue={inputValue}
-            initialValue={inputValue}
-            label="Input"
-            onSubmit={inputCallback}>
+          <InlineForm<string> initialValue={inputValue} label="Input" onSubmit={inputCallback}>
             <Input />
           </InlineForm>
           <hr />
           <InlineForm<string>
-            displayValue={inputWithValidatorValue}
             initialValue={inputWithValidatorValue}
             label="Input with validator"
             rules={[{ message: 'Please input something here!', required: true }]}
@@ -1001,7 +996,6 @@ const InlineFormSection: React.FC = () => {
           </InlineForm>
           <hr />
           <InlineForm<string>
-            displayValue={textAreaValue}
             initialValue={textAreaValue}
             label="Text Area"
             onSubmit={textAreaCallback}>
@@ -1009,7 +1003,6 @@ const InlineFormSection: React.FC = () => {
           </InlineForm>
           <hr />
           <InlineForm<string>
-            displayValue={passwordInputValue}
             initialValue={passwordInputValue}
             isPassword
             label="Password"
@@ -1018,7 +1011,6 @@ const InlineFormSection: React.FC = () => {
           </InlineForm>
           <hr />
           <InlineForm<number>
-            displayValue={inputNumberValue}
             initialValue={inputNumberValue}
             label="Input Number"
             onSubmit={InputNumberCallback}>
@@ -1026,18 +1018,13 @@ const InlineFormSection: React.FC = () => {
           </InlineForm>
           <hr />
           <InlineForm<string>
-            displayValue={inputSearchValue}
             initialValue={inputSearchValue}
             label="Input Search"
             onSubmit={InputSearchCallback}>
             <InputSearch allowClear enterButton placeholder="Input Search" />
           </InlineForm>
           <hr />
-          <InlineForm<string>
-            displayValue={selectValue}
-            initialValue={selectValue}
-            label="Select"
-            onSubmit={selectCallback}>
+          <InlineForm<string> initialValue={selectValue} label="Select" onSubmit={selectCallback}>
             <Select defaultValue={1} searchable={false}>
               {[
                 { label: 'off', value: 1 },

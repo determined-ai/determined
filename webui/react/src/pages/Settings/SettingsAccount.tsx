@@ -72,7 +72,6 @@ const SettingsAccount: React.FC = () => {
       </div>
       <Divider />
       <InlineForm<string>
-        displayValue={currentUser?.username ?? ''}
         initialValue={currentUser?.username ?? ''}
         label="Username"
         required
@@ -83,7 +82,6 @@ const SettingsAccount: React.FC = () => {
       </InlineForm>
       <Divider />
       <InlineForm<string>
-        displayValue={currentUser?.displayName ?? ''}
         initialValue={currentUser?.displayName ?? ''}
         label="Display Name"
         testId="displayname"

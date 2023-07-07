@@ -13,7 +13,6 @@ interface Props<T> extends React.PropsWithChildren, Omit<FormProps, 'children'> 
   label?: string;
   value?: T; // used to turn the Form.Item as controlled input
   initialValue: T;
-  displayValue?: string | number; // used as "read only" format
   onSubmit: (inputValue: T) => Promise<void | Error> | void;
   required?: boolean;
   isPassword?: boolean;
@@ -25,7 +24,6 @@ function InlineForm<T>({
   label,
   children,
   initialValue,
-  displayValue = '',
   value,
   isPassword = false,
   rules,
@@ -38,11 +36,13 @@ function InlineForm<T>({
   const [form] = Form.useForm();
   const shouldColapseText = useMemo(() => String(initialValue).length >= 45, [initialValue]); // prevents layout breaking, specially if using Input.TextArea.
   const readOnlyText = useMemo(() => {
-    if (isPassword) return String(displayValue).replace(/\S/g, '*');
-    if (shouldColapseText) return String(displayValue).slice(0, 50).concat('...');
+    const textValue = String(value ?? initialValue);
 
-    return displayValue;
-  }, [shouldColapseText, displayValue, isPassword]);
+    if (isPassword) return textValue.replace(/\S/g, '*');
+    if (shouldColapseText) return textValue.slice(0, 50).concat('...');
+
+    return textValue;
+  }, [shouldColapseText, value, initialValue, isPassword]);
 
   const resetForm = useCallback(() => {
     form.setFieldValue('input', initialValue);
