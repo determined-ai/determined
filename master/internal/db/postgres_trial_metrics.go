@@ -150,7 +150,8 @@ WHERE archived = false
 AND total_batches = $1
 AND trial_id = $2
 AND partition_type = $3
-AND custom_type = $4), NULL)`,
+AND custom_type = $4), NULL)
+FOR UPDATE`,
 		lastProcessedBatch, trialID,
 		customMetricTypeToPartitionType(mType), mType).Scan(&existingBodyJSON)
 	if err != nil {
