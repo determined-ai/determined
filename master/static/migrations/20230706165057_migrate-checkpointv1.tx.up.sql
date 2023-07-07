@@ -1,3 +1,5 @@
+-- TODO backport to checkpoints PR
+
 -- Endstate of checkpoint views / tables is
 -- raw_checkpoints is left unmodified.
 -- checkpoints_v2 has checkpoint_v2s and unarchived checkpoint_v1s.
@@ -5,6 +7,7 @@
 -- proto_checkpoints_view is the proto version of checkpoints_view.
 --
 -- Note we just leave checkpoints_v1 data so we can reverse this migration.
+
 INSERT INTO public.checkpoints_v2 (
     uuid,
     task_id,
@@ -16,19 +19,37 @@ INSERT INTO public.checkpoints_v2 (
     size
 )
 SELECT
-    c.uuid,
-    c.task_id,
+    -- https://stackoverflow.com/questions/12505158/generating-a-uuid-in-postgres-for-insert-statement
+    COALESCE(c.uuid, uuid_in(overlay(overlay(md5(random()::text || ':' || random()::text) placing '4' from 13) placing to_hex(floor(random()*(11-8+1) + 8)::int)::text from 17)::cstring)),
+    t.task_id,
     CASE -- TODO is this behaviour okay? Or should we backfill and insert into allocations.
         WHEN a.allocation_id IS NULL THEN NULL
-        ELSE c.allocation_id
+        ELSE a.allocation_id
     END,
-    c.report_time,
+    COALESCE(c.end_time, NOW()),
     c.state,
     c.resources,
     c.metadata,
     c.size
-FROM public.checkpoints_old_view c
-LEFT JOIN public.allocations a ON c.allocation_id = a.allocation_id;
+FROM public.raw_checkpoints c
+JOIN trials AS t on c.trial_id = t.id
+JOIN public.allocations a ON t.task_id || '.' || c.trial_run_id = a.allocation_id
+JOIN raw_steps AS s ON (
+     -- Hint to the query planner to use the matching index.
+     s.trial_id = t.id
+     AND s.trial_run_id = c.trial_run_id
+     AND s.total_batches = c.total_batches
+)
+JOIN raw_validations AS v ON (
+    -- Hint to the query planner to use the matching index.
+    v.trial_id = c.trial_id
+    AND v.trial_run_id = c.trial_run_id
+    AND v.total_batches = c.total_batches
+)
+WHERE
+    NOT c.archived AND
+    (s.archived IS NULL OR s.archived = false) AND
+    (v.archived IS NULL OR v.archived = false);
 
 DROP VIEW public.proto_checkpoints_view;
 DROP VIEW public.checkpoints_view;

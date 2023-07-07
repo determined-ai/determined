@@ -1,5 +1,6 @@
+-- TODO backport to checkpoints PR
 DELETE FROM public.checkpoints_v2 WHERE uuid IN (
-    SELECT uuid FROM public.raw_checkpoints WHERE is_version_one
+    SELECT uuid FROM public.raw_checkpoints
 );
 
 DROP VIEW public.proto_checkpoints_view;
