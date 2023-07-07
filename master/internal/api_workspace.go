@@ -265,6 +265,7 @@ func (a *apiServer) GetWorkspaces(
 		pinFilterExpr,
 		curUser.ID,
 	)
+	// TODO: find out why it's not returning workspace default pools
 	if err != nil {
 		return nil, err
 	}
@@ -316,7 +317,10 @@ func (a *apiServer) PostWorkspace(
 		}
 	}()
 
-	w := &model.Workspace{Name: req.Name, UserID: curUser.ID}
+	w := &model.Workspace{
+		Name: req.Name, UserID: curUser.ID,
+		DefaultComputePool: req.DefaultComputePool, DefaultAuxPool: req.DefaultAuxPool,
+	}
 
 	if req.AgentUserGroup != nil {
 		w.AgentUID = req.AgentUserGroup.AgentUid
@@ -418,6 +422,13 @@ func (a *apiServer) PatchWorkspace(
 		updatedWorkspace.AgentGroup = updateAug.AgentGroup
 
 		insertColumns = append(insertColumns, "uid", "user_", "gid", "group_")
+	}
+
+	if req.Workspace.DefaultComputePool != "" {
+		updatedWorkspace.DefaultComputePool = req.Workspace.DefaultComputePool
+	}
+	if req.Workspace.DefaultAuxPool != "" {
+		updatedWorkspace.DefaultAuxPool = req.Workspace.DefaultAuxPool
 	}
 
 	if req.Workspace.CheckpointStorageConfig != nil {
