@@ -577,6 +577,7 @@ export interface MetricSummary {
 export interface SummaryMetrics {
   avgMetrics?: Record<string, MetricSummary>;
   validationMetrics?: Record<string, MetricSummary>;
+  trainingMetrics: Record<string, MetricSummary>;
   //[customMetricType: string]?: Record<string, MetricSummary> Uncomment once generic metrics lands
 }
 
