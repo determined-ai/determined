@@ -71,12 +71,17 @@ func (b *metricsBody) LoadJSON(body *model.JSONObj) (err error) {
 
 func newMetricsBody(
 	avgMetrics *structpb.Struct,
-	batchMetrics any,
+	batchMetrics []*structpb.Struct,
 	mType model.MetricType,
 ) *metricsBody {
+	var bMetrics any = nil
+	if len(batchMetrics) != 0 && mType != model.ValidationMetricType {
+		bMetrics = batchMetrics
+	}
+	fmt.Println("new metrics body", mType, bMetrics)
 	return &metricsBody{
 		AvgMetrics:   avgMetrics,
-		BatchMetrics: batchMetrics,
+		BatchMetrics: bMetrics,
 		Type:         mType,
 	}
 }
