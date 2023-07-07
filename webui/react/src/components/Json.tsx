@@ -17,7 +17,7 @@ interface Props {
 interface RowProps {
   label: string;
   translateLabel?: TextTransfomer;
-  value: Json | string | number | null;
+  value: Json;
 }
 
 const Row: React.FC<RowProps> = ({ translateLabel, label, value }: RowProps) => {
