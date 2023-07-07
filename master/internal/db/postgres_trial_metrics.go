@@ -307,14 +307,15 @@ func shallowUnionMetrics(oldBody, newBody *metricsBody) (*metricsBody, error) {
 		return oldBody, nil
 	}
 
-	// FIXME: We don't need to convert this
+	// FIXME: can we avoid converting these to maps?
 	oldAvgMetricsMap := oldBody.AvgMetrics.AsMap()
 	newAvgMetricsMap := newBody.AvgMetrics.AsMap()
 	for key, newValue := range newAvgMetricsMap {
 		// we cannot calculate min/max efficiently for replaced metric values
 		// so we disallow it.
 		if _, ok := oldAvgMetricsMap[key]; ok {
-			return nil, errors.Errorf("replacing existing metric values is not supported %s", key)
+			return nil, fmt.Errorf("overwriting existing metric keys is not supported,"+
+				" conflicting key: %s", key)
 		}
 		oldAvgMetricsMap[key] = newValue
 	}
