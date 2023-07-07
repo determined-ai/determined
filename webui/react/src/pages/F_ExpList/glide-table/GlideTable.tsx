@@ -684,7 +684,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             )}`;
             break;
           case V1LocationType.TRAINING:
-            dataPath = `bestTrial.summaryMetrics.${currentColumn.column}`;
+            dataPath = `bestTrial.summaryMetrics.trainingMetrics.${currentColumn.column.replace(
+              'training',
+              '',
+            )}`;
             break;
           case V1LocationType.UNSPECIFIED:
             break;
