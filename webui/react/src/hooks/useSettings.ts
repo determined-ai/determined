@@ -163,7 +163,7 @@ const queryToSettings = <T>(config: SettingsConfig<T>, params: URLSearchParams) 
 };
 
 const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
-  const { isLoading: initialLoading, querySettings, state: rawState } = useContext(UserSettings);
+  const { isLoading, querySettings, state: rawState } = useContext(UserSettings);
   const derivedOb = useMemo(
     () =>
       rawState.select((s) =>
@@ -314,7 +314,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   }, [config, querySettings, updateSettings]);
 
   useLayoutEffect(() => {
-    if (initialLoading) return;
+    if (isLoading) return;
     return derivedOb.subscribe(async (cur, prev) => {
       if (!cur || !currentUser || isEqual(cur, prev)) return;
 
@@ -331,11 +331,11 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       const url = mappedSettings ? `?${mappedSettings}` : '';
       navigate(url, { replace: true });
     });
-  }, [currentUser, derivedOb, navigate, config, updateDB, initialLoading]);
+  }, [currentUser, derivedOb, navigate, config, updateDB, isLoading]);
 
   return {
     activeSettings,
-    isLoading: initialLoading,
+    isLoading: isLoading,
     resetSettings,
     settings,
     updateSettings,
