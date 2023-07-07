@@ -16,7 +16,7 @@ import PollingStore from './polling';
 // TODO define a proper JSON type.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Json = any;
-type State = Map<string, Record<string, unknown>>;
+type State = Map<string, { string: unknown }>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isTypeC(codec: t.Encoder<any, any>): codec is t.TypeC<t.Props> {
@@ -136,7 +136,7 @@ class UserSettingsStore extends PollingStore {
       newSettings = newSettings.withMutations((newSettings) => {
         for (const setting of response.settings) {
           const pathKey = (setting.storagePath || setting.key).replace(/u:2\//g, '');
-          const oldPathSettings = newSettings.get(pathKey) || {};
+          const oldPathSettings = newSettings.get(pathKey) || ({} as { string: unknown });
           const newPathSettings = {
             [setting.key]: setting.value ? JSON.parse(setting.value) : undefined,
           };
