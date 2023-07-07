@@ -276,25 +276,6 @@ func (db *PgDB) _addTrialMetricsTx(
 		mType); err != nil {
 		return rollbacks, err
 	}
-
-	/*
-		isMerge. at any position.
-			if last: we can do it incrementally
-		- cannot happen with a rollback. it won't be treated as a merge
-		- can only add new metric names.
-		- can change metric name's type. (how do we deal with this normally when us?) it doesn't matter
-			- non scalar is thrown out
-		- it's only a single datapoint change in all cases :thinking:
-
-
-		strategies:
-		- on any merge full recompute all types
-		- on any merge full recompute the affected type
-		- on conflict, pull the metric entry and incrementally update.
-			- equals => delete the old metric, update the summary values and back to normal flow?
-			- or break the flow and do a single summary update.
-	*/
-
 	var summaryMetrics model.JSONObj
 	err = tx.QueryRowContext(ctx, `
 		SELECT summary_metrics FROM trials WHERE id = $1 FOR UPDATE;
@@ -443,10 +424,10 @@ var pythonISOFormatRegex = regexp.MustCompile(
 // calculateNewSummaryMetrics calculates new summary metrics from the newly added
 // metrics and the existing summary metrics.
 func calculateNewSummaryMetrics(
-	summaryMetrics model.JSONObj, mAdded *structpb.Struct,
+	summaryMetrics model.JSONObj, metrics *structpb.Struct,
 ) model.JSONObj {
 	// Calculate numeric metrics.
-	for metricName, metric := range mAdded.Fields {
+	for metricName, metric := range metrics.Fields {
 		// Get type of provided metric.
 		metricFloatValue := 0.0
 		metricType := ""
@@ -519,7 +500,7 @@ func calculateNewSummaryMetrics(
 			continue
 		}
 
-		metric["last"] = replaceSpecialFloatsWithString(mAdded.Fields[metricName])
+		metric["last"] = replaceSpecialFloatsWithString(metrics.Fields[metricName])
 	}
 
 	return summaryMetrics
