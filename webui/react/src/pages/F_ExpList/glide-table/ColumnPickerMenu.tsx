@@ -11,6 +11,7 @@ import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/Spinner';
 import { V1LocationType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
+import { ensureArray } from 'utils/data';
 import { Loadable } from 'utils/loadable';
 
 import css from './ColumnPickerMenu.module.scss';
@@ -55,7 +56,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
 }) => {
   const filteredColumns = useMemo(() => {
     const regex = new RegExp(searchString, 'i');
-    const locations = Array.isArray(tab) ? tab : [tab];
+    const locations = ensureArray(tab);
     return totalColumns.filter(
       (col) => locations.includes(col.location) && regex.test(col.displayName || col.column),
     );
