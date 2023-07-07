@@ -970,11 +970,8 @@ const InlineFormSection: React.FC = () => {
           <code>{'isPassword'}</code> prop.
         </p>
         <br />
+        <h5>Controlled</h5>
         <div style={{ maxWidth: '700px' }}>
-          <InlineForm<string> initialValue={'initial value'} label="Input">
-            <Input />
-          </InlineForm>
-          <hr />
           <InlineForm<string>
             initialValue={'initial value'}
             label="Input with validator"
@@ -987,6 +984,7 @@ const InlineFormSection: React.FC = () => {
           <InlineForm<string>
             initialValue={textAreaValue}
             label="Text Area"
+            value={textAreaValue}
             onSubmit={textAreaCallback}>
             <Input.TextArea />
           </InlineForm>
@@ -994,21 +992,17 @@ const InlineFormSection: React.FC = () => {
           <InlineForm<string>
             initialValue={''}
             isPassword
-            label="Controlled Password"
+            label="Password"
             value={passwordInputValue}
             onSubmit={passwordInputCallback}>
             <Input.Password />
           </InlineForm>
           <hr />
-          <InlineForm<number> initialValue={1234} label="Input Number">
-            <InputNumber />
-          </InlineForm>
-          <hr />
-          <InlineForm<string> initialValue={''} label="Input Search">
-            <InputSearch allowClear enterButton placeholder="Input Search" />
-          </InlineForm>
-          <hr />
-          <InlineForm<string> initialValue={selectValue} label="Select" onSubmit={selectCallback}>
+          <InlineForm<string>
+            initialValue={selectValue}
+            label="Select"
+            value={selectValue}
+            onSubmit={selectCallback}>
             <Select defaultValue={1} searchable={false}>
               {[
                 { label: 'off', value: 1 },
@@ -1019,6 +1013,20 @@ const InlineFormSection: React.FC = () => {
                 </Option>
               ))}
             </Select>
+          </InlineForm>
+        </div>
+        <h5>Uncontroled</h5>
+        <div style={{ maxWidth: '700px' }}>
+          <InlineForm<string> initialValue={'initial value'} label="Input">
+            <Input />
+          </InlineForm>
+          <hr />
+          <InlineForm<number> initialValue={1234} label="Input Number">
+            <InputNumber />
+          </InlineForm>
+          <hr />
+          <InlineForm<string> initialValue={''} label="Input Search">
+            <InputSearch allowClear enterButton placeholder="Input Search" />
           </InlineForm>
         </div>
       </AntDCard>
