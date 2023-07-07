@@ -13,7 +13,7 @@ interface Props<T> extends React.PropsWithChildren, Omit<FormProps, 'children'> 
   label?: string;
   value?: T; // used to turn the Form.Item as controlled input
   initialValue: T;
-  onSubmit: (inputValue: T) => Promise<void | Error> | void;
+  onSubmit?: (inputValue: T) => Promise<void | Error> | void;
   required?: boolean;
   isPassword?: boolean;
   rules?: Rule[];
@@ -35,14 +35,19 @@ function InlineForm<T>({
   const [isEditing, setIsEditing] = useState(false);
   const [form] = Form.useForm();
   const shouldColapseText = useMemo(() => String(initialValue).length >= 45, [initialValue]); // prevents layout breaking, specially if using Input.TextArea.
+  const inputCurrentValue = Form.useWatch('input', form);
   const readOnlyText = useMemo(() => {
-    const textValue = String(value ?? initialValue);
+    let textValue = String(value ?? initialValue);
+    if (value === undefined) {
+      if (inputCurrentValue !== undefined && inputCurrentValue !== initialValue)
+        textValue = inputCurrentValue;
+    }
 
     if (isPassword) return textValue.replace(/\S/g, '*');
     if (shouldColapseText) return textValue.slice(0, 50).concat('...');
 
     return textValue;
-  }, [shouldColapseText, value, initialValue, isPassword]);
+  }, [shouldColapseText, value, initialValue, isPassword, inputCurrentValue]);
 
   const resetForm = useCallback(() => {
     form.setFieldValue('input', initialValue);
@@ -52,7 +57,7 @@ function InlineForm<T>({
   const submitForm = useCallback(async () => {
     try {
       const formValues = await form.validateFields();
-      onSubmit(formValues.input);
+      onSubmit?.(formValues.input);
     } catch (error) {
       form.setFieldValue('input', initialValue);
     }
@@ -66,8 +71,7 @@ function InlineForm<T>({
     } else {
       form.setFieldValue('input', initialValue);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialValue, value]);
+  }, [initialValue, value, form]);
 
   return (
     <Form

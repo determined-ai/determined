@@ -933,19 +933,13 @@ const CodeEditorSection: React.FC = () => {
 };
 
 const InlineFormSection: React.FC = () => {
-  const [inputValue, setInputValue] = useState('test value');
   const [inputWithValidatorValue, setInputWithValidatorValue] = useState('');
   const [textAreaValue, setTextAreaValue] = useState(
     'Lorem ipsum dolor sit amet consectetur adipisicing elit. Id tempora harum animi, provident explicabo in esse, hic qui cumque maiores ipsa, praesentium ad repellat dolorem voluptates! Eligendi magnam blanditiis velit.',
   );
   const [passwordInputValue, setPasswordInputValue] = useState('123456789');
-  const [inputSearchValue, setInputSearchValue] = useState('Some fancy search');
-  const [inputNumberValue, setInputNumberValue] = useState(1234);
   const [selectValue, setSelectValue] = useState('off');
 
-  const inputCallback = useCallback((newValue: string) => {
-    setInputValue(newValue);
-  }, []);
   const inputWithValidatorCallback = useCallback((newValue: string) => {
     setInputWithValidatorValue(newValue);
   }, []);
@@ -954,12 +948,6 @@ const InlineFormSection: React.FC = () => {
   }, []);
   const passwordInputCallback = useCallback((newValue: string) => {
     setPasswordInputValue(newValue);
-  }, []);
-  const InputNumberCallback = useCallback((newValue: number) => {
-    setInputNumberValue(newValue);
-  }, []);
-  const InputSearchCallback = useCallback((newValue: string) => {
-    setInputSearchValue(newValue);
   }, []);
   const selectCallback = useCallback((newValue: string) => {
     setSelectValue(newValue === '1' ? 'off' : 'on');
@@ -983,44 +971,40 @@ const InlineFormSection: React.FC = () => {
         </p>
         <br />
         <div style={{ maxWidth: '700px' }}>
-          <InlineForm<string> initialValue={inputValue} label="Input" onSubmit={inputCallback}>
+          <InlineForm<string> initialValue={'initial value'} label="Uncontrolled - Input">
             <Input />
           </InlineForm>
           <hr />
           <InlineForm<string>
-            initialValue={inputWithValidatorValue}
-            label="Input with validator"
+            initialValue={'initial value'}
+            label="Controlled - Input with validator"
             rules={[{ message: 'Please input something here!', required: true }]}
+            value={inputWithValidatorValue}
             onSubmit={inputWithValidatorCallback}>
             <Input maxLength={32} />
           </InlineForm>
           <hr />
           <InlineForm<string>
             initialValue={textAreaValue}
-            label="Text Area"
+            label="Controlled - Text Area"
             onSubmit={textAreaCallback}>
             <Input.TextArea />
           </InlineForm>
           <hr />
           <InlineForm<string>
-            initialValue={passwordInputValue}
+            initialValue={''}
             isPassword
-            label="Password"
+            label="Controlled Password"
+            value={passwordInputValue}
             onSubmit={passwordInputCallback}>
             <Input.Password />
           </InlineForm>
           <hr />
-          <InlineForm<number>
-            initialValue={inputNumberValue}
-            label="Input Number"
-            onSubmit={InputNumberCallback}>
+          <InlineForm<number> initialValue={1234} label="Uncontrolled Input Number">
             <InputNumber />
           </InlineForm>
           <hr />
-          <InlineForm<string>
-            initialValue={inputSearchValue}
-            label="Input Search"
-            onSubmit={InputSearchCallback}>
+          <InlineForm<string> initialValue={''} label="Uncontrolled - Input Search">
             <InputSearch allowClear enterButton placeholder="Input Search" />
           </InlineForm>
           <hr />
