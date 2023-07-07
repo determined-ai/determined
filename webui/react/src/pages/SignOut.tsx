@@ -11,6 +11,7 @@ import determinedStore from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
+import userSettings from 'stores/userSettings';
 import workspaceStore from 'stores/workspaces';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
@@ -30,6 +31,7 @@ const SignOut: React.FC = () => {
       permissionStore.reset();
       userStore.reset();
       workspaceStore.reset();
+      userSettings.reset();
       try {
         await logout({});
       } catch (e) {

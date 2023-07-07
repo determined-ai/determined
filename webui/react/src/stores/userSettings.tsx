@@ -24,10 +24,22 @@ function isTypeC(codec: t.Encoder<any, any>): codec is t.TypeC<t.Props> {
   return (codec as any)._tag === 'InterfaceType';
 }
 
+/**
+ * This stores per-user settings. These are values that affect how the UI functions
+ * and are limited in scope to the logged-in user.
+ */
 class UserSettingsStore extends PollingStore {
   readonly #settings: WritableObservable<Loadable<State>> = observable(NotLoaded);
 
-  public get<T>(type: t.Type<T>, key: string): Observable<Loadable<T | null>> {
+  /**
+   *
+   * @param type Type of the value to be returned or a decoder from JSON to that type
+   * @param key Unique key to store and retrieve the settings
+   * @returns An observable of the setting value. If that setting has never been set
+   *          (or has been removed) this is `null`.
+   */
+  public get<T>(type: t.Type<T>, key: string): Observable<Loadable<T | null>>;
+  public get<T>(type: t.Decoder<Json, T>, key: string): Observable<Loadable<T | null>> {
     return this.#settings.select((settings) => {
       return Loadable.map(settings, (settings) => {
         const value = settings.get(key);
@@ -79,6 +91,7 @@ class UserSettingsStore extends PollingStore {
     });
   }
 
+  /** Clears the setting, returning it to `null`. */
   public remove(key: string) {
     this.updateUserSetting(key, null);
     this.#settings.update((loadable) => {
@@ -88,6 +101,9 @@ class UserSettingsStore extends PollingStore {
     });
   }
 
+  /**
+   * This resets the store to its initial state, useful for logging the user out.
+   */
   public reset() {
     this.#settings.set(NotLoaded);
   }
@@ -178,6 +194,11 @@ class UserSettingsStore extends PollingStore {
     );
   }
 
+  /**
+   * DO NOT USE
+   *
+   * This is a temporary bridge for the old useSettings function
+   */
   public _forUseSettingsOnly(): WritableObservable<Loadable<State>> {
     return this.#settings;
   }
