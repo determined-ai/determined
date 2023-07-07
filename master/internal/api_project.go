@@ -213,7 +213,7 @@ func (a *apiServer) getProjectColumnsByID(
 
 	summaryMetricsSet := make(map[string]struct{})
 	for _, trial := range summaryMetrics {
-		if rawMetrics, ok := trial.SummaryMetrics["training"]; ok {
+		if rawMetrics, ok := trial.SummaryMetrics["avg_metrics"]; ok {
 			// iterate in order
 			metrics := rawMetrics.(map[string]interface{})
 			metricsKeys := make([]string, 0, len(metrics))

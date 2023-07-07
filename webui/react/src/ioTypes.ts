@@ -171,7 +171,6 @@ const ioMetricSummary = io.type({
 
 export const ioSummaryMetrics = io.partial({
   avg_metrics: io.record(io.string, ioMetricSummary),
-  training_metrics: io.record(io.string, ioMetricSummary),
   validation_metrics: io.record(io.string, ioMetricSummary),
 });
 export type ioSummaryMetrics = io.TypeOf<typeof ioSummaryMetrics>;

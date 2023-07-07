@@ -609,7 +609,6 @@ const decodeSummaryMetrics = (data: unknown): types.SummaryMetrics => {
   const ioSummaryMetrics = ioTypes.decode<ioTypes.ioSummaryMetrics>(ioTypes.ioSummaryMetrics, data);
   return {
     avgMetrics: ioSummaryMetrics.avg_metrics,
-    trainingMetrics: ioSummaryMetrics.training_metrics,
     validationMetrics: ioSummaryMetrics.validation_metrics,
   };
 };
