@@ -317,7 +317,10 @@ func (a *apiServer) PostWorkspace(
 		}
 	}()
 
-	w := &model.Workspace{Name: req.Name, UserID: curUser.ID}
+	w := &model.Workspace{
+		Name: req.Name, UserID: curUser.ID,
+		DefaultComputePool: req.DefaultComputePool, DefaultAuxPool: req.DefaultAuxPool,
+	}
 
 	if req.AgentUserGroup != nil {
 		w.AgentUID = req.AgentUserGroup.AgentUid
@@ -419,6 +422,15 @@ func (a *apiServer) PatchWorkspace(
 		updatedWorkspace.AgentGroup = updateAug.AgentGroup
 
 		insertColumns = append(insertColumns, "uid", "user_", "gid", "group_")
+	}
+
+	if req.Workspace.DefaultComputePool != "" {
+		updatedWorkspace.DefaultComputePool = req.Workspace.DefaultComputePool
+		insertColumns = append(insertColumns, "default_compute_pool")
+	}
+	if req.Workspace.DefaultAuxPool != "" {
+		updatedWorkspace.DefaultAuxPool = req.Workspace.DefaultAuxPool
+		insertColumns = append(insertColumns, "default_aux_pool")
 	}
 
 	if req.Workspace.CheckpointStorageConfig != nil {
