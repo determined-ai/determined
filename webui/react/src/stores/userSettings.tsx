@@ -6,17 +6,15 @@ import * as t from 'io-ts';
 import { getUserSetting, updateUserSetting } from 'services/api';
 import { V1GetUserSettingResponse } from 'services/api-ts-sdk';
 import { UpdateUserSettingParams } from 'services/types';
-import { isObject } from 'utils/data';
+import { Json, JsonObject } from 'types';
+import { isJsonObject, isObject } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { observable, Observable, WritableObservable } from 'utils/observable';
 
 import PollingStore from './polling';
 
-// TODO define a proper JSON type.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Json = any;
-type State = Map<string, { string: unknown }>;
+type State = Map<string, Json>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isTypeC(codec: t.Encoder<any, any>): codec is t.TypeC<t.Props> {
@@ -39,11 +37,12 @@ class UserSettingsStore extends PollingStore {
    *          (or has been removed) this is `null`.
    */
   public get<T>(type: t.Type<T>, key: string): Observable<Loadable<T | null>>;
+  public get<T>(type: t.Decoder<Json, T>, key: string): Observable<Loadable<T | null>>;
   public get<T>(type: t.Decoder<Json, T>, key: string): Observable<Loadable<T | null>> {
     return this.#settings.select((settings) => {
       return Loadable.map(settings, (settings) => {
         const value = settings.get(key);
-        if (key === undefined) {
+        if (value === undefined) {
           return null;
         }
         return pipe(
@@ -68,27 +67,38 @@ class UserSettingsStore extends PollingStore {
    */
   public set<T>(type: t.Type<T>, key: string, value: T): void;
   public set<T extends t.Props>(type: t.TypeC<T>, key: string, value: Partial<T>): void;
-  public set<T>(type: t.Encoder<T, Json>, key: string, value: T): void {
-    const encodedValue = isTypeC(type)
-      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        t.partial(type.props).encode(value as any)
-      : type.encode(value);
-    // This is non-blocking. If the API call fails we don't want to block
-    // the user from interacting, just let them know that their settings
-    // are not persisting. It's also important to update the value immediately
-    // for good rendering performance.
-    this.updateUserSetting(key, encodedValue);
-    this.#settings.update((settings) => {
-      return Loadable.map(settings, (settings) => {
-        return settings.update(key, (oldValue) => {
-          let newValue = encodedValue;
-          if (isTypeC(type)) {
-            newValue = { ...oldValue, ...encodedValue };
-          }
-          return newValue;
+  public set<T>(type: t.Encoder<T, Json>, key: string, value: T): void;
+  public set<T>(type: t.Encoder<T, Json> | t.TypeC<t.Props>, key: string, value: T): void {
+    if (isTypeC(type)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const encodedValue = t.partial(type.props).encode(value as any);
+      // This is non-blocking. If the API call fails we don't want to block
+      // the user from interacting, just let them know that their settings
+      // are not persisting. It's also important to update the value immediately
+      // for good rendering performance.
+      this.updateUserSetting(key, encodedValue);
+      this.#settings.update((settings) => {
+        return Loadable.map(settings, (settings) => {
+          return settings.update(key, (oldValue) => {
+            const old: JsonObject =
+              oldValue && isJsonObject(oldValue) ? oldValue : ({} as JsonObject);
+            return { ...old, ...encodedValue };
+          });
         });
       });
-    });
+    } else {
+      const encodedValue: Json = type.encode(value);
+      // This is non-blocking. If the API call fails we don't want to block
+      // the user from interacting, just let them know that their settings
+      // are not persisting. It's also important to update the value immediately
+      // for good rendering performance.
+      this.updateUserSetting(key, encodedValue);
+      this.#settings.update((settings) => {
+        return Loadable.map(settings, (settings) => {
+          return settings.set(key, encodedValue);
+        });
+      });
+    }
   }
 
   /** Clears the setting, returning it to `null`. */
@@ -136,11 +146,15 @@ class UserSettingsStore extends PollingStore {
       newSettings = newSettings.withMutations((newSettings) => {
         for (const setting of response.settings) {
           const pathKey = (setting.storagePath || setting.key).replace(/u:2\//g, '');
-          const oldPathSettings = newSettings.get(pathKey) || ({} as { string: unknown });
-          const newPathSettings = {
-            [setting.key]: setting.value ? JSON.parse(setting.value) : undefined,
-          };
-          newSettings.set(pathKey, { ...oldPathSettings, ...newPathSettings });
+          const oldPathSettings = newSettings.get(pathKey);
+          if (oldPathSettings && isJsonObject(oldPathSettings)) {
+            const newPathSettings = {
+              [setting.key]: setting.value ? JSON.parse(setting.value) : undefined,
+            };
+            newSettings.set(pathKey, { ...oldPathSettings, ...newPathSettings });
+          } else {
+            newSettings.set(pathKey, setting.value ? JSON.parse(setting.value) : undefined);
+          }
         }
       });
       return Loaded(newSettings);

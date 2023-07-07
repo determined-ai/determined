@@ -12,8 +12,16 @@ export type NullOrUndefined<T = undefined> = T | null | undefined;
 export type Point = { x: number; y: number };
 export type Range<T = Primitive> = [T, T];
 export type Eventually<T> = T | Promise<T>;
+
+// DEPRECATED
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type RawJson = Record<string, any>;
+
+export type JsonArray = Array<Json>;
+export interface JsonObject {
+  [key: string]: Json;
+}
+export type Json = string | number | null | JsonArray | JsonObject;
 
 export interface Pagination {
   limit: number;

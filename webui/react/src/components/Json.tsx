@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { RawJson } from 'types';
+import { Json, JsonObject } from 'types';
 import { isObject } from 'utils/data';
 
 import css from './Json.module.scss';
@@ -10,14 +10,14 @@ type TextTransfomer = (key: string) => string;
 interface Props {
   alternateBackground?: boolean;
   hideDivider?: boolean;
-  json: RawJson;
+  json: JsonObject;
   translateLabel?: TextTransfomer;
 }
 
 interface RowProps {
   label: string;
   translateLabel?: TextTransfomer;
-  value: RawJson | string | number | null;
+  value: Json | string | number | null;
 }
 
 const Row: React.FC<RowProps> = ({ translateLabel, label, value }: RowProps) => {
