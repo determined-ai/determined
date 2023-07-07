@@ -1120,10 +1120,13 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 			require.NoError(t, db.updateTotalBatches(ctx, tx, tr.ID))
 		}
 		if coinFlip() {
-			modelTypes := []model.MetricType{model.TrainingMetricType, model.ValidationMetricType}
+			metricTypes := []model.MetricType{
+				model.TrainingMetricType, model.ValidationMetricType,
+				model.MetricType("generic-xyz"),
+			}
 			//nolint:gosec // Weak RNG doesn't matter here.
-			modelType := modelTypes[rand.Intn(len(modelTypes))]
-			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, modelType)
+			metricType := metricTypes[rand.Intn(len(metricTypes))]
+			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, metricType)
 			require.NoError(t, err)
 		}
 		if coinFlip() {
@@ -1131,7 +1134,7 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 		}
 	}
 
-	writes := 5
+	writes := 10
 	trials := 10
 	var wg sync.WaitGroup
 	wg.Add(trials)
