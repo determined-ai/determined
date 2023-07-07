@@ -142,8 +142,8 @@ WHERE trial_id = $1
 // and the results.
 func (db *PgDB) addMetricsWithMerge(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
 	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
-) (metricID int, addedBody *metricsBody, replacedBody *metricsBody, err error) {
-	var replacedBodyJSON model.JSONObj
+) (metricID int, addedMetrics *metricsBody, err error) {
+	var existingBodyJSON model.JSONObj
 	err = tx.QueryRowContext(ctx, `
 SELECT COALESCE((SELECT metrics FROM metrics
 WHERE archived = false
@@ -152,32 +152,32 @@ AND trial_id = $2
 AND partition_type = $3
 AND custom_type = $4), NULL)`,
 		lastProcessedBatch, trialID,
-		customMetricTypeToPartitionType(mType), mType).Scan(&replacedBodyJSON)
+		customMetricTypeToPartitionType(mType), mType).Scan(&existingBodyJSON)
 	if err != nil {
-		return 0, nil, nil, errors.Wrap(err, "getting old metrics")
+		return 0, nil, errors.Wrap(err, "getting old metrics")
 	}
-	needsMerge := replacedBodyJSON != nil
+	needsMerge := existingBodyJSON != nil
 
-	fmt.Println("replaced body", replacedBodyJSON)
+	fmt.Println("existing body", existingBodyJSON)
 	fmt.Println("needs merge", needsMerge)
 
 	if !needsMerge {
 		id, err := db.addRawMetrics(ctx, tx, mBody, runID, trialID, lastProcessedBatch, mType)
-		return id, mBody, nil, err
+		return id, mBody, err
 	}
 
-	replacedBody = &metricsBody{Type: mType}
+	existingBody := &metricsBody{Type: mType}
 	// CHECK: how do we avoid this copy?
-	if err = replacedBody.LoadJSON(&replacedBodyJSON); err != nil {
-		return 0, nil, nil, err
+	if err = existingBody.LoadJSON(&existingBodyJSON); err != nil {
+		return 0, nil, err
 	}
-	fmt.Println("replaced body avg", replacedBody.AvgMetrics)
-	addedBody, err = mergeMetrics(replacedBody, mBody)
+	fmt.Println("existing body avg", existingBody.AvgMetrics)
+	finalBody, err := shallowUnionMetrics(existingBody, mBody)
 	if err != nil {
-		return 0, nil, nil, err
+		return 0, nil, err
 	}
-	id, err := db.updateRawMetrics(ctx, tx, addedBody, runID, trialID, lastProcessedBatch, mType)
-	return id, addedBody, replacedBody, err
+	id, err := db.updateRawMetrics(ctx, tx, finalBody, runID, trialID, lastProcessedBatch, mType)
+	return id, mBody, err
 }
 
 func (db *PgDB) updateRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
@@ -317,17 +317,8 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 	return res, err
 }
 
-// removeMetricsFromSummary removes metrics from the summary that is already
-// computed.
-func removeMetricsFromSummary(
-	summaryMetrics model.JSONObj, metrics *structpb.Struct,
-) model.JSONObj {
-	// TODO
-	return summaryMetrics
-}
-
-// mergeMetrics merges AvgMetrics of two metrics bodies.
-func mergeMetrics(oldBody, newBody *metricsBody) (*metricsBody, error) {
+// shallowUnionMetrics unions non-overlapping AvgMetrics of two metrics bodies.
+func shallowUnionMetrics(oldBody, newBody *metricsBody) (*metricsBody, error) {
 	if oldBody == nil {
 		return newBody, nil
 	}
@@ -343,6 +334,7 @@ func mergeMetrics(oldBody, newBody *metricsBody) (*metricsBody, error) {
 		// we cannot calculate min/max efficiently for replaced metric values
 		// so we disallow it.
 		if _, ok := oldAvgMetricsMap[key]; ok {
+			fmt.Println("old, new", oldBody.AvgMetrics, newBody.AvgMetrics)
 			return nil, errors.Errorf("replacing existing metric values is not implemented %s", key)
 		}
 		oldAvgMetricsMap[key] = newValue

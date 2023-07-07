@@ -303,7 +303,7 @@ func (db *PgDB) _addTrialMetricsTx(
 		return rollbacks, fmt.Errorf("error getting summary metrics from trials: %w", err)
 	}
 
-	metricRowID, addedMetrics, replacedMetrics, err := db.addMetricsWithMerge(ctx, tx,
+	metricRowID, addedMetrics, err := db.addMetricsWithMerge(ctx, tx,
 		mBody, m.TrialRunId, m.TrialId, m.StepsCompleted, mType)
 	if err != nil {
 		return rollbacks, err
@@ -329,13 +329,9 @@ func (db *PgDB) _addTrialMetricsTx(
 			summaryMetrics[summaryMetricsJSONPath] = map[string]any{}
 			// CHECK: assert no merge happened.
 		}
-		var replacedAvgMetrics *structpb.Struct = nil
-		if replacedMetrics != nil {
-			replacedAvgMetrics = replacedMetrics.AvgMetrics
-		}
 		summaryMetrics[summaryMetricsJSONPath] = calculateNewSummaryMetrics(
 			summaryMetrics[summaryMetricsJSONPath].(map[string]any),
-			addedMetrics.AvgMetrics, replacedAvgMetrics,
+			addedMetrics.AvgMetrics,
 		)
 
 		var latestValidationID *int
@@ -448,13 +444,7 @@ var pythonISOFormatRegex = regexp.MustCompile(
 // metrics and the existing summary metrics.
 func calculateNewSummaryMetrics(
 	summaryMetrics model.JSONObj, mAdded *structpb.Struct,
-	mRemoved *structpb.Struct,
 ) model.JSONObj {
-	if mRemoved != nil {
-		// PERF: maybe there's a smarter way to process this w/o looking at them as separate
-		// operations.
-		summaryMetrics = removeMetricsFromSummary(summaryMetrics, mRemoved)
-	}
 	// Calculate numeric metrics.
 	for metricName, metric := range mAdded.Fields {
 		// Get type of provided metric.

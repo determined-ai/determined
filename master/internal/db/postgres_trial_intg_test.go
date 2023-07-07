@@ -570,14 +570,16 @@ func TestMetricMergeUtil(t *testing.T) {
 		merged  string
 	}{
 		{[]string{`{"a":1.0}`}, `{"a":1.0}`},
-		{[]string{`{"a":1.0}`, `{"a":2.0}`}, `{"a":2.0}`},
+		// {[]string{`{"a":1.0}`, `{"a":2.0}`}, `{"a":2.0}`}, // unsupported.
 		{[]string{`{"a":1.0}`, `{"b":2.0}`}, `{"a":1.0,"b":2.0}`},
 	}
 	for _, c := range cases {
 		var merged *metricsBody
 		for _, report := range c.reports {
+			var err error
 			newBody := newMetricsBody(jsonToStruct(t, report), nil, model.TrainingMetricType)
-			merged = mergeMetrics(merged, newBody)
+			merged, err = shallowUnionMetrics(merged, newBody)
+			require.NoError(t, err)
 		}
 		deserializedMetrics := map[string]any{}
 		require.NoError(t, json.Unmarshal([]byte(c.merged), &deserializedMetrics))
@@ -613,7 +615,7 @@ func TestMetricMerge(t *testing.T) {
 		merged  string
 	}{
 		{[]string{`{"a":1.0}`}, `{"a":1.0}`},
-		{[]string{`{"a":1.0}`, `{"a":2.0}`}, `{"a":2.0}`},
+		// {[]string{`{"a":1.0}`, `{"a":2.0}`}, `{"a":2.0}`}, // unsupported.
 		{[]string{`{"a":1.0}`, `{"b":2.0}`}, `{"a":1.0,"b":2.0}`},
 	}
 
