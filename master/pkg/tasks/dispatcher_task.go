@@ -272,8 +272,12 @@ func (t *TaskSpec) ToDispatcherManifest(
 	// singularity supports including (docker, library, file path, etc).   If
 	// a docker reference without scheme (the default), the launcher will attempt
 	// to match to a locally cached image.
+	image := t.Environment.Image().For(slotType)
+	if len(image) == 0 {
+		return nil, "", "", fmt.Errorf("no image is configured for slot_type: %s", slotType)
+	}
 	launchParameters.SetImages(map[string]string{
-		"default": t.Environment.Image().For(slotType),
+		"default": image,
 	})
 
 	// Add some data volumes
