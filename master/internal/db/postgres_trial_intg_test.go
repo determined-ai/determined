@@ -641,7 +641,6 @@ func TestMetricMerge(t *testing.T) {
 		require.Len(t, metrics, 1)
 		deserializedMetrics := map[string]any{}
 		require.NoError(t, json.Unmarshal([]byte(c.merged), &deserializedMetrics))
-		fmt.Println(metrics[0].Metrics.AsMap())
 		require.EqualValues(t, deserializedMetrics, metrics[0].Metrics.AsMap()["avg_metrics"])
 	}
 }

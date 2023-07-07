@@ -158,20 +158,16 @@ AND custom_type = $4), NULL)`,
 	}
 	needsMerge := existingBodyJSON != nil
 
-	fmt.Println("existing body", existingBodyJSON)
-	fmt.Println("needs merge", needsMerge)
-
 	if !needsMerge {
 		id, err := db.addRawMetrics(ctx, tx, mBody, runID, trialID, lastProcessedBatch, mType)
 		return id, mBody, err
 	}
 
 	existingBody := &metricsBody{Type: mType}
-	// CHECK: how do we avoid this copy?
+	// CHECK: can we avoid this copy?
 	if err = existingBody.LoadJSON(&existingBodyJSON); err != nil {
 		return 0, nil, err
 	}
-	fmt.Println("existing body avg", existingBody.AvgMetrics)
 	finalBody, err := shallowUnionMetrics(existingBody, mBody)
 	if err != nil {
 		return 0, nil, err
@@ -187,9 +183,9 @@ func (db *PgDB) updateRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metric
 		return 0, err
 	}
 	pType := customMetricTypeToPartitionType(mType)
-	fmt.Println("updating metrics", mBody)
 
 	var metricRowID int
+	//nolint:execinquery // we want to get the id.
 	if err := tx.QueryRowContext(ctx, `
 UPDATE metrics
 SET metrics = $1
@@ -227,8 +223,7 @@ VALUES
 RETURNING id`,
 		trialID, runID, *mBody.ToJSONObj(), lastProcessedBatch, pType, mType,
 	).Scan(&metricRowID); err != nil {
-		fmt.Println(err)
-		return 0, errors.Wrap(err, "inserting metrics")
+		return metricRowID, errors.Wrap(err, "inserting metrics")
 	}
 
 	return metricRowID, nil
@@ -334,8 +329,7 @@ func shallowUnionMetrics(oldBody, newBody *metricsBody) (*metricsBody, error) {
 		// we cannot calculate min/max efficiently for replaced metric values
 		// so we disallow it.
 		if _, ok := oldAvgMetricsMap[key]; ok {
-			fmt.Println("old, new", oldBody.AvgMetrics, newBody.AvgMetrics)
-			return nil, errors.Errorf("replacing existing metric values is not implemented %s", key)
+			return nil, errors.Errorf("replacing existing metric values is not supported %s", key)
 		}
 		oldAvgMetricsMap[key] = newValue
 	}

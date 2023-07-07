@@ -163,9 +163,7 @@ WHERE id = $1`, id, restartCount); err != nil {
 func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	ctx context.Context, tx *sqlx.Tx, trialID int,
 ) error {
-	/*
-		can we limit this to recompute only a single metric type?
-	*/
+	// DISCUSS: can we limit this to recompute only a single metric type?
 	updatedSummaryMetrics := model.JSONObj{}
 	metricTypes := []model.MetricType{}
 	if err := tx.SelectContext(ctx, &metricTypes, `
@@ -308,7 +306,6 @@ func (db *PgDB) _addTrialMetricsTx(
 		summaryMetricsJSONPath := model.TrialSummaryMetricsJSONPath(mType)
 		if _, ok := summaryMetrics[summaryMetricsJSONPath]; !ok {
 			summaryMetrics[summaryMetricsJSONPath] = map[string]any{}
-			// CHECK: assert no merge happened.
 		}
 		summaryMetrics[summaryMetricsJSONPath] = calculateNewSummaryMetrics(
 			summaryMetrics[summaryMetricsJSONPath].(map[string]any),
