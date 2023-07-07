@@ -109,4 +109,4 @@ slurmcluster:
 
 .PHONY: unslurmcluster
 unslurmcluster:
-	$(MAKE) -C tools/slurm unslurmcluster
+	$(MAKE) -C tools/slurm unslurmcluster TF_LOCK=$(TF_LOCK)
