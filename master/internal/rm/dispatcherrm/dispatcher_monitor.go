@@ -33,6 +33,9 @@ const (
 	errorLinesToDisplay  = 15
 )
 
+// SlurmPrologReasonCode is the Slurm Prolog Reason Code.
+const SlurmPrologReasonCode = "Prolog"
+
 // A list of WARNING/ERROR level messages that we're interested in, because they contain
 // the root cause of the error.  The last matching pattern is used.
 var messagePatternsOfInterest = []*regexp.Regexp{
@@ -468,34 +471,25 @@ func (m *launcherMonitor) obtainJobStateFromWlmQueueDetails(
 		WithField("hpc-job-id", hpcJobID).
 		WithField("native-state", nativeState).
 		Debugf("job state from HPC queue stats")
+
+	// Provides information as to why a job is in a particular state.
+	reasonCode := qStats[hpcJobID]["reasonCode"]
+	reasonDesc := qStats[hpcJobID]["reasonDesc"]
+
 	switch {
 	case nativeState == "PD" || strings.ToLower(nativeState) == "pending":
 		m.publishJobState(launcher.PENDING, job, ctx, dispatchID, hpcJobID)
 
-		reasonCode := qStats[hpcJobID]["reasonCode"]
-		reasonDesc := qStats[hpcJobID]["reasonDesc"]
-
-		// Only log a message for this reason code if we did not already log
-		// it. This avoids logging the same message over and over again.
-		if reasonCode != job.jobPendingReasonCode {
-			m.writeExperimentLogFunc(ctx, dispatchID, "HPC job waiting to be scheduled: "+reasonDesc)
-
-			// Avoid repeated logging to the experiment log by storing the
-			// last reason code for which we logged a message. If the
-			// reason code changes, then that will cause a new message to
-			// be logged.
-			job.jobPendingReasonCode = reasonCode
-		}
+		m.processReasonCodeForPendingJobs(dispatchID, reasonCode, reasonDesc, ctx, job)
 
 		return true
 	case nativeState == "R" || strings.ToLower(nativeState) == "running":
 		m.publishJobState(launcher.RUNNING, job, ctx, dispatchID, hpcJobID)
 
-		// Clear the reason code in case the job winds up moving back to the
-		// pending state, for whatever reason. This will allow the pending
-		// reason to be displayed in the experiment log again, since the
-		// message is only displayed when there's a change in the reason code.
-		job.jobPendingReasonCode = ""
+		// The launcher treats a Slurm "CG" (completing) state, as a "running"
+		// state, so the reason codes for jobs that are in the "completing"
+		// state are also handled in this function.
+		m.processReasonCodeForRunningJobs(dispatchID, reasonCode, reasonDesc, ctx, job)
 
 		return true
 	}
@@ -503,6 +497,67 @@ func (m *launcherMonitor) obtainJobStateFromWlmQueueDetails(
 	job.jobPendingReasonCode = ""
 
 	return false
+}
+
+// Provides additional information in the experiment log based on the
+// reason code.
+func (m *launcherMonitor) processReasonCodeForPendingJobs(
+	dispatchID string,
+	reasonCode string,
+	reasonDesc string,
+	ctx *actor.Context,
+	job *launcherJob) {
+	// Only log a message for this reason code if we did not already log
+	// it. This avoids logging the same message over and over again.
+	if reasonCode != job.jobPendingReasonCode {
+		m.writeExperimentLogFunc(ctx, dispatchID, "HPC job waiting to be scheduled: "+reasonDesc)
+
+		// Avoid repeated logging to the experiment log by storing the
+		// last reason code for which we logged a message. If the
+		// reason code changes, then that will cause a new message to
+		// be logged.
+		job.jobPendingReasonCode = reasonCode
+	}
+}
+
+// Provides additional information in the experiment log based on the
+// reason code.
+func (m *launcherMonitor) processReasonCodeForRunningJobs(
+	dispatchID string,
+	reasonCode string,
+	reasonDesc string,
+	ctx *actor.Context,
+	job *launcherJob) {
+	// Only log a message for this reason code if we did not already log
+	// it. This avoids logging the same message over and over again.
+	if reasonCode != job.jobPendingReasonCode {
+		// Is the prolog script running?
+		if reasonCode == SlurmPrologReasonCode {
+			// Although Slurm reports the job as running, the container runtime
+			// (e.g., "singularity", "podman", "enroot") doesn't get executed
+			// until the prolog script, if any, finishes. While the prolog
+			// script is running, the user will see a state of "Pulling", even
+			// if the image file already exists on the local filesystem and is
+			// not actually being pulled from an external repository. Therefore,
+			// write a message to the experiment log to let the user know that
+			// the reason why their job shows a state of "Pulling" is because
+			// the container runtime is not running yet, and won't run, until
+			// the prolog script finishes.
+			m.writeExperimentLogFunc(ctx, dispatchID, "HPC job waiting on pre-condition: "+reasonDesc)
+		} else if job.jobPendingReasonCode == SlurmPrologReasonCode {
+			// The reason code is no longer "Prolog", so let the user know that,
+			// if the job state is "Pulling", it's no longer because the prolog
+			// script is running, and it's because the image is actually getting
+			// pulled.
+			m.writeExperimentLogFunc(ctx, dispatchID, "HPC job pre-condition cleared.")
+		}
+
+		// Avoid repeated logging to the experiment log by storing
+		// the last reason code for which we logged a message. If the
+		// reason code changes, then that will cause a new message to
+		// be logged.
+		job.jobPendingReasonCode = reasonCode
+	}
 }
 
 // queuesFromCluster fetches the latest job queue information from the cluster.

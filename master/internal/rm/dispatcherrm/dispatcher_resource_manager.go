@@ -1596,10 +1596,9 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 				response, "Job launch failed", err))
 		}
 		if strings.Contains(err.Error(), "EOF") {
-			return "", errors.Wrapf(err, "Job launch failed. "+
-				"Verify that the default HPC launcher JVM heap configuration is appropriate. "+
-				"The master configuration resource_manager.launcher_jvm_args can be used to "+
-				"override the default HPC launcher JVM heap configuration.")
+			return "", errors.Wrapf(err, "Launcher rejected the job due to "+
+				"excessive outstanding requests.  Normal operation will typically "+
+				"resume once the outstanding requests have been processed.")
 		}
 		return "", errors.Wrapf(err, "Job launch failed. "+
 			"Verify that the launcher service is up and reachable.")
