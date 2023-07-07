@@ -971,13 +971,13 @@ const InlineFormSection: React.FC = () => {
         </p>
         <br />
         <div style={{ maxWidth: '700px' }}>
-          <InlineForm<string> initialValue={'initial value'} label="Uncontrolled - Input">
+          <InlineForm<string> initialValue={'initial value'} label="Input">
             <Input />
           </InlineForm>
           <hr />
           <InlineForm<string>
             initialValue={'initial value'}
-            label="Controlled - Input with validator"
+            label="Input with validator"
             rules={[{ message: 'Please input something here!', required: true }]}
             value={inputWithValidatorValue}
             onSubmit={inputWithValidatorCallback}>
@@ -986,7 +986,7 @@ const InlineFormSection: React.FC = () => {
           <hr />
           <InlineForm<string>
             initialValue={textAreaValue}
-            label="Controlled - Text Area"
+            label="Text Area"
             onSubmit={textAreaCallback}>
             <Input.TextArea />
           </InlineForm>
@@ -1000,11 +1000,11 @@ const InlineFormSection: React.FC = () => {
             <Input.Password />
           </InlineForm>
           <hr />
-          <InlineForm<number> initialValue={1234} label="Uncontrolled Input Number">
+          <InlineForm<number> initialValue={1234} label="Input Number">
             <InputNumber />
           </InlineForm>
           <hr />
-          <InlineForm<string> initialValue={''} label="Uncontrolled - Input Search">
+          <InlineForm<string> initialValue={''} label="Input Search">
             <InputSearch allowClear enterButton placeholder="Input Search" />
           </InlineForm>
           <hr />
