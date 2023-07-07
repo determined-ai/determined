@@ -568,19 +568,26 @@ func TestMetricMergeUtil(t *testing.T) {
 	cases := []struct {
 		reports []string
 		merged  string
+		errMsg  string
 	}{
-		{[]string{`{"a":1.0}`}, `{"a":1.0}`},
-		// {[]string{`{"a":1.0}`, `{"a":2.0}`}, `{"a":2.0}`}, // unsupported.
-		{[]string{`{"a":1.0}`, `{"b":2.0}`}, `{"a":1.0,"b":2.0}`},
+		{[]string{`{"a":1.0}`}, `{"a":1.0}`, ""},
+		{[]string{`{"a":1.0}`, `{"a":2.0}`}, `{"a":2.0}`, "exist"}, // unsupported.
+		{[]string{`{"a":1.0}`, `{"b":2.0}`}, `{"a":1.0,"b":2.0}`, ""},
 	}
 	for _, c := range cases {
+		t.Log(c)
 		var merged *metricsBody
+		var err error
 		for _, report := range c.reports {
-			var err error
 			newBody := newMetricsBody(jsonToStruct(t, report), nil, model.TrainingMetricType)
 			merged, err = shallowUnionMetrics(merged, newBody)
-			require.NoError(t, err)
 		}
+		if c.errMsg != "" {
+			require.Error(t, err)
+			require.Contains(t, err.Error(), c.errMsg)
+			continue
+		}
+		require.NoError(t, err)
 		deserializedMetrics := map[string]any{}
 		require.NoError(t, json.Unmarshal([]byte(c.merged), &deserializedMetrics))
 		require.EqualValues(t, deserializedMetrics, merged.AvgMetrics.AsMap())
@@ -615,11 +622,12 @@ func TestMetricMerge(t *testing.T) {
 		merged  string
 	}{
 		{[]string{`{"a":1.0}`}, `{"a":1.0}`},
-		// {[]string{`{"a":1.0}`, `{"a":2.0}`}, `{"a":2.0}`}, // unsupported.
 		{[]string{`{"a":1.0}`, `{"b":2.0}`}, `{"a":1.0,"b":2.0}`},
+		{[]string{`{"a":1.0}`, `{"b":2.0}`, `{"c":2.0}`}, `{"a":1.0,"b":2.0,"c":2.0}`},
 	}
 
 	for _, c := range cases {
+		t.Log(c)
 		trialID := RequireMockTrial(t, db, exp).ID
 		for _, metricReport := range c.reports {
 			err := addMetricAt(1, metricReport, trialID)
