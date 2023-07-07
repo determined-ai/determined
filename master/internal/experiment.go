@@ -130,11 +130,6 @@ func newExperiment(
 	taskSpec *tasks.TaskSpec,
 ) (*experiment, []command.LaunchWarning, error) {
 	resources := activeConfig.Resources()
-	fmt.Println()
-	fmt.Println()
-	fmt.Println("activeconfig workspace:", activeConfig.Workspace())
-	fmt.Println("taskSpec workspace:", taskSpec.Workspace)
-	fmt.Println()
 	workspaceModel, err := workspace.WorkspaceByName(context.TODO(), taskSpec.Workspace)
 	if err != nil {
 		return nil, nil, err
