@@ -4,35 +4,39 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
-import { Primitive } from 'components/kit/internal/types';
 
 import css from './InlineForm.module.scss';
 
-interface Props extends React.PropsWithChildren, Omit<FormProps, 'children'> {
+type InlineForm<T> = (props: Props<T>) => JSX.Element;
+
+interface Props<T> extends React.PropsWithChildren, Omit<FormProps, 'children'> {
   label?: string;
-  displayValue?: Primitive;
-  initialValue?: Primitive;
-  onSubmit: (inputValue: string | number) => Promise<void | Error> | void;
+  value?: T; // used to turn the Form.Item as controlled input
+  initialValue: T;
+  displayValue?: string | number; // used as "read only" format
+  onSubmit: (inputValue: T) => Promise<void | Error> | void;
   required?: boolean;
   isPassword?: boolean;
   rules?: Rule[];
   testId?: string;
 }
 
-const InlineForm: React.FC<Props> = ({
+function InlineForm<T>({
   label,
   children,
+  initialValue,
   displayValue = '',
+  value,
   isPassword = false,
   rules,
   required,
   testId = '',
   onSubmit,
   ...formProps
-}) => {
+}: Props<T>): JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
   const [form] = Form.useForm();
-  const shouldColapseText = useMemo(() => String(displayValue).length >= 45, [displayValue]); // prevents layout breaking, specially if using Input.TextArea.
+  const shouldColapseText = useMemo(() => String(initialValue).length >= 45, [initialValue]); // prevents layout breaking, specially if using Input.TextArea.
   const readOnlyText = useMemo(() => {
     if (isPassword) return String(displayValue).replace(/\S/g, '*');
     if (shouldColapseText) return String(displayValue).slice(0, 50).concat('...');
@@ -41,25 +45,29 @@ const InlineForm: React.FC<Props> = ({
   }, [shouldColapseText, displayValue, isPassword]);
 
   const resetForm = useCallback(() => {
-    form.setFieldValue('input', displayValue);
+    form.setFieldValue('input', initialValue);
     setIsEditing(false);
-  }, [form, displayValue]);
+  }, [form, initialValue]);
 
   const submitForm = useCallback(async () => {
     try {
       const formValues = await form.validateFields();
       onSubmit(formValues.input);
     } catch (error) {
-      form.setFieldValue('input', displayValue);
+      form.setFieldValue('input', initialValue);
     }
 
     setIsEditing(false);
-  }, [form, onSubmit, displayValue]);
+  }, [form, onSubmit, initialValue]);
 
   useEffect(() => {
-    form.setFieldValue('input', displayValue);
+    if (value !== undefined) {
+      form.setFieldValue('input', value);
+    } else {
+      form.setFieldValue('input', initialValue);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayValue]);
+  }, [initialValue, value]);
 
   return (
     <Form
@@ -71,6 +79,7 @@ const InlineForm: React.FC<Props> = ({
       {...formProps}>
       <Form.Item
         className={css.formItemInput}
+        initialValue={initialValue}
         label={label}
         labelCol={{ span: 0 }}
         name="input"
@@ -115,6 +124,6 @@ const InlineForm: React.FC<Props> = ({
       </div>
     </Form>
   );
-};
+}
 
 export default InlineForm;

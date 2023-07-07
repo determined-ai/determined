@@ -54,7 +54,7 @@ import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'stores/contexts/UI';
 import { BrandingType } from 'stores/determinedInfo';
-import { Primitive, ValueOf } from 'types';
+import { ValueOf } from 'types';
 import { Note } from 'types';
 import { MetricType, User } from 'types';
 import {
@@ -933,35 +933,35 @@ const CodeEditorSection: React.FC = () => {
 };
 
 const InlineFormSection: React.FC = () => {
-  const [inputValue, setInputValue] = useState<Primitive>('test value');
-  const [inputWithValidatorValue, setInputWithValidatorValue] = useState<Primitive>('');
-  const [textAreaValue, setTextAreaValue] = useState<Primitive>(
+  const [inputValue, setInputValue] = useState('test value');
+  const [inputWithValidatorValue, setInputWithValidatorValue] = useState('');
+  const [textAreaValue, setTextAreaValue] = useState(
     'Lorem ipsum dolor sit amet consectetur adipisicing elit. Id tempora harum animi, provident explicabo in esse, hic qui cumque maiores ipsa, praesentium ad repellat dolorem voluptates! Eligendi magnam blanditiis velit.',
   );
-  const [passwordInputValue, setPasswordInputValue] = useState<Primitive>('123456789');
-  const [inputSearchValue, setInputSearchValue] = useState<Primitive>('Some fancy search');
-  const [inputNumberValue, setInputNumberValue] = useState<Primitive>(1234);
-  const [selectValue, setSelectValue] = useState<Primitive>('off');
+  const [passwordInputValue, setPasswordInputValue] = useState('123456789');
+  const [inputSearchValue, setInputSearchValue] = useState('Some fancy search');
+  const [inputNumberValue, setInputNumberValue] = useState(1234);
+  const [selectValue, setSelectValue] = useState('off');
 
-  const inputCallback = useCallback((newValue: Primitive) => {
+  const inputCallback = useCallback((newValue: string) => {
     setInputValue(newValue);
   }, []);
-  const inputWithValidatorCallback = useCallback((newValue: Primitive) => {
+  const inputWithValidatorCallback = useCallback((newValue: string) => {
     setInputWithValidatorValue(newValue);
   }, []);
-  const textAreaCallback = useCallback((newValue: Primitive) => {
+  const textAreaCallback = useCallback((newValue: string) => {
     setTextAreaValue(newValue);
   }, []);
-  const passwordInputCallback = useCallback((newValue: Primitive) => {
+  const passwordInputCallback = useCallback((newValue: string) => {
     setPasswordInputValue(newValue);
   }, []);
-  const InputNumberCallback = useCallback((newValue: Primitive) => {
-    setInputSearchValue(newValue);
-  }, []);
-  const InputSearchCallback = useCallback((newValue: Primitive) => {
+  const InputNumberCallback = useCallback((newValue: number) => {
     setInputNumberValue(newValue);
   }, []);
-  const selectCallback = useCallback((newValue: Primitive) => {
+  const InputSearchCallback = useCallback((newValue: string) => {
+    setInputSearchValue(newValue);
+  }, []);
+  const selectCallback = useCallback((newValue: string) => {
     setSelectValue(newValue === '1' ? 'off' : 'on');
   }, []);
 
@@ -983,45 +983,61 @@ const InlineFormSection: React.FC = () => {
         </p>
         <br />
         <div style={{ maxWidth: '700px' }}>
-          <InlineForm displayValue={inputValue} label="Input" onSubmit={inputCallback}>
+          <InlineForm<string>
+            displayValue={inputValue}
+            initialValue={inputValue}
+            label="Input"
+            onSubmit={inputCallback}>
             <Input />
           </InlineForm>
           <hr />
-          <InlineForm
+          <InlineForm<string>
             displayValue={inputWithValidatorValue}
+            initialValue={inputWithValidatorValue}
             label="Input with validator"
             rules={[{ message: 'Please input something here!', required: true }]}
             onSubmit={inputWithValidatorCallback}>
             <Input maxLength={32} />
           </InlineForm>
           <hr />
-          <InlineForm displayValue={textAreaValue} label="Text Area" onSubmit={textAreaCallback}>
+          <InlineForm<string>
+            displayValue={textAreaValue}
+            initialValue={textAreaValue}
+            label="Text Area"
+            onSubmit={textAreaCallback}>
             <Input.TextArea />
           </InlineForm>
           <hr />
-          <InlineForm
+          <InlineForm<string>
             displayValue={passwordInputValue}
+            initialValue={passwordInputValue}
             isPassword
             label="Password"
             onSubmit={passwordInputCallback}>
             <Input.Password />
           </InlineForm>
           <hr />
-          <InlineForm
+          <InlineForm<number>
             displayValue={inputNumberValue}
+            initialValue={inputNumberValue}
             label="Input Number"
             onSubmit={InputNumberCallback}>
             <InputNumber />
           </InlineForm>
           <hr />
-          <InlineForm
+          <InlineForm<string>
             displayValue={inputSearchValue}
+            initialValue={inputSearchValue}
             label="Input Search"
             onSubmit={InputSearchCallback}>
             <InputSearch allowClear enterButton placeholder="Input Search" />
           </InlineForm>
           <hr />
-          <InlineForm displayValue={selectValue} label="Select" onSubmit={selectCallback}>
+          <InlineForm<string>
+            displayValue={selectValue}
+            initialValue={selectValue}
+            label="Select"
+            onSubmit={selectCallback}>
             <Select defaultValue={1} searchable={false}>
               {[
                 { label: 'off', value: 1 },

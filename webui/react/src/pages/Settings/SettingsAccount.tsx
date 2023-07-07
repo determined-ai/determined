@@ -31,7 +31,7 @@ const SettingsAccount: React.FC = () => {
   const PasswordChangeModal = useModal(PasswordChangeModalComponent);
 
   const handleSaveDisplayName = useCallback(
-    async (newValue: string | number): Promise<void | Error> => {
+    async (newValue: string): Promise<void | Error> => {
       try {
         const user = await patchUser({
           userId: currentUser?.id || 0,
@@ -48,7 +48,7 @@ const SettingsAccount: React.FC = () => {
   );
 
   const handleSaveUsername = useCallback(
-    async (newValue: string | number): Promise<void | Error> => {
+    async (newValue: string): Promise<void | Error> => {
       try {
         const user = await patchUser({
           userId: currentUser?.id || 0,
@@ -71,9 +71,9 @@ const SettingsAccount: React.FC = () => {
         <Avatar hideTooltip size={Size.ExtraLarge} user={currentUser} />
       </div>
       <Divider />
-      <InlineForm
-        displayValue={currentUser?.username}
-        initialValue={currentUser?.username}
+      <InlineForm<string>
+        displayValue={currentUser?.username ?? ''}
+        initialValue={currentUser?.username ?? ''}
         label="Username"
         required
         rules={[{ message: 'Please input your username', required: true }]}
@@ -82,9 +82,9 @@ const SettingsAccount: React.FC = () => {
         <Input maxLength={32} placeholder="Add username" />
       </InlineForm>
       <Divider />
-      <InlineForm
-        displayValue={currentUser?.displayName}
-        initialValue={currentUser?.displayName}
+      <InlineForm<string>
+        displayValue={currentUser?.displayName ?? ''}
+        initialValue={currentUser?.displayName ?? ''}
         label="Display Name"
         testId="displayname"
         onSubmit={handleSaveDisplayName}>
