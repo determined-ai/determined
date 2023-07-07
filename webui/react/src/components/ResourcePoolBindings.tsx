@@ -1,5 +1,5 @@
 import { useObservable } from 'micro-observables';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
@@ -27,30 +27,34 @@ const ResourcePoolBindings = ({ poolName }: Props): JSX.Element => {
   const resourcePoolBindings: number[] = resourcePoolBindingMap.get(poolName, []);
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
 
-  const tableColumns: ColumnDef<Workspace>[] = [
-    {
-      dataIndex: 'workspace',
-      defaultWidth: 100,
-      key: 'workspace',
-      render: (_, record) => (
-        <div className={css.tableRow}>
-          <DynamicIcon name={record.name} size={40} style={{ borderRadius: '100%' }} />
-          <div>
+  const tableColumns: ColumnDef<Workspace>[] = useMemo(() => {
+    return [
+      {
+        dataIndex: 'workspace',
+        defaultWidth: 100,
+        key: 'workspace',
+        render: (_, record) => (
+          <div className={css.tableRow}>
+            <DynamicIcon name={record.name} size={40} style={{ borderRadius: '100%' }} />
             <div>
-              <Link path={paths.workspaceDetails(record.id)}>{record.name}</Link>
-            </div>
-            <div className={css.numProjects}>
-              {record.numProjects} {record.numProjects > 1 ? 'projects' : 'project'}
+              <div>
+                <Link path={paths.workspaceDetails(record.id)}>{record.name}</Link>
+              </div>
+              <div className={css.numProjects}>
+                {record.numProjects} {record.numProjects > 1 ? 'projects' : 'project'}
+              </div>
             </div>
           </div>
-        </div>
-      ),
-      sorter: (a, b) => alphaNumericSorter(a.name, b.name),
-      title: 'Workspace name',
-    },
-  ];
+        ),
+        sorter: (a, b) => alphaNumericSorter(a.name, b.name),
+        title: 'Workspace name',
+      },
+    ];
+  }, []);
 
-  const tableRows = workspaces.filter((w) => resourcePoolBindings.includes(w.id));
+  const tableRows = useMemo(() => {
+    return workspaces.filter((w) => resourcePoolBindings.includes(w.id));
+  }, [resourcePoolBindings, workspaces]);
 
   const onSaveBindings = useCallback(
     (bindings: string[]) => {
