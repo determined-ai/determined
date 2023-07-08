@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -146,25 +145,48 @@ func (db *PgDB) AddTrialMetrics(
 	return err
 }
 
-// GetMetrics returns a subset metrics of the requested type for the given trial ID.
-func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
-	mType model.MetricType,
-) ([]*trialv1.MetricsReport, error) {
-	var res []*trialv1.MetricsReport
+// GetMetricsQuery returns a basic query for metrics. Supports generic metrics
+func GetMetricsQuery(ctx context.Context, mType model.MetricType) *bun.SelectQuery {
 	pType := customMetricTypeToPartitionType(mType)
 	query := Bun().NewSelect().Table("metrics").
 		Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
 		ColumnExpr("proto_time(end_time) AS end_time").
 		Where("partition_type = ?", pType).
-		Where("trial_id = ?", trialID).
-		Where("total_batches > ?", afterBatches).
-		Where("archived = false")
+		// Where("trial_id = ?", trialID).
+		// Where("total_batches > ?", afterBatches).
+		Where("archived = false").
+		Order("trial_id", "trial_run_id", "total_batches")
 
 	if pType == GenericMetric {
 		// Going off of our current schema were looking for custom types in our legacy
 		// metrics tables is pointless.
 		query.Where("custom_type = ?", mType)
 	}
+	return query
+}
+
+// GetMetrics returns a subset metrics of the requested type for the given trial ID.
+func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
+	mType model.MetricType,
+) ([]*trialv1.MetricsReport, error) {
+	var res []*trialv1.MetricsReport
+	// pType := customMetricTypeToPartitionType(mType)
+	// query := Bun().NewSelect().Table("metrics").
+	// 	Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
+	// 	ColumnExpr("proto_time(end_time) AS end_time").
+	// 	Where("partition_type = ?", pType).
+	// 	Where("trial_id = ?", trialID).
+	// 	Where("total_batches > ?", afterBatches).
+	// 	Where("archived = false")
+
+	// if pType == GenericMetric {
+	// 	// Going off of our current schema were looking for custom types in our legacy
+	// 	// metrics tables is pointless.
+	// 	query.Where("custom_type = ?", mType)
+	// }
+	query := GetMetricsQuery(ctx, mType).
+		Where("trial_id = ?", trialID).
+		Where("total_batches > ?", afterBatches)
 
 	err := query.
 		Order("trial_id", "trial_run_id", "total_batches").
@@ -172,101 +194,4 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 		Scan(ctx, &res)
 
 	return res, err
-}
-
-func InsertTrialSourceInfo(ctx context.Context, tsi *trialv1.TrialSourceInfo,
-) *bun.InsertQuery {
-	// nonZeroValue := func(value int32) *int32 {
-	// 	if value != 0 {
-	// 		return &value
-	// 	}
-	// 	return nil
-	// }
-	// versionId := nonZeroValue(tsi.GetSourceModelVersionId())
-	// versionVersion := nonZeroValue(tsi.GetSourceModelVersionVersion())
-
-	// query := Bun().NewInsert().Model("trial_source_info").TableExpr("trial_source_info").
-	query := Bun().NewInsert().Model(tsi). //.TableExpr("trial_source_info").
-		// 			Column("trial_id", "checkpoint_uuid", "source_trial_id", "source_model_version_id",
-		// "source_model_version_version", "trial_source_info_type", "description"). //, "metadata").
-		// Value("trial_source_info_type", tsi.TrialSourceInfoType.String())
-		Value("trial_source_info_type", "?", tsi.TrialSourceInfoType.String())
-	// Value("checkpoint_uuid", tsi.CheckpointUuid).
-	// Value("source_trial_id", string(tsi.SourceTrialId)).
-	// // Value("source_model_version_id", string(*versionId)).
-	// // Value("source_model_version_version", string(*versionVersion)).
-	// Value("trial_source_info_type", tsi.TrialSourceInfoType.String()).
-	// Value("description", tsi.Description)
-	// Value("metadata", string(tsi.Metadata)).
-
-	// tsi.SourceTrialId,
-	// versionId,
-	// versionVersion,
-	// tsi.TrialSourceInfoType.String(),
-	// 	tsi.Description,
-	// 	tsi.Metadata,
-	// ).
-	// Scan(&resp)
-	if tsi.GetSourceModelVersionId() == 0 {
-		query.ExcludeColumn("source_model_version_id")
-	}
-	if tsi.GetSourceModelVersionVersion() == 0 {
-		query.ExcludeColumn("source_model_version_version")
-	}
-	if tsi.GetMetadata() == nil {
-		query.ExcludeColumn("metadata")
-	}
-	query = query.Returning("trial_id").Returning("checkpoint_uuid")
-	// fmt.Print(query.String())
-	return query
-}
-
-func GetTrialsUsingCheckpoint(ctx context.Context, checkpointUuid string) *bun.SelectQuery {
-	// nonZeroValue := func(value int32) *int32 {
-	// 	if value != 0 {
-	// 		return &value
-	// 	}
-	// 	return nil
-	// }
-	// versionId := nonZeroValue(tsi.GetSourceModelVersionId())
-	// versionVersion := nonZeroValue(tsi.GetSourceModelVersionVersion())
-
-	// query := Bun().NewInsert().Model("trial_source_info").TableExpr("trial_source_info").
-	// query := Bun().NewInsert().Model(tsi). //.TableExpr("trial_source_info").
-	// 			Column("trial_id", "checkpoint_uuid", "source_trial_id", "source_model_version_id",
-	// "source_model_version_version", "trial_source_info_type", "description"). //, "metadata").
-	// Value("trial_source_info_type", tsi.TrialSourceInfoType.String())
-	// Value("trial_source_info_type", "?", tsi.TrialSourceInfoType.String())
-	query := Bun().NewSelect().Table("trial_source_infos").
-		// Column("trial_id", "checkpoint_uuid").
-		Column("trial_id").
-		Where("checkpoint_uuid = ?", checkpointUuid)
-	// Value("checkpoint_uuid", tsi.CheckpointUuid).
-	// Value("source_trial_id", string(tsi.SourceTrialId)).
-	// // Value("source_model_version_id", string(*versionId)).
-	// // Value("source_model_version_version", string(*versionVersion)).
-	// Value("trial_source_info_type", tsi.TrialSourceInfoType.String()).
-	// Value("description", tsi.Description)
-	// Value("metadata", string(tsi.Metadata)).
-
-	// tsi.SourceTrialId,
-	// versionId,
-	// versionVersion,
-	// tsi.TrialSourceInfoType.String(),
-	// 	tsi.Description,
-	// 	tsi.Metadata,
-	// ).
-	// Scan(&resp)
-	// if tsi.GetSourceModelVersionId() == 0 {
-	// 	query.ExcludeColumn("source_model_version_id")
-	// }
-	// if tsi.GetSourceModelVersionVersion() == 0 {
-	// 	query.ExcludeColumn("source_model_version_version")
-	// }
-	// if tsi.GetMetadata() == nil {
-	// 	query.ExcludeColumn("metadata")
-	// }
-	// query = query.Returning("trial_id").Returning("checkpoint_uuid")
-	fmt.Print(query.String())
-	return query
 }

@@ -6,6 +6,7 @@ package internal
 import (
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -20,12 +21,11 @@ import (
 
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
-
-	"github.com/determined-ai/determined/master/internal/db"
 )
 
 func createTestTrial(
@@ -692,6 +692,33 @@ func TestCreateTrialSourceInfo(t *testing.T) {
 	infTrial2, _, _ := createTestTrialWithMetrics(
 		ctx, t, api, curUser, false)
 
+	// api.m.db.AddTrialMetrics()
+	// addTestTrialMetrics(ctx, t, api.m.db, infTrial,
+	// 	`{"inference": [{"a":1}, {"b":2}], "golabi": [{"b":2, "c":3}]}`)
+	var trialMetrics map[model.MetricType][]map[string]any
+	require.NoError(t, json.Unmarshal([]byte(
+		`{"inference": [{"a":1}, {"b":2}], "inference": [{"b":2, "c":3}]}`,
+	), &trialMetrics))
+	// trialRunID := 0
+	for mType, metrics := range trialMetrics {
+		for _, m := range metrics {
+			metrics, err := structpb.NewStruct(m)
+			require.NoError(t, err)
+			err = api.m.db.AddTrialMetrics(ctx,
+				&trialv1.TrialMetrics{
+					TrialId:        int32(infTrial.ID),
+					TrialRunId:     int32(0),
+					StepsCompleted: int32(0),
+					Metrics: &commonv1.Metrics{
+						AvgMetrics: metrics,
+					},
+				},
+				model.MetricType(mType),
+			)
+			require.NoError(t, err)
+		}
+	}
+
 	startingResources := map[string]int64{
 		"a": 1,
 	}
@@ -699,9 +726,8 @@ func TestCreateTrialSourceInfo(t *testing.T) {
 
 	// Basic TrialSourceInfo
 	trial_source_info := &trialv1.TrialSourceInfo{
-		TrialId:        int32(infTrial.ID),
-		CheckpointUuid: checkpointUuid,
-		// SourceTrialId:       int32(sourceTrial.ID),
+		TrialId:             int32(infTrial.ID),
+		CheckpointUuid:      checkpointUuid,
 		TrialSourceInfoType: trialv1.TrialSourceInfoType_INFERENCE,
 	}
 	req := &apiv1.CreateTrialSourceInfoRequest{TrialSourceInfo: trial_source_info}
@@ -711,9 +737,8 @@ func TestCreateTrialSourceInfo(t *testing.T) {
 	require.Equal(t, resp.CheckpointUuid, checkpointUuid)
 
 	trial_source_info2 := &trialv1.TrialSourceInfo{
-		TrialId:        int32(infTrial2.ID),
-		CheckpointUuid: checkpointUuid,
-		// SourceTrialId:       int32(sourceTrial.ID),
+		TrialId:             int32(infTrial2.ID),
+		CheckpointUuid:      checkpointUuid,
 		TrialSourceInfoType: trialv1.TrialSourceInfoType_INFERENCE,
 	}
 	req = &apiv1.CreateTrialSourceInfoRequest{TrialSourceInfo: trial_source_info2}
@@ -722,10 +747,10 @@ func TestCreateTrialSourceInfo(t *testing.T) {
 	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
 	require.Equal(t, resp.CheckpointUuid, checkpointUuid)
 
-	// Get the trials
+	// Get the trials and metrics
 	get_req := &apiv1.GetTrialsUsingCheckpointRequest{CheckpointUuid: checkpointUuid}
 	get_resp, get_err := api.GetTrialsUsingCheckpoint(ctx, get_req)
 	require.NoError(t, get_err)
-	require.Equal(t, len(get_resp.TrialId), 2)
+	require.Equal(t, len(get_resp.Data), 2)
 	// require.Equal(t, resp.CheckpointUuid, checkpointUuid)
 }

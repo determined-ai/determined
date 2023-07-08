@@ -14,6 +14,8 @@ const (
 	ValidationMetricType MetricType = "validation"
 	// TrainingMetricType designates metrics from training runs.
 	TrainingMetricType MetricType = "training"
+	// GenericMetricType designates metrics from any other type of task (inference for example).
+	InferenceMetricType MetricType = "inference"
 )
 
 // MetricType denotes what custom type the metric is.

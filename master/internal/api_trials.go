@@ -958,58 +958,24 @@ func (a *apiServer) CreateTrialSourceInfo(
 	// TODO: Test for failure if you only provide part of the state for the model_version
 
 	resp := &apiv1.CreateTrialSourceInfoResponse{}
-	reqTSI := req.TrialSourceInfo
-
-	// nonZeroValue := func(value int32) *int32 {
-	// 	if value != 0 {
-	// 		return &value
-	// 	}
-	// 	return nil
-	// }
-
-	// versionId := nonZeroValue(reqTSI.GetSourceModelVersionId())
-	// versionVersion := nonZeroValue(reqTSI.GetSourceModelVersionVersion())
-
-	// query := Bun().NewInsert().Model("trial_source_info").
-	// 	Column("trial_id", "checkpoint_uuid", "source_trial_id", "source_model_version_id",
-	// 		"source_model_version_version", "trial_source_info_type", "description", "metadata").
-	// 	Values(
-	// 		reqTSI.TrialId,
-	// 		reqTSI.CheckpointUuid,
-	// 		reqTSI.SourceTrialId,
-	// 		versionId,
-	// 		versionVersion,
-	// 		reqTSI.TrialSourceInfoType.String(),
-	// 		reqTSI.Description,
-	// 		reqTSI.Metadata,
-	// 	).
-	// 	Returning("trial_id", "checkpoint_uuid").
-	// 	Scan(&resp)
-
-	query := db.InsertTrialSourceInfo(ctx, reqTSI)
+	tsi := req.TrialSourceInfo
+	query := db.Bun().NewInsert().Model(tsi).
+		Value("trial_source_info_type", "?", tsi.TrialSourceInfoType.String()).
+		Returning("trial_id").Returning("checkpoint_uuid")
+	if tsi.GetSourceModelVersionId() == 0 {
+		query.ExcludeColumn("source_model_version_id")
+	}
+	if tsi.GetSourceModelVersionVersion() == 0 {
+		query.ExcludeColumn("source_model_version_version")
+	}
+	if tsi.GetMetadata() == nil {
+		query.ExcludeColumn("metadata")
+	}
 	_, err := query.Exec(ctx, resp)
-	// ) *bun.InsertQuery {
-
-	// switch err := a.m.db.QueryProto(
-	// 	"insert_trial_source_info",
-	// 	resp,
-	// 	reqTSI.TrialId,
-	// 	reqTSI.CheckpointUuid,
-	// 	reqTSI.SourceTrialId,
-	// 	versionId,
-	// 	versionVersion,
-	// 	reqTSI.TrialSourceInfoType.String(),
-	// 	reqTSI.Description,
-	// 	reqTSI.Metadata,
-	// ); {
-	// case err != nil:
-	// 	return nil, errors.Wrapf(err, "failed to create trial_source_info for trial %d", reqTSI.TrialId)
-	// }
 	return resp, err
 }
 
-// Create a TrialSourceInfo, which serves as a link between trials and checkpoints
-// used for tracking purposes for fine tuning and inference
+// TODO: Explain this
 func (a *apiServer) GetTrialsUsingCheckpoint(
 	ctx context.Context, req *apiv1.GetTrialsUsingCheckpointRequest,
 ) (*apiv1.GetTrialsUsingCheckpointResponse, error) {
@@ -1019,16 +985,70 @@ func (a *apiServer) GetTrialsUsingCheckpoint(
 	// 	return nil, fmt.Errorf("failed to create trial source info %w", err)
 	// }
 
+	// query := db.GetTrialsUsingCheckpoint(ctx, req.CheckpointUuid)
 	resp := &apiv1.GetTrialsUsingCheckpointResponse{}
-	query := db.GetTrialsUsingCheckpoint(ctx, req.CheckpointUuid)
-	var trialIds []int32
+	trialIDsQuery := db.Bun().NewSelect().Table("trial_source_infos").
+		Where("checkpoint_uuid = ?", req.CheckpointUuid).
+		Column("trial_id")
+	// query = query
+	// var trialIDs []int32
+
+	metricsQuery := db.GetMetricsQuery(ctx, model.InferenceMetricType).
+		// LeftJoin("metrics", "trial_source_infos.trial_id = metrics.trial_id").
+		// Relation("metrics").
+		Where("trial_id IN (?)", trialIDsQuery).
+		Limit(1000)
+	// metricsQuery = metricsQuery.
+	// metricsQuery = metricsQuery
+	fmt.Print(metricsQuery.String())
+
+	rows, err := metricsQuery.Rows(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		res := &trialv1.MetricsReport{}
+		if err := db.Bun().ScanRow(ctx, rows, res); err != nil {
+			return nil, err
+		}
+		// sourceInfoMetric.MetricReport = res
+		sourceInfoMetric := &apiv1.TrialSourceInfoMetric{MetricReport: res}
+		resp.Data = append(resp.Data, sourceInfoMetric)
+	}
+
+	// err := metricsQuery.Scan(ctx, res)
+	// sourceInfoMetric := &apiv1.TrialSourceInfoMetric{}
+	// sourceInfoMetric.MetricReport = append(sourceInfoMetric.MetricReport, res)
+	// // trialSourceInfoMetric := &apiv1.TrialSourceInfoMetric{MetricReport: res}
+	// resp.Data = append(resp.Data, sourceInfoMetric)
 
 	// _, err := query.Exec(ctx, resp)
-	err := query.Scan(ctx, &trialIds)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get trial source info %w", err)
-	}
-	resp.TrialId = trialIds
+	// err := query.Scan(ctx, &trialIDs)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to get trial source info %w", err)
+	// }
+
+	// pType := customMetricTypeToPartitionType(mType)
+
+	// if err := mType.Validate(); err != nil {
+	// 	return 0, err
+	// }
+
+	// key := -1
+	// size := 1000
+	// // trialIDIndex := 0
+	// for _, trialID := range trialIDs {
+	// 	res, err := db.GetMetrics(ctx, int(trialID), key, size, model.InferenceMetricType)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("failed to get trial source info %w", err)
+	// 	}
+	// 	trialSourceInfoMetric := &apiv1.TrialSourceInfoMetric{MetricReport: res}
+	// 	resp.Data = append(resp.Data, trialSourceInfoMetric)
+	// }
+
+	// resp.TrialId = trialIDs
 	return resp, err
 }
 
