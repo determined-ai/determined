@@ -208,7 +208,7 @@ func (a *apiServer) LaunchTensorboard(
 		Config:       req.Config,
 		Files:        req.Files,
 		MustZeroSlot: true,
-		WorkspaceId:  int(req.WorkspaceId),
+		WorkspaceID:  int(req.WorkspaceId),
 	})
 	if err != nil {
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
