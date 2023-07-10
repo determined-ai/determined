@@ -1130,7 +1130,7 @@ message TrialSourceInfoMetric {
   // Type of the TrialSourceInfo
   // determined.trial.v1.TrialSourceInfoType trial_source_info_type = 1;
   // Metric response.
-  determined.trial.v1.MetricsReport metric_report = 2;
+  repeated determined.trial.v1.MetricsReport metric_reports = 2;
 }
   
 
