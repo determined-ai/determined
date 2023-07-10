@@ -40,7 +40,12 @@ func TestMetricsBodyToJSON(t *testing.T) {
 		t.Run(fmt.Sprint(idx), func(t *testing.T) {
 			json := body.ToJSONObj()
 			_, ok := (*json)["batch_metrics"]
-			require.False(t, ok)
+			if body.Type == model.ValidationMetricType {
+				require.False(t, ok)
+			} else {
+				// we can leave this out if it's empty but we keep it for backward compatibility.
+				require.True(t, ok)
+			}
 			key := model.TrialMetricsJSONPath(body.Type == model.ValidationMetricType)
 			_, ok = (*json)[key]
 			require.True(t, ok)
