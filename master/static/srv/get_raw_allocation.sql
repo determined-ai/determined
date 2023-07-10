@@ -84,13 +84,6 @@ workloads AS (
                                 trials AS t on checkpoints_v2.task_id = t.task_id
                             UNION ALL
                             SELECT
-                                'checkpointing' AS kind,
-                                trial_id,
-                                end_time
-                            FROM
-                                raw_checkpoints
-                            UNION ALL
-                            SELECT
                                 'imagepulling' AS kind,
                                 trials.id,
                                 task_stats.end_time
