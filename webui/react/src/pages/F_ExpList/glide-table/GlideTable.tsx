@@ -326,7 +326,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     }
   }, [data, previousData, selectAll]);
 
-  const toogleHeadmap = useCallback(
+  const toggleHeadmap = useCallback(
     (col: string) => {
       const cols =
         heatmapApplied === 'all'
@@ -445,7 +445,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                   ? 'Cancel heatmap'
                   : 'Apply heatmap',
               onClick: () => {
-                toogleHeadmap(column.column);
+                toggleHeadmap(column.column);
               },
             }
           : null,
@@ -496,7 +496,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       setSortableColumnIds,
       setPinnedColumnsCount,
       heatmapApplied,
-      toogleHeadmap,
+      toggleHeadmap,
     ],
   );
 
@@ -730,8 +730,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           case V1ColumnType.NUMBER: {
             const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
             if (
-              (heatmapApplied === 'all' || heatmapApplied.includes(currentColumn.column)) &&
-              heatmap
+              heatmap &&
+              (heatmapApplied === 'all' || heatmapApplied.includes(currentColumn.column))
             ) {
               columnDefs[currentColumn.column] = defaultNumberColumn(
                 currentColumn,

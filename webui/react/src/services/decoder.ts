@@ -616,7 +616,7 @@ const decodeSummaryMetrics = (data: unknown): types.SummaryMetrics => {
   };
 };
 
-const decodeSummaryMetricsValue = (
+const decodeSummaryValidationMetrics = (
   data: types.SummaryMetrics,
   smallerIsBetter?: boolean,
 ): types.MetricsWorkload | undefined => {
@@ -652,7 +652,7 @@ export const decodeV1TrialToTrialItem = (
     state: decodeExperimentState(data.state),
     summaryMetrics,
     summaryValidationMetrics:
-      summaryMetrics && decodeSummaryMetricsValue(summaryMetrics, smallerIsBetter),
+      summaryMetrics && decodeSummaryValidationMetrics(summaryMetrics, smallerIsBetter),
     totalBatchesProcessed: data.totalBatchesProcessed,
     totalCheckpointSize: parseInt(data?.totalCheckpointSize || '0'),
   };

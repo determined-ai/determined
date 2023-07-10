@@ -290,14 +290,20 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const onContextMenuComplete = useCallback(fetchExperiments, [fetchExperiments]);
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
       try {
         const heatMap = await getProjectNumericMetricsRange({ id: project.id });
-        setProjectHeatmap(heatMap);
+        if (mounted) {
+          setProjectHeatmap(heatMap);
+        }
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to fetch project heatmap' });
       }
     })();
+    return () => {
+      mounted = false;
+    };
   }, [project.id]);
 
   // TODO: poll?
