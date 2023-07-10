@@ -171,8 +171,8 @@ func compareMetrics(
 		}
 
 		metrics := map[string]any{
-			"avg_metrics": expected[i].AvgMetrics.AsMap(),
-			// "batch_metrics": nil,
+			"avg_metrics":   expected[i].AvgMetrics.AsMap(),
+			"batch_metrics": nil,
 		}
 		if expected[i].BatchMetrics != nil {
 			var batchMetrics []any
