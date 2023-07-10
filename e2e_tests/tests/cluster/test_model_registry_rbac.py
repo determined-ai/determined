@@ -414,7 +414,7 @@ def test_model_rbac_deletes() -> None:
                     bindings.delete_DeleteModel(delete_session, modelName=model_name)
                     with pytest.raises(errors.NotFoundException) as notFoundErr:
                         bindings.get_GetModel(create_session, modelName=model_name)
-                    assert "not found" in str(notFoundErr.value)
+                    assert "not found" in str(notFoundErr.value).lower()
 
             # test deleting model versions
             tests = [
@@ -475,7 +475,7 @@ def test_model_rbac_deletes() -> None:
                             modelName=model_name,
                             modelVersionNum=model_version_num,
                         )
-                    assert "not found" in str(notFoundErr.value)
+                    assert "not found" in str(notFoundErr.value).lower()
         finally:
             for i in range(model_num):
                 admin_session = api_utils.determined_test_session(ADMIN_CREDENTIALS)

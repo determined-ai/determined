@@ -636,7 +636,7 @@ def test_group_access() -> None:
     creds1 = api_utils.create_test_user()
     with logged_in_user(creds1):
         det_cmd_expect_error(
-            ["workspace", "describe", workspace_name], "Did not find a workspace with name"
+            ["workspace", "describe", workspace_name], "Failed to describe workspace"
         )
 
     # add user to group
