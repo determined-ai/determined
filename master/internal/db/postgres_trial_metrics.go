@@ -148,8 +148,7 @@ WHERE trial_id = $1
 	return int(affectedRows), nil
 }
 
-// addMetricsWithMerge inserts a set of metrics to the database and returns the metric id,
-// and the results.
+// addMetricsWithMerge inserts a set of metrics to the database allowing for metric merges.
 func (db *PgDB) addMetricsWithMerge(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
 	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
 ) (metricID int, addedMetrics *metricsBody, err error) {
@@ -175,7 +174,6 @@ FOR UPDATE`,
 	}
 
 	existingBody := &metricsBody{Type: mType}
-	// CHECK: can we avoid this copy?
 	if err = existingBody.LoadJSON(&existingBodyJSON); err != nil {
 		return 0, nil, err
 	}
