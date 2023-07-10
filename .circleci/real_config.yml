@@ -3376,7 +3376,7 @@ workflows:
               context: ["gcp"]
               workload-manager: ["pbs"]
               always-run: [true]
-              mark: ["e2e_slurm and not parallel"]
+              mark: ["e2e_pbs and not parallel"]
               extra-pytest-flags: ["-k 'not cifar10_pytorch_distributed'"]
           requires:
             - build-go
@@ -3389,7 +3389,7 @@ workflows:
               container-run-type: ["podman"]
               workload-manager: ["pbs"]
               context: ["gcp"]
-              mark: ["e2e_slurm and not parallel"]
+              mark: ["e2e_pbs and not parallel"]
               extra-pytest-flags: ["-k 'not cifar10_pytorch_distributed'"]
           requires:
             - build-go
@@ -3402,7 +3402,7 @@ workflows:
               container-run-type: ["enroot"]
               workload-manager: ["pbs"]
               context: ["gcp"]
-              mark: ["e2e_slurm and not parallel"]
+              mark: ["e2e_pbs and not parallel"]
               extra-pytest-flags: ["-k 'not cifar10_pytorch_distributed'"]       
           requires:
             - build-go
