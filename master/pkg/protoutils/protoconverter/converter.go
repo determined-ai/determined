@@ -166,7 +166,7 @@ func (c *ProtoConverter) ToCheckpointState(x checkpointv1.State) model.State {
 }
 
 // ToMetricType converts a proto metric type to internal metric type representation.
-func (c *ProtoConverter) ToMetricType(x apiv1.MetricType) model.MetricType {
+func (c *ProtoConverter) ToMetricType(x apiv1.MetricType) model.MetricGroup {
 	if c.err != nil {
 		return ""
 	}

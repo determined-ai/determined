@@ -164,7 +164,7 @@ func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	ctx context.Context, tx *sqlx.Tx, trialID int,
 ) error {
 	updatedSummaryMetrics := model.JSONObj{}
-	metricTypes := []model.MetricType{}
+	metricTypes := []model.MetricGroup{}
 	if err := tx.SelectContext(ctx, &metricTypes, `
 SELECT DISTINCT custom_type FROM metrics WHERE partition_type = 'GENERIC' AND trial_id = $1
 	`,
@@ -194,7 +194,7 @@ SELECT DISTINCT custom_type FROM metrics WHERE partition_type = 'GENERIC' AND tr
 }
 
 func (db *PgDB) calculateFullTrialSummaryMetrics(
-	ctx context.Context, tx *sqlx.Tx, trialID int, metricType model.MetricType,
+	ctx context.Context, tx *sqlx.Tx, trialID int, metricType model.MetricGroup,
 ) (model.JSONObj, error) {
 	partition := customMetricTypeToPartitionType(metricType)
 	jsonPath := model.TrialMetricsJSONPath(partition == ValidationMetric)
@@ -260,7 +260,7 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 }
 
 func (db *PgDB) _addTrialMetricsTx(
-	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mType model.MetricType,
+	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mType model.MetricGroup,
 ) (rollbacks int, err error) {
 	isValidation := mType == model.ValidationMetricType
 	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
@@ -359,7 +359,7 @@ WHERE id = $1;
 
 // addTrialMetrics inserts a set of trial metrics to the database.
 func (db *PgDB) addTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricType,
+	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricGroup,
 ) (rollbacks int, err error) {
 	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
 	case float64, nil:

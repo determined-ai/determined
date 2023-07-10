@@ -104,7 +104,7 @@ func addMetrics(ctx context.Context,
 func addTestTrialMetrics(ctx context.Context,
 	t *testing.T, db *PgDB, trialID int, trialMetricsJSON string,
 ) {
-	var trialMetrics map[model.MetricType][]map[string]any
+	var trialMetrics map[model.MetricGroup][]map[string]any
 	require.NoError(t, json.Unmarshal([]byte(trialMetricsJSON), &trialMetrics))
 	trialRunID := 0
 
@@ -134,7 +134,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 		TotalBatches  int
 		EndTime       time.Time
 		PartitionType MetricPartitionType
-		Group         model.MetricType
+		Group         model.MetricGroup
 	}
 
 	baseMetric := metric{
@@ -822,7 +822,7 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 			}))
 		default:
 			rollbacksCnts, err := db.addTrialMetrics(
-				ctx, trialMetrics, model.MetricType(typ),
+				ctx, trialMetrics, model.MetricGroup(typ),
 			)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
@@ -1031,7 +1031,7 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 			require.NoError(t, db.updateTotalBatches(ctx, tx, tr.ID))
 		}
 		if coinFlip() {
-			modelTypes := []model.MetricType{model.TrainingMetricType, model.ValidationMetricType}
+			modelTypes := []model.MetricGroup{model.TrainingMetricType, model.ValidationMetricType}
 			//nolint:gosec // Weak RNG doesn't matter here.
 			modelType := modelTypes[rand.Intn(len(modelTypes))]
 			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, modelType)

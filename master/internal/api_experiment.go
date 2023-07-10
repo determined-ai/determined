@@ -1418,7 +1418,7 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 	seenSearcher := make(map[string]bool)
 	seenTrain := make(map[string]bool)
 	seenValid := make(map[string]bool)
-	seenMetrics := make(map[model.MetricType]map[string]bool)
+	seenMetrics := make(map[model.MetricGroup]map[string]bool)
 
 	var timeSinceLastAuth time.Time
 	for {
@@ -1537,7 +1537,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 		var endTime time.Time
 		var err error
 		//nolint:staticcheck // SA1019: backward compatibility
-		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.Group))
+		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricGroup(req.Group))
 		if err != nil {
 			return err
 		}
@@ -1718,7 +1718,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	var zeroTime time.Time
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
-	var metricID model.MetricType
+	var metricID model.MetricGroup
 	var metricMeasurements []db.MetricMeasurements
 	xAxisLabelMetrics := []string{"epoch"}
 

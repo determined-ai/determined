@@ -510,7 +510,7 @@ func TrialMetricsJSONPath(isValidation bool) string {
 }
 
 // TrialSummaryMetricsJSONPath returns the JSON path to the trials metric summary.
-func TrialSummaryMetricsJSONPath(metricType MetricType) string {
+func TrialSummaryMetricsJSONPath(metricType MetricGroup) string {
 	switch metricType {
 	case ValidationMetricType:
 		return legacyValidationMetricsPath
@@ -522,15 +522,15 @@ func TrialSummaryMetricsJSONPath(metricType MetricType) string {
 }
 
 // TrialSummaryMetricType returns the metric type for the given summary JSON path.
-func TrialSummaryMetricType(jsonPath string) MetricType {
-	var mType MetricType
+func TrialSummaryMetricType(jsonPath string) MetricGroup {
+	var mType MetricGroup
 	switch jsonPath {
 	case TrialSummaryMetricsJSONPath(TrainingMetricType):
 		mType = TrainingMetricType
 	case TrialSummaryMetricsJSONPath(ValidationMetricType):
 		mType = ValidationMetricType
 	default:
-		mType = MetricType(jsonPath)
+		mType = MetricGroup(jsonPath)
 	}
 	return mType
 }

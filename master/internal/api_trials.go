@@ -658,8 +658,8 @@ func (a *apiServer) formatMetrics(
 }
 
 func (a *apiServer) parseMetricTypeArgs(
-	legacyType apiv1.MetricType, newType model.MetricType,
-) (model.MetricType, error) {
+	legacyType apiv1.MetricType, newType model.MetricGroup,
+) (model.MetricGroup, error) {
 	if legacyType != apiv1.MetricType_METRIC_TYPE_UNSPECIFIED && newType != "" {
 		return "", status.Errorf(codes.InvalidArgument, "cannot specify both legacy and new metric type")
 	}
@@ -675,7 +675,7 @@ func (a *apiServer) parseMetricTypeArgs(
 }
 
 func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
-	metricType model.MetricType, maxDatapoints int, startBatches int,
+	metricType model.MetricGroup, maxDatapoints int, startBatches int,
 	endBatches int, timeSeriesFilter *commonv1.PolymorphicFilter,
 	metricIds []string,
 ) ([]*apiv1.DownsampledMetrics, error) {
@@ -712,7 +712,7 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		timeSeriesColumn = timeSeriesFilter.Name
 	}
 
-	metricTypeToNames := make(map[model.MetricType][]string)
+	metricTypeToNames := make(map[model.MetricGroup][]string)
 	if len(metricNames) > 0 {
 		if metricType == "" {
 			// to keep backwards compatibility.
@@ -731,7 +731,7 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 			string(metricID.Name))
 	}
 
-	getDownSampledMetric := func(aMetricNames []string, aMetricType model.MetricType,
+	getDownSampledMetric := func(aMetricNames []string, aMetricType model.MetricGroup,
 	) (*apiv1.DownsampledMetrics, error) {
 		var metric apiv1.DownsampledMetrics
 		metricMeasurements, err := trials.MetricsTimeSeries(
@@ -754,7 +754,7 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		return nil, nil
 	}
 
-	metricTypes := make([]model.MetricType, 0, len(metricTypeToNames))
+	metricTypes := make([]model.MetricGroup, 0, len(metricTypeToNames))
 	for metricType := range metricTypeToNames {
 		metricTypes = append(metricTypes, metricType)
 	}
@@ -795,7 +795,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 		}
 
 		//nolint:staticcheck // SA1019: backward compatibility
-		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.Group))
+		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricGroup(req.Group))
 		if err != nil {
 			return nil, err
 		}
@@ -819,7 +819,7 @@ func (a *apiServer) GetMetrics(
 		return resp.Send(&apiv1.GetMetricsResponse{Metrics: m})
 	}
 	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
-		model.MetricType(req.Type)); err != nil {
+		model.MetricGroup(req.Type)); err != nil {
 		return err
 	}
 
@@ -855,7 +855,7 @@ func (a *apiServer) GetValidationMetrics(
 }
 
 func (a *apiServer) streamMetrics(ctx context.Context,
-	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, metricType model.MetricType,
+	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, metricType model.MetricGroup,
 ) error {
 	if len(trialIDs) == 0 {
 		return status.Error(codes.InvalidArgument, "must specify at least one trialId")
@@ -1331,7 +1331,7 @@ func (a *apiServer) ReportTrialProgress(
 func (a *apiServer) ReportTrialMetrics(
 	ctx context.Context, req *apiv1.ReportTrialMetricsRequest,
 ) (*apiv1.ReportTrialMetricsResponse, error) {
-	metricType := model.MetricType(req.Type)
+	metricType := model.MetricGroup(req.Type)
 	if err := metricType.Validate(); err != nil {
 		return nil, err
 	}

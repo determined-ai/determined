@@ -26,7 +26,7 @@ const (
 
 // BunSelectMetricsQuery sets up a bun select query for based on new metrics table
 // simplifying some weirdness we set up for pg10 support.
-func BunSelectMetricsQuery(metricType model.MetricType, inclArchived bool) *bun.SelectQuery {
+func BunSelectMetricsQuery(metricType model.MetricGroup, inclArchived bool) *bun.SelectQuery {
 	pType := customMetricTypeToPartitionType(metricType)
 	q := Bun().NewSelect().
 		Where("partition_type = ?", pType).
@@ -51,7 +51,7 @@ func BunSelectMetricTypeNames() *bun.SelectQuery {
 rollbackMetrics ensures old training and validation metrics from a previous run id are archived.
 */
 func rollbackMetrics(ctx context.Context, tx *sqlx.Tx, runID, trialID,
-	lastProcessedBatch int32, mType model.MetricType,
+	lastProcessedBatch int32, mType model.MetricGroup,
 ) (int, error) {
 	pType := customMetricTypeToPartitionType(mType)
 	res, err := tx.ExecContext(ctx, `
@@ -82,7 +82,7 @@ WHERE trial_id = $1
 }
 
 func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map[string]interface{},
-	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
+	runID, trialID, lastProcessedBatch int32, mType model.MetricGroup,
 ) (int, error) {
 	pType := customMetricTypeToPartitionType(mType)
 
@@ -106,7 +106,7 @@ RETURNING id`,
 	return metricRowID, nil
 }
 
-func customMetricTypeToPartitionType(mType model.MetricType) MetricPartitionType {
+func customMetricTypeToPartitionType(mType model.MetricGroup) MetricPartitionType {
 	// TODO(hamid): remove partition_type once we move away from pg10 and
 	// we can use DEFAULT partitioning.
 	switch mType {
@@ -139,7 +139,7 @@ func (db *PgDB) AddValidationMetrics(
 
 // AddTrialMetrics persists the given trial metrics to the database.
 func (db *PgDB) AddTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricType,
+	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricGroup,
 ) error {
 	_, err := db.addTrialMetrics(ctx, m, mType)
 	return err
@@ -147,7 +147,7 @@ func (db *PgDB) AddTrialMetrics(
 
 // GetMetrics returns a subset metrics of the requested type for the given trial ID.
 func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
-	mType model.MetricType,
+	mType model.MetricGroup,
 ) ([]*trialv1.MetricsReport, error) {
 	var res []*trialv1.MetricsReport
 	pType := customMetricTypeToPartitionType(mType)

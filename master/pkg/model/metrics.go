@@ -12,9 +12,9 @@ import (
 
 const (
 	// ValidationMetricType designates metrics from validation runs.
-	ValidationMetricType MetricType = "validation"
+	ValidationMetricType MetricGroup = "validation"
 	// TrainingMetricType designates metrics from training runs.
-	TrainingMetricType MetricType = "training"
+	TrainingMetricType MetricGroup = "training"
 )
 
 type metricName string
@@ -27,16 +27,16 @@ func (t metricName) Validate() error {
 	return nil
 }
 
-// MetricType denotes what custom type the metric is.
-type MetricType string
+// MetricGroup denotes what custom type the metric is.
+type MetricGroup string
 
 // ToString returns the string representation of the metric type.
-func (t MetricType) ToString() string {
+func (t MetricGroup) ToString() string {
 	return string(t)
 }
 
 // ToProto returns the proto representation of the metric type.
-func (t MetricType) ToProto() apiv1.MetricType {
+func (t MetricGroup) ToProto() apiv1.MetricType {
 	switch t {
 	case ValidationMetricType:
 		return apiv1.MetricType_METRIC_TYPE_VALIDATION
@@ -48,7 +48,7 @@ func (t MetricType) ToProto() apiv1.MetricType {
 }
 
 // Validate validates the metric type.
-func (t MetricType) Validate() error {
+func (t MetricGroup) Validate() error {
 	if len(t) == 0 {
 		return status.Errorf(codes.InvalidArgument, "metric type cannot be empty")
 	}
@@ -60,7 +60,7 @@ func (t MetricType) Validate() error {
 
 // MetricIdentifier packages metric type and name together.
 type MetricIdentifier struct {
-	Type MetricType
+	Type MetricGroup
 	Name metricName
 }
 
@@ -83,7 +83,7 @@ func DeserializeMetricIdentifier(s string) (*MetricIdentifier, error) {
 	if err := metricIDName.Validate(); err != nil {
 		return nil, err
 	}
-	metricIDType := MetricType(nameAndType[0])
+	metricIDType := MetricGroup(nameAndType[0])
 	if err := metricIDType.Validate(); err != nil {
 		return nil, err
 	}

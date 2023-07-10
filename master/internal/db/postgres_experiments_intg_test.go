@@ -262,8 +262,8 @@ func TestMetricNames(t *testing.T) {
 
 	actualNames, err = db.MetricNames(ctx, []int{exp.ID})
 	require.NoError(t, err)
-	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.MetricType("inference")])
-	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.MetricType("golabi")])
+	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.MetricGroup("inference")])
+	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.MetricGroup("golabi")])
 }
 
 func TestMetricBatchesMilestones(t *testing.T) {
@@ -283,12 +283,12 @@ func TestMetricBatchesMilestones(t *testing.T) {
 	addTestTrialMetrics(ctx, t, db, trial2,
 		`{"inference": [{"b":1}, {"d":2}], "golabi": [{"f":"test"}]}`)
 
-	batches, _, err := MetricBatches(exp.ID, "a", startTime, model.MetricType("inference"))
+	batches, _, err := MetricBatches(exp.ID, "a", startTime, model.MetricGroup("inference"))
 	require.NoError(t, err)
 	require.Len(t, batches, 1)
 	require.Equal(t, batches[0], int32(1))
 
-	batches, _, err = MetricBatches(exp.ID, "b", startTime, model.MetricType("inference"))
+	batches, _, err = MetricBatches(exp.ID, "b", startTime, model.MetricGroup("inference"))
 	require.NoError(t, err)
 	require.Len(t, batches, 2, "should have 2 batches", batches, trial1, trial2)
 	require.Equal(t, batches[0], int32(1))

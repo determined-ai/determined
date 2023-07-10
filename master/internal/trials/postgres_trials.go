@@ -325,7 +325,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	metricNames []string,
 	startBatches int, endBatches int, xAxisMetricLabels []string,
 	maxDatapoints int, timeSeriesColumn string,
-	timeSeriesFilter *commonv1.PolymorphicFilter, metricType model.MetricType) (
+	timeSeriesFilter *commonv1.PolymorphicFilter, metricType model.MetricGroup) (
 	metricMeasurements []db.MetricMeasurements, err error,
 ) {
 	var queryColumn, orderColumn string

@@ -128,7 +128,7 @@ func GetNonTerminalExperimentCount(ctx context.Context,
 
 // MetricNames returns a list of metric names for the given experiment IDs.
 func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
-	map[model.MetricType][]string, error,
+	map[model.MetricGroup][]string, error,
 ) {
 	type MetricNamesRow struct {
 		MetricName string
@@ -147,7 +147,7 @@ func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 		return nil, err
 	}
 
-	metricNamesMap := make(map[model.MetricType][]string)
+	metricNamesMap := make(map[model.MetricGroup][]string)
 	for _, row := range rows {
 		mType := model.TrialSummaryMetricType(row.JSONPath)
 		if _, ok := metricNamesMap[mType]; !ok {
@@ -167,7 +167,7 @@ type batchesWrapper struct {
 // MetricBatches returns the milestones (in batches processed) at which a specific metric
 // was recorded.
 func MetricBatches(
-	experimentID int, metricName string, startTime time.Time, metricType model.MetricType,
+	experimentID int, metricName string, startTime time.Time, metricType model.MetricGroup,
 ) (
 	batches []int32, endTime time.Time, err error,
 ) {
