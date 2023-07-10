@@ -661,7 +661,7 @@ func (a *apiServer) parseMetricGroupArgs(
 	legacyType apiv1.MetricType, newType model.MetricGroup,
 ) (model.MetricGroup, error) {
 	if legacyType != apiv1.MetricType_METRIC_TYPE_UNSPECIFIED && newType != "" {
-		return "", status.Errorf(codes.InvalidArgument, "cannot specify both legacy and new metric type")
+		return "", status.Errorf(codes.InvalidArgument, "cannot specify both legacy and new metric group")
 	}
 	if newType != "" {
 		return newType, nil
@@ -669,7 +669,7 @@ func (a *apiServer) parseMetricGroupArgs(
 	conv := &protoconverter.ProtoConverter{}
 	convertedLegacyType := conv.ToMetricGroup(legacyType)
 	if cErr := conv.Error(); cErr != nil {
-		return "", status.Errorf(codes.InvalidArgument, "converting metric type: %s", cErr)
+		return "", status.Errorf(codes.InvalidArgument, "converting metric group: %s", cErr)
 	}
 	return convertedLegacyType, nil
 }

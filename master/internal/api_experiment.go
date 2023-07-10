@@ -1542,7 +1542,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 			return err
 		}
 		if metricGroup == "" {
-			return status.Error(codes.InvalidArgument, "must specify a metric type")
+			return status.Error(codes.InvalidArgument, "must specify a metric group")
 		}
 		newBatches, endTime, err = db.MetricBatches(experimentID, metricName, startTime, metricGroup)
 		if err != nil {
@@ -1590,7 +1590,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	//nolint:staticcheck // SA1019: backward compatibility
 	metricGroup := req.MetricType
 	if metricGroup == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
-		return status.Error(codes.InvalidArgument, "must specify a metric type")
+		return status.Error(codes.InvalidArgument, "must specify a metric group")
 	}
 	period := time.Duration(req.PeriodSeconds) * time.Second
 	if period == 0 {
@@ -1802,7 +1802,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	//nolint:staticcheck // SA1019: backward compatibility
 	metricGroup := req.MetricType
 	if metricGroup == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
-		return status.Error(codes.InvalidArgument, "must specify a metric type")
+		return status.Error(codes.InvalidArgument, "must specify a metric group")
 	}
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")

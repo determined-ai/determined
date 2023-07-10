@@ -521,7 +521,7 @@ func TrialSummaryMetricsJSONPath(metricGroup MetricGroup) string {
 	}
 }
 
-// TrialSummaryMetricGroup returns the metric type for the given summary JSON path.
+// TrialSummaryMetricGroup returns the metric group for the given summary JSON path.
 func TrialSummaryMetricGroup(jsonPath string) MetricGroup {
 	var mGroup MetricGroup
 	switch jsonPath {

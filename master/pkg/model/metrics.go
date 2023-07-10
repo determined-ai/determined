@@ -30,12 +30,12 @@ func (t metricName) Validate() error {
 // MetricGroup denotes what custom type the metric is.
 type MetricGroup string
 
-// ToString returns the string representation of the metric type.
+// ToString returns the string representation of the metric group.
 func (t MetricGroup) ToString() string {
 	return string(t)
 }
 
-// ToProto returns the proto representation of the metric type.
+// ToProto returns the proto representation of the metric group.
 func (t MetricGroup) ToProto() apiv1.MetricType {
 	switch t {
 	case ValidationMetricGroup:
@@ -47,18 +47,18 @@ func (t MetricGroup) ToProto() apiv1.MetricType {
 	}
 }
 
-// Validate validates the metric type.
+// Validate validates the metric group.
 func (t MetricGroup) Validate() error {
 	if len(t) == 0 {
-		return status.Errorf(codes.InvalidArgument, "metric type cannot be empty")
+		return status.Errorf(codes.InvalidArgument, "metric group cannot be empty")
 	}
 	if strings.Contains(t.ToString(), ".") {
-		return status.Errorf(codes.InvalidArgument, "metric type cannot contain '.'")
+		return status.Errorf(codes.InvalidArgument, "metric group cannot contain '.'")
 	}
 	return nil
 }
 
-// MetricIdentifier packages metric type and name together.
+// MetricIdentifier packages metric group and name together.
 type MetricIdentifier struct {
 	Type MetricGroup
 	Name metricName
@@ -77,7 +77,7 @@ func DeserializeMetricIdentifier(s string) (*MetricIdentifier, error) {
 	nameAndType := strings.SplitN(s, ".", 2)
 	if len(nameAndType) < 2 {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid metric identifier: '%s' expected <type>.<name>", s)
+			"invalid metric identifier: '%s' expected <group>.<name>", s)
 	}
 	metricIDName := metricName(nameAndType[1])
 	if err := metricIDName.Validate(); err != nil {

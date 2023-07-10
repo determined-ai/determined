@@ -37,7 +37,7 @@ func BunSelectMetricsQuery(metricGroup model.MetricGroup, inclArchived bool) *bu
 	return q
 }
 
-// BunSelectMetricGroupNames sets up a bun select query for getting all the metric type and names.
+// BunSelectMetricGroupNames sets up a bun select query for getting all the metric group and names.
 func BunSelectMetricGroupNames() *bun.SelectQuery {
 	return Bun().NewSelect().Table("trials").
 		ColumnExpr("DISTINCT jsonb_object_keys(summary_metrics) as json_path").
