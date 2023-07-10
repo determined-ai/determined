@@ -2,7 +2,7 @@ name: torchvision dsat core_api
 max_restarts: 0
 environment:
   image:
-    gpu: determinedai/environments-dev:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.23.3
+    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.23.3
 resources:
   slots_per_trial: 2
   shm_size: 4294967296 # 4 GiB.
