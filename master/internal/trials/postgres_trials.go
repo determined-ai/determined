@@ -358,7 +358,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	}
 
 	for _, metricName := range append(metricNames, "epoch") {
-		metricGroup := db.MetricGroupString
+		metricGroup := db.MetricTypeString
 		if curSummary, ok := summaryMetrics.Metrics[metricName].(map[string]any); ok {
 			if m, ok := curSummary["type"].(string); ok {
 				metricGroup = m
@@ -367,9 +367,9 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 
 		cast := "text"
 		switch metricGroup {
-		case db.MetricGroupNumber:
+		case db.MetricTypeNumber:
 			cast = "float8"
-		case db.MetricGroupBool:
+		case db.MetricTypeBool:
 			cast = "boolean"
 		}
 		subq = subq.ColumnExpr("(metrics->?->>?)::? as ?",

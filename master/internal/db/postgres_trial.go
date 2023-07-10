@@ -381,20 +381,20 @@ const (
 	// NaNPostgresString how we store NaN in JSONB in postgres.
 	NaNPostgresString = "NaN"
 
-	// MetricGroupString is the summary metric type for string or mixed types.
-	MetricGroupString = "string"
-	// MetricGroupNumber is the summary metric type for floats or ints.
-	MetricGroupNumber = "number"
-	// MetricGroupBool is the summary metric type for boolean.
-	MetricGroupBool = "boolean"
-	// MetricGroupDate is the summary metric type for date metrics.
-	MetricGroupDate = "date"
-	// MetricGroupObject is the summary metric type for object types.
-	MetricGroupObject = "object"
-	// MetricGroupArray is the summary metric type for array types.
-	MetricGroupArray = "array"
-	// MetricGroupNull is the summary metric type for array types.
-	MetricGroupNull = "null"
+	// MetricTypeString is the summary metric type for string or mixed types.
+	MetricTypeString = "string"
+	// MetricTypeNumber is the summary metric type for floats or ints.
+	MetricTypeNumber = "number"
+	// MetricTypeBool is the summary metric type for boolean.
+	MetricTypeBool = "boolean"
+	// MetricTypeDate is the summary metric type for date metrics.
+	MetricTypeDate = "date"
+	// MetricTypeObject is the summary metric type for object types.
+	MetricTypeObject = "object"
+	// MetricTypeArray is the summary metric type for array types.
+	MetricTypeArray = "array"
+	// MetricTypeNull is the summary metric type for array types.
+	MetricTypeNull = "null"
 )
 
 func jsonAnyToFloat(v any) float64 {
@@ -449,46 +449,46 @@ func calculateNewSummaryMetrics(
 	for metricName, metric := range metrics.Fields {
 		// Get type of provided metric.
 		metricFloatValue := 0.0
-		metricGroup := ""
+		metricType := ""
 		switch metricValue := metric.AsInterface().(type) {
 		case float64:
 			metricFloatValue = metricValue
-			metricGroup = MetricGroupNumber
+			metricType = MetricTypeNumber
 		case string:
 			switch f, ok := stringToSpecialFloats(metricValue); {
 			case ok:
 				metricFloatValue = f
-				metricGroup = MetricGroupNumber
+				metricType = MetricTypeNumber
 			case pythonISOFormatRegex.MatchString(metricValue):
-				metricGroup = MetricGroupDate
+				metricType = MetricTypeDate
 			default:
-				metricGroup = MetricGroupString
+				metricType = MetricTypeString
 			}
 		case bool:
-			metricGroup = MetricGroupBool
+			metricType = MetricTypeBool
 		case map[string]any:
-			metricGroup = MetricGroupObject
+			metricType = MetricTypeObject
 		case []any:
-			metricGroup = MetricGroupArray
+			metricType = MetricTypeArray
 		case nil:
-			metricGroup = MetricGroupNull
+			metricType = MetricTypeNull
 		default:
-			metricGroup = MetricGroupString
+			metricType = MetricTypeString
 		}
 
 		// If we haven't seen this metric before just add the type we have.
 		var ok bool
 		var summaryMetric map[string]any
 		if summaryMetric, ok = summaryMetrics[metricName].(map[string]any); !ok {
-			summaryMetric = map[string]any{"type": metricGroup}
-		} else if summaryMetric["type"] != metricGroup {
+			summaryMetric = map[string]any{"type": metricType}
+		} else if summaryMetric["type"] != metricType {
 			// If we have seen this before check if we disagree on types and set to string if we do.
-			metricGroup = "string"
-			summaryMetric = map[string]any{"type": metricGroup}
+			metricType = "string"
+			summaryMetric = map[string]any{"type": metricType}
 		}
 		summaryMetrics[metricName] = summaryMetric
 
-		if metricGroup != MetricGroupNumber {
+		if metricType != MetricTypeNumber {
 			continue
 		}
 
