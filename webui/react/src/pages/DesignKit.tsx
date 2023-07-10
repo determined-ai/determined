@@ -934,6 +934,8 @@ const CodeEditorSection: React.FC = () => {
 
 const InlineFormSection: React.FC = () => {
   const [inputWithValidatorValue, setInputWithValidatorValue] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [numberInput, setNumberInput] = useState(1234);
   const [textAreaValue, setTextAreaValue] = useState(
     'Lorem ipsum dolor sit amet consectetur adipisicing elit. Id tempora harum animi, provident explicabo in esse, hic qui cumque maiores ipsa, praesentium ad repellat dolorem voluptates! Eligendi magnam blanditiis velit.',
   );
@@ -942,6 +944,12 @@ const InlineFormSection: React.FC = () => {
 
   const inputWithValidatorCallback = useCallback((newValue: string) => {
     setInputWithValidatorValue(newValue);
+  }, []);
+  const numberInputCallback = useCallback((newValue: number) => {
+    setNumberInput(newValue);
+  }, []);
+  const searchCallback = useCallback((newValue: string) => {
+    setSearchInput(newValue);
   }, []);
   const textAreaCallback = useCallback((newValue: string) => {
     setTextAreaValue(newValue);
@@ -1014,10 +1022,29 @@ const InlineFormSection: React.FC = () => {
               ))}
             </Select>
           </InlineForm>
+          <hr />
+          <InlineForm<number>
+            initialValue={numberInput}
+            label="Input Number"
+            value={numberInput}
+            onSubmit={numberInputCallback}>
+            <InputNumber />
+          </InlineForm>
+          <hr />
+          <InlineForm<string>
+            initialValue={searchInput}
+            label="Input Search"
+            value={searchInput}
+            onSubmit={searchCallback}>
+            <InputSearch allowClear enterButton placeholder="Input Search" />
+          </InlineForm>
         </div>
-        <h5>Uncontroled</h5>
+        <h5>Uncontrolled</h5>
         <div style={{ maxWidth: '700px' }}>
-          <InlineForm<string> initialValue={'initial value'} label="Input">
+          <InlineForm<string>
+            initialValue={'initial value'}
+            label="Input with validator"
+            rules={[{ message: 'Please input something here!', required: true }]}>
             <Input />
           </InlineForm>
           <hr />
@@ -1027,6 +1054,27 @@ const InlineFormSection: React.FC = () => {
           <hr />
           <InlineForm<string> initialValue={''} label="Input Search">
             <InputSearch allowClear enterButton placeholder="Input Search" />
+          </InlineForm>
+          <hr />
+          <InlineForm<string> initialValue={textAreaValue} label="Text Area">
+            <Input.TextArea />
+          </InlineForm>
+          <hr />
+          <InlineForm<string> initialValue={''} isPassword label="Password">
+            <Input.Password />
+          </InlineForm>
+          <hr />
+          <InlineForm<string> initialValue={selectValue} label="Select">
+            <Select defaultValue={1} searchable={false}>
+              {[
+                { label: 'off', value: 1 },
+                { label: 'on', value: 2 },
+              ].map((opt) => (
+                <Option key={opt.value as React.Key} value={opt.value}>
+                  {opt.label}
+                </Option>
+              ))}
+            </Select>
           </InlineForm>
         </div>
       </AntDCard>
