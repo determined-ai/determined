@@ -47,7 +47,7 @@ func (as *AllocationService) StartAllocation(
 	specifier tasks.TaskSpecifier,
 	system *actor.System,
 	parent *actor.Ref,
-) *Allocation {
+) {
 	as.mu.Lock()
 	defer as.mu.Unlock()
 
@@ -64,8 +64,6 @@ func (as *AllocationService) StartAllocation(
 		defer as.mu.Unlock()
 		delete(as.allocations, req.AllocationID)
 	}()
-
-	return ref
 }
 
 // GetAllocation returns allocation actor by allocation id.
@@ -207,6 +205,20 @@ func (as *AllocationService) SetResourcesAsDaemon(
 	}
 
 	return ref.SetResourcesAsDaemon(ctx, rID)
+}
+
+// Signal the allocation with the given signal.
+func (as *AllocationService) Signal(
+	id model.AllocationID,
+	sig AllocationSignal,
+	reason string,
+) error {
+	ref := as.GetAllocation(id)
+	if ref == nil {
+		return api.NotFoundErrs("allocation", id.String(), true)
+	}
+	ref.HandleSignal(sig, reason) // TODO: public/private methods on allocation itself.
+	return nil
 }
 
 // State returns a copy of the current state of the allocation.

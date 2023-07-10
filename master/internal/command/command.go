@@ -216,7 +216,6 @@ type command struct {
 	jobType        model.JobType
 	jobID          model.JobID
 	allocationID   model.AllocationID
-	allocation     *task.Allocation
 	lastState      task.AllocationState
 	exitStatus     *task.AllocationExited
 	restored       bool
@@ -269,7 +268,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		c.allocation = task.DefaultService.StartAllocation(c.logCtx, sproto.AllocateRequest{
+		task.DefaultService.StartAllocation(c.logCtx, sproto.AllocateRequest{
 			AllocationID:      c.allocationID,
 			TaskID:            c.taskID,
 			JobID:             c.jobID,
@@ -311,10 +310,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 				"failure to delete user session for task: %v", c.taskID)
 		}
 	case *task.AllocationExited:
-		// TODO(!!!): Synchronize with the allocation background loop's exit. Instead, like
-		// the comment in trial.go, just use this instead of `ctx.Tell(*task.AllocationExited)`
-		// to get the exit.
-		_ = c.allocation.AwaitTermination()
 		c.exitStatus = msg
 		if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 			ctx.Log().WithError(err).Error("marking task complete")
@@ -339,7 +334,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 	case *apiv1.KillNotebookRequest:
 		// TODO(Brad): Do the same thing to allocations that we are doing to RMs.
-		c.allocation.HandleSignal(task.KillAllocation, "user requested kill")
+		task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
 	case *apiv1.SetNotebookPriorityRequest:
 		err := c.setPriority(ctx, int(msg.Priority), true)
@@ -359,7 +354,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillCommandRequest:
-		c.allocation.HandleSignal(task.KillAllocation, "user requested kill")
+		task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
 		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
 
 	case *apiv1.SetCommandPriorityRequest:
@@ -380,7 +375,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillShellRequest:
-		c.allocation.HandleSignal(task.KillAllocation, "user requested kill")
+		task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
 		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
 
 	case *apiv1.SetShellPriorityRequest:
@@ -401,7 +396,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillTensorboardRequest:
-		c.allocation.HandleSignal(task.KillAllocation, "user requested kill")
+		task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
 
 	case *apiv1.SetTensorboardPriorityRequest:
@@ -414,7 +409,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case *apiv1.DeleteWorkspaceRequest:
 		if c.Metadata.WorkspaceID == model.AccessScopeID(msg.Id) {
-			c.allocation.HandleSignal(task.KillAllocation, "user requested workspace delete")
+			task.DefaultService.Signal(
+				c.allocationID,
+				task.KillAllocation,
+				"user requested workspace delete",
+			)
 		}
 
 	case sproto.NotifyRMPriorityChange:
@@ -595,7 +594,12 @@ func (c *command) refreshAllocationState(ctx *actor.Context) task.AllocationStat
 		return c.exitStatus.FinalState
 	}
 
-	c.lastState = c.allocation.State()
+	state, err := task.DefaultService.State(c.allocationID)
+	if err != nil {
+		ctx.Log().WithError(err).Warn("refreshing allocation state")
+	} else {
+		c.lastState = state
+	}
 	return c.lastState
 }
 

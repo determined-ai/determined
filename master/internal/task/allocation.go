@@ -211,7 +211,6 @@ func startAllocation(
 // the error is never returned by Receive, and that a.Error(ctx, err) is called,
 // that way the allocation can cleanup properly.
 func (a *Allocation) run(ctx context.Context) {
-	defer a.wg.Cancel()
 	defer a.recover()
 
 	for {
@@ -442,9 +441,9 @@ func (a *Allocation) handleRMEvent(msg sproto.AllocationEvent) {
 	case *sproto.ReleaseResources:
 		if msg.ForceKill {
 			a.tryExitOrKill(msg.Reason)
-			return
+		} else {
+			a.tryExitOrTerminate(msg.Reason, msg.ForcePreemption)
 		}
-		a.tryExitOrTerminate("allocation being preempted by the scheduler", msg.ForcePreemption)
 	case *sproto.ContainerLog:
 		a.sendTaskLog(msg.ToTaskLog())
 	case *sproto.InvalidResourcesRequestError:

@@ -87,7 +87,7 @@ type trial struct {
 	runID int
 
 	// a ref to the current allocation
-	allocation trialRunAllocation
+	allocationID *model.AllocationID
 	// a note of the user initated exit reason, if any.
 	userInitiatedExit *model.ExitedReason
 
@@ -197,15 +197,19 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		resources := t.config.Resources()
 		resources.SetResourcePool(msg.ResourcePool)
 		t.config.SetResources(resources)
-		if t.allocation != nil {
-			t.allocation.HandleSignal(task.TerminateAllocation, "allocation resource pool changed")
+		if t.allocationID != nil {
+			task.DefaultService.Signal(
+				*t.allocationID,
+				task.TerminateAllocation,
+				"allocation resource pool changed",
+			)
 		}
 	case userInitiatedEarlyExit:
 		if err := t.handleUserInitiatedStops(ctx, msg); err != nil {
 			ctx.Respond(err)
 		}
 	case *task.AllocationExited:
-		if t.allocation != nil {
+		if t.allocationID != nil {
 			return t.allocationExited(ctx, msg)
 		}
 	case sproto.ContainerLog:
@@ -281,13 +285,13 @@ var taskAllocator = func(
 	specifier tasks.TaskSpecifier,
 	system *actor.System,
 	parent *actor.Ref,
-) trialRunAllocation {
-	return task.DefaultService.StartAllocation(logCtx, req, db, rm, specifier, system, parent)
+) {
+	task.DefaultService.StartAllocation(logCtx, req, db, rm, specifier, system, parent)
 }
 
 // maybeAllocateTask checks if the trial should allocate state and allocates it if so.
 func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
-	if !(t.allocation == nil &&
+	if !(t.allocationID == nil &&
 		!t.searcher.Complete &&
 		t.state == model.ActiveState) {
 		return nil
@@ -328,7 +332,8 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		ctx.Log().
 			WithField("allocation-id", ar.AllocationID).
 			Infof("starting restored trial allocation")
-		t.allocation = taskAllocator(t.logCtx, ar, t.db, t.rm, specifier, ctx.Self().System(), ctx.Self())
+		taskAllocator(t.logCtx, ar, t.db, t.rm, specifier, ctx.Self().System(), ctx.Self())
+		t.allocationID = &ar.AllocationID
 		// TODO(!!!): Just have the parent (trial) call `t.allocation.AwaitTermination()`, rather
 		// than the implicit "your child ctx.Tell(...)'s you an exit" as an "API" (scare quotes).
 		return nil
@@ -368,7 +373,8 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		Debugf("starting new trial allocation")
 
 	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
-	t.allocation = taskAllocator(t.logCtx, ar, t.db, t.rm, specifier, ctx.Self().System(), ctx.Self())
+	taskAllocator(t.logCtx, ar, t.db, t.rm, specifier, ctx.Self().System(), ctx.Self())
+	t.allocationID = &ar.AllocationID
 	return nil
 }
 
@@ -440,11 +446,10 @@ func (t *trial) buildTaskSpecifier(ctx *actor.Context) (*tasks.TrialSpec, error)
 
 // allocationExited cleans up after an allocation exit and exits permanently or reallocates.
 func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited) error {
-	// TODO(!!!): Just do this to get the exit, to get rid of this extra synchronization.
-	if exit := t.allocation.AwaitTermination(); exit != nil && exit.Err != nil {
+	if exit.Err != nil {
 		ctx.Log().WithError(exit.Err).Error("trial allocation failed")
 	}
-	t.allocation = nil
+	t.allocationID = nil
 
 	prom.DisassociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
 
@@ -574,13 +579,17 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 	case t.state == model.ActiveState:
 		return t.maybeAllocateTask(ctx)
 	case t.state == model.PausedState:
-		if t.allocation != nil {
+		if t.allocationID != nil {
 			ctx.Log().Info("decided to terminate trial due to pause")
-			t.allocation.HandleSignal(task.TerminateAllocation, s.InformationalReason)
+			task.DefaultService.Signal(
+				*t.allocationID,
+				task.TerminateAllocation,
+				s.InformationalReason,
+			)
 		}
 	case model.StoppingStates[t.state]:
 		switch {
-		case t.allocation == nil:
+		case t.allocationID == nil:
 			ctx.Log().Info("stopping trial before resources are requested")
 			return t.transition(ctx, model.StateWithReason{
 				State:               model.StoppingToTerminalStates[t.state],
@@ -593,7 +602,7 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 				model.StoppingErrorState:    task.KillAllocation,
 			}[t.state]; ok {
 				ctx.Log().Infof("decided to %s trial", action)
-				t.allocation.HandleSignal(action, s.InformationalReason)
+				task.DefaultService.Signal(*t.allocationID, action, s.InformationalReason)
 			}
 		}
 	case model.TerminalStates[t.state]:
