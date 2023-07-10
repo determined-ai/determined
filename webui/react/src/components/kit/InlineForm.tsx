@@ -50,9 +50,9 @@ function InlineForm<T>({
   }, [shouldColapseText, value, initialValue, isPassword, inputCurrentValue]);
 
   const resetForm = useCallback(() => {
-    form.setFieldValue('input', initialValue);
+    form.resetFields();
     setIsEditing(false);
-  }, [form, initialValue]);
+  }, [form]);
 
   const submitForm = useCallback(async () => {
     try {
@@ -89,7 +89,7 @@ function InlineForm<T>({
         name="input"
         required={required}
         rules={rules}
-        validateTrigger={['onSubmit']}>
+        validateTrigger={['onSubmit', 'onChange']}>
         {isEditing ? (
           children
         ) : (
@@ -106,6 +106,8 @@ function InlineForm<T>({
               icon={<Icon name="checkmark" title="confirm" />}
               type="primary"
               onClick={() => {
+                if (form.getFieldError('input').length) return;
+
                 form.submit();
                 submitForm();
               }}
