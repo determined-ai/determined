@@ -23,7 +23,7 @@ SELECT
         WHEN a.allocation_id IS NULL THEN NULL
         ELSE a.allocation_id
     END,
-    COALESCE(c.end_time, NOW()),
+    COALESCE(c.end_time, t.end_time, NOW()),
     c.state,
     c.resources,
     c.metadata,
