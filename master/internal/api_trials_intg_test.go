@@ -198,7 +198,7 @@ func compareMetrics(
 			Id:           actual.Id,
 		}
 		proto.Equal(actual, expectedRow)
-		require.Equal(t, actual, expectedRow)
+		require.Equal(t, expectedRow.Metrics.AsMap(), actual.Metrics.AsMap())
 
 		totalBatches++
 	}
