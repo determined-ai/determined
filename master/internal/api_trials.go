@@ -658,9 +658,9 @@ func (a *apiServer) formatMetrics(
 }
 
 func (a *apiServer) parseMetricGroupArgs(
-	legacyType apiv1.MetricGroup, newType model.MetricGroup,
+	legacyType apiv1.MetricType, newType model.MetricGroup,
 ) (model.MetricGroup, error) {
-	if legacyType != apiv1.MetricGroup_METRIC_TYPE_UNSPECIFIED && newType != "" {
+	if legacyType != apiv1.MetricType_METRIC_TYPE_UNSPECIFIED && newType != "" {
 		return "", status.Errorf(codes.InvalidArgument, "cannot specify both legacy and new metric type")
 	}
 	if newType != "" {
@@ -795,7 +795,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 		}
 
 		//nolint:staticcheck // SA1019: backward compatibility
-		metricGroup, err := a.parseMetricGroupArgs(req.MetricGroup, model.MetricGroup(req.Group))
+		metricGroup, err := a.parseMetricGroupArgs(req.MetricType, model.MetricGroup(req.Group))
 		if err != nil {
 			return nil, err
 		}
@@ -947,7 +947,7 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 		req.Filter.String(),
 		req.IncludeBatchMetrics,
 		//nolint:staticcheck // SA1019: backward compatibility
-		req.MetricGroup.String(),
+		req.MetricType.String(),
 	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d workloads not found:", req.TrialId)

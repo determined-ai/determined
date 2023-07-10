@@ -166,17 +166,17 @@ func (c *ProtoConverter) ToCheckpointState(x checkpointv1.State) model.State {
 }
 
 // ToMetricGroup converts a proto metric type to internal metric type representation.
-func (c *ProtoConverter) ToMetricGroup(x apiv1.MetricGroup) model.MetricGroup {
+func (c *ProtoConverter) ToMetricGroup(x apiv1.MetricType) model.MetricGroup {
 	if c.err != nil {
 		return ""
 	}
 
 	switch x {
-	case apiv1.MetricGroup_METRIC_TYPE_UNSPECIFIED:
+	case apiv1.MetricType_METRIC_TYPE_UNSPECIFIED:
 		return ""
-	case apiv1.MetricGroup_METRIC_TYPE_TRAINING:
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
 		return model.TrainingMetricGroup
-	case apiv1.MetricGroup_METRIC_TYPE_VALIDATION:
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
 		return model.ValidationMetricGroup
 	default:
 		c.err = fmt.Errorf("metric type %s is not a valid metric type to the backend", x)

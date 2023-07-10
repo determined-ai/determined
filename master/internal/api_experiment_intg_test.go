@@ -693,7 +693,7 @@ func TestLegacyExperiments(t *testing.T) {
 		req := &apiv1.TrialsSampleRequest{
 			ExperimentId: prse.CompletedAdaptiveSimpleExpID,
 			MetricName:   "loss",
-			MetricGroup:   apiv1.MetricGroup_METRIC_TYPE_TRAINING,
+			MetricType:   apiv1.MetricType_METRIC_TYPE_TRAINING,
 		}
 		err = api.TrialsSample(req, &mockStream[*apiv1.TrialsSampleResponse]{ctx: ctx})
 		require.NoError(t, err)
@@ -1088,21 +1088,21 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			return api.MetricBatches(&apiv1.MetricBatchesRequest{
 				ExperimentId: int32(id),
 				MetricName:   "name",
-				MetricGroup:   apiv1.MetricGroup_METRIC_TYPE_TRAINING,
+				MetricType:   apiv1.MetricType_METRIC_TYPE_TRAINING,
 			}, &mockStream[*apiv1.MetricBatchesResponse]{ctx: ctx})
 		}},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			return api.TrialsSnapshot(&apiv1.TrialsSnapshotRequest{
 				ExperimentId: int32(id),
 				MetricName:   "name",
-				MetricGroup:   apiv1.MetricGroup_METRIC_TYPE_TRAINING,
+				MetricType:   apiv1.MetricType_METRIC_TYPE_TRAINING,
 			}, &mockStream[*apiv1.TrialsSnapshotResponse]{ctx: ctx})
 		}},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			return api.TrialsSample(&apiv1.TrialsSampleRequest{
 				ExperimentId: int32(id),
 				MetricName:   "name",
-				MetricGroup:   apiv1.MetricGroup_METRIC_TYPE_TRAINING,
+				MetricType:   apiv1.MetricType_METRIC_TYPE_TRAINING,
 			}, &mockStream[*apiv1.TrialsSampleResponse]{ctx: ctx})
 		}},
 		{"CanGetExperimentArtifacts", func(id int) error {

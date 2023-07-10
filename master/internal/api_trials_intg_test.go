@@ -451,7 +451,7 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 
 			err = api.TrialsSample(&apiv1.TrialsSampleRequest{
 				ExperimentId:  int32(trial.ExperimentID),
-				MetricGroup:    apiv1.MetricGroup_METRIC_TYPE_VALIDATION,
+				MetricType:    apiv1.MetricType_METRIC_TYPE_VALIDATION,
 				MetricName:    metricName,
 				PeriodSeconds: 1,
 			}, resp)
@@ -648,7 +648,7 @@ func TestCompareTrialsSampling(t *testing.T) {
 		MetricNames:   []string{"loss"},
 		StartBatches:  0,
 		EndBatches:    1000,
-		MetricGroup:    apiv1.MetricGroup_METRIC_TYPE_TRAINING,
+		MetricType:    apiv1.MetricType_METRIC_TYPE_TRAINING,
 	}
 
 	resp, err := api.CompareTrials(ctx, req)

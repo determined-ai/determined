@@ -1537,7 +1537,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 		var endTime time.Time
 		var err error
 		//nolint:staticcheck // SA1019: backward compatibility
-		metricGroup, err := a.parseMetricGroupArgs(req.MetricGroup, model.MetricGroup(req.Group))
+		metricGroup, err := a.parseMetricGroupArgs(req.MetricType, model.MetricGroup(req.Group))
 		if err != nil {
 			return err
 		}
@@ -1588,8 +1588,8 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}
 	//nolint:staticcheck // SA1019: backward compatibility
-	metricGroup := req.MetricGroup
-	if metricGroup == apiv1.MetricGroup_METRIC_TYPE_UNSPECIFIED {
+	metricGroup := req.MetricType
+	if metricGroup == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
 		return status.Error(codes.InvalidArgument, "must specify a metric type")
 	}
 	period := time.Duration(req.PeriodSeconds) * time.Second
@@ -1627,10 +1627,10 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		var endTime time.Time
 		var err error
 		switch metricGroup {
-		case apiv1.MetricGroup_METRIC_TYPE_TRAINING:
+		case apiv1.MetricType_METRIC_TYPE_TRAINING:
 			newTrials, endTime, err = a.m.db.TrainingTrialsSnapshot(experimentID,
 				minBatches, maxBatches, metricName, startTime)
-		case apiv1.MetricGroup_METRIC_TYPE_VALIDATION:
+		case apiv1.MetricType_METRIC_TYPE_VALIDATION:
 			newTrials, endTime, err = a.m.db.ValidationTrialsSnapshot(experimentID,
 				minBatches, maxBatches, metricName, startTime)
 		default:
@@ -1710,7 +1710,7 @@ func (a *apiServer) topTrials(
 	}
 }
 
-func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGroup apiv1.MetricGroup,
+func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGroup apiv1.MetricType,
 	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
 	trialCursors map[int32]time.Time,
 ) (*apiv1.TrialsSampleResponse_Trial, error) {
@@ -1738,9 +1738,9 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGro
 		startTime = zeroTime
 	}
 	switch metricGroup {
-	case apiv1.MetricGroup_METRIC_TYPE_TRAINING:
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
 		metricID = model.TrainingMetricGroup //nolint:goconst
-	case apiv1.MetricGroup_METRIC_TYPE_VALIDATION:
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
 		metricID = model.ValidationMetricGroup //nolint:goconst
 	default:
 		panic("Invalid metric type")
@@ -1800,8 +1800,8 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 
 	metricName := req.MetricName
 	//nolint:staticcheck // SA1019: backward compatibility
-	metricGroup := req.MetricGroup
-	if metricGroup == apiv1.MetricGroup_METRIC_TYPE_UNSPECIFIED {
+	metricGroup := req.MetricType
+	if metricGroup == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
 		return status.Error(codes.InvalidArgument, "must specify a metric type")
 	}
 	if metricName == "" {

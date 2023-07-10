@@ -36,14 +36,14 @@ func (t MetricGroup) ToString() string {
 }
 
 // ToProto returns the proto representation of the metric type.
-func (t MetricGroup) ToProto() apiv1.MetricGroup {
+func (t MetricGroup) ToProto() apiv1.MetricType {
 	switch t {
 	case ValidationMetricGroup:
-		return apiv1.MetricGroup_METRIC_TYPE_VALIDATION
+		return apiv1.MetricType_METRIC_TYPE_VALIDATION
 	case TrainingMetricGroup:
-		return apiv1.MetricGroup_METRIC_TYPE_TRAINING
+		return apiv1.MetricType_METRIC_TYPE_TRAINING
 	default:
-		return apiv1.MetricGroup_METRIC_TYPE_UNSPECIFIED
+		return apiv1.MetricType_METRIC_TYPE_UNSPECIFIED
 	}
 }
 
