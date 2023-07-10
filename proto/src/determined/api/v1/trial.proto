@@ -19,15 +19,15 @@ import "protoc-gen-swagger/options/annotations.proto";
 // DownsampledMetrics captures a metric's name and downsampled data points.
 message DownsampledMetrics {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "data", "type", "custom_type" ] }
+    json_schema: { required: [ "data", "type", "group" ] }
   };
   // A possibly down-sampled series of metrics' readings through the progress of
   // the trial.
   repeated DataPoint data = 1;
-  // Type of metrics (training, validation, or unset).
+  // Metric group (training, validation, or unset).
   MetricType type = 3 [deprecated = true];
-  // Type of metrics (training, validation, etc).
-  string custom_type = 4;
+  // Metric group (training, validation, etc).
+  string group = 4;
 }
 
 // WorkloadContainer is a wrapper for Determined workloads to allow repeated
@@ -603,7 +603,7 @@ message GetTrialWorkloadsRequest {
   // When sorting workloads by sort_key, specify training or validation form of
   // a metric.
   MetricType metric_type = 8 [deprecated = true];
-  // Type of metrics (training, validation, etc).
+  // Metric group (training, validation, etc).
   string group = 9;
 }
 // Response to GetTrialWorkloadsRequest.
@@ -693,9 +693,9 @@ message CompareTrialsRequest {
   int32 start_batches = 4;
   // Sample from metrics before this batch number.
   int32 end_batches = 5;
-  // Type of metrics.
+  // Metric group.
   MetricType metric_type = 6 [deprecated = true];
-  // Type of metrics (training, validation, etc).
+  // Metric group (training, validation, etc).
   string group = 11;
   // metric ids for the query. must be in the form group.metric_name.
   repeated string metric_ids = 9;
