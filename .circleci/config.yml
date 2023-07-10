@@ -92,6 +92,11 @@ any-upstream: &any-upstream
     ignore:
       - /pull\/.*/
 
+any-fork: &any-fork
+  branches:
+    only:
+      - /pull\/.*/
+
 commands:
   fix-circle-working-directory:
     description: "Fix CIRCLE_WORKING_DIRECTORY"
@@ -2535,6 +2540,19 @@ jobs:
           channel: <<parameters.slack-channel>>
 
 workflows:
+  danh-forking:
+    jobs:
+      - test-unit-go:
+          filters: *any-upstream
+      - request-test-unit-go:
+          filters: *any-fork
+          type: approval
+      - test-unit-go:
+          name: f-test-unit-go
+          filters: *any-fork
+          requires:
+            - request-test-unit-go
+
   lint:
     jobs:
       - build-proto
