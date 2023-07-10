@@ -307,7 +307,7 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 	return res, err
 }
 
-// shallowUnionMetrics unions non-overlapping AvgMetrics of two metrics bodies.
+// shallowUnionMetrics unions non-overlapping keys of two metrics bodies.
 func shallowUnionMetrics(oldBody, newBody *metricsBody) (*metricsBody, error) {
 	if oldBody == nil {
 		return newBody, nil
@@ -317,24 +317,24 @@ func shallowUnionMetrics(oldBody, newBody *metricsBody) (*metricsBody, error) {
 		return oldBody, nil
 	}
 
-	// FIXME: can we avoid converting these to maps?
-	oldAvgMetricsMap := oldBody.AvgMetrics.AsMap()
-	newAvgMetricsMap := newBody.AvgMetrics.AsMap()
-	for key, newValue := range newAvgMetricsMap {
+	// disallow batch metrics from being overwritten.
+	if oldBody.BatchMetrics != nil && newBody.BatchMetrics != nil {
+		return nil, fmt.Errorf("overwriting batch metrics is not supported")
+	}
+
+	oldAvgMetrics := oldBody.AvgMetrics
+	newAvgMetrics := newBody.AvgMetrics
+	for key, newValue := range newAvgMetrics.GetFields() {
 		// we cannot calculate min/max efficiently for replaced metric values
 		// so we disallow it.
-		if _, ok := oldAvgMetricsMap[key]; ok {
+		if _, ok := oldAvgMetrics.GetFields()[key]; ok {
 			return nil, fmt.Errorf("overwriting existing metric keys is not supported,"+
 				" conflicting key: %s", key)
 		}
-		oldAvgMetricsMap[key] = newValue
+		oldAvgMetrics.GetFields()[key] = newValue
 	}
 
-	mergedAvgMetrics, err := structpb.NewStruct(oldAvgMetricsMap)
-	if err != nil {
-		return nil, errors.Wrap(err, "merging metrics")
-	}
-	oldBody.AvgMetrics = mergedAvgMetrics
+	oldBody.AvgMetrics = oldAvgMetrics
 
 	return oldBody, nil
 }
