@@ -42,6 +42,7 @@ def run_failure_test_multiple(config_file: str, model_def_file: str, errors: Lis
 
 
 @pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_unsupported_option() -> None:
     # Creates an experiment with a yaml file
     # It attempts to supply a slurm option that is controlled by Determined
@@ -57,6 +58,7 @@ def test_unsupported_option() -> None:
 
 
 @pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_docker_image() -> None:
     # Creates an experiment with a bad docker image file that will error
     errors = [
@@ -81,6 +83,7 @@ def test_docker_image() -> None:
 # failure that is intended.  This is the current behavior on mosaic, so for now skip without GPUs.
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
 @pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_node_not_available() -> None:
     # Creates an experiment with a configuration that cannot be satisfied.
     # Verifies that the error message includes the SBATCH options of the failed submission.
@@ -97,16 +100,26 @@ def test_node_not_available() -> None:
     )
 
 
+def bad_option_helper(config_path: str, fixture_path: str, error_string: str) -> None:
+    exp.run_failure_test(
+        conf.fixtures_path(config_path),
+        conf.fixtures_path(fixture_path),
+        error_string,
+    )
+
+
 @pytest.mark.e2e_slurm
 def test_bad_slurm_option() -> None:
     # Creates an experiment that uses an invalid slurm option.
     # Only casablanca displays the SBATCH options. Horizon does not upon failure
     # The line: "SBATCH options:" is not present on horizon's output
-    exp.run_failure_test(
-        conf.fixtures_path("failures/bad-slurm-option.yaml"),
-        conf.fixtures_path("failures/"),
-        "sbatch: unrecognized option",
-    )
+    bad_option_helper("failures/bad-slurm-option.yaml", "failures/", "sbatch: unrecognized option")
+
+
+@pytest.mark.e2e_pbs
+def test_bad_pbs_option() -> None:
+    # Creates an experiment that uses an invalid pbs option.
+    bad_option_helper("failures/bad-pbs-option.yaml", "failures/", "qsub: invalid option")
 
 
 @pytest.mark.e2e_slurm_internet_connected_cluster
@@ -146,6 +159,7 @@ def test_master_host() -> None:
 
 
 @pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_cifar10_pytorch_distributed() -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/distributed.yaml"))
     config["searcher"]["max_length"] = {"epochs": 1}

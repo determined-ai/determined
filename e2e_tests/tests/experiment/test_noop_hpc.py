@@ -11,6 +11,7 @@ from tests import experiment as exp
 
 
 @pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 @pytest.mark.timeout(20 * 60)
 def test_noop_pause_hpc() -> None:
     # The original configuration file, which we will need to modify for HPC

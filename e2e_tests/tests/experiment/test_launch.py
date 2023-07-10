@@ -9,6 +9,7 @@ from tests import experiment as exp
 
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_launch_layer_cifar(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -32,6 +33,7 @@ def test_launch_layer_cifar(collect_trial_profiles: Callable[[int], None]) -> No
 
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_launch_layer_exit(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
     config = conf.set_entrypoint(
@@ -50,8 +52,9 @@ def test_launch_layer_exit(collect_trial_profiles: Callable[[int], None]) -> Non
     slurm_run = exp.check_if_string_present_in_trial_logs(
         trials[0].trial.id, "Exited with exit code 1"
     )
+    pbs_run = exp.check_if_string_present_in_trial_logs(trials[0].trial.id, "exited with status 1")
     cpu_run = exp.check_if_string_present_in_trial_logs(
         trials[0].trial.id, "container failed with non-zero exit code: 1"
     )
 
-    assert cpu_run or slurm_run
+    assert cpu_run or slurm_run or pbs_run

@@ -24,6 +24,7 @@ LogFields = Union[bindings.v1TaskLogsFieldsResponse, bindings.v1TrialLogsFieldsR
 @pytest.mark.e2e_cpu_cross_version
 @pytest.mark.e2e_gpu
 @pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 @pytest.mark.timeout(10 * 60)
 def test_trial_logs() -> None:
     # TODO: refactor tests to not use cli singleton auth.
@@ -62,6 +63,7 @@ def test_trial_logs() -> None:
 @pytest.mark.e2e_cpu_cross_version
 @pytest.mark.e2e_gpu  # Note, e2e_gpu and not gpu_required hits k8s cpu tests.
 @pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 @pytest.mark.parametrize(
     "task_type,task_config,log_regex",
     [
