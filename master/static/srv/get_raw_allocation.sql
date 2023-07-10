@@ -82,13 +82,13 @@ workloads AS (
                                 checkpoints_v2
                             JOIN
                                 trials AS t on checkpoints_v2.task_id = t.task_id
-                            LEFT JOIN
-                                raw_checkpoints ON checkpoints_v2.uuid = raw_checkpoints.uuid
-                            WHERE
-                                -- 'true' checkpoint v2 case
-                                raw_checkpoints.id IS NULL OR
-                                -- ignore checkpoint v1 without valid endtime.
-                                raw_checkpoints.end_time IS NOT NULL
+                            UNION ALL
+                            SELECT
+                                'checkpointing' AS kind,
+                                trial_id,
+                                end_time
+                            FROM
+                                raw_checkpoints
                             UNION ALL
                             SELECT
                                 'imagepulling' AS kind,

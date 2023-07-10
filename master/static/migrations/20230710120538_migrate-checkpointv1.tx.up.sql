@@ -29,15 +29,15 @@ SELECT
     c.metadata,
     c.size
 FROM public.raw_checkpoints c
-JOIN trials AS t on c.trial_id = t.id
-JOIN public.allocations a ON t.task_id || '.' || c.trial_run_id = a.allocation_id
-JOIN raw_steps AS s ON (
+LEFT JOIN trials AS t on c.trial_id = t.id
+LEFT JOIN public.allocations a ON t.task_id || '.' || c.trial_run_id = a.allocation_id
+LEFT JOIN raw_steps AS s ON (
      -- Hint to the query planner to use the matching index.
      s.trial_id = t.id
      AND s.trial_run_id = c.trial_run_id
      AND s.total_batches = c.total_batches
 )
-JOIN raw_validations AS v ON (
+LEFT JOIN raw_validations AS v ON (
     -- Hint to the query planner to use the matching index.
     v.trial_id = c.trial_id
     AND v.trial_run_id = c.trial_run_id
