@@ -67,7 +67,7 @@ class TrainContext:
         logger.debug(f"_get_last_validation() -> {steps_completed}")
         return steps_completed
 
-    def report_trial_metrics(
+    def _report_trial_metrics(
         self,
         metric_type: str,
         total_batches: int,
@@ -117,7 +117,7 @@ class TrainContext:
         but may be accessed from the master using the CLI for post-processing.
         """
 
-        self.report_trial_metrics(util._LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
+        self._report_trial_metrics(util._LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
 
     def get_tensorboard_path(self) -> pathlib.Path:
         """
@@ -180,7 +180,7 @@ class TrainContext:
         metric using ``SearcherOperation.report_completed()`` in the Searcher API.
         """
 
-        self.report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
+        self._report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         """
@@ -230,7 +230,7 @@ class DummyTrainContext(TrainContext):
     def _get_last_validation(self) -> Optional[int]:
         return None
 
-    def report_trial_metrics(
+    def _report_trial_metrics(
         self,
         metric_type: str,
         total_batches: int,
@@ -244,11 +244,11 @@ class DummyTrainContext(TrainContext):
         but may be accessed from the master using the CLI for post-processing.
         """
         logger.info(
-            f"report_trial_metrics(metric_type={metric_type}, total_batches={total_batches},"
+            f"_report_trial_metrics(metric_type={metric_type}, total_batches={total_batches},"
             f"metrics={metrics})"
         )
         logger.debug(
-            f"report_trial_metrics(metric_type={metric_type}, total_batches={total_batches},"
+            f"_report_trial_metrics(metric_type={metric_type}, total_batches={total_batches},"
             f" batch_metrics={batch_metrics})"
         )
 
@@ -258,10 +258,10 @@ class DummyTrainContext(TrainContext):
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
-        self.report_trial_metrics(util._LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
+        self._report_trial_metrics(util._LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
 
     def report_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
-        self.report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
+        self._report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
 
     def upload_tensorboard_files(
         self,

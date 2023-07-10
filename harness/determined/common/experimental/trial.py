@@ -51,7 +51,7 @@ class CheckpointOrderBy(enum.Enum):
 
 
 @dataclasses.dataclass
-class TrialMetrics:
+class _TrialMetrics:
     """
     Specifies a metric that the trial reported.
 
@@ -74,7 +74,7 @@ class TrialMetrics:
     @classmethod
     def _from_bindings(
         cls, metric_report: bindings.v1MetricsReport, metric_type: str
-    ) -> "TrialMetrics":
+    ) -> "_TrialMetrics":
         key = "validation_metrics" if metric_type == util._LEGACY_VALIDATION else "avg_metrics"
         return cls(
             trial_id=metric_report.trialId,
@@ -96,7 +96,7 @@ class StepsBackwardCompat:
         self.total_batches = value
 
 
-class TrainingMetrics(TrialMetrics, StepsBackwardCompat):
+class TrainingMetrics(_TrialMetrics, StepsBackwardCompat):
     """
     Specifies a training metric report that the trial reported.
     """
@@ -110,11 +110,11 @@ class TrainingMetrics(TrialMetrics, StepsBackwardCompat):
     def _from_bindings(  # type: ignore
         cls,
         metric_report: bindings.v1MetricsReport,
-    ) -> "TrialMetrics":
+    ) -> "_TrialMetrics":
         return super()._from_bindings(metric_report, util._LEGACY_TRAINING)
 
 
-class ValidationMetrics(TrialMetrics, StepsBackwardCompat):
+class ValidationMetrics(_TrialMetrics, StepsBackwardCompat):
     """
     Specifies a validation metric report that the trial reported.
     """
@@ -127,7 +127,7 @@ class ValidationMetrics(TrialMetrics, StepsBackwardCompat):
     @classmethod
     def _from_bindings(  # type: ignore
         cls, metric_report: bindings.v1MetricsReport
-    ) -> "TrialMetrics":
+    ) -> "_TrialMetrics":
         return super()._from_bindings(metric_report, util._LEGACY_VALIDATION)
 
 
@@ -371,7 +371,7 @@ class TrialReference:
     def __repr__(self) -> str:
         return "Trial(id={})".format(self.id)
 
-    def stream_metrics(self, metric_type: str) -> Iterable[TrialMetrics]:
+    def stream_metrics(self, metric_type: str) -> Iterable[_TrialMetrics]:
         """
         Streams validation metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.
@@ -435,10 +435,10 @@ class TrialOrderBy(enum.Enum):
 
 def _stream_trials_metrics(
     session: api.Session, trial_ids: List[int], metric_type: str
-) -> Iterable[TrialMetrics]:
+) -> Iterable[_TrialMetrics]:
     for i in bindings.get_GetMetrics(session, trialIds=trial_ids, type=metric_type):
         for m in i.metrics:
-            yield TrialMetrics._from_bindings(m, metric_type=metric_type)
+            yield _TrialMetrics._from_bindings(m, metric_type=metric_type)
 
 
 def _stream_training_metrics(
