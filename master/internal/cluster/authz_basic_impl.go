@@ -34,6 +34,16 @@ func (a *MiscAuthZBasic) CanGetMasterLogs(
 	return nil, nil
 }
 
+// CanGetMasterConfig checks if user has access to master configs.
+func (a *MiscAuthZBasic) CanGetMasterConfig(
+	ctx context.Context, curUser *model.User,
+) (permErr error, err error) {
+	if !curUser.Admin {
+		return grpcutil.ErrPermissionDenied, nil
+	}
+	return nil, nil
+}
+
 // CanGetUsageDetails returns nil and nil error.
 func (a *MiscAuthZBasic) CanGetUsageDetails(
 	ctx context.Context, curUser *model.User,
