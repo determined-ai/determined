@@ -2964,7 +2964,7 @@ export interface V1ExpMetricNamesResponse {
      */
     validationMetrics?: Array<string>;
     /**
-     * List of metric type-name pairs.
+     * List of metric group-name pairs.
      * @type {Array<V1MetricName>}
      * @memberof V1ExpMetricNamesResponse
      */

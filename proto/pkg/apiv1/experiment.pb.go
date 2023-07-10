@@ -3156,7 +3156,7 @@ type ExpMetricNamesResponse struct {
 	//
 	// Deprecated: Do not use.
 	ValidationMetrics []string `protobuf:"bytes,3,rep,name=validation_metrics,json=validationMetrics,proto3" json:"validation_metrics,omitempty"`
-	// List of metric type-name pairs.
+	// List of metric group-name pairs.
 	MetricNames []*metricv1.MetricName `protobuf:"bytes,4,rep,name=metric_names,json=metricNames,proto3" json:"metric_names,omitempty"`
 }
 
