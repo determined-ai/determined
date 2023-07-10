@@ -2,7 +2,7 @@ import itertools
 import logging
 import pathlib
 import warnings
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Union
 
 import determined as det
 from determined.common import api, context, util, yaml
@@ -117,15 +117,13 @@ class Determined:
 
         authentication.logout(self._session._master, user, self._session._cert)
 
-    def list_users(self) -> Sequence[user.User]:
+    def list_users(self) -> Iterator[user.User]:
         users_bindings = bindings.get_GetUsers(session=self._session).users
-        users: List[user.User] = []
-        if users_bindings is None:
-            return users
+        if not users_bindings:
+            yield from ()
+        assert users_bindings  # mypy needs help.
         for user_b in users_bindings:
-            user_obj = user.User._from_bindings(user_b, self._session)
-            users.append(user_obj)
-        return users
+            yield user.User._from_bindings(user_b, self._session)
 
     def create_experiment(
         self,
@@ -300,8 +298,37 @@ class Determined:
         workspace_names: Optional[List[str]] = None,
         workspace_ids: Optional[List[int]] = None,
     ) -> List[model.Model]:
+        warnings.warn(
+            "Determined.get_models() has been deprecated and will be removed in a future version."
+            "Please call Determined.list_models() instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return list(
+            self.list_models(
+                sort_by=sort_by,
+                order_by=order_by,
+                name=name,
+                description=description,
+                model_id=model_id,
+                workspace_names=workspace_names,
+                workspace_ids=workspace_ids,
+            )
+        )
+
+    def list_models(
+        self,
+        sort_by: model.ModelSortBy = model.ModelSortBy.NAME,
+        order_by: model.ModelOrderBy = model.ModelOrderBy.ASCENDING,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        model_id: Optional[int] = None,
+        workspace_names: Optional[List[str]] = None,
+        workspace_ids: Optional[List[int]] = None,
+        limit: Optional[int] = None,
+    ) -> Iterator[model.Model]:
         """
-        Get a list of all models in the model registry.
+        Get an iterable of all models in the model registry.
 
         Arguments:
             sort_by: Which field to sort by. See :class:`~determined.experimental.ModelSortBy`.
@@ -311,8 +338,17 @@ class Determined:
                 include models with names matching this parameter.
             description: If this parameter is set, models will be filtered to
                 only include models with descriptions matching this parameter.
-            model_id: If this paramter is set, models will be filtered to
+            model_id: If this parameter is set, models will be filtered to
                 only include the model with this unique numeric id.
+            workspace_names: Only return models with names in this list.
+            workspace_ids: Only return models with workspace IDs in this list.
+            limit: Optional field that sets maximum page size of the response from the server.
+                When there are many models to return, a lower page size can result in shorter
+                latency at the expense of more HTTP requests to the server. Defaults to no maximum.
+
+        Returns:
+            An Iterator type that lazily instantiates response objects. To
+            get all models at once, call list(list_models()).
         """
 
         # TODO: more parameters?
@@ -331,6 +367,7 @@ class Determined:
                 offset=offset,
                 orderBy=order_by._to_bindings(),
                 sortBy=sort_by._to_bindings(),
+                limit=limit,
                 userIds=None,
                 users=None,
                 workspaceNames=workspace_names,
@@ -339,7 +376,9 @@ class Determined:
 
         resps = api.read_paginated(get_with_offset)
 
-        return [model.Model._from_bindings(m, self._session) for r in resps for m in r.models]
+        for r in resps:
+            for m in r.models:
+                yield model.Model._from_bindings(m, self._session)
 
     def get_model_labels(self) -> List[str]:
         """
