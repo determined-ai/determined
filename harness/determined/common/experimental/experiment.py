@@ -1,7 +1,8 @@
 import enum
 import sys
 import time
-from typing import Any, Dict, List, Optional
+import warnings
+from typing import Any, Dict, Iterator, List, Optional
 
 from determined.common import api
 from determined.common.api import bindings
@@ -103,14 +104,35 @@ class Experiment:
         sort_by: trial.TrialSortBy = trial.TrialSortBy.ID,
         order_by: trial.TrialOrderBy = trial.TrialOrderBy.ASCENDING,
     ) -> List[trial.Trial]:
+        warnings.warn(
+            "Experiment.get_trials() has been deprecated and will be removed in a future version."
+            "Please call Experiment.list_trials() instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return list(self.list_trials(sort_by, order_by))
+
+    def list_trials(
+        self,
+        sort_by: trial.TrialSortBy = trial.TrialSortBy.ID,
+        order_by: trial.TrialOrderBy = trial.TrialOrderBy.ASCENDING,
+        limit: Optional[int] = None,
+    ) -> Iterator[trial.Trial]:
         """
-        Get the list of :class:`~determined.experimental.Trial` instances
+        Get an iterator of :class:`~determined.experimental.Trial` instances
         representing trials for an experiment.
 
         Arguments:
             sort_by: Which field to sort by. See :class:`~determined.experimental.TrialSortBy`.
             order_by: Whether to sort in ascending or descending order. See
                 :class:`~determined.experimental.TrialOrderBy`.
+            limit: Optional field that sets maximum page size of the response from the server.
+                When there are many trials to return, a lower page size can result in shorter
+                latency at the expense of more HTTP requests to the server. Defaults to no maximum.
+
+        Returns:
+            This method returns an Iterable type that lazily instantiates response objects. To
+            get all models at once, call list(list_trials()).
         """
 
         def get_with_offset(offset: int) -> bindings.v1GetExperimentTrialsResponse:
@@ -119,12 +141,15 @@ class Experiment:
                 experimentId=self._id,
                 offset=offset,
                 orderBy=bindings.v1OrderBy(order_by.value),
+                limit=limit,
                 sortBy=bindings.v1GetExperimentTrialsRequestSortBy(sort_by.value),
             )
 
         resps = api.read_paginated(get_with_offset)
 
-        return [trial.Trial._from_bindings(t, self._session) for r in resps for t in r.trials]
+        for r in resps:
+            for t in r.trials:
+                yield trial.Trial._from_bindings(t, self._session)
 
     def await_first_trial(self, interval: float = 0.1) -> trial.Trial:
         """
