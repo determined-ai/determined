@@ -523,16 +523,16 @@ func TrialSummaryMetricsJSONPath(metricGroup MetricGroup) string {
 
 // TrialSummaryMetricGroup returns the metric type for the given summary JSON path.
 func TrialSummaryMetricGroup(jsonPath string) MetricGroup {
-	var mType MetricGroup
+	var mGroup MetricGroup
 	switch jsonPath {
 	case TrialSummaryMetricsJSONPath(TrainingMetricGroup):
-		mType = TrainingMetricGroup
+		mGroup = TrainingMetricGroup
 	case TrialSummaryMetricsJSONPath(ValidationMetricGroup):
-		mType = ValidationMetricGroup
+		mGroup = ValidationMetricGroup
 	default:
-		mType = MetricGroup(jsonPath)
+		mGroup = MetricGroup(jsonPath)
 	}
-	return mType
+	return mGroup
 }
 
 // Represent order of active states (Queued -> Pulling -> Starting -> Running).

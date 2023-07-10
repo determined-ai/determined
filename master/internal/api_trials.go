@@ -762,9 +762,9 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		return metricGroups[i] < metricGroups[j]
 	})
 
-	for _, mType := range metricGroups {
-		metricNames := metricGroupToNames[mType]
-		metric, err := getDownSampledMetric(metricNames, mType)
+	for _, mGroup := range metricGroups {
+		metricNames := metricGroupToNames[mGroup]
+		metric, err := getDownSampledMetric(metricNames, mGroup)
 		if err != nil {
 			return nil, err
 		}

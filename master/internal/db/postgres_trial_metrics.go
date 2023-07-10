@@ -51,9 +51,9 @@ func BunSelectMetricGroupNames() *bun.SelectQuery {
 rollbackMetrics ensures old training and validation metrics from a previous run id are archived.
 */
 func rollbackMetrics(ctx context.Context, tx *sqlx.Tx, runID, trialID,
-	lastProcessedBatch int32, mType model.MetricGroup,
+	lastProcessedBatch int32, mGroup model.MetricGroup,
 ) (int, error) {
-	pType := customMetricGroupToPartitionType(mType)
+	pType := customMetricGroupToPartitionType(mGroup)
 	res, err := tx.ExecContext(ctx, `
 UPDATE metrics SET archived = true
 WHERE trial_id = $1
@@ -82,11 +82,11 @@ WHERE trial_id = $1
 }
 
 func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map[string]interface{},
-	runID, trialID, lastProcessedBatch int32, mType model.MetricGroup,
+	runID, trialID, lastProcessedBatch int32, mGroup model.MetricGroup,
 ) (int, error) {
-	pType := customMetricGroupToPartitionType(mType)
+	pType := customMetricGroupToPartitionType(mGroup)
 
-	if err := mType.Validate(); err != nil {
+	if err := mGroup.Validate(); err != nil {
 		return 0, err
 	}
 
@@ -98,7 +98,7 @@ INSERT INTO metrics
 VALUES
 	($1, $2, now(), $3, $4, $5, $6)
 RETURNING id`,
-		trialID, runID, *metricsBody, lastProcessedBatch, pType, mType,
+		trialID, runID, *metricsBody, lastProcessedBatch, pType, mGroup,
 	).Scan(&metricRowID); err != nil {
 		return metricRowID, errors.Wrap(err, "inserting metrics")
 	}
@@ -106,10 +106,10 @@ RETURNING id`,
 	return metricRowID, nil
 }
 
-func customMetricGroupToPartitionType(mType model.MetricGroup) MetricPartitionType {
+func customMetricGroupToPartitionType(mGroup model.MetricGroup) MetricPartitionType {
 	// TODO(hamid): remove partition_type once we move away from pg10 and
 	// we can use DEFAULT partitioning.
-	switch mType {
+	switch mGroup {
 	case model.TrainingMetricGroup:
 		return TrainingMetric
 	case model.ValidationMetricGroup:
@@ -139,18 +139,18 @@ func (db *PgDB) AddValidationMetrics(
 
 // AddTrialMetrics persists the given trial metrics to the database.
 func (db *PgDB) AddTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricGroup,
+	ctx context.Context, m *trialv1.TrialMetrics, mGroup model.MetricGroup,
 ) error {
-	_, err := db.addTrialMetrics(ctx, m, mType)
+	_, err := db.addTrialMetrics(ctx, m, mGroup)
 	return err
 }
 
 // GetMetrics returns a subset metrics of the requested type for the given trial ID.
 func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
-	mType model.MetricGroup,
+	mGroup model.MetricGroup,
 ) ([]*trialv1.MetricsReport, error) {
 	var res []*trialv1.MetricsReport
-	pType := customMetricGroupToPartitionType(mType)
+	pType := customMetricGroupToPartitionType(mGroup)
 	query := Bun().NewSelect().Table("metrics").
 		Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
 		ColumnExpr("proto_time(end_time) AS end_time").
@@ -162,7 +162,7 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 	if pType == GenericMetric {
 		// Going off of our current schema were looking for custom types in our legacy
 		// metrics tables is pointless.
-		query.Where("custom_type = ?", mType)
+		query.Where("custom_type = ?", mGroup)
 	}
 
 	err := query.

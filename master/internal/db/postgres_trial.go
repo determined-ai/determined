@@ -260,9 +260,9 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 }
 
 func (db *PgDB) _addTrialMetricsTx(
-	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mType model.MetricGroup,
+	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mGroup model.MetricGroup,
 ) (rollbacks int, err error) {
-	isValidation := mType == model.ValidationMetricGroup
+	isValidation := mGroup == model.ValidationMetricGroup
 	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
 	metricsBody := map[string]interface{}{
 		metricsJSONPath: m.Metrics.AvgMetrics,
@@ -279,7 +279,7 @@ func (db *PgDB) _addTrialMetricsTx(
 	}
 
 	if rollbacks, err = rollbackMetrics(ctx, tx, m.TrialRunId, m.TrialId, m.StepsCompleted,
-		mType); err != nil {
+		mGroup); err != nil {
 		return rollbacks, err
 	}
 	var summaryMetrics model.JSONObj
@@ -291,7 +291,7 @@ func (db *PgDB) _addTrialMetricsTx(
 	}
 
 	metricRowID, err := db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
-		m.TrialId, m.StepsCompleted, mType)
+		m.TrialId, m.StepsCompleted, mGroup)
 	if err != nil {
 		return rollbacks, err
 	}
@@ -311,7 +311,7 @@ func (db *PgDB) _addTrialMetricsTx(
 			return rollbacks, errors.Wrap(err, "error on rollback compute of summary metrics")
 		}
 	default: // no rollbacks happened.
-		summaryMetricsJSONPath := model.TrialSummaryMetricsJSONPath(mType)
+		summaryMetricsJSONPath := model.TrialSummaryMetricsJSONPath(mGroup)
 		if _, ok := summaryMetrics[summaryMetricsJSONPath]; !ok {
 			summaryMetrics[summaryMetricsJSONPath] = map[string]any{}
 		}
@@ -359,16 +359,16 @@ WHERE id = $1;
 
 // addTrialMetrics inserts a set of trial metrics to the database.
 func (db *PgDB) addTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricGroup,
+	ctx context.Context, m *trialv1.TrialMetrics, mGroup model.MetricGroup,
 ) (rollbacks int, err error) {
 	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
 	case float64, nil:
 	default:
 		return 0, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
 	}
-	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", mType),
+	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", mGroup),
 		func(tx *sqlx.Tx) error {
-			rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, mType)
+			rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, mGroup)
 			return err
 		})
 }

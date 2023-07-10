@@ -108,7 +108,7 @@ func addTestTrialMetrics(ctx context.Context,
 	require.NoError(t, json.Unmarshal([]byte(trialMetricsJSON), &trialMetrics))
 	trialRunID := 0
 
-	for mType, metrics := range trialMetrics {
+	for mGroup, metrics := range trialMetrics {
 		for i, m := range metrics {
 			metrics, err := structpb.NewStruct(m)
 			require.NoError(t, err)
@@ -119,7 +119,7 @@ func addTestTrialMetrics(ctx context.Context,
 				Metrics: &commonv1.Metrics{
 					AvgMetrics: metrics,
 				},
-			}, mType)
+			}, mGroup)
 			require.NoError(t, err)
 		}
 	}

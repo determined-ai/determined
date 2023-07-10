@@ -149,11 +149,11 @@ func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 
 	metricNamesMap := make(map[model.MetricGroup][]string)
 	for _, row := range rows {
-		mType := model.TrialSummaryMetricGroup(row.JSONPath)
-		if _, ok := metricNamesMap[mType]; !ok {
-			metricNamesMap[mType] = make([]string, 0)
+		mGroup := model.TrialSummaryMetricGroup(row.JSONPath)
+		if _, ok := metricNamesMap[mGroup]; !ok {
+			metricNamesMap[mGroup] = make([]string, 0)
 		}
-		metricNamesMap[mType] = append(metricNamesMap[mType], row.MetricName)
+		metricNamesMap[mGroup] = append(metricNamesMap[mGroup], row.MetricName)
 	}
 
 	return metricNamesMap, nil
