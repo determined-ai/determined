@@ -1,5 +1,3 @@
--- TODO backport to checkpoints PR
-
 -- Endstate of checkpoint views / tables is
 -- raw_checkpoints is left unmodified.
 -- checkpoints_v2 has checkpoint_v2s and unarchived checkpoint_v1s.
@@ -7,7 +5,6 @@
 -- proto_checkpoints_view is the proto version of checkpoints_view.
 --
 -- Note we just leave checkpoints_v1 data so we can reverse this migration.
-
 INSERT INTO public.checkpoints_v2 (
     uuid,
     task_id,
@@ -75,7 +72,7 @@ CREATE OR REPLACE VIEW public.checkpoints_view AS
         v.metrics->'validation_metrics' AS validation_metrics,
         (v.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8 AS searcher_metric,
         CAST(c.metadata->>'steps_completed' AS int) as steps_completed,
-        -- Remove checkpoint version since it doesn't make sense anymore. 2 AS checkpoint_version,
+        -- Removing checkpoint version since it doesn't make sense anymore.
         c.size
     FROM checkpoints_v2 AS c
     LEFT JOIN trials AS t on c.task_id = t.task_id

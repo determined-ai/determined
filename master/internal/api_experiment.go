@@ -2221,7 +2221,7 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("proto_time(trials.start_time) AS start_time").
 		ColumnExpr("proto_time(trials.end_time) AS end_time").
 		Column("trials.restarts").
-		ColumnExpr("coalesce(new_ckpt.uuid) AS warm_start_checkpoint_uuid").
+		ColumnExpr("new_ckpt.uuid AS warm_start_checkpoint_uuid").
 		ColumnExpr("trials.checkpoint_size AS total_checkpoint_size").
 		ColumnExpr(exputil.ProtoStateDBCaseString(trialv1.State_value, "trials.state", "state",
 			"STATE_")).

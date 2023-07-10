@@ -112,7 +112,7 @@ SELECT
   t.start_time,
   t.end_time,
   t.hparams,
-  coalesce(new_ckpt.uuid) AS warm_start_checkpoint_uuid,
+  new_ckpt.uuid AS warm_start_checkpoint_uuid,
   t.task_id,
   t.checkpoint_size AS total_checkpoint_size,
   t.checkpoint_count,
@@ -132,8 +132,5 @@ FROM searcher_info
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id
   LEFT JOIN latest_validation lv ON lv.trial_id = searcher_info.trial_id
   LEFT JOIN best_checkpoint bc ON bc.trial_id = searcher_info.trial_id
-  -- Using `public.checkpoints_view` directly here results in the query planner being unable to push
-  -- filters into the union all, resulting in costly scans of steps, validations and checkpoints.
-  -- additionally, it joins a lot of stuff we don't need, so just fallback to the actual tables.
   LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = t.warm_start_checkpoint_id
   ORDER BY searcher_info.ordering

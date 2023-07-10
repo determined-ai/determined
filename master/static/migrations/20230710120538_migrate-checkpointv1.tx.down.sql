@@ -1,4 +1,3 @@
--- TODO backport to checkpoints PR
 DELETE FROM public.checkpoints_v2 WHERE uuid IN (
     SELECT uuid FROM public.raw_checkpoints
 );
