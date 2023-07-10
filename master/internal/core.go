@@ -112,10 +112,6 @@ func New(logStore *logger.LogBuffer, config *config.Config) *Master {
 	}
 }
 
-func (m *Master) getConfig(ctx echo.Context) (interface{}, error) {
-	return m.config.Printable()
-}
-
 // Info returns this master's information.
 func (m *Master) Info() aproto.MasterInfo {
 	telemetryInfo := aproto.TelemetryInfo{}
@@ -1110,7 +1106,6 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.File("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
-	m.echo.GET("/config", api.Route(m.getConfig))
 	m.echo.GET("/info", api.Route(m.getInfo))
 
 	experimentsGroup := m.echo.Group("/experiments")
