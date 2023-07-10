@@ -140,7 +140,7 @@ class ManagedCluster(Cluster):
         return cast(Dict, master_config)
 
     def fetch_config_reattach_wait(self) -> float:
-        s = self.fetch_config()["config"]["resource_pools"][0]["agent_reconnect_wait"]
+        s = self.fetch_config()["resource_pools"][0]["agent_reconnect_wait"]
         return float(s.rstrip("s"))
 
 

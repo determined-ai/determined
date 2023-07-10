@@ -10,11 +10,11 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 
 @authentication.required
 def config(args: Namespace) -> None:
-    resp = bindings.get_GetMasterConfig(cli.setup_session(args))
+    resp = bindings.get_GetMasterConfig(cli.setup_session(args)).config
     if args.json:
-        determined.cli.render.print_json(resp.to_json())
+        determined.cli.render.print_json(resp)
     else:
-        print(yaml.safe_dump(resp.to_json(), default_flow_style=False))
+        print(yaml.safe_dump(resp, default_flow_style=False))
 
 
 def get_master(args: Namespace) -> None:
