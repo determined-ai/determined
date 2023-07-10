@@ -204,22 +204,23 @@ func setup(t *testing.T) (
 	// instantiate the allocation
 	task := db.RequireMockTask(t, pgDB, nil)
 
-	a := DefaultService.StartAllocation(
+	ar := sproto.AllocateRequest{
+		TaskID:       task.TaskID,
+		AllocationID: model.AllocationID(fmt.Sprintf("%s.0", task.TaskID)),
+		SlotsNeeded:  2,
+		Preemptible:  true,
+		// ...
+	}
+	a := startAllocation(
 		detLogger.Context{},
-		sproto.AllocateRequest{
-			TaskID:       task.TaskID,
-			AllocationID: model.AllocationID(fmt.Sprintf("%s.0", task.TaskID)),
-			SlotsNeeded:  2,
-			Preemptible:  true,
-			// ...
-		},
+		ar,
 		pgDB,
 		rm,
 		mockTaskSpecifier{},
 		system,
 		trial,
 	)
-	require.Contains(t, rmActor.Messages, a.req)
+	require.Contains(t, rmActor.Messages, ar)
 
 	return system, &rmActor, rm, &trialImpl, trial, pgDB, a
 }

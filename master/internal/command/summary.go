@@ -50,7 +50,7 @@ func (c *command) summary(ctx *actor.Context) summary {
 		exitStatus = ptrs.Ptr(c.exitStatus.Err.Error())
 	}
 
-	state := c.allocation.State()
+	state := c.refreshAllocationState(ctx)
 
 	var addresses []cproto.Address
 	for _, cAddrs := range state.Addresses {
