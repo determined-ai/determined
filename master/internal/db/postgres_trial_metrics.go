@@ -26,19 +26,19 @@ const (
 
 // BunSelectMetricsQuery sets up a bun select query for based on new metrics table
 // simplifying some weirdness we set up for pg10 support.
-func BunSelectMetricsQuery(metricType model.MetricGroup, inclArchived bool) *bun.SelectQuery {
-	pType := customMetricTypeToPartitionType(metricType)
+func BunSelectMetricsQuery(metricGroup model.MetricGroup, inclArchived bool) *bun.SelectQuery {
+	pType := customMetricGroupToPartitionType(metricGroup)
 	q := Bun().NewSelect().
 		Where("partition_type = ?", pType).
 		Where("archived = ?", inclArchived)
 	if pType == GenericMetric {
-		q.Where("custom_type = ?", metricType)
+		q.Where("custom_type = ?", metricGroup)
 	}
 	return q
 }
 
-// BunSelectMetricTypeNames sets up a bun select query for getting all the metric type and names.
-func BunSelectMetricTypeNames() *bun.SelectQuery {
+// BunSelectMetricGroupNames sets up a bun select query for getting all the metric type and names.
+func BunSelectMetricGroupNames() *bun.SelectQuery {
 	return Bun().NewSelect().Table("trials").
 		ColumnExpr("DISTINCT jsonb_object_keys(summary_metrics) as json_path").
 		ColumnExpr("jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))" +
@@ -53,7 +53,7 @@ rollbackMetrics ensures old training and validation metrics from a previous run 
 func rollbackMetrics(ctx context.Context, tx *sqlx.Tx, runID, trialID,
 	lastProcessedBatch int32, mType model.MetricGroup,
 ) (int, error) {
-	pType := customMetricTypeToPartitionType(mType)
+	pType := customMetricGroupToPartitionType(mType)
 	res, err := tx.ExecContext(ctx, `
 UPDATE metrics SET archived = true
 WHERE trial_id = $1
@@ -84,7 +84,7 @@ WHERE trial_id = $1
 func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map[string]interface{},
 	runID, trialID, lastProcessedBatch int32, mType model.MetricGroup,
 ) (int, error) {
-	pType := customMetricTypeToPartitionType(mType)
+	pType := customMetricGroupToPartitionType(mType)
 
 	if err := mType.Validate(); err != nil {
 		return 0, err
@@ -106,13 +106,13 @@ RETURNING id`,
 	return metricRowID, nil
 }
 
-func customMetricTypeToPartitionType(mType model.MetricGroup) MetricPartitionType {
+func customMetricGroupToPartitionType(mType model.MetricGroup) MetricPartitionType {
 	// TODO(hamid): remove partition_type once we move away from pg10 and
 	// we can use DEFAULT partitioning.
 	switch mType {
-	case model.TrainingMetricType:
+	case model.TrainingMetricGroup:
 		return TrainingMetric
-	case model.ValidationMetricType:
+	case model.ValidationMetricGroup:
 		return ValidationMetric
 	default:
 		return GenericMetric
@@ -123,7 +123,7 @@ func customMetricTypeToPartitionType(mType model.MetricGroup) MetricPartitionTyp
 // metrics. If these training metrics occur before any others, a rollback is assumed and later
 // training and validation metrics are cleaned up.
 func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
-	_, err := db.addTrialMetrics(ctx, m, model.TrainingMetricType)
+	_, err := db.addTrialMetrics(ctx, m, model.TrainingMetricGroup)
 	return err
 }
 
@@ -133,7 +133,7 @@ func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics)
 func (db *PgDB) AddValidationMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics,
 ) error {
-	_, err := db.addTrialMetrics(ctx, m, model.ValidationMetricType)
+	_, err := db.addTrialMetrics(ctx, m, model.ValidationMetricGroup)
 	return err
 }
 
@@ -150,7 +150,7 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 	mType model.MetricGroup,
 ) ([]*trialv1.MetricsReport, error) {
 	var res []*trialv1.MetricsReport
-	pType := customMetricTypeToPartitionType(mType)
+	pType := customMetricGroupToPartitionType(mType)
 	query := Bun().NewSelect().Table("metrics").
 		Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
 		ColumnExpr("proto_time(end_time) AS end_time").

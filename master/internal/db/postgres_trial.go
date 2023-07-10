@@ -164,24 +164,24 @@ func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	ctx context.Context, tx *sqlx.Tx, trialID int,
 ) error {
 	updatedSummaryMetrics := model.JSONObj{}
-	metricTypes := []model.MetricGroup{}
-	if err := tx.SelectContext(ctx, &metricTypes, `
+	metricGroups := []model.MetricGroup{}
+	if err := tx.SelectContext(ctx, &metricGroups, `
 SELECT DISTINCT custom_type FROM metrics WHERE partition_type = 'GENERIC' AND trial_id = $1
 	`,
 		trialID); err != nil {
 		return err
 	}
-	metricTypes = append(metricTypes, model.TrainingMetricType)
-	metricTypes = append(metricTypes, model.ValidationMetricType)
+	metricGroups = append(metricGroups, model.TrainingMetricGroup)
+	metricGroups = append(metricGroups, model.ValidationMetricGroup)
 
-	for _, metricType := range metricTypes {
+	for _, metricGroup := range metricGroups {
 		summary, err := db.calculateFullTrialSummaryMetrics(
-			ctx, tx, trialID, metricType)
+			ctx, tx, trialID, metricGroup)
 		if err != nil {
-			return fmt.Errorf("rollback computing %s summary metrics: %w", metricType, err)
+			return fmt.Errorf("rollback computing %s summary metrics: %w", metricGroup, err)
 		}
 		if len(summary) > 0 {
-			key := model.TrialSummaryMetricsJSONPath(metricType)
+			key := model.TrialSummaryMetricsJSONPath(metricGroup)
 			updatedSummaryMetrics[key] = summary
 		}
 	}
@@ -194,13 +194,13 @@ SELECT DISTINCT custom_type FROM metrics WHERE partition_type = 'GENERIC' AND tr
 }
 
 func (db *PgDB) calculateFullTrialSummaryMetrics(
-	ctx context.Context, tx *sqlx.Tx, trialID int, metricType model.MetricGroup,
+	ctx context.Context, tx *sqlx.Tx, trialID int, metricGroup model.MetricGroup,
 ) (model.JSONObj, error) {
-	partition := customMetricTypeToPartitionType(metricType)
+	partition := customMetricGroupToPartitionType(metricGroup)
 	jsonPath := model.TrialMetricsJSONPath(partition == ValidationMetric)
 	//nolint: execinquery
 	rows, err := tx.QueryContext(ctx, db.queries.getOrLoad("calculate-full-trial-summary-metrics"),
-		trialID, jsonPath, partition, metricType)
+		trialID, jsonPath, partition, metricGroup)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getting full compute trial %d summary metrics", trialID)
 	}
@@ -262,7 +262,7 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 func (db *PgDB) _addTrialMetricsTx(
 	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mType model.MetricGroup,
 ) (rollbacks int, err error) {
-	isValidation := mType == model.ValidationMetricType
+	isValidation := mType == model.ValidationMetricGroup
 	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
 	metricsBody := map[string]interface{}{
 		metricsJSONPath: m.Metrics.AvgMetrics,
@@ -381,20 +381,20 @@ const (
 	// NaNPostgresString how we store NaN in JSONB in postgres.
 	NaNPostgresString = "NaN"
 
-	// MetricTypeString is the summary metric type for string or mixed types.
-	MetricTypeString = "string"
-	// MetricTypeNumber is the summary metric type for floats or ints.
-	MetricTypeNumber = "number"
-	// MetricTypeBool is the summary metric type for boolean.
-	MetricTypeBool = "boolean"
-	// MetricTypeDate is the summary metric type for date metrics.
-	MetricTypeDate = "date"
-	// MetricTypeObject is the summary metric type for object types.
-	MetricTypeObject = "object"
-	// MetricTypeArray is the summary metric type for array types.
-	MetricTypeArray = "array"
-	// MetricTypeNull is the summary metric type for array types.
-	MetricTypeNull = "null"
+	// MetricGroupString is the summary metric type for string or mixed types.
+	MetricGroupString = "string"
+	// MetricGroupNumber is the summary metric type for floats or ints.
+	MetricGroupNumber = "number"
+	// MetricGroupBool is the summary metric type for boolean.
+	MetricGroupBool = "boolean"
+	// MetricGroupDate is the summary metric type for date metrics.
+	MetricGroupDate = "date"
+	// MetricGroupObject is the summary metric type for object types.
+	MetricGroupObject = "object"
+	// MetricGroupArray is the summary metric type for array types.
+	MetricGroupArray = "array"
+	// MetricGroupNull is the summary metric type for array types.
+	MetricGroupNull = "null"
 )
 
 func jsonAnyToFloat(v any) float64 {
@@ -449,46 +449,46 @@ func calculateNewSummaryMetrics(
 	for metricName, metric := range metrics.Fields {
 		// Get type of provided metric.
 		metricFloatValue := 0.0
-		metricType := ""
+		metricGroup := ""
 		switch metricValue := metric.AsInterface().(type) {
 		case float64:
 			metricFloatValue = metricValue
-			metricType = MetricTypeNumber
+			metricGroup = MetricGroupNumber
 		case string:
 			switch f, ok := stringToSpecialFloats(metricValue); {
 			case ok:
 				metricFloatValue = f
-				metricType = MetricTypeNumber
+				metricGroup = MetricGroupNumber
 			case pythonISOFormatRegex.MatchString(metricValue):
-				metricType = MetricTypeDate
+				metricGroup = MetricGroupDate
 			default:
-				metricType = MetricTypeString
+				metricGroup = MetricGroupString
 			}
 		case bool:
-			metricType = MetricTypeBool
+			metricGroup = MetricGroupBool
 		case map[string]any:
-			metricType = MetricTypeObject
+			metricGroup = MetricGroupObject
 		case []any:
-			metricType = MetricTypeArray
+			metricGroup = MetricGroupArray
 		case nil:
-			metricType = MetricTypeNull
+			metricGroup = MetricGroupNull
 		default:
-			metricType = MetricTypeString
+			metricGroup = MetricGroupString
 		}
 
 		// If we haven't seen this metric before just add the type we have.
 		var ok bool
 		var summaryMetric map[string]any
 		if summaryMetric, ok = summaryMetrics[metricName].(map[string]any); !ok {
-			summaryMetric = map[string]any{"type": metricType}
-		} else if summaryMetric["type"] != metricType {
+			summaryMetric = map[string]any{"type": metricGroup}
+		} else if summaryMetric["type"] != metricGroup {
 			// If we have seen this before check if we disagree on types and set to string if we do.
-			metricType = "string"
-			summaryMetric = map[string]any{"type": metricType}
+			metricGroup = "string"
+			summaryMetric = map[string]any{"type": metricGroup}
 		}
 		summaryMetrics[metricName] = summaryMetric
 
-		if metricType != MetricTypeNumber {
+		if metricGroup != MetricGroupNumber {
 			continue
 		}
 

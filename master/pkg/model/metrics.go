@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	// ValidationMetricType designates metrics from validation runs.
-	ValidationMetricType MetricGroup = "validation"
-	// TrainingMetricType designates metrics from training runs.
-	TrainingMetricType MetricGroup = "training"
+	// ValidationMetricGroup designates metrics from validation runs.
+	ValidationMetricGroup MetricGroup = "validation"
+	// TrainingMetricGroup designates metrics from training runs.
+	TrainingMetricGroup MetricGroup = "training"
 )
 
 type metricName string
@@ -36,14 +36,14 @@ func (t MetricGroup) ToString() string {
 }
 
 // ToProto returns the proto representation of the metric type.
-func (t MetricGroup) ToProto() apiv1.MetricType {
+func (t MetricGroup) ToProto() apiv1.MetricGroup {
 	switch t {
-	case ValidationMetricType:
-		return apiv1.MetricType_METRIC_TYPE_VALIDATION
-	case TrainingMetricType:
-		return apiv1.MetricType_METRIC_TYPE_TRAINING
+	case ValidationMetricGroup:
+		return apiv1.MetricGroup_METRIC_TYPE_VALIDATION
+	case TrainingMetricGroup:
+		return apiv1.MetricGroup_METRIC_TYPE_TRAINING
 	default:
-		return apiv1.MetricType_METRIC_TYPE_UNSPECIFIED
+		return apiv1.MetricGroup_METRIC_TYPE_UNSPECIFIED
 	}
 }
 

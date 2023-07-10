@@ -17,13 +17,13 @@ func TestMetricIdentifierDeserialize(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			args{s: "ValidationMetricType.ValidationMetricName"},
-			&MetricIdentifier{Type: "ValidationMetricType", Name: "ValidationMetricName"},
+			args{s: "ValidationMetricGroup.ValidationMetricName"},
+			&MetricIdentifier{Type: "ValidationMetricGroup", Name: "ValidationMetricName"},
 			false,
 		},
 		{
-			args{s: "TrainingMetricType.TrainingMetricName"},
-			&MetricIdentifier{Type: "TrainingMetricType", Name: "TrainingMetricName"},
+			args{s: "TrainingMetricGroup.TrainingMetricName"},
+			&MetricIdentifier{Type: "TrainingMetricGroup", Name: "TrainingMetricName"},
 			false,
 		},
 		{
@@ -32,7 +32,7 @@ func TestMetricIdentifierDeserialize(t *testing.T) {
 			true,
 		},
 		{
-			args{s: "ValidationMetricType"},
+			args{s: "ValidationMetricGroup"},
 			nil,
 			true,
 		},
@@ -52,13 +52,13 @@ func TestMetricIdentifierDeserialize(t *testing.T) {
 			true,
 		},
 		{
-			args{s: "ValidationMetricType."},
+			args{s: "ValidationMetricGroup."},
 			nil,
 			true,
 		},
 		{
-			args{s: "ValidationMetricType.ValidationMetricName.Extra"},
-			&MetricIdentifier{Type: "ValidationMetricType", Name: "ValidationMetricName.Extra"},
+			args{s: "ValidationMetricGroup.ValidationMetricName.Extra"},
+			&MetricIdentifier{Type: "ValidationMetricGroup", Name: "ValidationMetricName.Extra"},
 			false,
 		},
 	}

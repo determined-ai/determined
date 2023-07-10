@@ -260,7 +260,7 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 
 	maxDataPoints := 7
 	actualTrainingMetrics, err := api.multiTrialSample(int32(trial.ID), trainMetricNames,
-		model.TrainingMetricType, maxDataPoints, 0, 10, nil, []string{})
+		model.TrainingMetricGroup, maxDataPoints, 0, 10, nil, []string{})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(actualTrainingMetrics))
 	var validationMetricNames []string
@@ -270,7 +270,7 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 	}
 
 	actualValidationTrainingMetrics, err := api.multiTrialSample(int32(trial.ID),
-		validationMetricNames, model.ValidationMetricType, maxDataPoints,
+		validationMetricNames, model.ValidationMetricGroup, maxDataPoints,
 		0, 10, nil, []string{})
 	require.Equal(t, 1, len(actualValidationTrainingMetrics))
 	require.NoError(t, err)
@@ -412,7 +412,7 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 				AvgMetrics: expectedMetrics,
 			},
 		},
-		Type: model.ValidationMetricType.ToString(),
+		Type: model.ValidationMetricGroup.ToString(),
 	})
 	require.NoError(t, err)
 
@@ -451,7 +451,7 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 
 			err = api.TrialsSample(&apiv1.TrialsSampleRequest{
 				ExperimentId:  int32(trial.ExperimentID),
-				MetricType:    apiv1.MetricType_METRIC_TYPE_VALIDATION,
+				MetricGroup:    apiv1.MetricGroup_METRIC_TYPE_VALIDATION,
 				MetricName:    metricName,
 				PeriodSeconds: 1,
 			}, resp)
@@ -648,7 +648,7 @@ func TestCompareTrialsSampling(t *testing.T) {
 		MetricNames:   []string{"loss"},
 		StartBatches:  0,
 		EndBatches:    1000,
-		MetricType:    apiv1.MetricType_METRIC_TYPE_TRAINING,
+		MetricGroup:    apiv1.MetricGroup_METRIC_TYPE_TRAINING,
 	}
 
 	resp, err := api.CompareTrials(ctx, req)

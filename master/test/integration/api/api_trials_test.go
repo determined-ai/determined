@@ -217,7 +217,7 @@ func trialProfilerMetricsTests(
 			TrialId:    int32(trial.ID),
 			Name:       "gpu_util",
 			AgentId:    "brad's agent",
-			MetricType: trialv1.TrialProfilerMetricLabels_PROFILER_METRIC_TYPE_SYSTEM,
+			MetricGroup: trialv1.TrialProfilerMetricLabels_PROFILER_METRIC_TYPE_SYSTEM,
 		},
 		Follow: true,
 	})
@@ -378,7 +378,7 @@ func randTrialProfilerSystemMetrics(
 			Name:       name,
 			AgentId:    agentID,
 			GpuUuid:    gpuUUID,
-			MetricType: trialv1.TrialProfilerMetricLabels_PROFILER_METRIC_TYPE_SYSTEM,
+			MetricGroup: trialv1.TrialProfilerMetricLabels_PROFILER_METRIC_TYPE_SYSTEM,
 		},
 	}
 }

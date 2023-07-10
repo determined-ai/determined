@@ -145,7 +145,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 	}
 
 	baseMetric.PartitionType = TrainingMetric
-	baseMetric.Group = model.TrainingMetricType
+	baseMetric.Group = model.TrainingMetricGroup
 	baseMetric.Metrics = map[string]any{
 		"avg_metrics": map[string]any{
 			"b": -1.0,
@@ -155,7 +155,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 	require.NoError(t, err)
 
 	baseMetric.PartitionType = ValidationMetric
-	baseMetric.Group = model.ValidationMetricType
+	baseMetric.Group = model.ValidationMetricGroup
 	baseMetric.Metrics = map[string]any{
 		"validation_metrics": map[string]any{
 			"val_loss": 3.0,
@@ -470,7 +470,7 @@ func TestSummaryMetricsMigration(t *testing.T) {
 	}
 }
 
-func TestEpochMetricTypes(t *testing.T) {
+func TestEpochMetricGroups(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
@@ -803,12 +803,12 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 		}
 		t.Logf("Adding %s metrics: %v", typ, trialMetrics)
 		switch typ {
-		case model.TrainingMetricType.ToString():
-			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, model.TrainingMetricType)
+		case model.TrainingMetricGroup.ToString():
+			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, model.TrainingMetricGroup)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
-		case model.ValidationMetricType.ToString():
-			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, model.ValidationMetricType)
+		case model.ValidationMetricGroup.ToString():
+			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, model.ValidationMetricGroup)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
 		case "checkpoint":
@@ -1031,7 +1031,7 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 			require.NoError(t, db.updateTotalBatches(ctx, tx, tr.ID))
 		}
 		if coinFlip() {
-			modelTypes := []model.MetricGroup{model.TrainingMetricType, model.ValidationMetricType}
+			modelTypes := []model.MetricGroup{model.TrainingMetricGroup, model.ValidationMetricGroup}
 			//nolint:gosec // Weak RNG doesn't matter here.
 			modelType := modelTypes[rand.Intn(len(modelTypes))]
 			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, modelType)

@@ -136,7 +136,7 @@ func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 	}
 	rows := []MetricNamesRow{}
 
-	metricNames := BunSelectMetricTypeNames().
+	metricNames := BunSelectMetricGroupNames().
 		Where("experiment_id IN (?)", bun.In(experimentIDs))
 
 	err := Bun().NewSelect().TableExpr("(?) as metric_names", metricNames).
@@ -149,7 +149,7 @@ func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 
 	metricNamesMap := make(map[model.MetricGroup][]string)
 	for _, row := range rows {
-		mType := model.TrialSummaryMetricType(row.JSONPath)
+		mType := model.TrialSummaryMetricGroup(row.JSONPath)
 		if _, ok := metricNamesMap[mType]; !ok {
 			metricNamesMap[mType] = make([]string, 0)
 		}
@@ -167,14 +167,14 @@ type batchesWrapper struct {
 // MetricBatches returns the milestones (in batches processed) at which a specific metric
 // was recorded.
 func MetricBatches(
-	experimentID int, metricName string, startTime time.Time, metricType model.MetricGroup,
+	experimentID int, metricName string, startTime time.Time, metricGroup model.MetricGroup,
 ) (
 	batches []int32, endTime time.Time, err error,
 ) {
 	var rows []*batchesWrapper
-	JSONKey := model.TrialMetricsJSONPath(metricType == model.ValidationMetricType)
+	JSONKey := model.TrialMetricsJSONPath(metricGroup == model.ValidationMetricGroup)
 
-	err = BunSelectMetricsQuery(metricType, false).
+	err = BunSelectMetricsQuery(metricGroup, false).
 		TableExpr("trials t").
 		Join("INNER JOIN metrics m ON t.id=m.trial_id").
 		ColumnExpr("m.total_batches AS batches_processed, max(t.end_time) as end_time").
@@ -201,7 +201,7 @@ func MetricBatches(
 func (db *PgDB) TrainingMetricBatches(experimentID int, metricName string, startTime time.Time) (
 	batches []int32, endTime time.Time, err error,
 ) {
-	return MetricBatches(experimentID, metricName, startTime, model.TrainingMetricType)
+	return MetricBatches(experimentID, metricName, startTime, model.TrainingMetricGroup)
 }
 
 // ValidationMetricBatches returns the milestones (in batches processed) at which a specific
@@ -209,7 +209,7 @@ func (db *PgDB) TrainingMetricBatches(experimentID int, metricName string, start
 func (db *PgDB) ValidationMetricBatches(experimentID int, metricName string, startTime time.Time) (
 	batches []int32, endTime time.Time, err error,
 ) {
-	return MetricBatches(experimentID, metricName, startTime, model.ValidationMetricType)
+	return MetricBatches(experimentID, metricName, startTime, model.ValidationMetricGroup)
 }
 
 type snapshotWrapper struct {

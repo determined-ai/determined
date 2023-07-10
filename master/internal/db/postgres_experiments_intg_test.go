@@ -228,8 +228,8 @@ func TestMetricNames(t *testing.T) {
 
 	actualNames, err := db.MetricNames(ctx, []int{-1})
 	require.NoError(t, err)
-	require.Len(t, actualNames[model.TrainingMetricType], 0)
-	require.Len(t, actualNames[model.ValidationMetricType], 0)
+	require.Len(t, actualNames[model.TrainingMetricGroup], 0)
+	require.Len(t, actualNames[model.ValidationMetricGroup], 0)
 
 	user := RequireMockUser(t, db)
 
@@ -241,16 +241,16 @@ func TestMetricNames(t *testing.T) {
 
 	actualNames, err = db.MetricNames(ctx, []int{exp.ID})
 	require.NoError(t, err)
-	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.TrainingMetricType])
-	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.ValidationMetricType])
+	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.TrainingMetricGroup])
+	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.ValidationMetricGroup])
 
 	addMetricCustomTime(ctx, t, trial2, time.Now())
 	runSummaryMigration(t)
 
 	actualNames, err = db.MetricNames(ctx, []int{exp.ID})
 	require.NoError(t, err)
-	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.TrainingMetricType])
-	require.Equal(t, []string{"b", "c", "f", "val_loss"}, actualNames[model.ValidationMetricType])
+	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.TrainingMetricGroup])
+	require.Equal(t, []string{"b", "c", "f", "val_loss"}, actualNames[model.ValidationMetricGroup])
 
 	exp = RequireMockExperiment(t, db, user)
 	trial1 = RequireMockTrial(t, db, exp).ID
