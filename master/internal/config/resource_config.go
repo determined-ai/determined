@@ -1,6 +1,8 @@
 package config
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+)
 
 // DefaultResourceConfig returns the default resource configuration.
 func DefaultResourceConfig() *ResourceConfig {
@@ -32,6 +34,20 @@ func (r *ResourceConfig) ResolveResource() error {
 		r.ResourcePools = []ResourcePoolConfig{defaultPool}
 	}
 	return nil
+}
+
+// DefaultResourcePools returns the default resource pool of the resource config.
+func (r ResourceConfig) DefaultResourcePools() (computePool, auxPool string, err error) {
+	if r.ResourceManager == nil ||
+		(r.ResourceManager.AgentRM == nil && r.ResourceManager.KubernetesRM == nil) {
+		return "", "", errors.New("resource manager not set - must resolve config first")
+	}
+	if r.ResourceManager.KubernetesRM != nil {
+		return r.ResourceManager.KubernetesRM.DefaultComputeResourcePool,
+			r.ResourceManager.KubernetesRM.DefaultComputeResourcePool, nil
+	}
+	return r.ResourceManager.AgentRM.DefaultComputeResourcePool,
+		r.ResourceManager.AgentRM.DefaultComputeResourcePool, nil
 }
 
 // Validate implements the check.Validatable interface.

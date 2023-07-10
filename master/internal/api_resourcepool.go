@@ -26,6 +26,14 @@ func (a *apiServer) GetResourcePools(
 func (a *apiServer) BindRPToWorkspace(
 	ctx context.Context, req *apiv1.BindRPToWorkspaceRequest,
 ) (*apiv1.BindRPToWorkspaceResponse, error) {
+	defaultComputePool, defaultAuxPool, err := a.m.config.DefaultResourcePools()
+	if err != nil {
+		return nil, err
+	}
+	if req.ResourcePoolName == defaultComputePool || req.ResourcePoolName == defaultAuxPool {
+		return nil, errors.Errorf("default resource pool %s cannot be bound to any workspace",
+			req.ResourcePoolName)
+	}
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -51,6 +59,15 @@ func (a *apiServer) BindRPToWorkspace(
 func (a *apiServer) OverwriteRPWorkspaceBindings(
 	ctx context.Context, req *apiv1.OverwriteRPWorkspaceBindingsRequest,
 ) (*apiv1.OverwriteRPWorkspaceBindingsResponse, error) {
+	defaultComputePool, defaultAuxPool, err := a.m.config.DefaultResourcePools()
+	if err != nil {
+		return nil, err
+	}
+	if req.ResourcePoolName == defaultComputePool || req.ResourcePoolName == defaultAuxPool {
+		return nil, errors.Errorf("default resource pool %s cannot be bound to any workspace",
+			req.ResourcePoolName)
+	}
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
