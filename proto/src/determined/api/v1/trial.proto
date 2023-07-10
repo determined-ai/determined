@@ -604,7 +604,7 @@ message GetTrialWorkloadsRequest {
   // a metric.
   MetricType metric_type = 8 [deprecated = true];
   // Type of metrics (training, validation, etc).
-  string custom_type = 9;
+  string group = 9;
 }
 // Response to GetTrialWorkloadsRequest.
 message GetTrialWorkloadsResponse {
@@ -696,8 +696,8 @@ message CompareTrialsRequest {
   // Type of metrics.
   MetricType metric_type = 6 [deprecated = true];
   // Type of metrics (training, validation, etc).
-  string custom_type = 11;
-  // metric ids for the query. must be in the form metric_type.metric_name.
+  string group = 11;
+  // metric ids for the query. must be in the form group.metric_name.
   repeated string metric_ids = 9;
   // The metric and range filter for a time series
   determined.common.v1.PolymorphicFilter time_series_filter = 10;
