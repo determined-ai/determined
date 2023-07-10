@@ -20,5 +20,4 @@ if [[ ${workload_manager} == pbs ]]; then
     # Enable job history
     echo "set server job_history_enable = true" | sudo /opt/pbs/bin/qmgr
     echo "Set job_history_enable to true"
-
 fi
