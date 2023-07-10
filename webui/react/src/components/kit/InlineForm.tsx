@@ -33,7 +33,7 @@ function InlineForm<T>({
   ...formProps
 }: Props<T>): JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
-  const [previousValue, setPreviousValue] = useState<T>(initialValue);
+  const [previousValue, setPreviousValue] = useState<T>(initialValue); // had to set a state due to uncontrolled form reseting to the initialValue instead of previous value
   const [form] = Form.useForm();
   const shouldColapseText = useMemo(() => String(initialValue).length >= 45, [initialValue]); // prevents layout breaking, specially if using Input.TextArea.
   const inputCurrentValue = Form.useWatch('input', form);
