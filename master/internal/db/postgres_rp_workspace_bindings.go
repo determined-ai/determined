@@ -285,7 +285,7 @@ func GetDefaultPoolsForWorkspace(ctx context.Context, workspaceID int,
 ) (computePool, auxPool string, err error) {
 	var target model.Workspace
 	err = Bun().NewSelect().Model(&target).Where("id = ?", workspaceID).Scan(ctx)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		return "", "", err
 	}
 
