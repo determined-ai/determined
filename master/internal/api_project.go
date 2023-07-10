@@ -159,16 +159,16 @@ func (a *apiServer) getProjectColumnsByID(
 	}
 
 	hyperparameters := []struct {
-		ExperimentID    int
 		WorkspaceID     int
 		Hyperparameters expconf.HyperparametersV0
+		BestTrialID     *int
 	}{}
 
 	// get all experiments in project
 	experimentQuery := db.Bun().NewSelect().
-		ColumnExpr("id as experiment_id").
 		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
 		ColumnExpr("config->'hyperparameters' as hyperparameters").
+		Column("best_trial_id").
 		Table("experiments").
 		Where("config->>'hyperparameters' IS NOT NULL").
 		Where("project_id = ?", id).
@@ -191,21 +191,25 @@ func (a *apiServer) getProjectColumnsByID(
 		return nil, err
 	}
 
-	experimentIds := make([]int, len(hyperparameters))
+	trialIDs := make([]int, 0, len(hyperparameters)+1)
+	// dummy value so bun doesn't generate invalid sql
+	trialIDs = append(trialIDs, -1)
 	for _, hparam := range hyperparameters {
-		experimentIds = append(experimentIds, hparam.ExperimentID)
+		if hparam.BestTrialID != nil {
+			trialIDs = append(trialIDs, *hparam.BestTrialID)
+		}
 	}
 	summaryMetrics := []struct {
-		ExperimentID   int
+		ID             int
 		SummaryMetrics model.JSONObj
 	}{}
 
 	trialsQuery := db.Bun().NewSelect().
-		Column("experiment_id").
+		Column("id").
 		Column("summary_metrics").
 		Table("trials").
-		Where("experiment_id IN (?)", bun.In(experimentIds)).
-		Order("experiment_id")
+		Where("id IN (?)", bun.In(trialIDs)).
+		Order("id")
 	err = trialsQuery.Scan(ctx, &summaryMetrics)
 	if err != nil {
 		return nil, err
