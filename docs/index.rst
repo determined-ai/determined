@@ -80,9 +80,9 @@
    Prometheus and Grafana <integrations/prometheus/prometheus>
    attributions
 
-##########################
- *Welcome to Determined!*
-##########################
+#######################
+ Welcome to Determined
+#######################
 
 .. meta::
    :description: Visit the Determined AI documentation home page and get quick access to information, tutorials, quickstarts, user guides, and reference material.
