@@ -41,6 +41,13 @@ func (a *MiscAuthZRBAC) CanGetMasterLogs(
 	return a.checkForPermission(ctx, curUser, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MASTER_LOGS)
 }
 
+// CanGetMasterConfig checks if the user has permission to view master configs.
+func (a *MiscAuthZRBAC) CanGetMasterConfig(
+	ctx context.Context, curUser *model.User,
+) (permErr error, error error) {
+	return a.checkForPermission(ctx, curUser, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MASTER_CONFIG)
+}
+
 // CanGetUsageDetails checks if the user can get usage related details.
 func (a *MiscAuthZRBAC) CanGetUsageDetails(
 	ctx context.Context, curUser *model.User,
