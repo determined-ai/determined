@@ -1537,7 +1537,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 		var endTime time.Time
 		var err error
 		//nolint:staticcheck // SA1019: backward compatibility
-		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
+		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.Group))
 		if err != nil {
 			return err
 		}

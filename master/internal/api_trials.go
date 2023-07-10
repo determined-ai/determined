@@ -744,7 +744,7 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		}
 		//nolint:staticcheck // SA1019: backward compatibility
 		metric.Type = aMetricType.ToProto()
-		metric.CustomType = aMetricType.ToString()
+		metric.Group = aMetricType.ToString()
 		if len(metricMeasurements) > 0 {
 			if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
 				return nil, err
@@ -795,7 +795,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 		}
 
 		//nolint:staticcheck // SA1019: backward compatibility
-		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
+		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.Group))
 		if err != nil {
 			return nil, err
 		}
