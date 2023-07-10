@@ -134,7 +134,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 		TotalBatches  int
 		EndTime       time.Time
 		PartitionType MetricPartitionType
-		Group         model.MetricGroup
+		CustomType    model.MetricGroup
 	}
 
 	baseMetric := metric{
@@ -145,7 +145,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 	}
 
 	baseMetric.PartitionType = TrainingMetric
-	baseMetric.Group = model.TrainingMetricGroup
+	baseMetric.CustomType = model.TrainingMetricGroup
 	baseMetric.Metrics = map[string]any{
 		"avg_metrics": map[string]any{
 			"b": -1.0,
@@ -155,7 +155,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 	require.NoError(t, err)
 
 	baseMetric.PartitionType = ValidationMetric
-	baseMetric.Group = model.ValidationMetricGroup
+	baseMetric.CustomType = model.ValidationMetricGroup
 	baseMetric.Metrics = map[string]any{
 		"validation_metrics": map[string]any{
 			"val_loss": 3.0,
