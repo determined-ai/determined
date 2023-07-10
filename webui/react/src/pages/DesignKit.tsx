@@ -69,7 +69,7 @@ import {
 } from 'utils/colors';
 import handleError from 'utils/error';
 import { Loaded, NotLoaded } from 'utils/loadable';
-import loremIpsum from 'utils/loremIpsum';
+import loremIpsum, { loremIpsumSentence } from 'utils/loremIpsum';
 import { noOp } from 'utils/service';
 import { KeyboardShortcut } from 'utils/shortcut';
 
@@ -936,9 +936,7 @@ const InlineFormSection: React.FC = () => {
   const [inputWithValidatorValue, setInputWithValidatorValue] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [numberInput, setNumberInput] = useState(1234);
-  const [textAreaValue, setTextAreaValue] = useState(
-    'Lorem ipsum dolor sit amet consectetur adipisicing elit. Id tempora harum animi, provident explicabo in esse, hic qui cumque maiores ipsa, praesentium ad repellat dolorem voluptates! Eligendi magnam blanditiis velit.',
-  );
+  const [textAreaValue, setTextAreaValue] = useState(loremIpsumSentence);
   const [passwordInputValue, setPasswordInputValue] = useState('123456789');
   const [selectValue, setSelectValue] = useState('off');
 
@@ -970,9 +968,6 @@ const InlineFormSection: React.FC = () => {
         </p>
       </AntDCard>
       <AntDCard title="Usage">
-        <p>
-          The <code>{'inputElement'}</code> sets the actual input to be rendered in the form.
-        </p>
         <p>
           If using the <code>{'Input.Password'}</code> component, is important to pass the{' '}
           <code>{'isPassword'}</code> prop.

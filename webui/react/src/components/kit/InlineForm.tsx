@@ -35,7 +35,7 @@ function InlineForm<T>({
   const [isEditing, setIsEditing] = useState(false);
   const [previousValue, setPreviousValue] = useState<T>(initialValue); // had to set a state due to uncontrolled form reseting to the initialValue instead of previous value
   const [form] = Form.useForm();
-  const shouldColapseText = useMemo(() => String(initialValue).length >= 45, [initialValue]); // prevents layout breaking, specially if using Input.TextArea.
+  const shouldCollapseText = useMemo(() => String(initialValue).length >= 45, [initialValue]); // prevents layout breaking, specially if using Input.TextArea.
   const inputCurrentValue = Form.useWatch('input', form);
   const readOnlyText = useMemo(() => {
     let textValue = String(value ?? initialValue);
@@ -45,10 +45,10 @@ function InlineForm<T>({
     }
 
     if (isPassword) return textValue.replace(/\S/g, '*');
-    if (shouldColapseText) return textValue.slice(0, 50).concat('...');
+    if (shouldCollapseText) return textValue.slice(0, 50).concat('...');
 
     return textValue;
-  }, [shouldColapseText, value, initialValue, isPassword, inputCurrentValue]);
+  }, [shouldCollapseText, value, initialValue, isPassword, inputCurrentValue]);
 
   const resetForm = useCallback(() => {
     form.resetFields();
