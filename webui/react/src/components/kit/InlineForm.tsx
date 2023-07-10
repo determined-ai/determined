@@ -33,6 +33,7 @@ function InlineForm<T>({
   ...formProps
 }: Props<T>): JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
+  const [previousValue, setPreviousValue] = useState<T>(initialValue);
   const [form] = Form.useForm();
   const shouldColapseText = useMemo(() => String(initialValue).length >= 45, [initialValue]); // prevents layout breaking, specially if using Input.TextArea.
   const inputCurrentValue = Form.useWatch('input', form);
@@ -51,14 +52,16 @@ function InlineForm<T>({
 
   const resetForm = useCallback(() => {
     form.resetFields();
+    form.setFieldValue('input', previousValue);
     setIsEditing(false);
-  }, [form]);
+  }, [form, previousValue]);
 
   const submitForm = useCallback(async () => {
     try {
       const formValues = await form.validateFields();
       onSubmit?.(formValues.input);
 
+      setPreviousValue(formValues.input);
       setIsEditing(false);
     } catch (error) {
       form.setFieldValue('input', initialValue);
