@@ -1,6 +1,7 @@
 import datetime
 import enum
 import json
+import warnings
 from typing import Any, Dict, Iterable, List, Optional
 
 from determined.common import api, util
@@ -239,13 +240,27 @@ class Model:
         return ModelVersion._from_bindings(r.modelVersion, self._session)
 
     def get_versions(self, order_by: ModelOrderBy = ModelOrderBy.DESC) -> List[ModelVersion]:
+        warnings.warn(
+            "Model.get_versions() has been deprecated and will be removed in a future version."
+            "Please call Model.list_versions() instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return list(self.list_versions(order_by=order_by))
+
+    def list_versions(self, order_by: ModelOrderBy = ModelOrderBy.DESC) -> Iterable[ModelVersion]:
         """
-        Get a list of ModelVersions with checkpoints of this model. The
-        model versions are sorted by model version ID and are returned in descending
+        Get an iterable of ModelVersions with checkpoints of this model.
+
+        The model versions are sorted by model version ID and are returned in descending
         order by default.
 
         Arguments:
             order_by (enum): A member of the :class:`ModelOrderBy` enum.
+
+        Note:
+            This method returns an Iterable type that lazily instantiates response objects. To
+            fetch all versions at once, call list(list_versions()).
         """
 
         def get_with_offset(offset: int) -> bindings.v1GetModelVersionsResponse:
@@ -258,10 +273,9 @@ class Model:
             )
 
         resps = api.read_paginated(get_with_offset)
-
-        return [
-            ModelVersion._from_bindings(m, self._session) for r in resps for m in r.modelVersions
-        ]
+        for r in resps:
+            for m in r.modelVersions:
+                yield ModelVersion._from_bindings(m, self._session)
 
     def register_version(self, checkpoint_uuid: str) -> ModelVersion:
         """
