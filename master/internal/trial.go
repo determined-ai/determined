@@ -15,7 +15,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/logger"
-	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 
@@ -276,19 +275,6 @@ func (t *trial) recover() error {
 	return nil
 }
 
-// To change in testing.
-var taskAllocator = func(
-	logCtx detLogger.Context,
-	req sproto.AllocateRequest,
-	db db.DB,
-	rm rm.ResourceManager,
-	specifier tasks.TaskSpecifier,
-	system *actor.System,
-	parent *actor.Ref,
-) {
-	task.DefaultService.StartAllocation(logCtx, req, db, rm, specifier, system, parent)
-}
-
 // maybeAllocateTask checks if the trial should allocate state and allocates it if so.
 func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	if !(t.allocationID == nil &&
@@ -332,7 +318,9 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		ctx.Log().
 			WithField("allocation-id", ar.AllocationID).
 			Infof("starting restored trial allocation")
-		taskAllocator(t.logCtx, ar, t.db, t.rm, specifier, ctx.Self().System(), ctx.Self())
+		task.DefaultService.StartAllocation(
+			t.logCtx, ar, t.db, t.rm, specifier, ctx.Self().System(), ctx.Self(),
+		)
 		t.allocationID = &ar.AllocationID
 		// TODO(!!!): Just have the parent (trial) call `t.allocation.AwaitTermination()`, rather
 		// than the implicit "your child ctx.Tell(...)'s you an exit" as an "API" (scare quotes).
@@ -373,7 +361,9 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		Debugf("starting new trial allocation")
 
 	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
-	taskAllocator(t.logCtx, ar, t.db, t.rm, specifier, ctx.Self().System(), ctx.Self())
+	task.DefaultService.StartAllocation(
+		t.logCtx, ar, t.db, t.rm, specifier, ctx.Self().System(), ctx.Self(),
+	)
 	t.allocationID = &ar.AllocationID
 	return nil
 }

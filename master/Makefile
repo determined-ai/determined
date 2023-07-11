@@ -67,9 +67,10 @@ build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	mockery --name=EventInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename event_iface.go 
 	mockery --name=NodeInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename node_iface.go 
 	mockery --name=ResourceManager --dir=internal/rm --output internal/mocks --filename rm.go
+	mockery --name=AllocationService --dir=internal/task --output internal/mocks/allocationmocks --filename allocation_service.go --outpkg allocationmocks
 
 	# fmt once since the mocks are not generated formatted.
-	goimports -l -local github.com/determined-ai -w ./internal/mocks
+	goimports -l -local github.com/determined-ai -w ./internal/mocks ./internal/mocks/allocationmocks
 	mkdir -p build
 	touch $@
 

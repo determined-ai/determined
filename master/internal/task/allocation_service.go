@@ -22,24 +22,24 @@ import (
 
 var syslog = logrus.WithField("component", "allocation_service")
 
-// DefaultService is the singleton default AllocationService.
-var DefaultService = NewAllocationService()
+// DefaultService is the singleton default allocationService.
+var DefaultService AllocationService = newAllocationService()
 
-// AllocationService is used to launch, track and interact with allocations.
-type AllocationService struct {
+// allocationService is used to launch, track and interact with allocations.
+type allocationService struct {
 	mu          sync.RWMutex
 	allocations map[model.AllocationID]*Allocation
 }
 
-// NewAllocationService creates a new AllocationService.
-func NewAllocationService() *AllocationService {
-	return &AllocationService{
+// newAllocationService creates a new allocationService.
+func newAllocationService() *allocationService {
+	return &allocationService{
 		allocations: map[model.AllocationID]*Allocation{},
 	}
 }
 
 // StartAllocation starts an allocation and returns a handle to it.
-func (as *AllocationService) StartAllocation(
+func (as *allocationService) StartAllocation(
 	logCtx detLogger.Context,
 	req sproto.AllocateRequest,
 	db db.DB,
@@ -68,21 +68,21 @@ func (as *AllocationService) StartAllocation(
 
 // GetAllocation returns allocation actor by allocation id.
 // TODO(!!!): IDK if this should be public.
-func (as *AllocationService) GetAllocation(allocationID model.AllocationID) *Allocation {
+func (as *allocationService) GetAllocation(allocationID model.AllocationID) *Allocation {
 	as.mu.RLock()
 	defer as.mu.RUnlock()
 	return as.allocations[allocationID]
 }
 
 // GetAllAllocationIDs returns all registered allocation ids.
-func (as *AllocationService) GetAllAllocationIDs() []model.AllocationID {
+func (as *allocationService) GetAllAllocationIDs() []model.AllocationID {
 	as.mu.RLock()
 	defer as.mu.RUnlock()
 	return maps.Keys(as.allocations)
 }
 
 // SendLog sends a container log, enriched with metadata from the allocation.
-func (as *AllocationService) SendLog(
+func (as *allocationService) SendLog(
 	ctx context.Context,
 	id model.AllocationID,
 	log *sproto.ContainerLog,
@@ -97,7 +97,7 @@ func (as *AllocationService) SendLog(
 
 // SetReady sets the ready bit and moves the allocation to the running state if it has not
 // progressed past it already.
-func (as *AllocationService) SetReady(ctx context.Context, id model.AllocationID) error {
+func (as *allocationService) SetReady(ctx context.Context, id model.AllocationID) error {
 	ref := as.GetAllocation(id)
 	if ref == nil {
 		return api.NotFoundErrs("allocation", id.String(), true)
@@ -112,7 +112,7 @@ func (as *AllocationService) SetReady(ctx context.Context, id model.AllocationID
 }
 
 // SetWaiting moves the allocation to the waiting state if it has not progressed past it yet.
-func (as *AllocationService) SetWaiting(ctx context.Context, id model.AllocationID) error {
+func (as *allocationService) SetWaiting(ctx context.Context, id model.AllocationID) error {
 	ref := as.GetAllocation(id)
 	if ref == nil {
 		return api.NotFoundErrs("allocation", id.String(), true)
@@ -128,7 +128,7 @@ func (as *AllocationService) SetWaiting(ctx context.Context, id model.Allocation
 
 // SetProxyAddress sets the proxy address of the allocation and sets up proxies for any services
 // it provides.
-func (as *AllocationService) SetProxyAddress(
+func (as *allocationService) SetProxyAddress(
 	ctx context.Context,
 	id model.AllocationID,
 	addr string,
@@ -150,7 +150,7 @@ func (as *AllocationService) SetProxyAddress(
 // process from each resource in the allocation connects and the resource manager sends each
 // resource's state, each watcher will receive a copy of the rendezvous info for communicating
 // with its peers.
-func (as *AllocationService) WatchRendezvous(
+func (as *allocationService) WatchRendezvous(
 	ctx context.Context,
 	id model.AllocationID,
 	rID sproto.ResourcesID,
@@ -169,7 +169,7 @@ func (as *AllocationService) WatchRendezvous(
 }
 
 // UnwatchRendezvous removes a rendezvous watcher.
-func (as *AllocationService) UnwatchRendezvous(
+func (as *allocationService) UnwatchRendezvous(
 	ctx context.Context,
 	id model.AllocationID,
 	rID sproto.ResourcesID,
@@ -189,7 +189,7 @@ func (as *AllocationService) UnwatchRendezvous(
 
 // SetResourcesAsDaemon marks the resources as daemons. If all non-daemon resources exit, the
 // allocation will kill the remaining daemon resources.
-func (as *AllocationService) SetResourcesAsDaemon(
+func (as *allocationService) SetResourcesAsDaemon(
 	ctx context.Context,
 	id model.AllocationID,
 	rID sproto.ResourcesID,
@@ -208,7 +208,7 @@ func (as *AllocationService) SetResourcesAsDaemon(
 }
 
 // Signal the allocation with the given signal.
-func (as *AllocationService) Signal(
+func (as *allocationService) Signal(
 	id model.AllocationID,
 	sig AllocationSignal,
 	reason string,
@@ -222,7 +222,7 @@ func (as *AllocationService) Signal(
 }
 
 // State returns a copy of the current state of the allocation.
-func (as *AllocationService) State(id model.AllocationID) (AllocationState, error) {
+func (as *allocationService) State(id model.AllocationID) (AllocationState, error) {
 	ref := as.GetAllocation(id)
 	if ref == nil {
 		return AllocationState{}, api.NotFoundErrs("allocation", id.String(), true)
@@ -233,7 +233,7 @@ func (as *AllocationService) State(id model.AllocationID) (AllocationState, erro
 // AllGather blocks until `numPeers` with the same `allocationID` are waiting and then returns the
 // data from all those peers. It returns an error if the call returns early without data for any
 // reason. Only one call may connect per `id`.
-func (as *AllocationService) AllGather(
+func (as *allocationService) AllGather(
 	ctx context.Context,
 	allocationID model.AllocationID,
 	id uuid.UUID,
@@ -273,7 +273,7 @@ func (as *AllocationService) AllGather(
 
 // WaitForRestore waits until the allocation has been restored by the resource manager. The
 // allocation must exist otherwise this will return a not found error.
-func (as *AllocationService) WaitForRestore(ctx context.Context, id model.AllocationID) error {
+func (as *allocationService) WaitForRestore(ctx context.Context, id model.AllocationID) error {
 	ref := as.GetAllocation(id)
 	if ref == nil {
 		return api.NotFoundErrs("allocation", id.String(), true)

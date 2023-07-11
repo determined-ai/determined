@@ -175,6 +175,11 @@ func (a *AllocationSubscription) Close() {
 	a.inbox.Put(SentinelAllocationEvent{})
 }
 
+// Len returns the count of pending events.
+func (a *AllocationSubscription) Len() int {
+	return a.inbox.Len()
+}
+
 // Proto returns the proto representation of ProxyPortConfig.
 func (p *ProxyPortConfig) Proto() *taskv1.ProxyPortConfig {
 	if p == nil {
