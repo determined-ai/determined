@@ -191,7 +191,7 @@ func TestAllocation(t *testing.T) {
 }
 
 func setup(t *testing.T) (
-	*mocks.ResourceManager, *actors.MockActor, *db.PgDB, *Allocation,
+	*mocks.ResourceManager, *actors.MockActor, *db.PgDB, *allocation,
 ) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")

@@ -141,7 +141,7 @@ func remakeCommandsByType(
 	snapshots := []CommandSnapshot{}
 
 	err := db.Bun().NewSelect().Model(&snapshots).
-		Relation("Allocation").
+		Relation("allocation").
 		Relation("Task").
 		Relation("Task.Job").
 		Where("allocation.end_time IS NULL").

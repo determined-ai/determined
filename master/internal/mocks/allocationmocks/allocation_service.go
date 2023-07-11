@@ -73,22 +73,6 @@ func (_m *AllocationService) GetAllAllocationIDs() []model.AllocationID {
 	return r0
 }
 
-// GetAllocation provides a mock function with given fields: allocationID
-func (_m *AllocationService) GetAllocation(allocationID model.AllocationID) *task.Allocation {
-	ret := _m.Called(allocationID)
-
-	var r0 *task.Allocation
-	if rf, ok := ret.Get(0).(func(model.AllocationID) *task.Allocation); ok {
-		r0 = rf(allocationID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*task.Allocation)
-		}
-	}
-
-	return r0
-}
-
 // SendLog provides a mock function with given fields: ctx, id, log
 func (_m *AllocationService) SendLog(ctx context.Context, id model.AllocationID, log *sproto.ContainerLog) {
 	_m.Called(ctx, id, log)
