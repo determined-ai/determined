@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -1377,30 +1376,15 @@ func (a *apiServer) AllocationRendezvousInfo(
 		return nil, err
 	}
 
-	allocationID := model.AllocationID(req.AllocationId)
-	resourcesID := sproto.ResourcesID(req.ResourcesId)
-
-	defer func() {
-		// TODO: partial failures are annoying and we should just make them impossible.
-		err := task.DefaultService.UnwatchRendezvous(ctx, allocationID, resourcesID)
-		if err != nil {
-			logrus.Errorf("failed to unwatch rendezvous for %s: %s", allocationID, err)
-		}
-	}()
-	w, err := task.DefaultService.WatchRendezvous(ctx, allocationID, resourcesID)
+	info, err := task.DefaultService.WatchRendezvous(
+		ctx,
+		model.AllocationID(req.AllocationId),
+		sproto.ResourcesID(req.ResourcesId),
+	)
 	if err != nil {
 		return nil, err
 	}
-
-	select {
-	case rsp := <-w.C:
-		if rsp.Err != nil {
-			return nil, rsp.Err
-		}
-		return &apiv1.AllocationRendezvousInfoResponse{RendezvousInfo: rsp.Info}, nil
-	case <-ctx.Done():
-		return nil, nil
-	}
+	return &apiv1.AllocationRendezvousInfoResponse{RendezvousInfo: info}, nil
 }
 
 func (a *apiServer) PostTrialRunnerMetadata(

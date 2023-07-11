@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	"github.com/google/uuid"
 
@@ -42,12 +43,7 @@ type AllocationService interface {
 		ctx context.Context,
 		id model.AllocationID,
 		rID sproto.ResourcesID,
-	) (RendezvousWatcher, error)
-	UnwatchRendezvous(
-		ctx context.Context,
-		id model.AllocationID,
-		rID sproto.ResourcesID,
-	) error
+	) (*trialv1.RendezvousInfo, error)
 	SetResourcesAsDaemon(
 		ctx context.Context,
 		id model.AllocationID,
