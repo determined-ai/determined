@@ -34,6 +34,7 @@
     "@codemirror/lang-markdown": "^6.1.1",
     "@codemirror/lang-python": "^6.1.2",
     "@codemirror/legacy-modes": "^6.3.2",
+    "@hpe.com/glide-data-grid": "^5.2.1",
     "@uiw/react-codemirror": "^4.20.2",
     "ansi-to-html": "^0.7.2",
     "antd": "^5.1.7",

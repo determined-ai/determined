@@ -5,7 +5,7 @@ import {
   getMiddleCenterBias,
   GridCellKind,
   measureTextCached,
-} from '@glideapps/glide-data-grid';
+} from '@hpe.com/glide-data-grid';
 
 interface LinkCellProps {
   readonly kind: 'link-cell';

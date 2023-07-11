@@ -1,4 +1,4 @@
-import { Rectangle } from '@glideapps/glide-data-grid';
+import { Rectangle } from '@hpe.com/glide-data-grid';
 import { Space } from 'antd';
 import { isLeft } from 'fp-ts/lib/Either';
 import { observable, useObservable } from 'micro-observables';

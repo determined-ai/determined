@@ -5,7 +5,7 @@ import {
   GridCellKind,
   measureTextCached,
   Rectangle,
-} from '@glideapps/glide-data-grid';
+} from '@hpe.com/glide-data-grid';
 
 import { roundedRect } from '../utils';
 
