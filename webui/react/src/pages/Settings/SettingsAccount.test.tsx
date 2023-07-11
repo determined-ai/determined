@@ -62,7 +62,7 @@ const Container: React.FC = () => {
     loadUsers();
   }, [loadUsers]);
 
-  return <SettingsAccount />;
+  return <SettingsAccount show={true} onClose={() => { return null; }} />;
 };
 
 const setup = () =>
@@ -80,6 +80,9 @@ describe('SettingsAccount', () => {
 
   it('should render with correct values', async () => {
     setup();
+    expect(screen.getByText('Username')).toBeInTheDocument();
+    expect(screen.getByText('Display Name')).toBeInTheDocument();
+    expect(screen.getByText('Password')).toBeInTheDocument();
     expect(await screen.findByText(USERNAME)).toBeInTheDocument();
     expect(screen.getByText(CHANGE_PASSWORD_TEXT)).toBeInTheDocument();
   });

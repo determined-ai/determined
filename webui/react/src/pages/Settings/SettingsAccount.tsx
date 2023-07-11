@@ -3,11 +3,18 @@ import React, { useCallback } from 'react';
 
 import { Size } from 'components/Avatar';
 import Button from 'components/kit/Button';
+import { Column, Columns } from 'components/kit/Columns';
+import Drawer from 'components/kit/Drawer';
 import InlineForm from 'components/kit/InlineForm';
 import Input from 'components/kit/Input';
+import InputShortcut from 'components/kit/InputShortcut';
 import { useModal } from 'components/kit/Modal';
-import Avatar from 'components/kit/UserAvatar';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
+import Section from 'components/Section';
+import { useSettings } from 'hooks/useSettings';
+import shortCutSettingsConfig, {
+  Settings as ShortcutSettings,
+} from 'pages/Settings/UserSettings.settings';
 import { patchUser } from 'services/api';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
@@ -24,11 +31,22 @@ export const API_USERNAME_ERROR_MESSAGE = 'Could not update username.';
 export const API_USERNAME_SUCCESS_MESSAGE = 'Username updated.';
 export const CHANGE_PASSWORD_TEXT = 'Change Password';
 
-const SettingsAccount: React.FC = () => {
+interface Props {
+  show: boolean;
+  onClose: () => void;
+}
+
+const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const info = useObservable(determinedStore.info);
 
   const PasswordChangeModal = useModal(PasswordChangeModalComponent);
+  const {
+    settings: { jupyterLab: jupyterLabShortcut,
+      omnibar: omnibarShortcut,
+      navbarCollapsed: navbarCollapsedShortcut,
+    },
+  } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
 
   const handleSaveDisplayName = useCallback(
     async (newValue: string): Promise<void | Error> => {
@@ -66,39 +84,72 @@ const SettingsAccount: React.FC = () => {
   );
 
   return (
-    <div className={css.base}>
-      <div className={css.avatar}>
-        <Avatar hideTooltip size={Size.ExtraLarge} user={currentUser} />
-      </div>
-      <Divider />
-      <InlineForm<string>
-        initialValue={currentUser?.username ?? ''}
-        label="Username"
-        required
-        rules={[{ message: 'Please input your username', required: true }]}
-        testId="username"
-        onSubmit={handleSaveUsername}>
-        <Input maxLength={32} placeholder="Add username" />
-      </InlineForm>
-      <Divider />
-      <InlineForm<string>
-        initialValue={currentUser?.displayName ?? ''}
-        label="Display Name"
-        testId="displayname"
-        onSubmit={handleSaveDisplayName}>
-        <Input maxLength={32} placeholder="Add display name" style={{ widows: '80%' }} />
-      </InlineForm>
-      {info.userManagementEnabled && (
-        <>
-          <Divider />
-          <div className={css.row}>
-            <label>Password</label>
-            <Button onClick={PasswordChangeModal.open}>{CHANGE_PASSWORD_TEXT}</Button>
-          </div>
-          <PasswordChangeModal.Component />
-        </>
-      )}
-    </div>
+    <Drawer
+      open={show}
+      placement="left"
+      title="Settings"
+      onClose={onClose}>
+      <Section title="Profile">
+        <div className={css.section}>
+          <InlineForm<string>
+            initialValue={currentUser?.username ?? ''}
+            label="Username"
+            required
+            rules={[{ message: 'Please input your username', required: true }]}
+            testId="username"
+            onSubmit={handleSaveUsername}>
+            <Input maxLength={32} placeholder="Add username" />
+          </InlineForm>
+          <InlineForm<string>
+            initialValue={currentUser?.displayName ?? ''}
+            label="Display Name"
+            testId="displayname"
+            onSubmit={handleSaveDisplayName}>
+            <Input maxLength={32} placeholder="Add display name" />
+          </InlineForm>
+          {info.userManagementEnabled && (
+            <>
+              <Columns>
+                <Column>
+                  <label>Password</label>
+                </Column>
+                <Button onClick={PasswordChangeModal.open}>{CHANGE_PASSWORD_TEXT}</Button>
+              </Columns>
+              <PasswordChangeModal.Component />
+            </>
+          )}
+        </div>
+        <Divider />
+      </Section>
+      <Section title="Shortcuts">
+        <div className={css.section}>
+          <Columns>
+            <Column>
+              <label>
+                Open Omnibar
+              </label>
+            </Column>
+            <InputShortcut value={omnibarShortcut} />
+          </Columns>
+          <Columns>
+            <Column>
+              <label>
+                Launch JupyterLab Notebook
+              </label>
+            </Column>
+            <InputShortcut value={jupyterLabShortcut} />
+          </Columns>
+          <Columns>
+            <Column>
+              <label>
+                Toggle Sidebar
+              </label>
+            </Column>
+            <InputShortcut value={navbarCollapsedShortcut} />
+          </Columns>
+        </div>
+      </Section>
+    </Drawer>
   );
 };
 

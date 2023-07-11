@@ -1,36 +1,8 @@
-.base {
-  margin: 0 auto;
-  max-width: $breakpoint-mobile;
-  padding: 32px 16px;
-  width: 100%;
-
-  .avatar {
-    align-items: center;
-    display: flex;
-    flex-direction: column;
-  }
-  .row {
-    align-items: center;
-    display: grid;
-    grid-template-columns: 2fr 3fr;
-  }
-  .displayInfo {
-    align-items: center;
-    display: grid;
-    gap: 4px;
-    grid-template-columns: 8fr 1fr;
-  }
-  .form {
-    align-items: center;
-    display: grid;
-    gap: 4px;
-    grid-template-columns: 6fr 1fr 1fr;
-  }
-  label {
-    color: var(--theme-surface-on-weak);
-  }
-  .info {
-    color: var(--theme-surface-on);
-    padding: 0 8px;
-  }
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+label {
+  color: var(--theme-surface-on-weak);
 }
