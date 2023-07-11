@@ -51,6 +51,17 @@ class and dataset.
        dataset=dataset
    )
 
+In the experiment config file, use a distributed launcher as the API requires information such as
+rank set by the launcher. Below is an example.
+
+.. code:: yaml
+
+   entrypoint: >-
+       python3 -m determined.launch.torch_distributed
+       python3 batch_processing.py
+   resources:
+     slots_per_trial: 4
+
 ``TorchBatchProcessor``
 =======================
 
