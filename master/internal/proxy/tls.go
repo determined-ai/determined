@@ -36,11 +36,12 @@ var (
 
 type certAndKeyInfo struct {
 	bun.BaseModel `bun:"table:cert_and_key_info"`
-	Serial        int64  `bun:"serial_number"`
-	Cert          []byte `bun:"cert"`
-	Key           []byte `bun:"key"`
-	IsMaster      bool   `bun:"is_master"`
-	IsCA          bool   `bun:"is_ca"`
+
+	Serial   int64  `bun:"serial_number"`
+	Cert     []byte `bun:"cert"`
+	Key      []byte `bun:"key"`
+	IsMaster bool   `bun:"is_master"`
+	IsCA     bool   `bun:"is_ca"`
 }
 
 func isCertExpired(certificate *x509.Certificate) bool {
@@ -183,10 +184,10 @@ func genKeyAndSignCert(unsignedCert, caCert *x509.Certificate, certKey, caKey *r
 func LoadOrGenSignedMasterCert() error {
 	masterInfoMutex.Lock()
 	defer masterInfoMutex.Unlock()
-	return maybeLoadOrGenSignedMasterCert()
+	return loadOrGenSignedMasterCert()
 }
 
-func maybeLoadOrGenSignedMasterCert() error {
+func loadOrGenSignedMasterCert() error {
 	// make sure calling function has locked MasterInfoMutex
 	err := loadMasterCertAndKey()
 	if err != nil {
@@ -240,10 +241,10 @@ func maybeLoadOrGenSignedMasterCert() error {
 func LoadOrGenCA() error {
 	masterInfoMutex.Lock()
 	defer masterInfoMutex.Unlock()
-	return maybeLoadOrGenCA()
+	return loadOrGenCA()
 }
 
-func maybeLoadOrGenCA() error {
+func loadOrGenCA() error {
 	// make sure the calling function has locked masterInfoMutex
 	err := loadCACertAndKey()
 	if err != nil {
@@ -301,7 +302,7 @@ func maybeLoadOrGenCA() error {
 func MasterCACert() ([]byte, error) {
 	masterInfoMutex.Lock()
 	defer masterInfoMutex.Unlock()
-	err := maybeLoadOrGenCA()
+	err := loadOrGenCA()
 	if err != nil {
 		return nil, err
 	}
@@ -317,7 +318,7 @@ func MasterCACert() ([]byte, error) {
 func MasterKeyAndCert() (keyPem []byte, certPem []byte, err error) {
 	masterInfoMutex.Lock()
 	defer masterInfoMutex.Unlock()
-	err = maybeLoadOrGenSignedMasterCert()
+	err = loadOrGenSignedMasterCert()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -338,7 +339,7 @@ func MasterKeyAndCert() (keyPem []byte, certPem []byte, err error) {
 func GenSignedCert() (keyPem []byte, certPem []byte, err error) {
 	masterInfoMutex.Lock()
 	defer masterInfoMutex.Unlock()
-	err = maybeLoadOrGenCA()
+	err = loadOrGenCA()
 	if err != nil {
 		return nil, nil, fmt.Errorf(
 			"unable to generate signed cert; error generating CA key and cert: %t", err)
