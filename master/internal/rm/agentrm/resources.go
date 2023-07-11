@@ -42,8 +42,6 @@ func (c containerResources) Summary() sproto.ResourcesSummary {
 
 // StartContainer notifies the agent to start a container.
 func (c containerResources) Start(
-	// TODO(!!!): Remove this `*actor.System`, either by refactor the RM to not be an actor or by
-	// adding a global system before the project's end.
 	ctx *actor.System, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) error {
 	handler := c.agent.Handler

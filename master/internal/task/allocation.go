@@ -21,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/idle"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
@@ -59,7 +60,7 @@ type AllocationState struct {
 	Ready     bool
 
 	Addresses  map[sproto.ResourcesID][]cproto.Address
-	Containers map[sproto.ResourcesID][]cproto.Container // TODO(!!!): Why multiple containers?
+	Containers map[sproto.ResourcesID][]cproto.Container
 }
 
 // FirstContainer returns the first container in the allocation state.
@@ -88,11 +89,10 @@ type Allocation struct {
 	db db.DB
 	rm rm.ResourceManager
 
-	syslog         *logrus.Entry
-	system         *actor.System
-	parent         *actor.Ref
-	resourceEvents *sproto.AllocationSubscription
-	wg             waitgroupx.Group
+	syslog *logrus.Entry
+	system *actor.System
+	parent *actor.Ref
+	wg     waitgroupx.Group
 
 	// The request to create the allocation, essentially our configuration.
 	req sproto.AllocateRequest
@@ -177,15 +177,13 @@ func startAllocation(
 	rmEvents, err := a.RequestResources()
 	if err != nil {
 		// TODO(!!!): Very awkward to not just return the error here; we should figure this out
-		// but it requires some work. A way to approach it would be to let `a.crash`
-		// return if the allocation is terminal and check that (which always return it is, here).
-		// TODO(!!!): But this probably isn't true since user calls can change our state in a way
-		// that makes us terminal.
+		// but it requires some work.
 		a.crash(err)
 	}
-	a.resourceEvents = rmEvents
 
-	a.wg.Go(a.run)
+	a.wg.Go(func(ctx context.Context) {
+		a.run(ctx, rmEvents)
+	})
 
 	return a
 }
@@ -210,11 +208,10 @@ func startAllocation(
 // and move on. If an error occurs that should force a stop, it is imperative
 // the error is never returned by Receive, and that a.Error(ctx, err) is called,
 // that way the allocation can cleanup properly.
-func (a *Allocation) run(ctx context.Context) {
+func (a *Allocation) run(ctx context.Context, sub *sproto.AllocationSubscription) {
 	defer a.recover()
-
 	for {
-		event := a.resourceEvents.Get()
+		event := sub.Get()
 		if event == (sproto.SentinelAllocationEvent{}) {
 			return
 		}
@@ -917,18 +914,16 @@ func (a *Allocation) kill(reason string) {
 	// Once a job has been killed, resend the kill every 30s, in the event it is lost (has
 	// happened before due to network failures).
 	a.killCooldown = ptrs.Ptr(time.Now().Add(killCooldown))
-	// TODO(!!!): Group.After(fn())? Huh..? Lol.
 	a.wg.Go(func(ctx context.Context) {
 		t := time.NewTimer(killCooldown * 2)
 		defer t.Stop()
 
 		select {
 		case <-t.C:
+			a.HandleSignal(KillAllocation, "killing again after 30s without all container exits")
 		case <-ctx.Done():
 			return
 		}
-
-		a.HandleSignal(KillAllocation, "killing again after 30s without all container exits")
 	})
 }
 
@@ -1045,7 +1040,7 @@ func (a *Allocation) terminated(reason string) {
 	}
 
 	a.wg.Cancel()
-	a.resourceEvents.Close()
+	rmevents.Publish(a.req.AllocationID, sproto.SentinelAllocationEvent{})
 	a.setMostProgressedModelState(model.AllocationStateTerminated)
 	exit := &AllocationExited{FinalState: a.state()}
 	a.exited = exit
