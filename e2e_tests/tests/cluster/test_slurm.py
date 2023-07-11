@@ -158,6 +158,7 @@ def test_master_host() -> None:
     )
 
 
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
 def test_cifar10_pytorch_distributed() -> None:
