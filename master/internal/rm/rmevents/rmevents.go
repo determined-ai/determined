@@ -13,8 +13,7 @@ import (
 // TODO(!!!): Must add tests and review intensely.
 
 const (
-	mainBufferSize        = 1024
-	perConsumerBufferSize = 64
+	mainBufferSize = 1024
 )
 
 type subscribeRequest struct {

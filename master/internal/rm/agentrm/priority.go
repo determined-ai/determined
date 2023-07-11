@@ -29,7 +29,10 @@ func NewPriorityScheduler(config *config.SchedulerConfig) Scheduler {
 	}
 }
 
-func (p priorityScheduler) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []model.AllocationID) {
+func (p priorityScheduler) Schedule(rp *resourcePool) (
+	toAllocate []*sproto.AllocateRequest,
+	toRelease []model.AllocationID,
+) {
 	return p.prioritySchedule(
 		rp.taskList,
 		rp.groups,
