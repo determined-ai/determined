@@ -56,7 +56,7 @@ const (
 	// The trial is preparing the environment after finishing pulling the
 	// image. Starting is a substate of the Active state.
 	State_STATE_STARTING State = 12
-	// The trial has an allocation actively running.
+	// The trial's allocation is actively running.
 	// Running is a substate of the Active state.
 	State_STATE_RUNNING State = 13
 )

@@ -60,7 +60,7 @@ enum State {
   // The trial is preparing the environment after finishing pulling the
   // image. Starting is a substate of the Active state.
   STATE_STARTING = 12;
-  // The trial has an allocation actively running.
+  // The trial's allocation is actively running.
   // Running is a substate of the Active state.
   STATE_RUNNING = 13;
 }
