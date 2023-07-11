@@ -319,8 +319,6 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 			t.logCtx, ar, t.db, t.rm, specifier, ctx.Self().System(), ctx.Self(),
 		)
 		t.allocationID = &ar.AllocationID
-		// TODO(!!!): Just have the parent (trial) call `t.allocation.AwaitTermination()`, rather
-		// than the implicit "your child ctx.Tell(...)'s you an exit" as an "API" (scare quotes).
 		return nil
 	}
 

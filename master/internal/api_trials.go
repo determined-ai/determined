@@ -1107,7 +1107,6 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 		return nil, err
 	}
 
-	// TODO(!!!): We may not need a task.WaitForRestore here.
 	err := task.DefaultService.WaitForRestore(ctx, model.AllocationID(req.AllocationId))
 	if err != nil {
 		return nil, err
@@ -1125,7 +1124,6 @@ func (a *apiServer) AllocationPendingPreemptionSignal(
 		return nil, err
 	}
 
-	// TODO(!!!): Just call `task.Signal`.
 	if err := a.m.rm.ExternalPreemptionPending(
 		a.m.system,
 		sproto.PendingPreemption{AllocationID: model.AllocationID(req.AllocationId)},
@@ -1166,7 +1164,6 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 		return nil, err
 	}
 
-	// TODO(!!!): protobuf custom string types..?
 	err := task.DefaultService.SetResourcesAsDaemon(
 		ctx,
 		model.AllocationID(req.AllocationId),

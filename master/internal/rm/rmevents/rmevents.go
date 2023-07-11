@@ -10,11 +10,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 )
 
-// TODO(!!!): Must add tests and review intensely.
+var syslog = *logrus.WithField("component", "rmevents")
 
-const (
-	mainBufferSize = 1024
-)
+const mainBufferSize = 1024
 
 type subscribeRequest struct {
 	topic model.AllocationID
@@ -71,10 +69,13 @@ func fanOut(
 	for {
 		select {
 		case msg := <-in:
+			syslog.Tracef("sending %T to %s", msg.event, msg.topic)
 			send(subsByTopicByID, msg)
 		case msg := <-subs:
+			syslog.Tracef("subscribing %s:%d", msg.topic, msg.id)
 			sub(subsByTopicByID, msg)
 		case msg := <-unsubs:
+			syslog.Tracef("unsubscribing %s:%d", msg.topic, msg.id)
 			unsub(subsByTopicByID, msg)
 		}
 	}

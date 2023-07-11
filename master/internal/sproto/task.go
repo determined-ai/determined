@@ -174,7 +174,6 @@ func (a *AllocationSubscription) Get() AllocationEvent {
 // Close unsubscribes us from further updates.
 func (a *AllocationSubscription) Close() {
 	a.unsub()
-	a.inbox.Put(SentinelAllocationEvent{})
 }
 
 // Len returns the count of pending events.
