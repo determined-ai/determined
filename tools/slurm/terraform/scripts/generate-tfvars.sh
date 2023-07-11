@@ -45,11 +45,11 @@ else
 fi
 
 cat <<EOF
-name = "$OPT_DEVBOX_PREFIX-dev-box"
-ssh_user = "$USER"
-ssh_key_pub = "$KEY_FILE"
-ssh_allow_ip = "$SSH_ALLOW_IP"
+name              = "$OPT_DEVBOX_PREFIX-dev-box"
+ssh_user          = "$USER"
+ssh_key_pub       = "$KEY_FILE"
+ssh_allow_ip      = "$SSH_ALLOW_IP"
 vmLifetimeSeconds = "$VMTIME"
-workload_manager = "$OPT_WORKLOAD_MANAGER"
-boot_disk = "projects/determined-ai/global/images/$BOOT_DISK"
+workload_manager  = "$OPT_WORKLOAD_MANAGER"
+boot_disk         = "projects/determined-ai/global/images/$BOOT_DISK"
 EOF

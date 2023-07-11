@@ -4,4 +4,5 @@ resource_manager:
   protocol: http
   job_storage_root: /var/tmp
   container_run_type: singularity
+  singularity_image_root: /srv/singularity
   launcher_jvm_args: -Xms1024m -Xmx2048m

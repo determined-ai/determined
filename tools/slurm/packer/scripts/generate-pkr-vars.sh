@@ -42,11 +42,13 @@ echo >&2 "INFO: Using image from family ${SOURCE_IMAGE_FAMILY}"
 # Other predefined variables
 
 SSH_USERNAME="packer2"
+CPU_IMAGE_NAME=$(grep "CPUImage" ../../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
 
 cat <<EOF
-ssh_username      = "${SSH_USERNAME}"
-workload_manager  = "${WORKLOAD_MANAGER}"
-image_project_id  = "${SOURCE_IMAGE_PROJECT_ID}"
-image_family      = "${SOURCE_IMAGE_FAMILY}"
-launcher_deb_name = "${CURRENT_VERSION}"
+ssh_username           = "${SSH_USERNAME}"
+workload_manager       = "${WORKLOAD_MANAGER}"
+image_project_id       = "${SOURCE_IMAGE_PROJECT_ID}"
+image_family           = "${SOURCE_IMAGE_FAMILY}"
+launcher_deb_name      = "${CURRENT_VERSION}"
+cpu_image_name         = "${CPU_IMAGE_NAME}"
 EOF

@@ -165,6 +165,9 @@
       apt:
         deb: "https://github.com/NVIDIA/enroot/releases/download/v3.4.1/enroot_3.4.1-1_amd64.deb"
 
+    - name: Update enroot runtime path in /etc/enroot/enroot.conf
+      command: sed -i '/^#ENROOT_RUNTIME_PATH/c\ENROOT_RUNTIME_PATH        /tmp/\$\(whoami\)' /etc/enroot/enroot.conf
+
     - name: Install Launcher
       apt:
         deb: "{{ launcher_deb }}"
@@ -173,6 +176,27 @@
       systemd:
         name: launcher.service
         enabled: yes
+
+    - name: Create /srv/singularity/determinedai directory
+      command: mkdir -p /srv/singularity/determinedai
+
+    - name: Set permissions for /srv/singularity/determinedai directories
+      command: chmod 777 /srv/singularity /srv/singularity/determinedai
+
+    - name: Pull singularity image
+      command: /usr/bin/manage-singularity-cache {{ cpu_image_name }}
+
+    - name: Create /srv/enroot directory
+      command: mkdir -p /srv/enroot
+    
+    - name: Set permissions for /srv/enroot directory
+      command: chmod 777 /srv/enroot
+
+    - name: Install enroot image .sqsh
+      command: /usr/bin/manage-enroot-cache -s /srv/enroot {{ cpu_image_name }}
+      environment:
+        ENROOT_RUNTIME_PATH: /srv/enroot
+        ENROOT_TEMP_PATH: /srv/enroot
 
     - name: Reinstall Munge (uninstall)
       apt:

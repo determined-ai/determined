@@ -8,11 +8,12 @@ packer {
 }
 
 variables {
-  ssh_username      = ""
-  workload_manager  = ""
-  image_project_id  = ""
-  image_family      = ""
-  launcher_deb_name = ""
+  ssh_username           = ""
+  workload_manager       = ""
+  image_project_id       = ""
+  image_family           = ""
+  launcher_deb_name      = ""
+  cpu_image_name         = ""
 }
 
 locals {
@@ -114,6 +115,6 @@ build {
 
   provisioner "ansible-local" {
     playbook_file   = "ansible-playbook.yml"
-    extra_arguments = ["--verbose", "-e \"launcher_deb=${local.launcher_deb_dest_path}\"", "-e \"workload_manager=${var.workload_manager}\""]
+    extra_arguments = ["--verbose", "-e \"launcher_deb=${local.launcher_deb_dest_path}\"", "-e \"workload_manager=${var.workload_manager}\"", "-e \"cpu_image_name=${var.cpu_image_name}\""]
   }
 }
