@@ -1,7 +1,7 @@
 apiVersion: v1
 name: determined
 description: A Helm chart for Determined
-version: "0.23.3-dev0"
+version: "0.23.3-rc0"
 icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
 home: https://github.com/determined-ai/determined.git
 
@@ -9,4 +9,4 @@ home: https://github.com/determined-ai/determined.git
 # If using a non-release version (e.g., X.Y.Z.dev0) you will have to specify an
 # existing official release version (e.g., X.Y.Z) or specify a commit has
 # that has been publicly published (all commits from master).
-appVersion: "0.23.3-dev0"
+appVersion: "0.23.3-rc0"

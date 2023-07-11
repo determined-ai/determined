@@ -109,7 +109,7 @@ export default defineConfig(({ mode }) => ({
     'process.env.IS_DEV': JSON.stringify(mode === 'development'),
     'process.env.PUBLIC_URL': JSON.stringify((mode !== 'test' && publicUrl) || ''),
     'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
-    'process.env.VERSION': '"0.23.3-dev0"',
+    'process.env.VERSION': '"0.23.3-rc0"',
   },
   optimizeDeps: {
     include: ['notebook'],
