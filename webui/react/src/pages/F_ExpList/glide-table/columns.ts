@@ -442,12 +442,9 @@ export const defaultTextColumn = (
 };
 
 const getHeatmapOpacity = (min: number, max: number, value: number): number => {
-  if (min >= max || value >= max) return 0.2;
-  const d = max - min;
-  if (value >= 0.75 * d + min) return 0.14;
-  if (value >= 0.5 * d + min) return 0.08;
-  if (value >= 0.25 * d + min) return 0.02;
-  return 0.01;
+  if (min >= max || value >= max) return 1;
+  if (value <= min) return 0;
+  return (value - min) / (max - min);
 };
 
 export const defaultNumberColumn = (

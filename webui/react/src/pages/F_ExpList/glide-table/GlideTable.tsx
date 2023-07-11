@@ -738,7 +738,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 columnWidths[currentColumn.column],
                 dataPath,
                 {
-                  color: (o: number) => `rgba(0,0,255,${o})`,
+                  color: (o: number) =>
+                    o < 0.5
+                      ? `rgba(255, 229, 179, ${-o + 0.5})`
+                      : `rgba(189, 171, 254, ${o - 0.5})`,
                   max: heatmap.max,
                   min: heatmap.min,
                 },
