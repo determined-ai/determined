@@ -141,7 +141,7 @@ func remakeCommandsByType(
 	snapshots := []CommandSnapshot{}
 
 	err := db.Bun().NewSelect().Model(&snapshots).
-		Relation("allocation").
+		Relation("Allocation").
 		Relation("Task").
 		Relation("Task.Job").
 		Where("allocation.end_time IS NULL").
@@ -272,8 +272,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 			AllocationID:      c.allocationID,
 			TaskID:            c.taskID,
 			JobID:             c.jobID,
-			RequestTime:       time.Now().UTC(),
 			JobSubmissionTime: c.registeredTime,
+			RequestTime:       time.Now().UTC(),
 			IsUserVisible:     true,
 			Name:              c.Config.Description,
 			Group:             ctx.Self(),

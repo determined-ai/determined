@@ -750,7 +750,7 @@ func (m *Master) tryRestoreExperiment(sema chan struct{}, wg *sync.WaitGroup, e 
 //  3. Restored experiment actors ping their restored trials to ensure they've initialized.
 //  4. The trial actors similarly ping allocations.
 //  5. Waitgroup waits for all on experiments.
-//  6. allocation actors ask AgentRM for resources. Since AgentRM has already initialized
+//  6. Allocation actors ask AgentRM for resources. Since AgentRM has already initialized
 //     the agent states in PreStart, it knows which containers it's supposed to have. If it does not
 //     have the required containers, allocation will receive a ResourcesFailure.
 //  7. When real agents finally connect, if the container is not on the agent, the restored

@@ -190,9 +190,7 @@ func (p *pod) Receive(ctx *actor.Context) error {
 
 	case PreemptTaskPod:
 		ctx.Log().Info("received preemption command")
-		rmevents.Publish(p.allocationID, &sproto.ReleaseResources{
-			Reason: "preempted by the scheduler",
-		})
+		rmevents.Publish(p.allocationID, &sproto.ReleaseResources{Reason: "preempted by the scheduler"})
 
 	case ChangePriority:
 		ctx.Log().Info("interrupting pod to change priorities")

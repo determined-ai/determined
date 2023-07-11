@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	"github.com/google/uuid"
@@ -27,11 +28,12 @@ type AllocationService interface {
 		system *actor.System,
 		parent *actor.Ref,
 	)
-	SendLog(
-		ctx context.Context,
+	Signal(
 		id model.AllocationID,
-		log *sproto.ContainerLog,
-	)
+		sig AllocationSignal,
+		reason string,
+	) error
+	State(id model.AllocationID) (AllocationState, error)
 	SetReady(ctx context.Context, id model.AllocationID) error
 	SetWaiting(ctx context.Context, id model.AllocationID) error
 	SetProxyAddress(
@@ -49,12 +51,6 @@ type AllocationService interface {
 		id model.AllocationID,
 		rID sproto.ResourcesID,
 	) error
-	Signal(
-		id model.AllocationID,
-		sig AllocationSignal,
-		reason string,
-	) error
-	State(id model.AllocationID) (AllocationState, error)
 	AllGather(
 		ctx context.Context,
 		allocationID model.AllocationID,
@@ -62,5 +58,11 @@ type AllocationService interface {
 		numPeers int,
 		data any,
 	) ([]any, error)
-	WaitForRestore(ctx context.Context, id model.AllocationID) error
+	WatchPreemption(ctx context.Context, id model.AllocationID) (bool, error)
+	AckPreemption(ctx context.Context, id model.AllocationID) error
+	SendLog(
+		ctx context.Context,
+		id model.AllocationID,
+		log *sproto.ContainerLog,
+	)
 }
