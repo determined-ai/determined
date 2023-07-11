@@ -57,6 +57,21 @@ class UserSettingsStore extends PollingStore {
     });
   }
 
+  public getAll(): Observable<Loadable<State>> {
+    return this.#settings.readOnly();
+  }
+
+  public overwrite(state: object): void {
+    //TODO: Write to DB
+    const stateMap = Map<string, Json>(state);
+    this.#settings.set(Loaded(stateMap));
+  }
+
+  public clear(): void {
+    //TODO: Write to DB
+    this.#settings.set(Loaded(Map()));
+  }
+
   /**
    * This sets the value of a setting and persists it for future sessions.
    * If the setting value is an object you can pass a partial value and
