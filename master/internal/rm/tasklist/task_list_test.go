@@ -17,10 +17,6 @@ func TestAllocationRequestComparator(t *testing.T) {
 	newTime := time.Now()
 	oldTime := newTime.Add(-time.Minute * 15)
 
-	system := actor.NewSystem("test")
-	r1 := system.MustActorOf(actor.Addr("r1"), nilActor)
-	r2 := system.MustActorOf(actor.Addr("r2"), nilActor)
-
 	type args struct {
 		a *sproto.AllocateRequest
 		b *sproto.AllocateRequest
@@ -37,11 +33,13 @@ func TestAllocationRequestComparator(t *testing.T) {
 					TaskID:            "task1",
 					JobID:             "job1",
 					JobSubmissionTime: oldTime,
+					RequestTime:       oldTime,
 				},
 				b: &sproto.AllocateRequest{
 					TaskID:            "task2",
 					JobID:             "job2",
 					JobSubmissionTime: newTime,
+					RequestTime:       newTime,
 				},
 			},
 			want: -1,
@@ -53,29 +51,31 @@ func TestAllocationRequestComparator(t *testing.T) {
 					TaskID:            "task1",
 					JobID:             "job1",
 					JobSubmissionTime: newTime,
+					RequestTime:       newTime,
 				},
 				b: &sproto.AllocateRequest{
 					TaskID:            "task2",
 					JobID:             "job2",
 					JobSubmissionTime: oldTime,
+					RequestTime:       oldTime,
 				},
 			},
 			want: 1,
 		},
 		{
-			name: "actor registration breaks tie",
+			name: "request time breaks tie",
 			args: args{
 				a: &sproto.AllocateRequest{
 					TaskID:            "task1",
 					JobID:             "job1",
 					JobSubmissionTime: newTime,
-					AllocationRef:     r1,
+					RequestTime:       oldTime,
 				},
 				b: &sproto.AllocateRequest{
 					TaskID:            "task2",
 					JobID:             "job2",
 					JobSubmissionTime: newTime,
-					AllocationRef:     r2,
+					RequestTime:       newTime,
 				},
 			},
 			want: -1,

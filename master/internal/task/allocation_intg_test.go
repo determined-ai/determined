@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/portregistry"
-	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	"github.com/stretchr/testify/mock"
@@ -22,7 +22,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
-	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -68,7 +67,7 @@ func TestAllocation(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			system, _, _, trialImpl, trial, _, a := setup(t)
+			rm, parent, _, a := setup(t)
 
 			// Pre-allocated stage.
 			mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
@@ -96,7 +95,7 @@ func TestAllocation(t *testing.T) {
 				ResourcePool: "default",
 				Resources:    resources,
 			})
-			require.Nil(t, trialImpl.AssertExpectations())
+			require.Nil(t, parent.AssertExpectations())
 
 			// Pre-ready stage.
 			first := true
@@ -154,6 +153,7 @@ func TestAllocation(t *testing.T) {
 			}
 
 			// Terminating stage.
+			rm.On("Release", mock.Anything, mock.Anything).Return(nil)
 			for _, r := range resources {
 				summary := r.Summary()
 				containerStateChanged := sproto.ResourcesStateChanged{
@@ -168,30 +168,37 @@ func TestAllocation(t *testing.T) {
 			require.Equal(t, tc.exit.Err, a.exited.Err)
 			require.Equal(t, tc.exit.UserRequestedStop, a.exited.UserRequestedStop)
 			require.NotNil(t, a.exited)
-			system.Ask(trial, actor.Ping{}).Get()
-			for _, m := range trialImpl.Messages {
-				// Just clear the state since it's really hard to check (has random stuff in it).
-				if exit, ok := m.(*AllocationExited); ok {
-					exit.FinalState = AllocationState{}
-				}
-			}
-			require.Contains(t, trialImpl.Messages, tc.exit)
+
+			var exit *AllocationExited
+			require.True(t, waitForCondition(
+				5*time.Second,
+				func() bool {
+					for _, m := range parent.Messages {
+						// Just clear the state since it's really hard to check (has random stuff in it).
+						if m, ok := m.(*AllocationExited); ok {
+							exit = m
+							return true
+						}
+					}
+					return false
+				},
+			))
+			require.Equal(t, tc.exit.Err, exit.Err)
+			require.Equal(t, tc.exit.UserRequestedStop, exit.UserRequestedStop)
 			// require.True(t, db.AssertExpectations(t))
 		})
 	}
 }
 
 func setup(t *testing.T) (
-	*actor.System, *actors.MockActor, rm.ResourceManager, *actors.MockActor,
-	*actor.Ref, *db.PgDB, *Allocation,
+	*mocks.ResourceManager, *actors.MockActor, *db.PgDB, *Allocation,
 ) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
 	portregistry.InitPortRegistry()
 
 	// mock resource manager.
-	rmActor := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
-	rm := actorrm.Wrap(system.MustActorOf(actor.Addr("rm"), &rmActor))
+	var rm mocks.ResourceManager
 
 	// mock trial
 	trialImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
@@ -211,16 +218,32 @@ func setup(t *testing.T) (
 		Preemptible:  true,
 		// ...
 	}
+	q := queue.New[sproto.AllocationEvent]()
+	sub := sproto.NewAllocationSubscription(q, func() {})
+	rm.On("Allocate", mock.Anything, mock.Anything).Return(sub, nil)
+
 	a := startAllocation(
 		detLogger.Context{},
 		ar,
 		pgDB,
-		rm,
+		&rm,
 		mockTaskSpecifier{},
 		system,
 		trial,
 	)
-	require.Contains(t, rmActor.Messages, ar)
+	require.True(t, rm.AssertExpectations(t))
 
-	return system, &rmActor, rm, &trialImpl, trial, pgDB, a
+	return &rm, &trialImpl, pgDB, a
+}
+
+var tickInterval = 100 * time.Millisecond
+
+func waitForCondition(timeout time.Duration, condition func() bool) bool {
+	for i := 0; i < int(timeout/tickInterval); i++ {
+		if condition() {
+			return true
+		}
+		time.Sleep(tickInterval)
+	}
+	return false
 }

@@ -64,9 +64,10 @@ build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	mockery --name=NSCAuthZ --dir=internal/command --output internal/mocks --filename nsc_authz_iface.go
 	mockery --name=ModelAuthZ --dir=internal/model --output internal/mocks --filename authz_model_iface.go
 	mockery --name=ResourceManager --dir=internal/rm --output internal/mocks --filename rm.go
+	mockery --name=AllocationService --dir=internal/task --output internal/mocks/allocationmocks --filename allocation_service.go --outpkg allocationmocks
 
 	# fmt once since the mocks are not generated formatted.
-	goimports -l -local github.com/determined-ai -w ./internal/mocks
+	goimports -l -local github.com/determined-ai -w ./internal/mocks ./internal/mocks/allocationmocks
 	mkdir -p build
 	touch $@
 

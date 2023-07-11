@@ -3,6 +3,8 @@ package rmevents
 import (
 	"sync"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/syncx/queue"
@@ -85,6 +87,7 @@ func send(
 ) {
 	subs, ok := subsByTopicByID[msg.topic]
 	if !ok {
+		logrus.Warnf("dropping message for %s with no subs", msg.topic)
 		return
 	}
 	for _, c := range subs {
