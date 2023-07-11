@@ -321,7 +321,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   }, [data, previousData, selectAll]);
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
-    (col: number, { bounds }: HeaderClickedEventArgs) => {
+    (col: number, { bounds, preventDefault }: HeaderClickedEventArgs) => {
+      preventDefault();
       const columnId = columnIds[col];
 
       if (columnId === MULTISELECT) {
@@ -789,6 +790,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           onColumnMoved={onColumnMoved}
           onColumnResize={onColumnResize}
           onHeaderClicked={onHeaderClicked}
+          onHeaderContextMenu={onHeaderClicked} // right-click
           onItemHovered={onColumnHovered}
           onVisibleRegionChanged={handleScroll}
         />

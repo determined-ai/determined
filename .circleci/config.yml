@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.23.2-dev0
+    default: 0.23.3-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -2579,10 +2579,10 @@ workflows:
       - test-unit-harness-gpu-lightning
       - test-unit-harness-gpu-deepspeed
       - test-unit-harness-gpu-parallel
-      - python-coverage:
-          requires:
-            - test-unit-harness-gpu
-            - test-unit-harness-gpu-parallel
+#      - python-coverage:
+#          requires:
+#            - test-unit-harness-gpu
+#            - test-unit-harness-gpu-parallel
 
   test-unit:
     jobs:

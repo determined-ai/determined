@@ -274,7 +274,6 @@ func RequireMockTrial(t *testing.T, db *PgDB, exp *model.Experiment) *model.Tria
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
 		HParams:      model.JSONObj{"global_batch_size": 1},
-		JobID:        exp.JobID,
 	}
 	err := db.AddTrial(&tr)
 	require.NoError(t, err, "failed to add trial")

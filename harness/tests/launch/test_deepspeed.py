@@ -266,3 +266,23 @@ def test_launch_worker(
 
     expected_cmd = pid_server_cmd + sshd_cmd
     mock_subprocess.assert_called_once_with(expected_cmd)
+
+
+def test_filter_env_vars() -> None:
+    env_in = {
+        "BASH_FUNC_xyz": "drop",
+        "KEEP_BASH_FUNC": "keep",
+        "OLDPWD": "drop",
+        "HOSTNAME": "drop",
+        "CUDA_VISIBLE_DEVICES": "drop",
+        "APPTAINER_CUDA_VISIBLE_DEVICES": "drop",
+        "SLURM_PROCID": "drop",
+        "DET_SLOT_IDS": "drop",
+        "DET_AGENT_ID": "drop",
+        "DET_USER_TOKEN": "keep",
+        "DET_SESSION_TOKEN": "keep",
+        "RANDOM_USER_VAR": "keep",
+    }
+    env_out = launch.deepspeed.filter_env_vars(env_in)
+    env_exp = {k: v for k, v in env_in.items() if v == "keep"}
+    assert env_out == env_exp

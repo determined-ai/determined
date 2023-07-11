@@ -735,15 +735,6 @@ service Determined {
     };
     option deprecated = true;
   }
-  // Downsample metrics collected during a trial.
-  rpc SummarizeTrial(SummarizeTrialRequest) returns (SummarizeTrialResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/trials/{trial_id}/summarize"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Trials", "Experiments" ]
-    };
-  }
   // Set allocation to ready state.
   rpc AllocationReady(AllocationReadyRequest)
       returns (AllocationReadyResponse) {

@@ -1390,6 +1390,13 @@ Whether to enable RBAC in WebUI and CLI. When ``type`` is ``rbac``, defaults ``t
 
 Assign a role to the user on workspace creation.
 
+``strict_job_queue_control``
+============================
+
+Restrict reordering of existing jobs through job queue to users with
+`PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE`. Requires Determined Enterprise Edition. Defaults to
+``false``.
+
 ``enabled``
 ===========
 

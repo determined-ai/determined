@@ -103,6 +103,7 @@ export const IconNameArray = [
   'row-medium',
   'row-large',
   'row-xl',
+  'four-squares',
 ] as const;
 
 const ColumnsIcon: React.FC = () => (
@@ -188,6 +189,19 @@ const RowIconSmall: React.FC = () => (
   </svg>
 );
 
+const FourSquaresIcon: React.FC = () => (
+  <svg fill="none" height="16" viewBox="0 0 16 16" width="16" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M2 10H5C5.55228 10 6 10.4477 6 11V14C6 14.5523 5.55228 15 5 15H2C1.44772 15 1 14.5523 1 14V11C1 10.4477 1.44772 10 2 10ZM11 1H14C14.5523 1 15 1.44772 15 2V5C15 5.55228 14.5523 6 14 6H11C10.4477 6 10 5.55228 10 5V2C10 1.44772 10.4477 1 11 1ZM11 10C10.4477 10 10 10.4477 10 11V14C10 14.5523 10.4477 15 11 15H14C14.5523 15 15 14.5523 15 14V11C15 10.4477 14.5523 10 14 10H11ZM11 0C9.89543 0 9 0.89543 9 2V5C9 6.10457 9.89543 7 11 7H14C15.1046 7 16 6.10457 16 5V2C16 0.895431 15.1046 0 14 0H11ZM2 9C0.895431 9 0 9.89543 0 11V14C0 15.1046 0.89543 16 2 16H5C6.10457 16 7 15.1046 7 14V11C7 9.89543 6.10457 9 5 9H2ZM9 11C9 9.89543 9.89543 9 11 9H14C15.1046 9 16 9.89543 16 11V14C16 15.1046 15.1046 16 14 16H11C9.89543 16 9 15.1046 9 14V11Z"
+      fill="currentcolor"
+    />
+    <path
+      d="M0 2C0 0.89543 0.895431 0 2 0H5C6.10457 0 7 0.895431 7 2V5C7 6.10457 6.10457 7 5 7H2C0.89543 7 0 6.10457 0 5V2ZM5.35355 2.85355C5.54882 2.65829 5.54882 2.34171 5.35355 2.14645C5.15829 1.95118 4.84171 1.95118 4.64645 2.14645L3 3.79289L2.35355 3.14645C2.15829 2.95118 1.84171 2.95118 1.64645 3.14645C1.45118 3.34171 1.45118 3.65829 1.64645 3.85355L2.64645 4.85355C2.84171 5.04882 3.15829 5.04882 3.35355 4.85355L5.35355 2.85355Z"
+      fill="currentcolor"
+    />
+  </svg>
+);
+
 export type IconName = (typeof IconNameArray)[number];
 
 export interface Props {
@@ -216,6 +230,7 @@ const Icon: React.FC<Props> = ({
     if (name === 'row-medium') return <RowIconMedium />;
     if (name === 'row-large') return <RowIconLarge />;
     if (name === 'row-xl') return <RowIconExtraLarge />;
+    if (name === 'four-squares') return <FourSquaresIcon />;
 
     return null;
   }, [name]);

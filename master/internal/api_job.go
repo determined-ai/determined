@@ -105,9 +105,20 @@ func (a *apiServer) GetJobQueueStats(
 
 // UpdateJobQueue forwards the job queue message to the relevant resource pool.
 func (a *apiServer) UpdateJobQueue(
-	_ context.Context, req *apiv1.UpdateJobQueueRequest,
+	ctx context.Context, req *apiv1.UpdateJobQueueRequest,
 ) (*apiv1.UpdateJobQueueResponse, error) {
-	err := jobservice.Default.UpdateJobQueue(req.Updates)
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	permErr, err := job.AuthZProvider.Get().CanControlJobQueue(ctx, curUser)
+	if err != nil {
+		return nil, err
+	}
+	if permErr != nil {
+		return nil, permErr
+	}
+	err = jobservice.Default.UpdateJobQueue(req.Updates)
 	if err != nil {
 		return nil, err
 	}

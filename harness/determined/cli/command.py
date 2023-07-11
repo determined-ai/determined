@@ -1,7 +1,7 @@
 import base64
 import json
 import re
-from argparse import ArgumentError, Namespace
+from argparse import Namespace
 from collections import OrderedDict, namedtuple
 from functools import reduce
 from pathlib import Path
@@ -200,11 +200,7 @@ def list_tasks(args: Namespace) -> None:
     params: Dict[str, Any] = {}
 
     if "workspace_name" in args and args.workspace_name is not None:
-        workspace = cli.workspace.get_workspace_by_name(
-            cli.setup_session(args), args.workspace_name
-        )
-        if workspace is None:
-            raise ArgumentError(None, f'Workspace "{args.workspace_name}" not found.')
+        workspace = cli.workspace.workspace_by_name(cli.setup_session(args), args.workspace_name)
 
         params["workspaceId"] = workspace.id
 
@@ -298,15 +294,22 @@ def _dot_to_json(key: Any, value: Any) -> Any:
     return json_output
 
 
-# A recursive function to replace value val in a Dict with a new value rval for override keys
-def _replace_value(
-    data_dict: Dict[str, Any], override_key_path: List[str], val: Any, rval: Any
-) -> None:
+# A recursive function to replace value val in a Dict with a new value rval for specified keys.
+# Some key may have value None of NoneType when value is not defined.
+# For example, when parent key "slurm" is specified in experiment .yaml file without
+# any child, the experiment config will contain None value for key 'slurm':
+# {'name': 'noop_single', ..., 'entrypoint': 'model_def:NoOpTrial', 'slurm': None}
+# This NoneType value None will raise TypeError if used, for example:
+# TypeError: argument of type 'NoneType' is not iterable
+# TypeError: 'NoneType' object does not support item assignment
+# The purpose of this function is to convert None value to empty value
+# but we only do this conversion for specified keys.
+def _replace_value(data_dict: Dict[str, Any], keys: List[str], val: Any, rval: Any) -> None:
     for key in data_dict.keys():
-        if data_dict[key] == val and key in override_key_path:
+        if data_dict[key] == val and key in keys:
             data_dict[key] = rval
         elif type(data_dict[key]) is dict:
-            _replace_value(data_dict[key], override_key_path, val, rval)
+            _replace_value(data_dict[key], keys, val, rval)
 
 
 def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> Dict[str, Any]:
@@ -340,11 +343,21 @@ def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> 
 
         # Convert config override in dot notation to json path
         config_arg_in_json = _dot_to_json(key, value)
-        # Some key may have value None of NoneType and will raise TypeError if used.
-        # For example:
+
+        # Some key may have value None of NoneType when value is not defined.
+        # For example, when parent key "slurm" is specified in experiment .yaml file without
+        # any child key, the config will contain None value for key 'slurm':
+        # {'name': 'noop_single', ..., 'entrypoint': 'model_def:NoOpTrial', 'slurm': None}
+        # This NoneType value None will raise TypeError if used, for example:
         # TypeError: argument of type 'NoneType' is not iterable
         # TypeError: 'NoneType' object does not support item assignment
-        # Convert NoneType value None in config to empty string {} for overrided key
+        # Before we can merge the config from the exp .yaml file with the config_arg
+        # provided from the command line, we need to convert NoneType value None in
+        # config to empty string {}. We only convert the None value for the key
+        # specified in config_arg in overrides, for the example above, if the override
+        # is "--config slurm.sbatch_args=[--mem-per-gpu=1g]", we will convert the
+        # " 'slurm': None " to " 'slurm': {} " in config before pass it to merge_dicts
+        # function.
         _replace_value(config, key.split("."), None, {})
         # Merge two objects in json format
         config = merge_dicts(config, config_arg_in_json)

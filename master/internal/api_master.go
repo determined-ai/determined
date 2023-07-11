@@ -41,6 +41,7 @@ func (a *apiServer) GetMaster(
 		ExternalLogoutUri:     a.m.config.InternalConfig.ExternalSessions.LogoutURI,
 		Branding:              "determined",
 		RbacEnabled:           config.GetAuthZConfig().IsRBACUIEnabled(),
+		StrictJobQueueControl: config.GetAuthZConfig().StrictJobQueueControl,
 		Product:               product,
 		UserManagementEnabled: !a.m.config.InternalConfig.ExternalSessions.Enabled(),
 		FeatureSwitches:       a.m.config.FeatureSwitches,
@@ -64,13 +65,16 @@ func (a *apiServer) GetTelemetry(
 func (a *apiServer) GetMasterConfig(
 	ctx context.Context, _ *apiv1.GetMasterConfigRequest,
 ) (*apiv1.GetMasterConfigResponse, error) {
-	// TODO: migrate to RBAC.
 	u, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if !u.Admin {
-		return nil, grpcutil.ErrPermissionDenied
+
+	permErr, err := cluster.AuthZProvider.Get().CanGetMasterConfig(ctx, u)
+	if permErr != nil {
+		return nil, permErr
+	} else if err != nil {
+		return nil, err
 	}
 
 	config, err := a.m.config.Printable()

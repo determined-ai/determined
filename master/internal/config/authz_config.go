@@ -26,6 +26,7 @@ type AuthZConfig struct {
 	// Removed: this option is removed and will not have any effect.
 	StrictNTSCEnabled      bool                         `json:"_strict_ntsc_enabled"`
 	AssignWorkspaceCreator AssignWorkspaceCreatorConfig `json:"workspace_creator_assign_role"`
+	StrictJobQueueControl  bool                         `json:"strict_job_queue_control"`
 }
 
 // DefaultAuthZConfig returns default authz config.
@@ -38,6 +39,7 @@ func DefaultAuthZConfig() *AuthZConfig {
 			Enabled: true,
 			RoleID:  2, // WorkspaceAdmin.
 		},
+		StrictJobQueueControl: false,
 	}
 }
 

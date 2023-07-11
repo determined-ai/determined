@@ -676,8 +676,7 @@ func (a *apiServer) parseMetricTypeArgs(
 
 func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 	metricType model.MetricType, maxDatapoints int, startBatches int,
-	endBatches int, logScale bool,
-	timeSeriesFilter *commonv1.PolymorphicFilter,
+	endBatches int, timeSeriesFilter *commonv1.PolymorphicFilter,
 	metricIds []string,
 ) ([]*apiv1.DownsampledMetrics, error) {
 	var startTime time.Time
@@ -777,38 +776,6 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 	return metrics, nil
 }
 
-func (a *apiServer) SummarizeTrial(ctx context.Context,
-	req *apiv1.SummarizeTrialRequest,
-) (*apiv1.SummarizeTrialResponse, error) {
-	var metricIds []string
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-		return nil, err
-	}
-
-	resp := &apiv1.SummarizeTrialResponse{Trial: &trialv1.Trial{}}
-	if err := a.m.db.QueryProto("get_trial_basic", resp.Trial, req.TrialId); err != nil {
-		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
-	}
-
-	//nolint:staticcheck // SA1019: backward compatibility
-	metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
-	if err != nil {
-		return nil, err
-	}
-
-	tsample, err := a.multiTrialSample(req.TrialId, req.MetricNames, metricType,
-		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-		(req.Scale == apiv1.Scale_SCALE_LOG),
-		nil, metricIds)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed sampling")
-	}
-	resp.Metrics = tsample
-
-	return resp, nil
-}
-
 func (a *apiServer) CompareTrials(ctx context.Context,
 	req *apiv1.CompareTrialsRequest,
 ) (*apiv1.CompareTrialsResponse, error) {
@@ -835,7 +802,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 
 		tsample, err := a.multiTrialSample(trialID, req.MetricNames, metricType,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-			(req.Scale == apiv1.Scale_SCALE_LOG), req.TimeSeriesFilter, req.MetricIds)
+			req.TimeSeriesFilter, req.MetricIds)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed sampling")
 		}

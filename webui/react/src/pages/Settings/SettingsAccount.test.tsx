@@ -87,13 +87,13 @@ describe('SettingsAccount', () => {
     setup();
     await user.click(screen.getByTestId('edit-displayname'));
     await user.type(screen.getByPlaceholderText('Add display name'), 'a');
-    await user.keyboard('{enter}');
+    await user.click(screen.getByTestId('submit-displayname'));
     expect(mockPatchUser).toHaveBeenCalledWith({
       userId: 1,
       userParams: { displayName: `${DISPLAY_NAME}a` },
     });
     await waitFor(() =>
-      expect(screen.getByTestId('text-displayname')).toHaveTextContent(`${DISPLAY_NAME}a`),
+      expect(screen.getByTestId('value-displayname')).toHaveTextContent(`${DISPLAY_NAME}a`),
     );
   });
   it('should be able to view change password modal when click', async () => {
