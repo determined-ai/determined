@@ -4,7 +4,6 @@ package determined.trial.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/trialv1";
 
 import "google/protobuf/struct.proto";
-import "determined/experiment/v1/experiment.proto";
 import "determined/common/v1/common.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "google/protobuf/timestamp.proto";
@@ -52,6 +51,18 @@ enum State {
   STATE_COMPLETED = 8;
   // The trial is errored and is shut down.
   STATE_ERROR = 9;
+  // The trial is queued (waiting to be run, or job state is still queued).
+  // Queued is a substate of the Active state.
+  STATE_QUEUED = 10;
+  // The trial is pulling the image. Pulling is a substate of the Active
+  // state.
+  STATE_PULLING = 11;
+  // The trial is preparing the environment after finishing pulling the
+  // image. Starting is a substate of the Active state.
+  STATE_STARTING = 12;
+  // The trial has an allocation actively running.
+  // Running is a substate of the Active state.
+  STATE_RUNNING = 13;
 }
 
 // MetricsWorkload is a workload generating metrics.
@@ -96,7 +107,7 @@ message Trial {
   // The time the trial ended if the trial is stopped.
   google.protobuf.Timestamp end_time = 4;
   // The current state of the trial.
-  determined.experiment.v1.State state = 5;
+  State state = 5;
   // Number times the trial restarted.
   int32 restarts = 17;
   // Trial hyperparameters.

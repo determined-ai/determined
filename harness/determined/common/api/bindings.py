@@ -448,6 +448,22 @@ class taskv1State(DetEnum):
     WAITING = "STATE_WAITING"
     QUEUED = "STATE_QUEUED"
 
+class trialv1State(DetEnum):
+    UNSPECIFIED = "STATE_UNSPECIFIED"
+    ACTIVE = "STATE_ACTIVE"
+    PAUSED = "STATE_PAUSED"
+    STOPPING_CANCELED = "STATE_STOPPING_CANCELED"
+    STOPPING_KILLED = "STATE_STOPPING_KILLED"
+    STOPPING_COMPLETED = "STATE_STOPPING_COMPLETED"
+    STOPPING_ERROR = "STATE_STOPPING_ERROR"
+    CANCELED = "STATE_CANCELED"
+    COMPLETED = "STATE_COMPLETED"
+    ERROR = "STATE_ERROR"
+    QUEUED = "STATE_QUEUED"
+    PULLING = "STATE_PULLING"
+    STARTING = "STATE_STARTING"
+    RUNNING = "STATE_RUNNING"
+
 class trialv1Trial(Printable):
     bestCheckpoint: "typing.Optional[v1CheckpointWorkload]" = None
     bestValidation: "typing.Optional[v1MetricsWorkload]" = None
@@ -469,7 +485,7 @@ class trialv1Trial(Printable):
         id: int,
         restarts: int,
         startTime: str,
-        state: "experimentv1State",
+        state: "trialv1State",
         totalBatchesProcessed: int,
         bestCheckpoint: "typing.Union[v1CheckpointWorkload, None, Unset]" = _unset,
         bestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
@@ -521,7 +537,7 @@ class trialv1Trial(Printable):
             "id": obj["id"],
             "restarts": obj["restarts"],
             "startTime": obj["startTime"],
-            "state": experimentv1State(obj["state"]),
+            "state": trialv1State(obj["state"]),
             "totalBatchesProcessed": obj["totalBatchesProcessed"],
         }
         if "bestCheckpoint" in obj:
