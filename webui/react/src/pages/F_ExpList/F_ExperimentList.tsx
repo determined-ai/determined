@@ -129,7 +129,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     rows: CompactSelection.empty(),
   });
 
-  const selectAll = useMemo(
+  const selectAll = useMemo<boolean>(
     () => !isLoadingSettings && settings.selectAll,
     [isLoadingSettings, settings.selectAll],
   );
