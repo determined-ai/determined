@@ -29,16 +29,11 @@ spec:
         memory: 64Gi
         cpu: 32
     volumeMounts:
-      - mountPath: /dev/shm
-        name: dshm
       {{- range .Values.mounts }}
       - name: {{ regexReplaceAll "[_]" .pvc "-" | lower }}
         mountPath: {{ .name }}
       {{- end }}
   volumes:
-    - name: dshm
-      emptyDir:
-        medium: Memory
     {{- range .Values.mounts }}
     - name: {{ regexReplaceAll "[_]" .pvc "-" | lower }}
       persistentVolumeClaim:
@@ -76,16 +71,11 @@ spec:
         rdma/ib: '1'
       {{- end }}
     volumeMounts:
-      - mountPath: /dev/shm
-        name: dshm
       {{- range .Values.mounts }}
       - name: {{ regexReplaceAll "[_]" .pvc "-" | lower }}
         mountPath: {{ .name }}
       {{- end }}
   volumes:
-    - name: dshm
-      emptyDir:
-        medium: Memory
     {{- range .Values.mounts }}
     - name: {{ regexReplaceAll "[_]" .pvc "-" | lower }}
       persistentVolumeClaim:
