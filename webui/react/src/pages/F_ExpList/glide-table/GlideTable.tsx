@@ -75,7 +75,6 @@ import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
 
 export interface GlideTableProps {
-  clearSelectionTrigger?: number;
   colorMap: MapOfIdsToColors;
   columnWidths: Record<string, number>;
   comparisonViewOpen?: boolean;
@@ -133,7 +132,6 @@ const rowHeightMap: Record<RowHeight, number> = {
 export const GlideTable: React.FC<GlideTableProps> = ({
   data,
   dataTotal,
-  clearSelectionTrigger,
   selection,
   setSelection,
   sortableColumnIds,
@@ -218,11 +216,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   // If this stand alone select is set, use it as the base when doing multi select.
   const [standAloneSelect, setStandAloneSelect] = React.useState<number>();
 
-  useEffect(() => {
-    if (clearSelectionTrigger === 0) return;
-    setSelection({ columns: CompactSelection.empty(), rows: CompactSelection.empty() });
-  }, [clearSelectionTrigger, setSelection]);
-
   const columnDefs = useMemo<Record<string, ColumnDef>>(
     () =>
       getColumnDefs({
@@ -289,22 +282,22 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   );
 
   const deselectAllRows = useCallback(() => {
+    setSelection((prev) => ({ ...prev, rows: CompactSelection.empty() }));
     setSelectAll(false);
     setExcludedExperimentIds(new Set());
-    setSelection((prev) => ({ ...prev, rows: CompactSelection.empty() }));
   }, [setSelectAll, setSelection, setExcludedExperimentIds]);
 
   const selectAllRows = useCallback(() => {
-    setExcludedExperimentIds(new Set());
-    setSelectAll(true);
     setSelection(({ columns, rows }: GridSelection) => ({
       columns,
       rows: rows.add([0, data.length]),
     }));
+    setExcludedExperimentIds(new Set());
+    setSelectAll(true);
   }, [setSelectAll, setSelection, data, setExcludedExperimentIds]);
 
   const previousData = usePrevious(data, undefined);
-  useEffect(() => {
+  useMemo(() => {
     if (selectAll && previousData && data.length > previousData.length) {
       setSelection(({ columns, rows }: GridSelection) => ({
         columns,

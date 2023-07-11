@@ -192,7 +192,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     }
     return new Set(settings.excludedExperiments);
   });
-  const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
@@ -411,12 +410,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
      * Deselect selected rows since their states may have changed where they
      * are no longer part of the filter criteria.
      */
-    setClearSelectionTrigger((prev) => prev + 1);
+    setSelection({
+      columns: CompactSelection.empty(),
+      rows: CompactSelection.empty(),
+    });
     setSelectAll(false);
 
     // Refetch experiment list to get updates based on batch action.
     await fetchExperiments();
-  }, [fetchExperiments, setSelectAll]);
+  }, [fetchExperiments, setSelectAll, setSelection]);
 
   const handleUpdateExperimentList = useCallback(
     (action: BatchAction, successfulIds: number[]) => {
@@ -487,7 +489,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setSelectAll(false);
-        setClearSelectionTrigger((prev) => prev + 1);
+        setSelection({
+          columns: CompactSelection.empty(),
+          rows: CompactSelection.empty(),
+        });
       }
     };
     window.addEventListener('keydown', handleEsc);
@@ -495,7 +500,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     return () => {
       window.removeEventListener('keydown', handleEsc);
     };
-  }, [setSelectAll]);
+  }, [setSelectAll, setSelection]);
 
   const updateExpListView = useCallback(
     (view: ExpListView) => {
@@ -645,7 +650,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               selectedExperiments={selectedExperiments}
               onWidthChange={handleCompareWidthChange}>
               <GlideTable
-                clearSelectionTrigger={clearSelectionTrigger}
                 colorMap={colorMap}
                 columnWidths={settings.columnWidths}
                 comparisonViewOpen={settings.compare}
