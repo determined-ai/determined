@@ -98,12 +98,12 @@ const NavigationTabbar: React.FC = () => {
     (workspaces) =>
       workspaces.map(
         (workspace) =>
-        ({
-          icon: <DynamicIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
-          label: workspace.name,
-          onClick: (e: AnyMouseEvent) =>
-            handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
-        } as ActionItem),
+          ({
+            icon: <DynamicIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
+            label: workspace.name,
+            onClick: (e: AnyMouseEvent) =>
+              handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
+          } as ActionItem),
       ),
   );
 
@@ -137,7 +137,7 @@ const NavigationTabbar: React.FC = () => {
     {
       icon: 'settings',
       label: 'Settings',
-      onClick: () => setShowSettings((prev) => !prev),
+      onClick: () => setShowSettings(true),
     },
     {
       icon: 'user',
@@ -190,7 +190,11 @@ const NavigationTabbar: React.FC = () => {
             status={clusterStatus}
           />
           <ToolbarItem icon="workspaces" label="Workspaces" onClick={handleWorkspacesOpen} />
-          <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
+          <ToolbarItem
+            icon="overflow-vertical"
+            label="Overflow Menu"
+            onClick={handleOverflowOpen}
+          />
         </div>
         <ActionSheet
           actions={[
@@ -212,7 +216,7 @@ const NavigationTabbar: React.FC = () => {
         />
         <WorkspaceCreateModal.Component />
       </nav>
-      <SettingsAccount show={showSettings} onClose={() => setShowSettings((prev) => !prev)} />
+      <SettingsAccount show={showSettings} onClose={() => setShowSettings(false)} />
     </>
   );
 };

@@ -62,7 +62,14 @@ const Container: React.FC = () => {
     loadUsers();
   }, [loadUsers]);
 
-  return <SettingsAccount show={true} onClose={() => { return null; }} />;
+  return (
+    <SettingsAccount
+      show={true}
+      onClose={() => {
+        return null;
+      }}
+    />
+  );
 };
 
 const setup = () =>

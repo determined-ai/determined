@@ -225,7 +225,7 @@ const NavigationSideBar: React.FC = () => {
     const items: MenuItem[] = [
       {
         key: 'settings',
-        label: <Link onClick={() => setShowSettings((prev) => !prev)}>Settings</Link>,
+        label: <Link onClick={() => setShowSettings(true)}>Settings</Link>,
       },
       { key: 'theme-toggle', label: <ThemeToggle /> },
       { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
@@ -247,7 +247,9 @@ const NavigationSideBar: React.FC = () => {
         appear={true}
         classNames={{
           appear: css.collapsedAppear,
-          appearActive: settings.navbarCollapsed ? css.collapsedEnterActive : css.collapsedExitActive,
+          appearActive: settings.navbarCollapsed
+            ? css.collapsedEnterActive
+            : css.collapsedExitActive,
           appearDone: settings.navbarCollapsed ? css.collapsedEnterDone : css.collapsedExitDone,
           enter: css.collapsedEnter,
           enterActive: css.collapsedEnterActive,
@@ -381,7 +383,7 @@ const NavigationSideBar: React.FC = () => {
           <WorkspaceCreateModal.Component />
         </nav>
       </CSSTransition>
-      <SettingsAccount show={showSettings} onClose={() => setShowSettings((prev) => !prev)} />
+      <SettingsAccount show={showSettings} onClose={() => setShowSettings(false)} />
     </>
   );
 };

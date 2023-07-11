@@ -1,7 +1,6 @@
 import { Divider } from 'antd';
 import React, { useCallback } from 'react';
 
-import { Size } from 'components/Avatar';
 import Button from 'components/kit/Button';
 import { Column, Columns } from 'components/kit/Columns';
 import Drawer from 'components/kit/Drawer';
@@ -42,7 +41,8 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
 
   const PasswordChangeModal = useModal(PasswordChangeModalComponent);
   const {
-    settings: { jupyterLab: jupyterLabShortcut,
+    settings: {
+      jupyterLab: jupyterLabShortcut,
       omnibar: omnibarShortcut,
       navbarCollapsed: navbarCollapsedShortcut,
     },
@@ -84,11 +84,7 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
   );
 
   return (
-    <Drawer
-      open={show}
-      placement="left"
-      title="Settings"
-      onClose={onClose}>
+    <Drawer open={show} placement="left" title="Settings" onClose={onClose}>
       <Section title="Profile">
         <div className={css.section}>
           <InlineForm<string>
@@ -125,25 +121,19 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
         <div className={css.section}>
           <Columns>
             <Column>
-              <label>
-                Open Omnibar
-              </label>
+              <label>Open Omnibar</label>
             </Column>
             <InputShortcut value={omnibarShortcut} />
           </Columns>
           <Columns>
             <Column>
-              <label>
-                Launch JupyterLab Notebook
-              </label>
+              <label>Launch JupyterLab Notebook</label>
             </Column>
             <InputShortcut value={jupyterLabShortcut} />
           </Columns>
           <Columns>
             <Column>
-              <label>
-                Toggle Sidebar
-              </label>
+              <label>Toggle Sidebar</label>
             </Column>
             <InputShortcut value={navbarCollapsedShortcut} />
           </Columns>
