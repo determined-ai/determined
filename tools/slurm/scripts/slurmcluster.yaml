@@ -118,6 +118,8 @@ stages:
         #       partition: defq_GPU
         # This is important: we have to use the symbolic links in the
         # tools/build directory to run properly.
+        # The line below allows the resource manager to be removed using a sed command.
+        # resource_manager_end
         root: $OPT_PROJECT_ROOT/tools/build
 
         observability:

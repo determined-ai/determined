@@ -6,6 +6,7 @@ set -e
 # Default values
 export OPT_CONTAINER_RUN_TYPE="singularity"
 export OPT_WORKLOAD_MANAGER="slurm"
+DETERMINED_AGENT=
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -24,6 +25,10 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             shift 2
+            ;;
+        -A)
+            DETERMINED_AGENT=1
+            shift
             ;;
         # The Makefile that calls this script may pass in additional flags used for other scritps
         # which can be ignored.
@@ -133,6 +138,12 @@ fi
 
 TEMPYAML=$TEMPDIR/slurmcluster.yaml
 envsubst <$PARENT_PATH/slurmcluster.yaml >$TEMPYAML
+if [[ -n $DETERMINED_AGENT ]]; then
+    # When deploying with the determined agent, remove the resource_manager section
+    # that would otherwise be used.   This then defaults to the agent rm and
+    # the master waits for agents to connect and provide resources.
+    sed -i -e '/resource_manager/,/resource_manager_end/d' $TEMPYAML
+fi
 echo "Generated devcluster file: $TEMPYAML"
 
 # We connect to the Slurm VM using an external IP address, but although it's a
