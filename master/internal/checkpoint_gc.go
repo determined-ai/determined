@@ -33,8 +33,6 @@ type checkpointGCTask struct {
 	jobID             model.JobID
 	jobSubmissionTime time.Time
 
-	allocation *task.Allocation
-
 	logCtx logger.Context
 }
 

@@ -16,6 +16,7 @@ import (
 
 // AllocationService allows callers to launch, direct and query allocations.
 type AllocationService interface {
+	GetAllAllocationIDs() []model.AllocationID
 	StartAllocation(
 		logCtx logger.Context,
 		req sproto.AllocateRequest,
@@ -25,8 +26,6 @@ type AllocationService interface {
 		system *actor.System,
 		parent *actor.Ref,
 	)
-	GetAllocation(allocationID model.AllocationID) *Allocation
-	GetAllAllocationIDs() []model.AllocationID
 	SendLog(
 		ctx context.Context,
 		id model.AllocationID,

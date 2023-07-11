@@ -28,13 +28,13 @@ var DefaultService AllocationService = newAllocationService()
 // allocationService is used to launch, track and interact with allocations.
 type allocationService struct {
 	mu          sync.RWMutex
-	allocations map[model.AllocationID]*Allocation
+	allocations map[model.AllocationID]*allocation
 }
 
 // newAllocationService creates a new allocationService.
 func newAllocationService() *allocationService {
 	return &allocationService{
-		allocations: map[model.AllocationID]*Allocation{},
+		allocations: map[model.AllocationID]*allocation{},
 	}
 }
 
@@ -66,14 +66,6 @@ func (as *allocationService) StartAllocation(
 	}()
 }
 
-// GetAllocation returns allocation actor by allocation id.
-// TODO(!!!): IDK if this should be public.
-func (as *allocationService) GetAllocation(allocationID model.AllocationID) *Allocation {
-	as.mu.RLock()
-	defer as.mu.RUnlock()
-	return as.allocations[allocationID]
-}
-
 // GetAllAllocationIDs returns all registered allocation ids.
 func (as *allocationService) GetAllAllocationIDs() []model.AllocationID {
 	as.mu.RLock()
@@ -87,7 +79,7 @@ func (as *allocationService) SendLog(
 	id model.AllocationID,
 	log *sproto.ContainerLog,
 ) {
-	ref := as.GetAllocation(id)
+	ref := as.getAllocation(id)
 	if ref == nil {
 		syslog.Warnf("dropped log for unknown allocation: %s", id)
 		return
@@ -98,7 +90,7 @@ func (as *allocationService) SendLog(
 // SetReady sets the ready bit and moves the allocation to the running state if it has not
 // progressed past it already.
 func (as *allocationService) SetReady(ctx context.Context, id model.AllocationID) error {
-	ref := as.GetAllocation(id)
+	ref := as.getAllocation(id)
 	if ref == nil {
 		return api.NotFoundErrs("allocation", id.String(), true)
 	}
@@ -113,7 +105,7 @@ func (as *allocationService) SetReady(ctx context.Context, id model.AllocationID
 
 // SetWaiting moves the allocation to the waiting state if it has not progressed past it yet.
 func (as *allocationService) SetWaiting(ctx context.Context, id model.AllocationID) error {
-	ref := as.GetAllocation(id)
+	ref := as.getAllocation(id)
 	if ref == nil {
 		return api.NotFoundErrs("allocation", id.String(), true)
 	}
@@ -133,7 +125,7 @@ func (as *allocationService) SetProxyAddress(
 	id model.AllocationID,
 	addr string,
 ) error {
-	ref := as.GetAllocation(id)
+	ref := as.getAllocation(id)
 	if ref == nil {
 		return api.NotFoundErrs("allocation", id.String(), true)
 	}
@@ -155,7 +147,7 @@ func (as *allocationService) WatchRendezvous(
 	id model.AllocationID,
 	rID sproto.ResourcesID,
 ) (RendezvousWatcher, error) {
-	ref := as.GetAllocation(id)
+	ref := as.getAllocation(id)
 	if ref == nil {
 		return RendezvousWatcher{}, api.NotFoundErrs("allocation", id.String(), true)
 	}
@@ -174,7 +166,7 @@ func (as *allocationService) UnwatchRendezvous(
 	id model.AllocationID,
 	rID sproto.ResourcesID,
 ) error {
-	ref := as.GetAllocation(id)
+	ref := as.getAllocation(id)
 	if ref == nil {
 		return api.NotFoundErrs("allocation", id.String(), true)
 	}
@@ -194,7 +186,7 @@ func (as *allocationService) SetResourcesAsDaemon(
 	id model.AllocationID,
 	rID sproto.ResourcesID,
 ) error {
-	ref := as.GetAllocation(id)
+	ref := as.getAllocation(id)
 	if ref == nil {
 		return api.NotFoundErrs("allocation", id.String(), true)
 	}
@@ -213,7 +205,7 @@ func (as *allocationService) Signal(
 	sig AllocationSignal,
 	reason string,
 ) error {
-	ref := as.GetAllocation(id)
+	ref := as.getAllocation(id)
 	if ref == nil {
 		return api.NotFoundErrs("allocation", id.String(), true)
 	}
@@ -223,7 +215,7 @@ func (as *allocationService) Signal(
 
 // State returns a copy of the current state of the allocation.
 func (as *allocationService) State(id model.AllocationID) (AllocationState, error) {
-	ref := as.GetAllocation(id)
+	ref := as.getAllocation(id)
 	if ref == nil {
 		return AllocationState{}, api.NotFoundErrs("allocation", id.String(), true)
 	}
@@ -274,9 +266,17 @@ func (as *allocationService) AllGather(
 // WaitForRestore waits until the allocation has been restored by the resource manager. The
 // allocation must exist otherwise this will return a not found error.
 func (as *allocationService) WaitForRestore(ctx context.Context, id model.AllocationID) error {
-	ref := as.GetAllocation(id)
+	ref := as.getAllocation(id)
 	if ref == nil {
 		return api.NotFoundErrs("allocation", id.String(), true)
 	}
 	return ref.WaitForRestore(ctx)
+}
+
+// getAllocation returns allocation actor by allocation id.
+// TODO(!!!): IDK if this should be public.
+func (as *allocationService) getAllocation(allocationID model.AllocationID) *allocation {
+	as.mu.RLock()
+	defer as.mu.RUnlock()
+	return as.allocations[allocationID]
 }
