@@ -3,11 +3,7 @@ import { useObservable } from 'micro-observables';
 import determinedStore, { DeterminedInfo } from 'stores/determinedInfo';
 
 // Add new feature switches below using `|`
-export type ValidFeature =
-  | 'dashboard'
-  | 'explist_v2'
-  | 'chart'
-  | 'rp_binding';
+export type ValidFeature = 'dashboard' | 'explist_v2' | 'chart' | 'rp_binding';
 
 const FeatureDefault: { [K in ValidFeature]: boolean } = {
   chart: false,
