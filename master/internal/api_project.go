@@ -423,11 +423,7 @@ func (a *apiServer) getProjectNumericMetricsRange(
 				}
 				switch v := metricsValue.(type) {
 				case float64:
-					if _, ok := valMetricsValues[metricsName]; !ok {
-						valMetricsValues[metricsName] = []float64{v}
-					} else {
-						valMetricsValues[metricsName] = append(valMetricsValues[metricsName], v)
-					}
+					valMetricsValues[metricsName] = append(valMetricsValues[metricsName], v)
 				}
 			}
 		}
@@ -442,11 +438,7 @@ func (a *apiServer) getProjectNumericMetricsRange(
 				}
 				switch v := metricsValue.(type) {
 				case float64:
-					if _, ok := traMetricsValues[metricsName]; !ok {
-						traMetricsValues[metricsName] = []float64{v}
-					} else {
-						traMetricsValues[metricsName] = append(traMetricsValues[metricsName], v)
-					}
+					traMetricsValues[metricsName] = append(traMetricsValues[metricsName], v)
 				}
 			}
 		}
