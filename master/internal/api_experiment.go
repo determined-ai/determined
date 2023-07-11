@@ -2302,7 +2302,6 @@ func (a *apiServer) CreateTrial(
 
 	trialModel := model.NewTrial(
 		model.CompletedState,
-		model.NewJobID(),
 		taskID,
 		model.RequestID{},
 		exp.ID,

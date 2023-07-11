@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS cert_and_key_info;
