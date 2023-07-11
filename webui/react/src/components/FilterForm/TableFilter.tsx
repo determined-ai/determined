@@ -1,8 +1,10 @@
 import { Popover } from 'antd';
 import { useObservable } from 'micro-observables';
+import { useCallback } from 'react';
 
 import FilterForm from 'components/FilterForm/components/FilterForm';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
+import { FormKind } from 'components/FilterForm/components/type';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
@@ -23,10 +25,27 @@ const TableFilter = ({
 }: Props): JSX.Element => {
   const columns: V1ProjectColumn[] = Loadable.getOrElse([], loadableColumns);
   const fieldCount = useObservable(formStore.fieldCount);
+  const formset = useObservable(formStore.formset);
 
-  const onIsOpenFilterChange = (newOpen: boolean) => {
-    setIsOpenFilter(newOpen);
-  };
+  const onIsOpenFilterChange = useCallback(
+    (newOpen: boolean) => {
+      if (newOpen) {
+        Loadable.match(formset, {
+          Loaded: (data) => {
+            // if there's no conditions, add default condition
+            if (data.filterGroup.children.length === 0) {
+              formStore.addChild(data.filterGroup.id, FormKind.Field);
+            }
+          },
+          NotLoaded: () => {
+            return;
+          },
+        });
+      }
+      setIsOpenFilter(newOpen);
+    },
+    [formStore, formset, setIsOpenFilter],
+  );
 
   const onHidePopOver = () => {
     setIsOpenFilter(false);
