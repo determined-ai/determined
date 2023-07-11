@@ -46,11 +46,11 @@ class ModelVersion:
             name (string): New name for model version
         """
 
-        self.name = name
         req = bindings.v1PatchModelVersion(name=name)
         bindings.patch_PatchModelVersion(
             self._session, body=req, modelName=self.model_name, modelVersionNum=self.model_version
         )
+        self.name = name
 
     def set_notes(self, notes: str) -> None:
         """
@@ -60,11 +60,11 @@ class ModelVersion:
             notes (string): Replaces notes for model version in registry
         """
 
-        self.notes = notes
         req = bindings.v1PatchModelVersion(notes=notes)
         bindings.patch_PatchModelVersion(
             self._session, body=req, modelName=self.model_name, modelVersionNum=self.model_version
         )
+        self.notes = notes
 
     def delete(self) -> None:
         """
@@ -260,11 +260,12 @@ class Model:
         Arguments:
             metadata (dict): Dictionary of metadata to add to the model.
         """
-        for key, val in metadata.items():
-            self.metadata[key] = val
+        updated_metadata = dict(self.metadata, **metadata)
 
-        req = bindings.v1PatchModel(metadata=self.metadata)
+        req = bindings.v1PatchModel(metadata=updated_metadata)
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
+
+        self.metadata = updated_metadata
 
     def remove_metadata(self, keys: List[str]) -> None:
         """
@@ -279,12 +280,15 @@ class Model:
                 f"remove_metadata() requires a list of strings as input but got: {keys}"
             )
 
+        updated_metadata = dict(self.metadata)
         for key in keys:
-            if key in self.metadata:
-                del self.metadata[key]
+            if key in updated_metadata:
+                del updated_metadata[key]
 
-        req = bindings.v1PatchModel(metadata=self.metadata)
+        req = bindings.v1PatchModel(metadata=updated_metadata)
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
+
+        self.metadata = updated_metadata
 
     def move_to_workspace(self, workspace_name: str) -> None:
         req = bindings.v1PatchModel(workspaceName=workspace_name)
@@ -301,29 +305,32 @@ class Model:
         if not isinstance(labels, Iterable):
             raise ValueError(f"set_labels() requires a list of strings as input but got: {labels}")
 
-        self.labels = list(labels)
+        labels = list(labels)
 
-        req = bindings.v1PatchModel(labels=self.labels)
+        req = bindings.v1PatchModel(labels=labels)
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
+
+        self.labels = labels
 
     def set_description(self, description: str) -> None:
-        self.description = description
-        req = bindings.v1PatchModel(description=self.description)
+        req = bindings.v1PatchModel(description=description)
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
+
+        self.description = description
 
     def archive(self) -> None:
         """
         Sets the model's state to archived
         """
-        self.archived = True
         bindings.post_ArchiveModel(self._session, modelName=self.name)
+        self.archived = True
 
     def unarchive(self) -> None:
         """
         Removes the model's archived state
         """
-        self.archived = False
         bindings.post_UnarchiveModel(self._session, modelName=self.name)
+        self.archived = False
 
     def delete(self) -> None:
         """
