@@ -5,6 +5,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
 // UserAuthZ describes authz methods for `user` package.
@@ -58,11 +59,15 @@ type UserAuthZ interface {
 
 	// GET /api/v1/users/setting
 	CanGetUsersOwnSettings(ctx context.Context, curUser model.User) error
-	// POST /api/v1/users/setting/reset
+	// PATCH /api/v1/users/setting
 	CanCreateUsersOwnSetting(
 		ctx context.Context, curUser model.User, setting model.UserWebSetting,
 	) error
 	// POST /api/v1/users/setting
+	CanOverwriteUsersOwnSettings(
+		ctx context.Context, curUser model.User, settings []*userv1.UserWebSetting,
+	) error
+	// POST /api/v1/users/setting/reset
 	CanResetUsersOwnSettings(ctx context.Context, curUser model.User) error
 }
 

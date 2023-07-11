@@ -136,8 +136,19 @@ service Determined {
     };
   }
   // Patch a user's settings for website
-  rpc PostUserSetting(PostUserSettingRequest)
-      returns (PostUserSettingResponse) {
+  rpc PatchUserSetting(PatchUserSettingRequest)
+      returns (PatchUserSettingResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/users/setting",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+  // Post a user's settings for website
+  rpc OverwriteUserSetting(OverwriteUserSettingRequest)
+      returns (OverwriteUserSettingResponse) {
     option (google.api.http) = {
       post: "/api/v1/users/setting",
       body: "*"

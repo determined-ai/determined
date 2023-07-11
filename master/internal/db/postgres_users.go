@@ -331,6 +331,21 @@ func UpdateUserSetting(setting *model.UserWebSetting) error {
 	return err
 }
 
+// OverwriteUserSetting resets user settings and fills them with passed values.
+func OverwriteUserSetting(userID model.UserID, settings []*userv1.UserWebSetting) error {
+	err := ResetUserSetting(userID)
+	for _, v := range settings {
+		userSetting := model.UserWebSetting{
+			UserID:      userID,
+			Key:         v.Key,
+			Value:       v.Value,
+			StoragePath: v.StoragePath,
+		}
+		err = UpdateUserSetting(&userSetting)
+	}
+	return err
+}
+
 // GetUserSetting gets user setting.
 func GetUserSetting(userID model.UserID) ([]*userv1.UserWebSetting, error) {
 	setting := []*userv1.UserWebSetting{}

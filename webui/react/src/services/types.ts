@@ -364,6 +364,10 @@ export interface UpdateUserSettingParams {
   storagePath: string;
 }
 
+export interface OverwriteUserSettingsParams {
+  settings: Api.V1UserWebSetting[];
+}
+
 export interface UpdateGroupParams {
   addUsers?: Array<number>;
   groupId: number;

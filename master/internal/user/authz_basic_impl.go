@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
 // UserAuthZBasic is basic OSS controls.
@@ -119,6 +120,13 @@ func (a *UserAuthZBasic) CanGetUsersOwnSettings(ctx context.Context, curUser mod
 // CanCreateUsersOwnSetting always returns nil.
 func (a *UserAuthZBasic) CanCreateUsersOwnSetting(
 	ctx context.Context, curUser model.User, setting model.UserWebSetting,
+) error {
+	return nil
+}
+
+// CanOverwriteUsersOwnSettings always returns nil.
+func (a *UserAuthZBasic) CanOverwriteUsersOwnSettings(
+	ctx context.Context, curUser model.User, settings []*userv1.UserWebSetting,
 ) error {
 	return nil
 }

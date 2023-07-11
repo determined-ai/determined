@@ -508,9 +508,9 @@ func (a *apiServer) GetUserSetting(
 	return &apiv1.GetUserSettingResponse{Settings: settings}, err
 }
 
-func (a *apiServer) PostUserSetting(
-	ctx context.Context, req *apiv1.PostUserSettingRequest,
-) (*apiv1.PostUserSettingResponse, error) {
+func (a *apiServer) PatchUserSetting(
+	ctx context.Context, req *apiv1.PatchUserSettingRequest,
+) (*apiv1.PatchUserSettingResponse, error) {
 	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
 		return nil, errExternalSessions
 	}
@@ -534,7 +534,30 @@ func (a *apiServer) PostUserSetting(
 	}
 
 	err = db.UpdateUserSetting(&settingModel)
-	return &apiv1.PostUserSettingResponse{}, err
+	return &apiv1.PatchUserSettingResponse{}, err
+}
+
+func (a *apiServer) OverwriteUserSetting(
+	ctx context.Context, req *apiv1.OverwriteUserSettingRequest,
+) (*apiv1.OverwriteUserSettingResponse, error) {
+	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
+		return nil, errExternalSessions
+	}
+	if req.Settings == nil {
+		return nil, status.Error(codes.InvalidArgument, "must specify settings")
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = user.AuthZProvider.Get().CanOverwriteUsersOwnSettings(
+		ctx, *curUser, req.Settings); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	err = db.OverwriteUserSetting(curUser.ID, req.Settings)
+	return &apiv1.OverwriteUserSettingResponse{}, err
 }
 
 func (a *apiServer) ResetUserSetting(

@@ -80,9 +80,15 @@ export const getUserSetting = generateDetApi<
 
 export const updateUserSetting = generateDetApi<
   Service.UpdateUserSettingParams,
-  Api.V1PostUserSettingResponse,
+  Api.V1PatchUserSettingResponse,
   void
 >(Config.updateUserSetting);
+
+export const overwriteUserSettings = generateDetApi<
+  Service.OverwriteUserSettingsParams,
+  Api.V1OverwriteUserSettingResponse,
+  void
+>(Config.overwriteUserSettings);
 
 export const resetUserSetting = generateDetApi<EmptyParams, Api.V1ResetUserSettingResponse, void>(
   Config.resetUserSetting,
