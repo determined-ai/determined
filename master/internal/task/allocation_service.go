@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 	"sync"
 
 	"golang.org/x/exp/maps"
@@ -146,37 +147,32 @@ func (as *allocationService) WatchRendezvous(
 	ctx context.Context,
 	id model.AllocationID,
 	rID sproto.ResourcesID,
-) (RendezvousWatcher, error) {
+) (*trialv1.RendezvousInfo, error) {
 	ref := as.getAllocation(id)
 	if ref == nil {
-		return RendezvousWatcher{}, api.NotFoundErrs("allocation", id.String(), true)
+		return nil, api.NotFoundErrs("allocation", id.String(), true)
 	}
 
 	err := ref.waitForRestore(ctx)
 	if err != nil {
-		return RendezvousWatcher{}, err
+		return nil, err
 	}
 
-	return ref.watchRendezvous(rID)
-}
-
-// UnwatchRendezvous removes a rendezvous watcher.
-func (as *allocationService) UnwatchRendezvous(
-	ctx context.Context,
-	id model.AllocationID,
-	rID sproto.ResourcesID,
-) error {
-	ref := as.getAllocation(id)
-	if ref == nil {
-		return api.NotFoundErrs("allocation", id.String(), true)
-	}
-
-	err := ref.waitForRestore(ctx)
+	w, err := ref.watchRendezvous(rID)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	defer ref.unwatchRendezvous(rID)
 
-	return ref.unwatchRendezvous(rID)
+	select {
+	case rsp := <-w.C:
+		if rsp.Err != nil {
+			return nil, rsp.Err
+		}
+		return rsp.Info, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
 
 // SetResourcesAsDaemon marks the resources as daemons. If all non-daemon resources exit, the

@@ -380,16 +380,10 @@ func (a *allocation) watchRendezvous(rID sproto.ResourcesID) (RendezvousWatcher,
 }
 
 // unwatchRendezvous removes a rendezvous watcher.
-func (a *allocation) unwatchRendezvous(rID sproto.ResourcesID) error {
+func (a *allocation) unwatchRendezvous(rID sproto.ResourcesID) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-
-	if err := a.validateRendezvous(); err != nil {
-		return err
-	}
-
 	a.rendezvous.unwatch(rID)
-	return nil
 }
 
 func (a *allocation) validateRendezvous() error {
