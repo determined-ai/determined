@@ -10164,18 +10164,6 @@ export interface V1TrialSourceInfo {
      * @memberof V1TrialSourceInfo
      */
     trialSourceInfoType: V1TrialSourceInfoType;
-    /**
-     * User defined description text
-     * @type {string}
-     * @memberof V1TrialSourceInfo
-     */
-    description?: string;
-    /**
-     * Struct of the user defined metadata
-     * @type {any}
-     * @memberof V1TrialSourceInfo
-     */
-    metadata?: any;
 }
 /**
  * - UNSPECIFIED: The type is unspecified  - INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub

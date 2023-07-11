@@ -8,19 +8,20 @@ CREATE TABLE public.trial_source_infos (
     -- Inference/Fine Tuning trial
     trial_id int REFERENCES public.trials(id) ON DELETE CASCADE NOT NULL,
     -- Checkpoint in question. Lifted from referred source_trial_id/source_model_version_id
-    checkpoint_uuid uuid REFERENCES public.checkpoints_v2(uuid) ON DELETE CASCADE NOT NULL,
+    -- Note: We are not using a proper foreign key because you cannot make a foreign key
+    -- on a view, which we are using to support both checkpoint v1 and v2. The joining is done implicitly
+    -- in code instead.
+    checkpoint_uuid uuid NOT NULL, -- REFERENCES public.checkpoints_v2(uuid) ON DELETE CASCADE NOT NULL,
     -- Original trial that created the checkpoint (may be null in some inference and fine tuning use cases)
-    source_trial_id int REFERENCES public.trials(id) ON DELETE CASCADE NULL,
+    -- source_trial_id int REFERENCES public.trials(id) ON DELETE CASCADE NULL,
     -- Source Trial's `model_version` `id` field
     source_model_version_id int NULL,
     -- Source Trial's `model_version` `version` field
     source_model_version_version int NULL,
     -- Type of the `trial_source_info` (inference or fine tuning for now)
     trial_source_info_type trial_source_info_type NOT NULL,
-    -- User defined description text
-    description text NULL,
-    -- User defined metadata
-    metadata jsonb NULL,
+    -- -- User defined description text
+    -- description text NULL,
 
     CONSTRAINT fk_model_versions FOREIGN KEY (source_model_version_id, source_model_version_version) REFERENCES public.model_versions (model_id, version),
     -- `public.model_version` defines its primary key as the combination of these
@@ -36,5 +37,5 @@ CREATE TABLE public.trial_source_infos (
 
 CREATE INDEX ix_trial_source_infos_trial_id ON public.trial_source_infos USING btree (trial_id);
 CREATE INDEX ix_trial_source_infos_checkpoint_uuid ON public.trial_source_infos USING btree (checkpoint_uuid);
-CREATE INDEX ix_trial_source_infos_source_trial_id ON public.trial_source_infos USING btree (source_trial_id);
+-- CREATE INDEX ix_trial_source_infos_source_trial_id ON public.trial_source_infos USING btree (source_trial_id);
 CREATE INDEX ix_trial_source_infos_source_model_version ON public.trial_source_infos USING btree (source_model_version_id, source_model_version_version);

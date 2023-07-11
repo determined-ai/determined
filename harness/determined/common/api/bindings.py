@@ -12955,8 +12955,6 @@ class v1TrialSorter(Printable):
         return out
 
 class v1TrialSourceInfo(Printable):
-    description: "typing.Optional[str]" = None
-    metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     sourceModelVersionId: "typing.Optional[int]" = None
     sourceModelVersionVersion: "typing.Optional[int]" = None
 
@@ -12966,18 +12964,12 @@ class v1TrialSourceInfo(Printable):
         checkpointUuid: str,
         trialId: int,
         trialSourceInfoType: "v1TrialSourceInfoType",
-        description: "typing.Union[str, None, Unset]" = _unset,
-        metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         sourceModelVersionId: "typing.Union[int, None, Unset]" = _unset,
         sourceModelVersionVersion: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.checkpointUuid = checkpointUuid
         self.trialId = trialId
         self.trialSourceInfoType = trialSourceInfoType
-        if not isinstance(description, Unset):
-            self.description = description
-        if not isinstance(metadata, Unset):
-            self.metadata = metadata
         if not isinstance(sourceModelVersionId, Unset):
             self.sourceModelVersionId = sourceModelVersionId
         if not isinstance(sourceModelVersionVersion, Unset):
@@ -12990,10 +12982,6 @@ class v1TrialSourceInfo(Printable):
             "trialId": obj["trialId"],
             "trialSourceInfoType": v1TrialSourceInfoType(obj["trialSourceInfoType"]),
         }
-        if "description" in obj:
-            kwargs["description"] = obj["description"]
-        if "metadata" in obj:
-            kwargs["metadata"] = obj["metadata"]
         if "sourceModelVersionId" in obj:
             kwargs["sourceModelVersionId"] = obj["sourceModelVersionId"]
         if "sourceModelVersionVersion" in obj:
@@ -13006,10 +12994,6 @@ class v1TrialSourceInfo(Printable):
             "trialId": self.trialId,
             "trialSourceInfoType": self.trialSourceInfoType.value,
         }
-        if not omit_unset or "description" in vars(self):
-            out["description"] = self.description
-        if not omit_unset or "metadata" in vars(self):
-            out["metadata"] = self.metadata
         if not omit_unset or "sourceModelVersionId" in vars(self):
             out["sourceModelVersionId"] = self.sourceModelVersionId
         if not omit_unset or "sourceModelVersionVersion" in vars(self):

@@ -748,9 +748,15 @@ func TestCreateTrialSourceInfo(t *testing.T) {
 	require.Equal(t, resp.CheckpointUuid, checkpointUuid)
 
 	// Get the trials and metrics
-	get_req := &apiv1.GetTrialsUsingCheckpointRequest{CheckpointUuid: checkpointUuid}
-	get_resp, get_err := api.GetTrialsUsingCheckpoint(ctx, get_req)
+	get_req := &apiv1.GetTrialSourceInfoMetricsByCheckpointRequest{CheckpointUuid: checkpointUuid}
+	get_resp, get_err := api.GetTrialSourceInfoMetricsByCheckpoint(ctx, get_req)
 	require.NoError(t, get_err)
 	require.Equal(t, len(get_resp.Data), 2)
-	// require.Equal(t, resp.CheckpointUuid, checkpointUuid)
+	for _, tsim := range get_resp.Data {
+		if tsim.TrialId == int32(infTrial.ID) {
+			require.Equal(t, len(tsim.MetricReports), 1)
+		} else {
+			require.Empty(t, tsim.MetricReports)
+		}
+	}
 }
