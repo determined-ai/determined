@@ -120,6 +120,14 @@ type (
 	}
 )
 
+// returns the workspace set by the user or the default workspace if none.
+func resolveWorkspaceID(workspace *model.Workspace) int {
+	if workspace == nil || workspace.ID == 0 {
+		return 1
+	}
+	return workspace.ID
+}
+
 // Create a new experiment object from the given model experiment object, along with its searcher
 // and log. If the input object has no ID set, also create a new experiment in the database and set
 // the returned object's ID appropriately.
@@ -131,11 +139,12 @@ func newExperiment(
 ) (*experiment, []command.LaunchWarning, error) {
 	resources := activeConfig.Resources()
 	workspaceModel, err := workspace.WorkspaceByName(context.TODO(), taskSpec.Workspace)
-	if err != nil {
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		return nil, nil, err
 	}
+	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system, resources.ResourcePool(), workspaceModel.ID, resources.SlotsPerTrial(),
+		m.system, resources.ResourcePool(), workspaceID, resources.SlotsPerTrial(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create an experiment: %w", err)
@@ -927,14 +936,16 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 }
 
 func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error {
+	// TODO: secure this to prevent people from just changing RPs to whatever they want
 	resources := e.activeConfig.Resources()
 	oldRP := resources.ResourcePool()
 	workspaceModel, err := workspace.WorkspaceByName(context.TODO(), e.activeConfig.Workspace())
-	if err != nil {
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		return err
 	}
+	workspaceID := resolveWorkspaceID(workspaceModel)
 	rp, err := e.rm.ResolveResourcePool(
-		ctx, msg.ResourcePool, workspaceModel.ID, e.activeConfig.Resources().SlotsPerTrial(),
+		ctx, msg.ResourcePool, workspaceID, e.activeConfig.Resources().SlotsPerTrial(),
 	)
 	switch {
 	case err != nil:

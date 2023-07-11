@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 
@@ -84,13 +85,14 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	}
 
 	workspaceModel, err := workspace.WorkspaceByName(context.TODO(), activeConfig.Workspace())
-	if err != nil {
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		return err
 	}
+	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
 		m.system,
 		activeConfig.Resources().ResourcePool(),
-		workspaceModel.ID,
+		workspaceID,
 		activeConfig.Resources().SlotsPerTrial(),
 	)
 	if err != nil {

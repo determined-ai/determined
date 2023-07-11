@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -292,12 +293,12 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 	defaulted := schemas.WithDefaults(config)
 	resources := defaulted.Resources()
 	workspaceModel, err := workspace.WorkspaceByName(context.TODO(), defaulted.Workspace())
-	if err != nil {
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		return nil, config, nil, nil, err
 	}
-
+	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system, resources.ResourcePool(), workspaceModel.ID, resources.SlotsPerTrial())
+		m.system, resources.ResourcePool(), workspaceID, resources.SlotsPerTrial())
 	if err != nil {
 		return nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
 	}
