@@ -55,8 +55,8 @@ func (as *allocationService) StartAllocation(
 	as.allocations[req.AllocationID] = ref
 
 	go func() {
-		_ = ref.AwaitTermination()
-		if err := ref.Close(); err != nil {
+		_ = ref.awaitTermination()
+		if err := ref.close(); err != nil {
 			syslog.WithError(err).Error("cleaning up allocation")
 		}
 
@@ -84,7 +84,7 @@ func (as *allocationService) SendLog(
 		syslog.Warnf("dropped log for unknown allocation: %s", id)
 		return
 	}
-	ref.SendLog(log)
+	ref.sendContainerLog(log)
 }
 
 // SetReady sets the ready bit and moves the allocation to the running state if it has not
@@ -95,12 +95,12 @@ func (as *allocationService) SetReady(ctx context.Context, id model.AllocationID
 		return api.NotFoundErrs("allocation", id.String(), true)
 	}
 
-	err := ref.WaitForRestore(ctx)
+	err := ref.waitForRestore(ctx)
 	if err != nil {
 		return err
 	}
 
-	return ref.SetReady(ctx)
+	return ref.setReady(ctx)
 }
 
 // SetWaiting moves the allocation to the waiting state if it has not progressed past it yet.
@@ -110,12 +110,12 @@ func (as *allocationService) SetWaiting(ctx context.Context, id model.Allocation
 		return api.NotFoundErrs("allocation", id.String(), true)
 	}
 
-	err := ref.WaitForRestore(ctx)
+	err := ref.waitForRestore(ctx)
 	if err != nil {
 		return err
 	}
 
-	return ref.SetWaiting(ctx)
+	return ref.setWaiting(ctx)
 }
 
 // SetProxyAddress sets the proxy address of the allocation and sets up proxies for any services
@@ -130,12 +130,12 @@ func (as *allocationService) SetProxyAddress(
 		return api.NotFoundErrs("allocation", id.String(), true)
 	}
 
-	err := ref.WaitForRestore(ctx)
+	err := ref.waitForRestore(ctx)
 	if err != nil {
 		return err
 	}
 
-	return ref.SetProxyAddress(ctx, addr)
+	return ref.setProxyAddress(ctx, addr)
 }
 
 // WatchRendezvous returns a watcher for the caller to wait for rendezvous to complete. When a
@@ -152,12 +152,12 @@ func (as *allocationService) WatchRendezvous(
 		return RendezvousWatcher{}, api.NotFoundErrs("allocation", id.String(), true)
 	}
 
-	err := ref.WaitForRestore(ctx)
+	err := ref.waitForRestore(ctx)
 	if err != nil {
 		return RendezvousWatcher{}, err
 	}
 
-	return ref.WatchRendezvous(rID)
+	return ref.watchRendezvous(rID)
 }
 
 // UnwatchRendezvous removes a rendezvous watcher.
@@ -171,12 +171,12 @@ func (as *allocationService) UnwatchRendezvous(
 		return api.NotFoundErrs("allocation", id.String(), true)
 	}
 
-	err := ref.WaitForRestore(ctx)
+	err := ref.waitForRestore(ctx)
 	if err != nil {
 		return err
 	}
 
-	return ref.UnwatchRendezvous(rID)
+	return ref.unwatchRendezvous(rID)
 }
 
 // SetResourcesAsDaemon marks the resources as daemons. If all non-daemon resources exit, the
@@ -191,12 +191,12 @@ func (as *allocationService) SetResourcesAsDaemon(
 		return api.NotFoundErrs("allocation", id.String(), true)
 	}
 
-	err := ref.WaitForRestore(ctx)
+	err := ref.waitForRestore(ctx)
 	if err != nil {
 		return err
 	}
 
-	return ref.SetResourcesAsDaemon(ctx, rID)
+	return ref.setResourcesAsDaemon(ctx, rID)
 }
 
 // Signal the allocation with the given signal.
@@ -209,7 +209,7 @@ func (as *allocationService) Signal(
 	if ref == nil {
 		return api.NotFoundErrs("allocation", id.String(), true)
 	}
-	ref.HandleSignal(sig, reason) // TODO: public/private methods on allocation itself.
+	ref.signal(sig, reason)
 	return nil
 }
 
@@ -219,7 +219,7 @@ func (as *allocationService) State(id model.AllocationID) (AllocationState, erro
 	if ref == nil {
 		return AllocationState{}, api.NotFoundErrs("allocation", id.String(), true)
 	}
-	return ref.State(), nil
+	return ref.state(), nil
 }
 
 // AllGather blocks until `numPeers` with the same `allocationID` are waiting and then returns the
@@ -270,7 +270,7 @@ func (as *allocationService) WaitForRestore(ctx context.Context, id model.Alloca
 	if ref == nil {
 		return api.NotFoundErrs("allocation", id.String(), true)
 	}
-	return ref.WaitForRestore(ctx)
+	return ref.waitForRestore(ctx)
 }
 
 // getAllocation returns allocation actor by allocation id.
