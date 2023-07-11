@@ -3,12 +3,18 @@ import { useObservable } from 'micro-observables';
 import determinedStore, { DeterminedInfo } from 'stores/determinedInfo';
 
 // Add new feature switches below using `|`
-export type ValidFeature = 'trials_comparison' | 'dashboard' | 'explist_v2' | 'chart';
+export type ValidFeature =
+  | 'trials_comparison'
+  | 'dashboard'
+  | 'explist_v2'
+  | 'chart'
+  | 'rp_binding';
 
 const FeatureDefault: { [K in ValidFeature]: boolean } = {
   chart: false,
   dashboard: false,
   explist_v2: false,
+  rp_binding: false,
   trials_comparison: false,
 };
 

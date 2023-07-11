@@ -1,3 +1,5 @@
+$font-size-content: 12px;
+
 .base {
   display: flex;
   flex-direction: column;
@@ -10,12 +12,29 @@
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+
+    .resoucePoolBoundContainer {
+      align-items: center;
+      border-bottom: 1px solid var(--theme-stage-border);
+      border-top: 1px solid var(--theme-stage-border);
+      display: inline-flex;
+      font-size: $font-size-content;
+      font-weight: bold;
+      justify-content: space-between;
+      margin: 8px 0;
+      padding: 8px 0;
+    }
+    .resoucePoolBoundCount {
+      align-items: center;
+      display: inline-flex;
+      gap: 4px;
+    }
   }
   .header {
     align-items: center;
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    gap: 8px;
     padding-top: 8px;
 
     .info {
@@ -27,10 +46,9 @@
     }
     .default {
       color: var(--theme-surface-on);
-      display: flex;
 
       span {
-        font-size: 12px;
+        font-size: $font-size-content;
         margin-right: 4px;
       }
       i {
@@ -47,7 +65,7 @@ section.details {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  font-size: 12px;
+  font-size: $font-size-content;
 
   ul {
     flex-grow: 1;

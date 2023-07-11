@@ -37,6 +37,11 @@ type MiscAuthZ interface {
 	// 	ctx context.Context, logLine interface{}, associatedWorkspaceID model.AccessScopeID,
 	// )
 
+	// CanGetMasterConfig returns an error if the user is not authorized to get master configs.
+	CanGetMasterConfig(
+		ctx context.Context, curUser *model.User,
+	) (permErr error, err error)
+
 	// CanGetHistoricalUsage returns an error if the user is not authorized to get usage
 	// related information.
 	CanGetUsageDetails(

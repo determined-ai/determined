@@ -1,0 +1,15 @@
+.header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.tableRow {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+}
+.numProjects {
+  color: var(--theme-stage-on);
+  font-size: 12px;
+}

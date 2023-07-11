@@ -87,11 +87,11 @@ workspace.
 
 We now have two independent workspaces, one for each team.
 
-.. image:: /assets/images/rbac-example-setup-dark.png
+.. image:: /assets/images/_rbac-example-setup-dark.png
    :class: only-dark
    :alt: Determined AI system architecture diagram dark mode
 
-.. image:: /assets/images/rbac-example-setup-light.png
+.. image:: /assets/images/_rbac-example-setup-light.png
    :class: only-light
    :alt: Determined AI system architecture diagram light mode
 

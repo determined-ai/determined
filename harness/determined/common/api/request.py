@@ -29,10 +29,7 @@ def parse_master_address(master_address: str) -> parse.ParseResult:
 
 def make_url(master_address: str, suffix: str) -> str:
     parsed = parse_master_address(master_address)
-    master_url = parsed.geturl().rstrip("/")
-    suffix = suffix.lstrip("/")
-    separator = "/" if suffix or master_address.endswith("/") else ""
-    return "{}{}{}".format(master_url, separator, suffix)
+    return parse.urljoin(parsed.geturl(), suffix)
 
 
 def maybe_upgrade_ws_scheme(master_address: str) -> str:
@@ -166,7 +163,7 @@ def do_request(
     if r.status_code == 401:
         raise errors.UnauthenticatedException(username=username)
     elif r.status_code == 404:
-        raise errors.NotFoundException(r)
+        raise errors.NotFoundException(r.reason)
     elif r.status_code >= 300:
         raise errors.APIException(r)
 

@@ -617,7 +617,6 @@ func TestProtoGetTrial(t *testing.T) {
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
 		TaskID:       task.TaskID,
-		JobID:        exp.JobID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
@@ -667,7 +666,6 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
 		TaskID:       task.TaskID,
-		JobID:        exp.JobID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
@@ -770,7 +768,6 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
 		TaskID:       task.TaskID,
-		JobID:        exp.JobID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
@@ -894,7 +891,6 @@ func TestGenericMetricsIO(t *testing.T) {
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
 		TaskID:       task.TaskID,
-		JobID:        exp.JobID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
@@ -995,7 +991,6 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 		task := RequireMockTask(t, db, exp.OwnerID)
 		tr := model.Trial{
 			TaskID:       task.TaskID,
-			JobID:        exp.JobID,
 			ExperimentID: exp.ID,
 			State:        model.ActiveState,
 			StartTime:    time.Now(),

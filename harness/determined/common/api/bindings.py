@@ -4245,6 +4245,7 @@ class v1GetMasterResponse(Printable):
         clusterId: str,
         clusterName: str,
         masterId: str,
+        strictJobQueueControl: bool,
         version: str,
         branding: "typing.Union[str, None, Unset]" = _unset,
         externalLoginUri: "typing.Union[str, None, Unset]" = _unset,
@@ -4259,6 +4260,7 @@ class v1GetMasterResponse(Printable):
         self.clusterId = clusterId
         self.clusterName = clusterName
         self.masterId = masterId
+        self.strictJobQueueControl = strictJobQueueControl
         self.version = version
         if not isinstance(branding, Unset):
             self.branding = branding
@@ -4285,6 +4287,7 @@ class v1GetMasterResponse(Printable):
             "clusterId": obj["clusterId"],
             "clusterName": obj["clusterName"],
             "masterId": obj["masterId"],
+            "strictJobQueueControl": obj["strictJobQueueControl"],
             "version": obj["version"],
         }
         if "branding" in obj:
@@ -4312,6 +4315,7 @@ class v1GetMasterResponse(Printable):
             "clusterId": self.clusterId,
             "clusterName": self.clusterName,
             "masterId": self.masterId,
+            "strictJobQueueControl": self.strictJobQueueControl,
             "version": self.version,
         }
         if not omit_unset or "branding" in vars(self):
@@ -8600,10 +8604,19 @@ class v1PermissionType(DetEnum):
     EDIT_MODEL_REGISTRY = "PERMISSION_TYPE_EDIT_MODEL_REGISTRY"
     CREATE_MODEL_REGISTRY = "PERMISSION_TYPE_CREATE_MODEL_REGISTRY"
     DELETE_MODEL_REGISTRY = "PERMISSION_TYPE_DELETE_MODEL_REGISTRY"
+    DELETE_MODEL_VERSION = "PERMISSION_TYPE_DELETE_MODEL_VERSION"
+    DELETE_OTHER_USER_MODEL_REGISTRY = "PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY"
+    DELETE_OTHER_USER_MODEL_VERSION = "PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION"
     VIEW_MASTER_LOGS = "PERMISSION_TYPE_VIEW_MASTER_LOGS"
     VIEW_CLUSTER_USAGE = "PERMISSION_TYPE_VIEW_CLUSTER_USAGE"
     UPDATE_AGENTS = "PERMISSION_TYPE_UPDATE_AGENTS"
     VIEW_SENSITIVE_AGENT_INFO = "PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO"
+    VIEW_MASTER_CONFIG = "PERMISSION_TYPE_VIEW_MASTER_CONFIG"
+    CONTROL_STRICT_JOB_QUEUE = "PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE"
+    VIEW_TEMPLATES = "PERMISSION_TYPE_VIEW_TEMPLATES"
+    UPDATE_TEMPLATES = "PERMISSION_TYPE_UPDATE_TEMPLATES"
+    CREATE_TEMPLATES = "PERMISSION_TYPE_CREATE_TEMPLATES"
+    DELETE_TEMPLATES = "PERMISSION_TYPE_DELETE_TEMPLATES"
     UPDATE_ROLES = "PERMISSION_TYPE_UPDATE_ROLES"
     EDIT_WEBHOOKS = "PERMISSION_TYPE_EDIT_WEBHOOKS"
 
@@ -10968,11 +10981,6 @@ class v1SSOProvider(Printable):
         }
         return out
 
-class v1Scale(DetEnum):
-    UNSPECIFIED = "SCALE_UNSPECIFIED"
-    LINEAR = "SCALE_LINEAR"
-    LOG = "SCALE_LOG"
-
 class v1SchedulerType(DetEnum):
     UNSPECIFIED = "SCHEDULER_TYPE_UNSPECIFIED"
     PRIORITY = "SCHEDULER_TYPE_PRIORITY"
@@ -11776,32 +11784,6 @@ class v1Slot(Printable):
             out["enabled"] = self.enabled
         if not omit_unset or "id" in vars(self):
             out["id"] = self.id
-        return out
-
-class v1SummarizeTrialResponse(Printable):
-
-    def __init__(
-        self,
-        *,
-        metrics: "typing.Sequence[v1DownsampledMetrics]",
-        trial: "trialv1Trial",
-    ):
-        self.metrics = metrics
-        self.trial = trial
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1SummarizeTrialResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "metrics": [v1DownsampledMetrics.from_json(x) for x in obj["metrics"]],
-            "trial": trialv1Trial.from_json(obj["trial"]),
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "metrics": [x.to_json(omit_unset) for x in self.metrics],
-            "trial": self.trial.to_json(omit_unset),
-        }
         return out
 
 class v1Task(Printable):
@@ -14222,7 +14204,6 @@ def get_CompareTrials(
     metricIds: "typing.Optional[typing.Sequence[str]]" = None,
     metricNames: "typing.Optional[typing.Sequence[str]]" = None,
     metricType: "typing.Optional[v1MetricType]" = None,
-    scale: "typing.Optional[v1Scale]" = None,
     startBatches: "typing.Optional[int]" = None,
     timeSeriesFilter_doubleRange_gt: "typing.Optional[float]" = None,
     timeSeriesFilter_doubleRange_gte: "typing.Optional[float]" = None,
@@ -14248,7 +14229,6 @@ def get_CompareTrials(
         "metricIds": metricIds,
         "metricNames": metricNames,
         "metricType": metricType.value if metricType is not None else None,
-        "scale": scale.value if scale is not None else None,
         "startBatches": startBatches,
         "timeSeriesFilter.doubleRange.gt": dump_float(timeSeriesFilter_doubleRange_gt) if timeSeriesFilter_doubleRange_gt is not None else None,
         "timeSeriesFilter.doubleRange.gte": dump_float(timeSeriesFilter_doubleRange_gte) if timeSeriesFilter_doubleRange_gte is not None else None,
@@ -18062,41 +18042,6 @@ def post_SetUserPassword(
     if _resp.status_code == 200:
         return v1SetUserPasswordResponse.from_json(_resp.json())
     raise APIHttpError("post_SetUserPassword", _resp)
-
-def get_SummarizeTrial(
-    session: "api.Session",
-    *,
-    trialId: int,
-    customType: "typing.Optional[str]" = None,
-    endBatches: "typing.Optional[int]" = None,
-    maxDatapoints: "typing.Optional[int]" = None,
-    metricNames: "typing.Optional[typing.Sequence[str]]" = None,
-    metricType: "typing.Optional[v1MetricType]" = None,
-    scale: "typing.Optional[v1Scale]" = None,
-    startBatches: "typing.Optional[int]" = None,
-) -> "v1SummarizeTrialResponse":
-    _params = {
-        "customType": customType,
-        "endBatches": endBatches,
-        "maxDatapoints": maxDatapoints,
-        "metricNames": metricNames,
-        "metricType": metricType.value if metricType is not None else None,
-        "scale": scale.value if scale is not None else None,
-        "startBatches": startBatches,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/trials/{trialId}/summarize",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1SummarizeTrialResponse.from_json(_resp.json())
-    raise APIHttpError("get_SummarizeTrial", _resp)
 
 def get_TaskLogs(
     session: "api.Session",
