@@ -125,22 +125,22 @@ type SentinelAllocationEvent struct{}
 func (SentinelAllocationEvent) AllocationEvent() {}
 
 // AllocationEvent implements AllocationEvent.
-func (ResourcesAllocated) AllocationEvent() {}
+func (*ResourcesAllocated) AllocationEvent() {}
 
 // AllocationEvent implements AllocationEvent.
-func (InvalidResourcesRequestError) AllocationEvent() {}
+func (*InvalidResourcesRequestError) AllocationEvent() {}
 
 // AllocationEvent implements AllocationEvent.
-func (ReleaseResources) AllocationEvent() {}
+func (*ReleaseResources) AllocationEvent() {}
 
 // AllocationEvent implements AllocationEvent.
-func (ResourcesStateChanged) AllocationEvent() {}
+func (*ResourcesStateChanged) AllocationEvent() {}
 
 // AllocationEvent implements AllocationEvent.
-func (ResourcesFailure) AllocationEvent() {}
+func (*ResourcesFailure) AllocationEvent() {}
 
 // AllocationEvent implements AllocationEvent.
-func (ContainerLog) AllocationEvent() {}
+func (*ContainerLog) AllocationEvent() {}
 
 // AllocationUnsubscribeFn closes a subscription.
 type AllocationUnsubscribeFn func()
@@ -373,7 +373,6 @@ func (s ResourcesSummary) Slots() int {
 // to start tasks on assigned resources.
 type Resources interface {
 	Summary() ResourcesSummary
-	// TODO(!!!): Remove `*actor.System` from this interface.
 	Start(*actor.System, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo) error
 	Kill(*actor.System, logger.Context)
 }

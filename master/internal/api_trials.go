@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
@@ -25,7 +24,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
-	"github.com/determined-ai/determined/master/internal/task/preemptible"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -1073,30 +1071,18 @@ func (a *apiServer) AllocationPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPreemptionSignalRequest,
 ) (*apiv1.AllocationPreemptionSignalResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(req.TimeoutSeconds)*time.Second)
+	defer cancel()
+
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
 	}
 
-	err := task.DefaultService.WaitForRestore(ctx, model.AllocationID(req.AllocationId))
+	preempt, err := task.DefaultService.WatchPreemption(ctx, model.AllocationID(req.AllocationId))
 	if err != nil {
 		return nil, err
 	}
-
-	id := uuid.New()
-	w, err := preemptible.Watch(req.AllocationId, id)
-	if err != nil {
-		return nil, err
-	}
-	defer preemptible.Unwatch(req.AllocationId, id)
-
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(req.TimeoutSeconds)*time.Second)
-	defer cancel()
-	select {
-	case <-w.C:
-		return &apiv1.AllocationPreemptionSignalResponse{Preempt: true}, nil
-	case <-ctx.Done():
-		return &apiv1.AllocationPreemptionSignalResponse{Preempt: false}, nil
-	}
+	return &apiv1.AllocationPreemptionSignalResponse{Preempt: preempt}, nil
 }
 
 func (a *apiServer) AckAllocationPreemptionSignal(
@@ -1106,12 +1092,10 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 		return nil, err
 	}
 
-	err := task.DefaultService.WaitForRestore(ctx, model.AllocationID(req.AllocationId))
+	err := task.DefaultService.AckPreemption(ctx, model.AllocationID(req.AllocationId))
 	if err != nil {
 		return nil, err
 	}
-
-	preemptible.Acknowledge(req.AllocationId)
 	return &apiv1.AckAllocationPreemptionSignalResponse{}, nil
 }
 

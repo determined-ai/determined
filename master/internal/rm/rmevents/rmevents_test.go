@@ -62,9 +62,9 @@ func TestRMEvents(t *testing.T) {
 
 		log := strconv.Itoa(i)
 		msg := sproto.ContainerLog{AuxMessage: &log}
-		Publish(topic, msg)
+		Publish(topic, &msg)
 		t.Logf("published %T to %s", msg, topic)
-		expected[topic] = append(expected[topic], msg)
+		expected[topic] = append(expected[topic], &msg)
 	}
 
 	t.Log("closing subs and waiting on background goroutines")
@@ -80,4 +80,12 @@ func TestRMEvents(t *testing.T) {
 			require.ElementsMatch(t, expected[topic], actual)
 		}
 	}
+}
+
+func TestRMEventsUnhappy(t *testing.T) {
+	aID1, aID2 := model.AllocationID("test1"), model.AllocationID("test2")
+	sub := Subscribe(aID1)
+	Publish(aID2, &sproto.ContainerLog{}) // Just a test that nothing panics with no hits.
+	sub.Close()                           // Close a sub to synchronize.
+	sub.Close()                           // Repeated closes shouldn't panic.
 }

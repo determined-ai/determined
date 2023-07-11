@@ -328,9 +328,9 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	return true
 }
 
-func (rp *resourcePool) releaseResource(ctx *actor.Context, allocationID model.AllocationID) {
-	ctx.Log().Infof("releasing resources taken by %s", allocationID)
-	rmevents.Publish(allocationID, &sproto.ReleaseResources{Reason: "preempted by the scheduler"})
+func (rp *resourcePool) releaseResource(ctx *actor.Context, aID model.AllocationID) {
+	ctx.Log().Infof("releasing resources taken by %s", aID)
+	rmevents.Publish(aID, &sproto.ReleaseResources{Reason: "preempted by the scheduler"})
 }
 
 func (rp *resourcePool) resourcesReleased(
@@ -538,8 +538,8 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 			for _, req := range toAllocate {
 				rp.allocateResources(ctx, req)
 			}
-			for _, allocationID := range toRelease {
-				rp.releaseResource(ctx, allocationID)
+			for _, aID := range toRelease {
+				rp.releaseResource(ctx, aID)
 			}
 			rp.sendScalingInfo(ctx)
 		}
@@ -862,8 +862,8 @@ func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
 		ctx.Log().WithError(rp.provisionerError).Warnf("removing task %s from list", task.AllocationID)
 		allocationsToRemove = append(allocationsToRemove, task.AllocationID)
 	}
-	for _, allocationID := range allocationsToRemove {
-		rmevents.Publish(allocationID, &sproto.InvalidResourcesRequestError{Cause: rp.provisionerError})
+	for _, aID := range allocationsToRemove {
+		rmevents.Publish(aID, &sproto.InvalidResourcesRequestError{Cause: rp.provisionerError})
 	}
 	after := rp.taskList.Len()
 	ctx.Log().WithField("before", before).WithField("after", after).Warn("pruned task list")

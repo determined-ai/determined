@@ -404,7 +404,7 @@ func (a *agentState) updateSlotDeviceView(ctx *actor.Context, deviceID device.ID
 		// On `PostStop`, draining will be already set to false, and we'll kill the container
 		// whether we have the device or not.
 		if !s.enabled.draining && s.containerID != nil {
-			rmevents.Publish(a.containerAllocation[*s.containerID], sproto.ReleaseResources{
+			rmevents.Publish(a.containerAllocation[*s.containerID], &sproto.ReleaseResources{
 				Reason:    "slot disabled",
 				ForceKill: true,
 			})
@@ -666,12 +666,12 @@ func newAgentStateFromSnapshot(as agentSnapshot) (*agentState, error) {
 func (a *agentState) restoreContainersField() error {
 	containerIDs := maps.Keys(a.containerState)
 
-	containerAllocation, err := loadContainersToAllocationIds(containerIDs)
+	res, err := loadContainersToAllocationIds(containerIDs)
 	if err != nil {
 		return err
 	}
-	a.containerAllocation = containerAllocation
-	log.WithField("agent-id", a.string()).Debugf("restored containers: %d", len(containerAllocation))
+	log.WithField("agent-id", a.string()).Debugf("restored containers: %d", len(res))
+	a.containerAllocation = res
 
 	return nil
 }

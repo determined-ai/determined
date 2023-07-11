@@ -2,8 +2,9 @@ package task
 
 import (
 	"context"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
 	"sync"
+
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	"golang.org/x/exp/maps"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/allgather"
+	"github.com/determined-ai/determined/master/internal/task/preemptible"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -51,7 +53,6 @@ func (as *allocationService) StartAllocation(
 ) {
 	as.mu.Lock()
 	defer as.mu.Unlock()
-
 	ref := startAllocation(logCtx, req, db, rm, specifier, system, parent)
 	as.allocations[req.AllocationID] = ref
 
@@ -223,31 +224,30 @@ func (as *allocationService) State(id model.AllocationID) (AllocationState, erro
 // reason. Only one call may connect per `id`.
 func (as *allocationService) AllGather(
 	ctx context.Context,
-	allocationID model.AllocationID,
-	id uuid.UUID,
+	id model.AllocationID,
+	wID uuid.UUID,
 	numPeers int,
 	data any,
 ) ([]any, error) {
-	err := as.WaitForRestore(ctx, allocationID)
+	err := as.waitForRestore(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
 	readyFn := func() {
-		err := as.SetReady(ctx, allocationID)
+		err := as.SetReady(ctx, id)
 		if err != nil {
-			syslog.WithError(err).Errorf("failed to set ready for %s", allocationID)
+			syslog.WithError(err).Errorf("failed to set ready for %s", id)
 		}
 	}
 
 	timeoutFn := func(err error) {
 		msg := err.Error()
-		as.SendLog(ctx, allocationID, &sproto.ContainerLog{AuxMessage: &msg})
+		as.SendLog(ctx, id, &sproto.ContainerLog{AuxMessage: &msg})
 	}
 
-	w := allgather.Join(allocationID.String(), id, numPeers, data, readyFn, timeoutFn)
-	defer allgather.Leave(allocationID.String(), id)
-
+	w := allgather.Join(id.String(), wID, numPeers, data, readyFn, timeoutFn)
+	defer allgather.Leave(id.String(), wID)
 	select {
 	case res := <-w.C:
 		if res.Err != nil {
@@ -259,9 +259,45 @@ func (as *allocationService) AllGather(
 	}
 }
 
-// WaitForRestore waits until the allocation has been restored by the resource manager. The
+// WatchPreemption blocks as long as the context allows to watch for a preemption signal.
+func (as *allocationService) WatchPreemption(
+	ctx context.Context,
+	id model.AllocationID,
+) (bool, error) {
+	err := as.waitForRestore(ctx, id)
+	if err != nil {
+		return false, err
+	}
+
+	wID := uuid.New()
+	w, err := preemptible.Watch(id.String(), wID)
+	if err != nil {
+		return false, err
+	}
+	defer preemptible.Unwatch(id.String(), wID)
+
+	select {
+	case <-w.C:
+		return true, nil
+	case <-ctx.Done():
+		return false, nil
+	}
+}
+
+// AckPreemption acknowledges the receipt of a preemption signal. This is used to differentiate
+// HPO/user-related early stops with a zero exit code from preemption-related early stopping.
+func (as *allocationService) AckPreemption(ctx context.Context, id model.AllocationID) error {
+	err := as.waitForRestore(ctx, id)
+	if err != nil {
+		return err
+	}
+	preemptible.Acknowledge(id.String())
+	return nil
+}
+
+// waitForRestore waits until the allocation has been restored by the resource manager. The
 // allocation must exist otherwise this will return a not found error.
-func (as *allocationService) WaitForRestore(ctx context.Context, id model.AllocationID) error {
+func (as *allocationService) waitForRestore(ctx context.Context, id model.AllocationID) error {
 	ref := as.getAllocation(id)
 	if ref == nil {
 		return api.NotFoundErrs("allocation", id.String(), true)
@@ -270,7 +306,6 @@ func (as *allocationService) WaitForRestore(ctx context.Context, id model.Alloca
 }
 
 // getAllocation returns allocation actor by allocation id.
-// TODO(!!!): IDK if this should be public.
 func (as *allocationService) getAllocation(allocationID model.AllocationID) *allocation {
 	as.mu.RLock()
 	defer as.mu.RUnlock()

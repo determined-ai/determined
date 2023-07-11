@@ -111,18 +111,11 @@ func (r *ResourceManager) ValidateCommandResources(
 func (r *ResourceManager) Allocate(
 	ctx actor.Messenger,
 	msg sproto.AllocateRequest,
-) (resp *sproto.AllocationSubscription, err error) {
-	// We want to subscribe before allocating, but also free
-	// the subscription for the caller if we fail.
+) (*sproto.AllocationSubscription, error) {
 	sub := rmevents.Subscribe(msg.AllocationID)
-	defer func() {
-		if err != nil {
-			sub.Close()
-		}
-	}()
-
-	err = r.Ask(ctx, msg, nil)
+	err := r.Ask(ctx, msg, nil)
 	if err != nil {
+		sub.Close()
 		return nil, err
 	}
 	return sub, nil

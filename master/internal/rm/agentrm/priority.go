@@ -30,8 +30,8 @@ func NewPriorityScheduler(config *config.SchedulerConfig) Scheduler {
 }
 
 func (p priorityScheduler) Schedule(rp *resourcePool) (
-	toAllocate []*sproto.AllocateRequest,
-	toRelease []model.AllocationID,
+	[]*sproto.AllocateRequest,
+	[]model.AllocationID,
 ) {
 	return p.prioritySchedule(
 		rp.taskList,
@@ -189,7 +189,7 @@ func (p priorityScheduler) prioritySchedulerWithFilter(
 		}
 	}
 
-	toReleaseSlice := make([]model.AllocationID, 0)
+	toReleaseSlice := make([]model.AllocationID, 0, len(toRelease))
 	for r := range toRelease {
 		toReleaseSlice = append(toReleaseSlice, r)
 	}

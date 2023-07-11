@@ -132,12 +132,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		}
 
 		t.completeTask(ctx)
-	case actor.ChildStopped:
-	case actor.ChildFailed:
-		if msg.Child.Address().Local() == t.allocationID.String() {
-			t.completeTask(ctx)
-			return errors.Wrapf(msg.Error, "checkpoint GC task failed (actor.ChildFailed)")
-		}
 	case actor.PostStop:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

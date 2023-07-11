@@ -37,11 +37,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-const (
-	killCooldown       = 15 * time.Second
-	okExitMessage      = "allocation exited successfully"
-	missingExitMessage = ""
-)
+const killCooldown = 15 * time.Second
+
+// AllocationSignal is an interface for signals that can be sent to an allocation.
+type AllocationSignal string
 
 const (
 	// KillAllocation is the signal to kill an allocation; analogous to in SIGKILL.
@@ -49,9 +48,6 @@ const (
 	// TerminateAllocation is the signal to kill an allocation; analogous to in SIGTERM.
 	TerminateAllocation AllocationSignal = "terminate"
 )
-
-// AllocationSignal is an interface for signals that can be sent to an allocation.
-type AllocationSignal string
 
 // AllocationState requests allocation state. A copy is filled and returned.
 type AllocationState struct {
@@ -87,6 +83,17 @@ type AllocationExited struct {
 	UserRequestedStop bool
 	Err               error
 	FinalState        AllocationState
+}
+
+func (a *AllocationExited) String() string {
+	switch {
+	case a == nil:
+		return ""
+	case a.Err != nil:
+		return a.Err.Error()
+	default:
+		return "allocation exited successfully"
+	}
 }
 
 // allocation encapsulates all the state of a single allocation.
@@ -176,8 +183,7 @@ func startAllocation(
 
 	rmEvents, err := a.requestResources()
 	if err != nil {
-		// TODO(!!!): Very awkward to not just return the error here; we should figure this out
-		// but it requires some work.
+		// TODO(!!!): Very awkward to not just return the error here.
 		a.crash(err)
 	}
 	a.wg.Go(func(ctx context.Context) { a.run(ctx, rmEvents) })
@@ -353,7 +359,8 @@ func (a *allocation) watchRendezvous(rID sproto.ResourcesID) (RendezvousWatcher,
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	if err := a.validateRendezvous(); err != nil {
+	err := a.validateRendezvous()
+	if err != nil {
 		return RendezvousWatcher{}, err
 	}
 
@@ -365,13 +372,14 @@ func (a *allocation) watchRendezvous(rID sproto.ResourcesID) (RendezvousWatcher,
 
 			select {
 			case <-t.C:
-				a.mu.Lock()
-				defer a.mu.Unlock()
-				if err := a.rendezvous.checkTimeout(); err != nil {
-					a.sendTaskLog(&model.TaskLog{Log: err.Error()})
-				}
 			case <-ctx.Done():
 				return
+			}
+
+			a.mu.Lock()
+			defer a.mu.Unlock()
+			if err := a.rendezvous.checkTimeout(); err != nil {
+				a.sendTaskLog(&model.TaskLog{Log: err.Error()})
 			}
 		})
 	}
@@ -492,7 +500,9 @@ func (a *allocation) close() error {
 		if a.exitErr == nil {
 			a.exitErr = errors.New("unknown error occurred")
 		}
-		a.syslog.WithError(a.exitErr).Info("exit did not run properly")
+		a.exited = &AllocationExited{Err: a.exitErr, FinalState: a.stateWithoutLock()}
+
+		a.syslog.WithError(a.exitErr).Error("exit did not run properly")
 		a.sendTaskLog(&model.TaskLog{
 			Log: fmt.Sprintf("%s was terminated: %s", a.req.Name, a.exitErr.Error()),
 		})
@@ -503,15 +513,13 @@ func (a *allocation) close() error {
 				r.Kill(a.system, a.logCtx)
 			}
 		}
+
 		if a.resourcesStarted {
 			a.markResourcesReleased()
 		}
 
 		a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
-		a.system.Tell(a.parent, &AllocationExited{
-			Err:        a.exitErr,
-			FinalState: a.stateWithoutLock(),
-		})
+		a.system.Tell(a.parent, a.exited)
 
 		if a.req.Preemptible {
 			preemptible.Unregister(a.req.AllocationID.String())
@@ -525,7 +533,6 @@ func (a *allocation) close() error {
 		if cfg := a.req.IdleTimeout; cfg != nil {
 			idle.Unregister(cfg.ServiceID)
 		}
-
 		if pErr := a.purgeRestorableResources(); pErr != nil {
 			err = multierror.Append(err, fmt.Errorf("purging restorable resources: %w", pErr))
 		}
@@ -1247,17 +1254,6 @@ func (a *allocation) ready() bool {
 	return (a.rendezvous != nil && a.rendezvous.ready()) ||
 		// And finally, of course, if the task explicitly called `AllocationReady` it is ready.
 		coalesceBool(a.model.IsReady, false)
-}
-
-func (a *AllocationExited) String() string {
-	switch {
-	case a == nil:
-		return missingExitMessage
-	case a.Err != nil:
-		return a.Err.Error()
-	default:
-		return okExitMessage
-	}
 }
 
 func coalesceBool(x *bool, fallback bool) bool {
