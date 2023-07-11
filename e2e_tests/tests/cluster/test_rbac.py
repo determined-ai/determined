@@ -352,7 +352,7 @@ def test_rbac_permission_assignment_errors() -> None:
             "--username-to-assign",
             "admin",
         ],
-        "not find a workspace",
+        "not found",
     )
     det_cmd_expect_error(
         [
@@ -364,7 +364,7 @@ def test_rbac_permission_assignment_errors() -> None:
             "--username-to-assign",
             "admin",
         ],
-        "not find a workspace",
+        "not found",
     )
 
     api_utils.configure_token_store(ADMIN_CREDENTIALS)
@@ -386,7 +386,7 @@ def test_rbac_permission_assignment_errors() -> None:
 
         # Unassigned role group doesn't have.
         det_cmd_expect_error(
-            ["rbac", "unassign-role", "Editor", "--group-name-to-assign", group_name], "not found"
+            ["rbac", "unassign-role", "Editor", "--group-name-to-assign", group_name], "Not Found"
         )
         det_cmd_expect_error(
             [
@@ -398,13 +398,13 @@ def test_rbac_permission_assignment_errors() -> None:
                 "--workspace-name",
                 "Uncategorized",
             ],
-            "not found",
+            "Not Found",
         )
 
         # Unassigned role user doesn't have.
         det_cmd_expect_error(
             ["rbac", "unassign-role", "Editor", "--username-to-assign", test_user_creds.username],
-            "not found",
+            "Not Found",
         )
         det_cmd_expect_error(
             [
@@ -416,7 +416,7 @@ def test_rbac_permission_assignment_errors() -> None:
                 "--workspace-name",
                 "Uncategorized",
             ],
-            "not found",
+            "Not Found",
         )
 
 

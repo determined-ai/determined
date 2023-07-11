@@ -3,8 +3,8 @@ from collections import namedtuple
 from typing import Any, Dict, List, Optional
 
 import determined.cli.render
-from determined import cli
 from determined.cli import default_pagination_args, render, require_feature_flag, setup_session
+from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.experimental import Session
@@ -161,7 +161,9 @@ def usernames_to_user_ids(session: Session, usernames: List[str]) -> List[int]:
             user_ids.append(user_id)
 
     if missing_users:
-        raise cli.not_found_errs("user(s)", ", ".join(missing_users), session)
+        raise api.errors.BadRequestException(
+            f"could not find users for usernames {', '.join(missing_users)}"
+        )
     return user_ids
 
 
@@ -170,7 +172,7 @@ def group_name_to_group_id(session: Session, group_name: str) -> int:
     resp = bindings.post_GetGroups(session, body=body)
     groups = resp.groups
     if groups is None or len(groups) != 1 or groups[0].group.groupId is None:
-        raise cli.not_found_errs("group", group_name, session)
+        raise api.errors.BadRequestException(f"could not find user group name {group_name}")
     return groups[0].group.groupId
 
 
