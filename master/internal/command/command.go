@@ -336,8 +336,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		// TODO(Brad): Do the same thing to allocations that we are doing to RMs.
 		err := task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
 		if err != nil {
-			ctx.Respond(err)
-			return nil
+			ctx.Log().WithError(err).Warn("failed to kill allocation")
 		}
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
 	case *apiv1.SetNotebookPriorityRequest:
@@ -360,8 +359,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillCommandRequest:
 		err := task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
 		if err != nil {
-			ctx.Respond(err)
-			return nil
+			ctx.Log().WithError(err).Warn("failed to kill allocation")
 		}
 		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
 
@@ -385,8 +383,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillShellRequest:
 		err := task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
 		if err != nil {
-			ctx.Respond(err)
-			return nil
+			ctx.Log().WithError(err).Warn("failed to kill allocation")
 		}
 		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
 
@@ -410,8 +407,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillTensorboardRequest:
 		err := task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
 		if err != nil {
-			ctx.Respond(err)
-			return nil
+			ctx.Log().WithError(err).Warn("failed to kill allocation")
 		}
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
 
