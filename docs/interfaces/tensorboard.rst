@@ -76,8 +76,8 @@ Example experiment configuration file:
        read_only: true
    tensorboard_args: ['--samples_per_plugin=images=100']
 
-The tensorboard_args field allows you to provide optional Tensorboard arguments. In the example above, we set the
-maximum number of image to display to 100, overriding Tensorboard's default value.
+The tensorboard_args field allows you to provide optional Tensorboard arguments. In the example
+above, we set the maximum number of image to display to 100, overriding Tensorboard's default value.
 
 For detailed configuration settings, refer to the :ref:`command-notebook-configuration`.
 
