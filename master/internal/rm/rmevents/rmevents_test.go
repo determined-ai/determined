@@ -13,8 +13,6 @@ import (
 )
 
 func TestRMEvents(t *testing.T) {
-	rand.Seed(1337)
-
 	numTopics, numSubsPerTopic := 10, 10
 
 	var topics []model.AllocationID
@@ -25,7 +23,6 @@ func TestRMEvents(t *testing.T) {
 	t.Logf("starting %d subs each for %d topics", numSubsPerTopic, numTopics)
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	var subs []*sproto.AllocationSubscription
 	results := map[model.AllocationID]map[int][]sproto.AllocationEvent{}
 	for _, topic := range topics {
 		topic := topic
@@ -37,7 +34,6 @@ func TestRMEvents(t *testing.T) {
 		for subID := 0; subID < numSubsPerTopic; subID++ {
 			subID := subID
 			sub := Subscribe(topic)
-			subs = append(subs, sub)
 
 			wg.Add(1)
 			go func() {
@@ -61,7 +57,7 @@ func TestRMEvents(t *testing.T) {
 	t.Logf("sending %d messages on random topics", iterations)
 	expected := map[model.AllocationID][]sproto.AllocationEvent{}
 	for i := 0; i < iterations; i++ {
-		topicID := rand.Int63n(int64(len(topics)))
+		topicID := rand.Int63n(int64(len(topics))) //nolint:gosec // This is a test.
 		topic := model.AllocationID(strconv.Itoa(int(topicID)))
 
 		log := strconv.Itoa(i)
