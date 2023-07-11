@@ -1,6 +1,8 @@
 package proxy
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"net/http"
@@ -59,6 +61,14 @@ func InitProxy(httpAuth ProxyHTTPAuth) {
 		HTTPAuth: httpAuth,
 		services: make(map[string]*Service),
 		syslog:   logrus.WithField("component", "proxy"),
+	}
+	err := LoadOrGenCA()
+	if err != nil {
+		logrus.Errorf("error generating key and cert: %t", err)
+	}
+	err = LoadOrGenSignedMasterCert()
+	if err != nil {
+		logrus.Errorf("error generating key and cert: %t", err)
 	}
 }
 
@@ -154,12 +164,57 @@ func (p *Proxy) NewProxyHandler(serviceID string) echo.HandlerFunc {
 		case c.IsWebSocket():
 			proxy = newSingleHostReverseWebSocketProxy(c, service.URL)
 		default:
-			proxy = httputil.NewSingleHostReverseProxy(service.URL)
+			newProxy, err := setUpProxy(service.URL)
+			if err != nil {
+				return err
+			}
+
+			proxy = newProxy
 		}
 		proxy.ServeHTTP(c.Response(), req)
 
 		return nil
 	}
+}
+
+func setUpProxy(serviceURL *url.URL) (*httputil.ReverseProxy, error) {
+	proxy := httputil.NewSingleHostReverseProxy(serviceURL)
+	if serviceURL.Scheme != https {
+		return proxy, nil
+	}
+	keyBytes, certBytes, err := MasterKeyAndCert()
+	if err != nil {
+		return nil, err
+	}
+	cert, err := tls.X509KeyPair(certBytes, keyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	masterCaBytes, err := MasterCACert()
+	if err != nil {
+		return nil, err
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(masterCaBytes)
+
+	//nolint:gosec,G402
+	proxy.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs:            caCertPool,
+			Certificates:       []tls.Certificate{cert},
+			InsecureSkipVerify: true,
+			VerifyConnection:   VerifyMasterSigned,
+		},
+	}
+
+	director := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		director(req)
+		req.Host = serviceURL.Host
+	}
+
+	return proxy, nil
 }
 
 // Summaries returns a snapshot of the registered services.
