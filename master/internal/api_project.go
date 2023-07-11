@@ -179,7 +179,6 @@ func (a *apiServer) getProjectColumnsByID(
 		curUser,
 		p,
 		experimentQuery,
-		// TODO: should we use a different permission for summary metrics?
 		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
 	)
 	if err != nil {
@@ -191,9 +190,7 @@ func (a *apiServer) getProjectColumnsByID(
 		return nil, err
 	}
 
-	trialIDs := make([]int, 0, len(hyperparameters)+1)
-	// dummy value so bun doesn't generate invalid sql
-	trialIDs = append(trialIDs, -1)
+	trialIDs := make([]int, 0, len(hyperparameters))
 	for _, hparam := range hyperparameters {
 		if hparam.BestTrialID != nil {
 			trialIDs = append(trialIDs, *hparam.BestTrialID)
@@ -204,15 +201,16 @@ func (a *apiServer) getProjectColumnsByID(
 		SummaryMetrics model.JSONObj
 	}{}
 
-	trialsQuery := db.Bun().NewSelect().
-		Column("id").
-		Column("summary_metrics").
-		Table("trials").
-		Where("id IN (?)", bun.In(trialIDs)).
-		Order("id")
-	err = trialsQuery.Scan(ctx, &summaryMetrics)
-	if err != nil {
-		return nil, err
+	if len(trialIDs) > 0 {
+		trialsQuery := db.Bun().NewSelect().
+			Column("id", "summary_metrics").
+			Table("trials").
+			Where("id IN (?)", bun.In(trialIDs)).
+			Order("id")
+		err = trialsQuery.Scan(ctx, &summaryMetrics)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	summaryMetricsSet := make(map[string]struct{})
