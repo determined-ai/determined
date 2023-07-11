@@ -26,7 +26,6 @@ import ExperimentList from './ExperimentList';
 import F_ExperimentList from './F_ExpList/F_ExperimentList';
 import css from './ProjectDetails.module.scss';
 import ProjectNotes from './ProjectNotes';
-import TrialsComparison from './TrialsComparison/TrialsComparison';
 
 type Params = {
   projectId: string;
@@ -34,7 +33,6 @@ type Params = {
 
 const ProjectDetails: React.FC = () => {
   const { projectId } = useParams<Params>();
-  const trialsComparisonEnabled = useFeature().isOn('trials_comparison');
   const f_explist = useFeature().isOn('explist_v2');
 
   const [project, setProject] = useState<Project | undefined>();
@@ -118,23 +116,10 @@ const ProjectDetails: React.FC = () => {
         key: 'notes',
         label: 'Notes',
       });
-      if (trialsComparisonEnabled) {
-        items.push({
-          children: (
-            <div className={css.tabPane}>
-              <div className={css.base}>
-                <TrialsComparison projectId={projectId} workspaceId={project?.workspaceId} />
-              </div>
-            </div>
-          ),
-          key: 'trials',
-          label: 'Trials',
-        });
-      }
     }
 
     return items;
-  }, [fetchProject, id, project, trialsComparisonEnabled, projectId, f_explist]);
+  }, [fetchProject, id, project, projectId, f_explist]);
 
   usePolling(fetchProject, { rerunOnNewFn: true });
 
