@@ -18,7 +18,10 @@ func NewRoundRobinScheduler() Scheduler {
 	return &roundRobinScheduler{}
 }
 
-func (p *roundRobinScheduler) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []model.AllocationID) {
+func (p *roundRobinScheduler) Schedule(rp *resourcePool) (
+	toAllocate []*sproto.AllocateRequest,
+	toRelease []model.AllocationID,
+) {
 	return roundRobinSchedule(
 		rp.taskList,
 		rp.groups,

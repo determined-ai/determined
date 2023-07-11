@@ -334,7 +334,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 	case *apiv1.KillNotebookRequest:
 		// TODO(Brad): Do the same thing to allocations that we are doing to RMs.
-		task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+		err := task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
 	case *apiv1.SetNotebookPriorityRequest:
 		err := c.setPriority(ctx, int(msg.Priority), true)
@@ -354,7 +358,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillCommandRequest:
-		task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+		err := task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
 		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
 
 	case *apiv1.SetCommandPriorityRequest:
@@ -375,7 +383,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillShellRequest:
-		task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+		err := task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
 		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
 
 	case *apiv1.SetShellPriorityRequest:
@@ -396,7 +408,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillTensorboardRequest:
-		task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+		err := task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
 
 	case *apiv1.SetTensorboardPriorityRequest:
@@ -409,11 +425,14 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case *apiv1.DeleteWorkspaceRequest:
 		if c.Metadata.WorkspaceID == model.AccessScopeID(msg.Id) {
-			task.DefaultService.Signal(
+			err := task.DefaultService.Signal(
 				c.allocationID,
 				task.KillAllocation,
 				"user requested workspace delete",
 			)
+			if err != nil {
+				ctx.Log().WithError(err).Warn("failed to kill allocation while deleting workspace")
+			}
 		}
 
 	case sproto.NotifyRMPriorityChange:

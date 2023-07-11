@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
+// AllocationService allows callers to launch, direct and query allocations.
 type AllocationService interface {
 	StartAllocation(
 		logCtx logger.Context,

@@ -165,6 +165,8 @@ func NewAllocationSubscription(
 	}
 }
 
+// Get blocks until an event is published for our subscription's topic. When the
+// subscription is closed, SentinelAllocationEvent is returned.
 func (a *AllocationSubscription) Get() AllocationEvent {
 	return a.inbox.Get()
 }

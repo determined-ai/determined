@@ -38,12 +38,6 @@ var nonRetryableErrors = []*regexp.Regexp{
 	regexp.MustCompile("sbatch: error: Batch job submission failed"),
 }
 
-// trialRunAllocation is the slice of the *task.Allocation interface that trial.go uses.
-type trialRunAllocation interface {
-	HandleSignal(sig task.AllocationSignal, reason string)
-	AwaitTermination() *task.AllocationExited
-}
-
 // A trial is a task actor which is responsible for handling:
 //   - messages from the resource manager,
 //   - messages from the experiment,
@@ -197,11 +191,14 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		resources.SetResourcePool(msg.ResourcePool)
 		t.config.SetResources(resources)
 		if t.allocationID != nil {
-			task.DefaultService.Signal(
+			err := task.DefaultService.Signal(
 				*t.allocationID,
 				task.TerminateAllocation,
 				"allocation resource pool changed",
 			)
+			if err != nil {
+				ctx.Log().WithError(err).Warn("could not preempt allocation to change rp")
+			}
 		}
 	case userInitiatedEarlyExit:
 		if err := t.handleUserInitiatedStops(ctx, msg); err != nil {
@@ -571,11 +568,14 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 	case t.state == model.PausedState:
 		if t.allocationID != nil {
 			ctx.Log().Info("decided to terminate trial due to pause")
-			task.DefaultService.Signal(
+			err := task.DefaultService.Signal(
 				*t.allocationID,
 				task.TerminateAllocation,
 				s.InformationalReason,
 			)
+			if err != nil {
+				ctx.Log().WithError(err).Warn("could not terminate allocation after pause")
+			}
 		}
 	case model.StoppingStates[t.state]:
 		switch {
@@ -592,7 +592,10 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 				model.StoppingErrorState:    task.KillAllocation,
 			}[t.state]; ok {
 				ctx.Log().Infof("decided to %s trial", action)
-				task.DefaultService.Signal(*t.allocationID, action, s.InformationalReason)
+				err := task.DefaultService.Signal(*t.allocationID, action, s.InformationalReason)
+				if err != nil {
+					ctx.Log().WithError(err).Warnf("could not %s allocation during stop", action)
+				}
 			}
 		}
 	case model.TerminalStates[t.state]:

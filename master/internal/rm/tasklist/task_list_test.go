@@ -5,13 +5,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
-
-	"github.com/determined-ai/determined/master/pkg/actor"
 )
-
-var nilActor = actor.ActorFunc(func(context *actor.Context) error {
-	return nil
-})
 
 func TestAllocationRequestComparator(t *testing.T) {
 	newTime := time.Now()
