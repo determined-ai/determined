@@ -131,9 +131,8 @@ CPU_IMAGE_FMT=${CPU_IMAGE_STRING//[\/:]/+}.sqsh
 
 # Configuration needed for PBS + Enroot
 if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
-    gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "sudo ENROOT_RUNTIME_PATH=/tmp ENROOT_TEMP_PATH=/tmp manage-enroot-cache -s /tmp ${CPU_IMAGE_STRING}"
-    gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "enroot create --force /tmp/${CPU_IMAGE_FMT}"
-    gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "sudo sed -i '/^#ENROOT_RUNTIME_PATH/c\ENROOT_RUNTIME_PATH        /tmp/\$\(whoami\)' /etc/enroot/enroot.conf"
+    gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "enroot create --force /srv/enroot/${CPU_IMAGE_FMT}"
+    # gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "sudo sed -i '/^#ENROOT_RUNTIME_PATH/c\ENROOT_RUNTIME_PATH        /tmp/\$\(whoami\)' /etc/enroot/enroot.conf"
 fi
 
 TEMPYAML=$TEMPDIR/slurmcluster.yaml

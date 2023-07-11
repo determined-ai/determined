@@ -43,9 +43,9 @@ resource "google_compute_firewall" "ssh-rule" {
 }
 
 resource "google_compute_instance" "vm_instance" {
-  name = var.name
+  name     = var.name
   provider = google-beta
-  tags = [var.name, "dev"]
+  tags     = [var.name, "dev"]
   metadata = {
     ssh-keys = "${var.ssh_user}:${file(var.ssh_key_pub)}"
   }
@@ -73,5 +73,5 @@ resource "google_compute_instance" "vm_instance" {
     instance_termination_action = "DELETE"
   }
 
-  metadata_startup_script = templatefile("${path.module}/scripts/startup-script.sh", { workload_manager = var.workload_manager })
+  metadata_startup_script = templatefile("${path.module}/scripts/startup-script.sh", { WORKLOAD_MANAGER = var.workload_manager })
 }

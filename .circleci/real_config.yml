@@ -3456,7 +3456,6 @@ workflows:
               context: ["gcp"]
               always-run: [true]
               mark: ["e2e_slurm and not parallel"]
-              extra-pytest-flags: ["-k 'not cifar10_pytorch_distributed'"]
           requires:
             - build-go
 
@@ -3468,7 +3467,6 @@ workflows:
               container-run-type: ["podman"]
               context: ["gcp"]
               mark: ["e2e_slurm and not parallel"]
-              extra-pytest-flags: ["-k 'not cifar10_pytorch_distributed'"]
           requires:
             - build-go
 
@@ -3480,7 +3478,6 @@ workflows:
               container-run-type: ["enroot"]
               context: ["gcp"]
               mark: ["e2e_slurm and not parallel"]
-              extra-pytest-flags: ["-k 'not cifar10_pytorch_distributed'"]
           requires:
             - build-go
 
@@ -3493,7 +3490,6 @@ workflows:
               workload-manager: ["pbs"]
               always-run: [true]
               mark: ["e2e_pbs and not parallel"]
-              extra-pytest-flags: ["-k 'not cifar10_pytorch_distributed'"]
           requires:
             - build-go
 
@@ -3506,7 +3502,6 @@ workflows:
               workload-manager: ["pbs"]
               context: ["gcp"]
               mark: ["e2e_pbs and not parallel"]
-              extra-pytest-flags: ["-k 'not cifar10_pytorch_distributed'"]
           requires:
             - build-go
 
@@ -3519,7 +3514,6 @@ workflows:
               workload-manager: ["pbs"]
               context: ["gcp"]
               mark: ["e2e_pbs and not parallel"]
-              extra-pytest-flags: ["-k 'not cifar10_pytorch_distributed'"]       
           requires:
             - build-go
 
@@ -3531,7 +3525,7 @@ workflows:
               agent-use: ["-A"]
               container-run-type: ["podman"]
               mark: ["e2e_slurm and not parallel"]
-              extra-pytest-flags: ["-k 'not cifar10_pytorch_distributed and not unsupported_option and not bad_slurm_option'"]
+              extra-pytest-flags: ["-k 'not unsupported_option and not bad_slurm_option'"]
           requires:
             - build-go
 

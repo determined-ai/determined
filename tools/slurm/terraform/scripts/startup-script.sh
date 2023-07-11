@@ -4,7 +4,7 @@ exec >/var/log/startup-script.log 2>&1
 
 # Startup and configuration must be done upon startup of VM since `hostname -f`
 # is different inside the packer instance (upon creation of image).
-if [[ ${workload_manager} == pbs ]]; then
+if [[ ${WORKLOAD_MANAGER} == pbs ]]; then
     sudo sed -i "s|^PBS_SERVER=.*|PBS_SERVER=$(hostname -f)|" /etc/pbs.conf
     sudo sed -i "s|^PBS_START_MOM=.*|PBS_START_MOM=1|" /etc/pbs.conf
 
