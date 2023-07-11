@@ -1313,6 +1313,7 @@ jobs:
             - "master/dist/*linux_amd64.rpm"
             - "agent/dist/*linux_amd64.deb"
             - "agent/dist/*linux_amd64.rpm"
+            - "agent/dist/determined-agent_linux_amd64_v1/determined-agent"
             - "build/*.image"
 
   package-and-push-system-dev:
@@ -2091,9 +2092,21 @@ jobs:
       container-run-type: 
         type: string
         default: singularity
+      agent-use: 
+        type: string
+        default: ""
       workload-manager:
         type: string
         default: slurm
+      master-scheme:
+        type: string
+        default: "http"
+      master-host:
+        type: string
+        default: "localhost"
+      master-port:
+        type: string
+        default: "8080"
       gcloud-service-key:
         default: GCLOUD_SERVICE_KEY
         description: The gcloud service key
@@ -2194,21 +2207,81 @@ jobs:
             sudo apt-get update
             sudo apt-get install gettext
             sudo apt-get install iproute2
-            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>>" TF_LOCK=false
+            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>> <<parameters.agent-use>>" TF_LOCK=false
           background: true
 
       - run:
           name: Wait for VM creation
           command: |
             sleep 3m
-            
+
+      # For when a user wants to use an agent instead of launcher.
+      - when:
+          condition:
+            equal: ["-A", <<parameters.agent-use>>]
+          steps:
+            - run:
+                name: Build agent resources 
+                command: |
+                  make -C agent build package
+            - wait-for-master:
+                scheme: <<parameters.master-scheme>>
+                host: <<parameters.master-host>>
+                port: <<parameters.master-port>>
+            - run:
+                name: Transfer agent resources 
+                command: |
+                  ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
+                  INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
+                  gcloud compute scp agent/dist/determined-agent_linux_amd64_v1/determined-agent "$INSTANCE_NAME":~ --zone $ZONE
+            - run:
+                name: Allocate Resources on VM
+                command: |
+                  ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
+                  INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
+                  PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
+                  gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- \
+                  srun determined-agent --master-host=<<parameters.master-host>> --master-port=<<parameters.master-port>> --resource-pool=default --container-runtime=<<parameters.container-run-type>>
+                background: true
+            - run: 
+                name: Query the slot count to ensure slots are allocated
+                command: |
+                  tries=20
+                  det slot list
+                  until [[ $(det slot list | wc -l) -gt 2 ]] ; do
+                      if [[ $((--tries)) -eq 0 ]]; then
+                        exit 1
+                      fi
+                      echo "Waiting 5s to query slots again..."
+                      sleep 5
+                      echo "Retrying slot query..."
+                      det slot list
+                  done
+
       - run-e2e-tests:
           mark: <<parameters.mark>>
           wait-for-master: true
+          master-scheme: <<parameters.master-scheme>>
+          master-host: <<parameters.master-host>>
+          master-port: <<parameters.master-port>>
           extra-pytest-flags: <<parameters.extra-pytest-flags>>
 
+      # Must cancel the srun command to prevent a ssh error
+      - when:
+          condition:
+            equal: ["-A", <<parameters.agent-use>>]
+          steps:
+            - run:
+                name: Deallocate the Resources on VM
+                command: |
+                  ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
+                  INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
+                  PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
+                  gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- \
+                  scancel -u $USER
+
       - run:
-          name: Make Unslurmcluster
+          name: Make unslurmcluster
           when: always
           command: |
             pkill determined-mast
@@ -2297,6 +2370,9 @@ jobs:
         type: string
         default: launcher
       extra-pytest-flags:
+        type: string
+        default: ""
+      agent-use: 
         type: string
         default: ""
     # Following https://circleci.com/docs/2.0/runner-installation-linux/index.html#start-the-service
@@ -2419,6 +2495,37 @@ jobs:
               }
             EOF
 
+      - when:
+          condition:
+            equal: ["-A", <<parameters.agent-use>>]
+          steps:
+            - run:
+                name: Allocate Resources on Cluster
+                # Sed command reduces the slots to 8 for the cifar10_pytorch test since znode does not allocate more than 8 on agent
+                command: |
+                  DET_MASTER_HOST=<<parameters.determined_master_host>>
+                  MASTER_HOST=$(echo $DET_MASTER_HOST | cut -d: -f1)
+                  MASTER_PORT=$(echo $DET_MASTER_HOST | cut -d: -f2)
+                  sed -i 's/slots_per_trial: 16/slots_per_trial: 8/' examples/computer_vision/cifar10_pytorch/distributed.yaml
+                  sudo cp agent/dist/determined-agent_linux_amd64_v1/determined-agent /scratch/launcher/.launcher.$HOSTNAME
+                  sudo srun --uid launcher --export=ALL -N2 --gpus-per-node=4  /scratch/launcher/.launcher.$HOSTNAME/determined-agent \
+                  --master-host=$MASTER_HOST  --master-port=$MASTER_PORT --resource-pool=default --container-runtime=singularity  --slot-type=cuda
+                background: true
+            - run: 
+                name: Query the slot count to ensure slots are allocated
+                command: |
+                  tries=20
+                  det slot list
+                  until [[ $(det slot list | wc -l) -gt 2 ]] ; do
+                      if [[ $((--tries)) -eq 0 ]]; then
+                        exit 1
+                      fi
+                      echo "Waiting 5s to query slots again..."
+                      sleep 5
+                      echo "Retrying slot query..."
+                      det slot list
+                  done
+
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: localhost
@@ -2427,6 +2534,15 @@ jobs:
 
       - store_test_results:
           path: /tmp/test-results/
+
+      - when:
+          condition:
+            equal: ["-A", <<parameters.agent-use>>]
+          steps:
+            - run: 
+                name: Deallocate Agent Resources on cluster
+                command: |
+                  scancel -u $USER
 
       - slack/status:
           fail_only: True
@@ -3208,6 +3324,18 @@ workflows:
               context: ["gcp"]
               mark: ["e2e_pbs and not parallel"]
               extra-pytest-flags: ["-k 'not cifar10_pytorch_distributed'"]       
+          requires:
+            - build-go
+
+      - test-e2e-hpc-gcp:
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-agent-podman-gcp]
+              context: ["gcp"]
+              agent-use: ["-A"]
+              container-run-type: ["podman"]
+              mark: ["e2e_slurm and not parallel"]
+              extra-pytest-flags: ["-k 'not cifar10_pytorch_distributed and not unsupported_option and not bad_slurm_option'"]
           requires:
             - build-go
 
@@ -4037,6 +4165,36 @@ workflows:
               auth_file: /home/launcher/.launcher.$HOSTNAME.token
               path: /opt/singularity/bin:/usr/local/bin:${PATH}
               ld_library_path:
+      - test-e2e-slurm:
+            name: test-e2e-slurm-agent-singularity-znode
+            slack-mentions: "${SLACK_USER_ID}"
+            requires:
+              - package-and-push-system-local
+            agent-use: "-A"
+            extra-pytest-flags: "-k 'not unsupported_option and not bad_slurm_option and not node_not_available'"
+            # For now we must skip node_not_available. There is a inconsistency with the agent where 
+            # the error is "failed to create experiment: slots requested exceeds cluster capacity" instead of the expected message.
+            master_config: |
+                task_container_defaults:
+                  image:
+                    cpu: determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-55a3e1c
+                    cuda: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-55a3e1c
+                  environment_variables:
+                    # Some ports are not working, disable them so distributed jobs work.
+                    - NCCL_IB_HCA=mlx6_0:0
+                checkpoint_storage:
+                  type: shared_fs
+                  host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
+                  storage_path: determined-checkpoint
+                  save_experiment_best: 0
+                  save_trial_best: 1
+                  save_trial_latest: 1
+                db:
+                  user: postgres
+                  host: localhost
+                  port: 5432
+                  name: determined
+                  password: launcher
 
   nightly-quarantine:
     when: << pipeline.parameters.do_nightly_tests >>

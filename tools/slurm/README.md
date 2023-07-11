@@ -48,6 +48,27 @@ with `devcluster` works from here as always.
 
 By default, each devbox invoked by `make slurmcluster` will automatically delete the VM after two hours of runtime. If you want to override this time limit, one can run `make slurm cluster vmtime=[seconds]`. Where `seconds` is a value between 0 to 315,576,000,000 seconds inclusive. The two hour time limit ensures that devboxes are being deleted if they are not used to prevent excess costs.
 
+## Using Slurmcluster with Determined Agents
+
+`make slurmcluster` supports using Determined agents to run jobs. To do this with `make slurmcluster` do the following steps from the `determined-ee/` directory:
+
+1. make -C agent build package
+2. make slurmcluster FLAGS="-A"
+3. gcloud compute scp agent/dist/determined-agent_linux_amd64_v1/determined-agent $USER-dev-box:/home/\$USER --zone us-west1-b
+
+The `FLAGS="-A"` in `make slurmcluster` removes the resource_manager section in the slurmcluster.yaml that would otherwise be used. This then defaults to the agent rm and the master waits for agents to connect and provide resources. The scp command brings the determined-agent to the dev-box. $USER will be replaced with your username when initiating GCP.
+
+Then, connect to your dev-box. This can be done with `make -C tools/slurm/terraform connect` or `gcloud compute ssh $USER-dev-box --project=determined-ai --zone=us-west1-b`. Input the following command on the devbox in order to allocate resources on slurm.
+
+`srun $HOME/determined-agent --master-host=localhost  --master-port=8080 --resource-pool=default --container-runtime=singularity`
+
+You can also use podman by changing the value for `container-runtime` to `podman`. 
+
+This command allocates the 8-core CPU that is on the GCP machine. Unfortunately, there are currently no gpus on the VM so we can not allocate any. 
+
+Now, you can launch jobs like normal using the Determined CLI. You can check the status of the allocated resources using `det slot list`.
+
+If you encounter an issue with jobs failing due to `ModuleNotFoundError: No module named 'determined'` run `make clean all` to rebuild determined. 
 # Running pytest Suites
 
 ## In Development
