@@ -34,6 +34,8 @@ type Workspace struct {
 	AgentGID                *int32                           `bun:"gid"`
 	AgentGroup              *string                          `bun:"group_"`
 	CheckpointStorageConfig *expconf.CheckpointStorageConfig `bun:"checkpoint_storage_config"`
+	DefaultComputePool      string                           `bun:"default_compute_pool"`
+	DefaultAuxPool          string                           `bun:"default_aux_pool"`
 }
 
 // ToProto converts a bun model of a workspace to a proto object.

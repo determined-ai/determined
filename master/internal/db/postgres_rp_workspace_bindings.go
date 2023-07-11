@@ -8,6 +8,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -277,4 +278,16 @@ func ReadRPsAvailableToWorkspace(
 	}
 
 	return rpNames, pagination, nil
+}
+
+// GetDefaultPoolsForWorkspace returns the default compute and aux pools for a workspace.
+func GetDefaultPoolsForWorkspace(ctx context.Context, workspaceID int,
+) (computePool, auxPool string, err error) {
+	var target model.Workspace
+	err = Bun().NewSelect().Model(&target).Where("id = ?", workspaceID).Scan(ctx)
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		return "", "", err
+	}
+
+	return target.DefaultComputePool, target.DefaultAuxPool, nil
 }
