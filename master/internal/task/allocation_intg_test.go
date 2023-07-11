@@ -142,7 +142,7 @@ func TestAllocation(t *testing.T) {
 				require.Nil(t, a.exited)
 				containerStateChanged.ResourcesStarted = nil
 
-				_, err := a.WatchRendezvous(r.Summary().ResourcesID)
+				_, err := a.watchRendezvous(r.Summary().ResourcesID)
 				require.NoError(t, err)
 			}
 			require.True(t, a.rendezvous.ready())
