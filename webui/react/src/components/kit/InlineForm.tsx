@@ -18,11 +18,13 @@ interface Props<T> extends React.PropsWithChildren, Omit<FormProps, 'children'> 
   isPassword?: boolean;
   rules?: Rule[];
   testId?: string;
+  displayValue?: string;
 }
 
 function InlineForm<T>({
   label,
   children,
+  displayValue,
   initialValue,
   value,
   isPassword = false,
@@ -38,6 +40,7 @@ function InlineForm<T>({
   const shouldCollapseText = useMemo(() => String(initialValue).length >= 45, [initialValue]); // prevents layout breaking, specially if using Input.TextArea.
   const inputCurrentValue = Form.useWatch('input', form);
   const readOnlyText = useMemo(() => {
+    if (displayValue) return displayValue;
     let textValue = String(value ?? initialValue);
     if (value === undefined) {
       if (inputCurrentValue !== undefined && inputCurrentValue !== initialValue)
@@ -46,9 +49,8 @@ function InlineForm<T>({
 
     if (isPassword) return textValue.replace(/\S/g, '*');
     if (shouldCollapseText) return textValue.slice(0, 50).concat('...');
-
     return textValue;
-  }, [shouldCollapseText, value, initialValue, isPassword, inputCurrentValue]);
+  }, [shouldCollapseText, value, initialValue, isPassword, inputCurrentValue, displayValue]);
 
   const resetForm = useCallback(() => {
     form.resetFields();

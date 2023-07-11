@@ -8,13 +8,16 @@ import InlineForm from 'components/kit/InlineForm';
 import Input from 'components/kit/Input';
 import InputShortcut from 'components/kit/InputShortcut';
 import { useModal } from 'components/kit/Modal';
+import Select, { Option } from 'components/kit/Select';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
+import { ThemeOptions } from 'components/ThemeToggle';
 import { useSettings } from 'hooks/useSettings';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
 } from 'pages/Settings/UserSettings.settings';
 import { patchUser } from 'services/api';
+import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import { message } from 'utils/dialogApi';
@@ -22,6 +25,7 @@ import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { Mode } from 'utils/themes';
 
 import css from './SettingsAccount.module.scss';
 
@@ -47,6 +51,12 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
       navbarCollapsed: navbarCollapsedShortcut,
     },
   } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
+  const {
+    ui: { mode: uiMode },
+    actions: { setMode },
+  } = useUI();
+
+  const currentThemeOption = ThemeOptions[uiMode];
 
   const handleSaveDisplayName = useCallback(
     async (newValue: string): Promise<void | Error> => {
@@ -116,6 +126,23 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
           )}
         </div>
         <Divider />
+      </Section>
+      <Section title="Preferences">
+        <div className={css.section}>
+          <InlineForm<Mode>
+            displayValue={currentThemeOption.displayName}
+            initialValue={currentThemeOption.className}
+            label="Theme Mode"
+            onSubmit={(newValue) => {
+              setMode(newValue);
+            }}>
+            <Select searchable={false}>
+              <Option key={ThemeOptions.dark.className} value={ThemeOptions.dark.className}>{ThemeOptions.dark.displayName}</Option>
+              <Option key={ThemeOptions.light.className} value={ThemeOptions.light.className}>{ThemeOptions.light.displayName}</Option>
+              <Option key={ThemeOptions.system.className} value={ThemeOptions.system.className}>{ThemeOptions.system.displayName}</Option>
+            </Select>
+          </InlineForm>
+        </div>
       </Section>
       <Section title="Shortcuts">
         <div className={css.section}>
