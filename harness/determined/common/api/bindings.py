@@ -15518,7 +15518,7 @@ def get_GetTrialSourceInfoMetricsByCheckpoint(
     }
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/checkpoints/{checkpointUuid}/trial_source_info_metrics",
+        path=f"/api/v1/checkpoints/{checkpointUuid}/trial-source-info-metrics",
         params=_params,
         json=None,
         data=None,

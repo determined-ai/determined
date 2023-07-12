@@ -1064,26 +1064,3 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 
 	wg.Wait()
 }
-
-// func TestGetTrialSourceInfoMetrics(t *testing.T) {
-// 	ctx := context.Background()
-// 	require.NoError(t, etc.SetRootPath(RootFromDB))
-// 	db := MustResolveTestPostgres(t)
-// 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
-// 	user := RequireMockUser(t, db)
-// 	exp := RequireMockExperiment(t, db, user)
-// 	trial1 := RequireMockTrial(t, db, exp).ID
-// 	AddTestTrialMetrics(ctx, t, db, trial1,
-// 		`{"inference": [{"a":1}, {"b":2}], "golabi": [{"b":2, "c":3}]}`)
-// 	require.NoError(t, AddCheckpointMetadata(ctx, &model.CheckpointV2{
-// 		UUID:         uuid.New(),
-// 		TaskID:       int32(trial1),
-// 		AllocationID: &a.AllocationID,
-// 		ReportTime:   time.Now(),
-// 		State:        model.ActiveState,
-// 		Metadata:     map[string]any{"steps_completed": 50},
-// 	}))
-
-// 	// addTestTrialMetrics(ctx, t, db, infTrial,
-// 	// 	`{"inference": [{"a":1}, {"b":2}], "golabi": [{"b":2, "c":3}]}`)
-// }

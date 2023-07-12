@@ -617,7 +617,6 @@ service Determined {
   // Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
   rpc ReportTrialSourceInfo(ReportTrialSourceInfoRequest)
       returns (ReportTrialSourceInfoResponse) {
-  
     option (google.api.http) = {
       post: "/api/v1/trial-source-info"
       body: "*"
@@ -1563,14 +1562,12 @@ service Determined {
     };
   }
 
-  // TODO:
-  // TODO: fix comment
-  // Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+  // Gets the metrics for all trials associated with this checkpoint
   rpc GetTrialSourceInfoMetricsByCheckpoint(GetTrialSourceInfoMetricsByCheckpointRequest)
       returns (TrialSourceInfoMetricsResponse) {
   
     option (google.api.http) = {
-      get: "/api/v1/checkpoints/{checkpoint_uuid}/trial_source_info_metrics"
+      get: "/api/v1/checkpoints/{checkpoint_uuid}/trial-source-info-metrics"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Internal" ]

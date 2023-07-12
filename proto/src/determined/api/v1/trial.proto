@@ -785,8 +785,6 @@ message ReportTrialSourceInfoResponse {
   int32 trial_id = 1;
   // UUID of the checkpoint.
   string checkpoint_uuid = 2;
-  // Type for this trial_source_info
-  // TrialSourceInfoType trial_source_info_type = 3;
 }
 
 // message GetTrialsUsingCheckpointRequest {
@@ -823,13 +821,3 @@ message TrialSourceInfoMetric {
   // All metrics for the trial
   repeated determined.trial.v1.MetricsReport metric_reports = 3;
 }
-  
-
-// Response to GetMetricsRequest.
-// message GetMetricsResponse {
-//   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-//     json_schema: { required: [ "metrics" ] }
-//   };
-//   // Metric response.
-//   repeated determined.trial.v1.MetricsReport metrics = 1;
-// }

@@ -673,14 +673,10 @@ func TestReportTrialSourceInfo(t *testing.T) {
 	infTrial2, _, _ := createTestTrialWithMetrics(
 		ctx, t, api, curUser, false)
 
-	// api.m.db.AddTrialMetrics()
-	// addTestTrialMetrics(ctx, t, api.m.db, infTrial,
-	// 	`{"inference": [{"a":1}, {"b":2}], "golabi": [{"b":2, "c":3}]}`)
 	var trialMetrics map[model.MetricType][]map[string]any
 	require.NoError(t, json.Unmarshal([]byte(
 		`{"inference": [{"a":1}, {"b":2}], "inference": [{"b":2, "c":3}]}`,
 	), &trialMetrics))
-	// trialRunID := 0
 	for mType, metrics := range trialMetrics {
 		for _, m := range metrics {
 			metrics, err := structpb.NewStruct(m)
@@ -705,7 +701,7 @@ func TestReportTrialSourceInfo(t *testing.T) {
 	}
 	checkpointUUID := createVersionTwoCheckpoint(ctx, t, api, curUser, startingResources)
 
-	// Basic TrialSourceInfo
+	// Create a TrialSourceInfo associated with each of the two trials.
 	trialSourceInfo := &trialv1.TrialSourceInfo{
 		TrialId:             int32(infTrial.ID),
 		CheckpointUuid:      checkpointUUID,
@@ -728,11 +724,13 @@ func TestReportTrialSourceInfo(t *testing.T) {
 	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
 	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
 
-	// Get the trials and metrics
+	// Get the trials and metrics.
 	getReq := &apiv1.GetTrialSourceInfoMetricsByCheckpointRequest{CheckpointUuid: checkpointUUID}
 	getResp, getErr := api.GetTrialSourceInfoMetricsByCheckpoint(ctx, getReq)
 	require.NoError(t, getErr)
 	require.Equal(t, len(getResp.Data), 2)
+
+	// Only infTrial should have generic metrics attached.
 	for _, tsim := range getResp.Data {
 		if tsim.TrialId == int32(infTrial.ID) {
 			require.Equal(t, len(tsim.MetricReports), 1)

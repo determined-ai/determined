@@ -16973,7 +16973,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary TODO: TODO: fix comment Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+         * @summary Gets the metrics for all trials associated with this checkpoint
          * @param {string} checkpointUuid UUID of the checkpoint.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - UNSPECIFIED: The type is unspecified  - INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
          * @param {*} [options] Override http request option.
@@ -16984,7 +16984,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             if (checkpointUuid === null || checkpointUuid === undefined) {
                 throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling getTrialSourceInfoMetricsByCheckpoint.');
             }
-            const localVarPath = `/api/v1/checkpoints/{checkpointUuid}/trial_source_info_metrics`
+            const localVarPath = `/api/v1/checkpoints/{checkpointUuid}/trial-source-info-metrics`
                 .replace(`{${"checkpointUuid"}}`, encodeURIComponent(String(checkpointUuid)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -18721,7 +18721,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary TODO: TODO: fix comment Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+         * @summary Gets the metrics for all trials associated with this checkpoint
          * @param {string} checkpointUuid UUID of the checkpoint.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - UNSPECIFIED: The type is unspecified  - INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
          * @param {*} [options] Override http request option.
@@ -19541,7 +19541,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary TODO: TODO: fix comment Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+         * @summary Gets the metrics for all trials associated with this checkpoint
          * @param {string} checkpointUuid UUID of the checkpoint.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - UNSPECIFIED: The type is unspecified  - INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
          * @param {*} [options] Override http request option.
@@ -20178,7 +20178,7 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
-     * @summary TODO: TODO: fix comment Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+     * @summary Gets the metrics for all trials associated with this checkpoint
      * @param {string} checkpointUuid UUID of the checkpoint.
      * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - UNSPECIFIED: The type is unspecified  - INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
      * @param {*} [options] Override http request option.

@@ -18359,7 +18359,7 @@ var (
 
 	pattern_Determined_DeleteCheckpoints_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "checkpoints"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Determined_GetTrialSourceInfoMetricsByCheckpoint_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "checkpoints", "checkpoint_uuid", "trial_source_info_metrics"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Determined_GetTrialSourceInfoMetricsByCheckpoint_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "checkpoints", "checkpoint_uuid", "trial-source-info-metrics"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_GetSearcherEvents_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "experiments", "experiment_id", "searcher_events"}, "", runtime.AssumeColonVerbOpt(true)))
 

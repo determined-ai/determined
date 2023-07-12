@@ -152,8 +152,6 @@ func GetMetricsQuery(ctx context.Context, mType model.MetricType) *bun.SelectQue
 		Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
 		ColumnExpr("proto_time(end_time) AS end_time").
 		Where("partition_type = ?", pType).
-		// Where("trial_id = ?", trialID).
-		// Where("total_batches > ?", afterBatches).
 		Where("archived = false").
 		Order("trial_id", "trial_run_id", "total_batches")
 
@@ -170,20 +168,6 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 	mType model.MetricType,
 ) ([]*trialv1.MetricsReport, error) {
 	var res []*trialv1.MetricsReport
-	// pType := customMetricTypeToPartitionType(mType)
-	// query := Bun().NewSelect().Table("metrics").
-	// 	Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
-	// 	ColumnExpr("proto_time(end_time) AS end_time").
-	// 	Where("partition_type = ?", pType).
-	// 	Where("trial_id = ?", trialID).
-	// 	Where("total_batches > ?", afterBatches).
-	// 	Where("archived = false")
-
-	// if pType == GenericMetric {
-	// 	// Going off of our current schema were looking for custom types in our legacy
-	// 	// metrics tables is pointless.
-	// 	query.Where("custom_type = ?", mType)
-	// }
 	query := GetMetricsQuery(ctx, mType).
 		Where("trial_id = ?", trialID).
 		Where("total_batches > ?", afterBatches)
