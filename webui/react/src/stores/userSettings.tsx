@@ -3,7 +3,7 @@ import { pipe } from 'fp-ts/function';
 import { Map } from 'immutable';
 import * as t from 'io-ts';
 
-import { getUserSetting, updateUserSetting } from 'services/api';
+import { getUserSetting, resetUserSetting, updateUserSetting } from 'services/api';
 import { V1GetUserSettingResponse } from 'services/api-ts-sdk';
 import { UpdateUserSettingParams } from 'services/types';
 import { Json, JsonObject } from 'types';
@@ -63,13 +63,16 @@ class UserSettingsStore extends PollingStore {
 
   public overwrite(state: object): void {
     //TODO: Write to DB
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const stateMap = Map<string, Json>(state);
-    this.#settings.set(Loaded(stateMap));
+    //this.#settings.set(Loaded(stateMap));
+    //overwriteUserSettings({})
   }
 
   public clear(): void {
     //TODO: Write to DB
     this.#settings.set(Loaded(Map()));
+    resetUserSetting({});
   }
 
   /**

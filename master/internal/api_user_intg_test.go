@@ -409,7 +409,7 @@ func TestAuthzGetUserSetting(t *testing.T) {
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
-func TestAuthzPatchUserSetting(t *testing.T) {
+func TestAuthzPostUserSetting(t *testing.T) {
 	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
 
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateUsersOwnSetting")
@@ -417,7 +417,7 @@ func TestAuthzPatchUserSetting(t *testing.T) {
 		model.UserWebSetting{UserID: curUser.ID, Key: "k", Value: "v"}).
 		Return(fmt.Errorf("canCreateUsersOwnSetting")).Once()
 
-	_, err := api.PatchUserSetting(ctx, &apiv1.PatchUserSettingRequest{
+	_, err := api.PostUserSetting(ctx, &apiv1.PostUserSettingRequest{
 		Setting: &userv1.UserWebSetting{Key: "k", Value: "v"},
 	})
 	require.Equal(t, expectedErr.Error(), err.Error())

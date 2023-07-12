@@ -141,7 +141,7 @@ message GetUserSettingResponse {
   repeated determined.user.v1.UserWebSetting settings = 1;
 }
 // Update user settings.
-message PatchUserSettingRequest {
+message PostUserSettingRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "storage_path", "setting" ] }
   };
@@ -158,8 +158,8 @@ message OverwriteUserSettingRequest {
   // Setting key value pairs.
   repeated determined.user.v1.UserWebSetting settings = 1;
 }
-// Response to PatchUserSettingRequest.
-message PatchUserSettingResponse {}
+// Response to PostUserSettingRequest.
+message PostUserSettingResponse {}
 // Reset user setting.
 message ResetUserSettingRequest {}
 // Response to ResetUserSettingRequest.

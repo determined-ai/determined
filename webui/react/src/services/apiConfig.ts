@@ -175,13 +175,13 @@ export const getUserSetting: DetApi<
 
 export const updateUserSetting: DetApi<
   Service.UpdateUserSettingParams,
-  Api.V1PatchUserSettingResponse,
+  Api.V1PostUserSettingResponse,
   void
 > = {
   name: 'updateUserSetting',
   postProcess: (response) => response,
   request: (params, options) =>
-    detApi.Users.patchUserSetting(
+    detApi.Users.postUserSetting(
       {
         setting: params.setting,
         storagePath: params.storagePath,

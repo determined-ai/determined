@@ -508,9 +508,9 @@ func (a *apiServer) GetUserSetting(
 	return &apiv1.GetUserSettingResponse{Settings: settings}, err
 }
 
-func (a *apiServer) PatchUserSetting(
-	ctx context.Context, req *apiv1.PatchUserSettingRequest,
-) (*apiv1.PatchUserSettingResponse, error) {
+func (a *apiServer) PostUserSetting(
+	ctx context.Context, req *apiv1.PostUserSettingRequest,
+) (*apiv1.PostUserSettingResponse, error) {
 	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
 		return nil, errExternalSessions
 	}
@@ -534,7 +534,7 @@ func (a *apiServer) PatchUserSetting(
 	}
 
 	err = db.UpdateUserSetting(&settingModel)
-	return &apiv1.PatchUserSettingResponse{}, err
+	return &apiv1.PostUserSettingResponse{}, err
 }
 
 func (a *apiServer) OverwriteUserSetting(

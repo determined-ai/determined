@@ -80,7 +80,7 @@ export const getUserSetting = generateDetApi<
 
 export const updateUserSetting = generateDetApi<
   Service.UpdateUserSettingParams,
-  Api.V1PatchUserSettingResponse,
+  Api.V1PostUserSettingResponse,
   void
 >(Config.updateUserSetting);
 
