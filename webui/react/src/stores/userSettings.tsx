@@ -145,7 +145,7 @@ class UserSettingsStore extends PollingStore {
 
       newSettings = newSettings.withMutations((newSettings) => {
         for (const setting of response.settings) {
-          const pathKey = (setting.storagePath || setting.key).replace(/u:2\//g, '');
+          const pathKey = setting.storagePath || setting.key;
           const oldPathSettings = newSettings.get(pathKey);
           if (oldPathSettings && isJsonObject(oldPathSettings)) {
             const newPathSettings = {
