@@ -1169,7 +1169,7 @@ func (m *Master) Run(ctx context.Context) error {
 	// echo does not set the response error on the context if no handler is matched
 	m.echo.Any("/*", func(c echo.Context) error {
 		id := fmt.Sprintf("%s %s", c.Request().Method, c.Request().URL.Path)
-		log.Warnf("unmatched request: %s", id)
+		log.Debugf("unmatched request: %s", id)
 		return echo.NewHTTPError(http.StatusNotFound,
 			fmt.Sprintf("api not found: %s", id))
 	})
