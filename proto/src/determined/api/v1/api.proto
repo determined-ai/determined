@@ -1563,9 +1563,9 @@ service Determined {
   }
 
   // Gets the metrics for all trials associated with this checkpoint
-  rpc GetTrialSourceInfoMetricsByCheckpoint(GetTrialSourceInfoMetricsByCheckpointRequest)
+  rpc GetTrialSourceInfoMetricsByCheckpoint(
+      GetTrialSourceInfoMetricsByCheckpointRequest)
       returns (TrialSourceInfoMetricsResponse) {
-  
     option (google.api.http) = {
       get: "/api/v1/checkpoints/{checkpoint_uuid}/trial-source-info-metrics"
     };

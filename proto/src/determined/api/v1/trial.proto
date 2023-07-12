@@ -767,18 +767,14 @@ message CreateTrialResponse {
 // Create a TrialSourceInfo
 message ReportTrialSourceInfoRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "trial_source_info" ]
-    }
+    json_schema: { required: [ "trial_source_info" ] }
   };
   determined.trial.v1.TrialSourceInfo trial_source_info = 1;
 }
 
 message ReportTrialSourceInfoResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "trial_id", "checkpoint_uuid" ]
-    }
+    json_schema: { required: [ "trial_id", "checkpoint_uuid" ] }
   };
   // Trial ID of the created
   int32 trial_id = 1;
@@ -789,9 +785,7 @@ message ReportTrialSourceInfoResponse {
 // message GetTrialsUsingCheckpointRequest {
 message GetTrialSourceInfoMetricsByCheckpointRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "checkpoint_uuid" ]
-    }
+    json_schema: { required: [ "checkpoint_uuid" ] }
   };
   // UUID of the checkpoint.
   string checkpoint_uuid = 1;
@@ -801,9 +795,7 @@ message GetTrialSourceInfoMetricsByCheckpointRequest {
 
 message TrialSourceInfoMetricsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "data" ]
-    }
+    json_schema: { required: [ "data" ] }
   };
   // All the related trials and their metrics
   repeated TrialSourceInfoMetric data = 1;
@@ -811,7 +803,9 @@ message TrialSourceInfoMetricsResponse {
 
 message TrialSourceInfoMetric {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id", "metric_report", "trial_source_info_type" ] }
+    json_schema: {
+      required: [ "trial_id", "metric_report", "trial_source_info_type" ]
+    }
   };
   // Trial ID for the inference or fine-tuning run
   int32 trial_id = 1;
