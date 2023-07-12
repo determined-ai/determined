@@ -90,7 +90,7 @@ func TestAllocation(t *testing.T) {
 				rID2: mockRsvn(rID2, "agent-2"),
 			}
 
-			a.handleRMEvent(&sproto.ResourcesAllocated{
+			a.HandleRMEvent(&sproto.ResourcesAllocated{
 				ID:           a.req.AllocationID,
 				ResourcePool: "default",
 				Resources:    resources,
@@ -105,12 +105,12 @@ func TestAllocation(t *testing.T) {
 					ResourcesID:    summary.ResourcesID,
 					ResourcesState: sproto.Assigned,
 				}
-				a.handleRMEvent(&containerStateChanged)
+				a.HandleRMEvent(&containerStateChanged)
 				require.Nil(t, a.exited)
 
 				beforePulling := time.Now().UTC().Truncate(time.Millisecond)
 				containerStateChanged.ResourcesState = sproto.Pulling
-				a.handleRMEvent(&containerStateChanged)
+				a.HandleRMEvent(&containerStateChanged)
 				require.Nil(t, a.exited)
 				afterPulling := time.Now().UTC().Truncate(time.Millisecond)
 
@@ -125,7 +125,7 @@ func TestAllocation(t *testing.T) {
 				}
 
 				containerStateChanged.ResourcesState = sproto.Starting
-				a.handleRMEvent(&containerStateChanged)
+				a.HandleRMEvent(&containerStateChanged)
 				require.Nil(t, a.exited)
 				containerStateChanged.ResourcesState = sproto.Running
 				containerStateChanged.ResourcesStarted = &sproto.ResourcesStarted{
@@ -138,11 +138,11 @@ func TestAllocation(t *testing.T) {
 						},
 					},
 				}
-				a.handleRMEvent(&containerStateChanged)
+				a.HandleRMEvent(&containerStateChanged)
 				require.Nil(t, a.exited)
 				containerStateChanged.ResourcesStarted = nil
 
-				_, err := a.watchRendezvous(r.Summary().ResourcesID)
+				_, err := a.WatchRendezvous(r.Summary().ResourcesID)
 				require.NoError(t, err)
 			}
 			require.True(t, a.rendezvous.ready())
@@ -163,7 +163,7 @@ func TestAllocation(t *testing.T) {
 						Failure: tc.err,
 					},
 				}
-				a.handleRMEvent(&containerStateChanged)
+				a.HandleRMEvent(&containerStateChanged)
 			}
 			require.Equal(t, tc.exit.Err, a.exited.Err)
 			require.Equal(t, tc.exit.UserRequestedStop, a.exited.UserRequestedStop)
@@ -222,7 +222,7 @@ func setup(t *testing.T) (
 	sub := sproto.NewAllocationSubscription(q, func() {})
 	rm.On("Allocate", mock.Anything, mock.Anything).Return(sub, nil)
 
-	a := startAllocation(
+	a := newAllocation(
 		detLogger.Context{},
 		ar,
 		pgDB,
