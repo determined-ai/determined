@@ -163,7 +163,8 @@ WHERE id = $1`, id, restartCount); err != nil {
 func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	ctx context.Context, tx *sqlx.Tx, trialID int,
 ) error {
-	// DISCUSS: can we limit this to recompute only a single metric type?
+	// PERF (DET-9566): we can probably limit this to recompute only a single metric type and it would
+	// fit the current usage better.
 	updatedSummaryMetrics := model.JSONObj{}
 	metricTypes := []model.MetricType{}
 	if err := tx.SelectContext(ctx, &metricTypes, `

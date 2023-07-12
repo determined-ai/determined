@@ -43,7 +43,6 @@ func (b metricsBody) ToJSONObj() *model.JSONObj {
 		return &body
 	}
 
-	// DISCUSS: we can skip this but it'd be a change in behavior.
 	body["batch_metrics"] = b.BatchMetrics
 	return &body
 }
