@@ -38,7 +38,10 @@ def make_url_new(master_address: str, suffix: str) -> str:
     if parsed_suffix.scheme and parsed_suffix.netloc:
         return make_url(master_address, suffix)
     parsed = parse_master_address(master_address)
-    return parse.urljoin(parsed.geturl(), suffix)
+    master_url = parsed.geturl().rstrip("/")
+    suffix = suffix.lstrip("/")
+    separator = "/" if suffix or master_address.endswith("/") else ""
+    return "{}{}{}".format(master_url, separator, suffix)
 
 
 def maybe_upgrade_ws_scheme(master_address: str) -> str:
