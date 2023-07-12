@@ -188,6 +188,10 @@ def tutorials_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../examples/tutorials", path)
 
 
+def features_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../../examples/features", path)
+
+
 def import_class_from_module(class_name: str, module_path: str) -> Any:
     module_dir = pathlib.Path(os.path.dirname(module_path))
 

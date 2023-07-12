@@ -1,5 +1,6 @@
 # type: ignore
 import logging
+import os
 import pathlib
 import typing
 
@@ -211,3 +212,35 @@ def run_gan(tmp_path: pathlib.Path, batches_trained: int = 0):
             steps=(1, 1),
             batches_trained=batches_trained,
         )
+
+
+@pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
+@pytest.mark.gpu_parallel
+def test_batch_processing_mnist(tmp_path: pathlib.Path, batches_trained: int = 0):
+    # Get processor class
+    example_sub_path = "torch_batch_process/batch_inference/compare_with_core_api"
+    example_path = utils.features_path(
+        os.path.join(example_sub_path, "torch_batch_process_inference.py")
+    )
+    processor_class = utils.import_class_from_module("MyProcessor", example_path)
+
+    # Get dataset
+    import filelock
+    import torchvision as tv
+    import torchvision.transforms as transforms
+
+    from determined.pytorch import experimental
+
+    transform = transforms.Compose(
+        [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+    )
+    with filelock.FileLock(os.path.join(tmp_path, "inference.lock")):
+        inference_data = tv.datasets.CIFAR10(
+            root="/data", train=False, download=True, transform=transform
+        )
+
+    experimental.torch_batch_process(
+        processor_class,
+        inference_data,
+        batch_size=200,
+    )
