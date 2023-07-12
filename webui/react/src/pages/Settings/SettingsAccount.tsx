@@ -45,10 +45,8 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
   const info = useObservable(determinedStore.info);
 
   const PasswordChangeModal = useModal(PasswordChangeModalComponent);
-  const {
-    settings: shortcutSettings,
-    updateSettings,
-  } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
+  const { settings: shortcutSettings, updateSettings } =
+    useSettings<ShortcutSettings>(shortCutSettingsConfig);
   const {
     ui: { mode: uiMode },
     actions: { setMode },
@@ -56,9 +54,12 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
 
   const currentThemeOption = ThemeOptions[uiMode];
 
-  const updateShortcut = useCallback((shortcutId: string, shortcut: KeyboardShortcut) => {
-    updateSettings({ [shortcutId]: shortcut });
-  }, [updateSettings]);
+  const updateShortcut = useCallback(
+    (shortcutId: string, shortcut: KeyboardShortcut) => {
+      updateSettings({ [shortcutId]: shortcut });
+    },
+    [updateSettings],
+  );
 
   const handleSaveDisplayName = useCallback(
     async (newValue: string): Promise<void | Error> => {
@@ -139,39 +140,42 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
               setMode(newValue);
             }}>
             <Select searchable={false}>
-              <Option key={ThemeOptions.dark.className} value={ThemeOptions.dark.className}>{ThemeOptions.dark.displayName}</Option>
-              <Option key={ThemeOptions.light.className} value={ThemeOptions.light.className}>{ThemeOptions.light.displayName}</Option>
-              <Option key={ThemeOptions.system.className} value={ThemeOptions.system.className}>{ThemeOptions.system.displayName}</Option>
+              <Option key={ThemeOptions.dark.className} value={ThemeOptions.dark.className}>
+                {ThemeOptions.dark.displayName}
+              </Option>
+              <Option key={ThemeOptions.light.className} value={ThemeOptions.light.className}>
+                {ThemeOptions.light.displayName}
+              </Option>
+              <Option key={ThemeOptions.system.className} value={ThemeOptions.system.className}>
+                {ThemeOptions.system.displayName}
+              </Option>
             </Select>
           </InlineForm>
         </div>
       </Section>
       <Section title="Shortcuts">
         <div className={css.section}>
-          <Columns>
-            <Column>
-              <label>Open Omnibar</label>
-            </Column>
-            <InlineForm<KeyboardShortcut> displayFormatter={shortcutToString} initialValue={shortcutSettings.omnibar} onSubmit={(s) => updateShortcut('omnibar', s)}>
-              <InputShortcut />
-            </InlineForm>
-          </Columns>
-          <Columns>
-            <Column>
-              <label>Launch JupyterLab Notebook</label>
-            </Column>
-            <InlineForm<KeyboardShortcut> displayFormatter={shortcutToString} initialValue={shortcutSettings.jupyterLab} onSubmit={(s) => updateShortcut('jupyterLab', s)}>
-              <InputShortcut />
-            </InlineForm>
-          </Columns>
-          <Columns>
-            <Column>
-              <label>Toggle Sidebar</label>
-            </Column>
-            <InlineForm<KeyboardShortcut> displayFormatter={shortcutToString} initialValue={shortcutSettings.navbarCollapsed} onSubmit={(s) => updateShortcut('navbarCollapsed', s)}>
-              <InputShortcut />
-            </InlineForm>
-          </Columns>
+          <InlineForm<KeyboardShortcut>
+            displayFormatter={shortcutToString}
+            initialValue={shortcutSettings.omnibar}
+            label="Open Omnibar"
+            onSubmit={(s) => updateShortcut('omnibar', s)}>
+            <InputShortcut />
+          </InlineForm>
+          <InlineForm<KeyboardShortcut>
+            displayFormatter={shortcutToString}
+            initialValue={shortcutSettings.jupyterLab}
+            label="Launch JupyterLab Notebook"
+            onSubmit={(s) => updateShortcut('jupyterLab', s)}>
+            <InputShortcut />
+          </InlineForm>
+          <InlineForm<KeyboardShortcut>
+            displayFormatter={shortcutToString}
+            initialValue={shortcutSettings.navbarCollapsed}
+            label="Toggle Sidebar"
+            onSubmit={(s) => updateShortcut('navbarCollapsed', s)}>
+            <InputShortcut />
+          </InlineForm>
         </div>
       </Section>
     </Drawer>
