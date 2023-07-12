@@ -26,6 +26,7 @@ _INTEG_MARKERS = {
     "e2e_cpu_2a",
     "e2e_cpu_agent_connection_loss",
     "e2e_cpu_elastic",
+    "e2e_cpu_rbac",
     "e2e_gpu",
     "e2e_k8s",
     "det_deploy_local",
