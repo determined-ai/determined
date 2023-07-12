@@ -2,6 +2,7 @@ import contextlib
 import getpass
 import logging
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -86,7 +87,15 @@ def _prepare_key(retention_dir: Union[Path, None]) -> Tuple[ContextManager[IO], 
     if retention_dir:
         key_path = retention_dir / "key"
         keyfile = key_path.open("w")
-        key_path.chmod(0o600)
+
+        if platform.system() == "Windows":
+            # On Windows, chmod only affects the read-only flag on the file. To emulate the
+            # actual functionality of chmod, an external library is used for Windows systems.
+            import oschmod
+
+            oschmod.set_mode(str(key_path), "600")
+        else:
+            key_path.chmod(0o600)
 
         return keyfile, str(key_path)
 

@@ -440,27 +440,13 @@ class _PyTorchReducerContext:
         self._wrapped_reducers.append(wrapped)
         return reducer
 
-    def reduce_metrics(self, for_training: bool) -> Dict[str, Any]:
-        # Only deal with reducers marked for this type of workload.
-        reducables = [
-            wrapped
-            for wrapped in self._wrapped_reducers
-            if (for_training and wrapped.for_training)
-            or (not for_training and wrapped.for_validation)
-        ]
-
-        if not reducables:
-            return {}
-
-        metrics = {}
-
-        gatherables = [wrapped.per_slot_reduce() for wrapped in reducables]
-
-        # Do one allgather for all metrics to improve .
-        gathered = self._allgather_fn(gatherables)
-
+    def run_cross_slot_reduction(
+        self, reducables: List[_WrappedReducer], gathered: List[Any]
+    ) -> Dict[str, Any]:
         # Reshape list from per-slot-list-of-all-metrics to a per-metric-list-of-all-slots.
         all_per_slot_metrics = zip(*gathered)
+
+        metrics = {}
 
         for wrapped, per_slot_metrics in zip(reducables, all_per_slot_metrics):
             reduced = wrapped.cross_slot_reduce(per_slot_metrics)
@@ -508,5 +494,25 @@ class _PyTorchReducerContext:
                         "a dict) if you wish to return a single named metric."
                     )
                 metrics[wrapped.name] = reduced
+        return metrics
+
+    def reduce_metrics(self, for_training: bool) -> Dict[str, Any]:
+        # Only deal with reducers marked for this type of workload.
+        reducables = [
+            wrapped
+            for wrapped in self._wrapped_reducers
+            if (for_training and wrapped.for_training)
+            or (not for_training and wrapped.for_validation)
+        ]
+
+        if not reducables:
+            return {}
+
+        gatherables = [wrapped.per_slot_reduce() for wrapped in reducables]
+
+        # Do one allgather for all metrics to improve .
+        gathered = self._allgather_fn(gatherables)
+
+        metrics = self.run_cross_slot_reduction(reducables, gathered)
 
         return metrics

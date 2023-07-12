@@ -16,7 +16,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/rbac"
-	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/usergroup"
 	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -28,7 +27,6 @@ type apiServer struct {
 
 	usergroup.UserGroupAPIServer
 	rbac.RBACAPIServerWrapper
-	trials.TrialsAPIServer
 	webhooks.WebhooksAPIServer
 }
 

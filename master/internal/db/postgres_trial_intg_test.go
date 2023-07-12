@@ -101,7 +101,7 @@ func addMetrics(ctx context.Context,
 	}
 }
 
-// Test helper function to add trial metrics
+// Test helper function to add trial metrics.
 func addTestTrialMetrics(ctx context.Context,
 	t *testing.T, db *PgDB, trialID int, trialMetricsJSON string,
 ) {
@@ -618,7 +618,6 @@ func TestProtoGetTrial(t *testing.T) {
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
 		TaskID:       task.TaskID,
-		JobID:        exp.JobID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
@@ -668,7 +667,6 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
 		TaskID:       task.TaskID,
-		JobID:        exp.JobID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
@@ -771,7 +769,6 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
 		TaskID:       task.TaskID,
-		JobID:        exp.JobID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
@@ -895,7 +892,6 @@ func TestGenericMetricsIO(t *testing.T) {
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
 		TaskID:       task.TaskID,
-		JobID:        exp.JobID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
@@ -996,7 +992,6 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 		task := RequireMockTask(t, db, exp.OwnerID)
 		tr := model.Trial{
 			TaskID:       task.TaskID,
-			JobID:        exp.JobID,
 			ExperimentID: exp.ID,
 			State:        model.ActiveState,
 			StartTime:    time.Now(),

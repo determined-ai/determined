@@ -1,9 +1,10 @@
-import { FilterOutlined } from '@ant-design/icons';
-import { Button, Popover } from 'antd';
+import { Popover } from 'antd';
 import { useObservable } from 'micro-observables';
 
 import FilterForm from 'components/FilterForm/components/FilterForm';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
+import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
 import { Loadable } from 'utils/loadable';
 
@@ -49,7 +50,7 @@ const TableFilter = ({
         placement="bottomLeft"
         trigger="click"
         onOpenChange={onIsOpenFilterChange}>
-        <Button icon={<FilterOutlined />}>
+        <Button icon={<Icon name="filter" title="filter" />}>
           Filter{fieldCount > 0 && <span>({fieldCount})</span>}
         </Button>
       </Popover>

@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/task/idle"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -44,6 +45,8 @@ const (
 	jupyterRuntimeDir = "/run/determined/jupyter/runtime"
 	jupyterEntrypoint = "/run/determined/jupyter/notebook-entrypoint.sh"
 	jupyterIdleCheck  = "/run/determined/jupyter/check_idle.py"
+	jupyterCertPath   = "/run/determined/jupyter/jupyterCert.pem"
+	jupyterKeyPath    = "/run/determined/jupyter/jupyterKey.key"
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minNotebookPort     = 2900
 	maxNotebookPort     = minNotebookPort + 299
@@ -176,16 +179,11 @@ func (a *apiServer) SetNotebookPriority(
 // isNTSCPermittedToLaunch checks authorization to launch in a given
 // workspace.
 func (a *apiServer) isNTSCPermittedToLaunch(
-	ctx context.Context, spec *tasks.GenericCommandSpec,
+	ctx context.Context, spec *tasks.GenericCommandSpec, user *model.User,
 ) error {
 	workspaceID := spec.Metadata.WorkspaceID
 	if workspaceID == 0 {
 		return status.Errorf(codes.InvalidArgument, "workspace_id is required")
-	}
-
-	user, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
 	w := &workspacev1.Workspace{}
@@ -220,21 +218,28 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
 	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
+		WorkspaceID:  req.WorkspaceId,
 		Config:       req.Config,
 		Files:        req.Files,
-	})
+	}, user)
 	if err != nil {
-		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
+		return nil, api.WrapWithFallbackCode(err, codes.InvalidArgument,
+			"failed to prepare launch params")
 	}
 
-	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
-	if req.WorkspaceId != 0 {
-		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
+	if err = a.isNTSCPermittedToLaunch(ctx, spec, user); err != nil {
+		return nil, err
 	}
 
-	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
+	notebookKey, notebookCert, err := proxy.GenSignedCert()
+	if err != nil {
 		return nil, err
 	}
 
@@ -309,6 +314,18 @@ func (a *apiServer) LaunchNotebook(
 			notebookDefaultPage,
 			etc.MustStaticFile(etc.NotebookTemplateResource),
 			0o644,
+			tar.TypeReg,
+		),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			jupyterKeyPath,
+			notebookKey,
+			0o600,
+			tar.TypeReg,
+		),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			jupyterCertPath,
+			notebookCert,
+			0o600,
 			tar.TypeReg,
 		),
 	}

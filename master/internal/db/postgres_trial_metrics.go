@@ -145,7 +145,7 @@ func (db *PgDB) AddTrialMetrics(
 	return err
 }
 
-// GetMetricsQuery returns a basic query for metrics. Supports generic metrics
+// GetMetricsQuery returns a basic query for metrics. Supports generic metrics.
 func GetMetricsQuery(ctx context.Context, mType model.MetricType) *bun.SelectQuery {
 	pType := customMetricTypeToPartitionType(mType)
 	query := Bun().NewSelect().Table("metrics").

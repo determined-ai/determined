@@ -38,6 +38,7 @@ const ColumnsCustomizeModalComponent: React.FC<Props> = ({
         defaultTargetEntries={defaultVisibleColumns}
         entries={columnList}
         initialTargetEntries={visibleColumns}
+        persistentEntries={['id', 'name']}
         sourceListTitle="Hidden"
         targetListTitle="Visible"
         onChange={setVisibleColumns}

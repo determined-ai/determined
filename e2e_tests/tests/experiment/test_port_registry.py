@@ -3,8 +3,7 @@ import pytest
 from determined.common.api.bindings import experimentv1State
 from tests import config as conf
 from tests import experiment as exp
-from tests.api_utils import ADMIN_CREDENTIALS
-from tests.cluster.test_users import logged_in_user
+from tests.cluster.test_users import ADMIN_CREDENTIALS, logged_in_user
 
 
 @pytest.mark.port_registry

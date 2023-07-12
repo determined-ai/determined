@@ -14,6 +14,12 @@ type JobAuthZ interface {
 	FilterJobs(
 		ctx context.Context, curUser model.User, jobs []*jobv1.Job,
 	) ([]*jobv1.Job, error)
+
+	// CanControlJobQueue returns an error if the user is not authorized to manipulate the
+	// job queue.
+	CanControlJobQueue(
+		ctx context.Context, curUser *model.User,
+	) (permErr error, err error)
 }
 
 // AuthZProvider is the authz registry for Notebooks, Shells, and Commands.

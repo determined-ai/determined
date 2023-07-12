@@ -164,11 +164,12 @@ query($id: ID!) {
 """
 )
 
-get_pr_merge_commit = GraphQLQuery(
+get_pr_merge_commit_and_url = GraphQLQuery(
     """
 query($id: ID!) {
   node(id: $id) {
     ... on PullRequest {
+      url
       mergeCommit {
         oid
       }
@@ -231,6 +232,37 @@ delete_project_item = GraphQLQuery(
 mutation($project: ID!, $item: ID!) {
   deleteProjectV2Item(input: {projectId: $project, itemId: $item}) {
     deletedItemId
+  }
+}
+"""
+)
+
+
+list_project_prs = GraphQLQuery(
+    """
+query($project: ID!, $after: String) {
+  node(id: $project) {
+    ... on ProjectV2 {
+      items(first: 100, after: $after) {
+        nodes {
+          id
+          fieldValueByName(name: "Status") {
+            ... on ProjectV2ItemFieldSingleSelectValue {
+              name
+            }
+          }
+          content {
+            ... on PullRequest {
+              id
+            }
+          }
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+      }
+    }
   }
 }
 """

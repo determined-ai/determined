@@ -68,7 +68,9 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
   const [pageState, setPageState] = useState<{ isLoading: boolean }>({ isLoading: true });
   const pageRef = useRef<HTMLElement>(null);
 
-  const { settings, updateSettings } = useSettings<Settings>(settingsConfig(jobState));
+  const { settings, updateSettings } = useSettings<Settings>(
+    useMemo(() => settingsConfig(jobState), [jobState]),
+  );
   const settingsColumns = useMemo(() => [...settings.columns], [settings.columns]);
 
   const isJobOrderAvailable = orderedSchedulers.has(selectedRp.schedulerType);

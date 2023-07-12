@@ -260,7 +260,7 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 
 	maxDataPoints := 7
 	actualTrainingMetrics, err := api.multiTrialSample(int32(trial.ID), trainMetricNames,
-		model.TrainingMetricType, maxDataPoints, 0, 10, false, nil, []string{})
+		model.TrainingMetricType, maxDataPoints, 0, 10, nil, []string{})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(actualTrainingMetrics))
 	var validationMetricNames []string
@@ -271,14 +271,14 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 
 	actualValidationTrainingMetrics, err := api.multiTrialSample(int32(trial.ID),
 		validationMetricNames, model.ValidationMetricType, maxDataPoints,
-		0, 10, false, nil, []string{})
+		0, 10, nil, []string{})
 	require.Equal(t, 1, len(actualValidationTrainingMetrics))
 	require.NoError(t, err)
 	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualTrainingMetrics[0]))
 	require.True(t, isMultiTrialSampleCorrect(expectedValMetrics, actualValidationTrainingMetrics[0]))
 
 	actualAllMetrics, err := api.multiTrialSample(int32(trial.ID), []string{},
-		"", maxDataPoints, 0, 10, false, nil, metricIds)
+		"", maxDataPoints, 0, 10, nil, metricIds)
 	require.Equal(t, 2, len(actualAllMetrics))
 	require.NoError(t, err)
 	require.Equal(t, maxDataPoints, len(actualAllMetrics[0].Data)) // max datapoints check
@@ -429,18 +429,6 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 		require.Equal(t, expectedMetricsMap, resp.Trials[0].Metrics[0].Data[0].Values.AsMap())
 	})
 
-	t.Run("SummarizeTrialsNonNumeric", func(t *testing.T) {
-		resp, err := api.SummarizeTrial(ctx, &apiv1.SummarizeTrialRequest{
-			TrialId:     int32(trial.ID),
-			MetricNames: maps.Keys(expectedMetricsMap),
-		})
-		require.NoError(t, err)
-
-		require.Len(t, resp.Metrics, 1)
-		require.Len(t, resp.Metrics[0].Data, 1)
-		require.Equal(t, expectedMetricsMap, resp.Metrics[0].Data[0].Values.AsMap())
-	})
-
 	t.Run("TrialsSample", func(t *testing.T) {
 		_, err := db.Bun().NewUpdate().Table("experiments").
 			Set("config = jsonb_set(config, '{searcher,name}', ?, true)", `"custom"`).
@@ -517,12 +505,6 @@ func TestTrialAuthZ(t *testing.T) {
 			})
 			return err
 		}, true},
-		{"CanGetExperimentArtifacts", func(id int) error {
-			_, err := api.SummarizeTrial(ctx, &apiv1.SummarizeTrialRequest{
-				TrialId: int32(id),
-			})
-			return err
-		}, false},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.CompareTrials(ctx, &apiv1.CompareTrialsRequest{
 				TrialIds: []int32{int32(id)},
@@ -667,7 +649,6 @@ func TestCompareTrialsSampling(t *testing.T) {
 		StartBatches:  0,
 		EndBatches:    1000,
 		MetricType:    apiv1.MetricType_METRIC_TYPE_TRAINING,
-		Scale:         apiv1.Scale_SCALE_LINEAR,
 	}
 
 	resp, err := api.CompareTrials(ctx, req)
@@ -713,7 +694,7 @@ func TestReportTrialSourceInfo(t *testing.T) {
 						AvgMetrics: metrics,
 					},
 				},
-				model.MetricType(mType),
+				mType,
 			)
 			require.NoError(t, err)
 		}
@@ -722,37 +703,37 @@ func TestReportTrialSourceInfo(t *testing.T) {
 	startingResources := map[string]int64{
 		"a": 1,
 	}
-	checkpointUuid := createVersionTwoCheckpoint(ctx, t, api, curUser, startingResources)
+	checkpointUUID := createVersionTwoCheckpoint(ctx, t, api, curUser, startingResources)
 
 	// Basic TrialSourceInfo
-	trial_source_info := &trialv1.TrialSourceInfo{
+	trialSourceInfo := &trialv1.TrialSourceInfo{
 		TrialId:             int32(infTrial.ID),
-		CheckpointUuid:      checkpointUuid,
+		CheckpointUuid:      checkpointUUID,
 		TrialSourceInfoType: trialv1.TrialSourceInfoType_INFERENCE,
 	}
-	req := &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: trial_source_info}
+	req := &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: trialSourceInfo}
 	resp, err := api.ReportTrialSourceInfo(ctx, req)
 	require.NoError(t, err)
 	require.Equal(t, resp.TrialId, int32(infTrial.ID))
-	require.Equal(t, resp.CheckpointUuid, checkpointUuid)
+	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
 
-	trial_source_info2 := &trialv1.TrialSourceInfo{
+	trialSourceInfo2 := &trialv1.TrialSourceInfo{
 		TrialId:             int32(infTrial2.ID),
-		CheckpointUuid:      checkpointUuid,
+		CheckpointUuid:      checkpointUUID,
 		TrialSourceInfoType: trialv1.TrialSourceInfoType_INFERENCE,
 	}
-	req = &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: trial_source_info2}
+	req = &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: trialSourceInfo2}
 	resp, err = api.ReportTrialSourceInfo(ctx, req)
 	require.NoError(t, err)
 	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
-	require.Equal(t, resp.CheckpointUuid, checkpointUuid)
+	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
 
 	// Get the trials and metrics
-	get_req := &apiv1.GetTrialSourceInfoMetricsByCheckpointRequest{CheckpointUuid: checkpointUuid}
-	get_resp, get_err := api.GetTrialSourceInfoMetricsByCheckpoint(ctx, get_req)
-	require.NoError(t, get_err)
-	require.Equal(t, len(get_resp.Data), 2)
-	for _, tsim := range get_resp.Data {
+	getReq := &apiv1.GetTrialSourceInfoMetricsByCheckpointRequest{CheckpointUuid: checkpointUUID}
+	getResp, getErr := api.GetTrialSourceInfoMetricsByCheckpoint(ctx, getReq)
+	require.NoError(t, getErr)
+	require.Equal(t, len(getResp.Data), 2)
+	for _, tsim := range getResp.Data {
 		if tsim.TrialId == int32(infTrial.ID) {
 			require.Equal(t, len(tsim.MetricReports), 1)
 		} else {

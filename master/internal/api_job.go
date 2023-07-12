@@ -3,6 +3,8 @@ package internal
 import (
 	"context"
 
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
+
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/job"
@@ -14,7 +16,7 @@ import (
 func (a *apiServer) GetJobs(
 	ctx context.Context, req *apiv1.GetJobsRequest,
 ) (resp *apiv1.GetJobsResponse, err error) {
-	jobs, err := job.DefaultManager.GetJobs(
+	jobs, err := jobservice.Default.GetJobs(
 		req.ResourcePool,
 		req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
 		req.States,
@@ -45,7 +47,7 @@ func (a *apiServer) GetJobs(
 func (a *apiServer) GetJobsV2(
 	ctx context.Context, req *apiv1.GetJobsV2Request,
 ) (resp *apiv1.GetJobsV2Response, err error) {
-	jobs, err := job.DefaultManager.GetJobs(
+	jobs, err := jobservice.Default.GetJobs(
 		req.ResourcePool,
 		req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
 		req.States,
@@ -103,9 +105,20 @@ func (a *apiServer) GetJobQueueStats(
 
 // UpdateJobQueue forwards the job queue message to the relevant resource pool.
 func (a *apiServer) UpdateJobQueue(
-	_ context.Context, req *apiv1.UpdateJobQueueRequest,
+	ctx context.Context, req *apiv1.UpdateJobQueueRequest,
 ) (*apiv1.UpdateJobQueueResponse, error) {
-	err := job.DefaultManager.UpdateJobQueue(req.Updates)
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	permErr, err := job.AuthZProvider.Get().CanControlJobQueue(ctx, curUser)
+	if err != nil {
+		return nil, err
+	}
+	if permErr != nil {
+		return nil, permErr
+	}
+	err = jobservice.Default.UpdateJobQueue(req.Updates)
 	if err != nil {
 		return nil, err
 	}

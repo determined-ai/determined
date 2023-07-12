@@ -46,6 +46,7 @@ type (
 		IdleTimeout *IdleTimeoutConfig
 		ProxyPorts  []*ProxyPortConfig
 		Restore     bool
+		ProxyTLS    bool
 
 		// Logging context of the allocation actor.
 		LogContext logger.Context
@@ -70,12 +71,9 @@ type (
 
 	// ResourcesReleased notifies resource providers to return resources from a task.
 	ResourcesReleased struct {
-		AllocationID  model.AllocationID
-		AllocationRef *actor.Ref
-		ResourcesID   *ResourcesID
+		AllocationID model.AllocationID
+		ResourcesID  *ResourcesID
 	}
-	// GetAllocationHandler returns a ref to the handler for the specified task.
-	GetAllocationHandler struct{ ID model.AllocationID }
 	// GetAllocationSummary returns the summary of the specified task.
 	GetAllocationSummary struct{ ID model.AllocationID }
 	// GetAllocationSummaries returns the summaries of all the tasks in the cluster.
@@ -95,8 +93,8 @@ type (
 	}
 	// SetAllocationName sets the name of the task.
 	SetAllocationName struct {
-		Name          string
-		AllocationRef *actor.Ref
+		Name         string
+		AllocationID model.AllocationID
 	}
 
 	// ValidateCommandResourcesRequest is a message asking resource manager whether the given

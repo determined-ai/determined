@@ -5,7 +5,7 @@ SHORT_GIT_HASH := $(shell git rev-parse --short HEAD)
 ARTIFACTS_DIR := /tmp/artifacts
 
 # Model-hub library environments will be built on top of the default GPU and CPU images in master/pkg/model/defaults.go
-DEFAULT_GPU_IMAGE := determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca
+DEFAULT_GPU_IMAGE := determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-14cb565
 
 ############REMINDER############
 # When bumping third-party library versions, remember to bump versions in
