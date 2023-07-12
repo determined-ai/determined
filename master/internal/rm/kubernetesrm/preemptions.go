@@ -2,6 +2,7 @@ package kubernetesrm
 
 import (
 	"context"
+	"time"
 
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
@@ -62,7 +63,7 @@ func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 		ctx.Log().WithError(err).Warnf(
 			"error in initializing preemption listener: checking for pods to preempt",
 		)
-		actors.NotifyAfter(ctx, defaultInformerBackoff, startPreemptionListener{})
+		actors.NotifyAfter(ctx, 5*time.Second, startPreemptionListener{})
 		return
 	}
 
@@ -78,7 +79,7 @@ func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 	})
 	if err != nil {
 		ctx.Log().WithError(err).Warnf("error initializing preemption watch")
-		actors.NotifyAfter(ctx, defaultInformerBackoff, startPreemptionListener{})
+		actors.NotifyAfter(ctx, 5*time.Second, startPreemptionListener{})
 		return
 	}
 

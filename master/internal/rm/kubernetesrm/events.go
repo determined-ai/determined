@@ -2,6 +2,7 @@ package kubernetesrm
 
 import (
 	"context"
+	"time"
 
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -67,7 +68,7 @@ func (e *eventListener) startEventListener(ctx *actor.Context) {
 		context.TODO(), metaV1.ListOptions{})
 	if err != nil {
 		ctx.Log().WithError(err).Warnf("error retrieving internal resource version")
-		actors.NotifyAfter(ctx, defaultInformerBackoff, startEventListener{})
+		actors.NotifyAfter(ctx, 5*time.Second, startEventListener{})
 		return
 	}
 
@@ -79,7 +80,7 @@ func (e *eventListener) startEventListener(ctx *actor.Context) {
 	})
 	if err != nil {
 		ctx.Log().WithError(err).Warnf("error initializing event retry watcher")
-		actors.NotifyAfter(ctx, defaultInformerBackoff, startEventListener{})
+		actors.NotifyAfter(ctx, 5*time.Second, startEventListener{})
 		return
 	}
 
