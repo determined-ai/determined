@@ -240,7 +240,7 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 	for _, curCase := range cases {
 		// Checkpoint not found
 		require.Equal(t, echo.NewHTTPError(http.StatusNotFound,
-			"checkpoint 7e0bad2c-b3f6-4988-916c-eb3081b19db0 not found"),
+			`checkpoint '7e0bad2c-b3f6-4988-916c-eb3081b19db0' not found`),
 			curCase.IDToReqCall("7e0bad2c-b3f6-4988-916c-eb3081b19db0"))
 
 		// Invalid checkpoint UUID

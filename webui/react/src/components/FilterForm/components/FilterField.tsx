@@ -264,8 +264,8 @@ const FilterField = ({
                 <DatePicker
                   value={dayjs(fieldValue).isValid() ? dayjs(fieldValue).utc() : null}
                   onChange={(value: DatePickerProps['value']) => {
-                    const dateString = dayjs(value).utc().startOf('date').format();
-                    updateFieldValue(field.id, dateString);
+                    const dt = dayjs(value).utc().startOf('date');
+                    updateFieldValue(field.id, dt.isValid() ? dt.format() : null);
                   }}
                   onOpenChange={setInputOpen}
                 />

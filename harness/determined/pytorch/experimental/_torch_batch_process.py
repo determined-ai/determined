@@ -47,13 +47,17 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
     def get_tensorboard_path(self) -> pathlib.Path:
         """
         Tensorboard files should be written to the path returned to be shown properly in the UI.
+
         For example, the path should be passed to PyTorch profiler as shown below:
 
-        torch.profiler.profile(
-            activities=...,
-            schedule=...,
-            on_trace_ready=torch.profiler.tensorboard_trace_handler(<tensorboard_path>),
-        )
+        .. code-block:: python
+
+            torch.profiler.profile(
+                activities=...,
+                schedule=...,
+                on_trace_ready=torch.profiler.tensorboard_trace_handler(<tensorboard_path>),
+            )
+
         """
         return self._tensorboard_path
 
@@ -132,6 +136,7 @@ class TorchBatchProcessor(metaclass=abc.ABCMeta):
     def process_batch(self, batch: Any, batch_idx: int) -> None:
         """
         This function will be called with every batch of data in the dataset
+
         Arguments:
             batch: a batch of data of the dataset passed into torch_batch_process
             batch_idx: index of the batch. Note that index is per worker. For example, if there are

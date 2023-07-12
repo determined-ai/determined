@@ -63,7 +63,6 @@ var unauthenticatedPointsList = []string{
 
 // adminAuthPointsList contains the paths that require admin authentication.
 var adminAuthPointsList = []string{
-	"/config",
 	"/agents/.*/slots/.*",
 }
 

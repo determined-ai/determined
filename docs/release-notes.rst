@@ -13,7 +13,7 @@
 Version 0.23.2
 ==============
 
-**Release Date:** June 30, 2023
+**Release Date:** July 05, 2023
 
 **New Features**
 

@@ -288,6 +288,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ProxyPorts:  sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), c.taskID),
 			IdleTimeout: idleWatcherConfig,
 			Restore:     c.restored,
+			ProxyTLS:    c.TaskType == model.TaskTypeNotebook,
 		}, c.db, c.rm, c.GenericCommandSpec)
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 

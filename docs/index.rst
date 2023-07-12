@@ -42,6 +42,7 @@
    Submit Experiment <model-dev-guide/submit-experiment>
    How to Debug Models <model-dev-guide/debug-models>
    Model Management <model-dev-guide/model-management/overview>
+   Batch Inference <model-dev-guide/batch-processing/batch-process-api-ug>
    Best Practices <model-dev-guide/best-practices/overview>
 
 .. toctree::
@@ -80,9 +81,9 @@
    Prometheus and Grafana <integrations/prometheus/prometheus>
    attributions
 
-##########################
- *Welcome to Determined!*
-##########################
+#######################
+ Welcome to Determined
+#######################
 
 .. meta::
    :description: Visit the Determined AI documentation home page and get quick access to information, tutorials, quickstarts, user guides, and reference material.
