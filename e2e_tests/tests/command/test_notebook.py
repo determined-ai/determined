@@ -31,7 +31,7 @@ def test_notebook_proxy() -> None:
         session.get(f"proxy/{task_id}/")
 
     typ = NTSC_Kind.notebook
-    created_id = launch_ntsc(session, 1, typ)
+    created_id = launch_ntsc(session, 1, typ).id
     print(f"created {typ} {created_id}")
     wait_for_ntsc_state(
         session,
