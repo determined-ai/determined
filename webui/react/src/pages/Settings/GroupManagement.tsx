@@ -27,10 +27,7 @@ import handleError from 'utils/error';
 import { useObservable } from 'utils/observable';
 
 import css from './GroupManagement.module.scss';
-import settingsConfig, {
-  DEFAULT_COLUMN_WIDTHS,
-  DEFAULT_COLUMNS,
-} from './GroupManagement.settings';
+import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS } from './GroupManagement.settings';
 
 interface DropdownProps {
   expanded: boolean;
