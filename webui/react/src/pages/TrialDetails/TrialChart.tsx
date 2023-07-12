@@ -48,13 +48,12 @@ const TrialChart: React.FC<Props> = ({
       const summ = await timeSeries({
         maxDatapoints: screen.width > 1600 ? 1500 : 1000,
         metricNames: metricNames,
-        scale: scale,
         startBatches: 0,
         trialIds: [trialId],
       });
       setTrialSummary(summ[0].metrics);
     }
-  }, [metricNames, scale, trialId]);
+  }, [metricNames, trialId]);
 
   const { stopPolling } = usePolling(fetchTrialSummary, { interval: 2000, rerunOnNewFn: true });
 

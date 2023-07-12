@@ -54,11 +54,15 @@ const useMetricNames = (
           ...newValidationMetrics.map((name) => ({ name, type: MetricType.Validation })),
           ...newTrainingMetrics.map((name) => ({ name, type: MetricType.Training })),
         ];
-        setMetrics((prevMetrics) =>
-          Loadable.getOrElse([], prevMetrics).length === newMetrics.length
-            ? prevMetrics
-            : Loaded(newMetrics),
-        );
+        setMetrics((prevMetrics) => {
+          const previousMetrics = Loadable.getOrElse([], prevMetrics);
+
+          // The metrics have not changed so return the previousm metrics
+          if (previousMetrics.length === newMetrics.length) return prevMetrics;
+
+          // Check that the new metrics are not an empty list before updating state
+          return newMetrics.length !== 0 ? Loaded(newMetrics) : prevMetrics;
+        });
       },
       errorHandler,
     );
