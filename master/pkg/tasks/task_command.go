@@ -3,7 +3,9 @@ package tasks
 import (
 	"archive/tar"
 	"encoding/json"
+	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -42,6 +44,8 @@ func (metadata *genericCommandSpecMetadata) MarshalToMap() (map[string]interface
 // GenericCommandSpec is a description of a task for running a command.
 type GenericCommandSpec struct {
 	Base TaskSpec
+
+	CommandID string
 
 	Config          model.CommandConfig
 	UserFiles       archive.Archive
@@ -101,7 +105,10 @@ func (s GenericCommandSpec) ToTaskSpec() TaskSpec {
 		wrapArchive(s.AdditionalFiles, rootDir),
 	}
 
-	res.Description = "cmd"
+	// HACK: Don't break the description from what it looked like under actors to not break
+	// tests. It is likely fine to break, but the tests are surprisingly annoying to change.
+	// We should come back to them.
+	res.Description = fmt.Sprintf("/%ss/%s/", strings.ToLower(string(s.TaskType)), s.CommandID)
 
 	res.Entrypoint = s.Config.Entrypoint
 

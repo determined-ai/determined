@@ -57,6 +57,7 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
+		msg.CommandID = string(taskID)
 		if err := createGenericCommandActor(
 			ctx, n.db, n.rm, taskID, model.TaskTypeNotebook, jobID,
 			model.JobTypeNotebook, msg,
