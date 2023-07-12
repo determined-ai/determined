@@ -66,7 +66,7 @@ func (c containerResources) Start(
 				ID:          c.containerID,
 				State:       cproto.Assigned,
 				Devices:     c.devices,
-				Description: c.req.Name,
+				Description: spec.Description,
 			},
 			Spec: spec.ToDockerSpec(),
 		},

@@ -351,6 +351,11 @@ func (a *allocation) setResourcesAsDaemon(_ context.Context, rID sproto.Resource
 	return nil
 }
 
+///
+//
+//  -- API Requests (lock) -> allocation <- RM events (lock on handling it)
+//
+
 // watchRendezvous returns a watcher for the caller to wait for rendezvous to complete. When a
 // process from each resource in the allocation connects and the resource manager sends each
 // resource's state, each watcher will receive a copy of the rendezvous info for communicating

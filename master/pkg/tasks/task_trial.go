@@ -103,7 +103,7 @@ func (s TrialSpec) ToTaskSpec() TaskSpec {
 	}
 
 	res.Description = fmt.Sprintf(
-		"exp-%d-trial-%d",
+		"/experiments/%d/trial/%d",
 		s.ExperimentID,
 		s.TrialID,
 	)

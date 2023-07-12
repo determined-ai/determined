@@ -56,6 +56,7 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
+		msg.CommandID = string(taskID)
 		if err := createGenericCommandActor(
 			ctx, s.db, s.rm, taskID, model.TaskTypeShell, jobID, model.JobTypeShell,
 			msg,
