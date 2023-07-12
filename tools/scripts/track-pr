@@ -195,7 +195,7 @@ def cherry_pick_pr(pr_id: str) -> None:
 
         traceback.print_exc()
         print("Cherry-pick failed, adding PR as conflicted")
-        add_item_to_project(current_project_id(), pr_id, FIX_CONFLICT_STATUS)
+        set_project_item_status(current_project_id(), pr_id, FIX_CONFLICT_STATUS)
         requests.post(
             "https://casper.internal.infra.determined.ai/hubot/conflict",
             headers={"X-Casper-Token": CASPER_TOKEN},
@@ -237,6 +237,7 @@ class Actions:
             # TODO Maybe delete the tracking issue in the next release that was
             # created when this merged without a label.
             print("Cherry-picking labeled merged PR")
+            add_item_to_project(current_project_id(), pr_id, FIX_OPEN_STATUS)
             cherry_pick_pr(pr_id)
         elif state == "CLOSED":
             print("Ignoring label addition to closed PR")
