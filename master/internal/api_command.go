@@ -102,7 +102,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		resources.Slots = 0
 	}
 	poolName, err := a.m.rm.ResolveResourcePool(
-		a.m.system, resources.ResourcePool, req.WorkspaceID, resources.Slots)
+		a.m.system, resources.ResourcePool, int(req.WorkspaceID), resources.Slots)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
