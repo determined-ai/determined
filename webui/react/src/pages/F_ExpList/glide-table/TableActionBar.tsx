@@ -385,7 +385,7 @@ const TableActionBar: React.FC<Props> = ({
             <Button
               type={heatmapApplied === 'all' ? 'primary' : 'default'}
               onClick={() => setHeatmapApplied(heatmapApplied === 'all' ? [] : 'all')}>
-              <Icon name="cluster" title="heatmap" />
+              <Icon name="heatmap" title="heatmap" />
             </Button>
           </Tooltip>
           <Dropdown content={settingContent}>
