@@ -118,9 +118,9 @@ def _parse_config_text_or_exit(
     if not experiment_config or not isinstance(experiment_config, dict):
         raise ArgumentError(None, f"Error: invalid experiment config file {path}")
 
-    parse_config_overrides(experiment_config, config_overrides)
+    config = parse_config_overrides(experiment_config, config_overrides)
 
-    return experiment_config
+    return config
 
 
 def _follow_experiment_logs(sess: api.Session, exp_id: int) -> None:
