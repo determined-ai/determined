@@ -277,33 +277,20 @@ func (db *PgDB) AddTrialMetrics(
 	return err
 }
 
-// GetMetricsQuery returns a basic query for metrics. Supports generic metrics.
-func GetMetricsQuery(ctx context.Context, mType model.MetricType) *bun.SelectQuery {
-	pType := customMetricTypeToPartitionType(mType)
-	query := Bun().NewSelect().Table("metrics").
-		Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
-		ColumnExpr("proto_time(end_time) AS end_time").
-		Where("partition_type = ?", pType).
-		Where("archived = false").
-		Order("trial_id", "trial_run_id", "total_batches")
-
-	if pType == GenericMetric {
-		// Going off of our current schema were looking for custom types in our legacy
-		// metrics tables is pointless.
-		query.Where("custom_type = ?", mType)
-	}
-	return query
-}
-
 // GetMetrics returns a subset metrics of the requested type for the given trial ID.
 func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 	mType model.MetricType,
 ) ([]*trialv1.MetricsReport, error) {
 	var res []*trialv1.MetricsReport
-	query := GetMetricsQuery(ctx, mType).
+	pType := customMetricTypeToPartitionType(mType)
+	query := Bun().NewSelect().Table("metrics").
+		Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
+		ColumnExpr("proto_time(end_time) AS end_time").
+		Where("partition_type = ?", pType).
 		Where("trial_id = ?", trialID).
-		Where("total_batches > ?", afterBatches)
-
+		Where("total_batches > ?", afterBatches).
+		Where("archived = false").
+		Order("trial_id", "trial_run_id", "total_batches")
 	err := query.
 		Order("trial_id", "trial_run_id", "total_batches").
 		Limit(limit).
