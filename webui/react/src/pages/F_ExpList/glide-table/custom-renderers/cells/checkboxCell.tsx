@@ -99,6 +99,7 @@ const renderer: CustomRenderer<CheckboxCell> = {
   draw: (a, cell) => drawBoolean(a, cell.data.checked),
   isMatch: (c): c is CheckboxCell => (c.data as CheckboxCellProps).kind === 'checkbox-cell',
   kind: GridCellKind.Custom,
+  measure: () => 40,
   needsHover: true,
   needsHoverPosition: true,
 };

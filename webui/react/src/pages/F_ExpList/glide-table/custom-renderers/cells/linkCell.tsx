@@ -92,12 +92,16 @@ const renderer: CustomRenderer<LinkCell> = {
 
     return true;
   },
-
   isMatch: (c): c is LinkCell => (c.data as LinkCellProps).kind === 'link-cell',
   kind: GridCellKind.Custom,
+  measure: (ctx, cell, theme) => {
+    const { link } = cell.data;
+    if (link === undefined) return 0;
+
+    return ctx.measureText(link.title).width + theme.cellHorizontalPadding * 2;
+  },
   needsHover: true,
   needsHoverPosition: true,
-
   onSelect: (e) => {
     if (onClickSelect(e) !== undefined) {
       e.preventDefault();

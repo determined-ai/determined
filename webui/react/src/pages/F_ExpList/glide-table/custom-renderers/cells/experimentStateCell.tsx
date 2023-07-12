@@ -200,6 +200,7 @@ const renderer: CustomRenderer<ExperimentStateCell> = {
   isMatch: (cell: CustomCell): cell is ExperimentStateCell =>
     (cell.data as ExperimentStateCellProps).kind === 'experiment-state-cell',
   kind: GridCellKind.Custom,
+  measure: () => 60,
   provideEditor: () => undefined,
 };
 
