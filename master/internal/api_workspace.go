@@ -265,7 +265,6 @@ func (a *apiServer) GetWorkspaces(
 		pinFilterExpr,
 		curUser.ID,
 	)
-	// TODO: find out why it's not returning workspace default pools
 	if err != nil {
 		return nil, err
 	}
