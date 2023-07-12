@@ -17768,7 +17768,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling reportTrialSourceInfo.');
             }
-            const localVarPath = `/api/v1/trial_source_info`;
+            const localVarPath = `/api/v1/trial-source-info`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;

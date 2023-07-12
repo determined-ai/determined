@@ -18183,7 +18183,7 @@ var (
 
 	pattern_Determined_CompareTrials_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "trials", "time-series"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Determined_ReportTrialSourceInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "trial_source_info"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Determined_ReportTrialSourceInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "trial-source-info"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_CreateTrial_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "trials"}, "", runtime.AssumeColonVerbOpt(true)))
 

@@ -367,19 +367,6 @@ class TrialReference:
         """
         return _stream_validation_metrics(self._session, [self.id])
 
-    def report_trial_source_info(self, checkpoint_uuid: str) -> None:
-        tsi = bindings.v1TrialSourceInfo(
-            checkpointUuid=checkpoint_uuid,
-            trialId=self.id,
-            # TODO: parameterize by type when we use fine-tuning
-            trialSourceInfoType=bindings.v1TrialSourceInfoType.INFERENCE,
-        )
-        req = bindings.v1ReportTrialSourceInfoRequest(trialSourceInfo=tsi)
-        bindings.post_ReportTrialSourceInfo(
-            session=self._session,
-            body=req,
-        )
-
 
 # This is to shorten line lengths of the TrialSortBy definition.
 _tsb = bindings.v1GetExperimentTrialsRequestSortBy

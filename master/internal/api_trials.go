@@ -917,16 +917,7 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 func (a *apiServer) ReportTrialSourceInfo(
 	ctx context.Context, req *apiv1.ReportTrialSourceInfoRequest,
 ) (*apiv1.ReportTrialSourceInfoResponse, error) {
-	// TODO: Handle user auth/rbac
-	// curUser, _, err := grpcutil.GetUser(ctx)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to create trial source info %w", err)
-	// }
-
-	// TODO: Handle check for whether the checkpoint is v1 or somehow fallback and link it
-	// properly if it is v1?
-	// TODO: Test for failure if you only provide part of the state for the model_version
-
+	// TODO (Taylor): Handle user auth/rbac
 	resp := &apiv1.ReportTrialSourceInfoResponse{}
 	tsi := req.TrialSourceInfo
 	query := db.Bun().NewInsert().Model(tsi).
@@ -942,17 +933,11 @@ func (a *apiServer) ReportTrialSourceInfo(
 	return resp, err
 }
 
-// TODO: Explain this.
+// Query for all trials that use a given checkpoint and return their metrics.
 func (a *apiServer) GetTrialSourceInfoMetricsByCheckpoint(
 	ctx context.Context, req *apiv1.GetTrialSourceInfoMetricsByCheckpointRequest,
 ) (*apiv1.TrialSourceInfoMetricsResponse, error) {
-	// TODO: Handle user auth/rbac
-	// curUser, _, err := grpcutil.GetUser(ctx)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to create trial source info %w", err)
-	// }
-
-	// query := db.GetTrialsUsingCheckpoint(ctx, req.CheckpointUuid)
+	// TODO (Taylor): Handle user auth/rbac
 	resp := &apiv1.TrialSourceInfoMetricsResponse{}
 	trialIDsQuery := db.Bun().NewSelect().Table("trial_source_infos").
 		Where("checkpoint_uuid = ?", req.CheckpointUuid).
@@ -966,48 +951,16 @@ func (a *apiServer) GetTrialSourceInfoMetricsByCheckpoint(
 		TrialID             int
 		TrialSourceInfoType string
 	}{}
-	// var trialIDs []int32
-
-	// metricsQuery := db.GetMetricsQuery(ctx, model.InferenceMetricType).
-	// 	// LeftJoin("metrics", "trial_source_infos.trial_id = metrics.trial_id").
-	// 	// Relation("metrics").
-	// 	Join("LEFT JOIN trials t1 ON trial_source_info.trial_id = t1.id").
-	// 	Where("trial_id IN (?)", trialIDsQuery).
-	// 	Limit(1000)
-	// fmt.Print(metricsQuery.String())
-
-	// rows, err := metricsQuery.Rows(ctx)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// defer rows.Close()
-
-	// for rows.Next() {
-	// 	res := &trialv1.MetricsReport{}
-	// 	if err := db.Bun().ScanRow(ctx, rows, res); err != nil {
-	// 		return nil, err
-	// 	}
-	// 	// sourceInfoMetric.MetricReport = res
-	// 	sourceInfoMetric := &apiv1.TrialSourceInfoMetric{MetricReport: res}
-	// 	resp.Data = append(resp.Data, sourceInfoMetric)
-	// }
-
-	// err := metricsQuery.Scan(ctx, res)
-	// sourceInfoMetric := &apiv1.TrialSourceInfoMetric{}
-	// sourceInfoMetric.MetricReport = append(sourceInfoMetric.MetricReport, res)
-	// // trialSourceInfoMetric := &apiv1.TrialSourceInfoMetric{MetricReport: res}
-	// resp.Data = append(resp.Data, sourceInfoMetric)
 
 	err := trialIDsQuery.Scan(ctx, &trialIds)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get trial source info %w", err)
 	}
 
-	key := -1
-	size := 1000
+	numMetricsLimit := 1000
 	for _, val := range trialIds {
 		sourceType := trialv1.TrialSourceInfoType_value[val.TrialSourceInfoType]
-		res, err := db.GetMetrics(ctx, val.TrialID, key, size, model.InferenceMetricType)
+		res, err := db.GetMetrics(ctx, val.TrialID, -1, numMetricsLimit, model.InferenceMetricType)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get trial source info %w", err)
 		}

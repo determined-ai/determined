@@ -619,7 +619,7 @@ service Determined {
       returns (ReportTrialSourceInfoResponse) {
   
     option (google.api.http) = {
-      post: "/api/v1/trial_source_info"
+      post: "/api/v1/trial-source-info"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

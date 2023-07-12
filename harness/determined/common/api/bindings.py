@@ -17062,7 +17062,7 @@ def post_ReportTrialSourceInfo(
     _params = None
     _resp = session._do_request(
         method="POST",
-        path="/api/v1/trial_source_info",
+        path="/api/v1/trial-source-info",
         params=_params,
         json=body.to_json(True),
         data=None,
