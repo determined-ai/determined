@@ -1,6 +1,6 @@
 CREATE TYPE public.trial_source_info_type AS ENUM (
-    'INFERENCE',
-    'FINE_TUNING'
+    'TRIAL_SOURCE_INFO_TYPE_INFERENCE',
+    'TRIAL_SOURCE_INFO_TYPE_FINE_TUNING'
 );
 
 -- Denotes a connection between a given trial and a checkpoint/source trial/model version

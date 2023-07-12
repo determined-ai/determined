@@ -705,7 +705,7 @@ func TestReportTrialSourceInfo(t *testing.T) {
 	trialSourceInfo := &trialv1.TrialSourceInfo{
 		TrialId:             int32(infTrial.ID),
 		CheckpointUuid:      checkpointUUID,
-		TrialSourceInfoType: trialv1.TrialSourceInfoType_INFERENCE,
+		TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
 	}
 	req := &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: trialSourceInfo}
 	resp, err := api.ReportTrialSourceInfo(ctx, req)
@@ -716,7 +716,7 @@ func TestReportTrialSourceInfo(t *testing.T) {
 	trialSourceInfo2 := &trialv1.TrialSourceInfo{
 		TrialId:             int32(infTrial2.ID),
 		CheckpointUuid:      checkpointUUID,
-		TrialSourceInfoType: trialv1.TrialSourceInfoType_INFERENCE,
+		TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
 	}
 	req = &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: trialSourceInfo2}
 	resp, err = api.ReportTrialSourceInfo(ctx, req)

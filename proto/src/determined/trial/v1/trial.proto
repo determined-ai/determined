@@ -280,11 +280,11 @@ message MetricsReport {
 // TrialSourceInfoType see \dT+ trial_source_info_type in db
 enum TrialSourceInfoType {
   // The type is unspecified
-  UNSPECIFIED = 0;
+  TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED = 0;
   // "Inference" Trial Source Info Type, used for batch inference
-  INFERENCE = 1;
+  TRIAL_SOURCE_INFO_TYPE_INFERENCE = 1;
   // "Fine Tuning" Trial Source Info Type, used in model hub
-  FINE_TUNING = 2;
+  TRIAL_SOURCE_INFO_TYPE_FINE_TUNING = 2;
 }
 
 // Denotes a connection between a given trial and a

@@ -5126,6 +5126,28 @@ class v1GetTrialResponse(Printable):
         }
         return out
 
+class v1GetTrialSourceInfoMetricsByCheckpointResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        data: "typing.Sequence[v1TrialSourceInfoMetric]",
+    ):
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTrialSourceInfoMetricsByCheckpointResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "data": [v1TrialSourceInfoMetric.from_json(x) for x in obj["data"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "data": [x.to_json(omit_unset) for x in self.data],
+        }
+        return out
+
 class v1GetTrialWorkloadsResponse(Printable):
 
     def __init__(
@@ -12362,32 +12384,10 @@ class v1TrialSourceInfoMetric(Printable):
             out["metricReports"] = None if self.metricReports is None else [x.to_json(omit_unset) for x in self.metricReports]
         return out
 
-class v1TrialSourceInfoMetricsResponse(Printable):
-
-    def __init__(
-        self,
-        *,
-        data: "typing.Sequence[v1TrialSourceInfoMetric]",
-    ):
-        self.data = data
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1TrialSourceInfoMetricsResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "data": [v1TrialSourceInfoMetric.from_json(x) for x in obj["data"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "data": [x.to_json(omit_unset) for x in self.data],
-        }
-        return out
-
 class v1TrialSourceInfoType(DetEnum):
-    UNSPECIFIED = "UNSPECIFIED"
-    INFERENCE = "INFERENCE"
-    FINE_TUNING = "FINE_TUNING"
+    UNSPECIFIED = "TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED"
+    INFERENCE = "TRIAL_SOURCE_INFO_TYPE_INFERENCE"
+    FINE_TUNING = "TRIAL_SOURCE_INFO_TYPE_FINE_TUNING"
 
 class v1TrialsSampleResponse(Printable):
 
@@ -15528,7 +15528,7 @@ def get_GetTrialSourceInfoMetricsByCheckpoint(
     *,
     checkpointUuid: str,
     trialSourceInfoType: "typing.Optional[v1TrialSourceInfoType]" = None,
-) -> "v1TrialSourceInfoMetricsResponse":
+) -> "v1GetTrialSourceInfoMetricsByCheckpointResponse":
     _params = {
         "trialSourceInfoType": trialSourceInfoType.value if trialSourceInfoType is not None else None,
     }
@@ -15543,7 +15543,7 @@ def get_GetTrialSourceInfoMetricsByCheckpoint(
         stream=False,
     )
     if _resp.status_code == 200:
-        return v1TrialSourceInfoMetricsResponse.from_json(_resp.json())
+        return v1GetTrialSourceInfoMetricsByCheckpointResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTrialSourceInfoMetricsByCheckpoint", _resp)
 
 def get_GetTrialWorkloads(

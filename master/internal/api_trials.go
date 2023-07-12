@@ -936,9 +936,9 @@ func (a *apiServer) ReportTrialSourceInfo(
 // Query for all trials that use a given checkpoint and return their metrics.
 func (a *apiServer) GetTrialSourceInfoMetricsByCheckpoint(
 	ctx context.Context, req *apiv1.GetTrialSourceInfoMetricsByCheckpointRequest,
-) (*apiv1.TrialSourceInfoMetricsResponse, error) {
+) (*apiv1.GetTrialSourceInfoMetricsByCheckpointResponse, error) {
 	// TODO (Taylor): Handle user auth/rbac
-	resp := &apiv1.TrialSourceInfoMetricsResponse{}
+	resp := &apiv1.GetTrialSourceInfoMetricsByCheckpointResponse{}
 	trialIDsQuery := db.Bun().NewSelect().Table("trial_source_infos").
 		Where("checkpoint_uuid = ?", req.CheckpointUuid).
 		Column("trial_id").Column("trial_source_info_type")
