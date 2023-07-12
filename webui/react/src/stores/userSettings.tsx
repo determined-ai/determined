@@ -152,8 +152,12 @@ class UserSettingsStore extends PollingStore {
               [setting.key]: setting.value ? JSON.parse(setting.value) : undefined,
             };
             newSettings.set(pathKey, { ...oldPathSettings, ...newPathSettings });
-          } else {
+          } else if (setting.key === '_ROOT') {
             newSettings.set(pathKey, setting.value ? JSON.parse(setting.value) : undefined);
+          } else {
+            newSettings.set(pathKey, {
+              [setting.key]: setting.value ? JSON.parse(setting.value) : undefined,
+            });
           }
         }
       });
