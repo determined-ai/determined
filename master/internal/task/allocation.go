@@ -148,8 +148,8 @@ type allocation struct {
 	portsRegistered bool
 }
 
-// startAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
-func startAllocation(
+// newAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
+func newAllocation(
 	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
 	specifier tasks.TaskSpecifier, system *actor.System, parent *actor.Ref,
 ) *allocation {
@@ -217,19 +217,44 @@ func (a *allocation) run(ctx context.Context, sub *sproto.AllocationSubscription
 		if event == (sproto.SentinelAllocationEvent{}) {
 			return
 		}
-		a.handleRMEvent(event)
+		a.HandleRMEvent(event)
 	}
 }
 
-// state returns a copy of the current state of the allocation.
-func (a *allocation) state() AllocationState {
+// HandleRMEvent handles downstream events from the resource manager.
+func (a *allocation) HandleRMEvent(msg sproto.AllocationEvent) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return a.stateWithoutLock()
+
+	switch msg := msg.(type) {
+	case *sproto.ResourcesAllocated:
+		if err := a.resourcesAllocated(msg); err != nil {
+			a.crash(err)
+		}
+	case *sproto.ResourcesStateChanged:
+		a.resourcesStateChanged(msg)
+	case *sproto.ResourcesFailure:
+		a.restoreResourceFailure(msg)
+	case *sproto.ReleaseResources:
+		a.releaseResources(msg)
+	case *sproto.ContainerLog:
+		a.sendTaskLog(msg.ToTaskLog())
+	case *sproto.InvalidResourcesRequestError:
+		a.crash(msg.Cause)
+	default:
+		panic(fmt.Errorf("unexpected RM event"))
+	}
 }
 
-// isRestoring returns if the allocation has been restored by the resource manager.
-func (a *allocation) isRestoring() bool {
+// State returns a copy of the current State of the allocation.
+func (a *allocation) State() AllocationState {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.state()
+}
+
+// IsRestoring returns if the allocation has been restored by the resource manager.
+func (a *allocation) IsRestoring() bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	return a.req.Restore && !a.restored
@@ -241,7 +266,7 @@ func (a *allocation) isRestoring() bool {
 func (a *allocation) waitForRestore(ctx context.Context) error {
 	for i := 0; i < 60; i++ {
 		switch {
-		case !a.isRestoring():
+		case !a.IsRestoring():
 			return nil
 		case ctx.Err() != nil:
 			return ctx.Err()
@@ -252,8 +277,8 @@ func (a *allocation) waitForRestore(ctx context.Context) error {
 	return fmt.Errorf("allocation stuck restoring after one minute of retrying")
 }
 
-// signal handles an external signal to kill or terminate the allocation.
-func (a *allocation) signal(sig AllocationSignal, reason string) {
+// Signal handles an external Signal to kill or terminate the allocation.
+func (a *allocation) Signal(sig AllocationSignal, reason string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -265,9 +290,9 @@ func (a *allocation) signal(sig AllocationSignal, reason string) {
 	}
 }
 
-// setProxyAddress sets the proxy address of the allocation and sets up proxies for any services
+// SetProxyAddress sets the proxy address of the allocation and sets up proxies for any services
 // it provides.
-func (a *allocation) setProxyAddress(_ context.Context, address string) error {
+func (a *allocation) SetProxyAddress(_ context.Context, address string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -283,13 +308,13 @@ func (a *allocation) setProxyAddress(_ context.Context, address string) error {
 	return nil
 }
 
-// sendContainerLog sends a container log, enriched with metadata from the allocation.
-func (a *allocation) sendContainerLog(log *sproto.ContainerLog) {
+// SendContainerLog sends a container log, enriched with metadata from the allocation.
+func (a *allocation) SendContainerLog(log *sproto.ContainerLog) {
 	a.sendTaskLog(log.ToTaskLog())
 }
 
-// setWaiting moves the allocation to the waiting state if it has not progressed past it yet.
-func (a *allocation) setWaiting(_ context.Context) error {
+// SetWaiting moves the allocation to the waiting state if it has not progressed past it yet.
+func (a *allocation) SetWaiting(_ context.Context) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -301,9 +326,9 @@ func (a *allocation) setWaiting(_ context.Context) error {
 	return nil
 }
 
-// setReady sets the ready bit and moves the allocation to the running state if it has not
+// SetReady sets the ready bit and moves the allocation to the running state if it has not
 // progressed past it already.
-func (a *allocation) setReady(_ context.Context) error {
+func (a *allocation) SetReady(_ context.Context) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -320,9 +345,9 @@ func (a *allocation) setReady(_ context.Context) error {
 	return nil
 }
 
-// setResourcesAsDaemon marks the resources as daemons. If all non-daemon resources exit, the
+// SetResourcesAsDaemon marks the resources as daemons. If all non-daemon resources exit, the
 // allocation will kill the remaining daemon resources.
-func (a *allocation) setResourcesAsDaemon(_ context.Context, rID sproto.ResourcesID) error {
+func (a *allocation) SetResourcesAsDaemon(_ context.Context, rID sproto.ResourcesID) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -351,16 +376,11 @@ func (a *allocation) setResourcesAsDaemon(_ context.Context, rID sproto.Resource
 	return nil
 }
 
-///
-//
-//  -- API Requests (lock) -> allocation <- RM events (lock on handling it)
-//
-
-// watchRendezvous returns a watcher for the caller to wait for rendezvous to complete. When a
+// WatchRendezvous returns a watcher for the caller to wait for rendezvous to complete. When a
 // process from each resource in the allocation connects and the resource manager sends each
 // resource's state, each watcher will receive a copy of the rendezvous info for communicating
 // with its peers.
-func (a *allocation) watchRendezvous(rID sproto.ResourcesID) (RendezvousWatcher, error) {
+func (a *allocation) WatchRendezvous(rID sproto.ResourcesID) (RendezvousWatcher, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -377,14 +397,8 @@ func (a *allocation) watchRendezvous(rID sproto.ResourcesID) (RendezvousWatcher,
 
 			select {
 			case <-t.C:
+				a.RendezvousTimeout()
 			case <-ctx.Done():
-				return
-			}
-
-			a.mu.Lock()
-			defer a.mu.Unlock()
-			if err := a.rendezvous.checkTimeout(); err != nil {
-				a.sendTaskLog(&model.TaskLog{Log: err.Error()})
 			}
 		})
 	}
@@ -392,11 +406,19 @@ func (a *allocation) watchRendezvous(rID sproto.ResourcesID) (RendezvousWatcher,
 	return a.rendezvous.watch(rID)
 }
 
-// unwatchRendezvous removes a rendezvous watcher.
-func (a *allocation) unwatchRendezvous(rID sproto.ResourcesID) {
+// UnwatchRendezvous removes a rendezvous watcher.
+func (a *allocation) UnwatchRendezvous(rID sproto.ResourcesID) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.rendezvous.unwatch(rID)
+}
+
+func (a *allocation) RendezvousTimeout() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if err := a.rendezvous.checkTimeout(); err != nil {
+		a.sendTaskLog(&model.TaskLog{Log: err.Error()})
+	}
 }
 
 func (a *allocation) validateRendezvous() error {
@@ -422,31 +444,6 @@ func (a *allocation) validateRendezvous() error {
 func (a *allocation) awaitTermination() *AllocationExited {
 	a.wg.Wait()
 	return a.exited
-}
-
-// handleRMEvent handles downstream events from the resource manager.
-func (a *allocation) handleRMEvent(msg sproto.AllocationEvent) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-
-	switch msg := msg.(type) {
-	case *sproto.ResourcesAllocated:
-		if err := a.resourcesAllocated(msg); err != nil {
-			a.crash(err)
-		}
-	case *sproto.ResourcesStateChanged:
-		a.resourcesStateChanged(msg)
-	case *sproto.ResourcesFailure:
-		a.restoreResourceFailure(msg)
-	case *sproto.ReleaseResources:
-		a.releaseResources(msg)
-	case *sproto.ContainerLog:
-		a.sendTaskLog(msg.ToTaskLog())
-	case *sproto.InvalidResourcesRequestError:
-		a.crash(msg.Cause)
-	default:
-		panic(fmt.Errorf("unexpected RM event"))
-	}
 }
 
 // requestResources sets up the allocation.
@@ -480,9 +477,9 @@ func (a *allocation) requestResources() (*sproto.AllocationSubscription, error) 
 	return sub, nil
 }
 
-// close ensures an allocation is properly closed. It tries to do everything before failing and
+// Close ensures an allocation is properly closed. It tries to do everything before failing and
 // ensures we don't leave any resources running.
-func (a *allocation) close() error {
+func (a *allocation) Close() error {
 	var err *multierror.Error
 
 	a.mu.Lock()
@@ -505,7 +502,7 @@ func (a *allocation) close() error {
 		if a.exitErr == nil {
 			a.exitErr = errors.New("unknown error occurred")
 		}
-		a.exited = &AllocationExited{Err: a.exitErr, FinalState: a.stateWithoutLock()}
+		a.exited = &AllocationExited{Err: a.exitErr, FinalState: a.state()}
 
 		a.syslog.WithError(a.exitErr).Error("exit did not run properly")
 		a.sendTaskLog(&model.TaskLog{
@@ -588,7 +585,7 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 	if cfg := a.req.IdleTimeout; cfg != nil {
 		idle.Register(*cfg, func(ctx context.Context, err error) {
 			a.syslog.WithError(err).Infof("killing %s due to inactivity", a.req.Name)
-			a.signal(TerminateAllocation, err.Error())
+			a.Signal(TerminateAllocation, err.Error())
 		})
 	}
 
@@ -881,7 +878,7 @@ func (a *allocation) preempt(reason string) {
 	})
 
 	preemptible.Preempt(a.req.AllocationID.String(), func(ctx context.Context, err error) {
-		a.signal(KillAllocation, err.Error())
+		a.Signal(KillAllocation, err.Error())
 	})
 }
 
@@ -917,7 +914,7 @@ func (a *allocation) kill(reason string) {
 
 		select {
 		case <-t.C:
-			a.signal(KillAllocation, "killing again after 30s without all container exits")
+			a.Signal(KillAllocation, "killing again after 30s without all container exits")
 		case <-ctx.Done():
 			return
 		}
@@ -1039,7 +1036,7 @@ func (a *allocation) terminated(reason string) {
 	a.wg.Cancel()
 	rmevents.Publish(a.req.AllocationID, sproto.SentinelAllocationEvent{})
 	a.setMostProgressedModelState(model.AllocationStateTerminated)
-	exit := &AllocationExited{FinalState: a.stateWithoutLock()}
+	exit := &AllocationExited{FinalState: a.state()}
 	a.exited = exit
 	exitReason := fmt.Sprintf("allocation terminated after %s", reason)
 
@@ -1208,7 +1205,7 @@ func (a *allocation) sendTaskLog(log *model.TaskLog) {
 	tasklogger.Insert(a.enrichLog(log))
 }
 
-func (a *allocation) stateWithoutLock() AllocationState {
+func (a *allocation) state() AllocationState {
 	addresses := map[sproto.ResourcesID][]cproto.Address{}
 	containers := map[sproto.ResourcesID][]cproto.Container{}
 	resources := map[sproto.ResourcesID]sproto.ResourcesSummary{}

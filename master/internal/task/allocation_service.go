@@ -53,12 +53,12 @@ func (as *allocationService) StartAllocation(
 ) {
 	as.mu.Lock()
 	defer as.mu.Unlock()
-	ref := startAllocation(logCtx, req, db, rm, specifier, system, parent)
-	as.allocations[req.AllocationID] = ref
 
+	ref := newAllocation(logCtx, req, db, rm, specifier, system, parent)
+	as.allocations[req.AllocationID] = ref
 	go func() {
 		_ = ref.awaitTermination()
-		if err := ref.close(); err != nil {
+		if err := ref.Close(); err != nil {
 			syslog.WithError(err).Error("cleaning up allocation")
 		}
 
@@ -86,7 +86,7 @@ func (as *allocationService) SendLog(
 		syslog.Warnf("dropped log for unknown allocation: %s", id)
 		return
 	}
-	ref.sendContainerLog(log)
+	ref.SendContainerLog(log)
 }
 
 // SetReady sets the ready bit and moves the allocation to the running state if it has not
@@ -102,7 +102,7 @@ func (as *allocationService) SetReady(ctx context.Context, id model.AllocationID
 		return err
 	}
 
-	return ref.setReady(ctx)
+	return ref.SetReady(ctx)
 }
 
 // SetWaiting moves the allocation to the waiting state if it has not progressed past it yet.
@@ -117,7 +117,7 @@ func (as *allocationService) SetWaiting(ctx context.Context, id model.Allocation
 		return err
 	}
 
-	return ref.setWaiting(ctx)
+	return ref.SetWaiting(ctx)
 }
 
 // SetProxyAddress sets the proxy address of the allocation and sets up proxies for any services
@@ -137,7 +137,7 @@ func (as *allocationService) SetProxyAddress(
 		return err
 	}
 
-	return ref.setProxyAddress(ctx, addr)
+	return ref.SetProxyAddress(ctx, addr)
 }
 
 // WatchRendezvous returns a watcher for the caller to wait for rendezvous to complete. When a
@@ -159,11 +159,11 @@ func (as *allocationService) WatchRendezvous(
 		return nil, err
 	}
 
-	w, err := ref.watchRendezvous(rID)
+	w, err := ref.WatchRendezvous(rID)
 	if err != nil {
 		return nil, err
 	}
-	defer ref.unwatchRendezvous(rID)
+	defer ref.UnwatchRendezvous(rID)
 
 	select {
 	case rsp := <-w.C:
@@ -193,7 +193,7 @@ func (as *allocationService) SetResourcesAsDaemon(
 		return err
 	}
 
-	return ref.setResourcesAsDaemon(ctx, rID)
+	return ref.SetResourcesAsDaemon(ctx, rID)
 }
 
 // Signal the allocation with the given signal.
@@ -206,7 +206,7 @@ func (as *allocationService) Signal(
 	if ref == nil {
 		return api.NotFoundErrs("allocation", id.String(), true)
 	}
-	ref.signal(sig, reason)
+	ref.Signal(sig, reason)
 	return nil
 }
 
@@ -216,7 +216,7 @@ func (as *allocationService) State(id model.AllocationID) (AllocationState, erro
 	if ref == nil {
 		return AllocationState{}, api.NotFoundErrs("allocation", id.String(), true)
 	}
-	return ref.state(), nil
+	return ref.State(), nil
 }
 
 // AllGather blocks until `numPeers` with the same `allocationID` are waiting and then returns the
