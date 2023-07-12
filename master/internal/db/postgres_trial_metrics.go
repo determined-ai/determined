@@ -29,17 +29,17 @@ const (
 type metricsBody struct {
 	BatchMetrics interface{}
 	AvgMetrics   *structpb.Struct
-	Type         model.MetricType
+	isValidation bool
 }
 
 func (b metricsBody) ToJSONObj() *model.JSONObj {
 	// we should probably move to avoid special casing based on metric type here.
-	metricsJSONPath := model.TrialMetricsJSONPath(b.Type == model.ValidationMetricType)
+	metricsJSONPath := model.TrialMetricsJSONPath(b.isValidation)
 	body := model.JSONObj{
 		metricsJSONPath: b.AvgMetrics,
 	}
 
-	if b.Type == model.ValidationMetricType {
+	if b.isValidation {
 		return &body
 	}
 
@@ -48,7 +48,7 @@ func (b metricsBody) ToJSONObj() *model.JSONObj {
 }
 
 func (b *metricsBody) LoadJSON(body *model.JSONObj) (err error) {
-	metricsJSONPath := model.TrialMetricsJSONPath(b.Type == model.ValidationMetricType)
+	metricsJSONPath := model.TrialMetricsJSONPath(b.isValidation)
 
 	avgMetricsVal, exists := (*body)[metricsJSONPath]
 	if !exists {
@@ -62,7 +62,7 @@ func (b *metricsBody) LoadJSON(body *model.JSONObj) (err error) {
 		return errors.Wrapf(err, "failed to convert avg metrics to structpb.Struct")
 	}
 
-	if b.Type == model.ValidationMetricType {
+	if b.isValidation {
 		return nil
 	}
 
@@ -77,7 +77,7 @@ func (b *metricsBody) LoadJSON(body *model.JSONObj) (err error) {
 func newMetricsBody(
 	avgMetrics *structpb.Struct,
 	batchMetrics []*structpb.Struct,
-	mType model.MetricType, // FIXME: could be just isValidation bool
+	isValidation bool,
 ) *metricsBody {
 	var bMetrics any = nil
 	if len(batchMetrics) != 0 {
@@ -86,7 +86,7 @@ func newMetricsBody(
 	return &metricsBody{
 		AvgMetrics:   avgMetrics,
 		BatchMetrics: bMetrics,
-		Type:         mType,
+		isValidation: isValidation,
 	}
 }
 
@@ -172,7 +172,7 @@ FOR UPDATE`,
 		return id, mBody, err
 	}
 
-	existingBody := &metricsBody{Type: mType}
+	existingBody := &metricsBody{isValidation: mType == model.ValidationMetricType}
 	if err = existingBody.LoadJSON(&existingBodyJSON); err != nil {
 		return 0, nil, err
 	}

@@ -579,7 +579,7 @@ func TestMetricMergeUtil(t *testing.T) {
 		var merged *metricsBody
 		var err error
 		for _, report := range c.reports {
-			newBody := newMetricsBody(jsonToStruct(t, report), nil, model.TrainingMetricType)
+			newBody := newMetricsBody(jsonToStruct(t, report), nil, false)
 			merged, err = shallowUnionMetrics(merged, newBody)
 		}
 		if c.errMsg != "" {

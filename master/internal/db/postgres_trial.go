@@ -265,7 +265,7 @@ func (db *PgDB) _addTrialMetricsTx(
 	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mType model.MetricType,
 ) (rollbacks int, err error) {
 	isValidation := mType == model.ValidationMetricType
-	mBody := newMetricsBody(m.Metrics.AvgMetrics, m.Metrics.BatchMetrics, mType)
+	mBody := newMetricsBody(m.Metrics.AvgMetrics, m.Metrics.BatchMetrics, isValidation)
 
 	if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
 		return rollbacks, err
