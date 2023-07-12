@@ -11,7 +11,7 @@ import pytest
 
 from determined.common import api, yaml
 from determined.common.api import authentication, bindings, certs
-from determined.common.api.bindings import experimentv1State
+from determined.common.api.bindings import experimentv1State, trialv1State
 from tests import api_utils
 from tests import config as conf
 from tests.cluster import utils as cluster_utils
@@ -162,7 +162,7 @@ def kill_experiments(experiment_ids: List[int], name: Optional[str] = None) -> N
 
 def kill_trial(trial_id: int) -> None:
     bindings.post_KillTrial(api_utils.determined_test_session(), id=trial_id)
-    wait_for_trial_state(trial_id, experimentv1State.CANCELED)
+    wait_for_trial_state(trial_id, trialv1State.CANCELED)
 
 
 def wait_for_experiment_by_name_is_active(
@@ -200,7 +200,7 @@ def wait_for_experiment_by_name_is_active(
             time.sleep(0.25)
             continue
 
-        if is_terminal_state(experiment.state):
+        if is_terminal_experiment_state(experiment.state):
             report_failed_experiment(experiment_id)
 
             pytest.fail(
@@ -252,7 +252,7 @@ def wait_for_experiment_state(
         if state == target_state:
             return
 
-        if is_terminal_state(state):
+        if is_terminal_experiment_state(state):
             if state != target_state:
                 report_failed_experiment(experiment_id)
 
@@ -282,7 +282,7 @@ def wait_for_experiment_state(
 
 def wait_for_trial_state(
     trial_id: int,
-    target_state: experimentv1State,
+    target_state: trialv1State,
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
     log_every: int = 60,
 ) -> None:
@@ -316,7 +316,7 @@ def wait_for_trial_state(
 
     else:
         state = trial_state(trial_id)
-        if target_state == experimentv1State.COMPLETED:
+        if target_state == trialv1State.COMPLETED:
             kill_trial(trial_id)
         report_failed_trial(trial_id, target_state=target_state, state=state)
         pytest.fail(
@@ -422,7 +422,7 @@ def experiment_state(
     return r.experiment.state
 
 
-def trial_state(trial_id: int) -> experimentv1State:
+def trial_state(trial_id: int) -> trialv1State:
     r = bindings.get_GetTrial(api_utils.determined_test_session(), trialId=trial_id)
     return r.trial.state
 
@@ -455,7 +455,7 @@ def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
         assert len(trials) == 1, len(trials)
 
         trial = trials[0].trial
-        assert trial.state == experimentv1State.CANCELED
+        assert trial.state == trialv1State.CANCELED
 
 
 def kill_single(experiment_id: int, should_have_trial: bool = False) -> None:
@@ -466,14 +466,22 @@ def kill_single(experiment_id: int, should_have_trial: bool = False) -> None:
         assert len(trials) == 1, len(trials)
 
         trial = trials[0].trial
-        assert trial.state == experimentv1State.CANCELED
+        assert trial.state == trialv1State.CANCELED
 
 
-def is_terminal_state(state: experimentv1State) -> bool:
+def is_terminal_experiment_state(state: experimentv1State) -> bool:
     return state in (
         experimentv1State.CANCELED,
         experimentv1State.COMPLETED,
         experimentv1State.ERROR,
+    )
+
+
+def is_terminal_state(state: trialv1State) -> bool:
+    return state in (
+        trialv1State.CANCELED,
+        trialv1State.COMPLETED,
+        trialv1State.ERROR,
     )
 
 
@@ -483,22 +491,23 @@ def num_trials(experiment_id: int) -> int:
 
 def num_active_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state == experimentv1State.RUNNING else 0
+        1
+        if t.trial.state in [trialv1State.RUNNING, trialv1State.STARTING, trialv1State.PULLING]
+        else 0
         for t in experiment_trials(experiment_id)
     )
 
 
 def num_completed_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state == experimentv1State.COMPLETED else 0
+        1 if t.trial.state == trialv1State.COMPLETED else 0
         for t in experiment_trials(experiment_id)
     )
 
 
 def num_error_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state == experimentv1State.ERROR else 0
-        for t in experiment_trials(experiment_id)
+        1 if t.trial.state == trialv1State.ERROR else 0 for t in experiment_trials(experiment_id)
     )
 
 
@@ -685,19 +694,15 @@ def run_list_cli_tests(experiment_id: int) -> None:
 
 def report_failed_experiment(experiment_id: int) -> None:
     trials = experiment_trials(experiment_id)
-    active = sum(1 for t in trials if t.trial.state == experimentv1State.RUNNING)
-    paused = sum(1 for t in trials if t.trial.state == experimentv1State.PAUSED)
-    stopping_completed = sum(
-        1 for t in trials if t.trial.state == experimentv1State.STOPPING_COMPLETED
-    )
-    stopping_canceled = sum(
-        1 for t in trials if t.trial.state == experimentv1State.STOPPING_CANCELED
-    )
-    stopping_error = sum(1 for t in trials if t.trial.state == experimentv1State.STOPPING_ERROR)
-    completed = sum(1 for t in trials if t.trial.state == experimentv1State.COMPLETED)
-    canceled = sum(1 for t in trials if t.trial.state == experimentv1State.CANCELED)
-    errored = sum(1 for t in trials if t.trial.state == experimentv1State.ERROR)
-    stopping_killed = sum(1 for t in trials if t.trial.state == experimentv1State.STOPPING_KILLED)
+    active = sum(1 for t in trials if t.trial.state == trialv1State.RUNNING)
+    paused = sum(1 for t in trials if t.trial.state == trialv1State.PAUSED)
+    stopping_completed = sum(1 for t in trials if t.trial.state == trialv1State.STOPPING_COMPLETED)
+    stopping_canceled = sum(1 for t in trials if t.trial.state == trialv1State.STOPPING_CANCELED)
+    stopping_error = sum(1 for t in trials if t.trial.state == trialv1State.STOPPING_ERROR)
+    completed = sum(1 for t in trials if t.trial.state == trialv1State.COMPLETED)
+    canceled = sum(1 for t in trials if t.trial.state == trialv1State.CANCELED)
+    errored = sum(1 for t in trials if t.trial.state == trialv1State.ERROR)
+    stopping_killed = sum(1 for t in trials if t.trial.state == trialv1State.STOPPING_KILLED)
 
     print(
         f"Experiment {experiment_id}: {len(trials)} trials, {completed} completed, "
@@ -711,9 +716,7 @@ def report_failed_experiment(experiment_id: int) -> None:
         print_trial_logs(trial.trial.id)
 
 
-def report_failed_trial(
-    trial_id: int, target_state: experimentv1State, state: experimentv1State
-) -> None:
+def report_failed_trial(trial_id: int, target_state: trialv1State, state: trialv1State) -> None:
     print(f"Trial {trial_id} was not {target_state.value} but {state.value}", file=sys.stderr)
     print_trial_logs(trial_id)
 
@@ -849,10 +852,10 @@ def verify_completed_experiment_metadata(
 
     for t in trials:
         trial = t.trial
-        if trial.state != experimentv1State.COMPLETED:
+        if trial.state != trialv1State.COMPLETED:
             report_failed_trial(
                 trial.id,
-                target_state=experimentv1State.COMPLETED,
+                target_state=trialv1State.COMPLETED,
                 state=trial.state,
             )
             pytest.fail(f"Trial {trial.id} was not STATE_COMPLETED but {trial.state.value}")
@@ -926,7 +929,7 @@ def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[
     trials = experiment_trials(experiment_id)
     for t in trials:
         trial = t.trial
-        if trial.state != experimentv1State.ERROR:
+        if trial.state != trialv1State.ERROR:
             continue
 
         logs = trial_logs(trial.id)

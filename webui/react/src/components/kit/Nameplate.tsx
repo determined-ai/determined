@@ -20,8 +20,8 @@ const Nameplate: React.FC<Props> = ({ alias, compact, icon, name }) => {
         {icon}
       </div>
       <div className={css.text}>
-        {alias && <span className={css.alias}>{alias}</span>}
-        {<span>{name}</span>}
+        {alias && <div className={css.alias}>{alias}</div>}
+        <div className={css.name}>{name}</div>
       </div>
     </div>
   );
