@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { ChartGrid, ChartsProps, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
@@ -7,6 +7,8 @@ import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
 import handleError from 'utils/error';
 import { Loaded, NotLoaded } from 'utils/loadable';
+
+import Spinner from '../../components/kit/internal/Spinner/Spinner';
 
 import { useGlasbey } from './useGlasbey';
 
@@ -61,14 +63,18 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
 
   return (
     <div style={{ height: 'calc(100vh - 250px)', overflow: 'auto' }}>
-      <ChartGrid
-        chartsProps={chartsProps}
-        handleError={handleError}
-        scale={scale}
-        setScale={setScale}
-        xAxis={xAxis}
-        onXAxisChange={setXAxis}
-      />
+      {isLoaded ? (
+        <ChartGrid
+          chartsProps={chartsProps}
+          handleError={handleError}
+          scale={scale}
+          setScale={setScale}
+          xAxis={xAxis}
+          onXAxisChange={setXAxis}
+        />
+      ) : (
+        <Spinner center spinning />
+      )}
     </div>
   );
 };
