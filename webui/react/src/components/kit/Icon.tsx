@@ -202,7 +202,7 @@ const HeatmapIcon: React.FC = () => (
     <rect fill="currentcolor" height="4" width="4" x="5" y="5" />
     <rect fill="currentcolor" height="4" width="4" x="15" y="12" />
     <rect fill="currentcolor" height="4" width="4" x="10" y="15" />
-    </svg>
+  </svg>
 );
 
 const FourSquaresIcon: React.FC = () => (
