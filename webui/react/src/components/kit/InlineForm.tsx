@@ -18,13 +18,13 @@ interface Props<T> extends React.PropsWithChildren, Omit<FormProps, 'children'> 
   isPassword?: boolean;
   rules?: Rule[];
   testId?: string;
-  displayValue?: string;
+  displayFormatter?: (value: T) => string;
 }
 
 function InlineForm<T>({
   label,
   children,
-  displayValue,
+  displayFormatter,
   initialValue,
   value,
   isPassword = false,
@@ -40,17 +40,16 @@ function InlineForm<T>({
   const shouldCollapseText = useMemo(() => String(initialValue).length >= 45, [initialValue]); // prevents layout breaking, specially if using Input.TextArea.
   const inputCurrentValue = Form.useWatch('input', form);
   const readOnlyText = useMemo(() => {
-    if (displayValue) return displayValue;
-    let textValue = String(value ?? initialValue);
+    let textValue = displayFormatter ? displayFormatter(value ?? initialValue) : String(value ?? initialValue);
     if (value === undefined) {
       if (inputCurrentValue !== undefined && inputCurrentValue !== initialValue)
-        textValue = inputCurrentValue;
+        textValue = displayFormatter ? displayFormatter(inputCurrentValue) : inputCurrentValue;
     }
 
     if (isPassword) return textValue.replace(/\S/g, '*');
     if (shouldCollapseText) return textValue.slice(0, 50).concat('...');
     return textValue;
-  }, [shouldCollapseText, value, initialValue, isPassword, inputCurrentValue, displayValue]);
+  }, [shouldCollapseText, value, initialValue, isPassword, inputCurrentValue, displayFormatter]);
 
   const resetForm = useCallback(() => {
     form.resetFields();

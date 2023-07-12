@@ -25,6 +25,7 @@ import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { KeyboardShortcut, shortcutToString } from 'utils/shortcut';
 import { Mode } from 'utils/themes';
 
 import css from './SettingsAccount.module.scss';
@@ -45,11 +46,8 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
 
   const PasswordChangeModal = useModal(PasswordChangeModalComponent);
   const {
-    settings: {
-      jupyterLab: jupyterLabShortcut,
-      omnibar: omnibarShortcut,
-      navbarCollapsed: navbarCollapsedShortcut,
-    },
+    settings: shortcutSettings,
+    updateSettings,
   } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
   const {
     ui: { mode: uiMode },
@@ -57,6 +55,10 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
   } = useUI();
 
   const currentThemeOption = ThemeOptions[uiMode];
+
+  const updateShortcut = useCallback((shortcutId: string, shortcut: KeyboardShortcut) => {
+    updateSettings({ [shortcutId]: shortcut });
+  }, [updateSettings]);
 
   const handleSaveDisplayName = useCallback(
     async (newValue: string): Promise<void | Error> => {
@@ -130,7 +132,7 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
       <Section title="Preferences">
         <div className={css.section}>
           <InlineForm<Mode>
-            displayValue={currentThemeOption.displayName}
+            displayFormatter={(value: Mode) => ThemeOptions[value].displayName}
             initialValue={currentThemeOption.className}
             label="Theme Mode"
             onSubmit={(newValue) => {
@@ -150,19 +152,25 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
             <Column>
               <label>Open Omnibar</label>
             </Column>
-            <InputShortcut value={omnibarShortcut} />
+            <InlineForm<KeyboardShortcut> displayFormatter={shortcutToString} initialValue={shortcutSettings.omnibar} onSubmit={(s) => updateShortcut('omnibar', s)}>
+              <InputShortcut />
+            </InlineForm>
           </Columns>
           <Columns>
             <Column>
               <label>Launch JupyterLab Notebook</label>
             </Column>
-            <InputShortcut value={jupyterLabShortcut} />
+            <InlineForm<KeyboardShortcut> displayFormatter={shortcutToString} initialValue={shortcutSettings.jupyterLab} onSubmit={(s) => updateShortcut('jupyterLab', s)}>
+              <InputShortcut />
+            </InlineForm>
           </Columns>
           <Columns>
             <Column>
               <label>Toggle Sidebar</label>
             </Column>
-            <InputShortcut value={navbarCollapsedShortcut} />
+            <InlineForm<KeyboardShortcut> displayFormatter={shortcutToString} initialValue={shortcutSettings.navbarCollapsed} onSubmit={(s) => updateShortcut('navbarCollapsed', s)}>
+              <InputShortcut />
+            </InlineForm>
           </Columns>
         </div>
       </Section>
