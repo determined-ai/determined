@@ -944,9 +944,9 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 
 // Create a TrialSourceInfo, which serves as a link between trials and checkpoints
 // used for tracking purposes for fine tuning and inference
-func (a *apiServer) CreateTrialSourceInfo(
-	ctx context.Context, req *apiv1.CreateTrialSourceInfoRequest,
-) (*apiv1.CreateTrialSourceInfoResponse, error) {
+func (a *apiServer) ReportTrialSourceInfo(
+	ctx context.Context, req *apiv1.ReportTrialSourceInfoRequest,
+) (*apiv1.ReportTrialSourceInfoResponse, error) {
 	// TODO: Handle user auth/rbac
 	// curUser, _, err := grpcutil.GetUser(ctx)
 	// if err != nil {
@@ -957,7 +957,7 @@ func (a *apiServer) CreateTrialSourceInfo(
 	// properly if it is v1?
 	// TODO: Test for failure if you only provide part of the state for the model_version
 
-	resp := &apiv1.CreateTrialSourceInfoResponse{}
+	resp := &apiv1.ReportTrialSourceInfoResponse{}
 	tsi := req.TrialSourceInfo
 	query := db.Bun().NewInsert().Model(tsi).
 		Value("trial_source_info_type", "?", tsi.TrialSourceInfoType.String()).

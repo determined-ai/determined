@@ -2498,54 +2498,6 @@ class v1CreateTrialResponse(Printable):
         }
         return out
 
-class v1CreateTrialSourceInfoRequest(Printable):
-
-    def __init__(
-        self,
-        *,
-        trialSourceInfo: "v1TrialSourceInfo",
-    ):
-        self.trialSourceInfo = trialSourceInfo
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1CreateTrialSourceInfoRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "trialSourceInfo": v1TrialSourceInfo.from_json(obj["trialSourceInfo"]),
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "trialSourceInfo": self.trialSourceInfo.to_json(omit_unset),
-        }
-        return out
-
-class v1CreateTrialSourceInfoResponse(Printable):
-
-    def __init__(
-        self,
-        *,
-        checkpointUuid: str,
-        trialId: int,
-    ):
-        self.checkpointUuid = checkpointUuid
-        self.trialId = trialId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1CreateTrialSourceInfoResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "checkpointUuid": obj["checkpointUuid"],
-            "trialId": obj["trialId"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "checkpointUuid": self.checkpointUuid,
-            "trialId": self.trialId,
-        }
-        return out
-
 class v1CreateTrialsCollectionRequest(Printable):
 
     def __init__(
@@ -9965,6 +9917,54 @@ class v1ReportTrialMetricsRequest(Printable):
         }
         return out
 
+class v1ReportTrialSourceInfoRequest(Printable):
+
+    def __init__(
+        self,
+        *,
+        trialSourceInfo: "v1TrialSourceInfo",
+    ):
+        self.trialSourceInfo = trialSourceInfo
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ReportTrialSourceInfoRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "trialSourceInfo": v1TrialSourceInfo.from_json(obj["trialSourceInfo"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "trialSourceInfo": self.trialSourceInfo.to_json(omit_unset),
+        }
+        return out
+
+class v1ReportTrialSourceInfoResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        checkpointUuid: str,
+        trialId: int,
+    ):
+        self.checkpointUuid = checkpointUuid
+        self.trialId = trialId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ReportTrialSourceInfoResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "checkpointUuid": obj["checkpointUuid"],
+            "trialId": obj["trialId"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "checkpointUuid": self.checkpointUuid,
+            "trialId": self.trialId,
+        }
+        return out
+
 class v1ResourceAllocationAggregatedEntry(Printable):
 
     def __init__(
@@ -13000,6 +13000,62 @@ class v1TrialSourceInfo(Printable):
             out["sourceModelVersionVersion"] = self.sourceModelVersionVersion
         return out
 
+class v1TrialSourceInfoMetric(Printable):
+    metricReports: "typing.Optional[typing.Sequence[v1MetricsReport]]" = None
+
+    def __init__(
+        self,
+        *,
+        trialId: int,
+        trialSourceInfoType: "v1TrialSourceInfoType",
+        metricReports: "typing.Union[typing.Sequence[v1MetricsReport], None, Unset]" = _unset,
+    ):
+        self.trialId = trialId
+        self.trialSourceInfoType = trialSourceInfoType
+        if not isinstance(metricReports, Unset):
+            self.metricReports = metricReports
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialSourceInfoMetric":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "trialId": obj["trialId"],
+            "trialSourceInfoType": v1TrialSourceInfoType(obj["trialSourceInfoType"]),
+        }
+        if "metricReports" in obj:
+            kwargs["metricReports"] = [v1MetricsReport.from_json(x) for x in obj["metricReports"]] if obj["metricReports"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "trialId": self.trialId,
+            "trialSourceInfoType": self.trialSourceInfoType.value,
+        }
+        if not omit_unset or "metricReports" in vars(self):
+            out["metricReports"] = None if self.metricReports is None else [x.to_json(omit_unset) for x in self.metricReports]
+        return out
+
+class v1TrialSourceInfoMetricsResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        data: "typing.Sequence[v1TrialSourceInfoMetric]",
+    ):
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialSourceInfoMetricsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "data": [v1TrialSourceInfoMetric.from_json(x) for x in obj["data"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "data": [x.to_json(omit_unset) for x in self.data],
+        }
+        return out
+
 class v1TrialSourceInfoType(DetEnum):
     UNSPECIFIED = "UNSPECIFIED"
     INFERENCE = "INFERENCE"
@@ -14460,26 +14516,6 @@ def post_CreateTrial(
     if _resp.status_code == 200:
         return v1CreateTrialResponse.from_json(_resp.json())
     raise APIHttpError("post_CreateTrial", _resp)
-
-def post_CreateTrialSourceInfo(
-    session: "api.Session",
-    *,
-    body: "v1CreateTrialSourceInfoRequest",
-) -> "v1CreateTrialSourceInfoResponse":
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path="/api/v1/trial-source-info",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1CreateTrialSourceInfoResponse.from_json(_resp.json())
-    raise APIHttpError("post_CreateTrialSourceInfo", _resp)
 
 def post_CreateTrialsCollection(
     session: "api.Session",
@@ -16331,6 +16367,29 @@ def get_GetTrialProfilerMetrics(
         return
     raise APIHttpError("get_GetTrialProfilerMetrics", _resp)
 
+def get_GetTrialSourceInfoMetricsByCheckpoint(
+    session: "api.Session",
+    *,
+    checkpointUuid: str,
+    trialSourceInfoType: "typing.Optional[v1TrialSourceInfoType]" = None,
+) -> "v1TrialSourceInfoMetricsResponse":
+    _params = {
+        "trialSourceInfoType": trialSourceInfoType.value if trialSourceInfoType is not None else None,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/checkpoints/{checkpointUuid}/trial_source_info_metrics",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1TrialSourceInfoMetricsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTrialSourceInfoMetricsByCheckpoint", _resp)
+
 def get_GetTrialWorkloads(
     session: "api.Session",
     *,
@@ -17916,6 +17975,26 @@ def post_ReportTrialSearcherEarlyExit(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ReportTrialSearcherEarlyExit", _resp)
+
+def post_ReportTrialSourceInfo(
+    session: "api.Session",
+    *,
+    body: "v1ReportTrialSourceInfoRequest",
+) -> "v1ReportTrialSourceInfoResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/trial_source_info",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1ReportTrialSourceInfoResponse.from_json(_resp.json())
+    raise APIHttpError("post_ReportTrialSourceInfo", _resp)
 
 def post_ReportTrialTrainingMetrics(
     session: "api.Session",

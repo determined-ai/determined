@@ -1074,7 +1074,7 @@ message CreateTrialResponse {
 }
 
 // Create a TrialSourceInfo
-message CreateTrialSourceInfoRequest {
+message ReportTrialSourceInfoRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
       required: [ "trial_source_info" ]
@@ -1083,7 +1083,7 @@ message CreateTrialSourceInfoRequest {
   determined.trial.v1.TrialSourceInfo trial_source_info = 1;
 }
 
-message CreateTrialSourceInfoResponse {
+message ReportTrialSourceInfoResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
       required: [ "trial_id", "checkpoint_uuid" ]

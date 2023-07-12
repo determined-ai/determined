@@ -5849,7 +5849,7 @@ func (x *CreateTrialResponse) GetTrial() *trialv1.Trial {
 }
 
 // Create a TrialSourceInfo
-type CreateTrialSourceInfoRequest struct {
+type ReportTrialSourceInfoRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -5857,8 +5857,8 @@ type CreateTrialSourceInfoRequest struct {
 	TrialSourceInfo *trialv1.TrialSourceInfo `protobuf:"bytes,1,opt,name=trial_source_info,json=trialSourceInfo,proto3" json:"trial_source_info,omitempty"`
 }
 
-func (x *CreateTrialSourceInfoRequest) Reset() {
-	*x = CreateTrialSourceInfoRequest{}
+func (x *ReportTrialSourceInfoRequest) Reset() {
+	*x = ReportTrialSourceInfoRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_determined_api_v1_trial_proto_msgTypes[86]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -5866,13 +5866,13 @@ func (x *CreateTrialSourceInfoRequest) Reset() {
 	}
 }
 
-func (x *CreateTrialSourceInfoRequest) String() string {
+func (x *ReportTrialSourceInfoRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateTrialSourceInfoRequest) ProtoMessage() {}
+func (*ReportTrialSourceInfoRequest) ProtoMessage() {}
 
-func (x *CreateTrialSourceInfoRequest) ProtoReflect() protoreflect.Message {
+func (x *ReportTrialSourceInfoRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_determined_api_v1_trial_proto_msgTypes[86]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -5884,19 +5884,19 @@ func (x *CreateTrialSourceInfoRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateTrialSourceInfoRequest.ProtoReflect.Descriptor instead.
-func (*CreateTrialSourceInfoRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ReportTrialSourceInfoRequest.ProtoReflect.Descriptor instead.
+func (*ReportTrialSourceInfoRequest) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_trial_proto_rawDescGZIP(), []int{86}
 }
 
-func (x *CreateTrialSourceInfoRequest) GetTrialSourceInfo() *trialv1.TrialSourceInfo {
+func (x *ReportTrialSourceInfoRequest) GetTrialSourceInfo() *trialv1.TrialSourceInfo {
 	if x != nil {
 		return x.TrialSourceInfo
 	}
 	return nil
 }
 
-type CreateTrialSourceInfoResponse struct {
+type ReportTrialSourceInfoResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -5907,8 +5907,8 @@ type CreateTrialSourceInfoResponse struct {
 	CheckpointUuid string `protobuf:"bytes,2,opt,name=checkpoint_uuid,json=checkpointUuid,proto3" json:"checkpoint_uuid,omitempty"`
 }
 
-func (x *CreateTrialSourceInfoResponse) Reset() {
-	*x = CreateTrialSourceInfoResponse{}
+func (x *ReportTrialSourceInfoResponse) Reset() {
+	*x = ReportTrialSourceInfoResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_determined_api_v1_trial_proto_msgTypes[87]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -5916,13 +5916,13 @@ func (x *CreateTrialSourceInfoResponse) Reset() {
 	}
 }
 
-func (x *CreateTrialSourceInfoResponse) String() string {
+func (x *ReportTrialSourceInfoResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateTrialSourceInfoResponse) ProtoMessage() {}
+func (*ReportTrialSourceInfoResponse) ProtoMessage() {}
 
-func (x *CreateTrialSourceInfoResponse) ProtoReflect() protoreflect.Message {
+func (x *ReportTrialSourceInfoResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_determined_api_v1_trial_proto_msgTypes[87]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -5934,19 +5934,19 @@ func (x *CreateTrialSourceInfoResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateTrialSourceInfoResponse.ProtoReflect.Descriptor instead.
-func (*CreateTrialSourceInfoResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ReportTrialSourceInfoResponse.ProtoReflect.Descriptor instead.
+func (*ReportTrialSourceInfoResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_trial_proto_rawDescGZIP(), []int{87}
 }
 
-func (x *CreateTrialSourceInfoResponse) GetTrialId() int32 {
+func (x *ReportTrialSourceInfoResponse) GetTrialId() int32 {
 	if x != nil {
 		return x.TrialId
 	}
 	return 0
 }
 
-func (x *CreateTrialSourceInfoResponse) GetCheckpointUuid() string {
+func (x *ReportTrialSourceInfoResponse) GetCheckpointUuid() string {
 	if x != nil {
 		return x.CheckpointUuid
 	}
@@ -7199,8 +7199,8 @@ var file_determined_api_v1_trial_proto_rawDesc = []byte{
 	0x61, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72,
 	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x54,
 	0x72, 0x69, 0x61, 0x6c, 0x52, 0x05, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x3a, 0x0d, 0x92, 0x41, 0x0a,
-	0x0a, 0x08, 0xd2, 0x01, 0x05, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x22, 0x8b, 0x01, 0x0a, 0x1c, 0x43,
-	0x72, 0x65, 0x61, 0x74, 0x65, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x0a, 0x08, 0xd2, 0x01, 0x05, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x22, 0x8b, 0x01, 0x0a, 0x1c, 0x52,
+	0x65, 0x70, 0x6f, 0x72, 0x74, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65,
 	0x49, 0x6e, 0x66, 0x6f, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x50, 0x0a, 0x11, 0x74,
 	0x72, 0x69, 0x61, 0x6c, 0x5f, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x69, 0x6e, 0x66, 0x6f,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69,
@@ -7208,8 +7208,8 @@ var file_determined_api_v1_trial_proto_rawDesc = []byte{
 	0x61, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x0f, 0x74, 0x72,
 	0x69, 0x61, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x3a, 0x19, 0x92,
 	0x41, 0x16, 0x0a, 0x14, 0xd2, 0x01, 0x11, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x5f, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x22, 0x87, 0x01, 0x0a, 0x1d, 0x43, 0x72, 0x65,
-	0x61, 0x74, 0x65, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x6e,
+	0x72, 0x63, 0x65, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x22, 0x87, 0x01, 0x0a, 0x1d, 0x52, 0x65, 0x70,
+	0x6f, 0x72, 0x74, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x6e,
 	0x66, 0x6f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x19, 0x0a, 0x08, 0x74, 0x72,
 	0x69, 0x61, 0x6c, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x74, 0x72,
 	0x69, 0x61, 0x6c, 0x49, 0x64, 0x12, 0x27, 0x0a, 0x0f, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f,
@@ -7373,8 +7373,8 @@ var file_determined_api_v1_trial_proto_goTypes = []interface{}{
 	(*GetValidationMetricsResponse)(nil),                 // 88: determined.api.v1.GetValidationMetricsResponse
 	(*CreateTrialRequest)(nil),                           // 89: determined.api.v1.CreateTrialRequest
 	(*CreateTrialResponse)(nil),                          // 90: determined.api.v1.CreateTrialResponse
-	(*CreateTrialSourceInfoRequest)(nil),                 // 91: determined.api.v1.CreateTrialSourceInfoRequest
-	(*CreateTrialSourceInfoResponse)(nil),                // 92: determined.api.v1.CreateTrialSourceInfoResponse
+	(*ReportTrialSourceInfoRequest)(nil),                 // 91: determined.api.v1.ReportTrialSourceInfoRequest
+	(*ReportTrialSourceInfoResponse)(nil),                // 92: determined.api.v1.ReportTrialSourceInfoResponse
 	(*GetTrialSourceInfoMetricsByCheckpointRequest)(nil), // 93: determined.api.v1.GetTrialSourceInfoMetricsByCheckpointRequest
 	(*TrialSourceInfoMetricsResponse)(nil),               // 94: determined.api.v1.TrialSourceInfoMetricsResponse
 	(*TrialSourceInfoMetric)(nil),                        // 95: determined.api.v1.TrialSourceInfoMetric
@@ -7504,7 +7504,7 @@ var file_determined_api_v1_trial_proto_depIdxs = []int32{
 	123, // 91: determined.api.v1.GetValidationMetricsResponse.metrics:type_name -> determined.trial.v1.MetricsReport
 	106, // 92: determined.api.v1.CreateTrialRequest.hparams:type_name -> google.protobuf.Struct
 	113, // 93: determined.api.v1.CreateTrialResponse.trial:type_name -> determined.trial.v1.Trial
-	124, // 94: determined.api.v1.CreateTrialSourceInfoRequest.trial_source_info:type_name -> determined.trial.v1.TrialSourceInfo
+	124, // 94: determined.api.v1.ReportTrialSourceInfoRequest.trial_source_info:type_name -> determined.trial.v1.TrialSourceInfo
 	125, // 95: determined.api.v1.GetTrialSourceInfoMetricsByCheckpointRequest.trial_source_info_type:type_name -> determined.trial.v1.TrialSourceInfoType
 	95,  // 96: determined.api.v1.TrialSourceInfoMetricsResponse.data:type_name -> determined.api.v1.TrialSourceInfoMetric
 	125, // 97: determined.api.v1.TrialSourceInfoMetric.trial_source_info_type:type_name -> determined.trial.v1.TrialSourceInfoType
@@ -8558,7 +8558,7 @@ func file_determined_api_v1_trial_proto_init() {
 			}
 		}
 		file_determined_api_v1_trial_proto_msgTypes[86].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateTrialSourceInfoRequest); i {
+			switch v := v.(*ReportTrialSourceInfoRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8570,7 +8570,7 @@ func file_determined_api_v1_trial_proto_init() {
 			}
 		}
 		file_determined_api_v1_trial_proto_msgTypes[87].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateTrialSourceInfoResponse); i {
+			switch v := v.(*ReportTrialSourceInfoResponse); i {
 			case 0:
 				return &v.state
 			case 1:

@@ -684,7 +684,7 @@ func TestCompareTrialsSampling(t *testing.T) {
 	require.Equal(t, sampleBatches1, sampleBatches2)
 }
 
-func TestCreateTrialSourceInfo(t *testing.T) {
+func TestReportTrialSourceInfo(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
 	infTrial, _, _ := createTestTrialWithMetrics(
@@ -730,8 +730,8 @@ func TestCreateTrialSourceInfo(t *testing.T) {
 		CheckpointUuid:      checkpointUuid,
 		TrialSourceInfoType: trialv1.TrialSourceInfoType_INFERENCE,
 	}
-	req := &apiv1.CreateTrialSourceInfoRequest{TrialSourceInfo: trial_source_info}
-	resp, err := api.CreateTrialSourceInfo(ctx, req)
+	req := &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: trial_source_info}
+	resp, err := api.ReportTrialSourceInfo(ctx, req)
 	require.NoError(t, err)
 	require.Equal(t, resp.TrialId, int32(infTrial.ID))
 	require.Equal(t, resp.CheckpointUuid, checkpointUuid)
@@ -741,8 +741,8 @@ func TestCreateTrialSourceInfo(t *testing.T) {
 		CheckpointUuid:      checkpointUuid,
 		TrialSourceInfoType: trialv1.TrialSourceInfoType_INFERENCE,
 	}
-	req = &apiv1.CreateTrialSourceInfoRequest{TrialSourceInfo: trial_source_info2}
-	resp, err = api.CreateTrialSourceInfo(ctx, req)
+	req = &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: trial_source_info2}
+	resp, err = api.ReportTrialSourceInfo(ctx, req)
 	require.NoError(t, err)
 	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
 	require.Equal(t, resp.CheckpointUuid, checkpointUuid)

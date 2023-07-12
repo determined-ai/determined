@@ -683,12 +683,12 @@ service Determined {
     };
   }
 
-  // Create a Trial Collection for a set of TrialFilters.
-  rpc CreateTrialSourceInfo(CreateTrialSourceInfoRequest)
-      returns (CreateTrialSourceInfoResponse) {
+  // Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+  rpc ReportTrialSourceInfo(ReportTrialSourceInfoRequest)
+      returns (ReportTrialSourceInfoResponse) {
   
     option (google.api.http) = {
-      post: "/api/v1/trial-source-info"
+      post: "/api/v1/trial_source_info"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -1638,6 +1638,20 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Checkpoints"
+    };
+  }
+
+  // TODO:
+  // TODO: fix comment
+  // Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+  rpc GetTrialSourceInfoMetricsByCheckpoint(GetTrialSourceInfoMetricsByCheckpointRequest)
+      returns (TrialSourceInfoMetricsResponse) {
+  
+    option (google.api.http) = {
+      get: "/api/v1/checkpoints/{checkpoint_uuid}/trial_source_info_metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
     };
   }
 

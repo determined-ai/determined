@@ -2314,38 +2314,6 @@ export interface V1CreateTrialsCollectionResponse {
     collection?: V1TrialsCollection;
 }
 /**
- * 
- * @export
- * @interface V1CreateTrialSourceInfoRequest
- */
-export interface V1CreateTrialSourceInfoRequest {
-    /**
-     * 
-     * @type {V1TrialSourceInfo}
-     * @memberof V1CreateTrialSourceInfoRequest
-     */
-    trialSourceInfo: V1TrialSourceInfo;
-}
-/**
- * 
- * @export
- * @interface V1CreateTrialSourceInfoResponse
- */
-export interface V1CreateTrialSourceInfoResponse {
-    /**
-     * Trial ID of the created
-     * @type {number}
-     * @memberof V1CreateTrialSourceInfoResponse
-     */
-    trialId: number;
-    /**
-     * UUID of the checkpoint.
-     * @type {string}
-     * @memberof V1CreateTrialSourceInfoResponse
-     */
-    checkpointUuid: string;
-}
-/**
  * Response to CurrentUserRequest.
  * @export
  * @interface V1CurrentUserResponse
@@ -7744,6 +7712,38 @@ export interface V1ReportTrialSearcherEarlyExitResponse {
 /**
  * 
  * @export
+ * @interface V1ReportTrialSourceInfoRequest
+ */
+export interface V1ReportTrialSourceInfoRequest {
+    /**
+     * 
+     * @type {V1TrialSourceInfo}
+     * @memberof V1ReportTrialSourceInfoRequest
+     */
+    trialSourceInfo: V1TrialSourceInfo;
+}
+/**
+ * 
+ * @export
+ * @interface V1ReportTrialSourceInfoResponse
+ */
+export interface V1ReportTrialSourceInfoResponse {
+    /**
+     * Trial ID of the created
+     * @type {number}
+     * @memberof V1ReportTrialSourceInfoResponse
+     */
+    trialId: number;
+    /**
+     * UUID of the checkpoint.
+     * @type {string}
+     * @memberof V1ReportTrialSourceInfoResponse
+     */
+    checkpointUuid: string;
+}
+/**
+ * 
+ * @export
  * @interface V1ReportTrialTrainingMetricsResponse
  */
 export interface V1ReportTrialTrainingMetricsResponse {
@@ -10164,6 +10164,44 @@ export interface V1TrialSourceInfo {
      * @memberof V1TrialSourceInfo
      */
     trialSourceInfoType: V1TrialSourceInfoType;
+}
+/**
+ * 
+ * @export
+ * @interface V1TrialSourceInfoMetric
+ */
+export interface V1TrialSourceInfoMetric {
+    /**
+     * Trial ID for the inference or fine-tuning run
+     * @type {number}
+     * @memberof V1TrialSourceInfoMetric
+     */
+    trialId: number;
+    /**
+     * Type of the TrialSourceInfo
+     * @type {V1TrialSourceInfoType}
+     * @memberof V1TrialSourceInfoMetric
+     */
+    trialSourceInfoType: V1TrialSourceInfoType;
+    /**
+     * All metrics for the trial
+     * @type {Array<V1MetricsReport>}
+     * @memberof V1TrialSourceInfoMetric
+     */
+    metricReports?: Array<V1MetricsReport>;
+}
+/**
+ * 
+ * @export
+ * @interface V1TrialSourceInfoMetricsResponse
+ */
+export interface V1TrialSourceInfoMetricsResponse {
+    /**
+     * All the related trials and their metrics
+     * @type {Array<V1TrialSourceInfoMetric>}
+     * @memberof V1TrialSourceInfoMetricsResponse
+     */
+    data: Array<V1TrialSourceInfoMetric>;
 }
 /**
  * - UNSPECIFIED: The type is unspecified  - INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
@@ -17197,44 +17235,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Create a Trial Collection for a set of TrialFilters.
-         * @param {V1CreateTrialSourceInfoRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        createTrialSourceInfo(body: V1CreateTrialSourceInfoRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling createTrialSourceInfo.');
-            }
-            const localVarPath = `/api/v1/trial-source-info`;
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'POST', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            localVarRequestOptions.body = JSON.stringify(body)
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
@@ -17724,6 +17724,47 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary TODO: TODO: fix comment Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+         * @param {string} checkpointUuid UUID of the checkpoint.
+         * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - UNSPECIFIED: The type is unspecified  - INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialSourceInfoMetricsByCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options: any = {}): FetchArgs {
+            // verify required parameter 'checkpointUuid' is not null or undefined
+            if (checkpointUuid === null || checkpointUuid === undefined) {
+                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling getTrialSourceInfoMetricsByCheckpoint.');
+            }
+            const localVarPath = `/api/v1/checkpoints/{checkpointUuid}/trial_source_info_metrics`
+                .replace(`{${"checkpointUuid"}}`, encodeURIComponent(String(checkpointUuid)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (trialSourceInfoType !== undefined) {
+                localVarQueryParameter['trialSourceInfoType'] = trialSourceInfoType
+            }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
@@ -18480,6 +18521,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+         * @param {V1ReportTrialSourceInfoRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        reportTrialSourceInfo(body: V1ReportTrialSourceInfoRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling reportTrialSourceInfo.');
+            }
+            const localVarPath = `/api/v1/trial_source_info`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Record training metrics for specified training.
          * @param {number} trainingMetricsTrialId The trial associated with these metrics.
          * @param {V1TrialMetrics} body The training metrics to persist.
@@ -19149,25 +19228,6 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Create a Trial Collection for a set of TrialFilters.
-         * @param {V1CreateTrialSourceInfoRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        createTrialSourceInfo(body: V1CreateTrialSourceInfoRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateTrialSourceInfoResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createTrialSourceInfo(body, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
@@ -19412,6 +19472,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getTelemetry(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTelemetryResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTelemetry(options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary TODO: TODO: fix comment Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+         * @param {string} checkpointUuid UUID of the checkpoint.
+         * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - UNSPECIFIED: The type is unspecified  - INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialSourceInfoMetricsByCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1TrialSourceInfoMetricsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialSourceInfoMetricsByCheckpoint(checkpointUuid, trialSourceInfoType, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19754,6 +19834,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+         * @param {V1ReportTrialSourceInfoRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        reportTrialSourceInfo(body: V1ReportTrialSourceInfoRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialSourceInfoResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialSourceInfo(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Record training metrics for specified training.
          * @param {number} trainingMetricsTrialId The trial associated with these metrics.
          * @param {V1TrialMetrics} body The training metrics to persist.
@@ -20066,16 +20165,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Create a Trial Collection for a set of TrialFilters.
-         * @param {V1CreateTrialSourceInfoRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        createTrialSourceInfo(body: V1CreateTrialSourceInfoRequest, options?: any) {
-            return InternalApiFp(configuration).createTrialSourceInfo(body, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
@@ -20212,6 +20301,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         getTelemetry(options?: any) {
             return InternalApiFp(configuration).getTelemetry(options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary TODO: TODO: fix comment Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+         * @param {string} checkpointUuid UUID of the checkpoint.
+         * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - UNSPECIFIED: The type is unspecified  - INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialSourceInfoMetricsByCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
+            return InternalApiFp(configuration).getTrialSourceInfoMetricsByCheckpoint(checkpointUuid, trialSourceInfoType, options)(fetch, basePath);
         },
         /**
          * 
@@ -20398,6 +20498,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         reportTrialSearcherEarlyExit(trialId: number, body: V1TrialEarlyExit, options?: any) {
             return InternalApiFp(configuration).reportTrialSearcherEarlyExit(trialId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+         * @param {V1ReportTrialSourceInfoRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        reportTrialSourceInfo(body: V1ReportTrialSourceInfoRequest, options?: any) {
+            return InternalApiFp(configuration).reportTrialSourceInfo(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -20666,18 +20776,6 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
-     * @summary Create a Trial Collection for a set of TrialFilters.
-     * @param {V1CreateTrialSourceInfoRequest} body
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public createTrialSourceInfo(body: V1CreateTrialSourceInfoRequest, options?: any) {
-        return InternalApiFp(this.configuration).createTrialSourceInfo(body, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
      * @summary Remove a group.
      * @param {number} groupId The id of the group that should be deleted.
      * @param {*} [options] Override http request option.
@@ -20839,6 +20937,19 @@ export class InternalApi extends BaseAPI {
      */
     public getTelemetry(options?: any) {
         return InternalApiFp(this.configuration).getTelemetry(options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary TODO: TODO: fix comment Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+     * @param {string} checkpointUuid UUID of the checkpoint.
+     * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - UNSPECIFIED: The type is unspecified  - INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getTrialSourceInfoMetricsByCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
+        return InternalApiFp(this.configuration).getTrialSourceInfoMetricsByCheckpoint(checkpointUuid, trialSourceInfoType, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -21057,6 +21168,18 @@ export class InternalApi extends BaseAPI {
      */
     public reportTrialSearcherEarlyExit(trialId: number, body: V1TrialEarlyExit, options?: any) {
         return InternalApiFp(this.configuration).reportTrialSearcherEarlyExit(trialId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+     * @param {V1ReportTrialSourceInfoRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public reportTrialSourceInfo(body: V1ReportTrialSourceInfoRequest, options?: any) {
+        return InternalApiFp(this.configuration).reportTrialSourceInfo(body, options)(this.fetch, this.basePath)
     }
     
     /**
