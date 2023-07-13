@@ -20,11 +20,16 @@ class Workspace:
         workspace_id: Optional[int] = None,
         workspace_name: Optional[str] = None,
     ):
-        if not (workspace_name or workspace_id):
-            raise ValueError("Workspace must be constructed with either a name or id")
-        self._session = session
-        self.id = workspace_id
+        if (workspace_id is None) ^ (workspace_name is None):
+            raise ValueError("Workspace must be constructed with either a name or id (not both).")
+
+        if workspace_id is None:
+            assert workspace_name is not None
+            self.id = _get_from_name(session, workspace_name).id
+        else:
+            self.id = workspace_id
         self.name = workspace_name
+        self._session = session
 
     @classmethod
     def _from_bindings(
@@ -39,14 +44,15 @@ class Workspace:
         self.name = workspace_bindings.name
 
     def reload(self) -> None:
-        assert not (self.id is None and self.name is None)
-        if self.id is None:  # We know the name but not the ID
-            workspaces_resp = bindings.get_GetWorkspaces(session=self._session, name=self.name)
-            if len(workspaces_resp.workspaces) == 0:
-                raise ValueError(f"No workspace found with name {self.name}")
-            workspace_bindings = workspaces_resp.workspaces[0]
-        else:
-            workspace_resp = bindings.get_GetWorkspace(session=self._session, id=self.id)
-            workspace_bindings = workspace_resp.workspace
+        resp = bindings.get_GetWorkspace(session=self._session, id=self.id)
+        workspace_bindings = resp.workspace
 
         self._hydrate(workspace_bindings)
+
+
+def _get_from_name(session: api.Session, name: str) -> bindings.v1Workspace:
+    """Workspace lookup from master that relies on a workspace name."""
+    resp = bindings.get_GetWorkspaces(session=session, name=name)
+    if len(resp.workspaces) == 0:
+        raise ValueError(f"No workspace found with name {name}")
+    return resp.workspaces[0]
