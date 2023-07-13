@@ -17,7 +17,7 @@ from typing import List
 
 import tensorflow as tf
 from cifar_model import build_model, build_optimizer, compile_model
-from data import download_data, get_training_data, get_validation_data
+from data import load_numpy_data
 from tensorflow.keras.models import Sequential
 
 from determined import keras
@@ -26,14 +26,7 @@ from determined import keras
 class CIFARTrial(keras.TFKerasTrial):
     def __init__(self, context: keras.TFKerasTrialContext) -> None:
         self.context = context
-
-        # Create a unique download directory for each rank so they don't overwrite each
-        # other when doing distributed training.
-        self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
-        self.download_directory = download_data(
-            download_directory=self.download_directory,
-            url=self.context.get_data_config()["url"],
-        )
+        self.train_np, self.test_np = load_numpy_data(self.context)
 
     def session_config(self) -> tf.compat.v1.ConfigProto:
         if self.context.get_hparams().get("disable_CPU_parallelism", False):
@@ -71,14 +64,25 @@ class CIFARTrial(keras.TFKerasTrial):
 
     def build_training_data_loader(self) -> keras.InputData:
         hparams = self.context.get_hparams()
-        # Return a tf.keras.Sequence.
-        return get_training_data(
-            data_directory=self.download_directory,
-            batch_size=self.context.get_per_slot_batch_size(),
-            width_shift_range=hparams.get("width_shift_range", 0.0),
-            height_shift_range=hparams.get("height_shift_range", 0.0),
-            horizontal_flip=hparams.get("horizontal_flip", False),
+
+        train_ds = self.context.wrap_dataset(tf.data.Dataset.from_tensor_slices(self.train_np))
+        augmentation = tf.keras.Sequential(
+            [
+                tf.keras.layers.RandomFlip(mode="horizontal"),
+                tf.keras.layers.RandomTranslation(
+                    height_factor=hparams.get("height_factor", 0.0),
+                    width_factor=hparams.get("width_factor", 0.0),
+                ),
+            ]
         )
+        train_ds = train_ds.batch(self.context.get_per_slot_batch_size())
+        train_ds = train_ds.map(
+            lambda x, y: (augmentation(x), y), num_parallel_calls=tf.data.experimental.AUTOTUNE
+        )
+        train_ds = train_ds.prefetch(tf.data.experimental.AUTOTUNE)
+        return train_ds
 
     def build_validation_data_loader(self) -> keras.InputData:
-        return get_validation_data(self.download_directory)
+        test_ds = self.context.wrap_dataset(tf.data.Dataset.from_tensor_slices(self.test_np))
+        test_ds = test_ds.batch(1)
+        return test_ds
