@@ -8,9 +8,7 @@ class Workspace:
     """A class representing a Workspace object.
 
     Attributes:
-        id: The ID of the workspace. Though a Workspace object can be created without an ID (and
-            therefore the attribute is mutable), workspace IDs are immutable for the lifetime of
-            the workspace.
+        id: (str) The ID of the workspace.
         name: (Mutable, str) The name of the workspace.
     """
 
