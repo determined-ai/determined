@@ -39,6 +39,8 @@ export const shortcutSettingsDefaults = {
   },
 } as const;
 
+export const shortcutsSettingsPath = 'shortcuts';
+
 const shortCutSettingsConfig: SettingsConfig<Settings> = {
   settings: {
     jupyterLab: {

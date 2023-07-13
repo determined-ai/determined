@@ -89,6 +89,8 @@ export const experimentListGlobalSettingsDefaults = {
   rowHeight: RowHeight.MEDIUM,
 } as const;
 
+export const experimentListGlobalSettingsPath = 'f_project-details-global';
+
 export const settingsConfigGlobal: SettingsConfig<F_ExperimentListGlobalSettings> = {
   settings: {
     expListView: {
