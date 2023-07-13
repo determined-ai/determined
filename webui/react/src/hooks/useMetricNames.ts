@@ -55,7 +55,7 @@ const useMetricNames = (
           ...newValidationMetrics.map((name) => ({ name, type: MetricType.Validation })),
           ...newTrainingMetrics.map((name) => ({ name, type: MetricType.Training })),
         ];
-        if (newMetrics.length !== 0) {
+        if (newMetrics.length > 0) {
           setMetrics((prevMetrics) => {
             /*
              * Since we may intermittently receive a subset of all available
