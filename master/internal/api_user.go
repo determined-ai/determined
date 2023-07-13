@@ -544,7 +544,7 @@ func (a *apiServer) OverwriteUserSetting(
 		return nil, errExternalSessions
 	}
 	if req.Settings == nil {
-		return nil, status.Error(codes.InvalidArgument, "must specify settings")
+		req.Settings = []*userv1.UserWebSetting{}
 	}
 
 	curUser, _, err := grpcutil.GetUser(ctx)
