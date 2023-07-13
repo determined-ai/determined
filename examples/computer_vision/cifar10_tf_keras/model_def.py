@@ -15,13 +15,13 @@ Based on: https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py
 """
 from typing import List, Tuple
 
-import determined as det
 import numpy as np
 import tensorflow as tf
 from cifar_model import build_model, build_optimizer, compile_model
 from data import load_numpy_data
 from tensorflow.keras.models import Sequential
 
+import determined as det
 from determined import keras
 
 
