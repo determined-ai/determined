@@ -317,7 +317,7 @@ func (db *PgDB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 }
 
 // UpdateUserSetting updates user setting.
-func UpdateUserSetting(settings []model.UserWebSetting) error {
+func UpdateUserSetting(settings []*model.UserWebSetting) error {
 	var err error
 	for _, setting := range settings {
 		if len(setting.Value) == 0 {

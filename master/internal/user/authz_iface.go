@@ -60,7 +60,7 @@ type UserAuthZ interface {
 	CanGetUsersOwnSettings(ctx context.Context, curUser model.User) error
 	// POST /api/v1/users/setting
 	CanCreateUsersOwnSetting(
-		ctx context.Context, curUser model.User, settings []model.UserWebSetting,
+		ctx context.Context, curUser model.User, settings []*model.UserWebSetting,
 	) error
 	// POST /api/v1/users/setting/reset
 	CanResetUsersOwnSettings(ctx context.Context, curUser model.User) error

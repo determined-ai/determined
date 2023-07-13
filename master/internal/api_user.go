@@ -522,9 +522,9 @@ func (a *apiServer) PostUserSetting(
 	if err != nil {
 		return nil, err
 	}
-	var settingsModel []model.UserWebSetting
+	var settingsModel []*model.UserWebSetting
 	for _, setting := range req.Settings {
-		settingsModel = append(settingsModel, model.UserWebSetting{
+		settingsModel = append(settingsModel, &model.UserWebSetting{
 			UserID:      curUser.ID,
 			Key:         setting.Key,
 			Value:       setting.Value,

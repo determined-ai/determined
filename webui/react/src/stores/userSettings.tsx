@@ -4,8 +4,7 @@ import { Map } from 'immutable';
 import * as t from 'io-ts';
 
 import { getUserSetting, resetUserSetting, updateUserSetting } from 'services/api';
-import { V1GetUserSettingResponse } from 'services/api-ts-sdk';
-import { UpdateUserSettingParams } from 'services/types';
+import { V1GetUserSettingResponse, V1UserWebSetting } from 'services/api-ts-sdk';
 import { Json, JsonObject } from 'types';
 import { isJsonObject, isObject } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
@@ -197,35 +196,26 @@ class UserSettingsStore extends PollingStore {
   // - API should support setting non-objects as values directly like a regular
   //   key/value store.
   protected updateUserSetting<T>(key: string, value: T) {
-    const dbUpdates: Array<UpdateUserSettingParams> = [];
+    const dbUpdates: Array<V1UserWebSetting> = [];
     if (isObject(value)) {
       const settings = value as unknown as { string: unknown };
       dbUpdates.push(
-        ...Object.keys(settings).reduce<UpdateUserSettingParams[]>((acc, setting) => {
+        ...Object.keys(settings).reduce<V1UserWebSetting[]>((acc, setting) => {
           return [
             ...acc,
             {
-              settings: {
-                key: setting,
-                storagePath: key,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                value: JSON.stringify((settings as any)[setting]),
-              },
+              key: setting,
               storagePath: key,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              value: JSON.stringify((settings as any)[setting]),
             },
           ];
         }, []),
       );
     } else {
-      dbUpdates.push({
-        settings: { key: '_ROOT', storagePath: key, value: JSON.stringify(value) },
-      });
+      dbUpdates.push({ key: '_ROOT', storagePath: key, value: JSON.stringify(value) });
     }
-    Promise.allSettled(
-      dbUpdates.map((update) => {
-        return updateUserSetting(update);
-      }),
-    ).catch((e) =>
+    return updateUserSetting({ settings: dbUpdates }).catch((e) =>
       handleError(e, {
         isUserTriggered: false,
         publicMessage: `Unable to update user settings for key: ${key}.`,

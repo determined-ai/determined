@@ -118,7 +118,7 @@ func (a *UserAuthZBasic) CanGetUsersOwnSettings(ctx context.Context, curUser mod
 
 // CanCreateUsersOwnSetting always returns nil.
 func (a *UserAuthZBasic) CanCreateUsersOwnSetting(
-	ctx context.Context, curUser model.User, settings []model.UserWebSetting,
+	ctx context.Context, curUser model.User, settings []*model.UserWebSetting,
 ) error {
 	return nil
 }
