@@ -1,15 +1,4 @@
-import {
-  array,
-  boolean,
-  literal,
-  number,
-  partial,
-  record,
-  string,
-  type,
-  TypeOf,
-  union,
-} from 'io-ts';
+import { array, boolean, literal, number, record, string, type, TypeOf, union } from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { SettingsConfig } from 'hooks/useSettings';

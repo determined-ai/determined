@@ -11,12 +11,13 @@ import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner';
 import { ThemeOptions } from 'components/ThemeToggle';
-import { useSettings } from 'hooks/useSettings';
 import { experimentListGlobalSettingsConfig, experimentListGlobalSettingsDefaults, ExpListView, RowHeight } from 'pages/F_ExpList/F_ExperimentList.settings';
 import { rowHeightCopy } from 'pages/F_ExpList/glide-table/RowHeightMenu';
-import shortCutSettingsConfig, {
-  Settings as ShortcutSettings,
+import {
+  shortcutSettingsConfig,
+  shortcutSettingsDefaults,
 } from 'pages/Settings/UserSettings.settings';
 import { patchUser } from 'services/api';
 import useUI from 'stores/contexts/UI';
@@ -48,45 +49,12 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
   const info = useObservable(determinedStore.info);
 
   const PasswordChangeModal = useModal(PasswordChangeModalComponent);
-  const { settings: shortcutSettings, updateSettings } =
-    useSettings<ShortcutSettings>(shortCutSettingsConfig);
   const {
     ui: { mode: uiMode },
     actions: { setMode },
   } = useUI();
 
   const currentThemeOption = ThemeOptions[uiMode];
-
-  const experimentListGlobalSettings = Loadable.match(useObservable(userSettings.get(experimentListGlobalSettingsConfig, 'f_project-details-global')), {
-    Loaded: (s) => {
-      if (s) return s;
-      return experimentListGlobalSettingsDefaults;
-    },
-    NotLoaded: () => experimentListGlobalSettingsDefaults,
-  });
-
-  const updateRowHeight = useCallback((rh: RowHeight) => {
-    const values = {
-      ...experimentListGlobalSettings,
-      rowHeight: rh,
-    };
-    userSettings.set(experimentListGlobalSettingsConfig, 'f_project-details-global', values);
-  }, [experimentListGlobalSettings]);
-
-  const updateExpListView = useCallback((v: ExpListView) => {
-    const values = {
-      ...experimentListGlobalSettings,
-      expListView: v,
-    };
-    userSettings.set(experimentListGlobalSettingsConfig, 'f_project-details-global', values);
-  }, [experimentListGlobalSettings]);
-
-  const updateShortcut = useCallback(
-    (shortcutId: string, shortcut: KeyboardShortcut) => {
-      updateSettings({ [shortcutId]: shortcut });
-    },
-    [updateSettings],
-  );
 
   const handleSaveDisplayName = useCallback(
     async (newValue: string): Promise<void | Error> => {
@@ -178,53 +146,96 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
               </Option>
             </Select>
           </InlineForm>
-          <InlineForm<RowHeight>
-            initialValue={experimentListGlobalSettings.rowHeight}
-            label="Table Density"
-            valueFormatter={(rh) => rowHeightCopy[rh]}
-            onSubmit={updateRowHeight}>
-            <Select searchable={false}>
-              {Object.entries(rowHeightCopy).map(([rowHeight, label]) => (
-                <Option key={rowHeight} value={rowHeight}>{label}</Option>
-              ))}
-            </Select>
-          </InlineForm>
-          <InlineForm<ExpListView>
-            initialValue={experimentListGlobalSettings.expListView}
-            label="Infinite Scroll"
-            valueFormatter={(v) => v === 'scroll' ? 'On' : 'Off'}
-            onSubmit={updateExpListView}>
-            <Select searchable={false}>
-              <Option key="scroll" value="scroll">On</Option>
-              <Option key="paged" value="paged">Off</Option>
-            </Select>
-          </InlineForm>
+          {Loadable.match(useObservable(userSettings.get(experimentListGlobalSettingsConfig, 'f_project-details-global')), {
+            Loaded: (s) => {
+              const settings = s === null ? experimentListGlobalSettingsDefaults : { ...experimentListGlobalSettingsDefaults, ...s };
+              return (
+                <>
+                  <InlineForm<RowHeight>
+                    initialValue={settings.rowHeight}
+                    label="Table Density"
+                    valueFormatter={(rh) => rowHeightCopy[rh]}
+                    onSubmit={(rh) => {
+                      userSettings.set(experimentListGlobalSettingsConfig, 'f_project-details-global', {
+                        ...settings,
+                        rowHeight: rh,
+                      });
+                    }}>
+                    <Select searchable={false}>
+                      {Object.entries(rowHeightCopy).map(([rowHeight, label]) => (
+                        <Option key={rowHeight} value={rowHeight}>{label}</Option>
+                      ))}
+                    </Select>
+                  </InlineForm>
+                  <InlineForm<ExpListView>
+                    initialValue={settings.expListView}
+                    label="Infinite Scroll"
+                    valueFormatter={(v) => v === 'scroll' ? 'On' : 'Off'}
+                    onSubmit={(v) => {
+                      userSettings.set(experimentListGlobalSettingsConfig, 'f_project-details-global', {
+                        ...settings,
+                        expListView: v,
+                      });
+                    }}>
+                    <Select searchable={false}>
+                      <Option key="scroll" value="scroll">On</Option>
+                      <Option key="paged" value="paged">Off</Option>
+                    </Select>
+                  </InlineForm>
+                </>);
+            },
+            NotLoaded: () => <Spinner />,
+          })}
         </div>
         <Divider />
       </Section>
       <Section title="Shortcuts">
         <div className={css.section}>
-          <InlineForm<KeyboardShortcut>
-            initialValue={shortcutSettings.omnibar}
-            label="Open Omnibar"
-            valueFormatter={shortcutToString}
-            onSubmit={(s) => updateShortcut('omnibar', s)}>
-            <InputShortcut />
-          </InlineForm>
-          <InlineForm<KeyboardShortcut>
-            initialValue={shortcutSettings.jupyterLab}
-            label="Launch JupyterLab Notebook"
-            valueFormatter={shortcutToString}
-            onSubmit={(s) => updateShortcut('jupyterLab', s)}>
-            <InputShortcut />
-          </InlineForm>
-          <InlineForm<KeyboardShortcut>
-            initialValue={shortcutSettings.navbarCollapsed}
-            label="Toggle Sidebar"
-            valueFormatter={shortcutToString}
-            onSubmit={(s) => updateShortcut('navbarCollapsed', s)}>
-            <InputShortcut />
-          </InlineForm>
+          {Loadable.match(useObservable(userSettings.get(shortcutSettingsConfig, 'shortcuts')), {
+            Loaded: (s) => {
+              const shortcutSettings = s === null ? shortcutSettingsDefaults : { ...shortcutSettingsDefaults, ...s };
+              return (
+                <>
+                  <InlineForm<KeyboardShortcut>
+                    initialValue={shortcutSettings.omnibar}
+                    label="Open Omnibar"
+                    valueFormatter={shortcutToString}
+                    onSubmit={(sc) => {
+                      userSettings.set(shortcutSettingsConfig, 'shortcuts', {
+                        ...shortcutSettings,
+                        omnibar: sc,
+                      });
+                    }}>
+                    <InputShortcut />
+                  </InlineForm>
+                  <InlineForm<KeyboardShortcut>
+                    initialValue={shortcutSettings.jupyterLab}
+                    label="Launch JupyterLab Notebook"
+                    valueFormatter={shortcutToString}
+                    onSubmit={(sc) => {
+                      userSettings.set(shortcutSettingsConfig, 'shortcuts', {
+                        ...shortcutSettings,
+                        jupyterLab: sc,
+                      });
+                    }}>
+                    <InputShortcut />
+                  </InlineForm>
+                  <InlineForm<KeyboardShortcut>
+                    initialValue={shortcutSettings.navbarCollapsed}
+                    label="Toggle Sidebar"
+                    valueFormatter={shortcutToString}
+                    onSubmit={(sc) => {
+                      userSettings.set(shortcutSettingsConfig, 'shortcuts', {
+                        ...shortcutSettings,
+                        navbarCollapsed: sc,
+                      });
+                    }}>
+                    <InputShortcut />
+                  </InlineForm>
+                </>);
+            },
+            NotLoaded: () => <Spinner />,
+          })}
         </div>
       </Section>
     </Drawer>
