@@ -22,7 +22,7 @@ import (
 // 1. A specific key/value pair tag.
 // 2. Names of agents that are equal to the instance IDs.
 type awsCluster struct {
-	*provconfig.AWSClusterConfig
+	config       *provconfig.AWSClusterConfig
 	resourcePool string
 	masterURL    url.URL
 	ec2UserData  []byte
@@ -96,10 +96,10 @@ func newAWSCluster(
 	configFileBase64 := base64.StdEncoding.EncodeToString(config.AgentConfigFileContents)
 
 	cluster := &awsCluster{
-		resourcePool:     resourcePool,
-		AWSClusterConfig: config.AWS,
-		masterURL:        *masterURL,
-		client:           ec2.New(sess),
+		resourcePool: resourcePool,
+		config:       config.AWS,
+		masterURL:    *masterURL,
+		client:       ec2.New(sess),
 		ec2UserData: mustMakeAgentSetupScript(agentSetupScriptConfig{
 			MasterHost:                   masterURL.Hostname(),
 			MasterPort:                   masterURL.Port(),
@@ -122,7 +122,7 @@ func newAWSCluster(
 		syslog: logrus.WithField("aws-cluster", resourcePool),
 	}
 
-	if cluster.SpotEnabled {
+	if cluster.config.SpotEnabled {
 		cluster.spot = &spotState{
 			trackedReqs:          newSetOfSpotRequests(),
 			approximateClockSkew: time.Second * 0,
@@ -133,12 +133,12 @@ func newAWSCluster(
 	return cluster, nil
 }
 
-func (c *awsCluster) instanceType() model.InstanceType {
-	return c.InstanceType
+func (c *awsCluster) InstanceType() model.InstanceType {
+	return c.config.InstanceType
 }
 
-func (c *awsCluster) slotsPerInstance() int {
-	return c.AWSClusterConfig.SlotsPerInstance()
+func (c *awsCluster) SlotsPerInstance() int {
+	return c.config.SlotsPerInstance()
 }
 
 func (c *awsCluster) agentNameFromInstance(inst *ec2.Instance) string {
@@ -161,35 +161,35 @@ func (c *awsCluster) stateFromEC2State(state *ec2.InstanceState) model.InstanceS
 	return model.Unknown
 }
 
-func (c *awsCluster) prestart() {
-	if c.SpotEnabled {
+func (c *awsCluster) Prestart() {
+	if c.config.SpotEnabled {
 		c.attemptToApproximateClockSkew()
 		c.cleanupLegacySpotInstances()
 	}
 }
 
-func (c *awsCluster) list() ([]*model.Instance, error) {
-	if c.SpotEnabled {
+func (c *awsCluster) List() ([]*model.Instance, error) {
+	if c.config.SpotEnabled {
 		return c.listSpot()
 	}
 	return c.listOnDemand()
 }
 
-func (c *awsCluster) launch(instanceNum int) error {
-	if c.SpotEnabled {
+func (c *awsCluster) Launch(instanceNum int) error {
+	if c.config.SpotEnabled {
 		return c.launchSpot(instanceNum)
 	}
 	return c.launchOnDemand(instanceNum)
 }
 
-func (c *awsCluster) terminate(instanceIDs []string) {
+func (c *awsCluster) Terminate(instanceIDs []string) {
 	ids := make([]*string, 0, len(instanceIDs))
 	for _, id := range instanceIDs {
 		idCopy := id
 		ids = append(ids, &idCopy)
 	}
 
-	if c.SpotEnabled {
+	if c.config.SpotEnabled {
 		c.terminateSpot(ids)
 	} else {
 		c.terminateOnDemand(ids)
@@ -279,8 +279,8 @@ func (c *awsCluster) describeInstances(dryRun bool) ([]*ec2.Instance, error) {
 		DryRun: aws.Bool(dryRun),
 		Filters: []*ec2.Filter{
 			{
-				Name:   aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
-				Values: []*string{aws.String(c.TagValue)},
+				Name:   aws.String(fmt.Sprintf("tag:%s", c.config.TagKey)),
+				Values: []*string{aws.String(c.config.TagValue)},
 			},
 			{
 				Name:   aws.String(fmt.Sprintf("tag:%s", "determined-resource-pool")),
@@ -340,16 +340,16 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 				DeviceName: aws.String("/dev/sda1"),
 				Ebs: &ec2.EbsBlockDevice{
 					DeleteOnTermination: aws.Bool(true),
-					VolumeSize:          aws.Int64(int64(c.RootVolumeSize)),
+					VolumeSize:          aws.Int64(int64(c.config.RootVolumeSize)),
 					VolumeType:          aws.String("gp2"),
 				},
 			},
 		},
 		DryRun:                            aws.Bool(dryRun),
-		ImageId:                           aws.String(c.ImageID),
+		ImageId:                           aws.String(c.config.ImageID),
 		InstanceInitiatedShutdownBehavior: aws.String(ec2.ShutdownBehaviorTerminate),
-		InstanceType:                      aws.String(c.AWSClusterConfig.InstanceType.Name()),
-		KeyName:                           aws.String(c.SSHKeyName),
+		InstanceType:                      aws.String(c.config.InstanceType.Name()),
+		KeyName:                           aws.String(c.config.SSHKeyName),
 		MaxCount:                          aws.Int64(int64(instanceNum)),
 		MinCount:                          aws.Int64(1),
 		TagSpecifications: []*ec2.TagSpecification{
@@ -358,11 +358,11 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 				Tags: []*ec2.Tag{
 					{
 						Key:   aws.String("Name"),
-						Value: aws.String(c.InstanceName),
+						Value: aws.String(c.config.InstanceName),
 					},
 					{
-						Key:   aws.String(c.TagKey),
-						Value: aws.String(c.TagValue),
+						Key:   aws.String(c.config.TagKey),
+						Value: aws.String(c.config.TagValue),
 					},
 					{
 						Key:   aws.String("determined-resource-pool"),
@@ -385,8 +385,8 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 		UserData: aws.String(base64.StdEncoding.EncodeToString(c.ec2UserData)),
 	}
 
-	if c.CustomTags != nil {
-		for _, tag := range c.CustomTags {
+	if c.config.CustomTags != nil {
+		for _, tag := range c.config.CustomTags {
 			customTag := &ec2.Tag{
 				Key:   aws.String(tag.Key),
 				Value: aws.String(tag.Value),
@@ -397,24 +397,24 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 
 	input.NetworkInterfaces = []*ec2.InstanceNetworkInterfaceSpecification{
 		{
-			AssociatePublicIpAddress: aws.Bool(c.NetworkInterface.PublicIP),
+			AssociatePublicIpAddress: aws.Bool(c.config.NetworkInterface.PublicIP),
 			DeleteOnTermination:      aws.Bool(true),
 			Description:              aws.String("network interface created by Determined"),
 			DeviceIndex:              aws.Int64(0),
 		},
 	}
-	if c.NetworkInterface.SubnetID != "" {
-		input.NetworkInterfaces[0].SubnetId = aws.String(c.NetworkInterface.SubnetID)
+	if c.config.NetworkInterface.SubnetID != "" {
+		input.NetworkInterfaces[0].SubnetId = aws.String(c.config.NetworkInterface.SubnetID)
 	}
-	if c.NetworkInterface.SecurityGroupID != "" {
+	if c.config.NetworkInterface.SecurityGroupID != "" {
 		input.NetworkInterfaces[0].Groups = []*string{
-			aws.String(c.NetworkInterface.SecurityGroupID),
+			aws.String(c.config.NetworkInterface.SecurityGroupID),
 		}
 	}
 
-	if c.IamInstanceProfileArn != "" {
+	if c.config.IamInstanceProfileArn != "" {
 		input.IamInstanceProfile = &ec2.IamInstanceProfileSpecification{
-			Arn: aws.String(c.IamInstanceProfileArn),
+			Arn: aws.String(c.config.IamInstanceProfileArn),
 		}
 	}
 

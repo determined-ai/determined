@@ -126,15 +126,15 @@ func newMockProvider(config *mockConfig) (*mockProvider, error) {
 	return cluster, nil
 }
 
-func (c *mockProvider) instanceType() model.InstanceType {
+func (c *mockProvider) InstanceType() model.InstanceType {
 	return c.mockInstanceType
 }
 
-func (c *mockProvider) slotsPerInstance() int {
+func (c *mockProvider) SlotsPerInstance() int {
 	return c.mockInstanceType.Slots()
 }
 
-func (c *mockProvider) list() ([]*model.Instance, error) {
+func (c *mockProvider) List() ([]*model.Instance, error) {
 	c.history = append(c.history, newMockFuncCall("list"))
 	instances := make([]*model.Instance, 0, len(c.instances))
 	for _, inst := range c.instances {
@@ -144,9 +144,9 @@ func (c *mockProvider) list() ([]*model.Instance, error) {
 	return instances, nil
 }
 
-func (c *mockProvider) prestart() {}
+func (c *mockProvider) Prestart() {}
 
-func (c *mockProvider) launch(instanceNum int) error {
+func (c *mockProvider) Launch(instanceNum int) error {
 	switch {
 	case c.failProvisioning:
 		return c.launchFail()
@@ -192,7 +192,7 @@ func (c *mockProvider) launchFail() error {
 	return fmt.Errorf("failed to launch")
 }
 
-func (c *mockProvider) terminate(instanceIDs []string) {
+func (c *mockProvider) Terminate(instanceIDs []string) {
 	c.history = append(c.history, newMockFuncCall("terminate", newInstanceIDSet(instanceIDs)))
 	for _, id := range instanceIDs {
 		delete(c.instances, id)
@@ -213,7 +213,7 @@ func TestProvisionerScaleUp(t *testing.T) {
 	}
 	mock, _ := newMockEnvironment(t, setup)
 	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
-	mock.provisioner.provision()
+	mock.provisioner.Provision()
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
@@ -238,7 +238,7 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 	}
 	mock, _ := newMockEnvironment(t, setup)
 	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 3})
-	mock.provisioner.provision()
+	mock.provisioner.Provision()
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
@@ -284,9 +284,9 @@ func TestProvisionerScaleDown(t *testing.T) {
 			"agent2": {Name: "agent2", IsIdle: true},
 		},
 	})
-	mock.provisioner.provision()
+	mock.provisioner.Provision()
 	time.Sleep(100 * time.Millisecond)
-	mock.provisioner.provision()
+	mock.provisioner.Provision()
 
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
@@ -340,7 +340,7 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 				"agent3": {Name: "agent3", IsIdle: true},
 			},
 		})
-	mock.provisioner.provision()
+	mock.provisioner.Provision()
 
 	// Submit jobs.
 	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{
@@ -353,10 +353,10 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 	})
 
 	// Give the provisioner chances to launch too many instances.
-	mock.provisioner.provision()
-	mock.provisioner.provision()
-	mock.provisioner.provision()
-	mock.provisioner.provision()
+	mock.provisioner.Provision()
+	mock.provisioner.Provision()
+	mock.provisioner.Provision()
+	mock.provisioner.Provision()
 
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 
@@ -401,9 +401,9 @@ func TestProvisionerTerminateDisconnectedInstances(t *testing.T) {
 	mock, _ := newMockEnvironment(t, setup)
 
 	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{})
-	mock.provisioner.provision()
+	mock.provisioner.Provision()
 	time.Sleep(100 * time.Millisecond)
-	mock.provisioner.provision()
+	mock.provisioner.Provision()
 
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
@@ -428,7 +428,7 @@ func TestProvisionerLaunchFailure(t *testing.T) {
 	mock, provisioner := newMockEnvironment(t, setup)
 
 	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
-	mock.provisioner.provision()
+	mock.provisioner.Provision()
 	assert.Error(t, provisioner.LaunchError(), "failed to launch", "expected error")
 }
 
@@ -447,16 +447,16 @@ func TestProvisionerLaunchOneAtATime(t *testing.T) {
 	mock, provisioner := newMockEnvironment(t, setup)
 
 	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
-	mock.provisioner.provision()
+	mock.provisioner.Provision()
 	err := provisioner.LaunchError()
 	assert.NilError(t, err, "received error %t", err)
 
 	setup.Config.MaxInstances = 3
 	mock, provisioner = newMockEnvironment(t, setup)
 	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
-	mock.provisioner.provision()
-	mock.provisioner.provision()
-	mock.provisioner.provision()
+	mock.provisioner.Provision()
+	mock.provisioner.Provision()
+	mock.provisioner.Provision()
 	err = provisioner.LaunchError()
 	assert.NilError(t, err, "received error %t", err)
 }
@@ -478,7 +478,7 @@ func TestProvisionerLaunchOneAtATimeFail(t *testing.T) {
 
 	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
 	for i := 0; i <= 4; i++ {
-		mock.provisioner.provision()
+		mock.provisioner.Provision()
 	}
 	assert.Error(t, provisioner.LaunchError(), "failed to launch", "expected error")
 }

@@ -23,7 +23,7 @@ import (
 // 1. A specific key/value pair label.
 // 2. Names of agents that are equal to the instance names.
 type gcpCluster struct {
-	*provconfig.GCPClusterConfig
+	config       *provconfig.GCPClusterConfig
 	resourcePool string
 	masterURL    url.URL
 	metadata     []*compute.MetadataItems
@@ -98,9 +98,9 @@ func newGCPCluster(
 	}))
 
 	cluster := &gcpCluster{
-		resourcePool:     resourcePool,
-		GCPClusterConfig: config.GCP,
-		masterURL:        *masterURL,
+		resourcePool: resourcePool,
+		config:       config.GCP,
+		masterURL:    *masterURL,
 		metadata: []*compute.MetadataItems{
 			{
 				Key:   "startup-script",
@@ -118,12 +118,12 @@ func newGCPCluster(
 	return cluster, nil
 }
 
-func (c *gcpCluster) instanceType() model.InstanceType {
-	return c.InstanceType
+func (c *gcpCluster) InstanceType() model.InstanceType {
+	return c.config.InstanceType
 }
 
-func (c *gcpCluster) slotsPerInstance() int {
-	return c.GCPClusterConfig.SlotsPerInstance()
+func (c *gcpCluster) SlotsPerInstance() int {
+	return c.config.SlotsPerInstance()
 }
 
 func (c *gcpCluster) idFromInstance(inst *compute.Instance) string {
@@ -159,21 +159,21 @@ func (c *gcpCluster) stateFromInstance(inst *compute.Instance) model.InstanceSta
 }
 
 func (c *gcpCluster) generateInstanceNamePattern() string {
-	return c.NamePrefix + petname.Generate(2, "-") + "-#####"
+	return c.config.NamePrefix + petname.Generate(2, "-") + "-#####"
 }
 
-func (c *gcpCluster) prestart() {
+func (c *gcpCluster) Prestart() {
 	petname.NonDeterministicMode()
 }
 
-func (c *gcpCluster) list() ([]*model.Instance, error) {
+func (c *gcpCluster) List() ([]*model.Instance, error) {
 	clientCtx := context.Background()
 	var instances []*compute.Instance
 	filter := fmt.Sprintf(
 		"(labels.%s=%s) AND (labels.determined-resource-pool=%s)",
-		c.LabelKey, c.LabelValue, c.resourcePool,
+		c.config.LabelKey, c.config.LabelValue, c.resourcePool,
 	)
-	req := c.client.Instances.List(c.Project, c.Zone).Filter(filter)
+	req := c.client.Instances.List(c.config.Project, c.config.Zone).Filter(filter)
 	if err := req.Pages(
 		clientCtx,
 		func(page *compute.InstanceList) error {
@@ -193,7 +193,7 @@ func (c *gcpCluster) list() ([]*model.Instance, error) {
 	return res, nil
 }
 
-func (c *gcpCluster) launch(instanceNum int) error {
+func (c *gcpCluster) Launch(instanceNum int) error {
 	if instanceNum <= 0 {
 		return nil
 	}
@@ -204,12 +204,13 @@ func (c *gcpCluster) launch(instanceNum int) error {
 		MinCount:           1,
 		NamePattern:        c.generateInstanceNamePattern(),
 	}
-	ops, err := c.client.Instances.BulkInsert(c.Project, c.Zone, bulk).Context(clientCtx).Do()
+	ops, err := c.client.Instances.BulkInsert(c.config.Project, c.config.Zone, bulk).
+		Context(clientCtx).Do()
 	if err != nil {
 		c.syslog.WithError(err).Errorf("error inserting GCE instance")
 		return err
 	}
-	tracker := newGCPBatchOperationTracker(c.GCPClusterConfig, c.client, []*compute.Operation{ops})
+	tracker := newGCPBatchOperationTracker(c.config, c.client, []*compute.Operation{ops})
 	go tracker.startTracker(func(doneOps []*compute.Operation) {
 		c.syslog.Info("inserted GCE instances")
 	})
@@ -217,7 +218,7 @@ func (c *gcpCluster) launch(instanceNum int) error {
 }
 
 func (c *gcpCluster) clusterInstanceProperties() *compute.InstanceProperties {
-	rb := c.InstanceProperties()
+	rb := c.config.InstanceProperties()
 	if rb.Labels == nil {
 		rb.Labels = make(map[string]string)
 	}
@@ -232,7 +233,7 @@ func (c *gcpCluster) clusterInstanceProperties() *compute.InstanceProperties {
 	return rb
 }
 
-func (c *gcpCluster) terminate(instances []string) {
+func (c *gcpCluster) Terminate(instances []string) {
 	if len(instances) == 0 {
 		return
 	}
@@ -240,7 +241,8 @@ func (c *gcpCluster) terminate(instances []string) {
 	var ops []*compute.Operation
 	for _, inst := range instances {
 		ClientCtx := context.Background()
-		resp, err := c.client.Instances.Delete(c.Project, c.Zone, inst).Context(ClientCtx).Do()
+		resp, err := c.client.Instances.Delete(c.config.Project, c.config.Zone, inst).
+			Context(ClientCtx).Do()
 		if err != nil {
 			c.syslog.WithError(err).Errorf("cannot delete GCE instance: %s", inst)
 		} else {
@@ -252,7 +254,7 @@ func (c *gcpCluster) terminate(instances []string) {
 		return
 	}
 
-	tracker := newGCPBatchOperationTracker(c.GCPClusterConfig, c.client, ops)
+	tracker := newGCPBatchOperationTracker(c.config, c.client, ops)
 	go tracker.startTracker(func(doneOps []*compute.Operation) {
 		deleted := c.newInstancesFromOperations(doneOps)
 		c.syslog.Infof(

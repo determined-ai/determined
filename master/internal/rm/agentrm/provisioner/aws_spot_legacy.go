@@ -139,9 +139,9 @@ func (c *awsCluster) legacyListCanceledButInstanceRunningSpotRequests() (
 	input := &ec2.DescribeSpotInstanceRequestsInput{
 		Filters: []*ec2.Filter{
 			{
-				Name: aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
+				Name: aws.String(fmt.Sprintf("tag:%s", c.config.TagKey)),
 				Values: []*string{
-					aws.String(c.TagValue),
+					aws.String(c.config.TagValue),
 				},
 			},
 			{
@@ -179,9 +179,9 @@ func (c *awsCluster) legacyListActiveSpotInstanceRequests() (reqs *setOfSpotRequ
 	input := &ec2.DescribeSpotInstanceRequestsInput{
 		Filters: []*ec2.Filter{
 			{
-				Name: aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
+				Name: aws.String(fmt.Sprintf("tag:%s", c.config.TagKey)),
 				Values: []*string{
-					aws.String(c.TagValue),
+					aws.String(c.config.TagValue),
 				},
 			},
 			{

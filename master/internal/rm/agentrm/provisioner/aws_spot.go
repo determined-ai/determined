@@ -322,15 +322,15 @@ func (c *awsCluster) setTagsOnInstances(activeReqs *setOfSpotRequests) error {
 		Tags: []*ec2.Tag{
 			{
 				Key:   aws.String("Name"),
-				Value: aws.String(c.InstanceName),
+				Value: aws.String(c.config.InstanceName),
 			},
 			{
 				Key:   aws.String("determined-resource-pool"),
 				Value: aws.String(c.resourcePool),
 			},
 			{
-				Key:   aws.String(c.TagKey),
-				Value: aws.String(c.TagValue),
+				Key:   aws.String(c.config.TagKey),
+				Value: aws.String(c.config.TagValue),
 			},
 			{
 				Key:   aws.String("determined-master-address"),
@@ -353,7 +353,7 @@ func (c *awsCluster) attemptToApproximateClockSkew() {
 	c.syslog.Debug("new AWS spot provisioner. launching spot request to determined approximate " +
 		"clock skew between local machine and AWS API.")
 	localCreateTime := time.Now()
-	resp, err := c.createSpotInstanceRequest(1, c.AWSClusterConfig.InstanceType,
+	resp, err := c.createSpotInstanceRequest(1, c.config.InstanceType,
 		time.Hour*100, false)
 	if err != nil {
 		c.syslog.
@@ -475,7 +475,7 @@ func (c *awsCluster) createSpotInstanceRequestsCorrectingForClockSkew(
 	maxRetries := 5
 	for numRetries := 0; numRetries <= maxRetries; numRetries++ {
 		offset := c.spot.approximateClockSkew + c.spot.launchTimeOffset
-		resp, err = c.createSpotInstanceRequest(numInstances, c.InstanceType, offset, dryRun)
+		resp, err = c.createSpotInstanceRequest(numInstances, c.config.InstanceType, offset, dryRun)
 		if err == nil {
 			return resp, nil
 		}
@@ -522,14 +522,14 @@ func (c *awsCluster) createSpotInstanceRequest(
 					DeviceName: aws.String("/dev/sda1"),
 					Ebs: &ec2.EbsBlockDevice{
 						DeleteOnTermination: aws.Bool(true),
-						VolumeSize:          aws.Int64(int64(c.RootVolumeSize)),
+						VolumeSize:          aws.Int64(int64(c.config.RootVolumeSize)),
 						VolumeType:          aws.String("gp2"),
 					},
 				},
 			},
-			ImageId:      aws.String(c.ImageID),
+			ImageId:      aws.String(c.config.ImageID),
 			InstanceType: aws.String(instanceType.Name()),
-			KeyName:      aws.String(c.SSHKeyName),
+			KeyName:      aws.String(c.config.SSHKeyName),
 
 			UserData: aws.String(base64.StdEncoding.EncodeToString(c.ec2UserData)),
 		},
@@ -538,12 +538,12 @@ func (c *awsCluster) createSpotInstanceRequest(
 				ResourceType: aws.String("spot-instances-request"),
 				Tags: []*ec2.Tag{
 					{
-						Key:   aws.String(c.TagKey),
-						Value: aws.String(c.TagValue),
+						Key:   aws.String(c.config.TagKey),
+						Value: aws.String(c.config.TagValue),
 					},
 					{
 						Key:   aws.String("Name"),
-						Value: aws.String(c.InstanceName),
+						Value: aws.String(c.config.InstanceName),
 					},
 					{
 						Key:   aws.String("determined-resource-pool"),
@@ -560,31 +560,31 @@ func (c *awsCluster) createSpotInstanceRequest(
 	}
 
 	// Excluding the SpotPrice param automatically uses the on-demand price
-	if c.SpotMaxPrice != provconfig.SpotPriceNotSetPlaceholder {
-		spotInput.SpotPrice = aws.String(c.AWSClusterConfig.SpotMaxPrice)
+	if c.config.SpotMaxPrice != provconfig.SpotPriceNotSetPlaceholder {
+		spotInput.SpotPrice = aws.String(c.config.SpotMaxPrice)
 	}
 
 	spotInput.LaunchSpecification.NetworkInterfaces = []*ec2.InstanceNetworkInterfaceSpecification{
 		{
-			AssociatePublicIpAddress: aws.Bool(c.NetworkInterface.PublicIP),
+			AssociatePublicIpAddress: aws.Bool(c.config.NetworkInterface.PublicIP),
 			DeleteOnTermination:      aws.Bool(true),
 			Description:              aws.String("network interface created by Determined"),
 			DeviceIndex:              aws.Int64(0),
 		},
 	}
-	if c.NetworkInterface.SubnetID != "" {
-		subnet := aws.String(c.NetworkInterface.SubnetID)
+	if c.config.NetworkInterface.SubnetID != "" {
+		subnet := aws.String(c.config.NetworkInterface.SubnetID)
 		spotInput.LaunchSpecification.NetworkInterfaces[0].SubnetId = subnet
 	}
-	if c.NetworkInterface.SecurityGroupID != "" {
+	if c.config.NetworkInterface.SecurityGroupID != "" {
 		spotInput.LaunchSpecification.NetworkInterfaces[0].Groups = []*string{
-			aws.String(c.NetworkInterface.SecurityGroupID),
+			aws.String(c.config.NetworkInterface.SecurityGroupID),
 		}
 	}
 
-	if c.IamInstanceProfileArn != "" {
+	if c.config.IamInstanceProfileArn != "" {
 		spotInput.LaunchSpecification.IamInstanceProfile = &ec2.IamInstanceProfileSpecification{
-			Arn: aws.String(c.IamInstanceProfileArn),
+			Arn: aws.String(c.config.IamInstanceProfileArn),
 		}
 	}
 
@@ -602,9 +602,9 @@ func (c *awsCluster) listCanceledButInstanceRunningSpotRequests(
 		DryRun: aws.Bool(dryRun),
 		Filters: []*ec2.Filter{
 			{
-				Name: aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
+				Name: aws.String(fmt.Sprintf("tag:%s", c.config.TagKey)),
 				Values: []*string{
-					aws.String(c.TagValue),
+					aws.String(c.config.TagValue),
 				},
 			},
 			{
@@ -651,9 +651,9 @@ func (c *awsCluster) listActiveSpotInstanceRequests(
 		DryRun: aws.Bool(dryRun),
 		Filters: []*ec2.Filter{
 			{
-				Name: aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
+				Name: aws.String(fmt.Sprintf("tag:%s", c.config.TagKey)),
 				Values: []*string{
-					aws.String(c.TagValue),
+					aws.String(c.config.TagValue),
 				},
 			},
 			{
@@ -711,9 +711,9 @@ func (c *awsCluster) listSpotRequestsByID(
 		DryRun: aws.Bool(dryRun),
 		Filters: []*ec2.Filter{
 			{
-				Name: aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
+				Name: aws.String(fmt.Sprintf("tag:%s", c.config.TagKey)),
 				Values: []*string{
-					aws.String(c.TagValue),
+					aws.String(c.config.TagValue),
 				},
 			},
 			{
