@@ -18,7 +18,6 @@ from typing import List, Tuple
 import numpy as np
 import tensorflow as tf
 from cifar_model import build_model, build_optimizer, compile_model
-from data import load_numpy_data
 from tensorflow.keras.models import Sequential
 
 import determined as det
