@@ -5,7 +5,7 @@ import { Modal } from 'components/kit/Modal';
 import userSettings from 'stores/userSettings';
 import { isObject } from 'utils/data';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable, Loaded } from 'utils/loadable';
 
 import CodeEditor from './kit/CodeEditor';
 
@@ -15,14 +15,11 @@ interface Props {
 
 const UserSettingsModal: React.FC<Props> = ({ onSave }: Props) => {
   const loadableState = useObservable(userSettings.getAll());
-  const state = Loadable.getOrElse(undefined, loadableState);
-  const stringifiedState: string | undefined = useMemo(
-    () => JSON.stringify(state, undefined, ' '),
-    [state],
+  const stringifiedState = Loadable.map(loadableState, (state) =>
+    JSON.stringify(state, undefined, ' '),
   );
-  const [editedSettingsString, setEditedSettingsString] = useState<Loadable<string>>(
-    stringifiedState ? Loaded(stringifiedState) : NotLoaded,
-  );
+  const [editedSettingsString, setEditedSettingsString] =
+    useState<Loadable<string>>(stringifiedState);
 
   const editedSettings: object | undefined = useMemo(
     () =>
@@ -30,8 +27,7 @@ const UserSettingsModal: React.FC<Props> = ({ onSave }: Props) => {
         Loaded: (settingsString) => {
           try {
             const obj = JSON.parse(settingsString);
-            if (!isObject(obj)) return;
-            return obj;
+            return isObject(obj) ? obj : undefined;
           } catch {
             return;
           }
@@ -44,7 +40,7 @@ const UserSettingsModal: React.FC<Props> = ({ onSave }: Props) => {
   useEffect(() => {
     if (Loadable.isLoaded(editedSettingsString)) return;
 
-    setEditedSettingsString(Loaded(stringifiedState));
+    setEditedSettingsString(stringifiedState);
   }, [editedSettingsString, stringifiedState]);
 
   const handleSave = useCallback(async () => {
