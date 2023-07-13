@@ -18,13 +18,13 @@ interface Props<T> extends React.PropsWithChildren, Omit<FormProps, 'children'> 
   isPassword?: boolean;
   rules?: Rule[];
   testId?: string;
-  displayFormatter?: (value: T) => string;
+  valueFormatter?: (value: T) => string;
 }
 
 function InlineForm<T>({
   label,
   children,
-  displayFormatter,
+  valueFormatter,
   initialValue,
   value,
   isPassword = false,
@@ -40,16 +40,18 @@ function InlineForm<T>({
   const shouldCollapseText = useMemo(() => String(initialValue).length >= 45, [initialValue]); // prevents layout breaking, specially if using Input.TextArea.
   const inputCurrentValue = Form.useWatch('input', form);
   const readOnlyText = useMemo(() => {
-    let textValue = displayFormatter ? displayFormatter(value ?? initialValue) : String(value ?? initialValue);
+    let textValue = valueFormatter
+      ? valueFormatter(value ?? initialValue)
+      : String(value ?? initialValue);
     if (value === undefined) {
       if (inputCurrentValue !== undefined && inputCurrentValue !== initialValue)
-        textValue = displayFormatter ? displayFormatter(inputCurrentValue) : inputCurrentValue;
+        textValue = valueFormatter ? valueFormatter(inputCurrentValue) : inputCurrentValue;
     }
 
     if (isPassword) return textValue.replace(/\S/g, '*');
     if (shouldCollapseText) return textValue.slice(0, 50).concat('...');
     return textValue;
-  }, [shouldCollapseText, value, initialValue, isPassword, inputCurrentValue, displayFormatter]);
+  }, [shouldCollapseText, value, initialValue, isPassword, inputCurrentValue, valueFormatter]);
 
   const resetForm = useCallback(() => {
     form.resetFields();
@@ -85,11 +87,10 @@ function InlineForm<T>({
       layout="inline"
       requiredMark={false}
       {...formProps}>
+      <label>{label}</label>
       <Form.Item
         className={css.formItemInput}
         initialValue={initialValue}
-        label={label}
-        labelCol={{ span: 0 }}
         name="input"
         required={required}
         rules={rules}

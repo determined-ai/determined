@@ -3,8 +3,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { formatKey, KeyboardShortcut, shortcutToString } from 'utils/shortcut';
 
-import css from './InputShortcut.module.scss';
-
 interface InputShortcutProps {
   disabled?: boolean;
   onChange?: (k: KeyboardShortcut | undefined) => void;
@@ -41,15 +39,13 @@ const InputShortcut: React.FC<InputShortcutProps> = ({
   );
 
   return (
-    <div className={css.shortcut_input_conatiner}>
-      <Input
-        placeholder={placeholder}
-        ref={inputRef}
-        value={inputValue}
-        onKeyDown={onKeyDown}
-        {...props}
-      />
-    </div>
+    <Input
+      placeholder={placeholder}
+      ref={inputRef}
+      value={inputValue}
+      onKeyDown={onKeyDown}
+      {...props}
+    />
   );
 };
 
