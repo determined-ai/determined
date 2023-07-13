@@ -13,6 +13,8 @@ import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import { ThemeOptions } from 'components/ThemeToggle';
 import { useSettings } from 'hooks/useSettings';
+import { experimentListGlobalSettingsConfig, experimentListGlobalSettingsDefaults, ExpListView, RowHeight } from 'pages/F_ExpList/F_ExperimentList.settings';
+import { rowHeightCopy } from 'pages/F_ExpList/glide-table/RowHeightMenu';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
 } from 'pages/Settings/UserSettings.settings';
@@ -20,6 +22,7 @@ import { patchUser } from 'services/api';
 import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
+import userSettings from 'stores/userSettings';
 import { message } from 'utils/dialogApi';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
@@ -53,6 +56,30 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
   } = useUI();
 
   const currentThemeOption = ThemeOptions[uiMode];
+
+  const experimentListGlobalSettings = Loadable.match(useObservable(userSettings.get(experimentListGlobalSettingsConfig, 'f_project-details-global')), {
+    Loaded: (s) => {
+      if (s) return s;
+      return experimentListGlobalSettingsDefaults;
+    },
+    NotLoaded: () => experimentListGlobalSettingsDefaults,
+  });
+
+  const updateRowHeight = useCallback((rh: RowHeight) => {
+    const values = {
+      ...experimentListGlobalSettings,
+      rowHeight: rh,
+    };
+    userSettings.set(experimentListGlobalSettingsConfig, 'f_project-details-global', values);
+  }, [experimentListGlobalSettings]);
+
+  const updateExpListView = useCallback((v: ExpListView) => {
+    const values = {
+      ...experimentListGlobalSettings,
+      expListView: v,
+    };
+    userSettings.set(experimentListGlobalSettingsConfig, 'f_project-details-global', values);
+  }, [experimentListGlobalSettings]);
 
   const updateShortcut = useCallback(
     (shortcutId: string, shortcut: KeyboardShortcut) => {
@@ -136,8 +163,8 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
             initialValue={currentThemeOption.className}
             label="Theme Mode"
             valueFormatter={(value: Mode) => ThemeOptions[value].displayName}
-            onSubmit={(newValue) => {
-              setMode(newValue);
+            onSubmit={(v) => {
+              setMode(v);
             }}>
             <Select searchable={false}>
               <Option key={ThemeOptions.dark.className} value={ThemeOptions.dark.className}>
@@ -151,7 +178,29 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
               </Option>
             </Select>
           </InlineForm>
+          <InlineForm<RowHeight>
+            initialValue={experimentListGlobalSettings.rowHeight}
+            label="Table Density"
+            valueFormatter={(rh) => rowHeightCopy[rh]}
+            onSubmit={updateRowHeight}>
+            <Select searchable={false}>
+              {Object.entries(rowHeightCopy).map(([rowHeight, label]) => (
+                <Option key={rowHeight} value={rowHeight}>{label}</Option>
+              ))}
+            </Select>
+          </InlineForm>
+          <InlineForm<ExpListView>
+            initialValue={experimentListGlobalSettings.expListView}
+            label="Infinite Scroll"
+            valueFormatter={(v) => v === 'scroll' ? 'On' : 'Off'}
+            onSubmit={updateExpListView}>
+            <Select searchable={false}>
+              <Option key="scroll" value="scroll">On</Option>
+              <Option key="paged" value="paged">Off</Option>
+            </Select>
+          </InlineForm>
         </div>
+        <Divider />
       </Section>
       <Section title="Shortcuts">
         <div className={css.section}>

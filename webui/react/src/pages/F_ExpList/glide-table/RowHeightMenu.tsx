@@ -11,7 +11,7 @@ interface RowHeightMenuProps {
   onRowHeightChange: (r: RowHeight) => void;
 }
 
-const rowHeightCopy: Record<RowHeight, string> = {
+export const rowHeightCopy: Record<RowHeight, string> = {
   [RowHeight.SHORT]: 'Short',
   [RowHeight.MEDIUM]: 'Medium',
   [RowHeight.TALL]: 'Tall',

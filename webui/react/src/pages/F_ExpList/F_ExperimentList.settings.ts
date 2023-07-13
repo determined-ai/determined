@@ -1,4 +1,15 @@
-import { array, boolean, literal, number, record, string, TypeOf, union } from 'io-ts';
+import {
+  array,
+  boolean,
+  literal,
+  number,
+  partial,
+  record,
+  string,
+  type,
+  TypeOf,
+  union,
+} from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { SettingsConfig } from 'hooks/useSettings';
@@ -23,7 +34,6 @@ export interface F_ExperimentListSettings {
   filterset: string; // save FilterFormSet as string
   sortString: string;
   pageLimit: number;
-  rowHeight: RowHeight;
   pinnedColumnsCount: number;
 }
 export const settingsConfigForProject = (id: number): SettingsConfig<F_ExperimentListSettings> => ({
@@ -63,12 +73,6 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       storageKey: 'pinnedColumnsCount',
       type: number,
     },
-    rowHeight: {
-      defaultValue: RowHeight.MEDIUM,
-      skipUrlEncoding: true,
-      storageKey: 'rowHeight',
-      type: ioRowHeight,
-    },
     sortString: {
       defaultValue: '',
       skipUrlEncoding: true,
@@ -81,7 +85,20 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
 
 export interface F_ExperimentListGlobalSettings {
   expListView: ExpListView;
+  rowHeight: RowHeight;
 }
+
+const ioExpListView = union([literal('scroll'), literal('paged')]);
+
+export const experimentListGlobalSettingsConfig = type({
+  expListView: ioExpListView,
+  rowHeight: ioRowHeight,
+});
+
+export const experimentListGlobalSettingsDefaults = {
+  expListView: 'scroll',
+  rowHeight: RowHeight.MEDIUM,
+} as const;
 
 export const settingsConfigGlobal: SettingsConfig<F_ExperimentListGlobalSettings> = {
   settings: {
@@ -89,7 +106,13 @@ export const settingsConfigGlobal: SettingsConfig<F_ExperimentListGlobalSettings
       defaultValue: 'scroll',
       skipUrlEncoding: true,
       storageKey: 'expListView',
-      type: union([literal('scroll'), literal('paged')]),
+      type: ioExpListView,
+    },
+    rowHeight: {
+      defaultValue: RowHeight.MEDIUM,
+      skipUrlEncoding: true,
+      storageKey: 'rowHeight',
+      type: ioRowHeight,
     },
   },
   storagePath: 'f_project-details-global',
