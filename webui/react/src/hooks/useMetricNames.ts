@@ -7,8 +7,9 @@ import { readStream } from 'services/utils';
 import { Metric, MetricType } from 'types';
 import { isEqual } from 'utils/data';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { metricKeyToMetric, metricToKey } from 'utils/metric';
+import { metricSorter } from 'utils/metric';
 import { alphaNumericSorter } from 'utils/sort';
-
 const useMetricNames = (
   experimentIds: number[],
   errorHandler?: (e: unknown) => void,
@@ -54,15 +55,35 @@ const useMetricNames = (
           ...newValidationMetrics.map((name) => ({ name, type: MetricType.Validation })),
           ...newTrainingMetrics.map((name) => ({ name, type: MetricType.Training })),
         ];
-        setMetrics((prevMetrics) => {
-          const previousMetrics = Loadable.getOrElse([], prevMetrics);
+        if (newMetrics.length !== 0) {
+          setMetrics((prevMetrics) => {
+            /*
+             * Since we may intermittently receive a subset of all available
+             * metrics or an empty list of metrics we must merge the new and
+             * previous metrics to accurately determine if any new metrics have
+             * not been seen before.
+             */
+            const previousMetrics = Loadable.getOrElse([], prevMetrics);
 
-          // The metrics have not changed so return the previousm metrics
-          if (previousMetrics.length === newMetrics.length) return prevMetrics;
+            const previousMetricsSet = Loadable.getOrElse([], prevMetrics).reduce(
+              (acc, cur) => acc.add(metricToKey(cur)),
+              new Set<string>(),
+            );
+            const updatedMetricsSet = [...newMetrics, ...previousMetrics].reduce(
+              (acc, cur) => acc.add(metricToKey(cur)),
+              new Set<string>(),
+            );
 
-          // Check that the new metrics are not an empty list before updating state
-          return newMetrics.length !== 0 ? Loaded(newMetrics) : prevMetrics;
-        });
+            if (isEqual(previousMetricsSet, updatedMetricsSet)) return prevMetrics;
+
+            return Loaded(
+              Array.from(updatedMetricsSet)
+                .map((metricKey) => metricKeyToMetric(metricKey))
+                .filter((metric): metric is Metric => !!metric)
+                .sort(metricSorter),
+            );
+          });
+        }
       },
       errorHandler,
     );
