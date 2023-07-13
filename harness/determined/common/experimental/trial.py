@@ -206,8 +206,8 @@ class Trial:
         rank_ids: Optional[List[int]] = None,
         stdtypes: Optional[List[str]] = None,
         min_level: Optional[LogLevel] = None,
-        timestamp_before: Union[str, int] = None,
-        timestamp_after: Union[str, int] = None,
+        timestamp_before: Optional[Union[str, int]] = None,
+        timestamp_after: Optional[Union[str, int]] = None,
         sources: Optional[List[str]] = None,
         search_text: Optional[str] = None,
     ) -> Iterable[str]:
@@ -245,7 +245,12 @@ class Trial:
         if tail is not None and tail < 0:
             raise ValueError(f"tail must be non-negative, got {tail}")
 
-        # Convert epoch timestamps to RFC 3339-formatted datetime strings.
+        # Validate and convert epoch timestamps to RFC 3339-formatted datetime strings.
+        if isinstance(timestamp_before, str):
+            util.validate_protobuf_timestamp(timestamp_before)
+        if isinstance(timestamp_after, str):
+            util.validate_protobuf_timestamp(timestamp_after)
+
         if isinstance(timestamp_before, int):
             timestamp_before = datetime.datetime.fromtimestamp(timestamp_before)
             timestamp_before = timestamp_before.isoformat("T") + "Z"

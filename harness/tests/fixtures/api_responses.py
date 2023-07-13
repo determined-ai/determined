@@ -52,6 +52,11 @@ def sample_get_trial(**kwargs: Any) -> bindings.v1GetTrialResponse:
         return resp
 
 
+def sample_get_trial_logs() -> str:
+    with open(FIXTURES_DIR / "trial_logs.json") as f:
+        return f.read()
+
+
 def sample_get_model() -> bindings.v1GetModelResponse:
     """Get a sample model from a fixture."""
     with open(FIXTURES_DIR / "model.json") as f:
