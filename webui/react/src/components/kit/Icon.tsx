@@ -204,21 +204,26 @@ const FourSquaresIcon: React.FC = () => (
 
 export type IconName = (typeof IconNameArray)[number];
 
-export interface Props {
-  color?: 'cancel' | 'error' | 'success';
-  name: IconName;
-  showTooltip?: boolean;
-  size?: IconSize;
-  title: string;
-}
+export type Props =
+  | {
+      color?: 'cancel' | 'error' | 'success';
+      name: IconName;
+      showTooltip?: boolean;
+      size?: IconSize;
+      title: string;
+    }
+  | {
+      color?: 'cancel' | 'error' | 'success';
+      name: IconName;
+      size?: IconSize;
+      decorative: true;
+    };
 
-const Icon: React.FC<Props> = ({
-  name,
-  showTooltip = false,
-  size = 'medium',
-  title,
-  color,
-}: Props) => {
+const Icon: React.FC<Props> = (props: Props) => {
+  const { name, size = 'medium', color } = props;
+  const showTooltip = 'decorative' in props ? false : props.showTooltip ?? false;
+  const title = 'decorative' in props ? undefined : props.title;
+  const decorative = 'decorative' in props;
   const classes = [css.base];
 
   const svgIcon = useMemo(() => {
@@ -240,7 +245,7 @@ const Icon: React.FC<Props> = ({
   if (color) classes.push(css[color]);
 
   const icon = (
-    <span aria-label={title} className={classes.join(' ')}>
+    <span aria-label={decorative ? undefined : title} className={classes.join(' ')}>
       {svgIcon}
     </span>
   );

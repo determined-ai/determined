@@ -358,7 +358,7 @@ const TableActionBar: React.FC<Props> = ({
           />
           {(selectAll || selectedExperimentIds.length > 0) && (
             <Dropdown menu={editMenuItems} onClick={handleAction}>
-              <Button icon={<Icon name="pencil" title="Edit" />}>
+              <Button icon={<Icon decorative name="pencil" />}>
                 Edit (
                 {selectAll
                   ? Loadable.isLoaded(total)

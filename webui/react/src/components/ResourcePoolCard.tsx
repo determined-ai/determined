@@ -178,7 +178,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
                 <section className={css.resoucePoolBoundContainer}>
                   <div>Bound to:</div>
                   <div className={css.resoucePoolBoundCount}>
-                    <Icon name="lock" title="lock" />
+                    <Icon name="lock" title="Bound Workspaces" />
                     {resourcePoolBindings.length} workspace
                   </div>
                 </section>
