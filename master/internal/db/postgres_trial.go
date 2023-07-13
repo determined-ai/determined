@@ -163,7 +163,8 @@ WHERE id = $1`, id, restartCount); err != nil {
 func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	ctx context.Context, tx *sqlx.Tx, trialID int,
 ) error {
-	// DISCUSS: can we limit this to recompute only a single metric type?
+	// TODO(DET-9566): we can probably limit this to recompute only a single metric type and it would
+	// fit the current usage better.
 	updatedSummaryMetrics := model.JSONObj{}
 	metricTypes := []model.MetricType{}
 	if err := tx.SelectContext(ctx, &metricTypes, `
@@ -264,7 +265,7 @@ func (db *PgDB) _addTrialMetricsTx(
 	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mType model.MetricType,
 ) (rollbacks int, err error) {
 	isValidation := mType == model.ValidationMetricType
-	mBody := newMetricsBody(m.Metrics.AvgMetrics, m.Metrics.BatchMetrics, mType)
+	mBody := newMetricsBody(m.Metrics.AvgMetrics, m.Metrics.BatchMetrics, isValidation)
 
 	if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
 		return rollbacks, err
