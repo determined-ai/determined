@@ -137,7 +137,6 @@ export const useTrialMetrics = (
         const response = await timeSeries({
           maxDatapoints: screen.width > 1600 ? 1500 : 1000,
           metricNames: metrics,
-          scale: scale,
           startBatches: 0,
           trialIds: trials?.map((t) => t?.id || 0).filter((i) => i > 0),
         });
@@ -161,7 +160,7 @@ export const useTrialMetrics = (
         message.error('Error fetching metrics');
       }
     }
-  }, [metrics, trials, scale, loadableMetrics, previousTrials]);
+  }, [metrics, trials, loadableMetrics, previousTrials]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchTrialSummary()]);
