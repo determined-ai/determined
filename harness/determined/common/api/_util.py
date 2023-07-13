@@ -120,7 +120,7 @@ def task_is_ready(
         task = bindings.get_GetTask(session, taskId=task_id).task
         if progress_report:
             progress_report()
-        assert task is not None, "task must not be present."
+        assert task is not None, "task must be present."
         if len(task.allocations) == 0:
             return False, None
 
