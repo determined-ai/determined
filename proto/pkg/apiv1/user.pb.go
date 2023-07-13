@@ -941,10 +941,8 @@ type PostUserSettingRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Storage path for setting.
-	StoragePath string `protobuf:"bytes,1,opt,name=storage_path,json=storagePath,proto3" json:"storage_path,omitempty"`
 	// Setting key value pair.
-	Setting *userv1.UserWebSetting `protobuf:"bytes,2,opt,name=setting,proto3" json:"setting,omitempty"`
+	Settings []*userv1.UserWebSetting `protobuf:"bytes,1,rep,name=settings,proto3" json:"settings,omitempty"`
 }
 
 func (x *PostUserSettingRequest) Reset() {
@@ -979,63 +977,7 @@ func (*PostUserSettingRequest) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *PostUserSettingRequest) GetStoragePath() string {
-	if x != nil {
-		return x.StoragePath
-	}
-	return ""
-}
-
-func (x *PostUserSettingRequest) GetSetting() *userv1.UserWebSetting {
-	if x != nil {
-		return x.Setting
-	}
-	return nil
-}
-
-// Replace all user settings.
-type OverwriteUserSettingRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// Setting key value pairs.
-	Settings []*userv1.UserWebSetting `protobuf:"bytes,1,rep,name=settings,proto3" json:"settings,omitempty"`
-}
-
-func (x *OverwriteUserSettingRequest) Reset() {
-	*x = OverwriteUserSettingRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[17]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *OverwriteUserSettingRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OverwriteUserSettingRequest) ProtoMessage() {}
-
-func (x *OverwriteUserSettingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[17]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use OverwriteUserSettingRequest.ProtoReflect.Descriptor instead.
-func (*OverwriteUserSettingRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *OverwriteUserSettingRequest) GetSettings() []*userv1.UserWebSetting {
+func (x *PostUserSettingRequest) GetSettings() []*userv1.UserWebSetting {
 	if x != nil {
 		return x.Settings
 	}
@@ -1052,7 +994,7 @@ type PostUserSettingResponse struct {
 func (x *PostUserSettingResponse) Reset() {
 	*x = PostUserSettingResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[18]
+		mi := &file_determined_api_v1_user_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1065,7 +1007,7 @@ func (x *PostUserSettingResponse) String() string {
 func (*PostUserSettingResponse) ProtoMessage() {}
 
 func (x *PostUserSettingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[18]
+	mi := &file_determined_api_v1_user_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1078,7 +1020,7 @@ func (x *PostUserSettingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostUserSettingResponse.ProtoReflect.Descriptor instead.
 func (*PostUserSettingResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{18}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{17}
 }
 
 // Reset user setting.
@@ -1091,7 +1033,7 @@ type ResetUserSettingRequest struct {
 func (x *ResetUserSettingRequest) Reset() {
 	*x = ResetUserSettingRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[19]
+		mi := &file_determined_api_v1_user_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1104,7 +1046,7 @@ func (x *ResetUserSettingRequest) String() string {
 func (*ResetUserSettingRequest) ProtoMessage() {}
 
 func (x *ResetUserSettingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[19]
+	mi := &file_determined_api_v1_user_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1117,7 +1059,7 @@ func (x *ResetUserSettingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResetUserSettingRequest.ProtoReflect.Descriptor instead.
 func (*ResetUserSettingRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{19}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{18}
 }
 
 // Response to ResetUserSettingRequest.
@@ -1130,7 +1072,7 @@ type ResetUserSettingResponse struct {
 func (x *ResetUserSettingResponse) Reset() {
 	*x = ResetUserSettingResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[20]
+		mi := &file_determined_api_v1_user_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1143,7 +1085,7 @@ func (x *ResetUserSettingResponse) String() string {
 func (*ResetUserSettingResponse) ProtoMessage() {}
 
 func (x *ResetUserSettingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[20]
+	mi := &file_determined_api_v1_user_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1156,46 +1098,7 @@ func (x *ResetUserSettingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResetUserSettingResponse.ProtoReflect.Descriptor instead.
 func (*ResetUserSettingResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{20}
-}
-
-// Response to OverwriteUserSettingRequest.
-type OverwriteUserSettingResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *OverwriteUserSettingResponse) Reset() {
-	*x = OverwriteUserSettingResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[21]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *OverwriteUserSettingResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OverwriteUserSettingResponse) ProtoMessage() {}
-
-func (x *OverwriteUserSettingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[21]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use OverwriteUserSettingResponse.ProtoReflect.Descriptor instead.
-func (*OverwriteUserSettingResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{21}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{19}
 }
 
 // Update user activity.
@@ -1215,7 +1118,7 @@ type PostUserActivityRequest struct {
 func (x *PostUserActivityRequest) Reset() {
 	*x = PostUserActivityRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[22]
+		mi := &file_determined_api_v1_user_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1228,7 +1131,7 @@ func (x *PostUserActivityRequest) String() string {
 func (*PostUserActivityRequest) ProtoMessage() {}
 
 func (x *PostUserActivityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[22]
+	mi := &file_determined_api_v1_user_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1241,7 +1144,7 @@ func (x *PostUserActivityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostUserActivityRequest.ProtoReflect.Descriptor instead.
 func (*PostUserActivityRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{22}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *PostUserActivityRequest) GetActivityType() userv1.ActivityType {
@@ -1275,7 +1178,7 @@ type PostUserActivityResponse struct {
 func (x *PostUserActivityResponse) Reset() {
 	*x = PostUserActivityResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[23]
+		mi := &file_determined_api_v1_user_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1288,7 +1191,7 @@ func (x *PostUserActivityResponse) String() string {
 func (*PostUserActivityResponse) ProtoMessage() {}
 
 func (x *PostUserActivityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[23]
+	mi := &file_determined_api_v1_user_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1301,7 +1204,7 @@ func (x *PostUserActivityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostUserActivityResponse.ProtoReflect.Descriptor instead.
 func (*PostUserActivityResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{23}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{21}
 }
 
 var File_determined_api_v1_user_proto protoreflect.FileDescriptor
@@ -1412,51 +1315,39 @@ var file_determined_api_v1_user_proto_rawDesc = []byte{
 	0x75, 0x73, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x57, 0x65, 0x62, 0x53,
 	0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x52, 0x08, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73,
 	0x3a, 0x10, 0x92, 0x41, 0x0d, 0x0a, 0x0b, 0xd2, 0x01, 0x08, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6e,
-	0x67, 0x73, 0x22, 0x99, 0x01, 0x0a, 0x16, 0x50, 0x6f, 0x73, 0x74, 0x55, 0x73, 0x65, 0x72, 0x53,
-	0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x21, 0x0a,
-	0x0c, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x5f, 0x70, 0x61, 0x74, 0x68, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x50, 0x61, 0x74, 0x68,
-	0x12, 0x3c, 0x0a, 0x07, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x22, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x75,
-	0x73, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x57, 0x65, 0x62, 0x53, 0x65,
-	0x74, 0x74, 0x69, 0x6e, 0x67, 0x52, 0x07, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x3a, 0x1e,
-	0x92, 0x41, 0x1b, 0x0a, 0x19, 0xd2, 0x01, 0x0c, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x5f,
-	0x70, 0x61, 0x74, 0x68, 0xd2, 0x01, 0x07, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x22, 0x6f,
-	0x0a, 0x1b, 0x4f, 0x76, 0x65, 0x72, 0x77, 0x72, 0x69, 0x74, 0x65, 0x55, 0x73, 0x65, 0x72, 0x53,
-	0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x3e, 0x0a,
-	0x08, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32,
-	0x22, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x75, 0x73, 0x65,
-	0x72, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x57, 0x65, 0x62, 0x53, 0x65, 0x74, 0x74,
-	0x69, 0x6e, 0x67, 0x52, 0x08, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x3a, 0x10, 0x92,
-	0x41, 0x0d, 0x0a, 0x0b, 0xd2, 0x01, 0x08, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x22,
-	0x19, 0x0a, 0x17, 0x50, 0x6f, 0x73, 0x74, 0x55, 0x73, 0x65, 0x72, 0x53, 0x65, 0x74, 0x74, 0x69,
-	0x6e, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x19, 0x0a, 0x17, 0x52, 0x65,
-	0x73, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x1a, 0x0a, 0x18, 0x52, 0x65, 0x73, 0x65, 0x74, 0x55, 0x73,
-	0x65, 0x72, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x22, 0x1e, 0x0a, 0x1c, 0x4f, 0x76, 0x65, 0x72, 0x77, 0x72, 0x69, 0x74, 0x65, 0x55, 0x73,
-	0x65, 0x72, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x22, 0xef, 0x01, 0x0a, 0x17, 0x50, 0x6f, 0x73, 0x74, 0x55, 0x73, 0x65, 0x72, 0x41, 0x63,
-	0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x45, 0x0a,
-	0x0d, 0x61, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x0e, 0x32, 0x20, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
-	0x64, 0x2e, 0x75, 0x73, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x63, 0x74, 0x69, 0x76, 0x69,
-	0x74, 0x79, 0x54, 0x79, 0x70, 0x65, 0x52, 0x0c, 0x61, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79,
-	0x54, 0x79, 0x70, 0x65, 0x12, 0x3f, 0x0a, 0x0b, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x5f, 0x74,
-	0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1e, 0x2e, 0x64, 0x65, 0x74, 0x65,
-	0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x75, 0x73, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x45,
-	0x6e, 0x74, 0x69, 0x74, 0x79, 0x54, 0x79, 0x70, 0x65, 0x52, 0x0a, 0x65, 0x6e, 0x74, 0x69, 0x74,
-	0x79, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x5f,
-	0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79,
-	0x49, 0x64, 0x3a, 0x2f, 0x92, 0x41, 0x2c, 0x0a, 0x2a, 0xd2, 0x01, 0x0d, 0x61, 0x63, 0x74, 0x69,
-	0x76, 0x69, 0x74, 0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0xd2, 0x01, 0x0b, 0x65, 0x6e, 0x74, 0x69,
-	0x74, 0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0xd2, 0x01, 0x09, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79,
-	0x5f, 0x69, 0x64, 0x22, 0x1a, 0x0a, 0x18, 0x50, 0x6f, 0x73, 0x74, 0x55, 0x73, 0x65, 0x72, 0x41,
-	0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42,
-	0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65,
-	0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65,
-	0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67,
-	0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x67, 0x73, 0x22, 0x6a, 0x0a, 0x16, 0x50, 0x6f, 0x73, 0x74, 0x55, 0x73, 0x65, 0x72, 0x53, 0x65,
+	0x74, 0x74, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x3e, 0x0a, 0x08,
+	0x73, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x22,
+	0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x75, 0x73, 0x65, 0x72,
+	0x2e, 0x76, 0x31, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x57, 0x65, 0x62, 0x53, 0x65, 0x74, 0x74, 0x69,
+	0x6e, 0x67, 0x52, 0x08, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x3a, 0x10, 0x92, 0x41,
+	0x0d, 0x0a, 0x0b, 0xd2, 0x01, 0x08, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x22, 0x19,
+	0x0a, 0x17, 0x50, 0x6f, 0x73, 0x74, 0x55, 0x73, 0x65, 0x72, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e,
+	0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x19, 0x0a, 0x17, 0x52, 0x65, 0x73,
+	0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x22, 0x1a, 0x0a, 0x18, 0x52, 0x65, 0x73, 0x65, 0x74, 0x55, 0x73, 0x65,
+	0x72, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0xef, 0x01, 0x0a, 0x17, 0x50, 0x6f, 0x73, 0x74, 0x55, 0x73, 0x65, 0x72, 0x41, 0x63, 0x74,
+	0x69, 0x76, 0x69, 0x74, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x45, 0x0a, 0x0d,
+	0x61, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0e, 0x32, 0x20, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64,
+	0x2e, 0x75, 0x73, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74,
+	0x79, 0x54, 0x79, 0x70, 0x65, 0x52, 0x0c, 0x61, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x54,
+	0x79, 0x70, 0x65, 0x12, 0x3f, 0x0a, 0x0b, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x5f, 0x74, 0x79,
+	0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1e, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72,
+	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x75, 0x73, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x6e,
+	0x74, 0x69, 0x74, 0x79, 0x54, 0x79, 0x70, 0x65, 0x52, 0x0a, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79,
+	0x54, 0x79, 0x70, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x5f, 0x69,
+	0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x49,
+	0x64, 0x3a, 0x2f, 0x92, 0x41, 0x2c, 0x0a, 0x2a, 0xd2, 0x01, 0x0d, 0x61, 0x63, 0x74, 0x69, 0x76,
+	0x69, 0x74, 0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0xd2, 0x01, 0x0b, 0x65, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0xd2, 0x01, 0x09, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x5f,
+	0x69, 0x64, 0x22, 0x1a, 0x0a, 0x18, 0x50, 0x6f, 0x73, 0x74, 0x55, 0x73, 0x65, 0x72, 0x41, 0x63,
+	0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35,
+	0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74,
+	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72,
+	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f,
+	0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1472,64 +1363,61 @@ func file_determined_api_v1_user_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_api_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_determined_api_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_determined_api_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_determined_api_v1_user_proto_goTypes = []interface{}{
-	(GetUsersRequest_SortBy)(0),          // 0: determined.api.v1.GetUsersRequest.SortBy
-	(*GetUsersRequest)(nil),              // 1: determined.api.v1.GetUsersRequest
-	(*GetUsersResponse)(nil),             // 2: determined.api.v1.GetUsersResponse
-	(*GetUserRequest)(nil),               // 3: determined.api.v1.GetUserRequest
-	(*GetUserResponse)(nil),              // 4: determined.api.v1.GetUserResponse
-	(*GetUserByUsernameRequest)(nil),     // 5: determined.api.v1.GetUserByUsernameRequest
-	(*GetUserByUsernameResponse)(nil),    // 6: determined.api.v1.GetUserByUsernameResponse
-	(*GetMeRequest)(nil),                 // 7: determined.api.v1.GetMeRequest
-	(*GetMeResponse)(nil),                // 8: determined.api.v1.GetMeResponse
-	(*PostUserRequest)(nil),              // 9: determined.api.v1.PostUserRequest
-	(*PostUserResponse)(nil),             // 10: determined.api.v1.PostUserResponse
-	(*SetUserPasswordRequest)(nil),       // 11: determined.api.v1.SetUserPasswordRequest
-	(*SetUserPasswordResponse)(nil),      // 12: determined.api.v1.SetUserPasswordResponse
-	(*PatchUserRequest)(nil),             // 13: determined.api.v1.PatchUserRequest
-	(*PatchUserResponse)(nil),            // 14: determined.api.v1.PatchUserResponse
-	(*GetUserSettingRequest)(nil),        // 15: determined.api.v1.GetUserSettingRequest
-	(*GetUserSettingResponse)(nil),       // 16: determined.api.v1.GetUserSettingResponse
-	(*PostUserSettingRequest)(nil),       // 17: determined.api.v1.PostUserSettingRequest
-	(*OverwriteUserSettingRequest)(nil),  // 18: determined.api.v1.OverwriteUserSettingRequest
-	(*PostUserSettingResponse)(nil),      // 19: determined.api.v1.PostUserSettingResponse
-	(*ResetUserSettingRequest)(nil),      // 20: determined.api.v1.ResetUserSettingRequest
-	(*ResetUserSettingResponse)(nil),     // 21: determined.api.v1.ResetUserSettingResponse
-	(*OverwriteUserSettingResponse)(nil), // 22: determined.api.v1.OverwriteUserSettingResponse
-	(*PostUserActivityRequest)(nil),      // 23: determined.api.v1.PostUserActivityRequest
-	(*PostUserActivityResponse)(nil),     // 24: determined.api.v1.PostUserActivityResponse
-	(OrderBy)(0),                         // 25: determined.api.v1.OrderBy
-	(*userv1.User)(nil),                  // 26: determined.user.v1.User
-	(*Pagination)(nil),                   // 27: determined.api.v1.Pagination
-	(*userv1.PatchUser)(nil),             // 28: determined.user.v1.PatchUser
-	(*userv1.UserWebSetting)(nil),        // 29: determined.user.v1.UserWebSetting
-	(userv1.ActivityType)(0),             // 30: determined.user.v1.ActivityType
-	(userv1.EntityType)(0),               // 31: determined.user.v1.EntityType
+	(GetUsersRequest_SortBy)(0),       // 0: determined.api.v1.GetUsersRequest.SortBy
+	(*GetUsersRequest)(nil),           // 1: determined.api.v1.GetUsersRequest
+	(*GetUsersResponse)(nil),          // 2: determined.api.v1.GetUsersResponse
+	(*GetUserRequest)(nil),            // 3: determined.api.v1.GetUserRequest
+	(*GetUserResponse)(nil),           // 4: determined.api.v1.GetUserResponse
+	(*GetUserByUsernameRequest)(nil),  // 5: determined.api.v1.GetUserByUsernameRequest
+	(*GetUserByUsernameResponse)(nil), // 6: determined.api.v1.GetUserByUsernameResponse
+	(*GetMeRequest)(nil),              // 7: determined.api.v1.GetMeRequest
+	(*GetMeResponse)(nil),             // 8: determined.api.v1.GetMeResponse
+	(*PostUserRequest)(nil),           // 9: determined.api.v1.PostUserRequest
+	(*PostUserResponse)(nil),          // 10: determined.api.v1.PostUserResponse
+	(*SetUserPasswordRequest)(nil),    // 11: determined.api.v1.SetUserPasswordRequest
+	(*SetUserPasswordResponse)(nil),   // 12: determined.api.v1.SetUserPasswordResponse
+	(*PatchUserRequest)(nil),          // 13: determined.api.v1.PatchUserRequest
+	(*PatchUserResponse)(nil),         // 14: determined.api.v1.PatchUserResponse
+	(*GetUserSettingRequest)(nil),     // 15: determined.api.v1.GetUserSettingRequest
+	(*GetUserSettingResponse)(nil),    // 16: determined.api.v1.GetUserSettingResponse
+	(*PostUserSettingRequest)(nil),    // 17: determined.api.v1.PostUserSettingRequest
+	(*PostUserSettingResponse)(nil),   // 18: determined.api.v1.PostUserSettingResponse
+	(*ResetUserSettingRequest)(nil),   // 19: determined.api.v1.ResetUserSettingRequest
+	(*ResetUserSettingResponse)(nil),  // 20: determined.api.v1.ResetUserSettingResponse
+	(*PostUserActivityRequest)(nil),   // 21: determined.api.v1.PostUserActivityRequest
+	(*PostUserActivityResponse)(nil),  // 22: determined.api.v1.PostUserActivityResponse
+	(OrderBy)(0),                      // 23: determined.api.v1.OrderBy
+	(*userv1.User)(nil),               // 24: determined.user.v1.User
+	(*Pagination)(nil),                // 25: determined.api.v1.Pagination
+	(*userv1.PatchUser)(nil),          // 26: determined.user.v1.PatchUser
+	(*userv1.UserWebSetting)(nil),     // 27: determined.user.v1.UserWebSetting
+	(userv1.ActivityType)(0),          // 28: determined.user.v1.ActivityType
+	(userv1.EntityType)(0),            // 29: determined.user.v1.EntityType
 }
 var file_determined_api_v1_user_proto_depIdxs = []int32{
 	0,  // 0: determined.api.v1.GetUsersRequest.sort_by:type_name -> determined.api.v1.GetUsersRequest.SortBy
-	25, // 1: determined.api.v1.GetUsersRequest.order_by:type_name -> determined.api.v1.OrderBy
-	26, // 2: determined.api.v1.GetUsersResponse.users:type_name -> determined.user.v1.User
-	27, // 3: determined.api.v1.GetUsersResponse.pagination:type_name -> determined.api.v1.Pagination
-	26, // 4: determined.api.v1.GetUserResponse.user:type_name -> determined.user.v1.User
-	26, // 5: determined.api.v1.GetUserByUsernameResponse.user:type_name -> determined.user.v1.User
-	26, // 6: determined.api.v1.GetMeResponse.user:type_name -> determined.user.v1.User
-	26, // 7: determined.api.v1.PostUserRequest.user:type_name -> determined.user.v1.User
-	26, // 8: determined.api.v1.PostUserResponse.user:type_name -> determined.user.v1.User
-	26, // 9: determined.api.v1.SetUserPasswordResponse.user:type_name -> determined.user.v1.User
-	28, // 10: determined.api.v1.PatchUserRequest.user:type_name -> determined.user.v1.PatchUser
-	26, // 11: determined.api.v1.PatchUserResponse.user:type_name -> determined.user.v1.User
-	29, // 12: determined.api.v1.GetUserSettingResponse.settings:type_name -> determined.user.v1.UserWebSetting
-	29, // 13: determined.api.v1.PostUserSettingRequest.setting:type_name -> determined.user.v1.UserWebSetting
-	29, // 14: determined.api.v1.OverwriteUserSettingRequest.settings:type_name -> determined.user.v1.UserWebSetting
-	30, // 15: determined.api.v1.PostUserActivityRequest.activity_type:type_name -> determined.user.v1.ActivityType
-	31, // 16: determined.api.v1.PostUserActivityRequest.entity_type:type_name -> determined.user.v1.EntityType
-	17, // [17:17] is the sub-list for method output_type
-	17, // [17:17] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	23, // 1: determined.api.v1.GetUsersRequest.order_by:type_name -> determined.api.v1.OrderBy
+	24, // 2: determined.api.v1.GetUsersResponse.users:type_name -> determined.user.v1.User
+	25, // 3: determined.api.v1.GetUsersResponse.pagination:type_name -> determined.api.v1.Pagination
+	24, // 4: determined.api.v1.GetUserResponse.user:type_name -> determined.user.v1.User
+	24, // 5: determined.api.v1.GetUserByUsernameResponse.user:type_name -> determined.user.v1.User
+	24, // 6: determined.api.v1.GetMeResponse.user:type_name -> determined.user.v1.User
+	24, // 7: determined.api.v1.PostUserRequest.user:type_name -> determined.user.v1.User
+	24, // 8: determined.api.v1.PostUserResponse.user:type_name -> determined.user.v1.User
+	24, // 9: determined.api.v1.SetUserPasswordResponse.user:type_name -> determined.user.v1.User
+	26, // 10: determined.api.v1.PatchUserRequest.user:type_name -> determined.user.v1.PatchUser
+	24, // 11: determined.api.v1.PatchUserResponse.user:type_name -> determined.user.v1.User
+	27, // 12: determined.api.v1.GetUserSettingResponse.settings:type_name -> determined.user.v1.UserWebSetting
+	27, // 13: determined.api.v1.PostUserSettingRequest.settings:type_name -> determined.user.v1.UserWebSetting
+	28, // 14: determined.api.v1.PostUserActivityRequest.activity_type:type_name -> determined.user.v1.ActivityType
+	29, // 15: determined.api.v1.PostUserActivityRequest.entity_type:type_name -> determined.user.v1.EntityType
+	16, // [16:16] is the sub-list for method output_type
+	16, // [16:16] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_user_proto_init() }
@@ -1744,18 +1632,6 @@ func file_determined_api_v1_user_proto_init() {
 			}
 		}
 		file_determined_api_v1_user_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*OverwriteUserSettingRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_user_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PostUserSettingResponse); i {
 			case 0:
 				return &v.state
@@ -1767,7 +1643,7 @@ func file_determined_api_v1_user_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_user_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_user_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ResetUserSettingRequest); i {
 			case 0:
 				return &v.state
@@ -1779,7 +1655,7 @@ func file_determined_api_v1_user_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_user_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_user_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ResetUserSettingResponse); i {
 			case 0:
 				return &v.state
@@ -1791,19 +1667,7 @@ func file_determined_api_v1_user_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_user_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*OverwriteUserSettingResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_user_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_user_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PostUserActivityRequest); i {
 			case 0:
 				return &v.state
@@ -1815,7 +1679,7 @@ func file_determined_api_v1_user_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_user_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_user_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PostUserActivityResponse); i {
 			case 0:
 				return &v.state
@@ -1834,7 +1698,7 @@ func file_determined_api_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_user_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   24,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

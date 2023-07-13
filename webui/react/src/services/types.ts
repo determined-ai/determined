@@ -360,12 +360,7 @@ export interface CreateGroupsParams {
   name: string;
 }
 export interface UpdateUserSettingParams {
-  setting: Api.V1UserWebSetting;
-  storagePath: string;
-}
-
-export interface OverwriteUserSettingsParams {
-  settings: Api.V1UserWebSetting[];
+  settings: Api.V1UserWebSetting | Api.V1UserWebSetting[];
 }
 
 export interface UpdateGroupParams {

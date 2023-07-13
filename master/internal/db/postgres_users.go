@@ -317,31 +317,18 @@ func (db *PgDB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 }
 
 // UpdateUserSetting updates user setting.
-func UpdateUserSetting(setting *model.UserWebSetting) error {
-	if len(setting.Value) == 0 {
-		_, err := Bun().NewDelete().Model(setting).Where(
-			"user_id = ?", setting.UserID).Where(
-			"storage_path = ?", setting.StoragePath).Where(
-			"key = ?", setting.Key).Exec(context.TODO())
-		return err
-	}
-
-	_, err := Bun().NewInsert().Model(setting).On("CONFLICT (user_id, key, storage_path) DO UPDATE").
-		Set("value = EXCLUDED.value").Exec(context.TODO())
-	return err
-}
-
-// OverwriteUserSetting resets user settings and fills them with passed values.
-func OverwriteUserSetting(userID model.UserID, settings []*userv1.UserWebSetting) error {
-	err := ResetUserSetting(userID)
-	for _, v := range settings {
-		userSetting := model.UserWebSetting{
-			UserID:      userID,
-			Key:         v.Key,
-			Value:       v.Value,
-			StoragePath: v.StoragePath,
+func UpdateUserSetting(settings []model.UserWebSetting) error {
+	var err error
+	for _, setting := range settings {
+		if len(setting.Value) == 0 {
+			_, err = Bun().NewDelete().Model(setting).Where(
+				"user_id = ?", setting.UserID).Where(
+				"storage_path = ?", setting.StoragePath).Where(
+				"key = ?", setting.Key).Exec(context.TODO())
+		} else {
+			_, err = Bun().NewInsert().Model(setting).On("CONFLICT (user_id, key, storage_path) DO UPDATE").
+				Set("value = EXCLUDED.value").Exec(context.TODO())
 		}
-		err = UpdateUserSetting(&userSetting)
 	}
 	return err
 }

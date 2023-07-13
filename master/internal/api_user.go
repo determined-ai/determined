@@ -514,50 +514,30 @@ func (a *apiServer) PostUserSetting(
 	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
 		return nil, errExternalSessions
 	}
-	if req.Setting == nil {
-		return nil, status.Error(codes.InvalidArgument, "must specify setting")
+	if req.Settings == nil {
+		return nil, status.Error(codes.InvalidArgument, "must specify settings")
 	}
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
-	settingModel := model.UserWebSetting{
-		UserID:      curUser.ID,
-		Key:         req.Setting.Key,
-		Value:       req.Setting.Value,
-		StoragePath: req.StoragePath,
+	var settingsModel []model.UserWebSetting
+	for _, setting := range req.Settings {
+		settingsModel = append(settingsModel, model.UserWebSetting{
+			UserID:      curUser.ID,
+			Key:         setting.Key,
+			Value:       setting.Value,
+			StoragePath: setting.StoragePath,
+		})
 	}
 	if err = user.AuthZProvider.Get().CanCreateUsersOwnSetting(
-		ctx, *curUser, settingModel); err != nil {
+		ctx, *curUser, settingsModel); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	err = db.UpdateUserSetting(&settingModel)
+	err = db.UpdateUserSetting(settingsModel)
 	return &apiv1.PostUserSettingResponse{}, err
-}
-
-func (a *apiServer) OverwriteUserSetting(
-	ctx context.Context, req *apiv1.OverwriteUserSettingRequest,
-) (*apiv1.OverwriteUserSettingResponse, error) {
-	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
-		return nil, errExternalSessions
-	}
-	if req.Settings == nil {
-		req.Settings = []*userv1.UserWebSetting{}
-	}
-
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err = user.AuthZProvider.Get().CanOverwriteUsersOwnSettings(
-		ctx, *curUser, req.Settings); err != nil {
-		return nil, status.Error(codes.PermissionDenied, err.Error())
-	}
-
-	err = db.OverwriteUserSetting(curUser.ID, req.Settings)
-	return &apiv1.OverwriteUserSettingResponse{}, err
 }
 
 func (a *apiServer) ResetUserSetting(

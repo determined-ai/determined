@@ -3,12 +3,7 @@ import { pipe } from 'fp-ts/function';
 import { Map } from 'immutable';
 import * as t from 'io-ts';
 
-import {
-  getUserSetting,
-  overwriteUserSettings,
-  resetUserSetting,
-  updateUserSetting,
-} from 'services/api';
+import { getUserSetting, resetUserSetting, updateUserSetting } from 'services/api';
 import { V1GetUserSettingResponse } from 'services/api-ts-sdk';
 import { UpdateUserSettingParams } from 'services/types';
 import { Json, JsonObject } from 'types';
@@ -66,7 +61,7 @@ class UserSettingsStore extends PollingStore {
     return this.#settings.readOnly();
   }
 
-  public overwrite(settings: object): void {
+  public async overwrite(settings: object) {
     const settingsMap = Map<string, Json>(settings);
     const settingsArray = Object.entries(settings).flatMap(([storagePath, settings]) =>
       isObject(settings)
@@ -78,7 +73,8 @@ class UserSettingsStore extends PollingStore {
         : [],
     );
     this.#settings.set(Loaded(settingsMap));
-    overwriteUserSettings({ settings: settingsArray });
+    await resetUserSetting({});
+    updateUserSetting({ settings: settingsArray });
   }
 
   public clear(): void {
@@ -209,7 +205,7 @@ class UserSettingsStore extends PollingStore {
           return [
             ...acc,
             {
-              setting: {
+              settings: {
                 key: setting,
                 storagePath: key,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -222,8 +218,7 @@ class UserSettingsStore extends PollingStore {
       );
     } else {
       dbUpdates.push({
-        setting: { key: '_ROOT', storagePath: key, value: JSON.stringify(value) },
-        storagePath: key,
+        settings: { key: '_ROOT', storagePath: key, value: JSON.stringify(value) },
       });
     }
     Promise.allSettled(

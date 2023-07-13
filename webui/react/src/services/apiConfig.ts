@@ -183,21 +183,10 @@ export const updateUserSetting: DetApi<
   request: (params, options) =>
     detApi.Users.postUserSetting(
       {
-        setting: params.setting,
-        storagePath: params.storagePath,
+        settings: Array.isArray(params.settings) ? params.settings : [params.settings],
       },
       options,
     ),
-};
-
-export const overwriteUserSettings: DetApi<
-  Service.OverwriteUserSettingsParams,
-  Api.V1OverwriteUserSettingResponse,
-  void
-> = {
-  name: 'overwriteUserSettings',
-  postProcess: (response) => response,
-  request: (params, options) => detApi.Users.overwriteUserSetting(params, options),
 };
 
 export const resetUserSetting: DetApi<

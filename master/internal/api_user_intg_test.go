@@ -414,24 +414,10 @@ func TestAuthzPostUserSetting(t *testing.T) {
 
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateUsersOwnSetting")
 	authzUsers.On("CanCreateUsersOwnSetting", mock.Anything, curUser,
-		model.UserWebSetting{UserID: curUser.ID, Key: "k", Value: "v"}).
+		[]*model.UserWebSetting{{UserID: curUser.ID, Key: "k", Value: "v"}}).
 		Return(fmt.Errorf("canCreateUsersOwnSetting")).Once()
 
 	_, err := api.PostUserSetting(ctx, &apiv1.PostUserSettingRequest{
-		Setting: &userv1.UserWebSetting{Key: "k", Value: "v"},
-	})
-	require.Equal(t, expectedErr.Error(), err.Error())
-}
-
-func TestAuthzOverwriteUserSetting(t *testing.T) {
-	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
-
-	expectedErr := status.Error(codes.PermissionDenied, "canOverwriteUsersOwnSettings")
-	authzUsers.On("CanOverwriteUsersOwnSettings", mock.Anything, curUser,
-		[]model.UserWebSetting{{UserID: curUser.ID, Key: "k", Value: "v"}}).
-		Return(fmt.Errorf("canOverwriteUsersOwnSetting")).Once()
-
-	_, err := api.OverwriteUserSetting(ctx, &apiv1.OverwriteUserSettingRequest{
 		Settings: []*userv1.UserWebSetting{{Key: "k", Value: "v"}},
 	})
 	require.Equal(t, expectedErr.Error(), err.Error())
