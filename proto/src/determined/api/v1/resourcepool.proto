@@ -52,9 +52,9 @@ message UnbindRPFromWorkspaceRequest {
   // The resource pool name.
   string resource_pool_name = 1;
   // The workspace IDs to be unbound.
-  repeated int32 workspace_ids = 2; // (optional)
+  repeated int32 workspace_ids = 2;
   // The workspace names to be unbound.
-  repeated string workspace_names = 3; // (optional)
+  repeated string workspace_names = 3;
 }
 
 // Unbind a resource pool to workspaces response.
@@ -101,10 +101,3 @@ message ListWorkspacesBoundToRPResponse {
   // Pagination information of the full dataset.
   Pagination pagination = 2;
 }
-
-// we want to add workspace name as a search parameter
-// I don't think endpoints will need to change
-// which takes precedence
-// Does webui need to change much to support this?
-// TODO: create ticket to rename messages to plural to reflect bulk operations (low priority)
-// TODO: delete invalid bindings from SDK/CLI? (low priority)

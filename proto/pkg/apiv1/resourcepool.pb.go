@@ -253,9 +253,9 @@ type UnbindRPFromWorkspaceRequest struct {
 	// The resource pool name.
 	ResourcePoolName string `protobuf:"bytes,1,opt,name=resource_pool_name,json=resourcePoolName,proto3" json:"resource_pool_name,omitempty"`
 	// The workspace IDs to be unbound.
-	WorkspaceIds []int32 `protobuf:"varint,2,rep,packed,name=workspace_ids,json=workspaceIds,proto3" json:"workspace_ids,omitempty"` // (optional)
+	WorkspaceIds []int32 `protobuf:"varint,2,rep,packed,name=workspace_ids,json=workspaceIds,proto3" json:"workspace_ids,omitempty"`
 	// The workspace names to be unbound.
-	WorkspaceNames []string `protobuf:"bytes,3,rep,name=workspace_names,json=workspaceNames,proto3" json:"workspace_names,omitempty"` // (optional)
+	WorkspaceNames []string `protobuf:"bytes,3,rep,name=workspace_names,json=workspaceNames,proto3" json:"workspace_names,omitempty"`
 }
 
 func (x *UnbindRPFromWorkspaceRequest) Reset() {
