@@ -1,8 +1,10 @@
 import os
+import re
 from typing import Dict, Optional, Union, cast
 from unittest import mock
 
 import pytest
+import responses
 
 from determined.common import api, storage
 from determined.common.experimental import checkpoint
@@ -70,3 +72,37 @@ def test_download_calls_S3StorageManager_download_in_direct_download_mode(
 
         sample_checkpoint.download(path=str(tmp_path), mode=checkpoint.DownloadMode.DIRECT)
         assert mock_download.call_count == 1
+
+
+@responses.activate
+def test_add_metadata_doesnt_update_local_on_rest_failure(
+    sample_checkpoint: checkpoint.Checkpoint,
+) -> None:
+    sample_checkpoint.metadata = {}
+
+    responses.post(
+        re.compile(f"{_MASTER}/api/v1/checkpoints/{sample_checkpoint.uuid}.*"), status=400
+    )
+
+    try:
+        sample_checkpoint.add_metadata({"test": "test"})
+        raise AssertionError("Server's 400 should raise an exception")
+    except api.errors.APIException:
+        assert "test" not in sample_checkpoint.metadata
+
+
+@responses.activate
+def test_remove_metadata_doesnt_update_local_on_rest_failure(
+    sample_checkpoint: checkpoint.Checkpoint,
+) -> None:
+    sample_checkpoint.metadata = {"test": "test"}
+
+    responses.post(
+        re.compile(f"{_MASTER}/api/v1/checkpoints/{sample_checkpoint.uuid}.*"), status=400
+    )
+
+    try:
+        sample_checkpoint.remove_metadata(["test"])
+        raise AssertionError("Server's 400 should raise an exception")
+    except api.errors.APIException:
+        assert "test" in sample_checkpoint.metadata

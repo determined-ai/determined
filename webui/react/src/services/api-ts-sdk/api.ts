@@ -687,6 +687,28 @@ export const TrialProfilerMetricLabelsProfilerMetricType = {
 } as const
 export type TrialProfilerMetricLabelsProfilerMetricType = ValueOf<typeof TrialProfilerMetricLabelsProfilerMetricType>
 /**
+ * - STATE_UNSPECIFIED: The trial is in an unspecified state.  - STATE_ACTIVE: The trial is in an active state.  - STATE_PAUSED: The trial is in a paused state  - STATE_STOPPING_CANCELED: The trial is canceled and is shutting down.  - STATE_STOPPING_KILLED: The trial is killed and is shutting down.  - STATE_STOPPING_COMPLETED: The trial is completed and is shutting down.  - STATE_STOPPING_ERROR: The trial is errored and is shutting down.  - STATE_CANCELED: The trial is canceled and is shut down.  - STATE_COMPLETED: The trial is completed and is shut down.  - STATE_ERROR: The trial is errored and is shut down.  - STATE_QUEUED: The trial is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The trial is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The trial is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The trial's allocation is actively running. Running is a substate of the Active state.
+ * @export
+ * @enum {string}
+ */
+export const Trialv1State = {
+    UNSPECIFIED: 'STATE_UNSPECIFIED',
+    ACTIVE: 'STATE_ACTIVE',
+    PAUSED: 'STATE_PAUSED',
+    STOPPINGCANCELED: 'STATE_STOPPING_CANCELED',
+    STOPPINGKILLED: 'STATE_STOPPING_KILLED',
+    STOPPINGCOMPLETED: 'STATE_STOPPING_COMPLETED',
+    STOPPINGERROR: 'STATE_STOPPING_ERROR',
+    CANCELED: 'STATE_CANCELED',
+    COMPLETED: 'STATE_COMPLETED',
+    ERROR: 'STATE_ERROR',
+    QUEUED: 'STATE_QUEUED',
+    PULLING: 'STATE_PULLING',
+    STARTING: 'STATE_STARTING',
+    RUNNING: 'STATE_RUNNING',
+} as const
+export type Trialv1State = ValueOf<typeof Trialv1State>
+/**
  * Trial is a set of workloads and are exploring a determined set of hyperparameters.
  * @export
  * @interface Trialv1Trial
@@ -718,10 +740,10 @@ export interface Trialv1Trial {
     endTime?: Date;
     /**
      * The current state of the trial.
-     * @type {Experimentv1State}
+     * @type {Trialv1State}
      * @memberof Trialv1Trial
      */
-    state: Experimentv1State;
+    state: Trialv1State;
     /**
      * Number times the trial restarted.
      * @type {number}

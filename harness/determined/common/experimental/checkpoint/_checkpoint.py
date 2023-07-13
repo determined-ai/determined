@@ -291,19 +291,6 @@ class Checkpoint:
         with open(path, "w") as f:
             json.dump(self.metadata, f, indent=2)
 
-    def _push_metadata(self) -> None:
-        # TODO: in a future version of this REST API, an entire, well-formed Checkpoint object.
-        req = bindings.v1PostCheckpointMetadataRequest(
-            checkpoint=bindings.v1Checkpoint(
-                uuid=self.uuid,
-                metadata=self.metadata,
-                resources={},
-                training=bindings.v1CheckpointTrainingMetadata(),
-                state=bindings.checkpointv1State.UNSPECIFIED,
-            ),
-        )
-        bindings.post_PostCheckpointMetadata(self._session, body=req, checkpoint_uuid=self.uuid)
-
     def add_metadata(self, metadata: Dict[str, Any]) -> None:
         """
         Adds user-defined metadata to the checkpoint. The ``metadata`` argument must be a
@@ -316,10 +303,12 @@ class Checkpoint:
         Arguments:
             metadata (dict): Dictionary of metadata to add to the checkpoint.
         """
-        for key, val in metadata.items():
-            self.metadata[key] = val
+        updated_metadata = dict(self.metadata, **metadata)
 
-        self._push_metadata()
+        req = _metadata_update_request(self.uuid, updated_metadata)
+        bindings.post_PostCheckpointMetadata(self._session, body=req, checkpoint_uuid=self.uuid)
+
+        self.metadata = updated_metadata
 
     def remove_metadata(self, keys: List[str]) -> None:
         """
@@ -332,11 +321,15 @@ class Checkpoint:
             keys (List[string]): Top-level keys to remove from the checkpoint metadata.
         """
 
+        updated_metadata = dict(self.metadata)
         for key in keys:
-            if key in self.metadata:
-                del self.metadata[key]
+            if key in updated_metadata:
+                del updated_metadata[key]
 
-        self._push_metadata()
+        req = _metadata_update_request(self.uuid, updated_metadata)
+        bindings.post_PostCheckpointMetadata(self._session, body=req, checkpoint_uuid=self.uuid)
+
+        self.metadata = updated_metadata
 
     def delete(self) -> None:
         """
@@ -391,3 +384,19 @@ class Checkpoint:
             state=CheckpointState(ckpt.state.value),
             training=CheckpointTrainingMetadata._from_bindings(ckpt.training),
         )
+
+
+def _metadata_update_request(
+    uuid: str, metadata: Dict[str, Any]
+) -> bindings.v1PostCheckpointMetadataRequest:
+    """Returns a request for updating checkpoint metadata."""
+    # TODO: in a future version of this REST API, an entire, well-formed Checkpoint object.
+    return bindings.v1PostCheckpointMetadataRequest(
+        checkpoint=bindings.v1Checkpoint(
+            uuid=uuid,
+            metadata=metadata,
+            resources={},
+            training=bindings.v1CheckpointTrainingMetadata(),
+            state=bindings.checkpointv1State.UNSPECIFIED,
+        ),
+    )

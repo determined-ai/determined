@@ -190,3 +190,5 @@ export const validateEnumList = (enumObject: unknown, values?: unknown[]): any =
 
   return enumValues.length !== 0 ? enumValues : undefined;
 };
+
+export const ensureArray = <T>(data: T | T[]): T[] => (Array.isArray(data) ? data : [data]);

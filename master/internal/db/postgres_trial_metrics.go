@@ -2,10 +2,12 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -23,6 +25,70 @@ const (
 	// GenericMetric designates metrics from other sources.
 	GenericMetric MetricPartitionType = "GENERIC"
 )
+
+type metricsBody struct {
+	BatchMetrics interface{}
+	AvgMetrics   *structpb.Struct
+	isValidation bool
+}
+
+func (b metricsBody) ToJSONObj() *model.JSONObj {
+	// we should probably move to avoid special casing based on metric type here.
+	metricsJSONPath := model.TrialMetricsJSONPath(b.isValidation)
+	body := model.JSONObj{
+		metricsJSONPath: b.AvgMetrics,
+	}
+
+	if b.isValidation {
+		return &body
+	}
+
+	body["batch_metrics"] = b.BatchMetrics
+	return &body
+}
+
+func (b *metricsBody) LoadJSON(body *model.JSONObj) (err error) {
+	metricsJSONPath := model.TrialMetricsJSONPath(b.isValidation)
+
+	avgMetricsVal, exists := (*body)[metricsJSONPath]
+	if !exists {
+		return fmt.Errorf("expected key %s in JSON body", metricsJSONPath)
+	}
+	avgMetrics, ok := avgMetricsVal.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("failed to deserialize %s", metricsJSONPath)
+	}
+	if b.AvgMetrics, err = structpb.NewStruct(avgMetrics); err != nil {
+		return errors.Wrapf(err, "failed to convert avg metrics to structpb.Struct")
+	}
+
+	if b.isValidation {
+		return nil
+	}
+
+	batchMetricsVal, exists := (*body)["batch_metrics"]
+	if exists {
+		b.BatchMetrics = batchMetricsVal
+	}
+
+	return nil
+}
+
+func newMetricsBody(
+	avgMetrics *structpb.Struct,
+	batchMetrics []*structpb.Struct,
+	isValidation bool,
+) *metricsBody {
+	var bMetrics any = nil
+	if len(batchMetrics) != 0 {
+		bMetrics = batchMetrics
+	}
+	return &metricsBody{
+		AvgMetrics:   avgMetrics,
+		BatchMetrics: bMetrics,
+		isValidation: isValidation,
+	}
+}
 
 // BunSelectMetricsQuery sets up a bun select query for based on new metrics table
 // simplifying some weirdness we set up for pg10 support.
@@ -81,16 +147,81 @@ WHERE trial_id = $1
 	return int(affectedRows), nil
 }
 
-func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map[string]interface{},
+// addMetricsWithMerge inserts a set of metrics to the database allowing for metric merges.
+func (db *PgDB) addMetricsWithMerge(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
+	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
+) (metricID int, addedMetrics *metricsBody, err error) {
+	var existingBodyJSON model.JSONObj
+	err = tx.QueryRowContext(ctx, `
+SELECT COALESCE((SELECT metrics FROM metrics
+WHERE archived = false
+AND total_batches = $1
+AND trial_id = $2
+AND partition_type = $3
+AND custom_type = $4), NULL)
+FOR UPDATE`,
+		lastProcessedBatch, trialID,
+		customMetricTypeToPartitionType(mType), mType).Scan(&existingBodyJSON)
+	if err != nil {
+		return 0, nil, errors.Wrap(err, "getting old metrics")
+	}
+	needsMerge := existingBodyJSON != nil
+
+	if !needsMerge {
+		id, err := db.addRawMetrics(ctx, tx, mBody, runID, trialID, lastProcessedBatch, mType)
+		return id, mBody, err
+	}
+
+	existingBody := &metricsBody{isValidation: mType == model.ValidationMetricType}
+	if err = existingBody.LoadJSON(&existingBodyJSON); err != nil {
+		return 0, nil, err
+	}
+	finalBody, err := shallowUnionMetrics(existingBody, mBody)
+	if err != nil {
+		return 0, nil, err
+	}
+	id, err := db.updateRawMetrics(ctx, tx, finalBody, runID, trialID, lastProcessedBatch, mType)
+	return id, mBody, err
+}
+
+func (db *PgDB) updateRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
 	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
 ) (int, error) {
-	pType := customMetricTypeToPartitionType(mType)
-
 	if err := mType.Validate(); err != nil {
 		return 0, err
 	}
+	pType := customMetricTypeToPartitionType(mType)
 
 	var metricRowID int
+	//nolint:execinquery // we want to get the id.
+	if err := tx.QueryRowContext(ctx, `
+UPDATE metrics
+SET metrics = $1
+WHERE archived = false
+AND trial_id = $2
+AND partition_type = $3
+AND custom_type = $4
+AND total_batches = $5
+RETURNING id`,
+		*mBody.ToJSONObj(), trialID, pType, mType, lastProcessedBatch,
+	).Scan(&metricRowID); err != nil {
+		return 0, errors.Wrap(err, "updating metrics")
+	}
+
+	return metricRowID, nil
+}
+
+// addRawMetrics inserts a set of raw metrics to the database and returns the metric id.
+func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
+	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
+) (int, error) {
+	if err := mType.Validate(); err != nil {
+		return 0, err
+	}
+	pType := customMetricTypeToPartitionType(mType)
+
+	var metricRowID int
+	// ON CONFLICT clause is not supported with partitioned tables (SQLSTATE 0A000)
 	//nolint:execinquery // we want to get the id.
 	if err := tx.QueryRowContext(ctx, `
 INSERT INTO metrics
@@ -98,7 +229,7 @@ INSERT INTO metrics
 VALUES
 	($1, $2, now(), $3, $4, $5, $6)
 RETURNING id`,
-		trialID, runID, *metricsBody, lastProcessedBatch, pType, mType,
+		trialID, runID, *mBody.ToJSONObj(), lastProcessedBatch, pType, mType,
 	).Scan(&metricRowID); err != nil {
 		return metricRowID, errors.Wrap(err, "inserting metrics")
 	}
@@ -171,4 +302,36 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 		Scan(ctx, &res)
 
 	return res, err
+}
+
+// shallowUnionMetrics unions non-overlapping keys of two metrics bodies.
+func shallowUnionMetrics(oldBody, newBody *metricsBody) (*metricsBody, error) {
+	if oldBody == nil {
+		return newBody, nil
+	}
+
+	if newBody == nil {
+		return oldBody, nil
+	}
+
+	// disallow batch metrics from being overwritten.
+	if oldBody.BatchMetrics != nil && newBody.BatchMetrics != nil {
+		return nil, fmt.Errorf("overwriting batch metrics is not supported")
+	}
+
+	oldAvgMetrics := oldBody.AvgMetrics
+	newAvgMetrics := newBody.AvgMetrics
+	for key, newValue := range newAvgMetrics.GetFields() {
+		// we cannot calculate min/max efficiently for replaced metric values
+		// so we disallow it.
+		if _, ok := oldAvgMetrics.GetFields()[key]; ok {
+			return nil, fmt.Errorf("overwriting existing metric keys is not supported,"+
+				" conflicting key: %s", key)
+		}
+		oldAvgMetrics.GetFields()[key] = newValue
+	}
+
+	oldBody.AvgMetrics = oldAvgMetrics
+
+	return oldBody, nil
 }

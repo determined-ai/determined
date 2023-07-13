@@ -46,6 +46,7 @@ type (
 		IdleTimeout *IdleTimeoutConfig
 		ProxyPorts  []*ProxyPortConfig
 		Restore     bool
+		ProxyTLS    bool
 
 		// Logging context of the allocation actor.
 		LogContext logger.Context
