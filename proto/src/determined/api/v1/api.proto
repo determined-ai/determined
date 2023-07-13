@@ -238,6 +238,17 @@ service Determined {
       tags: "Cluster"
     };
   }
+  // Patch master config.
+  rpc PatchMasterConfig(PatchMasterConfigRequest)
+      returns (PatchMasterConfigResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/master/config"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Cluster"
+    };
+  }
   // Stream master logs.
   rpc MasterLogs(MasterLogsRequest) returns (stream MasterLogsResponse) {
     option (google.api.http) = {

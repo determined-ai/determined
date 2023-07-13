@@ -303,6 +303,19 @@ export interface ProtobufAny {
     value?: string;
 }
 /**
+ * paths: "f.a"     paths: "f.b.d"  Here `f` represents a field in some root message, `a` and `b` fields in the message found in `f`, and `d` a field found in the message in `f.b`.  Field masks are used to specify a subset of fields that should be returned by a get operation or modified by an update operation. Field masks also have a custom JSON encoding (see below).  # Field Masks in Projections  When used in the context of a projection, a response message or sub-message is filtered by the API to only contain those fields as specified in the mask. For example, if the mask in the previous example is applied to a response message as follows:      f {       a : 22       b {         d : 1         x : 2       }       y : 13     }     z: 8  The result will not contain specific values for fields x,y and z (their value will be set to the default, and omitted in proto text output):       f {       a : 22       b {         d : 1       }     }  A repeated field is not allowed except at the last position of a paths string.  If a FieldMask object is not present in a get operation, the operation applies to all fields (as if a FieldMask of all fields had been specified).  Note that a field mask does not necessarily apply to the top-level response message. In case of a REST get operation, the field mask applies directly to the response, but in case of a REST list operation, the mask instead applies to each individual message in the returned resource list. In case of a REST custom method, other definitions may be used. Where the mask applies will be clearly documented together with its declaration in the API.  In any case, the effect on the returned resource/resources is required behavior for APIs.  # Field Masks in Update Operations  A field mask in update operations specifies which fields of the targeted resource are going to be updated. The API is required to only change the values of the fields as specified in the mask and leave the others untouched. If a resource is passed in to describe the updated values, the API ignores the values of all fields not covered by the mask.  If a repeated field is specified for an update operation, new values will be appended to the existing repeated field in the target resource. Note that a repeated field is only allowed in the last position of a `paths` string.  If a sub-message is specified in the last position of the field mask for an update operation, then new value will be merged into the existing sub-message in the target resource.  For example, given the target message:      f {       b {         d: 1         x: 2       }       c: [1]     }  And an update message:      f {       b {         d: 10       }       c: [2]     }  then if the field mask is:   paths: ["f.b", "f.c"]  then the result will be:      f {       b {         d: 10         x: 2       }       c: [1, 2]     }  An implementation may provide options to override this default behavior for repeated and message fields.  In order to reset a field's value to the default, the field must be in the mask and set to the default value in the provided resource. Hence, in order to reset all fields of a resource, provide a default instance of the resource and set all fields in the mask, or do not provide a mask as described below.  If a field mask is not present on update, the operation applies to all fields (as if a field mask of all fields has been specified). Note that in the presence of schema evolution, this may mean that fields the client does not know and has therefore not filled into the request will be reset to their default. If this is unwanted behavior, a specific service may require a client to always specify a field mask, producing an error if not.  As with get operations, the location of the resource which describes the updated values in the request message depends on the operation kind. In any case, the effect of the field mask is required to be honored by the API.  ## Considerations for HTTP REST  The HTTP kind of an update operation which uses a field mask must be set to PATCH instead of PUT in order to satisfy HTTP semantics (PUT must only be used for full updates).  # JSON Encoding of Field Masks  In JSON, a field mask is encoded as a single string where paths are separated by a comma. Fields name in each path are converted to/from lower-camel naming conventions.  As an example, consider the following message declarations:      message Profile {       User user = 1;       Photo photo = 2;     }     message User {       string display_name = 1;       string address = 2;     }  In proto a field mask for `Profile` may look as such:      mask {       paths: "user.display_name"       paths: "photo"     }  In JSON, the same mask is represented as below:      {       mask: "user.displayName,photo"     }  # Field Masks and Oneof Fields  Field masks treat fields in oneofs just as regular fields. Consider the following message:      message SampleMessage {       oneof test_oneof {         string name = 4;         SubMessage sub_message = 9;       }     }  The field mask can be:      mask {       paths: "name"     }  Or:      mask {       paths: "sub_message"     }  Note that oneof type names ("test_oneof" in this case) cannot be used in paths.  ## Field Mask Verification  The implementation of any API method which has a FieldMask type field in the request should verify the included field paths, and return an `INVALID_ARGUMENT` error if any path is unmappable.
+ * @export
+ * @interface ProtobufFieldMask
+ */
+export interface ProtobufFieldMask {
+    /**
+     * The set of field mask paths.
+     * @type {Array<string>}
+     * @memberof ProtobufFieldMask
+     */
+    paths?: Array<string>;
+}
+/**
  * `NullValue` is a singleton enumeration to represent the null value for the `Value` type union.   The JSON representation for `NullValue` is JSON `null`.   - NULL_VALUE: Null value.
  * @export
  * @enum {string}
@@ -1852,6 +1865,19 @@ export interface V1CompleteValidateAfterOperation {
      * @memberof V1CompleteValidateAfterOperation
      */
     searcherMetric?: any;
+}
+/**
+ * The config to be patched into Master Config.
+ * @export
+ * @interface V1Config
+ */
+export interface V1Config {
+    /**
+     * The log config to be patched into Master Config.
+     * @type {V1LogConfig}
+     * @memberof V1Config
+     */
+    log?: V1LogConfig;
 }
 /**
  * Container is a Docker container that is either scheduled to run or is currently running on a set of slots.
@@ -5164,6 +5190,25 @@ export const V1LocationType = {
 } as const
 export type V1LocationType = ValueOf<typeof V1LocationType>
 /**
+ * 
+ * @export
+ * @interface V1LogConfig
+ */
+export interface V1LogConfig {
+    /**
+     * The log level for Master Config.
+     * @type {string}
+     * @memberof V1LogConfig
+     */
+    level?: string;
+    /**
+     * The color setting for log in Master Config.
+     * @type {boolean}
+     * @memberof V1LogConfig
+     */
+    color?: boolean;
+}
+/**
  * LogEntry is a log event.
  * @export
  * @interface V1LogEntry
@@ -6088,6 +6133,38 @@ export interface V1PatchExperimentResponse {
     experiment?: V1Experiment;
 }
 /**
+ * Patch master config.
+ * @export
+ * @interface V1PatchMasterConfigRequest
+ */
+export interface V1PatchMasterConfigRequest {
+    /**
+     * The new config that the user wants to patch into the master config.
+     * @type {V1Config}
+     * @memberof V1PatchMasterConfigRequest
+     */
+    config?: V1Config;
+    /**
+     * The fields from the master config that the user wants to patch.
+     * @type {ProtobufFieldMask}
+     * @memberof V1PatchMasterConfigRequest
+     */
+    fieldMask?: ProtobufFieldMask;
+}
+/**
+ * Response to PatchMasterConfigRequest.
+ * @export
+ * @interface V1PatchMasterConfigResponse
+ */
+export interface V1PatchMasterConfigResponse {
+    /**
+     * The config file loaded by the master.
+     * @type {any}
+     * @memberof V1PatchMasterConfigResponse
+     */
+    config: any;
+}
+/**
  * PatchModel is a partial update to a model with only name required.
  * @export
  * @interface V1PatchModel
@@ -6433,7 +6510,7 @@ export interface V1Permission {
     scopeTypeMask?: V1ScopeTypeMask;
 }
 /**
- * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry.  - PERMISSION_TYPE_DELETE_MODEL_VERSION: Ability to delete model version.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY: Ability to delete another user's model registry.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION: Ability to delete another user's model version.  - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.  - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO: Ability to view sensitive subset of agent info.  - PERMISSION_TYPE_VIEW_MASTER_CONFIG: Ability to view master configs.  - PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE: Ability to control strict job queue.  - PERMISSION_TYPE_VIEW_TEMPLATES: Ability to view templates.  - PERMISSION_TYPE_UPDATE_TEMPLATES: Ability to update templates.  - PERMISSION_TYPE_CREATE_TEMPLATES: Ability to create templates.  - PERMISSION_TYPE_DELETE_TEMPLATES: Ability to delete templates.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
+ * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry.  - PERMISSION_TYPE_DELETE_MODEL_VERSION: Ability to delete model version.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY: Ability to delete another user's model registry.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION: Ability to delete another user's model version.  - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.  - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO: Ability to view sensitive subset of agent info.  - PERMISSION_TYPE_VIEW_MASTER_CONFIG: Ability to view master configs.  - PERMISSION_TYPE_UPDATE_MASTER_CONFIG: Ability to update master configs.  - PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE: Ability to control strict job queue.  - PERMISSION_TYPE_VIEW_TEMPLATES: Ability to view templates.  - PERMISSION_TYPE_UPDATE_TEMPLATES: Ability to update templates.  - PERMISSION_TYPE_CREATE_TEMPLATES: Ability to create templates.  - PERMISSION_TYPE_DELETE_TEMPLATES: Ability to delete templates.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
  * @export
  * @enum {string}
  */
@@ -6473,6 +6550,7 @@ export const V1PermissionType = {
     UPDATEAGENTS: 'PERMISSION_TYPE_UPDATE_AGENTS',
     VIEWSENSITIVEAGENTINFO: 'PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO',
     VIEWMASTERCONFIG: 'PERMISSION_TYPE_VIEW_MASTER_CONFIG',
+    UPDATEMASTERCONFIG: 'PERMISSION_TYPE_UPDATE_MASTER_CONFIG',
     CONTROLSTRICTJOBQUEUE: 'PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE',
     VIEWTEMPLATES: 'PERMISSION_TYPE_VIEW_TEMPLATES',
     UPDATETEMPLATES: 'PERMISSION_TYPE_UPDATE_TEMPLATES',
@@ -11238,6 +11316,44 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Patch master config.
+         * @param {V1PatchMasterConfigRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchMasterConfig(body: V1PatchMasterConfigRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchMasterConfig.');
+            }
+            const localVarPath = `/api/v1/master/config`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get an aggregated view of resource allocation during the given time period.
          * @param {string} startDate The first day to consider (the exact time is midnight UTC at the beginning of the day).
          * @param {string} endDate The last day to consider (the exact time is midnight UTC at the end of the day).
@@ -11570,6 +11686,25 @@ export const ClusterApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Patch master config.
+         * @param {V1PatchMasterConfigRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchMasterConfig(body: V1PatchMasterConfigRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchMasterConfigResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).patchMasterConfig(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get an aggregated view of resource allocation during the given time period.
          * @param {string} startDate The first day to consider (the exact time is midnight UTC at the beginning of the day).
          * @param {string} endDate The last day to consider (the exact time is midnight UTC at the end of the day).
@@ -11736,6 +11871,16 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          */
         masterLogs(offset?: number, limit?: number, follow?: boolean, options?: any) {
             return ClusterApiFp(configuration).masterLogs(offset, limit, follow, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Patch master config.
+         * @param {V1PatchMasterConfigRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchMasterConfig(body: V1PatchMasterConfigRequest, options?: any) {
+            return ClusterApiFp(configuration).patchMasterConfig(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -11909,6 +12054,18 @@ export class ClusterApi extends BaseAPI {
      */
     public masterLogs(offset?: number, limit?: number, follow?: boolean, options?: any) {
         return ClusterApiFp(this.configuration).masterLogs(offset, limit, follow, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Patch master config.
+     * @param {V1PatchMasterConfigRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public patchMasterConfig(body: V1PatchMasterConfigRequest, options?: any) {
+        return ClusterApiFp(this.configuration).patchMasterConfig(body, options)(this.fetch, this.basePath)
     }
     
     /**
