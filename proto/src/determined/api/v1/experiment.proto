@@ -545,7 +545,7 @@ message ExpMetricNamesResponse {
   // List of validation metric names.
   repeated string validation_metrics = 3 [deprecated = true];
   // List of metric group-name pairs.
-  repeated determined.metric.v1.MetricName metric_names = 4;
+  repeated determined.metric.v1.MetricIdentifier metric_names = 4;
 }
 
 // To distinguish the different categories of metrics.

@@ -65,8 +65,8 @@ type MetricIdentifier struct {
 }
 
 // ToProto returns the proto representation of the metric identifier.
-func (m MetricIdentifier) ToProto() *metricv1.MetricName {
-	return &metricv1.MetricName{
+func (m MetricIdentifier) ToProto() *metricv1.MetricIdentifier {
+	return &metricv1.MetricIdentifier{
 		Group: m.Group.ToString(),
 		Name:  string(m.Name),
 	}

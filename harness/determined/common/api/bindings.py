@@ -3055,7 +3055,7 @@ class v1EntityType(DetEnum):
     PROJECT = "ENTITY_TYPE_PROJECT"
 
 class v1ExpMetricNamesResponse(Printable):
-    metricNames: "typing.Optional[typing.Sequence[v1MetricName]]" = None
+    metricNames: "typing.Optional[typing.Sequence[v1MetricIdentifier]]" = None
     searcherMetrics: "typing.Optional[typing.Sequence[str]]" = None
     trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None
     validationMetrics: "typing.Optional[typing.Sequence[str]]" = None
@@ -3063,7 +3063,7 @@ class v1ExpMetricNamesResponse(Printable):
     def __init__(
         self,
         *,
-        metricNames: "typing.Union[typing.Sequence[v1MetricName], None, Unset]" = _unset,
+        metricNames: "typing.Union[typing.Sequence[v1MetricIdentifier], None, Unset]" = _unset,
         searcherMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         trainingMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         validationMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
@@ -3082,7 +3082,7 @@ class v1ExpMetricNamesResponse(Printable):
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
         if "metricNames" in obj:
-            kwargs["metricNames"] = [v1MetricName.from_json(x) for x in obj["metricNames"]] if obj["metricNames"] is not None else None
+            kwargs["metricNames"] = [v1MetricIdentifier.from_json(x) for x in obj["metricNames"]] if obj["metricNames"] is not None else None
         if "searcherMetrics" in obj:
             kwargs["searcherMetrics"] = obj["searcherMetrics"]
         if "trainingMetrics" in obj:
@@ -7042,7 +7042,7 @@ class v1MetricBatchesResponse(Printable):
             out["batches"] = self.batches
         return out
 
-class v1MetricName(Printable):
+class v1MetricIdentifier(Printable):
 
     def __init__(
         self,
@@ -7054,7 +7054,7 @@ class v1MetricName(Printable):
         self.name = name
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1MetricName":
+    def from_json(cls, obj: Json) -> "v1MetricIdentifier":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "group": obj["group"],
             "name": obj["name"],

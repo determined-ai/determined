@@ -1470,7 +1470,7 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 		for metricGroup, names := range metricNames {
 			for _, name := range names {
 				if seen := seenMetrics[metricGroup][name]; !seen {
-					typedMetric := metricv1.MetricName{
+					typedMetric := metricv1.MetricIdentifier{
 						Group: metricGroup.ToString(),
 						Name:  name,
 					}

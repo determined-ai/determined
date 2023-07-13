@@ -5,8 +5,8 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/metricv1";
 
 import "protoc-gen-swagger/options/annotations.proto";
 
-// MetricName packages metric name and group.
-message MetricName {
+// MetricIdentifier packages metric name and group.
+message MetricIdentifier {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "group", "name" ] }
   };
