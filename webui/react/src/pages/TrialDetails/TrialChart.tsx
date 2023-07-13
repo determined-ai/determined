@@ -16,6 +16,8 @@ import { timeSeries } from 'services/api';
 import { Metric, MetricContainer, Scale } from 'types';
 import { glasbeyColor } from 'utils/color';
 
+import handleError, { ErrorType } from '../../utils/error';
+
 interface Props {
   defaultMetricNames: Metric[];
   id?: string;
@@ -45,13 +47,21 @@ const TrialChart: React.FC<Props> = ({
 
   const fetchTrialSummary = useCallback(async () => {
     if (trialId) {
-      const summ = await timeSeries({
-        maxDatapoints: screen.width > 1600 ? 1500 : 1000,
-        metricNames: metricNames,
-        startBatches: 0,
-        trialIds: [trialId],
-      });
-      setTrialSummary(summ[0].metrics);
+      try {
+        const trialSummary = await timeSeries({
+          maxDatapoints: screen.width > 1600 ? 1500 : 1000,
+          metricNames: metricNames,
+          startBatches: 0,
+          trialIds: [trialId],
+        });
+        setTrialSummary(trialSummary[0].metrics);
+      } catch (e) {
+        handleError(e, {
+          publicMessage: `Failed to load trial summary for trial ${trialId}.`,
+          publicSubject: 'Trial summary fail to load.',
+          type: ErrorType.Api,
+        });
+      }
     }
   }, [metricNames, trialId]);
 
