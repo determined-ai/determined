@@ -20,6 +20,16 @@ class Workspace:
         workspace_id: Optional[int] = None,
         workspace_name: Optional[str] = None,
     ):
+        """Create a Workspace object.
+
+        Arguments:
+            session: The session to use for API calls.
+            workspace_id: (Optional) ID of the workspace. If None or not passed, the workspace ID
+                will be looked up here at initialization.
+            workspace_name: (Optional) Name of the workspace.
+
+        Note: Only one of workspace_id or workspace_name should be passed.
+        """
         if (workspace_id is None) ^ (workspace_name is None):
             raise ValueError("Workspace must be constructed with either a name or id (not both).")
 
