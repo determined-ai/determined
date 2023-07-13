@@ -1168,7 +1168,10 @@ func (m *Master) Run(ctx context.Context) error {
 	// Catch-all for requests not matched by any above handler
 	// echo does not set the response error on the context if no handler is matched
 	m.echo.Any("/*", func(c echo.Context) error {
-		return echo.ErrNotFound
+		id := fmt.Sprintf("%s %s", c.Request().Method, c.Request().URL.Path)
+		log.Debugf("unmatched request: %s", id)
+		return echo.NewHTTPError(http.StatusNotFound,
+			fmt.Sprintf("api not found: %s", id))
 	})
 
 	user.RegisterAPIHandler(m.echo, userService)

@@ -124,27 +124,27 @@ func (a *apiServer) enrichTrialState(trials ...*trialv1.Trial) error {
 	}
 
 	// Collect state information by TaskID
-	byTaskID := make(map[model.TaskID]experimentv1.State, len(tasks))
+	byTaskID := make(map[model.TaskID]trialv1.State, len(tasks))
 	for _, task := range tasks {
 		switch {
 		case task.Running:
-			byTaskID[task.Task] = experimentv1.State_STATE_RUNNING
+			byTaskID[task.Task] = trialv1.State_STATE_RUNNING
 		case task.Starting:
-			byTaskID[task.Task] = experimentv1.State_STATE_STARTING
+			byTaskID[task.Task] = trialv1.State_STATE_STARTING
 		case task.Pulling:
-			byTaskID[task.Task] = experimentv1.State_STATE_PULLING
+			byTaskID[task.Task] = trialv1.State_STATE_PULLING
 		default:
-			byTaskID[task.Task] = experimentv1.State_STATE_QUEUED
+			byTaskID[task.Task] = trialv1.State_STATE_QUEUED
 		}
 	}
 
 	// Active trials converted to Queued, Pulling, Starting, or Running
 	for _, trial := range trials {
-		if trial.State == experimentv1.State_STATE_ACTIVE {
+		if trial.State == trialv1.State_STATE_ACTIVE {
 			if setState, ok := byTaskID[model.TaskID(trial.TaskId)]; ok {
 				trial.State = setState
 			} else {
-				trial.State = experimentv1.State_STATE_QUEUED
+				trial.State = trialv1.State_STATE_QUEUED
 			}
 		}
 	}
@@ -629,7 +629,7 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
 
-	if resp.Trial.State == experimentv1.State_STATE_ACTIVE {
+	if resp.Trial.State == trialv1.State_STATE_ACTIVE {
 		if err := a.enrichTrialState(resp.Trial); err != nil {
 			return nil, err
 		}

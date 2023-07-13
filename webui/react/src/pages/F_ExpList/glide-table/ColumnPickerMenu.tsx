@@ -11,6 +11,7 @@ import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/Spinner';
 import { V1LocationType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
+import { ensureArray } from 'utils/data';
 import { Loadable } from 'utils/loadable';
 
 import css from './ColumnPickerMenu.module.scss';
@@ -24,6 +25,7 @@ const removeBannedColumns = (columns: ProjectColumn[]) =>
 const locationLabelMap = {
   [V1LocationType.EXPERIMENT]: 'General',
   [V1LocationType.VALIDATIONS]: 'Metrics',
+  [V1LocationType.TRAINING]: 'Metrics',
   [V1LocationType.HYPERPARAMETERS]: 'Hyperparameters',
 } as const;
 
@@ -39,7 +41,7 @@ interface ColumnTabProps {
   searchString: string;
   setSearchString: React.Dispatch<React.SetStateAction<string>>;
   setVisibleColumns: (newColumns: string[]) => void;
-  tab: V1LocationType;
+  tab: V1LocationType | V1LocationType[];
   totalColumns: ProjectColumn[];
 }
 
@@ -54,8 +56,9 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
 }) => {
   const filteredColumns = useMemo(() => {
     const regex = new RegExp(searchString, 'i');
+    const locations = ensureArray(tab);
     return totalColumns.filter(
-      (col) => col.location === tab && regex.test(col.displayName || col.column),
+      (col) => locations.includes(col.location) && regex.test(col.displayName || col.column),
     );
   }, [searchString, totalColumns, tab]);
 
@@ -169,24 +172,27 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
           <Pivot
             items={[
               V1LocationType.EXPERIMENT,
-              V1LocationType.VALIDATIONS,
+              [V1LocationType.VALIDATIONS, V1LocationType.TRAINING],
               V1LocationType.HYPERPARAMETERS,
-            ].map((tab) => ({
-              children: (
-                <ColumnPickerTab
-                  columnState={columnState}
-                  handleShowSuggested={handleShowSuggested}
-                  searchString={searchString}
-                  setSearchString={setSearchString}
-                  setVisibleColumns={setVisibleColumns}
-                  tab={tab}
-                  totalColumns={totalColumns}
-                />
-              ),
-              forceRender: true,
-              key: tab,
-              label: locationLabelMap[tab],
-            }))}
+            ].map((tab) => {
+              const canonicalTab = Array.isArray(tab) ? tab[0] : tab;
+              return {
+                children: (
+                  <ColumnPickerTab
+                    columnState={columnState}
+                    handleShowSuggested={handleShowSuggested}
+                    searchString={searchString}
+                    setSearchString={setSearchString}
+                    setVisibleColumns={setVisibleColumns}
+                    tab={tab}
+                    totalColumns={totalColumns}
+                  />
+                ),
+                forceRender: true,
+                key: canonicalTab,
+                label: locationLabelMap[canonicalTab],
+              };
+            })}
           />
         </div>
       }

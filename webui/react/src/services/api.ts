@@ -253,19 +253,6 @@ export const updateJobQueue = generateDetApi<
   Api.V1UpdateJobQueueResponse
 >(Config.updateJobQueue);
 
-/* Trials */
-export const queryTrials = generateDetApi(Config.queryTrials);
-
-export const updateTrialTags = generateDetApi(Config.updateTrialTags);
-
-export const createTrialsCollection = generateDetApi(Config.createTrialCollection);
-
-export const getTrialsCollections = generateDetApi(Config.getTrialsCollections);
-
-export const patchTrialsCollection = generateDetApi(Config.patchTrialsCollection);
-
-export const deleteTrialsCollection = generateDetApi(Config.deleteTrialsCollection);
-
 /* Experiments */
 
 export const getExperiments = generateDetApi<

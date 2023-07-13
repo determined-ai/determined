@@ -46,6 +46,8 @@ CHERRY_PICK_LABEL = "to-cherry-pick"
 NEEDS_TESTING_STATUS = "Needs testing"
 FIX_OPEN_STATUS = "Fix (open)"
 FIX_CONFLICT_STATUS = "Fix (conflict)"
+FIX_UNRELEASED_STATUS = "Fix (unreleased)"
+FIX_RELEASED_STATUS = "Fix (released)"
 
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 CASPER_TOKEN = os.environ["CASPER_TOKEN"]
@@ -76,13 +78,25 @@ def make_issue_for_pr(issue_repo_id: str, pr_id: str) -> str:
     )["createIssue"]["issue"]["id"]
 
 
-def add_item_to_project(project_id: str, item_id: str, status: str) -> None:
+def get_project_status_ids(project_id: str, status: str):
     status_info = gql.get_status_field_info(project=project_id)["node"]["field"]
-    status_field_id = status_info["id"]
-    status_value_id = next(v["id"] for v in status_info["options"] if v["name"] == status)
+    field_id = status_info["id"]
+    value_id = next(v["id"] for v in status_info["options"] if v["name"] == status)
+    return field_id, value_id
+
+
+def add_item_to_project(project_id: str, item_id: str, status: str) -> None:
+    status_field_id, status_value_id = get_project_status_ids(project_id, status)
     item_id = gql.add_item_to_project(project=project_id, item=item_id)["addProjectV2ItemById"][
         "item"
     ]["id"]
+    gql.set_project_item_status(
+        project=project_id, item=item_id, field=status_field_id, value=status_value_id
+    )
+
+
+def set_project_item_status(project_id: str, item_id: str, status: str) -> None:
+    status_field_id, status_value_id = get_project_status_ids(project_id, status)
     gql.set_project_item_status(
         project=project_id, item=item_id, field=status_field_id, value=status_value_id
     )
@@ -174,14 +188,14 @@ def cherry_pick_pr(pr_id: str) -> None:
         if not is_ee_pr:
             run("git", "push", ee_remote, f"{ee_release_branch}:{ee_release_branch}")
 
-        print("Cherry-pick succeeded, adding tracking item for testing")
-        add_tracking_issue_to_project(current_project_id(), pr_id, NEEDS_TESTING_STATUS)
+        print("Cherry-pick succeeded, updating item status")
+        set_project_item_status(current_project_id(), pr_id, FIX_UNRELEASED_STATUS)
     except subprocess.CalledProcessError:
         import traceback
 
         traceback.print_exc()
         print("Cherry-pick failed, adding PR as conflicted")
-        add_item_to_project(current_project_id(), pr_id, FIX_CONFLICT_STATUS)
+        set_project_item_status(current_project_id(), pr_id, FIX_CONFLICT_STATUS)
         requests.post(
             "https://casper.internal.infra.determined.ai/hubot/conflict",
             headers={"X-Casper-Token": CASPER_TOKEN},
@@ -199,9 +213,9 @@ class Actions:
             cherry_pick_pr(pr_id)
         else:
             title = gql.get_pr_title(id=pr_id)["node"]["title"]
-            if re.match("(feat|fix):", title) is not None:
+            if re.match(r"(feat|fix)\S*:", title, re.IGNORECASE) is not None:
                 print("Adding feat/fix PR")
-            elif re.match("[a-z]+:", title) is not None:
+            elif re.match(r"\S+:", title, re.IGNORECASE) is not None:
                 print("Skipping non-feat/fix PR")
                 return
             else:
@@ -223,6 +237,7 @@ class Actions:
             # TODO Maybe delete the tracking issue in the next release that was
             # created when this merged without a label.
             print("Cherry-picking labeled merged PR")
+            add_item_to_project(current_project_id(), pr_id, FIX_OPEN_STATUS)
             cherry_pick_pr(pr_id)
         elif state == "CLOSED":
             print("Ignoring label addition to closed PR")
@@ -243,8 +258,25 @@ class Actions:
     def cherry_pick_conflict_resolved(pr_id: str):
         # TODO Use Git to confirm the cherry-pick was done.
         project_id = current_project_id()
-        gql.delete_project_item(project=project_id, item=pr_id)
-        add_tracking_issue_to_project(project_id, pr_id, NEEDS_TESTING_STATUS)
+        set_project_item_status(project_id, pr_id, FIX_UNRELEASED_STATUS)
+
+    @staticmethod
+    def release_unreleased_prs():
+        after_cursor = None
+        project = current_project_id()
+        while True:
+            items = gql.list_project_prs(project=project, after=after_cursor)["node"]["items"]
+            print("batch:", len(items["nodes"]))
+            for item in items["nodes"]:
+                if item["fieldValueByName"]["name"] == FIX_UNRELEASED_STATUS and item["content"]:
+                    print(project, item["content"])
+                    add_tracking_issue_to_project(
+                        project, item["content"]["id"], NEEDS_TESTING_STATUS
+                    )
+                    set_project_item_status(project, item["id"], FIX_RELEASED_STATUS)
+            if not items["pageInfo"]["hasNextPage"]:
+                break
+            after_cursor = items["pageInfo"]["endCursor"]
 
 
 def main(args):

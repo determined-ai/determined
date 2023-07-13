@@ -3,6 +3,7 @@ import json
 import re
 from argparse import Namespace
 from collections import OrderedDict, namedtuple
+from functools import reduce
 from pathlib import Path
 from typing import IO, Any, Dict, Iterable, List, Optional, Tuple, Union
 
@@ -13,6 +14,7 @@ from determined import cli
 from determined.cli import render
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication
+from determined.util import merge_dicts
 
 yaml = yaml.YAML(typ="safe", pure=True)  # type: ignore
 
@@ -278,15 +280,39 @@ def config(args: Namespace) -> None:
     print(render.format_object_as_yaml(res_json["config"]))
 
 
-def _set_nested_config(config: Dict[str, Any], key_path: List[str], value: Any) -> Dict[str, Any]:
-    current = config
-    for key in key_path[:-1]:
-        current = current.setdefault(key, {})
-    current[key_path[-1]] = value
-    return config
+# Convert config overrides in dot notation to json path
+# For example the caller of this func will break down the config override
+#   --config slurm.sbatch_args=[--time=05:00]
+# into key slurm.sbatch_args, value [--time=05:00]
+# And this func will return string in json form:
+# 'slurm': {'sbatch_args': ['--time=05:00']}
+def _dot_to_json(key: Any, value: Any) -> Any:
+    json_output: Any = {}
+    path = key.split(".")
+    target = reduce(lambda d, k: d.setdefault(k, {}), path[:-1], json_output)
+    target[path[-1]] = value
+    return json_output
 
 
-def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> None:
+# A recursive function to replace value val in a Dict with a new value rval for specified keys.
+# Some key may have value None of NoneType when value is not defined.
+# For example, when parent key "slurm" is specified in experiment .yaml file without
+# any child, the experiment config will contain None value for key 'slurm':
+# {'name': 'noop_single', ..., 'entrypoint': 'model_def:NoOpTrial', 'slurm': None}
+# This NoneType value None will raise TypeError if used, for example:
+# TypeError: argument of type 'NoneType' is not iterable
+# TypeError: 'NoneType' object does not support item assignment
+# The purpose of this function is to convert None value to empty value
+# but we only do this conversion for specified keys.
+def _replace_value(data_dict: Dict[str, Any], keys: List[str], val: Any, rval: Any) -> None:
+    for key in data_dict.keys():
+        if data_dict[key] == val and key in keys:
+            data_dict[key] = rval
+        elif type(data_dict[key]) is dict:
+            _replace_value(data_dict[key], keys, val, rval)
+
+
+def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> Dict[str, Any]:
     for config_arg in overrides:
         if "=" not in config_arg:
             raise ValueError(
@@ -315,9 +341,28 @@ def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> 
             if key in _CONFIG_PATHS_COERCE_TO_LIST:
                 value = [value]
 
-        # TODO(#2703): Consider using full JSONPath spec instead of dot
-        # notation.
-        config = _set_nested_config(config, key.split("."), value)
+        # Convert config override in dot notation to json path
+        config_arg_in_json = _dot_to_json(key, value)
+
+        # Some key may have value None of NoneType when value is not defined.
+        # For example, when parent key "slurm" is specified in experiment .yaml file without
+        # any child key, the config will contain None value for key 'slurm':
+        # {'name': 'noop_single', ..., 'entrypoint': 'model_def:NoOpTrial', 'slurm': None}
+        # This NoneType value None will raise TypeError if used, for example:
+        # TypeError: argument of type 'NoneType' is not iterable
+        # TypeError: 'NoneType' object does not support item assignment
+        # Before we can merge the config from the exp .yaml file with the config_arg
+        # provided from the command line, we need to convert NoneType value None in
+        # config to empty string {}. We only convert the None value for the key
+        # specified in config_arg in overrides, for the example above, if the override
+        # is "--config slurm.sbatch_args=[--mem-per-gpu=1g]", we will convert the
+        # " 'slurm': None " to " 'slurm': {} " in config before pass it to merge_dicts
+        # function.
+        _replace_value(config, key.split("."), None, {})
+        # Merge two objects in json format
+        config = merge_dicts(config, config_arg_in_json)
+
+    return config
 
 
 def parse_config(
@@ -331,7 +376,7 @@ def parse_config(
         with config_file:
             config = util.safe_load_yaml_with_exceptions(config_file)
 
-    parse_config_overrides(config, overrides)
+    config = parse_config_overrides(config, overrides)
 
     for volume_arg in volumes:
         if ":" not in volume_arg:

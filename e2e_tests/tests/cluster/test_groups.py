@@ -70,7 +70,7 @@ def test_group_creation(add_users: List[str]) -> None:
 
         # Can delete.
         det_cmd(["user-group", "delete", group_name, "--yes"], check=True)
-        det_cmd_expect_error(["user-group", "describe", group_name], "not found")
+        det_cmd_expect_error(["user-group", "describe", group_name], "not find")
 
 
 @pytest.mark.e2e_cpu
@@ -93,7 +93,7 @@ def test_group_updates() -> None:
         det_cmd(["user-group", "change-name", group_name, new_group_name], check=True)
 
         # Old name is gone.
-        det_cmd_expect_error(["user-group", "describe", group_name, "--json"], "not found")
+        det_cmd_expect_error(["user-group", "describe", group_name, "--json"], "not find")
 
         # New name is here.
         group_desc = det_cmd_json(["user-group", "describe", new_group_name, "--json"])
@@ -138,15 +138,15 @@ def test_group_errors() -> None:
         # Adding non existent users to groups.
         fake_user = get_random_string()
         det_cmd_expect_error(
-            ["user-group", "create", fake_group, "--add-user", fake_user], "not found"
+            ["user-group", "create", fake_group, "--add-user", fake_user], "not find"
         )
-        det_cmd_expect_error(["user-group", "add-user", group_name, fake_user], "not found")
+        det_cmd_expect_error(["user-group", "add-user", group_name, fake_user], "not find")
 
         # Removing a non existent user from group.
-        det_cmd_expect_error(["user-group", "remove-user", group_name, fake_user], "not found")
+        det_cmd_expect_error(["user-group", "remove-user", group_name, fake_user], "not find")
 
         # Removing a user not in a group.
         det_cmd_expect_error(["user-group", "remove-user", group_name, "admin"], "Not Found")
 
         # Describing a non existent group.
-        det_cmd_expect_error(["user-group", "describe", get_random_string()], "not found")
+        det_cmd_expect_error(["user-group", "describe", get_random_string()], "not find")

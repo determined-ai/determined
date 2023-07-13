@@ -71,10 +71,10 @@ func (a *apiServer) GetMasterConfig(
 	}
 
 	permErr, err := cluster.AuthZProvider.Get().CanGetMasterConfig(ctx, u)
-	if permErr != nil {
-		return nil, permErr
-	} else if err != nil {
+	if err != nil {
 		return nil, err
+	} else if permErr != nil {
+		return nil, permErr
 	}
 
 	config, err := a.m.config.Printable()
