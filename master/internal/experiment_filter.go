@@ -103,7 +103,7 @@ func expColumnNameToSQL(columnName string) (string, error) {
 		"resourcePool":    "e.config->'resources'->>'resource_pool'",
 		"projectId":       "project_id",
 		"checkpointSize":  "checkpoint_size",
-		"checkpointCount": "checkpoint_count",
+		"checkpointCount": "e.checkpoint_count",
 		"searcherMetricsVal": `(
 			SELECT
 				searcher_metric_value
@@ -115,7 +115,7 @@ func expColumnNameToSQL(columnName string) (string, error) {
 					ELSE -1.0 * searcher_metric_value
 			END) ASC
 			LIMIT 1
-		 ) `,
+		) `,
 	}
 	var exists bool
 	col, exists := filterExperimentColMap[columnName]
