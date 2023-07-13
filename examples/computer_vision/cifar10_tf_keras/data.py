@@ -1,8 +1,9 @@
 from typing import Tuple
 
-import determined as det
 import numpy as np
 import tensorflow as tf
+
+import determined as det
 
 
 def load_numpy_data(

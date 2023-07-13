@@ -412,8 +412,6 @@ def test_cifar10(tmp_path: Path):
     exp_config = utils.make_default_exp_config(
         hparams, scheduling_unit=1, searcher_metric="random", checkpoint_dir=checkpoint_dir
     )
-    config = utils.load_config(utils.cv_examples_path("cifar10_tf_keras/const.yaml"))
-    exp_config["data"] = config["data"]
 
     controller = utils.make_trial_controller_from_trial_implementation(
         trial_cls,
