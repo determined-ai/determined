@@ -17,7 +17,9 @@ const svgIcons = [
 
 const setup = (props?: Props) => {
   const user = userEvent.setup();
-  const view = render(<Icon name="star" showTooltip title="Icon" {...props} />);
+  const view = render(
+    <Icon color={props?.color} name="star" showTooltip size={props?.size} title="Icon" />,
+  );
   return { user, view };
 };
 

@@ -204,21 +204,22 @@ const FourSquaresIcon: React.FC = () => (
 
 export type IconName = (typeof IconNameArray)[number];
 
-export type Props =
-  | {
-      color?: 'cancel' | 'error' | 'success';
-      name: IconName;
-      showTooltip?: boolean;
-      size?: IconSize;
-      title: string;
-    }
-  | {
-      color?: 'cancel' | 'error' | 'success';
-      name: IconName;
-      size?: IconSize;
-      decorative: true;
-    };
-
+type CommonProps = {
+  color?: 'cancel' | 'error' | 'success';
+  name: IconName;
+  size?: IconSize;
+  showTooltip?: boolean;
+};
+export type Props = CommonProps &
+  (
+    | {
+        title: string;
+        decorative?: never;
+      }
+    | {
+        decorative: true;
+      }
+  );
 const Icon: React.FC<Props> = (props: Props) => {
   const { name, size = 'medium', color } = props;
   const showTooltip = 'decorative' in props ? false : props.showTooltip ?? false;
