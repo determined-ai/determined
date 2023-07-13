@@ -166,24 +166,24 @@ func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	// TODO(DET-9566): we can probably limit this to recompute only a single metric type and it would
 	// fit the current usage better.
 	updatedSummaryMetrics := model.JSONObj{}
-	metricTypes := []model.MetricType{}
-	if err := tx.SelectContext(ctx, &metricTypes, `
+	metricGroups := []model.MetricGroup{}
+	if err := tx.SelectContext(ctx, &metricGroups, `
 SELECT DISTINCT custom_type FROM metrics WHERE partition_type = 'GENERIC' AND trial_id = $1
 	`,
 		trialID); err != nil {
 		return err
 	}
-	metricTypes = append(metricTypes, model.TrainingMetricType)
-	metricTypes = append(metricTypes, model.ValidationMetricType)
+	metricGroups = append(metricGroups, model.TrainingMetricGroup)
+	metricGroups = append(metricGroups, model.ValidationMetricGroup)
 
-	for _, metricType := range metricTypes {
+	for _, metricGroup := range metricGroups {
 		summary, err := db.calculateFullTrialSummaryMetrics(
-			ctx, tx, trialID, metricType)
+			ctx, tx, trialID, metricGroup)
 		if err != nil {
-			return fmt.Errorf("rollback computing %s summary metrics: %w", metricType, err)
+			return fmt.Errorf("rollback computing %s summary metrics: %w", metricGroup, err)
 		}
 		if len(summary) > 0 {
-			key := model.TrialSummaryMetricsJSONPath(metricType)
+			key := model.TrialSummaryMetricsJSONPath(metricGroup)
 			updatedSummaryMetrics[key] = summary
 		}
 	}
@@ -196,13 +196,13 @@ SELECT DISTINCT custom_type FROM metrics WHERE partition_type = 'GENERIC' AND tr
 }
 
 func (db *PgDB) calculateFullTrialSummaryMetrics(
-	ctx context.Context, tx *sqlx.Tx, trialID int, metricType model.MetricType,
+	ctx context.Context, tx *sqlx.Tx, trialID int, metricGroup model.MetricGroup,
 ) (model.JSONObj, error) {
-	partition := customMetricTypeToPartitionType(metricType)
+	partition := customMetricGroupToPartitionType(metricGroup)
 	jsonPath := model.TrialMetricsJSONPath(partition == ValidationMetric)
 	//nolint: execinquery
 	rows, err := tx.QueryContext(ctx, db.queries.getOrLoad("calculate-full-trial-summary-metrics"),
-		trialID, jsonPath, partition, metricType)
+		trialID, jsonPath, partition, metricGroup)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getting full compute trial %d summary metrics", trialID)
 	}
@@ -262,9 +262,9 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 }
 
 func (db *PgDB) _addTrialMetricsTx(
-	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mType model.MetricType,
+	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mGroup model.MetricGroup,
 ) (rollbacks int, err error) {
-	isValidation := mType == model.ValidationMetricType
+	isValidation := mGroup == model.ValidationMetricGroup
 	mBody := newMetricsBody(m.Metrics.AvgMetrics, m.Metrics.BatchMetrics, isValidation)
 
 	if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
@@ -272,7 +272,7 @@ func (db *PgDB) _addTrialMetricsTx(
 	}
 
 	if rollbacks, err = rollbackMetrics(ctx, tx, m.TrialRunId, m.TrialId, m.StepsCompleted,
-		mType); err != nil {
+		mGroup); err != nil {
 		return rollbacks, err
 	}
 	var summaryMetrics model.JSONObj
@@ -284,7 +284,7 @@ func (db *PgDB) _addTrialMetricsTx(
 	}
 
 	metricRowID, addedMetrics, err := db.addMetricsWithMerge(ctx, tx,
-		mBody, m.TrialRunId, m.TrialId, m.StepsCompleted, mType)
+		mBody, m.TrialRunId, m.TrialId, m.StepsCompleted, mGroup)
 	if err != nil {
 		return rollbacks, err
 	}
@@ -304,7 +304,7 @@ func (db *PgDB) _addTrialMetricsTx(
 			return rollbacks, errors.Wrap(err, "error on rollback compute of summary metrics")
 		}
 	default: // no rollbacks happened.
-		summaryMetricsJSONPath := model.TrialSummaryMetricsJSONPath(mType)
+		summaryMetricsJSONPath := model.TrialSummaryMetricsJSONPath(mGroup)
 		if _, ok := summaryMetrics[summaryMetricsJSONPath]; !ok {
 			summaryMetrics[summaryMetricsJSONPath] = map[string]any{}
 		}
@@ -352,16 +352,16 @@ WHERE id = $1;
 
 // addTrialMetrics inserts a set of trial metrics to the database.
 func (db *PgDB) addTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricType,
+	ctx context.Context, m *trialv1.TrialMetrics, mGroup model.MetricGroup,
 ) (rollbacks int, err error) {
 	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
 	case float64, nil:
 	default:
 		return 0, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
 	}
-	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", mType),
+	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", mGroup),
 		func(tx *sqlx.Tx) error {
-			rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, mType)
+			rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, mGroup)
 			return err
 		})
 }

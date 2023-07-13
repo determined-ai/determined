@@ -510,29 +510,29 @@ func TrialMetricsJSONPath(isValidation bool) string {
 }
 
 // TrialSummaryMetricsJSONPath returns the JSON path to the trials metric summary.
-func TrialSummaryMetricsJSONPath(metricType MetricType) string {
-	switch metricType {
-	case ValidationMetricType:
+func TrialSummaryMetricsJSONPath(metricGroup MetricGroup) string {
+	switch metricGroup {
+	case ValidationMetricGroup:
 		return legacyValidationMetricsPath
-	case TrainingMetricType:
+	case TrainingMetricGroup:
 		return legacyTrainingMetricsPath
 	default:
-		return metricType.ToString()
+		return metricGroup.ToString()
 	}
 }
 
-// TrialSummaryMetricType returns the metric type for the given summary JSON path.
-func TrialSummaryMetricType(jsonPath string) MetricType {
-	var mType MetricType
+// TrialSummaryMetricGroup returns the metric group for the given summary JSON path.
+func TrialSummaryMetricGroup(jsonPath string) MetricGroup {
+	var mGroup MetricGroup
 	switch jsonPath {
-	case TrialSummaryMetricsJSONPath(TrainingMetricType):
-		mType = TrainingMetricType
-	case TrialSummaryMetricsJSONPath(ValidationMetricType):
-		mType = ValidationMetricType
+	case TrialSummaryMetricsJSONPath(TrainingMetricGroup):
+		mGroup = TrainingMetricGroup
+	case TrialSummaryMetricsJSONPath(ValidationMetricGroup):
+		mGroup = ValidationMetricGroup
 	default:
-		mType = MetricType(jsonPath)
+		mGroup = MetricGroup(jsonPath)
 	}
-	return mType
+	return mGroup
 }
 
 // Represent order of active states (Queued -> Pulling -> Starting -> Running).

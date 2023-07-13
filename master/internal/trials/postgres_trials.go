@@ -23,12 +23,12 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	metricNames []string,
 	startBatches int, endBatches int, xAxisMetricLabels []string,
 	maxDatapoints int, timeSeriesColumn string,
-	timeSeriesFilter *commonv1.PolymorphicFilter, metricType model.MetricType) (
+	timeSeriesFilter *commonv1.PolymorphicFilter, metricGroup model.MetricGroup) (
 	metricMeasurements []db.MetricMeasurements, err error,
 ) {
 	var queryColumn, orderColumn string
 	metricsObjectName := model.TrialMetricsJSONPath(
-		metricType == model.ValidationMetricType)
+		metricGroup == model.ValidationMetricGroup)
 	// The data for batches and column are stored under different column names
 	switch timeSeriesColumn {
 	case "batches":
@@ -38,7 +38,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	default:
 		queryColumn = timeSeriesColumn
 	}
-	subq := db.BunSelectMetricsQuery(metricType, false).Table("metrics").
+	subq := db.BunSelectMetricsQuery(metricGroup, false).Table("metrics").
 		ColumnExpr("(select setseed(1)) as _seed").
 		ColumnExpr("total_batches as batches").
 		ColumnExpr("trial_id").ColumnExpr("end_time as time")
@@ -56,15 +56,15 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	}
 
 	for _, metricName := range append(metricNames, "epoch") {
-		metricType := db.MetricTypeString
+		metricGroup := db.MetricTypeString
 		if curSummary, ok := summaryMetrics.Metrics[metricName].(map[string]any); ok {
 			if m, ok := curSummary["type"].(string); ok {
-				metricType = m
+				metricGroup = m
 			}
 		}
 
 		cast := "text"
-		switch metricType {
+		switch metricGroup {
 		case db.MetricTypeNumber:
 			cast = "float8"
 		case db.MetricTypeBool:
