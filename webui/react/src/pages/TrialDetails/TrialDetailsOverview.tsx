@@ -43,7 +43,8 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   );
 
   const loadableMetricNames = useMetricNames([experiment.id], handleMetricNamesError);
-  const metricNames = Loadable.getOrElse([], loadableMetricNames);
+  const defaultMetricNames = useMemo(() => [], []);
+  const metricNames = Loadable.getOrElse(defaultMetricNames, loadableMetricNames);
 
   const { defaultMetrics, metrics } = useMemo(() => {
     const validationMetric = experiment?.config?.searcher.metric;
