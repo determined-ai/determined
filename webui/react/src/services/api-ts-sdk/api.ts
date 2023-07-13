@@ -5569,17 +5569,17 @@ export interface V1MetricBatchesResponse {
     batches?: Array<number>;
 }
 /**
- * MetricName packages metric name and type.
+ * MetricName packages metric name and group.
  * @export
  * @interface V1MetricName
  */
 export interface V1MetricName {
     /**
-     * The type of the metric.
+     * The group of the metric.
      * @type {string}
      * @memberof V1MetricName
      */
-    type: string;
+    group: string;
     /**
      * The name of the metric.
      * @type {string}

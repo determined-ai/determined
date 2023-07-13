@@ -1471,8 +1471,8 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 			for _, name := range names {
 				if seen := seenMetrics[metricGroup][name]; !seen {
 					typedMetric := metricv1.MetricName{
-						Type: metricGroup.ToString(),
-						Name: name,
+						Group: metricGroup.ToString(),
+						Name:  name,
 					}
 					response.MetricNames = append(response.MetricNames, &typedMetric)
 					if seenMetrics[metricGroup] == nil {

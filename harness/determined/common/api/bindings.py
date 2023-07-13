@@ -7047,24 +7047,24 @@ class v1MetricName(Printable):
     def __init__(
         self,
         *,
+        group: str,
         name: str,
-        type: str,
     ):
+        self.group = group
         self.name = name
-        self.type = type
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MetricName":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "group": obj["group"],
             "name": obj["name"],
-            "type": obj["type"],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "group": self.group,
             "name": self.name,
-            "type": self.type,
         }
         return out
 

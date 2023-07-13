@@ -727,7 +727,7 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		if err != nil {
 			return nil, errors.Wrapf(err, "error parsing metric id %s", metricIDStr)
 		}
-		metricGroupToNames[metricID.Type] = append(metricGroupToNames[metricID.Type],
+		metricGroupToNames[metricID.Group] = append(metricGroupToNames[metricID.Group],
 			string(metricID.Name))
 	}
 

@@ -60,15 +60,15 @@ func (t MetricGroup) Validate() error {
 
 // MetricIdentifier packages metric group and name together.
 type MetricIdentifier struct {
-	Type MetricGroup
-	Name metricName
+	Group MetricGroup
+	Name  metricName
 }
 
 // ToProto returns the proto representation of the metric identifier.
 func (m MetricIdentifier) ToProto() *metricv1.MetricName {
 	return &metricv1.MetricName{
-		Type: m.Type.ToString(),
-		Name: string(m.Name),
+		Group: m.Group.ToString(),
+		Name:  string(m.Name),
 	}
 }
 
@@ -88,7 +88,7 @@ func DeserializeMetricIdentifier(s string) (*MetricIdentifier, error) {
 		return nil, err
 	}
 	return &MetricIdentifier{
-		Type: metricIDType,
-		Name: metricIDName,
+		Group: metricIDType,
+		Name:  metricIDName,
 	}, nil
 }
