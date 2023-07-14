@@ -91,8 +91,7 @@ repos:
       - id: check-github-workflows
 
   - repo: https://github.com/psf/black
-    # Note: this should be kept in sync with the version in `requirements.txt`.
-    rev: 23.3.0
+    rev: 23.3.0 # Note: this should be kept in sync with the version in `requirements.txt`.
     hooks:
       - id: black
         exclude: ^(harness/determined/common/api/bindings.py)
@@ -103,8 +102,7 @@ repos:
         files: ^(harness|e2e_tests)/.*
         exclude: ^harness/tests/experiment/fixtures/ancient-checkpoints/.*
   - repo: https://github.com/pycqa/isort
-    # Note: this should be kept in sync with the version in `requirements.txt`.
-    rev: 5.11.5
+    rev: 5.11.5 # Note: this should be kept in sync with the version in `requirements.txt`.
     hooks:
       - id: isort
         name: isort (python)
