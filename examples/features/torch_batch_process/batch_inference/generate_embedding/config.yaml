@@ -1,0 +1,17 @@
+name: bert_embedding_generation
+entrypoint: >-
+   python3 -m determined.launch.torch_distributed
+   python3 bert_embedding_generation.py
+
+resources:
+  slots_per_trial: 4
+
+searcher:
+   name: single
+   metric: x
+   max_length: 100
+
+max_restarts: 0
+bind_mounts:
+  - host_path: /tmp
+    container_path: /tmp
