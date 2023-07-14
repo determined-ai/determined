@@ -244,7 +244,6 @@ def test_inference_torch_batch_process_cifar10(
 
     default_addr = ["0.0.0.12"]
 
-    # Create checkpoint folder under tmp_path to ensure proper clean-up
     checkpoint_path = os.path.join(tmp_path, "checkpoint")
     os.mkdir(checkpoint_path)
 
@@ -269,7 +268,6 @@ def test_inference_core_api_cifar10(rank, num_slots, tmp_path):
 
     default_addr = ["0.0.0.12"]
 
-    # Create checkpoint folder under tmp_path to ensure proper clean-up
     checkpoint_path = os.path.join(tmp_path, "checkpoint")
     os.mkdir(checkpoint_path)
 
