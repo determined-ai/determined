@@ -98,7 +98,7 @@ repos:
         exclude: ^(harness/determined/common/api/bindings.py)
   - repo: https://github.com/pycqa/flake8
     # Note: this should be kept in sync with the version in `requirements.txt`.
-    rev: 3.9.2
+    rev: 6.0.0
     hooks:
       - id: flake8
         files: ^(harness|e2e_tests)/.*
