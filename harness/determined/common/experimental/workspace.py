@@ -28,7 +28,7 @@ class Workspace:
 
         Note: Only one of workspace_id or workspace_name should be passed.
         """
-        if (workspace_id is None) ^ (workspace_name is None):
+        if (workspace_id is None) == (workspace_name is None):
             raise ValueError("Workspace must be constructed with either a name or id (not both).")
 
         if workspace_id is None:
