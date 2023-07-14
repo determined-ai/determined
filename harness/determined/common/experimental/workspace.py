@@ -33,7 +33,7 @@ class Workspace:
 
         if workspace_id is None:
             assert workspace_name is not None
-            self.id = _get_from_name(session, workspace_name).id
+            self.id = _get_workspace_id_from_name(session, workspace_name)
         else:
             self.id = workspace_id
         self.name = workspace_name
@@ -58,9 +58,11 @@ class Workspace:
         self._hydrate(workspace_bindings)
 
 
-def _get_from_name(session: api.Session, name: str) -> bindings.v1Workspace:
+def _get_workspace_id_from_name(session: api.Session, name: str) -> int:
     """Workspace lookup from master that relies on a workspace name."""
     resp = bindings.get_GetWorkspaces(session=session, name=name)
     if len(resp.workspaces) == 0:
         raise ValueError(f"No workspace found with name {name}")
-    return resp.workspaces[0]
+    assert len(resp.workspaces) < 2, f"Multiple workspaces found with name {name}"
+
+    return resp.workspaces[0].id
