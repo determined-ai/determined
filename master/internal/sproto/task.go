@@ -118,11 +118,11 @@ type (
 // AllocationEvent describes a change in status or state of an allocation or its resources.
 type AllocationEvent interface{ AllocationEvent() }
 
-// SentinelAllocationEvent can be used as a marker in the event stream.
-type SentinelAllocationEvent struct{}
+// AllocationReleasedEvent can be used as a marker in the event stream.
+type AllocationReleasedEvent struct{}
 
 // AllocationEvent implements AllocationEvent.
-func (SentinelAllocationEvent) AllocationEvent() {}
+func (AllocationReleasedEvent) AllocationEvent() {}
 
 // AllocationEvent implements AllocationEvent.
 func (*ResourcesAllocated) AllocationEvent() {}

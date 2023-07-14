@@ -21,7 +21,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/idle"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
@@ -214,7 +213,7 @@ func (a *allocation) run(ctx context.Context, sub *sproto.AllocationSubscription
 	defer a.recover()
 	for {
 		event := sub.Get()
-		if event == (sproto.SentinelAllocationEvent{}) {
+		if event == (sproto.AllocationReleasedEvent{}) {
 			return
 		}
 		a.HandleRMEvent(event)
@@ -1033,8 +1032,6 @@ func (a *allocation) terminated(reason string) {
 		return
 	}
 
-	a.wg.Cancel()
-	rmevents.Publish(a.req.AllocationID, sproto.SentinelAllocationEvent{})
 	a.setMostProgressedModelState(model.AllocationStateTerminated)
 	exit := &AllocationExited{FinalState: a.state()}
 	a.exited = exit
@@ -1043,6 +1040,7 @@ func (a *allocation) terminated(reason string) {
 	defer a.system.Tell(a.parent, exit)
 	defer a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
 	defer a.unregisterProxies()
+	defer a.wg.Cancel()
 
 	level := ptrs.Ptr(model.LogLevelInfo)
 	if a.exitErr != nil {
