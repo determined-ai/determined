@@ -42,7 +42,7 @@ func TestRMEvents(t *testing.T) {
 				for {
 					ev := sub.Get()
 					t.Logf("%s:%d got %T", topic, subID, ev)
-					if ev == (sproto.SentinelAllocationEvent{}) {
+					if ev == (sproto.AllocationReleasedEvent{}) {
 						return
 					}
 					mu.Lock()
@@ -69,7 +69,7 @@ func TestRMEvents(t *testing.T) {
 
 	t.Log("closing subs and waiting on background goroutines")
 	for _, topic := range topics {
-		Publish(topic, sproto.SentinelAllocationEvent{})
+		Publish(topic, sproto.AllocationReleasedEvent{})
 	}
 	wg.Wait()
 
