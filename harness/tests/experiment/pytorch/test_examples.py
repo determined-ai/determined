@@ -3,12 +3,15 @@ import logging
 import os
 import pathlib
 import typing
+import unittest.mock
 
 import pytest
 import torch
 from torch.distributed import launcher
 
+from determined import core
 from tests.experiment import pytorch_utils, utils  # noqa: I100
+from tests.launch import test_util
 
 
 def test_pytorch_mnist_example(tmp_path: pathlib.Path) -> None:
@@ -214,33 +217,68 @@ def run_gan(tmp_path: pathlib.Path, batches_trained: int = 0):
         )
 
 
-@pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
-@pytest.mark.gpu_parallel
-def test_batch_processing_mnist(tmp_path: pathlib.Path, batches_trained: int = 0):
-    # Get processor class
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context"
+)
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint"
+)
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._report_progress_to_master"
+)
+@pytest.mark.parametrize("rank, num_slots", [[0, 2], [1, 2]])
+def test_inference_torch_batch_process_cifar10(
+    mock_report_progress_to_master: unittest.mock.MagicMock,
+    mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
+    mock_initialize_default_inference_context: unittest.mock.MagicMock,
+    rank,
+    num_slots,
+    tmp_path,
+):
+    # Get main function from example
     example_sub_path = "torch_batch_process/batch_inference/compare_with_core_api"
     example_path = utils.features_path(
         os.path.join(example_sub_path, "torch_batch_process_inference.py")
     )
-    processor_class = utils.import_class_from_module("MyProcessor", example_path)
+    main_fn = utils.import_class_from_module("main", example_path)
 
-    # Get dataset
-    import filelock
-    import torchvision as tv
-    import torchvision.transforms as transforms
+    default_addr = ["0.0.0.12"]
 
-    from determined.pytorch import experimental
+    # Create checkpoint folder under tmp_path to ensure proper clean-up
+    checkpoint_path = os.path.join(tmp_path, "checkpoint")
+    os.mkdir(checkpoint_path)
 
-    transform = transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+    mock_initialize_default_inference_context.return_value = core._dummy_init(
+        distributed=utils.get_mock_distributed_context(rank=rank),
+        checkpoint_storage=str(checkpoint_path),
     )
-    with filelock.FileLock(os.path.join(tmp_path, "inference.lock")):
-        inference_data = tv.datasets.CIFAR10(
-            root="/data", train=False, download=True, transform=transform
-        )
 
-    experimental.torch_batch_process(
-        processor_class,
-        inference_data,
-        batch_size=200,
-    )
+    with test_util.set_mock_cluster_info(default_addr, rank, num_slots):
+        main_fn()
+    # Dataset length is 10,000; num_slots is 2; checkpoint_interval is 5; batch_size is 200
+    # expected checkpoint count = 10000 / 2 / 5 / 200 = 5
+    assert mock_synchronize_and_checkpoint.call_count == 5
+
+
+@pytest.mark.parametrize("rank, num_slots", [[0, 2], [1, 2]])
+def test_inference_core_api_cifar10(rank, num_slots, tmp_path):
+    # Get main function from example
+    example_sub_path = "torch_batch_process/batch_inference/compare_with_core_api"
+    example_path = utils.features_path(os.path.join(example_sub_path, "core_api_inference.py"))
+    main_fn = utils.import_class_from_module("main", example_path)
+
+    default_addr = ["0.0.0.12"]
+
+    # Create checkpoint folder under tmp_path to ensure proper clean-up
+    checkpoint_path = os.path.join(tmp_path, "checkpoint")
+    os.mkdir(checkpoint_path)
+
+    core_context = unittest.mock.MagicMock()
+    core_context.distributed = utils.get_mock_distributed_context(rank=rank)
+    core_context.preempt.should_preempt.return_value = False
+
+    with test_util.set_mock_cluster_info(default_addr, rank, num_slots):
+        main_fn(core_context)
+    # Dataset length is 10,000; num_slots is 2; checkpoint_interval is 5; batch_size is 200
+    # expected checkpoint count = 10000 / 2 / 5 / 200 = 5
+    assert core_context.distributed.gather.call_count == 5

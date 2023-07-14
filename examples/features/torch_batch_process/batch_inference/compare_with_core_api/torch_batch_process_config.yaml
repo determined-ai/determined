@@ -12,3 +12,7 @@ searcher:
    max_length: 100
 
 max_restarts: 2
+bind_mounts:
+    - host_path: /tmp
+      container_path: /tmp
+      read_only: false
