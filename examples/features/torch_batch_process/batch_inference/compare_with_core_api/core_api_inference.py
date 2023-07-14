@@ -16,8 +16,7 @@ from torch.utils import data
 from torchvision import transforms
 
 import determined as det
-import determined.pytorch
-from determined import core
+from determined import core, pytorch
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -97,7 +96,7 @@ def get_data_loader(
 
     sampler = data.SequentialSampler(inference_data)
     sampler = data.BatchSampler(sampler, batch_size=batch_size, drop_last=False)
-    sampler = determined.pytorch.samplers.DistributedBatchSampler(sampler, total_worker, rank)
+    sampler = pytorch.samplers.DistributedBatchSampler(sampler, total_worker, rank)
     dataloader = data.DataLoader(inference_data, batch_sampler=sampler)
 
     # Enumerate over dataloader directly may cause some workers to iterate for 1 more time
