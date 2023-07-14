@@ -178,7 +178,7 @@ func (a *apiServer) getProjectColumnsByID(
 		ctx,
 		curUser,
 		p,
-		experimentQuery,
+		db.Bun().NewSelect().TableExpr("(?) AS subq", experimentQuery),
 		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
 	)
 	if err != nil {
@@ -347,7 +347,7 @@ func (a *apiServer) getProjectMetricsNames(
 		ctx,
 		curUser,
 		project,
-		metricQuery,
+		db.Bun().NewSelect().TableExpr("(?) AS subq", metricQuery),
 		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS},
 	)
 	if err != nil {
