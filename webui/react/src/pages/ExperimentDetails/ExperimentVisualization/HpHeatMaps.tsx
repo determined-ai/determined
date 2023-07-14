@@ -227,7 +227,7 @@ const HpHeatMaps: React.FC<Props> = ({
         selectedMetric.name,
         selectedBatch,
         metricTypeParamMap[selectedMetric.type],
-        undefined, // custom metric type
+        undefined, // custom metric group
         selectedBatchMargin,
         undefined,
         { signal: canceler.signal },
