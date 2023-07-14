@@ -175,17 +175,20 @@ func (e *experiment) restoreTrial(
 	}
 
 	config := schemas.Copy(e.activeConfig)
-	t := newTrial(
+	t, err := newTrial(
 		e.logCtx, trialTaskID(e.ID, searcher.Create.RequestID), e.JobID, e.StartTime, e.ID, e.State,
-		searcher, e.rm, e.db, config, ckpt, e.taskSpec, e.generatedKeys, true,
+		searcher, e.rm, e.db, config, ckpt, e.taskSpec, e.generatedKeys, true, trialID,
+		e.searcher.TrialsCreated[searcher.Create.RequestID], ctx.Self().System(), ctx.Self(),
 	)
-	if trialID != nil {
-		t.id = *trialID
-		t.idSet = true
-		t.trialCreationSent = e.searcher.TrialsCreated[searcher.Create.RequestID]
+	if err != nil {
+		// TODO(!!!): kinda sloppy.
+		l.WithError(err).Error("failed to restore trial, aborting restore")
+		if !e.searcher.TrialsClosed[searcher.Create.RequestID] {
+			ctx.Tell(ctx.Self(), trialClosed{requestID: searcher.Create.RequestID})
+		}
+		return
 	}
-	trialActor, _ := ctx.ActorOf(searcher.Create.RequestID, t)
-	ctx.Ask(trialActor, actor.Ping{}).Get()
+	e.trials[searcher.Create.RequestID] = t // TODO(!!!): threadsafe, dupe check
 
 	l.Debug("restored trial")
 }

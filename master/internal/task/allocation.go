@@ -105,7 +105,6 @@ type allocation struct {
 
 	syslog *logrus.Entry
 	system *actor.System
-	parent *actor.Ref
 	wg     waitgroupx.Group
 
 	// The request to create the allocation, essentially our configuration.
@@ -150,7 +149,7 @@ type allocation struct {
 // newAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
 func newAllocation(
 	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
-	specifier tasks.TaskSpecifier, system *actor.System, parent *actor.Ref,
+	specifier tasks.TaskSpecifier, system *actor.System,
 ) *allocation {
 	req.LogContext = detLogger.MergeContexts(logCtx, detLogger.Context{
 		"allocation-id": req.AllocationID,
@@ -161,7 +160,6 @@ func newAllocation(
 		rm: rm,
 
 		system: system,
-		parent: parent,
 		wg:     waitgroupx.WithContext(context.Background()),
 		syslog: logrus.WithFields(logCtx.Fields()),
 
@@ -439,8 +437,8 @@ func (a *allocation) validateRendezvous() error {
 	return nil
 }
 
-// awaitTermination waits for the allocation and any goroutines associated with to exit.
-func (a *allocation) awaitTermination() *AllocationExited {
+// await the allocation exit and any goroutines associated.
+func (a *allocation) await() *AllocationExited {
 	a.wg.Wait()
 	return a.exited
 }
@@ -520,7 +518,6 @@ func (a *allocation) Close() error {
 		}
 
 		a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
-		a.system.Tell(a.parent, a.exited)
 
 		if a.req.Preemptible {
 			preemptible.Unregister(a.req.AllocationID.String())
@@ -1037,7 +1034,6 @@ func (a *allocation) terminated(reason string) {
 	a.exited = exit
 	exitReason := fmt.Sprintf("allocation terminated after %s", reason)
 
-	defer a.system.Tell(a.parent, exit)
 	defer a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
 	defer a.unregisterProxies()
 	defer a.wg.Cancel()

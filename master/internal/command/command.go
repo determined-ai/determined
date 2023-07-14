@@ -3,20 +3,21 @@ package command
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
+	"github.com/sirupsen/logrus"
 
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -205,8 +206,13 @@ func tryRestoreCommandsByType(
 
 // command is executed in a containerized environment on a Determined cluster.
 type command struct {
-	db *db.PgDB
-	rm rm.ResourceManager
+	mu sync.Mutex
+	wg waitgroupx.Group
+
+	db     *db.PgDB
+	rm     rm.ResourceManager
+	syslog *logrus.Entry
+	stop   func()
 
 	tasks.GenericCommandSpec
 
@@ -225,8 +231,15 @@ type command struct {
 
 // Receive implements the actor.Actor interface.
 func (c *command) Receive(ctx *actor.Context) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		c.wg = waitgroupx.WithContext(context.Background())
+		c.syslog = logrus.WithFields(c.logCtx.Fields())
+		c.stop = ctx.Self().Stop
+
 		ctx.AddLabels(c.logCtx)
 		c.allocationID = model.AllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 		if !c.restored {
@@ -288,7 +301,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			IdleTimeout: idleWatcherConfig,
 			Restore:     c.restored,
 			ProxyTLS:    c.TaskType == model.TaskTypeNotebook,
-		}, c.db, c.rm, c.GenericCommandSpec, ctx.Self().System(), ctx.Self())
+		}, c.db, c.rm, c.GenericCommandSpec, ctx.Self().System(), c.AllocationExitedCallback)
 
 		jobservice.Default.RegisterJob(c.jobID, ctx.Self())
 
@@ -310,15 +323,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 				"failure to delete user session for task: %v", c.taskID)
 		}
 	case *task.AllocationExited:
-		c.exitStatus = msg
-		if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
-			ctx.Log().WithError(err).Error("marking task complete")
-		}
-		if err := c.db.DeleteUserSessionByToken(c.GenericCommandSpec.Base.UserSessionToken); err != nil {
-			ctx.Log().WithError(err).Errorf(
-				"failure to delete user session for task: %v", c.taskID)
-		}
-		actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 	case getSummary:
 		if msg.userFilter == "" || c.Base.Owner.Username == msg.userFilter {
 			ctx.Respond(c.summary(ctx))
@@ -470,6 +474,30 @@ func (c *command) Receive(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func (c *command) AllocationExitedCallback(msg *task.AllocationExited) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.exitStatus = msg
+	if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
+		c.syslog.WithError(err).Error("marking task complete")
+	}
+	if err := c.db.DeleteUserSessionByToken(c.GenericCommandSpec.Base.UserSessionToken); err != nil {
+		c.syslog.WithError(err).Errorf("failure to delete user session for task: %v", c.taskID)
+	}
+
+	c.wg.Go(func(ctx context.Context) {
+		t := time.NewTimer(terminatedDuration)
+		defer t.Stop()
+
+		select {
+		case <-t.C:
+			c.stop()
+		case <-ctx.Done():
+		}
+	})
 }
 
 func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) error {

@@ -49,22 +49,24 @@ func (as *allocationService) StartAllocation(
 	rm rm.ResourceManager,
 	specifier tasks.TaskSpecifier,
 	system *actor.System,
-	parent *actor.Ref,
+	onExit func(*AllocationExited),
 ) {
 	as.mu.Lock()
 	defer as.mu.Unlock()
 
-	ref := newAllocation(logCtx, req, db, rm, specifier, system, parent)
+	ref := newAllocation(logCtx, req, db, rm, specifier, system)
 	as.allocations[req.AllocationID] = ref
 	go func() {
-		_ = ref.awaitTermination()
+		exit := ref.await()
 		if err := ref.Close(); err != nil {
 			syslog.WithError(err).Error("cleaning up allocation")
 		}
 
 		as.mu.Lock()
-		defer as.mu.Unlock()
 		delete(as.allocations, req.AllocationID)
+		as.mu.Unlock()
+
+		onExit(exit)
 	}()
 }
 

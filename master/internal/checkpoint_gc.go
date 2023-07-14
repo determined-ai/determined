@@ -3,9 +3,11 @@ package internal
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -24,8 +26,12 @@ import (
 )
 
 type checkpointGCTask struct {
-	db *db.PgDB
-	rm rm.ResourceManager
+	mu   sync.Mutex
+	stop func()
+
+	db     *db.PgDB
+	rm     rm.ResourceManager
+	syslog *logrus.Entry
 
 	taskID       model.TaskID
 	allocationID model.AllocationID
@@ -52,6 +58,10 @@ func newCheckpointGCTask(
 	deleteCheckpointsStr := strings.Join(checkpointStrIDs, ",")
 
 	return &checkpointGCTask{
+		db:     db,
+		rm:     rm,
+		syslog: logrus.WithField("component", "checkpointgc"),
+
 		taskID:            taskID,
 		jobID:             jobID,
 		jobSubmissionTime: jobSubmissionTime,
@@ -63,16 +73,18 @@ func newCheckpointGCTask(
 			CheckpointGlobs:    checkpointGlobs,
 			DeleteTensorboards: deleteTensorboards,
 		},
-		db: db,
-		rm: rm,
 
 		logCtx: logCtx,
 	}
 }
 
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	switch ctx.Message().(type) {
 	case actor.PreStart:
+		t.stop = ctx.Self().Stop
 		if len(t.ToDelete) == 0 && !t.DeleteTensorboards {
 			// Early return as nothing to do
 			ctx.Self().Stop()
@@ -113,7 +125,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			},
 			Group:        ctx.Self(),
 			ResourcePool: rp,
-		}, t.db, t.rm, t.GCCkptSpec, ctx.Self().System(), ctx.Self())
+		}, t.db, t.rm, t.GCCkptSpec, ctx.Self().System(), func(ae *task.AllocationExited) {})
 
 		// t.Base is just a shallow copy of the m.taskSpec on the master, so
 		// use caution when mutating it.
@@ -124,14 +136,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		if err != nil {
 			return fmt.Errorf("creating task container defaults: %v", err)
 		}
-	case *task.AllocationExited:
-		if msg.Err != nil {
-			ctx.Log().WithError(msg.Err).Error("wasn't able to delete checkpoints from checkpoint storage")
-			t.completeTask(ctx)
-			return errors.Wrapf(msg.Err, "checkpoint GC task failed because allocation failed")
-		}
-
-		t.completeTask(ctx)
 	case actor.PostStop:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -140,10 +144,17 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (t *checkpointGCTask) completeTask(ctx *actor.Context) {
-	if err := t.db.CompleteTask(t.taskID, time.Now().UTC()); err != nil {
-		ctx.Log().WithError(err).Error("marking GC task complete")
+func (t *checkpointGCTask) AllocationExitedCallback(msg *task.AllocationExited) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	if msg.Err != nil {
+		t.syslog.WithError(msg.Err).Error("wasn't able to delete checkpoints from checkpoint storage")
 	}
 
-	ctx.Self().Stop()
+	err := t.db.CompleteTask(t.taskID, time.Now().UTC())
+	if err != nil {
+		t.syslog.WithError(err).Error("marking GC task complete")
+	}
+	t.stop()
 }

@@ -1197,9 +1197,7 @@ func (a *apiServer) GetCurrentTrialSearcherOperation(
 	exp := actor.Addr("experiments", eID)
 
 	var resp trialSearcherState
-	if err := a.ask(exp, trialGetSearcherState{
-		requestID: rID,
-	}, &resp); err != nil {
+	if err := a.ask(exp, trialGetSearcherState{requestID: rID}, &resp); err != nil {
 		return nil, err
 	}
 
@@ -1247,9 +1245,9 @@ func (a *apiServer) ReportTrialSearcherEarlyExit(
 	if err != nil {
 		return nil, err
 	}
-	trial := actor.Addr("experiments", eID, rID)
+	exp := actor.Addr("experiments", eID)
 
-	if err = a.ask(trial, userInitiatedEarlyExit{
+	if err = a.ask(exp, userInitiatedEarlyExit{
 		requestID: rID,
 		reason:    model.ExitedReasonFromProto(req.EarlyExit.Reason),
 	}, nil); err != nil {

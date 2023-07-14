@@ -237,10 +237,6 @@ func (a *AllocationSummary) Proto() *taskv1.AllocationSummary {
 
 // Incoming task actor messages; task actors must accept these messages.
 type (
-	// ChangeRP notifies the task actor that to set itself for a new resource pool.
-	ChangeRP struct {
-		ResourcePool string
-	}
 	// ResourcesAllocated notifies the task actor of assigned resources.
 	ResourcesAllocated struct {
 		ID                model.AllocationID

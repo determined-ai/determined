@@ -11,7 +11,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
 
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/syncx/queue"
@@ -67,7 +66,7 @@ func TestAllocation(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			rm, parent, _, a := setup(t)
+			rm, _, a := setup(t)
 
 			// Pre-allocated stage.
 			mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
@@ -95,7 +94,6 @@ func TestAllocation(t *testing.T) {
 				ResourcePool: "default",
 				Resources:    resources,
 			})
-			require.Nil(t, parent.AssertExpectations())
 
 			// Pre-ready stage.
 			first := true
@@ -169,29 +167,16 @@ func TestAllocation(t *testing.T) {
 			require.Equal(t, tc.exit.UserRequestedStop, a.exited.UserRequestedStop)
 			require.NotNil(t, a.exited)
 
-			var exit *AllocationExited
-			require.True(t, waitForCondition(
-				5*time.Second,
-				func() bool {
-					for _, m := range parent.Messages {
-						// Just clear the state since it's really hard to check (has random stuff in it).
-						if m, ok := m.(*AllocationExited); ok {
-							exit = m
-							return true
-						}
-					}
-					return false
-				},
-			))
+			exit := a.await()
 			require.Equal(t, tc.exit.Err, exit.Err)
 			require.Equal(t, tc.exit.UserRequestedStop, exit.UserRequestedStop)
-			// require.True(t, db.AssertExpectations(t))
+			// require.True(t, db.AssertExpectations(t)) // TODO(!!!)
 		})
 	}
 }
 
 func setup(t *testing.T) (
-	*mocks.ResourceManager, *actors.MockActor, *db.PgDB, *allocation,
+	*mocks.ResourceManager, *db.PgDB, *allocation,
 ) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
@@ -199,11 +184,6 @@ func setup(t *testing.T) (
 
 	// mock resource manager.
 	var rm mocks.ResourceManager
-
-	// mock trial
-	trialImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
-	trialAddr := "trial"
-	trial := system.MustActorOf(actor.Addr(trialAddr), &trialImpl)
 
 	// real db.
 	pgDB := db.MustSetupTestPostgres(t)
@@ -229,11 +209,10 @@ func setup(t *testing.T) (
 		&rm,
 		mockTaskSpecifier{},
 		system,
-		trial,
 	)
 	require.True(t, rm.AssertExpectations(t))
 
-	return &rm, &trialImpl, pgDB, a
+	return &rm, pgDB, a
 }
 
 var tickInterval = 100 * time.Millisecond
