@@ -32,6 +32,8 @@ import {
 import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
 
+import { Loadable, Loaded, NotLoaded } from '../../utils/loadable';
+
 import { Settings } from './TrialDetailsOverview.settings';
 import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
 
@@ -126,7 +128,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     });
   }, [metrics, settings, trial, experiment]);
 
-  const [workloads, setWorkloads] = useState<WorkloadGroup[]>([]);
+  const [workloads, setWorkloads] = useState<Loadable<WorkloadGroup[]>>(NotLoaded);
   const [workloadCount, setWorkloadCount] = useState<number>(0);
 
   const fetchWorkloads = useCallback(async () => {
@@ -141,10 +143,9 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortKey: metricKeyToMetric(settings.sortKey)?.name || undefined,
         });
-        setWorkloads(wl.workloads);
+        setWorkloads(Loaded(wl.workloads));
         setWorkloadCount(wl.pagination.total || 0);
       } else {
-        setWorkloads([]);
         setWorkloadCount(0);
       }
     } catch (e) {
@@ -167,7 +168,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   const { stopPolling } = usePolling(fetchWorkloads, { rerunOnNewFn: true });
 
   const workloadSteps = useMemo(() => {
-    const data = workloads ?? [];
+    const data = Loadable.getOrElse([], workloads);
     const workloadSteps = workloadsToSteps(data);
     return settings.filter === TrialWorkloadFilter.All
       ? workloadSteps
@@ -238,7 +239,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         <ResponsiveTable<Step>
           columns={columns}
           dataSource={workloadSteps}
-          loading={!trial}
+          loading={Loadable.isLoading(workloads)}
           pagination={getFullPaginationConfig(
             {
               limit: settings.tableLimit,
