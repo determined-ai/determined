@@ -8,8 +8,6 @@ import { ExperimentWithTrial, TrialItem } from 'types';
 import handleError from 'utils/error';
 import { Loaded, NotLoaded } from 'utils/loadable';
 
-import Spinner from '../../components/kit/internal/Spinner/Spinner';
-
 import { useGlasbey } from './useGlasbey';
 
 interface Props {
@@ -52,29 +50,28 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
       const metricKey = `${metric.type}|${metric.name}`;
       return !!metricHasData?.[metricKey] && !!chartedMetrics?.[metricKey];
     });
-    if (isLoaded && chartDataIsLoaded) {
-      return Loaded(out);
-    } else {
+    if (!isLoaded) {
+      // When trial metrics hasn't loaded metric names or individual trial metrics.
+      return NotLoaded;
+    } else if (!chartDataIsLoaded) {
       // returns the chartProps with a NotLoaded series which enables
       // the ChartGrid to show a spinner for the loading charts.
       return Loaded(out.map((chartProps) => ({ ...chartProps, series: NotLoaded })));
+    } else {
+      return Loaded(out);
     }
   }, [colorMap, trials, xAxis, metricData]);
 
   return (
     <div style={{ height: 'calc(100vh - 250px)', overflow: 'auto' }}>
-      {isLoaded ? (
-        <ChartGrid
-          chartsProps={chartsProps}
-          handleError={handleError}
-          scale={scale}
-          setScale={setScale}
-          xAxis={xAxis}
-          onXAxisChange={setXAxis}
-        />
-      ) : (
-        <Spinner center spinning />
-      )}
+      <ChartGrid
+        chartsProps={chartsProps}
+        handleError={handleError}
+        scale={scale}
+        setScale={setScale}
+        xAxis={xAxis}
+        onXAxisChange={setXAxis}
+      />
     </div>
   );
 };
