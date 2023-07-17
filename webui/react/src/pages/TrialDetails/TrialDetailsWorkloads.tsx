@@ -234,28 +234,26 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   }, [stopPolling]);
 
   return (
-    <>
-      <Section options={options} title="Workloads">
-        <ResponsiveTable<Step>
-          columns={columns}
-          dataSource={workloadSteps}
-          loading={Loadable.isLoading(workloads)}
-          pagination={getFullPaginationConfig(
-            {
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
-            },
-            workloadCount,
-          )}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="batchNum"
-          scroll={{ x: 1000 }}
-          showSorterTooltip={false}
-          size="small"
-          onChange={handleTableChange}
-        />
-      </Section>
-    </>
+    <Section options={options} title="Workloads">
+      <ResponsiveTable<Step>
+        columns={columns}
+        dataSource={workloadSteps}
+        loading={Loadable.isLoading(workloads)}
+        pagination={getFullPaginationConfig(
+          {
+            limit: settings.tableLimit,
+            offset: settings.tableOffset,
+          },
+          workloadCount,
+        )}
+        rowClassName={defaultRowClassName({ clickable: false })}
+        rowKey="batchNum"
+        scroll={{ x: 1000 }}
+        showSorterTooltip={false}
+        size="small"
+        onChange={handleTableChange}
+      />
+    </Section>
   );
 };
 

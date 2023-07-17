@@ -317,7 +317,7 @@ const LearningCurve: React.FC<Props> = ({
           description="Please wait until the experiment is further along."
           message="Not enough data points to plot."
         />
-        <Spinner />
+        <Spinner center spinning />
       </div>
     );
   }
