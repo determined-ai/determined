@@ -37,7 +37,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by, metric_as_dict
             steps_completed = batch + 1
             if steps_completed % 100 == 0:
                 core_context.train._report_trial_metrics(
-                    metric_type=util._LEGACY_TRAINING,
+                    group=util._LEGACY_TRAINING,
                     total_batches=steps_completed,
                     metrics={"validation_error": x},
                 )
@@ -53,7 +53,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by, metric_as_dict
             batch += 1
 
         core_context.train._report_trial_metrics(
-            metric_type="validation", total_batches=steps_completed, metrics={"validation_error": x}
+            group="validation", total_batches=steps_completed, metrics={"validation_error": x}
         )
         op.report_completed({"foo": x} if metric_as_dict else x)
 
