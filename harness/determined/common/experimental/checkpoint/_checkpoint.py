@@ -168,7 +168,9 @@ class Checkpoint:
         """
         if self.state not in [CheckpointState.COMPLETED, CheckpointState.PARTIALLY_DELETED]:
             if self.state is None:
-                raise ValueError("Checkpoint state is unknown. Please reload the checkpoint.")
+                raise ValueError(
+                    "Checkpoint state is unknown. Please call Checkpoint.reload to refresh."
+                )
             raise errors.CheckpointStateException(
                 "Only COMPLETED or PARTIALLY_DELETED checkpoints can be downloaded. "
                 f"Checkpoint state: {self.state.value}"
