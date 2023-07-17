@@ -13,9 +13,9 @@ In this example, we use the `torch_batch_process` API to
 1. generate document embeddings across 4 workers
 2. chief worker uploads all the embeddings generated to a local Chroma vector database
     - We upload only via chief worker because Chroma recommends using a single Chroma client at a time 
-   ([link](https://docs.trychroma.com/usage-guide) as of 17th July, 2023).  
-    - Using Chroma in client/server mode or adapting the example to other vector database may get around this requirement.s
+   ([link](https://docs.trychroma.com/usage-guide) as of 17th July, 2023).
 
+This example can be easily adapted to be used with other vector databases.
 
 ## How to run the example
 `det e create distributed.yaml .`
