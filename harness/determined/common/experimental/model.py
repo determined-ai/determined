@@ -61,7 +61,6 @@ class ModelVersion:
             self._session, body=req, modelName=self.model_name, modelVersionNum=self.model_version
         )
         self.name = name
-        self.reload()
 
     def set_notes(self, notes: str) -> None:
         """
@@ -75,7 +74,6 @@ class ModelVersion:
             self._session, body=req, modelName=self.model_name, modelVersionNum=self.model_version
         )
         self.notes = notes
-        self.reload()
 
     def delete(self) -> None:
         """
@@ -310,8 +308,6 @@ class Model:
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
 
         self.metadata = updated_metadata
-        self.reload()
-        assert self.metadata is not None
 
     def remove_metadata(self, keys: List[str]) -> None:
         """
@@ -335,8 +331,6 @@ class Model:
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
 
         self.metadata = updated_metadata
-        self.reload()
-        assert self.metadata is not None
 
     def move_to_workspace(self, workspace_name: str) -> None:
         req = bindings.v1PatchModel(workspaceName=workspace_name)
@@ -359,12 +353,10 @@ class Model:
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
 
         self.labels = labels
-        self.reload()
 
     def set_description(self, description: str) -> None:
         req = bindings.v1PatchModel(description=description)
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
-        self.reload()
 
         self.description = description
 
@@ -374,7 +366,6 @@ class Model:
         """
         bindings.post_ArchiveModel(self._session, modelName=self.name)
         self.archived = True
-        self.reload()
 
     def unarchive(self) -> None:
         """
@@ -382,7 +373,6 @@ class Model:
         """
         bindings.post_UnarchiveModel(self._session, modelName=self.name)
         self.archived = False
-        self.reload()
 
     def delete(self) -> None:
         """
