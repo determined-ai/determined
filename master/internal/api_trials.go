@@ -819,7 +819,7 @@ func (a *apiServer) GetMetrics(
 		return resp.Send(&apiv1.GetMetricsResponse{Metrics: m})
 	}
 	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
-		model.MetricGroup(req.Type)); err != nil {
+		model.MetricGroup(req.Group)); err != nil {
 		return err
 	}
 
@@ -1331,7 +1331,7 @@ func (a *apiServer) ReportTrialProgress(
 func (a *apiServer) ReportTrialMetrics(
 	ctx context.Context, req *apiv1.ReportTrialMetricsRequest,
 ) (*apiv1.ReportTrialMetricsResponse, error) {
-	metricGroup := model.MetricGroup(req.Type)
+	metricGroup := model.MetricGroup(req.Group)
 	if err := metricGroup.Validate(); err != nil {
 		return nil, err
 	}
@@ -1350,7 +1350,7 @@ func (a *apiServer) ReportTrialTrainingMetrics(
 ) (*apiv1.ReportTrialTrainingMetricsResponse, error) {
 	_, err := a.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
 		Metrics: req.TrainingMetrics,
-		Type:    model.TrainingMetricGroup.ToString(),
+		Group:   model.TrainingMetricGroup.ToString(),
 	})
 	return &apiv1.ReportTrialTrainingMetricsResponse{}, err
 }
@@ -1360,7 +1360,7 @@ func (a *apiServer) ReportTrialValidationMetrics(
 ) (*apiv1.ReportTrialValidationMetricsResponse, error) {
 	_, err := a.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
 		Metrics: req.ValidationMetrics,
-		Type:    model.ValidationMetricGroup.ToString(),
+		Group:   model.ValidationMetricGroup.ToString(),
 	})
 	return &apiv1.ReportTrialValidationMetricsResponse{}, err
 }

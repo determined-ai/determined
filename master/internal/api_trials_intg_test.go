@@ -412,7 +412,7 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 				AvgMetrics: expectedMetrics,
 			},
 		},
-		Type: model.ValidationMetricGroup.ToString(),
+		Group: model.ValidationMetricGroup.ToString(),
 	})
 	require.NoError(t, err)
 
