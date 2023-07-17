@@ -2,7 +2,6 @@ from typing import List
 
 import pytest
 
-from determined.common import util
 from tests import config as conf
 from tests import experiment as exp
 
