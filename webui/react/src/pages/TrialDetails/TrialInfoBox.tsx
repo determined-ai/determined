@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
 
+import CheckpointModalComponent from 'components/CheckpointModal';
 import Card from 'components/kit/Card';
 import { useModal } from 'components/kit/Modal';
 import ModelCreateModal from 'components/ModelCreateModal';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
-import useModalCheckpoint from 'hooks/useModal/Checkpoint/useModalCheckpoint';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import { ModalCloseReason } from 'hooks/useModal/useModal';
 import { CheckpointWorkloadExtended, ExperimentBase, TrialDetails } from 'types';
@@ -37,6 +37,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   }, [trial?.totalCheckpointSize]);
 
   const modelCreateModal = useModal(ModelCreateModal);
+  const checkpointModal = useModal(CheckpointModalComponent);
 
   const {
     contextHolder: modalCheckpointRegisterContextHolder,
@@ -67,17 +68,9 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     [bestCheckpoint, openModalCheckpointRegister],
   );
 
-  const { contextHolder: modalCheckpointContextHolder, modalOpen: openModalCheckpoint } =
-    useModalCheckpoint({
-      checkpoint: bestCheckpoint,
-      config: experiment.config,
-      onClose: handleOnCloseCheckpoint,
-      title: 'Best Checkpoint',
-    });
-
   const handleModalCheckpointClick = useCallback(() => {
-    openModalCheckpoint();
-  }, [openModalCheckpoint]);
+    checkpointModal.open();
+  }, [checkpointModal]);
 
   return (
     <Section>
@@ -98,8 +91,13 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
             <OverviewStats title="Best Checkpoint" onClick={handleModalCheckpointClick}>
               Batch {bestCheckpoint.totalBatches}
             </OverviewStats>
-            {modalCheckpointContextHolder}
             {modalCheckpointRegisterContextHolder}
+            <checkpointModal.Component
+              checkpoint={bestCheckpoint}
+              config={experiment.config}
+              title="Best Checkpoint"
+              onClose={handleOnCloseCheckpoint}
+            />
             <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
           </>
         )}
