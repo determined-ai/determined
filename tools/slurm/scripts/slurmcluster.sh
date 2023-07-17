@@ -18,7 +18,7 @@ while [[ $# -gt 0 ]]; do
             fi
             shift 2
             ;;
-        -w | --resource-manager)
+        -w | --workload-manager)
             export OPT_WORKLOAD_MANAGER=$2
             if [[ -z $OPT_WORKLOAD_MANAGER ]]; then
                 echo >&2 "usage $0:  Missing -r {workload_manager}"
@@ -126,13 +126,27 @@ export OPT_PROJECT_ROOT='../..'
 export OPT_CLUSTER_INTERNAL_IP=$(terraform -chdir=terraform output --raw internal_ip)
 export OPT_AUTHFILE=$LOCAL_TOKEN_DEST
 
-CPU_IMAGE_STRING=$(grep "CPUImage" ../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
-CPU_IMAGE_FMT=${CPU_IMAGE_STRING//[\/:]/+}.sqsh
+LOCAL_CPU_IMAGE_STRING=$(grep "CPUImage" ../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
+LOCAL_CPU_IMAGE_SQSH=${LOCAL_CPU_IMAGE_STRING//[\/:]/+}.sqsh
 
 # Configuration needed for PBS + Enroot
 if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
-    gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "enroot create --force /srv/enroot/${CPU_IMAGE_FMT}"
-    # gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "sudo sed -i '/^#ENROOT_RUNTIME_PATH/c\ENROOT_RUNTIME_PATH        /tmp/\$\(whoami\)' /etc/enroot/enroot.conf"
+    # Find the file and assign its name to CPU_IMAGE_SQSH
+    CPU_IMAGE_SQSH=$(gcloud_ssh "ls /srv/enroot/ | grep '^determinedai+environments'")
+
+    if [[ $CPU_IMAGE_SQSH != "$LOCAL_CPU_IMAGE_SQSH" ]]; then
+        echo "WARNING: Local CPU Image specified in ../../master/pkg/schemas/expconf/const.go does not match the CPU Image found on existing ${OPT_WORKLOAD_MANAGER} image. Consider re-building the image and pushing to main"
+        echo "Manually pulling updated image and creating container"
+        gcloud_ssh "sudo ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CPU_IMAGE_STRING}"
+        gcloud_ssh "enroot create --force /srv/enroot/${LOCAL_CPU_IMAGE_SQSH}"
+    else
+        echo "Found up-to-date CPU Image on /srv/enroot/ ... creating container"
+        if [[ -n $CPU_IMAGE_SQSH ]]; then
+            gcloud_ssh "enroot create --force /srv/enroot/${CPU_IMAGE_SQSH}"
+        else
+            echo "No file starting with 'determinedai+environments' found in /srv/enroot/"
+        fi
+    fi
 fi
 
 TEMPYAML=$TEMPDIR/slurmcluster.yaml
