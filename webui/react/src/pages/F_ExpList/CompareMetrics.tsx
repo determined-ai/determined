@@ -19,8 +19,10 @@ interface Props {
 const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricData }) => {
   const colorMap = useGlasbey(selectedExperiments.map((e) => e.experiment.id));
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
-  const { metrics, data, scale, metricHasData, isLoaded, setScale } = metricData;
+  const { scale, setScale } = metricData;
+
   const chartsProps = useMemo(() => {
+    const { metrics, data, metricHasData, isLoaded } = metricData;
     const chartedMetrics: Record<string, boolean> = {};
     const out: ChartsProps = [];
     metrics.forEach((metric) => {
@@ -55,7 +57,7 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
       // the ChartGrid to show a spinner for the loading charts.
       return Loaded(out.map((chartProps) => ({ ...chartProps, series: NotLoaded })));
     }
-  }, [colorMap, trials, xAxis, data, isLoaded, metricHasData, metrics]);
+  }, [colorMap, trials, xAxis, metricData]);
 
   return (
     <div style={{ height: 'calc(100vh - 250px)', overflow: 'auto' }}>
