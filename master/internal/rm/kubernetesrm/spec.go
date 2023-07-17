@@ -500,7 +500,7 @@ func (p *pod) createPodSpec(scheduler string) error {
 		env.RawPodSpec.Spec.Containers != nil
 	if hasContainerSpec {
 		for _, container := range env.RawPodSpec.Spec.Containers {
-			if container.Name == "determined-container" {
+			if container.Name == model.DeterminedK8ContainerName {
 				detContainerSecurityContext = configureDetContainerSecurityContext(
 					spec.AgentUserGroup,
 					container.SecurityContext,
