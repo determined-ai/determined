@@ -495,13 +495,27 @@ func (p *pod) createPodSpec(scheduler string) error {
 		WorkingDir:      fluentBaseDir,
 	})
 
+	detContainerSecurityContext := configureSecurityContext(spec.AgentUserGroup)
+	hasContainerSpec := env.RawPodSpec != nil &&
+		env.RawPodSpec.Spec.Containers != nil
+	if hasContainerSpec {
+		for _, container := range env.RawPodSpec.Spec.Containers {
+			if container.Name == "determined-container" {
+				detContainerSecurityContext = configureDetContainerSecurityContext(
+					spec.AgentUserGroup,
+					container.SecurityContext,
+				)
+			}
+		}
+	}
+
 	container := k8sV1.Container{
 		Name:            model.DeterminedK8ContainerName,
 		Command:         spec.Entrypoint,
 		Env:             envVars,
 		Image:           env.Image().For(deviceType),
 		ImagePullPolicy: configureImagePullPolicy(env),
-		SecurityContext: configureSecurityContextWithPrivilege(spec.AgentUserGroup),
+		SecurityContext: detContainerSecurityContext,
 		Resources:       p.configureResourcesRequirements(),
 		VolumeMounts:    volumeMounts,
 		WorkingDir:      spec.WorkDir,
@@ -557,12 +571,15 @@ func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *k8sV1.Secur
 	return nil
 }
 
-func configureSecurityContextWithPrivilege(
+func configureDetContainerSecurityContext(
 	agentUserGroup *model.AgentUserGroup,
+	securityContext *k8sV1.SecurityContext,
 ) *k8sV1.SecurityContext {
-	securityContext := configureSecurityContext(agentUserGroup)
-	privileged := true
-	securityContext.Privileged = &privileged
+	context := configureSecurityContext(agentUserGroup)
+	if context != nil {
+		securityContext.RunAsUser = context.RunAsGroup
+		securityContext.RunAsGroup = context.RunAsGroup
+	}
 	return securityContext
 }
 
