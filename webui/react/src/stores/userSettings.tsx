@@ -60,7 +60,7 @@ class UserSettingsStore extends PollingStore {
     return this.#settings.readOnly();
   }
 
-  public async overwrite(settings: Map<string, Json>) {
+  public async overwrite(settings: State) {
     const settingsArray = Object.entries(settings.toJS()).flatMap(([storagePath, settings]) =>
       !!settings && isObject(settings)
         ? Object.entries(settings).map(([key, value]) => ({
@@ -71,12 +71,28 @@ class UserSettingsStore extends PollingStore {
         : [],
     );
 
-    await resetUserSetting({});
-    await updateUserSetting({ settings: settingsArray });
+    try {
+      await resetUserSetting({});
+      await updateUserSetting({ settings: settingsArray });
+    } catch (error) {
+      handleError(error, {
+        isUserTriggered: false,
+        publicMessage: 'Unable to update user settings, try again later.',
+        type: ErrorType.Api,
+      });
+    }
   }
 
-  public clear(): void {
-    resetUserSetting({});
+  public async clear() {
+    try {
+      await resetUserSetting({});
+    } catch (error) {
+      handleError(error, {
+        isUserTriggered: false,
+        publicMessage: 'Unable to reset user settings, try again later.',
+        type: ErrorType.Api,
+      });
+    }
   }
 
   /**
