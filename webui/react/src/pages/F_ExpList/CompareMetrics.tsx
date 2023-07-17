@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { ChartGrid, ChartsProps, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import MetricBadgeTag from 'components/MetricBadgeTag';
-import { useTrialMetrics } from 'pages/TrialDetails/useTrialMetrics';
+import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
 import handleError from 'utils/error';
 import { Loaded, NotLoaded } from 'utils/loadable';
@@ -13,13 +13,13 @@ import { useGlasbey } from './useGlasbey';
 interface Props {
   selectedExperiments: ExperimentWithTrial[];
   trials: TrialItem[];
+  metricData: TrialMetricData;
 }
 
-const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials }) => {
+const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricData }) => {
   const colorMap = useGlasbey(selectedExperiments.map((e) => e.experiment.id));
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
-  const { metrics, data, scale, metricHasData, isLoaded, setScale } = useTrialMetrics(trials);
-
+  const { metrics, data, scale, metricHasData, isLoaded, setScale } = metricData;
   const chartsProps = useMemo(() => {
     const chartedMetrics: Record<string, boolean> = {};
     const out: ChartsProps = [];
@@ -55,7 +55,7 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials }) => {
       // the ChartGrid to show a spinner for the loading charts.
       return Loaded(out.map((chartProps) => ({ ...chartProps, series: NotLoaded })));
     }
-  }, [metrics, data, colorMap, trials, xAxis, isLoaded, metricHasData]);
+  }, [colorMap, trials, xAxis, data, isLoaded, metricHasData, metrics]);
 
   return (
     <div style={{ height: 'calc(100vh - 250px)', overflow: 'auto' }}>

@@ -21,6 +21,15 @@ export interface TrialMetrics {
   metrics: Metric[];
 }
 
+export interface TrialMetricData {
+  data: Record<number, Record<string, Serie>>;
+  isLoaded: boolean;
+  metrics: Metric[];
+  scale: Scale;
+  setScale: React.Dispatch<React.SetStateAction<Scale>>;
+  metricHasData: Record<string, boolean>;
+}
+
 const summarizedMetricToSeries = (
   allDownsampledMetrics: MetricContainer[],
   selectedMetrics: Metric[],
@@ -81,16 +90,7 @@ const summarizedMetricToSeries = (
   return { data: trialData, metricHasData };
 };
 
-export const useTrialMetrics = (
-  trials: (TrialDetails | undefined)[],
-): {
-  data: Record<number, Record<string, Serie>>;
-  isLoaded: boolean;
-  metrics: Metric[];
-  scale: Scale;
-  setScale: React.Dispatch<React.SetStateAction<Scale>>;
-  metricHasData: Record<string, boolean>;
-} => {
+export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetricData => {
   const trialTerminated = trials?.every((trial) =>
     terminalRunStates.has(trial?.state ?? RunState.Active),
   );
