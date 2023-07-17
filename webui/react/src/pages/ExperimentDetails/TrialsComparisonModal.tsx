@@ -1,10 +1,10 @@
 import { Modal, Tag, Typography } from 'antd';
-import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Empty from 'components/kit/Empty';
+import { isEqual } from 'components/kit/internal/functions';
 import { XOR } from 'components/kit/internal/types';
 import usePrevious from 'components/kit/internal/usePrevious';
 import Select, { Option, SelectValue } from 'components/kit/Select';
@@ -164,7 +164,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
 
   useEffect(() => {
     setSelectedMetrics((prevSelectedMetrics) =>
-      _.isEqual(prevSelectedMetrics, prevMetrics) ? metrics : prevSelectedMetrics,
+      isEqual(prevSelectedMetrics, prevMetrics) ? metrics : prevSelectedMetrics,
     );
   }, [metrics, prevMetrics]);
 
@@ -202,7 +202,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
 
   useEffect(() => {
     setSelectedHyperparameters((prevSelectedHps) =>
-      _.isEqual(prevSelectedHps, prevHps) ? hyperparameterNames : prevSelectedHps,
+      isEqual(prevSelectedHps, prevHps) ? hyperparameterNames : prevSelectedHps,
     );
   }, [hyperparameterNames, prevHps]);
 
@@ -249,9 +249,9 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
             </thead>
             <tbody>
               <tr>
-                <td>State</td>
+                <th scope="row">State</th>
                 {trialsDetails.map((trial) => (
-                  <td align="center" key={trial.id}>
+                  <td key={trial.id} style={{ textAlign: 'center' }}>
                     <Badge state={trial.state} type={BadgeType.State} />
                   </td>
                 ))}
@@ -259,7 +259,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
               {Array.isArray(experiment) && (
                 <>
                   <tr>
-                    <td>Experiment ID</td>
+                    <th scope="row">Experiment ID</th>
                     {trialsDetails.map((trial) => (
                       <td key={trial.id}>
                         <Typography.Text ellipsis={{ tooltip: true }}>
@@ -269,7 +269,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                     ))}
                   </tr>
                   <tr>
-                    <td>Trial ID</td>
+                    <th scope="row">Trial ID</th>
                     {trialsDetails.map((trial) => (
                       <td key={trial.id}>
                         <Typography.Text ellipsis={{ tooltip: true }}>{trial.id}</Typography.Text>
@@ -279,7 +279,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                 </>
               )}
               <tr>
-                <td>Batched Processed</td>
+                <th scope="row">Batched Processed</th>
                 {trialsDetails.map((trial) => (
                   <td key={trial.id}>
                     <Typography.Text ellipsis={{ tooltip: true }}>
@@ -289,7 +289,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                 ))}
               </tr>
               <tr>
-                <td>Total Checkpoint Size</td>
+                <th scope="row">Total Checkpoint Size</th>
                 {trialsDetails.map((trial) => (
                   <td key={trial.id}>
                     <Typography.Text ellipsis={{ tooltip: true }}>
@@ -299,7 +299,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                 ))}
               </tr>
               <tr>
-                <td className={css.tableSelectCell} colSpan={colSpan}>
+                <th className={css.tableSelectCell} colSpan={colSpan} scope="row">
                   <div className={css.tableSelectContainer}>
                     <MetricSelect
                       defaultMetrics={metrics}
@@ -309,13 +309,13 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                       onChange={onMetricSelect}
                     />
                   </div>
-                </td>
+                </th>
               </tr>
               {selectedMetrics.map((metric) => (
                 <tr key={`${metric.type}-${metric.name}`}>
-                  <td>
+                  <th scope="row">
                     <MetricBadgeTag metric={metric} />
-                  </td>
+                  </th>
                   {trialsDetails.map((trial) => {
                     const metricValue = latestMetrics[trial.id][metric.name];
                     return (
@@ -333,7 +333,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                 </tr>
               ))}
               <tr>
-                <td className={css.tableSelectCell} colSpan={colSpan}>
+                <th className={css.tableSelectCell} colSpan={colSpan} scope="row">
                   <div className={css.tableSelectContainer}>
                     <Select
                       defaultValue={hyperparameterNames}
@@ -350,13 +350,13 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                       ))}
                     </Select>
                   </div>
-                </td>
+                </th>
               </tr>
               {selectedHyperparameters.map((hp) => (
                 <tr key={hp}>
-                  <td>
+                  <th scope="row">
                     <Typography.Text ellipsis={{ tooltip: true }}>{hp}</Typography.Text>
-                  </td>
+                  </th>
                   {trialsDetails.map((trial) => {
                     const hpValue = trial.hyperparameters[hp];
                     const stringValue = JSON.stringify(hpValue);
