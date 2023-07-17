@@ -1,7 +1,5 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
-import Button from 'components/kit/Button';
-import { Column, Columns } from 'components/kit/Columns';
 import Drawer from 'components/kit/Drawer';
 import InlineForm from 'components/kit/InlineForm';
 import Input from 'components/kit/Input';
@@ -40,10 +38,9 @@ import { Mode } from 'utils/themes';
 
 import css from './SettingsAccount.module.scss';
 
-export const API_DISPLAYNAME_SUCCESS_MESSAGE = 'Display name updated.';
-export const API_USERNAME_ERROR_MESSAGE = 'Could not update username.';
-export const API_USERNAME_SUCCESS_MESSAGE = 'Username updated.';
-export const CHANGE_PASSWORD_TEXT = 'Change Password';
+const API_DISPLAYNAME_SUCCESS_MESSAGE = 'Display name updated.';
+const API_USERNAME_ERROR_MESSAGE = 'Could not update username.';
+const API_USERNAME_SUCCESS_MESSAGE = 'Username updated.';
 
 interface Props {
   show: boolean;
@@ -97,6 +94,26 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
     [currentUser?.id],
   );
 
+  const [newPassword, setNewPassword] = useState<string>('');
+
+  const NEW_PASSWORD_REQUIRED_MESSAGE = 'New password required.';
+  const PASSWORD_TOO_SHORT_MESSAGE = "Password isn't long enough.";
+  const PASSWORD_UPPERCASE_MESSAGE = 'Password must include a uppercase letter.';
+  const PASSWORD_LOWERCASE_MESSAGE = 'Password must include a lowercase letter.';
+  const PASSWORD_NUMBER_MESSAGE = 'Password must include a number.';
+
+  const handleSavePassword = useCallback(
+    (value: string) => {
+      setNewPassword(value);
+      PasswordChangeModal.open();
+    },
+    [PasswordChangeModal],
+  );
+
+  const handlePasswordChangeModalClose = useCallback(() => {
+    setNewPassword('');
+  }, []);
+
   return Loadable.match(
     Loadable.all([
       useObservable(
@@ -138,13 +155,37 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
                 </InlineForm>
                 {info.userManagementEnabled && (
                   <>
-                    <Columns>
-                      <Column>
-                        <label>Password</label>
-                      </Column>
-                      <Button onClick={PasswordChangeModal.open}>{CHANGE_PASSWORD_TEXT}</Button>
-                    </Columns>
-                    <PasswordChangeModal.Component />
+                    <InlineForm<string>
+                      initialValue={newPassword}
+                      isPassword
+                      label="Password"
+                      rules={[
+                        { message: NEW_PASSWORD_REQUIRED_MESSAGE, required: true },
+                        { message: PASSWORD_TOO_SHORT_MESSAGE, min: 8 },
+                        {
+                          message: PASSWORD_UPPERCASE_MESSAGE,
+                          pattern: /[A-Z]+/,
+                        },
+                        {
+                          message: PASSWORD_LOWERCASE_MESSAGE,
+                          pattern: /[a-z]+/,
+                        },
+                        {
+                          message: PASSWORD_NUMBER_MESSAGE,
+                          pattern: /\d/,
+                        },
+                      ]}
+                      valueFormatter={(value: string) => {
+                        if (value.length) return value;
+                        return '*****';
+                      }}
+                      onSubmit={handleSavePassword}>
+                      <Input.Password />
+                    </InlineForm>
+                    <PasswordChangeModal.Component
+                      newPassword={newPassword}
+                      onClose={handlePasswordChangeModalClose}
+                    />
                   </>
                 )}
               </div>

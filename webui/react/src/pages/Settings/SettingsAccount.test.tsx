@@ -3,15 +3,15 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useCallback, useEffect } from 'react';
 
-import { NEW_PASSWORD_LABEL } from 'components/PasswordChangeModal';
 import { patchUser as mockPatchUser } from 'services/api';
 import { PatchUserParams } from 'services/types';
 import authStore from 'stores/auth';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import userStore from 'stores/users';
+import userSettings from 'stores/userSettings';
 import { DetailedUser } from 'types';
 
-import SettingsAccount, { CHANGE_PASSWORD_TEXT } from './SettingsAccount';
+import SettingsAccount from './SettingsAccount';
 
 vi.mock('services/api', () => ({
   getUsers: () =>
@@ -55,6 +55,7 @@ const Container: React.FC = () => {
 
   useEffect(() => {
     authStore.setAuth({ isAuthenticated: true });
+    userSettings.startPolling();
     return userStore.fetchUsers();
   }, []);
 
@@ -91,7 +92,6 @@ describe('SettingsAccount', () => {
     expect(screen.getByText('Display Name')).toBeInTheDocument();
     expect(screen.getByText('Password')).toBeInTheDocument();
     expect(await screen.findByText(USERNAME)).toBeInTheDocument();
-    expect(screen.getByText(CHANGE_PASSWORD_TEXT)).toBeInTheDocument();
   });
   it('should be able to change display name', async () => {
     setup();
@@ -105,10 +105,5 @@ describe('SettingsAccount', () => {
     await waitFor(() =>
       expect(screen.getByTestId('value-displayname')).toHaveTextContent(`${DISPLAY_NAME}a`),
     );
-  });
-  it('should be able to view change password modal when click', async () => {
-    setup();
-    await user.click(screen.getByText(CHANGE_PASSWORD_TEXT));
-    expect(screen.getByText(NEW_PASSWORD_LABEL)).toBeInTheDocument();
   });
 });
