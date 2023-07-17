@@ -98,185 +98,175 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
     [currentUser?.id],
   );
 
-  return (
-    <Drawer open={show} placement="left" title="Settings" onClose={onClose}>
-      <Section title="Profile">
-        <div className={css.section}>
-          <InlineForm<string>
-            initialValue={currentUser?.username ?? ''}
-            label="Username"
-            required
-            rules={[{ message: 'Please input your username', required: true }]}
-            testId="username"
-            onSubmit={handleSaveUsername}>
-            <Input maxLength={32} placeholder="Add username" />
-          </InlineForm>
-          <InlineForm<string>
-            initialValue={currentUser?.displayName ?? ''}
-            label="Display Name"
-            testId="displayname"
-            onSubmit={handleSaveDisplayName}>
-            <Input maxLength={32} placeholder="Add display name" />
-          </InlineForm>
-          {info.userManagementEnabled && (
-            <>
-              <Columns>
-                <Column>
-                  <label>Password</label>
-                </Column>
-                <Button onClick={PasswordChangeModal.open}>{CHANGE_PASSWORD_TEXT}</Button>
-              </Columns>
-              <PasswordChangeModal.Component />
-            </>
-          )}
-        </div>
-        <Divider />
-      </Section>
-      <Section title="Preferences">
-        <div className={css.section}>
-          <InlineForm<Mode>
-            initialValue={currentThemeOption.className}
-            label="Theme Mode"
-            valueFormatter={(value: Mode) => ThemeOptions[value].displayName}
-            onSubmit={(v) => {
-              setMode(v);
-            }}>
-            <Select searchable={false}>
-              <Option key={ThemeOptions.dark.className} value={ThemeOptions.dark.className}>
-                {ThemeOptions.dark.displayName}
-              </Option>
-              <Option key={ThemeOptions.light.className} value={ThemeOptions.light.className}>
-                {ThemeOptions.light.displayName}
-              </Option>
-              <Option key={ThemeOptions.system.className} value={ThemeOptions.system.className}>
-                {ThemeOptions.system.displayName}
-              </Option>
-            </Select>
-          </InlineForm>
-          {Loadable.match(
-            useObservable(
-              userSettings.get(
-                experimentListGlobalSettingsConfig,
-                experimentListGlobalSettingsPath,
-              ),
-            ),
-            {
-              Loaded: (s) => {
-                const settings =
-                  s === null
-                    ? experimentListGlobalSettingsDefaults
-                    : { ...experimentListGlobalSettingsDefaults, ...s };
-                return (
+  return Loadable.match(
+    Loadable.all([
+      useObservable(
+        userSettings.get(experimentListGlobalSettingsConfig, experimentListGlobalSettingsPath),
+      ),
+      useObservable(userSettings.get(shortcutSettingsConfig, shortcutsSettingsPath)),
+    ]),
+    {
+      Loaded: ([savedExperimentListGlobalSettings, savedShortcutSettings]) => {
+        const experimentListGlobalSettings =
+          savedExperimentListGlobalSettings === null
+            ? experimentListGlobalSettingsDefaults
+            : { ...experimentListGlobalSettingsDefaults, ...savedExperimentListGlobalSettings };
+
+        const shortcutSettings =
+          savedShortcutSettings === null
+            ? shortcutSettingsDefaults
+            : { ...shortcutSettingsDefaults, ...savedShortcutSettings };
+
+        return (
+          <Drawer open={show} placement="left" title="Settings" onClose={onClose}>
+            <Section title="Profile">
+              <div className={css.section}>
+                <InlineForm<string>
+                  initialValue={currentUser?.username ?? ''}
+                  label="Username"
+                  required
+                  rules={[{ message: 'Please input your username', required: true }]}
+                  testId="username"
+                  onSubmit={handleSaveUsername}>
+                  <Input maxLength={32} placeholder="Add username" />
+                </InlineForm>
+                <InlineForm<string>
+                  initialValue={currentUser?.displayName ?? ''}
+                  label="Display Name"
+                  testId="displayname"
+                  onSubmit={handleSaveDisplayName}>
+                  <Input maxLength={32} placeholder="Add display name" />
+                </InlineForm>
+                {info.userManagementEnabled && (
                   <>
-                    <InlineForm<RowHeight>
-                      initialValue={settings.rowHeight}
-                      label="Table Density"
-                      valueFormatter={(rh) => rowHeightCopy[rh]}
-                      onSubmit={(rh) => {
-                        userSettings.set(
-                          experimentListGlobalSettingsConfig,
-                          experimentListGlobalSettingsPath,
-                          {
-                            ...settings,
-                            rowHeight: rh,
-                          },
-                        );
-                      }}>
-                      <Select searchable={false}>
-                        {Object.entries(rowHeightCopy).map(([rowHeight, label]) => (
-                          <Option key={rowHeight} value={rowHeight}>
-                            {label}
-                          </Option>
-                        ))}
-                      </Select>
-                    </InlineForm>
-                    <InlineForm<ExpListView>
-                      initialValue={settings.expListView}
-                      label="Infinite Scroll"
-                      valueFormatter={(v) => (v === 'scroll' ? 'On' : 'Off')}
-                      onSubmit={(v) => {
-                        userSettings.set(
-                          experimentListGlobalSettingsConfig,
-                          experimentListGlobalSettingsPath,
-                          {
-                            ...settings,
-                            expListView: v,
-                          },
-                        );
-                      }}>
-                      <Select searchable={false}>
-                        <Option key="scroll" value="scroll">
-                          On
-                        </Option>
-                        <Option key="paged" value="paged">
-                          Off
-                        </Option>
-                      </Select>
-                    </InlineForm>
+                    <Columns>
+                      <Column>
+                        <label>Password</label>
+                      </Column>
+                      <Button onClick={PasswordChangeModal.open}>{CHANGE_PASSWORD_TEXT}</Button>
+                    </Columns>
+                    <PasswordChangeModal.Component />
                   </>
-                );
-              },
-              NotLoaded: () => <Spinner />,
-            },
-          )}
-        </div>
-        <Divider />
-      </Section>
-      <Section title="Shortcuts">
-        <div className={css.section}>
-          {Loadable.match(
-            useObservable(userSettings.get(shortcutSettingsConfig, shortcutsSettingsPath)),
-            {
-              Loaded: (s) => {
-                const shortcutSettings =
-                  s === null ? shortcutSettingsDefaults : { ...shortcutSettingsDefaults, ...s };
-                return (
-                  <>
-                    <InlineForm<KeyboardShortcut>
-                      initialValue={shortcutSettings.omnibar}
-                      label="Open Omnibar"
-                      valueFormatter={shortcutToString}
-                      onSubmit={(sc) => {
-                        userSettings.set(shortcutSettingsConfig, shortcutsSettingsPath, {
-                          ...shortcutSettings,
-                          omnibar: sc,
-                        });
-                      }}>
-                      <InputShortcut />
-                    </InlineForm>
-                    <InlineForm<KeyboardShortcut>
-                      initialValue={shortcutSettings.jupyterLab}
-                      label="Launch JupyterLab Notebook"
-                      valueFormatter={shortcutToString}
-                      onSubmit={(sc) => {
-                        userSettings.set(shortcutSettingsConfig, shortcutsSettingsPath, {
-                          ...shortcutSettings,
-                          jupyterLab: sc,
-                        });
-                      }}>
-                      <InputShortcut />
-                    </InlineForm>
-                    <InlineForm<KeyboardShortcut>
-                      initialValue={shortcutSettings.navbarCollapsed}
-                      label="Toggle Sidebar"
-                      valueFormatter={shortcutToString}
-                      onSubmit={(sc) => {
-                        userSettings.set(shortcutSettingsConfig, shortcutsSettingsPath, {
-                          ...shortcutSettings,
-                          navbarCollapsed: sc,
-                        });
-                      }}>
-                      <InputShortcut />
-                    </InlineForm>
-                  </>
-                );
-              },
-              NotLoaded: () => <Spinner />,
-            },
-          )}
-        </div>
-      </Section>
-    </Drawer>
+                )}
+              </div>
+              <Divider />
+            </Section>
+            <Section title="Preferences">
+              <div className={css.section}>
+                <InlineForm<Mode>
+                  initialValue={currentThemeOption.className}
+                  label="Theme Mode"
+                  valueFormatter={(value: Mode) => ThemeOptions[value].displayName}
+                  onSubmit={(v) => {
+                    setMode(v);
+                  }}>
+                  <Select searchable={false}>
+                    <Option key={ThemeOptions.dark.className} value={ThemeOptions.dark.className}>
+                      {ThemeOptions.dark.displayName}
+                    </Option>
+                    <Option key={ThemeOptions.light.className} value={ThemeOptions.light.className}>
+                      {ThemeOptions.light.displayName}
+                    </Option>
+                    <Option
+                      key={ThemeOptions.system.className}
+                      value={ThemeOptions.system.className}>
+                      {ThemeOptions.system.displayName}
+                    </Option>
+                  </Select>
+                </InlineForm>
+                <InlineForm<RowHeight>
+                  initialValue={experimentListGlobalSettings.rowHeight}
+                  label="Table Density"
+                  valueFormatter={(rh) => rowHeightCopy[rh]}
+                  onSubmit={(rh) => {
+                    userSettings.set(
+                      experimentListGlobalSettingsConfig,
+                      experimentListGlobalSettingsPath,
+                      {
+                        ...experimentListGlobalSettings,
+                        rowHeight: rh,
+                      },
+                    );
+                  }}>
+                  <Select searchable={false}>
+                    {Object.entries(rowHeightCopy).map(([rowHeight, label]) => (
+                      <Option key={rowHeight} value={rowHeight}>
+                        {label}
+                      </Option>
+                    ))}
+                  </Select>
+                </InlineForm>
+                <InlineForm<ExpListView>
+                  initialValue={experimentListGlobalSettings.expListView}
+                  label="Infinite Scroll"
+                  valueFormatter={(v) => (v === 'scroll' ? 'On' : 'Off')}
+                  onSubmit={(v) => {
+                    userSettings.set(
+                      experimentListGlobalSettingsConfig,
+                      experimentListGlobalSettingsPath,
+                      {
+                        ...experimentListGlobalSettings,
+                        expListView: v,
+                      },
+                    );
+                  }}>
+                  <Select searchable={false}>
+                    <Option key="scroll" value="scroll">
+                      On
+                    </Option>
+                    <Option key="paged" value="paged">
+                      Off
+                    </Option>
+                  </Select>
+                </InlineForm>
+              </div>
+              <Divider />
+            </Section>
+            <Section title="Shortcuts">
+              <div className={css.section}>
+                <InlineForm<KeyboardShortcut>
+                  initialValue={shortcutSettings.omnibar}
+                  label="Open Omnibar"
+                  valueFormatter={shortcutToString}
+                  onSubmit={(sc) => {
+                    userSettings.set(shortcutSettingsConfig, shortcutsSettingsPath, {
+                      ...shortcutSettings,
+                      omnibar: sc,
+                    });
+                  }}>
+                  <InputShortcut />
+                </InlineForm>
+                <InlineForm<KeyboardShortcut>
+                  initialValue={shortcutSettings.jupyterLab}
+                  label="Launch JupyterLab Notebook"
+                  valueFormatter={shortcutToString}
+                  onSubmit={(sc) => {
+                    userSettings.set(shortcutSettingsConfig, shortcutsSettingsPath, {
+                      ...shortcutSettings,
+                      jupyterLab: sc,
+                    });
+                  }}>
+                  <InputShortcut />
+                </InlineForm>
+                <InlineForm<KeyboardShortcut>
+                  initialValue={shortcutSettings.navbarCollapsed}
+                  label="Toggle Sidebar"
+                  valueFormatter={shortcutToString}
+                  onSubmit={(sc) => {
+                    userSettings.set(shortcutSettingsConfig, shortcutsSettingsPath, {
+                      ...shortcutSettings,
+                      navbarCollapsed: sc,
+                    });
+                  }}>
+                  <InputShortcut />
+                </InlineForm>
+              </div>
+            </Section>
+          </Drawer>
+        );
+      },
+      NotLoaded: () => <Spinner spinning />,
+    },
   );
 };
 
