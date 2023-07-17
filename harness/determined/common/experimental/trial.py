@@ -48,6 +48,23 @@ class CheckpointOrderBy(enum.Enum):
         return bindings.v1OrderBy(self.value)
 
 
+class TrialState(enum.Enum):
+    # UNSPECIFIED is internal to the bound API and is not be exposed to the front end
+    ACTIVE = bindings.trialv1State.ACTIVE.value
+    PAUSED = bindings.trialv1State.PAUSED.value
+    STOPPING_CANCELED = bindings.trialv1State.STOPPING_CANCELED.value
+    STOPPING_KILLED = bindings.trialv1State.STOPPING_KILLED.value
+    STOPPING_COMPLETED = bindings.trialv1State.STOPPING_COMPLETED.value
+    STOPPING_ERROR = bindings.trialv1State.STOPPING_ERROR.value
+    CANCELED = bindings.trialv1State.CANCELED.value
+    COMPLETED = bindings.trialv1State.COMPLETED.value
+    ERROR = bindings.trialv1State.ERROR.value
+    QUEUED = bindings.trialv1State.QUEUED.value
+    PULLING = bindings.trialv1State.PULLING.value
+    STARTING = bindings.trialv1State.STARTING.value
+    RUNNING = bindings.trialv1State.RUNNING.value
+
+
 class Trial:
     """
     A class representing a Trial object.
@@ -61,6 +78,7 @@ class Trial:
         session: HTTP request session.
         hparams: (Mutable, Optional[Dict]) Dict[name, value] of the trial's hyperparameters.
             This is an instance of the hyperparameter space defined by the experiment.
+        state: (Mutable, Optional[TrialState]) Trial state (ex: ACTIVE, PAUSED, COMPLETED).
         summary_metrics: (Mutable, Optional[Dict]) Summary metrics for the trial. Includes
             aggregated metrics for training and validation steps for each reported metric name.
             Example:
@@ -92,6 +110,7 @@ class Trial:
 
         self.hparams: Optional[Dict[str, Any]] = None
         self.summary_metrics: Optional[Dict[str, Any]] = None
+        self.state: Optional[TrialState] = None
 
     def logs(
         self,
@@ -329,6 +348,7 @@ class Trial:
 
     def _hydrate(self, trial: bindings.trialv1Trial) -> None:
         self.hparams = trial.hparams
+        self.state = TrialState(trial.state.value)
         self.summary_metrics = trial.summaryMetrics
 
     def reload(self) -> None:
