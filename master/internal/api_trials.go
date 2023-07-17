@@ -962,7 +962,49 @@ func (a *apiServer) GetTrialSourceInfoMetricsByCheckpoint(
 		sourceType := trialv1.TrialSourceInfoType_value[val.TrialSourceInfoType]
 		res, err := db.GetMetrics(ctx, val.TrialID, -1, numMetricsLimit, model.InferenceMetricType)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get trial source info %w", err)
+			return nil, fmt.Errorf("failed to get metrics trial source info %w", err)
+		}
+		trialSourceInfoMetric := &apiv1.TrialSourceInfoMetric{
+			TrialId:             int32(val.TrialID),
+			TrialSourceInfoType: trialv1.TrialSourceInfoType(sourceType),
+			MetricReports:       res,
+		}
+		resp.Data = append(resp.Data, trialSourceInfoMetric)
+	}
+	return resp, err
+}
+
+// Query for all trials that use a given checkpoint and return their metrics.
+func (a *apiServer) GetTrialSourceInfoMetricsByModelVersion(
+	ctx context.Context, req *apiv1.GetTrialSourceInfoMetricsByModelVersionRequest,
+) (*apiv1.GetTrialSourceInfoMetricsByModelVersionResponse, error) {
+	// TODO (Taylor): Handle user auth/rbac
+	resp := &apiv1.GetTrialSourceInfoMetricsByModelVersionResponse{}
+	trialIDsQuery := db.Bun().NewSelect().Table("trial_source_infos").
+		Where("model_version_id = ?", req.ModelVersionId).
+		Where("model_version_version = ?", req.ModelVersionVersion).
+		Column("trial_id").Column("trial_source_info_type")
+
+	if req.TrialSourceInfoType != nil {
+		trialIDsQuery.Where("trial_source_info_type = ?", req.TrialSourceInfoType.String())
+	}
+
+	trialIds := []struct {
+		TrialID             int
+		TrialSourceInfoType string
+	}{}
+
+	err := trialIDsQuery.Scan(ctx, &trialIds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get trial source info %w", err)
+	}
+
+	numMetricsLimit := 1000
+	for _, val := range trialIds {
+		sourceType := trialv1.TrialSourceInfoType_value[val.TrialSourceInfoType]
+		res, err := db.GetMetrics(ctx, val.TrialID, -1, numMetricsLimit, model.InferenceMetricType)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get metrics for trial source info %w", err)
 		}
 		trialSourceInfoMetric := &apiv1.TrialSourceInfoMetric{
 			TrialId:             int32(val.TrialID),

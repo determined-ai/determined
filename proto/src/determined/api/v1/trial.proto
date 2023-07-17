@@ -804,6 +804,28 @@ message GetTrialSourceInfoMetricsByCheckpointResponse {
   repeated TrialSourceInfoMetric data = 1;
 }
 
+// Request for all metrics related to a given checkpoint
+message GetTrialSourceInfoMetricsByModelVersionRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "checkpoint_uuid" ] }
+  };
+  // The database id of the model version
+  int32 model_version_id = 1;
+  // The version of the model version
+  int32 model_version_version = 2;
+  // Type of the TrialSourceInfo
+  optional determined.trial.v1.TrialSourceInfoType trial_source_info_type = 3;
+}
+
+// Response for all metrics related to a given checkpoint
+message GetTrialSourceInfoMetricsByModelVersionResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "data" ] }
+  };
+  // All the related trials and their metrics
+  repeated TrialSourceInfoMetric data = 1;
+}
+
 // Object that controls the link between a checkpoint and a
 // trial that uses that checkpoint
 message TrialSourceInfoMetric {
