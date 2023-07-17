@@ -1,8 +1,10 @@
-import { useObservable } from 'micro-observables';
+import { Map } from 'immutable';
+import { useMemoizedObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Modal } from 'components/kit/Modal';
 import userSettings from 'stores/userSettings';
+import { Json } from 'types';
 import { isObject } from 'utils/data';
 import handleError from 'utils/error';
 import { Loadable, Loaded } from 'utils/loadable';
@@ -14,20 +16,25 @@ interface Props {
 }
 
 const UserSettingsModal: React.FC<Props> = ({ onSave }: Props) => {
-  const loadableState = useObservable(userSettings.getAll());
-  const stringifiedState = Loadable.map(loadableState, (state) =>
-    JSON.stringify(state, undefined, ' '),
+  const initialSettingsString = useMemoizedObservable<Loadable<string>>(
+    () =>
+      userSettings
+        .getAll()
+        .select((loadableState) =>
+          Loadable.map(loadableState, (state) => JSON.stringify(state, undefined, ' ')),
+        ),
+    [],
   );
   const [editedSettingsString, setEditedSettingsString] =
-    useState<Loadable<string>>(stringifiedState);
+    useState<Loadable<string>>(initialSettingsString);
 
-  const editedSettings: object | undefined = useMemo(
+  const editedSettings = useMemo(
     () =>
       Loadable.match(editedSettingsString, {
         Loaded: (settingsString) => {
           try {
             const obj = JSON.parse(settingsString);
-            return isObject(obj) ? obj : undefined;
+            return isObject(obj) ? Map<string, Json>(obj) : undefined;
           } catch {
             return;
           }
@@ -40,14 +47,14 @@ const UserSettingsModal: React.FC<Props> = ({ onSave }: Props) => {
   useEffect(() => {
     if (Loadable.isLoaded(editedSettingsString)) return;
 
-    setEditedSettingsString(stringifiedState);
-  }, [editedSettingsString, stringifiedState]);
+    setEditedSettingsString(initialSettingsString);
+  }, [editedSettingsString, initialSettingsString]);
 
   const handleSave = useCallback(async () => {
     if (!editedSettings) return;
 
-    userSettings.overwrite(editedSettings);
-    await onSave?.();
+    onSave?.();
+    await userSettings.overwrite(editedSettings);
   }, [editedSettings, onSave]);
 
   const handleChange = useCallback((newSettings: string) => {

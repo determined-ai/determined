@@ -60,10 +60,9 @@ class UserSettingsStore extends PollingStore {
     return this.#settings.readOnly();
   }
 
-  public async overwrite(settings: object) {
-    const settingsMap = Map<string, Json>(settings);
-    const settingsArray = Object.entries(settings).flatMap(([storagePath, settings]) =>
-      isObject(settings)
+  public async overwrite(settings: Map<string, Json>) {
+    const settingsArray = Object.entries(settings.toJS()).flatMap(([storagePath, settings]) =>
+      !!settings && isObject(settings)
         ? Object.entries(settings).map(([key, value]) => ({
             key,
             storagePath,
@@ -71,13 +70,12 @@ class UserSettingsStore extends PollingStore {
           }))
         : [],
     );
-    this.#settings.set(Loaded(settingsMap));
+
     await resetUserSetting({});
-    updateUserSetting({ settings: settingsArray });
+    await updateUserSetting({ settings: settingsArray });
   }
 
   public clear(): void {
-    this.#settings.set(Loaded(Map()));
     resetUserSetting({});
   }
 
