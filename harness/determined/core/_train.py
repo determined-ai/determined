@@ -81,9 +81,11 @@ class TrainContext:
         but may be accessed from the master using the CLI for post-processing.
         """
 
-        # CHECK: do we want this for training as well? same for batch_metrics?
-        serializable_metrics = self._get_serializable_metrics(metrics)
-        reportable_metrics = {k: metrics[k] for k in serializable_metrics}
+        reportable_metrics = metrics
+        if group == util._LEGACY_VALIDATION:
+            # keep the old behavior of filtering out some metrics for validations.
+            serializable_metrics = self._get_serializable_metrics(metrics)
+            reportable_metrics = {k: metrics[k] for k in serializable_metrics}
 
         v1metrics = bindings.v1Metrics(avgMetrics=reportable_metrics, batchMetrics=batch_metrics)
         v1TrialMetrics = bindings.v1TrialMetrics(
