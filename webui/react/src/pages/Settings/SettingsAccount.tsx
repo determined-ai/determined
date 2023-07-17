@@ -1,4 +1,3 @@
-import { Divider } from 'antd';
 import React, { useCallback } from 'react';
 
 import Button from 'components/kit/Button';
