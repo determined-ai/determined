@@ -8,6 +8,8 @@ import authStore from 'stores/auth';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
+import { ConfirmationProvider } from './kit/useConfirm';
+
 const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
 const REGISTER_CHECKPOINT_TEXT = 'Register Checkpoint';
 
@@ -39,7 +41,9 @@ const setup = async () => {
   render(
     <BrowserRouter>
       <UIProvider>
-        <ModalTrigger />
+        <ConfirmationProvider>
+          <ModalTrigger />
+        </ConfirmationProvider>
       </UIProvider>
     </BrowserRouter>,
   );
