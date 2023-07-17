@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
+
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -286,13 +288,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ProxyPorts:  sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), c.taskID),
 			IdleTimeout: idleWatcherConfig,
 			Restore:     c.restored,
-		}, c.db, c.rm)
+			ProxyTLS:    c.TaskType == model.TaskTypeNotebook,
+		}, c.db, c.rm, c.GenericCommandSpec)
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
-		ctx.Self().System().TellAt(sproto.JobsActorAddr, sproto.RegisterJob{
-			JobID:    c.jobID,
-			JobActor: ctx.Self(),
-		})
+		jobservice.Default.RegisterJob(c.jobID, ctx.Self())
 
 		ctx.Ask(c.allocation, actor.Ping{}).Get()
 		if err := c.persist(); err != nil {
@@ -307,9 +307,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
-		ctx.Self().System().TellAt(sproto.JobsActorAddr, sproto.UnregisterJob{
-			JobID: c.jobID,
-		})
+		jobservice.Default.UnregisterJob(c.jobID)
 		if err := c.db.DeleteUserSessionByToken(c.GenericCommandSpec.Base.UserSessionToken); err != nil {
 			ctx.Log().WithError(err).Errorf(
 				"failure to delete user session for task: %v", c.taskID)
@@ -324,15 +322,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 				ctx.Log().WithError(err).Error("marking task complete")
 			}
-		}
-	case task.BuildTaskSpec:
-		if ctx.ExpectingResponse() {
-			ctx.Respond(c.ToTaskSpec(c.GenericCommandSpec.Keys))
-			// Evict the context from memory after starting the command as it is no longer needed. We
-			// evict as soon as possible to prevent the master from hitting an OOM.
-			// TODO: Consider not storing the userFiles in memory at all.
-			c.UserFiles = nil
-			c.AdditionalFiles = nil
 		}
 	case *task.AllocationExited:
 		c.exitStatus = msg
@@ -357,11 +346,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			Notebook: c.toNotebook(ctx),
 			Config:   protoutils.ToStruct(c.Config),
 		})
-	case *apiv1.IdleNotebookRequest:
-		if !msg.Idle {
-			ctx.Tell(c.allocation, task.IdleWatcherNoteActivity{LastActivity: time.Now()})
-		}
-		ctx.Respond(&apiv1.IdleNotebookResponse{})
 	case *apiv1.KillNotebookRequest:
 		// TODO(Brad): Do the same thing to allocations that we are doing to RMs.
 		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{

@@ -15,7 +15,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -94,8 +93,12 @@ func (p *pod) configureEnvVars(
 		slotIds = append(slotIds, strconv.Itoa(i))
 	}
 
+	masterScheme := "http"
+	if p.masterTLSConfig.Enabled {
+		masterScheme = "https"
+	}
 	envVarsMap["DET_CLUSTER_ID"] = p.clusterID
-	envVarsMap["DET_MASTER"] = fmt.Sprintf("%s:%d", p.masterIP, p.masterPort)
+	envVarsMap["DET_MASTER"] = fmt.Sprintf("%s://%s:%d", masterScheme, p.masterIP, p.masterPort)
 	envVarsMap["DET_MASTER_HOST"] = p.masterIP
 	envVarsMap["DET_MASTER_ADDR"] = p.masterIP
 	envVarsMap["DET_MASTER_PORT"] = fmt.Sprintf("%d", p.masterPort)
@@ -120,7 +123,8 @@ func (p *pod) configureEnvVars(
 }
 
 func (p *pod) configureConfigMapSpec(
-	runArchives []cproto.RunArchive, fluentFiles map[string][]byte,
+	runArchives []cproto.RunArchive,
+	fluentFiles map[string][]byte,
 ) (*k8sV1.ConfigMap, error) {
 	configMapData := make(map[string][]byte, len(runArchives))
 	// Add additional files as tar.gz archive.
@@ -152,9 +156,7 @@ func (p *pod) configureConfigMapSpec(
 	}, nil
 }
 
-func (p *pod) configureLoggingVolumes(
-	ctx *actor.Context,
-) ([]k8sV1.VolumeMount, []k8sV1.Volume) {
+func (p *pod) configureLoggingVolumes() ([]k8sV1.VolumeMount, []k8sV1.Volume) {
 	logsVolumeName := "det-logs"
 	configVolumeName := "det-fluent"
 	mounts := []k8sV1.VolumeMount{
@@ -187,7 +189,6 @@ func (p *pod) configureLoggingVolumes(
 }
 
 func (p *pod) configureVolumes(
-	ctx *actor.Context,
 	dockerMounts []mount.Mount,
 	runArchives []cproto.RunArchive,
 ) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume) {
@@ -306,7 +307,6 @@ func (p *pod) createPriorityClass(name string, priority int32) error {
 }
 
 func (p *pod) configurePodSpec(
-	ctx *actor.Context,
 	volumes []k8sV1.Volume,
 	determinedInitContainers k8sV1.Container,
 	determinedContainer k8sV1.Container,
@@ -369,7 +369,7 @@ func (p *pod) configurePodSpec(
 	return podSpec
 }
 
-func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
+func (p *pod) createPodSpec(scheduler string) error {
 	deviceType := p.slotType
 	// Device type is currently configured globally on KubernetesResourceManagerConfig.
 	// So we special case certain functionality to use device.CPU.
@@ -381,9 +381,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 
 	runArchives, rootArchives := spec.Archives()
 
-	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(
-		ctx, spec.Mounts, runArchives,
-	)
+	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(spec.Mounts, runArchives)
 
 	env := spec.Environment
 
@@ -417,7 +415,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	p.containerNames.Insert(model.DeterminedK8FluentContainerName)
 	envVars = append(envVars, k8sV1.EnvVar{Name: "DET_K8S_LOG_TO_FILE", Value: "true"})
 
-	loggingMounts, loggingVolumes := p.configureLoggingVolumes(ctx)
+	loggingMounts, loggingVolumes := p.configureLoggingVolumes()
 
 	volumes = append(volumes, loggingVolumes...)
 	volumeMounts = append(volumeMounts, loggingMounts...)
@@ -523,7 +521,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	container.VolumeMounts = append(container.VolumeMounts, rootVolumeMounts...)
 
 	p.pod = p.configurePodSpec(
-		ctx, volumes, initContainer, container, sidecars, (*k8sV1.Pod)(env.PodSpec()), scheduler)
+		volumes, initContainer, container, sidecars, (*k8sV1.Pod)(env.PodSpec()), scheduler)
 	return nil
 }
 
@@ -589,7 +587,8 @@ func configureInitContainer(
 }
 
 func handleRootArchiveFiles(
-	rootArchives []cproto.RunArchive, cm *k8sV1.ConfigMap,
+	rootArchives []cproto.RunArchive,
+	cm *k8sV1.ConfigMap,
 ) ([]k8sV1.Volume, []k8sV1.VolumeMount, error) {
 	rootPathsToKeys := make(map[string][]k8sV1.KeyToPath)
 	for _, a := range rootArchives {

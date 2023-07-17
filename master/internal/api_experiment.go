@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
+
 	"golang.org/x/exp/slices"
 
 	"github.com/labstack/echo/v4"
@@ -50,7 +52,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/metricv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
@@ -264,12 +265,7 @@ func (a *apiServer) GetExperiment(
 	}
 
 	jobID := model.JobID(exp.JobId)
-
-	jobSummary := &jobv1.JobSummary{}
-	err = a.ask(sproto.JobsActorAddr, sproto.GetJobSummary{
-		JobID:        jobID,
-		ResourcePool: exp.ResourcePool,
-	}, &jobSummary)
+	jobSummary, err := jobservice.Default.GetJobSummary(jobID, exp.ResourcePool)
 	if err != nil {
 		// An error here either is real or just that the experiment was not yet terminal in the DB
 		// when we first queried it but was by the time it got around to handling out ask. We can't
@@ -1422,7 +1418,7 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 	seenSearcher := make(map[string]bool)
 	seenTrain := make(map[string]bool)
 	seenValid := make(map[string]bool)
-	seenMetrics := make(map[model.MetricType]map[string]bool)
+	seenMetrics := make(map[model.MetricGroup]map[string]bool)
 
 	var timeSinceLastAuth time.Time
 	for {
@@ -1457,32 +1453,32 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 				"error fetching metric names for experiment: %d", req.Ids)
 		}
 
-		for _, name := range metricNames[model.TrainingMetricType] {
+		for _, name := range metricNames[model.TrainingMetricGroup] {
 			if seen := seenTrain[name]; !seen {
 				//nolint:staticcheck // SA1019: backward compatibility
 				response.TrainingMetrics = append(response.TrainingMetrics, name)
 				seenTrain[name] = true
 			}
 		}
-		for _, name := range metricNames[model.ValidationMetricType] {
+		for _, name := range metricNames[model.ValidationMetricGroup] {
 			if seen := seenValid[name]; !seen {
 				//nolint:staticcheck // SA1019: backward compatibility
 				response.ValidationMetrics = append(response.ValidationMetrics, name)
 				seenValid[name] = true
 			}
 		}
-		for metricType, names := range metricNames {
+		for metricGroup, names := range metricNames {
 			for _, name := range names {
-				if seen := seenMetrics[metricType][name]; !seen {
-					typedMetric := metricv1.MetricName{
-						Type: metricType.ToString(),
-						Name: name,
+				if seen := seenMetrics[metricGroup][name]; !seen {
+					typedMetric := metricv1.MetricIdentifier{
+						Group: metricGroup.ToString(),
+						Name:  name,
 					}
 					response.MetricNames = append(response.MetricNames, &typedMetric)
-					if seenMetrics[metricType] == nil {
-						seenMetrics[metricType] = make(map[string]bool)
+					if seenMetrics[metricGroup] == nil {
+						seenMetrics[metricGroup] = make(map[string]bool)
 					}
-					seenMetrics[metricType][name] = true
+					seenMetrics[metricGroup][name] = true
 				}
 			}
 		}
@@ -1541,14 +1537,14 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 		var endTime time.Time
 		var err error
 		//nolint:staticcheck // SA1019: backward compatibility
-		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
+		metricGroup, err := a.parseMetricGroupArgs(req.MetricType, model.MetricGroup(req.Group))
 		if err != nil {
 			return err
 		}
-		if metricType == "" {
-			return status.Error(codes.InvalidArgument, "must specify a metric type")
+		if metricGroup == "" {
+			return status.Error(codes.InvalidArgument, "must specify a metric group")
 		}
-		newBatches, endTime, err = db.MetricBatches(experimentID, metricName, startTime, metricType)
+		newBatches, endTime, err = db.MetricBatches(experimentID, metricName, startTime, metricGroup)
 		if err != nil {
 			return errors.Wrapf(err, "error fetching batches recorded for metric")
 		}
@@ -1592,9 +1588,9 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}
 	//nolint:staticcheck // SA1019: backward compatibility
-	metricType := req.MetricType
-	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
-		return status.Error(codes.InvalidArgument, "must specify a metric type")
+	metricGroup := req.MetricType
+	if metricGroup == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
+		return status.Error(codes.InvalidArgument, "must specify a metric group")
 	}
 	period := time.Duration(req.PeriodSeconds) * time.Second
 	if period == 0 {
@@ -1630,7 +1626,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		var newTrials []*apiv1.TrialsSnapshotResponse_Trial
 		var endTime time.Time
 		var err error
-		switch metricType {
+		switch metricGroup {
 		case apiv1.MetricType_METRIC_TYPE_TRAINING:
 			newTrials, endTime, err = a.m.db.TrainingTrialsSnapshot(experimentID,
 				minBatches, maxBatches, metricName, startTime)
@@ -1643,7 +1639,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		if err != nil {
 			return errors.Wrapf(err,
 				"error fetching snapshots of metrics for %s metric %s in experiment %d at %d batches",
-				metricType, metricName, experimentID, batchesProcessed)
+				metricGroup, metricName, experimentID, batchesProcessed)
 		}
 		startTime = endTime
 
@@ -1714,7 +1710,7 @@ func (a *apiServer) topTrials(
 	}
 }
 
-func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricType apiv1.MetricType,
+func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGroup apiv1.MetricType,
 	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
 	trialCursors map[int32]time.Time,
 ) (*apiv1.TrialsSampleResponse_Trial, error) {
@@ -1722,7 +1718,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	var zeroTime time.Time
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
-	var metricID model.MetricType
+	var metricID model.MetricGroup
 	var metricMeasurements []db.MetricMeasurements
 	xAxisLabelMetrics := []string{"epoch"}
 
@@ -1741,11 +1737,11 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	if !seenBefore {
 		startTime = zeroTime
 	}
-	switch metricType {
+	switch metricGroup {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricID = model.TrainingMetricType //nolint:goconst
+		metricID = model.TrainingMetricGroup //nolint:goconst
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricID = model.ValidationMetricType //nolint:goconst
+		metricID = model.ValidationMetricGroup //nolint:goconst
 	default:
 		panic("Invalid metric type")
 	}
@@ -1804,9 +1800,9 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 
 	metricName := req.MetricName
 	//nolint:staticcheck // SA1019: backward compatibility
-	metricType := req.MetricType
-	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
-		return status.Error(codes.InvalidArgument, "must specify a metric type")
+	metricGroup := req.MetricType
+	if metricGroup == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
+		return status.Error(codes.InvalidArgument, "must specify a metric group")
 	}
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
@@ -1843,7 +1839,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 		}
 		for _, trialID := range trialIDs {
 			var trial *apiv1.TrialsSampleResponse_Trial
-			trial, err = a.fetchTrialSample(trialID, metricName, metricType, maxDatapoints,
+			trial, err = a.fetchTrialSample(trialID, metricName, metricGroup, maxDatapoints,
 				startBatches, endBatches, currentTrials, trialCursors)
 			if err != nil {
 				return err
@@ -2227,7 +2223,7 @@ func (a *apiServer) SearchExperiments(
 		Column("trials.restarts").
 		ColumnExpr("coalesce(new_ckpt.uuid, old_ckpt.uuid) AS warm_start_checkpoint_uuid").
 		ColumnExpr("trials.checkpoint_size AS total_checkpoint_size").
-		ColumnExpr(exputil.ProtoStateDBCaseString(experimentv1.State_value, "trials.state", "state",
+		ColumnExpr(exputil.ProtoStateDBCaseString(trialv1.State_value, "trials.state", "state",
 			"STATE_")).
 		ColumnExpr(`(CASE WHEN trials.hparams = 'null'::jsonb
 				THEN null ELSE trials.hparams END) AS hparams`).
@@ -2306,7 +2302,6 @@ func (a *apiServer) CreateTrial(
 
 	trialModel := model.NewTrial(
 		model.CompletedState,
-		model.NewJobID(),
 		taskID,
 		model.RequestID{},
 		exp.ID,

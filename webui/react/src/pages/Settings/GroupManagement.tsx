@@ -27,7 +27,7 @@ import handleError from 'utils/error';
 import { useObservable } from 'utils/observable';
 
 import css from './GroupManagement.module.scss';
-import settingsConfig, { DEFAULT_COLUMN_WIDTHS } from './GroupManagement.settings';
+import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS } from './GroupManagement.settings';
 
 interface DropdownProps {
   expanded: boolean;
@@ -154,8 +154,7 @@ const GroupManagement: React.FC = () => {
   useEffect(() => {
     fetchGroups();
     fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchGroups, fetchUsers]);
 
   useEffect(() => (rbacEnabled ? roleStore.fetch() : undefined), [rbacEnabled]);
 
@@ -297,7 +296,10 @@ const GroupManagement: React.FC = () => {
         )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey={(r) => r.group.groupId || 0}
-        settings={settings}
+        settings={{
+          ...settings,
+          columns: DEFAULT_COLUMNS,
+        }}
         showSorterTooltip={false}
         size="small"
         updateSettings={updateSettings}

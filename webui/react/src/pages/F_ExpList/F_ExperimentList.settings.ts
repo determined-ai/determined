@@ -24,6 +24,7 @@ export interface F_ExperimentListSettings {
   sortString: string;
   pageLimit: number;
   rowHeight: RowHeight;
+  pinnedColumnsCount: number;
 }
 export const settingsConfigForProject = (id: number): SettingsConfig<F_ExperimentListSettings> => ({
   settings: {
@@ -54,6 +55,12 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       defaultValue: 20,
       skipUrlEncoding: true,
       storageKey: 'pageLimit',
+      type: number,
+    },
+    pinnedColumnsCount: {
+      defaultValue: 0,
+      skipUrlEncoding: true,
+      storageKey: 'pinnedColumnsCount',
       type: number,
     },
     rowHeight: {

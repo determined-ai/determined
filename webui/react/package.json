@@ -43,7 +43,7 @@
     "events": "^3.3.0",
     "fp-ts": "^2.13.1",
     "fuse.js": "^6.6.2",
-    "hermes-parallel-coordinates": "^0.6.7",
+    "hermes-parallel-coordinates": "^0.6.16",
     "humanize-duration": "^3.28.0",
     "immutable": "^4.3.0",
     "io-ts": "^2.2.20",

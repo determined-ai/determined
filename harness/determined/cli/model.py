@@ -7,13 +7,7 @@ from determined import cli
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.experimental import (
-    Determined,
-    Model,
-    ModelOrderBy,
-    ModelSortBy,
-    ModelVersion,
-)
+from determined.experimental import Determined, Model, ModelOrderBy, ModelSortBy, ModelVersion
 
 from . import render
 
@@ -67,7 +61,7 @@ def list_models(args: Namespace) -> None:
     workspace_names = None
     if args.workspace_names is not None:
         workspace_names = args.workspace_names.split(",")
-    models = Determined(args.master, None).get_models(
+    models = Determined(args.master, args.user).get_models(
         sort_by=ModelSortBy[args.sort_by.upper()],
         order_by=ModelOrderBy[args.order_by.upper()],
         workspace_names=workspace_names,
@@ -93,7 +87,7 @@ def list_models(args: Namespace) -> None:
 
 
 def model_by_name(args: Namespace) -> Model:
-    models = Determined(args.master, None).get_models(name=args.name)
+    models = Determined(args.master, args.user).get_models(name=args.name)
     if len(models) == 0:
         raise Exception("No model was found with the given name.")
     if len(models) > 1:
@@ -142,7 +136,7 @@ def list_versions(args: Namespace) -> None:
 
 
 def create(args: Namespace) -> None:
-    model = Determined(args.master, None).create_model(
+    model = Determined(args.master, args.user).create_model(
         args.name, args.description, workspace_name=args.workspace_name
     )
 

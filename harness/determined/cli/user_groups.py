@@ -7,7 +7,7 @@ from determined.cli import default_pagination_args, render, require_feature_flag
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.experimental import session
+from determined.experimental import Session
 
 v1UserHeaders = namedtuple(
     "v1UserHeaders",
@@ -145,7 +145,7 @@ def delete_group(args: Namespace) -> None:
         print("Skipping group deletion.")
 
 
-def usernames_to_user_ids(session: session.Session, usernames: List[str]) -> List[int]:
+def usernames_to_user_ids(session: Session, usernames: List[str]) -> List[int]:
     usernames_to_ids: Dict[str, Optional[int]] = {u: None for u in usernames}
     users = bindings.get_GetUsers(session).users or []
     for user in users:
@@ -167,7 +167,7 @@ def usernames_to_user_ids(session: session.Session, usernames: List[str]) -> Lis
     return user_ids
 
 
-def group_name_to_group_id(session: session.Session, group_name: str) -> int:
+def group_name_to_group_id(session: Session, group_name: str) -> int:
     body = bindings.v1GetGroupsRequest(name=group_name, limit=1, offset=0)
     resp = bindings.post_GetGroups(session, body=body)
     groups = resp.groups

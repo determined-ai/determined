@@ -47,6 +47,20 @@ func (_m *ModelAuthZ) CanDeleteModel(ctx context.Context, curUser model.User, m 
 	return r0
 }
 
+// CanDeleteModelVersion provides a mock function with given fields: ctx, curUser, modelVersion, workspaceID
+func (_m *ModelAuthZ) CanDeleteModelVersion(ctx context.Context, curUser model.User, modelVersion *modelv1.ModelVersion, workspaceID int32) error {
+	ret := _m.Called(ctx, curUser, modelVersion, workspaceID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *modelv1.ModelVersion, int32) error); ok {
+		r0 = rf(ctx, curUser, modelVersion, workspaceID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CanEditModel provides a mock function with given fields: ctx, curUser, m, workspaceID
 func (_m *ModelAuthZ) CanEditModel(ctx context.Context, curUser model.User, m *modelv1.Model, workspaceID int32) error {
 	ret := _m.Called(ctx, curUser, m, workspaceID)

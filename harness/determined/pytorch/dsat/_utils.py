@@ -72,7 +72,7 @@ def get_base_parser() -> argparse.ArgumentParser:
         help="Space-separated list of zero stages to search over",
     )
     base_parser.add_argument(
-        "--start_profile-step",
+        "--start-profile-step",
         type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["start-profile-step"],
         help="Step on which to start profiling",
@@ -85,7 +85,7 @@ def get_base_parser() -> argparse.ArgumentParser:
     )
     base_parser.add_argument(
         "-r",
-        "--random_seed",
+        "--random-seed",
         type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["random-seed"],
         help="Sets all random seeds",

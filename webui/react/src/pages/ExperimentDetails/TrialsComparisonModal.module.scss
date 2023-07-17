@@ -1,10 +1,9 @@
 .base {
+  background-color: var(--theme-background);
   border: 1px solid var(--theme-surface-border);
-  border-radius: var(--theme-border-radius);
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
-  height: 75vh;
+  height: 100%;
   overflow: auto;
 
   .row {
@@ -40,6 +39,7 @@
     white-space: nowrap;
 
     & > * {
+      margin: 0;
       max-width: 100%;
     }
   }
@@ -62,6 +62,9 @@
   .trialTag {
     font-size: 14px;
 
+    & * {
+      margin: 0;
+    }
     :hover {
       color: var(--theme-status-active);
     }

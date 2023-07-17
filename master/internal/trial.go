@@ -65,8 +65,8 @@ type trial struct {
 	// Fields that are essentially configuration for the trial.
 	config              expconf.ExperimentConfig
 	taskSpec            *tasks.TaskSpec
+	generatedKeys       ssh.PrivateAndPublicKeys
 	warmStartCheckpoint *model.Checkpoint
-	generatedKeys       *ssh.PrivateAndPublicKeys
 
 	// state is the current state of the trial. It's patched by experiment changes and kill trial.
 	state model.State
@@ -101,6 +101,7 @@ func newTrial(
 	config expconf.ExperimentConfig,
 	warmStartCheckpoint *model.Checkpoint,
 	taskSpec *tasks.TaskSpec,
+	generatedKeys ssh.PrivateAndPublicKeys,
 	restored bool,
 ) *trial {
 	return &trial{
@@ -116,6 +117,7 @@ func newTrial(
 
 		config:              config,
 		taskSpec:            taskSpec,
+		generatedKeys:       generatedKeys,
 		warmStartCheckpoint: warmStartCheckpoint,
 
 		logCtx: logger.MergeContexts(logCtx, logger.Context{
@@ -203,12 +205,6 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		if t.allocation != nil {
 			ctx.Tell(t.allocation, msg)
 		}
-	case task.BuildTaskSpec:
-		if spec, err := t.buildTaskSpec(ctx); err != nil {
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(spec)
-		}
 	case userInitiatedEarlyExit:
 		if err := t.handleUserInitiatedStops(ctx, msg); err != nil {
 			ctx.Respond(err)
@@ -246,7 +242,6 @@ func (t *trial) Receive(ctx *actor.Context) error {
 func (t *trial) create(ctx *actor.Context) error {
 	m := model.NewTrial(
 		t.state,
-		t.jobID,
 		t.taskID,
 		t.searcher.Create.RequestID,
 		t.experimentID,
@@ -300,6 +295,11 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	if err != nil {
 		ctx.Log().WithError(err).Warn("failed to restore trial allocation")
 	} else if restoredAllocation != nil {
+		specifier, err := t.buildTaskSpecifier(ctx)
+		if err != nil {
+			return err
+		}
+
 		ar := sproto.AllocateRequest{
 			AllocationID:      restoredAllocation.AllocationID,
 			TaskID:            t.taskID,
@@ -323,13 +323,18 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		ctx.Log().
 			WithField("allocation-id", ar.AllocationID).
 			Infof("starting restored trial allocation")
-		t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, ar, t.db, t.rm))
+		t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, ar, t.db, t.rm, specifier))
 		return nil
 	}
 
 	t.runID++
 	t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-run-id": t.runID})
 	ctx.AddLabels(t.logCtx)
+
+	specifier, err := t.buildTaskSpecifier(ctx)
+	if err != nil {
+		return err
+	}
 
 	ar := sproto.AllocateRequest{
 		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
@@ -356,7 +361,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		Debugf("starting new trial allocation")
 
 	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
-	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, ar, t.db, t.rm))
+	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, ar, t.db, t.rm, specifier))
 	ctx.Ask(t.allocation, actor.Ping{}).Get()
 
 	return nil
@@ -391,45 +396,28 @@ func (t *trial) addTask() error {
 	})
 }
 
-func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
-	// It is possible the trial state changed from active since we decided to launch this
-	// allocation but that, in quick succession, the resource manager provided the allocation with
-	// resources and we sent the cancel message. In this case, rather than let the allocation start,
-	// we send it a cancellation. If this is the first allocation, it will also prevent us from
-	// adding a trial when we are not active, which breaks some other invariants.
-	if t.state != model.ActiveState {
-		return tasks.TaskSpec{}, task.ErrAlreadyCancelled{}
-	}
-
-	if t.generatedKeys == nil {
-		generatedKeys, err := ssh.GenerateKey(t.taskSpec.SSHRsaSize, nil)
-		if err != nil {
-			return tasks.TaskSpec{}, errors.Wrap(err, "failed to generate keys for trial")
-		}
-		t.generatedKeys = &generatedKeys
-	}
-
+func (t *trial) buildTaskSpecifier(ctx *actor.Context) (*tasks.TrialSpec, error) {
 	if !t.trialCreationSent {
 		ctx.Tell(ctx.Self().Parent(), trialCreated{requestID: t.searcher.Create.RequestID})
 		t.trialCreationSent = true
 	}
 
 	if err := t.db.UpdateTrialRunID(t.id, t.runID); err != nil {
-		return tasks.TaskSpec{}, errors.Wrap(err, "failed to save trial run ID")
+		return nil, errors.Wrap(err, "failed to save trial run ID")
 	}
 
 	var stepsCompleted int
 	latestCheckpoint, err := t.db.LatestCheckpointForTrial(t.id)
 	switch {
 	case err != nil:
-		return tasks.TaskSpec{}, errors.Wrapf(err, "failed to query latest checkpoint for trial")
+		return nil, errors.Wrapf(err, "failed to query latest checkpoint for trial")
 	case latestCheckpoint == nil:
 		latestCheckpoint = t.warmStartCheckpoint
 	default:
 		stepsCompleted = latestCheckpoint.StepsCompleted
 	}
 
-	return tasks.TrialSpec{
+	return &tasks.TrialSpec{
 		Base: *t.taskSpec,
 
 		ExperimentID:     t.experimentID,
@@ -440,7 +428,9 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		TrialSeed:        t.searcher.Create.TrialSeed,
 		StepsCompleted:   stepsCompleted,
 		LatestCheckpoint: latestCheckpoint,
-	}.ToTaskSpec(t.generatedKeys), nil
+
+		Keys: t.generatedKeys,
+	}, nil
 }
 
 // allocationExited cleans up after an allocation exit and exits permanently or reallocates.

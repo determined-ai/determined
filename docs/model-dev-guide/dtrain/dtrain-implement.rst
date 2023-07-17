@@ -1,21 +1,23 @@
 .. _multi-gpu-training-implement:
 
-###################################################
- Introduction to Implementing Distributed Training
-###################################################
+###################################
+ Implementing Distributed Training
+###################################
 
 **************
  Connectivity
 **************
 
-Multi-machine training requires that all machines can connect directly. There may be firewall rules
-or network configuration that prevent machines in your cluster from communicating. Please check that
-agent machines can access each other outside of Determined by using ``ping`` or ``netcat`` tools.
+Multi-machine training necessitates that all machines are capable of establishing a direct
+connection. Firewall rules or network configurations might exist that prevent machines in your
+cluster from communicating with each other. You can verify that agent machines can connect with each
+other outside of Determined by using tools such as ``ping`` or ``netcat``.
 
 More rarely, if agents have multiple network interfaces and some of them are not routable,
 Determined may pick one of those interfaces rather than one that allows one agent to contact
 another. In this case, it is possible to explicitly set the network interface used for distributed
-training, as described in :ref:`cluster-configuration`.
+training, as described in :ref:`Basic Setup: Step 7 - Configure the Cluster
+<cluster-configuration>`.
 
 ***************
  Configuration
@@ -24,110 +26,124 @@ training, as described in :ref:`cluster-configuration`.
 Slots Per Trial
 ===============
 
-In the :ref:`experiment-config-reference`, the ``resources.slots_per_trial`` field controls the
-number of GPUs used to train a single trial.
+The ``resources.slots_per_trial`` field in the :ref:`experiment configuration
+<experiment-config-reference>` controls the number of GPUs used to train a single trial.
 
-The default value is ``1``, which disables distributed training. Setting ``slots_per_trial`` to a
-larger value enables multi-GPU training automatically. Note that these GPUs might be on a single
-machine or across multiple machines; the experiment configuration simply defines how many GPUs
-should be used for training, and the Determined job scheduler decides whether to schedule the task
-on a single agent or multiple agents, depending on the machines in the cluster and the other active
-workloads.
+By default, this field is set to a value of ``1``, which disables distributed training. If you
+increase the ``slots_per_trial`` value, this will automatically enable multi-GPU training. Bear in
+mind that these GPUs can either be located on a single machine or distributed across multiple
+machines. The experiment configuration merely dictates the number of GPUs to be used in the training
+process, while the Determined job scheduler decides whether to schedule the task on a single agent
+or multiple agents. Whether the job scheduler schedules the task on a single agent or multiple
+agents depends on the machines in the cluster and other active workloads.
 
-Multi-machine parallelism offers the ability to further parallelize training across more GPUs. To
-use multi-machine parallelism, set ``slots_per_trial`` to be a multiple of the total number of GPUs
-on an agent machine. For example, if your resource pool consists of multiple 8-GPU agent machines,
-valid values for ``slots_per_trial`` would be 16, 24, 32, etc. In this configuration, trials use all
-the resources of multiple machines to train a model:
+Multi-machine parallelism allows you to further parallelize training across more GPUs. To use this
+feature, set ``slots_per_trial`` to a multiple of the total number of GPUs on an agent machine. For
+example, if your resource pool consists of multiple 8-GPU agent machines, valid ``slots_per_trial``
+values would be 16, 24, 32, and so on.
+
+In the following configuration, trials will use the combined resources of multiple machines to train
+a model:
 
 .. code:: yaml
 
    resources:
      slots_per_trial: 16  # Two 8-GPU agent machines will be used in a trial
 
-For distributed multi-machine training, Determined automatically detects a common network interface
-shared by the agent machines. If your cluster has multiple common network interfaces, please specify
-the fastest one in :ref:`cluster-configuration` under
+For distributed multi-machine training, Determined will automatically detect a common network
+interface that is shared by the agent machines. If your cluster has multiple common network
+interfaces, we advise specifying the fastest one in :ref:`cluster-configuration` under
 ``task_container_defaults.dtrain_network_interface``.
 
-Reduce computational overhead by setting the ``global_batch_size`` to the largest batch size that
-fits into a single GPU multiplied times the number of slots.
-
 When the ``slots_per_trial`` field is set, the per-slot (i.e., per-GPU) batch size is set to
-``global_batch_size // slots_per_trial``. The per-slot and global batch sizes should be accessed via
-the context using :func:`context.get_per_slot_batch_size()
+``global_batch_size // slots_per_trial``. The per-slot and global batch sizes can be accessed
+through the context using :func:`context.get_per_slot_batch_size()
 <determined.TrialContext.get_per_slot_batch_size>` and :func:`context.get_global_batch_size()
 <determined.TrialContext.get_global_batch_size>`, respectively. If ``global_batch_size`` is not
 evenly divisible by ``slots_per_trial``, the remainder is dropped.
 
-If :ref:`slots_per_trial <exp-config-resources-slots-per-trial>` is greater than the number of slots
-on a single agent, Determined schedules it over multiple machines. When scheduling a multi-machine
-distributed training job, Determined requires that the job uses all of the slots (GPUs) on an agent.
-For example, in a cluster that consists of 8-GPU agents, an experiment with :ref:`slots_per_trial
-<exp-config-resources-slots-per-trial>` set to ``12`` is never scheduled and will wait indefinitely.
-The section on :ref:`Scheduling Behavior <dtrain-scheduling>` describes this in more detail.
+When scheduling a multi-machine distributed training job, Determined prefers that the job use all of
+the slots (GPUs) on an agent. The section on :ref:`Scheduling Behavior <dtrain-scheduling>`
+describes this preference in more detail.
 
-There might also be running tasks preventing your multi-GPU trials from acquiring enough GPUs on a
-single machine. Consider adjusting ``slots_per_trial`` or terminating existing tasks to free slots
-in your cluster.
+.. note::
+
+   You might have existing tasks that are running on a single machine that are preventing your
+   multi-GPU trials from acquiring sufficient GPUs. To alleviate this, you may want to consider
+   adjusting ``slots_per_trial`` or terminating existing tasks to free up slots in your cluster.
 
 Global Batch Size
 =================
 
-When doing distributed training, the ``global_batch_size`` specified in the
-:ref:`experiment-config-reference` is partitioned across ``slots_per_trial`` GPUs. The per-GPU batch
-size is set to: ``global_batch_size // slots_per_trial``. If ``slots_per_trial`` does not divide
-``global_batch_size`` evenly, the remainder is dropped. For convenience, the per-GPU batch size can
-be accessed via the Trial API, using :func:`context.get_per_slot_batch_size
-<determined.TrialContext.get_per_slot_batch_size>`.
+You can reduce computational overhead by setting the ``global_batch_size`` to the largest batch size
+that fits into a single GPU multiplied times the number of slots.
 
-For improved performance, *weak-scaling* is recommended. That is, increasing your
-``global_batch_size`` proportionally with ``slots_per_trial``. For example, change
-``global_batch_size`` and ``slots_per_trial`` from 32 and 1 to 128 and 4.
+.. note::
 
-Adjusting ``global_batch_size`` can affect your model convergence, which can affect your training
-and/or testing accuracy. You may need to adjust model hyperparameters like the learning rate and/or
-use a different optimizer when training with larger batch sizes.
+   The ``global_batch_size`` field will be automatically respected by the Trial APIs. To use this
+   hyperparameter with the Core API, you'll need to reference ``global_batch_size`` explicitly and
+   organize your code to respect its value.
+
+During distributed training, the ``global_batch_size`` specified in the :ref:`experiment
+configuration file <experiment-config-reference>` is partitioned across ``slots_per_trial`` GPUs.
+The per-GPU batch size is set to: ``global_batch_size // slots_per_trial``. Recall that if
+``global_batch_size`` is not evenly divisible by ``slots_per_trial``, the remainder is dropped. For
+convenience, the per-GPU batch size can be accessed via the Trial API, using
+:func:`context.get_per_slot_batch_size <determined.TrialContext.get_per_slot_batch_size>`.
+
+For improved performance, *weak-scaling* is recommended. Weak-scaling means proportionally
+increasing your ``global_batch_size`` with ``slots_per_trial``. For example, you might change
+``global_batch_size`` and ``slots_per_trial`` from 32 and 1 to 128 and 4, respectively. You can
+visit the blog post, `Scaling deep learning workloads
+<https://developer.hpe.com/blog/scaling-deep-learning-workloads/>`_, to learn more about weak
+scaling.
+
+Note that adjusting ``global_batch_size`` can impact your model convergence, which in turn can
+affect your training and/or testing accuracy. You might need to adjust model hyperparameters, such
+as the learning rate, or consider using a different optimizer when training with larger batch sizes.
 
 .. _multi-gpu-training-implement-adv-optimizations:
 
 Advanced Optimizations
 ======================
 
-Determined supports several optimizations to further reduce training time. These optimizations are
-available in :ref:`experiment-config-reference` under ``optimizations``.
+The following optimizations can further reduce training time.
 
 -  ``optimizations.aggregation_frequency`` controls how many batches are evaluated before exchanging
-   gradients. It is helpful in situations where it is not possible to increase the batch size
-   directly, for example, due to GPU memory limitations). This optimization increases your effective
-   batch size to ``aggregation_frequency`` * ``global_batch_size``.
+   gradients. This optimization increases your effective batch size to ``aggregation_frequency`` *
+   ``global_batch_size``. ``optimizations.aggregation_frequency`` is useful in scenarios where
+   directly increasing the batch size is not possible (for example, due to GPU memory limitations).
 
 -  ``optimizations.gradient_compression`` reduces the time it takes to transfer gradients between
    GPUs.
 
 -  ``optimizations.auto_tune_tensor_fusion`` automatically identifies the optimal message size
-   during gradient transfers, reducing communication overhead.
+   during gradient transfers, thereby reducing communication overhead.
 
 -  ``optimizations.average_training_metrics`` averages the training metrics across GPUs at the end
-   of every training workload, which requires communication. ``average_training_metrics`` is set to
-   ``true`` by default. This typically does not have a major impact on training performance, but if
-   you have a very small ``scheduling_unit``, disabling this option may improve performance. When
-   disabled, only the training metrics from the chief GPU are reported. This impacts results shown
-   in the WebUI and TensorBoard but does not influence model behavior or hyperparameter search.
+   of every training workload, a process that requires communication. ``average_training_metrics``
+   is set to ``true`` by default and typically does not have a significant impact on training
+   performance. However, if you have a very small ``scheduling_unit``, disabling this option could
+   improve performance. When disabled, only the training metrics from the chief GPU are reported.
+   This impacts results shown in the WebUI and TensorBoard but does not influence model behavior or
+   hyperparameter search.
 
-If you do not see improved performance using distributed training, there might be a performance
-bottleneck in the model that cannot be directly alleviated by using multiple GPUs, such as with data
-loading. You are encouraged to experiment with a synthetic dataset to verify the performance of
-multi-GPU training.
+To learn more about these optimizations, visit the :ref:`optimizations <exp-config-optimizations>`
+section in the Experiment Configuration Reference.
+
+If you're not seeing improved performance with distributed training, your model might have a
+performance bottleneck that can't be directly alleviated by using multiple GPUs, such as with data
+loading. You're encouraged to experiment with a synthetic dataset in order to verify the performance
+of multi-GPU training.
 
 .. warning::
 
    Multi-machine distributed training is designed to maximize performance by training with all the
    resources of a machine. This can lead to situations where an experiment is created but never
-   becomes active: if the number of GPUs requested does not divide into the machines available, for
-   instance, or if another experiment is already using some GPUs on a machine.
+   becomes active, such as when the number of GPUs requested does not factor into (divide evenly)
+   the machines available, or when another experiment is already using some GPUs on a machine.
 
-   If an experiment does not become active after a minute or so, please confirm that
+   If an experiment does not become active after a minute or so, please ensure that
    ``slots_per_trial`` is a multiple of the number of GPUs available on a machine. You can also use
    the CLI command ``det task list`` to check if any other tasks are using GPUs and preventing your
    experiment from using all the GPUs on a machine.
@@ -136,17 +152,19 @@ multi-GPU training.
  Downloading Data
 ******************
 
-When performing distributed training, Determined automatically creates one process for every GPU
-that is being used for training. Each process attempts to download training and/or validation data,
-so care should be taken to ensure that concurrent data downloads do not conflict with one another.
-One way to do this is to include a unique identifier in the local file system path where the
-downloaded data is stored. A convenient identifier is the ``rank`` of the current process: the
-process ``rank`` is automatically assigned by Determined and is unique among all trial processes.
+When performing distributed training, Determined automatically creates one process for each GPU that
+is being used for training. Each of these processes attempts to download training and/or validation
+data, so it is important to ensure that concurrent data downloads do not conflict with one another.
 
-You can do this by leveraging the :func:`self.context.distributed.get_rank()
-<determined._core._distributed.DistributedContext.get_rank>` function. Below is an example of how to
-do this when downloading data from S3. In this example, the S3 bucket name is configured via a field
-``data.bucket`` in the experiment configuration.
+One way to achieve this is to include a unique identifier in the local file system path where the
+downloaded data is stored. A convenient identifier is the ``rank`` of the current process. The
+process ``rank`` is automatically assigned by Determined and is unique among all trial processes.
+You can accomplish this by leveraging the :func:`self.context.distributed.get_rank()
+<determined._core._distributed.DistributedContext.get_rank>` function.
+
+The following example demonstrates how to accomplish this when downloading data from S3. In this
+example, the S3 bucket name is configured via a ``data.bucket`` field in the experiment
+configuration file.
 
 .. code:: python
 
@@ -172,43 +190,49 @@ do this when downloading data from S3. In this example, the S3 bucket name is co
  Scheduling Behavior
 *********************
 
-The Determined master takes care of scheduling distributed training jobs automatically, ensuring
-that all of the compute resources required for a job are available before the job itself is
-launched. Users should be aware of the following details about scheduler behavior when using
-distributed training:
+The Determined master schedules distributed training jobs automatically, ensuring that all of the
+compute resources required for a job are available before the job is launched. Here are some
+important details regarding ``slots_per_trial`` and the scheduler's behavior:
 
--  If ``slots_per_trial`` is smaller than or equal to the number of slots on a single agent,
-   Determined considers scheduling multiple distributed training jobs on a single agent. This is
+-  If ``slots_per_trial`` is less than or equal to the number of slots on a single agent, Determined
+   considers scheduling multiple distributed training jobs on a single agent. This approach is
    designed to improve utilization and to allow multiple small training jobs to run on a single
    agent. For example, an agent with eight GPUs could be assigned two 4-GPU jobs or four 2-GPU jobs.
 
--  Otherwise, if ``slots_per_trial`` is greater than the number of slots on a single agent,
-   Determined schedules the distributed training job onto multiple agents. A multi-machine
-   distributed training job is only scheduled onto an agent if this results in utilizing all of the
-   agent GPUs. This is to ensure good performance and utilize the full network bandwidth of each
-   machine while minimizing inter-machine networking. For example, if all of the agents in your
-   cluster have eight GPUs each , you should submit jobs with ``slots_per_trial`` set to a multiple
-   of eight, such as 8, 16, or 24.
+-  If ``slots_per_trial`` is greater than the number of slots on a single agent, Determined
+   schedules the distributed training job onto multiple agents. To ensure good performance and
+   utilize the full network bandwidth of each machine and to minimize inter-machine networking,
+   Determined prefers utilizing all of the agent GPUs on a machine. For example, if all the agents
+   in your cluster have eight GPUs each, you should submit jobs with ``slots_per_trial`` set to a
+   multiple of eight, such as 8, 16, or 24.
+
+.. note::
+
+   The scheduler can find fits for distributed jobs against agents of different sizes. This is
+   configured via the :ref:`allowing_heterogeneous_fits <allow-uneven-slots>` parameter. This
+   parameter defaults to ``false``. By default Determined requires that the job use all of the slots
+   (GPUs) on an agent.
 
 .. warning::
 
-   If these scheduling constraints for multi-machine distributed training are not satisfied,
+   If these scheduling constraints for multi-machine distributed training are not satisfied, and you
+   have not configured the :ref:`allowing_heterogeneous_fits <allow-uneven-slots>` parameter,
    distributed training jobs are not scheduled and wait indefinitely. For example, if every agent in
    the cluster has eight GPUs, a job with ``slots_per_trial`` set to ``12`` is never scheduled.
 
-   If a multi-GPU experiment does not become active after a minute or so, please confirm that
-   ``slots_per_trial`` is set so that it can be scheduled within these constraints. The CLI command
-   ``det task list`` can also be used to check if any other tasks are using GPUs and preventing your
+   If a multi-GPU experiment does not become active after a minute or so, please ensure that
+   ``slots_per_trial`` is set so that it can be scheduled within these constraints. You can also use
+   the CLI command ``det task list`` to check if any other tasks are using GPUs and preventing your
    experiment from using all the GPUs on a machine.
 
 ***********************
  Distributed Inference
 ***********************
 
-PyTorch users can also use the existing distributed training workflow with PyTorchTrial to
-accelerate their inference workloads. This workflow is not yet officially supported, so users must
-specify certain training-specific artifacts that are not used for inference. To run a distributed
-batch inference job, create a new PyTorchTrial and follow these steps:
+PyTorch users have the option to use the existing distributed training workflow with PyTorchTrial to
+accelerate their inference workloads. This workflow is not yet officially supported, therefore,
+users must specify certain training-specific artifacts that are not used for inference. To run a
+distributed batch inference job, create a new PyTorchTrial and follow these steps:
 
 -  Load the trained model and build the inference dataset using ``build_validation_data_loader()``.
 -  Specify the inference step using ``evaluate_batch()`` or ``evaluate_full_dataset()``.
@@ -219,163 +243,4 @@ batch inference job, create a new PyTorchTrial and follow these steps:
 Once the new PyTorchTrial object is created, use the experiment configuration to distribute
 inference in the same way as training. `cifar10_pytorch_inference
 <https://github.com/determined-ai/determined/blob/master/examples/computer_vision/cifar10_pytorch_inference/>`_
-is an example of distributed batch inference.
-
-.. _config-template:
-
-*************************
- Configuration Templates
-*************************
-
-At a typical organization, many Determined configuration files will contain similar settings. For
-example, all of the training workloads run at a given organization might use the same checkpoint
-storage configuration. One way to reduce this redundancy is to use *configuration templates*. With
-this feature, users can move settings that are shared by many experiments into a single YAML file
-that can then be referenced by configurations that require those settings.
-
-Each configuration template has a unique name and is stored by the Determined master. If a
-configuration specifies a template, the effective configuration of the task will be the result of
-merging the two YAML files (configuration file and template). The semantics of this merge operation
-is described below. Determined stores this effective configuration so that future changes to a
-template will not affect the reproducibility of experiments that used a previous version of the
-configuration template.
-
-A single configuration file can use at most one configuration template. A configuration template
-cannot itself use another configuration template.
-
-Using Templates to Simplify Experiment Configurations
-=====================================================
-
-An experiment can use a configuration template by using the ``--template`` command-line option to
-specify the name of the desired template.
-
-Here is an example demonstrating how an experiment configuration can be split into a reusable
-template and a simplified configuration.
-
-Consider the following experiment configuration:
-
-.. code:: yaml
-
-   name: mnist_tf_const
-   checkpoint_storage:
-     type: s3
-     access_key: my-access-key
-     secret_key: my-secret-key
-     bucket: my-bucket-name
-   data:
-     base_url: https://s3-us-west-2.amazonaws.com/determined-ai-datasets/mnist/
-     training_data: train-images-idx3-ubyte.gz
-     training_labels: train-labels-idx1-ubyte.gz
-     validation_set_size: 10000
-   hyperparameters:
-     base_learning_rate: 0.001
-     weight_cost: 0.0001
-     global_batch_size: 64
-     n_filters1: 40
-     n_filters2: 40
-   searcher:
-     name: single
-     metric: error
-     max_length:
-       batches: 500
-     smaller_is_better: true
-
-You may find that the values for the ``checkpoint_storage`` field are the same for many experiments
-and you want to use a configuration template to reduce the redundancy. You might write a template
-like the following:
-
-.. code:: yaml
-
-   description: template-tf-gpu
-   checkpoint_storage:
-     type: s3
-     access_key: my-access-key
-     secret_key: my-secret-key
-     bucket: my-bucket-name
-
-Then the experiment configuration for this experiment can be written using the following code:
-
-.. code:: yaml
-
-   description: mnist_tf_const
-   data:
-     base_url: https://s3-us-west-2.amazonaws.com/determined-ai-datasets/mnist/
-     training_data: train-images-idx3-ubyte.gz
-     training_labels: train-labels-idx1-ubyte.gz
-     validation_set_size: 10000
-   hyperparameters:
-     base_learning_rate: 0.001
-     weight_cost: 0.0001
-     global_batch_size: 64
-     n_filters1: 40
-     n_filters2: 40
-   searcher:
-     name: single
-     metric: error
-     max_length:
-       batches: 500
-     smaller_is_better: true
-
-To launch the experiment with the template:
-
-.. code:: bash
-
-   $ det experiment create --template template-tf-gpu mnist_tf_const.yaml <model_code>
-
-Using the CLI to Work with Templates
-====================================
-
-The :ref:`Determined command-line interface <cli-ug>` can be used to list, create, update, and
-delete configuration templates. This functionality can be accessed through the ``det template``
-sub-command. This command can be abbreviated as ``det tpl``.
-
-To list all the templates stored in Determined, use ``det template list``. You can also use the
-``-d`` or ``--detail`` option to show additional details.
-
-.. code::
-
-   $ det tpl list
-   Name
-   -------------------------
-   template-s3-tf-gpu
-   template-s3-pytorch-gpu
-   template-s3-keras-gpu
-
-To create or update a template, use ``det tpl set template_name template_file``.
-
-.. code::
-
-   $ cat > template-s3-keras-gpu.yaml << EOL
-   description: template-s3-keras-gpu
-   checkpoint_storage:
-     type: s3
-     access_key: my-access-key
-     secret_key: my-secret-key
-     bucket: my-bucket-name
-   EOL
-   $ det tpl set template-s3-keras-gpu template-s3-keras-gpu.yaml
-   Set template template-s3-keras-gpu
-
-Merge Behavior
-==============
-
-Suppose we have a template that specifies top-level fields ``a`` and ``b`` and a configuration that
-specifies fields ``b`` and ``c``. The merged configuration will have fields ``a``, ``b``, and ``c``.
-The value for field ``a`` will simply be the value set in the template. Likewise, the value for
-field ``c`` will be whatever was specified in the configuration. The final value for field ``b``,
-however, depends on the value's type:
-
--  If the field specifies a scalar value, the merged value will be the one specified by the
-   configuration (the configuration overrides the template).
-
--  If the field specifies a list value, the merged value will be the concatenation of the list
-   specified in the template and that specified in the configuration.
-
-   Note that there are exceptions to this rule for ``bind_mounts`` and ``resources.devices``. It may
-   be the case that the both the original config and the template will attempt to mount to the same
-   ``container_path``, which would result in an unstable config. In those situations, the original
-   config is preferred, and the conflicting bind mount or device from the template is omitted in the
-   merged result.
-
--  If the field specifies an object value, the resulting value will be the object generated by
-   recursively applying this merging algorithm to both objects.
+serves as an example of distributed batch inference.

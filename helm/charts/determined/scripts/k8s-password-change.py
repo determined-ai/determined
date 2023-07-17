@@ -51,6 +51,7 @@ def getMasterAddress(
     service_port: str,
     token: str,
 ) -> str:
+
     target_service = f"determined-master-service-{service_name}"
 
     if node_port != "true":

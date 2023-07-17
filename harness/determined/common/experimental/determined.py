@@ -47,7 +47,8 @@ class Determined:
         )
 
         auth = authentication.Authentication(self._master, user, password, cert=cert)
-        self._session = api.Session(self._master, user, auth, cert)
+        retry = api.default_retry()
+        self._session = api.Session(self._master, user, auth, cert, retry)
         token_user = auth.token_store.get_active_user()
         if token_user is not None:
             self._token = auth.token_store.get_token(token_user)

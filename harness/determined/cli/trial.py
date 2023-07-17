@@ -15,7 +15,7 @@ from determined.cli.master import format_log_entry
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
-from determined.common.experimental import Determined
+from determined.experimental import Determined
 
 from .checkpoint import render_checkpoint
 
@@ -142,10 +142,13 @@ def describe_trial(args: Namespace) -> None:
     print("Workloads:")
     render.tabulate_or_csv(headers, values, args.csv)
 
+    if args.metrics_summary:
+        render.print_json(trial_response.trial.summaryMetrics)
+
 
 def download(args: Namespace) -> None:
     checkpoint = (
-        Determined(args.master, None)
+        Determined(args.master, args.user)
         .get_trial(args.trial_id)
         .select_checkpoint(
             latest=args.latest,
@@ -360,6 +363,11 @@ args_description: ArgsDescription = [
                 "describe trial",
                 [
                     Arg("trial_id", type=int, help="trial ID"),
+                    Arg(
+                        "--metrics-summary",
+                        action="store_true",
+                        help="display summary of metrics",
+                    ),
                     Arg(
                         "--metrics",
                         action="store_true",

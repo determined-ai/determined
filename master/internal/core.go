@@ -21,6 +21,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
+
 	"github.com/coreos/go-systemd/activation"
 	"github.com/google/uuid"
 	"github.com/labstack/echo-contrib/prometheus"
@@ -51,7 +53,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -109,10 +110,6 @@ func New(logStore *logger.LogBuffer, config *config.Config) *Master {
 		logs:     logStore,
 		config:   config,
 	}
-}
-
-func (m *Master) getConfig(ctx echo.Context) (interface{}, error) {
-	return m.config.Printable()
 }
 
 // Info returns this master's information.
@@ -865,7 +862,7 @@ func (m *Master) Run(ctx context.Context) error {
 		ClusterID:             m.ClusterID,
 		HarnessPath:           filepath.Join(m.config.Root, "wheels"),
 		TaskContainerDefaults: m.config.TaskContainerDefaults,
-		MasterCert:            cert,
+		MasterCert:            config.GetCertPEM(cert),
 		SSHRsaSize:            m.config.Security.SSH.RsaKeySize,
 		SegmentEnabled:        m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "",
 		SegmentAPIKey:         m.config.Telemetry.SegmentMasterKey,
@@ -919,7 +916,6 @@ func (m *Master) Run(ctx context.Context) error {
 	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
 	userService := user.GetService()
 
-	allocationmap.InitAllocationMap()
 	proxy.InitProxy(processProxyAuthentication)
 	portregistry.InitPortRegistry()
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
@@ -1010,11 +1006,12 @@ func (m *Master) Run(ctx context.Context) error {
 		},
 		cert,
 	)
+	jobservice.SetDefaultService(job.NewManager(m.rm, m.system))
+
 	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
-	m.system.ActorOf(sproto.JobsActorAddr, job.NewJobs(m.rm))
 
 	if err = m.restoreNonTerminalExperiments(); err != nil {
 		return err
@@ -1109,7 +1106,6 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.File("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
-	m.echo.GET("/config", api.Route(m.getConfig))
 	m.echo.GET("/info", api.Route(m.getInfo))
 
 	experimentsGroup := m.echo.Group("/experiments")
@@ -1172,7 +1168,10 @@ func (m *Master) Run(ctx context.Context) error {
 	// Catch-all for requests not matched by any above handler
 	// echo does not set the response error on the context if no handler is matched
 	m.echo.Any("/*", func(c echo.Context) error {
-		return echo.ErrNotFound
+		id := fmt.Sprintf("%s %s", c.Request().Method, c.Request().URL.Path)
+		log.Debugf("unmatched request: %s", id)
+		return echo.NewHTTPError(http.StatusNotFound,
+			fmt.Sprintf("api not found: %s", id))
 	})
 
 	user.RegisterAPIHandler(m.echo, userService)

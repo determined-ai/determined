@@ -393,7 +393,6 @@ func setupTrial(t *testing.T, pgDB *db.PgDB) (
 	task := db.RequireMockTask(t, pgDB, experiment.OwnerID)
 	trial := &model.Trial{
 		TaskID:       task.TaskID,
-		JobID:        experiment.JobID,
 		ExperimentID: experiment.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),

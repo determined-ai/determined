@@ -56,24 +56,30 @@ def configure_token_store(credentials: authentication.Credentials) -> None:
 
 
 def launch_ntsc(
-    session: Session, workspace_id: int, typ: NTSC_Kind, exp_id: Optional[int] = None
-) -> str:
+    session: Session,
+    workspace_id: int,
+    typ: NTSC_Kind,
+    exp_id: Optional[int] = None,
+    template: Optional[str] = None,
+) -> AnyNTSC:
     if typ == NTSC_Kind.notebook:
         return bindings.post_LaunchNotebook(
-            session, body=bindings.v1LaunchNotebookRequest(workspaceId=workspace_id)
-        ).notebook.id
+            session,
+            body=bindings.v1LaunchNotebookRequest(workspaceId=workspace_id, templateName=template),
+        ).notebook
     elif typ == NTSC_Kind.tensorboard:
         experiment_ids = [exp_id] if exp_id else []
         return bindings.post_LaunchTensorboard(
             session,
             body=bindings.v1LaunchTensorboardRequest(
-                workspaceId=workspace_id, experimentIds=experiment_ids
+                workspaceId=workspace_id, experimentIds=experiment_ids, templateName=template
             ),
-        ).tensorboard.id
+        ).tensorboard
     elif typ == NTSC_Kind.shell:
         return bindings.post_LaunchShell(
-            session, body=bindings.v1LaunchShellRequest(workspaceId=workspace_id)
-        ).shell.id
+            session,
+            body=bindings.v1LaunchShellRequest(workspaceId=workspace_id, templateName=template),
+        ).shell
     elif typ == NTSC_Kind.command:
         return bindings.post_LaunchCommand(
             session,
@@ -82,8 +88,9 @@ def launch_ntsc(
                 config={
                     "entrypoint": ["sleep", "100"],
                 },
+                templateName=template,
             ),
-        ).command.id
+        ).command
     else:
         raise ValueError("unknown type")
 

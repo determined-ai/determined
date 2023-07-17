@@ -1,6 +1,8 @@
 package proxy
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,6 +22,17 @@ type Service struct {
 	LastRequested        time.Time
 	ProxyTCP             bool
 	AllowUnauthenticated bool
+}
+
+// Clone returns a deep copy of the Service.
+func (s Service) Clone() Service {
+	sURL := *s.URL
+	return Service{
+		URL:                  &sURL,
+		LastRequested:        s.LastRequested,
+		ProxyTCP:             s.ProxyTCP,
+		AllowUnauthenticated: s.AllowUnauthenticated,
+	}
 }
 
 // ProxyHTTPAuth processes a proxy request, returning true if the request should terminate
@@ -48,6 +61,14 @@ func InitProxy(httpAuth ProxyHTTPAuth) {
 		HTTPAuth: httpAuth,
 		services: make(map[string]*Service),
 		syslog:   logrus.WithField("component", "proxy"),
+	}
+	err := LoadOrGenCA()
+	if err != nil {
+		logrus.Errorf("error generating key and cert: %t", err)
+	}
+	err = LoadOrGenSignedMasterCert()
+	if err != nil {
+		logrus.Errorf("error generating key and cert: %t", err)
 	}
 }
 
@@ -97,13 +118,8 @@ func (p *Proxy) GetService(serviceID string) *Service {
 	service.LastRequested = time.Now()
 
 	// Make a copy to avoid callers mutating the object outside of this locked method.
-	sURL := *service.URL
-	return &Service{
-		URL:                  &sURL,
-		LastRequested:        service.LastRequested,
-		ProxyTCP:             service.ProxyTCP,
-		AllowUnauthenticated: service.AllowUnauthenticated,
-	}
+	clone := service.Clone()
+	return &clone
 }
 
 // NewProxyHandler returns a middleware function for proxying HTTP-like traffic to services
@@ -148,7 +164,12 @@ func (p *Proxy) NewProxyHandler(serviceID string) echo.HandlerFunc {
 		case c.IsWebSocket():
 			proxy = newSingleHostReverseWebSocketProxy(c, service.URL)
 		default:
-			proxy = httputil.NewSingleHostReverseProxy(service.URL)
+			newProxy, err := setUpProxy(service.URL)
+			if err != nil {
+				return err
+			}
+
+			proxy = newProxy
 		}
 		proxy.ServeHTTP(c.Response(), req)
 
@@ -156,23 +177,68 @@ func (p *Proxy) NewProxyHandler(serviceID string) echo.HandlerFunc {
 	}
 }
 
-// Summary returns a snapshot of the registered services.
-func (p *Proxy) Summary() map[string]Service {
-	p.lock.RLock()
-	defer p.lock.RUnlock()
-	snapshot := make(map[string]Service)
-
-	for id, service := range p.services {
-		sURL := *service.URL
-		snapshot[id] = Service{
-			URL:                  &sURL,
-			LastRequested:        service.LastRequested,
-			ProxyTCP:             service.ProxyTCP,
-			AllowUnauthenticated: service.AllowUnauthenticated,
-		}
+func setUpProxy(serviceURL *url.URL) (*httputil.ReverseProxy, error) {
+	proxy := httputil.NewSingleHostReverseProxy(serviceURL)
+	if serviceURL.Scheme != https {
+		return proxy, nil
+	}
+	keyBytes, certBytes, err := MasterKeyAndCert()
+	if err != nil {
+		return nil, err
+	}
+	cert, err := tls.X509KeyPair(certBytes, keyBytes)
+	if err != nil {
+		return nil, err
 	}
 
+	masterCaBytes, err := MasterCACert()
+	if err != nil {
+		return nil, err
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(masterCaBytes)
+
+	//nolint:gosec,G402
+	proxy.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs:            caCertPool,
+			Certificates:       []tls.Certificate{cert},
+			InsecureSkipVerify: true,
+			VerifyConnection:   VerifyMasterSigned,
+		},
+	}
+
+	director := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		director(req)
+		req.Host = serviceURL.Host
+	}
+
+	return proxy, nil
+}
+
+// Summaries returns a snapshot of the registered services.
+func (p *Proxy) Summaries() map[string]Service {
+	p.lock.RLock()
+	defer p.lock.RUnlock()
+
+	snapshot := make(map[string]Service)
+	for id, service := range p.services {
+		snapshot[id] = service.Clone()
+	}
 	return snapshot
+}
+
+// Summary returns a snapshot of a specific registered service.
+func (p *Proxy) Summary(id string) (Service, bool) {
+	p.lock.RLock()
+	defer p.lock.RUnlock()
+
+	service, ok := p.services[id]
+	if !ok {
+		return Service{}, false
+	}
+	return service.Clone(), true
 }
 
 func asyncCopy(dst io.Writer, src io.Reader) chan error {

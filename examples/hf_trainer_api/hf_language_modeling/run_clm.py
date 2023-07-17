@@ -156,6 +156,10 @@ class ModelArguments:
             )
         },
     )
+    trust_remote_code: bool = field(
+        default=False,
+        metadata={"help": ("Set to true to allow execution of code from remote model repos.")},
+    )
 
     def __post_init__(self):
         if self.config_overrides is not None and (
@@ -435,6 +439,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
         "cache_dir": model_args.cache_dir,
         "revision": model_args.model_revision,
         "use_auth_token": True if model_args.use_auth_token else None,
+        "trust_remote_code": model_args.trust_remote_code,
     }
     if model_args.config_name:
         config = AutoConfig.from_pretrained(model_args.config_name, **config_kwargs)

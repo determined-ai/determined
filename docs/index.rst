@@ -42,6 +42,7 @@
    Submit Experiment <model-dev-guide/submit-experiment>
    How to Debug Models <model-dev-guide/debug-models>
    Model Management <model-dev-guide/model-management/overview>
+   Batch Inference <model-dev-guide/batch-processing/batch-process-api-ug>
    Best Practices <model-dev-guide/best-practices/overview>
 
 .. toctree::
@@ -80,9 +81,9 @@
    Prometheus and Grafana <integrations/prometheus/prometheus>
    attributions
 
-##########################
- *Welcome to Determined!*
-##########################
+#######################
+ Welcome to Determined
+#######################
 
 .. meta::
    :description: Visit the Determined AI documentation home page and get quick access to information, tutorials, quickstarts, user guides, and reference material.
@@ -94,40 +95,46 @@ You can quickly train almost any deep learning model using Determined.
    <div class="landing">
       <div class="tiles-flex">
          <div class="tile-container">
-             <a class="tile" href="architecture/index.html">
-                 <h2 class="tile-title">How It Works</h2>
-                 <p class="tile-description">Learn about core concepts, key features, and system architecture.</p>
-             </a>
-         </div>
-         <div class="tile-container">
-             <a class="tile" href="tutorials/index.html">
-                 <h2 class="tile-title">Tutorials</h2>
-                 <p class="tile-description">Try Determined and learn the basics including how to port your existing code to the Determined environment.</p>
-             </a>
-         </div>
-         <div class="tile-container">
-             <a class="tile" href="setup-cluster/deploy-cluster/index.html">
-                 <h2 class="tile-title">Set Up Determined</h2>
-                 <p class="tile-description">Set up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
-             </a>
-         </div>
-         <div class="tile-container">
-            <a class="tile" href="tutorials/quickstart-mdldev.html">
-                <h2 class="tile-title">Model Developer Quickstart</h2>
-                <p class="tile-description">Learn the basic steps needed to set up a Determined environment and train models.</p>
+            <a class="tile" href="architecture/index.html">
+               <img class="tile-icon" src="_static/images/tools.png" alt="tools icon">
+               <h2 class="tile-title">How It Works</h2>
+               <p class="tile-description">Learn about core concepts, key features, and system architecture.</p>
             </a>
          </div>
          <div class="tile-container">
-             <a class="tile" href="training/index.html">
-                 <h2 class="tile-title">Model Developer Guide</h2>
-                 <p class="tile-description">Find user guides. Learn how to work with Training APIs and configure your distributed training experiments.</p>
-             </a>
+            <a class="tile" href="tutorials/index.html">
+               <img class="tile-icon" src="_static/images/getting-started.png" alt="getting started icon">
+               <h2 class="tile-title">Tutorials</h2>
+               <p class="tile-description">Try Determined and learn the basics including how to port your existing code to the Determined environment.</p>
+            </a>
          </div>
          <div class="tile-container">
-             <a class="tile" href="reference/overview.html">
-                 <h2 class="tile-title">Reference</h2>
-                 <p class="tile-description">Explore API libraries and configuration settings.</p>
-             </a>
+            <a class="tile" href="setup-cluster/deploy-cluster/index.html">
+               <img class="tile-icon" src="_static/images/integrations.png" alt="integrations icon">
+               <h2 class="tile-title">Set Up Determined</h2>
+               <p class="tile-description">Set up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
+            </a>
+         </div>
+         <div class="tile-container">
+            <a class="tile" href="tutorials/quickstart-mdldev.html">
+               <img class="tile-icon" src="_static/images/setup.png"  alt="setup icon">
+               <h2 class="tile-title">Model Developer Quickstart</h2>
+               <p class="tile-description">Learn the basic steps needed to set up a Determined environment and train models.</p>
+            </a>
+         </div>
+         <div class="tile-container">
+            <a class="tile" href="training/index.html">
+               <img class="tile-icon" src="_static/images/developer-guide.png" alt="developer guide icon">
+               <h2 class="tile-title">Model Developer Guide</h2>
+               <p class="tile-description">Find user guides. Learn how to work with Training APIs and configure your distributed training experiments.</p>
+            </a>
+         </div>
+         <div class="tile-container">
+            <a class="tile" href="reference/overview.html">
+               <img class="tile-icon" src="_static/images/reference.png" alt="reference icon">
+               <h2 class="tile-title">Reference</h2>
+               <p class="tile-description">Explore API libraries and configuration settings.</p>
+            </a>
          </div>
       </div>
    </div>

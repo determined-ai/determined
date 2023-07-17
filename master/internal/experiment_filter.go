@@ -98,12 +98,12 @@ func expColumnNameToSQL(columnName string) (string, error) {
 		"state":           "e.state",
 		"numTrials":       "(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id)",
 		"progress":        "COALESCE(progress, 0)",
-		"user":            "COALESCE(u.display_name, u.username)",
+		"user":            "e.owner_id",
 		"forkedFrom":      "e.parent_id",
 		"resourcePool":    "e.config->'resources'->>'resource_pool'",
 		"projectId":       "project_id",
 		"checkpointSize":  "checkpoint_size",
-		"checkpointCount": "checkpoint_count",
+		"checkpointCount": "e.checkpoint_count",
 		"searcherMetricsVal": `(
 			SELECT
 				searcher_metric_value
@@ -115,7 +115,7 @@ func expColumnNameToSQL(columnName string) (string, error) {
 					ELSE -1.0 * searcher_metric_value
 			END) ASC
 			LIMIT 1
-		 ) `,
+		) `,
 	}
 	var exists bool
 	col, exists := filterExperimentColMap[columnName]

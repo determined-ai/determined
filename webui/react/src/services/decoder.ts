@@ -605,6 +605,14 @@ export const decodeCheckpoints = (
   };
 };
 
+const decodeSummaryMetrics = (data: unknown): types.SummaryMetrics => {
+  const ioSummaryMetrics = ioTypes.decode<ioTypes.ioSummaryMetrics>(ioTypes.ioSummaryMetrics, data);
+  return {
+    avgMetrics: ioSummaryMetrics.avg_metrics,
+    validationMetrics: ioSummaryMetrics.validation_metrics,
+  };
+};
+
 export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem => {
   return {
     autoRestarts: data.restarts,
@@ -618,12 +626,13 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     latestValidationMetric: data.latestValidation && decodeMetricsWorkload(data.latestValidation),
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
+    summaryMetrics: data.summaryMetrics && decodeSummaryMetrics(data.summaryMetrics),
     totalBatchesProcessed: data.totalBatchesProcessed,
     totalCheckpointSize: parseInt(data?.totalCheckpointSize || '0'),
   };
 };
 
-const decodeSummaryMetrics = (data: Sdk.V1DownsampledMetrics[]): types.MetricContainer[] => {
+const decodeDownsampledMetrics = (data: Sdk.V1DownsampledMetrics[]): types.MetricContainer[] => {
   return data.map((m) => {
     const metrics: types.MetricContainer = {
       data: m.data.map((pt) => ({
@@ -641,12 +650,12 @@ const decodeSummaryMetrics = (data: Sdk.V1DownsampledMetrics[]): types.MetricCon
   });
 };
 
-export const decodeTrialSummary = (data: Sdk.V1SummarizeTrialResponse): types.TrialSummary => {
+export const decodeTrialSummary = (data: Sdk.V1ComparableTrial): types.TrialSummary => {
   const trialItem = decodeV1TrialToTrialItem(data.trial);
 
   return {
     ...trialItem,
-    metrics: decodeSummaryMetrics(data.metrics),
+    metrics: decodeDownsampledMetrics(data.metrics),
   };
 };
 

@@ -70,11 +70,6 @@ func (e ErrStaleResources) Error() string {
 	return fmt.Sprintf("stale resources %s", e.ID)
 }
 
-// All behaviors for allocations.
-const (
-	idleWatcher = "idle_watcher"
-)
-
 // ErrBehaviorDisabled is returned an operation is tried without the behavior being enabled.
 type ErrBehaviorDisabled struct {
 	Behavior string

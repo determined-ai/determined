@@ -1,4 +1,4 @@
-import React, { Suspense, useMemo } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo } from 'react';
 
 import awsLogoOnDark from 'assets/images/aws-logo-on-dark.svg';
 import awsLogo from 'assets/images/aws-logo.svg';
@@ -10,13 +10,16 @@ import Icon from 'components/kit/Icon';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import Spinner from 'components/Spinner';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
+import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import { maxPoolSlotCapacity } from 'stores/cluster';
 import clusterStore from 'stores/cluster';
 import useUI from 'stores/contexts/UI';
+import determinedStore from 'stores/determinedInfo';
+import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
-import { isDeviceType, ResourcePool } from 'types';
+import { isDeviceType, JsonObject, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { clone } from 'utils/data';
 import { Loadable } from 'utils/loadable';
@@ -24,6 +27,8 @@ import { useObservable } from 'utils/observable';
 import { DarkLight } from 'utils/themes';
 
 import Json from './Json';
+import { useModal } from './kit/Modal';
+import ResourcePoolBindingModalComponent from './ResourcePoolBindingModal';
 import css from './ResourcePoolCard.module.scss';
 
 interface Props {
@@ -59,8 +64,6 @@ const poolAttributes = [
   { key: 'schedulerType', label: 'Scheduler Type' },
 ];
 
-type SafeRawJson = Record<string, unknown>;
-
 /** Resource pool logo based on resource pool type */
 export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
   const { ui } = useUI();
@@ -86,7 +89,18 @@ export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
 };
 
 const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
+  const rpBindingFlagOn = useFeature().isOn('rp_binding');
+  const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
+
   const descriptionClasses = [css.description];
+  const { rbacEnabled } = useObservable(determinedStore.info);
+  const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
+  const resourcePoolBindings: number[] = resourcePoolBindingMap.get(pool.name, []);
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
+
+  useEffect(() => {
+    return clusterStore.fetchResourcePoolBindings(pool.name);
+  }, [pool.name]);
 
   if (!pool.description) descriptionClasses.push(css.empty);
 
@@ -115,32 +129,75 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
         delete acc[attribute.label];
       }
       return acc;
-    }, {} as SafeRawJson);
+    }, {} as JsonObject);
   }, [processedPool, isAux, pool]);
 
+  const onDropdown = useCallback(() => {
+    ResourcePoolBindingModal.open();
+  }, [ResourcePoolBindingModal]);
+
+  const onSaveBindings = useCallback(
+    (bindings: string[]) => {
+      const workspaceIds = workspaces.filter((w) => bindings.includes(w.name)).map((w) => w.id);
+      clusterStore.overwriteResourcePoolBindings(pool.name, workspaceIds);
+    },
+    [workspaces, pool],
+  );
+
   return (
-    <Card href={paths.resourcePool(pool.name)} size="medium">
-      <div className={css.base}>
-        <div className={css.header}>
-          <div className={css.info}>
-            <div className={css.name}>{pool.name}</div>
+    <>
+      <Card
+        actionMenu={
+          rpBindingFlagOn && rbacEnabled
+            ? [
+                {
+                  icon: <Icon name="four-squares" title="manage-bindings" />,
+                  key: 'bindings',
+                  label: 'Manage bindings',
+                },
+              ]
+            : []
+        }
+        href={paths.resourcePool(pool.name)}
+        size="medium"
+        onDropdown={onDropdown}>
+        <div className={css.base}>
+          <div className={css.header}>
+            <div className={css.info}>
+              <div className={css.name}>{pool.name}</div>
+            </div>
+            <div className={css.default}>
+              {(pool.defaultAuxPool || pool.defaultComputePool) && <span>Default</span>}
+              {pool.description && <Icon name="info" showTooltip title={pool.description} />}
+            </div>
           </div>
-          <div className={css.default}>
-            {(pool.defaultAuxPool || pool.defaultComputePool) && <span>Default</span>}
-            {pool.description && <Icon name="info" title={pool.description} />}
-          </div>
+          <Suspense fallback={<Spinner center />}>
+            <div className={css.body}>
+              <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
+              {rpBindingFlagOn && rbacEnabled && resourcePoolBindings.length > 0 && (
+                <section className={css.resoucePoolBoundContainer}>
+                  <div>Bound to:</div>
+                  <div className={css.resoucePoolBoundCount}>
+                    <Icon name="lock" title="Bound Workspaces" />
+                    {resourcePoolBindings.length} workspace
+                  </div>
+                </section>
+              )}
+              <section className={css.details}>
+                <Json hideDivider json={shortDetails} />
+              </section>
+              <div />
+            </div>
+          </Suspense>
         </div>
-        <Suspense fallback={<Spinner center />}>
-          <div className={css.body}>
-            <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
-            <section className={css.details}>
-              <Json hideDivider json={shortDetails} />
-            </section>
-            <div />
-          </div>
-        </Suspense>
-      </div>
-    </Card>
+      </Card>
+      <ResourcePoolBindingModal.Component
+        bindings={workspaces.filter((w) => resourcePoolBindings.includes(w.id)).map((w) => w.name)}
+        pool={pool.name}
+        workspaces={workspaces.map((w) => w.name)}
+        onSave={onSaveBindings}
+      />
+    </>
   );
 };
 

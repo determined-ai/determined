@@ -81,7 +81,7 @@ type pods struct {
 	nodeInformer                 *actor.Ref
 	eventListeners               []*actor.Ref
 	preemptionListeners          []*actor.Ref
-	resourceRequestQueue         *actor.Ref
+	resourceRequestQueue         *requestQueue
 	podNameToPodHandler          map[string]*actor.Ref
 	podNameToResourcePool        map[string]string
 	containerIDToPodName         map[string]string
@@ -98,6 +98,8 @@ type pods struct {
 	summarizeCacheLock sync.RWMutex
 	summarizeCache     summarizeResult
 	summarizeCacheTime time.Time
+
+	handleResourceError func(ctx *actor.Context) errorCallbackFunc
 }
 
 type summarizeResult struct {
@@ -154,8 +156,7 @@ func Initialize(
 	if loggingConfig.ElasticLoggingConfig != nil {
 		loggingTLSConfig = loggingConfig.ElasticLoggingConfig.Security.TLS
 	}
-
-	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
+	p := &pods{
 		cluster:                      c,
 		namespace:                    namespace,
 		namespaceToPoolName:          namespaceToPoolName,
@@ -183,7 +184,13 @@ func Initialize(
 		nodeToSystemResourceRequests: make(map[string]int64),
 		podInterfaces:                make(map[string]typedV1.PodInterface),
 		configMapInterfaces:          make(map[string]typedV1.ConfigMapInterface),
-	})
+	}
+	p.handleResourceError = func(ctx *actor.Context) errorCallbackFunc {
+		return func(err error) {
+			p.resourceErrorCallback(ctx, err)
+		}
+	}
+	podsActor, ok := s.ActorOf(actor.Addr("pods"), p)
 	check.Panic(check.True(ok, "pods address already taken"))
 	s.Ask(podsActor, actor.Ping{}).Get()
 
@@ -251,11 +258,6 @@ func (p *pods) Receive(ctx *actor.Context) error {
 			return err
 		}
 
-	case resourceDeletionFailed:
-		if msg.err != nil {
-			ctx.Log().WithError(msg.err).Error("error deleting leftover kubernetes resource")
-		}
-
 	case actor.ChildStopped:
 		if err := p.cleanUpPodHandler(ctx, msg.Child); err != nil {
 			return err
@@ -265,8 +267,6 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		switch msg.Child {
 		case p.nodeInformer:
 			return errors.Errorf("node informer failed")
-		case p.resourceRequestQueue:
-			return errors.Errorf("resource request actor failed")
 		}
 		for _, informer := range p.informers {
 			if msg.Child == informer {
@@ -299,6 +299,15 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func (p *pods) resourceErrorCallback(ctx *actor.Context, err error) {
+	switch err := err.(type) {
+	case resourceDeletionFailed:
+		ctx.Log().WithError(err).Error("error deleting leftover kubernetes resource")
+	default:
+		panic(fmt.Sprintf("unexpected message %T", err))
+	}
 }
 
 func readClientConfig(credsDir string) (*rest.Config, error) {
@@ -506,7 +515,6 @@ func (p *pods) reattachPod(
 
 	newPodHandler := newPod(
 		startMsg,
-		p.cluster,
 		startMsg.Spec.ClusterID,
 		p.clientSet,
 		pod.Namespace,
@@ -526,7 +534,6 @@ func (p *pods) reattachPod(
 	)
 
 	newPodHandler.restore = true
-	newPodHandler.logCtx["pod"] = pod.Name
 	newPodHandler.podName = pod.Name
 	newPodHandler.configMapName = pod.Name
 	newPodHandler.ports = ports
@@ -580,15 +587,15 @@ func (p *pods) deleteKubernetesResources(
 	ctx *actor.Context, pods *k8sV1.PodList, configMaps *k8sV1.ConfigMapList,
 ) {
 	for _, pod := range pods.Items {
-		ctx.Tell(p.resourceRequestQueue, deleteKubernetesResources{
-			handler: ctx.Self(), namespace: pod.Namespace, podName: pod.Name,
-		})
+		p.resourceRequestQueue.deleteKubernetesResources(
+			p.handleResourceError(ctx), pod.Namespace, pod.Name, "",
+		)
 	}
 
 	for _, configMap := range configMaps.Items {
-		ctx.Tell(p.resourceRequestQueue, deleteKubernetesResources{
-			handler: ctx.Self(), namespace: configMap.Namespace, configMapName: configMap.Name,
-		})
+		p.resourceRequestQueue.deleteKubernetesResources(
+			p.handleResourceError(ctx), configMap.Namespace, "", configMap.Name,
+		)
 	}
 }
 
@@ -702,16 +709,12 @@ func (p *pods) startPreemptionListeners(ctx *actor.Context) {
 }
 
 func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
-	p.resourceRequestQueue, _ = ctx.ActorOf(
-		"kubernetes-resource-request-queue",
-		newRequestQueue(p.podInterfaces, p.configMapInterfaces),
-	)
+	p.resourceRequestQueue = startRequestQueue(p.podInterfaces, p.configMapInterfaces)
 }
 
 func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 	newPodHandler := newPod(
 		msg,
-		p.cluster,
 		msg.Spec.ClusterID,
 		p.clientSet,
 		msg.Namespace,

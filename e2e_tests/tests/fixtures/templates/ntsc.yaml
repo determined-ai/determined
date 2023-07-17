@@ -1,0 +1,6 @@
+resources:
+  agent_label: ""
+  slots: 100
+environment:
+  environment_variables:
+    - SHOULDBE=SET

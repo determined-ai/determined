@@ -1,10 +1,11 @@
 import contextlib
-from typing import Dict, Generator, List, Tuple
+from typing import Any, Callable, Dict, Generator, List, NamedTuple, Optional, Tuple
 
 import pytest
 
 from determined import cli
 from determined.cli.user_groups import group_name_to_group_id, usernames_to_user_ids
+from determined.common import api
 from determined.common.api import authentication, bindings, errors
 from tests import api_utils, utils
 from tests.api_utils import configure_token_store, create_test_user, determined_test_session
@@ -19,10 +20,64 @@ def roles_not_implemented() -> bool:
 
 
 def rbac_disabled() -> bool:
+    if roles_not_implemented():
+        return True
     try:
         return not bindings.get_GetMaster(determined_test_session()).rbacEnabled
     except (errors.APIException, errors.MasterNotFoundException):
         return True
+
+
+def strict_q_control_disabled() -> bool:
+    if roles_not_implemented() or rbac_disabled():
+        return True
+    try:
+        return not bindings.get_GetMaster(determined_test_session()).strictJobQueueControl
+    except (errors.APIException, errors.MasterNotFoundException):
+        return True
+
+
+PermCase = NamedTuple(
+    "PermCase", [("cred", api.authentication.Credentials), ("raises", Optional[Any])]
+)
+
+
+def run_permission_tests(
+    action: Callable[[authentication.Credentials], None], cases: List[PermCase]
+) -> None:
+    for cred, raises in cases:
+        if raises is None:
+            action(cred)
+        else:
+            with pytest.raises(raises):
+                action(cred)
+
+
+def create_users_with_gloabl_roles(user_roles: List[List[str]]) -> List[authentication.Credentials]:
+    """
+    Set up users with the provided global role assignments.
+    user_roles: list of roles to assign to each user, one entry per user.
+    """
+    user_creds: List[authentication.Credentials] = []
+    with logged_in_user(ADMIN_CREDENTIALS):
+        for roles in user_roles:
+            user = bindings.v1User(username=api_utils.get_random_string(), admin=False, active=True)
+            creds = api_utils.create_test_user(True, user=user)
+            for role in roles:
+                cli.rbac.assign_role(
+                    utils.CliArgsMock(
+                        username_to_assign=creds.username,
+                        role_name=role,
+                    )
+                )
+            user_creds.append(creds)
+    return user_creds
+
+
+@pytest.fixture(scope="session")
+def cluster_admin_creds() -> authentication.Credentials:
+    [creds] = create_users_with_gloabl_roles([["ClusterAdmin"]])
+    return creds
 
 
 @contextlib.contextmanager
@@ -297,7 +352,7 @@ def test_rbac_permission_assignment_errors() -> None:
             "--username-to-assign",
             "admin",
         ],
-        "not find a workspace",
+        "not found",
     )
     det_cmd_expect_error(
         [
@@ -309,7 +364,7 @@ def test_rbac_permission_assignment_errors() -> None:
             "--username-to-assign",
             "admin",
         ],
-        "not find a workspace",
+        "not found",
     )
 
     api_utils.configure_token_store(ADMIN_CREDENTIALS)
@@ -331,7 +386,7 @@ def test_rbac_permission_assignment_errors() -> None:
 
         # Unassigned role group doesn't have.
         det_cmd_expect_error(
-            ["rbac", "unassign-role", "Editor", "--group-name-to-assign", group_name], "not found"
+            ["rbac", "unassign-role", "Editor", "--group-name-to-assign", group_name], "Not Found"
         )
         det_cmd_expect_error(
             [
@@ -343,13 +398,13 @@ def test_rbac_permission_assignment_errors() -> None:
                 "--workspace-name",
                 "Uncategorized",
             ],
-            "not found",
+            "Not Found",
         )
 
         # Unassigned role user doesn't have.
         det_cmd_expect_error(
             ["rbac", "unassign-role", "Editor", "--username-to-assign", test_user_creds.username],
-            "not found",
+            "Not Found",
         )
         det_cmd_expect_error(
             [
@@ -361,7 +416,7 @@ def test_rbac_permission_assignment_errors() -> None:
                 "--workspace-name",
                 "Uncategorized",
             ],
-            "not found",
+            "Not Found",
         )
 
 

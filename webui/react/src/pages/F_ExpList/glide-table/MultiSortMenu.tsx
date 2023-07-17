@@ -1,8 +1,8 @@
 import { Popover } from 'antd';
-import { ItemType } from 'antd/es/menu/hooks/useItems';
 import * as io from 'io-ts';
 
 import Button from 'components/kit/Button';
+import { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Select from 'components/kit/Select';
 import { V1ColumnType } from 'services/api-ts-sdk';
@@ -105,7 +105,7 @@ export const sortMenuItemsForColumn = (
   column: ProjectColumn,
   sorts: Sort[],
   onSortChange: (sorts: Sort[]) => void,
-): ItemType[] => {
+): MenuItem[] => {
   if (BANNED_SORT_COLUMNS.has(column.column)) {
     return [];
   }
@@ -239,7 +239,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
       </div>
       <div className={css.actions}>
         <Button
-          icon={<Icon name="add-small" size="tiny" title="Add sort" />}
+          icon={<Icon decorative name="add-small" size="tiny" />}
           type="text"
           onClick={addRow}>
           Add sort

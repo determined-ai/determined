@@ -18,5 +18,5 @@
     "jsx": "react-jsx",
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*", "typings/**/*.ts"]
+  "include": ["src/**/*", "typings/**/*.ts", "design/**/*"]
 }

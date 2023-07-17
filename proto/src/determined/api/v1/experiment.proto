@@ -544,8 +544,8 @@ message ExpMetricNamesResponse {
   repeated string training_metrics = 2 [deprecated = true];
   // List of validation metric names.
   repeated string validation_metrics = 3 [deprecated = true];
-  // List of generic metric names.
-  repeated determined.metric.v1.MetricName metric_names = 4;
+  // List of metric group-name pairs.
+  repeated determined.metric.v1.MetricIdentifier metric_names = 4;
 }
 
 // To distinguish the different categories of metrics.
@@ -575,8 +575,8 @@ message MetricBatchesRequest {
       }];
   // The type of metric.
   MetricType metric_type = 3 [deprecated = true];
-  // Type of metrics (training, validation, etc).
-  string custom_type = 5;
+  // Metric group (training, validation, etc).
+  string group = 5;
   // Seconds to wait when polling for updates.
   int32 period_seconds = 4;
 }
@@ -604,8 +604,8 @@ message TrialsSnapshotRequest {
       }];
   // The type of metric.
   MetricType metric_type = 3 [deprecated = true];
-  // Type of metrics (training, validation, etc).
-  string custom_type = 7;
+  // Metric group (training, validation, etc).
+  string group = 7;
   // The point of progress at which to query metrics.
   int32 batches_processed = 4
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
@@ -659,8 +659,8 @@ message TrialsSampleRequest {
       }];
   // The type of metric.
   MetricType metric_type = 3 [deprecated = true];
-  // Type of metrics (training, validation, etc).
-  string custom_type = 9;
+  // Metric group (training, validation, etc).
+  string group = 9;
   // Maximum number of trials to fetch data for.
   int32 max_trials = 4;
   // Maximum number of initial / historical data points.
@@ -695,7 +695,7 @@ message TrialsSampleResponse {
   repeated Trial trials = 1;
   // IDs of trials that are newly included in the data.
   repeated int32 promoted_trials = 2;
-  // IDs of trials that are no loger included in the top N trials.
+  // IDs of trials that are no longer included in the top N trials.
   repeated int32 demoted_trials = 3;
 }
 

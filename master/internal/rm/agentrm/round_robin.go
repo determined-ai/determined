@@ -51,9 +51,8 @@ func roundRobinSchedule(
 			states = append(states, state)
 			groupMapping[group] = state
 		}
-		assigned := taskList.Allocation(req.AllocationRef)
 		switch {
-		case !tasklist.AssignmentIsScheduled(assigned):
+		case !taskList.IsScheduled(req.AllocationID):
 			state.pendingReqs = append(state.pendingReqs, req)
 		default:
 			state.activeSlots += req.SlotsNeeded

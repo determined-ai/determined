@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
@@ -123,27 +124,27 @@ func (a *apiServer) enrichTrialState(trials ...*trialv1.Trial) error {
 	}
 
 	// Collect state information by TaskID
-	byTaskID := make(map[model.TaskID]experimentv1.State, len(tasks))
+	byTaskID := make(map[model.TaskID]trialv1.State, len(tasks))
 	for _, task := range tasks {
 		switch {
 		case task.Running:
-			byTaskID[task.Task] = experimentv1.State_STATE_RUNNING
+			byTaskID[task.Task] = trialv1.State_STATE_RUNNING
 		case task.Starting:
-			byTaskID[task.Task] = experimentv1.State_STATE_STARTING
+			byTaskID[task.Task] = trialv1.State_STATE_STARTING
 		case task.Pulling:
-			byTaskID[task.Task] = experimentv1.State_STATE_PULLING
+			byTaskID[task.Task] = trialv1.State_STATE_PULLING
 		default:
-			byTaskID[task.Task] = experimentv1.State_STATE_QUEUED
+			byTaskID[task.Task] = trialv1.State_STATE_QUEUED
 		}
 	}
 
 	// Active trials converted to Queued, Pulling, Starting, or Running
 	for _, trial := range trials {
-		if trial.State == experimentv1.State_STATE_ACTIVE {
+		if trial.State == trialv1.State_STATE_ACTIVE {
 			if setState, ok := byTaskID[model.TaskID(trial.TaskId)]; ok {
 				trial.State = setState
 			} else {
-				trial.State = experimentv1.State_STATE_QUEUED
+				trial.State = trialv1.State_STATE_QUEUED
 			}
 		}
 	}
@@ -628,7 +629,7 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
 
-	if resp.Trial.State == experimentv1.State_STATE_ACTIVE {
+	if resp.Trial.State == trialv1.State_STATE_ACTIVE {
 		if err := a.enrichTrialState(resp.Trial); err != nil {
 			return nil, err
 		}
@@ -656,27 +657,26 @@ func (a *apiServer) formatMetrics(
 	return nil
 }
 
-func (a *apiServer) parseMetricTypeArgs(
-	legacyType apiv1.MetricType, newType model.MetricType,
-) (model.MetricType, error) {
+func (a *apiServer) parseMetricGroupArgs(
+	legacyType apiv1.MetricType, newType model.MetricGroup,
+) (model.MetricGroup, error) {
 	if legacyType != apiv1.MetricType_METRIC_TYPE_UNSPECIFIED && newType != "" {
-		return "", status.Errorf(codes.InvalidArgument, "cannot specify both legacy and new metric type")
+		return "", status.Errorf(codes.InvalidArgument, "cannot specify both legacy and new metric group")
 	}
 	if newType != "" {
 		return newType, nil
 	}
 	conv := &protoconverter.ProtoConverter{}
-	convertedLegacyType := conv.ToMetricType(legacyType)
+	convertedLegacyType := conv.ToMetricGroup(legacyType)
 	if cErr := conv.Error(); cErr != nil {
-		return "", status.Errorf(codes.InvalidArgument, "converting metric type: %s", cErr)
+		return "", status.Errorf(codes.InvalidArgument, "converting metric group: %s", cErr)
 	}
 	return convertedLegacyType, nil
 }
 
 func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
-	metricType model.MetricType, maxDatapoints int, startBatches int,
-	endBatches int, logScale bool,
-	timeSeriesFilter *commonv1.PolymorphicFilter,
+	metricGroup model.MetricGroup, maxDatapoints int, startBatches int,
+	endBatches int, timeSeriesFilter *commonv1.PolymorphicFilter,
 	metricIds []string,
 ) ([]*apiv1.DownsampledMetrics, error) {
 	var startTime time.Time
@@ -712,46 +712,39 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		timeSeriesColumn = timeSeriesFilter.Name
 	}
 
-	metricTypeToNames := make(map[model.MetricType][]string)
+	metricGroupToNames := make(map[model.MetricGroup][]string)
 	if len(metricNames) > 0 {
-		if metricType == "" {
+		if metricGroup == "" {
 			// to keep backwards compatibility.
-			metricTypeToNames[model.TrainingMetricType] = metricNames
-			metricTypeToNames[model.ValidationMetricType] = metricNames
+			metricGroupToNames[model.TrainingMetricGroup] = metricNames
+			metricGroupToNames[model.ValidationMetricGroup] = metricNames
 		} else {
-			metricTypeToNames[metricType] = metricNames
+			metricGroupToNames[metricGroup] = metricNames
 		}
 	}
-	if len(metricIds) > 0 {
-		for _, metricID := range metricIds {
-			nameAndType := strings.SplitN(metricID, ".", 2)
-			if len(nameAndType) < 2 {
-				return nil, fmt.Errorf(`error fetching time series of validation metrics
-					invalid metricId %v metrics must be in the form metric_type.metric_name`,
-					metricID,
-				)
-			}
-			metricIDName := nameAndType[1]
-			metricIDType := model.MetricType(nameAndType[0])
-
-			metricTypeToNames[metricIDType] = append(metricTypeToNames[metricIDType], metricIDName)
+	for _, metricIDStr := range metricIds {
+		metricID, err := model.DeserializeMetricIdentifier(metricIDStr)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error parsing metric id %s", metricIDStr)
 		}
+		metricGroupToNames[metricID.Group] = append(metricGroupToNames[metricID.Group],
+			string(metricID.Name))
 	}
 
-	getDownSampledMetric := func(aMetricNames []string, aMetricType model.MetricType,
+	getDownSampledMetric := func(aMetricNames []string, aMetricGroup model.MetricGroup,
 	) (*apiv1.DownsampledMetrics, error) {
 		var metric apiv1.DownsampledMetrics
 		metricMeasurements, err := trials.MetricsTimeSeries(
 			trialID, startTime, aMetricNames, startBatches, endBatches,
 			xAxisLabelMetrics,
-			maxDatapoints, *timeSeriesColumn, timeSeriesFilter, aMetricType)
+			maxDatapoints, *timeSeriesColumn, timeSeriesFilter, aMetricGroup)
 		if err != nil {
 			return nil, errors.Wrapf(err, fmt.Sprintf("error fetching time series of %s metrics",
-				aMetricType))
+				aMetricGroup))
 		}
 		//nolint:staticcheck // SA1019: backward compatibility
-		metric.Type = aMetricType.ToProto()
-		metric.CustomType = aMetricType.ToString()
+		metric.Type = aMetricGroup.ToProto()
+		metric.Group = aMetricGroup.ToString()
 		if len(metricMeasurements) > 0 {
 			if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
 				return nil, err
@@ -761,8 +754,17 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		return nil, nil
 	}
 
-	for metricType, metricNames := range metricTypeToNames {
-		metric, err := getDownSampledMetric(metricNames, metricType)
+	metricGroups := make([]model.MetricGroup, 0, len(metricGroupToNames))
+	for metricGroup := range metricGroupToNames {
+		metricGroups = append(metricGroups, metricGroup)
+	}
+	sort.Slice(metricGroups, func(i, j int) bool {
+		return metricGroups[i] < metricGroups[j]
+	})
+
+	for _, mGroup := range metricGroups {
+		metricNames := metricGroupToNames[mGroup]
+		metric, err := getDownSampledMetric(metricNames, mGroup)
 		if err != nil {
 			return nil, err
 		}
@@ -772,38 +774,6 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 	}
 
 	return metrics, nil
-}
-
-func (a *apiServer) SummarizeTrial(ctx context.Context,
-	req *apiv1.SummarizeTrialRequest,
-) (*apiv1.SummarizeTrialResponse, error) {
-	var metricIds []string
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-		return nil, err
-	}
-
-	resp := &apiv1.SummarizeTrialResponse{Trial: &trialv1.Trial{}}
-	if err := a.m.db.QueryProto("get_trial_basic", resp.Trial, req.TrialId); err != nil {
-		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
-	}
-
-	//nolint:staticcheck // SA1019: backward compatibility
-	metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
-	if err != nil {
-		return nil, err
-	}
-
-	tsample, err := a.multiTrialSample(req.TrialId, req.MetricNames, metricType,
-		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-		(req.Scale == apiv1.Scale_SCALE_LOG),
-		nil, metricIds)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed sampling")
-	}
-	resp.Metrics = tsample
-
-	return resp, nil
 }
 
 func (a *apiServer) CompareTrials(ctx context.Context,
@@ -825,14 +795,14 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 		}
 
 		//nolint:staticcheck // SA1019: backward compatibility
-		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
+		metricGroup, err := a.parseMetricGroupArgs(req.MetricType, model.MetricGroup(req.Group))
 		if err != nil {
 			return nil, err
 		}
 
-		tsample, err := a.multiTrialSample(trialID, req.MetricNames, metricType,
+		tsample, err := a.multiTrialSample(trialID, req.MetricNames, metricGroup,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-			(req.Scale == apiv1.Scale_SCALE_LOG), req.TimeSeriesFilter, req.MetricIds)
+			req.TimeSeriesFilter, req.MetricIds)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed sampling")
 		}
@@ -849,7 +819,7 @@ func (a *apiServer) GetMetrics(
 		return resp.Send(&apiv1.GetMetricsResponse{Metrics: m})
 	}
 	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
-		model.MetricType(req.Type)); err != nil {
+		model.MetricGroup(req.Type)); err != nil {
 		return err
 	}
 
@@ -863,7 +833,7 @@ func (a *apiServer) GetTrainingMetrics(
 		return resp.Send(&apiv1.GetTrainingMetricsResponse{Metrics: m})
 	}
 	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
-		model.TrainingMetricType); err != nil {
+		model.TrainingMetricGroup); err != nil {
 		return err
 	}
 
@@ -877,7 +847,7 @@ func (a *apiServer) GetValidationMetrics(
 		return resp.Send(&apiv1.GetValidationMetricsResponse{Metrics: m})
 	}
 	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
-		model.ValidationMetricType); err != nil {
+		model.ValidationMetricGroup); err != nil {
 		return err
 	}
 
@@ -885,7 +855,7 @@ func (a *apiServer) GetValidationMetrics(
 }
 
 func (a *apiServer) streamMetrics(ctx context.Context,
-	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, metricType model.MetricType,
+	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, metricGroup model.MetricGroup,
 ) error {
 	if len(trialIDs) == 0 {
 		return status.Error(codes.InvalidArgument, "must specify at least one trialId")
@@ -910,7 +880,7 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 	trialIDIndex := 0
 	key := -1
 	for {
-		res, err := db.GetMetrics(ctx, int(trialIDs[trialIDIndex]), key, size, metricType)
+		res, err := db.GetMetrics(ctx, int(trialIDs[trialIDIndex]), key, size, metricGroup)
 		if err != nil {
 			return err
 		}
@@ -1149,14 +1119,11 @@ func (a *apiServer) AllocationPreemptionSignal(
 	}
 
 	allocationID := model.AllocationID(req.AllocationId)
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
-	if err != nil {
-		return nil, err
+	ref := allocationmap.GetAllocation(allocationID)
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
@@ -1185,14 +1152,12 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 	}
 
 	allocationID := model.AllocationID(req.AllocationId)
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
-	if err != nil {
-		return nil, err
+
+	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
@@ -1249,18 +1214,15 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 	}
 	allocationID := model.AllocationID(req.AllocationId)
 
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
-	if err != nil {
-		return nil, err
+	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
-	if err := a.ask(handler.Address(), task.MarkResourcesDaemon{
+	if err := a.ask(ref.Address(), task.MarkResourcesDaemon{
 		AllocationID: allocationID,
 		ResourcesID:  sproto.ResourcesID(req.ResourcesId),
 	}, nil); err != nil {
@@ -1369,11 +1331,15 @@ func (a *apiServer) ReportTrialProgress(
 func (a *apiServer) ReportTrialMetrics(
 	ctx context.Context, req *apiv1.ReportTrialMetricsRequest,
 ) (*apiv1.ReportTrialMetricsResponse, error) {
+	metricGroup := model.MetricGroup(req.Type)
+	if err := metricGroup.Validate(); err != nil {
+		return nil, err
+	}
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Metrics.TrialId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
-	if err := a.m.db.AddTrialMetrics(ctx, req.Metrics, model.MetricType(req.Type)); err != nil {
+	if err := a.m.db.AddTrialMetrics(ctx, req.Metrics, metricGroup); err != nil {
 		return nil, err
 	}
 	return &apiv1.ReportTrialMetricsResponse{}, nil
@@ -1384,7 +1350,7 @@ func (a *apiServer) ReportTrialTrainingMetrics(
 ) (*apiv1.ReportTrialTrainingMetricsResponse, error) {
 	_, err := a.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
 		Metrics: req.TrainingMetrics,
-		Type:    model.TrainingMetricType.ToString(),
+		Type:    model.TrainingMetricGroup.ToString(),
 	})
 	return &apiv1.ReportTrialTrainingMetricsResponse{}, err
 }
@@ -1394,7 +1360,7 @@ func (a *apiServer) ReportTrialValidationMetrics(
 ) (*apiv1.ReportTrialValidationMetricsResponse, error) {
 	_, err := a.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
 		Metrics: req.ValidationMetrics,
-		Type:    model.ValidationMetricType.ToString(),
+		Type:    model.ValidationMetricGroup.ToString(),
 	})
 	return &apiv1.ReportTrialValidationMetricsResponse{}, err
 }
@@ -1469,27 +1435,23 @@ func (a *apiServer) AllocationRendezvousInfo(
 
 	allocationID := model.AllocationID(req.AllocationId)
 	resourcesID := sproto.ResourcesID(req.ResourcesId)
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
-	if err != nil {
-		return nil, err
+	ref := allocationmap.GetAllocation(allocationID)
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
 	var w task.RendezvousWatcher
-	if err = a.ask(handler.Address(), task.WatchRendezvousInfo{
+	if err := a.ask(ref.Address(), task.WatchRendezvousInfo{
 		ResourcesID: resourcesID,
 	}, &w); err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(
-		handler.Address(), task.UnwatchRendezvousInfo{
-			ResourcesID: resourcesID,
-		})
+	defer a.m.system.TellAt(ref.Address(), task.UnwatchRendezvousInfo{
+		ResourcesID: resourcesID,
+	})
 
 	select {
 	case rsp := <-w.C:

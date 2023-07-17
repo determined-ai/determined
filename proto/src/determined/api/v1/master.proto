@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "google/protobuf/field_mask.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
@@ -27,7 +28,13 @@ message GetMasterRequest {}
 message GetMasterResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "version", "master_id", "cluster_id", "cluster_name" ]
+      required: [
+        "version",
+        "master_id",
+        "cluster_id",
+        "cluster_name",
+        "strict_job_queue_control"
+      ]
     }
   };
   // Different kinds of Determined Cloud offerings
@@ -63,6 +70,8 @@ message GetMasterResponse {
   repeated string feature_switches = 12;
   // Feature flag for user management.
   bool user_management_enabled = 13;
+  // Feature flag for strict job queue control.
+  bool strict_job_queue_control = 14;
 }
 
 // Get telemetry information.
@@ -82,6 +91,22 @@ message GetTelemetryResponse {
 message GetMasterConfigRequest {}
 // Response to GetMasterRequest.
 message GetMasterConfigResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "config" ] }
+  };
+  // The config file loaded by the master.
+  google.protobuf.Struct config = 1;
+}
+
+// Patch master config.
+message PatchMasterConfigRequest {
+  // The new config that the user wants to patch into the master config.
+  determined.master.v1.Config config = 1;
+  // The fields from the master config that the user wants to patch.
+  google.protobuf.FieldMask field_mask = 2;
+}
+// Response to PatchMasterConfigRequest.
+message PatchMasterConfigResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "config" ] }
   };

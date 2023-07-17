@@ -1,18 +1,21 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 import Pivot, { TabItem } from 'components/kit/Pivot';
 import SplitPane from 'components/SplitPane';
+import useScrollbarWidth from 'hooks/useScrollbarWidth';
+import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { ExperimentWithTrial, TrialItem } from 'types';
-import { isEqual } from 'utils/data';
 
 import CompareMetrics from './CompareMetrics';
 import CompareParallelCoordinates from './CompareParallelCoordinates';
+import { MIN_COLUMN_WIDTH } from './glide-table/columns';
 
 interface Props {
   children: React.ReactElement;
   open: boolean;
   initialWidth: number;
   onWidthChange: (width: number) => void;
+  fixedColumnsCount: number;
   projectId: number;
   selectedExperiments: ExperimentWithTrial[];
 }
@@ -21,23 +24,26 @@ const ComparisonView: React.FC<Props> = ({
   open,
   initialWidth,
   onWidthChange,
+  fixedColumnsCount,
   projectId,
   selectedExperiments,
 }) => {
-  const [trials, setTrials] = useState<TrialItem[]>([]);
+  const scrollbarWidth = useScrollbarWidth();
 
-  useEffect(() => {
-    const ts: TrialItem[] = [];
-    selectedExperiments.forEach((e) => e.bestTrial && ts.push(e.bestTrial));
-    setTrials((prev: TrialItem[]) => {
-      return isEqual(
-        prev?.map((e) => e.id),
-        ts?.map((e) => e?.id),
-      )
-        ? prev
-        : ts;
-    });
-  }, [selectedExperiments]);
+  const minWidths: [number, number] = useMemo(() => {
+    return [fixedColumnsCount * MIN_COLUMN_WIDTH + scrollbarWidth, 100];
+  }, [fixedColumnsCount, scrollbarWidth]);
+
+  const trials = useMemo(
+    () =>
+      selectedExperiments.filter((exp) => !!exp.bestTrial).map((exp) => exp.bestTrial as TrialItem),
+    [selectedExperiments],
+  );
+
+  const experiments = useMemo(
+    () => selectedExperiments.map((exp) => exp.experiment),
+    [selectedExperiments],
+  );
 
   const tabs: TabItem[] = useMemo(() => {
     return [
@@ -57,17 +63,23 @@ const ComparisonView: React.FC<Props> = ({
         key: 'hyperparameters',
         label: 'Hyperparameters',
       },
-      { key: 'configurations', label: 'Configurations' },
+      {
+        children: <TrialsComparisonTable experiment={experiments} trials={trials} />,
+        key: 'details',
+        label: 'Details',
+      },
     ];
-  }, [selectedExperiments, projectId, trials]);
+  }, [selectedExperiments, projectId, experiments, trials]);
 
   return (
-    <div>
-      <SplitPane initialWidth={initialWidth} open={open} onChange={onWidthChange}>
-        {children}
-        <Pivot destroyInactiveTabPane items={tabs} />
-      </SplitPane>
-    </div>
+    <SplitPane
+      initialWidth={initialWidth}
+      minimumWidths={minWidths}
+      open={open}
+      onChange={onWidthChange}>
+      {children}
+      <Pivot destroyInactiveTabPane items={tabs} />
+    </SplitPane>
   );
 };
 

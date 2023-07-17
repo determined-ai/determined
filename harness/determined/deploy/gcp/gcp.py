@@ -9,9 +9,15 @@ from typing import Any, Dict, List, Optional
 
 import googleapiclient.discovery
 from google.auth.exceptions import DefaultCredentialsError
+from google.cloud import storage
+from googleapiclient.errors import HttpError
+from ruamel import yaml
+from tabulate import tabulate
 from termcolor import colored
 
 from determined import util
+from determined.cli import render
+from determined.cli.errors import CliError
 from determined.deploy import healthcheck
 
 from .preflight import check_quota
@@ -29,7 +35,7 @@ terraform {
 
 
 def deploy(configs: Dict, env: Dict, variables_to_exclude: List, dry_run: bool = False) -> None:
-    validate_gcp_credentials(configs)
+    set_validate_gcp_credentials(configs)
     if not configs.get("no_preflight_checks"):
         check_quota(configs)
 
@@ -316,27 +322,38 @@ def run_command(command: List[str], env: Dict[str, str], cwd: Optional[str] = No
     subprocess.check_call(command, env=env, stdout=sys.stdout, cwd=cwd)
 
 
-def validate_gcp_credentials(configs: Dict) -> None:
-    vars_file_path = get_terraform_vars_file_path(configs)
-    # Try to load google credentials from terraform vars when present.
-    if os.path.exists(vars_file_path):
-        tf_vars = terraform_read_variables(vars_file_path)
-        set_gcp_credentials_env(tf_vars)
+def set_validate_gcp_credentials(
+    configs: Optional[Dict] = None, keypath: Optional[str] = None
+) -> None:
+    """Sets and validates GCP Credentials.
+    - If det_configs are available, then uses that to set credentials
+    - Else if only keypath is available, then uses it set credentials
+    - If none are available/provided, validates if credentials are set and valid
+    """
+    if keypath:
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = keypath
+    if configs:
+        vars_file_path = get_terraform_vars_file_path(configs)
+        # Try to load google credentials from terraform vars when present.
+        if os.path.exists(vars_file_path):
+            tf_vars = terraform_read_variables(vars_file_path)
+            set_gcp_credentials_env(tf_vars)
 
     try:
         googleapiclient.discovery.build("compute", "v1")
-    except DefaultCredentialsError:
-        print(
-            colored("Unable to locate GCP credentials.", "red"),
-            "Please set %s or explicitly create credentials"
-            % colored("GOOGLE_APPLICATION_CREDENTIALS", "yellow"),
-            "and re-run the application. ",
-            "For more information, please see",
-            "https://docs.determined.ai/latest/sysadmin-deploy-on-gcp/install-gcp.html#credentials",
-            "and",
-            "https://cloud.google.com/docs/authentication/getting-started",
+    except DefaultCredentialsError as exc:
+        err = (
+            colored("Unable to locate GCP credentials.", "red")
+            + " Please set "
+            + colored("GOOGLE_APPLICATION_CREDENTIALS", "yellow")
+            + " or explicitly create credentials "
+            + "and re-run the application. "
+            + "For more information, please see "
+            + "https://docs.determined.ai/latest/sysadmin-deploy-on-gcp/install-gcp.html#credential"
+            + "s and "
+            + "https://cloud.google.com/docs/authentication/getting-started"
         )
-        sys.exit(1)
+        raise CliError(err) from exc
 
 
 def set_gcp_credentials_env(tf_vars: Dict) -> None:
@@ -348,3 +365,41 @@ def set_gcp_credentials_env(tf_vars: Dict) -> None:
 def wait_for_master(configs: Dict, env: Dict, timeout: int = 300) -> None:
     master_url = terraform_output(configs, env, "Web-UI")
     healthcheck.wait_for_master_url(master_url, timeout)
+
+
+def check_or_create_gcsbucket(project_id: str, keypath: Optional[str] = None) -> None:
+    set_validate_gcp_credentials(keypath=keypath)
+    bucket_name = project_id + "-determined-deploy"
+    storage_service = googleapiclient.discovery.build("storage", "v1")
+    try:
+        storage_service.buckets().get(bucket=bucket_name).execute()
+    except HttpError as err:
+        if err.resp.status == 404:
+            request_body = {
+                "name": bucket_name,
+            }
+            storage_service.buckets().insert(project=project_id, body=request_body).execute()
+        else:
+            raise
+
+
+def list_clusters(bucket_name: str, project_id: str, print_format: str = "table") -> None:
+    set_validate_gcp_credentials()
+    storage_client = storage.Client(project=project_id)
+    blobs = storage_client.list_blobs(bucket_name)
+    cluster_list = [["Cluster ID"]]
+    for blob in blobs:
+        json_data_string = blob.download_as_string()
+        json_data = json.loads(json_data_string)
+        if json_data.get("resources"):
+            cluster_list.append([blob.name[:-16]])
+    cluster_json = {"Clusters": [dict(zip(cluster_list[0], row)) for row in cluster_list[1:]]}
+
+    if print_format == "json":
+        render.print_json(cluster_json)
+    elif print_format == "yaml":
+        cluster_yaml = yaml.dump(cluster_json)
+        print(cluster_yaml)
+    else:
+        print(tabulate(cluster_list, headers="firstrow"))
+    return

@@ -189,6 +189,7 @@
     background-color: var(--theme-stage-weak);
     cursor: pointer;
     padding: 9px 16px;
+    width: var(--nav-side-bar-width-max);
   }
   .user:hover {
     background-color: var(--theme-stage-strong);

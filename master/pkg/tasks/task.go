@@ -2,7 +2,6 @@ package tasks
 
 import (
 	"archive/tar"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -50,6 +49,11 @@ const (
 	C10DPort = "C10D_PORT"
 )
 
+// TaskSpecifier creates a TaskSpec. ToTaskSpec must only be called once per specifier.
+type TaskSpecifier interface {
+	ToTaskSpec() TaskSpec
+}
+
 // TaskSpec defines the spec of a task.
 type TaskSpec struct {
 	// Fields that are only for task logics.
@@ -60,7 +64,7 @@ type TaskSpec struct {
 	// Fields that are set on the cluster level.
 	ClusterID   string
 	HarnessPath string
-	MasterCert  *tls.Certificate
+	MasterCert  []byte
 	SSHRsaSize  int
 
 	SegmentEnabled bool
@@ -192,7 +196,7 @@ func (t TaskSpec) EnvVars() map[string]string {
 		e["DET_INTER_NODE_NETWORK_INTERFACE"] = networkInterface
 	}
 
-	if t.MasterCert != nil {
+	if len(t.MasterCert) != 0 {
 		e["DET_USE_TLS"] = "true"
 		e["DET_MASTER_CERT_FILE"] = certPath
 	} else {
@@ -284,6 +288,7 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 			Archives:         append(runArchives, rootArchives...),
 			UseFluentLogging: true,
 			DeviceType:       deviceType,
+			Registry:         env.RegistryAuth(),
 		},
 	}
 

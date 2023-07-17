@@ -12,8 +12,16 @@ export type NullOrUndefined<T = undefined> = T | null | undefined;
 export type Point = { x: number; y: number };
 export type Range<T = Primitive> = [T, T];
 export type Eventually<T> = T | Promise<T>;
+
+// DEPRECATED
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type RawJson = Record<string, any>;
+
+export type JsonArray = Array<Json>;
+export interface JsonObject {
+  [key: string]: Json;
+}
+export type Json = string | number | null | JsonArray | JsonObject;
 
 export interface Pagination {
   limit: number;
@@ -557,6 +565,21 @@ export interface TrialPagination extends WithPagination {
 type HpValue = Primitive | RawJson;
 export type TrialHyperparameters = Record<string, HpValue>;
 
+export interface MetricSummary {
+  count?: number;
+  last?: Primitive;
+  max?: number;
+  min?: number;
+  sum?: number;
+  type: 'string' | 'number' | 'boolean' | 'date' | 'object' | 'array' | 'null';
+}
+
+export interface SummaryMetrics {
+  avgMetrics?: Record<string, MetricSummary>;
+  validationMetrics?: Record<string, MetricSummary>;
+  //[customMetricType: string]?: Record<string, MetricSummary> Uncomment once generic metrics lands
+}
+
 export interface TrialItem extends StartEndTimes {
   autoRestarts: number;
   bestAvailableCheckpoint?: CheckpointWorkload;
@@ -567,6 +590,7 @@ export interface TrialItem extends StartEndTimes {
   id: number;
   latestValidationMetric?: MetricsWorkload;
   state: RunState;
+  summaryMetrics?: SummaryMetrics;
   totalBatchesProcessed: number;
   totalCheckpointSize: number;
 }
@@ -910,6 +934,8 @@ export interface Workspace {
   pinnedAt?: Date;
   state: WorkspaceState;
   userId: number;
+  defaultComputePool?: string;
+  defaultAuxPool?: string;
 }
 
 export interface WorkspacePagination extends WithPagination {

@@ -238,7 +238,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         selectedMetric.name,
         selectedBatch,
         metricTypeParamMap[selectedMetric.type],
-        undefined, // custom metric type
+        undefined, // custom metric group
         selectedBatchMargin,
         undefined,
         { signal: canceler.signal },
@@ -436,7 +436,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
       {showCompareTrials && (
         <TrialsComparisonModal
           experiment={experiment}
-          trials={selectedRowKeys}
+          trialIds={selectedRowKeys}
           visible={showCompareTrials}
           onCancel={() => setShowCompareTrials(false)}
           onUnselect={handleTrialUnselect}

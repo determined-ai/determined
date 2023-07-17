@@ -198,7 +198,7 @@ func compareMetrics(
 			Id:           actual.Id,
 		}
 		proto.Equal(actual, expectedRow)
-		require.Equal(t, actual, expectedRow)
+		require.Equal(t, expectedRow.Metrics.AsMap(), actual.Metrics.AsMap())
 
 		totalBatches++
 	}
@@ -260,7 +260,7 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 
 	maxDataPoints := 7
 	actualTrainingMetrics, err := api.multiTrialSample(int32(trial.ID), trainMetricNames,
-		model.TrainingMetricType, maxDataPoints, 0, 10, false, nil, []string{})
+		model.TrainingMetricGroup, maxDataPoints, 0, 10, nil, []string{})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(actualTrainingMetrics))
 	var validationMetricNames []string
@@ -270,15 +270,15 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 	}
 
 	actualValidationTrainingMetrics, err := api.multiTrialSample(int32(trial.ID),
-		validationMetricNames, model.ValidationMetricType, maxDataPoints,
-		0, 10, false, nil, []string{})
+		validationMetricNames, model.ValidationMetricGroup, maxDataPoints,
+		0, 10, nil, []string{})
 	require.Equal(t, 1, len(actualValidationTrainingMetrics))
 	require.NoError(t, err)
 	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualTrainingMetrics[0]))
 	require.True(t, isMultiTrialSampleCorrect(expectedValMetrics, actualValidationTrainingMetrics[0]))
 
 	actualAllMetrics, err := api.multiTrialSample(int32(trial.ID), []string{},
-		"", maxDataPoints, 0, 10, false, nil, metricIds)
+		"", maxDataPoints, 0, 10, nil, metricIds)
 	require.Equal(t, 2, len(actualAllMetrics))
 	require.NoError(t, err)
 	require.Equal(t, maxDataPoints, len(actualAllMetrics[0].Data)) // max datapoints check
@@ -412,7 +412,7 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 				AvgMetrics: expectedMetrics,
 			},
 		},
-		Type: model.ValidationMetricType.ToString(),
+		Type: model.ValidationMetricGroup.ToString(),
 	})
 	require.NoError(t, err)
 
@@ -427,18 +427,6 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 		require.Len(t, resp.Trials[0].Metrics, 1)
 		require.Len(t, resp.Trials[0].Metrics[0].Data, 1)
 		require.Equal(t, expectedMetricsMap, resp.Trials[0].Metrics[0].Data[0].Values.AsMap())
-	})
-
-	t.Run("SummarizeTrialsNonNumeric", func(t *testing.T) {
-		resp, err := api.SummarizeTrial(ctx, &apiv1.SummarizeTrialRequest{
-			TrialId:     int32(trial.ID),
-			MetricNames: maps.Keys(expectedMetricsMap),
-		})
-		require.NoError(t, err)
-
-		require.Len(t, resp.Metrics, 1)
-		require.Len(t, resp.Metrics[0].Data, 1)
-		require.Equal(t, expectedMetricsMap, resp.Metrics[0].Data[0].Values.AsMap())
 	})
 
 	t.Run("TrialsSample", func(t *testing.T) {
@@ -517,12 +505,6 @@ func TestTrialAuthZ(t *testing.T) {
 			})
 			return err
 		}, true},
-		{"CanGetExperimentArtifacts", func(id int) error {
-			_, err := api.SummarizeTrial(ctx, &apiv1.SummarizeTrialRequest{
-				TrialId: int32(id),
-			})
-			return err
-		}, false},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.CompareTrials(ctx, &apiv1.CompareTrialsRequest{
 				TrialIds: []int32{int32(id)},
@@ -667,7 +649,6 @@ func TestCompareTrialsSampling(t *testing.T) {
 		StartBatches:  0,
 		EndBatches:    1000,
 		MetricType:    apiv1.MetricType_METRIC_TYPE_TRAINING,
-		Scale:         apiv1.Scale_SCALE_LINEAR,
 	}
 
 	resp, err := api.CompareTrials(ctx, req)
