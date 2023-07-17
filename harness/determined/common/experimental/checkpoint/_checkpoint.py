@@ -167,12 +167,11 @@ class Checkpoint:
             mode (DownloadMode, optional): Governs how a checkpoint is downloaded. Defaults to
                 ``AUTO``.
         """
-        self.reload()
-        assert self.state
-        if (
-            self.state != CheckpointState.COMPLETED
-            and self.state != CheckpointState.PARTIALLY_DELETED
-        ):
+        if self.state not in [CheckpointState.COMPLETED, CheckpointState.PARTIALLY_DELETED]:
+            if self.state is None:
+                raise ValueError(
+                    "Checkpoint state is unknown. Please call Checkpoint.reload to refresh."
+                )
             raise errors.CheckpointStateException(
                 "Only COMPLETED or PARTIALLY_DELETED checkpoints can be downloaded. "
                 f"Checkpoint state: {self.state.value}"
@@ -302,7 +301,6 @@ class Checkpoint:
         where you are accessing the checkpoint files directly (not via Checkpoint.download) you may
         use this method directly to obtain the latest metadata.
         """
-        self.reload()
         with open(path, "w") as f:
             json.dump(self.metadata, f, indent=2)
 
@@ -338,8 +336,6 @@ class Checkpoint:
         bindings.post_PostCheckpointMetadata(self._session, body=req, checkpoint_uuid=self.uuid)
 
         self.metadata = updated_metadata
-        self.reload()
-        assert self.metadata
 
     def remove_metadata(self, keys: List[str]) -> None:
         """
@@ -361,8 +357,6 @@ class Checkpoint:
         bindings.post_PostCheckpointMetadata(self._session, body=req, checkpoint_uuid=self.uuid)
 
         self.metadata = updated_metadata
-        self.reload()
-        assert self.metadata
 
     def delete(self) -> None:
         """
