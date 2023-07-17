@@ -40,7 +40,7 @@ export type ModalContext = {
 export interface ModalSubmitParams {
   disabled?: boolean;
   text: string;
-  handler: () => Promise<void>;
+  handler: () => Promise<void> | void;
   onComplete?: () => Promise<void>;
   handleError: ErrorHandler;
   form?: string;
