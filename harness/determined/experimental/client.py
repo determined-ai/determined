@@ -419,7 +419,7 @@ def remove_oauth_client(client_id: str) -> None:
 
 
 @_require_singleton
-def _stream_trials_metrics(trial_ids: List[int], metric_type: str) -> Iterable[_TrialMetrics]:
+def _stream_trials_metrics(trial_ids: List[int], group: str) -> Iterable[_TrialMetrics]:
     """
     Streams trial metrics for one or more trials sorted by
     trial_id, trial_run_id and steps_completed.
@@ -428,7 +428,7 @@ def _stream_trials_metrics(trial_ids: List[int], metric_type: str) -> Iterable[_
         trial_ids: List of trial IDs to get metrics for.
     """
     assert _determined is not None
-    return _determined._stream_trials_metrics(trial_ids, metric_type=metric_type)
+    return _determined._stream_trials_metrics(trial_ids, group=group)
 
 
 @_require_singleton

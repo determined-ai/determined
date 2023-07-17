@@ -69,7 +69,7 @@ class TrainContext:
 
     def _report_trial_metrics(
         self,
-        metric_type: str,
+        group: str,
         total_batches: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
@@ -92,15 +92,15 @@ class TrainContext:
             trialId=self._trial_id,
             trialRunId=self._run_id,
         )
-        body = bindings.v1ReportTrialMetricsRequest(metrics=v1TrialMetrics, type=metric_type)
+        body = bindings.v1ReportTrialMetricsRequest(metrics=v1TrialMetrics, type=group)
         bindings.post_ReportTrialMetrics(self._session, body=body, metrics_trialId=self._trial_id)
 
         # Also sync tensorboard (all metrics, not just json-serializable ones).
         if self._tensorboard_mode == TensorboardMode.AUTO:
             if self._tbd_writer:
-                if metric_type == util._LEGACY_VALIDATION:
+                if group == util._LEGACY_VALIDATION:
                     self._tbd_writer.on_validation_step_end(total_batches, metrics)
-                elif metric_type == util._LEGACY_TRAINING:
+                elif group == util._LEGACY_TRAINING:
                     self._tbd_writer.on_train_step_end(total_batches, metrics, batch_metrics)
             self._tensorboard_manager.sync()
 
@@ -232,7 +232,7 @@ class DummyTrainContext(TrainContext):
 
     def _report_trial_metrics(
         self,
-        metric_type: str,
+        group: str,
         total_batches: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
@@ -244,11 +244,11 @@ class DummyTrainContext(TrainContext):
         but may be accessed from the master using the CLI for post-processing.
         """
         logger.info(
-            f"_report_trial_metrics(metric_type={metric_type}, total_batches={total_batches},"
+            f"_report_trial_metrics(group={group}, total_batches={total_batches},"
             f"metrics={metrics})"
         )
         logger.debug(
-            f"_report_trial_metrics(metric_type={metric_type}, total_batches={total_batches},"
+            f"_report_trial_metrics(group={group}, total_batches={total_batches},"
             f" batch_metrics={batch_metrics})"
         )
 

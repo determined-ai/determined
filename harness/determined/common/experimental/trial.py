@@ -72,10 +72,8 @@ class _TrialMetrics:
     batch_metrics: Optional[List[Dict[str, Any]]] = None
 
     @classmethod
-    def _from_bindings(
-        cls, metric_report: bindings.v1MetricsReport, metric_type: str
-    ) -> "_TrialMetrics":
-        key = "validation_metrics" if metric_type == util._LEGACY_VALIDATION else "avg_metrics"
+    def _from_bindings(cls, metric_report: bindings.v1MetricsReport, group: str) -> "_TrialMetrics":
+        key = "validation_metrics" if group == util._LEGACY_VALIDATION else "avg_metrics"
         return cls(
             trial_id=metric_report.trialId,
             trial_run_id=metric_report.trialRunId,
@@ -371,12 +369,12 @@ class TrialReference:
     def __repr__(self) -> str:
         return "Trial(id={})".format(self.id)
 
-    def stream_metrics(self, metric_type: str) -> Iterable[_TrialMetrics]:
+    def stream_metrics(self, group: str) -> Iterable[_TrialMetrics]:
         """
         Streams validation metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.
         """
-        return _stream_trials_metrics(self._session, [self.id], metric_type=metric_type)
+        return _stream_trials_metrics(self._session, [self.id], group=group)
 
     def stream_training_metrics(self) -> Iterable[TrainingMetrics]:
         """
@@ -434,11 +432,11 @@ class TrialOrderBy(enum.Enum):
 
 
 def _stream_trials_metrics(
-    session: api.Session, trial_ids: List[int], metric_type: str
+    session: api.Session, trial_ids: List[int], group: str
 ) -> Iterable[_TrialMetrics]:
-    for i in bindings.get_GetMetrics(session, trialIds=trial_ids, type=metric_type):
+    for i in bindings.get_GetMetrics(session, trialIds=trial_ids, type=group):
         for m in i.metrics:
-            yield _TrialMetrics._from_bindings(m, metric_type=metric_type)
+            yield _TrialMetrics._from_bindings(m, group=group)
 
 
 def _stream_training_metrics(
