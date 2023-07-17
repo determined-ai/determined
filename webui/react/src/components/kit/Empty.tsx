@@ -15,7 +15,7 @@ const Empty: React.FC<EmptyProps> = ({ icon, title, description }: EmptyProps) =
     <div className={css.emptyBase}>
       {icon ? (
         <div className={css.icon}>
-          <Icon name={icon} size="mega" title="Empty" />
+          <Icon decorative name={icon} size="mega" />
         </div>
       ) : null}
       {title ? <h4>{title}</h4> : null}

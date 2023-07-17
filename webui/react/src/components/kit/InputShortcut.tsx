@@ -45,6 +45,7 @@ const InputShortcut: React.FC<InputShortcutProps> = ({
   const onClearInput = useCallback(() => {
     value ? onChange?.(undefined) : setInputValue(undefined);
   }, [value, onChange]);
+
   return (
     <div className={css.shortcut_input_conatiner}>
       <Input
@@ -55,7 +56,7 @@ const InputShortcut: React.FC<InputShortcutProps> = ({
         {...props}
       />
       <Button icon={<Icon name="checkmark" title="save" />} type="primary" />
-      <Button icon={<Icon name="close" title="save" />} onClick={onClearInput} />
+      <Button icon={<Icon name="close" title="clear" />} onClick={onClearInput} />
     </div>
   );
 };
