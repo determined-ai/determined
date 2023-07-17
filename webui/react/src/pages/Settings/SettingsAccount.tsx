@@ -119,7 +119,7 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
 
         return (
           <Drawer open={show} placement="left" title="Settings" onClose={onClose}>
-            <Section title="Profile">
+            <Section divider title="Profile">
               <div className={css.section}>
                 <InlineForm<string>
                   initialValue={currentUser?.username ?? ''}
@@ -149,9 +149,8 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
                   </>
                 )}
               </div>
-              <Divider />
             </Section>
-            <Section title="Preferences">
+            <Section divider title="Preferences">
               <div className={css.section}>
                 <InlineForm<Mode>
                   initialValue={currentThemeOption.className}
@@ -220,9 +219,8 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
                   </Select>
                 </InlineForm>
               </div>
-              <Divider />
             </Section>
-            <Section title="Shortcuts">
+            <Section divider title="Shortcuts">
               <div className={css.section}>
                 <InlineForm<KeyboardShortcut>
                   initialValue={shortcutSettings.omnibar}
