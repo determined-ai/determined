@@ -54,6 +54,10 @@ masterPort: 8080
 # In multiple installation on a single cluster (using different namespaces), 
 # this flag set to false avoids to recreate non-namespaced objects. In some cases (e.g., GitOps w/ArgoCD) 
 # creating existing cluster-wide resources could stop/hang automatic deployments.
+#
+# WARNING 
+# The first installation must run with the createNonNamespacedObjects flag set to true to ensure 
+# the non-namespaced objects are created.
 createNonNamespacedObjects: true
 
 # When useNodePortForMaster is set to false (default), a LoadBalancer service is deployed to make
