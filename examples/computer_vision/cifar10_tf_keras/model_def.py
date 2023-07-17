@@ -13,7 +13,7 @@ Useful References:
 Based on: https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py
 
 """
-from typing import List, Tuple
+from typing import Generator, List, Tuple
 
 import numpy as np
 import tensorflow as tf
@@ -44,9 +44,18 @@ def load_numpy_data(
     return (X_train, Y_train), (X_test, Y_test)
 
 
+def to_generator(
+    xs: np.ndarray, ys: np.ndarray
+) -> Generator[Tuple[np.ndarray, np.ndarray], None, None]:
+    n = xs.shape[0]
+    for i in range(n):
+        yield xs[i], ys[i]
+
+
 class CIFARTrial(keras.TFKerasTrial):
     def __init__(self, context: keras.TFKerasTrialContext) -> None:
         self.context = context
+        self.train_np, self.test_np = load_numpy_data(self.context)
 
     def session_config(self) -> tf.compat.v1.ConfigProto:
         if self.context.get_hparams().get("disable_CPU_parallelism", False):
@@ -85,8 +94,15 @@ class CIFARTrial(keras.TFKerasTrial):
     def build_training_data_loader(self) -> keras.InputData:
         hparams = self.context.get_hparams()
 
-        train_np, _ = load_numpy_data(self.context)
-        train_ds = self.context.wrap_dataset(tf.data.Dataset.from_tensor_slices(train_np))
+        train_ds = self.context.wrap_dataset(
+            tf.data.Dataset.from_generator(
+                lambda: to_generator(*self.train_np),
+                output_signature=(
+                    tf.TensorSpec(shape=(32, 32, 3), dtype=tf.float32),
+                    tf.TensorSpec(shape=(10,), dtype=tf.float32),
+                ),
+            )
+        )
         augmentation = tf.keras.Sequential(
             [
                 tf.keras.layers.RandomFlip(mode="horizontal"),
@@ -104,7 +120,14 @@ class CIFARTrial(keras.TFKerasTrial):
         return train_ds
 
     def build_validation_data_loader(self) -> keras.InputData:
-        _, test_np = load_numpy_data(self.context)
-        test_ds = self.context.wrap_dataset(tf.data.Dataset.from_tensor_slices(test_np))
+        test_ds = self.context.wrap_dataset(
+            tf.data.Dataset.from_generator(
+                lambda: to_generator(*self.test_np),
+                output_signature=(
+                    tf.TensorSpec(shape=(32, 32, 3), dtype=tf.float32),
+                    tf.TensorSpec(shape=(10,), dtype=tf.float32),
+                ),
+            )
+        )
         test_ds = test_ds.batch(1)
         return test_ds
