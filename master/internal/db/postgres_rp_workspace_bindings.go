@@ -24,6 +24,9 @@ type RPWorkspaceBinding struct {
 func AddRPWorkspaceBindings(ctx context.Context, workspaceIds []int32, poolName string,
 	resourcePools []config.ResourcePoolConfig,
 ) error {
+	if len(workspaceIds) == 0 {
+		return nil
+	}
 	// Check if pool exists
 	poolExists := false
 	for _, pool := range resourcePools {
@@ -54,6 +57,9 @@ func AddRPWorkspaceBindings(ctx context.Context, workspaceIds []int32, poolName 
 func RemoveRPWorkspaceBindings(ctx context.Context,
 	workspaceIds []int32, poolName string,
 ) error {
+	if len(workspaceIds) == 0 {
+		return nil
+	}
 	// throw error if any of bindings don't exist
 	for _, workspaceID := range workspaceIds {
 		var rpWorkspaceBindings []*RPWorkspaceBinding
@@ -164,6 +170,9 @@ func getPagedBunQuery(
 func OverwriteRPWorkspaceBindings(ctx context.Context,
 	workspaceIds []int32, poolName string, resourcePools []config.ResourcePoolConfig,
 ) error {
+	if len(workspaceIds) == 0 {
+		return nil
+	}
 	// Check if pool exists
 	poolExists := false
 	for _, pool := range resourcePools {

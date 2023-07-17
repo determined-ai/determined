@@ -1424,11 +1424,17 @@ export interface V1BindRPToWorkspaceRequest {
      */
     resourcePoolName: string;
     /**
-     * The workspace IDs to be bound to the resouce pool.
+     * The workspace IDs to be bound to the resource pool.
      * @type {Array<number>}
      * @memberof V1BindRPToWorkspaceRequest
      */
     workspaceIds?: Array<number>;
+    /**
+     * The workspace names to be bound to the resource pool.
+     * @type {Array<string>}
+     * @memberof V1BindRPToWorkspaceRequest
+     */
+    workspaceNames?: Array<string>;
 }
 /**
  * Bind a resource pool to workspaces response.
@@ -5986,6 +5992,12 @@ export interface V1OverwriteRPWorkspaceBindingsRequest {
      * @memberof V1OverwriteRPWorkspaceBindingsRequest
      */
     workspaceIds?: Array<number>;
+    /**
+     * The new workspace names to bind to the resource_pool.
+     * @type {Array<string>}
+     * @memberof V1OverwriteRPWorkspaceBindingsRequest
+     */
+    workspaceNames?: Array<string>;
 }
 /**
  * Overwrite and replace the workspaces bound to an RP response.
@@ -9840,6 +9852,12 @@ export interface V1UnbindRPFromWorkspaceRequest {
      * @memberof V1UnbindRPFromWorkspaceRequest
      */
     workspaceIds?: Array<number>;
+    /**
+     * The workspace names to be unbound.
+     * @type {Array<string>}
+     * @memberof V1UnbindRPFromWorkspaceRequest
+     */
+    workspaceNames?: Array<string>;
 }
 /**
  * Unbind a resource pool to workspaces response.
