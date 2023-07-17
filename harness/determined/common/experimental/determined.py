@@ -397,7 +397,6 @@ class Determined:
         self, trial_ids: List[int]
     ) -> Iterable[trial.TrainingMetrics]:
         """
-        @deprecated
         Streams training metrics for one or more trials sorted by
         trial_id, trial_run_id and steps_completed.
 
@@ -410,7 +409,6 @@ class Determined:
         self, trial_ids: List[int]
     ) -> Iterable[trial.ValidationMetrics]:
         """
-        @deprecated
         Streams validation metrics for one or more trials sorted by
         trial_id, trial_run_id and steps_completed.
 

@@ -87,6 +87,7 @@ class _TrialMetrics:
 class StepsBackwardCompat:
     @property
     def steps_completed(self) -> int:
+        """@deprecated: Use total_batches instead."""
         return self.total_batches
 
     @steps_completed.setter
@@ -108,8 +109,8 @@ class TrainingMetrics(_TrialMetrics, StepsBackwardCompat):
     def _from_bindings(  # type: ignore
         cls,
         metric_report: bindings.v1MetricsReport,
-    ) -> "_TrialMetrics":
-        return super()._from_bindings(metric_report, util._LEGACY_TRAINING)
+    ) -> "TrainingMetrics":
+        return cast("TrainingMetrics", super()._from_bindings(metric_report, util._LEGACY_TRAINING))
 
 
 class ValidationMetrics(_TrialMetrics, StepsBackwardCompat):
@@ -125,8 +126,10 @@ class ValidationMetrics(_TrialMetrics, StepsBackwardCompat):
     @classmethod
     def _from_bindings(  # type: ignore
         cls, metric_report: bindings.v1MetricsReport
-    ) -> "_TrialMetrics":
-        return super()._from_bindings(metric_report, util._LEGACY_VALIDATION)
+    ) -> "ValidationMetrics":
+        return cast(
+            "ValidationMetrics", super()._from_bindings(metric_report, util._LEGACY_VALIDATION)
+        )
 
 
 class TrialReference:
@@ -445,7 +448,7 @@ def _stream_training_metrics(
     """@deprecated"""
     for i in bindings.get_GetTrainingMetrics(session, trialIds=trial_ids):
         for m in i.metrics:
-            yield cast(TrainingMetrics, TrainingMetrics._from_bindings(m))
+            yield TrainingMetrics._from_bindings(m)
 
 
 def _stream_validation_metrics(
@@ -454,4 +457,4 @@ def _stream_validation_metrics(
     """@deprecated"""
     for i in bindings.get_GetValidationMetrics(session, trialIds=trial_ids):
         for m in i.metrics:
-            yield cast(ValidationMetrics, ValidationMetrics._from_bindings(m))
+            yield ValidationMetrics._from_bindings(m)
