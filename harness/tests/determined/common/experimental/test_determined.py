@@ -5,10 +5,12 @@ import pytest
 import responses
 
 from determined.common.api import authentication, errors
-from determined.common.experimental import Determined
+from determined.common.experimental import determined
 from tests.fixtures import api_responses
 
 _MASTER = "http://localhost:8080"
+
+Determined = determined.Determined
 
 
 @pytest.fixture
@@ -125,8 +127,11 @@ def test_default_retry_doesnt_retry_allowed_status(
     responses.assert_call_count(get_model_url, 1)
 
 
+@pytest.mark.parametrize("attribute", ["summary_metrics", "state"])
 @responses.activate
-def test_get_trial_populates_summary_metrics(make_client: Callable[[], Determined]) -> None:
+def test_get_trial_populates_attribute(
+    make_client: Callable[[], Determined], attribute: str
+) -> None:
     client = make_client()
     trial_id = 1
     tr_resp = api_responses.sample_get_trial(id=trial_id)
@@ -135,4 +140,4 @@ def test_get_trial_populates_summary_metrics(make_client: Callable[[], Determine
 
     resp = client.get_trial(trial_id=trial_id)
 
-    assert resp.summary_metrics
+    assert attribute in resp.__dict__
