@@ -49,6 +49,13 @@ logColor: true
 # masterPort configures the port at which the Determined master listens for connections on.
 masterPort: 8080
 
+# Enables the creation of non-namespaces resources - Default: true
+# Non-namespaces resources are cluster-wide resources such as the priorityClasses.
+# Usage: In multiple installation on a single cluster (using different namespaces), 
+# this flag set to false avoids to recreate cluster-wide resources. 
+# Is some cases, creating existing cluster-wide resources could stop the automatic deployments.
+createNonNamespacesResources: true
+
 # When useNodePortForMaster is set to false (default), a LoadBalancer service is deployed to make
 # the Determined master reachable from outside the cluster. When useNodePortForMaster is set to
 # true, the master will instead be exposed behind a NodePort service. When using a NodePort service
