@@ -96,9 +96,11 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     },
     storagePath: `selected-file-${experimentId}`,
   });
-  const { settings, updateSettings } = useSettings<{ filePath: string }>(
-    configForExperiment(experiment.id),
-  );
+
+  const config: SettingsConfig<{ filePath: string }> = useMemo(() => {
+    return configForExperiment(experiment.id);
+  }, [experiment.id]);
+  const { settings, updateSettings } = useSettings<{ filePath: string }>(config);
   const handleSelectFile = useCallback(
     (filePath: string) => {
       updateSettings({ filePath });
