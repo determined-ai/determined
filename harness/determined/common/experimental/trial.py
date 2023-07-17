@@ -369,9 +369,9 @@ class TrialReference:
     def __repr__(self) -> str:
         return "Trial(id={})".format(self.id)
 
-    def stream_metrics(self, group: str) -> Iterable[_TrialMetrics]:
+    def _stream_metrics(self, group: str) -> Iterable[_TrialMetrics]:
         """
-        Streams validation metrics for this trial sorted by
+        Streams metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.
         """
         return _stream_trials_metrics(self._session, [self.id], group=group)
