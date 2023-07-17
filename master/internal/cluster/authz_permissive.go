@@ -41,6 +41,14 @@ func (a *MiscAuthZPermissive) CanGetMasterConfig(
 	return (&MiscAuthZBasic{}).CanGetMasterConfig(ctx, curUser)
 }
 
+// CanUpdateMasterConfig returns calls the RBAC implementation but always allows access.
+func (a *MiscAuthZPermissive) CanUpdateMasterConfig(
+	ctx context.Context, curUser *model.User,
+) (permErr error, err error) {
+	_, _ = (&MiscAuthZRBAC{}).CanUpdateMasterConfig(ctx, curUser)
+	return (&MiscAuthZBasic{}).CanUpdateMasterConfig(ctx, curUser)
+}
+
 // CanGetUsageDetails calls the RBAC implementation but always allows access.
 func (a *MiscAuthZPermissive) CanGetUsageDetails(
 	ctx context.Context, curUser *model.User,
