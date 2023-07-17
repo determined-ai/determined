@@ -96,6 +96,12 @@ def hf_trainer_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/hf_trainer_api", path)
 
 
+def torch_batch_process_examples_path(path: str) -> str:
+    return os.path.join(
+        os.path.dirname(__file__), "../../examples/features/torch_batch_process", path
+    )
+
+
 def load_config(config_path: str) -> Any:
     with open(config_path) as f:
         config = util.safe_load_yaml_with_exceptions(f)
