@@ -82,6 +82,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   const [trialsDetails, setTrialsDetails] = useState(trials ?? []);
   const [selectedHyperparameters, setSelectedHyperparameters] = useState<string[]>([]);
   const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
+  const colSpan = Array.isArray(experiment) ? experiment.length + 1 : 1;
 
   useEffect(() => {
     if (trialIds === undefined) return;
@@ -155,7 +156,9 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   );
 
   const loadableMetrics = useMetricNames(experimentIds, handleMetricNamesError);
-  const metrics = Loadable.getOrElse([], loadableMetrics);
+  const metrics: Metric[] = useMemo(() => {
+    return Loadable.getOrElse([], loadableMetrics);
+  }, [loadableMetrics]);
 
   const prevMetrics = usePrevious(metrics, []);
 
@@ -219,147 +222,160 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
         (trials === undefined || trials.length === 0)
       ) ? (
         <Spinner center spinning={!isLoaded}>
-          <div className={[css.row, css.sticky].join(' ')}>
-            <div className={[css.cell, css.blank, css.sticky].join(' ')} />
-            {trialsDetails.map((trial) => (
-              <div className={css.cell} key={trial.id}>
-                <Tag
-                  className={css.trialTag}
-                  closable={!!onUnselect}
-                  onClose={() => handleTrialUnselect(trial.id)}>
-                  <Link path={paths.trialDetails(trial.id, trial.experimentId)}>
-                    {Array.isArray(experiment) ? (
-                      <Typography.Paragraph ellipsis={{ tooltip: true }}>
-                        {experimentMap[trial.experimentId]?.name}
-                      </Typography.Paragraph>
-                    ) : (
-                      `Trial ${trial.id}`
-                    )}
-                  </Link>
-                </Tag>
-              </div>
-            ))}
-          </div>
-          <div className={css.row}>
-            <div className={[css.cell, css.sticky, css.indent].join(' ')}>State</div>
-            {trialsDetails.map((trial) => (
-              <div className={css.cell} key={trial.id}>
-                <Badge state={trial.state} type={BadgeType.State} />
-              </div>
-            ))}
-          </div>
-          {Array.isArray(experiment) && (
-            <>
-              <div className={css.row}>
-                <div className={[css.cell, css.sticky, css.indent].join(' ')}>Experiment ID</div>
+          <table>
+            <thead>
+              <tr>
+                <th />
                 {trialsDetails.map((trial) => (
-                  <div className={css.cell} key={trial.id}>
-                    {trial.experimentId}
-                  </div>
+                  <th key={trial.id}>
+                    <Tag
+                      className={css.trialTag}
+                      closable={!!onUnselect}
+                      style={{ width: '100%' }}
+                      onClose={() => handleTrialUnselect(trial.id)}>
+                      <Link path={paths.trialDetails(trial.id, trial.experimentId)}>
+                        {Array.isArray(experiment) ? (
+                          <Typography.Text ellipsis={{ tooltip: true }}>
+                            {experimentMap[trial.experimentId]?.name}
+                          </Typography.Text>
+                        ) : (
+                          `Trial ${trial.id}`
+                        )}
+                      </Link>
+                    </Tag>
+                  </th>
                 ))}
-              </div>
-              <div className={css.row}>
-                <div className={[css.cell, css.sticky, css.indent].join(' ')}>Trial ID</div>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">State</th>
                 {trialsDetails.map((trial) => (
-                  <div className={css.cell} key={trial.id}>
-                    {trial.id}
-                  </div>
+                  <td key={trial.id} style={{ textAlign: 'center' }}>
+                    <Badge state={trial.state} type={BadgeType.State} />
+                  </td>
                 ))}
-              </div>
-            </>
-          )}
-          <div className={css.row}>
-            <div className={[css.cell, css.sticky, css.indent].join(' ')}>Batched Processed</div>
-            {trialsDetails.map((trial) => (
-              <div className={css.cell} key={trial.id}>
-                {trial.totalBatchesProcessed}
-              </div>
-            ))}
-          </div>
-          <div className={css.row}>
-            <div className={[css.cell, css.sticky, css.indent].join(' ')}>
-              Total Checkpoint Size
-            </div>
-            {trialsDetails.map((trial) => (
-              <div className={css.cell} key={trial.id}>
-                {totalCheckpointsSizes[trial.id]}
-              </div>
-            ))}
-          </div>
-          <div className={[css.row, css.spanAll].join(' ')}>
-            <div className={[css.cell, css.spanAll].join(' ')}>
-              <MetricSelect
-                defaultMetrics={metrics}
-                metrics={metrics}
-                multiple
-                value={selectedMetrics}
-                onChange={onMetricSelect}
-              />
-            </div>
-          </div>
-          {selectedMetrics.map((metric) => (
-            <div className={css.row} key={metric.name}>
-              <div className={[css.cell, css.sticky, css.indent].join(' ')}>
-                <MetricBadgeTag metric={metric} />
-              </div>
-              {trialsDetails.map((trial) => {
-                const metricValue = latestMetrics[trial.id][metric.name];
-                return (
-                  <div className={css.cell} key={trial.id}>
-                    {metricValue !== undefined ? (
-                      typeof metricValue === 'number' ? (
-                        <HumanReadableNumber num={metricValue} />
-                      ) : (
-                        metricValue
-                      )
-                    ) : (
-                      ''
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-          <div className={[css.row, css.spanAll].join(' ')}>
-            <div className={[css.cell, css.spanAll].join(' ')}>
-              <Select
-                defaultValue={hyperparameterNames}
-                disableTags
-                label="Hyperparameters"
-                mode="multiple"
-                value={selectedHyperparameters}
-                width={200}
-                onChange={onHyperparameterSelect}>
-                {hyperparameterNames.map((hp) => (
-                  <Option key={hp} value={hp}>
-                    {hp}
-                  </Option>
+              </tr>
+              {Array.isArray(experiment) && (
+                <>
+                  <tr>
+                    <th scope="row">Experiment ID</th>
+                    {trialsDetails.map((trial) => (
+                      <td key={trial.id}>
+                        <Typography.Text ellipsis={{ tooltip: true }}>
+                          {trial.experimentId}
+                        </Typography.Text>
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <th scope="row">Trial ID</th>
+                    {trialsDetails.map((trial) => (
+                      <td key={trial.id}>
+                        <Typography.Text ellipsis={{ tooltip: true }}>{trial.id}</Typography.Text>
+                      </td>
+                    ))}
+                  </tr>
+                </>
+              )}
+              <tr>
+                <th scope="row">Batched Processed</th>
+                {trialsDetails.map((trial) => (
+                  <td key={trial.id}>
+                    <Typography.Text ellipsis={{ tooltip: true }}>
+                      {trial.totalBatchesProcessed}
+                    </Typography.Text>
+                  </td>
                 ))}
-              </Select>
-            </div>
-          </div>
-          {selectedHyperparameters.map((hp) => (
-            <div className={css.row} key={hp}>
-              <div className={[css.cell, css.sticky, css.indent].join(' ')}>
-                <Typography.Paragraph ellipsis={{ tooltip: true }}>{hp}</Typography.Paragraph>
-              </div>
-              {trialsDetails.map((trial) => {
-                const hpValue = trial.hyperparameters[hp];
-                const stringValue = JSON.stringify(hpValue);
-                return (
-                  <div className={css.cell} key={trial.id}>
-                    {isNumber(hpValue) ? (
-                      <HumanReadableNumber num={hpValue} />
-                    ) : (
-                      <Typography.Paragraph ellipsis={{ tooltip: true }}>
-                        {stringValue}
-                      </Typography.Paragraph>
-                    )}
+              </tr>
+              <tr>
+                <th scope="row">Total Checkpoint Size</th>
+                {trialsDetails.map((trial) => (
+                  <td key={trial.id}>
+                    <Typography.Text ellipsis={{ tooltip: true }}>
+                      {totalCheckpointsSizes[trial.id]}
+                    </Typography.Text>
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <th className={css.tableSelectCell} colSpan={colSpan} scope="row">
+                  <div className={css.tableSelectContainer}>
+                    <MetricSelect
+                      defaultMetrics={metrics}
+                      metrics={metrics}
+                      multiple
+                      value={selectedMetrics}
+                      onChange={onMetricSelect}
+                    />
                   </div>
-                );
-              })}
-            </div>
-          ))}
+                </th>
+              </tr>
+              {selectedMetrics.map((metric) => (
+                <tr key={`${metric.type}-${metric.name}`}>
+                  <th scope="row">
+                    <MetricBadgeTag metric={metric} />
+                  </th>
+                  {trialsDetails.map((trial) => {
+                    const metricValue = latestMetrics[trial.id][metric.name];
+                    return (
+                      <td key={trial.id}>
+                        {metricValue !== undefined ? (
+                          typeof metricValue === 'number' ? (
+                            <HumanReadableNumber num={metricValue} />
+                          ) : (
+                            metricValue
+                          )
+                        ) : null}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+              <tr>
+                <th className={css.tableSelectCell} colSpan={colSpan} scope="row">
+                  <div className={css.tableSelectContainer}>
+                    <Select
+                      defaultValue={hyperparameterNames}
+                      disableTags
+                      label="Hyperparameters"
+                      mode="multiple"
+                      value={selectedHyperparameters}
+                      width={200}
+                      onChange={onHyperparameterSelect}>
+                      {hyperparameterNames.map((hp) => (
+                        <Option key={hp} value={hp}>
+                          {hp}
+                        </Option>
+                      ))}
+                    </Select>
+                  </div>
+                </th>
+              </tr>
+              {selectedHyperparameters.map((hp) => (
+                <tr key={hp}>
+                  <th scope="row">
+                    <Typography.Text ellipsis={{ tooltip: true }}>{hp}</Typography.Text>
+                  </th>
+                  {trialsDetails.map((trial) => {
+                    const hpValue = trial.hyperparameters[hp];
+                    const stringValue = JSON.stringify(hpValue);
+                    return (
+                      <td key={trial.id}>
+                        {isNumber(hpValue) ? (
+                          <HumanReadableNumber num={hpValue} />
+                        ) : (
+                          <Typography.Text ellipsis={{ tooltip: true }}>
+                            {stringValue}
+                          </Typography.Text>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </Spinner>
       ) : (
         <Empty
