@@ -18,4 +18,5 @@ In this example, we use the `torch_batch_process` API to
 This example can be easily adapted to be used with other vector databases.
 
 ## How to run the example
+
 `det e create distributed.yaml .`
