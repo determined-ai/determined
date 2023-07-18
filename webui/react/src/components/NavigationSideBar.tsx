@@ -244,7 +244,7 @@ const NavigationSideBar: React.FC = () => {
   return (
     <>
       <CSSTransition
-        appear={true}
+        appear
         classNames={{
           appear: css.collapsedAppear,
           appearActive: settings.navbarCollapsed
@@ -330,7 +330,10 @@ const NavigationSideBar: React.FC = () => {
                           </li>
                         </WorkspaceActionDropdown>
                       ))}
-                    {canCreateWorkspace ? (
+                    {workspaces.length === 0 && (
+                      <div className={css.noWorkspaces}>No pinned workspaces</div>
+                    )}
+                    {canCreateWorkspace && (
                       <li>
                         <NavigationItem
                           icon="add-small"
@@ -345,9 +348,7 @@ const NavigationSideBar: React.FC = () => {
                           onClick={WorkspaceCreateModal.open}
                         />
                       </li>
-                    ) : workspaces.length === 0 ? (
-                      <div className={css.noWorkspaces}>No pinned workspaces</div>
-                    ) : null}
+                    )}
                   </ul>
                 ),
                 NotLoaded: () => <Spinner center />,
