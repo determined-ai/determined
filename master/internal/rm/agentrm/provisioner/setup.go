@@ -29,6 +29,6 @@ func Setup(
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating provisioner")
 	}
-	go provisioner.StartProvisioner()
+	go provisioner.Run()
 	return provisioner, nil
 }

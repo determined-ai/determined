@@ -106,8 +106,8 @@ func New(
 	}, nil
 }
 
-// StartProvisioner starts the provisioner.
-func (p *Provisioner) StartProvisioner() {
+// Run starts the provisioner loop.
+func (p *Provisioner) Run() {
 	for {
 		// Cooldown period before the provisioner starts.
 		time.Sleep(actionCooldown)

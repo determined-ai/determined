@@ -78,7 +78,7 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) (*mockEnvironment, *Pro
 		syslog:           logrus.WithField("test-provisioner", "default"),
 		system:           system,
 	}
-	go p.StartProvisioner()
+	go p.Run()
 
 	environment := mockEnvironment{
 		cluster:     cluster,
