@@ -484,6 +484,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
             use_auth_token=True if model_args.use_auth_token else None,
             torch_dtype=torch_dtype,
             low_cpu_mem_usage=model_args.low_cpu_mem_usage,
+            trust_remote_code=model_args.trust_remote_code,
         )
     else:
         model = AutoModelForCausalLM.from_config(config)
