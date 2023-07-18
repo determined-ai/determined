@@ -9612,24 +9612,24 @@ class v1ReportTrialMetricsRequest(Printable):
     def __init__(
         self,
         *,
+        group: str,
         metrics: "v1TrialMetrics",
-        type: str,
     ):
+        self.group = group
         self.metrics = metrics
-        self.type = type
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ReportTrialMetricsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "group": obj["group"],
             "metrics": v1TrialMetrics.from_json(obj["metrics"]),
-            "type": obj["type"],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "group": self.group,
             "metrics": self.metrics.to_json(omit_unset),
-            "type": self.type,
         }
         return out
 
@@ -14607,12 +14607,12 @@ def get_GetMe(
 def get_GetMetrics(
     session: "api.Session",
     *,
+    group: str,
     trialIds: "typing.Sequence[int]",
-    type: str,
 ) -> "typing.Iterable[v1GetMetricsResponse]":
     _params = {
+        "group": group,
         "trialIds": trialIds,
-        "type": type,
     }
     _resp = session._do_request(
         method="GET",
