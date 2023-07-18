@@ -20,7 +20,7 @@ func WorkspaceByName(ctx context.Context, workspaceName string) (*model.Workspac
 	return &w, nil
 }
 
-// WorkspaceIDsFromNames returns an unordered slice of workspaceIDs that correllate with the given
+// WorkspaceIDsFromNames returns an unordered slice of workspaceIDs that correlate with the given
 // workspace names.
 func WorkspaceIDsFromNames(ctx context.Context, workspaceNames []string) (
 	[]int32, error,
