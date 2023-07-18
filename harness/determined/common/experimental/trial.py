@@ -252,11 +252,11 @@ class Trial:
             util.validate_protobuf_timestamp(timestamp_after)
 
         if isinstance(timestamp_before, int):
-            timestamp_before = datetime.datetime.fromtimestamp(timestamp_before)
-            timestamp_before = timestamp_before.isoformat("T") + "Z"
+            datetime_before = datetime.datetime.fromtimestamp(timestamp_before)
+            timestamp_before = datetime_before.isoformat("T") + "Z"
         if isinstance(timestamp_after, int):
-            timestamp_after = datetime.datetime.fromtimestamp(timestamp_after)
-            timestamp_after = timestamp_after.isoformat("T") + "Z"
+            datetime_after = datetime.datetime.fromtimestamp(timestamp_after)
+            timestamp_after = datetime_after.isoformat("T") + "Z"
 
         for log in logs.trial_logs(
             session=self._session,
