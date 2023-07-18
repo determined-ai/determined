@@ -3,37 +3,10 @@ package provisioner
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
-
-// There was a bug where spot requests and instances were not being tagged with
-// the resource pool, leading to multiple resource pools trying to manage the
-// same instances. The code now uses a resource pool tag, but that means that
-// instances with the old tag format are ignored. To make sure we aren't leaving
-// orphaned instances after a version upgrade, we identify instances with the old
-// format and clean them up. Because the spot API is eventually consistent, we
-// repeat the cleanup after 5 minutes. This function can be removed once all users
-// are on versions newer than 0.15.5.
-func (c *awsCluster) cleanupLegacySpotInstances() {
-	loggerSpotLegacy := c.syslog.WithField("codepath", "spotLegacy")
-
-	// Repeat after 5 minutes to handle the fact that the AWS API is eventually consistent.
-	go func() {
-		loggerSpotLegacy.Infof("starting legacy spot cleanup operation")
-		c.legacyCleanupActiveSpotRequestsAndInstances()
-		c.legacyCleanupCanceledButInstanceRunningSpot()
-
-		time.Sleep(5 * time.Minute)
-
-		loggerSpotLegacy.Debugf("starting second pass of legacy spot cleanup")
-		c.legacyCleanupActiveSpotRequestsAndInstances()
-		c.legacyCleanupCanceledButInstanceRunningSpot()
-		loggerSpotLegacy.Debugf("completed legacy spot cleanup")
-	}()
-}
 
 func (c *awsCluster) legacyCleanupActiveSpotRequestsAndInstances() {
 	loggerSpotLegacy := c.syslog.WithField("codepath", "spotLegacy")

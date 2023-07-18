@@ -129,7 +129,6 @@ func newAWSCluster(
 			launchTimeOffset:     time.Second * 10,
 		}
 		cluster.attemptToApproximateClockSkew()
-		cluster.cleanupLegacySpotInstances()
 	}
 
 	return cluster, nil
