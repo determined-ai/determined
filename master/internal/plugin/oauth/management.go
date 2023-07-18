@@ -44,6 +44,10 @@ func (s *Service) addClient(c echo.Context) error {
 	}
 
 	user := c.(*context.DetContext).MustGetUser()
+	err = AuthZProvider.Get().CanAdministrateOauth(c.Request().Context(), user)
+	if err != nil {
+		return err
+	}
 
 	log.WithFields(log.Fields{
 		"domain": request.Domain,
@@ -82,6 +86,12 @@ func (s *Service) addClient(c echo.Context) error {
 }
 
 func (s *Service) clients(c echo.Context) error {
+	user := c.(*context.DetContext).MustGetUser()
+	err := AuthZProvider.Get().CanAdministrateOauth(c.Request().Context(), user)
+	if err != nil {
+		return err
+	}
+
 	clients, err := s.clientStore.List()
 	if err != nil {
 		return err
@@ -90,6 +100,12 @@ func (s *Service) clients(c echo.Context) error {
 }
 
 func (s *Service) deleteClient(c echo.Context) error {
+	user := c.(*context.DetContext).MustGetUser()
+	err := AuthZProvider.Get().CanAdministrateOauth(c.Request().Context(), user)
+	if err != nil {
+		return err
+	}
+
 	clientID := c.Param("id")
 	log.WithField("client_id", clientID).Info("deleting OAuth client")
 	return s.clientStore.RemoveByID(c.Param("id"))
