@@ -503,7 +503,7 @@ func (p *pod) createPodSpec(scheduler string) error {
 		ImagePullPolicy: configureImagePullPolicy(env),
 		SecurityContext: getDetContainerSecurityContext(
 			spec.AgentUserGroup,
-			env,
+			env.PodSpec(),
 		),
 		Resources:    p.configureResourcesRequirements(),
 		VolumeMounts: volumeMounts,
@@ -562,12 +562,12 @@ func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *k8sV1.Secur
 
 func getDetContainerSecurityContext(
 	agentUserGroup *model.AgentUserGroup,
-	env expconf.EnvironmentConfigV0,
+	podSpec *expconf.PodSpec,
 ) *k8sV1.SecurityContext {
 	securityContext := configureSecurityContext(agentUserGroup)
 
-	if env.PodSpec() != nil {
-		for _, container := range env.PodSpec().Spec.Containers {
+	if podSpec != nil {
+		for _, container := range podSpec.Spec.Containers {
 			if container.Name == model.DeterminedK8ContainerName {
 				userInput := container.SecurityContext
 				// Use det user link-with-agent-user to configure RunAsUser
