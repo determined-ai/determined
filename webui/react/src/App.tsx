@@ -40,7 +40,7 @@ import { Loadable } from 'utils/loadable';
 import css from './App.module.scss';
 
 import 'antd/dist/reset.css';
-import '@glideapps/glide-data-grid/dist/index.css';
+import '@hpe.com/glide-data-grid/dist/index.css';
 
 const AppView: React.FC = () => {
   const resize = useResize();
