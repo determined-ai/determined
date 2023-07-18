@@ -101,8 +101,10 @@ func New(
 		),
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
 		launchErr:        errInfo.NewStickyError(launchErrorTimeout, config.LaunchErrorRetries),
-		syslog:           logrus.WithField("provisioner", resourcePool),
-		system:           system,
+
+		syslog: logrus.WithField("component", "provisioner").
+			WithField("resource-pool", resourcePool),
+		system: system,
 	}, nil
 }
 
