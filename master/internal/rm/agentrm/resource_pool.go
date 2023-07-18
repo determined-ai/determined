@@ -482,7 +482,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		ctx.Respond(resourceSummaryFromAgentStates(rp.agentStatesCache))
 
 	case sproto.CapacityCheck:
-		// FIXME(MAR): reschedule = false?
+		reschedule = false
 		var totalSlots int
 		switch {
 		case rp.config.Provider == nil:
@@ -555,6 +555,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
 	case sproto.ValidateCommandResourcesRequest:
+		reschedule = false
 		fulfillable := true // Default to "true" when unknown.
 		if rp.slotsPerInstance > 0 {
 			fulfillable = rp.slotsPerInstance >= msg.Slots
