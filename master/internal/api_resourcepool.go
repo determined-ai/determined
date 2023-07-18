@@ -5,6 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/pkg/set"
+
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -171,18 +173,13 @@ func combineWorkspaceIDsAndNames(ctx context.Context, ids []int32, names []strin
 		return nil, err
 	}
 
-	combinedMap := map[int32]bool{}
+	idSet := set.New[int32]()
 	for _, id := range ids {
-		combinedMap[id] = true
+		idSet.Insert(id)
 	}
 	for _, id := range workspaceIDs {
-		combinedMap[id] = true
+		idSet.Insert(id)
 	}
 
-	var combinedSlice []int32
-	for id := range combinedMap {
-		combinedSlice = append(combinedSlice, id)
-	}
-
-	return combinedSlice, nil
+	return idSet.ToSlice(), nil
 }

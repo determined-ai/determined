@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/determined-ai/determined/master/pkg/set"
+
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -34,19 +36,18 @@ func WorkspaceIDsFromNames(ctx context.Context, workspaceNames []string) (
 		return nil, err
 	}
 	if len(workspaces) != len(workspaceNames) {
-		workspaceNamesMap := map[string]bool{}
-		for _, name := range workspaceNames {
-			workspaceNamesMap[name] = false
-		}
+		var missing []string
+		namesFound := set.New[string]()
 		for _, workspace := range workspaces {
-			workspaceNamesMap[workspace.Name] = true
+			namesFound.Insert(workspace.Name)
 		}
-		missing := make([]string, len(workspaceNames)-len(workspaces))
-		for name, found := range workspaceNamesMap {
-			if !found {
+
+		for _, name := range workspaceNames {
+			if !namesFound.Contains(name) {
 				missing = append(missing, name)
 			}
 		}
+
 		return nil, fmt.Errorf("the following workspaces do not exist: %s", missing)
 	}
 
