@@ -25,7 +25,7 @@ const (
 	secureScheme      = "https"
 )
 
-// Provisioner implements the ability to provision and terminate agent instances.
+// Provisioner provisions and terminates agent instances.
 // It is composed of four parts: a provisioner, a scaling decision maker, a provider,
 // and a rate limiter.
 //
