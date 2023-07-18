@@ -196,7 +196,7 @@ class DSATTrialTracker:
 
         self.smaller_is_better = _utils.smaller_is_better(self.searcher_metric)
 
-        self.model_profile_info_trial: Optional["DSATTrial"] = None
+        self.model_profile_info_trial: Optional["DSATModelProfileInfoTrial"] = None
         self.num_trials_since_best_result: int = 0
         self.successful_stages: Set[int] = set()
         self._all_trials_dict: Dict[uuid.UUID, "DSATTrial"] = {}
@@ -911,7 +911,10 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
     def get_random_hparams_and_search_data(
         self, zero_stage: int
     ) -> Tuple[Dict[str, Any], DSATSearchData]:
-        zero_optim_config = _utils.get_random_zero_optim_config(zero_stage)
+        assert self.trial_tracker.model_profile_info_trial
+        zero_optim_config = _utils.get_random_zero_optim_config(
+            zero_stage, self.trial_tracker.model_profile_info_trial
+        )
         new_hparams = copy.deepcopy(self.trial_tracker.hparams)
         new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
             new_hparams.get(_defaults.OVERWRITE_KEY, {}),
@@ -1063,7 +1066,10 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
     def get_random_hparams_and_search_data(
         self, zero_stage: int
     ) -> Tuple[Dict[str, Any], DSATSearchData]:
-        zero_optim_config = _utils.get_random_zero_optim_config(zero_stage)
+        assert self.trial_tracker.model_profile_info_trial
+        zero_optim_config = _utils.get_random_zero_optim_config(
+            zero_stage, self.trial_tracker.model_profile_info_trial
+        )
         new_hparams = copy.deepcopy(self.trial_tracker.hparams)
         new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
             new_hparams.get(_defaults.OVERWRITE_KEY, {}),
@@ -1365,7 +1371,10 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
     def get_random_hparams_and_search_data(
         self, zero_stage: int
     ) -> Tuple[Dict[str, Any], ASHADSATSearchData]:
-        zero_optim_config = _utils.get_random_zero_optim_config(zero_stage)
+        assert self.trial_tracker.model_profile_info_trial
+        zero_optim_config = _utils.get_random_zero_optim_config(
+            zero_stage, self.trial_tracker.model_profile_info_trial
+        )
         new_hparams = copy.deepcopy(self.trial_tracker.hparams)
         new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
             new_hparams.get(_defaults.OVERWRITE_KEY, {}),

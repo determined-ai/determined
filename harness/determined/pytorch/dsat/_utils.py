@@ -12,7 +12,7 @@ import torch
 from ruamel import yaml
 
 import determined as det
-from determined.pytorch.dsat import _defaults
+from determined.pytorch.dsat import _defaults, _dsat_search_method
 from determined.util import merge_dicts
 
 CURR_DIR = pathlib.Path(".")
@@ -353,7 +353,7 @@ def report_json_results(
 
 
 def get_zero_stage_search_space(
-    zero_stage: int,
+    zero_stage: int, model_profile_info_trial: _dsat_search_method.DSATModelProfileInfoTrial
 ) -> Dict[str, List[Union[bool, float]]]:
     default_settings: Dict[
         int, Dict[str, List[Union[bool, float]]]
@@ -361,14 +361,14 @@ def get_zero_stage_search_space(
     assert (
         zero_stage in default_settings
     ), f"Invalid zero_stage, must be one of {list(default_settings)}"
-    search_space = default_settings[1]
-    for stage in range(2, zero_stage + 1):
-        search_space = merge_dicts(search_space, default_settings[stage])
+    search_space = default_settings[zero_stage]
     return search_space
 
 
-def get_random_zero_optim_config(zero_stage: int) -> Dict[str, Union[bool, float]]:
-    search_space = get_zero_stage_search_space(zero_stage)
+def get_random_zero_optim_config(
+    zero_stage: int, model_profile_info_trial: _dsat_search_method.DSATModelProfileInfoTrial
+) -> Dict[str, Union[bool, float]]:
+    search_space = get_zero_stage_search_space(zero_stage, model_profile_info_trial)
     zero_optim_dict = {k: random.choice(v) for k, v in search_space.items()}
     zero_optim_dict["stage"] = zero_stage
     return zero_optim_dict
