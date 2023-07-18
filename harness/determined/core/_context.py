@@ -74,7 +74,7 @@ def _install_stacktrace_on_sigusr1() -> None:
         return
 
     # Signal handlers can only be registered on main threads.
-    if threading.current_thread() is threading.main_thread():
+    if threading.current_thread() is not threading.main_thread():
         return
 
     old_handler = None

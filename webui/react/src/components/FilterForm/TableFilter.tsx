@@ -69,7 +69,7 @@ const TableFilter = ({
         placement="bottomLeft"
         trigger="click"
         onOpenChange={onIsOpenFilterChange}>
-        <Button icon={<Icon name="filter" title="filter" />}>
+        <Button icon={<Icon decorative name="filter" />}>
           Filter{fieldCount > 0 && <span>({fieldCount})</span>}
         </Button>
       </Popover>

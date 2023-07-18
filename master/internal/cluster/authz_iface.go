@@ -42,6 +42,11 @@ type MiscAuthZ interface {
 		ctx context.Context, curUser *model.User,
 	) (permErr error, err error)
 
+	// CanUpdateMasterConfig returns an error if the user is not authorized to update master configs.
+	CanUpdateMasterConfig(
+		ctx context.Context, curUser *model.User,
+	) (permErr error, err error)
+
 	// CanGetHistoricalUsage returns an error if the user is not authorized to get usage
 	// related information.
 	CanGetUsageDetails(

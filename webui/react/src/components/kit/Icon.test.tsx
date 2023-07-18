@@ -17,7 +17,17 @@ const svgIcons = [
 
 const setup = (props?: Props) => {
   const user = userEvent.setup();
-  const view = render(<Icon name="star" showTooltip title="Icon" {...props} />);
+  const props_: Partial<Props> = props ?? {};
+  const title = ('title' in props_ ? props_.title : undefined) ?? 'Icon';
+  const view = render(
+    <Icon
+      color={props?.color}
+      name={props?.name ?? 'star'}
+      showTooltip
+      size={props?.size}
+      title={title}
+    />,
+  );
   return { user, view };
 };
 

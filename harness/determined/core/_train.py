@@ -5,8 +5,8 @@ from typing import Any, Callable, Dict, List, Optional, Set
 
 import determined as det
 from determined import tensorboard
-from determined.common import api
-from determined.common.api import errors
+from determined.common import api, util
+from determined.common.api import bindings, errors
 from determined.core import DistributedContext, TensorboardMode
 
 logger = logging.getLogger("determined.core")
@@ -67,6 +67,45 @@ class TrainContext:
         logger.debug(f"_get_last_validation() -> {steps_completed}")
         return steps_completed
 
+    def _report_trial_metrics(
+        self,
+        group: str,
+        total_batches: int,
+        metrics: Dict[str, Any],
+        batch_metrics: Optional[List[Dict[str, Any]]] = None,
+    ) -> None:
+        """
+        Report trial metrics to the master.
+
+        You can include a list of ``batch_metrics``.  Batch metrics are not be shown in the WebUI
+        but may be accessed from the master using the CLI for post-processing.
+        """
+
+        reportable_metrics = metrics
+        if group == util._LEGACY_VALIDATION:
+            # keep the old behavior of filtering out some metrics for validations.
+            serializable_metrics = self._get_serializable_metrics(metrics)
+            reportable_metrics = {k: metrics[k] for k in serializable_metrics}
+
+        v1metrics = bindings.v1Metrics(avgMetrics=reportable_metrics, batchMetrics=batch_metrics)
+        v1TrialMetrics = bindings.v1TrialMetrics(
+            metrics=v1metrics,
+            stepsCompleted=total_batches,
+            trialId=self._trial_id,
+            trialRunId=self._run_id,
+        )
+        body = bindings.v1ReportTrialMetricsRequest(metrics=v1TrialMetrics, type=group)
+        bindings.post_ReportTrialMetrics(self._session, body=body, metrics_trialId=self._trial_id)
+
+        # Also sync tensorboard (all metrics, not just json-serializable ones).
+        if self._tensorboard_mode == TensorboardMode.AUTO:
+            if self._tbd_writer:
+                if group == util._LEGACY_VALIDATION:
+                    self._tbd_writer.on_validation_step_end(total_batches, metrics)
+                elif group == util._LEGACY_TRAINING:
+                    self._tbd_writer.on_train_step_end(total_batches, metrics, batch_metrics)
+            self._tensorboard_manager.sync()
+
     def report_training_metrics(
         self,
         steps_completed: int,
@@ -80,27 +119,7 @@ class TrainContext:
         but may be accessed from the master using the CLI for post-processing.
         """
 
-        body = {
-            "trial_run_id": self._run_id,
-            "steps_completed": steps_completed,
-            "metrics": {
-                "avg_metrics": metrics,
-            },
-        }
-        if batch_metrics is not None:
-            body["metrics"]["batch_metrics"] = batch_metrics  # type: ignore
-        logger.info(
-            f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})"
-        )
-        self._session.post(
-            f"/api/v1/trials/{self._trial_id}/training_metrics",
-            data=det.util.json_encode(body),
-        )
-
-        if self._tensorboard_mode == TensorboardMode.AUTO:
-            if self._tbd_writer:
-                self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
-            self._tensorboard_manager.sync()
+        self._report_trial_metrics(util._LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
 
     def get_tensorboard_path(self) -> pathlib.Path:
         """
@@ -163,29 +182,7 @@ class TrainContext:
         metric using ``SearcherOperation.report_completed()`` in the Searcher API.
         """
 
-        serializable_metrics = self._get_serializable_metrics(metrics)
-        reportable_metrics = {k: metrics[k] for k in serializable_metrics}
-
-        body = {
-            "trial_run_id": self._run_id,
-            "steps_completed": steps_completed,
-            "metrics": {
-                "avg_metrics": reportable_metrics,
-            },
-        }
-        logger.info(
-            f"report_validation_metrics(steps_completed={steps_completed}, metrics={metrics})"
-        )
-        self._session.post(
-            f"/api/v1/trials/{self._trial_id}/validation_metrics",
-            data=det.util.json_encode(body),
-        )
-
-        # Also sync tensorboard (all metrics, not just json-serializable ones).
-        if self._tensorboard_mode == TensorboardMode.AUTO:
-            if self._tbd_writer:
-                self._tbd_writer.on_validation_step_end(steps_completed, metrics)
-            self._tensorboard_manager.sync()
+        self._report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         """
@@ -235,26 +232,38 @@ class DummyTrainContext(TrainContext):
     def _get_last_validation(self) -> Optional[int]:
         return None
 
+    def _report_trial_metrics(
+        self,
+        group: str,
+        total_batches: int,
+        metrics: Dict[str, Any],
+        batch_metrics: Optional[List[Dict[str, Any]]] = None,
+    ) -> None:
+        """
+        Report trial metrics to the master.
+
+        You can include a list of ``batch_metrics``.  Batch metrics are not be shown in the WebUI
+        but may be accessed from the master using the CLI for post-processing.
+        """
+        logger.info(
+            f"_report_trial_metrics(group={group}, total_batches={total_batches},"
+            f"metrics={metrics})"
+        )
+        logger.debug(
+            f"_report_trial_metrics(group={group}, total_batches={total_batches},"
+            f" batch_metrics={batch_metrics})"
+        )
+
     def report_training_metrics(
         self,
         steps_completed: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
-        logger.info(
-            f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})"
-        )
-        logger.debug(
-            f"report_training_metrics(steps_completed={steps_completed},"
-            f" batch_metrics={batch_metrics})"
-        )
+        self._report_trial_metrics(util._LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
 
     def report_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
-        serializable_metrics = self._get_serializable_metrics(metrics)
-        metrics = {k: metrics[k] for k in serializable_metrics}
-        logger.info(
-            f"report_validation_metrics(steps_completed={steps_completed} metrics={metrics})"
-        )
+        self._report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
 
     def upload_tensorboard_files(
         self,

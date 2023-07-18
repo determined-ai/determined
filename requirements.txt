@@ -9,7 +9,7 @@
 build
 black==23.3.0 # Note: this should be kept in sync with the version in `.pre-commit-config.yaml`.
 click<=8.0.4  # Unpin click after tensorflow update.
-flake8>=3.8.0 # Note: this should be kept in sync with the version in `.pre-commit-config.yaml`.
+flake8==3.9.2 # Note: this should be kept in sync with the version in `.pre-commit-config.yaml`.
 flake8-bugbear>=19.8.0
 flake8-builtins>=1.5.3
 flake8-colors>=0.1.6
