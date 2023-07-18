@@ -17,7 +17,7 @@ import { Loadable } from 'utils/loadable';
 import css from './ColumnPickerMenu.module.scss';
 import { defaultExperimentColumns } from './columns';
 
-const BANNED_COLUMNS = new Set(['name']);
+const BANNED_COLUMNS: Set<string> = new Set([]);
 
 const removeBannedColumns = (columns: ProjectColumn[]) =>
   columns.filter((col) => !BANNED_COLUMNS.has(col.column));

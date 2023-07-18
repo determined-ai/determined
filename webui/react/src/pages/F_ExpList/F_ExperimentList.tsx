@@ -81,7 +81,7 @@ const INITIAL_LOADING_EXPERIMENTS: Loadable<ExperimentWithTrial>[] = new Array(P
   NotLoaded,
 );
 
-const STATIC_COLUMNS = [MULTISELECT, 'name'];
+const STATIC_COLUMNS = [MULTISELECT];
 
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const contentRef = useRef<HTMLDivElement>(null);

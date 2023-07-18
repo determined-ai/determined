@@ -50,6 +50,7 @@ export const experimentColumns = [
 export type ExperimentColumn = (typeof experimentColumns)[number];
 
 export const defaultExperimentColumns: ExperimentColumn[] = [
+  'name',
   'startTime',
   'user',
   'description',
