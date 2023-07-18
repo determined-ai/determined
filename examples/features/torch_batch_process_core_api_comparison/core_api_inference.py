@@ -38,9 +38,8 @@ def run_inference(
         last_checkpoint_step = skip
         steps_completed = skip
         for batch_idx in range(skip, max_shard_length):
-            X = next(dataloader_iterator, None)
-            if X is not None:
-                data, label = X
+            data, label = next(dataloader_iterator, (None, None))
+            if data is not None:
                 output = ml_model(data)
                 preds = output.argmax(dim=1, keepdim=True)
 
