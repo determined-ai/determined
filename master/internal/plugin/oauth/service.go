@@ -72,8 +72,8 @@ type contextKey struct{}
 func (s *Service) userAuthorizationHandler(w http.ResponseWriter, r *http.Request) (string, error) {
 	// Ignore the error, since we just want to know whether we can get a session at all.
 	user, session, _ := s.users.UserAndSessionFromRequest(r)
+	c := r.Context().Value(contextKey{}).(echo.Context)
 	if session == nil {
-		c := r.Context().Value(contextKey{}).(echo.Context)
 		return "", c.Redirect(http.StatusFound, loginPath+"?redirect="+url.QueryEscape(r.URL.String()))
 	}
 
@@ -82,7 +82,7 @@ func (s *Service) userAuthorizationHandler(w http.ResponseWriter, r *http.Reques
 		"request_url": r.URL,
 	}).Infof("user authorizing an OAuth application")
 
-	if !user.Admin {
+	if err := AuthZProvider.Get().CanAdministrateOauth(c.Request().Context(), *user); err != nil {
 		return "", errors.Errorf("non-admin user %s cannot authorize OAuth applications", user.Username)
 	}
 
