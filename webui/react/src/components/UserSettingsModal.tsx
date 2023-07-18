@@ -1,3 +1,4 @@
+import { Alert } from 'antd';
 import { Map } from 'immutable';
 import { useMemoizedObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -19,6 +20,7 @@ interface Props {
 
 const UserSettingsModal: React.FC<Props> = ({ onSave }: Props) => {
   const { actions: uiActions } = useUI();
+  const [configError, setConfigError] = useState(false);
   const initialSettingsString = useMemoizedObservable<Loadable<string>>(
     () =>
       userSettings
@@ -37,8 +39,10 @@ const UserSettingsModal: React.FC<Props> = ({ onSave }: Props) => {
         Loaded: (settingsString) => {
           try {
             const obj = JSON.parse(settingsString);
+            setConfigError(false);
             return isObject(obj) ? Map<string, Json>(obj) : undefined;
           } catch {
+            setConfigError(true);
             return;
           }
         },
@@ -97,6 +101,7 @@ const UserSettingsModal: React.FC<Props> = ({ onSave }: Props) => {
         onChange={handleChange}
         onError={handleError}
       />
+      {configError && <Alert message="Invalid JSON" type="error" />}
     </Modal>
   );
 };
