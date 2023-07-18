@@ -117,6 +117,7 @@ class DSATTrial:
 
     @property
     def fp16(self) -> bool:
+        # GG_TODO: Doesn't accurately reflect HF fp16.enabled="auto" cases
         return bool(self.ds_config.get("fp16", {}).get("enabled")) or False
 
     @property
