@@ -364,10 +364,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
                 <FixedSizeGrid
                   columnCount={columnCount}
                   columnWidth={Math.floor(width / columnCount)}
-                  height={Math.min(
-                    height - 40,
-                    (chartsProps.length > columnCount ? 2.1 : 1.05) * 480,
-                  )}
+                  height={height - 40}
                   itemData={{ chartsProps: chartsProps, columnCount, handleError, scale, xAxis }}
                   rowCount={Math.ceil(chartsProps.length / columnCount)}
                   rowHeight={480}
