@@ -1,0 +1,6 @@
+:orphan:
+
+**New Features**
+
+-  K8s: We allow users to configure all fields of determined-container securityContext except for RunAsUser
+and RunAsGroup. Use :code:`det user link-with-agent-user` instead.
