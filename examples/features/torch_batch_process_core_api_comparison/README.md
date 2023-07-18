@@ -14,6 +14,7 @@ However, using Core API directly would require the user to directly handle
 - low-level parallel programming concepts such as gather, rank 
 - Determined machinery such as creating and loading checkpoint, preemption and resumption
 - initialization of appropriate distributed context
+- proper sharding of dataset
 
 You will see that using the Torch Batch Processing API for the same task is a lot easier as it abstracted away all the 
 low level details and provides useful helper functions.
