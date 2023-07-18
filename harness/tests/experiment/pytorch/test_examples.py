@@ -236,7 +236,7 @@ def test_inference_torch_batch_process_cifar10(
     tmp_path,
 ):
     # Get main function from example
-    example_sub_path = "torch_batch_process/batch_inference/compare_with_core_api"
+    example_sub_path = "torch_batch_process_core_api_comparison"
     example_path = utils.features_path(
         os.path.join(example_sub_path, "torch_batch_process_inference.py")
     )
@@ -262,7 +262,7 @@ def test_inference_torch_batch_process_cifar10(
 @pytest.mark.parametrize("rank, num_slots", [[0, 2], [1, 2]])
 def test_inference_core_api_cifar10(rank, num_slots, tmp_path):
     # Get main function from example
-    example_sub_path = "torch_batch_process/batch_inference/compare_with_core_api"
+    example_sub_path = "torch_batch_process_core_api_comparison"
     example_path = utils.features_path(os.path.join(example_sub_path, "core_api_inference.py"))
     main_fn = utils.import_class_from_module("main", example_path)
 
@@ -272,7 +272,12 @@ def test_inference_core_api_cifar10(rank, num_slots, tmp_path):
     os.mkdir(checkpoint_path)
 
     core_context = unittest.mock.MagicMock()
-    core_context.distributed = utils.get_mock_distributed_context(rank=rank)
+    # Dataset length is 10,000; num_slots is 2; batch_size is 200
+    # when rank == 0, shard_length = 10,000 / 2 / 200 = 25
+    # when rank == 1, shard_length = 10,000 / 2 / 200 = 25
+    core_context.distributed = utils.get_mock_distributed_context(
+        rank=rank, all_gather_return_value=[25, 25]
+    )
     core_context.preempt.should_preempt.return_value = False
 
     with test_util.set_mock_cluster_info(default_addr, rank, num_slots):

@@ -27,7 +27,7 @@ def run_inference(
     context: core.Context,
     rank: int,
     skip: int,
-    per_worker_iterate_length: int,
+    max_shard_length: int,
     pred_dir: pathlib.Path,
     checkpoint_interval: int,
 ) -> None:
@@ -37,7 +37,7 @@ def run_inference(
     with torch.no_grad():
         last_checkpoint_step = skip
         steps_completed = skip
-        for batch_idx in range(skip, per_worker_iterate_length):
+        for batch_idx in range(skip, max_shard_length):
             X = next(dataloader_iterator, None)
             if X is not None:
                 data, label = X
@@ -82,7 +82,7 @@ def checkpoint(steps_completed: int, context: core.Context):
 
 def get_data_loader(
     batch_size: int, total_worker: int, rank: int, data_dir: pathlib.Path, skip: int
-) -> [Any, int]:
+) -> Any:
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
     )
@@ -99,14 +99,7 @@ def get_data_loader(
     sampler = pytorch.samplers.DistributedBatchSampler(sampler, total_worker, rank)
     dataloader = data.DataLoader(inference_data, batch_sampler=sampler)
 
-    # Enumerate over dataloader directly may cause some workers to iterate for 1 more time
-    # than others when drop_last = False. If those workers synchronize on the last batch_idx,
-    # they would hang forever as other workers never hit that last batch_idx.
-    # To avoid the issue, we calculate and take the ceiling of the iteration count to ensure
-    # all workers iterate for the same number of times.
-    per_worker_iterate_length = math.ceil(len(inference_data) / batch_size / total_worker)
-    logging.info(f"per_worker_iterate_length is {per_worker_iterate_length}")
-    return dataloader, per_worker_iterate_length
+    return dataloader
 
 
 def load_state(checkpoint_directory: str):
@@ -147,16 +140,20 @@ def main(context: core.Context):
     pathlib.Path.mkdir(pathlib.Path(constants.PREDICTIONS_DIRECTORY), parents=True, exist_ok=True)
     pathlib.Path.mkdir(pathlib.Path(constants.DATA_DIRECTORY), parents=True, exist_ok=True)
 
-    data_loader, per_worker_iterate_length = get_data_loader(
+    data_loader = get_data_loader(
         batch_size, total_worker, rank, constants.DATA_DIRECTORY, skip=steps_completed
     )
+
+    max_shard_length = max(context.distributed.allgather(len(data_loader)))
+    logging.info(f"max shard length is {max_shard_length}")
+
     run_inference(
         model.build_model(),
         data_loader,
         context,
         rank,
         steps_completed,
-        per_worker_iterate_length,
+        max_shard_length,
         constants.PREDICTIONS_DIRECTORY,
         5,
     )
