@@ -495,31 +495,20 @@ func (p *pod) createPodSpec(scheduler string) error {
 		WorkingDir:      fluentBaseDir,
 	})
 
-	detContainerSecurityContext := configureSecurityContext(spec.AgentUserGroup)
-	hasContainerSpec := env.PodSpec() != nil &&
-		env.PodSpec().Spec.Containers != nil
-	if hasContainerSpec {
-		for _, container := range env.PodSpec().Spec.Containers {
-			if container.Name == model.DeterminedK8ContainerName {
-				detContainerSecurityContext = configureDetContainerSecurityContext(
-					spec.AgentUserGroup,
-					container.SecurityContext,
-				)
-			}
-		}
-	}
-
 	container := k8sV1.Container{
 		Name:            model.DeterminedK8ContainerName,
 		Command:         spec.Entrypoint,
 		Env:             envVars,
 		Image:           env.Image().For(deviceType),
 		ImagePullPolicy: configureImagePullPolicy(env),
-		SecurityContext: detContainerSecurityContext,
-		Resources:       p.configureResourcesRequirements(),
-		VolumeMounts:    volumeMounts,
-		WorkingDir:      spec.WorkDir,
-		Ports:           containerPorts,
+		SecurityContext: getDetContainerSecurityContext(
+			spec.AgentUserGroup,
+			env,
+		),
+		Resources:    p.configureResourcesRequirements(),
+		VolumeMounts: volumeMounts,
+		WorkingDir:   spec.WorkDir,
+		Ports:        containerPorts,
 	}
 
 	p.configMap, err = p.configureConfigMapSpec(runArchives, fluentFiles)
@@ -571,15 +560,30 @@ func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *k8sV1.Secur
 	return nil
 }
 
-func configureDetContainerSecurityContext(
+func getDetContainerSecurityContext(
 	agentUserGroup *model.AgentUserGroup,
-	securityContext *k8sV1.SecurityContext,
+	env expconf.EnvironmentConfigV0,
 ) *k8sV1.SecurityContext {
-	context := configureSecurityContext(agentUserGroup)
-	if context != nil {
-		securityContext.RunAsUser = context.RunAsGroup
-		securityContext.RunAsGroup = context.RunAsGroup
+	securityContext := configureSecurityContext(agentUserGroup)
+
+	if env.PodSpec() != nil {
+		for _, container := range env.PodSpec().Spec.Containers {
+			if container.Name == model.DeterminedK8ContainerName {
+				userInput := container.SecurityContext
+				// Use det user link-agent-user to configure RunAsUser and/or
+				// RunAsGroup. We disallow this in security context.
+				if securityContext != nil {
+					userInput.RunAsUser = securityContext.RunAsGroup
+					userInput.RunAsGroup = securityContext.RunAsGroup
+				} else {
+					userInput.RunAsUser = nil
+					userInput.RunAsGroup = nil
+				}
+				return userInput
+			}
+		}
 	}
+
 	return securityContext
 }
 
