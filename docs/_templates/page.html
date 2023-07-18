@@ -8,8 +8,12 @@
    which we also need for configuring algolia search. #}
 {% block linktags %}
 {{ super() }}
-<link rel="root" title="{{ _("Root") }}"
-      version="{{ version }}" href="{{ pathto("index") }}"/>
+<link
+   rel="root"
+   title="{{ _("Root") }}"
+   version="{{ version }}"
+   href="{{ pathto("index") }}"
+/>
 {% endblock %}
 
 {# Include an analytics script. #}
