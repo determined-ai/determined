@@ -142,7 +142,7 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 		return nil, err
 	}
 
-	workspaceIDs := []int32{}
+	var workspaceIDs []int32
 	for _, rpWorkspaceBinding := range rpWorkspaceBindings {
 		workspaceIDs = append(workspaceIDs, int32(rpWorkspaceBinding.WorkspaceID))
 	}
@@ -166,13 +166,23 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 
 func combineWorkspaceIDsAndNames(ctx context.Context, ids []int32, names []string,
 ) ([]int32, error) {
-	combined, err := workspaceauth.WorkspaceIDsFromNames(ctx, names)
+	workspaceIDs, err := workspaceauth.WorkspaceIDsFromNames(ctx, names)
 	if err != nil {
 		return nil, err
 	}
 
+	combinedMap := map[int32]bool{}
 	for _, id := range ids {
-		combined = append(combined, id)
+		combinedMap[id] = true
 	}
-	return combined, nil
+	for _, id := range workspaceIDs {
+		combinedMap[id] = true
+	}
+
+	var combinedSlice []int32
+	for id := range combinedMap {
+		combinedSlice = append(combinedSlice, id)
+	}
+
+	return combinedSlice, nil
 }
