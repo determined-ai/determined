@@ -1,9 +1,9 @@
-import { Switch } from 'antd';
 import { useMemo } from 'react';
 
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
+import Toggle from 'components/kit/Toggle';
 
 import { ExpListView, RowHeight } from '../F_ExperimentList.settings';
 
@@ -67,7 +67,7 @@ export const OptionsMenu: React.FC<OptionProps> = ({
             label: (
               <div className={css.scrollSettingsRow}>
                 <span>Infinite scroll</span>
-                <Switch checked={expListView === 'scroll'} size="small" />
+                <Toggle checked={expListView === 'scroll'} />
               </div>
             ),
             onClick: () => setExpListView(expListView === 'scroll' ? 'paged' : 'scroll'),
