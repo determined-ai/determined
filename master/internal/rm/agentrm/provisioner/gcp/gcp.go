@@ -1,4 +1,4 @@
-package provisioner
+package gcp
 
 import (
 	"crypto/tls"
@@ -16,6 +16,7 @@ import (
 	"google.golang.org/api/compute/v1"
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
+	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner/agentsetup"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -37,9 +38,10 @@ func init() {
 	petname.NonDeterministicMode()
 }
 
-func newGCPCluster(
+// New creates a new GCP cluster.
+func New(
 	resourcePool string, config *provconfig.Config, cert *tls.Certificate,
-) (*gcpCluster, error) {
+) (agentsetup.Provider, error) {
 	if err := config.GCP.InitDefaultValues(); err != nil {
 		return nil, errors.Wrap(err, "failed to initialize auto configuration")
 	}
@@ -70,7 +72,7 @@ func newGCPCluster(
 	)
 
 	var certBytes []byte
-	if masterURL.Scheme == secureScheme && cert != nil {
+	if masterURL.Scheme == agentsetup.SecureScheme && cert != nil {
 		for _, c := range cert.Certificate {
 			b := pem.EncodeToMemory(&pem.Block{
 				Type:  "CERTIFICATE",
@@ -81,7 +83,7 @@ func newGCPCluster(
 	}
 	masterCertBase64 := base64.StdEncoding.EncodeToString(certBytes)
 
-	startupScript := string(mustMakeAgentSetupScript(agentSetupScriptConfig{
+	startupScript := string(agentsetup.MustMakeAgentSetupScript(agentsetup.AgentSetupScriptConfig{
 		MasterHost:                   masterURL.Hostname(),
 		MasterPort:                   masterURL.Port(),
 		MasterCertName:               config.MasterCertName,

@@ -1,4 +1,4 @@
-package provisioner
+package scaledecider
 
 import (
 	"sort"
@@ -11,24 +11,20 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-const (
-	maxDisconnectPeriod = 10 * time.Minute
-)
-
-// scaleDecider makes decisions based on the following assumptions:
+// ScaleDecider makes decisions based on the following assumptions:
 //  1. All pending tasks cannot fit into all agents when receiving the snapshots from
 //     the scheduler, i.e. we need to launch new agents to fit the pending tasks.
 //  2. All tasks, agents, and instances don't have empty identifiers.
 //  3. All tasks, agents, and instances are not duplicated.
 //
-// scaleDecider ignores the agents that cannot be associated with any instances.
-// scaleDecider considers the following two cases:
+// ScaleDecider ignores the agents that cannot be associated with any instances.
+// ScaleDecider considers the following two cases:
 //  1. Instances that can be associated with agents.
 //  2. Instances that cannot be associated with agents. There are several possible causes:
 //     a. The provider is starting up the instances.
 //     b. The instances are already running but agents on them are starting up.
 //     c. The agents are disconnected to the master due to misconfiguration or some unknown reason.
-type scaleDecider struct {
+type ScaleDecider struct {
 	mu sync.Mutex
 
 	maxIdlePeriod       time.Duration
@@ -55,15 +51,16 @@ type scaleDecider struct {
 	resourcePool string
 }
 
-func newScaleDecider(
+// New creates a new scale decider.
+func New(
 	resourcePool string,
 	maxIdlePeriod, maxStartingPeriod,
 	maxDisconnectPeriod time.Duration,
 	minInstanceNum int,
 	maxInstanceNum int,
 	db db.DB,
-) *scaleDecider {
-	return &scaleDecider{
+) *ScaleDecider {
+	return &ScaleDecider{
 		maxStartingPeriod:      maxStartingPeriod,
 		maxIdlePeriod:          maxIdlePeriod,
 		maxDisconnectPeriod:    maxDisconnectPeriod,
@@ -85,7 +82,8 @@ func newScaleDecider(
 	}
 }
 
-func (s *scaleDecider) UpdateScalingInfo(info *sproto.ScalingInfo) {
+// UpdateScalingInfo updates the scaling information.
+func (s *ScaleDecider) UpdateScalingInfo(info *sproto.ScalingInfo) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -100,7 +98,8 @@ func (s *scaleDecider) UpdateScalingInfo(info *sproto.ScalingInfo) {
 	}
 }
 
-func (s *scaleDecider) UpdateInstanceSnapshot(instances []*model.Instance) bool {
+// UpdateInstanceSnapshot updates the instance snapshot.
+func (s *ScaleDecider) UpdateInstanceSnapshot(instances []*model.Instance) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -130,7 +129,8 @@ func (s *scaleDecider) UpdateInstanceSnapshot(instances []*model.Instance) bool 
 	return false
 }
 
-func (s *scaleDecider) RecordInstanceStats(slots int) error {
+// RecordInstanceStats records the instance stats.
+func (s *ScaleDecider) RecordInstanceStats(slots int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -159,7 +159,7 @@ func (s *scaleDecider) RecordInstanceStats(slots int) error {
 	return nil
 }
 
-func (s *scaleDecider) updateInstanceStartStats(poolName string, instID string, slots int) error {
+func (s *ScaleDecider) updateInstanceStartStats(poolName string, instID string, slots int) error {
 	return s.db.RecordInstanceStats(&model.InstanceStats{
 		ResourcePool: poolName,
 		InstanceID:   instID,
@@ -167,13 +167,14 @@ func (s *scaleDecider) updateInstanceStartStats(poolName string, instID string, 
 	})
 }
 
-func (s *scaleDecider) updateInstanceEndStats(instID string) error {
+func (s *ScaleDecider) updateInstanceEndStats(instID string) error {
 	return s.db.EndInstanceStats(&model.InstanceStats{
 		InstanceID: instID,
 	})
 }
 
-func (s *scaleDecider) UpdateInstancesEndStats(instIDs []string) error {
+// UpdateInstancesEndStats updates the instance end stats.
+func (s *ScaleDecider) UpdateInstancesEndStats(instIDs []string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -192,7 +193,8 @@ func (s *scaleDecider) UpdateInstancesEndStats(instIDs []string) error {
 	return nil
 }
 
-func (s *scaleDecider) CalculateInstanceStates() {
+// CalculateInstanceStates calculates the instance states.
+func (s *ScaleDecider) CalculateInstanceStates() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -254,7 +256,8 @@ func (s *scaleDecider) CalculateInstanceStates() {
 	}
 }
 
-func (s *scaleDecider) FindInstancesToTerminate() sproto.TerminateDecision {
+// FindInstancesToTerminate finds instances to terminate.
+func (s *ScaleDecider) FindInstancesToTerminate() sproto.TerminateDecision {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -329,7 +332,8 @@ func (s *scaleDecider) FindInstancesToTerminate() sproto.TerminateDecision {
 	return res
 }
 
-func (s *scaleDecider) CalculateNumInstancesToLaunch() int {
+// CalculateNumInstancesToLaunch calculates the number of instances to launch.
+func (s *ScaleDecider) CalculateNumInstancesToLaunch() int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

@@ -1,4 +1,4 @@
-package provisioner
+package scaledecider
 
 import (
 	"runtime/debug"
@@ -12,6 +12,14 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
+
+func newInstanceIDSet(instanceIDs []string) map[string]bool {
+	set := make(map[string]bool, len(instanceIDs))
+	for _, inst := range instanceIDs {
+		set[inst] = true
+	}
+	return set
+}
 
 func assertEqualInstancesMarked(t *testing.T, left, right map[string]time.Time) {
 	const timeErrorTolerance = 2 * time.Second
@@ -37,7 +45,7 @@ func assertEqualInstancesMarked(t *testing.T, left, right map[string]time.Time) 
 func TestCalculateInstanceStates(t *testing.T) {
 	type testcase struct {
 		name         string
-		scaleDecider scaleDecider
+		scaleDecider ScaleDecider
 
 		disconnected     map[string]time.Time
 		idle             map[string]time.Time
@@ -49,7 +57,7 @@ func TestCalculateInstanceStates(t *testing.T) {
 	tcs := []testcase{
 		{
 			name: "overall",
-			scaleDecider: scaleDecider{
+			scaleDecider: ScaleDecider{
 				maxIdlePeriod:       10 * time.Minute,
 				maxStartingPeriod:   10 * time.Minute,
 				maxDisconnectPeriod: 10 * time.Minute,
@@ -181,13 +189,13 @@ func TestCalculateInstanceStates(t *testing.T) {
 func TestFindInstancesToTerminate(t *testing.T) {
 	type testcase struct {
 		name         string
-		scaleDecider scaleDecider
+		scaleDecider ScaleDecider
 		toTerminate  []string
 	}
 	tcs := []testcase{
 		{
 			name: "terminate stopped",
-			scaleDecider: scaleDecider{
+			scaleDecider: ScaleDecider{
 				instances:      map[string]*model.Instance{"stopped": {}},
 				stopped:        map[string]bool{"stopped": true},
 				maxInstanceNum: 10,
@@ -196,7 +204,7 @@ func TestFindInstancesToTerminate(t *testing.T) {
 		},
 		{
 			name: "terminate long idle",
-			scaleDecider: scaleDecider{
+			scaleDecider: ScaleDecider{
 				instances:      map[string]*model.Instance{"long idle": {}},
 				longIdle:       map[string]bool{"long idle": true},
 				maxInstanceNum: 10,
@@ -205,7 +213,7 @@ func TestFindInstancesToTerminate(t *testing.T) {
 		},
 		{
 			name: "terminate long disconnected",
-			scaleDecider: scaleDecider{
+			scaleDecider: ScaleDecider{
 				instances:        map[string]*model.Instance{"long disconnected": {}},
 				longDisconnected: map[string]bool{"long disconnected": true},
 				maxInstanceNum:   10,
@@ -214,7 +222,7 @@ func TestFindInstancesToTerminate(t *testing.T) {
 		},
 		{
 			name: "terminate instances until below the maximum",
-			scaleDecider: scaleDecider{
+			scaleDecider: ScaleDecider{
 				instances: map[string]*model.Instance{
 					"earliest": {
 						ID:         "earliest",
@@ -252,7 +260,7 @@ func TestFindInstancesToTerminate(t *testing.T) {
 		},
 		{
 			name: "don't terminate instances if below minimum",
-			scaleDecider: scaleDecider{
+			scaleDecider: ScaleDecider{
 				instances: map[string]*model.Instance{
 					"stopped":           {},
 					"occupied":          {LaunchTime: time.Now().Add(-time.Minute)},
@@ -310,13 +318,13 @@ func TestFindInstancesToTerminate(t *testing.T) {
 func TestCalculateNumInstancesToLaunch(t *testing.T) {
 	type testcase struct {
 		name         string
-		scaleDecider scaleDecider
+		scaleDecider ScaleDecider
 		numToLaunch  int
 	}
 	tcs := []testcase{
 		{
 			name: "keep above min instance num",
-			scaleDecider: scaleDecider{
+			scaleDecider: ScaleDecider{
 				maxStartingPeriod:   time.Minute,
 				minInstanceNum:      1,
 				maxInstanceNum:      10,
@@ -326,7 +334,7 @@ func TestCalculateNumInstancesToLaunch(t *testing.T) {
 		},
 		{
 			name: "keep under max instance num",
-			scaleDecider: scaleDecider{
+			scaleDecider: ScaleDecider{
 				maxStartingPeriod: time.Minute,
 				maxInstanceNum:    2,
 				instances: map[string]*model.Instance{
@@ -343,7 +351,7 @@ func TestCalculateNumInstancesToLaunch(t *testing.T) {
 		},
 		{
 			name: "provision less if having starting instances",
-			scaleDecider: scaleDecider{
+			scaleDecider: ScaleDecider{
 				maxStartingPeriod: 10 * time.Minute,
 				maxInstanceNum:    10,
 				instances: map[string]*model.Instance{
@@ -369,7 +377,7 @@ func TestCalculateNumInstancesToLaunch(t *testing.T) {
 		},
 		{
 			name: "starting instances already more than needed",
-			scaleDecider: scaleDecider{
+			scaleDecider: ScaleDecider{
 				maxStartingPeriod: 10 * time.Minute,
 				maxInstanceNum:    10,
 				instances: map[string]*model.Instance{
@@ -407,7 +415,7 @@ func TestCalculateNumInstancesToLaunch(t *testing.T) {
 
 func TestRecordInstanceStats(t *testing.T) {
 	db := &mocks.DB{}
-	sd := scaleDecider{
+	sd := ScaleDecider{
 		db: db,
 		instances: map[string]*model.Instance{
 			"instance1": {

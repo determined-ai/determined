@@ -12,6 +12,10 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner/agentsetup"
+	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner/aws"
+	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner/gcp"
+	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner/scaledecider"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -20,9 +24,9 @@ import (
 )
 
 const (
-	actionCooldown    = 5 * time.Second
-	telemetryCooldown = 90 * time.Second
-	secureScheme      = "https"
+	actionCooldown      = 5 * time.Second
+	telemetryCooldown   = 90 * time.Second
+	maxDisconnectPeriod = 10 * time.Minute
 )
 
 // Provisioner provisions and terminates agent instances.
@@ -41,24 +45,14 @@ const (
 type Provisioner struct {
 	mu sync.Mutex
 
-	provider         Provider
-	scaleDecider     *scaleDecider
+	provider         agentsetup.Provider
+	scaleDecider     *scaledecider.ScaleDecider
 	telemetryLimiter *rate.Limiter
 	launchErr        *errInfo.StickyError
 
 	syslog *logrus.Entry
 
 	system *actor.System
-}
-
-// Provider is the interface for interacting with the underlying instance provider.
-// TODO(MAR): create individual packages for provider implementations.
-type Provider interface {
-	InstanceType() model.InstanceType
-	SlotsPerInstance() int
-	List() ([]*model.Instance, error)
-	Launch(instanceNum int) error
-	Terminate(instanceIDs []string)
 }
 
 // New creates a new Provisioner.
@@ -69,16 +63,16 @@ func New(
 	if err := config.InitMasterAddress(); err != nil {
 		return nil, err
 	}
-	var cluster Provider
+	var cluster agentsetup.Provider
 	switch {
 	case config.AWS != nil:
 		var err error
-		if cluster, err = newAWSCluster(resourcePool, config, cert); err != nil {
+		if cluster, err = aws.New(resourcePool, config, cert); err != nil {
 			return nil, errors.Wrap(err, "cannot create an EC2 cluster")
 		}
 	case config.GCP != nil:
 		var err error
-		if cluster, err = newGCPCluster(resourcePool, config, cert); err != nil {
+		if cluster, err = gcp.New(resourcePool, config, cert); err != nil {
 			return nil, errors.Wrap(err, "cannot create a GCP cluster")
 		}
 	}
@@ -90,7 +84,7 @@ func New(
 
 	return &Provisioner{
 		provider: cluster,
-		scaleDecider: newScaleDecider(
+		scaleDecider: scaledecider.New(
 			resourcePool,
 			time.Duration(config.MaxIdleAgentPeriod),
 			time.Duration(config.MaxAgentStartingPeriod),

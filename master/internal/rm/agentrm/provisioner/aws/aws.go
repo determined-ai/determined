@@ -1,4 +1,4 @@
-package provisioner
+package aws
 
 import (
 	"crypto/tls"
@@ -15,6 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
+	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner/agentsetup"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -37,9 +38,10 @@ type awsCluster struct {
 //nolint:lll  // See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
 const ec2InstanceID = `$(curl -q -H "X-aws-ec2-metadata-token: $(curl -q -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")"  http://169.254.169.254/latest/meta-data/instance-id)`
 
-func newAWSCluster(
+// New creates a new AWS cluster.
+func New(
 	resourcePool string, config *provconfig.Config, cert *tls.Certificate,
-) (*awsCluster, error) {
+) (agentsetup.Provider, error) {
 	if err := config.AWS.InitDefaultValues(); err != nil {
 		return nil, errors.Wrap(err, "failed to initialize auto configuration")
 	}
@@ -83,7 +85,7 @@ func newAWSCluster(
 	)
 
 	var certBytes []byte
-	if masterURL.Scheme == secureScheme && cert != nil {
+	if masterURL.Scheme == agentsetup.SecureScheme && cert != nil {
 		for _, c := range cert.Certificate {
 			b := pem.EncodeToMemory(&pem.Block{
 				Type:  "CERTIFICATE",
@@ -100,7 +102,7 @@ func newAWSCluster(
 		config:       config.AWS,
 		masterURL:    *masterURL,
 		client:       ec2.New(sess),
-		ec2UserData: mustMakeAgentSetupScript(agentSetupScriptConfig{
+		ec2UserData: agentsetup.MustMakeAgentSetupScript(agentsetup.AgentSetupScriptConfig{
 			MasterHost:                   masterURL.Hostname(),
 			MasterPort:                   masterURL.Port(),
 			MasterCertName:               config.MasterCertName,

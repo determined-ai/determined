@@ -1,4 +1,4 @@
-package provisioner
+package gcp
 
 import (
 	"context"

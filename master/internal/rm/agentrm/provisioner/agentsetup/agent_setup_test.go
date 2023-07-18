@@ -1,4 +1,4 @@
-package provisioner
+package agentsetup
 
 import (
 	"encoding/base64"
@@ -17,7 +17,7 @@ func TestAgentSetupScript(t *testing.T) {
 	encodedScript := base64.StdEncoding.EncodeToString([]byte("sleep 5\n echo \"hello world\""))
 	encodedContainerScript := base64.StdEncoding.EncodeToString([]byte("sleep"))
 	encodedMasterCert := base64.StdEncoding.EncodeToString([]byte("==== cert ===="))
-	conf := agentSetupScriptConfig{
+	conf := AgentSetupScriptConfig{
 		MasterHost:                   "test.master",
 		MasterPort:                   "8080",
 		MasterCertName:               "certname",
@@ -113,6 +113,6 @@ docker run --init --name determined-agent  \
     "test_docker_image"
 `
 
-	res := string(mustMakeAgentSetupScript(conf))
+	res := string(MustMakeAgentSetupScript(conf))
 	assert.Equal(t, res, expected)
 }

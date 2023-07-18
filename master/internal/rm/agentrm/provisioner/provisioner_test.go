@@ -12,6 +12,7 @@ import (
 	"gotest.tools/assert"
 
 	. "github.com/determined-ai/determined/master/internal/config/provconfig"
+	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner/scaledecider"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	errInfo "github.com/determined-ai/determined/master/pkg/errors"
@@ -64,7 +65,7 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) (*mockEnvironment, *Pro
 	}
 	p := &Provisioner{
 		provider: cluster,
-		scaleDecider: newScaleDecider(
+		scaleDecider: scaledecider.New(
 			"default",
 			time.Duration(setup.MaxIdleAgentPeriod),
 			time.Duration(setup.MaxAgentStartingPeriod),
