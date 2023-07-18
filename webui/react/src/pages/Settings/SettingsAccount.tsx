@@ -110,7 +110,7 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
     [PasswordChangeModal],
   );
 
-  const [pendingPasswordEdit, setPendingPasswordEdit] = useState<boolean>(true);
+  const [editingPassword, setEditingPassword] = useState<boolean>(false);
 
   return Loadable.match(
     Loadable.all([
@@ -157,7 +157,7 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
                       initialValue={newPassword}
                       isPassword
                       label="Password"
-                      pendingEdit={pendingPasswordEdit}
+                      open={editingPassword}
                       rules={[
                         { message: NEW_PASSWORD_REQUIRED_MESSAGE, required: true },
                         { message: PASSWORD_TOO_SHORT_MESSAGE, min: 8 },
@@ -178,12 +178,14 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
                         if (value.length) return value;
                         return '*****';
                       }}
+                      onCancel={() => setEditingPassword(false)}
+                      onEdit={() => setEditingPassword(true)}
                       onSubmit={handleSavePassword}>
                       <Input.Password />
                     </InlineForm>
                     <PasswordChangeModal.Component
                       newPassword={newPassword}
-                      onSubmit={() => setPendingPasswordEdit(false)}
+                      onSubmit={() => setEditingPassword(false)}
                     />
                   </>
                 )}

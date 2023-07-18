@@ -19,7 +19,9 @@ interface Props<T> extends React.PropsWithChildren, Omit<FormProps, 'children'> 
   rules?: Rule[];
   testId?: string;
   valueFormatter?: (value: T) => string;
-  pendingEdit?: boolean;
+  open?: boolean; // used to set `isEditing` as a controlled value
+  onEdit?: () => void;
+  onCancel?: () => void;
 }
 
 function InlineForm<T>({
@@ -33,7 +35,9 @@ function InlineForm<T>({
   required,
   testId = '',
   onSubmit,
-  pendingEdit,
+  onEdit,
+  onCancel,
+  open,
   ...formProps
 }: Props<T>): JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
@@ -55,24 +59,6 @@ function InlineForm<T>({
     return textValue;
   }, [shouldCollapseText, value, initialValue, isPassword, inputCurrentValue, valueFormatter]);
 
-  const resetForm = useCallback(() => {
-    form.resetFields();
-    form.setFieldValue('input', previousValue);
-    setIsEditing(false);
-  }, [form, previousValue]);
-
-  const submitForm = useCallback(async () => {
-    try {
-      const formValues = await form.validateFields();
-      onSubmit?.(formValues.input);
-
-      setPreviousValue(formValues.input);
-      if (!pendingEdit) setIsEditing(false);
-    } catch (error) {
-      form.setFieldValue('input', initialValue);
-    }
-  }, [form, onSubmit, initialValue, pendingEdit]);
-
   useEffect(() => {
     if (value !== undefined) {
       form.setFieldValue('input', value);
@@ -82,8 +68,35 @@ function InlineForm<T>({
   }, [initialValue, value, form]);
 
   useEffect(() => {
-    if (!pendingEdit) setIsEditing(false);
-  }, [pendingEdit]);
+    if (open !== undefined) setIsEditing(open);
+  }, [open]);
+
+  const handleEdit = useCallback(() => {
+    if (open === undefined) setIsEditing(true);
+    onEdit?.();
+  }, [open, onEdit]);
+
+  const handleCancel = useCallback(() => {
+    form.resetFields();
+    form.setFieldValue('input', previousValue);
+
+    if (open === undefined) setIsEditing(false);
+    onCancel?.();
+  }, [open, onCancel, form, previousValue]);
+
+  const handleConfirm = useCallback(async () => {
+    if (form.getFieldError('input').length) return;
+    form.submit();
+    try {
+      const formValues = await form.validateFields();
+      setPreviousValue(formValues.input);
+
+      if (open === undefined) setIsEditing(false);
+      onSubmit?.(formValues.input);
+    } catch (error) {
+      form.setFieldValue('input', initialValue);
+    }
+  }, [form, initialValue, open, onSubmit]);
 
   return (
     <Form
@@ -116,18 +129,13 @@ function InlineForm<T>({
               data-testid={`submit-${testId}`}
               icon={<Icon name="checkmark" title="confirm" />}
               type="primary"
-              onClick={() => {
-                if (form.getFieldError('input').length) return;
-
-                form.submit();
-                submitForm();
-              }}
+              onClick={handleConfirm}
             />
             <Button
               data-testid={`reset-${testId}`}
               icon={<Icon name="close-small" size="tiny" title="cancel" />}
               type="default"
-              onClick={() => resetForm()}
+              onClick={handleCancel}
             />
           </>
         ) : (
@@ -135,7 +143,7 @@ function InlineForm<T>({
             data-testid={`edit-${testId}`}
             icon={<Icon name="pencil" size="small" title="edit" />}
             type="default"
-            onClick={() => setIsEditing(true)}
+            onClick={handleEdit}
           />
         )}
       </div>
