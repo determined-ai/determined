@@ -8,7 +8,7 @@ class Workspace:
     """A class representing a Workspace object.
 
     Attributes:
-        id: (str) The ID of the workspace.
+        id: (int) The ID of the workspace.
         name: (Mutable, str) The name of the workspace.
     """
 
