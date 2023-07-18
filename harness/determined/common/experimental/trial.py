@@ -437,7 +437,7 @@ class TrialOrderBy(enum.Enum):
 def _stream_trials_metrics(
     session: api.Session, trial_ids: List[int], group: str
 ) -> Iterable[_TrialMetrics]:
-    for i in bindings.get_GetMetrics(session, trialIds=trial_ids, type=group):
+    for i in bindings.get_GetMetrics(session, trialIds=trial_ids, group=group):
         for m in i.metrics:
             yield _TrialMetrics._from_bindings(m, group=group)
 

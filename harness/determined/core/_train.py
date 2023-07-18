@@ -94,7 +94,7 @@ class TrainContext:
             trialId=self._trial_id,
             trialRunId=self._run_id,
         )
-        body = bindings.v1ReportTrialMetricsRequest(metrics=v1TrialMetrics, type=group)
+        body = bindings.v1ReportTrialMetricsRequest(metrics=v1TrialMetrics, group=group)
         bindings.post_ReportTrialMetrics(self._session, body=body, metrics_trialId=self._trial_id)
 
         # Also sync tensorboard (all metrics, not just json-serializable ones).
