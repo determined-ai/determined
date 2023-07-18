@@ -144,7 +144,7 @@ const ClusterHistoricalUsage: React.FC = () => {
         </Section>
         <Section
           bodyBorder
-          loading={Loadable.isLoading(loadableUsers) || Loadable.isLoading(chartSeries)}
+          loading={Loadable.isLoading(Loadable.all([loadableUsers, chartSeries]))}
           title="Compute Hours by User">
           {Loadable.match(chartSeries, {
             Loaded: (series) => (
