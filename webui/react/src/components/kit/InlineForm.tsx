@@ -19,6 +19,7 @@ interface Props<T> extends React.PropsWithChildren, Omit<FormProps, 'children'> 
   rules?: Rule[];
   testId?: string;
   valueFormatter?: (value: T) => string;
+  pendingEdit?: boolean;
 }
 
 function InlineForm<T>({
@@ -32,6 +33,7 @@ function InlineForm<T>({
   required,
   testId = '',
   onSubmit,
+  pendingEdit,
   ...formProps
 }: Props<T>): JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
@@ -65,11 +67,11 @@ function InlineForm<T>({
       onSubmit?.(formValues.input);
 
       setPreviousValue(formValues.input);
-      setIsEditing(false);
+      if (!pendingEdit) setIsEditing(false);
     } catch (error) {
       form.setFieldValue('input', initialValue);
     }
-  }, [form, onSubmit, initialValue]);
+  }, [form, onSubmit, initialValue, pendingEdit]);
 
   useEffect(() => {
     if (value !== undefined) {
@@ -78,6 +80,10 @@ function InlineForm<T>({
       form.setFieldValue('input', initialValue);
     }
   }, [initialValue, value, form]);
+
+  useEffect(() => {
+    if (!pendingEdit) setIsEditing(false);
+  }, [pendingEdit]);
 
   return (
     <Form

@@ -32,10 +32,10 @@ interface FormInputs {
 
 interface Props {
   newPassword: string;
-  onClose?: () => void;
+  onSubmit?: () => void;
 }
 
-const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onClose }: Props) => {
+const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }: Props) => {
   const [form] = Form.useForm<FormInputs>();
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const [disabled, setDisabled] = useState<boolean>(true);
@@ -63,6 +63,7 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onClose }:
       await setUserPassword({ password, userId: currentUser?.id ?? 0 });
       message.success(API_SUCCESS_MESSAGE);
       form.resetFields();
+      onSubmit?.();
     } catch (e) {
       message.error(API_ERROR_MESSAGE);
       handleError(e, { silent: true, type: ErrorType.Input });
@@ -73,7 +74,6 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onClose }:
   };
 
   const handleClose = () => {
-    onClose?.();
     form.resetFields();
   };
 
@@ -89,6 +89,7 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onClose }:
       }}
       title={MODAL_HEADER_LABEL}
       onClose={handleClose}>
+      <p>Please confirm your password change</p>
       <Form form={form} onFieldsChange={handleFieldsChange}>
         <Form.Item
           label={OLD_PASSWORD_LABEL}
