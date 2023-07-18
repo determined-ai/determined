@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Endstate of checkpoint views / tables is
 -- raw_checkpoints is left unmodified.
 -- checkpoints_v2 has checkpoint_v2s and unarchived checkpoint_v1s.
@@ -17,36 +19,28 @@ INSERT INTO public.checkpoints_v2 (
 )
 SELECT
     -- https://stackoverflow.com/questions/12505158/generating-a-uuid-in-postgres-for-insert-statement
-    COALESCE(c.uuid, uuid_in(overlay(overlay(md5(random()::text || ':' || random()::text) placing '4' from 13) placing to_hex(floor(random()*(11-8+1) + 8)::int)::text from 17)::cstring)),
+    COALESCE(c.uuid, uuid_generate_v4()),
     t.task_id,
-    CASE -- TODO is this behaviour okay? Or should we backfill and insert into allocations.
+    CASE
         WHEN a.allocation_id IS NULL THEN NULL
         ELSE a.allocation_id
     END,
     COALESCE(c.end_time, t.end_time, NOW()),
     c.state,
     c.resources,
-    c.metadata,
+    jsonb_build_object(
+        'steps_completed', c.total_batches,
+        'framework', c.framework,
+        'format', c.format,
+        'determined_version', c.determined_version,
+        'experiment_config', e.config,
+        'hparams', t.hparams
+    ) || COALESCE(c.metadata, '{}'::jsonb) AS metadata,
     c.size
 FROM public.raw_checkpoints c
-LEFT JOIN trials AS t on c.trial_id = t.id
+LEFT JOIN public.trials AS t on c.trial_id = t.id
 LEFT JOIN public.allocations a ON t.task_id || '.' || c.trial_run_id = a.allocation_id
-LEFT JOIN raw_steps AS s ON (
-     -- Hint to the query planner to use the matching index.
-     s.trial_id = t.id
-     AND s.trial_run_id = c.trial_run_id
-     AND s.total_batches = c.total_batches
-)
-LEFT JOIN raw_validations AS v ON (
-    -- Hint to the query planner to use the matching index.
-    v.trial_id = c.trial_id
-    AND v.trial_run_id = c.trial_run_id
-    AND v.total_batches = c.total_batches
-)
-WHERE
-    NOT c.archived AND
-    (s.archived IS NULL OR s.archived = false) AND
-    (v.archived IS NULL OR v.archived = false);
+LEFT JOIN public.experiments AS e on t.experiment_id = e.id;
 
 DROP VIEW public.proto_checkpoints_view;
 DROP VIEW public.checkpoints_view;
@@ -74,11 +68,11 @@ CREATE OR REPLACE VIEW public.checkpoints_view AS
         CAST(c.metadata->>'steps_completed' AS int) as steps_completed,
         -- Removing checkpoint version since it doesn't make sense anymore.
         c.size
-    FROM checkpoints_v2 AS c
-    LEFT JOIN trials AS t on c.task_id = t.task_id
-    LEFT JOIN experiments AS e on t.experiment_id = e.id
-    LEFT JOIN raw_validations AS v on CAST(c.metadata->>'steps_completed' AS int) = v.total_batches and t.id = v.trial_id
-    LEFT JOIN raw_steps AS s on CAST(c.metadata->>'steps_completed' AS int) = s.total_batches and t.id = s.trial_id
+    FROM public.checkpoints_v2 AS c
+    LEFT JOIN public.trials AS t on c.task_id = t.task_id
+    LEFT JOIN public.experiments AS e on t.experiment_id = e.id
+    LEFT JOIN public.raw_validations AS v on CAST(c.metadata->>'steps_completed' AS int) = v.total_batches and t.id = v.trial_id
+    LEFT JOIN public.raw_steps AS s on CAST(c.metadata->>'steps_completed' AS int) = s.total_batches and t.id = s.trial_id
     -- avoiding the steps view causes Postgres to not "Materialize" in this join.
     WHERE s.archived IS NULL OR s.archived = false
       AND v.archived IS NULL OR v.archived = false;
@@ -107,4 +101,4 @@ CREATE OR REPLACE VIEW public.proto_checkpoints_view AS
             'validation_metrics', json_build_object('avg_metrics', c.validation_metrics),
             'searcher_metric', c.searcher_metric
         ) AS training
-    FROM checkpoints_view AS c;
+    FROM public.checkpoints_view AS c;

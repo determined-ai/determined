@@ -2,11 +2,11 @@ DELETE FROM public.checkpoints_v2 WHERE uuid IN (
     SELECT uuid FROM public.raw_checkpoints
 );
 
-DROP VIEW public.proto_checkpoints_view;
-DROP VIEW public.checkpoints_view;
-DROP VIEW public.checkpoints_old_view;
-DROP VIEW public.checkpoints_new_view;
-DROP VIEW public.checkpoints;
+DROP VIEW IF EXISTS public.proto_checkpoints_view;
+DROP VIEW IF EXISTS public.checkpoints_view;
+DROP VIEW IF EXISTS public.checkpoints_old_view;
+DROP VIEW IF EXISTS public.checkpoints_new_view;
+DROP VIEW IF EXISTS public.checkpoints;
 
 
 CREATE OR REPLACE VIEW public.checkpoints_old_view AS
@@ -45,16 +45,16 @@ CREATE OR REPLACE VIEW public.checkpoints_old_view AS
         c.total_batches as steps_completed,
         1 as checkpoint_version,
         c.size
-    FROM raw_checkpoints AS c
-    LEFT JOIN trials AS t on c.trial_id = t.id
-    LEFT JOIN experiments AS e on t.experiment_id = e.id
-    LEFT JOIN raw_steps AS s ON (
+    FROM public.raw_checkpoints AS c
+    LEFT JOIN public.trials AS t on c.trial_id = t.id
+    LEFT JOIN public.experiments AS e on t.experiment_id = e.id
+    LEFT JOIN public.raw_steps AS s ON (
         -- Hint to the query planner to use the matching index.
         s.trial_id = t.id
         AND s.trial_run_id = c.trial_run_id
         AND s.total_batches = c.total_batches
     )
-    LEFT JOIN raw_validations AS v ON (
+    LEFT JOIN public.raw_validations AS v ON (
         -- Hint to the query planner to use the matching index.
         v.trial_id = c.trial_id
         AND v.trial_run_id = c.trial_run_id
@@ -84,22 +84,22 @@ CREATE OR REPLACE VIEW public.checkpoints_new_view AS
         CAST(c.metadata->>'steps_completed' AS int) as steps_completed,
         2 AS checkpoint_version,
         c.size
-    FROM checkpoints_v2 AS c
-    LEFT JOIN trials AS t on c.task_id = t.task_id
-    LEFT JOIN experiments AS e on t.experiment_id = e.id
-    LEFT JOIN raw_validations AS v on CAST(c.metadata->>'steps_completed' AS int) = v.total_batches and t.id = v.trial_id
-    LEFT JOIN raw_steps AS s on CAST(c.metadata->>'steps_completed' AS int) = s.total_batches and t.id = s.trial_id
+    FROM public.checkpoints_v2 AS c
+    LEFT JOIN public.trials AS t on c.task_id = t.task_id
+    LEFT JOIN public.experiments AS e on t.experiment_id = e.id
+    LEFT JOIN public.raw_validations AS v on CAST(c.metadata->>'steps_completed' AS int) = v.total_batches and t.id = v.trial_id
+    LEFT JOIN public.raw_steps AS s on CAST(c.metadata->>'steps_completed' AS int) = s.total_batches and t.id = s.trial_id
     -- avoiding the steps view causes Postgres to not "Materialize" in this join.
     WHERE s.archived IS NULL OR s.archived = false
       AND v.archived IS NULL OR v.archived = false;
 
 CREATE OR REPLACE VIEW public.checkpoints_view AS
-    SELECT * FROM checkpoints_new_view
+    SELECT * FROM public.checkpoints_new_view
     UNION ALL
-    SELECT * FROM checkpoints_old_view;
+    SELECT * FROM public.checkpoints_old_view;
 
-CREATE OR REPLACE VIEW checkpoints AS
-    SELECT * FROM raw_checkpoints WHERE NOT archived;
+CREATE OR REPLACE VIEW public.checkpoints AS
+    SELECT * FROM public.raw_checkpoints WHERE NOT archived;
 
 CREATE OR REPLACE VIEW public.proto_checkpoints_view AS
     SELECT
@@ -125,4 +125,4 @@ CREATE OR REPLACE VIEW public.proto_checkpoints_view AS
             'validation_metrics', json_build_object('avg_metrics', c.validation_metrics),
             'searcher_metric', c.searcher_metric
         ) AS training
-    FROM checkpoints_view AS c;
+    FROM public.checkpoints_view AS c;
