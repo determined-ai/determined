@@ -2,6 +2,11 @@ package workspace
 
 import (
 	"context"
+	"fmt"
+
+	"github.com/determined-ai/determined/master/pkg/set"
+
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -15,6 +20,42 @@ func WorkspaceByName(ctx context.Context, workspaceName string) (*model.Workspac
 		return nil, err
 	}
 	return &w, nil
+}
+
+// WorkspaceIDsFromNames returns an unordered slice of workspaceIDs that correlate with the given
+// workspace names.
+func WorkspaceIDsFromNames(ctx context.Context, workspaceNames []string) (
+	[]int32, error,
+) {
+	var workspaces []model.Workspace
+	err := db.Bun().NewSelect().
+		Model(&workspaces).
+		Where("name IN (?)", bun.In(workspaceNames)).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(workspaces) != len(workspaceNames) {
+		var missing []string
+		namesFound := set.New[string]()
+		for _, workspace := range workspaces {
+			namesFound.Insert(workspace.Name)
+		}
+
+		for _, name := range workspaceNames {
+			if !namesFound.Contains(name) {
+				missing = append(missing, name)
+			}
+		}
+
+		return nil, fmt.Errorf("the following workspaces do not exist: %s", missing)
+	}
+
+	var workspaceIDs []int32
+	for _, workspace := range workspaces {
+		workspaceIDs = append(workspaceIDs, int32(workspace.ID))
+	}
+	return workspaceIDs, nil
 }
 
 // ProjectIDByName returns a project's ID if it exists in the given workspace.
