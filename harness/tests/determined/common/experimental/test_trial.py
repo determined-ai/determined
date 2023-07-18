@@ -57,12 +57,16 @@ def test_trial_logs_converts_epoch_time(make_trialref: Callable[[int], trial.Tri
 
 
 @pytest.mark.parametrize(
-    "timestamp",
-    ["2021-10-26T23:17:12+04:00", "2021-10-26 23:17:12Z", "2021-10-26T23:17:12"],
+    "name,timestamp",
+    [
+        ("invalid_timezone", "2021-10-26T23:17:12+04:00"),
+        ("missing_T", "2021-10-26 23:17:12Z"),
+        ("missing_Z", "2021-10-26T23:17:12"),
+    ],
 )
 @responses.activate
 def test_trial_logs_invalid_timestamps(
-    make_trialref: Callable[[int], trial.Trial], timestamp: str
+    make_trialref: Callable[[int], trial.Trial], name: str, timestamp: str
 ) -> None:
     trialref = make_trialref(1)
 

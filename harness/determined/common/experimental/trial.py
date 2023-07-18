@@ -229,15 +229,16 @@ class Trial:
                 stdio outputs.  Defaults to ``None`` (same as ``["stdout", "stderr"]``).
             min_level (LogLevel, optional): When set, defines the minimum log priority for lines
                 that will be returned.  Defaults to ``None`` (all logs returned).
-            timestamp_before (Union[str, int], optional): Specifies a timestamp that filters logs
-                before a certain time. Accepts either a string in RFC 3339 format
+            timestamp_before (Union[str, int], optional): Specifies a timestamp that returns only
+                logs before a certain time. Accepts either a string in RFC 3339 format
                 (eg. ``2021-10-26T23:17:12Z``) or an int representing the epoch second.
-            timestamp_after (Union[str, int], optional): Specifies a timestamp that filters logs
-                after a certain time. Accepts either a string in RFC 3339 format
+            timestamp_after (Union[str, int], optional): Specifies a timestamp that returns only
+                logs after a certain time. Accepts either a string in RFC 3339 format
                 (eg. ``2021-10-26T23:17:12Z``) or an int representing the epoch second.
-            sources (List[str], optional): Specifies a filter for logs based on originating node
-                name (eg. ``master`` or ``agent``).
-            search_text (str, Optional): Filters individual logs by searching for a string.
+            sources (List[str], optional): When set, returns only logs originating from specified
+                node name(s) (eg. ``master`` or ``agent``).
+            search_text (str, Optional): Filters individual logs to only return logs containing
+                the specified string.
 
         """
         if head is not None and head < 0:
@@ -245,11 +246,18 @@ class Trial:
         if tail is not None and tail < 0:
             raise ValueError(f"tail must be non-negative, got {tail}")
 
+        if not isinstance(timestamp_before, (str, int)) or not isinstance(
+            timestamp_after, (str, int)
+        ):
+            raise ValueError(
+                "timestamp_before and timestamp_after must be either str or int types."
+            )
+
         # Validate and convert epoch timestamps to RFC 3339-formatted datetime strings.
-        if isinstance(timestamp_before, str):
-            util.validate_protobuf_timestamp(timestamp_before)
-        if isinstance(timestamp_after, str):
-            util.validate_protobuf_timestamp(timestamp_after)
+        if isinstance(timestamp_before, str) and not util.is_protobuf_timestamp(timestamp_before):
+            raise ValueError(f"Timestamp {timestamp_before} has an invalid format.")
+        if isinstance(timestamp_after, str) and not util.is_protobuf_timestamp(timestamp_after):
+            raise ValueError(f"Timestamp {timestamp_after} has an invalid format.")
 
         if isinstance(timestamp_before, int):
             datetime_before = datetime.datetime.fromtimestamp(timestamp_before)

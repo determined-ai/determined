@@ -210,7 +210,7 @@ def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
     return datetime.datetime.fromisoformat(ts)
 
 
-def validate_protobuf_timestamp(ts: str) -> None:
+def is_protobuf_timestamp(ts: str) -> bool:
     """
     Validates that a string timestamp is in a Protobuf-compatible format by attempting to
     convert it.
@@ -223,9 +223,13 @@ def validate_protobuf_timestamp(ts: str) -> None:
     :return: True if timestamp is valid, else False
     """
     if not ts.endswith("Z"):
-        raise ValueError(f"Invalid timestamp {ts}; must end in a trailing 'Z'.")
+        return False
 
-    datetime.datetime.fromisoformat(ts)
+    try:
+        datetime.datetime.fromisoformat(ts)
+    except (ValueError, TypeError):
+        return False
+    return True
 
 
 def wait_for(
