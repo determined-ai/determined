@@ -354,6 +354,7 @@ const TableActionBar: React.FC<Props> = ({
           <ColumnPickerMenu
             initialVisibleColumns={initialVisibleColumns}
             projectColumns={projectColumns}
+            projectId={project.id}
             setVisibleColumns={setVisibleColumns}
           />
           {(selectAll || selectedExperimentIds.length > 0) && (
