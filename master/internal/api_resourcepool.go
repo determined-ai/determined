@@ -39,8 +39,13 @@ func (a *apiServer) BindRPToWorkspace(
 		return nil, err
 	}
 
+	allWorkspaceIDs, err := combineWorkspaceIDsAndNames(ctx, req.WorkspaceIds, req.WorkspaceNames)
+	if err != nil {
+		return nil, err
+	}
+
 	if err = workspaceauth.AuthZProvider.Get().CanModifyRPWorkspaceBindings(ctx, *curUser,
-		req.WorkspaceIds); err != nil {
+		allWorkspaceIDs); err != nil {
 		return nil, authz.SubIfUnauthorized(
 			err,
 			errors.Errorf(
@@ -48,7 +53,7 @@ func (a *apiServer) BindRPToWorkspace(
 				curUser.Username))
 	}
 
-	err = db.AddRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName,
+	err = db.AddRPWorkspaceBindings(ctx, allWorkspaceIDs, req.ResourcePoolName,
 		config.GetMasterConfig().ResourceConfig.ResourcePools)
 	if err != nil {
 		return nil, err
@@ -73,8 +78,13 @@ func (a *apiServer) OverwriteRPWorkspaceBindings(
 		return nil, err
 	}
 
+	allWorkspaceIDs, err := combineWorkspaceIDsAndNames(ctx, req.WorkspaceIds, req.WorkspaceNames)
+	if err != nil {
+		return nil, err
+	}
+
 	if err = workspaceauth.AuthZProvider.Get().CanModifyRPWorkspaceBindings(ctx, *curUser,
-		req.WorkspaceIds); err != nil {
+		allWorkspaceIDs); err != nil {
 		return nil, authz.SubIfUnauthorized(err,
 			errors.Errorf(
 				`current user %q doesn't have permissions to modify resource pool bindings.`,
@@ -82,7 +92,7 @@ func (a *apiServer) OverwriteRPWorkspaceBindings(
 	}
 
 	masterConfig := config.GetMasterConfig()
-	err = db.OverwriteRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName,
+	err = db.OverwriteRPWorkspaceBindings(ctx, allWorkspaceIDs, req.ResourcePoolName,
 		masterConfig.ResourcePools)
 	if err != nil {
 		return nil, err
@@ -98,17 +108,23 @@ func (a *apiServer) UnbindRPFromWorkspace(
 	if err != nil {
 		return nil, err
 	}
+
+	allWorkspaceIDs, err := combineWorkspaceIDsAndNames(ctx, req.WorkspaceIds, req.WorkspaceNames)
+	if err != nil {
+		return nil, err
+	}
+
 	// Check permissions for all workspaces. Return err if any workspace doesn't have permissions.
 	// No partial unbinding.
 	if err = workspaceauth.AuthZProvider.Get().CanModifyRPWorkspaceBindings(ctx, *curUser,
-		req.WorkspaceIds); err != nil {
+		allWorkspaceIDs); err != nil {
 		return nil, authz.SubIfUnauthorized(err,
 			errors.Errorf(
 				`current user %q doesn't have permissions to modify resource pool bindings.`,
 				curUser.Username))
 	}
 
-	err = db.RemoveRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName)
+	err = db.RemoveRPWorkspaceBindings(ctx, allWorkspaceIDs, req.ResourcePoolName)
 	if err != nil {
 		return nil, err
 	}
@@ -146,4 +162,17 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 	return &apiv1.ListWorkspacesBoundToRPResponse{
 		WorkspaceIds: workspaceIDs, Pagination: pagination,
 	}, nil
+}
+
+func combineWorkspaceIDsAndNames(ctx context.Context, ids []int32, names []string,
+) ([]int32, error) {
+	combined, err := workspaceauth.WorkspaceIDsFromNames(ctx, names)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, id := range ids {
+		combined = append(combined, id)
+	}
+	return combined, nil
 }
