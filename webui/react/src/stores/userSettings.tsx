@@ -74,6 +74,7 @@ class UserSettingsStore extends PollingStore {
     try {
       await resetUserSetting({});
       await updateUserSetting({ settings: settingsArray });
+      this.#settings.set(Loaded(settings));
     } catch (error) {
       handleError(error, {
         isUserTriggered: false,
@@ -86,6 +87,7 @@ class UserSettingsStore extends PollingStore {
   public async clear() {
     try {
       await resetUserSetting({});
+      this.#settings.set(Loaded(Map()));
     } catch (error) {
       handleError(error, {
         isUserTriggered: false,
