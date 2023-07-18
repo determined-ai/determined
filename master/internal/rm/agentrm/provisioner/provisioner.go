@@ -56,7 +56,6 @@ type Provisioner struct {
 type Provider interface {
 	InstanceType() model.InstanceType
 	SlotsPerInstance() int
-	Prestart()
 	List() ([]*model.Instance, error)
 	Launch(instanceNum int) error
 	Terminate(instanceIDs []string)
@@ -83,7 +82,6 @@ func New(
 			return nil, errors.Wrap(err, "cannot create a GCP cluster")
 		}
 	}
-	cluster.Prestart()
 
 	var launchErrorTimeout time.Duration
 	if config != nil && config.LaunchErrorTimeout != nil {

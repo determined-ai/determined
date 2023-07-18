@@ -144,8 +144,6 @@ func (c *mockProvider) List() ([]*model.Instance, error) {
 	return instances, nil
 }
 
-func (c *mockProvider) Prestart() {}
-
 func (c *mockProvider) Launch(instanceNum int) error {
 	switch {
 	case c.failProvisioning:

@@ -33,6 +33,10 @@ type gcpCluster struct {
 	syslog *logrus.Entry
 }
 
+func init() {
+	petname.NonDeterministicMode()
+}
+
 func newGCPCluster(
 	resourcePool string, config *provconfig.Config, cert *tls.Certificate,
 ) (*gcpCluster, error) {
@@ -160,10 +164,6 @@ func (c *gcpCluster) stateFromInstance(inst *compute.Instance) model.InstanceSta
 
 func (c *gcpCluster) generateInstanceNamePattern() string {
 	return c.config.NamePrefix + petname.Generate(2, "-") + "-#####"
-}
-
-func (c *gcpCluster) Prestart() {
-	petname.NonDeterministicMode()
 }
 
 func (c *gcpCluster) List() ([]*model.Instance, error) {

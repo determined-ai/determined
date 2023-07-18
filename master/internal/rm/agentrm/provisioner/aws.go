@@ -128,6 +128,8 @@ func newAWSCluster(
 			approximateClockSkew: time.Second * 0,
 			launchTimeOffset:     time.Second * 10,
 		}
+		cluster.attemptToApproximateClockSkew()
+		cluster.cleanupLegacySpotInstances()
 	}
 
 	return cluster, nil
@@ -159,13 +161,6 @@ func (c *awsCluster) stateFromEC2State(state *ec2.InstanceState) model.InstanceS
 		return res
 	}
 	return model.Unknown
-}
-
-func (c *awsCluster) Prestart() {
-	if c.config.SpotEnabled {
-		c.attemptToApproximateClockSkew()
-		c.cleanupLegacySpotInstances()
-	}
 }
 
 func (c *awsCluster) List() ([]*model.Instance, error) {
