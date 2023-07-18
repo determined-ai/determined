@@ -1,4 +1,3 @@
-
 # Batch inference with Core API & Torch Batch Processing API
 
 ## Overview
