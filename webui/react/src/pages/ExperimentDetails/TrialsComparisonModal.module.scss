@@ -39,6 +39,7 @@
       z-index: 10;
     }
     th:first-of-type {
+      background-clip: padding-box;
       background-color: var(--theme-background);
       left: 0;
       position: sticky;
