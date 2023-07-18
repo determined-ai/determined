@@ -33,16 +33,17 @@ type kubernetesResourcePool struct {
 	config     *config.KubernetesResourceManagerConfig
 	poolConfig *config.ResourcePoolConfig
 
-	reqList               *tasklist.TaskList
-	groups                map[*actor.Ref]*tasklist.Group
-	addrToContainerID     map[*actor.Ref]cproto.ID
-	containerIDtoAddr     map[string]*actor.Ref
-	jobIDtoAddr           map[model.JobID]*actor.Ref
-	addrToJobID           map[*actor.Ref]model.JobID
-	groupActorToID        map[*actor.Ref]model.JobID
-	IDToGroupActor        map[model.JobID]*actor.Ref
-	slotsUsedPerGroup     map[*tasklist.Group]int
-	allocRefToRunningPods map[*actor.Ref]int
+	reqList                   *tasklist.TaskList
+	groups                    map[*actor.Ref]*tasklist.Group
+	allocationIDToContainerID map[model.AllocationID]cproto.ID
+	containerIDtoAllocationID map[string]model.AllocationID
+	// TODO(DET-9613): Jobs have many allocs.
+	jobIDToAllocationID       map[model.JobID]model.AllocationID
+	allocationIDToJobID       map[model.AllocationID]model.JobID
+	groupActorToID            map[*actor.Ref]model.JobID
+	IDToGroupActor            map[model.JobID]*actor.Ref
+	slotsUsedPerGroup         map[*tasklist.Group]int
+	allocationIDToRunningPods map[model.AllocationID]int
 
 	podsActor *actor.Ref
 
@@ -56,20 +57,20 @@ func newResourcePool(
 	podsActor *actor.Ref,
 ) *kubernetesResourcePool {
 	return &kubernetesResourcePool{
-		config:                rmConfig,
-		poolConfig:            poolConfig,
-		reqList:               tasklist.New(),
-		groups:                map[*actor.Ref]*tasklist.Group{},
-		addrToContainerID:     map[*actor.Ref]cproto.ID{},
-		containerIDtoAddr:     map[string]*actor.Ref{},
-		jobIDtoAddr:           map[model.JobID]*actor.Ref{},
-		addrToJobID:           map[*actor.Ref]model.JobID{},
-		groupActorToID:        map[*actor.Ref]model.JobID{},
-		IDToGroupActor:        map[model.JobID]*actor.Ref{},
-		slotsUsedPerGroup:     map[*tasklist.Group]int{},
-		allocRefToRunningPods: map[*actor.Ref]int{},
-		podsActor:             podsActor,
-		queuePositions:        tasklist.InitializeJobSortState(true),
+		config:                    rmConfig,
+		poolConfig:                poolConfig,
+		reqList:                   tasklist.New(),
+		groups:                    map[*actor.Ref]*tasklist.Group{},
+		allocationIDToContainerID: map[model.AllocationID]cproto.ID{},
+		containerIDtoAllocationID: map[string]model.AllocationID{},
+		jobIDToAllocationID:       map[model.JobID]model.AllocationID{},
+		allocationIDToJobID:       map[model.AllocationID]model.JobID{},
+		groupActorToID:            map[*actor.Ref]model.JobID{},
+		IDToGroupActor:            map[model.JobID]*actor.Ref{},
+		slotsUsedPerGroup:         map[*tasklist.Group]int{},
+		allocationIDToRunningPods: map[model.AllocationID]int{},
+		podsActor:                 podsActor,
+		queuePositions:            tasklist.InitializeJobSortState(true),
 	}
 }
 
@@ -105,16 +106,6 @@ func (k *kubernetesResourcePool) Receive(ctx *actor.Context) error {
 		sproto.RecoverJobPosition,
 		*apiv1.GetJobQueueStatsRequest:
 		return k.receiveJobQueueMsg(ctx)
-
-	case sproto.GetAllocationHandler:
-		reschedule = false
-
-		handler := k.reqList.TaskHandler(msg.ID)
-		if handler == nil {
-			ctx.Respond(fmt.Errorf("allocation handler for allocation ID %s not found", msg.ID))
-			return nil
-		}
-		ctx.Respond(handler)
 
 	case sproto.GetAllocationSummary:
 		if resp := k.reqList.TaskSummary(
@@ -188,8 +179,8 @@ func (k *kubernetesResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 		delete(k.groups, msg.Ref)
 		if jobID, ok := k.groupActorToID[msg.Ref]; ok {
 			delete(k.queuePositions, jobID)
-			delete(k.addrToJobID, k.jobIDtoAddr[jobID])
-			delete(k.jobIDtoAddr, jobID)
+			delete(k.allocationIDToJobID, k.jobIDToAllocationID[jobID])
+			delete(k.jobIDToAllocationID, jobID)
 			delete(k.groupActorToID, msg.Ref)
 			delete(k.IDToGroupActor, jobID)
 		}
@@ -207,17 +198,17 @@ func (k *kubernetesResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 		k.resourcesReleased(ctx, msg)
 
 	case sproto.UpdatePodStatus:
-		var ref *actor.Ref
-		if addr, ok := k.containerIDtoAddr[msg.ContainerID]; ok {
-			ref = addr
+		id, ok := k.containerIDtoAllocationID[msg.ContainerID]
+		if !ok {
+			return nil
 		}
 
 		for it := k.reqList.Iterator(); it.Next(); {
 			req := it.Value()
-			if req.AllocationRef == ref {
+			if req.AllocationID == id {
 				req.State = msg.State
 				if sproto.ScheduledStates[req.State] {
-					k.allocRefToRunningPods[ref]++
+					k.allocationIDToRunningPods[id]++
 				}
 			}
 		}
@@ -234,7 +225,7 @@ func (k *kubernetesResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 
 func (k *kubernetesResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) {
 	actors.NotifyOnStop(ctx, msg.AllocationRef, sproto.ResourcesReleased{
-		AllocationRef: msg.AllocationRef,
+		AllocationID: msg.AllocationID,
 	})
 
 	if len(msg.AllocationID) == 0 {
@@ -259,11 +250,11 @@ func (k *kubernetesResourcePool) addTask(ctx *actor.Context, msg sproto.Allocate
 				true,
 			)
 		}
-		k.jobIDtoAddr[msg.JobID] = msg.AllocationRef
-		k.addrToJobID[msg.AllocationRef] = msg.JobID
+		k.jobIDToAllocationID[msg.JobID] = msg.AllocationID
+		k.allocationIDToJobID[msg.AllocationID] = msg.JobID
 		k.groupActorToID[msg.Group] = msg.JobID
 		k.IDToGroupActor[msg.JobID] = msg.Group
-		k.allocRefToRunningPods[msg.AllocationRef] = 0
+		k.allocationIDToRunningPods[msg.AllocationID] = 0
 	}
 	k.reqList.AddTask(&msg)
 }
@@ -322,10 +313,10 @@ func (k *kubernetesResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		// for trials and trials take checkpoints.
 		for it := k.reqList.Iterator(); it.Next(); {
 			if it.Value().Group == msg.Handler {
-				taskActor := it.Value().AllocationRef
-				if id, ok := k.addrToContainerID[taskActor]; ok {
+				req := it.Value()
+				if id, ok := k.allocationIDToContainerID[req.AllocationID]; ok {
 					ctx.Tell(k.podsActor, ChangePriority{PodID: id})
-					delete(k.addrToContainerID, taskActor)
+					delete(k.allocationIDToContainerID, req.AllocationID)
 				}
 			}
 		}
@@ -415,11 +406,11 @@ func (k *kubernetesResourcePool) moveJob(
 	}
 	ctx.Tell(groupAddr, msg)
 
-	addr, ok := k.jobIDtoAddr[jobID]
+	allocationID, ok := k.jobIDToAllocationID[jobID]
 	if !ok {
 		return fmt.Errorf("job with ID %s has no valid task address", jobID)
 	}
-	containerID, ok := k.addrToContainerID[addr]
+	containerID, ok := k.allocationIDToContainerID[allocationID]
 	if !ok {
 		return fmt.Errorf("job with ID %s has no valid containerID", jobID)
 	}
@@ -435,7 +426,7 @@ func (k *kubernetesResourcePool) correctJobQInfo(
 ) map[model.JobID]*sproto.RMJobInfo {
 	jobIDToAllocatedSlots := map[model.JobID]int{}
 	for _, req := range reqs {
-		runningPods := k.allocRefToRunningPods[req.AllocationRef]
+		runningPods := k.allocationIDToRunningPods[req.AllocationID]
 		if req.SlotsNeeded <= k.config.MaxSlotsPerPod {
 			jobIDToAllocatedSlots[req.JobID] += runningPods * req.SlotsNeeded
 		} else {
@@ -461,7 +452,7 @@ func (k *kubernetesResourcePool) receiveSetAllocationName(
 	ctx *actor.Context,
 	msg sproto.SetAllocationName,
 ) {
-	if task, found := k.reqList.TaskByHandler(msg.AllocationRef); found {
+	if task, found := k.reqList.TaskByID(msg.AllocationID); found {
 		task.Name = msg.Name
 	}
 }
@@ -519,12 +510,12 @@ func (k *kubernetesResourcePool) assignResources(
 	allocations := sproto.ResourceList{}
 	for _, rs := range resources {
 		allocations[rs.Summary().ResourcesID] = rs
-		k.addrToContainerID[req.AllocationRef] = rs.containerID
-		k.containerIDtoAddr[rs.containerID.String()] = req.AllocationRef
+		k.allocationIDToContainerID[req.AllocationID] = rs.containerID
+		k.containerIDtoAllocationID[rs.containerID.String()] = req.AllocationID
 	}
 
 	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Resources: allocations}
-	k.reqList.AddAllocationRaw(req.AllocationRef, &assigned)
+	k.reqList.AddAllocationRaw(req.AllocationID, &assigned)
 	req.AllocationRef.System().Tell(req.AllocationRef, assigned.Clone())
 
 	if req.Restore {
@@ -551,7 +542,7 @@ func (k *kubernetesResourcePool) createResources(
 			containerID:     cproto.NewID(),
 			slots:           slotsPerPod,
 			group:           k.groups[req.Group],
-			initialPosition: k.queuePositions[k.addrToJobID[req.AllocationRef]],
+			initialPosition: k.queuePositions[k.allocationIDToJobID[req.AllocationID]],
 			namespace:       k.poolConfig.KubernetesNamespace,
 		})
 	}
@@ -581,7 +572,7 @@ func (k *kubernetesResourcePool) restoreResources(
 			containerID:     cproto.ID(restoreResponse.containerID),
 			slots:           slotsPerPod,
 			group:           k.groups[req.Group],
-			initialPosition: k.queuePositions[k.addrToJobID[req.AllocationRef]],
+			initialPosition: k.queuePositions[k.allocationIDToJobID[req.AllocationID]],
 			namespace:       k.poolConfig.KubernetesNamespace,
 
 			started: restoreResponse.started,
@@ -600,9 +591,9 @@ func (k *kubernetesResourcePool) resourcesReleased(
 		return
 	}
 
-	ctx.Log().Infof("resources are released for %s", msg.AllocationRef.Address())
+	ctx.Log().Infof("resources are released for %s", msg.AllocationID)
 
-	if req, ok := k.reqList.TaskByHandler(msg.AllocationRef); ok {
+	if req, ok := k.reqList.TaskByID(msg.AllocationID); ok {
 		group := k.groups[req.Group]
 
 		if group != nil {
@@ -610,15 +601,13 @@ func (k *kubernetesResourcePool) resourcesReleased(
 		}
 	}
 
-	k.reqList.RemoveTaskByHandler(msg.AllocationRef)
-	delete(k.addrToContainerID, msg.AllocationRef)
-	delete(k.allocRefToRunningPods, msg.AllocationRef)
+	k.reqList.RemoveTaskByID(msg.AllocationID)
+	delete(k.allocationIDToContainerID, msg.AllocationID)
+	delete(k.allocationIDToRunningPods, msg.AllocationID)
 
-	deleteID := ""
-	for id, addr := range k.containerIDtoAddr {
-		if addr == msg.AllocationRef {
-			deleteID = id
-			delete(k.containerIDtoAddr, deleteID)
+	for id, addr := range k.containerIDtoAllocationID {
+		if addr == msg.AllocationID {
+			delete(k.containerIDtoAllocationID, id)
 			break
 		}
 	}
@@ -647,8 +636,7 @@ func (k *kubernetesResourcePool) schedulePendingTasks(ctx *actor.Context) {
 	for it := k.reqList.Iterator(); it.Next(); {
 		req := it.Value()
 		group := k.groups[req.Group]
-		assigned := k.reqList.Allocation(req.AllocationRef)
-		if !tasklist.AssignmentIsScheduled(assigned) {
+		if !k.reqList.IsScheduled(req.AllocationID) {
 			if maxSlots := group.MaxSlots; maxSlots != nil {
 				if k.slotsUsedPerGroup[group]+req.SlotsNeeded > *maxSlots {
 					continue

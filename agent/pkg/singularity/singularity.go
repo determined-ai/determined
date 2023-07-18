@@ -220,10 +220,17 @@ func (s *SingularityClient) RunContainer(
 	}
 
 	_, err = envFile.WriteString(fmt.Sprintf(
-		"DET_B64_ENCODED_ENVVARS=%s",
+		"DET_B64_ENCODED_ENVVARS=%s\n",
 		strings.Join(b64EnvVars, ","),
 	))
 	if err != nil {
+		return nil, fmt.Errorf("writing to envfile: %w", err)
+	}
+	detDebug := 0
+	if s.debug {
+		detDebug = 1
+	}
+	if _, err = envFile.WriteString(fmt.Sprintf("DET_DEBUG=%d\n", detDebug)); err != nil {
 		return nil, fmt.Errorf("writing to envfile: %w", err)
 	}
 	if err = envFile.Close(); err != nil {
@@ -290,7 +297,6 @@ func (s *SingularityClient) RunContainer(
 		}
 	}
 
-	// TODO(DET-9080): Test this on ROCM devices.
 	s.log.Tracef("Device type is %s", req.DeviceType)
 	if req.DeviceType == device.ROCM {
 		args = append(args, "--rocm")
@@ -333,22 +339,7 @@ func (s *SingularityClient) RunContainer(
 	s.wg.Go(func(ctx context.Context) { s.shipSingularityCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
 	s.wg.Go(func(ctx context.Context) { s.shipSingularityCmdLogs(ctx, stderr, stdcopy.Stderr, p) })
 
-	cudaVisibleDevicesVar := strings.Join(cudaVisibleDevices, ",")
-	cmd.Env = append(cmd.Env,
-		fmt.Sprintf("SINGULARITYENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
-		fmt.Sprintf("APPTAINERENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
-	)
-	if s.debug {
-		cmd.Env = append(cmd.Env, "DET_DEBUG=1")
-	}
-	s.addOptionalRegistryAuthCredentials(req, cmd)
-	addEnvironmentValueIfSet([]string{"http_proxy", "https_proxy", "no_proxy"}, cmd)
-
-	// HACK(singularity): without this, --nv doesn't work right. If the singularity run command
-	// cannot find nvidia-smi, the --nv fails to make it available inside the container, e.g.,
-	// env -i /usr/bin/singularity run --nv \\
-	//   docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0 nvidia-smi
-	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
+	s.setCommandEnvironment(req, cudaVisibleDevices, cmd)
 
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("starting singularity container: %w", err)
@@ -387,6 +378,51 @@ func (s *SingularityClient) RunContainer(
 	}, nil
 }
 
+// Sets the environment of the process that will run the Singularity/apptainer command.
+func (s *SingularityClient) setCommandEnvironment(
+	req cproto.RunSpec, cudaVisibleDevices []string, cmd *exec.Cmd,
+) {
+	// Per https://pkg.go.dev/os/exec#Cmd.Env, if cmd.Env is nil, the new process uses the current
+	// process's environment. If this in not the case, for example because we specify something to
+	// control Singularity operation, then we need to explicitly specify any value needed from the
+	// current environment.
+	if req.DeviceType == device.CUDA {
+		cudaVisibleDevicesVar := strings.Join(cudaVisibleDevices, ",")
+		cmd.Env = append(cmd.Env,
+			fmt.Sprintf("SINGULARITYENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
+			fmt.Sprintf("APPTAINERENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
+		)
+	}
+	if req.DeviceType == device.ROCM {
+		// Avoid this problem: https://github.com/determined-ai/determined-ee/pull/922
+		// by not setting both ROCR_VISIBLE_DEVICES & CUDA_VISIBLE_DEVICES
+		s.addToTargetCommandEnvironmentIfSet(cmd, "ROCR_VISIBLE_DEVICES")
+	}
+
+	s.addOptionalRegistryAuthCredentials(req, cmd)
+
+	// HACK(singularity): without this, --nv doesn't work right. If the singularity run command
+	// cannot find nvidia-smi, the --nv fails to make it available inside the container, e.g.,
+	// env -i /usr/bin/singularity run --nv \\
+	//   docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0 nvidia-smi
+	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
+
+	s.addToTargetCommandEnvironmentIfSet(cmd, "http_proxy")
+	s.addToTargetCommandEnvironmentIfSet(cmd, "https_proxy")
+	s.addToTargetCommandEnvironmentIfSet(cmd, "no_proxy")
+	s.addToTargetCommandEnvironmentIfSet(cmd, "APPTAINER_CACHEDIR")
+	s.addToTargetCommandEnvironmentIfSet(cmd, "SINGULARITY_CACHEDIR")
+}
+
+// addToTargetCommandEnvironmentIfSet adds to the target command environment the value of
+// the specified environment variable from the current process, if set.
+func (s *SingularityClient) addToTargetCommandEnvironmentIfSet(cmd *exec.Cmd, variable string) {
+	if value, present := os.LookupEnv(variable); present {
+		s.log.Debugf("Forwarding %s=%s", variable, value)
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", variable, value))
+	}
+}
+
 func (s *SingularityClient) addOptionalRegistryAuthCredentials(req cproto.RunSpec, cmd *exec.Cmd) {
 	s.log.Trace("Checking for supplied credentials")
 	if req.Registry != nil {
@@ -406,15 +442,6 @@ func capabilitiesToSingularityArgs(req cproto.RunSpec, args []string) []string {
 		args = append(args, "--drop-caps", strings.Join(req.HostConfig.CapDrop, ","))
 	}
 	return args
-}
-
-func addEnvironmentValueIfSet(variables []string, cmd *exec.Cmd) {
-	for _, variable := range variables {
-		setting := os.Getenv(variable)
-		if setting != "" {
-			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", variable, setting))
-		}
-	}
 }
 
 // ReattachContainer implements container.ContainerRuntime.

@@ -85,7 +85,7 @@ html_theme_options = {
         "image_dark": "assets/images/logo-determined-ai-white.svg",
     },
     "switcher": {
-        "json_url": "_static/version-switcher/versions.json",
+        "json_url": "https://docs.determined.ai/latest/_static/version-switcher/versions.json",
         "version_match": version,
     },
     "repository_url": "https://github.com/determined-ai/determined",

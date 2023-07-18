@@ -2,10 +2,14 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"regexp"
 	"time"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -20,6 +24,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/project"
+	pkgTemplate "github.com/determined-ai/determined/master/internal/template"
+	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -260,9 +266,39 @@ func getCreateExperimentsProject(
 	return p, nil
 }
 
+// unmarshalTemplateConfig unmarshals the template config into `o` and returns api-ready errors.
+func (m *Master) unmarshalTemplateConfig(ctx context.Context, templateName string,
+	user *model.User, out interface{}, disallowUnknownFields bool,
+) error {
+	notFoundErr := status.Errorf(codes.InvalidArgument,
+		api.NotFoundErrMsg("temlpate", fmt.Sprint(templateName)))
+	template, err := m.db.TemplateByName(templateName)
+	if err != nil {
+		return notFoundErr
+	}
+	permErr, err := pkgTemplate.AuthZProvider.Get().CanViewTemplate(ctx,
+		user, model.AccessScopeID(template.WorkspaceID))
+	if err != nil {
+		return err
+	}
+	if permErr != nil {
+		return notFoundErr
+	}
+	if disallowUnknownFields {
+		err = yaml.Unmarshal(template.Config, out, yaml.DisallowUnknownFields)
+	} else {
+		err = yaml.Unmarshal(template.Config, out)
+	}
+	if err != nil {
+		return errors.Wrapf(err, "yaml.Unmarshal(template=%s)", templateName)
+	}
+	return nil
+}
+
 func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user *model.User) (
 	*model.Experiment, expconf.ExperimentConfig, *projectv1.Project, *tasks.TaskSpec, error,
 ) {
+	ctx := context.TODO()
 	// Read the config as the user provided it.
 	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(req.Config))
 	if err != nil {
@@ -271,26 +307,23 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 
 	// Apply the template that the user specified.
 	if req.Template != nil {
-		template, terr := m.db.TemplateByName(*req.Template)
-		if terr != nil {
-			return nil, config, nil, nil, errors.Wrapf(
-				terr, "TemplateByName(%q)", *req.Template,
-			)
-		}
 		var tc expconf.ExperimentConfig
-		if yerr := yaml.Unmarshal(template.Config, &tc, yaml.DisallowUnknownFields); yerr != nil {
-			return nil, config, nil, nil, errors.Wrapf(
-				terr, "yaml.Unmarshal(template=%q)", *req.Template,
-			)
+		err := m.unmarshalTemplateConfig(ctx, *req.Template, user, &tc, true)
+		if err != nil {
+			return nil, config, nil, nil, err
 		}
-		// Merge the template into the config.
 		config = schemas.Merge(config, tc)
 	}
 
 	defaulted := schemas.WithDefaults(config)
 	resources := defaulted.Resources()
+	workspaceModel, err := workspace.WorkspaceByName(context.TODO(), defaulted.Workspace())
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		return nil, config, nil, nil, err
+	}
+	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system, resources.ResourcePool(), resources.SlotsPerTrial())
+		m.system, resources.ResourcePool(), workspaceID, resources.SlotsPerTrial())
 	if err != nil {
 		return nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
 	}
@@ -322,7 +355,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 	if err = db.Bun().NewSelect().Model(w).
 		Where("id = ?", project.WorkspaceId).
 		Column("checkpoint_storage_config").
-		Scan(context.TODO()); err != nil {
+		Scan(ctx); err != nil {
 		return nil, config, nil, nil, err
 	}
 	config.RawCheckpointStorage = schemas.Merge(

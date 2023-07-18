@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
@@ -123,27 +124,27 @@ func (a *apiServer) enrichTrialState(trials ...*trialv1.Trial) error {
 	}
 
 	// Collect state information by TaskID
-	byTaskID := make(map[model.TaskID]experimentv1.State, len(tasks))
+	byTaskID := make(map[model.TaskID]trialv1.State, len(tasks))
 	for _, task := range tasks {
 		switch {
 		case task.Running:
-			byTaskID[task.Task] = experimentv1.State_STATE_RUNNING
+			byTaskID[task.Task] = trialv1.State_STATE_RUNNING
 		case task.Starting:
-			byTaskID[task.Task] = experimentv1.State_STATE_STARTING
+			byTaskID[task.Task] = trialv1.State_STATE_STARTING
 		case task.Pulling:
-			byTaskID[task.Task] = experimentv1.State_STATE_PULLING
+			byTaskID[task.Task] = trialv1.State_STATE_PULLING
 		default:
-			byTaskID[task.Task] = experimentv1.State_STATE_QUEUED
+			byTaskID[task.Task] = trialv1.State_STATE_QUEUED
 		}
 	}
 
 	// Active trials converted to Queued, Pulling, Starting, or Running
 	for _, trial := range trials {
-		if trial.State == experimentv1.State_STATE_ACTIVE {
+		if trial.State == trialv1.State_STATE_ACTIVE {
 			if setState, ok := byTaskID[model.TaskID(trial.TaskId)]; ok {
 				trial.State = setState
 			} else {
-				trial.State = experimentv1.State_STATE_QUEUED
+				trial.State = trialv1.State_STATE_QUEUED
 			}
 		}
 	}
@@ -628,7 +629,7 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
 
-	if resp.Trial.State == experimentv1.State_STATE_ACTIVE {
+	if resp.Trial.State == trialv1.State_STATE_ACTIVE {
 		if err := a.enrichTrialState(resp.Trial); err != nil {
 			return nil, err
 		}
@@ -675,8 +676,7 @@ func (a *apiServer) parseMetricTypeArgs(
 
 func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 	metricType model.MetricType, maxDatapoints int, startBatches int,
-	endBatches int, logScale bool,
-	timeSeriesFilter *commonv1.PolymorphicFilter,
+	endBatches int, timeSeriesFilter *commonv1.PolymorphicFilter,
 	metricIds []string,
 ) ([]*apiv1.DownsampledMetrics, error) {
 	var startTime time.Time
@@ -722,20 +722,13 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 			metricTypeToNames[metricType] = metricNames
 		}
 	}
-	if len(metricIds) > 0 {
-		for _, metricID := range metricIds {
-			nameAndType := strings.SplitN(metricID, ".", 2)
-			if len(nameAndType) < 2 {
-				return nil, fmt.Errorf(`error fetching time series of validation metrics
-					invalid metricId %v metrics must be in the form metric_type.metric_name`,
-					metricID,
-				)
-			}
-			metricIDName := nameAndType[1]
-			metricIDType := model.MetricType(nameAndType[0])
-
-			metricTypeToNames[metricIDType] = append(metricTypeToNames[metricIDType], metricIDName)
+	for _, metricIDStr := range metricIds {
+		metricID, err := model.DeserializeMetricIdentifier(metricIDStr)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error parsing metric id %s", metricIDStr)
 		}
+		metricTypeToNames[metricID.Type] = append(metricTypeToNames[metricID.Type],
+			string(metricID.Name))
 	}
 
 	getDownSampledMetric := func(aMetricNames []string, aMetricType model.MetricType,
@@ -761,8 +754,17 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		return nil, nil
 	}
 
-	for metricType, metricNames := range metricTypeToNames {
-		metric, err := getDownSampledMetric(metricNames, metricType)
+	metricTypes := make([]model.MetricType, 0, len(metricTypeToNames))
+	for metricType := range metricTypeToNames {
+		metricTypes = append(metricTypes, metricType)
+	}
+	sort.Slice(metricTypes, func(i, j int) bool {
+		return metricTypes[i] < metricTypes[j]
+	})
+
+	for _, mType := range metricTypes {
+		metricNames := metricTypeToNames[mType]
+		metric, err := getDownSampledMetric(metricNames, mType)
 		if err != nil {
 			return nil, err
 		}
@@ -772,38 +774,6 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 	}
 
 	return metrics, nil
-}
-
-func (a *apiServer) SummarizeTrial(ctx context.Context,
-	req *apiv1.SummarizeTrialRequest,
-) (*apiv1.SummarizeTrialResponse, error) {
-	var metricIds []string
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-		return nil, err
-	}
-
-	resp := &apiv1.SummarizeTrialResponse{Trial: &trialv1.Trial{}}
-	if err := a.m.db.QueryProto("get_trial_basic", resp.Trial, req.TrialId); err != nil {
-		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
-	}
-
-	//nolint:staticcheck // SA1019: backward compatibility
-	metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
-	if err != nil {
-		return nil, err
-	}
-
-	tsample, err := a.multiTrialSample(req.TrialId, req.MetricNames, metricType,
-		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-		(req.Scale == apiv1.Scale_SCALE_LOG),
-		nil, metricIds)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed sampling")
-	}
-	resp.Metrics = tsample
-
-	return resp, nil
 }
 
 func (a *apiServer) CompareTrials(ctx context.Context,
@@ -832,7 +802,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 
 		tsample, err := a.multiTrialSample(trialID, req.MetricNames, metricType,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-			(req.Scale == apiv1.Scale_SCALE_LOG), req.TimeSeriesFilter, req.MetricIds)
+			req.TimeSeriesFilter, req.MetricIds)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed sampling")
 		}
@@ -1149,14 +1119,11 @@ func (a *apiServer) AllocationPreemptionSignal(
 	}
 
 	allocationID := model.AllocationID(req.AllocationId)
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
-	if err != nil {
-		return nil, err
+	ref := allocationmap.GetAllocation(allocationID)
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
@@ -1185,14 +1152,12 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 	}
 
 	allocationID := model.AllocationID(req.AllocationId)
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
-	if err != nil {
-		return nil, err
+
+	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
@@ -1249,18 +1214,15 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 	}
 	allocationID := model.AllocationID(req.AllocationId)
 
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
-	if err != nil {
-		return nil, err
+	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
-	if err := a.ask(handler.Address(), task.MarkResourcesDaemon{
+	if err := a.ask(ref.Address(), task.MarkResourcesDaemon{
 		AllocationID: allocationID,
 		ResourcesID:  sproto.ResourcesID(req.ResourcesId),
 	}, nil); err != nil {
@@ -1473,27 +1435,23 @@ func (a *apiServer) AllocationRendezvousInfo(
 
 	allocationID := model.AllocationID(req.AllocationId)
 	resourcesID := sproto.ResourcesID(req.ResourcesId)
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
-	if err != nil {
-		return nil, err
+	ref := allocationmap.GetAllocation(allocationID)
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
 		return nil, err
 	}
 
 	var w task.RendezvousWatcher
-	if err = a.ask(handler.Address(), task.WatchRendezvousInfo{
+	if err := a.ask(ref.Address(), task.WatchRendezvousInfo{
 		ResourcesID: resourcesID,
 	}, &w); err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(
-		handler.Address(), task.UnwatchRendezvousInfo{
-			ResourcesID: resourcesID,
-		})
+	defer a.m.system.TellAt(ref.Address(), task.UnwatchRendezvousInfo{
+		ResourcesID: resourcesID,
+	})
 
 	select {
 	case rsp := <-w.C:

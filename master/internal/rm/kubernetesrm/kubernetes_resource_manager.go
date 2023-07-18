@@ -85,25 +85,61 @@ func (k ResourceManager) GetResourcePoolRef(
 func (k ResourceManager) ResolveResourcePool(
 	ctx actor.Messenger,
 	name string,
+	workspaceID int,
 	slots int,
 ) (string, error) {
+	ctxTODO := context.TODO()
+	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctxTODO, workspaceID)
+	if err != nil {
+		return "", err
+	}
 	// If the resource pool isn't set, fill in the default at creation time.
 	if name == "" && slots == 0 {
-		req := sproto.GetDefaultAuxResourcePoolRequest{}
-		resp, err := k.GetDefaultAuxResourcePool(ctx, req)
-		if err != nil {
-			return "", fmt.Errorf("defaulting to aux pool: %w", err)
+		if defaultAuxPool == "" {
+			req := sproto.GetDefaultAuxResourcePoolRequest{}
+			resp, err := k.GetDefaultAuxResourcePool(ctx, req)
+			if err != nil {
+				return "", fmt.Errorf("defaulting to aux pool: %w", err)
+			}
+			return resp.PoolName, nil
 		}
-		return resp.PoolName, nil
+		if err := k.ValidateResourcePool(ctx, defaultAuxPool); err != nil {
+			return "", fmt.Errorf("validating default aux pool: %w", err)
+		}
+		return defaultAuxPool, nil
 	}
 
 	if name == "" && slots >= 0 {
-		req := sproto.GetDefaultComputeResourcePoolRequest{}
-		resp, err := k.GetDefaultComputeResourcePool(ctx, req)
-		if err != nil {
-			return "", fmt.Errorf("defaulting to compute pool: %w", err)
+		if defaultComputePool == "" {
+			req := sproto.GetDefaultComputeResourcePoolRequest{}
+			resp, err := k.GetDefaultComputeResourcePool(ctx, req)
+			if err != nil {
+				return "", fmt.Errorf("defaulting to compute pool: %w", err)
+			}
+			return resp.PoolName, nil
 		}
-		return resp.PoolName, nil
+		if err := k.ValidateResourcePool(ctx, defaultComputePool); err != nil {
+			return "", fmt.Errorf("validating default compute pool: %w", err)
+		}
+		return defaultComputePool, nil
+	}
+
+	poolNames, _, err := db.ReadRPsAvailableToWorkspace(
+		context.TODO(), int32(workspaceID), 0, -1, config.GetMasterConfig().ResourcePools)
+	if err != nil {
+		return "", err
+	}
+	found := false
+	for _, poolName := range poolNames {
+		if name == poolName {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return "", fmt.Errorf(
+			"resource pool %s does not exist or is not available to workspace ID %d",
+			name, workspaceID)
 	}
 
 	if err := k.ValidateResourcePool(ctx, name); err != nil {
@@ -297,13 +333,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 
 	case sproto.RecoverJobPosition:
 		k.forwardToPool(ctx, msg.ResourcePool, msg)
-
-	case sproto.GetAllocationHandler:
-		if handler, err := k.aggregateTaskHandler(k.forwardToAllPools(ctx, msg)); err != nil {
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(handler)
-		}
 
 	case sproto.GetAllocationSummary:
 		if summary := k.aggregateTaskSummary(k.forwardToAllPools(ctx, msg)); summary != nil {

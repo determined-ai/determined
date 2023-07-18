@@ -64,10 +64,7 @@ def project_by_name(
     w = workspace_by_name(sess, workspace_name)
     p = bindings.get_GetWorkspaceProjects(sess, id=w.id, name=project_name).projects
     if len(p) == 0:
-        raise errors.EmptyResultException(
-            f'Did not find a project with name "{project_name}"'
-            f' in workspace "{workspace_name}".'
-        )
+        raise cli.not_found_errs("project", project_name, sess)
     return (w, p[0])
 
 

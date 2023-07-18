@@ -163,6 +163,7 @@ WHERE id = $1`, id, restartCount); err != nil {
 func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	ctx context.Context, tx *sqlx.Tx, trialID int,
 ) error {
+	// DISCUSS: can we limit this to recompute only a single metric type?
 	updatedSummaryMetrics := model.JSONObj{}
 	metricTypes := []model.MetricType{}
 	if err := tx.SelectContext(ctx, &metricTypes, `
@@ -263,16 +264,7 @@ func (db *PgDB) _addTrialMetricsTx(
 	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mType model.MetricType,
 ) (rollbacks int, err error) {
 	isValidation := mType == model.ValidationMetricType
-	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
-	metricsBody := map[string]interface{}{
-		metricsJSONPath: m.Metrics.AvgMetrics,
-		"batch_metrics": m.Metrics.BatchMetrics,
-	}
-	if isValidation {
-		metricsBody = map[string]interface{}{
-			metricsJSONPath: m.Metrics.AvgMetrics,
-		}
-	}
+	mBody := newMetricsBody(m.Metrics.AvgMetrics, m.Metrics.BatchMetrics, mType)
 
 	if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
 		return rollbacks, err
@@ -290,8 +282,8 @@ func (db *PgDB) _addTrialMetricsTx(
 		return rollbacks, fmt.Errorf("error getting summary metrics from trials: %w", err)
 	}
 
-	metricRowID, err := db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
-		m.TrialId, m.StepsCompleted, mType)
+	metricRowID, addedMetrics, err := db.addMetricsWithMerge(ctx, tx,
+		mBody, m.TrialRunId, m.TrialId, m.StepsCompleted, mType)
 	if err != nil {
 		return rollbacks, err
 	}
@@ -317,7 +309,7 @@ func (db *PgDB) _addTrialMetricsTx(
 		}
 		summaryMetrics[summaryMetricsJSONPath] = calculateNewSummaryMetrics(
 			summaryMetrics[summaryMetricsJSONPath].(map[string]any),
-			m.Metrics.AvgMetrics,
+			addedMetrics.AvgMetrics,
 		)
 
 		var latestValidationID *int
@@ -442,6 +434,8 @@ func replaceSpecialFloatsWithString(v any) any {
 var pythonISOFormatRegex = regexp.MustCompile(
 	`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$`)
 
+// calculateNewSummaryMetrics calculates new summary metrics from the newly added
+// metrics and the existing summary metrics.
 func calculateNewSummaryMetrics(
 	summaryMetrics model.JSONObj, metrics *structpb.Struct,
 ) model.JSONObj {
@@ -551,6 +545,7 @@ func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
 	return nil
 }
 
+// checkTrialRunID checks that the trial is currently on the given run.
 func checkTrialRunID(ctx context.Context, tx *sqlx.Tx, trialID, runID int32) error {
 	var cRunID int
 	switch err := tx.QueryRowxContext(ctx, `

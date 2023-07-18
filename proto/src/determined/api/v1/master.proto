@@ -27,7 +27,13 @@ message GetMasterRequest {}
 message GetMasterResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "version", "master_id", "cluster_id", "cluster_name" ]
+      required: [
+        "version",
+        "master_id",
+        "cluster_id",
+        "cluster_name",
+        "strict_job_queue_control"
+      ]
     }
   };
   // Different kinds of Determined Cloud offerings
@@ -63,6 +69,8 @@ message GetMasterResponse {
   repeated string feature_switches = 12;
   // Feature flag for user management.
   bool user_management_enabled = 13;
+  // Feature flag for strict job queue control.
+  bool strict_job_queue_control = 14;
 }
 
 // Get telemetry information.

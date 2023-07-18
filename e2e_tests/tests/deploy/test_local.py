@@ -13,9 +13,8 @@ import pytest
 from determined.common.api import bindings
 from tests import config as conf
 from tests import experiment as exp
-from tests.api_utils import ADMIN_CREDENTIALS
 
-from ..cluster.test_users import logged_in_user
+from ..cluster.test_users import ADMIN_CREDENTIALS, logged_in_user
 
 
 def det_deploy(subcommand: List) -> None:

@@ -1,4 +1,8 @@
 /* stylelint-disable */
+.ipynb-renderer-root {
+  background-color: var(--theme-surface);
+  padding: 8px;
+}
 .ipynb-renderer-root div#notebook {
   font-family: sans-serif;
   font-size: 13pt;

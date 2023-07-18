@@ -12,8 +12,6 @@ import (
 // ResourceManager is an interface for a resource manager, which can allocate and manage resources.
 type ResourceManager interface {
 	// Basic functionality
-	// Returns an error if the allocation ID is not able to be found.
-	GetAllocationHandler(actor.Messenger, sproto.GetAllocationHandler) (*actor.Ref, error)
 	GetAllocationSummary(
 		actor.Messenger,
 		sproto.GetAllocationSummary,
@@ -62,6 +60,7 @@ type ResourceManager interface {
 	ResolveResourcePool(
 		ctx actor.Messenger,
 		name string,
+		workspace,
 		slots int,
 	) (string, error)
 	ValidateResourcePoolAvailability(

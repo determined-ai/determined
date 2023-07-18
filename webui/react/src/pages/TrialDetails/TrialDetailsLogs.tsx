@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import LogViewer, {
   FetchConfig,
@@ -38,6 +38,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const { ui } = useUI();
   const [filterOptions, setFilterOptions] = useState<Filters>({});
   const confirm = useConfirm();
+  const canceler = useRef(new AbortController());
 
   const trialSettingsConfig = useMemo(() => settingsConfigForTrial(trial?.id || -1), [trial?.id]);
   const { resetSettings, settings, updateSettings } = useSettings<Settings>(trialSettingsConfig);
@@ -55,6 +56,10 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   const handleFilterChange = useCallback(
     (filters: Filters) => {
+      canceler.current.abort();
+      const newCanceler = new AbortController();
+      canceler.current = newCanceler;
+
       updateSettings({
         agentId: filters.agentIds,
         containerId: filters.containerIds,
@@ -149,7 +154,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         options.timestampAfter ? new Date(options.timestampAfter) : undefined,
         options.orderBy as OrderBy,
         settings.searchText,
-        { signal: config.canceler.signal },
+        { signal: canceler.current.signal },
       );
     },
     [settings, trial?.id],
@@ -159,14 +164,17 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     if (ui.isPageHidden) return;
     if (!trial?.id) return;
 
-    const canceler = new AbortController();
+    const fieldCanceler = new AbortController();
 
     readStream(
-      detApi.StreamingExperiments.trialLogsFields(trial.id, true, { signal: canceler.signal }),
+      detApi.StreamingExperiments.trialLogsFields(trial.id, true, { signal: fieldCanceler.signal }),
       (event) => setFilterOptions(event as Filters),
     );
 
-    return () => canceler.abort();
+    return () => {
+      fieldCanceler.abort();
+      canceler.current.abort();
+    };
   }, [trial?.id, ui.isPageHidden]);
 
   const logFilters = (

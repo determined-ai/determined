@@ -279,16 +279,16 @@ resource is the number of steps taken in each binary search (i.e., the number of
    decrease in their population size. The ``eta`` parameter in `the ASHA paper
    <https://arxiv.org/abs/1810.05934>`_. Default: ``2``.
 
--  ``--search_range_factor``: The inclusive, initial ``hi`` bound on the binary search is set by an
+-  ``--search-range-factor``: The inclusive, initial ``hi`` bound on the binary search is set by an
    approximate computation (the ``lo`` bound is always initialized to ``1``). This parameter adjusts
-   the ``hi`` bound by a factor of ``search_range_factor``. Default: ``1.0``.
+   the ``hi`` bound by a factor of ``search-range-factor``. Default: ``1.0``.
 
 ``binary`` Options
 ==================
 
 The ``binary`` search algorithm performs a straightforward search over the batch size for a
 collection of randomly-drawn DS configurations. A single option is available for this search:
-``--search_range_factor``, which plays precisely the same role as in the :ref:`asha-options` section
+``--search-range-factor``, which plays precisely the same role as in the :ref:`asha-options` section
 above.
 
 ``random`` Options
@@ -299,7 +299,7 @@ semi-random search over the batch size.
 
 ``random`` can be configured with the following flags:
 
--  ``--trials_per_random_config``: The maximum batch size configuration which will tested for a
+-  ``--trials-per-random-config``: The maximum batch size configuration which will tested for a
    given DS configuration. Default: ``5``.
 
 -  ``--early-stopping``: If provided, the experiment will terminate if a new best-configuration has

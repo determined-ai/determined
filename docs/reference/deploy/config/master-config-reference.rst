@@ -87,9 +87,9 @@ configure different container images for NVIDIA GPU tasks using the ``cuda`` key
 Determined 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using the ``rocm`` key.
 Default values:
 
--  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2`` for NVIDIA GPUs.
--  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.2`` for ROCm.
--  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.21.2`` for CPUs.
+-  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.23.3`` for NVIDIA GPUs.
+-  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.23.3`` for ROCm.
+-  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.23.3`` for CPUs.
 
 ``environment_variables``
 =========================
@@ -1389,6 +1389,13 @@ Whether to enable RBAC in WebUI and CLI. When ``type`` is ``rbac``, defaults ``t
 =================================
 
 Assign a role to the user on workspace creation.
+
+``strict_job_queue_control``
+============================
+
+Restrict reordering of existing jobs through job queue to users with
+`PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE`. Requires Determined Enterprise Edition. Defaults to
+``false``.
 
 ``enabled``
 ===========

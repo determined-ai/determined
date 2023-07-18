@@ -17,21 +17,22 @@ hyperparameters:
     learning_rate: 1e-5
 entrypoint: >-
   python -m determined.launch.torch_distributed
-  python image_classification.py 
-  --dataset_name beans  
-  --output_dir ./beans_outputs/  
-  --remove_unused_columns False 
-  --do_train  
-  --do_eval 
+  python image_classification.py
+  --dataset_name beans
+  --output_dir ./beans_outputs/
+  --remove_unused_columns False
+  --do_train
+  --do_eval
   --max_steps 100
-  --per_device_train_batch_size 8 
-  --per_device_eval_batch_size 8 
-  --logging_strategy steps 
+  --per_device_train_batch_size 8
+  --per_device_eval_batch_size 8
+  --logging_strategy steps
   --logging_steps 10
   --evaluation_strategy steps
   --eval_steps 10
-  --save_total_limit 3 
+  --save_total_limit 3
   --seed 1337
   --save_strategy steps
   --save_steps 20
+  --trust_remote_code false
 max_restarts: 0

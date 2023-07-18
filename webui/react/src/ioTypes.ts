@@ -44,6 +44,43 @@ export class ValueofType<D extends { [key: string]: unknown }> extends io.Type<V
   }
 }
 
+class Float extends io.Type<number, number | string, unknown> {
+  readonly _tag: 'FloatType' = 'FloatType' as const;
+  constructor() {
+    super(
+      'float',
+      (u): u is number => io.number.is(u),
+      (u, c) => {
+        let u_ = u;
+        if (u === 'Infinity') {
+          u_ = Infinity;
+        }
+        if (u === '-Infinity') {
+          u_ = -Infinity;
+        }
+        if (u === 'NaN') {
+          u_ = NaN;
+        }
+        return io.number.validate(u_, c);
+      },
+      (f) => {
+        if (f === Infinity) {
+          return 'Infinity';
+        }
+        if (f === -Infinity) {
+          return '-Infinity';
+        }
+        if (Number.isNaN(f)) {
+          return 'NaN';
+        }
+        return io.number.encode(f);
+      },
+    );
+  }
+}
+
+export const float = new Float();
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ValueofC<D extends { [key: string]: unknown }> extends ValueofType<D> {}
 
@@ -118,9 +155,9 @@ export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
 const ioMetricSummary = io.type({
   count: optional(io.union([io.number, io.undefined])),
   last: optional(io.union([io.number, io.string, io.boolean])),
-  max: optional(io.number),
-  min: optional(io.number),
-  sum: optional(io.number),
+  max: optional(float),
+  min: optional(float),
+  sum: optional(float),
   type: io.union([
     io.literal('string'),
     io.literal('number'),
@@ -132,9 +169,9 @@ const ioMetricSummary = io.type({
   ]),
 });
 
-export const ioSummaryMetrics = io.type({
-  avg_metrics: io.union([io.record(io.string, ioMetricSummary), io.undefined]),
-  validation_metrics: io.union([io.record(io.string, ioMetricSummary), io.undefined]),
+export const ioSummaryMetrics = io.partial({
+  avg_metrics: io.record(io.string, ioMetricSummary),
+  validation_metrics: io.record(io.string, ioMetricSummary),
 });
 export type ioSummaryMetrics = io.TypeOf<typeof ioSummaryMetrics>;
 

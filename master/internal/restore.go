@@ -2,8 +2,11 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
+
+	"github.com/determined-ai/determined/master/internal/workspace"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -81,9 +84,15 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		)
 	}
 
+	workspaceModel, err := workspace.WorkspaceByName(context.TODO(), activeConfig.Workspace())
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		return err
+	}
+	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
 		m.system,
 		activeConfig.Resources().ResourcePool(),
+		workspaceID,
 		activeConfig.Resources().SlotsPerTrial(),
 	)
 	if err != nil {

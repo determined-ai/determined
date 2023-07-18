@@ -36,6 +36,7 @@ func (r *ResourceManager) GetResourcePoolRef(
 func (r *ResourceManager) ResolveResourcePool(
 	ctx actor.Messenger,
 	name string,
+	workspaceID,
 	slots int,
 ) (string, error) {
 	return name, nil
@@ -70,14 +71,6 @@ func (r *ResourceManager) ValidateResourcePool(ctx actor.Messenger, name string)
 // Ref gets the underlying RM actor, for backwards compatibility. This is deprecated.
 func (r *ResourceManager) Ref() *actor.Ref {
 	return r.ref
-}
-
-// GetAllocationHandler requests the allocation actor for the given allocation.
-func (r *ResourceManager) GetAllocationHandler(
-	ctx actor.Messenger,
-	msg sproto.GetAllocationHandler,
-) (resp *actor.Ref, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
 }
 
 // GetAllocationSummary requests a summary of the given allocation.

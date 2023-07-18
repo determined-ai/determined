@@ -17,6 +17,7 @@ interface Props {
   reorder?: boolean;
   sourceListTitle?: string;
   targetListTitle?: string;
+  persistentEntries?: string[]; // Entries still exist when clicking "Remove all"
 }
 
 const Transfer: React.FC<Props> = ({
@@ -26,6 +27,7 @@ const Transfer: React.FC<Props> = ({
   sourceListTitle = 'Source',
   targetListTitle = 'Target',
   reorder = true,
+  persistentEntries,
   onChange,
 }: Props) => {
   const [targetEntries, setTargetEntries] = useState<string[]>(
@@ -217,7 +219,7 @@ const Transfer: React.FC<Props> = ({
             onClick={() => {
               moveToLeft(filteredVisibleEntries);
               // removing everything was keeping the columns out of sync with the UI...
-              moveToRight(['id', 'name']);
+              if (persistentEntries && persistentEntries.length > 0) moveToRight(persistentEntries);
             }}>
             Remove All
           </Link>

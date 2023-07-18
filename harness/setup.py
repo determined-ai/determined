@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="determined",
-    version="0.23.2-dev0",
+    version="0.23.3-dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -34,6 +34,7 @@ setuptools.setup(
         "azure-storage-blob",
         "termcolor>=1.1.0",
         "boto3",
+        "oschmod;platform_system=='Windows'",
         # CLI:
         "argcomplete>=1.9.4",
         "gitpython>=3.1.3",

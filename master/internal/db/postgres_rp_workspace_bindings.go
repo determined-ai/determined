@@ -8,6 +8,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -23,6 +24,9 @@ type RPWorkspaceBinding struct {
 func AddRPWorkspaceBindings(ctx context.Context, workspaceIds []int32, poolName string,
 	resourcePools []config.ResourcePoolConfig,
 ) error {
+	if len(workspaceIds) == 0 {
+		return nil
+	}
 	// Check if pool exists
 	poolExists := false
 	for _, pool := range resourcePools {
@@ -53,6 +57,9 @@ func AddRPWorkspaceBindings(ctx context.Context, workspaceIds []int32, poolName 
 func RemoveRPWorkspaceBindings(ctx context.Context,
 	workspaceIds []int32, poolName string,
 ) error {
+	if len(workspaceIds) == 0 {
+		return nil
+	}
 	// throw error if any of bindings don't exist
 	for _, workspaceID := range workspaceIds {
 		var rpWorkspaceBindings []*RPWorkspaceBinding
@@ -163,6 +170,9 @@ func getPagedBunQuery(
 func OverwriteRPWorkspaceBindings(ctx context.Context,
 	workspaceIds []int32, poolName string, resourcePools []config.ResourcePoolConfig,
 ) error {
+	if len(workspaceIds) == 0 {
+		return nil
+	}
 	// Check if pool exists
 	poolExists := false
 	for _, pool := range resourcePools {
@@ -277,4 +287,16 @@ func ReadRPsAvailableToWorkspace(
 	}
 
 	return rpNames, pagination, nil
+}
+
+// GetDefaultPoolsForWorkspace returns the default compute and aux pools for a workspace.
+func GetDefaultPoolsForWorkspace(ctx context.Context, workspaceID int,
+) (computePool, auxPool string, err error) {
+	var target model.Workspace
+	err = Bun().NewSelect().Model(&target).Where("id = ?", workspaceID).Scan(ctx)
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		return "", "", err
+	}
+
+	return target.DefaultComputePool, target.DefaultAuxPool, nil
 }

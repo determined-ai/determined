@@ -292,12 +292,12 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 	case cproto.Running:
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Running)
+		p.informTaskResourcesStarted(ctx, getResourcesStartedForPod(p.pod, p.ports))
 		err := p.startPodLogStreamer(ctx)
 		if err != nil {
 			return err
 		}
 
-		p.informTaskResourcesStarted(ctx, getResourcesStartedForPod(p.pod, p.ports))
 	case cproto.Terminated:
 		exitCode, exitMessage, err := getExitCodeAndMessage(p.pod, p.containerNames)
 		if err != nil {

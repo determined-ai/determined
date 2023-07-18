@@ -26,6 +26,7 @@ type AuthZConfig struct {
 	// Removed: this option is removed and will not have any effect.
 	StrictNTSCEnabled      bool                         `json:"_strict_ntsc_enabled"`
 	AssignWorkspaceCreator AssignWorkspaceCreatorConfig `json:"workspace_creator_assign_role"`
+	StrictJobQueueControl  bool                         `json:"strict_job_queue_control"`
 }
 
 // DefaultAuthZConfig returns default authz config.
@@ -38,6 +39,7 @@ func DefaultAuthZConfig() *AuthZConfig {
 			Enabled: true,
 			RoleID:  2, // WorkspaceAdmin.
 		},
+		StrictJobQueueControl: false,
 	}
 }
 
@@ -78,9 +80,8 @@ func (a AssignWorkspaceCreatorConfig) Validate() []error {
 
 // IsRBACUIEnabled returns if the feature flag RBAC should be enabled.
 func (c AuthZConfig) IsRBACUIEnabled() bool {
-	_, isRBACCapable := knownAuthZTypes["rbac"]
 	if c.RBACUIEnabled != nil {
-		return *c.RBACUIEnabled && isRBACCapable
+		return *c.RBACUIEnabled
 	}
 	return c.Type != BasicAuthZType
 }

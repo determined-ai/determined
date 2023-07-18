@@ -30,6 +30,8 @@ import subprocess
 import sys
 from typing import Callable, Optional
 
+import requests
+
 import gql
 
 TEST = os.environ.get("RELEASE_TEST") == "1"
@@ -44,8 +46,11 @@ CHERRY_PICK_LABEL = "to-cherry-pick"
 NEEDS_TESTING_STATUS = "Needs testing"
 FIX_OPEN_STATUS = "Fix (open)"
 FIX_CONFLICT_STATUS = "Fix (conflict)"
+FIX_UNRELEASED_STATUS = "Fix (unreleased)"
+FIX_RELEASED_STATUS = "Fix (released)"
 
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
+CASPER_TOKEN = os.environ["CASPER_TOKEN"]
 
 
 def run(*args, check=True, quiet=False, **kwargs):
@@ -73,13 +78,25 @@ def make_issue_for_pr(issue_repo_id: str, pr_id: str) -> str:
     )["createIssue"]["issue"]["id"]
 
 
-def add_item_to_project(project_id: str, item_id: str, status: str) -> None:
+def get_project_status_ids(project_id: str, status: str):
     status_info = gql.get_status_field_info(project=project_id)["node"]["field"]
-    status_field_id = status_info["id"]
-    status_value_id = next(v["id"] for v in status_info["options"] if v["name"] == status)
+    field_id = status_info["id"]
+    value_id = next(v["id"] for v in status_info["options"] if v["name"] == status)
+    return field_id, value_id
+
+
+def add_item_to_project(project_id: str, item_id: str, status: str) -> None:
+    status_field_id, status_value_id = get_project_status_ids(project_id, status)
     item_id = gql.add_item_to_project(project=project_id, item=item_id)["addProjectV2ItemById"][
         "item"
     ]["id"]
+    gql.set_project_item_status(
+        project=project_id, item=item_id, field=status_field_id, value=status_value_id
+    )
+
+
+def set_project_item_status(project_id: str, item_id: str, status: str) -> None:
+    status_field_id, status_value_id = get_project_status_ids(project_id, status)
     gql.set_project_item_status(
         project=project_id, item=item_id, field=status_field_id, value=status_value_id
     )
@@ -111,13 +128,10 @@ def current_project_id() -> str:
 
 
 def cherry_pick_pr(pr_id: str) -> None:
-    if "determined-ee" in run_capture("git", "remote", "get-url", CLONED_REMOTE):
-        # TODO Add the separate logic for running EE-only cherry-picks.
-        print("Skipping EE PR, marking as conflicted for human attention")
-        add_item_to_project(current_project_id(), pr_id, FIX_CONFLICT_STATUS)
-        return
+    is_ee_pr = "determined-ee" in run_capture("git", "remote", "get-url", CLONED_REMOTE)
 
-    pr_commit = gql.get_pr_merge_commit(id=pr_id)["node"]["mergeCommit"]["oid"]
+    pr = gql.get_pr_merge_commit_and_url(id=pr_id)["node"]
+    pr_commit = pr["mergeCommit"]["oid"]
     print(f"Cherry-picking {pr_commit}")
 
     try:
@@ -128,7 +142,6 @@ def cherry_pick_pr(pr_id: str) -> None:
                 "git", "ls-remote", CLONED_REMOTE, "refs/heads/release-*"
             ).splitlines()
         )[len("refs/heads/") :]
-        ee_release_branch = f"{release_branch}-ee"
         print(f"Found release branch {release_branch}")
 
         run(
@@ -140,9 +153,7 @@ def cherry_pick_pr(pr_id: str) -> None:
             f"{release_branch}:{release_branch}",
         )
 
-        ee_remote = "ee"
-        run("git", "remote", "add", ee_remote, "https://github.com/determined-ai/determined-ee.git")
-        run("cat", ".git/config")
+        # Set up authentication to access EE.
         auth = base64.b64encode(f"x-access-token:{GITHUB_TOKEN}".encode()).decode()
         run(
             "git",
@@ -151,30 +162,45 @@ def cherry_pick_pr(pr_id: str) -> None:
             "http.https://github.com/.extraHeader",
             f"Authorization: Basic {auth}",
         )
-        run("git", "fetch", "--depth=2", ee_remote, f"{ee_release_branch}:{ee_release_branch}")
 
         # Perform both cherry-picks.
         run("git", "config", "user.email", "automation@determined.ai")
         run("git", "config", "user.name", "Determined CI")
         run("git", "checkout", release_branch)
         run("git", "cherry-pick", "-x", pr_commit)
-        run("git", "checkout", ee_release_branch)
-        run("git", "cherry-pick", "-x", pr_commit)
+        if not is_ee_pr:
+            ee_remote = "ee"
+            ee_release_branch = f"{release_branch}-ee"
+            run(
+                "git",
+                "remote",
+                "add",
+                ee_remote,
+                "https://github.com/determined-ai/determined-ee.git",
+            )
+            run("git", "fetch", "--depth=2", ee_remote, f"{ee_release_branch}:{ee_release_branch}")
+            run("git", "checkout", ee_release_branch)
+            run("git", "cherry-pick", "-x", pr_commit)
 
         # Perform both pushes only if both cherry-picks succeeded, so we don't
         # end up with the two branches in different states.
         run("git", "push", CLONED_REMOTE, f"{release_branch}:{release_branch}")
-        run("git", "push", ee_remote, f"{ee_release_branch}:{ee_release_branch}")
+        if not is_ee_pr:
+            run("git", "push", ee_remote, f"{ee_release_branch}:{ee_release_branch}")
 
-        print("Cherry-pick succeeded, adding tracking item for testing")
-        add_tracking_issue_to_project(current_project_id(), pr_id, NEEDS_TESTING_STATUS)
+        print("Cherry-pick succeeded, updating item status")
+        set_project_item_status(current_project_id(), pr_id, FIX_UNRELEASED_STATUS)
     except subprocess.CalledProcessError:
         import traceback
 
         traceback.print_exc()
         print("Cherry-pick failed, adding PR as conflicted")
-        # TODO Notify a human.
         add_item_to_project(current_project_id(), pr_id, FIX_CONFLICT_STATUS)
+        requests.post(
+            "https://casper.internal.infra.determined.ai/hubot/conflict",
+            headers={"X-Casper-Token": CASPER_TOKEN},
+            json={"url": pr["url"]},
+        )
 
 
 class Actions:
@@ -187,9 +213,9 @@ class Actions:
             cherry_pick_pr(pr_id)
         else:
             title = gql.get_pr_title(id=pr_id)["node"]["title"]
-            if re.match("(feat|fix):", title) is not None:
+            if re.match(r"(feat|fix)\S*:", title, re.IGNORECASE) is not None:
                 print("Adding feat/fix PR")
-            elif re.match("[a-z]+:", title) is not None:
+            elif re.match(r"\S+:", title, re.IGNORECASE) is not None:
                 print("Skipping non-feat/fix PR")
                 return
             else:
@@ -231,8 +257,25 @@ class Actions:
     def cherry_pick_conflict_resolved(pr_id: str):
         # TODO Use Git to confirm the cherry-pick was done.
         project_id = current_project_id()
-        gql.delete_project_item(project=project_id, item=pr_id)
-        add_tracking_issue_to_project(project_id, pr_id, NEEDS_TESTING_STATUS)
+        set_project_item_status(project_id, pr_id, FIX_UNRELEASED_STATUS)
+
+    @staticmethod
+    def release_unreleased_prs():
+        after_cursor = None
+        project = current_project_id()
+        while True:
+            items = gql.list_project_prs(project=project, after=after_cursor)["node"]["items"]
+            print("batch:", len(items["nodes"]))
+            for item in items["nodes"]:
+                if item["fieldValueByName"]["name"] == FIX_UNRELEASED_STATUS and item["content"]:
+                    print(project, item["content"])
+                    add_tracking_issue_to_project(
+                        project, item["content"]["id"], NEEDS_TESTING_STATUS
+                    )
+                    set_project_item_status(project, item["id"], FIX_RELEASED_STATUS)
+            if not items["pageInfo"]["hasNextPage"]:
+                break
+            after_cursor = items["pageInfo"]["endCursor"]
 
 
 def main(args):

@@ -1,8 +1,6 @@
 import { sha512 } from 'js-sha512';
 
 import { globalStorage } from 'globalStorage';
-import { decodeTrialsCollection } from 'pages/TrialsComparison/api';
-import { TrialsCollection } from 'pages/TrialsComparison/Collections/collections';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
@@ -47,7 +45,6 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
     Tasks: new Api.TasksApi(config),
     Templates: new Api.TemplatesApi(config),
     TensorBoards: new Api.TensorboardsApi(config),
-    TrialsComparison: new Api.TrialComparisonApi(config),
     Users: new Api.UsersApi(config),
     Webhooks: new Api.WebhooksApi(config),
     Workspaces: new Api.WorkspacesApi(config),
@@ -481,88 +478,50 @@ export const getResourceAllocationAggregated: DetApi<
   },
 };
 
-/* Trials */
-export const queryTrials: DetApi<
-  Api.V1QueryTrialsRequest,
-  Api.V1QueryTrialsResponse,
-  Api.V1QueryTrialsResponse
+export const getResourcePoolBindings: DetApi<
+  Service.GetResourcePoolBindingsParams,
+  Api.V1ListWorkspacesBoundToRPResponse,
+  Api.V1ListWorkspacesBoundToRPResponse
 > = {
-  name: 'queryTrials',
-  postProcess: (response: Api.V1QueryTrialsResponse): Api.V1QueryTrialsResponse => {
+  name: 'getResourcePoolBindings',
+  postProcess: (response) => {
     return response;
   },
-  request: (params: Api.V1QueryTrialsRequest) => {
-    return detApi.TrialsComparison.queryTrials({
-      ...params,
-      limit: params?.limit ? 3 * params.limit : 30,
-    });
-  },
+  request: (params, options) =>
+    detApi.Internal.listWorkspacesBoundToRP(params.resourcePoolName, undefined, undefined, options),
 };
 
-export const updateTrialTags: DetApi<
-  Api.V1UpdateTrialTagsRequest,
-  Api.V1UpdateTrialTagsResponse,
-  Api.V1UpdateTrialTagsResponse
+export const deleteResourcePoolBindings: DetApi<
+  Service.ModifyResourcePoolBindingsParams,
+  Api.V1UnbindRPFromWorkspaceResponse,
+  void
 > = {
-  name: 'updateTrialTags',
-  postProcess: (response: Api.V1UpdateTrialTagsResponse) => {
-    return { rowsAffected: response.rowsAffected };
-  },
-  request: (params: Api.V1UpdateTrialTagsRequest) => {
-    return detApi.TrialsComparison.updateTrialTags(params);
-  },
+  name: 'deleteResourcePoolBindings',
+  postProcess: noOp,
+  request: (params, options) =>
+    detApi.Internal.unbindRPFromWorkspace(params.resourcePoolName, params, options),
 };
 
-export const createTrialCollection: DetApi<
-  Api.V1CreateTrialsCollectionRequest,
-  Api.V1CreateTrialsCollectionResponse,
-  TrialsCollection | undefined
+export const addResourcePoolBindings: DetApi<
+  Service.ModifyResourcePoolBindingsParams,
+  Api.V1BindRPToWorkspaceResponse,
+  void
 > = {
-  name: 'createTrialsCollection',
-  postProcess: (response: Api.V1CreateTrialsCollectionResponse) =>
-    response.collection ? decodeTrialsCollection(response.collection) : undefined,
-  request: (params: Api.V1CreateTrialsCollectionRequest) => {
-    return detApi.TrialsComparison.createTrialsCollection(params);
-  },
+  name: 'addResourcePoolBindings',
+  postProcess: noOp,
+  request: (params, options) =>
+    detApi.Internal.bindRPToWorkspace(params.resourcePoolName, params, options),
 };
 
-export const getTrialsCollections: DetApi<
-  number,
-  Api.V1GetTrialsCollectionsResponse,
-  Api.V1GetTrialsCollectionsResponse
+export const overwriteResourcePoolBindings: DetApi<
+  Service.ModifyResourcePoolBindingsParams,
+  Api.V1OverwriteRPWorkspaceBindingsResponse,
+  void
 > = {
-  name: 'getTrialsCollection',
-  postProcess: (response: Api.V1GetTrialsCollectionsResponse) => {
-    return { collections: response.collections };
-  },
-  request: (projectId: number) => {
-    return detApi.TrialsComparison.getTrialsCollections(projectId);
-  },
-};
-
-export const patchTrialsCollection: DetApi<
-  Api.V1PatchTrialsCollectionRequest,
-  Api.V1PatchTrialsCollectionResponse,
-  TrialsCollection | undefined
-> = {
-  name: 'patchTrialsCollection',
-  postProcess: (response: Api.V1PatchTrialsCollectionResponse) =>
-    response.collection ? decodeTrialsCollection(response.collection) : undefined,
-  request: (params: Api.V1PatchTrialsCollectionRequest) => {
-    return detApi.TrialsComparison.patchTrialsCollection(params);
-  },
-};
-
-export const deleteTrialsCollection: DetApi<
-  number,
-  Api.V1DeleteTrialsCollectionResponse,
-  Api.V1DeleteTrialsCollectionResponse
-> = {
-  name: 'deleteTrialsCollection',
-  postProcess: (response: Api.V1DeleteTrialsCollectionResponse) => response,
-  request: (id: number) => {
-    return detApi.TrialsComparison.deleteTrialsCollection(id);
-  },
+  name: 'overwriteResourcePoolBindings',
+  postProcess: noOp,
+  request: (params, options) =>
+    detApi.Internal.overwriteRPWorkspaceBindings(params.resourcePoolName, params, options),
 };
 
 /* Experiment */
@@ -991,7 +950,6 @@ export const timeSeries: DetApi<
       params.endBatches,
       params.metricType ? Type.metricTypeParamMap[params.metricType] : 'METRIC_TYPE_UNSPECIFIED',
       undefined,
-      params.scale === Type.Scale.Log ? 'SCALE_LOG' : 'SCALE_LINEAR',
     ),
 };
 
@@ -1332,7 +1290,7 @@ export const getWorkspaces: DetApi<
 };
 
 export const getWorkspace: DetApi<
-  Service.GetWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1GetWorkspaceResponse,
   Type.Workspace
 > = {
@@ -1340,7 +1298,7 @@ export const getWorkspace: DetApi<
   postProcess: (response) => {
     return decoder.mapV1Workspace(response.workspace);
   },
-  request: (params) => detApi.Workspaces.getWorkspace(params.id),
+  request: (params) => detApi.Workspaces.getWorkspace(params.workspaceId),
 };
 
 export const createWorkspace: DetApi<
@@ -1401,13 +1359,13 @@ export const getWorkspaceProjects: DetApi<
 };
 
 export const deleteWorkspace: DetApi<
-  Service.DeleteWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1DeleteWorkspaceResponse,
   Type.DeletionStatus
 > = {
   name: 'deleteWorkspace',
   postProcess: decoder.mapDeletionStatus,
-  request: (params) => detApi.Workspaces.deleteWorkspace(params.id),
+  request: (params) => detApi.Workspaces.deleteWorkspace(params.workspaceId),
 };
 
 export const patchWorkspace: DetApi<
@@ -1429,39 +1387,51 @@ export const patchWorkspace: DetApi<
 };
 
 export const archiveWorkspace: DetApi<
-  Service.ArchiveWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1ArchiveWorkspaceResponse,
   void
 > = {
   name: 'archiveWorkspace',
   postProcess: noOp,
-  request: (params) => detApi.Workspaces.archiveWorkspace(params.id),
+  request: (params) => detApi.Workspaces.archiveWorkspace(params.workspaceId),
 };
 
 export const unarchiveWorkspace: DetApi<
-  Service.UnarchiveWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1UnarchiveWorkspaceResponse,
   void
 > = {
   name: 'unarchiveWorkspace',
   postProcess: noOp,
-  request: (params) => detApi.Workspaces.unarchiveWorkspace(params.id),
+  request: (params) => detApi.Workspaces.unarchiveWorkspace(params.workspaceId),
 };
 
-export const pinWorkspace: DetApi<Service.PinWorkspaceParams, Api.V1PinWorkspaceResponse, void> = {
-  name: 'pinWorkspace',
-  postProcess: noOp,
-  request: (params) => detApi.Workspaces.pinWorkspace(params.id),
-};
+export const pinWorkspace: DetApi<Service.ActionWorkspaceParams, Api.V1PinWorkspaceResponse, void> =
+  {
+    name: 'pinWorkspace',
+    postProcess: noOp,
+    request: (params) => detApi.Workspaces.pinWorkspace(params.workspaceId),
+  };
 
 export const unpinWorkspace: DetApi<
-  Service.UnpinWorkspaceParams,
+  Service.ActionWorkspaceParams,
   Api.V1UnpinWorkspaceResponse,
   void
 > = {
   name: 'unpinWorkspace',
   postProcess: noOp,
-  request: (params) => detApi.Workspaces.unpinWorkspace(params.id),
+  request: (params) => detApi.Workspaces.unpinWorkspace(params.workspaceId),
+};
+
+export const getAvailableResourcePools: DetApi<
+  Service.ActionWorkspaceParams,
+  Api.V1ListRPsBoundToWorkspaceResponse,
+  string[]
+> = {
+  name: 'getAvailableResourcePools',
+  postProcess: (response) => response.resourcePools ?? [],
+  request: (params, options) =>
+    detApi.Workspaces.listRPsBoundToWorkspace(params.workspaceId, undefined, undefined, options),
 };
 
 /* Projects */

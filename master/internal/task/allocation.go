@@ -72,8 +72,6 @@ type (
 		rendezvous *rendezvous
 		// proxy state
 		proxies []string
-		// active all gather state
-		allGather *allGather
 		// records whether the allocation has completed any all gathers.
 		allGatherFinished bool
 
@@ -106,9 +104,7 @@ type (
 		Containers map[sproto.ResourcesID][]cproto.Container
 	}
 	// AllocationReady marks an allocation as ready.
-	AllocationReady struct {
-		Message string
-	}
+	AllocationReady struct{}
 	// AllocationWaiting marks an allocation as waiting.
 	AllocationWaiting struct {
 		Message string
@@ -310,36 +306,6 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		default:
 			a.Error(ctx, actor.ErrUnexpectedMessage(ctx))
 		}
-	case WatchAllGather, UnwatchAllGather, allGatherTimeout:
-		if a.allGather == nil {
-			switch msg.(type) {
-			case WatchAllGather:
-				a.allGather = newAllGather(ctx)
-			case UnwatchAllGather, allGatherTimeout:
-				// Ignore without active all gather.
-				return nil
-			}
-		}
-
-		switch msg := ctx.Message().(type) {
-		case WatchAllGather:
-			watcher := a.allGather.watch(msg)
-			ctx.Respond(watcher)
-		case UnwatchAllGather:
-			a.allGather.unwatch(msg)
-		case allGatherTimeout:
-			if err := a.allGather.checkTimeout(msg); err != nil {
-				a.sendTaskLog(&model.TaskLog{Log: err.Error()})
-				ctx.Log().WithError(err).Error("performing all gather through master")
-			}
-		default:
-			return actor.ErrUnexpectedMessage(ctx)
-		}
-
-		if a.allGather.done() {
-			a.allGather = nil
-			a.allGatherFinished = true
-		}
 	case sproto.InvalidResourcesRequestError:
 		ctx.Tell(a.req.AllocationRef, msg)
 		a.Error(ctx, msg)
@@ -404,10 +370,7 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 		a.sendTaskLog(&model.TaskLog{
 			Log: fmt.Sprintf("%s was terminated: %s", a.req.Name, "allocation did not exit correctly"),
 		})
-		a.rm.Release(ctx, sproto.ResourcesReleased{
-			AllocationID:  a.req.AllocationID,
-			AllocationRef: ctx.Self(),
-		})
+		a.rm.Release(ctx, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
 	}
 }
 
@@ -639,9 +602,8 @@ func (a *Allocation) ResourcesStateChanged(
 		a.resources[msg.ResourcesID].Exited = msg.ResourcesStopped
 
 		a.rm.Release(ctx, sproto.ResourcesReleased{
-			AllocationID:  a.req.AllocationID,
-			AllocationRef: ctx.Self(),
-			ResourcesID:   &msg.ResourcesID,
+			AllocationID: a.req.AllocationID,
+			ResourcesID:  &msg.ResourcesID,
 		})
 
 		if err := a.resources[msg.ResourcesID].Persist(); err != nil {
@@ -871,8 +833,12 @@ func (a *Allocation) registerProxies(ctx *actor.Context, addresses []cproto.Addr
 		// We are keying on allocation id instead of container id. Revisit this when we need to
 		// proxy multi-container tasks or when containers are created prior to being
 		// assigned to an agent.
+		urlScheme := "http"
+		if a.req.ProxyTLS {
+			urlScheme = "https"
+		}
 		proxy.DefaultProxy.Register(pcfg.ServiceID, &url.URL{
-			Scheme: "http",
+			Scheme: urlScheme,
 			Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
 		}, pcfg.ProxyTCP, pcfg.Unauthenticated)
 		ctx.Log().Debugf("registered proxy id: %s, tcp: %v\n", pcfg.ServiceID, pcfg.ProxyTCP)
@@ -938,10 +904,7 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 	a.exited = true
 	exitReason := fmt.Sprintf("allocation terminated after %s", reason)
 	defer ctx.Tell(ctx.Self().Parent(), exit)
-	defer a.rm.Release(ctx, sproto.ResourcesReleased{
-		AllocationID:  a.req.AllocationID,
-		AllocationRef: ctx.Self(),
-	})
+	defer a.rm.Release(ctx, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
 	defer a.unregisterProxies(ctx)
 	defer ctx.Self().Stop()
 

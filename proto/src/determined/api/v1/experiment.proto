@@ -695,7 +695,7 @@ message TrialsSampleResponse {
   repeated Trial trials = 1;
   // IDs of trials that are newly included in the data.
   repeated int32 promoted_trials = 2;
-  // IDs of trials that are no loger included in the top N trials.
+  // IDs of trials that are no longer included in the top N trials.
   repeated int32 demoted_trials = 3;
 }
 

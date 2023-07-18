@@ -17,6 +17,14 @@ func (a *JobAuthZBasic) FilterJobs(
 	return jobs, nil
 }
 
+// CanControlJobQueue returns an error if the user is not authorized to manipulate the
+// job queue.
+func (a *JobAuthZBasic) CanControlJobQueue(
+	ctx context.Context, curUser *model.User,
+) (permErr error, err error) {
+	return nil, nil
+}
+
 func init() {
 	AuthZProvider.Register("basic", &JobAuthZBasic{})
 }

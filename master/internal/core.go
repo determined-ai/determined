@@ -21,6 +21,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
+
 	"github.com/coreos/go-systemd/activation"
 	"github.com/google/uuid"
 	"github.com/labstack/echo-contrib/prometheus"
@@ -108,10 +110,6 @@ func New(logStore *logger.LogBuffer, config *config.Config) *Master {
 		logs:     logStore,
 		config:   config,
 	}
-}
-
-func (m *Master) getConfig(ctx echo.Context) (interface{}, error) {
-	return m.config.Printable()
 }
 
 // Info returns this master's information.
@@ -918,7 +916,6 @@ func (m *Master) Run(ctx context.Context) error {
 	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
 	userService := user.GetService()
 
-	allocationmap.InitAllocationMap()
 	proxy.InitProxy(processProxyAuthentication)
 	portregistry.InitPortRegistry()
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
@@ -1009,7 +1006,7 @@ func (m *Master) Run(ctx context.Context) error {
 		},
 		cert,
 	)
-	job.DefaultManager = job.NewManager(m.rm, m.system)
+	jobservice.SetDefaultService(job.NewManager(m.rm, m.system))
 
 	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
@@ -1109,7 +1106,6 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.File("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
-	m.echo.GET("/config", api.Route(m.getConfig))
 	m.echo.GET("/info", api.Route(m.getInfo))
 
 	experimentsGroup := m.echo.Group("/experiments")

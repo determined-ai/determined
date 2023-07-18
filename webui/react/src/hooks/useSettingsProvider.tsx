@@ -1,14 +1,12 @@
 import { Map } from 'immutable';
-import { observable, useObservable, WritableObservable } from 'micro-observables';
-import React, { createContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useEffect, useRef } from 'react';
 
 import Spinner from 'components/Spinner';
-import { getUserSetting } from 'services/api';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
+import userSettings from 'stores/userSettings';
+import { Loadable, NotLoaded } from 'utils/loadable';
+import { observable, useObservable, WritableObservable } from 'utils/observable';
 
 /*
  * UserSettingsState contains all the settings for a user
@@ -21,85 +19,38 @@ type UserSettingsState = Map<string, Settings>;
 export type Settings = { [key: string]: any }; //TODO: find a way to use a better type here
 
 type UserSettingsContext = {
-  clearQuerySettings: () => void;
-  isLoading: WritableObservable<boolean>;
-  querySettings: string;
-  state: WritableObservable<UserSettingsState>;
+  isLoading: boolean;
+  querySettings: URLSearchParams;
+  state: WritableObservable<Loadable<UserSettingsState>>;
 };
 
 export const UserSettings = createContext<UserSettingsContext>({
-  clearQuerySettings: () => undefined,
-  isLoading: observable(false),
-  querySettings: '',
-  state: observable(Map<string, Settings>()),
+  isLoading: true,
+  querySettings: new URLSearchParams(''),
+  state: observable(NotLoaded),
 });
 
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const isAuthChecked = useObservable(authStore.isChecked);
-  const [canceler] = useState(new AbortController());
-  const [isLoading] = useState(() => observable(true));
-  const querySettings = useRef('');
-  const [settingsState] = useState(() => observable(Map<string, Settings>()));
+  const querySettings = useRef(new URLSearchParams(''));
+  const isLoading = Loadable.isLoading(useObservable(userSettings._forUseSettingsOnly()));
 
   useEffect(() => {
-    if (!isAuthChecked) return;
-
-    getUserSetting({}, { signal: canceler.signal })
-      .then((response) => {
-        isLoading.set(false);
-        settingsState.update((currentState) => {
-          return currentState.withMutations((state) => {
-            response.settings.forEach((setting) => {
-              const value = setting.value ? JSON.parse(setting.value) : undefined;
-              let key = setting.storagePath || setting.key; // falls back to the setting key due to storagePath being optional.
-
-              if (key.includes('u:2/')) key = key.replace(/u:2\//g, '');
-
-              const entry = state.get(key);
-              if (!entry) {
-                state.set(key, { [setting.key]: value });
-              } else {
-                state.set(key, Object.assign({}, entry, { [setting.key]: value }));
-              }
-            });
-          });
-        });
-      })
-      .catch((error) => {
-        handleError(error, {
-          isUserTriggered: false,
-          publicMessage: 'Unable to fetch user settings.',
-          type: ErrorType.Api,
-        });
-      })
-      .finally(() => {
-        isLoading.set(false);
-      });
-
-    return () => canceler.abort();
-  }, [canceler, isAuthChecked, isLoading, settingsState]);
-
-  useEffect(() => {
-    const url = window.location.search.substring(/^\?/.test(location.search) ? 1 : 0);
-
-    querySettings.current = url;
+    querySettings.current = new URLSearchParams(window.location.search);
   }, []);
 
-  const clearQuerySettings = () => {
-    querySettings.current = '';
-  };
-
   return (
-    <Spinner
-      spinning={useObservable(isLoading) && !(isAuthChecked && !currentUser)}
-      tip="Loading Page">
+    <Spinner spinning={isLoading && !(isAuthChecked && !currentUser)} tip="Loading Page">
       <UserSettings.Provider
         value={{
-          clearQuerySettings,
-          isLoading: isLoading,
+          isLoading,
           querySettings: querySettings.current,
-          state: settingsState,
+          // Note that this cast fails when a setting is anything other than a JsonObject.
+          // Settings that are not JsonObjects should only be accessed via the new store.
+          state: userSettings._forUseSettingsOnly() as unknown as WritableObservable<
+            Loadable<UserSettingsState>
+          >,
         }}>
         {children}
       </UserSettings.Provider>

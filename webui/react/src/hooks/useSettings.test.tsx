@@ -7,6 +7,7 @@ import { BrowserRouter } from 'react-router-dom';
 import authStore from 'stores/auth';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import userStore from 'stores/users';
+import userSettings from 'stores/userSettings';
 
 import * as hook from './useSettings';
 import { SettingsProvider } from './useSettingsProvider';
@@ -103,6 +104,7 @@ const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
     authStore.setAuth({ isAuthenticated: true });
     authStore.setAuthChecked();
     userStore.updateCurrentUser(CURRENT_USER);
+    return userSettings.startPolling();
   }, []);
 
   return (
@@ -179,9 +181,6 @@ describe('useSettings', () => {
 
   it('should update settings', async () => {
     const { result } = setup();
-
-    // assure isLoading becomes true, which will allow useLayoutEffect, which will start watching for updates
-    await waitFor(() => expect(result.container.current.isLoading).toStrictEqual(true));
 
     act(() => result.container.current.updateSettings(newSettings));
 

@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
+
 	"golang.org/x/exp/slices"
 
 	"github.com/labstack/echo/v4"
@@ -20,7 +22,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
-	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/trials"
@@ -264,7 +265,7 @@ func (a *apiServer) GetExperiment(
 	}
 
 	jobID := model.JobID(exp.JobId)
-	jobSummary, err := job.DefaultManager.GetJobSummary(jobID, exp.ResourcePool)
+	jobSummary, err := jobservice.Default.GetJobSummary(jobID, exp.ResourcePool)
 	if err != nil {
 		// An error here either is real or just that the experiment was not yet terminal in the DB
 		// when we first queried it but was by the time it got around to handling out ask. We can't
@@ -2222,7 +2223,7 @@ func (a *apiServer) SearchExperiments(
 		Column("trials.restarts").
 		ColumnExpr("coalesce(new_ckpt.uuid, old_ckpt.uuid) AS warm_start_checkpoint_uuid").
 		ColumnExpr("trials.checkpoint_size AS total_checkpoint_size").
-		ColumnExpr(exputil.ProtoStateDBCaseString(experimentv1.State_value, "trials.state", "state",
+		ColumnExpr(exputil.ProtoStateDBCaseString(trialv1.State_value, "trials.state", "state",
 			"STATE_")).
 		ColumnExpr(`(CASE WHEN trials.hparams = 'null'::jsonb
 				THEN null ELSE trials.hparams END) AS hparams`).
@@ -2301,7 +2302,6 @@ func (a *apiServer) CreateTrial(
 
 	trialModel := model.NewTrial(
 		model.CompletedState,
-		model.NewJobID(),
 		taskID,
 		model.RequestID{},
 		exp.ID,

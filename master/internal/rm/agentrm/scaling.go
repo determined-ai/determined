@@ -23,7 +23,7 @@ func calculateDesiredNewAgentNum(
 		//    scheduler. To determine is a task is schedulable, we would ideally interface
 		//    with the scheduler in some way and not duplicate this logic.
 		switch {
-		case taskList.Allocation(it.Value().AllocationRef) != nil:
+		case taskList.IsScheduled(it.Value().AllocationID):
 			// If a task is already allocated, skip it.
 			continue
 		case it.Value().SlotsNeeded == 0:

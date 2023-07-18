@@ -3650,7 +3650,7 @@ type TrialsSampleResponse struct {
 	Trials []*TrialsSampleResponse_Trial `protobuf:"bytes,1,rep,name=trials,proto3" json:"trials,omitempty"`
 	// IDs of trials that are newly included in the data.
 	PromotedTrials []int32 `protobuf:"varint,2,rep,packed,name=promoted_trials,json=promotedTrials,proto3" json:"promoted_trials,omitempty"`
-	// IDs of trials that are no loger included in the top N trials.
+	// IDs of trials that are no longer included in the top N trials.
 	DemotedTrials []int32 `protobuf:"varint,3,rep,packed,name=demoted_trials,json=demotedTrials,proto3" json:"demoted_trials,omitempty"`
 }
 

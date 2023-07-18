@@ -10,7 +10,6 @@ import (
 	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	"google.golang.org/api/compute/v1"
@@ -207,22 +206,10 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) error {
 		ctx.Log().WithError(err).Errorf("error inserting GCE instance")
 		return err
 	}
-
-	if _, ok := ctx.ActorOf(
-		fmt.Sprintf("track-batch-operation-%s", uuid.New()),
-		&gcpBatchOperationTracker{
-			config: c.GCPClusterConfig,
-			client: c.client,
-			ops:    []*compute.Operation{ops},
-			postProcess: func(doneOps []*compute.Operation) {
-				ctx.Log().Info("inserted GCE instances")
-			},
-		},
-	); !ok {
-		err := errors.New("internal error tracking GCP operation batch")
-		ctx.Log().Error(err)
-		return err
-	}
+	tracker := newGCPBatchOperationTracker(c.GCPClusterConfig, c.client, []*compute.Operation{ops})
+	go tracker.startTracker(func(doneOps []*compute.Operation) {
+		ctx.Log().Info("inserted GCE instances")
+	})
 	return nil
 }
 
@@ -261,26 +248,17 @@ func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
 	if len(ops) == 0 {
 		return
 	}
-	if _, ok := ctx.ActorOf(
-		fmt.Sprintf("track-batch-operation-%s", uuid.New()),
-		&gcpBatchOperationTracker{
-			config: c.GCPClusterConfig,
-			client: c.client,
-			ops:    ops,
-			postProcess: func(doneOps []*compute.Operation) {
-				deleted := c.newInstancesFromOperations(doneOps)
-				ctx.Log().Infof(
-					"deleted %d/%d GCE instances: %s",
-					len(deleted),
-					len(instances),
-					model.FmtInstances(deleted),
-				)
-			},
-		},
-	); !ok {
-		ctx.Log().Error("internal error tracking GCP operation batch")
-		return
-	}
+
+	tracker := newGCPBatchOperationTracker(c.GCPClusterConfig, c.client, ops)
+	go tracker.startTracker(func(doneOps []*compute.Operation) {
+		deleted := c.newInstancesFromOperations(doneOps)
+		ctx.Log().Infof(
+			"deleted %d/%d GCE instances: %s",
+			len(deleted),
+			len(instances),
+			model.FmtInstances(deleted),
+		)
+	})
 }
 
 func (c *gcpCluster) newInstances(input []*compute.Instance) []*model.Instance {
