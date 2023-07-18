@@ -202,7 +202,7 @@ class DSATTrialTracker:
         self._all_trials_dict: Dict[uuid.UUID, "DSATTrial"] = {}
         self.queue: Deque["DSATTrial"] = deque()
 
-        self._mem_per_gpu_per_stage: Optional[Dict[int, int]] = None
+        self._min_mem_per_gpu_per_stage: Optional[Dict[int, int]] = None
         self._approx_max_mbs_per_stage: Optional[Dict[int, int]] = None
 
     def __len__(self) -> int:
@@ -379,16 +379,17 @@ class DSATTrialTracker:
         return self._fetch_model_profile_info_data("activation_mem_per_gpu")
 
     @property
-    def mem_per_gpu_per_stage(self) -> Dict[int, int]:
+    def min_mem_per_gpu_per_stage(self) -> Dict[int, int]:
         """
-        Returns the required gpu memory in bytes, per stage, according to whether fp16 training was
-        used (other low-precision cases not handled).
+        Returns the minimum required gpu memory in bytes, per stage, to train a single batch
+        according to whether fp16 training was used (other low-precision cases not currently
+        handled).
         """
         assert (
             self.model_profile_info_trial is not None
         ), "The model profile info Trial must be run before calling this method."
         fp16 = self.model_profile_info_trial.fp16
-        if self._mem_per_gpu_per_stage is None:
+        if self._min_mem_per_gpu_per_stage is None:
             params_mem = self.num_params * (2 if fp16 else 4)
             # Gradients must be converted to fp32 to update master weights, so they eventually
             # require the same memory regardless of whether mixed-precision is used.
@@ -409,12 +410,12 @@ class DSATTrialTracker:
             # In DS there is an mp_size int which can be used for model parallelism and also enters
             # the memory computation, but we will not support that feature at the moment.
 
-            mem_per_gpu_per_stage = {
+            min_mem_per_gpu_per_stage = {
                 stage: mem + self.activation_mem_per_gpu
                 for stage, mem in non_activation_mem_per_gpu_per_stage.items()
             }
-            self._mem_per_gpu_per_stage = mem_per_gpu_per_stage
-        return self._mem_per_gpu_per_stage
+            self._min_mem_per_gpu_per_stage = min_mem_per_gpu_per_stage
+        return self._min_mem_per_gpu_per_stage
 
     @property
     def approx_max_mbs_per_stage(self) -> Dict[int, int]:
@@ -422,10 +423,13 @@ class DSATTrialTracker:
         Returns the approximate max train_micro_batch_size_per_gpu (mbs) per stage.
         """
         if self._approx_max_mbs_per_stage is None:
-            self._approx_max_mbs_per_stage = {
-                stage: max((self.gpu_mem - mem) // self.activation_mem_per_gpu, 1)
-                for stage, mem in self.mem_per_gpu_per_stage.items()
-            }
+            self._approx_max_mbs_per_stage = {}
+            for stage, min_mem in self.min_mem_per_gpu_per_stage.items():
+                non_activation_min_mem = min_mem - self.activation_mem_per_gpu
+                approx_mbs = max(
+                    (self.gpu_mem - non_activation_min_mem) // self.activation_mem_per_gpu, 1
+                )
+                self._approx_max_mbs_per_stage[stage] = approx_mbs
         return self._approx_max_mbs_per_stage
 
     def _best_trial_fn(self, trials: Iterable["DSATTrial"]) -> Optional["DSATTrial"]:
@@ -609,7 +613,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
                 f"Approx. max mbs per stage: {self.trial_tracker.approx_max_mbs_per_stage}"
             )
             logging.info(
-                f"Approx. GPU memory per stage: {self.trial_tracker.mem_per_gpu_per_stage}"
+                f"Approx. min GPU memory per stage: {self.trial_tracker.min_mem_per_gpu_per_stage}"
             )
             logging.info(f"Total GPU memory: {self.trial_tracker.gpu_mem}")
 
