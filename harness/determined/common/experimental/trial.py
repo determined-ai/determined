@@ -246,8 +246,11 @@ class Trial:
         if tail is not None and tail < 0:
             raise ValueError(f"tail must be non-negative, got {tail}")
 
-        if not isinstance(timestamp_before, (str, int)) or not isinstance(
-            timestamp_after, (str, int)
+        if (
+            timestamp_before is not None
+            and not isinstance(timestamp_before, (str, int))
+            or timestamp_after is not None
+            and not isinstance(timestamp_after, (str, int))
         ):
             raise ValueError(
                 "timestamp_before and timestamp_after must be either str or int types."
