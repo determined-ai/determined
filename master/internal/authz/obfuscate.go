@@ -77,11 +77,15 @@ func ObfuscateAgent(agent *agentv1.Agent) error {
 		}
 	}
 
+	obfuscatedSlots := make(map[string]*agentv1.Slot)
 	for _, slot := range agent.Slots {
 		if err := ObfuscateSlot(slot); err != nil {
 			return errors.Errorf("unable to obfuscate agent: %s", err)
 		}
+		obfuscatedKey := uuid.New().String()
+		obfuscatedSlots[obfuscatedKey] = slot
 	}
+	agent.Slots = obfuscatedSlots
 
 	return nil
 }
