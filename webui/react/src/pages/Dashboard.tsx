@@ -33,6 +33,7 @@ import {
   getShells,
   getTensorBoards,
 } from 'services/api';
+import useUI from 'stores/contexts/UI';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import workspaceStore from 'stores/workspaces';
@@ -42,6 +43,7 @@ import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { dateTimeStringSorter } from 'utils/sort';
+import { Mode } from 'utils/themes';
 
 import css from './Dashboard.module.scss';
 
@@ -178,6 +180,9 @@ const Dashboard: React.FC = () => {
   }, [canceler, stopPolling]);
 
   const confirm = useConfirm();
+  const {
+    actions: { setMode },
+  } = useUI();
   const USModal = useModal(UserSettingsModal); // TODO: Remove before merging
 
   const pageBreadCrumb: BreadCrumbRoute[] = [{ breadcrumbName: 'Home', path: paths.dashboard() }];
@@ -206,7 +211,10 @@ const Dashboard: React.FC = () => {
               confirm({
                 content:
                   'Are you sure you want to reset all user settings to their default values?',
-                onConfirm: () => userSettings.clear(),
+                onConfirm: () => {
+                  setMode(Mode.System);
+                  userSettings.clear();
+                },
                 onError: handleError,
                 title: 'Reset User Settings',
               })

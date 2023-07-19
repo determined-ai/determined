@@ -515,7 +515,7 @@ func (a *apiServer) PostUserSetting(
 		return nil, errExternalSessions
 	}
 	if req.Settings == nil {
-		return nil, status.Error(codes.InvalidArgument, "must specify settings")
+		req.Settings = make([]*userv1.UserWebSetting, 0)
 	}
 
 	curUser, _, err := grpcutil.GetUser(ctx)

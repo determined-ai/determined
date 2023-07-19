@@ -214,7 +214,7 @@ class UserSettingsStore extends PollingStore {
   protected updateUserSetting<T>(key: string, value: T) {
     const dbUpdates: Array<V1UserWebSetting> = [];
     if (isObject(value)) {
-      const settings = value as unknown as { string: unknown };
+      const settings = value as { [key: string]: unknown };
       dbUpdates.push(
         ...Object.keys(settings).reduce<V1UserWebSetting[]>((acc, setting) => {
           return [
@@ -222,8 +222,7 @@ class UserSettingsStore extends PollingStore {
             {
               key: setting,
               storagePath: key,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              value: JSON.stringify((settings as any)[setting]),
+              value: JSON.stringify(settings[setting]),
             },
           ];
         }, []),
