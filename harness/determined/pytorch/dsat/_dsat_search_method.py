@@ -872,10 +872,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
             trial.num_completed_trials_in_lineage >= self.trials_per_random_config
         )
 
-        # DS domain knowledge: if stages 1 or 2 run successfully, there is no need to use stage 3.
-        stage_one_or_two_successful = {1, 2} & self.trial_tracker.successful_stages
-        should_stop_this_stage_3_trial = trial.stage == 3 and stage_one_or_two_successful
-
         # Check if other same-stage trials have successfully run with larger batch sizes than this
         # lineage can possibly run.
 
@@ -892,7 +888,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         if (
             failed_on_min_mbs
             or exceeded_trials_per_random_config_limit
-            or should_stop_this_stage_3_trial
             or other_configs_run_larger_batch_sizes
         ):
             return True

@@ -23,7 +23,7 @@ from determined.pytorch.dsat import (
     _utils,
     get_hf_args_with_overwrites,
 )
-from determined.pytorch.dsat._dsat_search_method import ASHADSATSearchData, DSATSearchData
+from determined.pytorch.dsat._dsat_search_method import ASHADSATSearchData
 from determined.pytorch.dsat._run_dsat import (
     get_custom_dsat_exp_conf_from_args,
     get_search_method_class,
@@ -773,38 +773,6 @@ class TestRandomDSATSearchMethodShouldStopLineage:
             assert search_method.should_stop_lineage(trial)
 
     @pytest.mark.timeout(5)
-    def test_stop_stage_3(
-        self,
-        default_random_state_and_search_method: Tuple[
-            searcher.SearcherState, RandomDSATSearchMethod
-        ],
-    ) -> None:
-        """
-        Verify that we stop a stage 3 lineage when a successful stage-1 or 2 trial has been found.
-        """
-        _, search_method = default_random_state_and_search_method
-        trial_dict_by_stage: Dict[int, DSATTrial] = {}
-        for stage in (1, 2, 3):
-            overwrites = {_defaults.OVERWRITE_KEY: {"zero_optimization": {"stage": stage}}}
-            hparams = {**HPARAMS_FIXTURE, **overwrites}
-            trial_dict_by_stage[stage] = search_method.trial_tracker.create_trial(
-                hparams, search_data=DSATSearchData(lo=1, hi=1)
-            )
-        assert trial_dict_by_stage[3].searcher_metric_name
-        search_method.trial_tracker.update_trial_metric(
-            trial_dict_by_stage[3], {trial_dict_by_stage[3].searcher_metric_name: 0}
-        )
-        assert not search_method.should_stop_lineage(trial_dict_by_stage[3])
-
-        search_method.trial_tracker.report_trial_early_exit(trial_dict_by_stage[1])
-        assert not search_method.should_stop_lineage(trial_dict_by_stage[3])
-
-        search_method.trial_tracker.update_trial_metric(
-            trial_dict_by_stage[2], {trial_dict_by_stage[3].searcher_metric_name: 0}
-        )
-        assert search_method.should_stop_lineage(trial_dict_by_stage[3])
-
-    @pytest.mark.timeout(5)
     def test_stop_after_fail_on_min_mbs(
         self,
         default_random_state_and_search_method: Tuple[
@@ -898,49 +866,6 @@ class TestRandomDSATSearchMethodShouldStopLineage:
             search_method.trial_tracker.queue.popleft()
             search_method.trial_tracker.report_trial_early_exit(bad_trial)
             assert search_method.should_stop_lineage(bad_trial)
-
-
-class TestRandomDSATSearchMethodChooseNextTrial:
-    """
-    Testing the various conditions which should non-trivially trigger
-    RandomDSATSearchMethod.choose_next_trial_from_queue
-    """
-
-    @pytest.mark.timeout(5)
-    def test_pruning_stage_3_trials(
-        self,
-        default_random_state_and_search_method: Tuple[
-            searcher.SearcherState, RandomDSATSearchMethod
-        ],
-    ) -> None:
-        """
-        Test the pruning of stage 3 trials.
-        """
-        _, search_method = default_random_state_and_search_method
-        # Run a successful stage-1 trial.
-        hparams, search_data = search_method.get_random_hparams_and_search_data(1)
-        successful_trial = search_method.trial_tracker.create_trial(hparams, search_data)
-        search_method.trial_tracker.queue_and_register_trial(successful_trial)
-        search_method.trial_tracker.queue.popleft()
-        assert successful_trial.searcher_metric_name
-        search_method.trial_tracker.update_trial_metric(
-            successful_trial, {successful_trial.searcher_metric_name: 0.0}
-        )
-
-        # Queue up a number of stage-3 trials and verify that choose_next_trial_from_queue
-        # returns a non-stage-3 trial and that no other stage-3 trials remain in the queue.
-        stage_three_trials = []
-        for _ in range(10):
-            hparams, search_data = search_method.get_random_hparams_and_search_data(3)
-            trial = search_method.trial_tracker.create_trial(hparams, search_data)
-            stage_three_trials.append(trial)
-            search_method.trial_tracker.queue_and_register_trial(trial)
-
-        # Then empty the queue and verify that all the trials which actually run are not
-        # stage 3, but rather their replacements.
-        while search_method.trial_tracker.queue:
-            next_trial = search_method.choose_next_trial_from_queue()
-            assert next_trial.stage != 3
 
 
 @pytest.fixture
