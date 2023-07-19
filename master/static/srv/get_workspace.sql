@@ -7,7 +7,7 @@ exp_count AS (
   WHERE project_id IN (SELECT id FROM p)
 )
 SELECT w.id, w.name, w.archived, w.immutable, u.username, w.user_id, w.checkpoint_storage_config,
-  'WORKSPACE_STATE_' || w.state AS state, w.error_message,
+  'WORKSPACE_STATE_' || w.state AS state, w.error_message, w.default_compute_pool, w.default_aux_pool,
   (CASE WHEN uid IS NOT NULL OR gid IS NOT NULL OR user_ IS NOT NULL OR group_ IS NOT NULL THEN
     jsonb_build_object('agent_uid', uid, 'agent_user', user_, 'agent_gid', gid, 'agent_group', group_)
     ELSE NULL END) as agent_user_group,
