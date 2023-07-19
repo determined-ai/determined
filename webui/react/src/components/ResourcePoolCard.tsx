@@ -19,7 +19,7 @@ import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
 import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
-import { isDeviceType, ResourcePool } from 'types';
+import { isDeviceType, JsonObject, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { clone } from 'utils/data';
 import { Loadable } from 'utils/loadable';
@@ -63,8 +63,6 @@ const poolAttributes = [
   { key: 'auxContainerCapacityPerAgent', label: 'Aux Containers Per Agent' },
   { key: 'schedulerType', label: 'Scheduler Type' },
 ];
-
-type SafeRawJson = Record<string, unknown>;
 
 /** Resource pool logo based on resource pool type */
 export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
@@ -131,7 +129,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
         delete acc[attribute.label];
       }
       return acc;
-    }, {} as SafeRawJson);
+    }, {} as JsonObject);
   }, [processedPool, isAux, pool]);
 
   const onDropdown = useCallback(() => {
@@ -180,7 +178,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
                 <section className={css.resoucePoolBoundContainer}>
                   <div>Bound to:</div>
                   <div className={css.resoucePoolBoundCount}>
-                    <Icon name="lock" title="lock" />
+                    <Icon name="lock" title="Bound Workspaces" />
                     {resourcePoolBindings.length} workspace
                   </div>
                 </section>

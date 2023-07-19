@@ -118,9 +118,9 @@ def _parse_config_text_or_exit(
     if not experiment_config or not isinstance(experiment_config, dict):
         raise ArgumentError(None, f"Error: invalid experiment config file {path}")
 
-    parse_config_overrides(experiment_config, config_overrides)
+    config = parse_config_overrides(experiment_config, config_overrides)
 
-    return experiment_config
+    return config
 
 
 def _follow_experiment_logs(sess: api.Session, exp_id: int) -> None:
@@ -591,11 +591,7 @@ def experiment_logs(args: Namespace) -> None:
     sess = cli.setup_session(args)
     trials = bindings.get_GetExperimentTrials(sess, experimentId=args.experiment_id).trials
     if len(trials) == 0:
-        print(
-            f"No trials found for experiment {args.experiment_id}. "
-            "Try again after the experiment has a trial running."
-        )
-        return
+        raise cli.not_found_errs("experiment", args.experiment_id, sess)
     first_trial_id = sorted(t_id.id for t_id in trials)[0]
     try:
         logs = api.trial_logs(

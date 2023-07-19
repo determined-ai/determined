@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Primitive, RawJson, RecordKey, UnknownRecord } from 'types';
+import { Json, JsonArray, JsonObject, Primitive, RawJson, RecordKey, UnknownRecord } from 'types';
 
 // `bigint` is not support yet for
 
@@ -9,16 +9,11 @@ export const isDate = (data: unknown): data is Date => data instanceof Date;
 export const isMap = (data: unknown): data is Map<unknown, unknown> => data instanceof Map;
 export const isNullOrUndefined = (data: unknown): data is null | undefined => data == null;
 export const isNumber = (data: unknown): data is number => typeof data === 'number';
-export const isFiniteNumber = (data: unknown): data is number => isNumber(data) && isFinite(data);
 export const isObject = (data: unknown): boolean => {
   return typeof data === 'object' && !Array.isArray(data) && !isSet(data) && data !== null;
 };
-
-export const finiteElseUndefined = (data: string | undefined): number | undefined => {
-  if (data === undefined) return undefined;
-  const x = parseFloat(data);
-  return isFinite(x) ? x : undefined;
-};
+export const isJsonObject = (json: Json): json is JsonObject => isObject(json);
+export const isJsonArray = (json: Json): json is JsonArray => Array.isArray(json);
 
 export const isPrimitive = (data: unknown): boolean =>
   isBigInt(data) ||
@@ -195,3 +190,5 @@ export const validateEnumList = (enumObject: unknown, values?: unknown[]): any =
 
   return enumValues.length !== 0 ? enumValues : undefined;
 };
+
+export const ensureArray = <T>(data: T | T[]): T[] => (Array.isArray(data) ? data : [data]);

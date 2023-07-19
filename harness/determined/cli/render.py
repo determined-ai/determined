@@ -11,6 +11,7 @@ import dateutil.parser
 import tabulate
 import termcolor
 
+from determined import util as det_util
 from determined.common import util, yaml
 
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
@@ -193,7 +194,7 @@ def print_json(data: Union[str, Any]) -> None:
     try:
         if isinstance(data, str):
             data = json.loads(data)
-        formatted_json = json.dumps(data, sort_keys=True, indent=2)
+        formatted_json = det_util.json_encode(data, sort_keys=True, indent="  ")
         print(formatted_json)
     except json.decoder.JSONDecodeError:
         print(data)

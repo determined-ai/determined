@@ -19,6 +19,7 @@ import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
 import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
+import InlineForm from 'components/kit/InlineForm';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
@@ -68,7 +69,7 @@ import {
 } from 'utils/colors';
 import handleError from 'utils/error';
 import { Loaded, NotLoaded } from 'utils/loadable';
-import loremIpsum from 'utils/loremIpsum';
+import loremIpsum, { loremIpsumSentence } from 'utils/loremIpsum';
 import { noOp } from 'utils/service';
 import { KeyboardShortcut } from 'utils/shortcut';
 
@@ -93,6 +94,7 @@ const ComponentTitles = {
   Facepile: 'Facepile',
   Form: 'Form',
   Icons: 'Icons',
+  InlineForm: 'InlineForm',
   Input: 'Input',
   InputNumber: 'InputNumber',
   InputSearch: 'InputSearch',
@@ -925,6 +927,151 @@ const CodeEditorSection: React.FC = () => {
           readonly={true}
           onError={handleError}
         />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const InlineFormSection: React.FC = () => {
+  const [inputWithValidatorValue, setInputWithValidatorValue] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [numberInput, setNumberInput] = useState(1234);
+  const [textAreaValue, setTextAreaValue] = useState(loremIpsumSentence);
+  const [passwordInputValue, setPasswordInputValue] = useState('123456789');
+  const [selectValue, setSelectValue] = useState('off');
+
+  const inputWithValidatorCallback = useCallback((newValue: string) => {
+    setInputWithValidatorValue(newValue);
+  }, []);
+  const numberInputCallback = useCallback((newValue: number) => {
+    setNumberInput(newValue);
+  }, []);
+  const searchCallback = useCallback((newValue: string) => {
+    setSearchInput(newValue);
+  }, []);
+  const textAreaCallback = useCallback((newValue: string) => {
+    setTextAreaValue(newValue);
+  }, []);
+  const passwordInputCallback = useCallback((newValue: string) => {
+    setPasswordInputValue(newValue);
+  }, []);
+  const selectCallback = useCallback((newValue: string) => {
+    setSelectValue(newValue === '1' ? 'off' : 'on');
+  }, []);
+
+  return (
+    <ComponentSection id="InlineForm" title="InlineForm">
+      <AntDCard>
+        <p>
+          The <code>{'<InlineForm>'}</code> allows people to have a simple form with just one input
+          to interact with.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <p>
+          If using the <code>{'Input.Password'}</code> component, is important to pass the{' '}
+          <code>{'isPassword'}</code> prop.
+        </p>
+        <br />
+        <h5>Controlled</h5>
+        <div style={{ maxWidth: '700px' }}>
+          <InlineForm<string>
+            initialValue={''}
+            label="Input with validator"
+            rules={[{ message: 'Please input something here!', required: true }]}
+            value={inputWithValidatorValue}
+            onSubmit={inputWithValidatorCallback}>
+            <Input maxLength={32} />
+          </InlineForm>
+          <hr />
+          <InlineForm<string>
+            initialValue={textAreaValue}
+            label="Text Area"
+            value={textAreaValue}
+            onSubmit={textAreaCallback}>
+            <Input.TextArea />
+          </InlineForm>
+          <hr />
+          <InlineForm<string>
+            initialValue={''}
+            isPassword
+            label="Password"
+            value={passwordInputValue}
+            onSubmit={passwordInputCallback}>
+            <Input.Password />
+          </InlineForm>
+          <hr />
+          <InlineForm<string>
+            initialValue={selectValue}
+            label="Select"
+            value={selectValue}
+            onSubmit={selectCallback}>
+            <Select defaultValue={1} searchable={false}>
+              {[
+                { label: 'off', value: 1 },
+                { label: 'on', value: 2 },
+              ].map((opt) => (
+                <Option key={opt.value as React.Key} value={opt.value}>
+                  {opt.label}
+                </Option>
+              ))}
+            </Select>
+          </InlineForm>
+          <hr />
+          <InlineForm<number>
+            initialValue={numberInput}
+            label="Input Number"
+            value={numberInput}
+            onSubmit={numberInputCallback}>
+            <InputNumber />
+          </InlineForm>
+          <hr />
+          <InlineForm<string>
+            initialValue={searchInput}
+            label="Input Search"
+            value={searchInput}
+            onSubmit={searchCallback}>
+            <InputSearch allowClear enterButton placeholder="Input Search" />
+          </InlineForm>
+        </div>
+        <h5>Uncontrolled</h5>
+        <div style={{ maxWidth: '700px' }}>
+          <InlineForm<string>
+            initialValue={'initial value'}
+            label="Input with validator"
+            rules={[{ message: 'Please input something here!', required: true }]}>
+            <Input />
+          </InlineForm>
+          <hr />
+          <InlineForm<number> initialValue={1234} label="Input Number">
+            <InputNumber />
+          </InlineForm>
+          <hr />
+          <InlineForm<string> initialValue={''} label="Input Search">
+            <InputSearch allowClear enterButton placeholder="Input Search" />
+          </InlineForm>
+          <hr />
+          <InlineForm<string> initialValue={textAreaValue} label="Text Area">
+            <Input.TextArea />
+          </InlineForm>
+          <hr />
+          <InlineForm<string> initialValue={''} isPassword label="Password">
+            <Input.Password />
+          </InlineForm>
+          <hr />
+          <InlineForm<string> initialValue={selectValue} label="Select">
+            <Select defaultValue={1} searchable={false}>
+              {[
+                { label: 'off', value: 1 },
+                { label: 'on', value: 2 },
+              ].map((opt) => (
+                <Option key={opt.value as React.Key} value={opt.value}>
+                  {opt.label}
+                </Option>
+              ))}
+            </Select>
+          </InlineForm>
+        </div>
       </AntDCard>
     </ComponentSection>
   );
@@ -2784,6 +2931,7 @@ const Components = {
   Facepile: <FacepileSection />,
   Form: <FormSection />,
   Icons: <IconsSection />,
+  InlineForm: <InlineFormSection />,
   Input: <InputSection />,
   InputNumber: <InputNumberSection />,
   InputSearch: <InputSearchSection />,

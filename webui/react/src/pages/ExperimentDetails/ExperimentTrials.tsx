@@ -9,7 +9,7 @@ import HumanReadableNumber from 'components/HumanReadableNumber';
 import Dropdown from 'components/kit/Dropdown';
 import Link from 'components/Link';
 import Section from 'components/Section';
-import InteractiveTable from 'components/Table/InteractiveTable';
+import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import { Renderer } from 'components/Table/Table';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
@@ -214,6 +214,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       column.sortOrder = null;
       if (column.key === 'checkpoint') {
         column.render = checkpointRenderer;
+        column.onCell = onRightClickableCell;
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.ID) {
         column.render = idRenderer;
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.BESTVALIDATIONMETRIC) {

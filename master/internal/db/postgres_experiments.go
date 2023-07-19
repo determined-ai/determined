@@ -128,7 +128,7 @@ func GetNonTerminalExperimentCount(ctx context.Context,
 
 // MetricNames returns a list of metric names for the given experiment IDs.
 func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
-	map[model.MetricType][]string, error,
+	map[model.MetricGroup][]string, error,
 ) {
 	type MetricNamesRow struct {
 		MetricName string
@@ -136,7 +136,7 @@ func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 	}
 	rows := []MetricNamesRow{}
 
-	metricNames := BunSelectMetricTypeNames().
+	metricNames := BunSelectMetricGroupNames().
 		Where("experiment_id IN (?)", bun.In(experimentIDs))
 
 	err := Bun().NewSelect().TableExpr("(?) as metric_names", metricNames).
@@ -147,13 +147,13 @@ func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 		return nil, err
 	}
 
-	metricNamesMap := make(map[model.MetricType][]string)
+	metricNamesMap := make(map[model.MetricGroup][]string)
 	for _, row := range rows {
-		mType := model.TrialSummaryMetricType(row.JSONPath)
-		if _, ok := metricNamesMap[mType]; !ok {
-			metricNamesMap[mType] = make([]string, 0)
+		mGroup := model.TrialSummaryMetricGroup(row.JSONPath)
+		if _, ok := metricNamesMap[mGroup]; !ok {
+			metricNamesMap[mGroup] = make([]string, 0)
 		}
-		metricNamesMap[mType] = append(metricNamesMap[mType], row.MetricName)
+		metricNamesMap[mGroup] = append(metricNamesMap[mGroup], row.MetricName)
 	}
 
 	return metricNamesMap, nil
@@ -167,14 +167,14 @@ type batchesWrapper struct {
 // MetricBatches returns the milestones (in batches processed) at which a specific metric
 // was recorded.
 func MetricBatches(
-	experimentID int, metricName string, startTime time.Time, metricType model.MetricType,
+	experimentID int, metricName string, startTime time.Time, metricGroup model.MetricGroup,
 ) (
 	batches []int32, endTime time.Time, err error,
 ) {
 	var rows []*batchesWrapper
-	JSONKey := model.TrialMetricsJSONPath(metricType == model.ValidationMetricType)
+	JSONKey := model.TrialMetricsJSONPath(metricGroup == model.ValidationMetricGroup)
 
-	err = BunSelectMetricsQuery(metricType, false).
+	err = BunSelectMetricsQuery(metricGroup, false).
 		TableExpr("trials t").
 		Join("INNER JOIN metrics m ON t.id=m.trial_id").
 		ColumnExpr("m.total_batches AS batches_processed, max(t.end_time) as end_time").
@@ -201,7 +201,7 @@ func MetricBatches(
 func (db *PgDB) TrainingMetricBatches(experimentID int, metricName string, startTime time.Time) (
 	batches []int32, endTime time.Time, err error,
 ) {
-	return MetricBatches(experimentID, metricName, startTime, model.TrainingMetricType)
+	return MetricBatches(experimentID, metricName, startTime, model.TrainingMetricGroup)
 }
 
 // ValidationMetricBatches returns the milestones (in batches processed) at which a specific
@@ -209,7 +209,7 @@ func (db *PgDB) TrainingMetricBatches(experimentID int, metricName string, start
 func (db *PgDB) ValidationMetricBatches(experimentID int, metricName string, startTime time.Time) (
 	batches []int32, endTime time.Time, err error,
 ) {
-	return MetricBatches(experimentID, metricName, startTime, model.ValidationMetricType)
+	return MetricBatches(experimentID, metricName, startTime, model.ValidationMetricGroup)
 }
 
 type snapshotWrapper struct {
@@ -908,6 +908,8 @@ func (db *PgDB) DeleteExperiments(ctx context.Context, ids []int) error {
 		return errors.Wrapf(err, "error deleting validations for experiments %v", ids)
 	}
 
+	// Even with migration away from checkpoints_v1,
+	// Keeping this to keep behavior of fully deleting checkpoints.
 	if _, err = tx.NewDelete().Model(&delIDs).Table("raw_checkpoints").
 		Where("trial_id IN (SELECT id FROM trials WHERE experiment_id IN (?))", bun.In(ids)).
 		Returning("id").

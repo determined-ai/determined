@@ -13,8 +13,8 @@ import DataEditor, {
   Item,
   Rectangle,
   Theme,
-} from '@glideapps/glide-data-grid';
-import { DrawHeaderCallback } from '@glideapps/glide-data-grid/dist/ts/data-grid/data-grid-types';
+} from '@hpe.com/glide-data-grid';
+import { DrawHeaderCallback } from '@hpe.com/glide-data-grid/dist/ts/data-grid/data-grid-types';
 import React, {
   Dispatch,
   SetStateAction,
@@ -402,7 +402,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               ...sortMenuItemsForColumn(column, sorts, onSortChange),
               { type: 'divider' as const },
               {
-                icon: <Icon name="filter" title="filter" />,
+                icon: <Icon decorative name="filter" />,
                 key: 'filter',
                 label: 'Filter by this column',
                 onClick: () => {
@@ -520,7 +520,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
         if (isLinkCell(cell)) {
           handlePath(event as unknown as AnyMouseEvent, { path: cell.data.link.href });
-          // cell.data.link.onClick(event);
         } else {
           if (event.shiftKey) {
             setSelection(({ rows }: GridSelection) => {
@@ -683,8 +682,13 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               '',
             )}`;
             break;
+          case V1LocationType.TRAINING:
+            dataPath = `bestTrial.summaryMetrics.avgMetrics.${currentColumn.column.replace(
+              'training.',
+              '',
+            )}`;
+            break;
           case V1LocationType.UNSPECIFIED:
-          default:
             break;
         }
         switch (currentColumn.type) {

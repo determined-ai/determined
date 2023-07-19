@@ -1,4 +1,4 @@
-import { CustomCell, CustomRenderer, GridCellKind } from '@glideapps/glide-data-grid';
+import { CustomCell, CustomRenderer, GridCellKind } from '@hpe.com/glide-data-grid';
 
 import { rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 import { Theme } from 'utils/themes';

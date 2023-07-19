@@ -19,15 +19,15 @@ import "protoc-gen-swagger/options/annotations.proto";
 // DownsampledMetrics captures a metric's name and downsampled data points.
 message DownsampledMetrics {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "data", "type", "custom_type" ] }
+    json_schema: { required: [ "data", "type", "group" ] }
   };
   // A possibly down-sampled series of metrics' readings through the progress of
   // the trial.
   repeated DataPoint data = 1;
-  // Type of metrics (training, validation, or unset).
+  // Metric group (training, validation, or unset).
   MetricType type = 3 [deprecated = true];
-  // Type of metrics (training, validation, etc).
-  string custom_type = 4;
+  // Metric group (training, validation, etc).
+  string group = 4;
 }
 
 // WorkloadContainer is a wrapper for Determined workloads to allow repeated
@@ -89,270 +89,6 @@ message TrialSorter {
   // The ordering for the sort.
   OrderBy order_by = 3;
 }
-
-// Filters to be applied to trials. Can be used to query, patch, and create
-// dynamic collections of trials.
-message TrialFilters {
-  // Filter trials by their corresponding experiment ids.
-  repeated int32 experiment_ids = 1;
-  // Filter trials by their corresponding project ids.
-  repeated int32 project_ids = 2;
-  // Filter trials by their corresponding workspace ids.
-  repeated int32 workspace_ids = 3;
-  // Filter trials to those containing ALL validation_metrics
-  // within the indicated ranges.
-  repeated ColumnFilter validation_metrics = 4;
-  // Filter trials to those containing ALL training_metrics
-  // within the indicated ranges.
-  repeated ColumnFilter training_metrics = 5;
-  // Filter trials to those containing ALL hyperparameters
-  // within the indicated ranges. Nested hparams are specified
-  // with dots.
-  repeated ColumnFilter hparams = 6;
-  // Filter trials according to the creators user id.
-  repeated int32 user_ids = 8;
-  // Filter trials according to the name of the searcher used.
-  string searcher = 7;
-  // Filter trials to those containing ANY of the provided tags.
-  repeated TrialTag tags = 9;
-  // Specifies a ranking for trials within their experiment.
-  message RankWithinExp {
-    // Specifies the sorter for determining the rank
-    TrialSorter sorter = 1;
-    // Specifies the top $RANK experiements to filter to
-    int32 rank = 2;
-  }
-  // Filter trials according to their rank within the experiment.
-  RankWithinExp rank_within_exp = 10;
-  // Filter trials to those starting within the given range.
-  determined.common.v1.TimestampFieldFilter start_time = 11;
-  // Filter trials to those ending within the given range.
-  determined.common.v1.TimestampFieldFilter end_time = 12;
-  // Filter trials to those with any of the given states.
-  repeated determined.trial.v1.State states = 13;
-  // Filter trials to those with the given searcher metric.
-  string searcher_metric = 14;
-  // Filter trials to those with a searcher metric within a given range
-  determined.common.v1.DoubleFieldFilter searcher_metric_value = 15;
-  // Filter trials to those with the provided ids
-  repeated int32 trial_ids = 16;
-}
-
-// Request to QueryTrials includes pagination parameters and TrialFilters.
-message QueryTrialsRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "filters" ] }
-  };
-  // The filters to be appled to the trial.
-  TrialFilters filters = 1;
-  // Sort trials by the given field.
-  TrialSorter sorter = 2;
-  // Offset for pagination.
-  int32 offset = 3;
-  // Limit the number of trials. A value of 0 denotes no limit.
-  int32 limit = 4;
-}
-
-// Augmented Trial struct to service trial comparison functionality.
-message AugmentedTrial {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [
-        "trial_id",
-        "state",
-        "hparams",
-        "training_metrics",
-        "validation_metrics",
-        "tags",
-        "start_time",
-        "end_time",
-        "searcher_type",
-        "experiment_id",
-        "experiment_name",
-        "experiment_description",
-        "experiment_labels",
-        "user_id",
-        "project_id",
-        "workspace_id",
-        "total_batches"
-      ]
-    }
-  };
-  // The id of the trial.
-  int32 trial_id = 1;
-  // The state of the trial.
-  determined.trial.v1.State state = 2;
-  // The hyperparameters for the trial
-  google.protobuf.Struct hparams = 3;
-  // The training metrics for the trial.
-  google.protobuf.Struct training_metrics = 4;
-  // The validation metrics for the trial.
-  google.protobuf.Struct validation_metrics = 5;
-  // The tags for the trial.
-  google.protobuf.Struct tags = 6;
-  // The start time for the trial.
-  google.protobuf.Timestamp start_time = 7;
-  // The end time for the trial.
-  google.protobuf.Timestamp end_time = 8;
-  // The searcher type for the trial.
-  string searcher_type = 9;
-  // The trials rank within the experiment, according to
-  // the sorter that is provided.
-  int32 rank_within_exp = 10;
-  // The experiment id for the trial.
-  int32 experiment_id = 11;
-  // The experiment name for the trial.
-  string experiment_name = 12;
-  // The experiment description for the trial.
-  string experiment_description = 13;
-  // The labels for the experiment corresponding to the trial.
-  repeated string experiment_labels = 14;
-  // The id of the user who created the experiment corresponding
-  // to the trial.
-  int32 user_id = 15;
-  // The project id for the trial.
-  int32 project_id = 16;
-  // The workspace id for the trial.
-  int32 workspace_id = 17;
-  // The total number of batches in the trial.
-  int32 total_batches = 18;
-  // The name of the trials searcher metric.
-  string searcher_metric = 19;
-  // The value for the trials searcher metric.
-  double searcher_metric_value = 20;
-  // The loss for the trials searcher metric.
-  double searcher_metric_loss = 21;
-}
-
-// Response for QueryTrials.
-message QueryTrialsResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trials" ] }
-  };
-  // The trials matching the query, with extra data.
-  repeated AugmentedTrial trials = 1;
-}
-
-// Specifies whether a tag should be added or removed.
-message TrialPatch {
-  // Specifies that a tag will be added.
-  repeated TrialTag add_tag = 1;
-  // Specifies that a tag will be removed.
-  repeated TrialTag remove_tag = 2;
-}
-
-// Request to patch trials. Can either specify a set of filters or
-// set of trial ids as the patch target.
-message UpdateTrialTagsRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "target", "patch" ] }
-  };
-  // struct for the ids parameter.
-  message Ids {
-    // List of Trial ids
-    repeated int32 ids = 1;
-  }
-  // the possible patch targets.
-  oneof target {
-    // patch that targets trials matching filters.
-    TrialFilters filters = 2;
-    // Patch that targets a list of trials.
-    Ids trial = 3;
-  }
-  // The patch to be applied to the trials
-  TrialPatch patch = 4;
-}
-
-// Response message to PatchTrials.
-message UpdateTrialTagsResponse {
-  // The number of trials that were patched.
-  int32 rows_affected = 1;
-}
-
-// Struct that represents a dynamic collection of trials,
-// along with some accompanying metadata.
-message TrialsCollection {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "name", "project_id", "filters", "sorter", "id", "user_id" ]
-    }
-  };
-  // The id for the collection.
-  int32 id = 1;
-  // The id of the user who created the collection.
-  int32 user_id = 2;
-  // The id of the project that the collection belongs to .
-  int32 project_id = 3;
-  // The name of the collection.
-  string name = 4;
-  // The filters that define the trials within the collection.
-  TrialFilters filters = 5;
-  // A sorter that determines the order for trials in the collection.
-  TrialSorter sorter = 6;
-}
-
-// Request message for GetTrialsCollection.
-message GetTrialsCollectionsRequest {
-  // The id of the project for which to retrieve all collections
-  int32 project_id = 1;
-}
-
-// Response message for GetTrialsCollection.
-message GetTrialsCollectionsResponse {
-  // The collections belonging to that project.
-  repeated TrialsCollection collections = 1;
-}
-
-// Request body for CeateTrials request which includes TrialFilters.
-message CreateTrialsCollectionRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "name", "project_id", "filters", "sorter" ] }
-  };
-  // The name for the collection.
-  string name = 1;
-  // The project id for the collection.
-  int32 project_id = 2;
-  // The filters for the collection.
-  TrialFilters filters = 3;
-  // The sorter for the collection.
-  TrialSorter sorter = 4;
-}
-
-//  Response message to CreateTrialCollection.
-message CreateTrialsCollectionResponse {
-  // The collection of trials.
-  TrialsCollection collection = 1;
-}
-
-// Request message to PatchTrialsCollection.
-message PatchTrialsCollectionRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id" ] }
-  };
-  // The ID of the collection to be patched.
-  int32 id = 1;
-  // The new name for the collection.
-  string name = 2;
-  // The new filters for the collection.
-  TrialFilters filters = 3;
-  // The new sorter for the collection.
-  TrialSorter sorter = 4;
-}
-
-// Response message to PatchTrialsCollection
-message PatchTrialsCollectionResponse {
-  // The patched collection.
-  TrialsCollection collection = 1;
-}
-
-// Request message to PatchTrialsCollection
-message DeleteTrialsCollectionRequest {
-  // The id for the TrialsCollection.
-  int32 id = 1;
-}
-
-// Empty response for DeleteTrialsCollection.
-message DeleteTrialsCollectionResponse {}
 
 // Stream trial logs.
 message TrialLogsRequest {
@@ -603,8 +339,8 @@ message GetTrialWorkloadsRequest {
   // When sorting workloads by sort_key, specify training or validation form of
   // a metric.
   MetricType metric_type = 8 [deprecated = true];
-  // Type of metrics (training, validation, etc).
-  string custom_type = 9;
+  // Metric group (training, validation, etc).
+  string group = 9;
 }
 // Response to GetTrialWorkloadsRequest.
 message GetTrialWorkloadsResponse {
@@ -693,11 +429,11 @@ message CompareTrialsRequest {
   int32 start_batches = 4;
   // Sample from metrics before this batch number.
   int32 end_batches = 5;
-  // Type of metrics.
+  // Metric group.
   MetricType metric_type = 6 [deprecated = true];
-  // Type of metrics (training, validation, etc).
-  string custom_type = 11;
-  // metric ids for the query. must be in the form metric_type.metric_name.
+  // Metric group (training, validation, etc).
+  string group = 11;
+  // metric ids for the query. must be in the form group.metric_name.
   repeated string metric_ids = 9;
   // The metric and range filter for a time series
   determined.common.v1.PolymorphicFilter time_series_filter = 10;
@@ -904,12 +640,12 @@ message ReportTrialProgressResponse {}
 // Persist the given metrics for the trial.
 message ReportTrialMetricsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "metrics", "type" ] }
+    json_schema: { required: [ "metrics", "group" ] }
   };
   // The metrics to persist.
   determined.trial.v1.TrialMetrics metrics = 1;
   // The type of metrics to persist eg 'training', 'validation', etc.
-  string type = 2;
+  string group = 2;
 }
 // Response to ReportTrialMetricsRequest
 message ReportTrialMetricsResponse {}
@@ -952,7 +688,7 @@ message PostTrialRunnerMetadataResponse {}
 // Stream training metrics.
 message GetMetricsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_ids", "type" ] }
+    json_schema: { required: [ "trial_ids", "group" ] }
   };
   // Trial IDs to get metrics for.
   repeated int32 trial_ids = 1
@@ -960,11 +696,12 @@ message GetMetricsRequest {
         required:
           ["trial_ids"];
       }];
-  // The type of metrics to get eg 'training', 'validation', etc.
-  string type = 2 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-    required:
-      ["type"];
-  }];
+  // The group of metrics to get eg 'training', 'validation', etc.
+  string group = 2
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required:
+          ["group"];
+      }];
 }
 // Response to GetMetricsRequest.
 message GetMetricsResponse {

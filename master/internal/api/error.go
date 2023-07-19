@@ -58,7 +58,7 @@ please ensure the client consuming the API is up to date and report a bug if the
 
 // NotFoundErrMsg creates a formatted message about a resource not being found.
 func NotFoundErrMsg(name string, id string) string {
-	msg := fmt.Sprintf("%s %s not found%s", name, id, AddRBACSuffix())
+	msg := fmt.Sprintf(`%s '%s' not found%s`, name, id, AddRBACSuffix())
 	if id == "" {
 		msg = fmt.Sprintf("%s not found%s", name, AddRBACSuffix())
 	}

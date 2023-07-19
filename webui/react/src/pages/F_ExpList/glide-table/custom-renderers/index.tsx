@@ -1,4 +1,4 @@
-import { DataEditorProps } from '@glideapps/glide-data-grid';
+import { DataEditorProps } from '@hpe.com/glide-data-grid';
 
 import CheckboxCell from './cells/checkboxCell';
 import ExperimentStateCell from './cells/experimentStateCell';

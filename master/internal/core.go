@@ -112,10 +112,6 @@ func New(logStore *logger.LogBuffer, config *config.Config) *Master {
 	}
 }
 
-func (m *Master) getConfig(ctx echo.Context) (interface{}, error) {
-	return m.config.Printable()
-}
-
 // Info returns this master's information.
 func (m *Master) Info() aproto.MasterInfo {
 	telemetryInfo := aproto.TelemetryInfo{}
@@ -1110,7 +1106,6 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.File("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
-	m.echo.GET("/config", api.Route(m.getConfig))
 	m.echo.GET("/info", api.Route(m.getInfo))
 
 	experimentsGroup := m.echo.Group("/experiments")
@@ -1173,7 +1168,10 @@ func (m *Master) Run(ctx context.Context) error {
 	// Catch-all for requests not matched by any above handler
 	// echo does not set the response error on the context if no handler is matched
 	m.echo.Any("/*", func(c echo.Context) error {
-		return echo.ErrNotFound
+		id := fmt.Sprintf("%s %s", c.Request().Method, c.Request().URL.Path)
+		log.Debugf("unmatched request: %s", id)
+		return echo.NewHTTPError(http.StatusNotFound,
+			fmt.Sprintf("api not found: %s", id))
 	})
 
 	user.RegisterAPIHandler(m.echo, userService)

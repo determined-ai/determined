@@ -19,7 +19,7 @@ const TrialHeaderLeft: React.FC<Props> = ({ experiment, trial }: Props) => {
       <Link className={css.experiment} to={paths.experimentDetails(trial.experimentId)}>
         Experiment {trial.experimentId} | {experiment.name}
       </Link>
-      <Icon name="arrow-right" size="tiny" title="Trial" />
+      <Icon decorative name="arrow-right" size="tiny" />
       <div className={css.trial}>
         <ExperimentIcons state={trial.state} />
         <div>Trial {trial.id}</div>

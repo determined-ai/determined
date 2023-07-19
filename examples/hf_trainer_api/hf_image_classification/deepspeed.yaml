@@ -6,7 +6,7 @@ environment:
     # You may need to modify this to match your network configuration.
     - NCCL_SOCKET_IFNAME=ens,eth,ib
   image:
-    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
+    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.23.3
 resources:
   slots_per_trial: 2
 searcher:
@@ -39,4 +39,5 @@ entrypoint: >-
   --save_steps 20
   --deepspeed ds_configs/ds_config_stage_1.json
   --trust_remote_code false
+  --fp16
 max_restarts: 0

@@ -38,7 +38,9 @@ class APIException(BadRequestException):
 
 
 class NotFoundException(APIException):
-    pass
+    def __init__(self, error_message: str) -> None:
+        self.message = error_message
+        self.status_code = 404
 
 
 class ForbiddenException(BadRequestException):

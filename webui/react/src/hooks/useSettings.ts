@@ -1,16 +1,17 @@
+import { Map } from 'immutable';
 import * as t from 'io-ts';
 import { useObservable } from 'micro-observables';
-import { useCallback, useContext, useEffect, useLayoutEffect, useMemo } from 'react';
+import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { updateUserSetting } from 'services/api';
-import { UpdateUserSettingParams } from 'services/types';
 import userStore from 'stores/users';
+import userSettings from 'stores/userSettings';
 import { Primitive } from 'types';
 import { isEqual } from 'utils/data';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useValueMemoizedObservable } from 'utils/observable';
 
 import { Settings, SettingsProvider, UserSettings } from './useSettingsProvider';
 
@@ -24,10 +25,6 @@ export interface SettingsConfigProp<A> {
 export interface SettingsConfig<T> {
   settings: { [K in keyof T]: SettingsConfigProp<T[K]> };
   storagePath: string;
-}
-
-interface UserSettingUpdate extends UpdateUserSettingParams {
-  userId: number;
 }
 
 export type UpdateSettings<T> = (newSettings: Partial<T>) => void;
@@ -162,13 +159,15 @@ const queryToSettings = <T>(config: SettingsConfig<T>, params: URLSearchParams) 
 };
 
 const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
-  const { isLoading: isLoadingOb, querySettings, state: stateOb } = useContext(UserSettings);
-  const initialLoading = useObservable(isLoadingOb);
+  const { isLoading, querySettings, state: rawState } = useContext(UserSettings);
   const derivedOb = useMemo(
-    () => stateOb.select((s) => s.get(config.storagePath)),
-    [stateOb, config.storagePath],
+    () =>
+      rawState.select((s) =>
+        Loadable.getOrElse(Map<string, Settings>(), s).get(config.storagePath),
+      ),
+    [rawState, config.storagePath],
   );
-  const state = useObservable(derivedOb);
+  const state = useValueMemoizedObservable(derivedOb);
   const navigate = useNavigate();
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
 
@@ -209,93 +208,67 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     [config.settings, settings],
   );
 
-  const updateDB = useCallback(
-    async (newSettings: Settings, oldSettings: SettingsRecord<T>) => {
-      const dbUpdates = Object.keys(newSettings).reduce<UserSettingUpdate[]>((acc, setting) => {
-        const newSetting = newSettings[setting];
-        const stateSetting = oldSettings?.[setting as keyof T];
-        if (currentUser?.id && !isEqual(newSetting, stateSetting)) {
-          acc.push({
-            setting: {
-              key: setting,
-              storagePath: config.storagePath,
-              value: JSON.stringify(newSettings[setting]),
-            },
-            storagePath: config.storagePath,
-            userId: currentUser.id,
-          });
-        }
-
-        return acc;
-      }, []);
-
-      if (dbUpdates.length !== 0) {
-        try {
-          // Persist storage to backend.
-          await Promise.allSettled(
-            dbUpdates.map((update) => {
-              updateUserSetting(update);
-            }),
-          );
-        } catch (e) {
-          handleError(e, {
-            isUserTriggered: false,
-            publicMessage: 'Unable to update user settings.',
-            publicSubject: 'Some POST user settings failed.',
-            silent: true,
-            type: ErrorType.Api,
-          });
-        }
-      }
-    },
-    [config.storagePath, currentUser],
-  );
-
   const resetSettings = useCallback(
     (settingsArray?: string[]) => {
       if (!currentUser) return;
 
       const array = settingsArray ?? Object.keys(config.settings);
 
-      stateOb.update((s) => {
-        return s.update(config.storagePath, (old) => {
-          const news = { ...old };
-          array.forEach((setting) => {
-            let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined =
-              undefined;
+      rawState.update((s) => {
+        return Loadable.map(s, (s) => {
+          return s.update(config.storagePath, (old) => {
+            const news = { ...old };
+            array.forEach((setting) => {
+              let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined =
+                undefined;
 
-            for (const key in config.settings) {
-              const conf = config.settings[key];
+              for (const key in config.settings) {
+                const conf = config.settings[key];
 
-              if (conf.storageKey === setting) {
-                defaultSetting = conf;
-                break;
+                if (conf.storageKey === setting) {
+                  defaultSetting = conf;
+                  break;
+                }
               }
-            }
 
-            if (!defaultSetting || !news) return;
+              if (!defaultSetting || !news) return;
 
-            news[setting] = defaultSetting.defaultValue;
+              news[setting] = defaultSetting.defaultValue;
+            });
+            return news;
           });
-          return news;
         });
       });
     },
-    [config, currentUser, stateOb],
+    [config, currentUser, rawState],
   );
 
   const updateSettings = useCallback(
     (updates: Partial<Settings>) => {
-      stateOb.update((s) => {
-        const oldSettings = s.get(config.storagePath) ?? {};
-        const newSettings = { ...s.get(config.storagePath), ...updates };
-        return s.set(
-          config.storagePath,
-          isEqual(oldSettings, newSettings) ? oldSettings : newSettings,
-        );
+      // Fake update to get access to old state without race conditions.
+      rawState.update((s) => {
+        Loadable.forEach(s, (s) => {
+          const oldSettings = s.get(config.storagePath) ?? {};
+          const newSettings = { ...s.get(config.storagePath), ...updates };
+          if (!isEqual(oldSettings, newSettings)) {
+            setTimeout(() => userSettings.set(t.any, config.storagePath, newSettings), 0);
+
+            if (
+              (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
+                (setting) => !!setting.skipUrlEncoding,
+              )
+            ) {
+              return;
+            }
+            const mappedSettings = settingsToQuery(config, newSettings);
+            const url = mappedSettings ? `?${mappedSettings}` : '';
+            navigate(url, { replace: true });
+          }
+        });
+        return s;
       });
     },
-    [config, stateOb],
+    [config, rawState, navigate],
   );
 
   // parse navigation url to state
@@ -306,29 +279,9 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     updateSettings(parsedSettings);
   }, [config, querySettings, updateSettings]);
 
-  useLayoutEffect(() => {
-    if (initialLoading) return;
-    return derivedOb.subscribe(async (cur, prev) => {
-      if (!cur || !currentUser || isEqual(cur, prev)) return;
-
-      await updateDB(cur, prev as unknown as SettingsRecord<T>);
-
-      if (
-        (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
-          (setting) => !!setting.skipUrlEncoding,
-        )
-      ) {
-        return;
-      }
-      const mappedSettings = settingsToQuery(config, cur);
-      const url = mappedSettings ? `?${mappedSettings}` : '';
-      navigate(url, { replace: true });
-    });
-  }, [currentUser, derivedOb, navigate, config, updateDB, initialLoading]);
-
   return {
     activeSettings,
-    isLoading: initialLoading,
+    isLoading: isLoading,
     resetSettings,
     settings,
     updateSettings,

@@ -146,7 +146,7 @@ def test_group_errors() -> None:
         det_cmd_expect_error(["user-group", "remove-user", group_name, fake_user], "not find")
 
         # Removing a user not in a group.
-        det_cmd_expect_error(["user-group", "remove-user", group_name, "admin"], "NotFound")
+        det_cmd_expect_error(["user-group", "remove-user", group_name, "admin"], "Not Found")
 
         # Describing a non existent group.
         det_cmd_expect_error(["user-group", "describe", get_random_string()], "not find")

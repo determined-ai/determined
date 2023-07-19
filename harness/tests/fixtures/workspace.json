@@ -1,0 +1,17 @@
+{
+  "workspace":{
+    "id":1,
+    "name":"Uncategorized",
+    "archived":false,
+    "username":"admin",
+    "immutable":true,
+    "numProjects":1,
+    "pinned":false,
+    "userId":1,
+    "numExperiments":707,
+    "state":"WORKSPACE_STATE_UNSPECIFIED",
+    "errorMessage":"",
+    "defaultComputePool":"",
+    "defaultAuxPool":""
+  }
+}

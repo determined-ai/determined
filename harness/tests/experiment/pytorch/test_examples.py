@@ -59,8 +59,8 @@ def test_pytorch_parallel(tmp_path: pathlib.Path) -> None:
 
     patterns = [
         # Expect two training reports.
-        f"report_training_metrics.*steps_completed={1*scheduling_unit}",
-        f"report_training_metrics.*steps_completed={2*scheduling_unit}",
+        f"report_trial_metrics.*group=training.*total_batches={1*scheduling_unit}",
+        f"report_trial_metrics.*group=training.*total_batches={2*scheduling_unit}",
         f"validated: {validation_size} records.*in {exp_val_batches} batches",
     ]
 

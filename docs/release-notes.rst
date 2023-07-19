@@ -10,10 +10,31 @@
  Version 0.23
 **************
 
+Version 0.23.3
+==============
+
+**Release Date:** July 18, 2023
+
+**Breaking Changes**
+
+-  API: Removed echo-backed `/config` endpoint, replaced by grpc-gateway `api/v1/master/config`
+
+**Improvements**
+
+-  Notebook: The connection between Determined Master and the notebook task on Determined Agents was
+   previously HTTP only. This change upgrades the connection to HTTPS for enhanced security.
+
+**Deprecated Features**
+
+-  API: The ``SummarizeTrial`` endpoint is removed in favor of ``CompareTrials``; ``CompareTrials``
+   sends a similar request with the `trial_id` parameter replaced by the `trial_ids` array.
+-  API: The ``scale`` parameter is removed from ``CompareTrialsRequest``; this was used only for
+   lttb downsampling which has since been replaced.
+
 Version 0.23.2
 ==============
 
-**Release Date:** June 30, 2023
+**Release Date:** July 05, 2023
 
 **New Features**
 

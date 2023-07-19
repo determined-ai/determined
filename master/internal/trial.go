@@ -242,7 +242,6 @@ func (t *trial) Receive(ctx *actor.Context) error {
 func (t *trial) create(ctx *actor.Context) error {
 	m := model.NewTrial(
 		t.state,
-		t.jobID,
 		t.taskID,
 		t.searcher.Create.RequestID,
 		t.experimentID,
