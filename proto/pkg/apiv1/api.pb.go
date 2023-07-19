@@ -1549,16 +1549,16 @@ var file_determined_api_v1_api_proto_rawDesc = []byte{
 	0x93, 0x02, 0x18, 0x2a, 0x13, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x63, 0x68, 0x65,
 	0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x73, 0x3a, 0x01, 0x2a, 0x92, 0x41, 0x0d, 0x0a, 0x0b,
 	0x43, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x73, 0x12, 0x80, 0x02, 0x0a, 0x25,
-	0x47, 0x65, 0x74, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x6e,
-	0x66, 0x6f, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x42, 0x79, 0x43, 0x68, 0x65, 0x63, 0x6b,
+	0x47, 0x65, 0x74, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x42,
+	0x79, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x43, 0x68, 0x65, 0x63, 0x6b,
 	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x3f, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e,
 	0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x54, 0x72, 0x69,
-	0x61, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x4d, 0x65, 0x74, 0x72,
-	0x69, 0x63, 0x73, 0x42, 0x79, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x52,
+	0x61, 0x6c, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x42, 0x79, 0x53, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x49, 0x6e, 0x66, 0x6f, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x52,
 	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x40, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69,
 	0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x54, 0x72,
-	0x69, 0x61, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x4d, 0x65, 0x74,
-	0x72, 0x69, 0x63, 0x73, 0x42, 0x79, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74,
+	0x69, 0x61, 0x6c, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x42, 0x79, 0x53, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74,
 	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x54, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x41,
 	0x12, 0x3f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x70,
 	0x6f, 0x69, 0x6e, 0x74, 0x73, 0x2f, 0x7b, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e,
@@ -2387,7 +2387,7 @@ var file_determined_api_v1_api_proto_goTypes = []interface{}{
 	(*CheckpointsRemoveFilesRequest)(nil),                 // 138: determined.api.v1.CheckpointsRemoveFilesRequest
 	(*PatchCheckpointsRequest)(nil),                       // 139: determined.api.v1.PatchCheckpointsRequest
 	(*DeleteCheckpointsRequest)(nil),                      // 140: determined.api.v1.DeleteCheckpointsRequest
-	(*GetTrialSourceInfoMetricsByCheckpointRequest)(nil),  // 141: determined.api.v1.GetTrialSourceInfoMetricsByCheckpointRequest
+	(*GetTrialMetricsBySourceInfoCheckpointRequest)(nil),  // 141: determined.api.v1.GetTrialMetricsBySourceInfoCheckpointRequest
 	(*GetSearcherEventsRequest)(nil),                      // 142: determined.api.v1.GetSearcherEventsRequest
 	(*PostSearcherOperationsRequest)(nil),                 // 143: determined.api.v1.PostSearcherOperationsRequest
 	(*ExpMetricNamesRequest)(nil),                         // 144: determined.api.v1.ExpMetricNamesRequest
@@ -2587,7 +2587,7 @@ var file_determined_api_v1_api_proto_goTypes = []interface{}{
 	(*CheckpointsRemoveFilesResponse)(nil),                // 338: determined.api.v1.CheckpointsRemoveFilesResponse
 	(*PatchCheckpointsResponse)(nil),                      // 339: determined.api.v1.PatchCheckpointsResponse
 	(*DeleteCheckpointsResponse)(nil),                     // 340: determined.api.v1.DeleteCheckpointsResponse
-	(*GetTrialSourceInfoMetricsByCheckpointResponse)(nil), // 341: determined.api.v1.GetTrialSourceInfoMetricsByCheckpointResponse
+	(*GetTrialMetricsBySourceInfoCheckpointResponse)(nil), // 341: determined.api.v1.GetTrialMetricsBySourceInfoCheckpointResponse
 	(*GetSearcherEventsResponse)(nil),                     // 342: determined.api.v1.GetSearcherEventsResponse
 	(*PostSearcherOperationsResponse)(nil),                // 343: determined.api.v1.PostSearcherOperationsResponse
 	(*ExpMetricNamesResponse)(nil),                        // 344: determined.api.v1.ExpMetricNamesResponse
@@ -2789,7 +2789,7 @@ var file_determined_api_v1_api_proto_depIdxs = []int32{
 	138, // 138: determined.api.v1.Determined.CheckpointsRemoveFiles:input_type -> determined.api.v1.CheckpointsRemoveFilesRequest
 	139, // 139: determined.api.v1.Determined.PatchCheckpoints:input_type -> determined.api.v1.PatchCheckpointsRequest
 	140, // 140: determined.api.v1.Determined.DeleteCheckpoints:input_type -> determined.api.v1.DeleteCheckpointsRequest
-	141, // 141: determined.api.v1.Determined.GetTrialSourceInfoMetricsByCheckpoint:input_type -> determined.api.v1.GetTrialSourceInfoMetricsByCheckpointRequest
+	141, // 141: determined.api.v1.Determined.GetTrialMetricsBySourceInfoCheckpoint:input_type -> determined.api.v1.GetTrialMetricsBySourceInfoCheckpointRequest
 	142, // 142: determined.api.v1.Determined.GetSearcherEvents:input_type -> determined.api.v1.GetSearcherEventsRequest
 	143, // 143: determined.api.v1.Determined.PostSearcherOperations:input_type -> determined.api.v1.PostSearcherOperationsRequest
 	144, // 144: determined.api.v1.Determined.ExpMetricNames:input_type -> determined.api.v1.ExpMetricNamesRequest
@@ -2989,7 +2989,7 @@ var file_determined_api_v1_api_proto_depIdxs = []int32{
 	338, // 338: determined.api.v1.Determined.CheckpointsRemoveFiles:output_type -> determined.api.v1.CheckpointsRemoveFilesResponse
 	339, // 339: determined.api.v1.Determined.PatchCheckpoints:output_type -> determined.api.v1.PatchCheckpointsResponse
 	340, // 340: determined.api.v1.Determined.DeleteCheckpoints:output_type -> determined.api.v1.DeleteCheckpointsResponse
-	341, // 341: determined.api.v1.Determined.GetTrialSourceInfoMetricsByCheckpoint:output_type -> determined.api.v1.GetTrialSourceInfoMetricsByCheckpointResponse
+	341, // 341: determined.api.v1.Determined.GetTrialMetricsBySourceInfoCheckpoint:output_type -> determined.api.v1.GetTrialMetricsBySourceInfoCheckpointResponse
 	342, // 342: determined.api.v1.Determined.GetSearcherEvents:output_type -> determined.api.v1.GetSearcherEventsResponse
 	343, // 343: determined.api.v1.Determined.PostSearcherOperations:output_type -> determined.api.v1.PostSearcherOperationsResponse
 	344, // 344: determined.api.v1.Determined.ExpMetricNames:output_type -> determined.api.v1.ExpMetricNamesResponse
@@ -3428,7 +3428,7 @@ type DeterminedClient interface {
 	// Delete Checkpoints.
 	DeleteCheckpoints(ctx context.Context, in *DeleteCheckpointsRequest, opts ...grpc.CallOption) (*DeleteCheckpointsResponse, error)
 	// Gets the metrics for all trials associated with this checkpoint
-	GetTrialSourceInfoMetricsByCheckpoint(ctx context.Context, in *GetTrialSourceInfoMetricsByCheckpointRequest, opts ...grpc.CallOption) (*GetTrialSourceInfoMetricsByCheckpointResponse, error)
+	GetTrialMetricsBySourceInfoCheckpoint(ctx context.Context, in *GetTrialMetricsBySourceInfoCheckpointRequest, opts ...grpc.CallOption) (*GetTrialMetricsBySourceInfoCheckpointResponse, error)
 	// Get the list of custom searcher events with long polling.
 	GetSearcherEvents(ctx context.Context, in *GetSearcherEventsRequest, opts ...grpc.CallOption) (*GetSearcherEventsResponse, error)
 	// Submit operations to a custom searcher.
@@ -5064,9 +5064,9 @@ func (c *determinedClient) DeleteCheckpoints(ctx context.Context, in *DeleteChec
 	return out, nil
 }
 
-func (c *determinedClient) GetTrialSourceInfoMetricsByCheckpoint(ctx context.Context, in *GetTrialSourceInfoMetricsByCheckpointRequest, opts ...grpc.CallOption) (*GetTrialSourceInfoMetricsByCheckpointResponse, error) {
-	out := new(GetTrialSourceInfoMetricsByCheckpointResponse)
-	err := c.cc.Invoke(ctx, "/determined.api.v1.Determined/GetTrialSourceInfoMetricsByCheckpoint", in, out, opts...)
+func (c *determinedClient) GetTrialMetricsBySourceInfoCheckpoint(ctx context.Context, in *GetTrialMetricsBySourceInfoCheckpointRequest, opts ...grpc.CallOption) (*GetTrialMetricsBySourceInfoCheckpointResponse, error) {
+	out := new(GetTrialMetricsBySourceInfoCheckpointResponse)
+	err := c.cc.Invoke(ctx, "/determined.api.v1.Determined/GetTrialMetricsBySourceInfoCheckpoint", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -6006,7 +6006,7 @@ type DeterminedServer interface {
 	// Delete Checkpoints.
 	DeleteCheckpoints(context.Context, *DeleteCheckpointsRequest) (*DeleteCheckpointsResponse, error)
 	// Gets the metrics for all trials associated with this checkpoint
-	GetTrialSourceInfoMetricsByCheckpoint(context.Context, *GetTrialSourceInfoMetricsByCheckpointRequest) (*GetTrialSourceInfoMetricsByCheckpointResponse, error)
+	GetTrialMetricsBySourceInfoCheckpoint(context.Context, *GetTrialMetricsBySourceInfoCheckpointRequest) (*GetTrialMetricsBySourceInfoCheckpointResponse, error)
 	// Get the list of custom searcher events with long polling.
 	GetSearcherEvents(context.Context, *GetSearcherEventsRequest) (*GetSearcherEventsResponse, error)
 	// Submit operations to a custom searcher.
@@ -6557,8 +6557,8 @@ func (*UnimplementedDeterminedServer) PatchCheckpoints(context.Context, *PatchCh
 func (*UnimplementedDeterminedServer) DeleteCheckpoints(context.Context, *DeleteCheckpointsRequest) (*DeleteCheckpointsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteCheckpoints not implemented")
 }
-func (*UnimplementedDeterminedServer) GetTrialSourceInfoMetricsByCheckpoint(context.Context, *GetTrialSourceInfoMetricsByCheckpointRequest) (*GetTrialSourceInfoMetricsByCheckpointResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTrialSourceInfoMetricsByCheckpoint not implemented")
+func (*UnimplementedDeterminedServer) GetTrialMetricsBySourceInfoCheckpoint(context.Context, *GetTrialMetricsBySourceInfoCheckpointRequest) (*GetTrialMetricsBySourceInfoCheckpointResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTrialMetricsBySourceInfoCheckpoint not implemented")
 }
 func (*UnimplementedDeterminedServer) GetSearcherEvents(context.Context, *GetSearcherEventsRequest) (*GetSearcherEventsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSearcherEvents not implemented")
@@ -9307,20 +9307,20 @@ func _Determined_DeleteCheckpoints_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Determined_GetTrialSourceInfoMetricsByCheckpoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTrialSourceInfoMetricsByCheckpointRequest)
+func _Determined_GetTrialMetricsBySourceInfoCheckpoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTrialMetricsBySourceInfoCheckpointRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeterminedServer).GetTrialSourceInfoMetricsByCheckpoint(ctx, in)
+		return srv.(DeterminedServer).GetTrialMetricsBySourceInfoCheckpoint(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/determined.api.v1.Determined/GetTrialSourceInfoMetricsByCheckpoint",
+		FullMethod: "/determined.api.v1.Determined/GetTrialMetricsBySourceInfoCheckpoint",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeterminedServer).GetTrialSourceInfoMetricsByCheckpoint(ctx, req.(*GetTrialSourceInfoMetricsByCheckpointRequest))
+		return srv.(DeterminedServer).GetTrialMetricsBySourceInfoCheckpoint(ctx, req.(*GetTrialMetricsBySourceInfoCheckpointRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -10910,8 +10910,8 @@ var _Determined_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Determined_DeleteCheckpoints_Handler,
 		},
 		{
-			MethodName: "GetTrialSourceInfoMetricsByCheckpoint",
-			Handler:    _Determined_GetTrialSourceInfoMetricsByCheckpoint_Handler,
+			MethodName: "GetTrialMetricsBySourceInfoCheckpoint",
+			Handler:    _Determined_GetTrialMetricsBySourceInfoCheckpoint_Handler,
 		},
 		{
 			MethodName: "GetSearcherEvents",

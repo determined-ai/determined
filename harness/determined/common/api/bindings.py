@@ -5060,6 +5060,28 @@ class v1GetTrialCheckpointsResponse(Printable):
         }
         return out
 
+class v1GetTrialMetricsBySourceInfoCheckpointResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        data: "typing.Sequence[v1TrialSourceInfoMetric]",
+    ):
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTrialMetricsBySourceInfoCheckpointResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "data": [v1TrialSourceInfoMetric.from_json(x) for x in obj["data"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "data": [x.to_json(omit_unset) for x in self.data],
+        }
+        return out
+
 class v1GetTrialProfilerAvailableSeriesResponse(Printable):
 
     def __init__(
@@ -5123,28 +5145,6 @@ class v1GetTrialResponse(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "trial": self.trial.to_json(omit_unset),
-        }
-        return out
-
-class v1GetTrialSourceInfoMetricsByCheckpointResponse(Printable):
-
-    def __init__(
-        self,
-        *,
-        data: "typing.Sequence[v1TrialSourceInfoMetric]",
-    ):
-        self.data = data
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetTrialSourceInfoMetricsByCheckpointResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "data": [v1TrialSourceInfoMetric.from_json(x) for x in obj["data"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "data": [x.to_json(omit_unset) for x in self.data],
         }
         return out
 
@@ -15447,6 +15447,29 @@ def get_GetTrialCheckpoints(
         return v1GetTrialCheckpointsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTrialCheckpoints", _resp)
 
+def get_GetTrialMetricsBySourceInfoCheckpoint(
+    session: "api.Session",
+    *,
+    checkpointUuid: str,
+    trialSourceInfoType: "typing.Optional[v1TrialSourceInfoType]" = None,
+) -> "v1GetTrialMetricsBySourceInfoCheckpointResponse":
+    _params = {
+        "trialSourceInfoType": trialSourceInfoType.value if trialSourceInfoType is not None else None,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/checkpoints/{checkpointUuid}/trial-source-info-metrics",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetTrialMetricsBySourceInfoCheckpointResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTrialMetricsBySourceInfoCheckpoint", _resp)
+
 def get_GetTrialProfilerAvailableSeries(
     session: "api.Session",
     *,
@@ -15522,29 +15545,6 @@ def get_GetTrialProfilerMetrics(
             raise APIHttpStreamError("get_GetTrialProfilerMetrics", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_GetTrialProfilerMetrics", _resp)
-
-def get_GetTrialSourceInfoMetricsByCheckpoint(
-    session: "api.Session",
-    *,
-    checkpointUuid: str,
-    trialSourceInfoType: "typing.Optional[v1TrialSourceInfoType]" = None,
-) -> "v1GetTrialSourceInfoMetricsByCheckpointResponse":
-    _params = {
-        "trialSourceInfoType": trialSourceInfoType.value if trialSourceInfoType is not None else None,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/checkpoints/{checkpointUuid}/trial-source-info-metrics",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1GetTrialSourceInfoMetricsByCheckpointResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetTrialSourceInfoMetricsByCheckpoint", _resp)
 
 def get_GetTrialWorkloads(
     session: "api.Session",

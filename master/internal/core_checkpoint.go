@@ -17,7 +17,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/checkpoints/archive"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	detContext "github.com/determined-ai/determined/master/internal/context"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -158,11 +157,10 @@ func (m *Master) getCheckpoint(c echo.Context) error {
 				args.CheckpointUUID, err))
 	}
 
-	curUser := c.(*detContext.DetContext).MustGetUser()
-	errE := m.canDoActionOnCheckpoint(c.Request().Context(), curUser, args.CheckpointUUID,
+	errE := m.canDoActionOnCheckpoint(c.Request().Context(), args.CheckpointUUID,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
 	if errE != nil {
-		errM := m.canDoActionOnCheckpointThroughModel(c.Request().Context(), curUser, args.CheckpointUUID)
+		errM := m.canDoActionOnCheckpointThroughModel(c.Request().Context(), args.CheckpointUUID)
 		if errM != nil {
 			s, ok := status.FromError(errE)
 			if !ok {

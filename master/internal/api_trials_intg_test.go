@@ -696,16 +696,32 @@ func TestReportTrialSourceInfo(t *testing.T) {
 		}
 	}
 
-	startingResources := map[string]int64{
-		"a": 1,
-	}
+	// Create a checkpoint to index with
+	startingResources := map[string]int64{"a": 1}
 	checkpointUUID := createVersionTwoCheckpoint(ctx, t, api, curUser, startingResources)
+
+	// Create a model_version to index with
+	// RegisterCheckpointAsModelVersion(t, api.m.db, checkpointUUID.ToUUID())
+
+	// modelReq := &apiv1.PostModelRequest{
+	// 	Name: uuid.New().String(),
+	// }
+	// modelResp, err := api.PostModel(ctx, modelReq)
+	// require.NoError(t, err)
+	// modelVersionReq := &apiv1.PostModelVersionRequest{
+	// 	ModelName:      modelResp.Model.Name,
+	// 	CheckpointUuid: checkpointUUID,
+	// }
+	// modelVersionResp, err := api.PostModelVersion(ctx, modelVersionReq)
+	// require.NoError(t, err)
 
 	// Create a TrialSourceInfo associated with each of the two trials.
 	trialSourceInfo := &trialv1.TrialSourceInfo{
 		TrialId:             int32(infTrial.ID),
 		CheckpointUuid:      checkpointUUID,
 		TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+		// SourceModelVersionId:      &modelVersionResp.ModelVersion.Id,
+		// SourceModelVersionVersion: &modelVersionResp.ModelVersion.Version,
 	}
 	req := &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: trialSourceInfo}
 	resp, err := api.ReportTrialSourceInfo(ctx, req)
@@ -725,8 +741,8 @@ func TestReportTrialSourceInfo(t *testing.T) {
 	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
 
 	// Get the trials and metrics.
-	getReq := &apiv1.GetTrialSourceInfoMetricsByCheckpointRequest{CheckpointUuid: checkpointUUID}
-	getResp, getErr := api.GetTrialSourceInfoMetricsByCheckpoint(ctx, getReq)
+	getReq := &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID}
+	getResp, getErr := api.GetTrialMetricsBySourceInfoCheckpoint(ctx, getReq)
 	require.NoError(t, getErr)
 	require.Equal(t, len(getResp.Data), 2)
 

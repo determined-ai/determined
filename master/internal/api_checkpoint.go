@@ -22,6 +22,7 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	modelauth "github.com/determined-ai/determined/master/internal/model"
+	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -42,10 +43,14 @@ func errCheckpointsNotFound(ids []string) error {
 
 func (m *Master) canDoActionOnCheckpoint(
 	ctx context.Context,
-	curUser model.User,
 	id string,
 	action func(context.Context, model.User, *model.Experiment) error,
 ) error {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
 	uuid, err := uuid.Parse(id)
 	if err != nil {
 		return err
@@ -65,18 +70,23 @@ func (m *Master) canDoActionOnCheckpoint(
 		return err
 	}
 
-	if err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp); err != nil {
+	if err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
 		return authz.SubIfUnauthorized(err, api.NotFoundErrs("checkpoint", id, true))
 	}
-	if err := action(ctx, curUser, exp); err != nil {
+	if err := action(ctx, *curUser, exp); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
 	}
 	return nil
 }
 
 func (m *Master) canDoActionOnCheckpointThroughModel(
-	ctx context.Context, curUser model.User, ckptID string,
+	ctx context.Context, ckptID string,
 ) error {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
 	ckptUUID, err := uuid.Parse(ckptID)
 	if err != nil {
 		return err
@@ -100,7 +110,7 @@ func (m *Master) canDoActionOnCheckpointThroughModel(
 			return err
 		}
 		if errCanGetModel = modelauth.AuthZProvider.Get().CanGetModel(
-			ctx, curUser, model, model.WorkspaceId); errCanGetModel == nil {
+			ctx, *curUser, model, model.WorkspaceId); errCanGetModel == nil {
 			return nil
 		}
 	}
@@ -112,15 +122,11 @@ func (m *Master) canDoActionOnCheckpointThroughModel(
 func (a *apiServer) GetCheckpoint(
 	ctx context.Context, req *apiv1.GetCheckpointRequest,
 ) (*apiv1.GetCheckpointResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	errE := a.m.canDoActionOnCheckpoint(ctx, *curUser, req.CheckpointUuid,
+	errE := a.m.canDoActionOnCheckpoint(ctx, req.CheckpointUuid,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
 
 	if errE != nil {
-		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, req.CheckpointUuid)
+		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, req.CheckpointUuid)
 		if errM != nil {
 			return nil, errE
 		}
@@ -129,7 +135,7 @@ func (a *apiServer) GetCheckpoint(
 	resp := &apiv1.GetCheckpointResponse{}
 	resp.Checkpoint = &checkpointv1.Checkpoint{}
 
-	if err = a.m.db.QueryProto(
+	if err := a.m.db.QueryProto(
 		"get_checkpoint", resp.Checkpoint, req.CheckpointUuid); err != nil {
 		return resp,
 			errors.Wrapf(err, "error fetching checkpoint %s from database", req.CheckpointUuid)
@@ -395,17 +401,13 @@ func (a *apiServer) DeleteCheckpoints(
 func (a *apiServer) PostCheckpointMetadata(
 	ctx context.Context, req *apiv1.PostCheckpointMetadataRequest,
 ) (*apiv1.PostCheckpointMetadataResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err = a.m.canDoActionOnCheckpoint(ctx, *curUser, req.Checkpoint.Uuid,
+	if err := a.m.canDoActionOnCheckpoint(ctx, req.Checkpoint.Uuid,
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
 
 	currCheckpoint := &checkpointv1.Checkpoint{}
-	if err = a.m.db.QueryProto("get_checkpoint", currCheckpoint, req.Checkpoint.Uuid); err != nil {
+	if err := a.m.db.QueryProto("get_checkpoint", currCheckpoint, req.Checkpoint.Uuid); err != nil {
 		return nil,
 			errors.Wrapf(err, "error fetching checkpoint %s from database", req.Checkpoint.Uuid)
 	}
@@ -428,4 +430,31 @@ func (a *apiServer) PostCheckpointMetadata(
 
 	return &apiv1.PostCheckpointMetadataResponse{Checkpoint: currCheckpoint},
 		errors.Wrapf(err, "error updating checkpoint %s in database", req.Checkpoint.Uuid)
+}
+
+// Query for all trials that use a given checkpoint and return their metrics.
+func (a *apiServer) GetTrialMetricsBySourceInfoCheckpoint(
+	ctx context.Context, req *apiv1.GetTrialMetricsBySourceInfoCheckpointRequest,
+) (*apiv1.GetTrialMetricsBySourceInfoCheckpointResponse, error) {
+	err := a.m.canDoActionOnCheckpoint(ctx, req.CheckpointUuid,
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &apiv1.GetTrialMetricsBySourceInfoCheckpointResponse{}
+	trialIDsQuery := db.Bun().NewSelect().Table("trial_source_infos").
+		Where("checkpoint_uuid = ?", req.CheckpointUuid)
+
+	if req.TrialSourceInfoType != nil {
+		trialIDsQuery.Where("trial_source_info_type = ?", req.TrialSourceInfoType.String())
+	}
+
+	trialSourceMetrics, err := trials.GetMetricsForTrialSourceInfoQuery(ctx, trialIDsQuery)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get trial source info %w", err)
+	}
+
+	resp.Data = append(resp.Data, trialSourceMetrics...)
+	return resp, nil
 }
