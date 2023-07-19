@@ -34,15 +34,14 @@ def export_and_load_model(experiment_id: int) -> None:
 
 @pytest.mark.parallel
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])
-@pytest.mark.parametrize("tf2", [False, True])
 def test_tf_keras_parallel(
-    aggregation_frequency: int, tf2: bool, collect_trial_profiles: Callable[[int], None]
+    aggregation_frequency: int, collect_trial_profiles: Callable[[int], None]
 ) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
-    config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
+    config = conf.set_tf2_image(config)
     config = conf.set_profiling_enabled(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
