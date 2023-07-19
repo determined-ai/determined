@@ -371,7 +371,7 @@ def get_random_zero_optim_config(
         if v is None:
             if k in ("reduce_bucket_size", "stage3_prefetch_bucket_size"):
                 zero_optim_dict[k] = random.randint(
-                    approx_hidden_size**2 // 10, 10 * approx_hidden_size**2
+                    approx_hidden_size**2 // 100, 100 * approx_hidden_size**2
                 )
             elif k == "stage3_param_persistence_threshold":
                 zero_optim_dict[k] = random.randint(
