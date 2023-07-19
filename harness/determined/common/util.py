@@ -223,11 +223,17 @@ def is_protobuf_timestamp(ts: str) -> bool:
     if not ts.endswith("Z"):
         return False
 
-    try:
-        datetime.datetime.fromisoformat(ts)
-    except (ValueError, TypeError):
-        return False
-    return True
+    # Protobuf accepts timestamps with or without microseconds.
+    accepted_formats = ["%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%SZ"]
+    for fmt in accepted_formats:
+        try:
+            datetime.datetime.strptime(ts, fmt)
+        except (ValueError, TypeError):
+            continue
+        else:
+            # Return if any format is successful.
+            return True
+    return False
 
 
 def wait_for(
