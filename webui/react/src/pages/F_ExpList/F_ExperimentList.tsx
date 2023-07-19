@@ -433,9 +433,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     (cPage: number, cPageSize: number) => {
       updateSettings({ pageLimit: cPageSize });
       // Pagination component is assuming starting index of 1.
+      if (cPage - 1 !== page) {
+        setClearSelectionTrigger((t) => t + 1);
+      }
       setPage(cPage - 1);
     },
-    [updateSettings],
+    [page, updateSettings],
   );
 
   const handleToggleComparisonView = useCallback(() => {
