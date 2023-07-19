@@ -251,7 +251,16 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
           const oldSettings = s.get(config.storagePath) ?? {};
           const newSettings = { ...s.get(config.storagePath), ...updates };
           if (!isEqual(oldSettings, newSettings)) {
-            setTimeout(() => userSettings.set(t.any, config.storagePath, newSettings), 0);
+            const props: { [k: string]: t.Type<unknown> } = {};
+            Object.keys(updates).forEach((key) => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const t = (config.settings as any)[key]?.type;
+              if (t !== undefined) {
+                props[key] = t;
+              }
+            });
+            const type = t.type(props);
+            setTimeout(() => userSettings.set(type, config.storagePath, updates), 0);
 
             if (
               (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
