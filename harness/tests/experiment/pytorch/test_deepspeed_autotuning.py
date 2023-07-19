@@ -1088,16 +1088,16 @@ class TestBinaryDSATSearchMethod:
                     assert curr_trial.lineage_root == first_trial
 
     @pytest.mark.timeout(5)
-    def test_binary_range_too_small(
+    def test_initial_binary_range_too_small_extension(
         self,
         long_binary_state_and_search_method: Tuple[
             searcher.SearcherState, BinarySearchDSATSearchMethod
         ],
     ) -> None:
         """
-        Ensure that if the actual optimal batch size is larger than the initial range (which
-        hopefully never happens, but is possible), then the largest batch size in the range is
-        returned.
+        The initial binary search range is based on heuristics and the ceiling may be too low. Test
+        that we are appropriately auto-extending the range in such cases, so that the target value
+        will eventually be found.
         """
         searcher_state, search_method = long_binary_state_and_search_method
         search_method.trial_tracker.queue.clear()
@@ -1124,11 +1124,18 @@ class TestBinaryDSATSearchMethod:
                 )
                 assert search_method.trial_tracker.queue
                 if curr_trial.mbs == search_data.hi:
-                    # Next trial should start a new lineage in this case.
-                    next_lineage_trial = search_method.trial_tracker.queue.popleft()
+                    # Next trial should be in the same lineage with a range which covers the
+                    # target value
+                    extended_search_trial = search_method.trial_tracker.queue.popleft()
+                    assert extended_search_trial.search_data is not None
                     assert not search_method.trial_tracker.queue
-                    assert next_lineage_trial.lineage_root != first_trial
+                    assert extended_search_trial.lineage_root == first_trial
                     assert num_halvings <= int(math.log(num_possible_mbs, 2)) + 1
+                    assert (
+                        extended_search_trial.search_data.lo
+                        <= target_mbs
+                        <= extended_search_trial.search_data.hi
+                    )
                     break
                 curr_trial = search_method.trial_tracker.queue.popleft()
                 assert not search_method.trial_tracker.queue
@@ -1746,7 +1753,8 @@ class TestASHADSATSearchMethod:
         self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
-        Verify that lineages which have completed their binary search are not continued.
+        Verify that lineages which have completed their binary search are not continued. Tested by
+        having a trial fail when attempting its max possible batch size.
         """
         searcher_state, search_method = long_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
@@ -1761,7 +1769,6 @@ class TestASHADSATSearchMethod:
         search_method.trial_tracker.queue_and_register_trial(trial)
         _ = search_method.trial_tracker.queue.popleft()
         assert trial.searcher_metric_name is not None
-        search_method.trial_tracker.update_trial_metric(trial, {trial.searcher_metric_name: 0.0})
         assert search_method.get_next_trial_in_lineage(trial) is None
 
     @pytest.mark.timeout(5)
@@ -1769,8 +1776,9 @@ class TestASHADSATSearchMethod:
         self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
-        Verify that if a lineage successfully completes its binary search mid-rung, that lineage
-        is counted as having completed the rung.
+        Verify that if a lineage successfully completes its binary search mid-rung, that lineage is
+        counted as having completed the rung. Tested by having a trial fail when attempting its max
+        possible batch size.
         """
         searcher_state, search_method = long_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
@@ -1787,9 +1795,6 @@ class TestASHADSATSearchMethod:
         assert successful_trial.searcher_metric_name is not None
         assert successful_trial.search_data is not None
         assert isinstance(successful_trial.search_data, ASHADSATSearchData)
-        search_method.trial_tracker.update_trial_metric(
-            successful_trial, {successful_trial.searcher_metric_name: 0.0}
-        )
         assert search_method.lineage_completed_rung(
             successful_trial, successful_trial.search_data.curr_rung
         )

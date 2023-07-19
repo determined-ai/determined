@@ -1050,9 +1050,14 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
         if last_trial.search_data is None:
             return [self.get_random_trial()]
         new_search_data = copy.deepcopy(last_trial.search_data)
-        new_search_data.lo = last_trial.mbs + 1
-        if new_search_data.lo > new_search_data.hi:
-            return [self.get_random_trial()]
+        # The initial binary search ceiling was a best-effort guess. If the trial successfully
+        # completed the ceiling mbs, extend the range. Protects against cases which
+        # underestimate the maximum batch size.
+        max_mbs_succeeded = new_search_data.lo == new_search_data.hi
+        if max_mbs_succeeded:
+            new_search_data.lo, new_search_data.hi = new_search_data.hi, 2 * new_search_data.hi
+        else:
+            new_search_data.lo = last_trial.mbs + 1
 
         mbs = (new_search_data.hi + new_search_data.lo) // 2
         new_hparams = copy.deepcopy(last_trial.hparams)
@@ -1345,7 +1350,14 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         assert latest_trial.search_data is not None
         new_search_data = copy.deepcopy(latest_trial.search_data)
         if latest_trial.searcher_metric_val is not None:
-            new_search_data.lo = latest_trial.mbs + 1
+            # The initial binary search ceiling was a best-effort guess. If the trial successfully
+            # completed the ceiling mbs, extend the range. Protects against cases which
+            # underestimate the maximum batch size.
+            max_mbs_succeeded = new_search_data.lo == new_search_data.hi
+            if max_mbs_succeeded:
+                new_search_data.lo, new_search_data.hi = new_search_data.hi, 2 * new_search_data.hi
+            else:
+                new_search_data.lo = latest_trial.mbs + 1
         else:
             new_search_data.hi = latest_trial.mbs - 1
 
@@ -1388,7 +1400,6 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         hi = max(hi, lo)
         new_search_data = ASHADSATSearchData(lo=1, hi=hi, curr_rung=0)
 
-        # Randomly choose the actual batch size.
         mbs = (new_search_data.hi + new_search_data.lo) // 2
         new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
         return new_hparams, new_search_data
