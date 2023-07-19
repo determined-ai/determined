@@ -60,7 +60,14 @@ spec:
           - name: database-cert
             mountPath: {{ include "determined.secretPath" . }}
             readOnly: true
-          {{ end }}
+          {{- end }}
+          ## ISP CUSTOM - additional volume mount for ca.crt or boundle to perform the ca cert injection
+          {{- if .Values.externalCaCertSecretName }}
+          - name: etc-ssl-certs
+            mountPath: /etc/ssl/certs
+            readOnly: true
+          {{- end }}
+          ## ISP CUSTOM -END
         resources:
           requests:
             {{- if .Values.masterCpuRequest }}
@@ -79,6 +86,25 @@ spec:
             memory: {{ .Values.masterMemLimit  | quote }}
             {{- end}}
           {{- end}}
+      ## ISP CUSTOM - init container to update ca.crt or ca bundle into the master image
+      {{- if .Values.externalCaCertSecretName }}
+      initContainers:
+      - name: update-ca-certificates
+        command:
+          - sh
+          - -c
+          - update-ca-certificates --fresh
+        image: {{ .Values.imageRegistry }}/{{ $image }}:{{ $tag }}
+        imagePullPolicy: "Always"
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+          - mountPath: /usr/local/share/ca-certificates/
+            name: usr-local-share-ca-certificates
+          - mountPath: /etc/ssl/certs
+            name: etc-ssl-certs
+      {{- end }}
+      ## ISP CUSTOM - END
       {{- if .Values.imagePullSecretName}}
       imagePullSecrets:
         - name: {{ .Values.imagePullSecretName }}
@@ -91,7 +117,7 @@ spec:
         - name: tls-secret
           secret:
             secretName: {{ .Values.tlsSecret }}
-        {{ end }}
+        {{- end }}
         {{- if .Values.db.sslMode }}
         - name: database-cert
           {{- $resourceType := (required "A valid .Values.db.resourceType entry required!" .Values.db.resourceType | trim)}}
@@ -102,4 +128,15 @@ spec:
           secret:
             secretName: {{ required  "A valid Values.db.certResourceName entry is required!" .Values.db.certResourceName }}
           {{- end }}
-        {{ end }}
+        {{- end }}
+        ## ISP CUSTOM - additional volumes to manage ca.crt or ca boundle injection
+        {{- if .Values.externalCaCertSecretName }}
+        - name: usr-local-share-ca-certificates
+          secret:
+            defaultMode: 420
+            secretName: {{ .Values.externalCaCertSecretName }}
+        - name: etc-ssl-certs
+          emptyDir: {}
+        {{- end }}
+        ## ISP CUSTOM - END
+

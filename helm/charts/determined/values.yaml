@@ -60,6 +60,12 @@ masterPort: 8080
 # the non-namespaced objects are created.
 createNonNamespacedObjects: true
 
+# External ca.crt injection certificate/s secret name
+# Command to create the ca cert secret: 
+#     kubectl create secret generic <external ca cert secret name, e.g., ext-ca-cert> --from-file=<ca.crt or ca bundle filename> -n <namespace>
+#
+# externalCaCertSecretName: <external ca cert secret name, e.g., ext-ca-cert>
+
 # When useNodePortForMaster is set to false (default), a LoadBalancer service is deployed to make
 # the Determined master reachable from outside the cluster. When useNodePortForMaster is set to
 # true, the master will instead be exposed behind a NodePort service. When using a NodePort service
