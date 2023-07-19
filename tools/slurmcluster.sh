@@ -300,6 +300,7 @@ OPT_CHECKPOINTPATH_casablanca_login=/mnt/lustre/foundation_engineering/determine
 OPT_MASTERHOST_casablanca_login=casablanca-login
 OPT_MASTERPORT_casablanca_login=$USERPORT
 OPT_TRESSUPPORTED_casablanca_login=true
+OPT_DEFAULTAUXRESOURCEPOOL_casablanca_login=
 OPT_DEFAULTCOMPUTERESOURCEPOOL_casablanca_login=custom_defq_GPU
 # Indentation of resource_pools must match devcluster-slurm.yaml
 OPT_RESOURCEPOOLS_casablanca_login=$(
@@ -583,6 +584,7 @@ export OPT_REMOTEUSER=$(lookup "OPT_REMOTEUSER_$CLUSTER")
 export OPT_SLOTTYPE=$(lookup "OPT_SLOTTYPE_$CLUSTER")
 export OPT_DEFAULTIMAGE=$(lookup "OPT_DEFAULTIMAGE_$CLUSTER")
 export OPT_DEFAULTCOMPUTERESOURCEPOOL=$(lookup "OPT_DEFAULTCOMPUTERESOURCEPOOL_$CLUSTER")
+export OPT_DEFAULTAUXRESOURCEPOOL=$(lookup "OPT_DEFAULTAUXRESOURCEPOOL_$CLUSTER")
 export OPT_TASKCONTAINERDEFAULTS=$(lookup "OPT_TASKCONTAINERDEFAULTS_$CLUSTER")
 export OPT_PARTITIONOVERRIDES=$(lookup "OPT_PARTITIONOVERRIDES_$CLUSTER")
 export OPT_RESOURCEPOOLS=$(lookup "OPT_RESOURCEPOOLS_$CLUSTER")

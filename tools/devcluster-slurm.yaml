@@ -88,6 +88,7 @@ $OPT_RESOURCEPOOLS
           tres_supported: $OPT_TRESSUPPORTED
           gres_supported: $OPT_GRESSUPPORTED
           rendezvous_network_interface: $OPT_RENDEVOUSIFACE
+          default_aux_resource_pool: $OPT_DEFAULTAUXRESOURCEPOOL
           default_compute_resource_pool: $OPT_DEFAULTCOMPUTERESOURCEPOOL
           slot_type: $OPT_SLOTTYPE
           partition_overrides: 
