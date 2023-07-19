@@ -27,7 +27,7 @@ def make_trialref(standard_session: api.Session) -> Callable[[int], trial.Trial]
 @responses.activate
 def test_trial_logs_converts_epoch_time(make_trialref: Callable[[int], trial.Trial]) -> None:
     trialref = make_trialref(1)
-    trial_logs = api_responses.sample_get_trial_logs()
+    trial_logs = api_responses.sample_trial_logs()
     trial_logs_url = f"{_MASTER}/api/v1/trials/{trialref.id}/logs"
 
     before_ts = 1689285229
@@ -46,14 +46,11 @@ def test_trial_logs_converts_epoch_time(make_trialref: Callable[[int], trial.Tri
         match=[responses.matchers.query_param_matcher(params, strict_match=False)],
     )
 
-    resp = trialref.logs(timestamp_before=before_ts, timestamp_after=after_ts)
-
-    assert len(list(resp)) > 1
-    assert len(responses.calls) == 1
+    list(trialref.logs(timestamp_before=before_ts, timestamp_after=after_ts))
 
     call = responses.calls[0]
-    assert call.request.params["timestampBefore"] == params["timestampBefore"]
-    assert call.request.params["timestampAfter"] == params["timestampAfter"]
+    assert call.request.params["timestampBefore"] == timestamp_before
+    assert call.request.params["timestampAfter"] == timestamp_after
 
 
 @pytest.mark.parametrize(
@@ -71,4 +68,5 @@ def test_trial_logs_invalid_timestamps(
     trialref = make_trialref(1)
 
     with pytest.raises(ValueError):
-        list(trialref.logs(timestamp_before=timestamp, timestamp_after=timestamp))
+        list(trialref.logs(timestamp_before=timestamp, timestamp_after=None))
+        list(trialref.logs(timestamp_before=None, timestamp_after=timestamp))

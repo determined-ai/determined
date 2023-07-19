@@ -218,9 +218,8 @@ def is_protobuf_timestamp(ts: str) -> bool:
     Protobuf requires timestamps in a limited RFC3339 format which requires a trailing "Z" to
     indicate UTC timezone.
 
-    Example: ``yyyy-MM-dd'T'HH:mm:ss'Z'``
-    :param ts: timestamp string
-    :return: True if timestamp is valid, else False
+    Arguments:
+        ts (string): timestamp string (eg. ``yyyy-MM-dd'T'HH:mm:ss'Z'``)
     """
     if not ts.endswith("Z"):
         return False
