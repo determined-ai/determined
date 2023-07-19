@@ -50,7 +50,7 @@ FIX_UNRELEASED_STATUS = "Fix (unreleased)"
 FIX_RELEASED_STATUS = "Fix (released)"
 
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
-CASPER_TOKEN = os.environ["CASPER_TOKEN"]
+CASPER_TOKEN = os.environ.get("CASPER_TOKEN", "")
 
 
 def run(*args, check=True, quiet=False, **kwargs):
