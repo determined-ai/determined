@@ -1763,20 +1763,21 @@ class TestASHADSATSearchMethod:
         hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = (
             search_data.hi + search_data.lo
         ) // 2
-        trial = search_method.trial_tracker.create_trial(
+        failed_trial = search_method.trial_tracker.create_trial(
             hparams=hparams, search_data=search_data, parent_trial=None
         )
-        search_method.trial_tracker.queue_and_register_trial(trial)
+        search_method.trial_tracker.queue_and_register_trial(failed_trial)
         _ = search_method.trial_tracker.queue.popleft()
-        assert trial.searcher_metric_name is not None
-        assert search_method.get_next_trial_in_lineage(trial) is None
+        search_method.trial_tracker.report_trial_early_exit(failed_trial)
+        assert failed_trial.searcher_metric_name is not None
+        assert search_method.get_next_trial_in_lineage(failed_trial) is None
 
     @pytest.mark.timeout(5)
     def test_completed_binary_search_lineages_are_counted_complete(
         self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
-        Verify that if a lineage successfully completes its binary search mid-rung, that lineage is
+        Verify that if a lineage completes its binary search mid-rung, that lineage is
         counted as having completed the rung. Tested by having a trial fail when attempting its max
         possible batch size.
         """
@@ -1787,18 +1788,19 @@ class TestASHADSATSearchMethod:
         hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = (
             search_data.hi + search_data.lo
         ) // 2
-        successful_trial = search_method.trial_tracker.create_trial(
+        failed_trial = search_method.trial_tracker.create_trial(
             hparams=hparams, search_data=search_data, parent_trial=None
         )
-        search_method.trial_tracker.queue_and_register_trial(successful_trial)
+        search_method.trial_tracker.queue_and_register_trial(failed_trial)
         _ = search_method.trial_tracker.queue.popleft()
-        assert successful_trial.searcher_metric_name is not None
-        assert successful_trial.search_data is not None
-        assert isinstance(successful_trial.search_data, ASHADSATSearchData)
+        assert failed_trial.searcher_metric_name is not None
+        assert failed_trial.search_data is not None
+        assert isinstance(failed_trial.search_data, ASHADSATSearchData)
+        search_method.trial_tracker.report_trial_early_exit(failed_trial)
         assert search_method.lineage_completed_rung(
-            successful_trial, successful_trial.search_data.curr_rung
+            failed_trial, failed_trial.search_data.curr_rung
         )
-        assert search_method.get_next_trial_in_lineage(successful_trial) is None
+        assert search_method.get_next_trial_in_lineage(failed_trial) is None
 
     @pytest.mark.timeout(5)
     def test_failed_binary_search_lineages_are_counted_complete(
@@ -1830,9 +1832,7 @@ class TestASHADSATSearchMethod:
     @pytest.mark.timeout(5)
     def test_lineage_completed_rung(
         self,
-        long_asha_state_and_search_method: Tuple[
-            searcher.SearcherState, BinarySearchDSATSearchMethod
-        ],
+        long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod],
     ) -> None:
         """
         Testing the `lineage_completed_rung` method by creating a very long lineage and verifying
@@ -1875,6 +1875,61 @@ class TestASHADSATSearchMethod:
                 for rung_idx in range(0, old_rung + 1):
                     assert search_method.lineage_completed_rung(trial, rung_idx)
                 assert not search_method.lineage_completed_rung(trial, old_rung + 1)
+
+    @pytest.mark.timeout(5)
+    def test_initial_binary_range_too_small_extension(
+        self,
+        long_large_min_resource_asha_state_and_search_method: Tuple[
+            searcher.SearcherState, ASHADSATSearchMethod
+        ],
+    ) -> None:
+        """
+        The initial binary search range is based on heuristics and the ceiling may be too low. Test
+        that we are appropriately auto-extending the range in such cases, so that the target value
+        will eventually be found. The minimum resource needs to be large to avoid starting new
+        lineages.
+        """
+        searcher_state, search_method = long_large_min_resource_asha_state_and_search_method
+        search_method.trial_tracker.queue.clear()
+        # test for that all stages successfully find all possible values in their search range:
+        for stage in range(4):
+            _, search_data = search_method.get_random_hparams_and_search_data(stage)
+            num_possible_mbs = search_data.hi - search_data.lo + 1
+            target_mbs = search_data.hi + 1
+            search_method.trial_tracker.queue.clear()
+            hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
+            first_trial = search_method.trial_tracker.create_trial(hparams, search_data)
+            search_method.trial_tracker.queue_and_register_trial(first_trial)
+            curr_trial = search_method.trial_tracker.queue.popleft()
+            for num_halvings in range(1, num_possible_mbs + 1):
+                assert curr_trial.search_data
+                assert curr_trial.search_data.lo <= curr_trial.mbs <= curr_trial.search_data.hi
+                assert curr_trial.mbs < target_mbs
+                assert curr_trial.searcher_metric_name
+                search_method.on_validation_completed(
+                    searcher_state,
+                    curr_trial.request_id,
+                    {curr_trial.searcher_metric_name: 0.0},
+                    curr_trial.length,
+                )
+                assert search_method.trial_tracker.queue
+                if curr_trial.mbs == search_data.hi:
+                    # Next trial should be in the same lineage with a range which covers the
+                    # target value
+                    extended_search_trial = search_method.trial_tracker.queue.popleft()
+                    assert extended_search_trial.search_data is not None
+                    assert not search_method.trial_tracker.queue
+                    assert extended_search_trial.lineage_root == first_trial
+                    assert num_halvings <= int(math.log(num_possible_mbs, 2)) + 1
+                    assert (
+                        extended_search_trial.search_data.lo
+                        <= target_mbs
+                        <= extended_search_trial.search_data.hi
+                    )
+                    break
+                curr_trial = search_method.trial_tracker.queue.popleft()
+                assert not search_method.trial_tracker.queue
+                assert curr_trial.lineage_root == first_trial
 
 
 class TestHFConfigOverwriting:

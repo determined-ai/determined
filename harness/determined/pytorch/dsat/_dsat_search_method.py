@@ -1265,14 +1265,13 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
             return True
         if trial.num_completed_trials_in_lineage >= self.max_trials_for_rung_idx(rung_idx):
             return True
-        # Also need to cover the cases where a binary search stopped before using all available
-        # resources (trials) in its current rung. Only need to check for curr_rung = rung_idx.
+        # Also need to cover the cases where a binary search failed on its minimum possible batch
+        # size. Only need to check for curr_rung = rung_idx.
         if latest_trial.search_data.curr_rung == rung_idx:
             failed_on_min_mbs = (
                 latest_trial.error and latest_trial.mbs == latest_trial.search_data.lo
             )
-            trivial_search_data = latest_trial.search_data.hi == latest_trial.search_data.lo
-            if trivial_search_data or failed_on_min_mbs:
+            if failed_on_min_mbs:
                 return True
         return False
 
@@ -1349,7 +1348,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         latest_trial = self.get_latest_trial_in_lineage(trial)
         assert latest_trial.search_data is not None
         new_search_data = copy.deepcopy(latest_trial.search_data)
-        if latest_trial.searcher_metric_val is not None:
+        if not latest_trial.error:
             # The initial binary search ceiling was a best-effort guess. If the trial successfully
             # completed the ceiling mbs, extend the range. Protects against cases which
             # underestimate the maximum batch size.
