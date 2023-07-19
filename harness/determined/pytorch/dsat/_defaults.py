@@ -50,6 +50,7 @@ DEFAULT_ZERO_SEARCH_SPACE: Dict[int, Dict[str, Optional[Union[List[int], List[bo
     3: {
         "overlap_comm": [True, False],
         "reduce_bucket_size": None,
+        "contiguous_gradients": [True, False],
         "stage3_param_persistence_threshold": None,
         "stage3_prefetch_bucket_size": None,
         "stage3_max_live_parameters": DEFAULT_SEARCH_SPACE_MIN_MAX,
