@@ -269,28 +269,54 @@ func PermittedScopes(
 	return model.AccessScopeSet{}, nil
 }
 
+// CheckForPermissionOptions represents the otpions for CheckForPermission.
+type CheckForPermissionOptions struct {
+	LogResult bool
+}
+
+// CheckForPermissionOptionsFunc is a function type for defining options for CheckForPermission.
+type CheckForPermissionOptionsFunc func(*CheckForPermissionOptions)
+
+// EnablePermissionCheckLogging enables or disables rbac audit logging for CheckForPermissons.
+func EnablePermissionCheckLogging(flag bool) CheckForPermissionOptionsFunc {
+	return func(o *CheckForPermissionOptions) {
+		o.LogResult = flag
+	}
+}
+
 // CheckForPermission checks if the user has the given permission on the given subject
-// and logging the result.
+// and logs the result unless logging is disabled.
 func CheckForPermission(
 	ctx context.Context, subject string, curUser *model.User,
 	workspaceID *model.AccessScopeID, permission rbacv1.PermissionType,
+	options ...CheckForPermissionOptionsFunc,
 ) (permErr error, err error) {
-	fields := audit.ExtractLogFields(ctx)
-	fields["userID"] = curUser.ID
-	fields["username"] = curUser.Username
-	fields["permissionsRequired"] = []audit.PermissionWithSubject{
-		{
-			PermissionTypes: []rbacv1.PermissionType{permission},
-			SubjectType:     subject,
-		},
+	// defaults to logging results.
+	opts := &CheckForPermissionOptions{
+		LogResult: true,
 	}
 
-	defer func() {
-		if err == nil {
-			fields["permissionGranted"] = permErr == nil
-			audit.Log(fields)
+	for _, option := range options {
+		option(opts)
+	}
+
+	if opts.LogResult {
+		fields := audit.ExtractLogFields(ctx)
+		fields["userID"] = curUser.ID
+		fields["username"] = curUser.Username
+		fields["permissionsRequired"] = []audit.PermissionWithSubject{
+			{
+				PermissionTypes: []rbacv1.PermissionType{permission},
+				SubjectType:     subject,
+			},
 		}
-	}()
+		defer func() {
+			if err == nil {
+				fields["permissionGranted"] = permErr == nil
+				audit.Log(fields)
+			}
+		}()
+	}
 
 	var wid int32
 	if workspaceID != nil {
