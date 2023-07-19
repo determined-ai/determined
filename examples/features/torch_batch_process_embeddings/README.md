@@ -25,8 +25,8 @@ This example can be easily adapted to be used with other vector databases.
 
 ## System requirements
 
-This example should be run on a machine with at least 2 GPUs. This is because for simplicity, we use the agent's file
-system to store embedding files and to initialize vector database. If the workers are split across machines, this
+This example should be run on an agent machine with at least 2 GPUs. This is because for simplicity, we use the agent's 
+file system to store embedding files and to initialize vector database. If the workers are split across machines, this
 example would not run properly. 
 
 Alternatively, you can modify the example to use a shared file system directory bind-mounted to the agent machine and 
