@@ -9615,13 +9615,13 @@ export interface V1TrialSourceInfo {
      * @type {number}
      * @memberof V1TrialSourceInfo
      */
-    sourceModelVersionId?: number;
+    modelVersionId?: number;
     /**
      * Source model_version version which generated the checkpoint (if applicable)
      * @type {number}
      * @memberof V1TrialSourceInfo
      */
-    sourceModelVersionVersion?: number;
+    modelVersionVersion?: number;
     /**
      * Type for this trial_source_info
      * @type {V1TrialSourceInfoType}

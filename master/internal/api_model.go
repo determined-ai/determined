@@ -819,7 +819,9 @@ func (a *apiServer) DeleteModelVersion(
 func (a *apiServer) GetTrialSourceInfoMetricsByModelVersion(
 	ctx context.Context, req *apiv1.GetTrialSourceInfoMetricsByModelVersionRequest,
 ) (*apiv1.GetTrialSourceInfoMetricsByModelVersionResponse, error) {
-	modelResp, err := a.ModelVersionFromID(string(req.ModelVersionId), req.ModelVersionVersion)
+	modelResp, err := a.ModelVersionFromID(
+		strconv.FormatInt(int64(req.ModelVersionId), 10), req.ModelVersionVersion,
+	)
 	if err != nil {
 		return nil, err
 	}

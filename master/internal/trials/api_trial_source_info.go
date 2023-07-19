@@ -31,11 +31,11 @@ func (a *TrialSourceInfoAPIServer) ReportTrialSourceInfo(
 	query := db.Bun().NewInsert().Model(tsi).
 		Value("trial_source_info_type", "?", tsi.TrialSourceInfoType.String()).
 		Returning("trial_id").Returning("checkpoint_uuid")
-	if tsi.SourceModelVersionId == nil {
-		query.ExcludeColumn("source_model_version_id")
+	if tsi.ModelVersionId == nil {
+		query.ExcludeColumn("model_version_id")
 	}
-	if tsi.SourceModelVersionVersion == nil {
-		query.ExcludeColumn("source_model_version_version")
+	if tsi.ModelVersionVersion == nil {
+		query.ExcludeColumn("model_version_version")
 	}
 	_, err := query.Exec(ctx, resp)
 	return resp, err

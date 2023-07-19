@@ -23,6 +23,7 @@ import (
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -701,27 +702,16 @@ func TestReportTrialSourceInfo(t *testing.T) {
 	checkpointUUID := createVersionTwoCheckpoint(ctx, t, api, curUser, startingResources)
 
 	// Create a model_version to index with
-	// RegisterCheckpointAsModelVersion(t, api.m.db, checkpointUUID.ToUUID())
-
-	// modelReq := &apiv1.PostModelRequest{
-	// 	Name: uuid.New().String(),
-	// }
-	// modelResp, err := api.PostModel(ctx, modelReq)
-	// require.NoError(t, err)
-	// modelVersionReq := &apiv1.PostModelVersionRequest{
-	// 	ModelName:      modelResp.Model.Name,
-	// 	CheckpointUuid: checkpointUUID,
-	// }
-	// modelVersionResp, err := api.PostModelVersion(ctx, modelVersionReq)
-	// require.NoError(t, err)
+	conv := &protoconverter.ProtoConverter{}
+	modelVersion := RegisterCheckpointAsModelVersion(t, api.m.db, conv.ToUUID(checkpointUUID))
 
 	// Create a TrialSourceInfo associated with each of the two trials.
 	trialSourceInfo := &trialv1.TrialSourceInfo{
 		TrialId:             int32(infTrial.ID),
 		CheckpointUuid:      checkpointUUID,
 		TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
-		// SourceModelVersionId:      &modelVersionResp.ModelVersion.Id,
-		// SourceModelVersionVersion: &modelVersionResp.ModelVersion.Version,
+		ModelVersionId:      &modelVersion.Id,
+		ModelVersionVersion: &modelVersion.Version,
 	}
 	req := &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: trialSourceInfo}
 	resp, err := api.ReportTrialSourceInfo(ctx, req)
@@ -740,18 +730,30 @@ func TestReportTrialSourceInfo(t *testing.T) {
 	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
 	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
 
-	// Get the trials and metrics.
-	getReq := &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID}
-	getResp, getErr := api.GetTrialMetricsBySourceInfoCheckpoint(ctx, getReq)
+	// Get the trials and metrics based on checkpoint
+	getCkptReq := &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID}
+	getCkptResp, getErr := api.GetTrialMetricsBySourceInfoCheckpoint(ctx, getCkptReq)
 	require.NoError(t, getErr)
-	require.Equal(t, len(getResp.Data), 2)
+	require.Equal(t, len(getCkptResp.Data), 2)
 
 	// Only infTrial should have generic metrics attached.
-	for _, tsim := range getResp.Data {
+	for _, tsim := range getCkptResp.Data {
 		if tsim.TrialId == int32(infTrial.ID) {
 			require.Equal(t, len(tsim.MetricReports), 1)
 		} else {
 			require.Empty(t, tsim.MetricReports)
 		}
 	}
+
+	// Get the trials and metrics based on model version
+	getMVReq := &apiv1.GetTrialSourceInfoMetricsByModelVersionRequest{
+		ModelVersionId:      modelVersion.Id,
+		ModelVersionVersion: modelVersion.Version,
+	}
+	getMVResp, getMVErr := api.GetTrialSourceInfoMetricsByModelVersion(ctx, getMVReq)
+	require.NoError(t, getMVErr)
+	require.Equal(t, len(getMVResp.Data), 1)
+	require.Equal(t, len(getCkptResp.Data[0].MetricReports), 1)
+	// if tsim.TrialId == int32(infTrial.ID) {
+	// 	require.Equal(t, len(tsim.MetricReports), 1)
 }

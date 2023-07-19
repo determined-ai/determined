@@ -43,14 +43,10 @@ func errCheckpointsNotFound(ids []string) error {
 
 func (m *Master) canDoActionOnCheckpoint(
 	ctx context.Context,
+	curUser model.User,
 	id string,
 	action func(context.Context, model.User, *model.Experiment) error,
 ) error {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return err
-	}
-
 	uuid, err := uuid.Parse(id)
 	if err != nil {
 		return err
@@ -70,23 +66,18 @@ func (m *Master) canDoActionOnCheckpoint(
 		return err
 	}
 
-	if err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
+	if err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp); err != nil {
 		return authz.SubIfUnauthorized(err, api.NotFoundErrs("checkpoint", id, true))
 	}
-	if err := action(ctx, *curUser, exp); err != nil {
+	if err := action(ctx, curUser, exp); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
 	}
 	return nil
 }
 
 func (m *Master) canDoActionOnCheckpointThroughModel(
-	ctx context.Context, ckptID string,
+	ctx context.Context, curUser model.User, ckptID string,
 ) error {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return err
-	}
-
 	ckptUUID, err := uuid.Parse(ckptID)
 	if err != nil {
 		return err
@@ -110,7 +101,7 @@ func (m *Master) canDoActionOnCheckpointThroughModel(
 			return err
 		}
 		if errCanGetModel = modelauth.AuthZProvider.Get().CanGetModel(
-			ctx, *curUser, model, model.WorkspaceId); errCanGetModel == nil {
+			ctx, curUser, model, model.WorkspaceId); errCanGetModel == nil {
 			return nil
 		}
 	}
@@ -122,11 +113,16 @@ func (m *Master) canDoActionOnCheckpointThroughModel(
 func (a *apiServer) GetCheckpoint(
 	ctx context.Context, req *apiv1.GetCheckpointRequest,
 ) (*apiv1.GetCheckpointResponse, error) {
-	errE := a.m.canDoActionOnCheckpoint(ctx, req.CheckpointUuid,
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	errE := a.m.canDoActionOnCheckpoint(ctx, *curUser, req.CheckpointUuid,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
 
 	if errE != nil {
-		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, req.CheckpointUuid)
+		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, req.CheckpointUuid)
 		if errM != nil {
 			return nil, errE
 		}
@@ -401,7 +397,12 @@ func (a *apiServer) DeleteCheckpoints(
 func (a *apiServer) PostCheckpointMetadata(
 	ctx context.Context, req *apiv1.PostCheckpointMetadataRequest,
 ) (*apiv1.PostCheckpointMetadataResponse, error) {
-	if err := a.m.canDoActionOnCheckpoint(ctx, req.Checkpoint.Uuid,
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.m.canDoActionOnCheckpoint(ctx, *curUser, req.Checkpoint.Uuid,
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -436,7 +437,11 @@ func (a *apiServer) PostCheckpointMetadata(
 func (a *apiServer) GetTrialMetricsBySourceInfoCheckpoint(
 	ctx context.Context, req *apiv1.GetTrialMetricsBySourceInfoCheckpointRequest,
 ) (*apiv1.GetTrialMetricsBySourceInfoCheckpointResponse, error) {
-	err := a.m.canDoActionOnCheckpoint(ctx, req.CheckpointUuid,
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = a.m.canDoActionOnCheckpoint(ctx, *curUser, req.CheckpointUuid,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
 	if err != nil {
 		return nil, err
