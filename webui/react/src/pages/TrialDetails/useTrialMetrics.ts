@@ -117,7 +117,6 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
   const [loadableData, setLoadableData] =
     useState<Loadable<Record<number, Record<string, Serie>>>>(NotLoaded);
   const [scale, setScale] = useState<Scale>(Scale.Linear);
-  const [metricHasData, setMetricHasData] = useState<Record<string, boolean>>({});
 
   const previousTrials = usePrevious(trials, []);
 
@@ -151,16 +150,11 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
         setLoadableData((prev) =>
           isEqual(Loadable.getOrElse([], prev), newData) ? prev : Loaded(newData),
         );
-        // Wait until the metric names are loaded
-        // to determine if trials have data for any metric
-        if (Loadable.isLoaded(loadableMetrics)) {
-          setMetricHasData(metricsHaveData);
-        }
       } catch (e) {
         message.error('Error fetching metrics');
       }
     }
-  }, [metrics, trials, loadableMetrics, previousTrials]);
+  }, [metrics, trials, previousTrials]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchTrialSummary()]);
@@ -181,7 +175,6 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
   return {
     data: Loadable.getOrElse({}, loadableData),
     isLoaded: metricNamesLoaded && Loadable.isLoaded(loadableData),
-    metricHasData,
     metrics,
     scale,
     setScale,
