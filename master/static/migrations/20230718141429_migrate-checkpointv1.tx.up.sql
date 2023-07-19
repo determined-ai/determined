@@ -18,7 +18,6 @@ INSERT INTO public.checkpoints_v2 (
     size
 )
 SELECT
-    -- https://stackoverflow.com/questions/12505158/generating-a-uuid-in-postgres-for-insert-statement
     COALESCE(c.uuid, uuid_generate_v4()),
     t.task_id,
     CASE
@@ -38,9 +37,9 @@ SELECT
     ) || COALESCE(c.metadata, '{}'::jsonb) AS metadata,
     c.size
 FROM public.raw_checkpoints c
-LEFT JOIN public.trials AS t on c.trial_id = t.id
+JOIN public.trials AS t on c.trial_id = t.id
 LEFT JOIN public.allocations a ON t.task_id || '.' || c.trial_run_id = a.allocation_id
-LEFT JOIN public.experiments AS e on t.experiment_id = e.id;
+JOIN public.experiments AS e on t.experiment_id = e.id;
 
 DROP VIEW public.proto_checkpoints_view;
 DROP VIEW public.checkpoints_view;
