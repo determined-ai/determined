@@ -1,101 +1,75 @@
 package kubernetesrm
 
 import (
-	"github.com/determined-ai/determined/master/pkg/actor"
+	"context"
 
+	"github.com/sirupsen/logrus"
 	k8sV1 "k8s.io/api/core/v1"
-	k8Informers "k8s.io/client-go/informers"
-	k8sClient "k8s.io/client-go/kubernetes"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
+	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/cache"
+	watchtools "k8s.io/client-go/tools/watch"
 )
 
-// Messages sent by the nodeInformer to itself.
-type (
-	startNodeInformer struct{}
-)
-
-// Messages sent by the nodeInformer to the podsHandler.
-type (
-	nodeStatusUpdate struct {
-		updatedNode *k8sV1.Node
-		deletedNode *k8sV1.Node
-	}
-)
+type nodeCallbackFunc func(*k8sV1.Node, watch.EventType)
 
 type nodeInformer struct {
-	informer    k8Informers.SharedInformerFactory
-	podsHandler *actor.Ref
-	stop        chan struct{}
+	cb         nodeCallbackFunc
+	syslog     *logrus.Entry
+	resultChan <-chan watch.Event
 }
 
-func newNodeInformer(clientSet k8sClient.Interface, podsHandler *actor.Ref) *nodeInformer {
-	return &nodeInformer{
-		informer: k8Informers.NewSharedInformerFactoryWithOptions(
-			clientSet, 0, []k8Informers.SharedInformerOption{}...),
-		podsHandler: podsHandler,
-		stop:        make(chan struct{}),
-	}
-}
-
-func (n *nodeInformer) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		ctx.Tell(ctx.Self(), startNodeInformer{})
-
-	case startNodeInformer:
-		if err := n.startNodeInformer(ctx); err != nil {
-			return err
-		}
-
-	case actor.PostStop:
-		ctx.Log().Infof("shutting down node informer")
-		close(n.stop)
-
-	default:
-		ctx.Log().Errorf("unexpected message %T", msg)
-		return actor.ErrUnexpectedMessage(ctx)
+func newNodeInformer(
+	ctx context.Context,
+	nodeInterface typedV1.NodeInterface,
+	cb nodeCallbackFunc,
+) (*nodeInformer, error) {
+	nodes, err := nodeInterface.List(ctx, metaV1.ListOptions{})
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
-}
-
-func (n *nodeInformer) startNodeInformer(ctx *actor.Context) error {
-	nodeInformer := n.informer.Core().V1().Nodes().Informer()
-	nodeInformer.AddEventHandler(&cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			node, ok := obj.(*k8sV1.Node)
-			if ok {
-				ctx.Log().Debugf("node added %s", node.Name)
-				ctx.Tell(n.podsHandler, nodeStatusUpdate{updatedNode: node})
-			} else {
-				ctx.Log().Warnf("error converting event of type %T to *k8sV1.Node: %+v", obj, obj)
-			}
-		},
-		UpdateFunc: func(oldObj, newObj interface{}) {
-			node, ok := newObj.(*k8sV1.Node)
-			if ok {
-				ctx.Log().Debugf("node updated %s", node.Name)
-				ctx.Tell(n.podsHandler, nodeStatusUpdate{updatedNode: node})
-			} else {
-				ctx.Log().Warnf("error converting event of type %T to *k8sV1.Node: %+v", newObj, newObj)
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			node, ok := obj.(*k8sV1.Node)
-			if ok {
-				ctx.Log().Debugf("node stopped %s", node.Name)
-				ctx.Tell(n.podsHandler, nodeStatusUpdate{deletedNode: node})
-			} else {
-				ctx.Log().Warnf("error converting event of type %T to *k8sV1.Node: %+v", obj, obj)
-			}
+	rw, err := watchtools.NewRetryWatcher(nodes.ResourceVersion, &cache.ListWatch{
+		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
+			return nodeInterface.Watch(ctx, options)
 		},
 	})
-
-	ctx.Log().Debug("starting node informer")
-	n.informer.Start(n.stop)
-	for !nodeInformer.HasSynced() {
+	if err != nil {
+		return nil, err
 	}
-	ctx.Log().Info("node informer has started")
 
-	return nil
+	// Log when nodes are first added to the informer (at start-up).
+	syslog := logrus.WithField("component", "nodeInformer")
+	for i := range nodes.Items {
+		syslog.Debugf("informer added node: %s", nodes.Items[i].Name)
+		cb(&nodes.Items[i], watch.Added)
+	}
+
+	return &nodeInformer{
+		cb:         cb,
+		syslog:     syslog,
+		resultChan: rw.ResultChan(),
+	}, nil
+}
+
+func (n *nodeInformer) run() {
+	n.syslog.Debug("node informer is starting")
+	for event := range n.resultChan {
+		if event.Type == watch.Error {
+			n.syslog.Warnf("node informer emitted error %+v", event)
+			continue
+		}
+
+		node, ok := event.Object.(*k8sV1.Node)
+		if !ok {
+			n.syslog.Warnf("error converting event of type %T to *k8sV1.Node: %+v", event, event)
+			continue
+		}
+
+		n.syslog.Debugf(`informer got new node event for node '%s': %s %s`,
+			node.Name, event.Type, node.Status.Phase)
+		n.cb(node, event.Type)
+	}
+	panic("node informer stopped unexpectedly")
 }
