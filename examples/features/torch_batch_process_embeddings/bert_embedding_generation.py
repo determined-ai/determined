@@ -43,12 +43,26 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
             masks = masks.to(self.device)
 
             outputs = self.model(inputs, masks)
+
+            # To create an embedding vector for each document,
+            # 1. we take the hidden states from the last layer (output["hidden_states"][-1]),
+            #    which is a tensor of (#examples, #tokens, #hidden_states) size.
+            # 2. we calculate the average across the token-dimension, resulting in a tensor of
+            #    (#examples, #hidden_states) size.
             outputs = torch.mean(outputs["hidden_states"][-1], dim=1)
 
             self.output.append({"embeddings": outputs, "id": batch["_id"], "text": batch["text"]})
             self.last_index = batch_idx
 
     def on_checkpoint_start(self):
+        """
+        In this function, each worker persists the in-memory embeddings to the file system of the agent machine.
+           - Note that our set-up is for demonstration purpose only. Production use cases should save to a
+             shared file system directory bind-mounted to all agent machines and experiment containers.
+        File names contain rank and batch index information to avoid duplication between:
+        - files created by different workers
+        - files created by the same worker for different batches of input data
+        """
         if len(self.output) == 0:
             return
         file_name = f"bert_embedding_worker_{self.rank}_end_batch_{self.last_index}"
@@ -57,6 +71,15 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
         self.output = []
 
     def on_finish(self):
+        """
+        In this function, the chief worker (rank 0):
+        - initializes a Chroma client and creates a Chroma collection. The collection is persisted in the
+          directory "/tmp/chroma" of the container. The "/tmp" directory in the container is a bind-mount of the
+          "/tmp" directory on the agent machine (see distributed.yaml file).
+          - Note that our set-up is for demonstration purpose only. Production use cases should use a
+            shared file system directory bind-mounted to all agent machines and experiment containers.
+        - reads in and insert embedding files generated from all workers to the Chroma collection
+        """
         if self.rank == 0:
             chroma_dir = "/tmp/chroma"
             os.makedirs(chroma_dir, exist_ok=True)

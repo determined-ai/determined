@@ -4,7 +4,7 @@ entrypoint: >-
    python3 bert_embedding_generation.py
 
 resources:
-  slots_per_trial: 4
+  slots_per_trial: 2
 
 searcher:
    name: single
