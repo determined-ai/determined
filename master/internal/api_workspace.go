@@ -307,6 +307,13 @@ func (a *apiServer) PostWorkspace(
 		}
 	}
 
+	if req.DefaultComputePool != "" || req.DefaultAuxPool != "" {
+		err = workspace.AuthZProvider.Get().CanModifyRPWorkspaceBindings(ctx, *curUser, []int32{})
+		if err != nil {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+	}
+
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -424,13 +431,18 @@ func (a *apiServer) PatchWorkspace(
 		insertColumns = append(insertColumns, "uid", "user_", "gid", "group_")
 	}
 
-	if req.Workspace.DefaultComputePool != "" {
-		updatedWorkspace.DefaultComputePool = req.Workspace.DefaultComputePool
-		insertColumns = append(insertColumns, "default_compute_pool")
-	}
-	if req.Workspace.DefaultAuxPool != "" {
-		updatedWorkspace.DefaultAuxPool = req.Workspace.DefaultAuxPool
-		insertColumns = append(insertColumns, "default_aux_pool")
+	if req.Workspace.DefaultComputePool != "" || req.Workspace.DefaultAuxPool != "" {
+		err = workspace.AuthZProvider.Get().CanModifyRPWorkspaceBindings(ctx, currUser,
+			[]int32{currWorkspace.Id})
+		if err != nil {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+		if req.Workspace.DefaultComputePool != "" {
+			updatedWorkspace.DefaultComputePool = req.Workspace.DefaultComputePool
+		}
+		if req.Workspace.DefaultAuxPool != "" {
+			updatedWorkspace.DefaultAuxPool = req.Workspace.DefaultAuxPool
+		}
 	}
 
 	if req.Workspace.CheckpointStorageConfig != nil {
