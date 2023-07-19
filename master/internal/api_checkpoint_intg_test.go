@@ -46,9 +46,8 @@ func createVersionTwoCheckpoint(
 		TaskID:       trial.TaskID,
 		AllocationID: &aID,
 		ReportTime:   time.Now(),
-		// State:        model.ActiveState,
-		State:     model.CompletedState,
-		Resources: resources,
+		State:        model.ActiveState,
+		Resources:    resources,
 		Metadata: map[string]interface{}{
 			"framework":          "tensortorch",
 			"determined_version": "1.0.0",
