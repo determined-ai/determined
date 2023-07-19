@@ -363,7 +363,7 @@ def get_random_zero_optim_config(
     assert isinstance(model_profile_info_trial.metric, dict)
     num_params = model_profile_info_trial.metric["num_params"]
     assert isinstance(num_params, int)
-    approx_hidden_size = int(math.sqrt(num_params)) // 10
+    approx_hidden_size = int(math.sqrt(num_params)) // 20
     search_space = _defaults.DEFAULT_ZERO_SEARCH_SPACE[zero_stage]
     # For list values in the search space, make a random choice.
     zero_optim_dict: Dict[str, Union[bool, float]] = {}
