@@ -241,6 +241,27 @@ def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
     return datetime.datetime.fromisoformat(ts)
 
 
+def is_protobuf_timestamp(ts: str) -> bool:
+    """
+    Validates that a string timestamp is in a Protobuf-compatible format by attempting to
+    convert it.
+
+    Protobuf requires timestamps in a limited RFC3339 format which requires a trailing "Z" to
+    indicate UTC timezone.
+
+    Arguments:
+        ts (string): timestamp string (eg. ``yyyy-MM-dd'T'HH:mm:ss'Z'``)
+    """
+    if not ts.endswith("Z"):
+        return False
+
+    try:
+        datetime.datetime.fromisoformat(ts)
+    except (ValueError, TypeError):
+        return False
+    return True
+
+
 def wait_for(
     predicate: Callable[[], Tuple[bool, T]], timeout: int = 60, interval: float = 0.1
 ) -> T:
