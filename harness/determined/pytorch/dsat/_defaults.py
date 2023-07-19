@@ -33,6 +33,8 @@ MODEL_INFO_PROFILE_DS_CONFIG = {
 # profiling run and HuggingFace rule-of-thumb defaults.
 # See https://huggingface.co/docs/transformers/main_classes/deepspeed#zero3-config
 DEFAULT_SEARCH_SPACE_MIN_MAX = [10**7, 10**10]
+DEFAULT_STAGE3_MAX_LIVE_PARAMETERS = 10**9
+DEFAULT_STAGE3_MAX_REUSE_DISTANCE = 10**9
 
 DEFAULT_ZERO_SEARCH_SPACE: Dict[int, Dict[str, Optional[Union[List[int], List[bool]]]]] = {
     0: {},
@@ -53,8 +55,14 @@ DEFAULT_ZERO_SEARCH_SPACE: Dict[int, Dict[str, Optional[Union[List[int], List[bo
         "contiguous_gradients": [True, False],
         "stage3_param_persistence_threshold": None,
         "stage3_prefetch_bucket_size": None,
-        # "stage3_max_live_parameters": DEFAULT_SEARCH_SPACE_MIN_MAX,
-        # "stage3_max_reuse_distance": DEFAULT_SEARCH_SPACE_MIN_MAX,
+        "stage3_max_live_parameters": [
+            DEFAULT_STAGE3_MAX_LIVE_PARAMETERS // 10,
+            DEFAULT_STAGE3_MAX_LIVE_PARAMETERS * 10,
+        ],
+        "stage3_max_reuse_distance": [
+            DEFAULT_STAGE3_MAX_REUSE_DISTANCE // 10,
+            DEFAULT_STAGE3_MAX_REUSE_DISTANCE * 10,
+        ],
     },
 }
 
