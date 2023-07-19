@@ -124,14 +124,14 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
       hasData: !!metrics?.length,
-      hasLoaded: batches && metrics,
+      hasLoaded: Loadable.isLoaded(loadableMetrics) && !!batches,
       isExperimentTerminal: terminalRunStates.has(experiment.state),
       isSupported: !(
         ExperimentSearcherName.Single === experiment.config.searcher.name ||
         ExperimentSearcherName.Pbt === experiment.config.searcher.name
       ),
     };
-  }, [batches, experiment, metrics]);
+  }, [batches, experiment, loadableMetrics, metrics]);
 
   const handleFiltersChange = useCallback(
     (newFilters: Partial<VisualizationFilters>) => {
@@ -376,7 +376,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
   } else if (!hasLoaded && experiment.state !== RunState.Paused) {
     return <Spinner spinning tip="Fetching metrics..." />;
-  } else if (!hasData) {
+  } else if (hasLoaded && !hasData) {
     return isExperimentTerminal || experiment.state === RunState.Paused ? (
       <Message title="No data to plot." type={MessageType.Empty} />
     ) : (

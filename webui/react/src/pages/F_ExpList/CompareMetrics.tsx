@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { ChartGrid, ChartsProps, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
@@ -50,12 +50,15 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
       const metricKey = `${metric.type}|${metric.name}`;
       return !!chartedMetrics?.[metricKey];
     });
-    if (isLoaded && chartDataIsLoaded) {
-      return Loaded(out);
-    } else {
+    if (!isLoaded) {
+      // When trial metrics hasn't loaded metric names or individual trial metrics.
+      return NotLoaded;
+    } else if (!chartDataIsLoaded) {
       // returns the chartProps with a NotLoaded series which enables
       // the ChartGrid to show a spinner for the loading charts.
       return Loaded(out.map((chartProps) => ({ ...chartProps, series: NotLoaded })));
+    } else {
+      return Loaded(out);
     }
   }, [colorMap, trials, xAxis, metricData]);
 

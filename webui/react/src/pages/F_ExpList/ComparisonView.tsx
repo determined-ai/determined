@@ -1,3 +1,4 @@
+import { Alert } from 'antd';
 import React, { useMemo } from 'react';
 
 import Pivot, { TabItem } from 'components/kit/Pivot';
@@ -88,7 +89,14 @@ const ComparisonView: React.FC<Props> = ({
       open={open}
       onChange={onWidthChange}>
       {children}
-      <Pivot items={tabs} />
+      {selectedExperiments.length === 0 ? (
+        <Alert
+          description="Select experiments you would like to compare."
+          message="No experiments selected."
+        />
+      ) : (
+        <Pivot items={tabs} />
+      )}
     </SplitPane>
   );
 };

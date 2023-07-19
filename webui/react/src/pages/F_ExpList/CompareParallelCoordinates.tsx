@@ -2,10 +2,10 @@ import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Spinner from 'components/kit/internal/Spinner/Spinner';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner/Spinner';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
 import ExperimentVisualizationFilters, {
@@ -63,7 +63,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
   const { settings, updateSettings, resetSettings } =
     useSettings<ExperimentHyperparametersSettings>(settingsConfig);
 
-  const { metrics, data, setScale } = metricData;
+  const { metrics, data, isLoaded, setScale } = metricData;
 
   const colorMap = useGlasbey(selectedExperiments.map((e) => e.experiment.id));
   const selectedScale = settings.scale;
@@ -261,13 +261,8 @@ const CompareParallelCoordinates: React.FC<Props> = ({
     });
   }, [selectedExperiments, selectedMetric, fullHParams, metricData, selectedScale, trials, data]);
 
-  if (selectedExperiments.length === 0) {
-    return (
-      <div className={css.waiting}>
-        <Alert description="No experiments selected." />
-        <Spinner />
-      </div>
-    );
+  if (!isLoaded) {
+    return <Spinner center spinning />;
   }
 
   if (!chartData || (selectedExperiments.length !== 0 && metrics.length === 0)) {
@@ -277,7 +272,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
           description="Please wait until the experiments are further along."
           message="Not enough data points to plot."
         />
-        <Spinner />
+        <Spinner center spinning />
       </div>
     );
   }
