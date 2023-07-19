@@ -1998,7 +1998,8 @@ class DSATMockMaster(MockMaster):
 
     def _process_operations(self, operations: List[searcher.Operation]) -> None:
         for op in operations:
-            self._append_events_for_op(op)  # validate_after returns two events.
+            # validate_after returns two events.
+            self._append_events_for_op(op)
 
     def add_event(self, event_obj: bindings.v1SearcherEvent) -> None:
         self.events_queue.append(event_obj)

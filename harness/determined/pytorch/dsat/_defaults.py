@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 ALL_SEARCH_METHOD_NAMES = ["binary", "_test", "asha", "random"]
 
@@ -29,23 +29,31 @@ MODEL_INFO_PROFILE_DS_CONFIG = {
 }
 
 
-# Using similar. Written as a diff between successive stages for brevity.
-reduce_bucket_size_defaults = [n * 10**m for n in (1, 5) for m in range(6, 10)]
-allgather_bucket_size_defaults = [n * 10**m for n in (1, 5) for m in range(6, 10)]
+# The default search space. None's are replaced at run-time by estimates based on the model info
+# profiling run and HuggingFace rule-of-thumb defaults.
+# See https://huggingface.co/docs/transformers/main_classes/deepspeed#zero3-config
+DEFAULT_SEARCH_SPACE_MIN_MAX = [10**7, 10**10]
 
-DEFAULT_ZERO_SEARCH_SPACE: Dict[int, Dict[str, List[Union[bool, float]]]] = {
+DEFAULT_ZERO_SEARCH_SPACE: Dict[int, Dict[str, Optional[Union[List[int], List[bool]]]]] = {
     0: {},
     1: {
-        "reduce_bucket_size": reduce_bucket_size_defaults,
-        "allgather_bucket_size": allgather_bucket_size_defaults,
+        "reduce_bucket_size": None,
+        "allgather_bucket_size": DEFAULT_SEARCH_SPACE_MIN_MAX,
     },
     2: {
+        "reduce_bucket_size": None,
+        "allgather_bucket_size": DEFAULT_SEARCH_SPACE_MIN_MAX,
         "overlap_comm": [True, False],
         "reduce_scatter": [True, False],
         "contiguous_gradients": [True, False],
     },
     3: {
-        "allgather_partitions": [True, False],
+        "overlap_comm": [True, False],
+        "reduce_bucket_size": None,
+        "stage3_param_persistence_threshold": None,
+        "stage3_prefetch_bucket_size": None,
+        "stage3_max_live_parameters": DEFAULT_SEARCH_SPACE_MIN_MAX,
+        "stage3_max_reuse_distance": DEFAULT_SEARCH_SPACE_MIN_MAX,
     },
 }
 

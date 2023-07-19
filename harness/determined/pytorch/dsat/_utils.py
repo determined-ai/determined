@@ -2,6 +2,7 @@ import argparse
 import copy
 import json
 import logging
+import math
 import pathlib
 import random
 from contextlib import contextmanager
@@ -352,24 +353,40 @@ def report_json_results(
         raise AssertionError("Unexpected additional operations found!")
 
 
-def get_zero_stage_search_space(
-    zero_stage: int, model_profile_info_trial: _dsat_search_method.DSATModelProfileInfoTrial
-) -> Dict[str, List[Union[bool, float]]]:
-    default_settings: Dict[
-        int, Dict[str, List[Union[bool, float]]]
-    ] = _defaults.DEFAULT_ZERO_SEARCH_SPACE
-    assert (
-        zero_stage in default_settings
-    ), f"Invalid zero_stage, must be one of {list(default_settings)}"
-    search_space = default_settings[zero_stage]
-    return search_space
-
-
 def get_random_zero_optim_config(
     zero_stage: int, model_profile_info_trial: _dsat_search_method.DSATModelProfileInfoTrial
 ) -> Dict[str, Union[bool, float]]:
-    search_space = get_zero_stage_search_space(zero_stage, model_profile_info_trial)
-    zero_optim_dict = {k: random.choice(v) for k, v in search_space.items()}
+    # For certain values we set defaults based on the approximate hidden dimension size,
+    # approximated as the square-root of the number of parameters.
+    # GG_NOTE: Should it be trainable params only?
+    # See https://huggingface.co/docs/transformers/main_classes/deepspeed#zero3-config
+    assert isinstance(model_profile_info_trial.metric, dict)
+    num_params = model_profile_info_trial.metric["num_params"]
+    assert isinstance(num_params, int)
+    approx_hidden_dim = int(math.sqrt(num_params)) // 10
+    search_space = _defaults.DEFAULT_ZERO_SEARCH_SPACE[zero_stage]
+    # For list values in the search space, make a random choice.
+    zero_optim_dict: Dict[str, Union[bool, float]] = {}
+    for k, v in search_space.items():
+        if v is None:
+            if k in ("reduce_bucket_size", "stage3_prefetch_bucket_size"):
+                zero_optim_dict[k] = random.randint(
+                    approx_hidden_dim**2 // 100, 100 * approx_hidden_dim**2
+                )
+            elif k == "stage3_param_persistence_threshold":
+                zero_optim_dict[k] = random.randint(
+                    approx_hidden_dim // 100, 100 * approx_hidden_dim
+                )
+            else:
+                raise ValueError(f"Unexpected key {k}")
+        elif isinstance(v, list) and isinstance(v[0], bool):
+            zero_optim_dict[k] = random.choice(v)
+        elif isinstance(v, list) and isinstance(v[0], int):
+            zero_optim_dict[k] = random.randint(*v)
+        else:
+            raise ValueError(f"Unexpected key, value: {k}, {v}")
+    # Other search ranges are dynamically determined based on heuristics.
+    assert isinstance(model_profile_info_trial.metric, dict)
     zero_optim_dict["stage"] = zero_stage
     return zero_optim_dict
 
