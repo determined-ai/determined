@@ -1,6 +1,7 @@
 import logging
 import os
 import pathlib
+import shutil
 
 import chromadb
 import torch
@@ -92,7 +93,7 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
 
             for file in os.listdir(self.output_dir):
                 file_path = pathlib.Path(self.output_dir, file)
-                batches = torch.load(file_path)
+                batches = torch.load(file_path, map_location="cuda:0")
                 for batch in batches:
                     for embedding in batch["embeddings"]:
                         embedding = embedding.tolist()
@@ -102,6 +103,9 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
 
             collection.add(embeddings=embeddings, documents=documents, ids=ids)
             logging.info(f"Embedding contains {collection.count()} entries")
+
+            # Clean-up temporary embedding files
+            shutil.rmtree(self.output_dir)
 
 
 if __name__ == "__main__":
