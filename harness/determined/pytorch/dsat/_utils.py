@@ -363,7 +363,7 @@ def get_random_zero_optim_config(
     assert isinstance(model_profile_info_trial.metric, dict)
     num_params = model_profile_info_trial.metric["num_params"]
     assert isinstance(num_params, int)
-    approx_hidden_dim = int(math.sqrt(num_params)) // 10
+    approx_hidden_size = int(math.sqrt(num_params)) // 10
     search_space = _defaults.DEFAULT_ZERO_SEARCH_SPACE[zero_stage]
     # For list values in the search space, make a random choice.
     zero_optim_dict: Dict[str, Union[bool, float]] = {}
@@ -371,11 +371,11 @@ def get_random_zero_optim_config(
         if v is None:
             if k in ("reduce_bucket_size", "stage3_prefetch_bucket_size"):
                 zero_optim_dict[k] = random.randint(
-                    approx_hidden_dim**2 // 100, 100 * approx_hidden_dim**2
+                    approx_hidden_size**2 // 100, 100 * approx_hidden_size**2
                 )
             elif k == "stage3_param_persistence_threshold":
                 zero_optim_dict[k] = random.randint(
-                    approx_hidden_dim // 100, 100 * approx_hidden_dim
+                    approx_hidden_size // 100, 100 * approx_hidden_size
                 )
             else:
                 raise ValueError(f"Unexpected key {k}")
