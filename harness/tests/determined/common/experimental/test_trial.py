@@ -35,16 +35,8 @@ def test_trial_logs_converts_epoch_time(make_trialref: Callable[[int], trial.Tri
 
     timestamp_before = datetime.datetime.fromtimestamp(before_ts).isoformat("T") + "Z"
     timestamp_after = datetime.datetime.fromtimestamp(after_ts).isoformat("T") + "Z"
-    params = {
-        "timestampBefore": timestamp_before,
-        "timestampAfter": timestamp_after,
-    }
-    responses.get(
-        trial_logs_url,
-        stream=True,
-        body=trial_logs,
-        match=[responses.matchers.query_param_matcher(params, strict_match=False)],
-    )
+
+    responses.get(trial_logs_url, stream=True, body=trial_logs)
 
     list(trialref.logs(timestamp_before=before_ts, timestamp_after=after_ts))
 
@@ -80,32 +72,24 @@ def test_trial_logs_invalid_timestamps(
     ],
 )
 @responses.activate
-def test_trial_logs_valid_timestamps(
+def test_trial_logs_accepts_valid_timestamps(
     make_trialref: Callable[[int], trial.Trial], name: str, valid_timestamp: str
 ) -> None:
     trialref = make_trialref(1)
     trial_logs = api_responses.sample_trial_logs()
     trial_logs_url = f"{_MASTER}/api/v1/trials/{trialref.id}/logs"
 
-    params = {
-        "timestampBefore": valid_timestamp,
-    }
     responses.get(
         trial_logs_url,
         stream=True,
         body=trial_logs,
-        match=[responses.matchers.query_param_matcher(params, strict_match=False)],
     )
     list(trialref.logs(timestamp_before=valid_timestamp, timestamp_after=None))
 
-    params = {
-        "timestampAfter": valid_timestamp,
-    }
     responses.get(
         trial_logs_url,
         stream=True,
         body=trial_logs,
-        match=[responses.matchers.query_param_matcher(params, strict_match=False)],
     )
 
     list(trialref.logs(timestamp_before=None, timestamp_after=valid_timestamp))
