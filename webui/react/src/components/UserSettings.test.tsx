@@ -11,7 +11,7 @@ import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { DetailedUser } from 'types';
 
-import Settings from './Settings';
+import UserSettings from './UserSettings';
 
 vi.mock('services/api', () => ({
   getUsers: () =>
@@ -64,7 +64,7 @@ const Container: React.FC = () => {
   }, [loadUsers]);
 
   return (
-    <Settings
+    <UserSettings
       show={true}
       onClose={() => {
         return null;
@@ -80,7 +80,7 @@ const setup = () =>
     </UIProvider>,
   );
 
-describe('Settings', () => {
+describe('UserSettings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.clearAllTimers();

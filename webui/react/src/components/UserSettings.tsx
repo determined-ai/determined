@@ -14,7 +14,7 @@ import {
   shortcutSettingsConfig,
   shortcutSettingsDefaults,
   shortcutsSettingsPath,
-} from 'pages/Admin/UserSettings.settings';
+} from 'components/UserSettings.settings';
 import {
   experimentListGlobalSettingsConfig,
   experimentListGlobalSettingsDefaults,
@@ -36,7 +36,7 @@ import { useObservable } from 'utils/observable';
 import { KeyboardShortcut, shortcutToString } from 'utils/shortcut';
 import { Mode } from 'utils/themes';
 
-import css from './Settings.module.scss';
+import css from './UserSettings.module.scss';
 
 const API_DISPLAYNAME_SUCCESS_MESSAGE = 'Display name updated.';
 const API_USERNAME_ERROR_MESSAGE = 'Could not update username.';
@@ -47,7 +47,7 @@ interface Props {
   onClose: () => void;
 }
 
-const Settings: React.FC<Props> = ({ show, onClose }: Props) => {
+const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const info = useObservable(determinedStore.info);
 
@@ -305,4 +305,4 @@ const Settings: React.FC<Props> = ({ show, onClose }: Props) => {
   );
 };
 
-export default Settings;
+export default UserSettings;

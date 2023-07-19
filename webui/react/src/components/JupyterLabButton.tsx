@@ -4,10 +4,10 @@ import JupyterLabModalComponent from 'components/JupyterLabModal';
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
-import { useSettings } from 'hooks/useSettings';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
-} from 'pages/Admin/UserSettings.settings';
+} from 'components/UserSettings.settings';
+import { useSettings } from 'hooks/useSettings';
 import { Workspace } from 'types';
 import { shortcutToString } from 'utils/shortcut';
 interface Props {

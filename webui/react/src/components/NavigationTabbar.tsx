@@ -6,8 +6,8 @@ import DynamicIcon from 'components/DynamicIcon';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Link, { Props as LinkProps } from 'components/Link';
-import Settings from 'components/Settings';
 import Spinner from 'components/Spinner/Spinner';
+import UserSettings from 'components/UserSettings';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
 import authStore from 'stores/auth';
@@ -216,7 +216,7 @@ const NavigationTabbar: React.FC = () => {
         />
         <WorkspaceCreateModal.Component />
       </nav>
-      <Settings show={showSettings} onClose={() => setShowSettings(false)} />
+      <UserSettings show={showSettings} onClose={() => setShowSettings(false)} />
     </>
   );
 };
