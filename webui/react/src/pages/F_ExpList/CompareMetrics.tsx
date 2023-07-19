@@ -22,7 +22,7 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
   const { scale, setScale } = metricData;
 
   const chartsProps = useMemo(() => {
-    const { metrics, data, metricHasData, isLoaded } = metricData;
+    const { metrics, data, isLoaded } = metricData;
     const chartedMetrics: Record<string, boolean> = {};
     const out: ChartsProps = [];
     metrics.forEach((metric) => {

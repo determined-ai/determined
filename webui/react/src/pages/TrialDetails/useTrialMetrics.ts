@@ -27,7 +27,6 @@ export interface TrialMetricData {
   metrics: Metric[];
   scale: Scale;
   setScale: React.Dispatch<React.SetStateAction<Scale>>;
-  metricHasData: Record<string, boolean>;
 }
 
 const summarizedMetricToSeries = (
