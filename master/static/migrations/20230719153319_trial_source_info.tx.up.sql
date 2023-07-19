@@ -11,9 +11,9 @@ CREATE TABLE public.trial_source_infos (
     -- Note: We are not using a proper foreign key because you cannot make a foreign key
     -- on a view, which we are using to support both checkpoint v1 and v2.
     checkpoint_uuid uuid NOT NULL, -- REFERENCES public.checkpoints_v2(uuid) ON DELETE CASCADE NOT NULL,
-    -- Trial's `model_version` `id` field
+    -- ID of the `model_version` this trial is linked to
     model_version_id int NULL,
-    -- Source Trial's `model_version` `version` field
+    -- Version of the `model_version` this trial is linked to
     model_version_version int NULL,
     -- Type of the `trial_source_info` (inference or fine tuning for now)
     trial_source_info_type trial_source_info_type NOT NULL,
