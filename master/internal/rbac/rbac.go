@@ -269,7 +269,7 @@ func PermittedScopes(
 	return model.AccessScopeSet{}, nil
 }
 
-// CheckForPermissionOptions represents the otpions for CheckForPermission.
+// CheckForPermissionOptions represents the options for CheckForPermission.
 type CheckForPermissionOptions struct {
 	LogResult bool
 }
