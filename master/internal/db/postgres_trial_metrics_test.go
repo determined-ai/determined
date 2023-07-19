@@ -19,18 +19,18 @@ func TestMetricsBodyToJSON(t *testing.T) {
 
 	cases := []metricsBody{
 		{
-			Type:       "generic",
-			AvgMetrics: avgMetricsStruct,
+			isValidation: false,
+			AvgMetrics:   avgMetricsStruct,
 		},
-		*newMetricsBody(avgMetricsStruct, nil, "generic"),
-		*newMetricsBody(avgMetricsStruct, nil, model.TrainingMetricType),
-		*newMetricsBody(avgMetricsStruct, nil, model.ValidationMetricType),
+		*newMetricsBody(avgMetricsStruct, nil, false),
+		*newMetricsBody(avgMetricsStruct, nil, false),
+		*newMetricsBody(avgMetricsStruct, nil, true),
 		{
-			Type:       model.ValidationMetricType,
-			AvgMetrics: avgMetricsStruct,
+			isValidation: true,
+			AvgMetrics:   avgMetricsStruct,
 		},
 		{
-			Type:         model.ValidationMetricType,
+			isValidation: true,
 			AvgMetrics:   avgMetricsStruct,
 			BatchMetrics: avgMetricsStruct,
 		},
@@ -40,13 +40,13 @@ func TestMetricsBodyToJSON(t *testing.T) {
 		t.Run(fmt.Sprint(idx), func(t *testing.T) {
 			json := body.ToJSONObj()
 			_, ok := (*json)["batch_metrics"]
-			if body.Type == model.ValidationMetricType {
+			if body.isValidation {
 				require.False(t, ok)
 			} else {
 				// we can leave this out if it's empty but we keep it for backward compatibility.
 				require.True(t, ok)
 			}
-			key := model.TrialMetricsJSONPath(body.Type == model.ValidationMetricType)
+			key := model.TrialMetricsJSONPath(body.isValidation)
 			_, ok = (*json)[key]
 			require.True(t, ok)
 		})

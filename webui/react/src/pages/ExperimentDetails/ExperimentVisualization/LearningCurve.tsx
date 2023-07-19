@@ -31,6 +31,7 @@ import { glasbeyColor } from 'utils/color';
 import { flattenObject, isEqual, isPrimitive } from 'utils/data';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'utils/routes';
 import { openCommandResponse } from 'utils/wait';
 
@@ -111,7 +112,7 @@ const LearningCurve: React.FC<Props> = ({
 }: Props) => {
   const { ui } = useUI();
   const [trialIds, setTrialIds] = useState<number[]>([]);
-  const [chartData, setChartData] = useState<Serie[]>([]);
+  const [chartData, setChartData] = useState<Loadable<Serie[]>>(NotLoaded);
   const [trialHps, setTrialHps] = useState<TrialHParams[]>([]);
   const [highlightedTrialId, setHighlightedTrialId] = useState<number>();
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -243,7 +244,7 @@ const LearningCurve: React.FC<Props> = ({
             key: trialId,
             name: `trial ${trialId}`,
           }));
-        setChartData(newChartData);
+        setChartData(Loaded(newChartData));
 
         // One successful event as come through.
         setHasLoaded(true);
@@ -316,7 +317,7 @@ const LearningCurve: React.FC<Props> = ({
           description="Please wait until the experiment is further along."
           message="Not enough data points to plot."
         />
-        <Spinner />
+        <Spinner center spinning />
       </div>
     );
   }

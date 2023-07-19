@@ -4,7 +4,7 @@ import {
   getMiddleCenterBias,
   GridCellKind,
   measureTextCached,
-} from '@glideapps/glide-data-grid';
+} from '@hpe.com/glide-data-grid';
 
 interface UserProfileCellProps {
   readonly kind: 'user-profile-cell';
@@ -75,6 +75,7 @@ const renderer: CustomRenderer<UserProfileCell> = {
   isMatch: (cell: CustomCell): cell is UserProfileCell =>
     (cell.data as UserProfileCellProps).kind === 'user-profile-cell',
   kind: GridCellKind.Custom,
+  measure: () => 50,
   onPaste: (v, d) => ({
     ...d,
     name: v,

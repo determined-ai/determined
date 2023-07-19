@@ -238,18 +238,12 @@ func (a *apiServer) PatchCheckpoints(
 					size += v
 				}
 
-				v1Update := tx.NewUpdate().Model(&model.CheckpointV1{}).
-					Where("uuid = ?", c.Uuid)
 				v2Update := tx.NewUpdate().Model(&model.CheckpointV2{}).
 					Where("uuid = ?", c.Uuid)
 
 				if len(c.Resources.Resources) == 0 { // Full delete case.
-					v1Update = v1Update.Set("state = ?", model.DeletedState)
 					v2Update = v2Update.Set("state = ?", model.DeletedState)
 				} else { // Partial delete case.
-					v1Update = v1Update.
-						Set("resources = ?", c.Resources.Resources).
-						Set("size = ?", size)
 					v2Update = v2Update.
 						Set("resources = ?", c.Resources.Resources).
 						Set("size = ?", size)
@@ -273,13 +267,8 @@ func (a *apiServer) PatchCheckpoints(
 
 					// Only set state to partially deleted if files changed.
 					if !maps.Equal(oldResources.Resources, c.Resources.Resources) {
-						v1Update = v1Update.Set("state = ?", model.PartiallyDeletedState)
 						v2Update = v2Update.Set("state = ?", model.PartiallyDeletedState)
 					}
-				}
-
-				if _, err := v1Update.Exec(ctx); err != nil {
-					return fmt.Errorf("deleting checkpoints from raw_checkpoints: %w", err)
 				}
 
 				if _, err := v2Update.Exec(ctx); err != nil {

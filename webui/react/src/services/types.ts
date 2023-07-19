@@ -9,7 +9,6 @@ import {
   MetricType,
   Note,
   RunState,
-  Scale,
   TrialWorkloadFilter,
 } from 'types';
 
@@ -32,7 +31,6 @@ export interface TrialSummaryBaseParams {
   maxDatapoints: number;
   metricNames: Metric[];
   metricType?: MetricType;
-  scale?: Scale;
   startBatches?: number;
 }
 

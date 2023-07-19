@@ -14,7 +14,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -59,37 +58,11 @@ func TestUpdateCheckpointSize(t *testing.T) {
 			for k := 0; k < 2; k++ {
 				ckpt := uuid.New()
 				checkpointIDs = append(checkpointIDs, ckpt)
-				// Ensure it works with both checkpoint versions.
-				if i == 0 && j == 0 && k == 0 {
-					checkpointBun := struct {
-						bun.BaseModel `bun:"table:checkpoints"`
-						TrialID       int
-						TrialRunID    int
-						TotalBatches  int
-						State         model.State
-						UUID          string
-						EndTime       time.Time
-						Resources     map[string]int64
-						Size          int64
-					}{
-						TrialID:      tr.ID,
-						TrialRunID:   1,
-						TotalBatches: 1,
-						State:        model.ActiveState,
-						UUID:         ckpt.String(),
-						EndTime:      time.Now().UTC().Truncate(time.Millisecond),
-						Resources:    resources[resourcesIndex],
-						Size:         resources[resourcesIndex]["TEST"],
-					}
 
-					_, err := Bun().NewInsert().Model(&checkpointBun).Exec(ctx)
-					require.NoError(t, err)
-				} else {
-					checkpoint := MockModelCheckpoint(ckpt, tr, allocation)
-					checkpoint.Resources = resources[resourcesIndex]
-					err := AddCheckpointMetadata(ctx, &checkpoint)
-					require.NoError(t, err)
-				}
+				checkpoint := MockModelCheckpoint(ckpt, tr, allocation)
+				checkpoint.Resources = resources[resourcesIndex]
+				err := AddCheckpointMetadata(ctx, &checkpoint)
+				require.NoError(t, err)
 
 				resourcesIndex++
 			}

@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	// ValidationMetricType designates metrics from validation runs.
-	ValidationMetricType MetricType = "validation"
-	// TrainingMetricType designates metrics from training runs.
-	TrainingMetricType MetricType = "training"
-	// InferenceMetricType GenericMetricType designates metrics from any other type of task.
-	InferenceMetricType MetricType = "inference"
+	// ValidationMetricGroup designates metrics from validation runs.
+	ValidationMetricGroup MetricGroup = "validation"
+	// TrainingMetricGroup designates metrics from training runs.
+	TrainingMetricGroup MetricGroup = "training"
+	// InferenceMetricGroup designates metrics from inference runs.
+	InferenceMetricGroup MetricGroup = "inference"
 )
 
 type metricName string
@@ -29,48 +29,48 @@ func (t metricName) Validate() error {
 	return nil
 }
 
-// MetricType denotes what custom type the metric is.
-type MetricType string
+// MetricGroup denotes what custom type the metric is.
+type MetricGroup string
 
-// ToString returns the string representation of the metric type.
-func (t MetricType) ToString() string {
+// ToString returns the string representation of the metric group.
+func (t MetricGroup) ToString() string {
 	return string(t)
 }
 
-// ToProto returns the proto representation of the metric type.
-func (t MetricType) ToProto() apiv1.MetricType {
+// ToProto returns the proto representation of the metric group.
+func (t MetricGroup) ToProto() apiv1.MetricType {
 	switch t {
-	case ValidationMetricType:
+	case ValidationMetricGroup:
 		return apiv1.MetricType_METRIC_TYPE_VALIDATION
-	case TrainingMetricType:
+	case TrainingMetricGroup:
 		return apiv1.MetricType_METRIC_TYPE_TRAINING
 	default:
 		return apiv1.MetricType_METRIC_TYPE_UNSPECIFIED
 	}
 }
 
-// Validate validates the metric type.
-func (t MetricType) Validate() error {
+// Validate validates the metric group.
+func (t MetricGroup) Validate() error {
 	if len(t) == 0 {
-		return status.Errorf(codes.InvalidArgument, "metric type cannot be empty")
+		return status.Errorf(codes.InvalidArgument, "metric group cannot be empty")
 	}
 	if strings.Contains(t.ToString(), ".") {
-		return status.Errorf(codes.InvalidArgument, "metric type cannot contain '.'")
+		return status.Errorf(codes.InvalidArgument, "metric group cannot contain '.'")
 	}
 	return nil
 }
 
-// MetricIdentifier packages metric type and name together.
+// MetricIdentifier packages metric group and name together.
 type MetricIdentifier struct {
-	Type MetricType
-	Name metricName
+	Group MetricGroup
+	Name  metricName
 }
 
 // ToProto returns the proto representation of the metric identifier.
-func (m MetricIdentifier) ToProto() *metricv1.MetricName {
-	return &metricv1.MetricName{
-		Type: m.Type.ToString(),
-		Name: string(m.Name),
+func (m MetricIdentifier) ToProto() *metricv1.MetricIdentifier {
+	return &metricv1.MetricIdentifier{
+		Group: m.Group.ToString(),
+		Name:  string(m.Name),
 	}
 }
 
@@ -79,18 +79,18 @@ func DeserializeMetricIdentifier(s string) (*MetricIdentifier, error) {
 	nameAndType := strings.SplitN(s, ".", 2)
 	if len(nameAndType) < 2 {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid metric identifier: '%s' expected <type>.<name>", s)
+			"invalid metric identifier: '%s' expected <group>.<name>", s)
 	}
 	metricIDName := metricName(nameAndType[1])
 	if err := metricIDName.Validate(); err != nil {
 		return nil, err
 	}
-	metricIDType := MetricType(nameAndType[0])
+	metricIDType := MetricGroup(nameAndType[0])
 	if err := metricIDType.Validate(); err != nil {
 		return nil, err
 	}
 	return &MetricIdentifier{
-		Type: metricIDType,
-		Name: metricIDName,
+		Group: metricIDType,
+		Name:  metricIDName,
 	}, nil
 }

@@ -34,7 +34,7 @@ const Spinner: React.FC<Props> = ({
         data-testid="custom-spinner"
         indicator={
           <div className={css.spin}>
-            <Icon name="spinner" size={size} title="Spinner" />
+            <Icon name="spinner" size={size} title="Loading" />
           </div>
         }
         spinning={!!spinning}

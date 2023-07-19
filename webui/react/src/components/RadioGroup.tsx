@@ -118,7 +118,7 @@ const RadioGroup: React.FC<Props> = ({
             </Tooltip>
           )}>
           <Radio.Button className={css.option} value={option.id}>
-            {option.icon && <Icon name={option.icon} size={option.iconSize} title={option.label} />}
+            {option.icon && <Icon decorative name={option.icon} size={option.iconSize} />}
             {option.label && showLabels && !iconOnly && (
               <span className={css.label}>{option.label}</span>
             )}

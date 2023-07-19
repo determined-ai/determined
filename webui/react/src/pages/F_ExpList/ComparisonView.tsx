@@ -1,9 +1,11 @@
+import { Alert } from 'antd';
 import React, { useMemo } from 'react';
 
 import Pivot, { TabItem } from 'components/kit/Pivot';
 import SplitPane from 'components/SplitPane';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
+import { useTrialMetrics } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
 
 import CompareMetrics from './CompareMetrics';
@@ -45,16 +47,25 @@ const ComparisonView: React.FC<Props> = ({
     [selectedExperiments],
   );
 
+  const metricData = useTrialMetrics(trials);
+
   const tabs: TabItem[] = useMemo(() => {
     return [
       {
-        children: <CompareMetrics selectedExperiments={selectedExperiments} trials={trials} />,
+        children: (
+          <CompareMetrics
+            metricData={metricData}
+            selectedExperiments={selectedExperiments}
+            trials={trials}
+          />
+        ),
         key: 'metrics',
         label: 'Metrics',
       },
       {
         children: (
           <CompareParallelCoordinates
+            metricData={metricData}
             projectId={projectId}
             selectedExperiments={selectedExperiments}
             trials={trials}
@@ -69,7 +80,7 @@ const ComparisonView: React.FC<Props> = ({
         label: 'Details',
       },
     ];
-  }, [selectedExperiments, projectId, experiments, trials]);
+  }, [selectedExperiments, projectId, experiments, trials, metricData]);
 
   return (
     <SplitPane
@@ -78,7 +89,14 @@ const ComparisonView: React.FC<Props> = ({
       open={open}
       onChange={onWidthChange}>
       {children}
-      <Pivot destroyInactiveTabPane items={tabs} />
+      {selectedExperiments.length === 0 ? (
+        <Alert
+          description="Select experiments you would like to compare."
+          message="No experiments selected."
+        />
+      ) : (
+        <Pivot items={tabs} />
+      )}
     </SplitPane>
   );
 };

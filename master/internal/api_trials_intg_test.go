@@ -261,7 +261,7 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 
 	maxDataPoints := 7
 	actualTrainingMetrics, err := api.multiTrialSample(int32(trial.ID), trainMetricNames,
-		model.TrainingMetricType, maxDataPoints, 0, 10, nil, []string{})
+		model.TrainingMetricGroup, maxDataPoints, 0, 10, nil, []string{})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(actualTrainingMetrics))
 	var validationMetricNames []string
@@ -271,7 +271,7 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 	}
 
 	actualValidationTrainingMetrics, err := api.multiTrialSample(int32(trial.ID),
-		validationMetricNames, model.ValidationMetricType, maxDataPoints,
+		validationMetricNames, model.ValidationMetricGroup, maxDataPoints,
 		0, 10, nil, []string{})
 	require.Equal(t, 1, len(actualValidationTrainingMetrics))
 	require.NoError(t, err)
@@ -413,7 +413,7 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 				AvgMetrics: expectedMetrics,
 			},
 		},
-		Type: model.ValidationMetricType.ToString(),
+		Group: model.ValidationMetricGroup.ToString(),
 	})
 	require.NoError(t, err)
 
@@ -674,7 +674,7 @@ func TestReportTrialSourceInfo(t *testing.T) {
 	infTrial2, _, _ := createTestTrialWithMetrics(
 		ctx, t, api, curUser, false)
 
-	var trialMetrics map[model.MetricType][]map[string]any
+	var trialMetrics map[model.MetricGroup][]map[string]any
 	require.NoError(t, json.Unmarshal([]byte(
 		`{"inference": [{"a":1}, {"b":2}], "inference": [{"b":2, "c":3}]}`,
 	), &trialMetrics))

@@ -381,6 +381,18 @@ class Determined:
         except api.errors.NotFoundException:
             raise det.errors.EnterpriseOnlyError("API not found: oauth2/clients")
 
+    def _stream_trials_metrics(
+        self, trial_ids: List[int], group: str
+    ) -> Iterable[trial._TrialMetrics]:
+        """
+        Streams metrics for one or more trials sorted by
+        trial_id, trial_run_id and total_batches.
+
+        Arguments:
+            trial_ids: List of trial IDs to get metrics for.
+        """
+        return trial._stream_trials_metrics(self._session, trial_ids, group=group)
+
     def stream_trials_training_metrics(
         self, trial_ids: List[int]
     ) -> Iterable[trial.TrainingMetrics]:

@@ -1,12 +1,7 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { ModalFuncProps } from 'antd';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
-import Badge, { BadgeType } from 'components/Badge';
-import HumanReadableNumber from 'components/HumanReadableNumber';
-import Button from 'components/kit/Button';
-import Link from 'components/Link';
-import useModal, { ModalCloseReason, ModalHooks } from 'hooks/useModal/useModal';
+import { Modal } from 'components/kit/Modal';
+import { ModalCloseReason } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
@@ -17,16 +12,22 @@ import {
   ExperimentConfig,
 } from 'types';
 import { formatDatetime } from 'utils/datetime';
+import handleError from 'utils/error';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
-import css from './useModalCheckpoint.module.scss';
+import Badge, { BadgeType } from './Badge';
+import css from './CheckpointModal.module.scss';
+import HumanReadableNumber from './HumanReadableNumber';
+import Button from './kit/Button';
+import useConfirm from './kit/useConfirm';
+import Link from './Link';
 
 export interface Props {
-  checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint | undefined;
+  checkpoint?: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
   children?: React.ReactNode;
   config: ExperimentConfig;
-  onClose?: (reason?: ModalCloseReason) => void;
+  onClose: (reason?: ModalCloseReason) => void;
   searcherValidation?: number;
   title: string;
 }
@@ -82,43 +83,37 @@ const renderResource = (resource: string, size: string): React.ReactNode => {
   );
 };
 
-const useModalCheckpoint = ({
+const CheckpointModalComponent: React.FC<Props> = ({
   checkpoint,
   config,
   title,
   onClose,
   ...props
-}: Props): ModalHooks => {
-  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
+}: Props) => {
+  const confirm = useConfirm();
 
-  const handleCancel = useCallback(() => onClose?.(ModalCloseReason.Cancel), [onClose]);
+  const handleCancel = useCallback(() => onClose(ModalCloseReason.Cancel), [onClose]);
 
-  const handleOk = useCallback(() => onClose?.(ModalCloseReason.Ok), [onClose]);
+  const handleOk = useCallback(() => onClose(ModalCloseReason.Ok), [onClose]);
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (!checkpoint?.uuid) return;
-    readStream(detApi.Checkpoint.deleteCheckpoints({ checkpointUuids: [checkpoint.uuid] }));
+    await readStream(detApi.Checkpoint.deleteCheckpoints({ checkpointUuids: [checkpoint.uuid] }));
   }, [checkpoint]);
 
-  const deleteCPModalProps: ModalFuncProps = useMemo(() => {
+  const onClickDelete = useCallback(() => {
     const content = `Are you sure you want to request checkpoint deletion for batch
 ${checkpoint?.totalBatches}. This action may complete or fail without further notification.`;
 
-    return {
+    confirm({
       content,
-      icon: <ExclamationCircleOutlined />,
-      okButtonProps: { danger: true },
+      danger: true,
       okText: 'Request Delete',
-      onCancel: handleCancel,
-      onOk: handleDelete,
+      onConfirm: handleDelete,
+      onError: handleError,
       title: 'Confirm Checkpoint Deletion',
-      width: 450,
-    };
-  }, [checkpoint, handleCancel, handleDelete]);
-
-  const onClickDelete = useCallback(() => {
-    openOrUpdate(deleteCPModalProps);
-  }, [openOrUpdate, deleteCPModalProps]);
+    });
+  }, [checkpoint?.totalBatches, confirm, handleDelete]);
 
   const content = useMemo(() => {
     if (!checkpoint?.experimentId || !checkpoint?.resources) return null;
@@ -188,35 +183,19 @@ ${checkpoint?.totalBatches}. This action may complete or fail without further no
     );
   }, [checkpoint, config, props.searcherValidation, onClickDelete]);
 
-  const modalProps: ModalFuncProps = useMemo(
-    () => ({
-      content,
-      icon: <ExclamationCircleOutlined />,
-      okText: 'Register Checkpoint',
-      onCancel: handleCancel,
-      onOk: handleOk,
-      title: title,
-      width: 768,
-    }),
-    [content, handleCancel, handleOk, title],
+  return (
+    <Modal
+      cancel
+      submit={{
+        handleError,
+        handler: handleOk,
+        text: 'Register Checkpoint',
+      }}
+      title={title}
+      onClose={handleCancel}>
+      {content}
+    </Modal>
   );
-
-  const modalOpen = useCallback(
-    (initialModalProps: ModalFuncProps = {}) => {
-      openOrUpdate({ ...modalProps, ...initialModalProps });
-    },
-    [modalProps, openOrUpdate],
-  );
-
-  /**
-   * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal.
-   */
-  useEffect(() => {
-    if (modalRef.current) openOrUpdate(modalProps);
-  }, [modalProps, modalRef, openOrUpdate]);
-
-  return { modalOpen, modalRef, ...modalHook };
 };
 
-export default useModalCheckpoint;
+export default CheckpointModalComponent;

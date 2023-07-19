@@ -274,7 +274,7 @@ const FilterField = ({
           </>
         )}
         <Button
-          icon={<Icon name="close" title="close field" />}
+          icon={<Icon name="close" title="Close Field" />}
           type="text"
           onClick={() => formStore.removeChild(field.id)}
         />

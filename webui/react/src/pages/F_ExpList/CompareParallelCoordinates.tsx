@@ -2,16 +2,16 @@ import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Spinner from 'components/kit/internal/Spinner/Spinner';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner/Spinner';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
 import ExperimentVisualizationFilters, {
   VisualizationFilters,
 } from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
-import { useTrialMetrics } from 'pages/TrialDetails/useTrialMetrics';
+import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import { Primitive, Range } from 'types';
 import {
   ExperimentWithTrial,
@@ -37,12 +37,14 @@ interface Props {
   projectId: number;
   selectedExperiments: ExperimentWithTrial[];
   trials: TrialItem[];
+  metricData: TrialMetricData;
 }
 
 const CompareParallelCoordinates: React.FC<Props> = ({
   selectedExperiments,
   trials,
   projectId,
+  metricData,
 }: Props) => {
   const [chartData, setChartData] = useState<HpTrialData>();
   const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
@@ -61,7 +63,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
   const { settings, updateSettings, resetSettings } =
     useSettings<ExperimentHyperparametersSettings>(settingsConfig);
 
-  const { metrics, data, setScale } = useTrialMetrics(trials);
+  const { metrics, data, isLoaded, setScale } = metricData;
 
   const colorMap = useGlasbey(selectedExperiments.map((e) => e.experiment.id));
   const selectedScale = settings.scale;
@@ -221,7 +223,6 @@ const CompareParallelCoordinates: React.FC<Props> = ({
       const metricValue = data?.[trial.id]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];
 
       if (!metricValue) return;
-
       trialMetricsMap[expId] = metricValue;
 
       trialMetricRange = updateRange<number>(trialMetricRange, metricValue);
@@ -252,22 +253,16 @@ const CompareParallelCoordinates: React.FC<Props> = ({
     trialHpdata[metricKey] = metricValues;
 
     const metricRange = getNumericRange(metricValues);
-
     setChartData({
       data: trialHpdata,
       metricRange,
       metricValues,
       trialIds,
     });
-  }, [selectedExperiments, selectedMetric, fullHParams, data, selectedScale, metrics, trials]);
+  }, [selectedExperiments, selectedMetric, fullHParams, metricData, selectedScale, trials, data]);
 
-  if (selectedExperiments.length === 0) {
-    return (
-      <div className={css.waiting}>
-        <Alert description="No experiments selected." />
-        <Spinner />
-      </div>
-    );
+  if (!isLoaded) {
+    return <Spinner center spinning />;
   }
 
   if (!chartData || (selectedExperiments.length !== 0 && metrics.length === 0)) {
@@ -277,7 +272,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
           description="Please wait until the experiments are further along."
           message="Not enough data points to plot."
         />
-        <Spinner />
+        <Spinner center spinning />
       </div>
     );
   }

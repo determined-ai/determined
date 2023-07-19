@@ -69,7 +69,7 @@ func GetMetricsForTrialSourceInfoQuery(
 			continue
 		}
 		sourceType := trialv1.TrialSourceInfoType_value[val.TrialSourceInfoType]
-		res, err := db.GetMetrics(ctx, val.TrialID, -1, numMetricsLimit, model.InferenceMetricType)
+		res, err := db.GetMetrics(ctx, val.TrialID, -1, numMetricsLimit, model.InferenceMetricGroup)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get metrics %w", err)
 		}

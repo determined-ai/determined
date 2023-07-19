@@ -1,8 +1,8 @@
-import { CustomCell, GridCellKind, Theme } from '@glideapps/glide-data-grid';
+import { CustomCell, GridCellKind, Theme } from '@hpe.com/glide-data-grid';
 import {
   BaseDrawArgs,
   CustomRenderer,
-} from '@glideapps/glide-data-grid/dist/ts/data-grid/cells/cell-types';
+} from '@hpe.com/glide-data-grid/dist/ts/data-grid/cells/cell-types';
 
 import { roundedRect } from '../utils';
 
@@ -99,6 +99,7 @@ const renderer: CustomRenderer<CheckboxCell> = {
   draw: (a, cell) => drawBoolean(a, cell.data.checked),
   isMatch: (c): c is CheckboxCell => (c.data as CheckboxCellProps).kind === 'checkbox-cell',
   kind: GridCellKind.Custom,
+  measure: () => 40,
   needsHover: true,
   needsHoverPosition: true,
 };

@@ -83,22 +83,6 @@ best_checkpoint AS (
         ORDER BY c.signed_searcher_metric ASC
       ) AS rank
     FROM (
-      SELECT old_c.*
-      FROM (
-          SELECT c.*, v.signed_searcher_metric,
-            ROW_NUMBER() OVER(
-              PARTITION BY v.trial_id
-              ORDER BY v.signed_searcher_metric ASC
-            ) AS rank
-          FROM trial_validations v
-          INNER JOIN checkpoints_old_view c ON (
-            c.steps_completed = v.total_batches
-            AND c.trial_id = v.trial_id
-          )
-          WHERE c.state = 'COMPLETED'
-        ) old_c
-      WHERE old_c.rank = 1
-      UNION ALL
       SELECT new_c.*
       FROM (
           SELECT c.*, v.signed_searcher_metric,
@@ -107,7 +91,7 @@ best_checkpoint AS (
               ORDER BY v.signed_searcher_metric ASC
             ) AS rank
           FROM trial_validations v
-          INNER JOIN checkpoints_new_view c ON (
+          INNER JOIN checkpoints_view c ON (
             c.steps_completed = v.total_batches
             AND c.trial_id = v.trial_id
           )
@@ -128,7 +112,7 @@ SELECT
   t.start_time,
   t.end_time,
   t.hparams,
-  coalesce(new_ckpt.uuid, old_ckpt.uuid) AS warm_start_checkpoint_uuid,
+  new_ckpt.uuid AS warm_start_checkpoint_uuid,
   t.task_id,
   t.checkpoint_size AS total_checkpoint_size,
   t.checkpoint_count,
@@ -148,9 +132,5 @@ FROM searcher_info
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id
   LEFT JOIN latest_validation lv ON lv.trial_id = searcher_info.trial_id
   LEFT JOIN best_checkpoint bc ON bc.trial_id = searcher_info.trial_id
-  -- Using `public.checkpoints_view` directly here results in the query planner being unable to push
-  -- filters into the union all, resulting in costly scans of steps, validations and checkpoints.
-  -- additionally, it joins a lot of stuff we don't need, so just fallback to the actual tables.
-  LEFT JOIN raw_checkpoints old_ckpt ON old_ckpt.id = t.warm_start_checkpoint_id
   LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = t.warm_start_checkpoint_id
   ORDER BY searcher_info.ordering

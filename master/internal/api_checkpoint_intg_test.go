@@ -25,42 +25,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
 
-func createVersionOneCheckpoint(
-	ctx context.Context, t *testing.T, api *apiServer, curUser model.User, resources map[string]int64,
-) string {
-	size := int64(0)
-	for _, v := range resources {
-		size += v
-	}
-
-	trial := createTestTrial(t, api, curUser)
-	checkpointBun := struct {
-		bun.BaseModel `bun:"table:checkpoints"`
-		TrialID       int
-		TrialRunID    int
-		TotalBatches  int
-		State         model.State
-		UUID          string
-		Size          int64
-		EndTime       time.Time
-		Resources     map[string]int64
-	}{
-		TrialID:      trial.ID,
-		TrialRunID:   1,
-		TotalBatches: 1,
-		State:        model.ActiveState,
-		UUID:         uuid.New().String(),
-		Size:         size,
-		EndTime:      time.Now().UTC().Truncate(time.Millisecond),
-		Resources:    resources,
-	}
-
-	_, err := db.Bun().NewInsert().Model(&checkpointBun).Exec(ctx)
-	require.NoError(t, err)
-
-	return checkpointBun.UUID
-}
-
 func createVersionTwoCheckpoint(
 	ctx context.Context, t *testing.T, api *apiServer, curUser model.User, resources map[string]int64,
 ) string {
@@ -171,132 +135,124 @@ func TestPatchCheckpoint(t *testing.T) {
 		"b": 2,
 		"c": 7,
 	}
-	for _, uuid := range []string{
-		createVersionOneCheckpoint(ctx, t, api, curUser, startingResources),
-		createVersionTwoCheckpoint(ctx, t, api, curUser, startingResources),
-	} {
-		// Don't send an update.
-		_, err := api.PatchCheckpoints(ctx, &apiv1.PatchCheckpointsRequest{
-			Checkpoints: []*checkpointv1.PatchCheckpoint{
-				{
-					Uuid:      uuid,
+	uuid := createVersionTwoCheckpoint(ctx, t, api, curUser, startingResources)
+	// Don't send an update.
+	_, err := api.PatchCheckpoints(ctx, &apiv1.PatchCheckpointsRequest{
+		Checkpoints: []*checkpointv1.PatchCheckpoint{
+			{
+				Uuid:      uuid,
+				Resources: nil,
+			},
+		},
+	})
+	require.NoError(t, err)
+	actualSize, actualResources, actualState := getCheckpointSizeResourcesState(ctx, t, uuid)
+	require.Equal(t, 10, actualSize)
+	require.Equal(t, startingResources, actualResources)
+	require.Equal(t, model.ActiveState, actualState)
+
+	// Send an update with same resources as what we have.
+	_, err = api.PatchCheckpoints(ctx, &apiv1.PatchCheckpointsRequest{
+		Checkpoints: []*checkpointv1.PatchCheckpoint{
+			{
+				Uuid: uuid,
+				Resources: &checkpointv1.PatchCheckpoint_OptionalResources{
+					Resources: startingResources,
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	actualSize, actualResources, actualState = getCheckpointSizeResourcesState(ctx, t, uuid)
+	require.Equal(t, 10, actualSize)
+	require.Equal(t, startingResources, actualResources)
+	require.Equal(t, model.ActiveState, actualState)
+	require.Equal(t, 10, getTrialSizeFromUUID(ctx, t, uuid))
+	require.Equal(t, 10, getExperimentSizeFromUUID(ctx, t, uuid))
+
+	// Partially delete checkpoint
+	resources := map[string]int64{
+		"a": 1,
+	}
+	_, err = api.PatchCheckpoints(ctx, &apiv1.PatchCheckpointsRequest{
+		Checkpoints: []*checkpointv1.PatchCheckpoint{
+			{
+				Uuid: uuid,
+				Resources: &checkpointv1.PatchCheckpoint_OptionalResources{
+					Resources: resources,
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	actualSize, actualResources, actualState = getCheckpointSizeResourcesState(ctx, t, uuid)
+	require.Equal(t, 1, actualSize)
+	require.Equal(t, resources, actualResources)
+	require.Equal(t, model.PartiallyDeletedState, actualState)
+	require.Equal(t, 1, getTrialSizeFromUUID(ctx, t, uuid))
+	require.Equal(t, 1, getExperimentSizeFromUUID(ctx, t, uuid))
+
+	// Full delete checkpoint.
+	_, err = api.PatchCheckpoints(ctx, &apiv1.PatchCheckpointsRequest{
+		Checkpoints: []*checkpointv1.PatchCheckpoint{
+			{
+				Uuid: uuid,
+				Resources: &checkpointv1.PatchCheckpoint_OptionalResources{
 					Resources: nil,
 				},
 			},
-		})
-		require.NoError(t, err)
-		actualSize, actualResources, actualState := getCheckpointSizeResourcesState(ctx, t, uuid)
-		require.Equal(t, 10, actualSize)
-		require.Equal(t, startingResources, actualResources)
-		require.Equal(t, model.ActiveState, actualState)
-
-		// Send an update with same resources as what we have.
-		_, err = api.PatchCheckpoints(ctx, &apiv1.PatchCheckpointsRequest{
-			Checkpoints: []*checkpointv1.PatchCheckpoint{
-				{
-					Uuid: uuid,
-					Resources: &checkpointv1.PatchCheckpoint_OptionalResources{
-						Resources: startingResources,
-					},
-				},
-			},
-		})
-		require.NoError(t, err)
-		actualSize, actualResources, actualState = getCheckpointSizeResourcesState(ctx, t, uuid)
-		require.Equal(t, 10, actualSize)
-		require.Equal(t, startingResources, actualResources)
-		require.Equal(t, model.ActiveState, actualState)
-		require.Equal(t, 10, getTrialSizeFromUUID(ctx, t, uuid))
-		require.Equal(t, 10, getExperimentSizeFromUUID(ctx, t, uuid))
-
-		// Partially delete checkpoint
-		resources := map[string]int64{
-			"a": 1,
-		}
-		_, err = api.PatchCheckpoints(ctx, &apiv1.PatchCheckpointsRequest{
-			Checkpoints: []*checkpointv1.PatchCheckpoint{
-				{
-					Uuid: uuid,
-					Resources: &checkpointv1.PatchCheckpoint_OptionalResources{
-						Resources: resources,
-					},
-				},
-			},
-		})
-		require.NoError(t, err)
-		actualSize, actualResources, actualState = getCheckpointSizeResourcesState(ctx, t, uuid)
-		require.Equal(t, 1, actualSize)
-		require.Equal(t, resources, actualResources)
-		require.Equal(t, model.PartiallyDeletedState, actualState)
-		require.Equal(t, 1, getTrialSizeFromUUID(ctx, t, uuid))
-		require.Equal(t, 1, getExperimentSizeFromUUID(ctx, t, uuid))
-
-		// Full delete checkpoint.
-		_, err = api.PatchCheckpoints(ctx, &apiv1.PatchCheckpointsRequest{
-			Checkpoints: []*checkpointv1.PatchCheckpoint{
-				{
-					Uuid: uuid,
-					Resources: &checkpointv1.PatchCheckpoint_OptionalResources{
-						Resources: nil,
-					},
-				},
-			},
-		})
-		require.NoError(t, err)
-		actualSize, actualResources, actualState = getCheckpointSizeResourcesState(ctx, t, uuid)
-		require.Equal(t, 1, actualSize) // Size and resources don't get cleared.
-		require.Equal(t, resources, actualResources)
-		require.Equal(t, model.DeletedState, actualState)
-		require.Equal(t, 0, getTrialSizeFromUUID(ctx, t, uuid))
-		require.Equal(t, 0, getExperimentSizeFromUUID(ctx, t, uuid))
-	}
+		},
+	})
+	require.NoError(t, err)
+	actualSize, actualResources, actualState = getCheckpointSizeResourcesState(ctx, t, uuid)
+	require.Equal(t, 1, actualSize) // Size and resources don't get cleared.
+	require.Equal(t, resources, actualResources)
+	require.Equal(t, model.DeletedState, actualState)
+	require.Equal(t, 0, getTrialSizeFromUUID(ctx, t, uuid))
+	require.Equal(t, 0, getExperimentSizeFromUUID(ctx, t, uuid))
 
 	// Test metadata.json special handling.
 	startingResources = map[string]int64{
 		"test": 1,
 	}
-	for _, uuid := range []string{
-		createVersionOneCheckpoint(ctx, t, api, curUser, startingResources),
-		createVersionTwoCheckpoint(ctx, t, api, curUser, startingResources),
-	} {
-		// Sending extra metadata.json is fine.
-		_, err := api.PatchCheckpoints(ctx, &apiv1.PatchCheckpointsRequest{
-			Checkpoints: []*checkpointv1.PatchCheckpoint{
-				{
-					Uuid: uuid,
-					Resources: &checkpointv1.PatchCheckpoint_OptionalResources{
-						Resources: map[string]int64{"test": 1, "metadata.json": 2},
-					},
+	uuid = createVersionTwoCheckpoint(ctx, t, api, curUser, startingResources)
+	// Sending extra metadata.json is fine.
+	_, err = api.PatchCheckpoints(ctx, &apiv1.PatchCheckpointsRequest{
+		Checkpoints: []*checkpointv1.PatchCheckpoint{
+			{
+				Uuid: uuid,
+				Resources: &checkpointv1.PatchCheckpoint_OptionalResources{
+					Resources: map[string]int64{"test": 1, "metadata.json": 2},
 				},
 			},
-		})
-		require.NoError(t, err)
-		actualSize, actualResources, actualState := getCheckpointSizeResourcesState(ctx, t, uuid)
-		require.Equal(t, 3, actualSize)
-		require.Equal(t, map[string]int64{"test": 1, "metadata.json": 2}, actualResources)
-		require.Equal(t, model.ActiveState, actualState)
-		require.Equal(t, 3, getTrialSizeFromUUID(ctx, t, uuid))
-		require.Equal(t, 3, getExperimentSizeFromUUID(ctx, t, uuid))
+		},
+	})
+	require.NoError(t, err)
+	actualSize, actualResources, actualState = getCheckpointSizeResourcesState(ctx, t, uuid)
+	require.Equal(t, 3, actualSize)
+	require.Equal(t, map[string]int64{"test": 1, "metadata.json": 2}, actualResources)
+	require.Equal(t, model.ActiveState, actualState)
+	require.Equal(t, 3, getTrialSizeFromUUID(ctx, t, uuid))
+	require.Equal(t, 3, getExperimentSizeFromUUID(ctx, t, uuid))
 
-		// Now that we have it not sending it causes partial deletion.
-		_, err = api.PatchCheckpoints(ctx, &apiv1.PatchCheckpointsRequest{
-			Checkpoints: []*checkpointv1.PatchCheckpoint{
-				{
-					Uuid: uuid,
-					Resources: &checkpointv1.PatchCheckpoint_OptionalResources{
-						Resources: map[string]int64{"test": 1},
-					},
+	// Now that we have it not sending it causes partial deletion.
+	_, err = api.PatchCheckpoints(ctx, &apiv1.PatchCheckpointsRequest{
+		Checkpoints: []*checkpointv1.PatchCheckpoint{
+			{
+				Uuid: uuid,
+				Resources: &checkpointv1.PatchCheckpoint_OptionalResources{
+					Resources: map[string]int64{"test": 1},
 				},
 			},
-		})
-		require.NoError(t, err)
-		actualSize, actualResources, actualState = getCheckpointSizeResourcesState(ctx, t, uuid)
-		require.Equal(t, 1, actualSize)
-		require.Equal(t, map[string]int64{"test": 1}, actualResources)
-		require.Equal(t, model.PartiallyDeletedState, actualState)
-		require.Equal(t, 1, getTrialSizeFromUUID(ctx, t, uuid))
-		require.Equal(t, 1, getExperimentSizeFromUUID(ctx, t, uuid))
-	}
+		},
+	})
+	require.NoError(t, err)
+	actualSize, actualResources, actualState = getCheckpointSizeResourcesState(ctx, t, uuid)
+	require.Equal(t, 1, actualSize)
+	require.Equal(t, map[string]int64{"test": 1}, actualResources)
+	require.Equal(t, model.PartiallyDeletedState, actualState)
+	require.Equal(t, 1, getTrialSizeFromUUID(ctx, t, uuid))
+	require.Equal(t, 1, getExperimentSizeFromUUID(ctx, t, uuid))
 }
 
 func TestCheckpointAuthZ(t *testing.T) {
@@ -328,45 +284,41 @@ func TestCheckpointAuthZ(t *testing.T) {
 		}, false},
 	}
 
-	for _, checkpointID := range []string{
-		createVersionOneCheckpoint(ctx, t, api, curUser, nil),
-		createVersionTwoCheckpoint(ctx, t, api, curUser, nil),
-	} {
-		for _, curCase := range cases {
-			notFoundUUID := uuid.New().String()
-			if curCase.UseMultiCheckpointError {
-				require.Equal(t, errCheckpointsNotFound([]string{notFoundUUID}),
-					curCase.IDToReqCall(notFoundUUID))
-			} else {
-				require.Equal(t, apiPkg.NotFoundErrs("checkpoint", notFoundUUID, true),
-					curCase.IDToReqCall(notFoundUUID))
-			}
-
-			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-				Return(authz2.PermissionDeniedError{}).Once()
-			if curCase.UseMultiCheckpointError {
-				require.Equal(t, errCheckpointsNotFound([]string{checkpointID}),
-					curCase.IDToReqCall(checkpointID))
-			} else {
-				require.Equal(t, apiPkg.NotFoundErrs("checkpoint", checkpointID, true),
-					curCase.IDToReqCall(checkpointID))
-			}
-
-			expectedErr := fmt.Errorf("canGetExperimentError")
-			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-				Return(expectedErr).Once()
-			authZModel.On("CanGetModel", mock.Anything, mock.Anything,
-				mock.Anything, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
-			require.Equal(t, expectedErr, curCase.IDToReqCall(checkpointID))
-
-			expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
-			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-				Return(nil).Once()
-			authZModel.On("CanGetModel", mock.Anything, mock.Anything,
-				mock.Anything, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
-			authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
-				Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
-			require.Equal(t, expectedErr, curCase.IDToReqCall(checkpointID))
+	checkpointID := createVersionTwoCheckpoint(ctx, t, api, curUser, nil)
+	for _, curCase := range cases {
+		notFoundUUID := uuid.New().String()
+		if curCase.UseMultiCheckpointError {
+			require.Equal(t, errCheckpointsNotFound([]string{notFoundUUID}),
+				curCase.IDToReqCall(notFoundUUID))
+		} else {
+			require.Equal(t, apiPkg.NotFoundErrs("checkpoint", notFoundUUID, true),
+				curCase.IDToReqCall(notFoundUUID))
 		}
+
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(authz2.PermissionDeniedError{}).Once()
+		if curCase.UseMultiCheckpointError {
+			require.Equal(t, errCheckpointsNotFound([]string{checkpointID}),
+				curCase.IDToReqCall(checkpointID))
+		} else {
+			require.Equal(t, apiPkg.NotFoundErrs("checkpoint", checkpointID, true),
+				curCase.IDToReqCall(checkpointID))
+		}
+
+		expectedErr := fmt.Errorf("canGetExperimentError")
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(expectedErr).Once()
+		authZModel.On("CanGetModel", mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+		require.Equal(t, expectedErr, curCase.IDToReqCall(checkpointID))
+
+		expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(nil).Once()
+		authZModel.On("CanGetModel", mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+		authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
+			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
+		require.Equal(t, expectedErr, curCase.IDToReqCall(checkpointID))
 	}
 }

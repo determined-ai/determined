@@ -1,4 +1,4 @@
-import { DataEditorProps } from '@glideapps/glide-data-grid';
+import { DataEditorProps } from '@hpe.com/glide-data-grid';
 import dayjs from 'dayjs';
 
 import { ExperimentItem } from 'types';

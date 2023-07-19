@@ -1,63 +1,51 @@
 .base {
-  background-color: var(--theme-background);
-  border: 1px solid var(--theme-surface-border);
-  display: flex;
-  flex-direction: column;
   height: 100%;
   overflow: auto;
 
-  .row {
-    align-items: center;
-    border-bottom: 1px solid var(--theme-surface-border);
-    display: grid;
-    grid-auto-columns: minmax(160px, 1fr);
-    grid-auto-flow: column;
-    grid-template-columns: 170px repeat(auto-fill, minmax(160px, 1fr));
-    justify-content: space-between;
-    min-width: fit-content;
+  table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: fit-content;
 
-    & > div:first-child {
-      background-color: var(--theme-stage);
-    }
-  }
-  .row.sticky {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-  }
-  .row.spanAll {
-    display: flex;
-    left: 0;
-    position: sticky;
-  }
-  .cell {
-    align-items: center;
-    display: flex;
-    overflow: hidden;
-    padding: 8px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    tr {
+      border-bottom: 1px solid var(--theme-surface-border);
 
-    & > * {
-      margin: 0;
-      max-width: 100%;
+      &:nth-child(even) {
+        background-color: var(--theme-surface-weak);
+      }
+      &:nth-child(odd) {
+        background-color: var(--theme-surface-strong);
+      }
     }
-  }
-  .cell.blank {
-    height: 100%;
-  }
-  .cell.sticky {
-    border-right: 1px solid var(--theme-surface-border);
-    left: 0;
-    position: sticky;
-  }
-  .cell.indent {
-    padding-left: 20px;
-  }
-  .cell.spanAll {
-    border-right: 0;
-    left: 0;
-    position: sticky;
+    th,
+    td {
+      padding: 8px;
+      width: 180px;
+    }
+    .tableSelectCell {
+      padding: unset;
+
+      > .tableSelectContainer {
+        left: 0;
+        padding: 8px 16px;
+        position: sticky;
+        width: fit-content;
+      }
+    }
+    thead > tr:first-of-type {
+      background-color: var(--theme-background);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    th:first-of-type {
+      background-clip: padding-box;
+      background-color: var(--theme-background);
+      left: 0;
+      position: sticky;
+      text-align: left;
+      width: 200px;
+    }
   }
   .trialTag {
     font-size: 14px;
