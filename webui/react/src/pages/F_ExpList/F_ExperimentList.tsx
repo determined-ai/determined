@@ -514,6 +514,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [isLoading, experiments],
   );
 
+  const showPagination = useMemo(() => {
+    return isPagedView && (!settings.compare || settings.pinnedColumnsCount !== 0);
+  }, [isPagedView, settings.compare, settings.pinnedColumnsCount]);
+
   return (
     <>
       <TableActionBar
@@ -592,7 +596,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 onSortChange={onSortChange}
               />
             </ComparisonView>
-            {isPagedView && (
+            {showPagination && (
               <Columns>
                 <Column align="right">
                   <Pagination
