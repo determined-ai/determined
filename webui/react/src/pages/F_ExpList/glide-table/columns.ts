@@ -4,7 +4,7 @@ import {
   GridCell,
   GridCellKind,
   SizedGridColumn,
-} from '@glideapps/glide-data-grid';
+} from '@hpe.com/glide-data-grid';
 
 import { getColor, getInitials } from 'components/Avatar';
 import { terminalRunStates } from 'constants/states';

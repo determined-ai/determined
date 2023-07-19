@@ -13,8 +13,8 @@ import DataEditor, {
   Item,
   Rectangle,
   Theme,
-} from '@glideapps/glide-data-grid';
-import { DrawHeaderCallback } from '@glideapps/glide-data-grid/dist/ts/data-grid/data-grid-types';
+} from '@hpe.com/glide-data-grid';
+import { DrawHeaderCallback } from '@hpe.com/glide-data-grid/dist/ts/data-grid/data-grid-types';
 import React, {
   Dispatch,
   SetStateAction,
@@ -520,7 +520,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
         if (isLinkCell(cell)) {
           handlePath(event as unknown as AnyMouseEvent, { path: cell.data.link.href });
-          // cell.data.link.onClick(event);
         } else {
           if (event.shiftKey) {
             setSelection(({ rows }: GridSelection) => {

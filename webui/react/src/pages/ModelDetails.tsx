@@ -76,11 +76,11 @@ const ModelDetails: React.FC = () => {
 
   const { canModifyModel, canModifyModelVersion, loading: rbacLoading } = usePermissions();
 
-  const {
-    settings,
-    isLoading: isLoadingSettings,
-    updateSettings,
-  } = useSettings<Settings>(settingsConfig(modelId));
+  const config = useMemo(() => {
+    return settingsConfig(modelId);
+  }, [modelId]);
+
+  const { settings, isLoading: isLoadingSettings, updateSettings } = useSettings<Settings>(config);
 
   const fetchModel = useCallback(async () => {
     if (!settings) return;

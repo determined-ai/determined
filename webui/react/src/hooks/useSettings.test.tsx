@@ -16,6 +16,7 @@ const CURRENT_USER = { id: 1, isActive: true, isAdmin: false, username: 'bunny' 
 
 vi.mock('services/api', () => ({
   getUserSetting: () => Promise.resolve({ settings: [] }),
+  updateUserSetting: () => Promise.resolve(),
 }));
 
 interface Settings {
