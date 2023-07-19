@@ -33,7 +33,6 @@ def export_and_load_model(experiment_id: int) -> None:
 
 
 @pytest.mark.parallel
-@pytest.mark.tensorflow2
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])
 @pytest.mark.parametrize("tf2", [False, True])
 def test_tf_keras_parallel(
