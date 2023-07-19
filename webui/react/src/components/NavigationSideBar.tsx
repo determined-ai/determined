@@ -11,14 +11,14 @@ import Icon, { IconName, IconSize } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
+import Settings from 'components/Settings';
 import Spinner from 'components/Spinner/Spinner';
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
-import SettingsAccount from 'pages/Settings/SettingsAccount';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
-} from 'pages/Settings/UserSettings.settings';
+} from 'pages/Admin/UserSettings.settings';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
@@ -384,7 +384,7 @@ const NavigationSideBar: React.FC = () => {
           <WorkspaceCreateModal.Component />
         </nav>
       </CSSTransition>
-      <SettingsAccount show={showSettings} onClose={() => setShowSettings(false)} />
+      <Settings show={showSettings} onClose={() => setShowSettings(false)} />
     </>
   );
 };

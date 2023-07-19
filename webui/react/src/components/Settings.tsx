@@ -11,18 +11,18 @@ import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import { ThemeOptions } from 'components/ThemeToggle';
 import {
+  shortcutSettingsConfig,
+  shortcutSettingsDefaults,
+  shortcutsSettingsPath,
+} from 'pages/Admin/UserSettings.settings';
+import {
   experimentListGlobalSettingsConfig,
   experimentListGlobalSettingsDefaults,
   experimentListGlobalSettingsPath,
   ExpListView,
   RowHeight,
 } from 'pages/F_ExpList/F_ExperimentList.settings';
-import { rowHeightCopy } from 'pages/F_ExpList/glide-table/RowHeightMenu';
-import {
-  shortcutSettingsConfig,
-  shortcutSettingsDefaults,
-  shortcutsSettingsPath,
-} from 'pages/Settings/UserSettings.settings';
+import { rowHeightLabels } from 'pages/F_ExpList/glide-table/RowHeightMenu';
 import { patchUser } from 'services/api';
 import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
@@ -36,7 +36,7 @@ import { useObservable } from 'utils/observable';
 import { KeyboardShortcut, shortcutToString } from 'utils/shortcut';
 import { Mode } from 'utils/themes';
 
-import css from './SettingsAccount.module.scss';
+import css from './Settings.module.scss';
 
 const API_DISPLAYNAME_SUCCESS_MESSAGE = 'Display name updated.';
 const API_USERNAME_ERROR_MESSAGE = 'Could not update username.';
@@ -47,7 +47,7 @@ interface Props {
   onClose: () => void;
 }
 
-const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
+const Settings: React.FC<Props> = ({ show, onClose }: Props) => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const info = useObservable(determinedStore.info);
 
@@ -121,15 +121,11 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
     ]),
     {
       Loaded: ([savedExperimentListGlobalSettings, savedShortcutSettings]) => {
-        const experimentListGlobalSettings =
-          savedExperimentListGlobalSettings === null
-            ? experimentListGlobalSettingsDefaults
-            : { ...experimentListGlobalSettingsDefaults, ...savedExperimentListGlobalSettings };
-
-        const shortcutSettings =
-          savedShortcutSettings === null
-            ? shortcutSettingsDefaults
-            : { ...shortcutSettingsDefaults, ...savedShortcutSettings };
+        const experimentListGlobalSettings = {
+          ...experimentListGlobalSettingsDefaults,
+          ...(savedExperimentListGlobalSettings ?? {}),
+        };
+        const shortcutSettings = { ...shortcutSettingsDefaults, ...(savedShortcutSettings ?? {}) };
 
         return (
           <Drawer open={show} placement="left" title="Settings" onClose={onClose}>
@@ -217,7 +213,7 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
                 <InlineForm<RowHeight>
                   initialValue={experimentListGlobalSettings.rowHeight}
                   label="Table Density"
-                  valueFormatter={(rh) => rowHeightCopy[rh]}
+                  valueFormatter={(rh) => rowHeightLabels[rh]}
                   onSubmit={(rh) => {
                     userSettings.set(
                       experimentListGlobalSettingsConfig,
@@ -229,7 +225,7 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
                     );
                   }}>
                   <Select searchable={false}>
-                    {Object.entries(rowHeightCopy).map(([rowHeight, label]) => (
+                    {Object.entries(rowHeightLabels).map(([rowHeight, label]) => (
                       <Option key={rowHeight} value={rowHeight}>
                         {label}
                       </Option>
@@ -309,4 +305,4 @@ const SettingsAccount: React.FC<Props> = ({ show, onClose }: Props) => {
   );
 };
 
-export default SettingsAccount;
+export default Settings;

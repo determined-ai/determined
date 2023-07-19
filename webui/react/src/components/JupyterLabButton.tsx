@@ -7,7 +7,7 @@ import Tooltip from 'components/kit/Tooltip';
 import { useSettings } from 'hooks/useSettings';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
-} from 'pages/Settings/UserSettings.settings';
+} from 'pages/Admin/UserSettings.settings';
 import { Workspace } from 'types';
 import { shortcutToString } from 'utils/shortcut';
 interface Props {

@@ -9,7 +9,7 @@ import { BaseNode } from 'omnibar/tree-extension/types';
 import { isTreeNode } from 'omnibar/tree-extension/utils';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
-} from 'pages/Settings/UserSettings.settings';
+} from 'pages/Admin/UserSettings.settings';
 import handleError from 'utils/error';
 import { matchesShortcut } from 'utils/shortcut';
 
