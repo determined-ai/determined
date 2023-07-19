@@ -11,25 +11,18 @@ import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
-export const MODAL_HEADER_LABEL = 'Change Password';
+const MODAL_HEADER_LABEL = 'Change Password';
 export const OLD_PASSWORD_LABEL = 'Old Password';
-export const OLD_PASSWORD_NAME = 'oldPassword';
-export const NEW_PASSWORD_LABEL = 'New Password';
-export const NEW_PASSWORD_NAME = 'newPassword';
+const OLD_PASSWORD_NAME = 'oldPassword';
+const NEW_PASSWORD_NAME = 'newPassword';
 export const CONFIRM_PASSWORD_LABEL = 'Confirm Password';
-export const CONFIRM_PASSWORD_NAME = 'confirmPassword';
-export const CANCEL_BUTTON_LABEL = 'Cancel';
+const CONFIRM_PASSWORD_NAME = 'confirmPassword';
 export const OK_BUTTON_LABEL = 'Change Password';
-export const INCORRECT_PASSWORD_MESSAGE = 'Incorrect password.';
-export const NEW_PASSWORD_REQUIRED_MESSAGE = 'New password required.';
-export const PASSWORD_TOO_SHORT_MESSAGE = "Password isn't long enough.";
-export const PASSWORD_UPPERCASE_MESSAGE = 'Password must include a uppercase letter.';
-export const PASSWORD_LOWERCASE_MESSAGE = 'Password must include a lowercase letter.';
-export const PASSWORD_NUMBER_MESSAGE = 'Password must include a number.';
-export const CONFIRM_PASSWORD_REQUIRED_MESSAGE = 'Confirmed password required.';
-export const PASSWORDS_NOT_MATCHING_MESSAGE = 'Passwords do not match.';
+const INCORRECT_PASSWORD_MESSAGE = 'Incorrect password.';
+const CONFIRM_PASSWORD_REQUIRED_MESSAGE = 'Confirmed password required.';
+const PASSWORDS_NOT_MATCHING_MESSAGE = 'Passwords do not match.';
 export const API_SUCCESS_MESSAGE = 'Password updated.';
-export const API_ERROR_MESSAGE = 'Could not update password.';
+const API_ERROR_MESSAGE = 'Could not update password.';
 
 interface FormInputs {
   [OLD_PASSWORD_NAME]: string;
@@ -37,7 +30,12 @@ interface FormInputs {
   [CONFIRM_PASSWORD_NAME]: string;
 }
 
-const PasswordChangeModalComponent: React.FC = () => {
+interface Props {
+  newPassword: string;
+  onSubmit?: () => void;
+}
+
+const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }: Props) => {
   const [form] = Form.useForm<FormInputs>();
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const [disabled, setDisabled] = useState<boolean>(true);
@@ -61,10 +59,11 @@ const PasswordChangeModalComponent: React.FC = () => {
     await form.validateFields();
 
     try {
-      const password = form.getFieldValue(NEW_PASSWORD_NAME);
+      const password = newPassword;
       await setUserPassword({ password, userId: currentUser?.id ?? 0 });
       message.success(API_SUCCESS_MESSAGE);
       form.resetFields();
+      onSubmit?.();
     } catch (e) {
       message.error(API_ERROR_MESSAGE);
       handleError(e, { silent: true, type: ErrorType.Input });
@@ -72,6 +71,10 @@ const PasswordChangeModalComponent: React.FC = () => {
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
     }
+  };
+
+  const handleClose = () => {
+    form.resetFields();
   };
 
   return (
@@ -85,7 +88,8 @@ const PasswordChangeModalComponent: React.FC = () => {
         text: OK_BUTTON_LABEL,
       }}
       title={MODAL_HEADER_LABEL}
-      onClose={form.resetFields}>
+      onClose={handleClose}>
+      <p>Please confirm your password change</p>
       <Form form={form} onFieldsChange={handleFieldsChange}>
         <Form.Item
           label={OLD_PASSWORD_LABEL}
@@ -102,28 +106,6 @@ const PasswordChangeModalComponent: React.FC = () => {
           <Input.Password />
         </Form.Item>
         <Form.Item
-          label={NEW_PASSWORD_LABEL}
-          name={NEW_PASSWORD_NAME}
-          rules={[
-            { message: NEW_PASSWORD_REQUIRED_MESSAGE, required: true },
-            { message: PASSWORD_TOO_SHORT_MESSAGE, min: 8 },
-            {
-              message: PASSWORD_UPPERCASE_MESSAGE,
-              pattern: /[A-Z]+/,
-            },
-            {
-              message: PASSWORD_LOWERCASE_MESSAGE,
-              pattern: /[a-z]+/,
-            },
-            {
-              message: PASSWORD_NUMBER_MESSAGE,
-              pattern: /\d/,
-            },
-          ]}>
-          <Input.Password />
-        </Form.Item>
-        <Form.Item
-          dependencies={[NEW_PASSWORD_NAME]}
           label={CONFIRM_PASSWORD_LABEL}
           name={CONFIRM_PASSWORD_NAME}
           rules={[
@@ -131,17 +113,11 @@ const PasswordChangeModalComponent: React.FC = () => {
             {
               message: PASSWORDS_NOT_MATCHING_MESSAGE,
               validator: (rule, value) => {
-                return value === form.getFieldValue(NEW_PASSWORD_NAME)
-                  ? Promise.resolve()
-                  : Promise.reject();
+                return value === newPassword ? Promise.resolve() : Promise.reject();
               },
             },
           ]}>
           <Input.Password />
-        </Form.Item>
-        <Form.Item>
-          Password must be at least 8 characters and contain an uppercase letter, a lowercase
-          letter, and a number.
         </Form.Item>
       </Form>
     </Modal>

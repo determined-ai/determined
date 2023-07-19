@@ -150,6 +150,7 @@ const AppView: React.FC = () => {
                           }
                           workspace={workspace ?? undefined}
                         />
+                        <Omnibar />
                         <main>
                           <Router routes={appRoutes} />
                         </main>
@@ -167,7 +168,6 @@ const AppView: React.FC = () => {
                 <Button onClick={refreshPage}>Try Again</Button>
               </PageMessage>
             )}
-            <Omnibar />
           </>
         ) : (
           <Spinner center />

@@ -3,10 +3,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { formatKey, KeyboardShortcut, shortcutToString } from 'utils/shortcut';
 
-import Button from './Button';
-import Icon from './Icon';
-import css from './InputShortcut.module.scss';
-
 interface InputShortcutProps {
   disabled?: boolean;
   onChange?: (k: KeyboardShortcut | undefined) => void;
@@ -42,22 +38,14 @@ const InputShortcut: React.FC<InputShortcutProps> = ({
     [onChange, value],
   );
 
-  const onClearInput = useCallback(() => {
-    value ? onChange?.(undefined) : setInputValue(undefined);
-  }, [value, onChange]);
-
   return (
-    <div className={css.shortcut_input_conatiner}>
-      <Input
-        placeholder={placeholder}
-        ref={inputRef}
-        value={inputValue}
-        onKeyDown={onKeyDown}
-        {...props}
-      />
-      <Button icon={<Icon name="checkmark" title="save" />} type="primary" />
-      <Button icon={<Icon name="close" title="clear" />} onClick={onClearInput} />
-    </div>
+    <Input
+      placeholder={placeholder}
+      ref={inputRef}
+      value={inputValue}
+      onKeyDown={onKeyDown}
+      {...props}
+    />
   );
 };
 

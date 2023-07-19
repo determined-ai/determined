@@ -11,7 +11,7 @@ interface RowHeightMenuProps {
   onRowHeightChange: (r: RowHeight) => void;
 }
 
-const rowHeightCopy: Record<RowHeight, string> = {
+export const rowHeightLabels: Record<RowHeight, string> = {
   [RowHeight.SHORT]: 'Short',
   [RowHeight.MEDIUM]: 'Medium',
   [RowHeight.TALL]: 'Tall',
@@ -32,7 +32,7 @@ export const RowHeightMenu: React.FC<RowHeightMenuProps> = ({ rowHeight, onRowHe
   const dropdownItems: MenuItem[] = useMemo(
     () => [
       {
-        children: Object.entries(rowHeightCopy).map(([rowHeight, label], idx) => ({
+        children: Object.entries(rowHeightLabels).map(([rowHeight, label], idx) => ({
           icon: getIcon(idx),
           key: `rowHeight-${rowHeight}`,
           label,

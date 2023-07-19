@@ -1,41 +1,28 @@
-/* stylelint-disable no-descending-specificity */
-
 .formBase {
+  align-items: start;
   display: inline-grid;
-  grid-template-columns: calc(100% - 84px) 10px auto; // 84px comes from the size of the buttons container + 10px gutter
+  grid-template-columns: 168px auto 84px;
   width: 100%;
 
   .buttonsContainer {
     display: inline-flex;
-    grid-column: 3 / 4;
-    grid-template-columns: max-content 10px max-content;
     justify-content: end;
 
     & > button {
       transition: none; // there's a transition (RTL slide) when enabling edit mode...
 
       &:last-of-type {
-        grid-column: 3 / 4;
         margin-left: 10px;
       }
     }
   }
+  label {
+    margin: 5px 0;
+  }
   .formItemInput {
-    grid-column: 1 / 2;
     margin-inline-end: 0;
-
-    & > div {
-      display: inline-grid;
-      grid-template-columns: min-content auto 70%;
-      width: 100%;
-
-      & > div:nth-of-type(2) {
-        grid-column: 3 / 4;
-      }
-    }
   }
   .readOnlyElement {
-    box-sizing: border-box;
-    padding: 11px;
+    padding: 12px;
   }
 }

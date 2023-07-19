@@ -401,9 +401,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const onRowHeightChange = useCallback(
     (newRowHeight: RowHeight) => {
-      updateSettings({ rowHeight: newRowHeight });
+      updateGlobalSettings({ rowHeight: newRowHeight });
     },
-    [updateSettings],
+    [updateGlobalSettings],
   );
 
   useEffect(() => {
@@ -521,7 +521,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         isOpenFilter={isOpenFilter}
         project={project}
         projectColumns={projectColumns}
-        rowHeight={settings.rowHeight}
+        rowHeight={globalSettings.rowHeight}
         selectAll={selectAll}
         selectedExperimentIds={selectedExperimentIds}
         setExpListView={updateExpListView}
@@ -568,7 +568,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
                 project={project}
                 projectColumns={projectColumns}
-                rowHeight={settings.rowHeight}
+                rowHeight={globalSettings.rowHeight}
                 scrollPositionSetCount={scrollPositionSetCount}
                 selectAll={selectAll}
                 selectedExperimentIds={selectedExperimentIds}

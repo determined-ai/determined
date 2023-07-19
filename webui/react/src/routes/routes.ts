@@ -223,19 +223,6 @@ const routes: RouteConfig[] = [
     title: 'Job Queue',
   },
   {
-    id: 'settings',
-    needAuth: true,
-    path: '/settings/:tab',
-    title: 'Settings',
-  },
-  {
-    id: 'settings',
-    needAuth: true,
-    path: '/settings',
-    redirect: '/settings/account',
-    title: 'Settings',
-  },
-  {
     id: 'admin',
     needAuth: true,
     path: '/admin/:tab',
