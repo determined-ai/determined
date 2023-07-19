@@ -74,6 +74,8 @@ func (w *Workspace) ToProto() (*workspacev1.Workspace, error) {
 		State:                   w.State.ToProto(),
 		AgentUserGroup:          aug,
 		CheckpointStorageConfig: storageConfig,
+		DefaultComputePool:      w.DefaultComputePool,
+		DefaultAuxPool:          w.DefaultAuxPool,
 	}, nil
 }
 
