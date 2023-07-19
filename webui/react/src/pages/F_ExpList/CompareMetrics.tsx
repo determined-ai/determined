@@ -22,7 +22,7 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
   const { scale, setScale } = metricData;
 
   const chartsProps = useMemo(() => {
-    const { metrics, data, metricHasData, isLoaded } = metricData;
+    const { metrics, data, isLoaded } = metricData;
     const chartedMetrics: Record<string, boolean> = {};
     const out: ChartsProps = [];
     metrics.forEach((metric) => {
@@ -31,7 +31,7 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
       trials.forEach((t) => {
         const m = data[t?.id || 0];
         m?.[key] && t && series.push({ ...m[key], color: colorMap[t.experimentId] });
-        chartedMetrics[key] ||= series.length > 0;
+        chartedMetrics[key] ||= series.length > 0 || !!t.endTime;
       });
       out.push({
         series: Loaded(series),
@@ -48,7 +48,7 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
     // spinner.
     const chartDataIsLoaded = metrics.every((metric) => {
       const metricKey = `${metric.type}|${metric.name}`;
-      return !!metricHasData?.[metricKey] && !!chartedMetrics?.[metricKey];
+      return !!chartedMetrics?.[metricKey];
     });
     if (isLoaded && chartDataIsLoaded) {
       return Loaded(out);
