@@ -211,8 +211,7 @@ def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
 
 
 def is_protobuf_timestamp(ts: str) -> bool:
-    """
-    Validates that a string timestamp is in a Protobuf-compatible format by attempting to
+    """Validates that a string timestamp is in a Protobuf-compatible format by attempting to
     convert it.
 
     Protobuf requires timestamps in a limited RFC3339 format which requires a trailing "Z" to
