@@ -6962,17 +6962,11 @@ export interface V1PostUserResponse {
  */
 export interface V1PostUserSettingRequest {
     /**
-     * Storage path for setting.
-     * @type {string}
-     * @memberof V1PostUserSettingRequest
-     */
-    storagePath: string;
-    /**
      * Setting key value pair.
-     * @type {V1UserWebSetting}
+     * @type {Array<V1UserWebSetting>}
      * @memberof V1PostUserSettingRequest
      */
-    setting: V1UserWebSetting;
+    settings: Array<V1UserWebSetting>;
 }
 /**
  * Response to PostUserSettingRequest.
@@ -27827,7 +27821,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
-         * @summary Patch a user's settings for website
+         * @summary Post a user's settings for website
          * @param {V1PostUserSettingRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -28104,7 +28098,7 @@ export const UsersApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Patch a user's settings for website
+         * @summary Post a user's settings for website
          * @param {V1PostUserSettingRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -28253,7 +28247,7 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
-         * @summary Patch a user's settings for website
+         * @summary Post a user's settings for website
          * @param {V1PostUserSettingRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -28392,7 +28386,7 @@ export class UsersApi extends BaseAPI {
     
     /**
      * 
-     * @summary Patch a user's settings for website
+     * @summary Post a user's settings for website
      * @param {V1PostUserSettingRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
