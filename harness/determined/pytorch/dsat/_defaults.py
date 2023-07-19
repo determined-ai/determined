@@ -53,8 +53,8 @@ DEFAULT_ZERO_SEARCH_SPACE: Dict[int, Dict[str, Optional[Union[List[int], List[bo
         "contiguous_gradients": [True, False],
         "stage3_param_persistence_threshold": None,
         "stage3_prefetch_bucket_size": None,
-        "stage3_max_live_parameters": DEFAULT_SEARCH_SPACE_MIN_MAX,
-        "stage3_max_reuse_distance": DEFAULT_SEARCH_SPACE_MIN_MAX,
+        # "stage3_max_live_parameters": DEFAULT_SEARCH_SPACE_MIN_MAX,
+        # "stage3_max_reuse_distance": DEFAULT_SEARCH_SPACE_MIN_MAX,
     },
 }
 
