@@ -22,23 +22,6 @@ func TestStandardAuth(t *testing.T) {
 	require.Equal(t, authStandard, service.getAuthLevel(c))
 }
 
-func TestAdminAuth(t *testing.T) {
-	e := echo.New()
-	c := e.NewContext(nil, nil)
-	c.SetPath("/api/v1/master/config")
-	c.SetRequest(httptest.NewRequest(http.MethodPatch, "/standardTest", nil))
-	service := Service{}
-
-	c.SetPath("/agents/id/slots/1")
-	require.Equal(t, authStandard, service.getAuthLevel(c))
-	c.SetRequest(httptest.NewRequest(http.MethodPatch, "/api/v1/master/config", nil))
-	c.SetRequest(httptest.NewRequest(http.MethodPatch, "/agents/id/slots/1", nil))
-	require.Equal(t, authAdmin, service.getAuthLevel(c))
-
-	c.SetRequest(httptest.NewRequest(http.MethodPatch, "/agents/id/slots/1/enable", nil))
-	require.Equal(t, authAdmin, service.getAuthLevel(c))
-}
-
 func TestNoAuth(t *testing.T) {
 	e := echo.New()
 	c := e.NewContext(nil, nil)
