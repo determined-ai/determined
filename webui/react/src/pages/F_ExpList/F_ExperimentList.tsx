@@ -48,6 +48,7 @@ import {
   experimentColumns,
   MIN_COLUMN_WIDTH,
   MULTISELECT,
+  NO_PINS_WIDTH,
 } from './glide-table/columns';
 import { Error, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
@@ -453,6 +454,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const scrollbarWidth = useScrollbarWidth();
 
   const comparisonViewTableWidth = useMemo(() => {
+    if (pinnedColumns.length === 1) return NO_PINS_WIDTH;
     return Math.min(
       containerWidth - 30,
       pinnedColumns.reduce(

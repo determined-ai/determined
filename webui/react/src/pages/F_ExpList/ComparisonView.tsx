@@ -10,6 +10,7 @@ import { ExperimentWithTrial, TrialItem } from 'types';
 
 import CompareMetrics from './CompareMetrics';
 import CompareParallelCoordinates from './CompareParallelCoordinates';
+import css from './ComparisonView.module.scss';
 import { MIN_COLUMN_WIDTH } from './glide-table/columns';
 
 interface Props {
@@ -31,6 +32,11 @@ const ComparisonView: React.FC<Props> = ({
   selectedExperiments,
 }) => {
   const scrollbarWidth = useScrollbarWidth();
+  const classes: string[] = [css.base];
+  const hasPinnedColumns = fixedColumnsCount > 1;
+
+  if (open) classes.push(css.open);
+  if (!hasPinnedColumns) classes.push(css.noPins);
 
   const minWidths: [number, number] = useMemo(() => {
     return [fixedColumnsCount * MIN_COLUMN_WIDTH + scrollbarWidth, 100];
@@ -88,7 +94,11 @@ const ComparisonView: React.FC<Props> = ({
       minimumWidths={minWidths}
       open={open}
       onChange={onWidthChange}>
-      {children}
+      {open && !hasPinnedColumns ? (
+        <div className={css.noPinsMessage}>Pin columns to see them in &quot;Compare View&quot;</div>
+      ) : (
+        children
+      )}
       {selectedExperiments.length === 0 ? (
         <Alert
           description="Select experiments you would like to compare."

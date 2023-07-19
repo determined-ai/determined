@@ -21,6 +21,7 @@ import { getDisplayName } from 'utils/user';
 import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
 export const MIN_COLUMN_WIDTH = 40;
+export const NO_PINS_WIDTH = 200;
 
 export const MULTISELECT = 'selected';
 
