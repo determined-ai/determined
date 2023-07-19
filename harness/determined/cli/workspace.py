@@ -21,6 +21,8 @@ WORKSPACE_HEADERS = [
     "Agent Gid",
     "Agent User",
     "Agent Group",
+    "Default Compute Pool",
+    "Default Aux Pool",
 ]
 
 workspace_arg: Arg = Arg("-w", "--workspace-name", type=str, help="workspace name")
@@ -59,6 +61,8 @@ def render_workspaces(
             w.agentUserGroup.agentGid if w.agentUserGroup else None,
             w.agentUserGroup.agentUser if w.agentUserGroup else None,
             w.agentUserGroup.agentGroup if w.agentUserGroup else None,
+            w.defaultComputePool if w.defaultComputePool else None,
+            w.defaultAuxPool if w.defaultAuxPool else None,
         ]
         if not from_list_api:
             value.append(w.checkpointStorageConfig)
