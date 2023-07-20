@@ -514,26 +514,29 @@ func (a *apiServer) PostUserSetting(
 	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
 		return nil, errExternalSessions
 	}
-	if req.Setting == nil {
-		return nil, status.Error(codes.InvalidArgument, "must specify setting")
+	if req.Settings == nil {
+		req.Settings = make([]*userv1.UserWebSetting, 0)
 	}
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
-	settingModel := model.UserWebSetting{
-		UserID:      curUser.ID,
-		Key:         req.Setting.Key,
-		Value:       req.Setting.Value,
-		StoragePath: req.StoragePath,
+	settingsModel := make([]*model.UserWebSetting, 0, len(req.Settings))
+	for _, setting := range req.Settings {
+		settingsModel = append(settingsModel, &model.UserWebSetting{
+			UserID:      curUser.ID,
+			Key:         setting.Key,
+			Value:       setting.Value,
+			StoragePath: setting.StoragePath,
+		})
 	}
 	if err = user.AuthZProvider.Get().CanCreateUsersOwnSetting(
-		ctx, *curUser, settingModel); err != nil {
+		ctx, *curUser, settingsModel); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	err = db.UpdateUserSetting(&settingModel)
+	err = db.UpdateUserSetting(settingsModel)
 	return &apiv1.PostUserSettingResponse{}, err
 }
 

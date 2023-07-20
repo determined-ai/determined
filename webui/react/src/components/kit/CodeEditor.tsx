@@ -2,6 +2,7 @@ import { DownloadOutlined, FileOutlined } from '@ant-design/icons';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { python } from '@codemirror/lang-python';
 import { StreamLanguage } from '@codemirror/language';
+import { json } from '@codemirror/legacy-modes/mode/javascript';
 import { yaml } from '@codemirror/legacy-modes/mode/yaml';
 import ReactCodeMirror from '@uiw/react-codemirror';
 import { Tree } from 'antd';
@@ -33,7 +34,7 @@ const MARKDOWN_CONFIG = {
 export type Props = {
   files: TreeNode[];
   onError: ErrorHandler;
-  height?: string;
+  height?: string; // height of the editable area, if a title is provided that will add an additional ~38px
   onChange?: (arg0: string) => void; // only use in single-file editing
   onSelectFile?: (arg0: string) => void;
   readonly?: boolean;
@@ -99,6 +100,7 @@ const isConfig = (key: unknown): key is Config =>
   key === Config.Submitted || key === Config.Runtime;
 
 const langs = {
+  json: () => StreamLanguage.define(json),
   markdown: () => markdown({ base: markdownLanguage }),
   python,
   yaml: () => StreamLanguage.define(yaml),
@@ -142,7 +144,7 @@ const CodeEditor: React.FC<Props> = ({
 
   const syntax = useMemo(() => {
     if (String(activeFile?.key).includes('.py')) return 'python';
-
+    if (String(activeFile?.key).includes('.json')) return 'json';
     if (String(activeFile?.key).includes('.md')) return 'markdown';
 
     return 'yaml';
@@ -269,10 +271,7 @@ const CodeEditor: React.FC<Props> = ({
     viewMode === 'editor' ? css.editorMode : '',
   ];
 
-  const sectionClasses = [
-    pageError ? css.pageError : css.editor,
-    height !== '100%' ? css.noBorder : '',
-  ];
+  const sectionClasses = [pageError ? css.pageError : css.editor];
 
   const treeClasses = [css.fileTree, viewMode === 'editor' ? css.hideElement : ''];
 
@@ -308,7 +307,7 @@ const CodeEditor: React.FC<Props> = ({
   }
 
   return (
-    <div className={classes.join(' ')} style={{ height }}>
+    <div className={classes.join(' ')}>
       <DirectoryTree
         className={treeClasses.join(' ')}
         data-testid="fileTree"

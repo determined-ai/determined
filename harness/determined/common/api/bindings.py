@@ -8957,24 +8957,20 @@ class v1PostUserSettingRequest(Printable):
     def __init__(
         self,
         *,
-        setting: "v1UserWebSetting",
-        storagePath: str,
+        settings: "typing.Sequence[v1UserWebSetting]",
     ):
-        self.setting = setting
-        self.storagePath = storagePath
+        self.settings = settings
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostUserSettingRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "setting": v1UserWebSetting.from_json(obj["setting"]),
-            "storagePath": obj["storagePath"],
+            "settings": [v1UserWebSetting.from_json(x) for x in obj["settings"]],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "setting": self.setting.to_json(omit_unset),
-            "storagePath": self.storagePath,
+            "settings": [x.to_json(omit_unset) for x in self.settings],
         }
         return out
 
