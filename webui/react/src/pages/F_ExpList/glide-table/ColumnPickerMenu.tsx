@@ -81,9 +81,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   }, [searchString, totalColumns, tab]);
 
   const allFilteredColumnsChecked = useMemo(() => {
-    return filteredColumns
-      .map((col) => columnState.includes(col.column))
-      .every((col) => col === true);
+    return filteredColumns.every((col) => columnState.includes(col.column));
   }, [columnState, filteredColumns]);
 
   const handleShowHideAll = useCallback(() => {
