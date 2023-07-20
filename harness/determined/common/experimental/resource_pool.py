@@ -37,10 +37,12 @@ class ResourcePool:
         self,
         workspace_names: List[str],
     ) -> None:
-        """Add RP<>Workspace bindings.
+        """
+        Binds a resource pool to one or more workspaces.
 
-        Binds a resource pool to one or more workspaces. A resource pool with bindings can
-        only be used by workspaces bound to it.
+        A resource pool with bindings can only be used by workspaces bound to it. Attempting to add
+        a binding that already exists results in an SQL error. Binding workspaces or resource pools
+        that do not exist will result in Not Found errors.
 
         Args:
             workspace_names: The names of the workspaces to be bound.
@@ -62,10 +64,11 @@ class ResourcePool:
         self,
         workspace_names: List[str],
     ) -> None:
-        """Remove RP<>Workspace bindings.
+        """
+        Unbinds a resource pool from one or more workspaces.
 
-        Unbinds a resource pool from one or more workspaces. A resource pool with bindings can
-        only be used by workspaces bound to it.
+        A resource pool with bindings can only be used by workspaces bound to it. Attempting to
+        remove a binding that does not exist results in a no-op.
 
         Args:
             workspace_names: The names of the workspaces to be bound.
@@ -84,10 +87,10 @@ class ResourcePool:
         bindings.delete_UnbindRPFromWorkspace(self._session, body=req, resourcePoolName=self.name)
 
     def list_workspaces(self) -> List[str]:
-        """List RP<>Workspace bindings.
+        """
+        Lists the workspaces bound to a specified resource pool.
 
-        Lists the workspaces bound to a specified resource pool. A resource pool with bindings can
-        only be used by workspaces bound to it.
+        A resource pool with bindings can only be used by workspaces bound to it.
 
         Returns:
             A list of workspaces bound to the resource pool.
@@ -117,10 +120,12 @@ class ResourcePool:
         self,
         workspace_names: List[str],
     ) -> None:
-        """Replace RP<>Workspace bindings.
+        """
+        Replaces all the workspaces bound to a resource pool with those specified.
 
-        Replaces all the workspaces bound to a resource pool with those specified. If no bindings
-        exist, adds them.
+        If no bindings exist, new bindings will be added. Binding the same workspace more than once
+        results in an SQL error. Binding workspaces or resource pools that do not exist result in
+        Not Found errors.
 
         Args:
             workspace_names: The names of the workspaces to be bound.

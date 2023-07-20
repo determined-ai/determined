@@ -58,8 +58,7 @@ class Workspace:
         self._hydrate(workspace_bindings)
 
     def list_pools(self) -> List[str]:
-        """List available resource pools.
-
+        """
         Lists the resources pools that the workspace has access to. Tasks submitted to this
         workspace can only use the resource pools listed here.
 
