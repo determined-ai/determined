@@ -21,7 +21,7 @@ class ResourcePool:
 
         Arguments:
             session: The session to use for API calls.
-            workspace_name: (Optional) Name of the resource pool.
+            name: (Optional) Name of the resource pool.
         """
         self.name = name
         self._session = session
@@ -37,11 +37,19 @@ class ResourcePool:
         self,
         workspace_names: List[str],
     ) -> None:
-        """
-        Bind a resource pool to workspaces.
+        """Add RP<>Workspace bindings.
 
-        Arguments:
-            workspace_names (list(str)): The names of the workspaces to be bound.
+        Binds a resource pool to one or more workspaces. A resource pool with bindings can
+        only be used by workspaces bound to it.
+
+        Args:
+            workspace_names: The names of the workspaces to be bound.
+
+        Returns:
+            None
+
+        Raises:
+            APIHttpError: An error occurred adding the bindings.
         """
         req = bindings.v1BindRPToWorkspaceRequest(
             resourcePoolName=self.name,
@@ -54,11 +62,19 @@ class ResourcePool:
         self,
         workspace_names: List[str],
     ) -> None:
-        """
-        Unbind a resource pool from workspaces.
+        """Remove RP<>Workspace bindings.
 
-        Arguments:
-            workspace_names (list(str)): The names of the workspaces to be unbound.
+        Unbinds a resource pool from one or more workspaces. A resource pool with bindings can
+        only be used by workspaces bound to it.
+
+        Args:
+            workspace_names: The names of the workspaces to be bound.
+
+        Returns:
+            None
+
+        Raises:
+            APIHttpError: An error occurred removing the bindings.
         """
         req = bindings.v1UnbindRPFromWorkspaceRequest(
             resourcePoolName=self.name,
@@ -68,11 +84,16 @@ class ResourcePool:
         bindings.delete_UnbindRPFromWorkspace(self._session, body=req, resourcePoolName=self.name)
 
     def list_workspaces(self) -> List[str]:
-        """
-        List workspaces bound to a resource pool.
+        """List RP<>Workspace bindings.
+
+        Lists the workspaces bound to a specified resource pool. A resource pool with bindings can
+        only be used by workspaces bound to it.
 
         Returns:
-            (List(str)) The names of workspaces bound to the resource pool.
+            A list of workspaces bound to the resource pool.
+
+        Raises:
+            APIHttpError: An error occurred getting the bindings.
         """
 
         def get_with_offset(offset: int) -> bindings.v1ListWorkspacesBoundToRPResponse:
@@ -96,12 +117,19 @@ class ResourcePool:
         self,
         workspace_names: List[str],
     ) -> None:
-        """
-        Overwrite the workspaces bound to a resource pool.
+        """Replace RP<>Workspace bindings.
 
-        Arguments:
-            workspace_names (list(str)): The names of the workspaces to overwrite
-                existing workspaces bound to the resource pool.
+        Replaces all the workspaces bound to a resource pool with those specified. If no bindings
+        exist, adds them.
+
+        Args:
+            workspace_names: The names of the workspaces to be bound.
+
+        Returns:
+            None
+
+        Raises:
+            APIHttpError: An error occurred replacing the bindings.
         """
         req = bindings.v1OverwriteRPWorkspaceBindingsRequest(
             resourcePoolName=self.name,

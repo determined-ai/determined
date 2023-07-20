@@ -58,11 +58,16 @@ class Workspace:
         self._hydrate(workspace_bindings)
 
     def list_pools(self) -> List[str]:
-        """
-        List resources pools available to a workspace.
+        """List available resource pools.
+
+        Lists the resources pools that the workspace has access to. Tasks submitted to this
+        workspace can only use the resource pools listed here.
 
         Returns:
-            (List(str)) The names of resource pools bound to the workspace.
+            A list of resource pools available for the workspace to use.
+
+        Raises:
+            APIHttpError: An error occurred getting the available pools.
         """
 
         def get_with_offset(offset: int) -> bindings.v1ListRPsBoundToWorkspaceResponse:
