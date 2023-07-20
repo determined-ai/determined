@@ -709,7 +709,7 @@ class TestRandomDSATSearchMethodSearch:
     def test_full_experiment_happy_path(
         self,
         default_random_state_and_search_method: Tuple[
-            searcher.SearcherState, BinarySearchDSATSearchMethod
+            searcher.SearcherState, RandomDSATSearchMethod
         ],
     ) -> None:
         """
