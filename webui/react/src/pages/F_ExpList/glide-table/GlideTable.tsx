@@ -35,6 +35,7 @@ import {
 } from 'components/FilterForm/components/type';
 import { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
+import useMobile from 'hooks/useMobile';
 import usePrevious from 'hooks/usePrevious';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
@@ -201,6 +202,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   const theme = getTheme(appTheme);
 
   const users = useObservable(usersStore.getUsers());
+
+  const isMobile = useMobile();
 
   const columnIds = useMemo(
     () =>
@@ -419,7 +422,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               },
             ]),
         // Column is pinned if the index is inside of the frozen columns
-        col < staticColumns.length
+        col < staticColumns.length || isMobile
           ? null
           : col > pinnedColumnsCount + staticColumns.length - 1
           ? {
@@ -452,15 +455,15 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [
       columnIds,
       projectColumns,
+      formStore,
       sorts,
       onSortChange,
-      staticColumns,
+      staticColumns.length,
+      isMobile,
       pinnedColumnsCount,
-      selectAllRows,
-      deselectAllRows,
       selection.rows.length,
-      formStore,
-      gridRef,
+      deselectAllRows,
+      selectAllRows,
       onIsOpenFilterChange,
       sortableColumnIds,
       setSortableColumnIds,
@@ -787,7 +790,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           columns={columns}
           customRenderers={customRenderers}
           drawHeader={drawHeader}
-          freezeColumns={staticColumns.length + pinnedColumnsCount}
+          freezeColumns={isMobile ? 0 : staticColumns.length + pinnedColumnsCount}
           getCellContent={getCellContent}
           getCellsForSelection // `getCellsForSelection` is required for double click column resize to content.
           getRowThemeOverride={getRowThemeOverride}
