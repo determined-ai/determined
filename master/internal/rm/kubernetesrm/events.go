@@ -71,6 +71,7 @@ func (e *eventListener) run() {
 			continue
 		}
 
+		e.syslog.Debugf("listener got new event: %s", newEvent.Message)
 		e.cb(newEvent)
 	}
 	panic("event listener stopped unexpectedly")

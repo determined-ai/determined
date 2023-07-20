@@ -194,10 +194,7 @@ func TestEventListener(t *testing.T) {
 		eventNames []string
 	}{
 		{"zero events", nil, []string{}},
-		{
-			"listener success", nil,
-			[]string{"A"},
-		},
+		{"listener success", nil, []string{"A"}},
 		{
 			"listener success & event ordering success",
 			nil,
@@ -276,11 +273,7 @@ func TestPreemptionListener(t *testing.T) {
 		names    []string
 	}{
 		{"zero preemptions", nil, []string{}},
-		{
-			"informer success",
-			nil,
-			[]string{"abc"},
-		},
+		{"informer success", nil, []string{"abc"}},
 		{
 			"informer success & event ordering success",
 			nil,
@@ -369,6 +362,8 @@ func initializeMockOpts(label string) (metaV1.ListOptions, metaV1.ListOptions) {
 	case "pod":
 		mockOptsList.LabelSelector = determinedLabel
 		mockOptsWatch.LabelSelector = determinedLabel
+		mockOptsWatch.ResourceVersion = "1"
+		mockOptsWatch.AllowWatchBookmarks = true
 	case "preemption":
 		mockOptsList.LabelSelector = determinedPreemptionLabel
 		mockOptsWatch.LabelSelector = determinedPreemptionLabel

@@ -64,7 +64,7 @@ func (p *preemptionListener) run() {
 	p.syslog.Info("preemption listener is starting")
 	for e := range p.resultChan {
 		if e.Type == watch.Error {
-			p.syslog.WithField("error", e.Object).Warnf("preemption listener encountered error")
+			p.syslog.WithField("error", e.Object).Warn("preemption listener encountered error")
 			continue
 		}
 
@@ -74,6 +74,7 @@ func (p *preemptionListener) run() {
 			continue
 		}
 
+		p.syslog.Debugf("listener got new preemption command for pod : %s", pod.Name)
 		p.cb(pod.Name)
 	}
 	p.syslog.Warn("preemption listener stopped unexpectedly")
