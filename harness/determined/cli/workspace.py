@@ -149,6 +149,22 @@ def list_workspace_projects(args: Namespace) -> None:
         render.tabulate_or_csv(PROJECT_HEADERS, values, False)
 
 
+@authentication.required
+def list_pools(args: Namespace) -> None:
+    session = cli.setup_session(args)
+    w = workspace_by_name(session, args.workspace_name)
+    resp = bindings.get_ListRPsBoundToWorkspace(session, workspaceId=w.id)
+    pools_str = ""
+    if resp.resourcePools:
+        pools_str = ", ".join(resp.resourcePools)
+
+    render.tabulate_or_csv(
+        headers=["Workspace", "Available Resource Pools"],
+        values=[[args.workspace_name, pools_str]],
+        as_csv=False,
+    )
+
+
 def _parse_agent_user_group_args(args: Namespace) -> Optional[bindings.v1AgentUserGroup]:
     if args.agent_uid or args.agent_gid or args.agent_user or args.agent_group:
         return bindings.v1AgentUserGroup(
@@ -376,6 +392,14 @@ args_description = [
                     ),
                     *pagination_args,
                     Arg("--json", action="store_true", help="print as JSON"),
+                ],
+            ),
+            Cmd(
+                "list-pools",
+                list_pools,
+                "list the resource pools available to a workspace",
+                [
+                    Arg("workspace_name", type=str, help="name of the workspace"),
                 ],
             ),
             Cmd(
