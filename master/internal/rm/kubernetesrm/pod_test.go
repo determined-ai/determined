@@ -1,7 +1,10 @@
 package kubernetesrm
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 	"testing"
@@ -11,6 +14,7 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -24,6 +28,7 @@ import (
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/rest"
 )
 
 type mockReceiver struct {
@@ -73,12 +78,14 @@ func createPod(
 	namespace := "default"
 	masterIP := "0.0.0.0"
 	var masterPort int32 = 32
-	podInterface := &mockPodInterface{}
 	configMapInterface := clientSet.CoreV1().ConfigMaps(namespace)
 	resourceRequestQueue := resourceHandler
 	leaveKubernetesResources := false
 	slotType := device.CUDA
 	slotResourceRequests := config.PodSlotResourceRequests{}
+
+	podInterface := &mocks.PodInterface{}
+	// TODO CAROLINA
 
 	newPodHandler := newPod(
 		msg, clusterID, &clientSet, namespace, masterIP, masterPort,
@@ -669,7 +676,21 @@ func TestReceiveContainerLog(t *testing.T) {
 	system, newPod, ref, podMap, _ := createPodWithMockQueue(nil)
 	newPod.restore = true
 	newPod.container.State = cproto.Running
-	newPod.podInterface = &mockPodInterface{logMessage: &mockLogMessage}
+	// newPod.podInterface = &mockPodInterface{logMessage: &mockLogMessage}
+
+	podInterface := &mocks.PodInterface{}
+	// TODO CAROLINA 2
+	podInterface.On("Create", context.TODO(), newPod, []metaV1.CreateOptions{}).Return(
+		podMap[newPod.podName], nil)
+	podInterface.On("GetLogs", newPod.podName, &k8sV1.PodLogOptions{}).Return(
+		rest.NewRequestWithClient(&url.URL{}, "", rest.ClientContentConfig{},
+			&http.Client{
+				Transport: &mocks.RoundTripper{},
+			}),
+	)
+
+	newPod.podInterface = podInterface
+
 	podMap["task"].Purge()
 	assert.Equal(t, podMap["task"].GetLength(), 0)
 	system.Ask(ref, actor.PreStart{})
@@ -745,7 +766,10 @@ func TestKillTaskPod(t *testing.T) {
 	setupEntrypoint(t)
 	defer cleanup(t)
 
-	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
+	// podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
+	pods := make(map[string]*k8sV1.Pod)
+	podInterface := &mocks.PodInterface{}
+
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
@@ -755,10 +779,10 @@ func TestKillTaskPod(t *testing.T) {
 
 	// We take a quick nap immediately so we can purge the start message after it arrives.
 	time.Sleep(time.Second)
-	assert.Check(t, podInterface.pods[newPod.podName] != nil)
+	assert.Check(t, pods[newPod.podName] != nil)
 	system.Ask(ref, KillTaskPod{})
 	time.Sleep(time.Second)
-	assert.Check(t, podInterface.pods[newPod.podName] == nil)
+	assert.Check(t, pods[newPod.podName] == nil)
 	assert.Check(t, newPod.resourcesDeleted.Load())
 }
 

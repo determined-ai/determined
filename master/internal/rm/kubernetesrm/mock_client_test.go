@@ -17,6 +17,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
+
+	"github.com/determined-ai/determined/master/internal/mocks"
 )
 
 type mockConfigMapInterface struct {
@@ -201,9 +203,16 @@ func (m *mockPodInterface) Evict(ctx context.Context, eviction *v1beta1.Eviction
 }
 
 func (m *mockPodInterface) GetLogs(name string, opts *k8sV1.PodLogOptions) *rest.Request {
+	transport := &mocks.RoundTripper{}
+	transport.On("RoundTrip").Return(
+		&http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(*m.logMessage)),
+		}, nil,
+	)
 	return rest.NewRequestWithClient(&url.URL{}, "", rest.ClientContentConfig{},
 		&http.Client{
-			Transport: &mockRoundTripInterface{message: m.logMessage},
+			Transport: transport,
 		})
 }
 
@@ -211,19 +220,4 @@ func (m *mockPodInterface) ProxyGet(
 	string, string, string, string, map[string]string,
 ) rest.ResponseWrapper {
 	panic("implement me")
-}
-
-type mockRoundTripInterface struct {
-	message *string
-}
-
-func (m *mockRoundTripInterface) RoundTrip(req *http.Request) (*http.Response, error) {
-	var msg string
-	if m.message != nil {
-		msg = *m.message
-	}
-	return &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(strings.NewReader(msg)),
-	}, nil
 }
