@@ -11,6 +11,7 @@ import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { DetailedUser } from 'types';
 
+import { ConfirmationProvider } from './kit/useConfirm';
 import UserSettings from './UserSettings';
 
 vi.mock('services/api', () => ({
@@ -76,7 +77,9 @@ const Container: React.FC = () => {
 const setup = () =>
   render(
     <UIProvider>
-      <Container />
+      <ConfirmationProvider>
+        <Container />
+      </ConfirmationProvider>
     </UIProvider>,
   );
 

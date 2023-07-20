@@ -29,7 +29,7 @@ func (_m *UserAuthZ) CanCreateUser(ctx context.Context, curUser model.User, user
 	return r0
 }
 
-// CanCreateUsersOwnSetting provides a mock function with given fields: ctx, curUser, setting
+// CanCreateUsersOwnSetting provides a mock function with given fields: ctx, curUser, settings
 func (_m *UserAuthZ) CanCreateUsersOwnSetting(ctx context.Context, curUser model.User, settings []*model.UserWebSetting) error {
 	ret := _m.Called(ctx, curUser, settings)
 
