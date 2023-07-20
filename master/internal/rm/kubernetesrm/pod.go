@@ -42,7 +42,8 @@ type podSubmissionInfo struct {
 	taskSpec tasks.TaskSpec
 }
 
-// podStatusUpdate: messages that are sent by the pod informer (TODO: mar).
+// TODO(mar).
+// podStatusUpdate: messages that are sent by the pod informer.
 type podStatusUpdate struct {
 	updatedPod *k8sV1.Pod
 }

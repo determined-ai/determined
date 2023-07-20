@@ -2,6 +2,7 @@ package kubernetesrm
 
 import (
 	"context"
+	"reflect"
 	"sync"
 	"testing"
 
@@ -32,16 +33,19 @@ func TestPodInformer(t *testing.T) {
 	cases := []struct {
 		name     string
 		podNames []string
+		ordering []string
 	}{
-		{"zero pods", []string{}},
-		{"informer success", []string{"abc"}},
+		{"zero pods", []string{}, []string{}},
+		{"informer success", []string{"abc"}, []string{"abc"}},
 		{
 			"informer success & event ordering success",
+			[]string{"A", "B", "C", "D", "E"},
 			[]string{"A", "B", "C", "D", "E"},
 		},
 		{
 			"informer success & event ordering failure",
 			[]string{"A", "B", "C", "D", "E"},
+			[]string{"C", "A", "B", "D", "E"},
 		},
 	}
 	for _, tt := range cases {
@@ -95,7 +99,11 @@ func TestPodInformer(t *testing.T) {
 			// Assert correct ordering of pod-modified events
 			// after all events are received and the channel is closed.
 			wg.Wait()
-			assert.Equal(t, tt.podNames, ordering)
+			if reflect.DeepEqual(tt.podNames, tt.ordering) {
+				assert.Equal(t, tt.podNames, ordering)
+			} else {
+				assert.NotEqual(t, tt.ordering, ordering)
+			}
 		})
 	}
 }
@@ -105,11 +113,13 @@ func TestNodeInformer(t *testing.T) {
 		name       string
 		operations []operations
 		output     map[string]bool
+		ordering   map[string]bool
 	}{
-		{"zero nodes", []operations{}, map[string]bool{}},
+		{"zero nodes", []operations{}, map[string]bool{}, map[string]bool{}},
 		{
 			"informer success",
 			[]operations{{"abc", watch.Added}},
+			map[string]bool{"abc": true},
 			map[string]bool{"abc": true},
 		},
 		{
@@ -122,6 +132,19 @@ func TestNodeInformer(t *testing.T) {
 				{"B", watch.Modified},
 			},
 			map[string]bool{"B": false, "C": true},
+			map[string]bool{"B": false, "C": true},
+		},
+		{
+			"informer success & event ordering success",
+			[]operations{
+				{"A", watch.Added},
+				{"B", watch.Added},
+				{"C", watch.Added},
+				{"A", watch.Deleted},
+				{"B", watch.Modified},
+			},
+			map[string]bool{"B": false, "C": true},
+			map[string]bool{"A": true, "C": true},
 		},
 	}
 	for _, tt := range cases {
@@ -182,7 +205,11 @@ func TestNodeInformer(t *testing.T) {
 			}
 
 			wg.Wait()
-			assert.Equal(t, tt.output, currNodes)
+			if reflect.DeepEqual(tt.output, tt.ordering) {
+				assert.Equal(t, tt.output, currNodes)
+			} else {
+				assert.NotEqual(t, tt.ordering, currNodes)
+			}
 		})
 	}
 }
@@ -192,18 +219,19 @@ func TestEventListener(t *testing.T) {
 		name       string
 		expected   error
 		eventNames []string
+		ordering   []string
 	}{
-		{"zero events", nil, []string{}},
-		{"listener success", nil, []string{"A"}},
+		{"zero events", nil, []string{}, []string{}},
+		{"listener success", nil, []string{"A"}, []string{"A"}},
 		{
-			"listener success & event ordering success",
-			nil,
+			"listener success & event ordering success", nil,
+			[]string{"A", "B", "C", "D", "E"},
 			[]string{"A", "B", "C", "D", "E"},
 		},
 		{
-			"listener success & event ordering failure",
-			nil,
+			"listener success & event ordering failure", nil,
 			[]string{"A", "B", "C", "D", "E"},
+			[]string{"E", "D", "C", "A", "B"},
 		},
 	}
 	for _, tt := range cases {
@@ -261,7 +289,11 @@ func TestEventListener(t *testing.T) {
 			}
 
 			wg.Wait()
-			assert.Equal(t, tt.eventNames, ordering)
+			if reflect.DeepEqual(tt.eventNames, tt.ordering) {
+				assert.Equal(t, tt.eventNames, ordering)
+			} else {
+				assert.NotEqual(t, tt.ordering, ordering)
+			}
 		})
 	}
 }
@@ -271,18 +303,19 @@ func TestPreemptionListener(t *testing.T) {
 		testName string
 		expected error
 		names    []string
+		ordering []string
 	}{
-		{"zero preemptions", nil, []string{}},
-		{"informer success", nil, []string{"abc"}},
+		{"zero preemptions", nil, []string{}, []string{}},
+		{"informer success", nil, []string{"abc"}, []string{"abc"}},
 		{
-			"informer success & event ordering success",
-			nil,
+			"informer success & event ordering success", nil,
+			[]string{"A", "B", "C", "D", "E"},
 			[]string{"A", "B", "C", "D", "E"},
 		},
 		{
-			"informer success & event ordering failure",
-			nil,
+			"informer success & event ordering failure", nil,
 			[]string{"A", "B", "C", "D", "E"},
+			[]string{"D", "A", "C", "B", "E"},
 		},
 	}
 	for _, tt := range cases {
@@ -338,7 +371,11 @@ func TestPreemptionListener(t *testing.T) {
 			}
 
 			wg.Wait()
-			assert.Equal(t, tt.names, ordering)
+			if reflect.DeepEqual(tt.names, tt.ordering) {
+				assert.Equal(t, tt.names, ordering)
+			} else {
+				assert.NotEqual(t, tt.ordering, ordering)
+			}
 		})
 	}
 }

@@ -77,5 +77,5 @@ func (p *preemptionListener) run() {
 		p.syslog.Debugf("listener got new preemption command for pod : %s", pod.Name)
 		p.cb(pod.Name)
 	}
-	p.syslog.Warn("preemption listener stopped unexpectedly")
+	panic("preemption listener stopped unexpectedly")
 }
