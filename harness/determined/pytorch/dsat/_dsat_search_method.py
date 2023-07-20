@@ -189,6 +189,7 @@ class DSATTrialTracker:
         self.start_profile_step = args.start_profile_step
         self.end_profile_step = args.end_profile_step
         self.zero_stages = set(args.zero_stages)
+        self.divisible_by = args.divisible_by
 
         # Derived attributes
         self.slots_per_trial: int = self.exp_config["resources"]["slots_per_trial"]
@@ -596,6 +597,11 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
     def on_trial_created(
         self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
     ) -> List[searcher.Operation]:
+        last_trial = self.trial_tracker[request_id]
+        # GG_TODO: remove; for testing.
+        if not isinstance(last_trial, DSATModelProfileInfoTrial):
+            assert not last_trial.mbs % self.trial_tracker.divisible_by
+
         return []
 
     def on_validation_completed(
@@ -799,7 +805,9 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
             if last_trial.search_data is None:
                 return new_trials
             new_search_data = copy.deepcopy(last_trial.search_data)
-            new_search_data.hi = last_trial.mbs - 1
+            new_search_data.hi = _utils.round_down(
+                last_trial.mbs - 1, self.trial_tracker.divisible_by
+            )
 
             mbs = self.get_random_mbs_from_search_data(new_search_data)
             new_hparams = copy.deepcopy(last_trial.hparams)
@@ -846,11 +854,9 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
             return [self.get_random_trial()]
 
         new_search_data = copy.deepcopy(last_trial.search_data)
-        new_search_data.lo = last_trial.mbs + 1
-        # It is possible lo > hi in the case where initial soft ceiling computation was innaccurate
-        # in which case we double hi.
-        if new_search_data.lo > new_search_data.hi:
-            new_search_data.hi *= 2
+        new_search_data.lo = _utils.round_up(last_trial.mbs + 1, self.trial_tracker.divisible_by)
+        while new_search_data.lo > new_search_data.hi:
+            new_search_data.hi = 2 * new_search_data.hi
 
         mbs = self.get_random_mbs_from_search_data(new_search_data)
 
@@ -900,7 +906,10 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         volume than simply choosing the midpoint. Draws from a binomial distribution, to keep the
         results still somewhat focused near the midpoint.
         """
-        mbs: int = search_data.lo + self.rng.binomial(search_data.hi - search_data.lo, 0.5)
+        mbs: int = _utils.round_down(
+            search_data.lo + self.rng.binomial(search_data.hi - search_data.lo, 0.5),
+            self.trial_tracker.divisible_by,
+        )
         return mbs
 
     def get_random_hparams_and_search_data(
@@ -922,25 +931,17 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
         if best_trial_for_stage is not None and best_trial_for_stage.search_data is not None:
             new_search_data = copy.deepcopy(best_trial_for_stage.search_data)
-            # Update the floor to one greater than the mbs used and raise the ceiling to be
-            # the maximum between the largest mbs trial of this stage which was successful, the
-            # best trial's ceiling, and twice as large as the floor.
-            new_search_data.lo = best_trial_for_stage.mbs + 1
-            largest_successful_batch_size_for_stage = max(
-                t.mbs
-                for t in self.trial_tracker.completed_trials
-                if t.stage == best_trial_for_stage.stage
-                and isinstance(t.metric, dict)
-                and t.metric.get(self.trial_tracker.searcher_metric) is not None
-            )
-            new_search_data.hi = max(
-                largest_successful_batch_size_for_stage, new_search_data.hi, 2 * new_search_data.lo
-            )
+            # Update the floor to match the best trial's mbs used and use the  best trial's ceiling.
+            new_search_data.lo = best_trial_for_stage.mbs
+            new_search_data.hi = best_trial_for_stage.search_data.hi
         # Otherwise choose the corresponding search data based on approximate computations
         else:
             random_zero_stage_max_mbs = self.trial_tracker.approx_max_mbs_per_stage[zero_stage]
-            hi = 2 * random_zero_stage_max_mbs - 1
-            new_search_data = DSATSearchData(lo=1, hi=hi)
+            lo = self.trial_tracker.divisible_by
+            hi = _utils.round_down(
+                2 * random_zero_stage_max_mbs - lo, self.trial_tracker.divisible_by
+            )
+            new_search_data = DSATSearchData(lo=lo, hi=hi)
 
         # Randomly choose the actual batch size.
         mbs = self.get_random_mbs_from_search_data(new_search_data)
@@ -1011,11 +1012,12 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
         if last_trial.search_data is None:
             return [self.get_random_trial()]
         new_search_data = copy.deepcopy(last_trial.search_data)
-        new_search_data.hi = last_trial.mbs - 1
+        new_search_data.hi = _utils.round_down(last_trial.mbs - 1, self.trial_tracker.divisible_by)
         if new_search_data.lo > new_search_data.hi:
             return [self.get_random_trial()]
 
-        mbs = (new_search_data.hi + new_search_data.lo) // 2
+        mid = (new_search_data.hi + new_search_data.lo) // 2
+        mbs = _utils.round_down(mid, self.trial_tracker.divisible_by)
         new_hparams = copy.deepcopy(last_trial.hparams)
         new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
 
@@ -1050,11 +1052,13 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
         # underestimate the maximum batch size.
         max_mbs_succeeded = new_search_data.lo == new_search_data.hi
         if max_mbs_succeeded:
-            new_search_data.lo, new_search_data.hi = new_search_data.hi, 2 * new_search_data.hi
+            new_search_data.lo = new_search_data.hi
+            new_search_data.hi = 2 * new_search_data.hi
         else:
-            new_search_data.lo = last_trial.mbs + 1
+            new_search_data.lo = last_trial.mbs + self.trial_tracker.divisible_by
 
-        mbs = (new_search_data.hi + new_search_data.lo) // 2
+        mid = (new_search_data.hi + new_search_data.lo) // 2
+        mbs = _utils.round_down(mid, self.trial_tracker.divisible_by)
         new_hparams = copy.deepcopy(last_trial.hparams)
         new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
         trial = self.trial_tracker.create_trial(
@@ -1081,12 +1085,14 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
 
         # The default `search_range_factor = 1.` value makes the starting value coincide with
         # the predicted max mbs, but we give the user a handle to alter this range as needed.
-        lo = 1
-        hi = 2 * int(self.search_range_factor * random_zero_stage_max_mbs) - 1
+        lo = self.trial_tracker.divisible_by
+        hi = 2 * int(self.search_range_factor * random_zero_stage_max_mbs) - lo
+        hi = _utils.round_down(hi, self.trial_tracker.divisible_by)
         hi = max(hi, lo)
-        new_search_data = DSATSearchData(lo=1, hi=hi)
+        new_search_data = DSATSearchData(lo=lo, hi=hi)
 
-        mbs = (new_search_data.hi + new_search_data.lo) // 2
+        mid = (new_search_data.hi + new_search_data.lo) // 2
+        mbs = _utils.round_down(mid, self.trial_tracker.divisible_by)
         new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
         return new_hparams, new_search_data
 
@@ -1349,16 +1355,22 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
             # underestimate the maximum batch size.
             max_mbs_succeeded = new_search_data.lo == new_search_data.hi
             if max_mbs_succeeded:
-                new_search_data.lo, new_search_data.hi = new_search_data.hi, 2 * new_search_data.hi
+                new_search_data.lo = new_search_data.hi
+                new_search_data.hi = 2 * new_search_data.hi
             else:
-                new_search_data.lo = latest_trial.mbs + 1
+                new_search_data.lo = _utils.round_up(
+                    latest_trial.mbs + 1, self.trial_tracker.divisible_by
+                )
         else:
-            new_search_data.hi = latest_trial.mbs - 1
+            new_search_data.hi = _utils.round_down(
+                latest_trial.mbs - 1, self.trial_tracker.divisible_by
+            )
 
         if new_search_data.hi < new_search_data.lo:
             return None
 
-        mbs = (new_search_data.hi + new_search_data.lo) // 2
+        mid = (new_search_data.hi + new_search_data.lo) // 2
+        mbs = _utils.round_down(mid, self.trial_tracker.divisible_by)
 
         new_hparams = copy.deepcopy(latest_trial.hparams)
         new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
@@ -1389,12 +1401,15 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         )
 
         random_zero_stage_max_mbs = self.trial_tracker.approx_max_mbs_per_stage[zero_stage]
-        lo = 1
-        hi = 2 * int(random_zero_stage_max_mbs * self.search_range_factor) - 1
+        lo = self.trial_tracker.divisible_by
+        hi = 2 * int(self.search_range_factor * random_zero_stage_max_mbs) - lo
+        hi = _utils.round_down(hi, self.trial_tracker.divisible_by)
         hi = max(hi, lo)
-        new_search_data = ASHADSATSearchData(lo=1, hi=hi, curr_rung=0)
 
-        mbs = (new_search_data.hi + new_search_data.lo) // 2
+        new_search_data = ASHADSATSearchData(lo=lo, hi=hi, curr_rung=0)
+
+        mid = (new_search_data.hi + new_search_data.lo) // 2
+        mbs = _utils.round_down(mid, self.trial_tracker.divisible_by)
         new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
         return new_hparams, new_search_data
 
@@ -1430,7 +1445,10 @@ class _TestDSATSearchMethod(BaseDSATSearchMethod):
             del hparams_without_profile_info_keys[_defaults.OVERWRITE_KEY]["autotuning"][
                 "model_info_path"
             ]
-            for tmbs in range(2, self.trial_tracker.max_trials + 1):
+            for tmbs in range(
+                self.trial_tracker.divisible_by,
+                self.trial_tracker.divisible_by * self.trial_tracker.max_trials + 1,
+            ):
                 hparams = copy.deepcopy(hparams_without_profile_info_keys)
                 hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = tmbs
                 # Choose a random zero stage:

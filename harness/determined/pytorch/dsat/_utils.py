@@ -99,6 +99,13 @@ def get_base_parser() -> argparse.ArgumentParser:
     base_parser.add_argument(
         "--max-search-runner-restarts", type=int, default=5, help="Maximum search runner restarts"
     )
+    base_parser.add_argument(
+        "-d",
+        "--divisible-by",
+        type=int,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["divisible-by"],
+        help="Only use batch sizes divisible by the provided value",
+    )
 
     return base_parser
 
@@ -539,3 +546,18 @@ def get_hf_args_with_overwrites(args: List[str], hparams: Dict[str, Any]) -> Lis
         args = update_hf_args(args, overwritten_ds_config_dict)
 
     return args
+
+
+def round_down(num: int, factor: int) -> int:
+    """
+    Rounds num down such that it is divisible by factor, returning the result.
+    """
+    return factor * (num // factor)
+
+
+def round_up(num: int, factor: int) -> int:
+    """
+    Rounds num up such that it is divisible by factor, returning the result.
+    """
+    div, mod = divmod(num, factor)
+    return factor * (div + (1 if mod else 0))

@@ -40,6 +40,7 @@ DEFAULT_ZERO_SEARCH_SPACE: Dict[int, Dict[str, Optional[Union[List[int], List[bo
     0: {},
     1: {
         "reduce_bucket_size": None,
+        "overlap_comm": [True, False],
         "allgather_bucket_size": DEFAULT_SEARCH_SPACE_MIN_MAX,
     },
     2: {
@@ -81,6 +82,7 @@ AUTOTUNING_ARG_DEFAULTS = {
     "min-binary-search-trials": 3,
     "max-rungs": 5,
     "asha-early-stopping": 0,
+    "divisible-by": 1,
 }
 
 DEFAULT_SEARCH_RUNNER_CONFIG = {
