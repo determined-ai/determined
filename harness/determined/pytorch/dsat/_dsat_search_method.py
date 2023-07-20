@@ -941,6 +941,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
             hi = _utils.round_down(
                 2 * random_zero_stage_max_mbs - lo, self.trial_tracker.divisible_by
             )
+            hi = max(hi, lo)
             new_search_data = DSATSearchData(lo=lo, hi=hi)
 
         # Randomly choose the actual batch size.
