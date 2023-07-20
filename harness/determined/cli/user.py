@@ -3,9 +3,7 @@ from argparse import Namespace
 from collections import namedtuple
 from typing import Any, List
 
-from termcolor import colored
-
-from determined.cli import login_sdk_client, setup_session
+from determined.cli import errors, login_sdk_client, setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
 from determined.common.declarative_argparse import Arg, Cmd
@@ -103,15 +101,13 @@ def change_password(parsed_args: Namespace) -> None:
 
     if not username:
         # The default user should have been set by now by autologin.
-        print(colored("Please log in as an admin or user to change passwords", "red"))
-        return
+        raise errors.CliError("Please log in as an admin or user to change passwords")
 
     password = getpass.getpass("New password for user '{}': ".format(username))
     check_password = getpass.getpass("Confirm password: ")
 
     if password != check_password:
-        print(colored("Passwords do not match", "red"))
-        return
+        raise errors.CliError("Passwords do not match")
 
     user_obj = client.get_user_by_name(username)
     user_obj.change_password(new_password=password)

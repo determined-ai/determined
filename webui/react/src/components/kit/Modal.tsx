@@ -41,7 +41,7 @@ export interface ModalSubmitParams {
   disabled?: boolean;
   text: string;
   handler: () => Promise<void> | void;
-  onComplete?: () => Promise<void>;
+  onComplete?: () => Promise<void> | void;
   handleError: ErrorHandler;
   form?: string;
 }

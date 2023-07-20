@@ -83,9 +83,10 @@ if [ $(whoami) == "root" ] && [ -r /run/determined/etc/passwd ]; then
     sed -i "s/\([a-zA-Z0-9]\+\):x:[0-9]\+:[0-9]\+:/\1:x:0:0:/" /run/determined/etc/passwd
 fi
 
-log_debug "ROCR_VISIBLE_DEVICES: $ROCR_VISIBLE_DEVICES"
-log_debug "CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
-log_debug "DET_SLOT_IDS: $DET_SLOT_IDS"
+log_debug "  ROCR_VISIBLE_DEVICES: $ROCR_VISIBLE_DEVICES"
+log_debug "  CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
+log_debug "NVIDIA_VISIBLE_DEVICES: $NVIDIA_VISIBLE_DEVICES"
+log_debug "          DET_SLOT_IDS: $DET_SLOT_IDS"
 
 log "INFO: executing $@" >&2
 exec "$@"

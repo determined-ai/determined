@@ -129,5 +129,5 @@ class CIFARTrial(keras.TFKerasTrial):
                 ),
             )
         )
-        test_ds = test_ds.batch(1)
+        test_ds = test_ds.batch(self.context.get_per_slot_batch_size())
         return test_ds

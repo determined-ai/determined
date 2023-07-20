@@ -135,7 +135,7 @@ service Determined {
       tags: "Users"
     };
   }
-  // Patch a user's settings for website
+  // Post a user's settings for website
   rpc PostUserSetting(PostUserSettingRequest)
       returns (PostUserSettingResponse) {
     option (google.api.http) = {

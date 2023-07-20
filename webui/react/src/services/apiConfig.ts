@@ -8,6 +8,7 @@ import * as Service from 'services/types';
 import { DeterminedInfo, Telemetry } from 'stores/determinedInfo';
 import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'types';
 import * as Type from 'types';
+import { ensureArray } from 'utils/data';
 import { identity, noOp } from 'utils/service';
 
 const updatedApiConfigParams = (
@@ -180,11 +181,13 @@ export const updateUserSetting: DetApi<
 > = {
   name: 'updateUserSetting',
   postProcess: (response) => response,
-  request: (params) =>
-    detApi.Users.postUserSetting({
-      setting: params.setting,
-      storagePath: params.storagePath,
-    }),
+  request: (params, options) =>
+    detApi.Users.postUserSetting(
+      {
+        settings: ensureArray(params.settings),
+      },
+      options,
+    ),
 };
 
 export const resetUserSetting: DetApi<

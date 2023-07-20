@@ -3138,7 +3138,7 @@ type DeterminedClient interface {
 	GetUserSetting(ctx context.Context, in *GetUserSettingRequest, opts ...grpc.CallOption) (*GetUserSettingResponse, error)
 	// Reset a user's settings for website
 	ResetUserSetting(ctx context.Context, in *ResetUserSettingRequest, opts ...grpc.CallOption) (*ResetUserSettingResponse, error)
-	// Patch a user's settings for website
+	// Post a user's settings for website
 	PostUserSetting(ctx context.Context, in *PostUserSettingRequest, opts ...grpc.CallOption) (*PostUserSettingResponse, error)
 	// Get the requested user.
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
@@ -5727,7 +5727,7 @@ type DeterminedServer interface {
 	GetUserSetting(context.Context, *GetUserSettingRequest) (*GetUserSettingResponse, error)
 	// Reset a user's settings for website
 	ResetUserSetting(context.Context, *ResetUserSettingRequest) (*ResetUserSettingResponse, error)
-	// Patch a user's settings for website
+	// Post a user's settings for website
 	PostUserSetting(context.Context, *PostUserSettingRequest) (*PostUserSettingResponse, error)
 	// Get the requested user.
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)

@@ -1,4 +1,4 @@
-package provisioner
+package aws
 
 import (
 	"sort"

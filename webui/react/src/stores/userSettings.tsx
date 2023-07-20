@@ -3,9 +3,8 @@ import { pipe } from 'fp-ts/function';
 import { Map } from 'immutable';
 import * as t from 'io-ts';
 
-import { getUserSetting, updateUserSetting } from 'services/api';
-import { V1GetUserSettingResponse } from 'services/api-ts-sdk';
-import { UpdateUserSettingParams } from 'services/types';
+import { getUserSetting, resetUserSetting, updateUserSetting } from 'services/api';
+import { V1GetUserSettingResponse, V1UserWebSetting } from 'services/api-ts-sdk';
 import { Json, JsonObject } from 'types';
 import { isJsonObject, isObject } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
@@ -55,6 +54,47 @@ class UserSettingsStore extends PollingStore {
         );
       });
     });
+  }
+
+  public getAll(): Observable<Loadable<State>> {
+    return this.#settings.readOnly();
+  }
+
+  public async overwrite(settings: State) {
+    const settingsArray = Object.entries(settings.toJS()).flatMap(([storagePath, settings]) =>
+      !!settings && isObject(settings)
+        ? Object.entries(settings).map(([key, value]) => ({
+            key,
+            storagePath,
+            value: JSON.stringify(value),
+          }))
+        : [],
+    );
+
+    try {
+      await resetUserSetting({});
+      await updateUserSetting({ settings: settingsArray });
+      this.#settings.set(Loaded(settings));
+    } catch (error) {
+      handleError(error, {
+        isUserTriggered: false,
+        publicMessage: 'Unable to update user settings, try again later.',
+        type: ErrorType.Api,
+      });
+    }
+  }
+
+  public async clear() {
+    try {
+      await resetUserSetting({});
+      this.#settings.set(Loaded(Map()));
+    } catch (error) {
+      handleError(error, {
+        isUserTriggered: false,
+        publicMessage: 'Unable to reset user settings, try again later.',
+        type: ErrorType.Api,
+      });
+    }
   }
 
   /**
@@ -172,36 +212,25 @@ class UserSettingsStore extends PollingStore {
   // - API should support setting non-objects as values directly like a regular
   //   key/value store.
   protected updateUserSetting<T>(key: string, value: T) {
-    const dbUpdates: Array<UpdateUserSettingParams> = [];
+    const dbUpdates: Array<V1UserWebSetting> = [];
     if (isObject(value)) {
-      const settings = value as unknown as { string: unknown };
+      const settings = value as { [key: string]: unknown };
       dbUpdates.push(
-        ...Object.keys(settings).reduce<UpdateUserSettingParams[]>((acc, setting) => {
+        ...Object.keys(settings).reduce<V1UserWebSetting[]>((acc, setting) => {
           return [
             ...acc,
             {
-              setting: {
-                key: setting,
-                storagePath: key,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                value: JSON.stringify((settings as any)[setting]),
-              },
+              key: setting,
               storagePath: key,
+              value: JSON.stringify(settings[setting]),
             },
           ];
         }, []),
       );
     } else {
-      dbUpdates.push({
-        setting: { key: '_ROOT', storagePath: key, value: JSON.stringify(value) },
-        storagePath: key,
-      });
+      dbUpdates.push({ key: '_ROOT', storagePath: key, value: JSON.stringify(value) });
     }
-    Promise.allSettled(
-      dbUpdates.map((update) => {
-        return updateUserSetting(update);
-      }),
-    ).catch((e) =>
+    return updateUserSetting({ settings: dbUpdates }).catch((e) =>
       handleError(e, {
         isUserTriggered: false,
         publicMessage: `Unable to update user settings for key: ${key}.`,

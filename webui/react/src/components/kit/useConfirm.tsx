@@ -12,7 +12,7 @@ export interface ConfirmModalProps {
   title?: string;
   okText?: string;
   onClose?: () => void;
-  onConfirm: () => Promise<void>;
+  onConfirm: () => Promise<void> | void;
   onError: ErrorHandler;
 }
 
