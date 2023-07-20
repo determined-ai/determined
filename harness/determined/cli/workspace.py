@@ -154,19 +154,15 @@ def list_pools(args: Namespace) -> None:
     session = cli.setup_session(args)
     w = workspace_by_name(session, args.workspace_name)
     resp = bindings.get_ListRPsBoundToWorkspace(session, workspaceId=w.id)
-
     pools_str = ""
-    if resp.resourcePools is None:
-        print("workspace has no available resource pools")
-        return
+    if resp.resourcePools:
+        pools_str = ", ".join(resp.resourcePools)
 
-    for pool in resp.resourcePools:
-        pools_str += pool + ", "
-    if pools_str != "":
-        pools_str = pools_str[:-2]
-    headers = ["Workspace", "Available Resource Pools"]
-    values = [[args.workspace_name, pools_str]]
-    render.tabulate_or_csv(headers, values, False)
+    render.tabulate_or_csv(
+        headers=["Workspace", "Available Resource Pools"],
+        values=[[args.workspace_name, pools_str]],
+        as_csv=False,
+    )
 
 
 def _parse_agent_user_group_args(args: Namespace) -> Optional[bindings.v1AgentUserGroup]:
