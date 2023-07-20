@@ -92,7 +92,7 @@ class ResourcePool:
 
         return workspace_names
 
-    def set_bindings(
+    def replace_bindings(
         self,
         workspace_names: List[str],
     ) -> None:
