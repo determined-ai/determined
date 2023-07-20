@@ -156,6 +156,10 @@ def list_pools(args: Namespace) -> None:
     resp = bindings.get_ListRPsBoundToWorkspace(session, workspaceId=w.id)
 
     pools_str = ""
+    if resp.resourcePools is None:
+        print("workspace has no available resource pools")
+        return
+
     for pool in resp.resourcePools:
         pools_str += pool + ", "
     if pools_str != "":
