@@ -156,9 +156,10 @@ def list_pools(args: Namespace) -> None:
     resp = bindings.get_ListRPsBoundToWorkspace(session, workspaceId=w.id)
 
     pools_str = ""
-    for pool in resp.resourcePools[:-1]:
+    for pool in resp.resourcePools:
         pools_str += pool + ", "
-    pools_str += resp.resourcePools[-1]
+    if pools_str != "":
+        pools_str = pools_str[:-2]
     headers = ["Workspace", "Available Resource Pools"]
     values = [[args.workspace_name, pools_str]]
     render.tabulate_or_csv(headers, values, False)
