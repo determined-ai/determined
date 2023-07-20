@@ -1,5 +1,5 @@
 from argparse import ONE_OR_MORE, Namespace
-from typing import List
+from typing import Any, List
 
 from determined.cli import render, setup_session
 from determined.common.api import authentication, bindings
