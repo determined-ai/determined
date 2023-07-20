@@ -21,7 +21,6 @@ type RPWorkspaceBinding struct {
 }
 
 // AddRPWorkspaceBindings inserts new bindings between workspaceIds and poolName.
-// TODO: check binding exsistence.
 func AddRPWorkspaceBindings(ctx context.Context, workspaceIds []int32, poolName string,
 	resourcePools []config.ResourcePoolConfig,
 ) error {

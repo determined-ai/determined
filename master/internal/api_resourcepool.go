@@ -88,7 +88,6 @@ func (a *apiServer) BindRPToWorkspace(
 	return &apiv1.BindRPToWorkspaceResponse{}, nil
 }
 
-// TODO: Overwite with empty list returns a SQL error
 func (a *apiServer) OverwriteRPWorkspaceBindings(
 	ctx context.Context, req *apiv1.OverwriteRPWorkspaceBindingsRequest,
 ) (*apiv1.OverwriteRPWorkspaceBindingsResponse, error) {

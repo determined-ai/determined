@@ -15,6 +15,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	testPoolName  = "test pool"
+	testPool2Name = "test pool too"
+)
+
 func TestAddAndRemoveBindings(t *testing.T) {
 	ctx := context.Background()
 	pgDB := MustResolveTestPostgres(t)
@@ -30,17 +35,12 @@ func TestAddAndRemoveBindings(t *testing.T) {
 		}
 	}()
 
-	var int32IDs []int32
-	for _, workspaceID := range workspaceIDs {
-		int32IDs = append(int32IDs, workspaceID)
-	}
 	// Test single insert/delete
 	// Test bulk insert/delete
-	testPoolName := "test pool"
-	testPool2Name := "test pool too"
-	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, testPoolName, []config.ResourcePoolConfig{
-		{PoolName: testPoolName}, {PoolName: testPool2Name},
-	})
+	err = AddRPWorkspaceBindings(ctx,
+		[]int32{workspaceIDs[0]}, testPoolName, []config.ResourcePoolConfig{
+			{PoolName: testPoolName}, {PoolName: testPool2Name},
+		})
 	require.NoError(t, err, "failed to add bindings: %t", err)
 
 	var values []RPWorkspaceBinding
@@ -52,14 +52,14 @@ func TestAddAndRemoveBindings(t *testing.T) {
 	require.Equal(t, testPoolName, values[0].PoolName,
 		"expected pool name to be '%s', but got %s", testPoolName, values[0].PoolName)
 
-	err = RemoveRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, testPoolName)
+	err = RemoveRPWorkspaceBindings(ctx, []int32{workspaceIDs[0]}, testPoolName)
 	require.NoError(t, err, "failed to remove bindings: %t", err)
 
 	count, err = Bun().NewSelect().Model(&values).ScanAndCount(ctx)
 	require.NoError(t, err, "error when scanning DB: %t", err)
 	require.Equal(t, 0, count, "expected 0 items in DB, found %d", count)
 
-	err = AddRPWorkspaceBindings(ctx, int32IDs, testPool2Name, []config.ResourcePoolConfig{
+	err = AddRPWorkspaceBindings(ctx, workspaceIDs, testPool2Name, []config.ResourcePoolConfig{
 		{PoolName: testPoolName}, {PoolName: testPool2Name},
 	})
 	require.NoError(t, err, "failed to add bindings: %t", err)
@@ -74,7 +74,7 @@ func TestAddAndRemoveBindings(t *testing.T) {
 			"expected pool name to be '%s', but got %s", testPool2Name, values[i].PoolName)
 	}
 
-	err = RemoveRPWorkspaceBindings(ctx, int32IDs, testPool2Name)
+	err = RemoveRPWorkspaceBindings(ctx, workspaceIDs, testPool2Name)
 	require.NoError(t, err, "failed to remove bindings: %t", err)
 
 	count, err = Bun().NewSelect().Model(&values).ScanAndCount(ctx)
