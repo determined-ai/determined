@@ -238,7 +238,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 		return nil, "", "", errList[0]
 	}
 	slurmArgs = append(slurmArgs, slurmProj...)
-	customParams["slurmArgs"] = slurmArgs
+	customParams["slurmArgs"] = removeDuplicates(slurmArgs)
 
 	var pbsArgs []string
 
@@ -251,7 +251,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 		return nil, "", "", errList[0]
 	}
 	pbsArgs = append(pbsArgs, pbsProj...)
-	customParams["pbsArgs"] = pbsArgs
+	customParams["pbsArgs"] = removeDuplicates(pbsArgs)
 
 	if containerRunType == podman {
 		portMappings := *getPortMappings(t)
@@ -359,6 +359,18 @@ func (t *TaskSpec) WarnUnsupportedOptions(
 	}
 
 	return strings.Join(warnings, "\n")
+}
+
+// removeDuplicates removes duplicated sbatch args from sbatchArgs array.
+func removeDuplicates(sbatchArgs []string) (result []string) {
+	argsMap := make(map[string]bool)
+	for _, arg := range sbatchArgs {
+		if !argsMap[arg] {
+			argsMap[arg] = true
+			result = append(result, arg)
+		}
+	}
+	return result
 }
 
 // jobAndProjectLabels returns as command options the strings necessary to label
