@@ -4,6 +4,7 @@
   gap: 8px;
   grid-template-columns: 72px 1fr;
   padding-bottom: 8px;
+  width: fit-content;
 
   &.baseRoot {
     grid-template-columns: 1fr;

@@ -1,6 +1,6 @@
 .base {
-  max-width: 680px;
-  min-width: 680px;
+  max-width: calc(100vw - 26px);
+  width: 680px;
 }
 .header {
   align-items: center;
@@ -11,7 +11,7 @@
 }
 .filter {
   max-height: 300px;
-  overflow-y: scroll;
+  overflow: scroll;
   padding-right: 16px;
 }
 .buttonContainer {
