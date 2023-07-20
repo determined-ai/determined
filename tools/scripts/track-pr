@@ -137,10 +137,15 @@ def cherry_pick_pr(pr_id: str) -> None:
     try:
         # Find and fetch the PR commit and both release branches.
         release_branch = max(
-            line.split()[1]
-            for line in run_capture(
-                "git", "ls-remote", CLONED_REMOTE, "refs/heads/release-*"
-            ).splitlines()
+            (
+                line.split()[1]
+                for line in run_capture(
+                    "git", "ls-remote", CLONED_REMOTE, "refs/heads/release-*"
+                ).splitlines()
+            ),
+            key=lambda branch: [
+                int(part) for part in re.search(r"/release-(\d+)\.(\d+)\.(\d+)$", branch).groups()
+            ],
         )[len("refs/heads/") :]
         print(f"Found release branch {release_branch}")
 
