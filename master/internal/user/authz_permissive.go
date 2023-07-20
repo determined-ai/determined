@@ -107,10 +107,10 @@ func (p *UserAuthZPermissive) CanGetUsersOwnSettings(
 
 // CanCreateUsersOwnSetting calls RBAC authz but enforces basic authz.
 func (p *UserAuthZPermissive) CanCreateUsersOwnSetting(
-	ctx context.Context, curUser model.User, setting model.UserWebSetting,
+	ctx context.Context, curUser model.User, settings []*model.UserWebSetting,
 ) error {
-	_ = (&UserAuthZRBAC{}).CanCreateUsersOwnSetting(ctx, curUser, setting)
-	return (&UserAuthZBasic{}).CanCreateUsersOwnSetting(ctx, curUser, setting)
+	_ = (&UserAuthZRBAC{}).CanCreateUsersOwnSetting(ctx, curUser, settings)
+	return (&UserAuthZBasic{}).CanCreateUsersOwnSetting(ctx, curUser, settings)
 }
 
 // CanResetUsersOwnSettings calls RBAC authz but enforces basic authz.

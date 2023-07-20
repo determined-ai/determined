@@ -179,7 +179,7 @@ func (a *UserAuthZRBAC) CanGetUsersOwnSettings(ctx context.Context, curUser mode
 
 // CanCreateUsersOwnSetting always returns nil.
 func (a *UserAuthZRBAC) CanCreateUsersOwnSetting(
-	ctx context.Context, curUser model.User, setting model.UserWebSetting,
+	ctx context.Context, curUser model.User, setting []*model.UserWebSetting,
 ) error {
 	noPermissionRequired(ctx, curUser.ID, curUser.ID)
 
