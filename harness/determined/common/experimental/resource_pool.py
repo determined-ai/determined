@@ -108,7 +108,7 @@ class ResourcePool:
 
         resps = api.read_paginated(get_with_offset)
         workspace_names = [
-            workspace.Workspace(session=self._session, workspace_id=w).workspace_name
+            workspace.Workspace(session=self._session, workspace_id=w).name
             for r in resps
             if r.workspaceIds is not None
             for w in r.workspaceIds
