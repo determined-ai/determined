@@ -5,7 +5,7 @@ hyperparameters:
   layer1_dropout: 0.25
   layer2_dropout: 0.25
   layer3_dropout: 0.5
-  global_batch_size: 32
+  global_batch_size: 40
   width_factor: 0.1
   height_factor: 0.1
   horizontal_flip: True
