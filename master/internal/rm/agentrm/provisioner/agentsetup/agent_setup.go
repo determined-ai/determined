@@ -1,4 +1,4 @@
-package provisioner
+package agentsetup
 
 import (
 	"bytes"
@@ -7,9 +7,14 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-type agentSetupScriptConfig struct {
+// SecureScheme is the scheme used for the master's HTTPS port.
+const SecureScheme = "https"
+
+// AgentSetupScriptConfig is the configuration for the agent setup script.
+type AgentSetupScriptConfig struct {
 	MasterHost                   string
 	MasterPort                   string
 	MasterCertName               string
@@ -29,7 +34,17 @@ type agentSetupScriptConfig struct {
 	AgentReconnectBackoff        int
 }
 
-func mustMakeAgentSetupScript(config agentSetupScriptConfig) []byte {
+// Provider is the interface for interacting with the underlying instance provider.
+type Provider interface {
+	InstanceType() model.InstanceType
+	SlotsPerInstance() int
+	List() ([]*model.Instance, error)
+	Launch(instanceNum int) error
+	Terminate(instanceIDs []string)
+}
+
+// MustMakeAgentSetupScript generates the agent setup script.
+func MustMakeAgentSetupScript(config AgentSetupScriptConfig) []byte {
 	templateStr := string(etc.MustStaticFile(etc.AgentSetupScriptTemplateResource))
 	tpl := template.Must(template.New("AgentSetupScript").Parse(templateStr))
 	var buf bytes.Buffer

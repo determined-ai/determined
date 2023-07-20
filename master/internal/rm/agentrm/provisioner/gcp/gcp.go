@@ -1,4 +1,4 @@
-package provisioner
+package gcp
 
 import (
 	"crypto/tls"
@@ -11,11 +11,12 @@ import (
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/api/compute/v1"
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
-	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner/agentsetup"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -23,17 +24,24 @@ import (
 // 1. A specific key/value pair label.
 // 2. Names of agents that are equal to the instance names.
 type gcpCluster struct {
-	*provconfig.GCPClusterConfig
+	config       *provconfig.GCPClusterConfig
 	resourcePool string
 	masterURL    url.URL
 	metadata     []*compute.MetadataItems
 
 	client *compute.Service
+
+	syslog *logrus.Entry
 }
 
-func newGCPCluster(
+func init() {
+	petname.NonDeterministicMode()
+}
+
+// New creates a new GCP cluster.
+func New(
 	resourcePool string, config *provconfig.Config, cert *tls.Certificate,
-) (*gcpCluster, error) {
+) (agentsetup.Provider, error) {
 	if err := config.GCP.InitDefaultValues(); err != nil {
 		return nil, errors.Wrap(err, "failed to initialize auto configuration")
 	}
@@ -64,7 +72,7 @@ func newGCPCluster(
 	)
 
 	var certBytes []byte
-	if masterURL.Scheme == secureScheme && cert != nil {
+	if masterURL.Scheme == agentsetup.SecureScheme && cert != nil {
 		for _, c := range cert.Certificate {
 			b := pem.EncodeToMemory(&pem.Block{
 				Type:  "CERTIFICATE",
@@ -75,7 +83,7 @@ func newGCPCluster(
 	}
 	masterCertBase64 := base64.StdEncoding.EncodeToString(certBytes)
 
-	startupScript := string(mustMakeAgentSetupScript(agentSetupScriptConfig{
+	startupScript := string(agentsetup.MustMakeAgentSetupScript(agentsetup.AgentSetupScriptConfig{
 		MasterHost:                   masterURL.Hostname(),
 		MasterPort:                   masterURL.Port(),
 		MasterCertName:               config.MasterCertName,
@@ -96,9 +104,9 @@ func newGCPCluster(
 	}))
 
 	cluster := &gcpCluster{
-		resourcePool:     resourcePool,
-		GCPClusterConfig: config.GCP,
-		masterURL:        *masterURL,
+		resourcePool: resourcePool,
+		config:       config.GCP,
+		masterURL:    *masterURL,
 		metadata: []*compute.MetadataItems{
 			{
 				Key:   "startup-script",
@@ -110,17 +118,18 @@ func newGCPCluster(
 			},
 		},
 		client: computeService,
+		syslog: logrus.WithField("gcp-cluster", resourcePool),
 	}
 
 	return cluster, nil
 }
 
-func (c *gcpCluster) instanceType() model.InstanceType {
-	return c.InstanceType
+func (c *gcpCluster) InstanceType() model.InstanceType {
+	return c.config.InstanceType
 }
 
-func (c *gcpCluster) slotsPerInstance() int {
-	return c.GCPClusterConfig.SlotsPerInstance()
+func (c *gcpCluster) SlotsPerInstance() int {
+	return c.config.SlotsPerInstance()
 }
 
 func (c *gcpCluster) idFromInstance(inst *compute.Instance) string {
@@ -156,21 +165,17 @@ func (c *gcpCluster) stateFromInstance(inst *compute.Instance) model.InstanceSta
 }
 
 func (c *gcpCluster) generateInstanceNamePattern() string {
-	return c.NamePrefix + petname.Generate(2, "-") + "-#####"
+	return c.config.NamePrefix + petname.Generate(2, "-") + "-#####"
 }
 
-func (c *gcpCluster) prestart(ctx *actor.Context) {
-	petname.NonDeterministicMode()
-}
-
-func (c *gcpCluster) list(ctx *actor.Context) ([]*model.Instance, error) {
+func (c *gcpCluster) List() ([]*model.Instance, error) {
 	clientCtx := context.Background()
 	var instances []*compute.Instance
 	filter := fmt.Sprintf(
 		"(labels.%s=%s) AND (labels.determined-resource-pool=%s)",
-		c.LabelKey, c.LabelValue, c.resourcePool,
+		c.config.LabelKey, c.config.LabelValue, c.resourcePool,
 	)
-	req := c.client.Instances.List(c.Project, c.Zone).Filter(filter)
+	req := c.client.Instances.List(c.config.Project, c.config.Zone).Filter(filter)
 	if err := req.Pages(
 		clientCtx,
 		func(page *compute.InstanceList) error {
@@ -183,14 +188,14 @@ func (c *gcpCluster) list(ctx *actor.Context) ([]*model.Instance, error) {
 	res := c.newInstances(instances)
 	for i, inst := range res {
 		if inst.State == model.Unknown {
-			ctx.Log().Errorf("unknown instance state for instance %v: %v",
+			c.syslog.Errorf("unknown instance state for instance %v: %v",
 				inst.ID, instances[i])
 		}
 	}
 	return res, nil
 }
 
-func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) error {
+func (c *gcpCluster) Launch(instanceNum int) error {
 	if instanceNum <= 0 {
 		return nil
 	}
@@ -201,20 +206,21 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) error {
 		MinCount:           1,
 		NamePattern:        c.generateInstanceNamePattern(),
 	}
-	ops, err := c.client.Instances.BulkInsert(c.Project, c.Zone, bulk).Context(clientCtx).Do()
+	ops, err := c.client.Instances.BulkInsert(c.config.Project, c.config.Zone, bulk).
+		Context(clientCtx).Do()
 	if err != nil {
-		ctx.Log().WithError(err).Errorf("error inserting GCE instance")
+		c.syslog.WithError(err).Errorf("error inserting GCE instance")
 		return err
 	}
-	tracker := newGCPBatchOperationTracker(c.GCPClusterConfig, c.client, []*compute.Operation{ops})
+	tracker := newGCPBatchOperationTracker(c.config, c.client, []*compute.Operation{ops})
 	go tracker.startTracker(func(doneOps []*compute.Operation) {
-		ctx.Log().Info("inserted GCE instances")
+		c.syslog.Info("inserted GCE instances")
 	})
 	return nil
 }
 
 func (c *gcpCluster) clusterInstanceProperties() *compute.InstanceProperties {
-	rb := c.InstanceProperties()
+	rb := c.config.InstanceProperties()
 	if rb.Labels == nil {
 		rb.Labels = make(map[string]string)
 	}
@@ -229,7 +235,7 @@ func (c *gcpCluster) clusterInstanceProperties() *compute.InstanceProperties {
 	return rb
 }
 
-func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
+func (c *gcpCluster) Terminate(instances []string) {
 	if len(instances) == 0 {
 		return
 	}
@@ -237,9 +243,10 @@ func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
 	var ops []*compute.Operation
 	for _, inst := range instances {
 		ClientCtx := context.Background()
-		resp, err := c.client.Instances.Delete(c.Project, c.Zone, inst).Context(ClientCtx).Do()
+		resp, err := c.client.Instances.Delete(c.config.Project, c.config.Zone, inst).
+			Context(ClientCtx).Do()
 		if err != nil {
-			ctx.Log().WithError(err).Errorf("cannot delete GCE instance: %s", inst)
+			c.syslog.WithError(err).Errorf("cannot delete GCE instance: %s", inst)
 		} else {
 			ops = append(ops, resp)
 		}
@@ -249,10 +256,10 @@ func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
 		return
 	}
 
-	tracker := newGCPBatchOperationTracker(c.GCPClusterConfig, c.client, ops)
+	tracker := newGCPBatchOperationTracker(c.config, c.client, ops)
 	go tracker.startTracker(func(doneOps []*compute.Operation) {
 		deleted := c.newInstancesFromOperations(doneOps)
-		ctx.Log().Infof(
+		c.syslog.Infof(
 			"deleted %d/%d GCE instances: %s",
 			len(deleted),
 			len(instances),
