@@ -78,7 +78,7 @@ class ResourcePool:
         """
         req = bindings.v1UnbindRPFromWorkspaceRequest(
             resourcePoolName=self.name,
-            workspaceIds=workspace_names,
+            workspaceNames=workspace_names,
         )
 
         bindings.delete_UnbindRPFromWorkspace(self._session, body=req, resourcePoolName=self.name)
