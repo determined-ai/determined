@@ -57,7 +57,7 @@ class Workspace:
 
         self._hydrate(workspace_bindings)
 
-    def resource_pools(self) -> Optional[List[str]]:
+    def list_pools(self) -> List[str]:
         """
         List resources pools available to a workspace.
 

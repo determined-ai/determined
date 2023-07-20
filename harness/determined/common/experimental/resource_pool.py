@@ -33,7 +33,7 @@ class ResourcePool:
         resource_pool = cls(session, name=resource_pool_bindings.name)
         return resource_pool
 
-    def bind(
+    def add_bindings(
         self,
         workspace_names: List[str],
     ) -> None:
@@ -50,7 +50,7 @@ class ResourcePool:
 
         bindings.post_BindRPToWorkspace(self._session, body=req, resourcePoolName=self.name)
 
-    def unbind(
+    def remove_bindings(
         self,
         workspace_names: List[str],
     ) -> None:
@@ -67,7 +67,7 @@ class ResourcePool:
 
         bindings.delete_UnbindRPFromWorkspace(self._session, body=req, resourcePoolName=self.name)
 
-    def workspaces(self) -> List[str]:
+    def list_workspaces(self) -> List[str]:
         """
         List workspaces bound to a resource pool.
 
