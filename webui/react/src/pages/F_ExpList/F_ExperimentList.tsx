@@ -434,6 +434,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       updateSettings({ pageLimit: cPageSize });
       // Pagination component is assuming starting index of 1.
       if (cPage - 1 !== page) {
+        setExperiments(Array(cPageSize).fill(NotLoaded));
         setClearSelectionTrigger((t) => t + 1);
       }
       setPage(cPage - 1);
