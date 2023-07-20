@@ -305,7 +305,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                 </InlineForm>
               </div>
             </Section>
-            <Section divider title="Advanced">
+            <Section title="Advanced">
               <Paragraph>
                 Advanced features are potentially dangerous and could require you to completely
                 reset your user settings if you make a mistake.
