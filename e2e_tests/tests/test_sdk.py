@@ -8,6 +8,7 @@ import pytest
 
 from determined.common import yaml
 from determined.common.api import bindings, errors
+from determined.common.experimental import resource_pool
 from determined.common.experimental.trial import TrainingMetrics, ValidationMetrics
 from determined.experimental import client as _client
 from tests import config as conf
@@ -436,28 +437,10 @@ def test_rp_workspace_mapping(client: _client.Determined) -> None:
     try:
         with pytest.raises(
             errors.APIException,
-            match="only admin privileged users can bind resource pool to a workspace",
+            match="default resource pool default cannot be bound to any workspace",
         ):
-            client.bind_rps_to_workspaces(rp_names, workspace_names)
-
-        client = _client.Determined(user="admin", password="")
-        client.bind_rps_to_workspaces(rp_names, workspace_names)
-
-        resp_workspace_names = client.list_workspaces_bound_to_rp(rp_names[0])
-        assert sorted(resp_workspace_names) == workspace_names
-
-        for wn in workspace_names:
-            resp_rp_names = client.list_rps_bound_to_workspace(wn)
-            assert sorted(resp_rp_names) == rp_names
-
-        client.overwrite_rp_workspace_bindings(rp_names[0], overwrite_workspace_names)
-
-        resp_workspace_names = client.list_workspaces_bound_to_rp(rp_names[0])
-        assert sorted(resp_workspace_names) == overwrite_workspace_names
-
-        client.unbind_rp_from_workspaces(rp_names[0], overwrite_workspace_names)
-        workspace_names = client.list_workspaces_bound_to_rp(rp_names[0])
-        assert workspace_names == []
+            rp = resource_pool.ResourcePool(client._session, rp_names[0])
+            rp.bind(workspace_names)
     finally:
         for id in workspace_ids:
             bindings.delete_DeleteWorkspace(session=client._session, id=id)

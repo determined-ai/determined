@@ -1,0 +1,43 @@
+{
+    "resourcePool":{
+        "agentDockerImage": "",
+        "agentDockerNetwork": "",
+        "agentDockerRuntime": "",
+        "agentFluentImage": "",
+        "auxContainerCapacity": 100,
+        "auxContainerCapacityPerAgent": 100,
+        "auxContainersRunning": 0,
+        "containerStartupScript": "",
+        "defaultAuxPool": true,
+        "defaultComputePool": true,
+        "description": "",
+        "imageId": "",
+        "instanceType": "",
+        "location": "on-prem",
+        "masterCertName": "",
+        "masterUrl": "",
+        "maxAgentStartingPeriod": 0,
+        "maxAgents": 0,
+        "maxIdleAgentPeriod": 0,
+        "minAgents": 0,
+        "name": "default",
+        "numAgents": 1,
+        "preemptible": false,
+        "schedulerFittingPolicy": "FITTING_POLICY_BEST",
+        "schedulerType": "SCHEDULER_TYPE_FAIR_SHARE",
+        "slotType": "TYPE_CPU",
+        "slotsAvailable": 1,
+        "slotsUsed": 0,
+        "startupScript": "",
+        "type": "RESOURCE_POOL_TYPE_STATIC",
+        "accelerator": "",
+        "slotsPerAgent": -1,
+        "stats": {
+          "queuedCount": 0,
+          "scheduledCount": 0
+        }
+      }
+  }
+
+  
+  

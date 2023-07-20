@@ -23,6 +23,22 @@ def single_item_workspaces() -> bindings.v1GetWorkspacesResponse:
     )
 
 
+@pytest.fixture
+def single_item_rps_bound_to_workspace() -> bindings.v1ListRPsBoundToWorkspaceResponse:
+    single_item_pagination = bindings.v1Pagination(endIndex=1, startIndex=0, total=1)
+    return bindings.v1ListRPsBoundToWorkspaceResponse(
+        resourcePools=["foo"], pagination=single_item_pagination
+    )
+
+
+@pytest.fixture
+def multi_item_rps_bound_to_workspace() -> bindings.v1ListRPsBoundToWorkspaceResponse:
+    multi_items_pagination = bindings.v1Pagination(endIndex=2, startIndex=0, total=2)
+    return bindings.v1ListRPsBoundToWorkspaceResponse(
+        resourcePools=["foo", "bar"], pagination=multi_items_pagination
+    )
+
+
 @responses.activate
 def test_workspace_constructor_requires_exactly_one_of_id_or_name(
     standard_session: api.Session,
@@ -71,3 +87,21 @@ def test_workspace_constructor_populates_id_from_name(
 def test_workspace_constructor_doesnt_populate_name_from_id(standard_session: api.Session) -> None:
     ws = workspace.Workspace(session=standard_session, workspace_id=1)
     assert ws.name is None
+
+
+@responses.activate
+def test_list_bounded_resource_pools(
+    standard_session: api.Session,
+    single_item_workspaces: bindings.v1GetWorkspacesResponse,
+    single_item_rps_bound_to_workspace: bindings.v1ListRPsBoundToWorkspaceResponse,
+) -> None:
+    workspace_id = single_item_workspaces.workspaces[0].id
+    responses.get(f"{_MASTER}/api/v1/workspaces", json=single_item_workspaces.to_json())
+    responses.get(
+        f"{_MASTER}/api/v1/workspaces/{workspace_id}/available-resource-pools",
+        json=single_item_rps_bound_to_workspace.to_json(),
+    )
+
+    ws = workspace.Workspace(session=standard_session, workspace_id=workspace_id)
+    rps = ws.resource_pools()
+    assert rps == ["foo"]

@@ -97,6 +97,12 @@ def empty_get_pagination() -> bindings.v1Pagination:
     return bindings.v1Pagination(endIndex=0, limit=0, offset=0, startIndex=0, total=0)
 
 
+def sample_get_resource_pool() -> bindings.v1ResourcePool:
+    with open(FIXTURES_DIR / "resource_pool.json") as f:
+        resp = bindings.v1ResourcePool.from_json(json.load(f))
+        return resp
+
+
 def page_of(
     complete_resp: P, pageable_type: str, offset: int = 0, limit: Optional[int] = None
 ) -> P:
