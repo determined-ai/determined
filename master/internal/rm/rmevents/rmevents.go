@@ -10,14 +10,14 @@ import (
 	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 )
 
-var syslog = *logrus.WithField("component", "rmevents")
+var syslog = logrus.WithField("component", "rmevents")
 
 const mainBufferSize = 1024
 
 type subscribeRequest struct {
 	topic model.AllocationID
 	id    int
-	inbox *queue.Queue[sproto.AllocationEvent]
+	inbox *queue.Queue[sproto.ResourcesEvent]
 }
 
 type unsubscribeRequest struct {
@@ -27,7 +27,7 @@ type unsubscribeRequest struct {
 
 type eventWithTopic struct {
 	topic model.AllocationID
-	event sproto.AllocationEvent
+	event sproto.ResourcesEvent
 }
 
 type manager struct {
@@ -47,16 +47,16 @@ func newManager() *manager {
 	return &manager{events: in, subEvents: subs, unsubEvents: unsubs}
 }
 
-func (m *manager) subscribe(topic model.AllocationID) *sproto.AllocationSubscription {
+func (m *manager) subscribe(topic model.AllocationID) *sproto.ResourcesSubscription {
 	id := m.id.next()
-	inbox := queue.New[sproto.AllocationEvent]()
+	inbox := queue.New[sproto.ResourcesEvent]()
 	m.subEvents <- subscribeRequest{topic: topic, id: id, inbox: inbox}
 	return sproto.NewAllocationSubscription(inbox, func() {
 		m.unsubEvents <- unsubscribeRequest{topic: topic, id: id}
 	})
 }
 
-func (m *manager) publish(topic model.AllocationID, event sproto.AllocationEvent) {
+func (m *manager) publish(topic model.AllocationID, event sproto.ResourcesEvent) {
 	m.events <- eventWithTopic{topic: topic, event: event}
 }
 
@@ -65,7 +65,7 @@ func fanOut(
 	subs <-chan subscribeRequest,
 	unsubs <-chan unsubscribeRequest,
 ) {
-	subsByTopicByID := map[model.AllocationID]map[int]*queue.Queue[sproto.AllocationEvent]{}
+	subsByTopicByID := map[model.AllocationID]map[int]*queue.Queue[sproto.ResourcesEvent]{}
 	for {
 		select {
 		case msg := <-in:
@@ -82,7 +82,7 @@ func fanOut(
 }
 
 func send(
-	subsByTopicByID map[model.AllocationID]map[int]*queue.Queue[sproto.AllocationEvent],
+	subsByTopicByID map[model.AllocationID]map[int]*queue.Queue[sproto.ResourcesEvent],
 	msg eventWithTopic,
 ) {
 	subs, ok := subsByTopicByID[msg.topic]
@@ -96,17 +96,17 @@ func send(
 }
 
 func sub(
-	subsByTopicByID map[model.AllocationID]map[int]*queue.Queue[sproto.AllocationEvent],
+	subsByTopicByID map[model.AllocationID]map[int]*queue.Queue[sproto.ResourcesEvent],
 	msg subscribeRequest,
 ) {
 	if _, ok := subsByTopicByID[msg.topic]; !ok {
-		subsByTopicByID[msg.topic] = map[int]*queue.Queue[sproto.AllocationEvent]{}
+		subsByTopicByID[msg.topic] = map[int]*queue.Queue[sproto.ResourcesEvent]{}
 	}
 	subsByTopicByID[msg.topic][msg.id] = msg.inbox
 }
 
 func unsub(
-	subsByTopicByID map[model.AllocationID]map[int]*queue.Queue[sproto.AllocationEvent],
+	subsByTopicByID map[model.AllocationID]map[int]*queue.Queue[sproto.ResourcesEvent],
 	msg unsubscribeRequest,
 ) {
 	_, ok := subsByTopicByID[msg.topic][msg.id]

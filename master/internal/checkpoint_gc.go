@@ -101,7 +101,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			return fmt.Errorf("resolving resource pool: %w", err)
 		}
 
-		task.DefaultService.StartAllocation(t.logCtx, sproto.AllocateRequest{
+		err = task.DefaultService.StartAllocation(t.logCtx, sproto.AllocateRequest{
 			TaskID:            t.taskID,
 			JobID:             t.jobID,
 			RequestTime:       time.Now().UTC(),
@@ -113,7 +113,12 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			},
 			Group:        ctx.Self(),
 			ResourcePool: rp,
-		}, t.db, t.rm, t.GCCkptSpec, ctx.Self().System(), ctx.Self())
+		}, t.db, t.rm, t.GCCkptSpec, ctx.Self().System(), func(ae *task.AllocationExited) {
+			ctx.Tell(ctx.Self(), ae)
+		})
+		if err != nil {
+			return err
+		}
 
 		// t.Base is just a shallow copy of the m.taskSpec on the master, so
 		// use caution when mutating it.

@@ -111,10 +111,11 @@ func (r *ResourceManager) ValidateCommandResources(
 func (r *ResourceManager) Allocate(
 	ctx actor.Messenger,
 	msg sproto.AllocateRequest,
-) (*sproto.AllocationSubscription, error) {
+) (*sproto.ResourcesSubscription, error) {
 	sub := rmevents.Subscribe(msg.AllocationID)
 	err := r.Ask(ctx, msg, nil)
 	if err != nil {
+		r.Release(ctx, sproto.ResourcesReleased{AllocationID: msg.AllocationID})
 		sub.Close()
 		return nil, err
 	}

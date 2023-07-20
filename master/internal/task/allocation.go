@@ -105,7 +105,6 @@ type allocation struct {
 
 	syslog *logrus.Entry
 	system *actor.System
-	parent *actor.Ref
 	wg     waitgroupx.Group
 
 	// The request to create the allocation, essentially our configuration.
@@ -150,8 +149,8 @@ type allocation struct {
 // newAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
 func newAllocation(
 	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
-	specifier tasks.TaskSpecifier, system *actor.System, parent *actor.Ref,
-) *allocation {
+	specifier tasks.TaskSpecifier, system *actor.System,
+) (*allocation, error) {
 	req.LogContext = detLogger.MergeContexts(logCtx, detLogger.Context{
 		"allocation-id": req.AllocationID,
 	})
@@ -161,7 +160,6 @@ func newAllocation(
 		rm: rm,
 
 		system: system,
-		parent: parent,
 		wg:     waitgroupx.WithContext(context.Background()),
 		syslog: logrus.WithFields(logCtx.Fields()),
 
@@ -182,11 +180,10 @@ func newAllocation(
 
 	rmEvents, err := a.requestResources()
 	if err != nil {
-		// TODO(!!!): Very awkward to not just return the error here.
-		a.crash(err)
+		return nil, fmt.Errorf("requesting resources: %w", err)
 	}
 	a.wg.Go(func(ctx context.Context) { a.run(ctx, rmEvents) })
-	return a
+	return a, nil
 }
 
 // Receive implements actor.Actor for the allocation.
@@ -209,11 +206,13 @@ func newAllocation(
 // and move on. If an error occurs that should force a stop, it is imperative
 // the error is never returned by Receive, and that a.Error(ctx, err) is called,
 // that way the allocation can cleanup properly.
-func (a *allocation) run(ctx context.Context, sub *sproto.AllocationSubscription) {
+func (a *allocation) run(ctx context.Context, sub *sproto.ResourcesSubscription) {
 	defer a.recover()
+	defer sub.Close()
+	defer a.wg.Cancel() // Important if we panic, so awaitTermination can unblock.
 	for {
 		event := sub.Get()
-		if event == (sproto.AllocationReleasedEvent{}) {
+		if event == (sproto.ResourcesReleasedEvent{}) {
 			return
 		}
 		a.HandleRMEvent(event)
@@ -221,7 +220,7 @@ func (a *allocation) run(ctx context.Context, sub *sproto.AllocationSubscription
 }
 
 // HandleRMEvent handles downstream events from the resource manager.
-func (a *allocation) HandleRMEvent(msg sproto.AllocationEvent) {
+func (a *allocation) HandleRMEvent(msg sproto.ResourcesEvent) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -389,7 +388,7 @@ func (a *allocation) WatchRendezvous(rID sproto.ResourcesID) (RendezvousWatcher,
 	}
 
 	if a.rendezvous == nil {
-		a.rendezvous = newRendezvous(a.model.AllocationID, a.resources)
+		a.rendezvous = newRendezvous(a.model.AllocationID, a.resources, rendezvousTimeoutDuration)
 		a.wg.Go(func(ctx context.Context) {
 			t := time.NewTimer(rendezvousTimeoutDuration)
 			defer t.Stop()
@@ -446,7 +445,7 @@ func (a *allocation) awaitTermination() *AllocationExited {
 }
 
 // requestResources sets up the allocation.
-func (a *allocation) requestResources() (*sproto.AllocationSubscription, error) {
+func (a *allocation) requestResources() (*sproto.ResourcesSubscription, error) {
 	if a.req.Restore {
 		// Load allocation.
 		a.syslog.Debug("requestResources load allocation")
@@ -520,7 +519,6 @@ func (a *allocation) Close() error {
 		}
 
 		a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
-		a.system.Tell(a.parent, a.exited)
 
 		if a.req.Preemptible {
 			preemptible.Unregister(a.req.AllocationID.String())
@@ -1033,11 +1031,13 @@ func (a *allocation) terminated(reason string) {
 	}
 
 	a.setMostProgressedModelState(model.AllocationStateTerminated)
+	if err := a.db.UpdateAllocationState(a.model); err != nil {
+		a.syslog.WithError(err).Error("failed to set allocation state to terminated")
+	}
 	exit := &AllocationExited{FinalState: a.state()}
 	a.exited = exit
 	exitReason := fmt.Sprintf("allocation terminated after %s", reason)
 
-	defer a.system.Tell(a.parent, exit)
 	defer a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
 	defer a.unregisterProxies()
 	defer a.wg.Cancel()
@@ -1123,6 +1123,8 @@ func (a *allocation) terminated(reason string) {
 			return
 		}
 	case len(a.resources) == 0:
+		exitReason = fmt.Sprintf("allocation stopped after %s", reason)
+		a.syslog.Info(exitReason)
 		return
 	default:
 		// If we ever exit without a reason and we have no exited resources, something has gone

@@ -134,7 +134,7 @@ func setup(t *testing.T) (
 	as.On(
 		"StartAllocation", mock.Anything, mock.Anything, mock.Anything,
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-	).Return()
+	).Return(nil)
 
 	// mock db.
 	db := &mocks.DB{}

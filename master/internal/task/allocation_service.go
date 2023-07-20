@@ -30,6 +30,7 @@ var DefaultService AllocationService = newAllocationService()
 
 // allocationService is used to launch, track and interact with allocations.
 type allocationService struct {
+	syslog      *logrus.Entry
 	mu          sync.RWMutex
 	allocations map[model.AllocationID]*allocation
 }
@@ -37,6 +38,7 @@ type allocationService struct {
 // newAllocationService creates a new allocationService.
 func newAllocationService() *allocationService {
 	return &allocationService{
+		syslog:      logrus.WithField("component", "allocation-service"),
 		allocations: map[model.AllocationID]*allocation{},
 	}
 }
@@ -49,15 +51,19 @@ func (as *allocationService) StartAllocation(
 	rm rm.ResourceManager,
 	specifier tasks.TaskSpecifier,
 	system *actor.System,
-	parent *actor.Ref,
-) {
+	onExit func(*AllocationExited),
+) error {
 	as.mu.Lock()
 	defer as.mu.Unlock()
 
-	ref := newAllocation(logCtx, req, db, rm, specifier, system, parent)
+	ref, err := newAllocation(logCtx, req, db, rm, specifier, system)
+	if err != nil {
+		return err
+	}
 	as.allocations[req.AllocationID] = ref
+
 	go func() {
-		_ = ref.awaitTermination()
+		exit := ref.awaitTermination()
 		if err := ref.Close(); err != nil {
 			syslog.WithError(err).Error("cleaning up allocation")
 		}
@@ -65,7 +71,9 @@ func (as *allocationService) StartAllocation(
 		as.mu.Lock()
 		defer as.mu.Unlock()
 		delete(as.allocations, req.AllocationID)
+		onExit(exit)
 	}()
+	return nil
 }
 
 // GetAllAllocationIDs returns all registered allocation ids.
@@ -81,9 +89,9 @@ func (as *allocationService) SendLog(
 	id model.AllocationID,
 	log *sproto.ContainerLog,
 ) {
-	ref := as.getAllocation(id)
-	if ref == nil {
-		syslog.Warnf("dropped log for unknown allocation: %s", id)
+	ref, err := as.getAllocation(id)
+	if err != nil {
+		syslog.Warnf("dropped log for unknown allocation: %s", err)
 		return
 	}
 	ref.SendContainerLog(log)
@@ -92,31 +100,19 @@ func (as *allocationService) SendLog(
 // SetReady sets the ready bit and moves the allocation to the running state if it has not
 // progressed past it already.
 func (as *allocationService) SetReady(ctx context.Context, id model.AllocationID) error {
-	ref := as.getAllocation(id)
-	if ref == nil {
-		return api.NotFoundErrs("allocation", id.String(), true)
-	}
-
-	err := ref.waitForRestore(ctx)
+	ref, err := as.waitForRestore(ctx, id)
 	if err != nil {
 		return err
 	}
-
 	return ref.SetReady(ctx)
 }
 
 // SetWaiting moves the allocation to the waiting state if it has not progressed past it yet.
 func (as *allocationService) SetWaiting(ctx context.Context, id model.AllocationID) error {
-	ref := as.getAllocation(id)
-	if ref == nil {
-		return api.NotFoundErrs("allocation", id.String(), true)
-	}
-
-	err := ref.waitForRestore(ctx)
+	ref, err := as.waitForRestore(ctx, id)
 	if err != nil {
 		return err
 	}
-
 	return ref.SetWaiting(ctx)
 }
 
@@ -127,16 +123,10 @@ func (as *allocationService) SetProxyAddress(
 	id model.AllocationID,
 	addr string,
 ) error {
-	ref := as.getAllocation(id)
-	if ref == nil {
-		return api.NotFoundErrs("allocation", id.String(), true)
-	}
-
-	err := ref.waitForRestore(ctx)
+	ref, err := as.waitForRestore(ctx, id)
 	if err != nil {
 		return err
 	}
-
 	return ref.SetProxyAddress(ctx, addr)
 }
 
@@ -149,12 +139,7 @@ func (as *allocationService) WatchRendezvous(
 	id model.AllocationID,
 	rID sproto.ResourcesID,
 ) (*trialv1.RendezvousInfo, error) {
-	ref := as.getAllocation(id)
-	if ref == nil {
-		return nil, api.NotFoundErrs("allocation", id.String(), true)
-	}
-
-	err := ref.waitForRestore(ctx)
+	ref, err := as.waitForRestore(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -183,16 +168,10 @@ func (as *allocationService) SetResourcesAsDaemon(
 	id model.AllocationID,
 	rID sproto.ResourcesID,
 ) error {
-	ref := as.getAllocation(id)
-	if ref == nil {
-		return api.NotFoundErrs("allocation", id.String(), true)
-	}
-
-	err := ref.waitForRestore(ctx)
+	ref, err := as.waitForRestore(ctx, id)
 	if err != nil {
 		return err
 	}
-
 	return ref.SetResourcesAsDaemon(ctx, rID)
 }
 
@@ -202,19 +181,20 @@ func (as *allocationService) Signal(
 	sig AllocationSignal,
 	reason string,
 ) error {
-	ref := as.getAllocation(id)
-	if ref == nil {
-		return api.NotFoundErrs("allocation", id.String(), true)
+	ref, err := as.getAllocation(id)
+	if err != nil {
+		return err
 	}
 	ref.Signal(sig, reason)
 	return nil
 }
 
 // State returns a copy of the current state of the allocation.
+// TODO(!!!): Just replace this with DB access, easy to do.
 func (as *allocationService) State(id model.AllocationID) (AllocationState, error) {
-	ref := as.getAllocation(id)
-	if ref == nil {
-		return AllocationState{}, api.NotFoundErrs("allocation", id.String(), true)
+	ref, err := as.getAllocation(id)
+	if err != nil {
+		return AllocationState{}, err
 	}
 	return ref.State(), nil
 }
@@ -229,7 +209,7 @@ func (as *allocationService) AllGather(
 	numPeers int,
 	data any,
 ) ([]any, error) {
-	err := as.waitForRestore(ctx, id)
+	_, err := as.waitForRestore(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -264,9 +244,10 @@ func (as *allocationService) WatchPreemption(
 	ctx context.Context,
 	id model.AllocationID,
 ) (bool, error) {
-	err := as.waitForRestore(ctx, id)
+	_, err := as.waitForRestore(context.TODO(), id)
 	if err != nil {
-		return false, err
+		// HACK: Swallow the error since contexts with an instant timeout still expect a status.
+		return false, nil
 	}
 
 	wID := uuid.New()
@@ -287,7 +268,7 @@ func (as *allocationService) WatchPreemption(
 // AckPreemption acknowledges the receipt of a preemption signal. This is used to differentiate
 // HPO/user-related early stops with a zero exit code from preemption-related early stopping.
 func (as *allocationService) AckPreemption(ctx context.Context, id model.AllocationID) error {
-	err := as.waitForRestore(ctx, id)
+	_, err := as.waitForRestore(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -297,17 +278,29 @@ func (as *allocationService) AckPreemption(ctx context.Context, id model.Allocat
 
 // waitForRestore waits until the allocation has been restored by the resource manager. The
 // allocation must exist otherwise this will return a not found error.
-func (as *allocationService) waitForRestore(ctx context.Context, id model.AllocationID) error {
-	ref := as.getAllocation(id)
-	if ref == nil {
-		return api.NotFoundErrs("allocation", id.String(), true)
+func (as *allocationService) waitForRestore(
+	ctx context.Context,
+	id model.AllocationID,
+) (*allocation, error) {
+	ref, err := as.getAllocation(id)
+	if err != nil {
+		return nil, err
 	}
-	return ref.waitForRestore(ctx)
+	err = ref.waitForRestore(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ref, nil
 }
 
 // getAllocation returns allocation actor by allocation id.
-func (as *allocationService) getAllocation(allocationID model.AllocationID) *allocation {
+func (as *allocationService) getAllocation(id model.AllocationID) (*allocation, error) {
 	as.mu.RLock()
 	defer as.mu.RUnlock()
-	return as.allocations[allocationID]
+
+	ref := as.allocations[id]
+	if ref == nil {
+		return nil, api.NotFoundErrs("allocation", id.String(), true)
+	}
+	return ref, nil
 }

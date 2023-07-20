@@ -43,7 +43,9 @@ type RendezvousWatcher struct {
 
 // rendezvous encapsulates the rendezvous state of a trial.
 type rendezvous struct {
-	allocationID      model.AllocationID
+	allocationID model.AllocationID
+	timeout      time.Duration
+
 	watchers          map[sproto.ResourcesID]chan<- RendezvousInfoOrError
 	resources         resourcesList
 	lastWatchTime     time.Time
@@ -51,9 +53,14 @@ type rendezvous struct {
 }
 
 // newRendezvous returns a new rendezvous component.
-func newRendezvous(allocationID model.AllocationID, rs resourcesList) *rendezvous {
+func newRendezvous(
+	allocationID model.AllocationID,
+	rs resourcesList,
+	timeout time.Duration,
+) *rendezvous {
 	return &rendezvous{
 		allocationID: allocationID,
+		timeout:      timeout,
 		resources:    rs,
 		watchers:     map[sproto.ResourcesID]chan<- RendezvousInfoOrError{},
 	}
@@ -144,7 +151,7 @@ func (r *rendezvous) checkTimeout() error {
 		return nil
 	}
 
-	exceededTimeout := time.Now().After(r.lastWatchTime.Add(rendezvousTimeoutDuration))
+	exceededTimeout := time.Now().After(r.lastWatchTime.Add(r.timeout))
 	if exceededTimeout {
 		return ErrTimeoutExceeded{
 			Message: "some containers are taking a long time to " +

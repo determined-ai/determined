@@ -21,7 +21,7 @@ type ResourceManager interface {
 		sproto.GetAllocationSummaries,
 	) (map[model.AllocationID]sproto.AllocationSummary, error)
 	SetAllocationName(actor.Messenger, sproto.SetAllocationName)
-	Allocate(actor.Messenger, sproto.AllocateRequest) (*sproto.AllocationSubscription, error)
+	Allocate(actor.Messenger, sproto.AllocateRequest) (*sproto.ResourcesSubscription, error)
 	Release(actor.Messenger, sproto.ResourcesReleased)
 	ValidateCommandResources(
 		actor.Messenger,

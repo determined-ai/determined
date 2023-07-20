@@ -9,11 +9,11 @@ var defaultManager = newManager()
 
 // Subscribe to events for the given allocation. Returns a subscription with a channel to listen
 // to events. When finished listening, callers should call `AllocationSubscription.Close()`.
-func Subscribe(topic model.AllocationID) *sproto.AllocationSubscription {
+func Subscribe(topic model.AllocationID) *sproto.ResourcesSubscription {
 	return defaultManager.subscribe(topic)
 }
 
 // Publish an event for the provided allocation.
-func Publish(topic model.AllocationID, event sproto.AllocationEvent) {
+func Publish(topic model.AllocationID, event sproto.ResourcesEvent) {
 	defaultManager.publish(topic, event)
 }

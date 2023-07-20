@@ -115,69 +115,69 @@ type (
 	}
 )
 
-// AllocationEvent describes a change in status or state of an allocation or its resources.
-type AllocationEvent interface{ AllocationEvent() }
+// ResourcesEvent describes a change in status or state of an allocation's resources.
+type ResourcesEvent interface{ ResourcesEvent() }
 
-// AllocationReleasedEvent can be used as a marker in the event stream.
-type AllocationReleasedEvent struct{}
+// ResourcesReleasedEvent notes when the RM has acknowledged resources are released.
+type ResourcesReleasedEvent struct{}
 
-// AllocationEvent implements AllocationEvent.
-func (AllocationReleasedEvent) AllocationEvent() {}
+// ResourcesEvent implements ResourcesEvent.
+func (ResourcesReleasedEvent) ResourcesEvent() {}
 
-// AllocationEvent implements AllocationEvent.
-func (*ResourcesAllocated) AllocationEvent() {}
+// ResourcesEvent implements ResourcesEvent.
+func (*ResourcesAllocated) ResourcesEvent() {}
 
-// AllocationEvent implements AllocationEvent.
-func (*InvalidResourcesRequestError) AllocationEvent() {}
+// ResourcesEvent implements ResourcesEvent.
+func (*InvalidResourcesRequestError) ResourcesEvent() {}
 
-// AllocationEvent implements AllocationEvent.
-func (*ReleaseResources) AllocationEvent() {}
+// ResourcesEvent implements ResourcesEvent.
+func (*ReleaseResources) ResourcesEvent() {}
 
-// AllocationEvent implements AllocationEvent.
-func (*ResourcesStateChanged) AllocationEvent() {}
+// ResourcesEvent implements ResourcesEvent.
+func (*ResourcesStateChanged) ResourcesEvent() {}
 
-// AllocationEvent implements AllocationEvent.
-func (*ResourcesFailure) AllocationEvent() {}
+// ResourcesEvent implements ResourcesEvent.
+func (*ResourcesFailure) ResourcesEvent() {}
 
-// AllocationEvent implements AllocationEvent.
-func (*ContainerLog) AllocationEvent() {}
+// ResourcesEvent implements ResourcesEvent.
+func (*ContainerLog) ResourcesEvent() {}
 
-// AllocationUnsubscribeFn closes a subscription.
-type AllocationUnsubscribeFn func()
+// ResourcesUnsubscribeFn closes a subscription.
+type ResourcesUnsubscribeFn func()
 
-// AllocationSubscription is a subscription for streaming AllocationEvent's. It must be closed when
+// ResourcesSubscription is a subscription for streaming ResourcesEvents's. It must be closed when
 // you are finished consuming events. Blocking on C forever can cause the publisher to backup
 // and adversely affect the system.
-type AllocationSubscription struct {
+type ResourcesSubscription struct {
 	// C is never closed, because only the consumer knows, by aggregating events, when events stop.
-	inbox *queue.Queue[AllocationEvent]
-	unsub AllocationUnsubscribeFn
+	inbox *queue.Queue[ResourcesEvent]
+	unsub ResourcesUnsubscribeFn
 }
 
 // NewAllocationSubscription create a new subcription.
 func NewAllocationSubscription(
-	inbox *queue.Queue[AllocationEvent],
-	cl AllocationUnsubscribeFn,
-) *AllocationSubscription {
-	return &AllocationSubscription{
+	inbox *queue.Queue[ResourcesEvent],
+	cl ResourcesUnsubscribeFn,
+) *ResourcesSubscription {
+	return &ResourcesSubscription{
 		inbox: inbox,
 		unsub: cl,
 	}
 }
 
 // Get blocks until an event is published for our subscription's topic. When the
-// subscription is closed, SentinelAllocationEvent is returned.
-func (a *AllocationSubscription) Get() AllocationEvent {
+// subscription is closed, ResourcesReleasedEvent is returned.
+func (a *ResourcesSubscription) Get() ResourcesEvent {
 	return a.inbox.Get()
 }
 
 // Close unsubscribes us from further updates.
-func (a *AllocationSubscription) Close() {
+func (a *ResourcesSubscription) Close() {
 	a.unsub()
 }
 
 // Len returns the count of pending events.
-func (a *AllocationSubscription) Len() int {
+func (a *ResourcesSubscription) Len() int {
 	return a.inbox.Len()
 }
 

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
+
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -315,9 +317,19 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		ctx.Log().
 			WithField("allocation-id", ar.AllocationID).
 			Infof("starting restored trial allocation")
-		task.DefaultService.StartAllocation(
-			t.logCtx, ar, t.db, t.rm, specifier, ctx.Self().System(), ctx.Self(),
-		)
+
+		// HACK: Start used to only return errors async, now that it doesn't we need retries else
+		// temporary failures fail the entire trial too easily.
+		err = backoff.Retry(func() error {
+			return task.DefaultService.StartAllocation(
+				t.logCtx, ar, t.db, t.rm, specifier, ctx.Self().System(), func(ae *task.AllocationExited) {
+					ctx.Tell(ctx.Self(), ae)
+				},
+			)
+		}, launchRetries())
+		if err != nil {
+			return err
+		}
 		t.allocationID = &ar.AllocationID
 		return nil
 	}
@@ -356,9 +368,19 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		Debugf("starting new trial allocation")
 
 	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
-	task.DefaultService.StartAllocation(
-		t.logCtx, ar, t.db, t.rm, specifier, ctx.Self().System(), ctx.Self(),
-	)
+	// HACK: Start used to only return errors async, now that it doesn't we need retries else
+	// temporary failures fail the entire trial too easily.
+	err = backoff.Retry(func() error {
+		return task.DefaultService.StartAllocation(
+			t.logCtx, ar, t.db, t.rm, specifier, ctx.Self().System(), func(ae *task.AllocationExited) {
+				ctx.Tell(ctx.Self(), ae)
+			},
+		)
+	}, launchRetries())
+	if err != nil {
+		return err
+	}
+
 	t.allocationID = &ar.AllocationID
 	return nil
 }
@@ -693,4 +715,11 @@ func (t *trial) maybeRestoreAllocation(ctx *actor.Context) (*model.Allocation, e
 			),
 		)
 	}
+}
+
+func launchRetries() backoff.BackOff {
+	bf := backoff.NewExponentialBackOff()
+	bf.InitialInterval = time.Second
+	bf.MaxInterval = time.Minute
+	return backoff.WithMaxRetries(bf, 4)
 }

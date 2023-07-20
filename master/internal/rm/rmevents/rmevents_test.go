@@ -23,12 +23,12 @@ func TestRMEvents(t *testing.T) {
 	t.Logf("starting %d subs each for %d topics", numSubsPerTopic, numTopics)
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	results := map[model.AllocationID]map[int][]sproto.AllocationEvent{}
+	results := map[model.AllocationID]map[int][]sproto.ResourcesEvent{}
 	for _, topic := range topics {
 		topic := topic
 
 		mu.Lock()
-		results[topic] = map[int][]sproto.AllocationEvent{}
+		results[topic] = map[int][]sproto.ResourcesEvent{}
 		mu.Unlock()
 
 		for subID := 0; subID < numSubsPerTopic; subID++ {
@@ -42,7 +42,7 @@ func TestRMEvents(t *testing.T) {
 				for {
 					ev := sub.Get()
 					t.Logf("%s:%d got %T", topic, subID, ev)
-					if ev == (sproto.AllocationReleasedEvent{}) {
+					if ev == (sproto.ResourcesReleasedEvent{}) {
 						return
 					}
 					mu.Lock()
@@ -55,7 +55,7 @@ func TestRMEvents(t *testing.T) {
 
 	iterations := 1000
 	t.Logf("sending %d messages on random topics", iterations)
-	expected := map[model.AllocationID][]sproto.AllocationEvent{}
+	expected := map[model.AllocationID][]sproto.ResourcesEvent{}
 	for i := 0; i < iterations; i++ {
 		topicID := rand.Int63n(int64(len(topics))) //nolint:gosec // This is a test.
 		topic := model.AllocationID(strconv.Itoa(int(topicID)))
@@ -69,7 +69,7 @@ func TestRMEvents(t *testing.T) {
 
 	t.Log("closing subs and waiting on background goroutines")
 	for _, topic := range topics {
-		Publish(topic, sproto.AllocationReleasedEvent{})
+		Publish(topic, sproto.ResourcesReleasedEvent{})
 	}
 	wg.Wait()
 

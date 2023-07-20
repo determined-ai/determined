@@ -10,8 +10,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/syncx/queue"
@@ -67,7 +67,7 @@ func TestAllocation(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			rm, parent, _, a := setup(t)
+			rm, _, a := setup(t)
 
 			// Pre-allocated stage.
 			mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
@@ -95,7 +95,6 @@ func TestAllocation(t *testing.T) {
 				ResourcePool: "default",
 				Resources:    resources,
 			})
-			require.Nil(t, parent.AssertExpectations())
 
 			// Pre-ready stage.
 			first := true
@@ -168,30 +167,12 @@ func TestAllocation(t *testing.T) {
 			require.Equal(t, tc.exit.Err, a.exited.Err)
 			require.Equal(t, tc.exit.UserRequestedStop, a.exited.UserRequestedStop)
 			require.NotNil(t, a.exited)
-
-			var exit *AllocationExited
-			require.True(t, waitForCondition(
-				5*time.Second,
-				func() bool {
-					for _, m := range parent.Messages {
-						// Just clear the state since it's really hard to check (has random stuff in it).
-						if m, ok := m.(*AllocationExited); ok {
-							exit = m
-							return true
-						}
-					}
-					return false
-				},
-			))
-			require.Equal(t, tc.exit.Err, exit.Err)
-			require.Equal(t, tc.exit.UserRequestedStop, exit.UserRequestedStop)
-			// require.True(t, db.AssertExpectations(t))
 		})
 	}
 }
 
 func setup(t *testing.T) (
-	*mocks.ResourceManager, *actors.MockActor, *db.PgDB, *allocation,
+	*mocks.ResourceManager, *db.PgDB, *allocation,
 ) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
@@ -199,11 +180,6 @@ func setup(t *testing.T) (
 
 	// mock resource manager.
 	var rm mocks.ResourceManager
-
-	// mock trial
-	trialImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
-	trialAddr := "trial"
-	trial := system.MustActorOf(actor.Addr(trialAddr), &trialImpl)
 
 	// real db.
 	pgDB := db.MustSetupTestPostgres(t)
@@ -218,25 +194,27 @@ func setup(t *testing.T) (
 		Preemptible:  true,
 		// ...
 	}
-	q := queue.New[sproto.AllocationEvent]()
+	q := queue.New[sproto.ResourcesEvent]()
 	sub := sproto.NewAllocationSubscription(q, func() {})
 	rm.On("Allocate", mock.Anything, mock.Anything).Return(sub, nil)
 
-	a := newAllocation(
+	a, err := newAllocation(
 		detLogger.Context{},
 		ar,
 		pgDB,
 		&rm,
 		mockTaskSpecifier{},
 		system,
-		trial,
 	)
+	require.NoError(t, err)
 	require.True(t, rm.AssertExpectations(t))
 
-	return &rm, &trialImpl, pgDB, a
+	tasklogger.SetDefaultLogger(tasklogger.New(&nullWriter{}))
+
+	return &rm, pgDB, a
 }
 
-var tickInterval = 100 * time.Millisecond
+var tickInterval = 10 * time.Millisecond
 
 func waitForCondition(timeout time.Duration, condition func() bool) bool {
 	for i := 0; i < int(timeout/tickInterval); i++ {
@@ -246,4 +224,11 @@ func waitForCondition(timeout time.Duration, condition func() bool) bool {
 		time.Sleep(tickInterval)
 	}
 	return false
+}
+
+type nullWriter struct{}
+
+// AddTaskLogs implements tasklogger.Writer.
+func (*nullWriter) AddTaskLogs([]*model.TaskLog) error {
+	return nil
 }

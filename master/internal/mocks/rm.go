@@ -23,19 +23,19 @@ type ResourceManager struct {
 }
 
 // Allocate provides a mock function with given fields: _a0, _a1
-func (_m *ResourceManager) Allocate(_a0 actor.Messenger, _a1 sproto.AllocateRequest) (*sproto.AllocationSubscription, error) {
+func (_m *ResourceManager) Allocate(_a0 actor.Messenger, _a1 sproto.AllocateRequest) (*sproto.ResourcesSubscription, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *sproto.AllocationSubscription
+	var r0 *sproto.ResourcesSubscription
 	var r1 error
-	if rf, ok := ret.Get(0).(func(actor.Messenger, sproto.AllocateRequest) (*sproto.AllocationSubscription, error)); ok {
+	if rf, ok := ret.Get(0).(func(actor.Messenger, sproto.AllocateRequest) (*sproto.ResourcesSubscription, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(actor.Messenger, sproto.AllocateRequest) *sproto.AllocationSubscription); ok {
+	if rf, ok := ret.Get(0).(func(actor.Messenger, sproto.AllocateRequest) *sproto.ResourcesSubscription); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*sproto.AllocationSubscription)
+			r0 = ret.Get(0).(*sproto.ResourcesSubscription)
 		}
 	}
 

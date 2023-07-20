@@ -26,8 +26,8 @@ type AllocationService interface {
 		rm rm.ResourceManager,
 		specifier tasks.TaskSpecifier,
 		system *actor.System,
-		parent *actor.Ref,
-	)
+		onExit func(*AllocationExited),
+	) error
 	Signal(
 		id model.AllocationID,
 		sig AllocationSignal,

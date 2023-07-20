@@ -268,7 +268,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		task.DefaultService.StartAllocation(c.logCtx, sproto.AllocateRequest{
+		err := task.DefaultService.StartAllocation(c.logCtx, sproto.AllocateRequest{
 			AllocationID:      c.allocationID,
 			TaskID:            c.taskID,
 			JobID:             c.jobID,
@@ -288,7 +288,12 @@ func (c *command) Receive(ctx *actor.Context) error {
 			IdleTimeout: idleWatcherConfig,
 			Restore:     c.restored,
 			ProxyTLS:    c.TaskType == model.TaskTypeNotebook,
-		}, c.db, c.rm, c.GenericCommandSpec, ctx.Self().System(), ctx.Self())
+		}, c.db, c.rm, c.GenericCommandSpec, ctx.Self().System(), func(ae *task.AllocationExited) {
+			ctx.Tell(ctx.Self(), ae)
+		})
+		if err != nil {
+			return err
+		}
 
 		jobservice.Default.RegisterJob(c.jobID, ctx.Self())
 

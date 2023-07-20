@@ -594,7 +594,7 @@ func (k *kubernetesResourcePool) resourcesReleased(
 		}
 	}
 
-	rmevents.Publish(msg.AllocationID, sproto.AllocationReleasedEvent{})
+	rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
 	k.reqList.RemoveTaskByID(msg.AllocationID)
 	delete(k.allocationIDToContainerID, msg.AllocationID)
 	delete(k.allocationIDToRunningPods, msg.AllocationID)

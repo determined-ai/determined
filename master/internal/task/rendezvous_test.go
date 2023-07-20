@@ -44,7 +44,7 @@ func TestRendezvous(t *testing.T) {
 					Resources: res,
 					Rank:      1,
 				},
-			})
+			}, rendezvousTimeoutDuration)
 
 			var ws []RendezvousWatcher
 			watch := func(rID sproto.ResourcesID) func() {
@@ -107,7 +107,7 @@ func TestRendezvousValidation(t *testing.T) {
 	c1 := sproto.ResourcesID(cproto.NewID())
 	r := newRendezvous(t1, resourcesList{
 		c1: &taskmodel.ResourcesWithState{Rank: 0},
-	})
+	}, rendezvousTimeoutDuration)
 
 	_, err := r.watch(sproto.ResourcesID(cproto.NewID()))
 	assert.ErrorContains(t, err, "stale resources")
@@ -125,7 +125,7 @@ func TestTerminationInRendezvous(t *testing.T) {
 	r := newRendezvous(t1, resourcesList{
 		c1: &taskmodel.ResourcesWithState{Rank: 0},
 		c2: &taskmodel.ResourcesWithState{Rank: 1},
-	})
+	}, rendezvousTimeoutDuration)
 
 	r.resources[c1].Started = &sproto.ResourcesStarted{
 		Addresses: addressesFromContainerID(c1),
@@ -151,7 +151,7 @@ func TestUnwatchInRendezvous(t *testing.T) {
 	r := newRendezvous(t1, resourcesList{
 		c1: &taskmodel.ResourcesWithState{Rank: 0},
 		c2: &taskmodel.ResourcesWithState{Rank: 1},
-	})
+	}, rendezvousTimeoutDuration)
 
 	r.resources[c1].Started = &sproto.ResourcesStarted{Addresses: addressesFromContainerID(c1)}
 	r.try()
@@ -168,14 +168,12 @@ func TestUnwatchInRendezvous(t *testing.T) {
 }
 
 func TestRendezvousTimeout(t *testing.T) {
-	rendezvousTimeoutDuration = 0
-
 	t1 := model.AllocationID(uuid.New().String())
 	c1, c2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
 	r := newRendezvous(t1, resourcesList{
 		c1: &taskmodel.ResourcesWithState{Rank: 0},
 		c2: &taskmodel.ResourcesWithState{Rank: 1},
-	})
+	}, 0)
 
 	_, err := r.watch(c1)
 	assert.NilError(t, err)

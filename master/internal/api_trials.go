@@ -1071,16 +1071,16 @@ func (a *apiServer) AllocationPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPreemptionSignalRequest,
 ) (*apiv1.AllocationPreemptionSignalResponse, error) {
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, fmt.Errorf("checking if allocation is editable: %w", err)
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(req.TimeoutSeconds)*time.Second)
 	defer cancel()
 
-	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
-		return nil, err
-	}
-
 	preempt, err := task.DefaultService.WatchPreemption(ctx, model.AllocationID(req.AllocationId))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("watching preemption status: %w", err)
 	}
 	return &apiv1.AllocationPreemptionSignalResponse{Preempt: preempt}, nil
 }
