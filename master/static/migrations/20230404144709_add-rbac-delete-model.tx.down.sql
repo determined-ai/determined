@@ -1,4 +1,4 @@
-DELETE FROM permissions_assignments WHERE permission_id IN (
+DELETE FROM permission_assignments WHERE permission_id IN (
     7004
 );
 
