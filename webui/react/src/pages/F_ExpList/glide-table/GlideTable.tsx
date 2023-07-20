@@ -630,10 +630,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     (columnIdsStartIdx: number, columnIdsEndIdx: number): void => {
       const pinnedColumnEnd = staticColumns.length + pinnedColumnsCount - 1;
       if (
-        // can't move a column into the pinned area via dragging
-        (columnIdsStartIdx > pinnedColumnEnd && columnIdsEndIdx <= pinnedColumnEnd) ||
         // can't move a column out of the pinned area via dragging
-        (columnIdsStartIdx <= pinnedColumnEnd && columnIdsEndIdx > pinnedColumnEnd)
+        columnIdsStartIdx <= pinnedColumnEnd &&
+        columnIdsEndIdx > pinnedColumnEnd
       )
         return;
 
@@ -645,8 +644,19 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
         setSortableColumnIds(newCols);
       }
+
+      // If a column is moved into the pinned area via dragging
+      if (columnIdsStartIdx > pinnedColumnEnd && columnIdsEndIdx <= pinnedColumnEnd) {
+        setPinnedColumnsCount(pinnedColumnsCount + 1);
+      }
     },
-    [staticColumns.length, pinnedColumnsCount, sortableColumnIds, setSortableColumnIds],
+    [
+      staticColumns.length,
+      pinnedColumnsCount,
+      sortableColumnIds,
+      setSortableColumnIds,
+      setPinnedColumnsCount,
+    ],
   );
 
   const onColumnHovered = useCallback(
