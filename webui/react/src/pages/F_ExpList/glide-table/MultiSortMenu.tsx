@@ -32,6 +32,7 @@ interface MultiSortProps {
   sorts: Sort[];
   columns: Loadable<ProjectColumn[]>;
   onChange: (sorts: Sort[]) => void;
+  isMobile?: boolean;
 }
 interface MultiSortRowProps {
   sort: Sort;
@@ -252,7 +253,12 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
   );
 };
 
-const MultiSortMenu: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
+const MultiSortMenu: React.FC<MultiSortProps> = ({
+  sorts,
+  columns,
+  onChange,
+  isMobile = false,
+}) => {
   const validSorts = sorts.filter(validSort.is);
   const onSortPopoverOpenChange = (open: boolean) => {
     if (!open) {
@@ -267,7 +273,7 @@ const MultiSortMenu: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) =
       showArrow={false}
       trigger="click"
       onOpenChange={onSortPopoverOpenChange}>
-      <Button icon={<SortButtonIcon />}>
+      <Button hideChildren={isMobile} icon={<SortButtonIcon />}>
         Sort {validSorts.length ? `(${validSorts.length})` : ''}
       </Button>
     </Popover>
