@@ -18,7 +18,10 @@ CREATE TABLE public.trial_source_infos (
     -- Type of the `trial_source_info` (inference or fine tuning for now)
     trial_source_info_type trial_source_info_type NOT NULL,
 
-    CONSTRAINT fk_model_versions FOREIGN KEY (model_version_id, model_version_version) REFERENCES public.model_versions (model_id, version),
+    -- Foreign key to the model_versions table.
+    -- Note: This is joining on model_id and the version. 
+    -- There is also an internal id for the `ModelVersion` object, but we are pointing at the `Model` object's id and the version number
+    CONSTRAINT fk_model_versions FOREIGN KEY (model_version_id, model_version_version) REFERENCES public.model_versions (model_id, version) ON DELETE CASCADE,
     -- `public.model_version` defines its primary key as the combination of these
     -- two values. Make sure that either they are both present or both missing
     CONSTRAINT check_model_version_valid CHECK (

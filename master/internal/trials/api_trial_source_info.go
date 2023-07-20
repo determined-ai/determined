@@ -50,15 +50,13 @@ func GetMetricsForTrialSourceInfoQuery(
 		TrialID             int
 		TrialSourceInfoType string
 	}{}
-
 	q = q.Column("trial_id", "trial_source_info_type")
-
 	err := q.Scan(ctx, &trialIds)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get trial source info %w", err)
 	}
-	ret := []*apiv1.TrialSourceInfoMetric{}
 
+	ret := []*apiv1.TrialSourceInfoMetric{}
 	numMetricsLimit := 1000
 	for _, val := range trialIds {
 		if err := CanGetTrialsExperimentAndCheckCanDoAction(ctx, val.TrialID,

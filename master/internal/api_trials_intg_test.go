@@ -676,10 +676,10 @@ func TestReportTrialSourceInfo(t *testing.T) {
 
 	var trialMetrics map[model.MetricGroup][]map[string]any
 	require.NoError(t, json.Unmarshal([]byte(
-		`{"inference": [{"a":1}, {"b":2}], "inference": [{"b":2, "c":3}]}`,
+		`{"inference": [{"a":1}, {"b":2}]}`,
 	), &trialMetrics))
-	for mType, metrics := range trialMetrics {
-		for _, m := range metrics {
+	for mType, metricsList := range trialMetrics {
+		for _, m := range metricsList {
 			metrics, err := structpb.NewStruct(m)
 			require.NoError(t, err)
 			err = api.m.db.AddTrialMetrics(ctx,
@@ -710,7 +710,7 @@ func TestReportTrialSourceInfo(t *testing.T) {
 		TrialId:             int32(infTrial.ID),
 		CheckpointUuid:      checkpointUUID,
 		TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
-		ModelVersionId:      &modelVersion.Id,
+		ModelVersionId:      &modelVersion.Model.Id,
 		ModelVersionVersion: &modelVersion.Version,
 	}
 	req := &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: trialSourceInfo}
@@ -739,6 +739,7 @@ func TestReportTrialSourceInfo(t *testing.T) {
 	// Only infTrial should have generic metrics attached.
 	for _, tsim := range getCkptResp.Data {
 		if tsim.TrialId == int32(infTrial.ID) {
+			// One aggregated MetricsReport
 			require.Equal(t, len(tsim.MetricReports), 1)
 		} else {
 			require.Empty(t, tsim.MetricReports)
@@ -747,13 +748,12 @@ func TestReportTrialSourceInfo(t *testing.T) {
 
 	// Get the trials and metrics based on model version
 	getMVReq := &apiv1.GetTrialSourceInfoMetricsByModelVersionRequest{
-		ModelVersionId:      modelVersion.Id,
+		ModelVersionId:      modelVersion.Model.Id,
 		ModelVersionVersion: modelVersion.Version,
 	}
 	getMVResp, getMVErr := api.GetTrialSourceInfoMetricsByModelVersion(ctx, getMVReq)
 	require.NoError(t, getMVErr)
+	// One trial is valid and it has one aggregated MetricsReport
 	require.Equal(t, len(getMVResp.Data), 1)
 	require.Equal(t, len(getCkptResp.Data[0].MetricReports), 1)
-	// if tsim.TrialId == int32(infTrial.ID) {
-	// 	require.Equal(t, len(tsim.MetricReports), 1)
 }
