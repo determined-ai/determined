@@ -636,6 +636,20 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			errorContains:    "is not configurable",
 		},
 		{
+			name:             "Test remove duplicated slurmArgs",
+			containerRunType: "singularity",
+			slotType:         device.CUDA,
+			Slurm:            []string{"--DUP", "--DUP", "--dup"},
+			wantSlurmArgs:    []string{"--DUP", "--dup"},
+		},
+		{
+			name:             "Test remove duplicated pbsArgs",
+			containerRunType: "singularity",
+			slotType:         device.CUDA,
+			Pbs:              []string{"-DUP", "-DUP", "-dup"},
+			wantPbsArgs:      []string{"-DUP", "-dup"},
+		},
+		{
 			name:             "Add Tmp FS",
 			containerRunType: "enroot",
 			slotType:         device.CUDA,
