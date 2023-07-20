@@ -16,10 +16,10 @@ def standard_session() -> api.Session:
 
 @pytest.fixture
 def single_item_resource_pools() -> bindings.v1GetResourcePoolsResponse:
-    sample_resource_pools = api_responses.sample_get_resource_pool().resourcePools
+    sample_resource_pools = api_responses.sample_get_resource_pool()
     single_item_pagination = bindings.v1Pagination(endIndex=1, startIndex=0, total=1)
     return bindings.v1GetResourcePoolsResponse(
-        resourcePools=sample_resource_pools, pagination=single_item_pagination
+        resourcePools=[sample_resource_pools], pagination=single_item_pagination
     )
 
 
@@ -35,7 +35,7 @@ def test_bind_rp_to_workspaces_errors_on_invalid_rps(
     rp = resource_pool.ResourcePool(session=standard_session, name="invalid_rp")
 
     try:
-        rp.bind("foo")
+        rp.add_bindings(["foo"])
         raise AssertionError("Server's 500 should raise an exception")
     except api.errors.APIException:
         pass
