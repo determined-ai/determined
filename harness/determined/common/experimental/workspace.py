@@ -59,7 +59,7 @@ class Workspace:
 
     def resource_pools(self) -> Optional[List[str]]:
         """
-        List resources pool bound to a workspace.
+        List resources pools available to a workspace.
 
         Returns:
             (List(str)) The names of resource pools bound to the workspace.
