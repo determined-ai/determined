@@ -163,4 +163,4 @@ args_description = [
             ),
         ],
     )
-]
+]  # type: List[Any]
