@@ -112,7 +112,9 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
 
   const loadableMetrics = useMetricNames(experimentIds, handleMetricNamesError);
   const metricNamesLoaded = Loadable.isLoaded(loadableMetrics);
-  const metrics = Loadable.getOrElse([], loadableMetrics);
+  const metrics = useMemo(() => {
+    return Loadable.getOrElse([], loadableMetrics);
+  }, [loadableMetrics]);
   const [loadableData, setLoadableData] =
     useState<Loadable<Record<number, Record<string, Serie>>>>(NotLoaded);
   const [scale, setScale] = useState<Scale>(Scale.Linear);
