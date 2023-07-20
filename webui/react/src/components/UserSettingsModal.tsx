@@ -18,7 +18,7 @@ interface Props {
   onSave?: () => void;
 }
 
-const UserSettingsModal: React.FC<Props> = ({ onSave }: Props) => {
+const UserSettingsModalComponent: React.FC<Props> = ({ onSave }: Props) => {
   const { actions: uiActions } = useUI();
   const [configError, setConfigError] = useState(false);
   const initialSettingsString = useMemoizedObservable<Loadable<string>>(
@@ -106,4 +106,4 @@ const UserSettingsModal: React.FC<Props> = ({ onSave }: Props) => {
   );
 };
 
-export default UserSettingsModal;
+export default UserSettingsModalComponent;

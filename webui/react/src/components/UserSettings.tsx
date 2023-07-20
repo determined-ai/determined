@@ -1,3 +1,4 @@
+import { Space } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Drawer from 'components/kit/Drawer';
@@ -36,7 +37,12 @@ import { useObservable } from 'utils/observable';
 import { KeyboardShortcut, shortcutToString } from 'utils/shortcut';
 import { Mode } from 'utils/themes';
 
+import Accordion from './kit/Accordion';
+import Button from './kit/Button';
+import Paragraph from './kit/Typography/Paragraph';
+import useConfirm from './kit/useConfirm';
 import css from './UserSettings.module.scss';
+import UserSettingsModalComponent from './UserSettingsModal';
 
 const API_DISPLAYNAME_SUCCESS_MESSAGE = 'Display name updated.';
 const API_USERNAME_ERROR_MESSAGE = 'Could not update username.';
@@ -50,7 +56,9 @@ interface Props {
 const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const info = useObservable(determinedStore.info);
+  const confirm = useConfirm();
 
+  const UserSettingsModal = useModal(UserSettingsModalComponent);
   const PasswordChangeModal = useModal(PasswordChangeModalComponent);
   const {
     ui: { mode: uiMode },
@@ -296,6 +304,35 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   <InputShortcut />
                 </InlineForm>
               </div>
+            </Section>
+            <Section divider title="Advanced">
+              <Paragraph>
+                Advanced features are potentially dangerous and could require you to completely
+                reset your user settings if you make a mistake.
+              </Paragraph>
+              <Accordion title="I know what I'm doing">
+                <Space>
+                  <Button
+                    danger
+                    type="primary"
+                    onClick={() =>
+                      confirm({
+                        content:
+                          'Are you sure you want to reset all user settings to their default values?',
+                        onConfirm: () => {
+                          setMode(Mode.System);
+                          userSettings.clear();
+                        },
+                        onError: handleError,
+                        title: 'Reset User Settings',
+                      })
+                    }>
+                    Reset to Default
+                  </Button>
+                  <Button onClick={() => UserSettingsModal.open()}>Edit Raw Settings (JSON)</Button>
+                  <UserSettingsModal.Component />
+                </Space>
+              </Accordion>
             </Section>
           </Drawer>
         );

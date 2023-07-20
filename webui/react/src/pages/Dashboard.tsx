@@ -3,12 +3,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import ExperimentIcons from 'components/ExperimentIcons';
 import JupyterLabButton from 'components/JupyterLabButton';
 import Breadcrumb from 'components/kit/Breadcrumb';
-import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Empty from 'components/kit/Empty';
 import Icon from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
-import useConfirm from 'components/kit/useConfirm';
 import Link from 'components/Link';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
@@ -21,7 +18,6 @@ import {
   taskNameRenderer,
   taskTypeRenderer,
 } from 'components/Table/Table';
-import UserSettingsModal from 'components/UserSettingsModal';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
@@ -33,9 +29,7 @@ import {
   getShells,
   getTensorBoards,
 } from 'services/api';
-import useUI from 'stores/contexts/UI';
 import userStore from 'stores/users';
-import userSettings from 'stores/userSettings';
 import workspaceStore from 'stores/workspaces';
 import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';
 import { ErrorType } from 'utils/error';
@@ -43,7 +37,6 @@ import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { dateTimeStringSorter } from 'utils/sort';
-import { Mode } from 'utils/themes';
 
 import css from './Dashboard.module.scss';
 
@@ -179,12 +172,6 @@ const Dashboard: React.FC = () => {
     };
   }, [canceler, stopPolling]);
 
-  const confirm = useConfirm();
-  const {
-    actions: { setMode },
-  } = useUI();
-  const USModal = useModal(UserSettingsModal); // TODO: Remove before merging
-
   const pageBreadCrumb: BreadCrumbRoute[] = [{ breadcrumbName: 'Home', path: paths.dashboard() }];
   if (projectsLoading && submissionsLoading) {
     return (
@@ -200,29 +187,7 @@ const Dashboard: React.FC = () => {
   return (
     <Page
       breadcrumb={pageBreadCrumb}
-      options={
-        <>
-          <JupyterLabButton enabled={canCreateNSC} />
-          <Button onClick={() => USModal.open()}>Edit Raw Settings (JSON)</Button>
-          <Button
-            danger
-            type="primary"
-            onClick={() =>
-              confirm({
-                content:
-                  'Are you sure you want to reset all user settings to their default values?',
-                onConfirm: () => {
-                  setMode(Mode.System);
-                  userSettings.clear();
-                },
-                onError: handleError,
-                title: 'Reset User Settings',
-              })
-            }>
-            Reset to Default
-          </Button>
-        </>
-      }
+      options={<JupyterLabButton enabled={canCreateNSC} />}
       title="Home">
       {projectsLoading ? (
         <Section>
@@ -347,7 +312,6 @@ const Dashboard: React.FC = () => {
           />
         )}
       </Section>
-      <USModal.Component />
     </Page>
   );
 };
