@@ -71,22 +71,25 @@ def replace_bindings(args: Namespace) -> None:
 
 @authentication.required
 def list_workspaces(args: Namespace) -> None:
-    resp = bindings.get_ListWorkspacesBoundToRP(
-        setup_session(args), resourcePoolName=args.pool_name
-    )
+    session = setup_session(args)
+    resp = bindings.get_ListWorkspacesBoundToRP(session, resourcePoolName=args.pool_name)
     if resp.workspaceIds is None or len(resp.workspaceIds) == 0:
         print("resource pool has no assignments")
         return
 
     print("ids are:", resp.workspaceIds)  # TODO: convert to names
+    workspace_names = ""
+    workspaces_set = set(resp.workspaceIds)
+    workspaces = bindings.get_GetWorkspaces(session)
+    for workspace in workspaces.workspaces:
+        if workspace.id in workspaces_set:
+            workspace_names += workspace.name + ", "
 
-    workspaces_string = ""
-    for workspace in resp.workspaceIds[:-1]:
-        workspaces_string += str(workspace) + ", "
-    workspaces_string += str(resp.workspaceIds[-1])
+    if workspace_names != "":
+        workspace_names = workspace_names[:-2]
 
     headers = ["resource pool", "workspaces"]
-    values = [[args.pool_name, workspaces_string]]
+    values = [[args.pool_name, workspace_names]]
     render.tabulate_or_csv(headers, values, False)
     return
 
