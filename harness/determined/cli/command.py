@@ -321,15 +321,17 @@ def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> 
             )
 
         key, value = config_arg.split("=", maxsplit=1)  # type: Tuple[str, Any]
+        print(key, value, type(value), value.startswith(("[", "{")))
 
         # Complex objects may contain commas but are not intended to be split
         # on commas and have their parts parsed separately.
         if value.startswith(("[", "{")):
-            value = yaml.load(value)
             # Certain configurations keys are expected to have list values.
             # Convert a single value to a singleton list if needed.
             if key in _CONFIG_PATHS_COERCE_TO_LIST and value.startswith("{"):
-                value = [value]
+                value = [yaml.load(value)]
+            else:
+                value = yaml.load(value)
         # Separate values if a comma exists. Use yaml.load() to cast
         # the value(s) to the type YAML would use, e.g., "4" -> 4.
         elif "," in value:
