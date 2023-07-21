@@ -984,7 +984,8 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         else:
             random_zero_stage_max_mbs = self.trial_tracker.approx_max_mbs_per_stage[zero_stage]
             lo = self.trial_tracker.divisible_by
-            hi = _utils.round_mbs_down(2 * random_zero_stage_max_mbs - lo, self.trial_tracker)
+            hi = max(2 * random_zero_stage_max_mbs - lo, lo)
+            hi = _utils.round_mbs_down(hi, self.trial_tracker)
             hi = max(hi, lo)
             new_search_data = DSATSearchData(lo=lo, hi=hi)
 
@@ -1133,10 +1134,7 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
         # The default `search_range_factor = 1.` value makes the starting value coincide with
         # the predicted max mbs, but we give the user a handle to alter this range as needed.
         lo = self.trial_tracker.divisible_by
-        hi = min(
-            2 * int(self.search_range_factor * random_zero_stage_max_mbs) - lo,
-            self.trial_tracker.max_mbs,
-        )
+        hi = max(2 * int(self.search_range_factor * random_zero_stage_max_mbs) - lo, lo)
         hi = _utils.round_mbs_down(hi, self.trial_tracker)
         hi = max(hi, lo)
         new_search_data = DSATSearchData(lo=lo, hi=hi)
@@ -1457,10 +1455,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
 
         random_zero_stage_max_mbs = self.trial_tracker.approx_max_mbs_per_stage[zero_stage]
         lo = self.trial_tracker.divisible_by
-        hi = min(
-            2 * int(self.search_range_factor * random_zero_stage_max_mbs) - lo,
-            self.trial_tracker.max_mbs,
-        )
+        hi = max(2 * int(self.search_range_factor * random_zero_stage_max_mbs) - lo, lo)
         hi = _utils.round_mbs_down(hi, self.trial_tracker)
         hi = max(hi, lo)
 
