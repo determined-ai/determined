@@ -301,7 +301,8 @@ message TrialSourceInfo {
   string checkpoint_uuid = 2;
   // Source `id`` for the model which generated the checkpoint (if applicable)
   optional int32 model_id = 3;
-  // Source `version` in the model_version version field which generated the checkpoint (if applicable)
+  // Source `version` in the model_version version field which generated the
+  // checkpoint (if applicable)
   optional int32 model_version = 4;
   // Type for this trial_source_info
   TrialSourceInfoType trial_source_info_type = 5;
