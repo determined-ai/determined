@@ -1431,7 +1431,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
 class _TestDSATSearchMethod(BaseDSATSearchMethod):
     """Searcher for basic testing purposes.
 
-    Submits Trials with linearly increasing batch sizes, from 2 up to max_trials
+    Submits Trials with increasing batch sizes consistent with global args.
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -1453,12 +1453,10 @@ class _TestDSATSearchMethod(BaseDSATSearchMethod):
             del hparams_without_profile_info_keys[_defaults.OVERWRITE_KEY]["autotuning"][
                 "model_info_path"
             ]
-            for tmbs in range(
-                self.trial_tracker.divisible_by,
-                self.trial_tracker.divisible_by * self.trial_tracker.max_trials + 1,
-            ):
+            for trial_num in range(1, self.trial_tracker.max_trials):
                 hparams = copy.deepcopy(hparams_without_profile_info_keys)
-                hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = tmbs
+                mbs = self.trial_tracker.divisible_by * trial_num
+                hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
                 # Choose a random zero stage:
                 hparams[_defaults.OVERWRITE_KEY]["zero_optimization"] = {
                     "stage": random.choice(list(self.args.zero_stages))

@@ -106,18 +106,24 @@ DEFAULT_HF_ARGS_WITHOUT_DEEPSPEED = RAW_DEFAULT_HF_ARGS_WITHOUT_DEEPSPEED.split(
 
 
 def _run_searcher(
-    search_method_name: str, all_metrics: List[Dict[str, Any]]
+    search_method_name: str,
+    all_metrics: List[Dict[str, Any]],
+    additional_args: Optional[Dict[str, Any]] = None,
 ) -> MockMasterSearchRunner:
     """
     Run a mocked version of the Determined master with a deterministic series of
     returned metrics for a given Deepspeed Autotune Custom Search Method
     """
     search_method_class = get_search_method_class(search_method_name)
-    default_args = DEFAULT_ARGS_DICT[search_method_name]
+    args = DEFAULT_ARGS_DICT[search_method_name]
+    if additional_args is not None:
+        args = copy.deepcopy(args)
+        for k, v in additional_args.items():
+            setattr(args, k, v)
     default_exp_config = DEFAULT_CUSTOM_DSAT_EXP_CONFIG_DICT[search_method_name]
     with tempfile.TemporaryDirectory() as searcher_dir:
         searcher_path = pathlib.Path(searcher_dir)
-        search_method = search_method_class(args=default_args, exp_config=default_exp_config)
+        search_method = search_method_class(args=args, exp_config=default_exp_config)
         mock_master_obj = DSATMockMaster(all_metrics=all_metrics)
         search_runner = MockMasterSearchRunner(search_method, mock_master_obj, searcher_path)
         search_runner.run(exp_config={}, context_dir="", includes=None)
@@ -151,6 +157,32 @@ def test_deepspeed_autotune_happy_path() -> None:
 
 
 @pytest.mark.timeout(10)
+def test_deepspeed_autotune_happy_path_divisible_by() -> None:
+    """
+    Simulate the Deepspeed Autotune Search Methods end to end and make sure
+    nothing falls over when the divisible_by flag is set
+    """
+    for search_method_name in _defaults.ALL_SEARCH_METHOD_NAMES:
+        # All of our search methods currently run all of the specified `max-trials` in the
+        # happy path
+        exp_num_trials = cast(int, _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"])
+        model_info_profile_trial_metrics: List[Dict[str, Any]] = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
+        default_metric_name = str(_defaults.AUTOTUNING_ARG_DEFAULTS["metric"])
+        successful_trial_metrics: List[Dict[str, Any]] = [
+            {default_metric_name: 0.0} for _ in range(exp_num_trials - 1)
+        ]
+        all_metrics = model_info_profile_trial_metrics + successful_trial_metrics
+        search_runner = _run_searcher(search_method_name, all_metrics, {"divisible_by": 8})
+        assert len(search_runner.state.trials_created) == exp_num_trials
+        assert len(search_runner.state.trials_closed) == exp_num_trials
+        assert len(search_runner.state.trial_progress) == exp_num_trials
+        for trial_uuid in search_runner.state.trial_progress:
+            assert search_runner.state.trial_progress[trial_uuid] == 1.0
+        assert not search_runner.state.experiment_failed
+        assert search_runner.state.experiment_completed
+
+
+@pytest.mark.timeout(10)
 def test_continuous_failures() -> None:
     """
     Make sure that DSAT Search Methods can handle continuous failures. The experiment should be
@@ -162,6 +194,27 @@ def test_continuous_failures() -> None:
         failed_trial_metrics = [{ERROR_METRIC_NAME: True} for _ in range(exp_num_trials - 1)]
         all_metrics = model_info_profile_trial_metrics + failed_trial_metrics
         search_runner = _run_searcher(search_method_name, all_metrics)
+
+        assert len(search_runner.state.trials_created) == exp_num_trials
+        assert len(search_runner.state.failures) == exp_num_trials - 1
+        assert len(search_runner.state.trials_closed) == exp_num_trials
+        assert len(search_runner.state.trial_progress) == exp_num_trials
+        assert search_runner.state.experiment_failed
+        assert not search_runner.state.experiment_completed
+
+
+@pytest.mark.timeout(10)
+def test_continuous_failures_divisible_by() -> None:
+    """
+    Make sure that DSAT Search Methods can handle continuous failures when divisible_by is set. The
+    experiment should be marked as failed.
+    """
+    for search_method_name in _defaults.ALL_SEARCH_METHOD_NAMES:
+        exp_num_trials = cast(int, _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"])
+        model_info_profile_trial_metrics = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
+        failed_trial_metrics = [{ERROR_METRIC_NAME: True} for _ in range(exp_num_trials - 1)]
+        all_metrics = model_info_profile_trial_metrics + failed_trial_metrics
+        search_runner = _run_searcher(search_method_name, all_metrics, {"divisible_by": 8})
 
         assert len(search_runner.state.trials_created) == exp_num_trials
         assert len(search_runner.state.failures) == exp_num_trials - 1
@@ -184,6 +237,30 @@ def test_one_off_failure() -> None:
             model_info_profile_trial_metrics + one_failed_trial_metrics + successful_trial_metrics
         )
         search_runner = _run_searcher(search_method_name, all_metrics)
+
+        assert len(search_runner.state.trials_created) == exp_num_trials
+        assert len(search_runner.state.failures) == 1
+        assert len(search_runner.state.trials_closed) == exp_num_trials
+        assert len(search_runner.state.trial_progress) == exp_num_trials
+        assert not search_runner.state.experiment_failed
+        assert search_runner.state.experiment_completed
+
+
+@pytest.mark.timeout(10)
+def test_one_off_failure_divisible_by() -> None:
+    """Make sure that DSAT Search Methods can properly handle a single failure when divisible_by is
+    set.
+    """
+    for search_method_name in _defaults.ALL_SEARCH_METHOD_NAMES:
+        exp_num_trials = cast(int, _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"])
+        model_info_profile_trial_metrics = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
+        one_failed_trial_metrics: List[Dict[str, Any]] = [{ERROR_METRIC_NAME: True}]
+        default_metric_name: str = str(_defaults.AUTOTUNING_ARG_DEFAULTS["metric"])
+        successful_trial_metrics = [{default_metric_name: 0.0} for _ in range(exp_num_trials - 2)]
+        all_metrics = (
+            model_info_profile_trial_metrics + one_failed_trial_metrics + successful_trial_metrics
+        )
+        search_runner = _run_searcher(search_method_name, all_metrics, {"divisible_by": 8})
 
         assert len(search_runner.state.trials_created) == exp_num_trials
         assert len(search_runner.state.failures) == 1
