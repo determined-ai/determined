@@ -6,8 +6,10 @@ import shlex
 import shutil
 import subprocess
 import sys
+import typing
 from argparse import Namespace
-from typing import Any, List, OrderedDict, Tuple
+from collections.abc import Sequence as abc_Sequence
+from typing import Any, Dict, List, Optional, OrderedDict, Sequence, Tuple, get_args, get_origin
 from urllib import parse
 
 from termcolor import colored
@@ -75,19 +77,40 @@ def _bindings_sig(fn: Any) -> Tuple[str, List[inspect.Parameter]]:
 
 def _bindings_sig_str(name: str, params: List[inspect.Parameter]) -> str:
     def serialize_param(p: inspect.Parameter) -> str:
-        return str(p)
+        return str(p).replace("typing.", "")
 
     params_str = ", ".join(serialize_param(p) for p in params)
     return f"{name} <= {params_str}" if params else name
 
 
-def _is_primitive_parameter(p: inspect.Parameter) -> bool:
-    if p.annotation in [str, int, float, bool]:
+def _is_primitive_annotation(a: Any) -> bool:
+    if isinstance(a, str):
+        try:
+            a = eval(a.strip())
+        except NameError:
+            pass
+    # TODO bools
+    if a in [str, int, float, type(None)]:
         return True
-    # is in a list of above
-    if hasattr(p.annotation, "__origin__") and p.annotation.__origin__ in [list, List]:
-        return p.annotation.__args__[0] in [str, int, float, bool]
+
+    origin = get_origin(a)
+    args = get_args(a)
+
+    if origin is typing.Union:
+        # Handle Optional[X] as a special case.
+        if len(args) == 2 and type(None) in args:
+            return _is_primitive_annotation(args[0])
+    elif origin in [list, tuple, set, frozenset, abc_Sequence]:
+        # Assume all elements of the sequence are of the same type,
+        # and check that type.
+        if args is not None:
+            return all(_is_primitive_annotation(arg) for arg in args)
+
     return False
+
+
+def _is_primitive_parameter(p: inspect.Parameter) -> bool:
+    return _is_primitive_annotation(p.annotation)
 
 
 def _can_be_called_via_cli(params: List[inspect.Parameter]) -> bool:
@@ -102,15 +125,44 @@ def _can_be_called_via_cli(params: List[inspect.Parameter]) -> bool:
     return True
 
 
+def _test():
+    _, params = _bindings_sig(bindings.get_GetExperiment)
+    assert _can_be_called_via_cli(params) is True, params
+
+    _, params = _bindings_sig(bindings.post_UpdateJobQueue)
+    assert _can_be_called_via_cli(params) is False, params
+    annots = [
+        str,
+        Sequence[str],
+        Optional[str],
+        Optional[Sequence[str]],
+    ]
+    for a in annots:
+        assert (
+            _is_primitive_parameter(
+                inspect.Parameter("x", inspect.Parameter.POSITIONAL_ONLY, annotation=a)
+            )
+            is True
+        ), a
+
+    _, params = _bindings_sig(bindings.get_ExpMetricNames)
+    for p in params:
+        assert _is_primitive_parameter(p) is True, p
+
+
+# print(_bindings_sig(bindings.get_ExpMetricNames))
+_test()
+
+
 def _get_available_bindings(show_unusable: bool = False):
     rv: List[Tuple[str, List[inspect.Parameter]]] = []
     for name, obj in inspect.getmembers(bindings):
         if not inspect.isfunction(obj):
             continue
         name, params = _bindings_sig(obj)
-        if not show_unusable and not _can_be_called_via_cli(params):
-            continue
         if not show_unusable:
+            if not _can_be_called_via_cli(params):
+                continue
             params = [p for p in params if _is_primitive_parameter(p)]
         rv.append((name, params))
 
@@ -126,19 +178,39 @@ def list_bindings(args: Namespace) -> None:
         print(_bindings_sig_str(name, params))
 
 
-def _test():
-    _, params = _bindings_sig(bindings.get_GetExperiment)
-    assert _can_be_called_via_cli(params) is True, params
+def _parse_args_to_kwargs(args: Namespace, params: List[inspect.Parameter]) -> Dict[str, Any]:
+    assert len(args.args) <= len(params), "too many arguments"
+    kwargs: Dict[str, Any] = {}
 
-    _, params = _bindings_sig(bindings.post_UpdateJobQueue)
-    assert _can_be_called_via_cli(params) is False, params
+    for idx, arg in enumerate(args.args):
+        # by order
+        kwargs[params[idx].name] = arg
+
+    # for p in params:
+    #     if p.default is not inspect.Parameter.empty:
+    #         kwargs[p.name] = p.default
+    #     else:
+    #         kwargs[p.name] = getattr(args, p.name)
+    return kwargs
 
 
-_test()
+def _print_resposne(d: Any) -> None:
+    if d is None:
+        return
+    if hasattr(d, "to_json"):
+        cli.render.print_json(d.to_json())
+    elif inspect.isgenerator(d):
+        for v in d:
+            _print_resposne(v)
+    else:
+        print(d)
 
 
 @authentication.required
 def call_bindings(args: Namespace) -> None:
+    """
+    support calling some bindings with primitive arguments via the cli
+    """
     sess = cli.setup_session(args)
     fn_name: str = args.name
     fns = _get_available_bindings(show_unusable=False)
@@ -151,34 +223,26 @@ def call_bindings(args: Namespace) -> None:
             raise errors.CliError(f"no such binding: {fn_name}")
         # if len(matches) > 1:
         #     raise errors.CliError(f"multiple bindings match for {fn_name}: {matches}")
-        input(f"did you mean {matches[0]}? (press enter to continue)")
+        input(f"did you mean '{matches[0]}'? (press enter to continue)")
         fn_name = matches[0]
         fn = getattr(bindings, fn_name)
 
     params = fns[fn_name]
     try:
-        assert len(args.args) <= len(params), "too many arguments"
-        # turn the positional args into kwargs
-        kwargs = {p.name: args.args[i] for i, p in enumerate(params)}
+        kwargs = _parse_args_to_kwargs(args, params)
         rv = fn(sess, **kwargs)
-    except TypeError as e:
+    except Exception as e:  # we could check TypeError but let's provide more hint
         raise errors.CliError(
-            "expected arguments: "
+            "Usage: "
             + _bindings_sig_str(
                 fn_name,
                 params,
-            ),
+            )
+            + f"\n{str(e)}",
             e,
         )
 
-    if rv is None:
-        return
-
-    # see it it has a to_json method
-    if hasattr(rv, "to_json"):
-        cli.render.print_json(rv.to_json())
-    else:
-        print(rv.experiment)
+    _print_resposne(rv)
 
 
 args_description = [
