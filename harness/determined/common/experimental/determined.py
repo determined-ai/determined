@@ -182,9 +182,27 @@ class Determined:
         project_id: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Iterator[experiment.Experiment]:
-        """
-        Get a list of :class:`~determined.experimental.Experiment` representing the
-        experiments with the provided experiment ID.
+        """Get an iterable of experiments (:class:`~determined.experimental.Experiment`).
+
+        Arguments:
+            sort_by: Which field to sort by. See
+                :class:`~determined.experimental.ExperimentSortBy`.
+            order_by: Whether to sort in ascending or descending order. See
+                :class:`~determined.experimental.ExperimentOrderBy`.
+            name: If this parameter is set, experiments will be filtered to only include those
+                with names matching this parameter.
+            experiment_ids: Only return experiments with these IDs.
+            labels: Only return experiments with labels in this list.
+            users: Only return experiments belonging to these users. Defaults to all users.
+            states: Only return experiments that are in these states.
+            project_id: Only return experiments associated with this project ID.
+            limit: Specifies maximum page size of the response from the server. When there are
+                many experiments to return, a lower page size can result in shorter latency at the
+                expense of more HTTP requests to the server. Defaults to no maximum.
+
+        Returns:
+            An Iterator type that lazily instantiates response objects. To
+            get all experiments at once, call list(list_experiments()).
         """
 
         def get_with_offset(offset: int) -> bindings.v1GetExperimentsResponse:
@@ -199,7 +217,7 @@ class Determined:
                 offset=offset,
                 limit=limit,
                 name=name,
-                states=states,
+                states=[state._to_bindings() for state in states] if states else None,
                 users=users,
                 projectId=project_id,
             )

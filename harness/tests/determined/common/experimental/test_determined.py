@@ -149,7 +149,7 @@ def test_get_trial_populates_attribute(
 def test_list_experiments_calls_bindings_with_params(
     mock_bindings: mock.MagicMock,
     make_client: Callable[[], Determined],
-):
+) -> None:
     client = make_client()
     exps_resp = api_responses.sample_get_experiments()
 
@@ -169,16 +169,18 @@ def test_list_experiments_calls_bindings_with_params(
         pageable_type="experiments",
     )
 
-    list(client.list_experiments(**params))
+    list(client.list_experiments(**params))  # type: ignore
 
     _, call_kwargs = mock_bindings.call_args_list[0]
 
-    assert call_kwargs["sortBy"] == params["sort_by"]._to_bindings()
-    assert call_kwargs["orderBy"] == params["order_by"]._to_bindings()
+    assert call_kwargs["sortBy"] == params["sort_by"]._to_bindings()  # type: ignore
+    assert call_kwargs["orderBy"] == params["order_by"]._to_bindings()  # type: ignore
     assert call_kwargs["experimentIdFilter_incl"] == params["experiment_ids"]
     assert call_kwargs["labels"] == params["labels"]
     assert call_kwargs["users"] == params["users"]
-    assert call_kwargs["states"] == params["states"]
+    assert call_kwargs["states"] == [
+        state._to_bindings() for state in params["states"]  # type: ignore
+    ]
     assert call_kwargs["name"] == params["name"]
     assert call_kwargs["projectId"] == params["project_id"]
 
@@ -188,7 +190,7 @@ def test_list_experiments_calls_bindings_with_params(
 def test_list_experiments_iterates_through_pages(
     mock_bindings: mock.MagicMock,
     make_client: Callable[[], Determined],
-):
+) -> None:
     client = make_client()
     exps_resp = api_responses.sample_get_experiments()
     total_exps = len(exps_resp.experiments)

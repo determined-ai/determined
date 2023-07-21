@@ -194,8 +194,8 @@ def serve_by_page(
 
 
 def iter_pages(
-    pageable_resp: bindings.Paginated, pageable_type: str, max_page_size: int = None
-) -> Iterator[P]:
+    pageable_resp: bindings.Paginated, pageable_type: str, max_page_size: Optional[int] = None
+) -> Iterator[bindings.Paginated]:
     """Creates an infinite generator from a pageable response.
 
     If the pageable response is exhausted, this method will return an empty response.
@@ -217,4 +217,4 @@ def iter_pages(
             limit=max_page_size,
         )
         yield page
-        offset = page.pagination.endIndex
+        offset = page.pagination.endIndex  # type: ignore
