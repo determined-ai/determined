@@ -321,7 +321,6 @@ def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> 
             )
 
         key, value = config_arg.split("=", maxsplit=1)  # type: Tuple[str, Any]
-        print(key, value, type(value), value.startswith(("[", "{")))
 
         # Complex objects may contain commas but are not intended to be split
         # on commas and have their parts parsed separately.
