@@ -60,9 +60,9 @@ To analyze multiple experiments, use ``det tensorboard start <experiment-id> <ex
  Customizing TensorBoard Instances
 ***********************************
 
-Determined allows you to initialize TensorBoard with a job configuration (YAML) file. This
-can be useful for running TensorBoard with a specific container image or for enabling access to
-additional data through a bind-mount.
+Determined allows you to initialize TensorBoard with a job configuration (YAML) file. This can be
+useful for running TensorBoard with a specific container image or for enabling access to additional
+data through a bind-mount.
 
 Example job configuration file:
 
