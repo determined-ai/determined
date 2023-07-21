@@ -398,22 +398,28 @@ def get_random_zero_optim_config(
     return zero_optim_dict
 
 
-def get_batch_config_from_mbs_gas_and_slots(
-    ds_config: Dict[str, Any], slots: int
+def get_batch_config(
+    ds_config: Dict[str, Any], slots: int, train_batch_size: Optional[int] = None
 ) -> Dict[str, int]:
     """
-    Returns a consistent batch size configuration by adjusting `train_batch_size` according to the
-    number of `slots`, `train_micro_batch_size_per_gpu`, and `gradient_accumulation_steps`  (or its
-    default value, if not specified).
+    Returns a consistent batch size configuration by either adjusting `train_batch_size`, if
+    `train_batch_size` is None, or `gradient_accumulation_steps` otherwise.
     """
     mbs = ds_config["train_micro_batch_size_per_gpu"]
     gas = ds_config.get("gradient_accumulation_steps", _defaults.GAS_DEFAULT)
-    if gas == "auto":
-        # Needed for HuggingFace.
-        gas = 1
-    tbs = mbs * gas * slots
+    if train_batch_size is not None:
+        gas = train_batch_size // slots // mbs
+        if not gas * slots * mbs == train_batch_size:
+            raise ValueError(
+                f"Invalid configuration: mbs, slots, tbs = {mbs, slots, train_batch_size}"
+            )
+    else:
+        if gas == "auto":
+            # Needed for HuggingFace.
+            gas = 1
+        train_batch_size = mbs * gas * slots
     return {
-        "train_batch_size": tbs,
+        "train_batch_size": train_batch_size,
         "train_micro_batch_size_per_gpu": mbs,
         "gradient_accumulation_steps": gas,
     }

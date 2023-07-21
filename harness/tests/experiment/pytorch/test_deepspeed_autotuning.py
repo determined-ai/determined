@@ -212,6 +212,44 @@ def test_model_profile_info_run_failure() -> None:
         assert not search_runner.state.experiment_completed
 
 
+class TestGetBatchConfig:
+    """Tests for the get_batch_config utility function."""
+
+    @pytest.mark.timeout(5)
+    def test_no_tbs(self) -> None:
+        with open(DS_CONFIG_PATH, "r") as f:
+            ds_config = json.load(f)
+            for slots in range(1, 128):
+                batch_size_config = _utils.get_batch_config(ds_config, slots=slots)
+                assert batch_size_config
+
+    @pytest.mark.timeout(5)
+    def test_with_tbs(self) -> None:
+        with open(DS_CONFIG_PATH, "r") as f:
+            ds_config = json.load(f)
+            mbs = ds_config["train_micro_batch_size_per_gpu"]
+            for slots in range(1, 128):
+                for tbs in range(1, 5120):
+                    invalid_conditions = (
+                        tbs < slots,
+                        tbs < mbs,
+                        tbs < mbs * slots,
+                        tbs % slots,
+                        tbs % mbs,
+                        tbs % (mbs * slots),
+                    )
+                    if any(invalid_conditions):
+                        with pytest.raises(ValueError):
+                            batch_size_config = _utils.get_batch_config(
+                                ds_config, slots=slots, train_batch_size=tbs
+                            )
+                    else:
+                        batch_size_config = _utils.get_batch_config(
+                            ds_config, slots=slots, train_batch_size=tbs
+                        )
+                        assert batch_size_config
+
+
 class TestDSATTrial:
     @pytest.mark.timeout(5)
     def setup_class(self) -> None:
