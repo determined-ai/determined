@@ -136,7 +136,9 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
     ]),
     {
       Loaded: ([
-        savedExperimentListGlobalSettings, savedShortcutSettings, savedFeatureSettings,
+        savedExperimentListGlobalSettings,
+        savedShortcutSettings,
+        savedFeatureSettings,
       ]) => {
         const experimentListGlobalSettings = {
           ...experimentListGlobalSettingsDefaults,
