@@ -15,8 +15,9 @@ metric_groups = [
     det_util._LEGACY_TRAINING,
     det_util._LEGACY_VALIDATION,
     "group_b",
-    "group_c",
-    "inference",
+    "grou%p_c",
+    "infer ence",
+    "inf%er en/ce",
 ]
 
 
@@ -31,7 +32,7 @@ def main(core_context: det.core.Context, increment_by: float):
         idx = batch % len(metric_groups)
         group = metric_groups[idx]
         noise = random.random() * x
-        metrics = {f"z{group}/metric_{i}": x * (i + 1) + noise for i in range(3)}
+        metrics = {f"z{group}/me.t r%i]\\c_{i}": x * (i + 1) + noise for i in range(3)}
         core_context.train._report_trial_metrics(
             group=group, total_batches=total_batches, metrics=metrics
         )
