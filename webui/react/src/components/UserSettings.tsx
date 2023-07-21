@@ -17,6 +17,12 @@ import {
   shortcutsSettingsPath,
 } from 'components/UserSettings.settings';
 import {
+  FEATURE_SETTINGS_PATH,
+  FEATURES,
+  featureSettingsConfig,
+  ValidFeature,
+} from 'hooks/useFeature';
+import {
   experimentListGlobalSettingsConfig,
   experimentListGlobalSettingsDefaults,
   experimentListGlobalSettingsPath,
@@ -126,14 +132,25 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
         userSettings.get(experimentListGlobalSettingsConfig, experimentListGlobalSettingsPath),
       ),
       useObservable(userSettings.get(shortcutSettingsConfig, shortcutsSettingsPath)),
+      useObservable(userSettings.get(featureSettingsConfig, FEATURE_SETTINGS_PATH)),
     ]),
     {
-      Loaded: ([savedExperimentListGlobalSettings, savedShortcutSettings]) => {
+      Loaded: ([
+        savedExperimentListGlobalSettings, savedShortcutSettings, savedFeatureSettings,
+      ]) => {
         const experimentListGlobalSettings = {
           ...experimentListGlobalSettingsDefaults,
           ...(savedExperimentListGlobalSettings ?? {}),
         };
         const shortcutSettings = { ...shortcutSettingsDefaults, ...(savedShortcutSettings ?? {}) };
+
+        const featureSettings = {
+          ...Object.keys(FEATURES).reduce((acc, key) => {
+            acc[key as ValidFeature] = null;
+            return acc;
+          }, {} as Record<ValidFeature, boolean | null>),
+          ...(savedFeatureSettings ?? {}),
+        };
 
         return (
           <Drawer open={show} placement="left" title="Settings" onClose={onClose}>
@@ -333,6 +350,38 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   <UserSettingsModal.Component />
                 </Space>
               </Accordion>
+            </Section>
+            <Section divider title="Experimental">
+              <div className={css.section}>
+                {Object.entries(FEATURES).map(([feature, label]) => (
+                  <InlineForm<boolean | null>
+                    initialValue={featureSettings[feature as ValidFeature]}
+                    key={feature}
+                    label={label}
+                    valueFormatter={(value) => {
+                      switch (value) {
+                        case null:
+                          return 'Default';
+                        case true:
+                          return 'On';
+                        case false:
+                          return 'Off';
+                      }
+                    }}
+                    onSubmit={(val) => {
+                      userSettings.set(featureSettingsConfig, FEATURE_SETTINGS_PATH, {
+                        ...featureSettings,
+                        [feature]: val,
+                      });
+                    }}>
+                    <Select searchable={false}>
+                      <Option value={null}>Default</Option>
+                      <Option value={true}>On</Option>
+                      <Option value={false}>Off</Option>
+                    </Select>
+                  </InlineForm>
+                ))}
+              </div>
             </Section>
           </Drawer>
         );
