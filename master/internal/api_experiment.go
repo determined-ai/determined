@@ -27,7 +27,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
 
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/codes"
@@ -399,18 +398,17 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			}
 
 			if len(checkpoints) > 0 {
-				addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
-				jobSubmissionTime := exp.StartTime
-				taskID := model.NewTaskID()
-				ckptGCTask := newCheckpointGCTask(
-					a.m.rm, a.m.db, taskID, exp.JobID, jobSubmissionTime, taskSpec,
-					exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
-					true, agentUserGroup, userModel, nil,
-				)
-				if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
-					logrus.WithError(gcErr).Errorf("failed to gc checkpoints for experiment")
-					return
-				}
+				go func() {
+					err := runCheckpointGCTask(
+						a.m.system, a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
+						taskSpec, exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
+						true, agentUserGroup, userModel, nil,
+					)
+					if err != nil {
+						logrus.WithError(err).Errorf("failed to gc checkpoints for experiment")
+						return
+					}
+				}()
 			}
 
 			// delete jobs per experiment
@@ -1202,13 +1200,16 @@ func (a *apiServer) PatchExperiment(
 			}
 
 			taskID := model.NewTaskID()
-			ckptGCTask := newCheckpointGCTask(
-				a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
-				taskSpec, modelExp.ID, modelExp.Config,
-				checkpoints, []string{fullDeleteGlob}, true, agentUserGroup, user, nil,
-			)
-			a.m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
-				ckptGCTask)
+			go func() {
+				err = runCheckpointGCTask(
+					a.m.system, a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
+					taskSpec, modelExp.ID, modelExp.Config, checkpoints, []string{fullDeleteGlob}, true,
+					agentUserGroup, user, nil,
+				)
+				if err != nil {
+					logrus.WithError(err).Error("failed to GC checkpoints in patch experiment")
+				}
+			}()
 		}
 	}
 

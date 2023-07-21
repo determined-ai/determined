@@ -6,7 +6,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -18,136 +21,109 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-type checkpointGCTask struct {
-	db *db.PgDB
-	rm rm.ResourceManager
-
-	taskID       model.TaskID
-	allocationID model.AllocationID
-	tasks.GCCkptSpec
-	jobID             model.JobID
-	jobSubmissionTime time.Time
-
-	logCtx logger.Context
-}
-
 const fullDeleteGlob = "**/*"
 
-func newCheckpointGCTask(
-	rm rm.ResourceManager, db *db.PgDB, taskID model.TaskID,
-	jobID model.JobID, jobSubmissionTime time.Time, taskSpec tasks.TaskSpec, expID int,
-	legacyConfig expconf.LegacyConfig, toDeleteCheckpoints []uuid.UUID, checkpointGlobs []string,
+func runCheckpointGCTask(
+	system *actor.System,
+	rm rm.ResourceManager,
+	db *db.PgDB,
+	taskID model.TaskID,
+	jobID model.JobID,
+	jobSubmissionTime time.Time,
+	taskSpec tasks.TaskSpec,
+	expID int,
+	legacyConfig expconf.LegacyConfig,
+	toDeleteCheckpoints []uuid.UUID,
+	checkpointGlobs []string,
 	deleteTensorboards bool,
-	agentUserGroup *model.AgentUserGroup, owner *model.User, logCtx logger.Context,
-) *checkpointGCTask {
-	taskSpec.AgentUserGroup = agentUserGroup
-	taskSpec.Owner = owner
+	agentUserGroup *model.AgentUserGroup,
+	owner *model.User,
+	logCtx logger.Context,
+) error {
 	conv := &protoconverter.ProtoConverter{}
 	checkpointStrIDs := conv.ToStringList(toDeleteCheckpoints)
 	deleteCheckpointsStr := strings.Join(checkpointStrIDs, ",")
 
-	return &checkpointGCTask{
-		taskID:            taskID,
-		jobID:             jobID,
-		jobSubmissionTime: jobSubmissionTime,
-		GCCkptSpec: tasks.GCCkptSpec{
-			Base:               taskSpec,
-			ExperimentID:       expID,
-			LegacyConfig:       legacyConfig,
-			ToDelete:           deleteCheckpointsStr,
-			CheckpointGlobs:    checkpointGlobs,
-			DeleteTensorboards: deleteTensorboards,
+	if len(deleteCheckpointsStr) == 0 && !deleteTensorboards {
+		// Early return as nothing to do
+		return nil
+	}
+
+	rp, err := rm.ResolveResourcePool(system, "", -1, 0)
+	if err != nil {
+		return fmt.Errorf("resolving resource pool: %w", err)
+	}
+
+	// t.Base is just a shallow copy of the m.taskSpec on the master, so
+	// use caution when mutating it.
+	tcd, err := rm.TaskContainerDefaults(
+		system,
+		rp,
+		config.GetMasterConfig().TaskContainerDefaults)
+	if err != nil {
+		return fmt.Errorf("creating task container defaults: %v", err)
+	}
+	taskSpec.TaskContainerDefaults = tcd
+
+	taskSpec.AgentUserGroup = agentUserGroup
+	taskSpec.Owner = owner
+
+	gcSpec := tasks.GCCkptSpec{
+		Base:               taskSpec,
+		ExperimentID:       expID,
+		LegacyConfig:       legacyConfig,
+		ToDelete:           deleteCheckpointsStr,
+		CheckpointGlobs:    checkpointGlobs,
+		DeleteTensorboards: deleteTensorboards,
+	}
+
+	logCtx = logger.MergeContexts(logCtx, logger.Context{
+		"task-id":   taskID,
+		"task-type": model.TaskTypeCheckpointGC,
+	})
+	syslog := logrus.WithField("component", "checkpointgc").WithFields(logCtx.Fields())
+
+	if err := db.AddTask(&model.Task{
+		TaskID:     taskID,
+		TaskType:   model.TaskTypeCheckpointGC,
+		StartTime:  time.Now().UTC(),
+		JobID:      &jobID,
+		LogVersion: model.CurrentTaskLogVersion,
+	}); err != nil {
+		return errors.Wrapf(err, "persisting GC task %s", taskID)
+	}
+
+	allocationID := model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1))
+	// HACK: Just to get a valid group ID. Refactor groups to not be actors.
+	group, _ := system.ActorOf(actor.Addr("checkpoint_gc", allocationID), &actors.Nothing)
+
+	resultChan := make(chan error)
+	onExit := func(ae *task.AllocationExited) {
+		err := db.CompleteTask(taskID, time.Now().UTC())
+		if err != nil {
+			syslog.WithError(err).Error("marking GC task complete")
+		}
+		resultChan <- ae.Err
+	}
+
+	err = task.DefaultService.StartAllocation(logCtx, sproto.AllocateRequest{
+		TaskID:            taskID,
+		JobID:             jobID,
+		JobSubmissionTime: jobSubmissionTime,
+		AllocationID:      allocationID,
+		Name:              fmt.Sprintf("Checkpoint GC (Experiment %d)", expID),
+		FittingRequirements: sproto.FittingRequirements{
+			SingleAgent: true,
 		},
-		db: db,
-		rm: rm,
-
-		logCtx: logCtx,
+		Group:        group,
+		ResourcePool: rp,
+	}, db, rm, gcSpec, system, onExit)
+	if err != nil {
+		return err
 	}
-}
-
-func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		if len(t.ToDelete) == 0 && !t.DeleteTensorboards {
-			// Early return as nothing to do
-			ctx.Self().Stop()
-			return nil
-		}
-		t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{
-			"task-id":   t.taskID,
-			"task-type": model.TaskTypeCheckpointGC,
-		})
-		ctx.AddLabels(t.logCtx)
-
-		if err := t.db.AddTask(&model.Task{
-			TaskID:     t.taskID,
-			TaskType:   model.TaskTypeCheckpointGC,
-			StartTime:  ctx.Self().RegisteredTime(),
-			JobID:      &t.jobID,
-			LogVersion: model.CurrentTaskLogVersion,
-		}); err != nil {
-			return errors.Wrapf(err, "persisting GC task %s", t.taskID)
-		}
-
-		t.allocationID = model.AllocationID(fmt.Sprintf("%s.%d", t.taskID, 1))
-
-		rp, err := t.rm.ResolveResourcePool(ctx, "", -1, 0)
-		if err != nil {
-			return fmt.Errorf("resolving resource pool: %w", err)
-		}
-
-		err = task.DefaultService.StartAllocation(t.logCtx, sproto.AllocateRequest{
-			TaskID:            t.taskID,
-			JobID:             t.jobID,
-			JobSubmissionTime: t.jobSubmissionTime,
-			AllocationID:      t.allocationID,
-			Name:              fmt.Sprintf("Checkpoint GC (Experiment %d)", t.ExperimentID),
-			FittingRequirements: sproto.FittingRequirements{
-				SingleAgent: true,
-			},
-			Group:        ctx.Self(),
-			ResourcePool: rp,
-		}, t.db, t.rm, t.GCCkptSpec, ctx.Self().System(), func(ae *task.AllocationExited) {
-			ctx.Tell(ctx.Self(), ae)
-		})
-		if err != nil {
-			return err
-		}
-
-		// t.Base is just a shallow copy of the m.taskSpec on the master, so
-		// use caution when mutating it.
-		t.Base.TaskContainerDefaults, err = t.rm.TaskContainerDefaults(
-			ctx,
-			rp,
-			config.GetMasterConfig().TaskContainerDefaults)
-		if err != nil {
-			return fmt.Errorf("creating task container defaults: %v", err)
-		}
-	case *task.AllocationExited:
-		if msg.Err != nil {
-			ctx.Log().WithError(msg.Err).Error("wasn't able to delete checkpoints from checkpoint storage")
-			t.completeTask(ctx)
-			return errors.Wrapf(msg.Err, "checkpoint GC task failed because allocation failed")
-		}
-
-		t.completeTask(ctx)
-	case actor.PostStop:
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-
-	return nil
-}
-
-func (t *checkpointGCTask) completeTask(ctx *actor.Context) {
-	if err := t.db.CompleteTask(t.taskID, time.Now().UTC()); err != nil {
-		ctx.Log().WithError(err).Error("marking GC task complete")
-	}
-
-	ctx.Self().Stop()
+	return <-resultChan
 }
