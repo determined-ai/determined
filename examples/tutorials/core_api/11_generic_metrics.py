@@ -32,7 +32,7 @@ def main(core_context: det.core.Context, increment_by):
         idx = batch % len(metric_groups)
         group = metric_groups[idx]
         noise = random.random() * x
-        metrics = {f"{group}/metric_{i}": x * (i + 1) + noise for i in range(3)}
+        metrics = {f"z{group}/metric_{i}": x * (i + 1) + noise for i in range(3)}
         core_context.train._report_trial_metrics(
             group=group, total_batches=steps_completed, metrics=metrics
         )
