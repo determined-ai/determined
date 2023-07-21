@@ -27,7 +27,8 @@ class MockMaster(metaclass=abc.ABCMeta):
 
 class SimulateMaster(MockMaster):
     def __init__(self, metric: Union[float, Dict[str, Any]]) -> None:
-        self.events_queue: List[bindings.v1SearcherEvent] = []  # store event and
+        # store event and
+        self.events_queue: List[bindings.v1SearcherEvent] = []
         self.events_count = 0
         self.metric = metric
         self.overall_progress = 0.0
@@ -48,7 +49,8 @@ class SimulateMaster(MockMaster):
 
     def _process_operations(self, operations: List[searcher.Operation]) -> None:
         for op in operations:
-            self._append_events_for_op(op)  # validate_after returns two events.
+            # validate_after returns two events.
+            self._append_events_for_op(op)
 
     def add_event(self, event_obj: bindings.v1SearcherEvent) -> None:
         self.events_queue.append(event_obj)

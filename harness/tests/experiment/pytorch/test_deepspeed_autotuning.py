@@ -1054,6 +1054,18 @@ def long_binary_state_and_search_method_divisible_by() -> (
     yield searcher_state, search_method
 
 
+@pytest.fixture
+def long_binary_state_and_search_method_train_batch_size() -> (
+    Generator[Tuple[searcher.SearcherState, BaseDSATSearchMethod], Any, None]
+):
+    """For long-running tests which need a longer max_trials."""
+    args = copy.deepcopy(DEFAULT_ARGS_DICT["binary"])
+    args.max_trials = 10**3
+    args.train_batch_size = 512
+    searcher_state, search_method = search_state_and_method_builder(args)
+    yield searcher_state, search_method
+
+
 class TestBinaryDSATSearchMethod:
     @pytest.mark.timeout(5)
     def test_binary_happy_path(
@@ -1279,6 +1291,47 @@ class TestBinaryDSATSearchMethod:
             trial.searcher_metric_name: metric_val
         }
 
+    @pytest.mark.timeout(5)
+    def test_full_experiment_happy_path_train_batch_size(
+        self,
+        long_binary_state_and_search_method_train_batch_size: Tuple[
+            searcher.SearcherState, BinarySearchDSATSearchMethod
+        ],
+    ) -> None:
+        """
+        Simulate running a full experiment with all successful trials, each improving on the last,
+        and verify the expected end state when divisible-by is set.
+        """
+        searcher_state, search_method = long_binary_state_and_search_method_train_batch_size
+        num_trials = 0
+        while search_method.trial_tracker.can_run_more_trials:
+            trial = search_method.choose_next_trial_from_queue()
+            assert (
+                search_method.trial_tracker.train_batch_size
+                == trial.mbs * trial.gas * trial.slots_per_trial
+            )
+            assert trial.searcher_metric_name is not None
+            num_trials += 1
+            metric_val = (
+                -1 * num_trials if search_method.trial_tracker.smaller_is_better else num_trials
+            )
+            search_method.on_validation_completed(
+                searcher_state=searcher_state,
+                request_id=trial.request_id,
+                metric={trial.searcher_metric_name: metric_val},
+                train_length=trial.length,
+            )
+        # Verify that all max_trials were run.
+        assert (
+            search_method.trial_tracker.num_completed_trials
+            == search_method.trial_tracker.max_trials
+        )
+        # Verify that the best-found trial has the expected metric value
+        assert search_method.trial_tracker.best_trial is not None
+        assert search_method.trial_tracker.best_trial.metric == {
+            trial.searcher_metric_name: metric_val
+        }
+
 
 @pytest.fixture
 def default_asha_state_and_search_method() -> (
@@ -1294,6 +1347,16 @@ def default_asha_state_and_search_method_divisible_by() -> (
 ):
     args = copy.deepcopy(DEFAULT_ARGS_DICT["asha"])
     args.divisible_by = 8
+    searcher_state, search_method = search_state_and_method_builder(args)
+    yield searcher_state, search_method
+
+
+@pytest.fixture
+def default_asha_state_and_search_method_train_batch_size() -> (
+    Generator[Tuple[searcher.SearcherState, BaseDSATSearchMethod], Any, None]
+):
+    args = copy.deepcopy(DEFAULT_ARGS_DICT["asha"])
+    args.train_batch_size = 512
     searcher_state, search_method = search_state_and_method_builder(args)
     yield searcher_state, search_method
 
@@ -1317,6 +1380,18 @@ def long_asha_state_and_search_method_divisble_by() -> (
     args.max_trials = 500
     args.max_rungs = 8
     args.divisible_by = 8
+    searcher_state, search_method = search_state_and_method_builder(args)
+    yield searcher_state, search_method
+
+
+@pytest.fixture
+def long_asha_state_and_search_method_train_batch_size() -> (
+    Generator[Tuple[searcher.SearcherState, BaseDSATSearchMethod], Any, None]
+):
+    args = copy.deepcopy(DEFAULT_ARGS_DICT["asha"])
+    args.max_trials = 500
+    args.max_rungs = 8
+    args.train_batch_size = 512
     searcher_state, search_method = search_state_and_method_builder(args)
     yield searcher_state, search_method
 
@@ -1460,6 +1535,47 @@ class TestASHADSATSearchMethod:
             trial.searcher_metric_name: metric_val
         }
 
+    @pytest.mark.timeout(5)
+    def test_full_experiment_happy_path_train_batch_size(
+        self,
+        default_asha_state_and_search_method_train_batch_size: Tuple[
+            searcher.SearcherState, ASHADSATSearchMethod
+        ],
+    ) -> None:
+        """
+        Simulate running a full experiment with all successful trials, each improving on the last
+        and verify the expected end state when train_batch_size is set.
+        """
+        searcher_state, search_method = default_asha_state_and_search_method_train_batch_size
+        num_trials = 0
+        while search_method.trial_tracker.can_run_more_trials:
+            trial = search_method.choose_next_trial_from_queue()
+            assert (
+                search_method.trial_tracker.train_batch_size
+                == trial.mbs * trial.gas * trial.slots_per_trial
+            )
+            assert trial.searcher_metric_name is not None
+            num_trials += 1
+            metric_val = (
+                -1 * num_trials if search_method.trial_tracker.smaller_is_better else num_trials
+            )
+            search_method.on_validation_completed(
+                searcher_state=searcher_state,
+                request_id=trial.request_id,
+                metric={trial.searcher_metric_name: metric_val},
+                train_length=trial.length,
+            )
+        # Verify that all max_trials were run.
+        assert (
+            search_method.trial_tracker.num_completed_trials
+            == search_method.trial_tracker.max_trials
+        )
+        # Verify that the best-found trial has the expected metric value
+        assert search_method.trial_tracker.best_trial is not None
+        assert search_method.trial_tracker.best_trial.metric == {
+            trial.searcher_metric_name: metric_val
+        }
+
     @pytest.mark.timeout(10)
     def test_full_experiment_reverse_ordered_results(
         self,
@@ -1532,6 +1648,64 @@ class TestASHADSATSearchMethod:
         for metric in metrics:
             trial = search_method.choose_next_trial_from_queue()
             assert not trial.mbs % search_method.trial_tracker.divisible_by
+            assert trial.searcher_metric_name is not None
+            search_method.on_validation_completed(
+                searcher_state=searcher_state,
+                request_id=trial.request_id,
+                metric={trial.searcher_metric_name: metric},
+                train_length=trial.length,
+            )
+        # Verify that the higher rungs contain lineages which performed better than lower rungs.
+        for rung_idx in range(search_method.max_rungs - 1):
+            lower_rung_trials = search_method.rungs[rung_idx]
+            higher_rung_trials = search_method.rungs[rung_idx + 1]
+            if higher_rung_trials:
+                non_promoted_lower_rung_trials = [
+                    lo
+                    for lo in lower_rung_trials
+                    if not any(lo in hi.lineage_set for hi in higher_rung_trials)
+                ]
+                # Every best-metric result in this set should be worse than every best-metric result
+                # in higher_rung_trials
+                for lo in non_promoted_lower_rung_trials:
+                    best_lo_trial = search_method.get_best_trial_in_lineage(lo, rung_idx)
+                    assert best_lo_trial
+                    assert best_lo_trial.metric
+                    assert isinstance(best_lo_trial.metric, dict)
+                    assert best_lo_trial.searcher_metric_name
+                    best_lo_metric = best_lo_trial.metric[best_lo_trial.searcher_metric_name]
+                    for hi in higher_rung_trials:
+                        best_hi_trial = search_method.get_best_trial_in_lineage(hi, rung_idx + 1)
+                        assert best_hi_trial
+                        assert best_hi_trial.metric
+                        assert isinstance(best_hi_trial.metric, dict)
+                        assert best_hi_trial.searcher_metric_name
+                        best_hi_metric = best_hi_trial.metric[best_lo_trial.searcher_metric_name]
+                        assert best_lo_metric < best_hi_metric
+
+    @pytest.mark.timeout(10)
+    def test_full_experiment_reverse_ordered_results_train_batch_size(
+        self,
+        long_asha_state_and_search_method_train_batch_size: Tuple[
+            searcher.SearcherState, ASHADSATSearchMethod
+        ],
+    ) -> None:
+        """
+        Simulate running a full experiment with all successful trials, each worse than the last,
+        and verify the expected end state, which is that trials in the higher rungs should have
+        better metrics than those which were never promoted out of the rungs.
+        """
+        searcher_state, search_method = long_asha_state_and_search_method_train_batch_size
+        assert isinstance(search_method, ASHADSATSearchMethod)
+        metrics = list(range(search_method.trial_tracker.max_trials - 1))
+        if not search_method.trial_tracker.smaller_is_better:
+            metrics = metrics[::-1]
+        for metric in metrics:
+            trial = search_method.choose_next_trial_from_queue()
+            assert (
+                search_method.trial_tracker.train_batch_size
+                == trial.mbs * trial.gas * trial.slots_per_trial
+            )
             assert trial.searcher_metric_name is not None
             search_method.on_validation_completed(
                 searcher_state=searcher_state,

@@ -106,6 +106,12 @@ def get_base_parser() -> argparse.ArgumentParser:
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["divisible-by"],
         help="Only use batch sizes divisible by the provided value",
     )
+    base_parser.add_argument(
+        "-t",
+        "--train-batch-size",
+        type=int,
+        help="Fix the global train_batch_size to the provided value.",
+    )
 
     return base_parser
 
@@ -260,6 +266,16 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
     search_runner_config["hyperparameters"] = vars(args)
 
     return search_runner_config
+
+
+def sanity_check_args(args: argparse.Namespace) -> None:
+    submitted_exp_config_dict = get_dict_from_yaml_or_json_path(args.config_path)
+    if args.train_batch_size is not None:
+        slots = submitted_exp_config_dict["resources"].get("slots_per_trial", 1)
+        if args.train_batch_size % slots:
+            raise ValueError("train-batch-size must be divislbe by slots_per_trial")
+        if args.train_batch_size % args.divisible_by:
+            raise ValueError("train-batch-size must be divislbe by divisible-by")
 
 
 def get_dict_from_yaml_or_json_path(
@@ -555,16 +571,34 @@ def get_hf_args_with_overwrites(args: List[str], hparams: Dict[str, Any]) -> Lis
     return args
 
 
-def round_down(num: int, factor: int) -> int:
+def round_mbs_down(mbs: int, trial_tracker: _dsat_search_method.DSATTrialTracker) -> int:
     """
-    Rounds num down such that it is divisible by factor, returning the result.
+    Rounds mbs, the train_micro_batch_size_per_gpu, down such that it satisfies the divisibility
+    conditions specified by global args.
     """
-    return factor * (num // factor)
+    if trial_tracker.train_batch_size is None:
+        factor = trial_tracker.divisible_by
+        mbs = factor * (mbs // factor)
+    else:
+        factor = trial_tracker.train_batch_size // trial_tracker.slots_per_trial
+        while factor % mbs:
+            mbs -= 1
+    return mbs
 
 
-def round_up(num: int, factor: int) -> int:
+def round_mbs_up(mbs: int, trial_tracker: _dsat_search_method.DSATTrialTracker) -> int:
     """
-    Rounds num up such that it is divisible by factor, returning the result.
+    Rounds mbs, the train_micro_batch_size_per_gpu, up such that it satisfies the divisibility
+    conditions specified by global args.
     """
-    div, mod = divmod(num, factor)
-    return factor * (div + (1 if mod else 0))
+    if trial_tracker.train_batch_size is None:
+        factor = trial_tracker.divisible_by
+        div, mod = divmod(mbs, factor)
+        mbs = factor * (div + (1 if mod else 0))
+    else:
+        factor = trial_tracker.train_batch_size // trial_tracker.slots_per_trial
+        if mbs > factor:
+            raise ValueError("impossible to round up")
+        while factor % mbs:
+            mbs += 1
+    return mbs
