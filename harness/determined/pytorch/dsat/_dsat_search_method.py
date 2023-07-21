@@ -1202,9 +1202,9 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         if not self.lineage_completed_rung(last_trial, last_trial.search_data.curr_rung):
             next_trial = self.get_next_trial_in_lineage(last_trial)
         if next_trial is None:
-            next_lineage = self.get_next_promotable_lineage()
-            if next_lineage is not None:
-                next_trial = self.get_next_trial_in_lineage(next_lineage)
+            next_lineage_trial = self.get_trial_from_next_promotable_lineage()
+            if next_lineage_trial is not None:
+                next_trial = self.get_next_trial_in_lineage(next_lineage_trial)
                 if next_trial is not None:
                     assert next_trial.search_data
                     assert isinstance(next_trial.search_data, ASHADSATSearchData)
@@ -1277,7 +1277,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
                 return True
         return False
 
-    def get_next_promotable_lineage(self) -> Optional[DSATTrial]:
+    def get_trial_from_next_promotable_lineage(self) -> Optional[DSATTrial]:
         # Cannot promote from the top rung (rung_idx == self.max_rung - 1)
         for rung_idx in reversed(range(self.max_rungs - 1)):
             next_promotable_trial = self.get_next_promotable_lineage_in_rung(rung_idx)

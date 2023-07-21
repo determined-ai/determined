@@ -1485,7 +1485,7 @@ class TestASHADSATSearchMethod:
             assert trial is not None
             assert search_method.lineage_completed_rung(trial, 0)
             assert not search_method.lineage_completed_rung(trial, 1)
-        assert search_method.get_next_promotable_lineage()
+        assert search_method.get_trial_from_next_promotable_lineage()
 
         # Take the worst lineage in rung zero, promote it, and complete its next rung with better
         # metrics than any seen in rung zero.
@@ -1510,7 +1510,7 @@ class TestASHADSATSearchMethod:
             )
         # Next promotable trial should be from the lowest rung.
         assert (
-            search_method.get_next_promotable_lineage()
+            search_method.get_trial_from_next_promotable_lineage()
             == search_method.get_next_promotable_lineage_in_rung(0)
         )
 
@@ -1701,7 +1701,7 @@ class TestASHADSATSearchMethod:
             assert search_method.lineage_completed_rung(trial, 0)
             assert not search_method.lineage_completed_rung(trial, 1)
 
-        next_promotable_lineage = search_method.get_next_promotable_lineage()
+        next_promotable_lineage = search_method.get_trial_from_next_promotable_lineage()
         assert next_promotable_lineage is not None
         next_trial = search_method.get_next_trial_in_lineage(next_promotable_lineage)
         assert next_trial is not None
@@ -1803,7 +1803,7 @@ class TestASHADSATSearchMethod:
         # Check that we have populated the rungs as expected:
         assert all(search_method.rungs[idx] for idx in range(2))
         assert not any(search_method.rungs[idx] for idx in range(2, search_method.max_rungs - 1))
-        assert search_method.get_next_promotable_lineage()
+        assert search_method.get_trial_from_next_promotable_lineage()
         assert search_method.get_next_promotable_lineage_in_rung(1)
         assert not search_method.get_next_promotable_lineage_in_rung(0)
 
@@ -1842,7 +1842,7 @@ class TestASHADSATSearchMethod:
         assert next_lineage_rung_0.search_data.curr_rung == 0
         assert next_lineage_rung_1.search_data.curr_rung == 1
 
-        next_promotable_lineage = search_method.get_next_promotable_lineage()
+        next_promotable_lineage = search_method.get_trial_from_next_promotable_lineage()
         assert next_promotable_lineage
         assert next_promotable_lineage.search_data
         assert isinstance(next_promotable_lineage.search_data, ASHADSATSearchData)
@@ -1880,7 +1880,7 @@ class TestASHADSATSearchMethod:
             search_method.trial_tracker.queue_and_register_trial(trial)
             _ = search_method.trial_tracker.queue.popleft()
         assert search_method.lineage_completed_rung(trial, search_method.max_rungs - 1)
-        assert search_method.get_next_promotable_lineage() is None
+        assert search_method.get_trial_from_next_promotable_lineage() is None
 
     @pytest.mark.timeout(5)
     def test_no_continuation_for_completed_lineages(
