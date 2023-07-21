@@ -636,12 +636,14 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         last_trial = self.trial_tracker[request_id]
         # GG_TODO: remove; for testing.
         if not isinstance(last_trial, DSATModelProfileInfoTrial):
-            assert not last_trial.mbs % self.trial_tracker.divisible_by
+            if last_trial.mbs % self.trial_tracker.divisible_by:
+                raise ValueError
             if self.trial_tracker.train_batch_size is not None:
-                assert (
+                if (
                     self.trial_tracker.train_batch_size
-                    == last_trial.mbs * last_trial.gas * last_trial.slots_per_trial
-                )
+                    != last_trial.mbs * last_trial.gas * last_trial.slots_per_trial
+                ):
+                    raise ValueError
 
         return []
 
@@ -1094,6 +1096,8 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
         if last_trial.search_data is None:
             return [self.get_random_trial()]
         new_search_data = copy.deepcopy(last_trial.search_data)
+        if last_trial.mbs == 1:
+            return [self.get_random_trial()]
         new_search_data.hi = _utils.round_mbs_down(last_trial.mbs - 1, self.trial_tracker)
         if new_search_data.lo > new_search_data.hi:
             return [self.get_random_trial()]
@@ -1501,7 +1505,12 @@ class _TestDSATSearchMethod(BaseDSATSearchMethod):
             ]
             for trial_num in range(1, self.trial_tracker.max_trials):
                 hparams = copy.deepcopy(hparams_without_profile_info_keys)
-                mbs = self.trial_tracker.divisible_by * trial_num
+                mbs = max(
+                    _utils.round_mbs_up(
+                        min(trial_num, self.trial_tracker.max_mbs), self.trial_tracker
+                    ),
+                    self.trial_tracker.divisible_by,
+                )
                 if mbs > self.trial_tracker.max_mbs:
                     mbs = self.trial_tracker.max_mbs
                 hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs

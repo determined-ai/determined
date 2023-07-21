@@ -276,6 +276,11 @@ def sanity_check_args(args: argparse.Namespace) -> None:
             raise ValueError("train-batch-size must be divislbe by slots_per_trial")
         if args.train_batch_size % args.divisible_by:
             raise ValueError("train-batch-size must be divislbe by divisible-by")
+        if args.divisible_by > args.train_batch_size // slots:
+            raise ValueError(
+                "No valid batch sizes possible with these divisible_by, train_batch_size, and "
+                "slots_per_trial values"
+            )
 
 
 def get_dict_from_yaml_or_json_path(
