@@ -1485,7 +1485,7 @@ class TestASHADSATSearchMethod:
             assert trial is not None
             assert search_method.lineage_completed_rung(trial, 0)
             assert not search_method.lineage_completed_rung(trial, 1)
-        assert search_method.get_trial_from_next_promotable_lineage()
+        assert search_method.get_last_trial_from_next_promotable_lineage()
 
         # Take the worst lineage in rung zero, promote it, and complete its next rung with better
         # metrics than any seen in rung zero.
@@ -1510,7 +1510,7 @@ class TestASHADSATSearchMethod:
             )
         # Next promotable trial should be from the lowest rung.
         assert (
-            search_method.get_trial_from_next_promotable_lineage()
+            search_method.get_last_trial_from_next_promotable_lineage()
             == search_method.get_next_promotable_lineage_in_rung(0)
         )
 
@@ -1701,7 +1701,7 @@ class TestASHADSATSearchMethod:
             assert search_method.lineage_completed_rung(trial, 0)
             assert not search_method.lineage_completed_rung(trial, 1)
 
-        next_promotable_lineage = search_method.get_trial_from_next_promotable_lineage()
+        next_promotable_lineage = search_method.get_last_trial_from_next_promotable_lineage()
         assert next_promotable_lineage is not None
         next_trial = search_method.get_next_trial_in_lineage(next_promotable_lineage)
         assert next_trial is not None
@@ -1803,7 +1803,7 @@ class TestASHADSATSearchMethod:
         # Check that we have populated the rungs as expected:
         assert all(search_method.rungs[idx] for idx in range(2))
         assert not any(search_method.rungs[idx] for idx in range(2, search_method.max_rungs - 1))
-        assert search_method.get_trial_from_next_promotable_lineage()
+        assert search_method.get_last_trial_from_next_promotable_lineage()
         assert search_method.get_next_promotable_lineage_in_rung(1)
         assert not search_method.get_next_promotable_lineage_in_rung(0)
 
@@ -1842,7 +1842,7 @@ class TestASHADSATSearchMethod:
         assert next_lineage_rung_0.search_data.curr_rung == 0
         assert next_lineage_rung_1.search_data.curr_rung == 1
 
-        next_promotable_lineage = search_method.get_trial_from_next_promotable_lineage()
+        next_promotable_lineage = search_method.get_last_trial_from_next_promotable_lineage()
         assert next_promotable_lineage
         assert next_promotable_lineage.search_data
         assert isinstance(next_promotable_lineage.search_data, ASHADSATSearchData)
@@ -1880,88 +1880,7 @@ class TestASHADSATSearchMethod:
             search_method.trial_tracker.queue_and_register_trial(trial)
             _ = search_method.trial_tracker.queue.popleft()
         assert search_method.lineage_completed_rung(trial, search_method.max_rungs - 1)
-        assert search_method.get_trial_from_next_promotable_lineage() is None
-
-    @pytest.mark.timeout(5)
-    def test_no_continuation_for_completed_lineages(
-        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
-    ) -> None:
-        """
-        Verify that lineages which have completed their binary search are not continued. Tested by
-        having a trial fail when attempting its max possible batch size.
-        """
-        searcher_state, search_method = long_asha_state_and_search_method
-        search_method.trial_tracker.queue.clear()
-        hparams, _ = search_method.get_random_hparams_and_search_data(1)
-        search_data = ASHADSATSearchData(lo=1, hi=1, curr_rung=0)
-        hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = (
-            search_data.hi + search_data.lo
-        ) // 2
-        failed_trial = search_method.trial_tracker.create_trial(
-            hparams=hparams, search_data=search_data, parent_trial=None
-        )
-        search_method.trial_tracker.queue_and_register_trial(failed_trial)
-        _ = search_method.trial_tracker.queue.popleft()
-        search_method.trial_tracker.report_trial_early_exit(failed_trial)
-        assert failed_trial.searcher_metric_name is not None
-        assert search_method.get_next_trial_in_lineage(failed_trial) is None
-
-    @pytest.mark.timeout(5)
-    def test_completed_binary_search_lineages_are_counted_complete(
-        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
-    ) -> None:
-        """
-        Verify that if a lineage completes its binary search mid-rung, that lineage is
-        counted as having completed the rung. Tested by having a trial fail when attempting its max
-        possible batch size.
-        """
-        searcher_state, search_method = long_asha_state_and_search_method
-        search_method.trial_tracker.queue.clear()
-        hparams, _ = search_method.get_random_hparams_and_search_data(1)
-        search_data = ASHADSATSearchData(lo=1, hi=1, curr_rung=0)
-        hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = (
-            search_data.hi + search_data.lo
-        ) // 2
-        failed_trial = search_method.trial_tracker.create_trial(
-            hparams=hparams, search_data=search_data, parent_trial=None
-        )
-        search_method.trial_tracker.queue_and_register_trial(failed_trial)
-        _ = search_method.trial_tracker.queue.popleft()
-        assert failed_trial.searcher_metric_name is not None
-        assert failed_trial.search_data is not None
-        assert isinstance(failed_trial.search_data, ASHADSATSearchData)
-        search_method.trial_tracker.report_trial_early_exit(failed_trial)
-        assert search_method.lineage_completed_rung(
-            failed_trial, failed_trial.search_data.curr_rung
-        )
-        assert search_method.get_next_trial_in_lineage(failed_trial) is None
-
-    @pytest.mark.timeout(5)
-    def test_failed_binary_search_lineages_are_counted_complete(
-        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
-    ) -> None:
-        """
-        Verify that if a lineage fails its binary search mid-rung by failing on the minimum
-        possible batch size, that lineage is counted as having completed the rung.
-        """
-        searcher_state, search_method = long_asha_state_and_search_method
-        search_method.trial_tracker.queue.clear()
-        hparams, _ = search_method.get_random_hparams_and_search_data(1)
-        search_data = ASHADSATSearchData(lo=1, hi=2, curr_rung=0)
-        hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = (
-            search_data.hi + search_data.lo
-        ) // 2
-        failed_trial = search_method.trial_tracker.create_trial(
-            hparams=hparams, search_data=search_data, parent_trial=None
-        )
-        search_method.trial_tracker.queue_and_register_trial(failed_trial)
-        _ = search_method.trial_tracker.queue.popleft()
-        search_method.trial_tracker.report_trial_early_exit(failed_trial)
-        assert isinstance(failed_trial.search_data, ASHADSATSearchData)
-        assert search_method.lineage_completed_rung(
-            failed_trial, failed_trial.search_data.curr_rung
-        )
-        assert search_method.get_next_trial_in_lineage(failed_trial) is None
+        assert search_method.get_last_trial_from_next_promotable_lineage() is None
 
     @pytest.mark.timeout(5)
     def test_lineage_completed_rung(
@@ -1970,7 +1889,7 @@ class TestASHADSATSearchMethod:
     ) -> None:
         """
         Testing the `lineage_completed_rung` method by creating a very long lineage and verifying
-        that this method gives the expected results.
+        that lineages are counted as completed or not in the appropriate cases
         """
         searcher_state, search_method = long_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
