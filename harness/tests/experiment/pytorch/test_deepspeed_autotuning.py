@@ -297,7 +297,7 @@ class TestGetBatchConfig:
         with open(DS_CONFIG_PATH, "r") as f:
             ds_config = json.load(f)
             for slots in range(1, 128):
-                batch_size_config = _utils.get_batch_config(ds_config, slots=slots)
+                batch_size_config = _utils.get_batch_config_from_mbs(ds_config, slots=slots)
                 assert batch_size_config
 
     @pytest.mark.timeout(5)
@@ -317,11 +317,11 @@ class TestGetBatchConfig:
                     )
                     if any(invalid_conditions):
                         with pytest.raises(ValueError):
-                            batch_size_config = _utils.get_batch_config(
+                            batch_size_config = _utils.get_batch_config_from_mbs(
                                 ds_config, slots=slots, train_batch_size=tbs
                             )
                     else:
-                        batch_size_config = _utils.get_batch_config(
+                        batch_size_config = _utils.get_batch_config_from_mbs(
                             ds_config, slots=slots, train_batch_size=tbs
                         )
                         assert batch_size_config

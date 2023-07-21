@@ -398,12 +398,13 @@ def get_random_zero_optim_config(
     return zero_optim_dict
 
 
-def get_batch_config(
+def get_batch_config_from_mbs(
     ds_config: Dict[str, Any], slots: int, train_batch_size: Optional[int] = None
 ) -> Dict[str, int]:
     """
-    Returns a consistent batch size configuration by either adjusting `train_batch_size`, if
-    `train_batch_size` is None, or `gradient_accumulation_steps` otherwise.
+    Returns a consistent batch size configuration based on the `train_micro_batch_size_per_gpu`
+    value specified by the ds_config. Either adjusts `train_batch_size`, if `train_batch_size` is
+    None, or `gradient_accumulation_steps` otherwise.
     """
     mbs = ds_config["train_micro_batch_size_per_gpu"]
     gas = ds_config.get("gradient_accumulation_steps", _defaults.GAS_DEFAULT)

@@ -296,7 +296,7 @@ class DSATTrialTracker:
         except FileNotFoundError:
             # In case the DS json config was added as an `--include` arg.
             ds_config = _utils.get_ds_config_from_hparams(hparams)
-        batch_size_config = _utils.get_batch_config(ds_config, slots=self.slots_per_trial)
+        batch_size_config = _utils.get_batch_config_from_mbs(ds_config, slots=self.slots_per_trial)
         hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
             hparams[_defaults.OVERWRITE_KEY], batch_size_config
         )
