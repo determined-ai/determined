@@ -9,28 +9,24 @@ import { ExpListView, RowHeight } from '../F_ExperimentList.settings';
 
 import css from './OptionsMenu.module.scss';
 
-const rowHeightItems = [
+export const rowHeightItems = [
   {
     icon: <Icon decorative name="row-small" />,
-    key: 'rowHeight-SHORT',
     label: 'Short',
     rowHeight: RowHeight.SHORT,
   },
   {
     icon: <Icon decorative name="row-medium" />,
-    key: 'rowHeight-MEDIUM',
     label: 'Medium',
     rowHeight: RowHeight.MEDIUM,
   },
   {
     icon: <Icon decorative name="row-large" />,
-    key: 'rowHeight-TALL',
     label: 'Tall',
     rowHeight: RowHeight.TALL,
   },
   {
     icon: <Icon decorative name="row-xl" />,
-    key: 'rowHeight-EXTRA_TALL',
     label: 'Extra Tall',
     rowHeight: RowHeight.EXTRA_TALL,
   },
@@ -54,6 +50,7 @@ export const OptionsMenu: React.FC<OptionProps> = ({
       {
         children: rowHeightItems.map(({ rowHeight, ...itemProps }) => ({
           ...itemProps,
+          key: `rowHeight-${rowHeight}`,
           onClick: () => onRowHeightChange(rowHeight),
         })),
         label: 'Row height',
