@@ -1,6 +1,7 @@
 import { Alert } from 'antd';
 import React, { useMemo } from 'react';
 
+import Message from 'components/kit/internal/Message';
 import Pivot, { TabItem } from 'components/kit/Pivot';
 import SplitPane from 'components/SplitPane';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
@@ -10,7 +11,6 @@ import { ExperimentWithTrial, TrialItem } from 'types';
 
 import CompareMetrics from './CompareMetrics';
 import CompareParallelCoordinates from './CompareParallelCoordinates';
-import css from './ComparisonView.module.scss';
 import { MIN_COLUMN_WIDTH } from './glide-table/columns';
 
 interface Props {
@@ -32,11 +32,7 @@ const ComparisonView: React.FC<Props> = ({
   selectedExperiments,
 }) => {
   const scrollbarWidth = useScrollbarWidth();
-  const classes: string[] = [css.base];
   const hasPinnedColumns = fixedColumnsCount > 1;
-
-  if (open) classes.push(css.open);
-  if (!hasPinnedColumns) classes.push(css.noPins);
 
   const minWidths: [number, number] = useMemo(() => {
     return [fixedColumnsCount * MIN_COLUMN_WIDTH + scrollbarWidth, 100];
@@ -95,7 +91,7 @@ const ComparisonView: React.FC<Props> = ({
       open={open}
       onChange={onWidthChange}>
       {open && !hasPinnedColumns ? (
-        <div className={css.noPinsMessage}>Pin columns to see them in &quot;Compare View&quot;</div>
+        <Message title='Pin columns to see them in "Compare View"' />
       ) : (
         children
       )}
