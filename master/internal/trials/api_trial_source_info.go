@@ -56,6 +56,9 @@ func GetMetricsForTrialSourceInfoQuery(
 		return nil, fmt.Errorf("failed to get trial source info %w", err)
 	}
 
+	// TODO (Taylor): If we reach a point where this becomes a performance bottleneck
+	// we should join on trial_source_infos -> trials -> experiments to get the
+	// workspace_id and get permissions on those without checking each trial individually
 	ret := []*apiv1.TrialSourceInfoMetric{}
 	numMetricsLimit := 1000
 	for _, val := range trialIds {
