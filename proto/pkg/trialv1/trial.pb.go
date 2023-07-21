@@ -1192,7 +1192,8 @@ type TrialSourceInfo struct {
 	CheckpointUuid string `protobuf:"bytes,2,opt,name=checkpoint_uuid,json=checkpointUuid,proto3" json:"checkpoint_uuid,omitempty"`
 	// Source `id“ for the model which generated the checkpoint (if applicable)
 	ModelId *int32 `protobuf:"varint,3,opt,name=model_id,json=modelId,proto3,oneof" json:"model_id,omitempty"`
-	// Source `version` in the model_version version field which generated the checkpoint (if applicable)
+	// Source `version` in the model_version version field which generated the
+	// checkpoint (if applicable)
 	ModelVersion *int32 `protobuf:"varint,4,opt,name=model_version,json=modelVersion,proto3,oneof" json:"model_version,omitempty"`
 	// Type for this trial_source_info
 	TrialSourceInfoType TrialSourceInfoType `protobuf:"varint,5,opt,name=trial_source_info_type,json=trialSourceInfoType,proto3,enum=determined.trial.v1.TrialSourceInfoType" json:"trial_source_info_type,omitempty"`
