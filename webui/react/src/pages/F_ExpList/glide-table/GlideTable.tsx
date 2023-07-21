@@ -428,6 +428,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               },
             }
           : {
+              disabled: pinnedColumnsCount <= 1,
               key: 'unpin',
               label: 'Unpin column',
               onClick: () => {
