@@ -60,6 +60,8 @@ func auditLogMiddleware() echo.MiddlewareFunc {
 				unauthorized = true
 			}
 
+			errored := c.Response().Status >= 400
+
 			fields := map[string]interface{}{
 				"type":      "echo_audit_log",
 				"remote_ip": c.RealIP(),
@@ -71,7 +73,7 @@ func auditLogMiddleware() echo.MiddlewareFunc {
 
 			var logFn LogrusLogFn
 			switch method := c.Request().Method; {
-			case infoMethods[method] || unauthorized:
+			case infoMethods[method] || errored:
 				logFn = log.WithFields(fields).Infof
 			case debugMethods[method]:
 				logFn = log.WithFields(fields).Debugf
