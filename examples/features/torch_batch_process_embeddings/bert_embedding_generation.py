@@ -111,7 +111,7 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
 if __name__ == "__main__":
     dataset = load_dataset("BeIR/scidocs", "corpus", split="corpus")
     # Persisting embeddings can take quite a while on Chroma
-    # Adding a limit on dataset size to ensure the example finishes faster
+    # Adding a limit on dataset size to ensure the example finishes fast
     dataset = dataset.select(list(range(500)))
     experimental.torch_batch_process(
         EmbeddingProcessor,
