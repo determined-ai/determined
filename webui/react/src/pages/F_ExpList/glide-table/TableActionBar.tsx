@@ -92,6 +92,7 @@ interface Props {
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   setVisibleColumns: (newColumns: string[]) => void;
   toggleComparisonView?: () => void;
+  compareViewOn?: boolean;
   total: Loadable<number>;
   formStore: FilterFormStore;
   setIsOpenFilter: (value: boolean) => void;
@@ -125,6 +126,7 @@ const TableActionBar: React.FC<Props> = ({
   toggleComparisonView,
   rowHeight,
   onRowHeightChange,
+  compareViewOn,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -385,7 +387,9 @@ const TableActionBar: React.FC<Props> = ({
             </Tooltip>
           </Dropdown>
           {!!toggleComparisonView && (
-            <Button icon={<Icon name="panel" title="compare" />} onClick={toggleComparisonView}>
+            <Button
+              icon={<Icon name={compareViewOn ? 'panel-on' : 'panel'} title="compare" />}
+              onClick={toggleComparisonView}>
               Compare
             </Button>
           )}

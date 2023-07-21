@@ -99,6 +99,7 @@ export const IconNameArray = [
   'filter',
   'options',
   'panel',
+  'panel-on',
   'row-small',
   'row-medium',
   'row-large',
@@ -140,12 +141,25 @@ const OptionsIcon: React.FC = () => (
 );
 
 const PanelIcon: React.FC = () => (
-  <svg fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <svg fill="none" height="20" viewBox="0 0 20 20" width="20" xmlns="http://www.w3.org/2000/svg">
+    <rect height="15.6667" rx="1.5" stroke="currentcolor" width="15.6667" x="2.16675" y="2.16663" />
     <path
-      clipRule="evenodd"
-      d="M10.72 5H19V19H10.72V5ZM9.72 5H5V19H9.72V5ZM10.72 4H19C19.5523 4 20 4.44772 20 5V19C20 19.5523 19.5523 20 19 20H10.72H9.72H5C4.93096 20 4.86356 19.993 4.79847 19.9797C4.34278 19.8864 4 19.4832 4 19V5C4 4.44772 4.44772 4 5 4H9.72H10.72Z"
+      d="M3.66675 2.16663H8.16675V17.8333H3.66675C2.83832 17.8333 2.16675 17.1617 2.16675 16.3333V3.66663C2.16675 2.8382 2.83832 2.16663 3.66675 2.16663Z"
+      stroke="currentcolor"
+    />
+  </svg>
+);
+
+const PanelOnIcon: React.FC = () => (
+  <svg fill="none" height="20" viewBox="0 0 20 20" width="20" xmlns="http://www.w3.org/2000/svg">
+    <rect height="15.6667" rx="1.5" stroke="currentcolor" width="15.6667" x="2.16675" y="2.16663" />
+    <path
+      d="M3.66675 2.16663H8.16675V17.8333H3.66675C2.83832 17.8333 2.16675 17.1617 2.16675 16.3333V3.66663C2.16675 2.8382 2.83832 2.16663 3.66675 2.16663Z"
+      stroke="currentcolor"
+    />
+    <path
+      d="M18 4C18 2.89543 17.1046 2 16 2H8V18H16C17.1046 18 18 17.1046 18 16V4Z"
       fill="currentcolor"
-      fillRule="evenodd"
     />
   </svg>
 );
@@ -232,6 +246,7 @@ const Icon: React.FC<Props> = (props: Props) => {
     if (name === 'filter') return <FilterIcon />;
     if (name === 'options') return <OptionsIcon />;
     if (name === 'panel') return <PanelIcon />;
+    if (name === 'panel-on') return <PanelOnIcon />;
     if (name === 'row-small') return <RowIconSmall />;
     if (name === 'row-medium') return <RowIconMedium />;
     if (name === 'row-large') return <RowIconLarge />;
