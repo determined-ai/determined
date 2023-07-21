@@ -1,4 +1,4 @@
-g//go:build integration
+//go:build integration
 // +build integration
 
 package internal
