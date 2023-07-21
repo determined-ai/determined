@@ -11,17 +11,29 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	rpauth "github.com/determined-ai/determined/master/internal/resourcepool-rbac"
 	workspaceauth "github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 func (a *apiServer) GetResourcePools(
-	_ context.Context, req *apiv1.GetResourcePoolsRequest,
+	ctx context.Context, req *apiv1.GetResourcePoolsRequest,
 ) (*apiv1.GetResourcePoolsResponse, error) {
 	resp, err := a.m.rm.GetResourcePools(a.m.system, req)
 	if err != nil {
 		return nil, err
 	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	filteredPools, err := rpauth.AuthZProvider.Get().FilterResourcePools(ctx, *curUser,
+		resp.ResourcePools)
+	if err != nil {
+		return nil, err
+	}
+	resp.ResourcePools = filteredPools
 	return resp, a.paginate(&resp.Pagination, &resp.ResourcePools, req.Offset, req.Limit)
 }
 
