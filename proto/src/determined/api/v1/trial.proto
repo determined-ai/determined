@@ -810,10 +810,10 @@ message GetTrialSourceInfoMetricsByModelVersionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "checkpoint_uuid" ] }
   };
-  // The database id of the model version
-  int32 model_version_id = 1;
+  // The database id of the model
+  int32 model_id = 1;
   // The version of the model version
-  int32 model_version_version = 2;
+  int32 model_version = 2;
   // Type of the TrialSourceInfo
   optional determined.trial.v1.TrialSourceInfoType trial_source_info_type = 3;
 }

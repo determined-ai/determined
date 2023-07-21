@@ -12445,8 +12445,8 @@ class v1TrialSimulation(Printable):
         return out
 
 class v1TrialSourceInfo(Printable):
-    modelVersionId: "typing.Optional[int]" = None
-    modelVersionVersion: "typing.Optional[int]" = None
+    modelId: "typing.Optional[int]" = None
+    modelVersion: "typing.Optional[int]" = None
 
     def __init__(
         self,
@@ -12454,16 +12454,16 @@ class v1TrialSourceInfo(Printable):
         checkpointUuid: str,
         trialId: int,
         trialSourceInfoType: "v1TrialSourceInfoType",
-        modelVersionId: "typing.Union[int, None, Unset]" = _unset,
-        modelVersionVersion: "typing.Union[int, None, Unset]" = _unset,
+        modelId: "typing.Union[int, None, Unset]" = _unset,
+        modelVersion: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.checkpointUuid = checkpointUuid
         self.trialId = trialId
         self.trialSourceInfoType = trialSourceInfoType
-        if not isinstance(modelVersionId, Unset):
-            self.modelVersionId = modelVersionId
-        if not isinstance(modelVersionVersion, Unset):
-            self.modelVersionVersion = modelVersionVersion
+        if not isinstance(modelId, Unset):
+            self.modelId = modelId
+        if not isinstance(modelVersion, Unset):
+            self.modelVersion = modelVersion
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialSourceInfo":
@@ -12472,10 +12472,10 @@ class v1TrialSourceInfo(Printable):
             "trialId": obj["trialId"],
             "trialSourceInfoType": v1TrialSourceInfoType(obj["trialSourceInfoType"]),
         }
-        if "modelVersionId" in obj:
-            kwargs["modelVersionId"] = obj["modelVersionId"]
-        if "modelVersionVersion" in obj:
-            kwargs["modelVersionVersion"] = obj["modelVersionVersion"]
+        if "modelId" in obj:
+            kwargs["modelId"] = obj["modelId"]
+        if "modelVersion" in obj:
+            kwargs["modelVersion"] = obj["modelVersion"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -12484,10 +12484,10 @@ class v1TrialSourceInfo(Printable):
             "trialId": self.trialId,
             "trialSourceInfoType": self.trialSourceInfoType.value,
         }
-        if not omit_unset or "modelVersionId" in vars(self):
-            out["modelVersionId"] = self.modelVersionId
-        if not omit_unset or "modelVersionVersion" in vars(self):
-            out["modelVersionVersion"] = self.modelVersionVersion
+        if not omit_unset or "modelId" in vars(self):
+            out["modelId"] = self.modelId
+        if not omit_unset or "modelVersion" in vars(self):
+            out["modelVersion"] = self.modelVersion
         return out
 
 class v1TrialSourceInfoMetric(Printable):

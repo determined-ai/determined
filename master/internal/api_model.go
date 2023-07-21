@@ -820,7 +820,7 @@ func (a *apiServer) GetTrialSourceInfoMetricsByModelVersion(
 	ctx context.Context, req *apiv1.GetTrialSourceInfoMetricsByModelVersionRequest,
 ) (*apiv1.GetTrialSourceInfoMetricsByModelVersionResponse, error) {
 	modelResp, err := a.ModelVersionFromID(
-		strconv.FormatInt(int64(req.ModelVersionId), 10), req.ModelVersionVersion,
+		strconv.FormatInt(int64(req.ModelId), 10), req.ModelVersion,
 	)
 	if err != nil {
 		return nil, err
@@ -835,8 +835,8 @@ func (a *apiServer) GetTrialSourceInfoMetricsByModelVersion(
 	}
 	resp := &apiv1.GetTrialSourceInfoMetricsByModelVersionResponse{}
 	trialIDsQuery := db.Bun().NewSelect().Table("trial_source_infos").
-		Where("model_version_id = ?", req.ModelVersionId).
-		Where("model_version_version = ?", req.ModelVersionVersion)
+		Where("model_id = ?", req.ModelId).
+		Where("model_version = ?", req.ModelVersion)
 
 	if req.TrialSourceInfoType != nil {
 		trialIDsQuery.Where("trial_source_info_type = ?", req.TrialSourceInfoType.String())

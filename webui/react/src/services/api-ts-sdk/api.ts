@@ -9684,17 +9684,17 @@ export interface V1TrialSourceInfo {
      */
     checkpointUuid: string;
     /**
-     * Source model_version id which generated the checkpoint (if applicable)
+     * Source `id`` for the model which generated the checkpoint (if applicable)
      * @type {number}
      * @memberof V1TrialSourceInfo
      */
-    modelVersionId?: number;
+    modelId?: number;
     /**
-     * Source model_version version which generated the checkpoint (if applicable)
+     * Source `version` in the model_version version field which generated the checkpoint (if applicable)
      * @type {number}
      * @memberof V1TrialSourceInfo
      */
-    modelVersionVersion?: number;
+    modelVersion?: number;
     /**
      * Type for this trial_source_info
      * @type {V1TrialSourceInfoType}

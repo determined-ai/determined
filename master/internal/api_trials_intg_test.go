@@ -710,8 +710,8 @@ func TestReportTrialSourceInfo(t *testing.T) {
 		TrialId:             int32(infTrial.ID),
 		CheckpointUuid:      checkpointUUID,
 		TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
-		ModelVersionId:      &modelVersion.Model.Id,
-		ModelVersionVersion: &modelVersion.Version,
+		ModelId:             &modelVersion.Model.Id,
+		ModelVersion:        &modelVersion.Version,
 	}
 	req := &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: trialSourceInfo}
 	resp, err := api.ReportTrialSourceInfo(ctx, req)
@@ -748,8 +748,8 @@ func TestReportTrialSourceInfo(t *testing.T) {
 
 	// Get the trials and metrics based on model version
 	getMVReq := &apiv1.GetTrialSourceInfoMetricsByModelVersionRequest{
-		ModelVersionId:      modelVersion.Model.Id,
-		ModelVersionVersion: modelVersion.Version,
+		ModelId:      modelVersion.Model.Id,
+		ModelVersion: modelVersion.Version,
 	}
 	getMVResp, getMVErr := api.GetTrialSourceInfoMetricsByModelVersion(ctx, getMVReq)
 	require.NoError(t, getMVErr)
