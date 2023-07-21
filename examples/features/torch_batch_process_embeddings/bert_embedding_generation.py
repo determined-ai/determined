@@ -112,7 +112,7 @@ if __name__ == "__main__":
     dataset = load_dataset("BeIR/scidocs", "corpus", split="corpus")
     # Persisting embeddings can take quite a while on Chroma
     # Adding a limit on dataset size to ensure the example finishes sooner
-    dataset = dataset.select(list(range(500)))
+    dataset = dataset.select(list(range(100)))
     experimental.torch_batch_process(
         EmbeddingProcessor,
         dataset,
