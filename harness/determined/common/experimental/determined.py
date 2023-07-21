@@ -170,6 +170,45 @@ class Determined:
         resp = bindings.get_GetExperiment(session=self._session, experimentId=experiment_id)
         return experiment.Experiment._from_bindings(resp.experiment, self._session)
 
+    def list_experiments(
+        self,
+        sort_by: Optional[experiment.ExperimentSortBy] = None,
+        order_by: Optional[experiment.ExperimentOrderBy] = None,
+        experiment_ids: Optional[List[int]] = None,
+        labels: Optional[List[str]] = None,
+        users: Optional[List[str]] = None,
+        states: Optional[List[experiment.ExperimentState]] = None,
+        name: Optional[str] = None,
+        project_id: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Iterator[experiment.Experiment]:
+        """
+        Get a list of :class:`~determined.experimental.Experiment` representing the
+        experiments with the provided experiment ID.
+        """
+
+        def get_with_offset(offset: int) -> bindings.v1GetExperimentsResponse:
+            return bindings.get_GetExperiments(
+                session=self._session,
+                sortBy=sort_by and sort_by._to_bindings() or None,
+                orderBy=order_by and order_by._to_bindings() or None,
+                archived=None,
+                description=None,
+                labels=labels,
+                experimentIdFilter_incl=experiment_ids,
+                offset=offset,
+                limit=limit,
+                name=name,
+                states=states,
+                users=users,
+                projectId=project_id,
+            )
+
+        resps = api.read_paginated(get_with_offset)
+        for r in resps:
+            for e in r.experiments:
+                yield experiment.Experiment._from_bindings(e, self._session)
+
     def get_trial(self, trial_id: int) -> trial.Trial:
         """
         Get the :class:`~determined.experimental.Trial` representing the
