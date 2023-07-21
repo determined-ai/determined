@@ -110,7 +110,7 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
 
 if __name__ == "__main__":
     dataset = load_dataset("BeIR/scidocs", "corpus", split="corpus")
-    dataset = dataset.select(list(range(1000)))
+    dataset = dataset.select(list(range(500)))
     experimental.torch_batch_process(
         EmbeddingProcessor,
         dataset,
