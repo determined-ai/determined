@@ -5,11 +5,20 @@ Determined WebUI.
 """
 
 import logging
+import random
 import time
 
 # NEW: import determined
 import determined as det
 from determined.common import util as det_util
+
+metric_groups = [
+    det_util._LEGACY_TRAINING,
+    det_util._LEGACY_VALIDATION,
+    "group_b",
+    "group_c",
+    "inference",
+]
 
 
 def main(core_context: det.core.Context, increment_by):
@@ -20,15 +29,13 @@ def main(core_context: det.core.Context, increment_by):
         steps_completed = batch + 1
         time.sleep(0.1)
         logging.info(f"x is now {x}")
-        # NEW: report training metrics.
-        if steps_completed % 10 == 0:
-            core_context.train._report_trial_metrics(
-                group=det_util._LEGACY_TRAINING, total_batches=steps_completed, metrics={"x": x}
-            )
-    # NEW: report a "validation" metric at the end.
-    core_context.train._report_trial_metrics(
-        group=det_util._LEGACY_VALIDATION, total_batches=steps_completed, metrics={"x": x}
-    )
+        idx = batch % len(metric_groups)
+        group = metric_groups[idx]
+        noise = random.random() * x
+        metrics = {f"{group}/metric_{i}": x * (i + 1) + noise for i in range(3)}
+        core_context.train._report_trial_metrics(
+            group=group, total_batches=steps_completed, metrics=metrics
+        )
 
 
 if __name__ == "__main__":
