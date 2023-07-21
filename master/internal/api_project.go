@@ -110,7 +110,7 @@ func (a *apiServer) getProjectColumnsByID(
 		},
 		{
 			Column:      "searcherType",
-			DisplayName: "Searcher type",
+			DisplayName: "Searcher",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 		},
@@ -134,7 +134,7 @@ func (a *apiServer) getProjectColumnsByID(
 		},
 		{
 			Column:      "checkpointCount",
-			DisplayName: "Checkpoint count",
+			DisplayName: "Checkpoints",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 		},
