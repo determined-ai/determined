@@ -1,4 +1,4 @@
-package resourcepoolrbac
+package rm
 
 import (
 	"context"
@@ -7,16 +7,16 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
-// ResourcePoolAuthZBasic is classic OSS Determined authentication for workspaces.
-type ResourcePoolAuthZBasic struct{}
+// ResourceManagerAuthZBasic is classic OSS Determined authentication for resource managers.
+type ResourceManagerAuthZBasic struct{}
 
 // FilterResourcePools always returns provided list and a nil error.
-func (a *ResourcePoolAuthZBasic) FilterResourcePools(
+func (a *ResourceManagerAuthZBasic) FilterResourcePools(
 	ctx context.Context, curUser model.User, resourcePools []*resourcepoolv1.ResourcePool,
 ) ([]*resourcepoolv1.ResourcePool, error) {
 	return resourcePools, nil
 }
 
 func init() {
-	AuthZProvider.Register("basic", &ResourcePoolAuthZBasic{})
+	AuthZProvider.Register("basic", &ResourceManagerAuthZBasic{})
 }

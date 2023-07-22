@@ -11,7 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	rpauth "github.com/determined-ai/determined/master/internal/resourcepool-rbac"
+	"github.com/determined-ai/determined/master/internal/rm"
 	workspaceauth "github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -28,7 +28,7 @@ func (a *apiServer) GetResourcePools(
 		return nil, err
 	}
 
-	filteredPools, err := rpauth.AuthZProvider.Get().FilterResourcePools(ctx, *curUser,
+	filteredPools, err := rm.AuthZProvider.Get().FilterResourcePools(ctx, *curUser,
 		resp.ResourcePools)
 	if err != nil {
 		return nil, err

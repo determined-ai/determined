@@ -1,4 +1,4 @@
-package resourcepoolrbac
+package rm
 
 import (
 	"context"
@@ -8,13 +8,13 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
-// ResourcePoolAuthZ is the interface for resource pool authorization.
-type ResourcePoolAuthZ interface {
+// ResourceManagerAuthZ is the interface for resource manager authorization.
+type ResourceManagerAuthZ interface {
 	// GET /api/v1/resource-pools
 	FilterResourcePools(
 		ctx context.Context, curUser model.User, resourcePools []*resourcepoolv1.ResourcePool,
 	) ([]*resourcepoolv1.ResourcePool, error)
 }
 
-// AuthZProvider providers ResourcePoolAuthZ implementations.
-var AuthZProvider authz.AuthZProviderType[ResourcePoolAuthZ]
+// AuthZProvider provides ResourceManagerAuthZ implementations.
+var AuthZProvider authz.AuthZProviderType[ResourceManagerAuthZ]
