@@ -169,6 +169,13 @@ func TestListWorkspacesBindingRP(t *testing.T) {
 	require.Equal(t, int(workspaceIDs[0]), bindings[0].WorkspaceID,
 		"expected workspaceID %d, but got %d", workspaceIDs[0], bindings[0].WorkspaceID)
 
+	// test get all bindings
+	err = AddRPWorkspaceBindings(ctx, []int32{workspaceIDs[1]}, testPoolName, existingPools)
+	require.NoError(t, err, "failed to add bindings: %t", err)
+	bindings, err = GetAllBindings(ctx)
+	require.NoError(t, err, "failed to get all bindings")
+	require.Equal(t, 2, len(bindings),
+		"expected length of bindings to be 0 but got %d", len(bindings))
 	return
 }
 
