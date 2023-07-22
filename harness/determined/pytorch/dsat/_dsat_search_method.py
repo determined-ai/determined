@@ -231,6 +231,8 @@ class DSATTrialTracker:
         self.end_profile_step = args.end_profile_step
         self.zero_stages = set(args.zero_stages)
         self.divisible_by: int = args.divisible_by
+        # divisible_by is also the minimum possible train_micro_batch_size_per_gpu. Alias attr:
+        self.min_mbs = self.divisible_by
         self.train_batch_size: Optional[int] = args.train_batch_size
 
         # Derived attributes
@@ -824,7 +826,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
 
     def get_default_hi_lo(self, zero_stage: int) -> Tuple[int, int]:
         random_zero_stage_max_mbs = self.trial_tracker.approx_max_mbs_per_stage[zero_stage]
-        lo = self.trial_tracker.divisible_by
+        lo = self.trial_tracker.min_mbs
         # Set the hi such that the midpoint is exactly at random_zero_stage_max_mbs when
         # search_range_factor == 1, then ensure all divisibility and sensibility criteria are met.
         hi = 2 * int(self.search_range_factor * random_zero_stage_max_mbs) - lo
@@ -893,7 +895,9 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
             if last_trial.search_data is None:
                 return new_trials
             new_search_data = copy.deepcopy(last_trial.search_data)
-            new_search_data.hi = self.round_mbs_down(last_trial.mbs - 1)
+            # last_trial.mbs - 1 is guaranteed to be a viable round_mbs_down value; non-viable ones
+            # are caught by self.should_stop_lineage.
+            new_search_data.hi = last_trial.mbs - self.trial_tracker.divisible_by
 
             mbs = self.get_random_mbs_from_search_data(new_search_data)
             new_hparams = copy.deepcopy(last_trial.hparams)
@@ -943,7 +947,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         if last_trial.mbs == self.trial_tracker.max_mbs:
             new_search_data.hi = new_search_data.lo = self.trial_tracker.max_mbs
         else:
-            new_search_data.lo = self.round_mbs_up(last_trial.mbs + 1)
+            new_search_data.lo = last_trial.mbs + self.trial_tracker.divisible_by
             while new_search_data.lo > new_search_data.hi:
                 new_search_data.hi *= 2
                 new_search_data.hi = min(new_search_data.hi, self.trial_tracker.max_mbs)
@@ -1136,9 +1140,9 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
         if last_trial.search_data is None:
             return [self.get_random_trial()]
         new_search_data = copy.deepcopy(last_trial.search_data)
-        if last_trial.mbs == 1:
+        if last_trial.mbs == self.trial_tracker.min_mbs:
             return [self.get_random_trial()]
-        new_search_data.hi = self.round_mbs_down(last_trial.mbs - 1)
+        new_search_data.hi = last_trial.mbs - self.trial_tracker.divisible_by
         if new_search_data.lo > new_search_data.hi:
             return [self.get_random_trial()]
 
@@ -1436,7 +1440,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
                 new_search_data.lo = new_search_data.hi
                 new_search_data.hi = min(2 * new_search_data.hi, self.trial_tracker.max_mbs)
             else:
-                new_search_data.lo = self.round_mbs_up(latest_trial.mbs + 1)
+                new_search_data.lo = latest_trial.mbs + self.trial_tracker.divisible_by
         else:
             failed_on_min_mbs = latest_trial.mbs == latest_trial.search_data.lo
             if failed_on_min_mbs:
@@ -1451,7 +1455,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
                 else:
                     new_search_data.hi = new_search_data.lo = latest_trial.mbs
             else:
-                new_search_data.hi = self.round_mbs_down(latest_trial.mbs - 1)
+                new_search_data.hi = latest_trial.mbs - self.trial_tracker.divisible_by
 
         mid = (new_search_data.hi + new_search_data.lo) // 2
         mbs = self.round_mbs_down(mid)
@@ -1527,7 +1531,7 @@ class _TestDSATSearchMethod(BaseDSATSearchMethod):
             for trial_num in range(1, self.trial_tracker.max_trials):
                 hparams = copy.deepcopy(hparams_without_profile_info_keys)
                 # Force mbs to lie in the viable range of values.
-                mbs = max(trial_num, self.trial_tracker.divisible_by)
+                mbs = max(trial_num, self.trial_tracker.min_mbs)
                 mbs = min(mbs, self.trial_tracker.max_mbs)
                 mbs = self.round_mbs_up(mbs)
                 hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
