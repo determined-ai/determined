@@ -574,36 +574,3 @@ def get_hf_args_with_overwrites(args: List[str], hparams: Dict[str, Any]) -> Lis
         args = update_hf_args(args, overwritten_ds_config_dict)
 
     return args
-
-
-def round_mbs_down(mbs: int, trial_tracker: _dsat_search_method.DSATTrialTracker) -> int:
-    """
-    Rounds mbs, the train_micro_batch_size_per_gpu, down such that it satisfies the divisibility
-    conditions specified by global args.
-    """
-    if trial_tracker.train_batch_size is None:
-        factor = trial_tracker.divisible_by
-        mbs = factor * (mbs // factor)
-    else:
-        factor = trial_tracker.train_batch_size // trial_tracker.slots_per_trial
-        while factor % mbs:
-            mbs -= 1
-    return mbs
-
-
-def round_mbs_up(mbs: int, trial_tracker: _dsat_search_method.DSATTrialTracker) -> int:
-    """
-    Rounds mbs, the train_micro_batch_size_per_gpu, up such that it satisfies the divisibility
-    conditions specified by global args.
-    """
-    if trial_tracker.train_batch_size is None:
-        factor = trial_tracker.divisible_by
-        div, mod = divmod(mbs, factor)
-        mbs = factor * (div + (1 if mod else 0))
-    else:
-        factor = trial_tracker.train_batch_size // trial_tracker.slots_per_trial
-        if mbs > factor:
-            raise ValueError("impossible to round up")
-        while factor % mbs:
-            mbs += 1
-    return mbs
