@@ -112,6 +112,15 @@ def get_base_parser() -> argparse.ArgumentParser:
         type=int,
         help="Fix the global train_batch_size to the provided value.",
     )
+    search_range_factor_help = (
+        "Expands the initial search range by a factor of `search-range-factor`"
+    )
+    base_parser.add_argument(
+        "--search-range-factor",
+        type=float,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
+        help=search_range_factor_help,
+    )
 
     return base_parser
 
@@ -146,19 +155,10 @@ def get_full_parser() -> argparse.ArgumentParser:
         help="Terminates the search if a new best config not found in last `early-stopping` trials",
     )
 
-    binary_subparser = subparsers.add_parser(
+    subparsers.add_parser(
         "binary",
         parents=[base_parser],
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    search_range_factor_help = (
-        "Expands the initial search range by a factor of `search-range-factor`"
-    )
-    binary_subparser.add_argument(
-        "--search-range-factor",
-        type=float,
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
-        help=search_range_factor_help,
     )
 
     asha_subparser = subparsers.add_parser(
@@ -185,12 +185,6 @@ def get_full_parser() -> argparse.ArgumentParser:
         "--divisor",
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["divisor"],
         help="ASHA divisor parameter (`eta` in arxiv:1810.05934)",
-    )
-    asha_subparser.add_argument(
-        "--search-range-factor",
-        type=float,
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
-        help=search_range_factor_help,
     )
 
     return parser
