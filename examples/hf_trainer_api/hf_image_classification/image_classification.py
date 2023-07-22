@@ -338,12 +338,14 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
         ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
+        trust_remote_code=model_args.trust_remote_code,
     )
     feature_extractor = AutoFeatureExtractor.from_pretrained(
         model_args.feature_extractor_name or model_args.model_name_or_path,
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
+        trust_remote_code=model_args.trust_remote_code,
     )
 
     # Define torchvision transforms to be applied to each image.
