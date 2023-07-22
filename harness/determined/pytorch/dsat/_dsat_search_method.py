@@ -1526,12 +1526,10 @@ class _TestDSATSearchMethod(BaseDSATSearchMethod):
             ]
             for trial_num in range(1, self.trial_tracker.max_trials):
                 hparams = copy.deepcopy(hparams_without_profile_info_keys)
-                mbs = max(
-                    self.round_mbs_up(min(trial_num, self.trial_tracker.max_mbs)),
-                    self.trial_tracker.divisible_by,
-                )
-                if mbs > self.trial_tracker.max_mbs:
-                    mbs = self.trial_tracker.max_mbs
+                # Force mbs to lie in the viable range of values.
+                mbs = max(trial_num, self.trial_tracker.divisible_by)
+                mbs = min(mbs, self.trial_tracker.max_mbs)
+                mbs = self.round_mbs_up(mbs)
                 hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
                 # Choose a random zero stage:
                 hparams[_defaults.OVERWRITE_KEY]["zero_optimization"] = {
