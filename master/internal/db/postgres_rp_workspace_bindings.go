@@ -195,6 +195,18 @@ func OverwriteRPWorkspaceBindings(ctx context.Context,
 	return err
 }
 
+// GetAllBindings gets all valid rp-workspace bindings.
+func GetAllBindings(
+	ctx context.Context,
+) ([]*RPWorkspaceBinding, error) {
+	var rpWorkspaceBindings []*RPWorkspaceBinding
+	err := Bun().NewSelect().Model(&rpWorkspaceBindings).Where("valid = ?", true).Scan(ctx)
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		return nil, err
+	}
+	return rpWorkspaceBindings, nil
+}
+
 // GetUnboundRPs get unbound resource pools.
 func GetUnboundRPs(
 	ctx context.Context, resourcePools []config.ResourcePoolConfig,
