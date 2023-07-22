@@ -23,8 +23,6 @@ def parse_args() -> argparse.Namespace:
 def run_autotuning(args: argparse.Namespace) -> None:
     # Build the default SearchRunner's config from the submitted config. The original
     # config yaml file is added as an include and is reimported by the SearchRunner later.
-
-    _utils.sanity_check_args(args)
     config = _utils.get_search_runner_config_from_args(args)
 
     # Create empty tempdir as the model_dir and upload everything else as an includes in order to

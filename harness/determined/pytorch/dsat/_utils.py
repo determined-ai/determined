@@ -228,12 +228,42 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
     if args.search_runner_config is not None:
         submitted_search_runner_config = get_dict_from_yaml_or_json_path(args.search_runner_config)
         return submitted_search_runner_config
+    submitted_exp_config_dict = sanity_check_args_and_get_submitted_config(args)
 
+    default_search_runner_config = _defaults.DEFAULT_SEARCH_RUNNER_CONFIG
+    if args.max_search_runner_restarts is not None:
+        default_search_runner_config["max_restarts"] = args.max_search_runner_restarts
+    # Merge with the submitted experiment config so that the search runner shares the project,
+    # workspace, etc.
+    search_runner_config = merge_dicts(submitted_exp_config_dict, default_search_runner_config)
+    search_runner_config["name"] = f"(DSAT) {search_runner_config['name']}"
+    search_runner_config["hyperparameters"] = vars(args)
+
+    return search_runner_config
+
+
+def sanity_check_args_and_get_submitted_config(args: argparse.Namespace) -> Dict[str, Any]:
     submitted_exp_config_dict = get_dict_from_yaml_or_json_path(args.config_path)
-    assert "deepspeed_config" in submitted_exp_config_dict["hyperparameters"], (
-        "DS AT requires a `hyperparameters.deepspeed_config` key which points "
-        "to the deepspeed config json file"
-    )
+    if "deepspeed_config" not in submitted_exp_config_dict["hyperparameters"]:
+        raise ValueError(
+            "DS AT requires a `hyperparameters.deepspeed_config` key which points "
+            "to the deepspeed config json file"
+        )
+
+    # Basic counting criteria.
+    if args.train_batch_size is not None:
+        slots = submitted_exp_config_dict["resources"].get("slots_per_trial", 1)
+        if args.train_batch_size % slots:
+            raise ValueError("train-batch-size must be divislbe by slots_per_trial")
+        if args.train_batch_size % args.divisible_by:
+            raise ValueError("train-batch-size must be divislbe by divisible-by")
+        if args.divisible_by > args.train_batch_size // slots:
+            raise ValueError(
+                "No valid batch sizes possible with these divisible_by, train_batch_size, and "
+                "slots_per_trial values"
+            )
+        if args.start_profile_step > args.end_profile_step:
+            raise ValueError("start-profile-step must be smaller than end-profile-step")
 
     # Also sanity check that if a --deepspeed_config (or in the case of HF
     # --deepspeed) arg is passed in, both configs match. Probably some gotchas here because
@@ -255,32 +285,7 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
                     f"{hp_deepspeed_config}, does not match the path in the entrypoint, "
                     f"{entrypoint_deepspeed_config}."
                 )
-
-    default_search_runner_config = _defaults.DEFAULT_SEARCH_RUNNER_CONFIG
-    if args.max_search_runner_restarts is not None:
-        default_search_runner_config["max_restarts"] = args.max_search_runner_restarts
-    # Merge with the submitted experiment config so that the search runner shares the project,
-    # workspace, etc.
-    search_runner_config = merge_dicts(submitted_exp_config_dict, default_search_runner_config)
-    search_runner_config["name"] = f"(DSAT) {search_runner_config['name']}"
-    search_runner_config["hyperparameters"] = vars(args)
-
-    return search_runner_config
-
-
-def sanity_check_args(args: argparse.Namespace) -> None:
-    submitted_exp_config_dict = get_dict_from_yaml_or_json_path(args.config_path)
-    if args.train_batch_size is not None:
-        slots = submitted_exp_config_dict["resources"].get("slots_per_trial", 1)
-        if args.train_batch_size % slots:
-            raise ValueError("train-batch-size must be divislbe by slots_per_trial")
-        if args.train_batch_size % args.divisible_by:
-            raise ValueError("train-batch-size must be divislbe by divisible-by")
-        if args.divisible_by > args.train_batch_size // slots:
-            raise ValueError(
-                "No valid batch sizes possible with these divisible_by, train_batch_size, and "
-                "slots_per_trial values"
-            )
+    return submitted_exp_config_dict
 
 
 def get_dict_from_yaml_or_json_path(
