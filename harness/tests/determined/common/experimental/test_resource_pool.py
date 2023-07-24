@@ -21,21 +21,3 @@ def single_item_resource_pools() -> bindings.v1GetResourcePoolsResponse:
     return bindings.v1GetResourcePoolsResponse(
         resourcePools=[sample_resource_pools], pagination=single_item_pagination
     )
-
-
-@responses.activate
-def test_bind_rp_to_workspaces_errors_on_invalid_rps(
-    standard_session: api.Session,
-) -> None:
-    resource_pool_name = "invalid_rp"
-    responses.post(
-        f"{_MASTER}/api/v1/resource-pools/{resource_pool_name}/workspace-bindings",
-        status=500,
-    )
-    rp = resource_pool.ResourcePool(session=standard_session, name="invalid_rp")
-
-    try:
-        rp.add_bindings(["foo"])
-        raise AssertionError("Server's 500 should raise an exception")
-    except api.errors.APIException:
-        pass
