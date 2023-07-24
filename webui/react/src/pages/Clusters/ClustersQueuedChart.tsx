@@ -48,6 +48,9 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
           hoursByLabel={queuedStats.hoursAverage}
           label="Queued Minutes"
           time={queuedStats.time}
+          formatValues={(_: uPlot, splits: number[]) => (
+            splits.map(n => n > 120 ? `${n/120} hrs`: n.toString())
+          )}
         />
       </Section>
     </>

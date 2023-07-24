@@ -17,6 +17,7 @@ interface ClusterHistoricalUsageChartProps {
   hoursTotal?: number[];
   label?: string;
   time: string[];
+  formatValues?: (self: uPlot, splits: number[]) => string[]
 }
 
 const CHART_HEIGHT = 350;
@@ -29,6 +30,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   hoursTotal,
   time,
   chartKey,
+  formatValues
 }: ClusterHistoricalUsageChartProps) => {
   const chartData: AlignedData = useMemo(() => {
     const timeUnix: number[] = time.map((item) => Date.parse(item) / 1000);
@@ -100,7 +102,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
             });
           },
         },
-        { label: label ? label : 'GPU Hours' },
+        { label: label ? label : 'GPU Hours', values: formatValues},
       ],
       height,
       key: chartKey,
