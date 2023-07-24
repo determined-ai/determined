@@ -8,18 +8,18 @@ import { Loadable } from 'utils/loadable';
 
 // add new feature switches here
 export const FEATURES = {
-  chart: 'New Charts',
-  explist_v2: 'New Experiment List',
-  rp_binding: 'Resource Pool Binding',
+  chart: 'Enable improved learning curve charts for experiment visualizations',
+  explist_v2: 'Enable improved experiment listing, filtering, and comparison',
+  rp_binding: 'Allow resource pools to be assigned to workspaces',
 } as const;
 export const FEATURE_SETTINGS_PATH = 'global-features';
 
-const ioValidFeature = keyof(FEATURES);
-export type ValidFeature = TypeOf<typeof ioValidFeature>;
+const ValidFeature = keyof(FEATURES);
+export type ValidFeature = TypeOf<typeof ValidFeature>;
 
 // had to dig into fp-ts to get a partial record for the settings config
 export const featureSettingsConfig = partial(
-  map(() => union([boolean, ioNull]))(ioValidFeature.keys),
+  map(() => union([boolean, ioNull]))(ValidFeature.keys),
 );
 export type FeatureSettingsConfig = TypeOf<typeof featureSettingsConfig>;
 
