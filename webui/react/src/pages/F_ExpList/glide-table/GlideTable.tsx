@@ -434,6 +434,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               },
             }
           : {
+              disabled: pinnedColumnsCount <= 1,
               key: 'unpin',
               label: 'Unpin column',
               onClick: () => {
@@ -634,25 +635,33 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const onColumnMoved: DataEditorProps['onColumnMoved'] = useCallback(
     (columnIdsStartIdx: number, columnIdsEndIdx: number): void => {
-      const pinnedColumnEnd = staticColumns.length + pinnedColumnsCount - 1;
-      if (
-        // can't move a column into the pinned area via dragging
-        (columnIdsStartIdx > pinnedColumnEnd && columnIdsEndIdx <= pinnedColumnEnd) ||
-        // can't move a column out of the pinned area via dragging
-        (columnIdsStartIdx <= pinnedColumnEnd && columnIdsEndIdx > pinnedColumnEnd)
-      )
-        return;
+      // Prevent the static columns from moving.
+      if (columnIdsStartIdx < staticColumns.length) return;
 
+      // Update the pinned column count based on where the column is sourced from and where it lands.
+      const pinnedColumnEnd = staticColumns.length + pinnedColumnsCount;
+      const isIntoPinned =
+        columnIdsStartIdx >= pinnedColumnEnd && columnIdsEndIdx < pinnedColumnEnd;
+      const isOutOfPinned =
+        columnIdsStartIdx < pinnedColumnEnd && columnIdsEndIdx >= pinnedColumnEnd;
+      if (isIntoPinned) setPinnedColumnsCount(pinnedColumnsCount + 1);
+      if (isOutOfPinned) setPinnedColumnsCount(pinnedColumnsCount - 1);
+
+      // Update the column list with the updated column.
       const sortableColumnIdsStartIdx = columnIdsStartIdx - staticColumns.length;
       const sortableColumnIdsEndIdx = Math.max(columnIdsEndIdx - staticColumns.length, 0);
-      if (sortableColumnIdsStartIdx > -1) {
-        const newCols = [...sortableColumnIds];
-        const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
-        newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
-        setSortableColumnIds(newCols);
-      }
+      const newCols = [...sortableColumnIds];
+      const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
+      newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
+      setSortableColumnIds(newCols);
     },
-    [staticColumns.length, pinnedColumnsCount, sortableColumnIds, setSortableColumnIds],
+    [
+      pinnedColumnsCount,
+      setPinnedColumnsCount,
+      setSortableColumnIds,
+      sortableColumnIds,
+      staticColumns.length,
+    ],
   );
 
   const onColumnHovered = useCallback(

@@ -21,6 +21,7 @@ import { getDisplayName } from 'utils/user';
 import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
 export const MIN_COLUMN_WIDTH = 40;
+export const NO_PINS_WIDTH = 200;
 
 export const MULTISELECT = 'selected';
 
@@ -50,6 +51,7 @@ export const experimentColumns = [
 export type ExperimentColumn = (typeof experimentColumns)[number];
 
 export const defaultExperimentColumns: ExperimentColumn[] = [
+  'name',
   'startTime',
   'user',
   'description',

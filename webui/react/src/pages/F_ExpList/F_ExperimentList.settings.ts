@@ -57,7 +57,7 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       type: number,
     },
     pinnedColumnsCount: {
-      defaultValue: 0,
+      defaultValue: 1,
       skipUrlEncoding: true,
       storageKey: 'pinnedColumnsCount',
       type: number,

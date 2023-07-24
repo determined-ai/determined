@@ -48,6 +48,7 @@ import {
   experimentColumns,
   MIN_COLUMN_WIDTH,
   MULTISELECT,
+  NO_PINS_WIDTH,
 } from './glide-table/columns';
 import { Error, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
@@ -81,7 +82,7 @@ const INITIAL_LOADING_EXPERIMENTS: Loadable<ExperimentWithTrial>[] = new Array(P
   NotLoaded,
 );
 
-const STATIC_COLUMNS = [MULTISELECT, 'name'];
+const STATIC_COLUMNS = [MULTISELECT];
 
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -453,6 +454,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const scrollbarWidth = useScrollbarWidth();
 
   const comparisonViewTableWidth = useMemo(() => {
+    if (pinnedColumns.length === 1) return NO_PINS_WIDTH;
     return Math.min(
       containerWidth - 30,
       pinnedColumns.reduce(
@@ -511,6 +513,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     () => (isLoading ? [NotLoaded] : experiments),
     [isLoading, experiments],
   );
+
+  const showPagination = useMemo(() => {
+    return isPagedView && (!settings.compare || settings.pinnedColumnsCount !== 0);
+  }, [isPagedView, settings.compare, settings.pinnedColumnsCount]);
 
   return (
     <>
@@ -591,7 +597,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 onSortChange={onSortChange}
               />
             </ComparisonView>
-            {isPagedView && (
+            {showPagination && (
               <Columns>
                 <Column align="right">
                   <Pagination
