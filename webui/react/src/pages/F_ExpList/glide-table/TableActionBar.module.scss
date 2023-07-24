@@ -9,14 +9,3 @@
     color: var(--theme-stage-on);
   }
 }
-.settingContent {
-  .title {
-    color: var(--theme-stage-border);
-    margin-bottom: 8px;
-  }
-  .row {
-    align-items: center;
-    display: grid;
-    grid-template-columns: 24px 120px 28px;
-  }
-}
