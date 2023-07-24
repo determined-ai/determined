@@ -101,9 +101,9 @@ interface Props {
   rowHeight: RowHeight;
   onRowHeightChange: (r: RowHeight) => void;
   setHeatmapApplied: (selection: string[]) => void;
-  heatmapApplied: string[];
-  toggleHeatmap: (heatmapOn: boolean) => void
-  heatmapOn: boolean
+  toggleHeatmap: (heatmapOn: boolean) => void;
+  heatmapOn: boolean;
+  heatmapBtnVisible: boolean;
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -131,9 +131,8 @@ const TableActionBar: React.FC<Props> = ({
   toggleComparisonView,
   rowHeight,
   onRowHeightChange,
-  setHeatmapApplied,
-  heatmapApplied,
   compareViewOn,
+  heatmapBtnVisible,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -368,13 +367,15 @@ const TableActionBar: React.FC<Props> = ({
       </Column>
       <Column align="right">
         <Columns>
-          <Tooltip content={`${heatmapOn ? 'Cancel' : 'Apply'} Heatmap`}>
-            <Button
-              type={heatmapOn ? 'primary' : 'default'}
-              onClick={() => toggleHeatmap(heatmapOn)}>
-              <Icon name="heatmap" title="heatmap" />
-            </Button>
-          </Tooltip>
+          {heatmapBtnVisible && (
+            <Tooltip content={'Toggle Metric Heatmap'}>
+              <Button
+                type={heatmapOn ? 'primary' : 'default'}
+                onClick={() => toggleHeatmap(heatmapOn)}>
+                <Icon name="heatmap" title="heatmap" />
+              </Button>
+            </Tooltip>
+          )}
           <OptionsMenu
             expListView={expListView}
             rowHeight={rowHeight}

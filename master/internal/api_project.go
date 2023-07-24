@@ -476,6 +476,8 @@ func (a *apiServer) getProjectNumericMetricsRange(
 	type metrics struct {
 		Min   interface{}
 		Max   interface{}
+		Last  interface{}
+		Sum   interface{}
 		Count *int32
 	}
 
@@ -512,13 +514,28 @@ func (a *apiServer) getProjectNumericMetricsRange(
 				if value.Count == nil {
 					continue
 				}
-				metricsValue := value.Min
-				if !r.SmallerIsBetter {
-					metricsValue = value.Max
-				}
-				switch v := metricsValue.(type) {
-				case float64:
-					traMetricsValues[metricsName] = append(traMetricsValues[metricsName], v)
+				aggregates := []string{"count", "last", "max", "min", "sum"}
+				for _, aggregate := range aggregates {
+					tMetricsName := fmt.Sprintf("%s.%s", metricsName, aggregate)
+					var tMetricsValue interface{}
+					switch aggregate {
+					case "count":
+						tMetricsValue = value.Count
+					case "last":
+						tMetricsValue = value.Last
+					case "max":
+						tMetricsValue = value.Max
+					case "min":
+						tMetricsValue = value.Min
+					case "sum":
+						tMetricsValue = value.Sum
+					}
+					switch v := tMetricsValue.(type) {
+					case float64:
+						traMetricsValues[tMetricsName] = append(traMetricsValues[tMetricsName], v)
+					case *int32:
+						traMetricsValues[tMetricsName] = append(traMetricsValues[tMetricsName], float64(*v))
+					}
 				}
 			}
 		}

@@ -263,6 +263,7 @@ const svgIconMap: Record<SvgIconName, React.FC> & { [x in FontIconName]?: never 
   'columns': ColumnsIcon,
   'filter': FilterIcon,
   'four-squares': FourSquaresIcon,
+  'heatmap': HeatmapIcon,
   'options': OptionsIcon,
   'panel': PanelIcon,
   'panel-on': PanelOnIcon,
@@ -271,7 +272,6 @@ const svgIconMap: Record<SvgIconName, React.FC> & { [x in FontIconName]?: never 
   'row-small': RowIconSmall,
   'row-xl': RowIconExtraLarge,
   'scroll': ScrollIcon,
-  'heatmap': HeatmapIcon
 };
 
 type CommonProps = {

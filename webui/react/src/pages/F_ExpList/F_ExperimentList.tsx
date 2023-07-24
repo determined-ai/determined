@@ -20,7 +20,7 @@ import useResize from 'hooks/useResize';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, getProjectNumericMetricsRange, searchExperiments } from 'services/api';
-import { V1BulkExperimentFilters, V1LocationType } from 'services/api-ts-sdk';
+import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import {
   ExperimentAction,
   ExperimentItem,
@@ -519,14 +519,29 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const handleHeatmapChange = useCallback(
     (selection: string[]) => {
-      updateSettings({ heatmapApplied: selection });
+      updateSettings({ heatmapSkipped: selection });
     },
     [updateSettings],
   );
 
-  const handleToggleHeatmap = useCallback((heatmapOn: boolean) => {
-    updateSettings({ heatmapOn: !heatmapOn })
-  }, [updateSettings])
+  const handleToggleHeatmap = useCallback(
+    (heatmapOn: boolean) => {
+      updateSettings({ heatmapOn: !heatmapOn });
+    },
+    [updateSettings],
+  );
+
+  const heatmapBtnVisible = useMemo(() => {
+    return !!Loadable.getOrElse([], projectColumns).find(
+      (column) =>
+        settings.columns
+          .slice(0, settings.compare ? settings.pinnedColumnsCount : undefined)
+          .includes(column.column) &&
+        column.type === V1ColumnType.NUMBER &&
+        (column.location === V1LocationType.VALIDATIONS ||
+          column.location === V1LocationType.TRAINING),
+    );
+  }, [settings.columns, projectColumns, settings.pinnedColumnsCount, settings.compare]);
 
   const selectedExperiments: ExperimentWithTrial[] = useMemo(() => {
     if (selectedExperimentIds.length === 0) return [];
@@ -560,9 +575,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         filters={experimentFilters}
         formStore={formStore}
         handleUpdateExperimentList={handleUpdateExperimentList}
-        heatmapApplied={settings.heatmapApplied}
+        heatmapBtnVisible={heatmapBtnVisible}
         heatmapOn={settings.heatmapOn}
-        toggleHeatmap={handleToggleHeatmap}
         initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}
         project={project}
@@ -576,6 +590,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         setVisibleColumns={setVisibleColumns}
         sorts={sorts}
         toggleComparisonView={handleToggleComparisonView}
+        toggleHeatmap={handleToggleHeatmap}
         total={total}
         onAction={handleOnAction}
         onRowHeightChange={onRowHeightChange}
@@ -610,7 +625,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 formStore={formStore}
                 handleScroll={isPagedView ? undefined : handleScroll}
                 handleUpdateExperimentList={handleUpdateExperimentList}
-                heatmapApplied={settings.heatmapApplied}
+                heatmapOn={settings.heatmapOn}
+                heatmapSkipped={settings.heatmapSkipped}
                 height={height}
                 page={page}
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
@@ -624,7 +640,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 setColumnWidths={handleColumnWidthChange}
                 setExcludedExperimentIds={setExcludedExperimentIds}
                 setHeatmapApplied={handleHeatmapChange}
-                heatmapOn={settings.heatmapOn}
                 setPinnedColumnsCount={setPinnedColumnsCount}
                 setSelectAll={setSelectAll}
                 setSelectedExperimentIds={setSelectedExperimentIds}
@@ -635,7 +650,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 onContextMenuComplete={onContextMenuComplete}
                 onIsOpenFilterChange={onIsOpenFilterChange}
                 onSortChange={onSortChange}
-                toggleHeatmapSetting={handleToggleHeatmap}
               />
             </ComparisonView>
             {showPagination && (

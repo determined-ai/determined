@@ -24,8 +24,8 @@ export interface F_ExperimentListSettings {
   sortString: string;
   pageLimit: number;
   pinnedColumnsCount: number;
-  heatmapApplied: string[];
-  heatmapOn: boolean
+  heatmapSkipped: string[];
+  heatmapOn: boolean;
 }
 export const settingsConfigForProject = (id: number): SettingsConfig<F_ExperimentListSettings> => ({
   settings: {
@@ -52,17 +52,17 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       storageKey: 'filterset',
       type: string,
     },
-    heatmapApplied: {
-      defaultValue: [],
-      skipUrlEncoding: true,
-      storageKey: 'heatmapApplied',
-      type: array(string),
-    },
     heatmapOn: {
       defaultValue: false,
       skipUrlEncoding: true,
       storageKey: 'heatmapOn',
-      type: boolean
+      type: boolean,
+    },
+    heatmapSkipped: {
+      defaultValue: [],
+      skipUrlEncoding: true,
+      storageKey: 'heatmapSkipped',
+      type: array(string),
     },
     pageLimit: {
       defaultValue: 20,

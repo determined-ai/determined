@@ -132,12 +132,23 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
         if (!checked && columnState.indexOf(id) < pinnedColumnsCount) {
           updateSettings({ pinnedColumnsCount: Math.max(pinnedColumnsCount - 1, 0) });
         }
+        // If uncheck something had heatmap skipped, reset to heatmap visible
+        if (!checked) {
+          updateSettings({ heatmapSkipped: settings.heatmapSkipped.filter((s) => s !== id) });
+        }
         const newColumnSet = new Set(columnState);
         checked ? newColumnSet.add(id) : newColumnSet.delete(id);
         setVisibleColumns([...newColumnSet]);
       }
     },
-    [columnState, setVisibleColumns, settings.compare, settings.pinnedColumnsCount, updateSettings],
+    [
+      columnState,
+      setVisibleColumns,
+      settings.compare,
+      settings.pinnedColumnsCount,
+      updateSettings,
+      settings.heatmapSkipped,
+    ],
   );
 
   const handleSearch = useCallback(
