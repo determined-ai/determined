@@ -58,7 +58,7 @@ const IsOn = (
 ): boolean => {
   const { featureSwitches } = info;
   // Read from default state
-  let isOn: boolean = FEATURES[feature].defaultValue;
+  let isOn: boolean = FEATURES[feature]?.defaultValue ?? false;
 
   // Read from config settings
   featureSwitches.includes(feature) && (isOn = true);
