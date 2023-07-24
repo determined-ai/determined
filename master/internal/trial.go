@@ -143,6 +143,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		if t.idSet {
+			// recover(). We do want to reset state + trial restarts probaly.
 			if err := t.recover(); err != nil {
 				return fmt.Errorf("recovering trial in prestart: %w", err)
 			}

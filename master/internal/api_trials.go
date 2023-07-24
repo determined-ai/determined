@@ -193,6 +193,9 @@ func (a *apiServer) TrialLogs(
 		// upgrade. In the event it did not, this should return quickly anyway.
 		fallthrough
 	case t.LogVersion == model.TaskLogVersion1:
+		// TODO in new instance this is broken. Honestly suprised this works so well
+		// since I'm assuming we create a new task. Since task is the limitation.
+
 		// Translate the request.
 		res := make(chan api.BatchResult, taskLogsChanBuffer)
 		go a.taskLogs(ctx, &apiv1.TaskLogsRequest{

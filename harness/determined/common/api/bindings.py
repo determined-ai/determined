@@ -2038,6 +2038,70 @@ class v1Container(Printable):
             out["parent"] = self.parent
         return out
 
+class v1ContinueExperimentRequest(Printable):
+    overrideConfig: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        id: int,
+        overrideConfig: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.id = id
+        if not isinstance(overrideConfig, Unset):
+            self.overrideConfig = overrideConfig
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ContinueExperimentRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "id": obj["id"],
+        }
+        if "overrideConfig" in obj:
+            kwargs["overrideConfig"] = obj["overrideConfig"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "id": self.id,
+        }
+        if not omit_unset or "overrideConfig" in vars(self):
+            out["overrideConfig"] = self.overrideConfig
+        return out
+
+class v1ContinueExperimentResponse(Printable):
+    warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
+
+    def __init__(
+        self,
+        *,
+        config: "typing.Dict[str, typing.Any]",
+        experiment: "v1Experiment",
+        warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
+    ):
+        self.config = config
+        self.experiment = experiment
+        if not isinstance(warnings, Unset):
+            self.warnings = warnings
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ContinueExperimentResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
+            "experiment": v1Experiment.from_json(obj["experiment"]),
+        }
+        if "warnings" in obj:
+            kwargs["warnings"] = [v1LaunchWarning(x) for x in obj["warnings"]] if obj["warnings"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
+            "experiment": self.experiment.to_json(omit_unset),
+        }
+        if not omit_unset or "warnings" in vars(self):
+            out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
+        return out
+
 class v1CreateExperimentRequest(Printable):
     activate: "typing.Optional[bool]" = None
     config: "typing.Optional[str]" = None
@@ -13639,6 +13703,26 @@ def post_CompleteTrialSearcherValidation(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_CompleteTrialSearcherValidation", _resp)
+
+def post_ContinueExperiment(
+    session: "api.Session",
+    *,
+    body: "v1ContinueExperimentRequest",
+) -> "v1ContinueExperimentResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/experiments/continue",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1ContinueExperimentResponse.from_json(_resp.json())
+    raise APIHttpError("post_ContinueExperiment", _resp)
 
 def post_CreateExperiment(
     session: "api.Session",

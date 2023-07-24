@@ -1303,6 +1303,168 @@ func (a *apiServer) GetExperimentCheckpoints(
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 
+// New endpoint to avoid breaking things.
+func (a *apiServer) ContinueExperiment(
+	ctx context.Context, req *apiv1.ContinueExperimentRequest,
+) (*apiv1.ContinueExperimentResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	// todo assert terminal state
+	// lock experiment?
+	// todo assert single searcher
+	// actually assert state near the end to avoid a race
+
+	// TODO rbac stuff.
+	_ = user
+
+	// active config -- TODO
+	activeConfig, err := a.m.db.ActiveExperimentConfig(int(req.Id))
+	if err != nil {
+		return nil, fmt.Errorf("loading active config for experiment %d: %w", req.Id, err)
+	}
+
+	// TODO merge active config with supplied config.
+	mergedConfig := activeConfig
+
+	// TODO update original config
+
+	// mergedConfig -> string
+
+	bytes, err := mergedConfig.Value() // TODO better way to do this
+	if err != nil {
+		return nil, err
+	}
+	dbExp, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(
+		&apiv1.CreateExperimentRequest{
+			Config:   string(bytes.([]byte)),
+			ParentId: req.Id,
+		}, user,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p); err != nil {
+		return nil, status.Errorf(codes.PermissionDenied, err.Error())
+	}
+	dbExp.ParentID = nil // Not a parent.
+	dbExp.ID = int(req.Id)
+
+	// What if an experiment has no trials??? TODO.
+	trialsResp, err := a.GetExperimentTrials(ctx, &apiv1.GetExperimentTrialsRequest{
+		ExperimentId: req.Id,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("getting experiment trials: %w", err)
+	}
+	if len(trialsResp.Trials) != 1 {
+		return nil, fmt.Errorf("experiment needs exactly one trial got %d instead",
+			len(trialsResp.Trials))
+	}
+
+	// Overwrite config ??? or allow this???
+	// Maybe check and error if it is a different trial?
+	// Or maybe don't? and just not set it if it is a different trial
+	activeConfig.RawSearcher.RawSourceTrialID = ptrs.Ptr(int(trialsResp.Trials[0].Id))
+
+	// TODO adjust searcher to only train for this much more?
+	// The searcher itself doesn't seem to have a way to handle this.
+	/*
+		activeConfig.RawSearcher.RawSingleConfig.RawMaxLength = &expconf.LengthV0{
+			Unit:  expconf.Batches,
+			Units: 0,
+		}
+	*/
+	// Okay so error out that this won't train anymore?
+	// How do we convert units? Is this even possible probaly not
+	// Or do we just default to keep trainig
+	// TODO remove this.
+	if activeConfig.RawSearcher.RawSingleConfig.RawMaxLength.Units <= 0 {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"trial won't train anymore so not continuing")
+	}
+
+	// where do we persist the experiment. newExperiment !!!
+	// where do we set warm start checkpoint ID. newExperiment
+	// where do we persist the trial?
+
+	// var launchWarnings []command.LaunchWarning // TODO delete
+	// if false {                                 // TODO delete
+	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
+	}
+
+	// updateExperiment state
+	// updateTrial state?
+
+	// TODO get trial
+	e.continueFromTrialID = activeConfig.RawSearcher.RawSourceTrialID
+	_, created := a.m.system.ActorOf(exputil.ExperimentsAddr.Child(e.ID), e)
+	if !created {
+		return nil, status.Errorf(codes.FailedPrecondition, "experiment actor still running")
+	}
+
+	// bugs
+	// a. 1. keeps training for awhile
+	//   searcher.max_length.batches=937 where do we obey this when we decide to stop?
+	//   is it searcher or experiment code?
+	// b. trial run id increases -- which makes sense but restarts is affected no?
+	//   we will break an invariant of restarts < trial IDs
+	//   we could add a new like meta retry id but I don't love that.
+	// c. we broke checkpoint gc
+	//   persisting GC task 2520.df8c3766-3265-4fd7-8328-560bba6a1da3:
+	//   adding task: ERROR:
+	//   insert or update on table \"tasks\" violates foreign key constraint \"tasks_job_id_fkey\"
+	// d. okay so we will need to add a new task for sure -- complciates things
+	//   how do we get taskID even?
+	//   how do we reconicle trail logs? Like should both logs be present?
+	// e. det e logs 2520 -f (same as d.)
+	//   broken won't follow
+	//   this is due to us calling task logs, honestly suprised we see more logs
+
+	// Let's do test cases...
+	// 1. continuing an compelted exp with same config
+	//   should exit immediately since it trained for batches
+	// 2. continuing an completed exp with larger train time
+	//   should train for the longer time
+	// 3. continung an completed exp with shorter train time
+	//   should exit immediately
+	//
+	// 4. transient failure
+	//    should rerun and have sucess
+	// 5. failure failure should rerun trial restarts
+
+	// Broke restarts...
+
+	// YES?
+	// why does searcher create despite being paused???
+	// Is this how normal experiments work?
+
+	//_ = launchWarnings // TODO delete
+
+	fmt.Println("Has activated gone through?")
+	_, err = a.ActivateExperiment(ctx, &apiv1.ActivateExperimentRequest{Id: int32(e.ID)})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to activate experiment: %s", err)
+	}
+	//}
+	// TODO activate
+
+	// TODO
+	protoExp, err := a.getExperiment(ctx, *user, int(req.Id))
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.ContinueExperimentResponse{
+		Experiment: protoExp,
+		Config:     protoutils.ToStruct(activeConfig),
+		Warnings:   command.LaunchWarningToProto(launchWarnings),
+	}, nil
+}
+
 func (a *apiServer) CreateExperiment(
 	ctx context.Context, req *apiv1.CreateExperimentRequest,
 ) (*apiv1.CreateExperimentResponse, error) {

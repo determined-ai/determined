@@ -297,6 +297,32 @@ def submit_experiment(args: Namespace) -> None:
                 _follow_experiment_logs(sess, resp.experiment.id)
 
 
+# TODO Follow / other exp options ? ? ?
+@authentication.required
+def continue_experiment(args: Namespace) -> None:
+    config_text = '{"name":"hack"}'
+    if args.config_file:
+        config_text = args.config_file.read()
+        args.config_file.close()
+    experiment_config = _parse_config_text_or_exit(config_text, "HACK", args.config)
+
+    if args.config:
+        # The user provided tweaks as cli args, so we have to reserialize the submitted experiment
+        # config.  This will unfortunately remove comments they had in the yaml, so we only do it
+        # when we have to.
+        yaml_dump = yaml.dump(experiment_config)
+        assert yaml_dump is not None
+        config_text = yaml_dump
+
+    sess = cli.setup_session(args)
+
+    req = bindings.v1ContinueExperimentRequest(
+        id=args.experiment_id,
+        overrideConfig=config_text,
+    )
+    resp = bindings.post_ContinueExperiment(sess, body=req)
+
+
 def local_experiment(args: Namespace) -> None:
     if not args.test_mode:
         raise NotImplementedError(
@@ -1130,6 +1156,17 @@ main_cmd = Cmd(
                 ),
             ],
         ),
+        # Continue experiment command.
+        Cmd(
+            "continue",
+            continue_experiment,
+            "continue experiment",
+            [
+                experiment_id_arg("experiment ID to continue"),
+                Arg("--config_file", type=FileType("r"), help="experiment config file (.yaml)"),
+                Arg("--config", action="append", default=[], help=CONFIG_DESC),
+            ],
+        ),        
         # Lifecycle management commands.
         Cmd(
             "activate",

@@ -245,9 +245,16 @@ var TrialTransitions = map[State]map[State]bool{
 		// User-canceled trials go directly from ACTIVE to COMPLETED with no in between.
 		CompletedState: true,
 	},
-	CanceledState:  {},
-	CompletedState: {},
-	ErrorState:     {},
+	CanceledState: {
+		// Should this active or paused?
+		ActiveState: true,
+	},
+	CompletedState: {
+		ActiveState: true,
+	},
+	ErrorState: {
+		ActiveState: true,
+	},
 	PausedState: {
 		ActiveState:            true,
 		StoppingKilledState:    true,

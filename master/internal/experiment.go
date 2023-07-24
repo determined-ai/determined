@@ -110,6 +110,7 @@ type (
 		rm                  rm.ResourceManager
 		searcher            *searcher.Searcher
 		warmStartCheckpoint *model.Checkpoint
+		continueFromTrialID *int
 
 		taskSpec      *tasks.TaskSpec
 		generatedKeys ssh.PrivateAndPublicKeys
@@ -545,6 +546,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 	case *apiv1.ActivateExperimentRequest:
+		fmt.Println("ACTIVATE EXPERIMENT?")
 		switch ok := e.updateState(ctx, model.StateWithReason{
 			State:               model.ActiveState,
 			InformationalReason: "user requested activation",
@@ -677,10 +679,18 @@ func (e *experiment) processOperations(
 			config := schemas.Copy(e.activeConfig)
 			state := trialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
-			ctx.ActorOf(op.RequestID, newTrial(
+
+			fmt.Println("E.state", e.State)
+			t := newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
-			))
+			)
+			if e.continueFromTrialID != nil {
+				t.id = *e.continueFromTrialID
+				t.idSet = true
+			}
+
+			ctx.ActorOf(op.RequestID, t)
 		case searcher.ValidateAfter:
 			state := e.TrialSearcherState[op.RequestID]
 			state.Op = op
