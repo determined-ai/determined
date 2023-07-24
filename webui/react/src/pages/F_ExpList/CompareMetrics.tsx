@@ -25,12 +25,25 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
     const { metrics, data, isLoaded } = metricData;
     const chartedMetrics: Record<string, boolean> = {};
     const out: ChartsProps = [];
+    const expNameById: Record<number, string> = {};
+    selectedExperiments.forEach((e) => {
+      expNameById[e.experiment.id] = e.experiment.name;
+    });
     metrics.forEach((metric) => {
       const series: Serie[] = [];
       const key = `${metric.type}|${metric.name}`;
       trials.forEach((t) => {
         const m = data[t?.id || 0];
-        m?.[key] && t && series.push({ ...m[key], color: colorMap[t.experimentId] });
+        m?.[key] &&
+          t &&
+          series.push({
+            ...m[key],
+            color: colorMap[t.experimentId],
+            metricType: undefined,
+            name: expNameById[t.experimentId]
+              ? `${expNameById[t.experimentId]} (${t.experimentId})`
+              : String(t.experimentId),
+          });
         chartedMetrics[key] ||= series.length > 0 || !!t.endTime;
       });
       out.push({
@@ -60,7 +73,7 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
     } else {
       return Loaded(out);
     }
-  }, [colorMap, trials, xAxis, metricData]);
+  }, [colorMap, trials, xAxis, metricData, selectedExperiments]);
 
   return (
     <div style={{ height: 'calc(100vh - 250px)', overflow: 'auto' }}>
