@@ -80,3 +80,13 @@ func WorkspaceByProjectID(ctx context.Context, projectID int) (*model.Workspace,
 	}
 	return &w, nil
 }
+
+// AllWorkspaces returns all the workspaces that exist.
+func AllWorkspaces(ctx context.Context) ([]*model.Workspace, error) {
+	var w []*model.Workspace
+	err := db.Bun().NewSelect().Model(&w).Scan(ctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get all workspaces")
+	}
+	return w, nil
+}
