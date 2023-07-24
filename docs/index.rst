@@ -94,7 +94,7 @@
    :robots: follow, index
    :segment: segment neutral
    :target_country: us
-   :web_section_id: TBD
+   :web_section_id: R12299
 
 You can quickly train almost any deep learning model using Determined.
 
