@@ -3,6 +3,7 @@ package trials
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -72,8 +73,8 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 		case db.MetricTypeBool:
 			cast = "boolean"
 		}
-		subq = subq.ColumnExpr("(metrics->?->>?)::? as ?",
-			metricsObjectName, metricName, bun.Safe(cast), bun.Ident(metricName))
+		subq = subq.ColumnExpr("(metrics->?->>?)::? as ?", metricsObjectName,
+			metricName, bun.Safe(cast), bun.Ident(strings.ReplaceAll(metricName, ".", "")))
 	}
 
 	subq = subq.Where("trial_id = ?", trialID).OrderExpr("random()").
@@ -100,17 +101,17 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
 
-	selectMetrics := map[string]bool{}
+	selectMetrics := map[string]string{}
 
 	for i := range metricNames {
-		selectMetrics[metricNames[i]] = true
+		selectMetrics[strings.ReplaceAll(metricNames[i], ".", "")] = metricNames[i]
 	}
 
 	for i := range results {
 		valuesMap := make(map[string]interface{})
 		for mName, mVal := range results[i] {
-			if selectMetrics[mName] {
-				valuesMap[mName] = mVal
+			if selectMetrics[mName] != "" {
+				valuesMap[selectMetrics[mName]] = mVal
 			}
 		}
 		epoch := new(int32)
