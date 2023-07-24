@@ -515,6 +515,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   return (
     <>
       <TableActionBar
+        compareViewOn={settings.compare}
         excludedExperimentIds={excludedExperimentIds}
         experiments={experiments}
         expListView={globalSettings.expListView}

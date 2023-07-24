@@ -1,0 +1,5 @@
+:orphan:
+
+**New Features**
+
+-  K8s: We now allow users to populate all securityContext fields within the podspec of the determined-container except for RunAsUser and RunAsGroup. Use :code:`det user link-with-agent-user` instead.

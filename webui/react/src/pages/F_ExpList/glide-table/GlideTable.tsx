@@ -41,7 +41,7 @@ import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'stores/contexts/UI';
 import usersStore from 'stores/users';
 import { ExperimentWithTrial, Project, ProjectColumn } from 'types';
-import { Surface } from 'utils/colors';
+import { Float, Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
@@ -268,23 +268,29 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     (row: number): Partial<Theme> | undefined => {
       // to put a border on the bottom row (actually the top of the row below it)
       if (row === data.length) return;
+
       // avoid showing 'empty rows' below data
       if (!data[row]) {
-        return {
-          borderColor: getCssVar(Surface.Surface),
-        };
+        return { borderColor: getCssVar(Surface.Surface) };
       }
 
-      const hoverStyle = row === hoveredRow ? { bgCell: getCssVar(Surface.SurfaceWeak) } : {};
+      const hoverStyle: { accentLight?: string; bgCell?: string } = {};
+      if (row === hoveredRow) {
+        hoverStyle.bgCell = getCssVar(Surface.SurfaceStrong);
+        if (selection.rows.toArray().includes(hoveredRow)) {
+          hoverStyle.accentLight = getCssVar(Float.FloatStrong);
+        }
+      }
 
       const rowColorTheme = Loadable.match(data[row], {
         Loaded: (record) =>
           colorMap[record.experiment.id] ? { accentColor: colorMap[record.experiment.id] } : {},
         NotLoaded: () => ({}),
       });
+
       return { ...rowColorTheme, ...hoverStyle };
     },
-    [colorMap, data, hoveredRow],
+    [colorMap, data, hoveredRow, selection.rows],
   );
 
   const onColumnResize: DataEditorProps['onColumnResize'] = useCallback(
