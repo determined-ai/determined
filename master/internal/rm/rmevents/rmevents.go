@@ -87,7 +87,7 @@ func send(
 ) {
 	subs, ok := subsByTopicByID[msg.topic]
 	if !ok {
-		logrus.Warnf("dropping message for %s with no subs", msg.topic)
+		syslog.Warnf("dropping message for %s with no subs", msg.topic)
 		return
 	}
 	for _, c := range subs {

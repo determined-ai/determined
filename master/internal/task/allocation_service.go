@@ -190,7 +190,7 @@ func (as *allocationService) Signal(
 }
 
 // State returns a copy of the current state of the allocation.
-// TODO(!!!): Just replace this with DB access, easy to do.
+// TODO(DET-9698): Just replace this with DB access, easy to do.
 func (as *allocationService) State(id model.AllocationID) (AllocationState, error) {
 	ref, err := as.getAllocation(id)
 	if err != nil {

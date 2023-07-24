@@ -48,7 +48,7 @@ func TestRestoreFailed(t *testing.T) {
 }
 
 func TestInvalidResourcesRequest(t *testing.T) {
-	// TODO(!!!): Unify InvalidResourcesRequestError and ResourcesFailure code paths.
+	// TODO(DET-9699): Unify InvalidResourcesRequestError and ResourcesFailure code paths.
 	db, _, id, q, exitFuture := requireStarted(t)
 	defer requireKilled(t, db, id, q, exitFuture)
 

@@ -262,15 +262,18 @@ func (a *allocation) IsRestoring() bool {
 // has passed. If a minute passes, an error is returned. The allocation must exist otherwise this
 // will return a not found error.
 func (a *allocation) waitForRestore(ctx context.Context) error {
+	t := time.NewTicker(time.Second)
+	defer t.Stop()
 	for i := 0; i < 60; i++ {
-		switch {
-		case !a.IsRestoring():
+		if !a.IsRestoring() {
 			return nil
-		case ctx.Err() != nil:
-			return ctx.Err()
 		}
 
-		time.Sleep(time.Second)
+		select {
+		case <-t.C:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
 	return fmt.Errorf("allocation stuck restoring after one minute of retrying")
 }
@@ -491,7 +494,7 @@ func (a *allocation) Close() error {
 		}
 	}
 
-	// TODO(!!!): This logic is gross, and it is unclear if all the proper cleanup logic for  th
+	// TODO(DET-9697): This logic is gross, and it is unclear if all the proper cleanup logic for th
 	// "oops" case is running given the diff between this and `a.terminated()`. We should refactor
 	// them to reduce code duplication and ensure correctness. Consider `a.closers = []func(){}` to
 	// consolidate "deferred" closers in a state machine.

@@ -364,7 +364,7 @@ type ResourcesStateChanged struct {
 	ResourcesStopped *ResourcesStopped
 
 	// More granular information about specific resource types.
-	// TODO(!!!): This can be removed now.
+	// TODO(DET-9700): This can be removed now.
 	Container *cproto.Container
 }
 
