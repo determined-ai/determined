@@ -371,7 +371,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                       }
                     }}
                     onSubmit={(val) => {
-                      userSettings.set(featureSettingsConfig, FEATURE_SETTINGS_PATH, {
+                      userSettings.set(FeatureSettingsConfig, FEATURE_SETTINGS_PATH, {
                         ...featureSettings,
                         [feature]: val,
                       });
