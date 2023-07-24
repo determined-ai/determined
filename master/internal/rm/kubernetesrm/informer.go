@@ -2,38 +2,42 @@ package kubernetesrm
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sirupsen/logrus"
-	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/cache"
 	watchtools "k8s.io/client-go/tools/watch"
 )
 
-type podCallbackFunc func(*k8sV1.Pod)
+type callbackFunc func(watch.Event)
 
 type informer struct {
-	cb         podCallbackFunc
+	cb         callbackFunc
+	name       string
 	syslog     *logrus.Entry
 	resultChan <-chan watch.Event
 }
 
 func newInformer(
 	ctx context.Context,
+	label string,
+	name string,
 	namespace string,
 	podInterface typedV1.PodInterface,
-	cb podCallbackFunc,
+	cb callbackFunc,
 ) (*informer, error) {
-	pods, err := podInterface.List(ctx, metaV1.ListOptions{LabelSelector: determinedLabel})
+	pods, err := podInterface.List(ctx, metaV1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
 
 	rw, err := watchtools.NewRetryWatcher(pods.ResourceVersion, &cache.ListWatch{
 		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
-			options.LabelSelector = determinedLabel
+			options.LabelSelector = label
 			return podInterface.Watch(ctx, options)
 		},
 	})
@@ -43,38 +47,68 @@ func newInformer(
 
 	// Log when pods are first added to the informer (at start-up).
 	syslog := logrus.WithFields(logrus.Fields{
-		"component": "podInformer",
+		"component": fmt.Sprintf("%s-Informer", name),
 		"namespace": namespace,
 	})
 	for i := range pods.Items {
-		syslog.Debugf("informer added pod: %s", pods.Items[i].Name)
-		cb(&pods.Items[i])
+		syslog.Debugf("informer added %s: %s", name, pods.Items[i].Name)
+		cb(watch.Event{Object: &pods.Items[i]})
 	}
 
 	return &informer{
 		cb:         cb,
+		name:       name,
 		syslog:     syslog,
 		resultChan: rw.ResultChan(),
 	}, nil
 }
 
-// startInformer returns the updated pod, if any.
+func newEventListener(
+	ctx context.Context,
+	eventInterface v1.EventInterface,
+	namespace string,
+	cb callbackFunc,
+) (*informer, error) {
+	events, err := eventInterface.List(ctx, metaV1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	rw, err := watchtools.NewRetryWatcher(events.ResourceVersion, &cache.ListWatch{
+		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
+			return eventInterface.Watch(ctx, metaV1.ListOptions{})
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Log when pods are first added to the informer (at start-up).
+	syslog := logrus.WithFields(logrus.Fields{
+		"component": "eventListener",
+		"namespace": namespace,
+	})
+	for i := range events.Items {
+		syslog.Debugf("listener added event: %s", events.Items[i].Name)
+		cb(watch.Event{Object: &events.Items[i]})
+	}
+
+	return &informer{
+		cb:         cb,
+		name:       "event",
+		syslog:     syslog,
+		resultChan: rw.ResultChan(),
+	}, nil
+}
+
 func (i *informer) run() {
-	i.syslog.Debug("pod informer is starting")
+	i.syslog.Debugf("%s informer is starting", i.name)
 	for event := range i.resultChan {
 		if event.Type == watch.Error {
-			i.syslog.Warnf("pod informer emitted error %+v", event)
+			i.syslog.Warnf("%s informer emitted error %+v", i.name, event)
 			continue
 		}
-
-		pod, ok := event.Object.(*k8sV1.Pod)
-		if !ok {
-			i.syslog.Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
-			continue
-		}
-
-		i.syslog.Debugf("informer got new pod event for pod: %s %s", pod.Name, pod.Status.Phase)
-		i.cb(pod)
+		i.cb(event)
 	}
-	panic("pod informer stopped unexpectedly")
+	panic(fmt.Sprintf("%s informer stopped unexpectedly", i.name))
 }

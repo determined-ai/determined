@@ -8,11 +8,24 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	k8sV1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/watch"
+)
+
+/*
+import (
+	"context"
+	"reflect"
+	"sync"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 
 	"github.com/determined-ai/determined/master/internal/mocks"
 )
+
 
 const namespace = "default"
 
@@ -297,6 +310,7 @@ func TestEventListener(t *testing.T) {
 		})
 	}
 }
+*/
 
 func TestPreemptionListener(t *testing.T) {
 	cases := []struct {

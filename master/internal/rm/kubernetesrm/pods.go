@@ -671,11 +671,19 @@ func (p *pods) startPodInformer(s *actor.System) error {
 	for namespace := range p.namespaceToPoolName {
 		i, err := newInformer(
 			context.TODO(),
+			determinedLabel,
+			"pod",
 			namespace,
 			p.podInterfaces[namespace],
-			func(pod *k8sV1.Pod) {
+			func(event watch.Event) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
+				pod, ok := event.Object.(*k8sV1.Pod)
+				if !ok {
+					p.syslog.Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
+					return
+				}
+				p.syslog.Debugf("informer got new pod event for pod %s: %s ", pod.Name, event.Type)
 				p.podStatusCallback(s, pod)
 			})
 		if err != nil {
@@ -709,10 +717,17 @@ func (p *pods) startEventListeners(s *actor.System) error {
 			context.TODO(),
 			p.clientSet.CoreV1().Events(namespace),
 			namespace,
-			func(event *k8sV1.Event) {
+			func(event watch.Event) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
-				p.eventStatusCallback(s, event)
+				newEvent, ok := event.Object.(*k8sV1.Event)
+				if !ok {
+					p.syslog.Warnf("error converting object type %T to *k8sV1.Event: %+v", event, event)
+					return
+				}
+
+				p.syslog.Debugf("listener got new event: %s", newEvent.Message)
+				p.eventStatusCallback(s, newEvent)
 			})
 		if err != nil {
 			return err
@@ -724,12 +739,21 @@ func (p *pods) startEventListeners(s *actor.System) error {
 
 func (p *pods) startPreemptionListeners(s *actor.System) error {
 	for namespace := range p.namespaceToPoolName {
-		l, err := newPreemptionListener(context.TODO(), namespace,
+		l, err := newInformer(context.TODO(),
+			determinedPreemptionLabel,
+			"preemption",
+			namespace,
 			p.clientSet.CoreV1().Pods(namespace),
-			func(name string) {
+			func(event watch.Event) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
-				p.preemptionCallback(s, name)
+				pod, ok := event.Object.(*k8sV1.Pod)
+				if !ok {
+					p.syslog.Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
+					return
+				}
+				p.syslog.Debugf("informer got new preemption event for pod %s ", pod.Name)
+				p.preemptionCallback(s, pod.Name)
 			})
 		if err != nil {
 			return err
