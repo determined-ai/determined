@@ -483,8 +483,8 @@ func requireStarted(t *testing.T, opts ...func(*sproto.AllocateRequest)) (
 	})
 	state, err := DefaultService.State(ar.AllocationID)
 	require.NoError(t, err)
-	require.Nil(t, state.FirstContainer())
-	require.Nil(t, state.FirstContainerAddresses())
+	require.Nil(t, state.SingleContainer())
+	require.Nil(t, state.SingleContainerAddresses())
 	require.Contains(t, DefaultService.GetAllAllocationIDs(), ar.AllocationID)
 
 	return pgDB, &rm, ar.AllocationID, q, &exitFuture

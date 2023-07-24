@@ -42,9 +42,9 @@ const killCooldown = 15 * time.Second
 type AllocationSignal string
 
 const (
-	// KillAllocation is the signal to kill an allocation; analogous to in SIGKILL.
+	// KillAllocation is the signal to kill an allocation; analogous to SIGKILL.
 	KillAllocation AllocationSignal = "kill"
-	// TerminateAllocation is the signal to kill an allocation; analogous to in SIGTERM.
+	// TerminateAllocation is the signal to kill an allocation; analogous to SIGTERM.
 	TerminateAllocation AllocationSignal = "terminate"
 )
 
@@ -58,8 +58,8 @@ type AllocationState struct {
 	Containers map[sproto.ResourcesID][]cproto.Container
 }
 
-// FirstContainer returns the first container in the allocation state.
-func (a AllocationState) FirstContainer() *cproto.Container {
+// SingleContainer returns a single random container from the allocation state.
+func (a AllocationState) SingleContainer() *cproto.Container {
 	for _, cs := range a.Containers {
 		for _, c := range cs {
 			return &c
@@ -68,8 +68,8 @@ func (a AllocationState) FirstContainer() *cproto.Container {
 	return nil
 }
 
-// FirstContainerAddresses returns the first container's addresses in the allocation state.
-func (a AllocationState) FirstContainerAddresses() []cproto.Address {
+// SingleContainerAddresses returns a single random container's addresses from the allocation state.
+func (a AllocationState) SingleContainerAddresses() []cproto.Address {
 	for _, ca := range a.Addresses {
 		return ca
 	}
@@ -154,6 +154,10 @@ func newAllocation(
 	req.LogContext = detLogger.MergeContexts(logCtx, detLogger.Context{
 		"allocation-id": req.AllocationID,
 	})
+
+	if req.RequestTime.IsZero() {
+		req.RequestTime = time.Now().UTC()
+	}
 
 	a := &allocation{
 		db: db,
@@ -262,9 +266,13 @@ func (a *allocation) IsRestoring() bool {
 // has passed. If a minute passes, an error is returned. The allocation must exist otherwise this
 // will return a not found error.
 func (a *allocation) waitForRestore(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+
 	t := time.NewTicker(time.Second)
 	defer t.Stop()
-	for i := 0; i < 60; i++ {
+
+	for {
 		if !a.IsRestoring() {
 			return nil
 		}
@@ -272,10 +280,9 @@ func (a *allocation) waitForRestore(ctx context.Context) error {
 		select {
 		case <-t.C:
 		case <-ctx.Done():
-			return ctx.Err()
+			return fmt.Errorf("allocation stuck restoring: %w", ctx.Err())
 		}
 	}
-	return fmt.Errorf("allocation stuck restoring after one minute of retrying")
 }
 
 // Signal handles an external Signal to kill or terminate the allocation.
@@ -478,9 +485,9 @@ func (a *allocation) requestResources() (*sproto.ResourcesSubscription, error) {
 	return sub, nil
 }
 
-// Close ensures an allocation is properly closed. It tries to do everything before failing and
+// Cleanup ensures an allocation is properly closed. It tries to do everything before failing and
 // ensures we don't leave any resources running.
-func (a *allocation) Close() error {
+func (a *allocation) Cleanup() error {
 	var err *multierror.Error
 
 	a.mu.Lock()

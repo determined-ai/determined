@@ -104,7 +104,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		err = task.DefaultService.StartAllocation(t.logCtx, sproto.AllocateRequest{
 			TaskID:            t.taskID,
 			JobID:             t.jobID,
-			RequestTime:       time.Now().UTC(),
 			JobSubmissionTime: t.jobSubmissionTime,
 			AllocationID:      t.allocationID,
 			Name:              fmt.Sprintf("Checkpoint GC (Experiment %d)", t.ExperimentID),

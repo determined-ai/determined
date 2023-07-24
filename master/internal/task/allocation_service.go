@@ -64,7 +64,7 @@ func (as *allocationService) StartAllocation(
 
 	go func() {
 		exit := ref.awaitTermination()
-		if err := ref.Close(); err != nil {
+		if err := ref.Cleanup(); err != nil {
 			syslog.WithError(err).Error("cleaning up allocation")
 		}
 

@@ -1,7 +1,7 @@
 package rmevents
 
 import (
-	"sync"
+	"sync/atomic"
 
 	"github.com/sirupsen/logrus"
 
@@ -12,17 +12,17 @@ import (
 
 var syslog = logrus.WithField("component", "rmevents")
 
-const mainBufferSize = 1024
+const eventBufferSize = 1024
 
 type subscribeRequest struct {
 	topic model.AllocationID
-	id    int
+	id    int64
 	inbox *queue.Queue[sproto.ResourcesEvent]
 }
 
 type unsubscribeRequest struct {
 	topic model.AllocationID
-	id    int
+	id    int64
 }
 
 type eventWithTopic struct {
@@ -31,14 +31,14 @@ type eventWithTopic struct {
 }
 
 type manager struct {
-	id          sequence
+	id          atomic.Int64
 	events      chan<- eventWithTopic
 	subEvents   chan<- subscribeRequest
 	unsubEvents chan<- unsubscribeRequest
 }
 
 func newManager() *manager {
-	in := make(chan eventWithTopic, mainBufferSize)
+	in := make(chan eventWithTopic, eventBufferSize)
 	// This channel is used to synchronize receipt of unsubscription
 	// with draining our updates channel, do not buffer it.
 	subs := make(chan subscribeRequest)
@@ -48,7 +48,7 @@ func newManager() *manager {
 }
 
 func (m *manager) subscribe(topic model.AllocationID) *sproto.ResourcesSubscription {
-	id := m.id.next()
+	id := m.id.Add(1)
 	inbox := queue.New[sproto.ResourcesEvent]()
 	m.subEvents <- subscribeRequest{topic: topic, id: id, inbox: inbox}
 	return sproto.NewAllocationSubscription(inbox, func() {
@@ -65,7 +65,7 @@ func fanOut(
 	subs <-chan subscribeRequest,
 	unsubs <-chan unsubscribeRequest,
 ) {
-	subsByTopicByID := map[model.AllocationID]map[int]*queue.Queue[sproto.ResourcesEvent]{}
+	subsByTopicByID := map[model.AllocationID]map[int64]*queue.Queue[sproto.ResourcesEvent]{}
 	for {
 		select {
 		case msg := <-in:
@@ -82,7 +82,7 @@ func fanOut(
 }
 
 func send(
-	subsByTopicByID map[model.AllocationID]map[int]*queue.Queue[sproto.ResourcesEvent],
+	subsByTopicByID map[model.AllocationID]map[int64]*queue.Queue[sproto.ResourcesEvent],
 	msg eventWithTopic,
 ) {
 	subs, ok := subsByTopicByID[msg.topic]
@@ -96,17 +96,17 @@ func send(
 }
 
 func sub(
-	subsByTopicByID map[model.AllocationID]map[int]*queue.Queue[sproto.ResourcesEvent],
+	subsByTopicByID map[model.AllocationID]map[int64]*queue.Queue[sproto.ResourcesEvent],
 	msg subscribeRequest,
 ) {
 	if _, ok := subsByTopicByID[msg.topic]; !ok {
-		subsByTopicByID[msg.topic] = map[int]*queue.Queue[sproto.ResourcesEvent]{}
+		subsByTopicByID[msg.topic] = map[int64]*queue.Queue[sproto.ResourcesEvent]{}
 	}
 	subsByTopicByID[msg.topic][msg.id] = msg.inbox
 }
 
 func unsub(
-	subsByTopicByID map[model.AllocationID]map[int]*queue.Queue[sproto.ResourcesEvent],
+	subsByTopicByID map[model.AllocationID]map[int64]*queue.Queue[sproto.ResourcesEvent],
 	msg unsubscribeRequest,
 ) {
 	_, ok := subsByTopicByID[msg.topic][msg.id]
@@ -119,16 +119,4 @@ func unsub(
 		delete(subsByTopicByID, msg.topic)
 	}
 	return
-}
-
-type sequence struct {
-	mu sync.Mutex
-	i  int
-}
-
-func (s *sequence) next() int {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.i++
-	return s.i
 }
