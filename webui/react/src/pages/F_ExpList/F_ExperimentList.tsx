@@ -653,7 +653,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 comparisonViewOpen={settings.compare}
                 data={experimentsIfLoaded}
                 dataTotal={isPagedView ? experiments.length : Loadable.getOrElse(0, total)}
-                excludedExperimentIds={excludedExperimentIds}
                 formStore={formStore}
                 handleScroll={isPagedView ? undefined : handleScroll}
                 handleUpdateExperimentList={handleUpdateExperimentList}

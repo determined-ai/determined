@@ -78,7 +78,6 @@ export interface GlideTableProps {
   colorMap: MapOfIdsToColors;
   columnWidths: Record<string, number>;
   comparisonViewOpen?: boolean;
-  excludedExperimentIds: Set<number>;
   data: Loadable<ExperimentWithTrial>[];
   dataTotal: number;
   handleScroll?: (r: Rectangle) => void;
@@ -298,7 +297,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const previousData = usePrevious(data, undefined);
   useMemo(() => {
-    if (selectAll && previousData && data.length > previousData.length) {
+    if (selectAll && !!previousData && data.length > previousData.length) {
       setSelection(({ columns, rows }: GridSelection) => ({
         columns,
         rows: rows.add([previousData.length - 1, data.length]),
