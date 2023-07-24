@@ -18,10 +18,10 @@ const ValidFeature = keyof(FEATURES);
 export type ValidFeature = TypeOf<typeof ValidFeature>;
 
 // had to dig into fp-ts to get a partial record for the settings config
-export const featureSettingsConfig = partial(
+export const FeatureSettingsConfig = partial(
   map(() => union([boolean, ioNull]))(ValidFeature.keys),
 );
-export type FeatureSettingsConfig = TypeOf<typeof featureSettingsConfig>;
+export type FeatureSettingsConfig = TypeOf<typeof FeatureSettingsConfig>;
 
 export const FeatureDefault: { [K in ValidFeature]: boolean } = {
   chart: false,
@@ -39,7 +39,7 @@ const useFeature = (): FeatureHook => {
   const info = useObservable(determinedStore.info);
   const featureSettings = useObservable(
     userSettings
-      .get(featureSettingsConfig, FEATURE_SETTINGS_PATH)
+      .get(FeatureSettingsConfig, FEATURE_SETTINGS_PATH)
       .select((loadable) => Loadable.getOrElse(null, loadable)),
   );
   return { isOn: (feature: ValidFeature) => IsOn(feature, info, featureSettings) };

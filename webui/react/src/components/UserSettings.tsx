@@ -19,7 +19,7 @@ import {
 import {
   FEATURE_SETTINGS_PATH,
   FEATURES,
-  featureSettingsConfig,
+  FeatureSettingsConfig,
   ValidFeature,
 } from 'hooks/useFeature';
 import {
@@ -132,7 +132,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
         userSettings.get(experimentListGlobalSettingsConfig, experimentListGlobalSettingsPath),
       ),
       useObservable(userSettings.get(shortcutSettingsConfig, shortcutsSettingsPath)),
-      useObservable(userSettings.get(featureSettingsConfig, FEATURE_SETTINGS_PATH)),
+      useObservable(userSettings.get(FeatureSettingsConfig, FEATURE_SETTINGS_PATH)),
     ]),
     {
       Loaded: ([
