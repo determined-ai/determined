@@ -120,7 +120,7 @@ def create_workspaces_with_users(
         yield workspaces, rid_to_creds
 
 
-@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_user_role_setup() -> None:
     perm_assigments = [
@@ -137,7 +137,7 @@ def test_user_role_setup() -> None:
         assert len(workspaces) == 2
 
 
-@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_rbac_permission_assignment() -> None:
     api_utils.configure_token_store(ADMIN_CREDENTIALS)
@@ -280,7 +280,7 @@ def test_rbac_permission_assignment() -> None:
         assert json_out["assignments"] == []
 
 
-@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_rbac_permission_assignment_errors() -> None:
     # Specifying args incorrectly.
@@ -420,7 +420,7 @@ def test_rbac_permission_assignment_errors() -> None:
         )
 
 
-@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_rbac_list_roles() -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
@@ -540,7 +540,7 @@ def test_rbac_list_roles() -> None:
         assert json_out["assignments"][0]["scopeCluster"]
 
 
-@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_rbac_describe_role() -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
@@ -612,7 +612,7 @@ def test_rbac_describe_role() -> None:
         assert user_assign[1]["roleAssignment"]["scopeWorkspaceId"] == 1
 
 
-@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_group_access() -> None:
     # create relevant workspace and project, with group having access
