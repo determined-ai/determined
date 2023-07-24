@@ -39,7 +39,6 @@ spec:
         {{- if .Values.enterpriseEdition }}
         {{- if .Values.oidc }}
         env:
-          ## OLD - name: DETERMINED_OIDC_CLIENT_SECRET
           - name: DETERMINED_OIDC_CLIENT_SECRET
             valueFrom:
               secretKeyRef:
