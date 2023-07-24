@@ -2450,6 +2450,71 @@ class TestASHADSATSearchMethod:
                 assert not search_method.trial_tracker.queue
                 assert curr_trial.lineage_root == first_trial
 
+    @pytest.mark.timeout(5)
+    def test_resample_hps_on_min_mbs_fail(
+        self,
+        long_large_min_resource_asha_state_and_search_method: Tuple[
+            searcher.SearcherState, ASHADSATSearchMethod
+        ],
+    ) -> None:
+        """
+        Tests the mini-optimization in which we re-sample hps when a trial fails on its minimum mbs.
+        """
+        searcher_state, search_method = long_large_min_resource_asha_state_and_search_method
+        search_method.trial_tracker.queue.clear()
+        stage = 1
+        _, search_data = search_method.get_random_hparams_and_search_data(stage)
+
+        search_method.trial_tracker.queue.clear()
+        hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
+        first_trial = search_method.trial_tracker.create_trial(hparams, search_data)
+        search_method.trial_tracker.queue_and_register_trial(first_trial)
+        _ = search_method.trial_tracker.queue.popleft()
+
+        # Let the first trial fail on its min mbs.
+        assert first_trial.search_data
+        first_trial.search_data.lo = first_trial.search_data.hi = first_trial.mbs
+
+        search_method.on_trial_exited_early(
+            searcher_state, first_trial.request_id, searcher.ExitedReason.ERRORED
+        )
+        assert search_method.trial_tracker.queue
+
+        # Verify that the next trial has the same mbs but different hparams
+        next_trial = search_method.trial_tracker.queue.popleft()
+        assert next_trial.stage == first_trial.stage
+        assert next_trial.mbs == first_trial.mbs
+        # There's a chance the newly generated hps randomly coincide with the old ones, so check
+        # equivalence by identity, not value.
+        assert next_trial.hparams is not first_trial.hparams
+
+        # Then queue up some successful trials and repeat the check again:
+        for _ in range(3):
+            assert next_trial.searcher_metric_name
+            search_method.on_validation_completed(
+                searcher_state,
+                next_trial.request_id,
+                {next_trial.searcher_metric_name: 0.0},
+                next_trial.length,
+            )
+            next_trial = search_method.trial_tracker.queue.popleft()
+
+        assert next_trial.search_data
+        next_trial.search_data.lo = next_trial.search_data.hi = next_trial.mbs
+
+        search_method.on_trial_exited_early(
+            searcher_state, next_trial.request_id, searcher.ExitedReason.ERRORED
+        )
+        assert search_method.trial_tracker.queue
+
+        # The next trial after the above failure should have the same mbs as the largest
+        # successful mbs in the lineage, which was the failed trial's parent.
+        last_trial = search_method.trial_tracker.queue.popleft()
+        assert last_trial.stage == next_trial.stage
+        assert next_trial.parent
+        assert last_trial.mbs == next_trial.parent.mbs
+        assert last_trial.hparams is not next_trial.hparams
+
 
 class TestHFConfigOverwriting:
     @pytest.mark.timeout(5)

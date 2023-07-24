@@ -1315,9 +1315,11 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         assert last_trial.search_data is not None and isinstance(
             last_trial.search_data, ASHADSATSearchData
         )
+        # Keep trying to complete current rung, if possible:
         if not self.lineage_completed_rung(last_trial, last_trial.search_data.curr_rung):
             next_trial = self.get_next_trial_in_lineage(last_trial)
         else:
+            # Otherwise, we promote the next lineage, if possible:
             last_trial_from_next_lineage = self.get_last_trial_from_next_promotable_lineage()
             if last_trial_from_next_lineage is not None:
                 next_trial = self.get_next_trial_in_lineage(last_trial_from_next_lineage)
@@ -1325,6 +1327,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
                 assert isinstance(next_trial.search_data, ASHADSATSearchData)
                 # Promote to next rung
                 next_trial.search_data.curr_rung += 1
+        # Finally, start a new lineage, if neither option above available.
         if next_trial is None:
             next_trial = self.get_random_trial()
         return next_trial
@@ -1382,14 +1385,6 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
             return True
         if trial.num_completed_trials_in_lineage >= self.max_trials_for_rung_idx(rung_idx):
             return True
-        # Also need to cover the cases where a binary search failed on its minimum possible batch
-        # size. Only need to check for curr_rung = rung_idx.
-        if latest_trial.search_data.curr_rung == rung_idx:
-            failed_on_min_mbs = (
-                latest_trial.error and latest_trial.mbs == latest_trial.search_data.lo
-            )
-            if failed_on_min_mbs:
-                return True
         return False
 
     def get_last_trial_from_next_promotable_lineage(self) -> Optional[DSATTrial]:
@@ -1466,6 +1461,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         assert latest_trial.search_data is not None
         new_search_data = copy.deepcopy(latest_trial.search_data)
         if not latest_trial.error:
+            new_hparams = copy.deepcopy(latest_trial.hparams)
             # The initial binary search ceiling was a best-effort guess. If the trial successfully
             # completed the ceiling mbs, extend the range. Protects against cases which
             # underestimate the maximum batch size.
@@ -1478,8 +1474,10 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         else:
             failed_on_min_mbs = latest_trial.mbs == latest_trial.search_data.lo
             if failed_on_min_mbs:
-                # Revert to last successful batch size in the lineage (if any) and resubmit, tuning
-                # non-batch-size parameters, otherwise run the last mbs again.
+                # Small optimization: instead of just killing this lineage after failing, resample
+                # hps relevant for this stage and revert to the last successful batch size, if
+                # any, otherwise re-run the last batch size. Helps with testing the boundaries of
+                # runnable trials, rather than stopping early and starting over from zero.
                 any_successful_trials = any(not t.error for t in latest_trial.lineage_set)
                 if any_successful_trials:
                     largest_successful_mbs = max(
@@ -1488,8 +1486,10 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
                     new_search_data.hi = new_search_data.lo = largest_successful_mbs
                 else:
                     new_search_data.hi = new_search_data.lo = latest_trial.mbs
+                new_hparams, _ = self.get_random_hparams_and_search_data(latest_trial.stage)
             else:
                 new_search_data.hi = latest_trial.mbs - self.trial_tracker.divisible_by
+                new_hparams = copy.deepcopy(latest_trial.hparams)
 
         mid = (new_search_data.hi + new_search_data.lo) // 2
         mbs = self.round_mbs_down(mid)
