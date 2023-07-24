@@ -98,10 +98,10 @@ const SplitPane: React.FC<Props> = ({
   return (
     <div className={classnames.join(' ')} ref={container}>
       <div style={{ display: open && isMobile ? 'none' : 'initial', width: open ? width : '100%' }}>
-        {children?.[0]}
+        {children[0]}
       </div>
       {!isMobile && <div className={css.handle} ref={handle} />}
-      <div className={css.rightBox}>{children?.[1]}</div>
+      <div className={css.rightBox}>{children[1]}</div>
     </div>
   );
 };
