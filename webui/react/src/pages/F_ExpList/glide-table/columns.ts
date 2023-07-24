@@ -431,7 +431,7 @@ export const defaultTextColumn = (
     },
     title: column.displayName || column.column,
     tooltip: () => undefined,
-    width: columnWidth ?? 140,
+    width: columnWidth ?? columnWidthsFallback,
   };
 };
 
@@ -453,7 +453,7 @@ export const defaultNumberColumn = (
     },
     title: column.displayName || column.column,
     tooltip: () => undefined,
-    width: columnWidth ?? 140,
+    width: columnWidth ?? columnWidthsFallback,
   };
 };
 
@@ -475,9 +475,11 @@ export const defaultDateColumn = (
     },
     title: column.displayName || column.column,
     tooltip: () => undefined,
-    width: columnWidth ?? 140,
+    width: columnWidth ?? columnWidthsFallback,
   };
 };
+
+export const columnWidthsFallback = 140;
 
 export const defaultColumnWidths: Record<ExperimentColumn, number> = {
   archived: 80,

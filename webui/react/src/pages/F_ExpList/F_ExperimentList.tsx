@@ -44,6 +44,7 @@ import {
   settingsConfigGlobal,
 } from './F_ExperimentList.settings';
 import {
+  columnWidthsFallback,
   ExperimentColumn,
   experimentColumns,
   MIN_COLUMN_WIDTH,
@@ -458,7 +459,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     return Math.min(
       containerWidth - 30,
       pinnedColumns.reduce(
-        (totalWidth, curCol) => totalWidth + settings.columnWidths[curCol] ?? 0,
+        (totalWidth, curCol) =>
+          totalWidth + (settings.columnWidths[curCol] ?? columnWidthsFallback),
         scrollbarWidth,
       ),
     );
