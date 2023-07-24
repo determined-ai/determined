@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/determined-ai/determined/master/pkg/set"
-
+	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/set"
 )
 
 // WorkspaceByName returns a workspace given it's name.
@@ -82,4 +82,14 @@ func WorkspaceByProjectID(ctx context.Context, projectID int) (*model.Workspace,
 		return nil, err
 	}
 	return &w, nil
+}
+
+// AllWorkspaces returns all the workspaces that exist.
+func AllWorkspaces(ctx context.Context) ([]*model.Workspace, error) {
+	var w []*model.Workspace
+	err := db.Bun().NewSelect().Model(&w).Scan(ctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get all workspaces")
+	}
+	return w, nil
 }
