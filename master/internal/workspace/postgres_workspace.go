@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/determined-ai/determined/master/pkg/set"
-
+	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/set"
 )
 
 // WorkspaceByName returns a workspace given it's name.
