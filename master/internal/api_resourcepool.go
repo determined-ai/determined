@@ -28,8 +28,21 @@ func (a *apiServer) GetResourcePools(
 		return nil, err
 	}
 
+	workspaces, err := workspaceauth.AllWorkspaces(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var workspaceIDs []int32
+	for _, w := range workspaces {
+		workspaceIDs = append(workspaceIDs, int32(w.ID))
+	}
+	ids, err := workspaceauth.AuthZProvider.Get().FilterWorkspaceIDs(ctx, *curUser, workspaceIDs)
+	if err != nil {
+		return nil, err
+	}
+
 	filteredPools, err := rm.AuthZProvider.Get().FilterResourcePools(ctx, *curUser,
-		resp.ResourcePools)
+		resp.ResourcePools, ids)
 	if err != nil {
 		return nil, err
 	}

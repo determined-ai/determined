@@ -13,6 +13,7 @@ type ResourceManagerAuthZBasic struct{}
 // FilterResourcePools always returns provided list and a nil error.
 func (a *ResourceManagerAuthZBasic) FilterResourcePools(
 	ctx context.Context, curUser model.User, resourcePools []*resourcepoolv1.ResourcePool,
+	workspaceIDs []int32,
 ) ([]*resourcepoolv1.ResourcePool, error) {
 	return resourcePools, nil
 }
