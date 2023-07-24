@@ -324,35 +324,6 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                 </InlineForm>
               </div>
             </Section>
-            <Section title="Advanced">
-              <Paragraph>
-                Advanced features are potentially dangerous and could require you to completely
-                reset your user settings if you make a mistake.
-              </Paragraph>
-              <Accordion title="I know what I'm doing">
-                <Space>
-                  <Button
-                    danger
-                    type="primary"
-                    onClick={() =>
-                      confirm({
-                        content:
-                          'Are you sure you want to reset all user settings to their default values?',
-                        onConfirm: () => {
-                          setMode(Mode.System);
-                          userSettings.clear();
-                        },
-                        onError: handleError,
-                        title: 'Reset User Settings',
-                      })
-                    }>
-                    Reset to Default
-                  </Button>
-                  <Button onClick={() => UserSettingsModal.open()}>Edit Raw Settings (JSON)</Button>
-                  <UserSettingsModal.Component />
-                </Space>
-              </Accordion>
-            </Section>
             <Section divider title="Experimental">
               <div className={css.section}>
                 {Object.entries(FEATURES).map(([feature, label]) => (
@@ -384,6 +355,35 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   </InlineForm>
                 ))}
               </div>
+            </Section>
+            <Section title="Advanced">
+              <Paragraph>
+                Advanced features are potentially dangerous and could require you to completely
+                reset your user settings if you make a mistake.
+              </Paragraph>
+              <Accordion title="I know what I'm doing">
+                <Space>
+                  <Button
+                    danger
+                    type="primary"
+                    onClick={() =>
+                      confirm({
+                        content:
+                          'Are you sure you want to reset all user settings to their default values?',
+                        onConfirm: () => {
+                          setMode(Mode.System);
+                          userSettings.clear();
+                        },
+                        onError: handleError,
+                        title: 'Reset User Settings',
+                      })
+                    }>
+                    Reset to Default
+                  </Button>
+                  <Button onClick={() => UserSettingsModal.open()}>Edit Raw Settings (JSON)</Button>
+                  <UserSettingsModal.Component />
+                </Space>
+              </Accordion>
             </Section>
           </Drawer>
         );
