@@ -317,7 +317,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 
 	defaulted := schemas.WithDefaults(config)
 	resources := defaulted.Resources()
-	workspaceModel, err := workspace.WorkspaceByName(context.TODO(), defaulted.Workspace())
+	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), int(req.ProjectId))
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		return nil, config, nil, nil, err
 	}

@@ -139,7 +139,7 @@ func newExperiment(
 	taskSpec *tasks.TaskSpec,
 ) (*experiment, []command.LaunchWarning, error) {
 	resources := activeConfig.Resources()
-	workspaceModel, err := workspace.WorkspaceByName(context.TODO(), taskSpec.Workspace)
+	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), expModel.ProjectID)
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		return nil, nil, err
 	}
@@ -940,7 +940,7 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 	// TODO: secure this to prevent people from just changing RPs to whatever they want
 	resources := e.activeConfig.Resources()
 	oldRP := resources.ResourcePool()
-	workspaceModel, err := workspace.WorkspaceByName(context.TODO(), e.activeConfig.Workspace())
+	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		return err
 	}

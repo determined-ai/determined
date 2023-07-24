@@ -140,7 +140,6 @@ args_description = [
                         [
                             Arg("pool_name", type=str, help="name of the resource pool"),
                         ],
-                        is_default=True,
                     ),
                 ],
             ),

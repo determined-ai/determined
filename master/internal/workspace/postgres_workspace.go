@@ -27,6 +27,9 @@ func WorkspaceByName(ctx context.Context, workspaceName string) (*model.Workspac
 func WorkspaceIDsFromNames(ctx context.Context, workspaceNames []string) (
 	[]int32, error,
 ) {
+	if len(workspaceNames) == 0 {
+		return []int32{}, nil
+	}
 	var workspaces []model.Workspace
 	err := db.Bun().NewSelect().
 		Model(&workspaces).
