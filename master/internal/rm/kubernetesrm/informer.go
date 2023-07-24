@@ -101,6 +101,40 @@ func newEventListener(
 	}, nil
 }
 
+func newNodeInformer(
+	ctx context.Context,
+	nodeInterface typedV1.NodeInterface,
+	cb callbackFunc,
+) (*informer, error) {
+	nodes, err := nodeInterface.List(ctx, metaV1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	rw, err := watchtools.NewRetryWatcher(nodes.ResourceVersion, &cache.ListWatch{
+		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
+			return nodeInterface.Watch(ctx, options)
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Log when nodes are first added to the informer (at start-up).
+	syslog := logrus.WithField("component", "nodeInformer")
+	for i := range nodes.Items {
+		syslog.Debugf("informer added node: %s", nodes.Items[i].Name)
+		cb(watch.Event{Object: &nodes.Items[i], Type: watch.Added})
+	}
+
+	return &informer{
+		cb:         cb,
+		name:       "node",
+		syslog:     syslog,
+		resultChan: rw.ResultChan(),
+	}, nil
+}
+
 func (i *informer) run() {
 	i.syslog.Debugf("%s informer is starting", i.name)
 	for event := range i.resultChan {

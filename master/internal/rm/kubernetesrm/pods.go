@@ -668,24 +668,25 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 }
 
 func (p *pods) startPodInformer(s *actor.System) error {
+	cb := func(event watch.Event) {
+		p.mu.Lock()
+		defer p.mu.Unlock()
+		pod, ok := event.Object.(*k8sV1.Pod)
+		if !ok {
+			p.syslog.Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
+			return
+		}
+		p.syslog.Debugf("informer got new pod event for pod %s: %s ", pod.Name, event.Type)
+		p.podStatusCallback(s, pod)
+	}
 	for namespace := range p.namespaceToPoolName {
 		i, err := newInformer(
 			context.TODO(),
 			determinedLabel,
 			"pod",
 			namespace,
-			p.podInterfaces[namespace],
-			func(event watch.Event) {
-				p.mu.Lock()
-				defer p.mu.Unlock()
-				pod, ok := event.Object.(*k8sV1.Pod)
-				if !ok {
-					p.syslog.Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
-					return
-				}
-				p.syslog.Debugf("informer got new pod event for pod %s: %s ", pod.Name, event.Type)
-				p.podStatusCallback(s, pod)
-			})
+			p.podInterfaces[namespace], cb,
+		)
 		if err != nil {
 			return err
 		}
@@ -698,10 +699,19 @@ func (p *pods) startPodInformer(s *actor.System) error {
 func (p *pods) startNodeInformer() error {
 	i, err := newNodeInformer(context.TODO(),
 		p.clientSet.CoreV1().Nodes(),
-		func(node *k8sV1.Node, event watch.EventType) {
+		func(event watch.Event) {
 			p.mu.Lock()
 			defer p.mu.Unlock()
-			p.nodeStatusCallback(node, event)
+
+			node, ok := event.Object.(*k8sV1.Node)
+			if !ok {
+				p.syslog.Warnf("error converting event of type %T to *k8sV1.Node: %+v", event, event)
+				return
+			}
+
+			p.syslog.Debugf(`informer got new node event for node '%s': %s %s`,
+				node.Name, event.Type, node.Status.Phase)
+			p.nodeStatusCallback(node, event.Type)
 		})
 	if err != nil {
 		return err
@@ -843,10 +853,6 @@ func (p *pods) nodeStatusCallback(
 	node *k8sV1.Node,
 	action watch.EventType,
 ) {
-	if node == nil {
-		return
-	}
-
 	switch action {
 	case watch.Added:
 		p.currentNodes[node.Name] = node
