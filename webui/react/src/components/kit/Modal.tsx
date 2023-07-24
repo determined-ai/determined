@@ -40,8 +40,8 @@ export type ModalContext = {
 export interface ModalSubmitParams {
   disabled?: boolean;
   text: string;
-  handler: () => Promise<void>;
-  onComplete?: () => Promise<void>;
+  handler: () => Promise<void> | void;
+  onComplete?: () => Promise<void> | void;
   handleError: ErrorHandler;
   form?: string;
 }
@@ -156,7 +156,7 @@ export const Modal: React.FC<ModalProps> = ({
               <Icon name="warning-large" size="large" title="Danger" />
             </div>
           ) : (
-            icon && <Icon name={icon} size="large" title={icon} />
+            icon && <Icon decorative name={icon} size="large" />
           )}
           <div className={css.headerTitle}>{title}</div>
           <div className={css.headerLink}>

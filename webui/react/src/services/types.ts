@@ -9,7 +9,6 @@ import {
   MetricType,
   Note,
   RunState,
-  Scale,
   TrialWorkloadFilter,
 } from 'types';
 
@@ -32,7 +31,6 @@ export interface TrialSummaryBaseParams {
   maxDatapoints: number;
   metricNames: Metric[];
   metricType?: MetricType;
-  scale?: Scale;
   startBatches?: number;
 }
 
@@ -362,8 +360,7 @@ export interface CreateGroupsParams {
   name: string;
 }
 export interface UpdateUserSettingParams {
-  setting: Api.V1UserWebSetting;
-  storagePath: string;
+  settings: Api.V1UserWebSetting | Api.V1UserWebSetting[];
 }
 
 export interface UpdateGroupParams {

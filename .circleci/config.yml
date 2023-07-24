@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.23.3-dev0
+    default: 0.23.4-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -50,7 +50,7 @@ parameters:
     default: v1dev23
   gke-version:
     type: string
-    default: "1.25.8"
+    default: "1.25.10"
   master-build-resource-class:
     type: string
     default: xlarge
@@ -90,6 +90,11 @@ upstream-feature-branch: &upstream-feature-branch
 any-upstream: &any-upstream
   branches:
     ignore:
+      - /pull\/.*/
+
+any-fork: &any-fork
+  branches:
+    only:
       - /pull\/.*/
 
 commands:
@@ -2572,18 +2577,6 @@ workflows:
               executor-name:
                 ["python-37", "python-38", "python-39", "win/default"]
 
-  test-unit-gpu:
-    jobs:
-      - test-unit-harness-cpu-tf1
-      - test-unit-harness-gpu
-      - test-unit-harness-gpu-lightning
-      - test-unit-harness-gpu-deepspeed
-      - test-unit-harness-gpu-parallel
-#      - python-coverage:
-#          requires:
-#            - test-unit-harness-gpu
-#            - test-unit-harness-gpu-parallel
-
   test-unit:
     jobs:
       - test-unit-go
@@ -2593,6 +2586,38 @@ workflows:
           filters: *any-upstream
       - test-unit-harness-cpu
       - test-unit-harness-tf2
+
+      - test-unit-harness-cpu-tf1:
+          filters: *any-upstream
+      - test-unit-harness-gpu:
+          filters: *any-upstream
+      - test-unit-harness-gpu-lightning:
+          filters: *any-upstream
+      - test-unit-harness-gpu-deepspeed:
+          filters: *any-upstream
+      - test-unit-harness-gpu-parallel:
+          filters: *any-upstream
+
+      # allows forks to request run approval instead of failing
+      - request-gpu-unit-tests:
+          type: approval
+          filters: *any-fork
+      - test-unit-harness-cpu-tf1:
+          name: f-test-unit-harness-cpu-tf1
+          filters: *any-fork
+      - test-unit-harness-gpu:
+          name: f-test-unit-harness-gpu
+          filters: *any-fork
+      - test-unit-harness-gpu-lightning:
+          name: f-test-unit-harness-gpu-lightning
+          filters: *any-fork
+      - test-unit-harness-gpu-deepspeed:
+          name: f-test-unit-harness-gpu-deepspeed
+          filters: *any-fork
+      - test-unit-harness-gpu-parallel:
+          name: f-test-unit-harness-gpu-parallel
+          filters: *any-fork
+
       - test-unit-model-hub
       - test-unit-storage:
           context: storage-unit-tests
@@ -2601,6 +2626,8 @@ workflows:
       - python-coverage:
           requires:
             - test-unit-harness-cpu
+            - test-unit-harness-gpu
+            - test-unit-harness-gpu-parallel
             - test-unit-harness-tf2
             - test-unit-model-hub
             - test-unit-storage

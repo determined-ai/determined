@@ -327,6 +327,32 @@ class protobufAny(Printable):
             out["value"] = self.value
         return out
 
+class protobufFieldMask(Printable):
+    paths: "typing.Optional[typing.Sequence[str]]" = None
+
+    def __init__(
+        self,
+        *,
+        paths: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+    ):
+        if not isinstance(paths, Unset):
+            self.paths = paths
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "protobufFieldMask":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "paths" in obj:
+            kwargs["paths"] = obj["paths"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "paths" in vars(self):
+            out["paths"] = self.paths
+        return out
+
 class protobufNullValue(DetEnum):
     NULL_VALUE = "NULL_VALUE"
 
@@ -448,6 +474,22 @@ class taskv1State(DetEnum):
     WAITING = "STATE_WAITING"
     QUEUED = "STATE_QUEUED"
 
+class trialv1State(DetEnum):
+    UNSPECIFIED = "STATE_UNSPECIFIED"
+    ACTIVE = "STATE_ACTIVE"
+    PAUSED = "STATE_PAUSED"
+    STOPPING_CANCELED = "STATE_STOPPING_CANCELED"
+    STOPPING_KILLED = "STATE_STOPPING_KILLED"
+    STOPPING_COMPLETED = "STATE_STOPPING_COMPLETED"
+    STOPPING_ERROR = "STATE_STOPPING_ERROR"
+    CANCELED = "STATE_CANCELED"
+    COMPLETED = "STATE_COMPLETED"
+    ERROR = "STATE_ERROR"
+    QUEUED = "STATE_QUEUED"
+    PULLING = "STATE_PULLING"
+    STARTING = "STATE_STARTING"
+    RUNNING = "STATE_RUNNING"
+
 class trialv1Trial(Printable):
     bestCheckpoint: "typing.Optional[v1CheckpointWorkload]" = None
     bestValidation: "typing.Optional[v1MetricsWorkload]" = None
@@ -469,7 +511,7 @@ class trialv1Trial(Printable):
         id: int,
         restarts: int,
         startTime: str,
-        state: "experimentv1State",
+        state: "trialv1State",
         totalBatchesProcessed: int,
         bestCheckpoint: "typing.Union[v1CheckpointWorkload, None, Unset]" = _unset,
         bestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
@@ -521,7 +563,7 @@ class trialv1Trial(Printable):
             "id": obj["id"],
             "restarts": obj["restarts"],
             "startTime": obj["startTime"],
-            "state": experimentv1State(obj["state"]),
+            "state": trialv1State(obj["state"]),
             "totalBatchesProcessed": obj["totalBatchesProcessed"],
         }
         if "bestCheckpoint" in obj:
@@ -1928,6 +1970,32 @@ class v1CompleteValidateAfterOperation(Printable):
             out["searcherMetric"] = self.searcherMetric
         return out
 
+class v1Config(Printable):
+    log: "typing.Optional[v1LogConfig]" = None
+
+    def __init__(
+        self,
+        *,
+        log: "typing.Union[v1LogConfig, None, Unset]" = _unset,
+    ):
+        if not isinstance(log, Unset):
+            self.log = log
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Config":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "log" in obj:
+            kwargs["log"] = v1LogConfig.from_json(obj["log"]) if obj["log"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "log" in vars(self):
+            out["log"] = None if self.log is None else self.log.to_json(omit_unset)
+        return out
+
 class v1Container(Printable):
     devices: "typing.Optional[typing.Sequence[v1Device]]" = None
     parent: "typing.Optional[str]" = None
@@ -2683,27 +2751,27 @@ class v1DownsampledMetrics(Printable):
     def __init__(
         self,
         *,
-        customType: str,
         data: "typing.Sequence[v1DataPoint]",
+        group: str,
         type: "v1MetricType",
     ):
-        self.customType = customType
         self.data = data
+        self.group = group
         self.type = type
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1DownsampledMetrics":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "customType": obj["customType"],
             "data": [v1DataPoint.from_json(x) for x in obj["data"]],
+            "group": obj["group"],
             "type": v1MetricType(obj["type"]),
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "customType": self.customType,
             "data": [x.to_json(omit_unset) for x in self.data],
+            "group": self.group,
             "type": self.type.value,
         }
         return out
@@ -2765,7 +2833,7 @@ class v1EntityType(DetEnum):
     PROJECT = "ENTITY_TYPE_PROJECT"
 
 class v1ExpMetricNamesResponse(Printable):
-    metricNames: "typing.Optional[typing.Sequence[v1MetricName]]" = None
+    metricNames: "typing.Optional[typing.Sequence[v1MetricIdentifier]]" = None
     searcherMetrics: "typing.Optional[typing.Sequence[str]]" = None
     trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None
     validationMetrics: "typing.Optional[typing.Sequence[str]]" = None
@@ -2773,7 +2841,7 @@ class v1ExpMetricNamesResponse(Printable):
     def __init__(
         self,
         *,
-        metricNames: "typing.Union[typing.Sequence[v1MetricName], None, Unset]" = _unset,
+        metricNames: "typing.Union[typing.Sequence[v1MetricIdentifier], None, Unset]" = _unset,
         searcherMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         trainingMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         validationMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
@@ -2792,7 +2860,7 @@ class v1ExpMetricNamesResponse(Printable):
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
         if "metricNames" in obj:
-            kwargs["metricNames"] = [v1MetricName.from_json(x) for x in obj["metricNames"]] if obj["metricNames"] is not None else None
+            kwargs["metricNames"] = [v1MetricIdentifier.from_json(x) for x in obj["metricNames"]] if obj["metricNames"] is not None else None
         if "searcherMetrics" in obj:
             kwargs["searcherMetrics"] = obj["searcherMetrics"]
         if "trainingMetrics" in obj:
@@ -6545,6 +6613,40 @@ class v1LocationType(DetEnum):
     VALIDATIONS = "LOCATION_TYPE_VALIDATIONS"
     TRAINING = "LOCATION_TYPE_TRAINING"
 
+class v1LogConfig(Printable):
+    color: "typing.Optional[bool]" = None
+    level: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        color: "typing.Union[bool, None, Unset]" = _unset,
+        level: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(color, Unset):
+            self.color = color
+        if not isinstance(level, Unset):
+            self.level = level
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1LogConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "color" in obj:
+            kwargs["color"] = obj["color"]
+        if "level" in obj:
+            kwargs["level"] = obj["level"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "color" in vars(self):
+            out["color"] = self.color
+        if not omit_unset or "level" in vars(self):
+            out["level"] = self.level
+        return out
+
 class v1LogEntry(Printable):
 
     def __init__(
@@ -6726,29 +6828,29 @@ class v1MetricBatchesResponse(Printable):
             out["batches"] = self.batches
         return out
 
-class v1MetricName(Printable):
+class v1MetricIdentifier(Printable):
 
     def __init__(
         self,
         *,
+        group: str,
         name: str,
-        type: str,
     ):
+        self.group = group
         self.name = name
-        self.type = type
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1MetricName":
+    def from_json(cls, obj: Json) -> "v1MetricIdentifier":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "group": obj["group"],
             "name": obj["name"],
-            "type": obj["type"],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "group": self.group,
             "name": self.name,
-            "type": self.type,
         }
         return out
 
@@ -7652,6 +7754,62 @@ class v1PatchExperimentResponse(Printable):
             out["experiment"] = None if self.experiment is None else self.experiment.to_json(omit_unset)
         return out
 
+class v1PatchMasterConfigRequest(Printable):
+    config: "typing.Optional[v1Config]" = None
+    fieldMask: "typing.Optional[protobufFieldMask]" = None
+
+    def __init__(
+        self,
+        *,
+        config: "typing.Union[v1Config, None, Unset]" = _unset,
+        fieldMask: "typing.Union[protobufFieldMask, None, Unset]" = _unset,
+    ):
+        if not isinstance(config, Unset):
+            self.config = config
+        if not isinstance(fieldMask, Unset):
+            self.fieldMask = fieldMask
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchMasterConfigRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "config" in obj:
+            kwargs["config"] = v1Config.from_json(obj["config"]) if obj["config"] is not None else None
+        if "fieldMask" in obj:
+            kwargs["fieldMask"] = protobufFieldMask.from_json(obj["fieldMask"]) if obj["fieldMask"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "config" in vars(self):
+            out["config"] = None if self.config is None else self.config.to_json(omit_unset)
+        if not omit_unset or "fieldMask" in vars(self):
+            out["fieldMask"] = None if self.fieldMask is None else self.fieldMask.to_json(omit_unset)
+        return out
+
+class v1PatchMasterConfigResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        config: "typing.Dict[str, typing.Any]",
+    ):
+        self.config = config
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchMasterConfigResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
+        }
+        return out
+
 class v1PatchModel(Printable):
     description: "typing.Optional[str]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
@@ -8191,6 +8349,7 @@ class v1Permission(Printable):
 class v1PermissionType(DetEnum):
     UNSPECIFIED = "PERMISSION_TYPE_UNSPECIFIED"
     ADMINISTRATE_USER = "PERMISSION_TYPE_ADMINISTRATE_USER"
+    ADMINISTRATE_OAUTH = "PERMISSION_TYPE_ADMINISTRATE_OAUTH"
     CREATE_EXPERIMENT = "PERMISSION_TYPE_CREATE_EXPERIMENT"
     VIEW_EXPERIMENT_ARTIFACTS = "PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS"
     VIEW_EXPERIMENT_METADATA = "PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA"
@@ -8224,6 +8383,7 @@ class v1PermissionType(DetEnum):
     UPDATE_AGENTS = "PERMISSION_TYPE_UPDATE_AGENTS"
     VIEW_SENSITIVE_AGENT_INFO = "PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO"
     VIEW_MASTER_CONFIG = "PERMISSION_TYPE_VIEW_MASTER_CONFIG"
+    UPDATE_MASTER_CONFIG = "PERMISSION_TYPE_UPDATE_MASTER_CONFIG"
     CONTROL_STRICT_JOB_QUEUE = "PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE"
     VIEW_TEMPLATES = "PERMISSION_TYPE_VIEW_TEMPLATES"
     UPDATE_TEMPLATES = "PERMISSION_TYPE_UPDATE_TEMPLATES"
@@ -8797,24 +8957,20 @@ class v1PostUserSettingRequest(Printable):
     def __init__(
         self,
         *,
-        setting: "v1UserWebSetting",
-        storagePath: str,
+        settings: "typing.Sequence[v1UserWebSetting]",
     ):
-        self.setting = setting
-        self.storagePath = storagePath
+        self.settings = settings
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostUserSettingRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "setting": v1UserWebSetting.from_json(obj["setting"]),
-            "storagePath": obj["storagePath"],
+            "settings": [v1UserWebSetting.from_json(x) for x in obj["settings"]],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "setting": self.setting.to_json(omit_unset),
-            "storagePath": self.storagePath,
+            "settings": [x.to_json(omit_unset) for x in self.settings],
         }
         return out
 
@@ -9453,24 +9609,24 @@ class v1ReportTrialMetricsRequest(Printable):
     def __init__(
         self,
         *,
+        group: str,
         metrics: "v1TrialMetrics",
-        type: str,
     ):
+        self.group = group
         self.metrics = metrics
-        self.type = type
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ReportTrialMetricsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "group": obj["group"],
             "metrics": v1TrialMetrics.from_json(obj["metrics"]),
-            "type": obj["type"],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "group": self.group,
             "metrics": self.metrics.to_json(omit_unset),
-            "type": self.type,
         }
         return out
 
@@ -13400,8 +13556,8 @@ def post_CheckpointsRemoveFiles(
 def get_CompareTrials(
     session: "api.Session",
     *,
-    customType: "typing.Optional[str]" = None,
     endBatches: "typing.Optional[int]" = None,
+    group: "typing.Optional[str]" = None,
     maxDatapoints: "typing.Optional[int]" = None,
     metricIds: "typing.Optional[typing.Sequence[str]]" = None,
     metricNames: "typing.Optional[typing.Sequence[str]]" = None,
@@ -13425,8 +13581,8 @@ def get_CompareTrials(
     trialIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> "v1CompareTrialsResponse":
     _params = {
-        "customType": customType,
         "endBatches": endBatches,
+        "group": group,
         "maxDatapoints": maxDatapoints,
         "metricIds": metricIds,
         "metricNames": metricNames,
@@ -14448,12 +14604,12 @@ def get_GetMe(
 def get_GetMetrics(
     session: "api.Session",
     *,
+    group: str,
     trialIds: "typing.Sequence[int]",
-    type: str,
 ) -> "typing.Iterable[v1GetMetricsResponse]":
     _params = {
+        "group": group,
         "trialIds": trialIds,
-        "type": type,
     }
     _resp = session._do_request(
         method="GET",
@@ -15356,8 +15512,8 @@ def get_GetTrialWorkloads(
     session: "api.Session",
     *,
     trialId: int,
-    customType: "typing.Optional[str]" = None,
     filter: "typing.Optional[GetTrialWorkloadsRequestFilterOption]" = None,
+    group: "typing.Optional[str]" = None,
     includeBatchMetrics: "typing.Optional[bool]" = None,
     limit: "typing.Optional[int]" = None,
     metricType: "typing.Optional[v1MetricType]" = None,
@@ -15366,8 +15522,8 @@ def get_GetTrialWorkloads(
     sortKey: "typing.Optional[str]" = None,
 ) -> "v1GetTrialWorkloadsResponse":
     _params = {
-        "customType": customType,
         "filter": filter.value if filter is not None else None,
+        "group": group,
         "includeBatchMetrics": str(includeBatchMetrics).lower() if includeBatchMetrics is not None else None,
         "limit": limit,
         "metricType": metricType.value if metricType is not None else None,
@@ -16036,12 +16192,12 @@ def get_MetricBatches(
     *,
     experimentId: int,
     metricName: str,
-    customType: "typing.Optional[str]" = None,
+    group: "typing.Optional[str]" = None,
     metricType: "typing.Optional[v1MetricType]" = None,
     periodSeconds: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1MetricBatchesResponse]":
     _params = {
-        "customType": customType,
+        "group": group,
         "metricName": metricName,
         "metricType": metricType.value if metricType is not None else None,
         "periodSeconds": periodSeconds,
@@ -16236,6 +16392,26 @@ def patch_PatchExperiment(
     if _resp.status_code == 200:
         return v1PatchExperimentResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchExperiment", _resp)
+
+def patch_PatchMasterConfig(
+    session: "api.Session",
+    *,
+    body: "v1PatchMasterConfigRequest",
+) -> "v1PatchMasterConfigResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path="/api/v1/master/config",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PatchMasterConfigResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchMasterConfig", _resp)
 
 def patch_PatchModel(
     session: "api.Session",
@@ -17348,8 +17524,8 @@ def get_TrialsSample(
     *,
     experimentId: int,
     metricName: str,
-    customType: "typing.Optional[str]" = None,
     endBatches: "typing.Optional[int]" = None,
+    group: "typing.Optional[str]" = None,
     maxDatapoints: "typing.Optional[int]" = None,
     maxTrials: "typing.Optional[int]" = None,
     metricType: "typing.Optional[v1MetricType]" = None,
@@ -17357,8 +17533,8 @@ def get_TrialsSample(
     startBatches: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1TrialsSampleResponse]":
     _params = {
-        "customType": customType,
         "endBatches": endBatches,
+        "group": group,
         "maxDatapoints": maxDatapoints,
         "maxTrials": maxTrials,
         "metricName": metricName,
@@ -17398,14 +17574,14 @@ def get_TrialsSnapshot(
     experimentId: int,
     metricName: str,
     batchesMargin: "typing.Optional[int]" = None,
-    customType: "typing.Optional[str]" = None,
+    group: "typing.Optional[str]" = None,
     metricType: "typing.Optional[v1MetricType]" = None,
     periodSeconds: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1TrialsSnapshotResponse]":
     _params = {
         "batchesMargin": batchesMargin,
         "batchesProcessed": batchesProcessed,
-        "customType": customType,
+        "group": group,
         "metricName": metricName,
         "metricType": metricType.value if metricType is not None else None,
         "periodSeconds": periodSeconds,

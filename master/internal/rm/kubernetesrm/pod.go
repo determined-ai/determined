@@ -42,6 +42,17 @@ type podSubmissionInfo struct {
 	taskSpec tasks.TaskSpec
 }
 
+// TODO(mar).
+// podStatusUpdate: messages that are sent by the pod informer.
+type podStatusUpdate struct {
+	updatedPod *k8sV1.Pod
+}
+
+// podEventUpdate are messages that are sent by the event listener.
+type podEventUpdate struct {
+	event *k8sV1.Event
+}
+
 // pod manages the lifecycle of a Kubernetes pod that executes a
 // Determined task. The lifecycle of the pod is managed based on
 // the status of the specified set of containers.

@@ -80,6 +80,12 @@ def sample_get_checkpoint() -> bindings.v1GetCheckpointResponse:
         return resp
 
 
+def sample_get_workspace() -> bindings.v1GetWorkspaceResponse:
+    with open(FIXTURES_DIR / "workspace.json") as f:
+        resp = bindings.v1GetWorkspaceResponse.from_json(json.load(f))
+        return resp
+
+
 def sample_get_pagination() -> bindings.v1Pagination:
     with open(FIXTURES_DIR / "pagination.json") as f:
         resp = bindings.v1Pagination.from_json(json.load(f))
@@ -88,7 +94,7 @@ def sample_get_pagination() -> bindings.v1Pagination:
 
 def empty_get_pagination() -> bindings.v1Pagination:
     """A pagination response for an object with no entries."""
-    return bindings.v1Pagination(endIndex=5, limit=0, offset=0, startIndex=0, total=5)
+    return bindings.v1Pagination(endIndex=0, limit=0, offset=0, startIndex=0, total=0)
 
 
 def page_of(

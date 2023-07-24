@@ -16,7 +16,6 @@ vi.useFakeTimers();
 import PasswordChangeModalComponent, {
   API_SUCCESS_MESSAGE,
   CONFIRM_PASSWORD_LABEL,
-  NEW_PASSWORD_LABEL,
   OK_BUTTON_LABEL,
   OLD_PASSWORD_LABEL,
 } from './PasswordChangeModal';
@@ -76,7 +75,7 @@ const Container: React.FC = () => {
   return (
     <div>
       <Button onClick={PasswordChangeModal.open}>{OPEN_MODAL_TEXT}</Button>
-      <PasswordChangeModal.Component />
+      <PasswordChangeModal.Component newPassword={SECOND_PASSWORD_VALUE} />
     </div>
   );
 };
@@ -98,7 +97,6 @@ describe('Password Change Modal', () => {
     await setup();
 
     await user.type(screen.getByLabelText(OLD_PASSWORD_LABEL), FIRST_PASSWORD_VALUE);
-    await user.type(screen.getByLabelText(NEW_PASSWORD_LABEL), SECOND_PASSWORD_VALUE);
     await user.type(screen.getByLabelText(CONFIRM_PASSWORD_LABEL), SECOND_PASSWORD_VALUE);
     await user.click(screen.getByRole('button', { name: OK_BUTTON_LABEL }));
 

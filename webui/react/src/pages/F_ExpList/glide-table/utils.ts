@@ -1,4 +1,4 @@
-import { DataEditorProps } from '@glideapps/glide-data-grid';
+import { DataEditorProps } from '@hpe.com/glide-data-grid';
 import dayjs from 'dayjs';
 
 import { ExperimentItem } from 'types';
@@ -53,7 +53,7 @@ export const getTimeInEnglish = (d: Date): string => {
  */
 export const getTheme = (appTheme: Theme): DataEditorProps['theme'] => {
   return {
-    accentLight: appTheme.surfaceStrong,
+    accentLight: appTheme.float,
     bgBubble: appTheme.ixStrong,
     bgCell: appTheme.surface,
     bgHeader: appTheme.surface,

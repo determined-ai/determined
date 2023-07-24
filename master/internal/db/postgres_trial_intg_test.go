@@ -104,11 +104,11 @@ func addMetrics(ctx context.Context,
 func addTestTrialMetrics(ctx context.Context,
 	t *testing.T, db *PgDB, trialID int, trialMetricsJSON string,
 ) {
-	var trialMetrics map[model.MetricType][]map[string]any
+	var trialMetrics map[model.MetricGroup][]map[string]any
 	require.NoError(t, json.Unmarshal([]byte(trialMetricsJSON), &trialMetrics))
 	trialRunID := 0
 
-	for mType, metrics := range trialMetrics {
+	for mGroup, metrics := range trialMetrics {
 		for i, m := range metrics {
 			metrics, err := structpb.NewStruct(m)
 			require.NoError(t, err)
@@ -119,7 +119,7 @@ func addTestTrialMetrics(ctx context.Context,
 				Metrics: &commonv1.Metrics{
 					AvgMetrics: metrics,
 				},
-			}, mType)
+			}, mGroup)
 			require.NoError(t, err)
 		}
 	}
@@ -134,7 +134,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 		TotalBatches  int
 		EndTime       time.Time
 		PartitionType MetricPartitionType
-		CustomType    model.MetricType
+		CustomType    model.MetricGroup
 	}
 
 	baseMetric := metric{
@@ -145,7 +145,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 	}
 
 	baseMetric.PartitionType = TrainingMetric
-	baseMetric.CustomType = model.TrainingMetricType
+	baseMetric.CustomType = model.TrainingMetricGroup
 	baseMetric.Metrics = map[string]any{
 		"avg_metrics": map[string]any{
 			"b": -1.0,
@@ -155,7 +155,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 	require.NoError(t, err)
 
 	baseMetric.PartitionType = ValidationMetric
-	baseMetric.CustomType = model.ValidationMetricType
+	baseMetric.CustomType = model.ValidationMetricGroup
 	baseMetric.Metrics = map[string]any{
 		"validation_metrics": map[string]any{
 			"val_loss": 3.0,
@@ -470,7 +470,7 @@ func TestSummaryMetricsMigration(t *testing.T) {
 	}
 }
 
-func TestEpochMetricTypes(t *testing.T) {
+func TestEpochMetricGroups(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
@@ -554,6 +554,95 @@ func getLatestValidation(ctx context.Context, t *testing.T, trialID int) (*int, 
 
 	require.Len(t, res, 1)
 	return res[0].ID, res[0].Metric
+}
+
+func jsonToStruct(t *testing.T, jsonStr string) *structpb.Struct {
+	var rawMetrics map[string]any
+	require.NoError(t, json.Unmarshal([]byte(jsonStr), &rawMetrics))
+	metrics, err := structpb.NewStruct(rawMetrics)
+	require.NoError(t, err)
+	return metrics
+}
+
+func TestMetricMergeUtil(t *testing.T) {
+	cases := []struct {
+		reports []string
+		merged  string
+		errMsg  string
+	}{
+		{[]string{`{"a":1.0}`}, `{"a":1.0}`, ""},
+		{[]string{`{"a":1.0}`, `{"a":2.0}`}, `{"a":2.0}`, "exist"}, // unsupported.
+		{[]string{`{"a":1.0}`, `{"b":2.0}`}, `{"a":1.0,"b":2.0}`, ""},
+	}
+	for _, c := range cases {
+		t.Log(c)
+		var merged *metricsBody
+		var err error
+		for _, report := range c.reports {
+			newBody := newMetricsBody(jsonToStruct(t, report), nil, false)
+			merged, err = shallowUnionMetrics(merged, newBody)
+		}
+		if c.errMsg != "" {
+			require.Error(t, err)
+			require.Contains(t, err.Error(), c.errMsg)
+			continue
+		}
+		require.NoError(t, err)
+		deserializedMetrics := map[string]any{}
+		require.NoError(t, json.Unmarshal([]byte(c.merged), &deserializedMetrics))
+		require.EqualValues(t, deserializedMetrics, merged.AvgMetrics.AsMap())
+	}
+}
+
+func TestMetricMerge(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	mGroup := model.TrainingMetricGroup
+
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
+
+	addMetricAt := func(batchNumber int, metricsJSON string, trialID int) error {
+		trialRunID := 0
+		require.NoError(t, db.AddTrialMetrics(ctx, &trialv1.TrialMetrics{
+			TrialId:        int32(trialID),
+			TrialRunId:     int32(trialRunID),
+			StepsCompleted: int32(batchNumber),
+			Metrics: &commonv1.Metrics{
+				AvgMetrics: jsonToStruct(t, metricsJSON),
+			},
+		}, mGroup))
+		return nil
+	}
+
+	cases := []struct {
+		reports []string
+		merged  string
+	}{
+		{[]string{`{"a":1.0}`}, `{"a":1.0}`},
+		{[]string{`{"a":1.0}`, `{"b":2.0}`}, `{"a":1.0,"b":2.0}`},
+		{[]string{`{"a":1.0}`, `{"b":2.0}`, `{"c":2.0}`}, `{"a":1.0,"b":2.0,"c":2.0}`},
+	}
+
+	for _, c := range cases {
+		t.Log(c)
+		trialID := RequireMockTrial(t, db, exp).ID
+		for _, metricReport := range c.reports {
+			err := addMetricAt(1, metricReport, trialID)
+			require.NoError(t, err)
+			metrics, err := GetMetrics(ctx, trialID, 0, 100, mGroup)
+			require.NoError(t, err)
+			require.Len(t, metrics, 1)
+		}
+		metrics, err := GetMetrics(ctx, trialID, 0, 100, mGroup)
+		require.NoError(t, err)
+		require.Len(t, metrics, 1)
+		deserializedMetrics := map[string]any{}
+		require.NoError(t, json.Unmarshal([]byte(c.merged), &deserializedMetrics))
+		require.EqualValues(t, deserializedMetrics, metrics[0].Metrics.AsMap()["avg_metrics"])
+	}
 }
 
 func TestLatestMetricID(t *testing.T) {
@@ -803,12 +892,12 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 		}
 		t.Logf("Adding %s metrics: %v", typ, trialMetrics)
 		switch typ {
-		case model.TrainingMetricType.ToString():
-			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, model.TrainingMetricType)
+		case model.TrainingMetricGroup.ToString():
+			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, model.TrainingMetricGroup)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
-		case model.ValidationMetricType.ToString():
-			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, model.ValidationMetricType)
+		case model.ValidationMetricGroup.ToString():
+			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, model.ValidationMetricGroup)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
 		case "checkpoint":
@@ -822,7 +911,7 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 			}))
 		default:
 			rollbacksCnts, err := db.addTrialMetrics(
-				ctx, trialMetrics, model.MetricType(typ),
+				ctx, trialMetrics, model.MetricGroup(typ),
 			)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
@@ -1031,10 +1120,13 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 			require.NoError(t, db.updateTotalBatches(ctx, tx, tr.ID))
 		}
 		if coinFlip() {
-			modelTypes := []model.MetricType{model.TrainingMetricType, model.ValidationMetricType}
+			metricGroups := []model.MetricGroup{
+				model.TrainingMetricGroup, model.ValidationMetricGroup,
+				model.MetricGroup("generic-xyz"),
+			}
 			//nolint:gosec // Weak RNG doesn't matter here.
-			modelType := modelTypes[rand.Intn(len(modelTypes))]
-			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, modelType)
+			metricGroup := metricGroups[rand.Intn(len(metricGroups))]
+			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, metricGroup)
 			require.NoError(t, err)
 		}
 		if coinFlip() {
@@ -1042,7 +1134,7 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 		}
 	}
 
-	writes := 5
+	writes := 10
 	trials := 10
 	var wg sync.WaitGroup
 	wg.Add(trials)

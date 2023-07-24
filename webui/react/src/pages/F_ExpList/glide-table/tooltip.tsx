@@ -1,4 +1,4 @@
-import { DataEditorProps, GridMouseEventArgs } from '@glideapps/glide-data-grid';
+import { DataEditorProps, GridMouseEventArgs } from '@hpe.com/glide-data-grid';
 import { Tooltip } from 'antd';
 import React, { ReactNode, useCallback, useEffect, useMemo } from 'react';
 

@@ -90,3 +90,20 @@ message ResourceAllocationAggregatedEntry {
   // This field has been deprecated and will be empty.
   map<string, float> by_agent_label = 7;
 }
+
+// The log config for Master Config
+message LogConfig {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [] }
+  };
+  // The log level for Master Config.
+  string level = 1;
+  // The color setting for log in Master Config.
+  bool color = 2;
+}
+
+// The config to be patched into Master Config.
+message Config {
+  // The log config to be patched into Master Config.
+  LogConfig log = 2;
+}

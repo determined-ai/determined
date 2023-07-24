@@ -5,7 +5,7 @@ import {
   GridCellKind,
   Theme as GTheme,
   SizedGridColumn,
-} from '@glideapps/glide-data-grid';
+} from '@hpe.com/glide-data-grid';
 
 import { getColor, getInitials } from 'components/Avatar';
 import { terminalRunStates } from 'constants/states';
@@ -22,6 +22,7 @@ import { getDisplayName } from 'utils/user';
 import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
 export const MIN_COLUMN_WIDTH = 40;
+export const NO_PINS_WIDTH = 200;
 
 export const MULTISELECT = 'selected';
 
@@ -51,6 +52,7 @@ export const experimentColumns = [
 export type ExperimentColumn = (typeof experimentColumns)[number];
 
 export const defaultExperimentColumns: ExperimentColumn[] = [
+  'name',
   'startTime',
   'user',
   'description',
@@ -112,7 +114,7 @@ export const getColumnDefs = ({
       displayData: String(record.experiment.checkpointCount),
       kind: GridCellKind.Number,
     }),
-    title: 'Checkpoint Count',
+    title: 'Checkpoints',
     tooltip: () => undefined,
     width: columnWidths.checkpointCount,
   },
@@ -307,7 +309,7 @@ export const getColumnDefs = ({
         kind: GridCellKind.Text,
       };
     },
-    title: 'Searcher Metric Values',
+    title: 'Searcher Metric Value',
     tooltip: () => undefined,
     width: columnWidths.searcherMetricsVal,
   },
@@ -319,7 +321,7 @@ export const getColumnDefs = ({
       displayData: String(record.experiment.searcherType),
       kind: GridCellKind.Text,
     }),
-    title: 'Searcher Type',
+    title: 'Searcher',
     tooltip: () => undefined,
     width: columnWidths.searcherType,
   },
@@ -437,7 +439,7 @@ export const defaultTextColumn = (
     },
     title: column.displayName || column.column,
     tooltip: () => undefined,
-    width: columnWidth ?? 140,
+    width: columnWidth ?? columnWidthsFallback,
   };
 };
 
@@ -472,7 +474,7 @@ export const defaultNumberColumn = (
     },
     title: column.displayName || column.column,
     tooltip: () => undefined,
-    width: columnWidth ?? 140,
+    width: columnWidth ?? columnWidthsFallback,
   };
 };
 
@@ -494,9 +496,11 @@ export const defaultDateColumn = (
     },
     title: column.displayName || column.column,
     tooltip: () => undefined,
-    width: columnWidth ?? 140,
+    width: columnWidth ?? columnWidthsFallback,
   };
 };
+
+export const columnWidthsFallback = 140;
 
 export const defaultColumnWidths: Record<ExperimentColumn, number> = {
   archived: 80,

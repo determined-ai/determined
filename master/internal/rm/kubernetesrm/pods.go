@@ -13,10 +13,12 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
 	k8sV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
@@ -77,10 +79,6 @@ type pods struct {
 	loggingTLSConfig model.TLSClientConfig
 	loggingConfig    model.LoggingConfig
 
-	informers                    []*actor.Ref
-	nodeInformer                 *actor.Ref
-	eventListeners               []*actor.Ref
-	preemptionListeners          []*actor.Ref
 	resourceRequestQueue         *requestQueue
 	podNameToPodHandler          map[string]*actor.Ref
 	podNameToResourcePool        map[string]string
@@ -95,11 +93,14 @@ type pods struct {
 	podInterfaces       map[string]typedV1.PodInterface
 	configMapInterfaces map[string]typedV1.ConfigMapInterface
 
+	mu                 sync.RWMutex
 	summarizeCacheLock sync.RWMutex
 	summarizeCache     summarizeResult
 	summarizeCacheTime time.Time
 
 	handleResourceError func(ctx *actor.Context) errorCallbackFunc
+
+	syslog *logrus.Entry
 }
 
 type summarizeResult struct {
@@ -184,6 +185,7 @@ func Initialize(
 		nodeToSystemResourceRequests: make(map[string]int64),
 		podInterfaces:                make(map[string]typedV1.PodInterface),
 		configMapInterfaces:          make(map[string]typedV1.ConfigMapInterface),
+		syslog:                       logrus.WithField("pod-name", namespace),
 	}
 	p.handleResourceError = func(ctx *actor.Context) errorCallbackFunc {
 		return func(err error) {
@@ -194,10 +196,33 @@ func Initialize(
 	check.Panic(check.True(ok, "pods address already taken"))
 	s.Ask(podsActor, actor.Ping{}).Get()
 
+	err := p.startPodInformer(s)
+	if err != nil {
+		panic(err)
+	}
+
+	err = p.startNodeInformer()
+	if err != nil {
+		panic(err)
+	}
+
+	err = p.startEventListeners(s)
+	if err != nil {
+		panic(err)
+	}
+
+	err = p.startPreemptionListeners(s)
+	if err != nil {
+		panic(err)
+	}
+
 	return podsActor
 }
 
 func (p *pods) Receive(ctx *actor.Context) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		if err := p.startClientSet(ctx); err != nil {
@@ -217,29 +242,12 @@ func (p *pods) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		p.startPodInformer(ctx)
-		p.startNodeInformer(ctx)
-		p.startEventListeners(ctx)
-		p.startPreemptionListeners(ctx)
-
 	case actor.PostStop:
 
 	case StartTaskPod:
 		if err := p.receiveStartTaskPod(ctx, msg); err != nil {
 			return err
 		}
-
-	case podStatusUpdate:
-		p.receivePodStatusUpdate(ctx, msg)
-
-	case nodeStatusUpdate:
-		p.receiveNodeStatusUpdate(ctx, msg)
-
-	case podEventUpdate:
-		p.receivePodEventUpdate(ctx, msg)
-
-	case PreemptTaskPod:
-		p.receivePodPreemption(ctx, msg)
 
 	case ChangePriority:
 		p.receivePriorityChange(ctx, msg)
@@ -264,26 +272,6 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		}
 
 	case actor.ChildFailed:
-		switch msg.Child {
-		case p.nodeInformer:
-			return errors.Errorf("node informer failed")
-		}
-		for _, informer := range p.informers {
-			if msg.Child == informer {
-				return errors.Errorf("pod informer failed")
-			}
-		}
-		for _, preemptionListener := range p.preemptionListeners {
-			if msg.Child == preemptionListener {
-				return errors.Errorf("preemption listener failed")
-			}
-		}
-		for _, eventListener := range p.eventListeners {
-			if msg.Child == eventListener {
-				return errors.Errorf("event listener failed")
-			}
-		}
-
 		if err := p.cleanUpPodHandler(ctx, msg.Child); err != nil {
 			return err
 		}
@@ -572,13 +560,13 @@ func (p *pods) reattachPod(
 		containerID: containerID,
 	}
 
-	// Send a podStatusUpdate for any missed updates between master going up
+	// Calls podStatusCallback for any missed updates between master going up
 	// and the pod being reattached.
 	updated, err := p.podInterfaces[pod.Namespace].Get(context.TODO(), pod.Name, metaV1.GetOptions{})
 	if err != nil {
 		return reattachPodResponse{}, errors.Wrap(err, "error getting pod status update in restore")
 	}
-	ctx.Tell(ctx.Self(), podStatusUpdate{updatedPod: updated})
+	p.podStatusCallback(ctx.Self().System(), updated)
 
 	return reattachPodResponse{containerID: containerID, started: started}, nil
 }
@@ -679,33 +667,76 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 	return nil
 }
 
-func (p *pods) startPodInformer(ctx *actor.Context) {
+func (p *pods) startPodInformer(s *actor.System) error {
 	for namespace := range p.namespaceToPoolName {
-		i, _ := ctx.ActorOf("pod-informer-"+namespace,
-			newInformer(p.podInterfaces[namespace], ctx.Self()),
-		)
-		p.informers = append(p.informers, i)
+		i, err := newInformer(
+			context.TODO(),
+			namespace,
+			p.podInterfaces[namespace],
+			func(pod *k8sV1.Pod) {
+				p.mu.Lock()
+				defer p.mu.Unlock()
+				p.podStatusCallback(s, pod)
+			})
+		if err != nil {
+			return err
+		}
+
+		go i.run()
 	}
+	return nil
 }
 
-func (p *pods) startNodeInformer(ctx *actor.Context) {
-	p.nodeInformer, _ = ctx.ActorOf("node-informer", newNodeInformer(p.clientSet, ctx.Self()))
+func (p *pods) startNodeInformer() error {
+	i, err := newNodeInformer(context.TODO(),
+		p.clientSet.CoreV1().Nodes(),
+		func(node *k8sV1.Node, event watch.EventType) {
+			p.mu.Lock()
+			defer p.mu.Unlock()
+			p.nodeStatusCallback(node, event)
+		})
+	if err != nil {
+		return err
+	}
+
+	go i.run()
+	return nil
 }
 
-func (p *pods) startEventListeners(ctx *actor.Context) {
+func (p *pods) startEventListeners(s *actor.System) error {
 	for namespace := range p.namespaceToPoolName {
-		l, _ := ctx.ActorOf("event-listener-"+namespace,
-			newEventListener(p.clientSet, ctx.Self(), namespace))
-		p.eventListeners = append(p.eventListeners, l)
+		l, err := newEventListener(
+			context.TODO(),
+			p.clientSet.CoreV1().Events(namespace),
+			namespace,
+			func(event *k8sV1.Event) {
+				p.mu.Lock()
+				defer p.mu.Unlock()
+				p.eventStatusCallback(s, event)
+			})
+		if err != nil {
+			return err
+		}
+		go l.run()
 	}
+	return nil
 }
 
-func (p *pods) startPreemptionListeners(ctx *actor.Context) {
+func (p *pods) startPreemptionListeners(s *actor.System) error {
 	for namespace := range p.namespaceToPoolName {
-		l, _ := ctx.ActorOf("preemption-listener-"+namespace,
-			newPreemptionListener(p.clientSet, ctx.Self(), namespace))
-		p.preemptionListeners = append(p.preemptionListeners, l)
+		l, err := newPreemptionListener(context.TODO(), namespace,
+			p.clientSet.CoreV1().Pods(namespace),
+			func(name string) {
+				p.mu.Lock()
+				defer p.mu.Unlock()
+				p.preemptionCallback(s, name)
+			})
+		if err != nil {
+			return err
+		}
+		go l.run()
 	}
+	return nil
 }
 
 func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
@@ -758,25 +789,24 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 	return nil
 }
 
-func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
-	ref, ok := p.podNameToPodHandler[msg.updatedPod.Name]
+func (p *pods) podStatusCallback(s *actor.System, pod *k8sV1.Pod) {
+	ref, ok := p.podNameToPodHandler[pod.Name]
 	if !ok {
-		ctx.Log().WithField("pod-name", msg.updatedPod.Name).Warn(
-			"received pod status update for un-registered pod")
+		p.syslog.Warn("received pod status update for un-registered pod")
 		return
 	}
 
-	ctx.Tell(ref, msg)
+	s.Tell(ref, podStatusUpdate{pod})
 
-	if containerID, ok := p.podNameToContainerID[msg.updatedPod.Name]; ok {
+	if containerID, ok := p.podNameToContainerID[pod.Name]; ok {
 		if state, ok := p.containerIDToSchedulingState[containerID]; ok {
 			currState := sproto.SchedulingStateQueued
-			if msg.updatedPod.Status.Phase == "Running" {
+			if pod.Status.Phase == "Running" {
 				currState = sproto.SchedulingStateScheduled
 			}
 			if currState != state {
 				p.containerIDToSchedulingState[containerID] = currState
-				ctx.Tell(p.cluster, sproto.UpdatePodStatus{
+				s.Tell(p.cluster, sproto.UpdatePodStatus{
 					ContainerID: containerID,
 					State:       currState,
 				})
@@ -785,27 +815,35 @@ func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
 	}
 }
 
-func (p *pods) receiveNodeStatusUpdate(ctx *actor.Context, msg nodeStatusUpdate) {
-	if msg.updatedNode != nil {
-		p.currentNodes[msg.updatedNode.Name] = msg.updatedNode
-	}
-
-	if msg.deletedNode != nil {
-		delete(p.currentNodes, msg.deletedNode.Name)
-	}
-}
-
-func (p *pods) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
-	ref, ok := p.podNameToPodHandler[msg.event.InvolvedObject.Name]
-	if !ok {
-		// We log at the debug level because we are unable to filter
-		// pods based on their labels the way we do with pod status updates.
-		ctx.Log().WithField("pod-name", msg.event.InvolvedObject.Name).Debug(
-			"received pod event for an un-registered pod")
+func (p *pods) nodeStatusCallback(
+	node *k8sV1.Node,
+	action watch.EventType,
+) {
+	if node == nil {
 		return
 	}
 
-	ctx.Tell(ref, msg)
+	switch action {
+	case watch.Added:
+		p.currentNodes[node.Name] = node
+	case watch.Modified:
+		p.currentNodes[node.Name] = node
+	case watch.Deleted:
+		delete(p.currentNodes, node.Name)
+	default:
+	}
+}
+
+func (p *pods) eventStatusCallback(s *actor.System, event *k8sV1.Event) {
+	ref, ok := p.podNameToPodHandler[event.InvolvedObject.Name]
+	if !ok {
+		// We log at the debug level because we are unable to filter
+		// pods based on their labels the way we do with pod status updates.
+		p.syslog.Debug("received pod event for an un-registered pod")
+		return
+	}
+
+	s.Tell(ref, podEventUpdate{event})
 }
 
 func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResources) {
@@ -826,14 +864,13 @@ func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResourc
 	ctx.Respond(&PodsInfo{NumAgents: len(summary), SlotsAvailable: slots})
 }
 
-func (p *pods) receivePodPreemption(ctx *actor.Context, msg PreemptTaskPod) {
-	ref, ok := p.podNameToPodHandler[msg.PodName]
+func (p *pods) preemptionCallback(s *actor.System, name string) {
+	ref, ok := p.podNameToPodHandler[name]
 	if !ok {
-		ctx.Log().WithField("pod-name", msg.PodName).Debug(
-			"received preemption command for unregistered pod")
+		p.syslog.Debug("received preemption command for unregistered pod")
 		return
 	}
-	ctx.Tell(ref, msg)
+	s.Tell(ref, PreemptTaskPod{PodName: name})
 }
 
 func (p *pods) verifyPodAndGetRef(ctx *actor.Context, podID string) *actor.Ref {

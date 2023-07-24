@@ -1043,14 +1043,6 @@ const InlineFormSection: React.FC = () => {
             <Input />
           </InlineForm>
           <hr />
-          <InlineForm<number> initialValue={1234} label="Input Number">
-            <InputNumber />
-          </InlineForm>
-          <hr />
-          <InlineForm<string> initialValue={''} label="Input Search">
-            <InputSearch allowClear enterButton placeholder="Input Search" />
-          </InlineForm>
-          <hr />
           <InlineForm<string> initialValue={textAreaValue} label="Text Area">
             <Input.TextArea />
           </InlineForm>
@@ -1070,6 +1062,14 @@ const InlineFormSection: React.FC = () => {
                 </Option>
               ))}
             </Select>
+          </InlineForm>
+          <hr />
+          <InlineForm<number> initialValue={1234} label="Input Number">
+            <InputNumber />
+          </InlineForm>
+          <hr />
+          <InlineForm<string> initialValue={''} label="Input Search">
+            <InputSearch allowClear enterButton placeholder="Input Search" />
           </InlineForm>
         </div>
       </AntDCard>

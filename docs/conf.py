@@ -67,6 +67,7 @@ html_favicon = "assets/images/favicon.ico"
 html_last_updated_fmt = None
 # See https://pradyunsg.me/furo/
 
+# `navbar-logo.html` and `sbt-sidebar-nav.html` come from `sphinx-book-theme`
 html_sidebars = {
     "**": [
         "navbar-logo.html",

@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { ChartGrid, ChartsProps, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import MetricBadgeTag from 'components/MetricBadgeTag';
-import { useTrialMetrics } from 'pages/TrialDetails/useTrialMetrics';
+import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
 import handleError from 'utils/error';
 import { Loaded, NotLoaded } from 'utils/loadable';
@@ -13,23 +13,38 @@ import { useGlasbey } from './useGlasbey';
 interface Props {
   selectedExperiments: ExperimentWithTrial[];
   trials: TrialItem[];
+  metricData: TrialMetricData;
 }
 
-const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials }) => {
+const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricData }) => {
   const colorMap = useGlasbey(selectedExperiments.map((e) => e.experiment.id));
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
-  const { metrics, data, scale, metricHasData, isLoaded, setScale } = useTrialMetrics(trials);
+  const { scale, setScale } = metricData;
 
   const chartsProps = useMemo(() => {
+    const { metrics, data, isLoaded } = metricData;
     const chartedMetrics: Record<string, boolean> = {};
     const out: ChartsProps = [];
+    const expNameById: Record<number, string> = {};
+    selectedExperiments.forEach((e) => {
+      expNameById[e.experiment.id] = e.experiment.name;
+    });
     metrics.forEach((metric) => {
       const series: Serie[] = [];
       const key = `${metric.type}|${metric.name}`;
       trials.forEach((t) => {
         const m = data[t?.id || 0];
-        m?.[key] && t && series.push({ ...m[key], color: colorMap[t.experimentId] });
-        chartedMetrics[key] ||= series.length > 0;
+        m?.[key] &&
+          t &&
+          series.push({
+            ...m[key],
+            color: colorMap[t.experimentId],
+            metricType: undefined,
+            name: expNameById[t.experimentId]
+              ? `${expNameById[t.experimentId]} (${t.experimentId})`
+              : String(t.experimentId),
+          });
+        chartedMetrics[key] ||= series.length > 0 || !!t.endTime;
       });
       out.push({
         series: Loaded(series),
@@ -46,16 +61,19 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials }) => {
     // spinner.
     const chartDataIsLoaded = metrics.every((metric) => {
       const metricKey = `${metric.type}|${metric.name}`;
-      return !!metricHasData?.[metricKey] && !!chartedMetrics?.[metricKey];
+      return !!chartedMetrics?.[metricKey];
     });
-    if (isLoaded && chartDataIsLoaded) {
-      return Loaded(out);
-    } else {
+    if (!isLoaded) {
+      // When trial metrics hasn't loaded metric names or individual trial metrics.
+      return NotLoaded;
+    } else if (!chartDataIsLoaded) {
       // returns the chartProps with a NotLoaded series which enables
       // the ChartGrid to show a spinner for the loading charts.
       return Loaded(out.map((chartProps) => ({ ...chartProps, series: NotLoaded })));
+    } else {
+      return Loaded(out);
     }
-  }, [metrics, data, colorMap, trials, xAxis, isLoaded, metricHasData]);
+  }, [colorMap, trials, xAxis, metricData, selectedExperiments]);
 
   return (
     <div style={{ height: 'calc(100vh - 250px)', overflow: 'auto' }}>

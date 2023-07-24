@@ -198,7 +198,7 @@ func compareMetrics(
 			Id:           actual.Id,
 		}
 		proto.Equal(actual, expectedRow)
-		require.Equal(t, actual, expectedRow)
+		require.Equal(t, expectedRow.Metrics.AsMap(), actual.Metrics.AsMap())
 
 		totalBatches++
 	}
@@ -260,7 +260,7 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 
 	maxDataPoints := 7
 	actualTrainingMetrics, err := api.multiTrialSample(int32(trial.ID), trainMetricNames,
-		model.TrainingMetricType, maxDataPoints, 0, 10, nil, []string{})
+		model.TrainingMetricGroup, maxDataPoints, 0, 10, nil, []string{})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(actualTrainingMetrics))
 	var validationMetricNames []string
@@ -270,7 +270,7 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 	}
 
 	actualValidationTrainingMetrics, err := api.multiTrialSample(int32(trial.ID),
-		validationMetricNames, model.ValidationMetricType, maxDataPoints,
+		validationMetricNames, model.ValidationMetricGroup, maxDataPoints,
 		0, 10, nil, []string{})
 	require.Equal(t, 1, len(actualValidationTrainingMetrics))
 	require.NoError(t, err)
@@ -412,7 +412,7 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 				AvgMetrics: expectedMetrics,
 			},
 		},
-		Type: model.ValidationMetricType.ToString(),
+		Group: model.ValidationMetricGroup.ToString(),
 	})
 	require.NoError(t, err)
 

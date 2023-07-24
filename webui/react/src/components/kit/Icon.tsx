@@ -20,7 +20,7 @@ export const IconSizeArray = [
 
 export type IconSize = (typeof IconSizeArray)[number];
 
-export const IconNameArray = [
+const fontIcons = [
   'home',
   'dai-logo',
   'arrow-left',
@@ -95,17 +95,31 @@ export const IconNameArray = [
   'critical',
   'trace',
   'webhooks',
+] as const;
+
+type FontIconName = (typeof fontIcons)[number];
+
+export const svgIcons = [
   'columns',
   'filter',
+  'four-squares',
   'options',
   'panel',
-  'row-small',
-  'row-medium',
+  'panel-on',
   'row-large',
+  'row-medium',
+  'row-small',
   'row-xl',
   'heatmap',
   'four-squares',
+  'scroll',
 ] as const;
+
+type SvgIconName = (typeof svgIcons)[number];
+
+export const IconNameArray = [...fontIcons, ...svgIcons];
+
+export type IconName = (typeof IconNameArray)[number];
 
 const ColumnsIcon: React.FC = () => (
   <svg fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -141,12 +155,25 @@ const OptionsIcon: React.FC = () => (
 );
 
 const PanelIcon: React.FC = () => (
-  <svg fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <svg fill="none" height="20" viewBox="0 0 20 20" width="20" xmlns="http://www.w3.org/2000/svg">
+    <rect height="15.6667" rx="1.5" stroke="currentcolor" width="15.6667" x="2.16675" y="2.16663" />
     <path
-      clipRule="evenodd"
-      d="M10.72 5H19V19H10.72V5ZM9.72 5H5V19H9.72V5ZM10.72 4H19C19.5523 4 20 4.44772 20 5V19C20 19.5523 19.5523 20 19 20H10.72H9.72H5C4.93096 20 4.86356 19.993 4.79847 19.9797C4.34278 19.8864 4 19.4832 4 19V5C4 4.44772 4.44772 4 5 4H9.72H10.72Z"
+      d="M3.66675 2.16663H8.16675V17.8333H3.66675C2.83832 17.8333 2.16675 17.1617 2.16675 16.3333V3.66663C2.16675 2.8382 2.83832 2.16663 3.66675 2.16663Z"
+      stroke="currentcolor"
+    />
+  </svg>
+);
+
+const PanelOnIcon: React.FC = () => (
+  <svg fill="none" height="20" viewBox="0 0 20 20" width="20" xmlns="http://www.w3.org/2000/svg">
+    <rect height="15.6667" rx="1.5" stroke="currentcolor" width="15.6667" x="2.16675" y="2.16663" />
+    <path
+      d="M3.66675 2.16663H8.16675V17.8333H3.66675C2.83832 17.8333 2.16675 17.1617 2.16675 16.3333V3.66663C2.16675 2.8382 2.83832 2.16663 3.66675 2.16663Z"
+      stroke="currentcolor"
+    />
+    <path
+      d="M18 4C18 2.89543 17.1046 2 16 2H8V18H16C17.1046 18 18 17.1046 18 16V4Z"
       fill="currentcolor"
-      fillRule="evenodd"
     />
   </svg>
 );
@@ -218,23 +245,56 @@ const FourSquaresIcon: React.FC = () => (
   </svg>
 );
 
-export type IconName = (typeof IconNameArray)[number];
+const ScrollIcon: React.FC = () => (
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="4.5" x2="12.7" y1="5.5" y2="5.5" />
+      <line strokeOpacity="0.72" x1="4.5" x2="12.7" y1="9.5" y2="9.5" />
+      <line strokeOpacity="0.48" x1="4.5" x2="12.7" y1="13.5" y2="13.5" />
+      <line strokeOpacity="0.24" x1="4.5" x2="12.7" y1="17.5" y2="17.5" />
+      <path d="M20 15.7059L17.6 18M17.6 18L15.2 15.7059M17.6 18V5" />
+    </g>
+  </svg>
+);
 
-export interface Props {
+// intersection here is to ensure the index access in the component returns
+// undefined | React.FC and not any
+const svgIconMap: Record<SvgIconName, React.FC> & { [x in FontIconName]?: never } = {
+  'columns': ColumnsIcon,
+  'filter': FilterIcon,
+  'four-squares': FourSquaresIcon,
+  'options': OptionsIcon,
+  'panel': PanelIcon,
+  'panel-on': PanelOnIcon,
+  'row-large': RowIconLarge,
+  'row-medium': RowIconMedium,
+  'row-small': RowIconSmall,
+  'row-xl': RowIconExtraLarge,
+  'scroll': ScrollIcon,
+  'heatmap': HeatmapIcon
+};
+
+type CommonProps = {
   color?: 'cancel' | 'error' | 'success';
   name: IconName;
-  showTooltip?: boolean;
   size?: IconSize;
-  title: string;
-}
-
-const Icon: React.FC<Props> = ({
-  name,
-  showTooltip = false,
-  size = 'medium',
-  title,
-  color,
-}: Props) => {
+  showTooltip?: boolean;
+};
+export type Props = CommonProps &
+  (
+    | {
+        title: string;
+        decorative?: never;
+      }
+    | {
+        decorative: true;
+      }
+  );
+const Icon: React.FC<Props> = (props: Props) => {
+  const { name, size = 'medium', color } = props;
+  const showTooltip = 'decorative' in props ? false : props.showTooltip ?? false;
+  const title = 'decorative' in props ? undefined : props.title;
+  const decorative = 'decorative' in props;
   const classes = [css.base];
 
   const svgIcon = useMemo(() => {
@@ -249,7 +309,8 @@ const Icon: React.FC<Props> = ({
     if (name === 'heatmap') return <HeatmapIcon />;
     if (name === 'four-squares') return <FourSquaresIcon />;
 
-    return null;
+    const MappedIcon = svgIconMap[name];
+    return MappedIcon && <MappedIcon />;
   }, [name]);
 
   if (name) classes.push(`icon-${name}`);
@@ -257,7 +318,7 @@ const Icon: React.FC<Props> = ({
   if (color) classes.push(css[color]);
 
   const icon = (
-    <span aria-label={title} className={classes.join(' ')}>
+    <span aria-label={decorative ? undefined : title} className={classes.join(' ')}>
       {svgIcon}
     </span>
   );

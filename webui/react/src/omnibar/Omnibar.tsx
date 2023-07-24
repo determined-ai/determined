@@ -1,15 +1,15 @@
 import OmnibarNpm from 'omnibar';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import shortCutSettingsConfig, {
+  Settings as ShortcutSettings,
+} from 'components/UserSettings.settings';
 import { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import { useSettings } from 'hooks/useSettings';
 import * as Tree from 'omnibar/tree-extension/index';
 import TreeNode from 'omnibar/tree-extension/TreeNode';
 import { BaseNode } from 'omnibar/tree-extension/types';
 import { isTreeNode } from 'omnibar/tree-extension/utils';
-import shortCutSettingsConfig, {
-  Settings as ShortcutSettings,
-} from 'pages/Settings/UserSettings.settings';
 import handleError from 'utils/error';
 import { matchesShortcut } from 'utils/shortcut';
 

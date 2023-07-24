@@ -1,23 +1,22 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import Icon, { IconNameArray, IconSizeArray } from './Icon';
+import Icon, { IconNameArray, IconSizeArray, svgIcons } from './Icon';
 import type { Props } from './Icon';
-
-const svgIcons = [
-  'columns',
-  'filter',
-  'options',
-  'panel',
-  'row-small',
-  'row-medium',
-  'row-large',
-  'row-xl',
-];
 
 const setup = (props?: Props) => {
   const user = userEvent.setup();
-  const view = render(<Icon name="star" showTooltip title="Icon" {...props} />);
+  const props_: Partial<Props> = props ?? {};
+  const title = ('title' in props_ ? props_.title : undefined) ?? 'Icon';
+  const view = render(
+    <Icon
+      color={props?.color}
+      name={props?.name ?? 'star'}
+      showTooltip
+      size={props?.size}
+      title={title}
+    />,
+  );
   return { user, view };
 };
 
@@ -35,7 +34,7 @@ describe('Icon', () => {
     it.each(IconNameArray)('should display a %s icon', (name) => {
       const { view } = setup({ name, title: name });
       const firstChild = view.container.firstChild;
-      if (!svgIcons.includes(name)) {
+      if (!(svgIcons as readonly string[]).includes(name)) {
         expect(firstChild).toHaveClass(...['base', `icon-${name}`, 'medium']);
       } else {
         expect(firstChild?.firstChild?.nodeName).toBe('svg');

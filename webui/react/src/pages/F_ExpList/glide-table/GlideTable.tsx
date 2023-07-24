@@ -13,8 +13,8 @@ import DataEditor, {
   Item,
   Rectangle,
   Theme,
-} from '@glideapps/glide-data-grid';
-import { DrawHeaderCallback } from '@glideapps/glide-data-grid/dist/ts/data-grid/data-grid-types';
+} from '@hpe.com/glide-data-grid';
+import { DrawHeaderCallback } from '@hpe.com/glide-data-grid/dist/ts/data-grid/data-grid-types';
 import React, {
   Dispatch,
   SetStateAction,
@@ -41,7 +41,7 @@ import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'stores/contexts/UI';
 import usersStore from 'stores/users';
 import { ExperimentWithTrial, Project, ProjectColumn, ProjectMetricsRange } from 'types';
-import { Surface } from 'utils/colors';
+import { Float, Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
@@ -274,23 +274,29 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     (row: number): Partial<Theme> | undefined => {
       // to put a border on the bottom row (actually the top of the row below it)
       if (row === data.length) return;
+
       // avoid showing 'empty rows' below data
       if (!data[row]) {
-        return {
-          borderColor: getCssVar(Surface.Surface),
-        };
+        return { borderColor: getCssVar(Surface.Surface) };
       }
 
-      const hoverStyle = row === hoveredRow ? { bgCell: getCssVar(Surface.SurfaceWeak) } : {};
+      const hoverStyle: { accentLight?: string; bgCell?: string } = {};
+      if (row === hoveredRow) {
+        hoverStyle.bgCell = getCssVar(Surface.SurfaceStrong);
+        if (selection.rows.toArray().includes(hoveredRow)) {
+          hoverStyle.accentLight = getCssVar(Float.FloatStrong);
+        }
+      }
 
       const rowColorTheme = Loadable.match(data[row], {
         Loaded: (record) =>
           colorMap[record.experiment.id] ? { accentColor: colorMap[record.experiment.id] } : {},
         NotLoaded: () => ({}),
       });
+
       return { ...rowColorTheme, ...hoverStyle };
     },
-    [colorMap, data, hoveredRow],
+    [colorMap, data, hoveredRow, selection.rows],
   );
 
   const onColumnResize: DataEditorProps['onColumnResize'] = useCallback(
@@ -426,7 +432,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               ...sortMenuItemsForColumn(column, sorts, onSortChange),
               { type: 'divider' as const },
               {
-                icon: <Icon name="filter" title="filter" />,
+                icon: <Icon decorative name="filter" />,
                 key: 'filter',
                 label: 'Filter by this column',
                 onClick: () => {
@@ -466,6 +472,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               },
             }
           : {
+              disabled: pinnedColumnsCount <= 1,
               key: 'unpin',
               label: 'Unpin column',
               onClick: () => {
@@ -560,7 +567,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
         if (isLinkCell(cell)) {
           handlePath(event as unknown as AnyMouseEvent, { path: cell.data.link.href });
-          // cell.data.link.onClick(event);
         } else {
           if (event.shiftKey) {
             setSelection(({ rows }: GridSelection) => {
@@ -669,25 +675,33 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const onColumnMoved: DataEditorProps['onColumnMoved'] = useCallback(
     (columnIdsStartIdx: number, columnIdsEndIdx: number): void => {
-      const pinnedColumnEnd = staticColumns.length + pinnedColumnsCount - 1;
-      if (
-        // can't move a column into the pinned area via dragging
-        (columnIdsStartIdx > pinnedColumnEnd && columnIdsEndIdx <= pinnedColumnEnd) ||
-        // can't move a column out of the pinned area via dragging
-        (columnIdsStartIdx <= pinnedColumnEnd && columnIdsEndIdx > pinnedColumnEnd)
-      )
-        return;
+      // Prevent the static columns from moving.
+      if (columnIdsStartIdx < staticColumns.length) return;
 
+      // Update the pinned column count based on where the column is sourced from and where it lands.
+      const pinnedColumnEnd = staticColumns.length + pinnedColumnsCount;
+      const isIntoPinned =
+        columnIdsStartIdx >= pinnedColumnEnd && columnIdsEndIdx < pinnedColumnEnd;
+      const isOutOfPinned =
+        columnIdsStartIdx < pinnedColumnEnd && columnIdsEndIdx >= pinnedColumnEnd;
+      if (isIntoPinned) setPinnedColumnsCount(pinnedColumnsCount + 1);
+      if (isOutOfPinned) setPinnedColumnsCount(pinnedColumnsCount - 1);
+
+      // Update the column list with the updated column.
       const sortableColumnIdsStartIdx = columnIdsStartIdx - staticColumns.length;
       const sortableColumnIdsEndIdx = Math.max(columnIdsEndIdx - staticColumns.length, 0);
-      if (sortableColumnIdsStartIdx > -1) {
-        const newCols = [...sortableColumnIds];
-        const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
-        newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
-        setSortableColumnIds(newCols);
-      }
+      const newCols = [...sortableColumnIds];
+      const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
+      newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
+      setSortableColumnIds(newCols);
     },
-    [staticColumns.length, pinnedColumnsCount, sortableColumnIds, setSortableColumnIds],
+    [
+      pinnedColumnsCount,
+      setPinnedColumnsCount,
+      setSortableColumnIds,
+      sortableColumnIds,
+      staticColumns.length,
+    ],
   );
 
   const onColumnHovered = useCallback(
@@ -723,8 +737,13 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               '',
             )}`;
             break;
+          case V1LocationType.TRAINING:
+            dataPath = `bestTrial.summaryMetrics.avgMetrics.${currentColumn.column.replace(
+              'training.',
+              '',
+            )}`;
+            break;
           case V1LocationType.UNSPECIFIED:
-          default:
             break;
         }
         switch (currentColumn.type) {

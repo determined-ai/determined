@@ -40,7 +40,7 @@ import { Loadable } from 'utils/loadable';
 import css from './App.module.scss';
 
 import 'antd/dist/reset.css';
-import '@glideapps/glide-data-grid/dist/index.css';
+import '@hpe.com/glide-data-grid/dist/index.css';
 
 const AppView: React.FC = () => {
   const resize = useResize();
@@ -150,6 +150,7 @@ const AppView: React.FC = () => {
                           }
                           workspace={workspace ?? undefined}
                         />
+                        <Omnibar />
                         <main>
                           <Router routes={appRoutes} />
                         </main>
@@ -167,7 +168,6 @@ const AppView: React.FC = () => {
                 <Button onClick={refreshPage}>Try Again</Button>
               </PageMessage>
             )}
-            <Omnibar />
           </>
         ) : (
           <Spinner center />

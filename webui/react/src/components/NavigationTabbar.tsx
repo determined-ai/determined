@@ -7,6 +7,7 @@ import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Link, { Props as LinkProps } from 'components/Link';
 import Spinner from 'components/Spinner/Spinner';
+import UserSettings from 'components/UserSettings';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
 import authStore from 'stores/auth';
@@ -67,6 +68,8 @@ const NavigationTabbar: React.FC = () => {
   const { canCreateWorkspace } = usePermissions();
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
+
+  const [showSettings, setShowSettings] = useState<boolean>(false);
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
   const handleWorkspacesOpen = useCallback(() => {
@@ -134,7 +137,7 @@ const NavigationTabbar: React.FC = () => {
     {
       icon: 'settings',
       label: 'Settings',
-      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.settings('account')),
+      onClick: () => setShowSettings(true),
     },
     {
       icon: 'user',
@@ -173,41 +176,48 @@ const NavigationTabbar: React.FC = () => {
   ];
 
   return (
-    <nav className={css.base}>
-      <div className={css.toolbar}>
-        <ToolbarItem icon="home" label="Home" path={paths.dashboard()} />
-        <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
-        <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
-        <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
-        <ToolbarItem
-          icon="cluster"
-          label="Cluster"
-          path={paths.clusters()}
-          status={clusterStatus}
+    <>
+      <nav className={css.base}>
+        <div className={css.toolbar}>
+          <ToolbarItem icon="home" label="Home" path={paths.dashboard()} />
+          <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
+          <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
+          <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
+          <ToolbarItem
+            icon="cluster"
+            label="Cluster"
+            path={paths.clusters()}
+            status={clusterStatus}
+          />
+          <ToolbarItem icon="workspaces" label="Workspaces" onClick={handleWorkspacesOpen} />
+          <ToolbarItem
+            icon="overflow-vertical"
+            label="Overflow Menu"
+            onClick={handleOverflowOpen}
+          />
+        </div>
+        <ActionSheet
+          actions={[
+            {
+              icon: 'workspaces',
+              label: 'Workspaces',
+              onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.workspaceList()),
+              path: paths.workspaceList(),
+            },
+            ...workspaceActions,
+          ]}
+          show={isShowingPinnedWorkspaces}
+          onCancel={handleActionSheetCancel}
         />
-        <ToolbarItem icon="workspaces" label="Workspaces" onClick={handleWorkspacesOpen} />
-        <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
-      </div>
-      <ActionSheet
-        actions={[
-          {
-            icon: 'workspaces',
-            label: 'Workspaces',
-            onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.workspaceList()),
-            path: paths.workspaceList(),
-          },
-          ...workspaceActions,
-        ]}
-        show={isShowingPinnedWorkspaces}
-        onCancel={handleActionSheetCancel}
-      />
-      <ActionSheet
-        actions={[...overflowActionsTop, ...overflowActionsBottom]}
-        show={isShowingOverflow}
-        onCancel={handleActionSheetCancel}
-      />
-      <WorkspaceCreateModal.Component />
-    </nav>
+        <ActionSheet
+          actions={[...overflowActionsTop, ...overflowActionsBottom]}
+          show={isShowingOverflow}
+          onCancel={handleActionSheetCancel}
+        />
+        <WorkspaceCreateModal.Component />
+      </nav>
+      <UserSettings show={showSettings} onClose={() => setShowSettings(false)} />
+    </>
   );
 };
 

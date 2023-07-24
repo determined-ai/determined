@@ -2,6 +2,7 @@ import importlib
 import os
 import pathlib
 import re
+import unittest.mock
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
 
 import numpy as np
@@ -186,6 +187,10 @@ def gan_examples_path(path: str) -> str:
 
 def tutorials_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../examples/tutorials", path)
+
+
+def features_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../../examples/features", path)
 
 
 def import_class_from_module(class_name: str, module_path: str) -> Any:
@@ -461,3 +466,16 @@ def assert_patterns_in_logs(input_list: List[str], patterns: List[str]) -> None:
         f'the following patterns:\n  "{text}"\nwere not found in \
         the trial logs:\n\n{"".join(input_list)}'  # noqa
     )
+
+
+def get_mock_distributed_context(
+    rank: int = 0,
+    all_gather_return_value: Optional[Any] = None,
+    gather_return_value: Optional[Any] = None,
+) -> unittest.mock.MagicMock:
+    mock_distributed_context = unittest.mock.MagicMock()
+    mock_distributed_context.get_rank.return_value = rank
+    mock_distributed_context.broadcast.return_value = "mock_checkpoint_uuid"
+    mock_distributed_context.allgather.return_value = all_gather_return_value
+    mock_distributed_context.gather.return_value = gather_return_value
+    return mock_distributed_context

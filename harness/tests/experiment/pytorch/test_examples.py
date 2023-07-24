@@ -1,13 +1,17 @@
 # type: ignore
 import logging
+import os
 import pathlib
 import typing
+import unittest.mock
 
 import pytest
 import torch
 from torch.distributed import launcher
 
+from determined import core
 from tests.experiment import pytorch_utils, utils  # noqa: I100
+from tests.launch import test_util
 
 
 def test_pytorch_mnist_example(tmp_path: pathlib.Path) -> None:
@@ -59,8 +63,8 @@ def test_pytorch_parallel(tmp_path: pathlib.Path) -> None:
 
     patterns = [
         # Expect two training reports.
-        f"report_training_metrics.*steps_completed={1*scheduling_unit}",
-        f"report_training_metrics.*steps_completed={2*scheduling_unit}",
+        f"report_trial_metrics.*group=training.*total_batches={1*scheduling_unit}",
+        f"report_trial_metrics.*group=training.*total_batches={2*scheduling_unit}",
         f"validated: {validation_size} records.*in {exp_val_batches} batches",
     ]
 
@@ -211,3 +215,73 @@ def run_gan(tmp_path: pathlib.Path, batches_trained: int = 0):
             steps=(1, 1),
             batches_trained=batches_trained,
         )
+
+
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context"
+)
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint"
+)
+@unittest.mock.patch(
+    "determined.pytorch.experimental._torch_batch_process._report_progress_to_master"
+)
+@pytest.mark.parametrize("rank, num_slots", [[0, 2], [1, 2]])
+def test_inference_torch_batch_process_cifar10(
+    mock_report_progress_to_master: unittest.mock.MagicMock,
+    mock_synchronize_and_checkpoint: unittest.mock.MagicMock,
+    mock_initialize_default_inference_context: unittest.mock.MagicMock,
+    rank,
+    num_slots,
+    tmp_path,
+):
+    # Get main function from example
+    example_sub_path = "torch_batch_process_core_api_comparison"
+    example_path = utils.features_path(
+        os.path.join(example_sub_path, "torch_batch_process_inference.py")
+    )
+    main_fn = utils.import_class_from_module("main", example_path)
+
+    default_addr = ["0.0.0.12"]
+
+    checkpoint_path = os.path.join(tmp_path, "checkpoint")
+    os.mkdir(checkpoint_path)
+
+    mock_initialize_default_inference_context.return_value = core._dummy_init(
+        distributed=utils.get_mock_distributed_context(rank=rank),
+        checkpoint_storage=str(checkpoint_path),
+    )
+
+    with test_util.set_mock_cluster_info(default_addr, rank, num_slots):
+        main_fn()
+    # Dataset length is 10,000; num_slots is 2; checkpoint_interval is 5; batch_size is 200
+    # expected checkpoint count = 10000 / 2 / 5 / 200 = 5
+    assert mock_synchronize_and_checkpoint.call_count == 5
+
+
+@pytest.mark.parametrize("rank, num_slots", [[0, 2], [1, 2]])
+def test_inference_core_api_cifar10(rank, num_slots, tmp_path):
+    # Get main function from example
+    example_sub_path = "torch_batch_process_core_api_comparison"
+    example_path = utils.features_path(os.path.join(example_sub_path, "core_api_inference.py"))
+    main_fn = utils.import_class_from_module("main", example_path)
+
+    default_addr = ["0.0.0.12"]
+
+    checkpoint_path = os.path.join(tmp_path, "checkpoint")
+    os.mkdir(checkpoint_path)
+
+    core_context = unittest.mock.MagicMock()
+    # Dataset length is 10,000; num_slots is 2; batch_size is 200
+    # when rank == 0, shard_length = 10,000 / 2 / 200 = 25
+    # when rank == 1, shard_length = 10,000 / 2 / 200 = 25
+    core_context.distributed = utils.get_mock_distributed_context(
+        rank=rank, all_gather_return_value=[25, 25]
+    )
+    core_context.preempt.should_preempt.return_value = False
+
+    with test_util.set_mock_cluster_info(default_addr, rank, num_slots):
+        main_fn(core_context)
+    # Dataset length is 10,000; num_slots is 2; checkpoint_interval is 5; batch_size is 200
+    # expected checkpoint count = 10000 / 2 / 5 / 200 = 5
+    assert core_context.distributed.gather.call_count == 5

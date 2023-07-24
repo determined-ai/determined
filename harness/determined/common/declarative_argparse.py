@@ -1,10 +1,11 @@
 import functools
 import itertools
-import sys
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union, cast
 
 from termcolor import colored
+
+from determined.common import util
 
 
 def make_prefixes(desc: str) -> List[str]:
@@ -42,20 +43,6 @@ def deprecation_warning(message: str, color: bool = True) -> str:
     return colored(msg, "yellow") if color else msg
 
 
-def warn_on_usage(message: str) -> Callable:
-    """Wrap a function to print out a warning on usage."""
-
-    def decorator(func: Callable) -> Callable:
-        @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            print(message, file=sys.stderr)
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
 # Classes used to represent the structure of an argument parser setup; these
 # are turned into actual `argparse` objects by `add_args`.
 class Cmd:
@@ -81,7 +68,7 @@ class Cmd:
         self.func = func
         # wrap the fn in deprecation warning.
         if self.deprecation_message and self.func:
-            self.func = warn_on_usage(deprecation_warning(self.deprecation_message))(self.func)
+            self.func = util.deprecated(deprecation_warning(self.deprecation_message))(self.func)
 
         if self.func:
             # Force the help string onto the actual function for later. This

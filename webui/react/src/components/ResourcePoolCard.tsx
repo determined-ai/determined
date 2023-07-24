@@ -167,7 +167,9 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
               <div className={css.name}>{pool.name}</div>
             </div>
             <div className={css.default}>
-              {(pool.defaultAuxPool || pool.defaultComputePool) && <span>Default</span>}
+              {(pool.defaultAuxPool && pool.defaultComputePool && <span>Default</span>) ||
+                (pool.defaultComputePool && <span>Default Compute</span>) ||
+                (pool.defaultAuxPool && <span>Default Aux</span>)}
               {pool.description && <Icon name="info" showTooltip title={pool.description} />}
             </div>
           </div>
@@ -178,7 +180,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
                 <section className={css.resoucePoolBoundContainer}>
                   <div>Bound to:</div>
                   <div className={css.resoucePoolBoundCount}>
-                    <Icon name="lock" title="lock" />
+                    <Icon name="lock" title="Bound Workspaces" />
                     {resourcePoolBindings.length} workspace
                   </div>
                 </section>

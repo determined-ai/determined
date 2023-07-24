@@ -426,3 +426,19 @@ def test_torchvision_deepspeed_trial_deepspeed_autotuning() -> None:
             1,
             search_method_name="random",
         )
+
+
+@pytest.mark.distributed
+@pytest.mark.gpu_required
+def test_torch_batch_process_generate_embedding() -> None:
+    config = conf.load_config(
+        conf.features_examples_path("torch_batch_process_embeddings/distributed.yaml")
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        copy_destination = os.path.join(tmpdir, "example")
+        shutil.copytree(
+            conf.features_examples_path("torch_batch_process_embeddings"),
+            copy_destination,
+        )
+        exp.run_basic_test_with_temp_config(config, copy_destination, 1)

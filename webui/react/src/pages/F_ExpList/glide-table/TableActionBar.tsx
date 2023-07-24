@@ -1,7 +1,6 @@
-import { Space, Switch } from 'antd';
+import { Space } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import ScrollIcon from 'assets/images/infinite-scroll.svg';
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
@@ -48,7 +47,7 @@ import { ExpListView, RowHeight } from '../F_ExperimentList.settings';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
 import MultiSortMenu, { Sort } from './MultiSortMenu';
-import { RowHeightMenu } from './RowHeightMenu';
+import { OptionsMenu } from './OptionsMenu';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -92,6 +91,7 @@ interface Props {
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   setVisibleColumns: (newColumns: string[]) => void;
   toggleComparisonView?: () => void;
+  compareViewOn?: boolean;
   total: Loadable<number>;
   formStore: FilterFormStore;
   setIsOpenFilter: (value: boolean) => void;
@@ -129,6 +129,7 @@ const TableActionBar: React.FC<Props> = ({
   onRowHeightChange,
   setHeatmapApplied,
   heatmapApplied,
+  compareViewOn,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -326,24 +327,6 @@ const TableActionBar: React.FC<Props> = ({
 
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
-  const settingContent = useMemo(
-    () => (
-      <div className={css.settingContent}>
-        <div className={css.title}>Data</div>
-        <div className={css.row}>
-          <img alt="scroll" src={ScrollIcon} />
-          <span>Infinite Scroll</span>
-          <Switch
-            checked={expListView === 'scroll'}
-            size="small"
-            onChange={(c: boolean) => setExpListView(c ? 'scroll' : 'paged')}
-          />
-        </div>
-      </div>
-    ),
-    [expListView, setExpListView],
-  );
-
   return (
     <Columns>
       <Column>
@@ -358,11 +341,12 @@ const TableActionBar: React.FC<Props> = ({
           <ColumnPickerMenu
             initialVisibleColumns={initialVisibleColumns}
             projectColumns={projectColumns}
+            projectId={project.id}
             setVisibleColumns={setVisibleColumns}
           />
           {(selectAll || selectedExperimentIds.length > 0) && (
             <Dropdown menu={editMenuItems} onClick={handleAction}>
-              <Button icon={<Icon name="pencil" title="Edit" />}>
+              <Button icon={<Icon decorative name="pencil" />}>
                 Edit (
                 {selectAll
                   ? Loadable.isLoaded(total)
@@ -380,7 +364,6 @@ const TableActionBar: React.FC<Props> = ({
       </Column>
       <Column align="right">
         <Columns>
-          <RowHeightMenu rowHeight={rowHeight} onRowHeightChange={onRowHeightChange} />
           <Tooltip content={`${heatmapApplied === 'all' ? 'Cancel' : 'Apply'} Heatmap`}>
             <Button
               type={heatmapApplied === 'all' ? 'primary' : 'default'}
@@ -388,15 +371,16 @@ const TableActionBar: React.FC<Props> = ({
               <Icon name="heatmap" title="heatmap" />
             </Button>
           </Tooltip>
-          <Dropdown content={settingContent}>
-            <Tooltip content="Table Settings">
-              <Button>
-                <Icon name="overflow-horizontal" title="menu" />
-              </Button>
-            </Tooltip>
-          </Dropdown>
+          <OptionsMenu
+            expListView={expListView}
+            rowHeight={rowHeight}
+            setExpListView={setExpListView}
+            onRowHeightChange={onRowHeightChange}
+          />
           {!!toggleComparisonView && (
-            <Button icon={<Icon name="panel" title="compare" />} onClick={toggleComparisonView}>
+            <Button
+              icon={<Icon name={compareViewOn ? 'panel-on' : 'panel'} title="compare" />}
+              onClick={toggleComparisonView}>
               Compare
             </Button>
           )}

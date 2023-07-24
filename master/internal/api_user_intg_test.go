@@ -414,11 +414,11 @@ func TestAuthzPostUserSetting(t *testing.T) {
 
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateUsersOwnSetting")
 	authzUsers.On("CanCreateUsersOwnSetting", mock.Anything, curUser,
-		model.UserWebSetting{UserID: curUser.ID, Key: "k", Value: "v"}).
+		[]*model.UserWebSetting{{UserID: curUser.ID, Key: "k", Value: "v"}}).
 		Return(fmt.Errorf("canCreateUsersOwnSetting")).Once()
 
 	_, err := api.PostUserSetting(ctx, &apiv1.PostUserSettingRequest{
-		Setting: &userv1.UserWebSetting{Key: "k", Value: "v"},
+		Settings: []*userv1.UserWebSetting{{Key: "k", Value: "v"}},
 	})
 	require.Equal(t, expectedErr.Error(), err.Error())
 }

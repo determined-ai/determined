@@ -15,8 +15,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
-
 	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/config"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -187,7 +187,7 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 			if !user.Active {
 				return echo.NewHTTPError(http.StatusForbidden, "user not active")
 			}
-			if adminOnly && !user.Admin {
+			if adminOnly && !user.Admin && !config.GetAuthZConfig().IsRBACEnabled() {
 				return echo.NewHTTPError(http.StatusForbidden, "user not admin")
 			}
 

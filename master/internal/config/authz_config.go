@@ -15,8 +15,12 @@ var (
 	authZConfigMutex sync.Mutex
 )
 
-// BasicAuthZType is the default authz string id.
-const BasicAuthZType = "basic"
+// Authz string ids.
+const (
+	// BasicAuthZType is the default authz string id.
+	BasicAuthZType = "basic"
+	RBACAuthZType  = "rbac"
+)
 
 // AuthZConfig is a authz-related section of master config.
 type AuthZConfig struct {
@@ -84,6 +88,26 @@ func (c AuthZConfig) IsRBACUIEnabled() bool {
 		return *c.RBACUIEnabled
 	}
 	return c.Type != BasicAuthZType
+}
+
+// IsRBACEnabled returns if the authz config type is using the RBAC implementation
+// and will attempt to use Fallback and Default types if necessary.
+func (c AuthZConfig) IsRBACEnabled() bool {
+	var authzType string
+	if _, ok := knownAuthZTypes[c.Type]; !ok {
+		if c.FallbackType != nil {
+			if _, ok := knownAuthZTypes[*c.FallbackType]; !ok {
+				authzType = DefaultAuthZConfig().Type
+			} else {
+				authzType = *c.FallbackType
+			}
+		} else {
+			authzType = DefaultAuthZConfig().Type
+		}
+	} else {
+		authzType = c.Type
+	}
+	return authzType == RBACAuthZType
 }
 
 func initAuthZTypes() {
