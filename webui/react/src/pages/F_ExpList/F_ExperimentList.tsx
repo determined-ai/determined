@@ -1,5 +1,4 @@
-import { Rectangle } from '@hpe.com/glide-data-grid';
-import { CompactSelection, GridSelection, Rectangle } from '@glideapps/glide-data-grid';
+import { CompactSelection, GridSelection, Rectangle } from '@hpe.com/glide-data-grid';
 import { Space } from 'antd';
 import { isLeft } from 'fp-ts/lib/Either';
 import { observable, useObservable } from 'micro-observables';
@@ -517,7 +516,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       // Pagination component is assuming starting index of 1.
       if (cPage - 1 !== page) {
         setExperiments(Array(cPageSize).fill(NotLoaded));
-        setClearSelectionTrigger((t) => t + 1);
       }
       setPage(cPage - 1);
     },
