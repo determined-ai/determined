@@ -49,7 +49,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
             splits.map((n) => durationInEnglish(n * 1000))
           }
           hoursByLabel={queuedStats.hoursAverage}
-          label="Queued Time"
+          label=" "
           time={queuedStats.time}
         />
       </Section>
