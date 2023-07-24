@@ -118,6 +118,29 @@ html[data-theme="dark"] {
   height: 24px;
   width: 24px;
 }
+.tile-container:nth-child(6n - 5) > .tile {
+  background-color: #ededed;
+}
+
+.tile-container:nth-child(6n - 4) > .tile {
+  background-color: #ffffff;
+}
+
+.tile-container:nth-child(6n - 3) > .tile {
+  background-color: #ededed;
+}
+
+.tile-container:nth-child(6n - 2) > .tile {
+  background-color: #ffffff;
+}
+
+.tile-container:nth-child(6n - 1) > .tile {
+  background-color: #ededed;
+}
+
+.tile-container:nth-child(6n) > .tile {
+  background-color: #ffffff;
+}
 /*
 .tile-container:nth-child(6n - 5) > .tile {
   background-color: #FEC901;
