@@ -118,7 +118,7 @@ html[data-theme="dark"] {
   height: 24px;
   width: 24px;
 }
-
+/*
 .tile-container:nth-child(6n - 5) > .tile {
   background-color: #FEC901;
 }
@@ -142,7 +142,7 @@ html[data-theme="dark"] {
 .tile-container:nth-child(6n) > .tile {
   background-color: #a0da70;
 }
-
+*/
 .tile:hover {
   -webkit-transform: translate3d(0, -6px, 0);
   transform: translate3d(0, -6px, 0);
