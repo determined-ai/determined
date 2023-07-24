@@ -75,7 +75,8 @@ html_sidebars = {
         "search-field.html",
         "sbt-sidebar-nav.html",
     ],
-    "index": [],
+# to suppress sidebar on home page uncomment this line:
+#    "index": [],
 }
 
 pygments_style = "sphinx"
