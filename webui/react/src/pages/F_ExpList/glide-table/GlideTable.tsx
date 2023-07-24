@@ -90,8 +90,8 @@ export interface GlideTableProps {
   project?: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   projectHeatmap: ProjectMetricsRange[];
-  heatmapApplied: string[] | 'all';
-  setHeatmapApplied: (selection: string[] | 'all') => void;
+  heatmapApplied: string[];
+  setHeatmapApplied: (selection: string[]) => void;
   rowHeight: RowHeight;
   selectedExperimentIds: number[];
   setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
@@ -108,6 +108,8 @@ export interface GlideTableProps {
   onContextMenuComplete?: () => void;
   pinnedColumnsCount: number;
   setPinnedColumnsCount: (count: number) => void;
+  heatmapOn: boolean,
+  toggleHeatmapSetting: (heatmapOn: boolean) => void
 }
 
 /**
@@ -165,6 +167,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   projectHeatmap,
   heatmapApplied,
   setHeatmapApplied,
+  heatmapOn,
+  toggleHeatmapSetting
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
   const [hoveredRow, setHoveredRow] = useState<number>();
@@ -334,18 +338,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const toggleHeadmap = useCallback(
     (col: string) => {
-      const cols =
-        heatmapApplied === 'all'
-          ? Loadable.getOrElse([], projectColumns)
-              .filter(
-                (col) =>
-                  col.type === V1ColumnType.NUMBER &&
-                  (col.location === V1LocationType.VALIDATIONS ||
-                    col.location === V1LocationType.TRAINING),
-              )
-              .map((c) => c.column)
-          : heatmapApplied;
-      setHeatmapApplied(cols.includes(col) ? cols.filter((p) => p !== col) : [...cols, col]);
+      if(heatmapOn) {
+        setHeatmapApplied(heatmapApplied.includes(col) ? heatmapApplied.filter((p) => p !== col) : [...heatmapApplied, col]);
+      } else {
+        setHeatmapApplied([...new Set([...heatmapApplied, col])])
+        toggleHeatmapSetting(false)
+      }
     },
     [projectColumns, setHeatmapApplied, heatmapApplied],
   );
@@ -448,7 +446,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           ? {
               key: 'heatmap',
               label:
-                heatmapApplied === 'all' || heatmapApplied.includes(column.column)
+              heatmapOn && heatmapApplied.includes(column.column)
                   ? 'Cancel heatmap'
                   : 'Apply heatmap',
               onClick: () => {
@@ -751,7 +749,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
             if (
               heatmap &&
-              (heatmapApplied === 'all' || heatmapApplied.includes(currentColumn.column))
+              (heatmapOn && heatmapApplied.includes(currentColumn.column))
             ) {
               columnDefs[currentColumn.column] = defaultNumberColumn(
                 currentColumn,

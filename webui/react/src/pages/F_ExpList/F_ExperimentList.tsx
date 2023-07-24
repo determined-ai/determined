@@ -518,11 +518,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleHeatmapChange = useCallback(
-    (selection: string[] | 'all') => {
+    (selection: string[]) => {
       updateSettings({ heatmapApplied: selection });
     },
     [updateSettings],
   );
+
+  const handleToggleHeatmap = useCallback((heatmapOn: boolean) => {
+    updateSettings({ heatmapOn: !heatmapOn })
+  }, [updateSettings])
 
   const selectedExperiments: ExperimentWithTrial[] = useMemo(() => {
     if (selectedExperimentIds.length === 0) return [];
@@ -557,6 +561,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         formStore={formStore}
         handleUpdateExperimentList={handleUpdateExperimentList}
         heatmapApplied={settings.heatmapApplied}
+        heatmapOn={settings.heatmapOn}
+        toggleHeatmap={handleToggleHeatmap}
         initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}
         project={project}
@@ -618,6 +624,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 setColumnWidths={handleColumnWidthChange}
                 setExcludedExperimentIds={setExcludedExperimentIds}
                 setHeatmapApplied={handleHeatmapChange}
+                heatmapOn={settings.heatmapOn}
                 setPinnedColumnsCount={setPinnedColumnsCount}
                 setSelectAll={setSelectAll}
                 setSelectedExperimentIds={setSelectedExperimentIds}
@@ -628,6 +635,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 onContextMenuComplete={onContextMenuComplete}
                 onIsOpenFilterChange={onIsOpenFilterChange}
                 onSortChange={onSortChange}
+                toggleHeatmapSetting={handleToggleHeatmap}
               />
             </ComparisonView>
             {showPagination && (
