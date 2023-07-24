@@ -192,7 +192,7 @@ class Determined:
             name: If this parameter is set, experiments will be filtered to only include those
                 with names matching this parameter.
             experiment_ids: Only return experiments with these IDs.
-            labels: Only return experiments with labels in this list.
+            labels: Only return experiments with a label in this list.
             users: Only return experiments belonging to these users. Defaults to all users.
             states: Only return experiments that are in these states.
             project_id: Only return experiments associated with this project ID.

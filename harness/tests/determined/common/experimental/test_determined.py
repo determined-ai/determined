@@ -166,7 +166,7 @@ def test_list_experiments_calls_bindings_with_params(
 
     mock_bindings.side_effect = api_responses.iter_pages(
         pageable_resp=exps_resp,
-        pageable_type="experiments",
+        pageable_attribute="experiments",
     )
 
     list(client.list_experiments(**params))  # type: ignore
@@ -194,19 +194,23 @@ def test_list_experiments_iterates_through_pages(
     client = make_client()
     exps_resp = api_responses.sample_get_experiments()
     total_exps = len(exps_resp.experiments)
-    page_size = 1
+    page_size = 2
     total_pages = math.ceil(total_exps / page_size)
+
+    if total_pages == 1:
+        raise ValueError(f"Test expects response to contain > {page_size} objects.")
 
     mock_bindings.side_effect = api_responses.iter_pages(
         pageable_resp=exps_resp,
-        pageable_type="experiments",
+        pageable_attribute="experiments",
         max_page_size=page_size,
     )
 
     exps = client.list_experiments(limit=page_size)
 
-    for p, _ in enumerate(exps):
+    for i, _ in enumerate(exps):
+        page_num = math.ceil((i + 1) / page_size)
         _, call_kwargs = mock_bindings.call_args
-        assert call_kwargs["offset"] == p
+        assert call_kwargs["offset"] == (page_num - 1) * page_size
 
     assert mock_bindings.call_count == total_pages

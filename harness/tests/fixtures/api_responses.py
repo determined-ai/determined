@@ -194,7 +194,7 @@ def serve_by_page(
 
 
 def iter_pages(
-    pageable_resp: bindings.Paginated, pageable_type: str, max_page_size: Optional[int] = None
+    pageable_resp: bindings.Paginated, pageable_attribute: str, max_page_size: Optional[int] = None
 ) -> Iterator[bindings.Paginated]:
     """Creates an infinite generator from a pageable response.
 
@@ -202,8 +202,8 @@ def iter_pages(
 
     Args:
         pageable_resp: A complete response that can be paginated
-        pageable_type: The name of the field in the response that will be split up across pages when
-          a response is paginated
+        pageable_attribute: The name of the field in the response that will be split up across
+          pages when a response is paginated
         max_page_size: The maximum number of items to include in each page. If a request's params
           specify a limit that is larger than this (or no limit at all), the limit will be reduced
           to this value
@@ -212,7 +212,7 @@ def iter_pages(
     while True:
         page = page_of(
             complete_resp=pageable_resp,
-            pageable_type=pageable_type,
+            pageable_type=pageable_attribute,
             offset=offset,
             limit=max_page_size,
         )
