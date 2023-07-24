@@ -189,6 +189,63 @@ class Determined:
         resp = bindings.get_GetExperiment(session=self._session, experimentId=experiment_id)
         return experiment.Experiment._from_bindings(resp.experiment, self._session)
 
+    def list_experiments(
+        self,
+        sort_by: Optional[experiment.ExperimentSortBy] = None,
+        order_by: Optional[experiment.ExperimentOrderBy] = None,
+        experiment_ids: Optional[List[int]] = None,
+        labels: Optional[List[str]] = None,
+        users: Optional[List[str]] = None,
+        states: Optional[List[experiment.ExperimentState]] = None,
+        name: Optional[str] = None,
+        project_id: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Iterator[experiment.Experiment]:
+        """Get an iterable of experiments (:class:`~determined.experimental.Experiment`).
+
+        Arguments:
+            sort_by: Which field to sort by. See
+                :class:`~determined.experimental.ExperimentSortBy`.
+            order_by: Whether to sort in ascending or descending order. See
+                :class:`~determined.experimental.ExperimentOrderBy`.
+            name: If this parameter is set, experiments will be filtered to only include those
+                with names matching this parameter.
+            experiment_ids: Only return experiments with these IDs.
+            labels: Only return experiments with a label in this list.
+            users: Only return experiments belonging to these users. Defaults to all users.
+            states: Only return experiments that are in these states.
+            project_id: Only return experiments associated with this project ID.
+            limit: Specifies maximum page size of the response from the server. When there are
+                many experiments to return, a lower page size can result in shorter latency at the
+                expense of more HTTP requests to the server. Defaults to no maximum.
+
+        Returns:
+            An Iterator type that lazily instantiates response objects. To
+            get all experiments at once, call list(list_experiments()).
+        """
+
+        def get_with_offset(offset: int) -> bindings.v1GetExperimentsResponse:
+            return bindings.get_GetExperiments(
+                session=self._session,
+                sortBy=sort_by and sort_by._to_bindings() or None,
+                orderBy=order_by and order_by._to_bindings() or None,
+                archived=None,
+                description=None,
+                labels=labels,
+                experimentIdFilter_incl=experiment_ids,
+                offset=offset,
+                limit=limit,
+                name=name,
+                states=[state._to_bindings() for state in states] if states else None,
+                users=users,
+                projectId=project_id,
+            )
+
+        resps = api.read_paginated(get_with_offset)
+        for r in resps:
+            for e in r.experiments:
+                yield experiment.Experiment._from_bindings(e, self._session)
+
     def get_trial(self, trial_id: int) -> trial.Trial:
         """
         Get the :class:`~determined.experimental.Trial` representing the
