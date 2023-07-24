@@ -17,7 +17,7 @@ interface ClusterHistoricalUsageChartProps {
   hoursTotal?: number[];
   label?: string;
   time: string[];
-  formatValues?: (self: uPlot, splits: number[]) => string[]
+  formatValues?: (self: uPlot, splits: number[]) => string[];
 }
 
 const CHART_HEIGHT = 350;
@@ -30,7 +30,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   hoursTotal,
   time,
   chartKey,
-  formatValues
+  formatValues,
 }: ClusterHistoricalUsageChartProps) => {
   const chartData: AlignedData = useMemo(() => {
     const timeUnix: number[] = time.map((item) => Date.parse(item) / 1000);
@@ -102,7 +102,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
             });
           },
         },
-        { label: label ? label : 'GPU Hours', values: formatValues},
+        { label: label ? label : 'GPU Hours', values: formatValues },
       ],
       height,
       key: chartKey,
@@ -120,7 +120,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
       series,
       tzDate: (ts) => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
     };
-  }, [groupBy, height, hoursByLabel, hoursTotal, label, chartKey, singlePoint]);
+  }, [groupBy, height, hoursByLabel, hoursTotal, label, chartKey, singlePoint, formatValues]);
 
   if (!hasData) {
     return <Message title="No data to plot." type={MessageType.Empty} />;
