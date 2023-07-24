@@ -33,6 +33,39 @@ class ExperimentState(enum.Enum):
         return bindings.experimentv1State(self.value)
 
 
+class ExperimentSortBy(enum.Enum):
+    ID = bindings.v1GetExperimentsRequestSortBy.ID
+    DESCRIPTION = bindings.v1GetExperimentsRequestSortBy.DESCRIPTION
+    START_TIME = bindings.v1GetExperimentsRequestSortBy.START_TIME
+    END_TIME = bindings.v1GetExperimentsRequestSortBy.END_TIME
+    STATE = bindings.v1GetExperimentsRequestSortBy.STATE
+    NUM_TRIALS = bindings.v1GetExperimentsRequestSortBy.NUM_TRIALS
+    PROGRESS = bindings.v1GetExperimentsRequestSortBy.PROGRESS
+    USER = bindings.v1GetExperimentsRequestSortBy.USER
+    NAME = bindings.v1GetExperimentsRequestSortBy.NAME
+    FORKED_FROM = bindings.v1GetExperimentsRequestSortBy.FORKED_FROM
+    RESOURCE_POOL = bindings.v1GetExperimentsRequestSortBy.RESOURCE_POOL
+    PROJECT_ID = bindings.v1GetExperimentsRequestSortBy.PROJECT_ID
+    CHECKPOINT_SIZE = bindings.v1GetExperimentsRequestSortBy.CHECKPOINT_SIZE
+    CHECKPOINT_COUNT = bindings.v1GetExperimentsRequestSortBy.CHECKPOINT_COUNT
+    SEARCHER_METRIC_VAL = bindings.v1GetExperimentsRequestSortBy.SEARCHER_METRIC_VAL
+
+    def _to_bindings(self) -> bindings.v1GetExperimentsRequestSortBy:
+        return bindings.v1GetExperimentsRequestSortBy(self.value)
+
+
+class ExperimentOrderBy(enum.Enum):
+    """Specifies whether a sorted list of experiments should be in ascending or
+    descending order.
+    """
+
+    ASCENDING = bindings.v1OrderBy.ASC.value
+    DESCENDING = bindings.v1OrderBy.DESC.value
+
+    def _to_bindings(self) -> bindings.v1OrderBy:
+        return bindings.v1OrderBy(self.value)
+
+
 class Experiment:
     """
     A class representing an Experiment object.
