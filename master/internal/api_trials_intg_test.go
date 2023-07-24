@@ -470,6 +470,40 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 	})
 }
 
+func TestUnusualMetricNames(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	expectedMetricsMap := map[string]any{
+		"a.loss": 1.5,
+		"b/loss": 2.5,
+	}
+	expectedMetrics, err := structpb.NewStruct(expectedMetricsMap)
+	require.NoError(t, err)
+
+	trial := createTestTrial(t, api, curUser)
+	_, err = api.ReportTrialValidationMetrics(ctx, &apiv1.ReportTrialValidationMetricsRequest{
+		ValidationMetrics: &trialv1.TrialMetrics{
+			TrialId:        int32(trial.ID),
+			TrialRunId:     0,
+			StepsCompleted: 1,
+			Metrics: &commonv1.Metrics{
+				AvgMetrics: expectedMetrics,
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	req := &apiv1.CompareTrialsRequest{
+		TrialIds:      []int32{int32(trial.ID)},
+		MaxDatapoints: 3,
+		MetricNames:   []string{"a.loss", "b/loss"},
+		StartBatches:  0,
+		EndBatches:    1000,
+		MetricType:    apiv1.MetricType_METRIC_TYPE_VALIDATION,
+	}
+	_, err = api.CompareTrials(ctx, req)
+	require.NoError(t, err)
+}
+
 func TestTrialAuthZ(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 	authZNSC := setupNSCAuthZ()
