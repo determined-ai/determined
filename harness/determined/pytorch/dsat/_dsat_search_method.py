@@ -793,6 +793,44 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         """
         return False
 
+    def get_random_zero_optim_config(
+        self,
+        zero_stage: int,
+    ) -> Dict[str, Union[bool, float]]:
+        # For certain values we set defaults based on the approximate hidden dimension size,
+        # approximated as the square-root of the number of parameters.
+        # GG_NOTE: Should it be trainable params only?
+        # See https://huggingface.co/docs/transformers/main_classes/deepspeed#zero3-config
+        assert self.trial_tracker.model_profile_info_trial
+        assert isinstance(self.trial_tracker.model_profile_info_trial.metric, dict)
+        num_params = self.trial_tracker.model_profile_info_trial.metric["num_params"]
+        assert isinstance(num_params, int)
+        approx_hidden_size = int(num_params**0.5) // 20
+        search_space = _defaults.DEFAULT_ZERO_SEARCH_SPACE[zero_stage]
+        # For list values in the search space, make a random choice.
+        zero_optim_dict: Dict[str, Union[bool, float]] = {}
+        for k, v in search_space.items():
+            if v is None:
+                if k in ("reduce_bucket_size", "stage3_prefetch_bucket_size"):
+                    zero_optim_dict[k] = random.randint(
+                        approx_hidden_size**2 // 100, 100 * approx_hidden_size**2
+                    )
+                elif k == "stage3_param_persistence_threshold":
+                    zero_optim_dict[k] = random.randint(
+                        approx_hidden_size // 10, 10 * approx_hidden_size
+                    )
+                else:
+                    raise ValueError(f"Unexpected key {k}")
+            elif isinstance(v, list) and isinstance(v[0], bool):
+                zero_optim_dict[k] = random.choice(v)
+            elif isinstance(v, list) and isinstance(v[0], int):
+                zero_optim_dict[k] = random.randint(*v)
+            else:
+                raise ValueError(f"Unexpected key, value: {k}, {v}")
+        # Other search ranges are dynamically determined based on heuristics.
+        zero_optim_dict["stage"] = zero_stage
+        return zero_optim_dict
+
     def round_mbs_down(self, mbs: int) -> int:
         """
         Rounds mbs, the train_micro_batch_size_per_gpu, down such that it satisfies the divisibility
@@ -1010,9 +1048,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         self, zero_stage: int
     ) -> Tuple[Dict[str, Any], DSATSearchData]:
         assert self.trial_tracker.model_profile_info_trial
-        zero_optim_config = _utils.get_random_zero_optim_config(
-            zero_stage, self.trial_tracker.model_profile_info_trial
-        )
+        zero_optim_config = self.get_random_zero_optim_config(zero_stage)
         new_hparams = copy.deepcopy(self.trial_tracker.hparams)
         new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
             new_hparams.get(_defaults.OVERWRITE_KEY, {}),
@@ -1163,9 +1199,7 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
         self, zero_stage: int
     ) -> Tuple[Dict[str, Any], DSATSearchData]:
         assert self.trial_tracker.model_profile_info_trial
-        zero_optim_config = _utils.get_random_zero_optim_config(
-            zero_stage, self.trial_tracker.model_profile_info_trial
-        )
+        zero_optim_config = self.get_random_zero_optim_config(zero_stage)
         new_hparams = copy.deepcopy(self.trial_tracker.hparams)
         new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
             new_hparams.get(_defaults.OVERWRITE_KEY, {}),
@@ -1479,9 +1513,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         self, zero_stage: int
     ) -> Tuple[Dict[str, Any], ASHADSATSearchData]:
         assert self.trial_tracker.model_profile_info_trial
-        zero_optim_config = _utils.get_random_zero_optim_config(
-            zero_stage, self.trial_tracker.model_profile_info_trial
-        )
+        zero_optim_config = self.get_random_zero_optim_config(zero_stage)
         new_hparams = copy.deepcopy(self.trial_tracker.hparams)
         new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
             new_hparams.get(_defaults.OVERWRITE_KEY, {}),
