@@ -74,7 +74,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 			cast = "boolean"
 		}
 		subq = subq.ColumnExpr("(metrics->?->>?)::? as ?", metricsObjectName,
-			metricName, bun.Safe(cast), bun.Ident(strings.ReplaceAll(metricName, ".", "")))
+			metricName, bun.Safe(cast), bun.Ident(strings.ReplaceAll(metricName, ".", "·")))
 	}
 
 	subq = subq.Where("trial_id = ?", trialID).OrderExpr("random()").
@@ -104,7 +104,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	selectMetrics := map[string]string{}
 
 	for i := range metricNames {
-		selectMetrics[strings.ReplaceAll(metricNames[i], ".", "")] = metricNames[i]
+		selectMetrics[strings.ReplaceAll(metricNames[i], ".", "·")] = metricNames[i]
 	}
 
 	for i := range results {
