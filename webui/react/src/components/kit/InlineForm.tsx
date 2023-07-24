@@ -10,7 +10,7 @@ import css from './InlineForm.module.scss';
 type InlineForm<T> = (props: Props<T>) => JSX.Element;
 
 interface Props<T> extends React.PropsWithChildren, Omit<FormProps, 'children'> {
-  label?: string;
+  label?: React.ReactNode;
   value?: T; // used to turn the Form.Item as controlled input
   initialValue: T;
   onSubmit?: (inputValue: T) => Promise<void | Error> | void;

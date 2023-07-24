@@ -45,6 +45,7 @@ import { Mode } from 'utils/themes';
 
 import Accordion from './kit/Accordion';
 import Button from './kit/Button';
+import Icon from './kit/Icon';
 import Paragraph from './kit/Typography/Paragraph';
 import useConfirm from './kit/useConfirm';
 import css from './UserSettings.module.scss';
@@ -326,15 +327,21 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
             </Section>
             <Section divider title="Experimental">
               <div className={css.section}>
-                {Object.entries(FEATURES).map(([feature, label]) => (
+                {Object.entries(FEATURES).map(([feature, description]) => (
                   <InlineForm<boolean | null>
-                    initialValue={featureSettings[feature as ValidFeature]}
+                    initialValue={
+                      featureSettings[feature as ValidFeature] ?? description.defaultValue
+                    }
                     key={feature}
-                    label={label}
+                    label={
+                      <Space>
+                        {feature} <Icon name="info" showTooltip title={description.description} />
+                      </Space>
+                    }
                     valueFormatter={(value) => {
                       switch (value) {
                         case null:
-                          return 'Default';
+                          return '';
                         case true:
                           return 'On';
                         case false:
@@ -348,7 +355,6 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                       });
                     }}>
                     <Select searchable={false}>
-                      <Option value={null}>Default</Option>
                       <Option value={true}>On</Option>
                       <Option value={false}>Off</Option>
                     </Select>

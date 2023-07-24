@@ -1,5 +1,5 @@
 import { map } from 'fp-ts/lib/Record';
-import { boolean, null as ioNull, keyof, partial, TypeOf, union } from 'io-ts';
+import { boolean, null as ioNull, partial, TypeOf, union } from 'io-ts';
 import { useObservable } from 'micro-observables';
 
 import determinedStore, { DeterminedInfo } from 'stores/determinedInfo';
@@ -7,27 +7,32 @@ import userSettings from 'stores/userSettings';
 import { Loadable } from 'utils/loadable';
 
 // add new feature switches here
-export const FEATURES = {
-  chart: 'Enable improved learning curve charts for experiment visualizations',
-  explist_v2: 'Enable improved experiment listing, filtering, and comparison',
-  rp_binding: 'Allow resource pools to be assigned to workspaces',
+export type ValidFeature = 'chart' | 'explist_v2' | 'rp_binding';
+
+type FeatureDescription = {
+  description: string;
+  defaultValue: boolean;
+};
+
+export const FEATURES: Record<ValidFeature, FeatureDescription> = {
+  chart: {
+    defaultValue: false,
+    description: 'Enable improved learning curve charts for experiment visualizations',
+  },
+  explist_v2: {
+    defaultValue: false,
+    description: 'Enable improved experiment listing, filtering, and comparison',
+  },
+  rp_binding: {
+    defaultValue: false,
+    description: 'Allow resource pools to be assigned to workspaces',
+  },
 } as const;
 export const FEATURE_SETTINGS_PATH = 'global-features';
 
-const ValidFeature = keyof(FEATURES);
-export type ValidFeature = TypeOf<typeof ValidFeature>;
-
 // had to dig into fp-ts to get a partial record for the settings config
-export const FeatureSettingsConfig = partial(
-  map(() => union([boolean, ioNull]))(ValidFeature.keys),
-);
+export const FeatureSettingsConfig = partial(map(() => union([boolean, ioNull]))(FEATURES));
 export type FeatureSettingsConfig = TypeOf<typeof FeatureSettingsConfig>;
-
-export const FeatureDefault: { [K in ValidFeature]: boolean } = {
-  chart: false,
-  explist_v2: false,
-  rp_binding: false,
-};
 
 const queryParams = new URLSearchParams(window.location.search);
 
@@ -53,7 +58,7 @@ const IsOn = (
 ): boolean => {
   const { featureSwitches } = info;
   // Read from default state
-  let isOn: boolean = FeatureDefault[feature];
+  let isOn: boolean = FEATURES[feature].defaultValue;
 
   // Read from config settings
   featureSwitches.includes(feature) && (isOn = true);
