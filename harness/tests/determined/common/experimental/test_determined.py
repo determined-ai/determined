@@ -1,3 +1,4 @@
+import math
 from typing import Callable, List
 from unittest import mock
 
@@ -5,7 +6,7 @@ import pytest
 import responses
 
 from determined.common.api import authentication, errors
-from determined.common.experimental import determined
+from determined.common.experimental import determined, experiment
 from tests.fixtures import api_responses
 
 _MASTER = "http://localhost:8080"
@@ -141,3 +142,75 @@ def test_get_trial_populates_attribute(
     resp = client.get_trial(trial_id=trial_id)
 
     assert attribute in resp.__dict__
+
+
+@responses.activate
+@mock.patch("determined.common.api.bindings.get_GetExperiments")
+def test_list_experiments_calls_bindings_with_params(
+    mock_bindings: mock.MagicMock,
+    make_client: Callable[[], Determined],
+) -> None:
+    client = make_client()
+    exps_resp = api_responses.sample_get_experiments()
+
+    params = {
+        "sort_by": experiment.ExperimentSortBy.ID,
+        "order_by": experiment.ExperimentOrderBy.ASCENDING,
+        "experiment_ids": list(range(10)),
+        "labels": ["label1", "label2"],
+        "users": ["user1", "user2"],
+        "states": [experiment.ExperimentState.COMPLETED, experiment.ExperimentState.ACTIVE],
+        "name": "exp name",
+        "project_id": 1,
+    }
+
+    mock_bindings.side_effect = api_responses.iter_pages(
+        pageable_resp=exps_resp,
+        pageable_attribute="experiments",
+    )
+
+    list(client.list_experiments(**params))  # type: ignore
+
+    _, call_kwargs = mock_bindings.call_args_list[0]
+
+    assert call_kwargs["sortBy"] == params["sort_by"]._to_bindings()  # type: ignore
+    assert call_kwargs["orderBy"] == params["order_by"]._to_bindings()  # type: ignore
+    assert call_kwargs["experimentIdFilter_incl"] == params["experiment_ids"]
+    assert call_kwargs["labels"] == params["labels"]
+    assert call_kwargs["users"] == params["users"]
+    assert call_kwargs["states"] == [
+        state._to_bindings() for state in params["states"]  # type: ignore
+    ]
+    assert call_kwargs["name"] == params["name"]
+    assert call_kwargs["projectId"] == params["project_id"]
+
+
+@responses.activate
+@mock.patch("determined.common.api.bindings.get_GetExperiments")
+def test_list_experiments_iterates_through_pages(
+    mock_bindings: mock.MagicMock,
+    make_client: Callable[[], Determined],
+) -> None:
+    client = make_client()
+    exps_resp = api_responses.sample_get_experiments()
+    total_exps = len(exps_resp.experiments)
+    page_size = 2
+    total_pages = math.ceil(total_exps / page_size)
+
+    if total_pages == 1:
+        raise ValueError(f"Test expects response to contain > {page_size} objects.")
+
+    mock_bindings.side_effect = api_responses.iter_pages(
+        pageable_resp=exps_resp,
+        pageable_attribute="experiments",
+        max_page_size=page_size,
+    )
+
+    exps = client.list_experiments(limit=page_size)
+
+    for i, _ in enumerate(exps):
+        page_num = math.ceil((i + 1) / page_size)
+        _, call_kwargs = mock_bindings.call_args
+        assert call_kwargs["offset"] == (page_num - 1) * page_size
+
+    assert mock_bindings.call_count == total_pages
