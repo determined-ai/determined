@@ -209,7 +209,7 @@ func GetAllBindings(
 
 // GetUnboundRPs get unbound resource pools.
 func GetUnboundRPs(
-	ctx context.Context, resourcePools []config.ResourcePoolConfig,
+	ctx context.Context, resourcePools []string,
 ) ([]string, error) {
 	var boundResourcePools []string
 	_, err := Bun().NewSelect().
@@ -226,10 +226,10 @@ func GetUnboundRPs(
 		boundRPsMap[boundRP] = true
 	}
 
-	unboundRPs := []string{}
+	var unboundRPs []string
 	for _, resourcePool := range resourcePools {
-		if !boundRPsMap[resourcePool.PoolName] {
-			unboundRPs = append(unboundRPs, resourcePool.PoolName)
+		if !boundRPsMap[resourcePool] {
+			unboundRPs = append(unboundRPs, resourcePool)
 		}
 	}
 
@@ -250,7 +250,11 @@ func ReadRPsAvailableToWorkspace(
 	limit int32,
 	resourcePoolConfig []config.ResourcePoolConfig,
 ) ([]string, *apiv1.Pagination, error) {
-	unboundRPNames, err := GetUnboundRPs(ctx, resourcePoolConfig)
+	var resourcePoolNames []string
+	for _, rp := range resourcePoolConfig {
+		resourcePoolNames = append(resourcePoolNames, rp.PoolName)
+	}
+	unboundRPNames, err := GetUnboundRPs(ctx, resourcePoolNames)
 	if err != nil {
 		return nil, nil, err
 	}
