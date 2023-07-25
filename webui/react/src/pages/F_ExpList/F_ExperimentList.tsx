@@ -519,7 +519,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const showPagination = useMemo(() => {
-    return isPagedView && (!settings.compare || settings.pinnedColumnsCount !== 0) && !(isMobile && settings.compare);
+    return (
+      isPagedView &&
+      (!settings.compare || settings.pinnedColumnsCount !== 0) &&
+      !(isMobile && settings.compare)
+    );
   }, [isMobile, isPagedView, settings.compare, settings.pinnedColumnsCount]);
 
   return (
