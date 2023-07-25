@@ -1,7 +1,7 @@
 .. _setup-eks-cluster:
 
 ###################################################
- Set up and Manage an AWS Kubernetes (EKS) Cluster
+ Set Up and Manage an AWS Kubernetes (EKS) Cluster
 ###################################################
 
 Determined can be installed on a cluster that is hosted on a managed Kubernetes service such as

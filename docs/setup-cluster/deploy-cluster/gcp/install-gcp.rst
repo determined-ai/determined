@@ -1,8 +1,8 @@
 .. _install-gcp:
 
-####################
- Install Determined
-####################
+##########################
+ Install Determined (GCP)
+##########################
 
 This user guide describes how to deploy a Determined cluster on Google Cloud Platform (GCP). The
 ``det deploy`` tool makes it easy to create and deploy these resources in GCP. The ``det deploy``

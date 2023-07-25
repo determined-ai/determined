@@ -1,7 +1,7 @@
 .. _setup-aks-cluster:
 
 #############################################################
- Set up and Manage an Azure Kubernetes Service (AKS) Cluster
+ Set Up and Manage an Azure Kubernetes Service (AKS) Cluster
 #############################################################
 
 Determined can be installed on a cluster that is hosted on a managed Kubernetes service such as `AKS

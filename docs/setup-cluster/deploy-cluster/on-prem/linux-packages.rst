@@ -15,6 +15,8 @@ You have two options for installing the Determined master and agent:
 -  Using Red Hat 7-based Linux distributions (e.g., Red Hat Enterprise Linux, CentOS, Oracle Linux,
    and Scientific Linux).
 
+.. _install-using-linux-packages-preliminary:
+
 *******************
  Preliminary Setup
 *******************
@@ -112,6 +114,8 @@ Install PostgreSQL using ``apt`` or ``yum``
       postgres=# CREATE DATABASE determined;
       postgres=# CREATE USER determined WITH ENCRYPTED PASSWORD 'determined-password';
       postgres=# GRANT ALL PRIVILEGES ON DATABASE determined TO determined;
+
+.. _install-det-linux:
 
 Install the Determined Master and Agent
 =======================================

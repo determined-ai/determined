@@ -18,6 +18,8 @@ them to one master.
    Due to the limitations of Docker networking on macOS, distributed training across multiple macOS
    agents is not supported.
 
+.. _install-using-homebrew-steps:
+
 ***********************
  Installation - Master
 ***********************

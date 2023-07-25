@@ -1,7 +1,7 @@
 .. _setup-gke-cluster:
 
 ############################################################
- Set up and Manage a Google Kubernetes Engine (GKE) Cluster
+ Set Up and Manage a Google Kubernetes Engine (GKE) Cluster
 ############################################################
 
 Determined can be installed on a cluster that is hosted on a managed Kubernetes service such as `GKE

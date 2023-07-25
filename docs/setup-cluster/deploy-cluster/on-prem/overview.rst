@@ -1,3 +1,5 @@
+.. _install-on-prem-with-agents:
+
 ################
  Deploy on Prem
 ################
@@ -22,7 +24,7 @@ Determined by your preferred method.
 
    requirements
    docker
-   deploy
    linux-packages
+   deploy
    homebrew
    wsl
