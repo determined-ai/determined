@@ -937,7 +937,6 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 }
 
 func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error {
-	// TODO: secure this to prevent people from just changing RPs to whatever they want
 	resources := e.activeConfig.Resources()
 	oldRP := resources.ResourcePool()
 	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
