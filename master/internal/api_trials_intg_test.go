@@ -500,7 +500,7 @@ func TestUnusualMetricNames(t *testing.T) {
 	req := &apiv1.CompareTrialsRequest{
 		TrialIds:      []int32{int32(trial.ID)},
 		MaxDatapoints: 3,
-		MetricNames:   []string{"a.loss", "b/loss"},
+		MetricNames:   []string{"a.loss", "b/loss", asciiSweep},
 		StartBatches:  0,
 		EndBatches:    1000,
 		MetricType:    apiv1.MetricType_METRIC_TYPE_VALIDATION,
