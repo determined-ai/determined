@@ -61,7 +61,10 @@ To bind or unbind a resource pool using the CLI, run the following command:
 
 .. code:: bash
 
-   det -u admin rbac bind-resource-pool –rp "<resource_pool_name>" –w "<workspace_name>"
+   det -u admin rp bindings add <resource_pool_name> <workspace_name> <workspace_name_2> ...
+
+Resource pool name and at least one workspace name are required. Use `det rp bindings -h` for more
+information on the CLI commands.
 
 In the Cluster view, a bound resource pool is indicated by a lock symbol and the number of
 workspaces it is bound to. Moreover, clicking on a resource pool card from the Cluster view displays
