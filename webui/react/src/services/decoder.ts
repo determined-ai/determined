@@ -614,7 +614,6 @@ const decodeSummaryMetrics = (data: unknown): types.SummaryMetrics => {
 };
 
 export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem => {
-  const summaryMetrics = data.summaryMetrics && decodeSummaryMetrics(data.summaryMetrics);
   return {
     autoRestarts: data.restarts,
     bestAvailableCheckpoint: data.bestCheckpoint && decodeCheckpointWorkload(data.bestCheckpoint),
@@ -627,7 +626,7 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     latestValidationMetric: data.latestValidation && decodeMetricsWorkload(data.latestValidation),
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
-    summaryMetrics,
+    summaryMetrics: data.summaryMetrics && decodeSummaryMetrics(data.summaryMetrics),
     totalBatchesProcessed: data.totalBatchesProcessed,
     totalCheckpointSize: parseInt(data?.totalCheckpointSize || '0'),
   };
