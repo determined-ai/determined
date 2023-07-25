@@ -53,13 +53,7 @@ module.exports = {
       { args: 'after-used', ignoreRestSiblings: true },
     ],
     '@typescript-eslint/prefer-optional-chain': ['error'],
-    'array-element-newline': [
-      'error',
-      {
-        ArrayExpression: 'consistent',
-        ArrayPattern: { multiline: true },
-      },
-    ],
+    'array-element-newline': ['error', 'consistent'],
     'arrow-parens': ['error', 'always'],
     'arrow-spacing': ['error', { after: true, before: true }],
     'block-spacing': ['error', 'always'],

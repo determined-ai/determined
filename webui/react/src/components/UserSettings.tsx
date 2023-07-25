@@ -17,6 +17,12 @@ import {
   shortcutsSettingsPath,
 } from 'components/UserSettings.settings';
 import {
+  FEATURE_SETTINGS_PATH,
+  FEATURES,
+  FeatureSettingsConfig,
+  ValidFeature,
+} from 'hooks/useFeature';
+import {
   experimentListGlobalSettingsConfig,
   experimentListGlobalSettingsDefaults,
   experimentListGlobalSettingsPath,
@@ -39,6 +45,7 @@ import { Mode } from 'utils/themes';
 
 import Accordion from './kit/Accordion';
 import Button from './kit/Button';
+import Icon from './kit/Icon';
 import Paragraph from './kit/Typography/Paragraph';
 import useConfirm from './kit/useConfirm';
 import css from './UserSettings.module.scss';
@@ -131,9 +138,14 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
         userSettings.get(experimentListGlobalSettingsConfig, experimentListGlobalSettingsPath),
       ),
       useObservable(userSettings.get(shortcutSettingsConfig, shortcutsSettingsPath)),
+      useObservable(userSettings.get(FeatureSettingsConfig, FEATURE_SETTINGS_PATH)),
     ]),
     {
-      Loaded: ([savedExperimentListGlobalSettings, savedShortcutSettings]) => {
+      Loaded: ([
+        savedExperimentListGlobalSettings,
+        savedShortcutSettings,
+        savedFeatureSettings,
+      ]) => {
         const experimentListGlobalSettings = {
           ...experimentListGlobalSettingsDefaults,
           ...(savedExperimentListGlobalSettings ?? {}),
@@ -308,6 +320,33 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   }}>
                   <InputShortcut />
                 </InlineForm>
+              </div>
+            </Section>
+            <Section divider title="Experimental">
+              <div className={css.section}>
+                {Object.entries(FEATURES).map(([feature, description]) => (
+                  <InlineForm<boolean>
+                    initialValue={
+                      savedFeatureSettings?.[feature as ValidFeature] ?? description.defaultValue
+                    }
+                    key={feature}
+                    label={
+                      <Space>
+                        {feature} <Icon name="info" showTooltip title={description.description} />
+                      </Space>
+                    }
+                    valueFormatter={(value) => (value ? 'On' : 'Off')}
+                    onSubmit={(val) => {
+                      userSettings.set(FeatureSettingsConfig, FEATURE_SETTINGS_PATH, {
+                        [feature]: val,
+                      });
+                    }}>
+                    <Select searchable={false}>
+                      <Option value={true}>On</Option>
+                      <Option value={false}>Off</Option>
+                    </Select>
+                  </InlineForm>
+                ))}
               </div>
             </Section>
             <Section title="Advanced">
