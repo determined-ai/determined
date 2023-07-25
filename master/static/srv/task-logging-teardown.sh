@@ -21,7 +21,7 @@ epoch_seconds() {
 #
 # This wait time it to handle the case when log stream procesors have
 # not exited yet -- either becuase someone is still writing to the stream,
-# or the DET_MASTER is not reachable and therefor we are slow in flushing
+# or the DET_MASTER is not reachable and therefore we are slow in flushing
 # the logs to the master.
 #
 # After this wait, the container entrypoint immediately exits and all
