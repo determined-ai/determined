@@ -570,6 +570,10 @@ func getDetContainerSecurityContext(
 		for _, container := range podSpec.Spec.Containers {
 			if container.Name == model.DeterminedK8ContainerName {
 				userInput := container.SecurityContext
+				if userInput == nil {
+					userInput = &k8sV1.SecurityContext{}
+				}
+
 				// Use det user link-with-agent-user to configure RunAsUser
 				// and/or RunAsGroup. We disallow this in security context.
 				if securityContext != nil {

@@ -37,6 +37,7 @@ interface ColumnMenuProps {
   projectColumns: Loadable<ProjectColumn[]>;
   setVisibleColumns: (newColumns: string[]) => void;
   projectId: number;
+  isMobile?: boolean;
 }
 
 interface ColumnTabProps {
@@ -205,6 +206,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   setVisibleColumns,
   initialVisibleColumns,
   projectId,
+  isMobile = false,
 }) => {
   const [searchString, setSearchString] = useState('');
   const [open, setOpen] = useState(false);
@@ -263,7 +265,9 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
       placement="bottom"
       trigger="click"
       onOpenChange={handleOpenChange}>
-      <Button icon={<Icon name="columns" title="column picker" />}>Columns</Button>
+      <Button hideChildren={isMobile} icon={<Icon name="columns" title="column picker" />}>
+        Columns
+      </Button>
     </Popover>
   );
 };

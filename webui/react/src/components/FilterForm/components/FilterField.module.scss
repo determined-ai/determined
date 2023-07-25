@@ -8,7 +8,7 @@
 .fieldCard {
   align-items: center;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 32px 32px;
+  grid-template-columns: repeat(3, minmax(110px, 1fr)) 32px 32px;
 }
 .fullWidth {
   width: 100%;

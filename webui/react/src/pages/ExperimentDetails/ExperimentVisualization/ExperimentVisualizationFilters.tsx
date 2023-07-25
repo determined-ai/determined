@@ -167,6 +167,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
     <>
       {showMaxTrials && (
         <Select
+          dropdownMatchSelectWidth={100}
           label="Top Trials"
           searchable={false}
           value={filters.maxTrial}

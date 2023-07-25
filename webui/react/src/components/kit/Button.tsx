@@ -12,6 +12,7 @@ interface ButtonProps {
   danger?: boolean;
   disabled?: boolean;
   form?: string;
+  hideChildren?: boolean;
   htmlType?: 'button' | 'submit' | 'reset';
   icon?: ReactNode;
   column?: boolean;
@@ -35,6 +36,8 @@ const Button: React.FC<ButtonProps> = forwardRef(
       size = 'middle',
       tooltip = '',
       className, // do not include className in {...props} below.
+      hideChildren = false,
+      children,
       ...props
     }: ButtonProps & CloneElementProps,
     ref,
@@ -44,7 +47,7 @@ const Button: React.FC<ButtonProps> = forwardRef(
     if (props.selected) classes.push(css.selected);
     if (props.column) classes.push(css.column);
     if (props.icon) classes.push(css.withIcon);
-    if (props.children) classes.push(css.withChildren);
+    if (children && !hideChildren) classes.push(css.withChildren);
 
     return (
       <ConditionalWrapper
@@ -55,8 +58,9 @@ const Button: React.FC<ButtonProps> = forwardRef(
           ref={ref}
           size={size}
           tabIndex={props.disabled ? -1 : 0}
-          {...props}
-        />
+          {...props}>
+          {!hideChildren && children}
+        </AntdButton>
       </ConditionalWrapper>
     );
   },
