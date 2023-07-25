@@ -103,5 +103,5 @@ def test_list_bounded_resource_pools(
     )
 
     ws = workspace.Workspace(session=standard_session, workspace_id=workspace_id)
-    rps = ws.resource_pools()
+    rps = ws.list_pools()
     assert rps == ["foo"]

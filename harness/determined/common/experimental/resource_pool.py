@@ -15,7 +15,7 @@ class ResourcePool:
     def __init__(
         self,
         session: api.Session,
-        name: Optional[str] = None,
+        name: str = "",
     ):
         """Create a resource pool object.
 
@@ -66,7 +66,7 @@ class ResourcePool:
 
         bindings.delete_UnbindRPFromWorkspace(self._session, body=req, resourcePoolName=self.name)
 
-    def list_workspaces(self) -> List[str]:
+    def list_workspaces(self) -> List[Optional[str]]:
         """Lists the workspaces bound to a specified resource pool.
 
         A resource pool with bindings can only be used by workspaces bound to it.
