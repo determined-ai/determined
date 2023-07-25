@@ -10,6 +10,7 @@ import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import {
   activateExperiments,
@@ -131,6 +132,7 @@ const TableActionBar: React.FC<Props> = ({
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const totalExperiments = Loadable.getOrElse(0, total);
+  const isMobile = useMobile();
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
@@ -328,20 +330,27 @@ const TableActionBar: React.FC<Props> = ({
         <Space className={css.base}>
           <TableFilter
             formStore={formStore}
+            isMobile={isMobile}
             isOpenFilter={isOpenFilter}
             loadableColumns={projectColumns}
             setIsOpenFilter={setIsOpenFilter}
           />
-          <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
+          <MultiSortMenu
+            columns={projectColumns}
+            isMobile={isMobile}
+            sorts={sorts}
+            onChange={onSortChange}
+          />
           <ColumnPickerMenu
             initialVisibleColumns={initialVisibleColumns}
+            isMobile={isMobile}
             projectColumns={projectColumns}
             projectId={project.id}
             setVisibleColumns={setVisibleColumns}
           />
           {(selectAll || selectedExperimentIds.length > 0) && (
             <Dropdown menu={editMenuItems} onClick={handleAction}>
-              <Button icon={<Icon decorative name="pencil" />}>
+              <Button hideChildren={isMobile} icon={<Icon decorative name="pencil" />}>
                 Edit (
                 {selectAll
                   ? Loadable.isLoaded(total)
@@ -352,9 +361,11 @@ const TableActionBar: React.FC<Props> = ({
               </Button>
             </Dropdown>
           )}
-          <span className={css.expNum}>
-            {totalExperiments.toLocaleString()} experiment{totalExperiments > 1 && 's'}
-          </span>
+          {!isMobile && (
+            <span className={css.expNum}>
+              {totalExperiments.toLocaleString()} experiment{totalExperiments > 1 && 's'}
+            </span>
+          )}
         </Space>
       </Column>
       <Column align="right">
@@ -367,6 +378,7 @@ const TableActionBar: React.FC<Props> = ({
           />
           {!!toggleComparisonView && (
             <Button
+              hideChildren={isMobile}
               icon={<Icon name={compareViewOn ? 'panel-on' : 'panel'} title="compare" />}
               onClick={toggleComparisonView}>
               Compare
