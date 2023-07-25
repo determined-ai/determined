@@ -104,6 +104,7 @@ class Experiment:
         # These properties may be mutable and will be set by _hydrate()
         self.config: Optional[Dict[str, Any]] = None
         self.state: Optional[bindings.experimentv1State] = None
+        self.labels: Optional[List[str]] = None
         self.archived: Optional[bool] = None
         self.name: Optional[str] = None
         self.progress: Optional[float] = None
@@ -122,6 +123,7 @@ class Experiment:
         self.progress = exp.progress
         self.description = exp.description
         self.notes = exp.notes
+        self.labels = exp.labels
 
     def reload(self) -> None:
         """
@@ -147,6 +149,26 @@ class Experiment:
         req_body = bindings.v1PatchExperiment(id=self.id, notes=notes)
         resp = bindings.patch_PatchExperiment(self._session, experiment_id=self.id, body=req_body)
         self.notes = resp.experiment.notes if resp.experiment else None
+
+    def add_labels(self, labels: List[str]) -> None:
+        resp = bindings.get_GetExperiment(self._session, experimentId=self.id).experiment
+        patch_exp = bindings.v1PatchExperiment.from_json(resp.to_json())
+        current_labels = patch_exp or []
+        patch_exp.labels = set(current_labels + labels)
+        bindings.patch_PatchExperiment(self._session, body=patch_exp, experiment_id=self.id)
+
+    def remove_labels(self, labels: List[str]) -> None:
+        resp = bindings.get_GetExperiment(self._session, experimentId=self.id).experiment
+        patch_exp = bindings.v1PatchExperiment.from_json(resp.to_json())
+        current_labels = patch_exp or []
+        patch_exp.labels = set(current_labels) - set(labels)
+        bindings.patch_PatchExperiment(self._session, body=patch_exp, experiment_id=self.id)
+
+    def set_labels(self, labels: List[str]):
+        resp = bindings.get_GetExperiment(self._session, experimentId=self.id).experiment
+        patch_exp = bindings.v1PatchExperiment.from_json(resp.to_json())
+        patch_exp.labels = set(labels)
+        bindings.patch_PatchExperiment(self._session, body=patch_exp, experiment_id=self.id)
 
     def activate(self) -> None:
         bindings.post_ActivateExperiment(self._session, id=self._id)
