@@ -460,12 +460,11 @@ func (a *apiServer) GetProjectNumericMetricsRange(
 		})
 	}
 
-		ranges = append(ranges, &projectv1.MetricsRange{
-			MetricsName: "searcherMetricsVal",
-			Min:         mathx.Min(searcherMetricsValue...),
-			Max:         mathx.Max(searcherMetricsValue...),
-		})
-	
+	ranges = append(ranges, &projectv1.MetricsRange{
+		MetricsName: "searcherMetricsVal",
+		Min:         mathx.Min(searcherMetricsValue...),
+		Max:         mathx.Max(searcherMetricsValue...),
+	})
 
 	return &apiv1.GetProjectNumericMetricsRangeResponse{Ranges: ranges}, nil
 }
@@ -490,10 +489,10 @@ func (a *apiServer) getProjectNumericMetricsRange(
 	}
 
 	var res []struct {
-		SmallerIsBetter   bool
+		SmallerIsBetter     bool
 		SearcherMetricValue *float64
-		ValidationMetrics *map[string]metrics
-		AvgMetrics        *map[string]metrics
+		ValidationMetrics   *map[string]metrics
+		AvgMetrics          *map[string]metrics
 	}
 
 	if err := query.Scan(ctx, &res); err != nil {
