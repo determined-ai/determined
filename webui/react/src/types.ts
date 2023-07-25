@@ -591,7 +591,6 @@ export interface TrialItem extends StartEndTimes {
   latestValidationMetric?: MetricsWorkload;
   state: RunState;
   summaryMetrics?: SummaryMetrics;
-  summaryValidationMetrics?: MetricsWorkload;
   totalBatchesProcessed: number;
   totalCheckpointSize: number;
 }
