@@ -57,7 +57,13 @@ steps:
    workspaces.
 -  Once you are satisfied with the list of bound workspaces, click **Apply**.
 
-To bind or unbind a resource pool using the CLI, run the following command:
+To bind a resource pool using the CLI, run the following command:
+
+.. code:: bash
+
+   det -u admin rp bindings add <resource_pool_name> <workspace_name> <workspace_name_2> ...
+
+To unbind a resource pool using the CLI, run:
 
 .. code:: bash
 
