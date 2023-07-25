@@ -371,6 +371,7 @@ func (a *allocation) SetResourcesAsDaemon(_ context.Context, rID sproto.Resource
 		return nil
 	}
 
+	a.syslog.Errorf("setting resources as daemon %s", rID)
 	a.resources[rID].Daemon = true
 	if err := a.resources[rID].Persist(); err != nil {
 		a.crash(err)
@@ -554,6 +555,7 @@ func (a *allocation) Cleanup() error {
 // heavy stuff unless it is necessarily (which also works to spread occurrences of the same work
 // out). Eventually, Allocations should just be started with their TaskSpec.
 func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
+	a.syslog.WithField("restore", a.req.Restore).Infof("%d resources allocated", len(msg.Resources))
 	if !a.req.Restore {
 		if a.getModelState() != model.AllocationStatePending {
 			// If we have moved on from the pending state, these must be stale (and we must have
@@ -719,10 +721,13 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 			return
 		}
 
+		a.syslog.Infof("resources terminated %s: %s", msg.ResourcesID, msg.ResourcesStopped.String())
+
 		a.setMostProgressedModelState(model.AllocationStateTerminating)
 
 		a.resources[msg.ResourcesID].Exited = msg.ResourcesStopped
 
+		a.syslog.Infof("releasing resources %s", msg.ResourcesID)
 		a.rm.Release(a.system, sproto.ResourcesReleased{
 			AllocationID: a.req.AllocationID,
 			ResourcesID:  &msg.ResourcesID,
@@ -737,10 +742,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 		case a.killedWhileRunning:
 			a.sendTaskLog(&model.TaskLog{
 				ContainerID: msg.ContainerIDStr(),
-				Log: fmt.Sprintf(
-					"resources were killed: %s",
-					msg.ResourcesStopped.String(),
-				),
+				Log:         fmt.Sprintf("killed: %s", msg.ResourcesStopped.String()),
 			})
 			a.tryExit("resources were killed")
 		case msg.ResourcesStopped.Failure != nil:
@@ -749,8 +751,17 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 			// will exit with a 0 exit code and kill the rest of the resources sending
 			// failed messages for these resources.
 			if a.killedDaemonsGracefully {
+				a.sendTaskLog(&model.TaskLog{
+					ContainerID: msg.ContainerIDStr(),
+					Log:         fmt.Sprintf("daemon killed: %s", msg.ResourcesStopped.String()),
+				})
 				a.tryExit("remaining resources terminated")
 			} else {
+				a.sendTaskLog(&model.TaskLog{
+					ContainerID: msg.ContainerIDStr(),
+					Log:         fmt.Sprintf("crashed: %s", msg.ResourcesStopped.String()),
+					Level:       ptrs.Ptr(model.LogLevelError),
+				})
 				a.crash(*msg.ResourcesStopped.Failure)
 			}
 		default:
@@ -910,6 +921,7 @@ func (a *allocation) kill(reason string) {
 	}
 
 	if len(a.resources.exited()) == 0 {
+		a.syslog.Errorf("setting killed while running: %d", len(a.resources.exited()))
 		a.killedWhileRunning = true
 	}
 
