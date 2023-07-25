@@ -298,17 +298,6 @@ const Icon: React.FC<Props> = (props: Props) => {
   const classes = [css.base];
 
   const svgIcon = useMemo(() => {
-    if (name === 'columns') return <ColumnsIcon />;
-    if (name === 'filter') return <FilterIcon />;
-    if (name === 'options') return <OptionsIcon />;
-    if (name === 'panel') return <PanelIcon />;
-    if (name === 'row-small') return <RowIconSmall />;
-    if (name === 'row-medium') return <RowIconMedium />;
-    if (name === 'row-large') return <RowIconLarge />;
-    if (name === 'row-xl') return <RowIconExtraLarge />;
-    if (name === 'heatmap') return <HeatmapIcon />;
-    if (name === 'four-squares') return <FourSquaresIcon />;
-
     const MappedIcon = svgIconMap[name];
     return MappedIcon && <MappedIcon />;
   }, [name]);
