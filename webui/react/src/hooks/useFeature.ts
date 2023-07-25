@@ -22,7 +22,7 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
     friendlyName: 'New Charts',
   },
   explist_v2: {
-    defaultValue: true,
+    defaultValue: false,
     description: 'Enable improved experiment listing, filtering, and comparison',
     friendlyName: 'New Experiment List',
   },
