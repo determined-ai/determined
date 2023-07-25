@@ -1,4 +1,4 @@
-import { match } from 'fp-ts/Either';
+import { isRight, match } from 'fp-ts/Either';
 import { pipe } from 'fp-ts/function';
 import { Map } from 'immutable';
 import * as t from 'io-ts';
@@ -7,7 +7,7 @@ import { getUserSetting, resetUserSetting, updateUserSetting } from 'services/ap
 import { V1GetUserSettingResponse, V1UserWebSetting } from 'services/api-ts-sdk';
 import { Json, JsonObject } from 'types';
 import { isJsonObject, isObject } from 'utils/data';
-import handleError, { ErrorType } from 'utils/error';
+import handleError, { DetError, ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { observable, Observable, WritableObservable } from 'utils/observable';
 
@@ -25,7 +25,7 @@ function isTypeC(codec: t.Encoder<any, any>): codec is t.TypeC<t.Props> {
  * This stores per-user settings. These are values that affect how the UI functions
  * and are limited in scope to the logged-in user.
  */
-class UserSettingsStore extends PollingStore {
+export class UserSettingsStore extends PollingStore {
   readonly #settings: WritableObservable<Loadable<State>> = observable(NotLoaded);
 
   /**
@@ -60,7 +60,7 @@ class UserSettingsStore extends PollingStore {
     return this.#settings.readOnly();
   }
 
-  public async overwrite(settings: State) {
+  public async overwrite(settings: State): Promise<void> {
     const settingsArray = Object.entries(settings.toJS()).flatMap(([storagePath, settings]) =>
       !!settings && isObject(settings)
         ? Object.entries(settings).map(([key, value]) => ({
@@ -84,7 +84,7 @@ class UserSettingsStore extends PollingStore {
     }
   }
 
-  public async clear() {
+  public async clear(): Promise<void> {
     try {
       await resetUserSetting({});
       this.#settings.set(Loaded(Map()));
@@ -132,7 +132,7 @@ class UserSettingsStore extends PollingStore {
       // the user from interacting, just let them know that their settings
       // are not persisting. It's also important to update the value immediately
       // for good rendering performance.
-      this.updateUserSetting(key, encodedValue);
+      setTimeout(() => this.updateUserSetting(key, encodedValue), 0);
       this.#settings.update((settings) => {
         return Loadable.map(settings, (settings) => {
           return settings.set(key, encodedValue);
@@ -141,8 +141,39 @@ class UserSettingsStore extends PollingStore {
     }
   }
 
+  /**
+   * This updates the value of a setting and persists it for future sessions.
+   * If the setting value is an object you can pass a partial value and
+   * if will be merged with the previous value.
+   * @param type The type of the value or an encoder of the value to JSON.
+   * @param key Unique key to store and retrieve the settings
+   * @param fn Function to update the value of the setting at `key`
+   */
+  public update<T>(type: t.Type<T, Json>, key: string, fn: (value: T | undefined) => T): void {
+    this.#settings.update((settings) => {
+      return Loadable.map(settings, (settings) => {
+        return settings.update(key, (jsonValue) => {
+          let value: T | undefined = undefined;
+          if (jsonValue !== undefined) {
+            const attempt = type.decode(jsonValue);
+            if (isRight(attempt)) {
+              value = attempt.right;
+            }
+          }
+          const newValue = fn(value);
+          // This is non-blocking. If the API call fails we don't want to block
+          // the user from interacting, just let them know that their settings
+          // are not persisting. It's also important to update the value immediately
+          // for good rendering performance.
+          setTimeout(() => this.updateUserSetting(key, newValue), 0);
+          return type.encode(newValue);
+        });
+      });
+    });
+  }
+
   /** Clears the setting, returning it to `null`. */
-  public remove(key: string) {
+  public remove(key: string): void {
     this.updateUserSetting(key, null);
     this.#settings.update((loadable) => {
       return Loadable.map(loadable, (map) => {
@@ -154,11 +185,11 @@ class UserSettingsStore extends PollingStore {
   /**
    * This resets the store to its initial state, useful for logging the user out.
    */
-  public reset() {
+  public reset(): void {
     this.#settings.set(NotLoaded);
   }
 
-  protected async poll() {
+  protected async poll(): Promise<void> {
     try {
       const response = await getUserSetting({ signal: this.canceler?.signal });
       this.updateSettingsFromResponse(response);
@@ -179,7 +210,7 @@ class UserSettingsStore extends PollingStore {
     }
   }
 
-  protected updateSettingsFromResponse(response: V1GetUserSettingResponse) {
+  protected updateSettingsFromResponse(response: V1GetUserSettingResponse): void {
     this.#settings.update((loadable) => {
       let newSettings: State = Loadable.getOrElse(Map(), loadable);
 
@@ -211,10 +242,10 @@ class UserSettingsStore extends PollingStore {
   //   and flexibility that way
   // - API should support setting non-objects as values directly like a regular
   //   key/value store.
-  protected updateUserSetting<T>(key: string, value: T) {
+  protected updateUserSetting<T>(key: string, value: T): Promise<void | DetError> {
     const dbUpdates: Array<V1UserWebSetting> = [];
     if (isObject(value)) {
-      const settings = value as { [key: string]: unknown };
+      const settings = value as unknown as { [key: string]: unknown };
       dbUpdates.push(
         ...Object.keys(settings).reduce<V1UserWebSetting[]>((acc, setting) => {
           return [
