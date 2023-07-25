@@ -81,9 +81,9 @@
    Prometheus and Grafana <integrations/prometheus/prometheus>
    attributions
 
-#######################
- Welcome to Determined
-#######################
+#############################
+ Determined AI Documentation
+#############################
 
 .. meta::
    :http-equiv=x-ua-compatible: IE=edge
@@ -96,7 +96,8 @@
    :target_country: us
    :web_section_id: R12299
 
-You can quickly train almost any deep learning model using Determined.
+Find setup guides, examples, tutorials, API references, and more to learn how to quickly train
+almost any deep learning model using Determined.
 
 .. raw:: html
 
