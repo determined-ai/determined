@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 
+import useMobile from 'hooks/useMobile';
 import useResize from 'hooks/useResize';
 
 import css from './SplitPane.module.scss';
@@ -25,6 +26,7 @@ const SplitPane: React.FC<Props> = ({
   const container = useRef<HTMLDivElement>(null);
   const handle = useRef<HTMLDivElement>(null);
   const containerDimensions = useResize(container);
+  const isMobile = useMobile();
 
   const throttledOnChange = useMemo(
     () => onChange && throttle(8, onChange, { noTrailing: true }),
@@ -95,9 +97,11 @@ const SplitPane: React.FC<Props> = ({
 
   return (
     <div className={classnames.join(' ')} ref={container}>
-      <div style={{ width: open ? width : '100%' }}>{children?.[0]}</div>
-      <div className={css.handle} ref={handle} />
-      <div className={css.rightBox}>{children?.[1]}</div>
+      <div style={{ display: open && isMobile ? 'none' : 'initial', width: open ? width : '100%' }}>
+        {children[0]}
+      </div>
+      {!isMobile && <div className={css.handle} ref={handle} />}
+      <div className={css.rightBox}>{children[1]}</div>
     </div>
   );
 };

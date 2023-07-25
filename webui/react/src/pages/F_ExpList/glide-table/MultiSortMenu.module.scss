@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: 8px;
   max-height: 500px;
+  max-width: calc(100vw - 26px);
   width: 376px;
 }
 .rows {

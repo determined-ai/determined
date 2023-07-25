@@ -501,11 +501,14 @@ func (p *pod) createPodSpec(scheduler string) error {
 		Env:             envVars,
 		Image:           env.Image().For(deviceType),
 		ImagePullPolicy: configureImagePullPolicy(env),
-		SecurityContext: configureSecurityContext(spec.AgentUserGroup),
-		Resources:       p.configureResourcesRequirements(),
-		VolumeMounts:    volumeMounts,
-		WorkingDir:      spec.WorkDir,
-		Ports:           containerPorts,
+		SecurityContext: getDetContainerSecurityContext(
+			spec.AgentUserGroup,
+			env.PodSpec(),
+		),
+		Resources:    p.configureResourcesRequirements(),
+		VolumeMounts: volumeMounts,
+		WorkingDir:   spec.WorkDir,
+		Ports:        containerPorts,
 	}
 
 	p.configMap, err = p.configureConfigMapSpec(runArchives, fluentFiles)
@@ -555,6 +558,37 @@ func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *k8sV1.Secur
 	}
 
 	return nil
+}
+
+func getDetContainerSecurityContext(
+	agentUserGroup *model.AgentUserGroup,
+	podSpec *expconf.PodSpec,
+) *k8sV1.SecurityContext {
+	securityContext := configureSecurityContext(agentUserGroup)
+
+	if podSpec != nil {
+		for _, container := range podSpec.Spec.Containers {
+			if container.Name == model.DeterminedK8ContainerName {
+				userInput := container.SecurityContext
+				if userInput == nil {
+					userInput = &k8sV1.SecurityContext{}
+				}
+
+				// Use det user link-with-agent-user to configure RunAsUser
+				// and/or RunAsGroup. We disallow this in security context.
+				if securityContext != nil {
+					userInput.RunAsUser = securityContext.RunAsGroup
+					userInput.RunAsGroup = securityContext.RunAsGroup
+				} else {
+					userInput.RunAsUser = nil
+					userInput.RunAsGroup = nil
+				}
+				return userInput
+			}
+		}
+	}
+
+	return securityContext
 }
 
 func configureImagePullPolicy(environment expconf.EnvironmentConfig) k8sV1.PullPolicy {

@@ -13,8 +13,10 @@ myst_parser
 # Theme
 sphinx-book-theme==1.0.0
 
-# pin pydata-sphinx-theme at 0.13.1 to avoid extension import issue
-pydata-sphinx-theme==0.13.1
+# forked version of pydata-sphinx-theme
+# - pinned to 0.13.1
+# - Includes some aria labelling changes to satisfy compliance
+pydata-sphinx-theme @ git+https://github.com/determined-ai/pydata-sphinx-theme@chore/WEB-1292/hpe-accessibility-patches
 
 # live.py
 watchdog

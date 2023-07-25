@@ -17,13 +17,19 @@ import {
   shortcutsSettingsPath,
 } from 'components/UserSettings.settings';
 import {
+  FEATURE_SETTINGS_PATH,
+  FEATURES,
+  FeatureSettingsConfig,
+  ValidFeature,
+} from 'hooks/useFeature';
+import {
   experimentListGlobalSettingsConfig,
   experimentListGlobalSettingsDefaults,
   experimentListGlobalSettingsPath,
   ExpListView,
   RowHeight,
 } from 'pages/F_ExpList/F_ExperimentList.settings';
-import { rowHeightLabels } from 'pages/F_ExpList/glide-table/RowHeightMenu';
+import { rowHeightItems } from 'pages/F_ExpList/glide-table/OptionsMenu';
 import { patchUser } from 'services/api';
 import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
@@ -39,6 +45,7 @@ import { Mode } from 'utils/themes';
 
 import Accordion from './kit/Accordion';
 import Button from './kit/Button';
+import Icon from './kit/Icon';
 import Paragraph from './kit/Typography/Paragraph';
 import useConfirm from './kit/useConfirm';
 import css from './UserSettings.module.scss';
@@ -52,6 +59,11 @@ interface Props {
   show: boolean;
   onClose: () => void;
 }
+
+const rowHeightLabels = rowHeightItems.reduce((acc, { rowHeight, label }) => {
+  acc[rowHeight] = label;
+  return acc;
+}, {} as Record<RowHeight, string>);
 
 const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
@@ -126,9 +138,14 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
         userSettings.get(experimentListGlobalSettingsConfig, experimentListGlobalSettingsPath),
       ),
       useObservable(userSettings.get(shortcutSettingsConfig, shortcutsSettingsPath)),
+      useObservable(userSettings.get(FeatureSettingsConfig, FEATURE_SETTINGS_PATH)),
     ]),
     {
-      Loaded: ([savedExperimentListGlobalSettings, savedShortcutSettings]) => {
+      Loaded: ([
+        savedExperimentListGlobalSettings,
+        savedShortcutSettings,
+        savedFeatureSettings,
+      ]) => {
         const experimentListGlobalSettings = {
           ...experimentListGlobalSettingsDefaults,
           ...(savedExperimentListGlobalSettings ?? {}),
@@ -233,7 +250,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                     );
                   }}>
                   <Select searchable={false}>
-                    {Object.entries(rowHeightLabels).map(([rowHeight, label]) => (
+                    {rowHeightItems.map(({ rowHeight, label }) => (
                       <Option key={rowHeight} value={rowHeight}>
                         {label}
                       </Option>
@@ -303,6 +320,34 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   }}>
                   <InputShortcut />
                 </InlineForm>
+              </div>
+            </Section>
+            <Section divider title="Experimental">
+              <div className={css.section}>
+                {Object.entries(FEATURES).map(([feature, description]) => (
+                  <InlineForm<boolean>
+                    initialValue={
+                      savedFeatureSettings?.[feature as ValidFeature] ?? description.defaultValue
+                    }
+                    key={feature}
+                    label={
+                      <Space>
+                        {description.friendlyName}
+                        <Icon name="info" showTooltip title={description.description} />
+                      </Space>
+                    }
+                    valueFormatter={(value) => (value ? 'On' : 'Off')}
+                    onSubmit={(val) => {
+                      userSettings.set(FeatureSettingsConfig, FEATURE_SETTINGS_PATH, {
+                        [feature]: val,
+                      });
+                    }}>
+                    <Select searchable={false}>
+                      <Option value={true}>On</Option>
+                      <Option value={false}>Off</Option>
+                    </Select>
+                  </InlineForm>
+                ))}
               </div>
             </Section>
             <Section title="Advanced">

@@ -9,15 +9,18 @@ import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/Spinner';
+import { useSettings } from 'hooks/useSettings';
 import { V1LocationType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
 import { ensureArray } from 'utils/data';
 import { Loadable } from 'utils/loadable';
 
+import { F_ExperimentListSettings, settingsConfigForProject } from '../F_ExperimentList.settings';
+
 import css from './ColumnPickerMenu.module.scss';
 import { defaultExperimentColumns } from './columns';
 
-const BANNED_COLUMNS = new Set(['name']);
+const BANNED_COLUMNS: Set<string> = new Set([]);
 
 const removeBannedColumns = (columns: ProjectColumn[]) =>
   columns.filter((col) => !BANNED_COLUMNS.has(col.column));
@@ -33,16 +36,19 @@ interface ColumnMenuProps {
   initialVisibleColumns: string[];
   projectColumns: Loadable<ProjectColumn[]>;
   setVisibleColumns: (newColumns: string[]) => void;
+  projectId: number;
+  isMobile?: boolean;
 }
 
 interface ColumnTabProps {
-  columnState: Set<string>;
+  columnState: string[];
   handleShowSuggested: () => void;
   searchString: string;
   setSearchString: React.Dispatch<React.SetStateAction<string>>;
   setVisibleColumns: (newColumns: string[]) => void;
   tab: V1LocationType | V1LocationType[];
   totalColumns: ProjectColumn[];
+  projectId: number;
 }
 
 const ColumnPickerTab: React.FC<ColumnTabProps> = ({
@@ -53,7 +59,20 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   setVisibleColumns,
   tab,
   totalColumns,
+  projectId,
 }) => {
+  const settingsConfig = useMemo(() => settingsConfigForProject(projectId), [projectId]);
+
+  const { settings, updateSettings } = useSettings<F_ExperimentListSettings>(settingsConfig);
+
+  const checkedColumn = useMemo(
+    () =>
+      settings.compare
+        ? new Set(columnState.slice(0, settings.pinnedColumnsCount))
+        : new Set(columnState),
+    [columnState, settings.compare, settings.pinnedColumnsCount],
+  );
+
   const filteredColumns = useMemo(() => {
     const regex = new RegExp(searchString, 'i');
     const locations = ensureArray(tab);
@@ -63,31 +82,63 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   }, [searchString, totalColumns, tab]);
 
   const allFilteredColumnsChecked = useMemo(() => {
-    return filteredColumns.map((col) => columnState.has(col.column)).every((col) => col === true);
+    return filteredColumns.every((col) => columnState.includes(col.column));
   }, [columnState, filteredColumns]);
 
   const handleShowHideAll = useCallback(() => {
     const filteredColumnMap: Record<string, boolean> = filteredColumns.reduce(
-      (acc, col) => ({ ...acc, [col.column]: columnState.has(col.column) }),
+      (acc, col) => ({ ...acc, [col.column]: columnState.includes(col.column) }),
       {},
     );
 
     const newColumns = allFilteredColumnsChecked
-      ? [...columnState].filter((col) => !filteredColumnMap[col])
+      ? columnState.filter((col) => !filteredColumnMap[col])
       : [...new Set([...columnState, ...filteredColumns.map((col) => col.column)])];
     setVisibleColumns(newColumns);
-  }, [allFilteredColumnsChecked, filteredColumns, setVisibleColumns, columnState]);
+
+    // If uncheck something pinned, reduce the pinnedColumnsCount
+    allFilteredColumnsChecked &&
+      updateSettings({
+        pinnedColumnsCount: newColumns.filter(
+          (col) => columnState.indexOf(col) < settings.pinnedColumnsCount,
+        ).length,
+      });
+  }, [
+    allFilteredColumnsChecked,
+    filteredColumns,
+    setVisibleColumns,
+    columnState,
+    updateSettings,
+    settings.pinnedColumnsCount,
+  ]);
 
   const handleColumnChange = useCallback(
     (event: CheckboxChangeEvent) => {
       const { id, checked } = event.target;
       if (id === undefined) return;
-
-      const newColumnSet = new Set(columnState);
-      checked ? newColumnSet.add(id) : newColumnSet.delete(id);
-      setVisibleColumns([...newColumnSet]);
+      const pinnedColumnsCount = settings.pinnedColumnsCount;
+      if (settings.compare) {
+        // pin or unpin column
+        const newColumns = columnState.filter((c) => c !== id);
+        if (checked) {
+          newColumns.splice(pinnedColumnsCount, 0, id);
+          updateSettings({ pinnedColumnsCount: Math.max(pinnedColumnsCount + 1, 0) });
+        } else {
+          newColumns.splice(pinnedColumnsCount - 1, 0, id);
+          updateSettings({ pinnedColumnsCount: Math.max(pinnedColumnsCount - 1, 0) });
+        }
+        setVisibleColumns(newColumns);
+      } else {
+        // If uncheck something pinned, reduce the pinnedColumnsCount
+        if (!checked && columnState.indexOf(id) < pinnedColumnsCount) {
+          updateSettings({ pinnedColumnsCount: Math.max(pinnedColumnsCount - 1, 0) });
+        }
+        const newColumnSet = new Set(columnState);
+        checked ? newColumnSet.add(id) : newColumnSet.delete(id);
+        setVisibleColumns([...newColumnSet]);
+      }
     },
-    [columnState, setVisibleColumns],
+    [columnState, setVisibleColumns, settings.compare, settings.pinnedColumnsCount, updateSettings],
   );
 
   const handleSearch = useCallback(
@@ -111,7 +162,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
           {filteredColumns.length > 0 ? (
             filteredColumns.map((col) => (
               <Checkbox
-                checked={columnState.has(col.column)}
+                checked={checkedColumn.has(col.column)}
                 id={col.column}
                 key={col.column}
                 onChange={handleColumnChange}>
@@ -125,14 +176,16 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
       ) : (
         <Spinner />
       )}
-      <div className={css.actionRow}>
-        <Button type="text" onClick={handleShowHideAll}>
-          {allFilteredColumnsChecked ? 'Hide' : 'Show'} all
-        </Button>
-        <Button type="text" onClick={handleShowSuggested}>
-          Reset
-        </Button>
-      </div>
+      {!settings.compare && (
+        <div className={css.actionRow}>
+          <Button type="text" onClick={handleShowHideAll}>
+            {allFilteredColumnsChecked ? 'Hide' : 'Show'} all
+          </Button>
+          <Button type="text" onClick={handleShowSuggested}>
+            Reset
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
@@ -141,6 +194,8 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   projectColumns,
   setVisibleColumns,
   initialVisibleColumns,
+  projectId,
+  isMobile = false,
 }) => {
   const [searchString, setSearchString] = useState('');
   const [open, setOpen] = useState(false);
@@ -157,8 +212,6 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
     () => removeBannedColumns(Loadable.getOrElse([], projectColumns)),
     [projectColumns],
   );
-
-  const columnState = useMemo(() => new Set(initialVisibleColumns), [initialVisibleColumns]);
 
   const handleShowSuggested = useCallback(() => {
     setVisibleColumns(defaultExperimentColumns);
@@ -179,8 +232,9 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
               return {
                 children: (
                   <ColumnPickerTab
-                    columnState={columnState}
+                    columnState={initialVisibleColumns}
                     handleShowSuggested={handleShowSuggested}
+                    projectId={projectId}
                     searchString={searchString}
                     setSearchString={setSearchString}
                     setVisibleColumns={setVisibleColumns}
@@ -200,7 +254,9 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
       placement="bottom"
       trigger="click"
       onOpenChange={handleOpenChange}>
-      <Button icon={<Icon name="columns" title="column picker" />}>Columns</Button>
+      <Button hideChildren={isMobile} icon={<Icon name="columns" title="column picker" />}>
+        Columns
+      </Button>
     </Popover>
   );
 };

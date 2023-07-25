@@ -2,103 +2,80 @@ package kubernetesrm
 
 import (
 	"context"
-	"time"
 
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/tools/cache"
-	watchtools "k8s.io/client-go/tools/watch"
-
-	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
-
+	"github.com/sirupsen/logrus"
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8sClient "k8s.io/client-go/kubernetes"
+	"k8s.io/apimachinery/pkg/watch"
+	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/tools/cache"
+	watchtools "k8s.io/client-go/tools/watch"
 )
 
-// Messages that are sent to the preemption listener.
-type startPreemptionListener struct{}
+type preemptCallbackFunc func(string)
 
 type preemptionListener struct {
-	clientSet   *k8sClient.Clientset
-	podsHandler *actor.Ref
-	namespace   string
+	cb         preemptCallbackFunc
+	syslog     *logrus.Entry
+	resultChan <-chan watch.Event
 }
 
 func newPreemptionListener(
-	clientSet *k8sClient.Clientset,
-	podsHandler *actor.Ref,
+	ctx context.Context,
 	namespace string,
-) *preemptionListener {
-	return &preemptionListener{
-		clientSet:   clientSet,
-		podsHandler: podsHandler,
-		namespace:   namespace,
-	}
-}
-
-func (p *preemptionListener) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		ctx.Tell(ctx.Self(), startPreemptionListener{})
-
-	case startPreemptionListener:
-		p.startPreemptionListener(ctx)
-
-	case actor.PostStop:
-
-	default:
-		ctx.Log().Errorf("unexpected message %T", msg)
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-
-	return nil
-}
-
-func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
+	podInterface typedV1.PodInterface,
+	cb preemptCallbackFunc,
+) (*preemptionListener, error) {
 	// Check if there are pods to preempt on startup.
-	pods, err := p.clientSet.CoreV1().Pods(p.namespace).List(
-		context.TODO(), metaV1.ListOptions{LabelSelector: determinedPreemptionLabel})
+	pods, err := podInterface.List(ctx,
+		metaV1.ListOptions{LabelSelector: determinedPreemptionLabel})
 	if err != nil {
-		ctx.Log().WithError(err).Warnf(
-			"error in initializing preemption listener: checking for pods to preempt",
-		)
-		actors.NotifyAfter(ctx, 5*time.Second, startPreemptionListener{})
-		return
-	}
-
-	for _, pod := range pods.Items {
-		ctx.Tell(p.podsHandler, PreemptTaskPod{PodName: pod.Name})
+		return nil, err
 	}
 
 	rw, err := watchtools.NewRetryWatcher(pods.ResourceVersion, &cache.ListWatch{
 		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
-			return p.clientSet.CoreV1().Pods(p.namespace).Watch(
-				context.TODO(), metaV1.ListOptions{LabelSelector: determinedPreemptionLabel})
+			options.LabelSelector = determinedPreemptionLabel
+			return podInterface.Watch(ctx, options)
 		},
 	})
 	if err != nil {
-		ctx.Log().WithError(err).Warnf("error initializing preemption watch")
-		actors.NotifyAfter(ctx, 5*time.Second, startPreemptionListener{})
-		return
+		return nil, err
 	}
 
-	ctx.Log().Info("preemption listener is starting")
-	for e := range rw.ResultChan() {
+	// Log when pods are first added to the informer (at start-up).
+	syslog := logrus.WithFields(logrus.Fields{
+		"component": "preemptionListener",
+		"namespace": namespace,
+	})
+	for i := range pods.Items {
+		syslog.Debugf("preemption listener added: %s", pods.Items[i].Name)
+		cb(pods.Items[i].Name)
+	}
+
+	return &preemptionListener{
+		cb:         cb,
+		syslog:     syslog,
+		resultChan: rw.ResultChan(),
+	}, nil
+}
+
+func (p *preemptionListener) run() {
+	p.syslog.Info("preemption listener is starting")
+	for e := range p.resultChan {
 		if e.Type == watch.Error {
-			ctx.Log().WithField("error", e.Object).Warnf("preemption listener encountered error")
+			p.syslog.WithField("error", e.Object).Warn("preemption listener encountered error")
 			continue
 		}
 
 		pod, ok := e.Object.(*k8sV1.Pod)
 		if !ok {
-			ctx.Log().Warnf("error converting object type %T to *k8sV1.Pod: %+v", e, e)
+			p.syslog.Warnf("error converting object type %T to *k8sV1.Pod: %+v", e, e)
 			continue
 		}
 
-		ctx.Tell(p.podsHandler, PreemptTaskPod{PodName: pod.Name})
+		p.syslog.Debugf("listener got new preemption command for pod : %s", pod.Name)
+		p.cb(pod.Name)
 	}
-
-	ctx.Log().Warn("preemption listener stopped unexpectedly")
-	ctx.Tell(ctx.Self(), startPreemptionListener{})
+	panic("preemption listener stopped unexpectedly")
 }
