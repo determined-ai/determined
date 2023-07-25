@@ -8,7 +8,6 @@ import (
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/cache"
 	watchtools "k8s.io/client-go/tools/watch"
 )
@@ -65,7 +64,7 @@ func newInformer(
 
 func newEventListener(
 	ctx context.Context,
-	eventInterface v1.EventInterface,
+	eventInterface typedV1.EventInterface,
 	namespace string,
 	cb callbackFunc,
 ) (*informer, error) {

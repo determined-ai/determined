@@ -566,7 +566,7 @@ func (p *pods) reattachPod(
 	if err != nil {
 		return reattachPodResponse{}, errors.Wrap(err, "error getting pod status update in restore")
 	}
-	p.podStatusCallback(ctx.Self().System(), updated)
+	p.podStatusCallback(ctx.Self().System(), watch.Event{Object: updated})
 
 	return reattachPodResponse{containerID: containerID, started: started}, nil
 }
@@ -668,24 +668,18 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 }
 
 func (p *pods) startPodInformer(s *actor.System) error {
-	cb := func(event watch.Event) {
-		p.mu.Lock()
-		defer p.mu.Unlock()
-		pod, ok := event.Object.(*k8sV1.Pod)
-		if !ok {
-			p.syslog.Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
-			return
-		}
-		p.syslog.Debugf("informer got new pod event for pod %s: %s ", pod.Name, event.Type)
-		p.podStatusCallback(s, pod)
-	}
 	for namespace := range p.namespaceToPoolName {
 		i, err := newInformer(
 			context.TODO(),
 			determinedLabel,
 			"pod",
 			namespace,
-			p.podInterfaces[namespace], cb,
+			p.podInterfaces[namespace],
+			func(event watch.Event) {
+				p.mu.Lock()
+				defer p.mu.Unlock()
+				p.podStatusCallback(s, event)
+			},
 		)
 		if err != nil {
 			return err
@@ -702,16 +696,7 @@ func (p *pods) startNodeInformer() error {
 		func(event watch.Event) {
 			p.mu.Lock()
 			defer p.mu.Unlock()
-
-			node, ok := event.Object.(*k8sV1.Node)
-			if !ok {
-				p.syslog.Warnf("error converting event of type %T to *k8sV1.Node: %+v", event, event)
-				return
-			}
-
-			p.syslog.Debugf(`informer got new node event for node '%s': %s %s`,
-				node.Name, event.Type, node.Status.Phase)
-			p.nodeStatusCallback(node, event.Type)
+			p.nodeStatusCallback(event)
 		})
 	if err != nil {
 		return err
@@ -730,14 +715,7 @@ func (p *pods) startEventListeners(s *actor.System) error {
 			func(event watch.Event) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
-				newEvent, ok := event.Object.(*k8sV1.Event)
-				if !ok {
-					p.syslog.Warnf("error converting object type %T to *k8sV1.Event: %+v", event, event)
-					return
-				}
-
-				p.syslog.Debugf("listener got new event: %s", newEvent.Message)
-				p.eventStatusCallback(s, newEvent)
+				p.eventStatusCallback(s, event)
 			})
 		if err != nil {
 			return err
@@ -757,13 +735,7 @@ func (p *pods) startPreemptionListeners(s *actor.System) error {
 			func(event watch.Event) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
-				pod, ok := event.Object.(*k8sV1.Pod)
-				if !ok {
-					p.syslog.Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
-					return
-				}
-				p.syslog.Debugf("informer got new preemption event for pod %s ", pod.Name)
-				p.preemptionCallback(s, pod.Name)
+				p.preemptionCallback(s, event)
 			})
 		if err != nil {
 			return err
@@ -823,7 +795,14 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 	return nil
 }
 
-func (p *pods) podStatusCallback(s *actor.System, pod *k8sV1.Pod) {
+func (p *pods) podStatusCallback(s *actor.System, event watch.Event) {
+	pod, ok := event.Object.(*k8sV1.Pod)
+	if !ok {
+		p.syslog.Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
+		return
+	}
+	p.syslog.Debugf("informer got new pod event for pod %s: %s ", pod.Name, event.Type)
+
 	ref, ok := p.podNameToPodHandler[pod.Name]
 	if !ok {
 		p.syslog.Warn("received pod status update for un-registered pod")
@@ -849,11 +828,17 @@ func (p *pods) podStatusCallback(s *actor.System, pod *k8sV1.Pod) {
 	}
 }
 
-func (p *pods) nodeStatusCallback(
-	node *k8sV1.Node,
-	action watch.EventType,
-) {
-	switch action {
+func (p *pods) nodeStatusCallback(event watch.Event) {
+	node, ok := event.Object.(*k8sV1.Node)
+	if !ok {
+		p.syslog.Warnf("error converting event of type %T to *k8sV1.Node: %+v", event, event)
+		return
+	}
+
+	p.syslog.Debugf(`informer got new node event for node '%s': %s %s`,
+		node.Name, event.Type, node.Status.Phase)
+
+	switch event.Type {
 	case watch.Added:
 		p.currentNodes[node.Name] = node
 	case watch.Modified:
@@ -864,8 +849,15 @@ func (p *pods) nodeStatusCallback(
 	}
 }
 
-func (p *pods) eventStatusCallback(s *actor.System, event *k8sV1.Event) {
-	ref, ok := p.podNameToPodHandler[event.InvolvedObject.Name]
+func (p *pods) eventStatusCallback(s *actor.System, event watch.Event) {
+	newEvent, ok := event.Object.(*k8sV1.Event)
+	if !ok {
+		p.syslog.Warnf("error converting object type %T to *k8sV1.Event: %+v", event, event)
+		return
+	}
+
+	p.syslog.Debugf("listener got new event: %s", newEvent.Message)
+	ref, ok := p.podNameToPodHandler[newEvent.InvolvedObject.Name]
 	if !ok {
 		// We log at the debug level because we are unable to filter
 		// pods based on their labels the way we do with pod status updates.
@@ -873,7 +865,7 @@ func (p *pods) eventStatusCallback(s *actor.System, event *k8sV1.Event) {
 		return
 	}
 
-	s.Tell(ref, podEventUpdate{event})
+	s.Tell(ref, podEventUpdate{newEvent})
 }
 
 func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResources) {
@@ -894,13 +886,20 @@ func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResourc
 	ctx.Respond(&PodsInfo{NumAgents: len(summary), SlotsAvailable: slots})
 }
 
-func (p *pods) preemptionCallback(s *actor.System, name string) {
-	ref, ok := p.podNameToPodHandler[name]
+func (p *pods) preemptionCallback(s *actor.System, event watch.Event) {
+	pod, ok := event.Object.(*k8sV1.Pod)
+	if !ok {
+		p.syslog.Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
+		return
+	}
+	p.syslog.Debugf("informer got new preemption event for pod %s ", pod.Name)
+
+	ref, ok := p.podNameToPodHandler[pod.Name]
 	if !ok {
 		p.syslog.Debug("received preemption command for unregistered pod")
 		return
 	}
-	s.Tell(ref, PreemptTaskPod{PodName: name})
+	s.Tell(ref, PreemptTaskPod{PodName: pod.Name})
 }
 
 func (p *pods) verifyPodAndGetRef(ctx *actor.Context, podID string) *actor.Ref {

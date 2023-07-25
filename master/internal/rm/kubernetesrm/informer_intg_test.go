@@ -8,24 +8,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	k8sV1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/watch"
-)
-
-/*
-import (
-	"context"
-	"reflect"
-	"sync"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 
 	"github.com/determined-ai/determined/master/internal/mocks"
 )
-
 
 const namespace = "default"
 
@@ -80,14 +67,18 @@ func TestPodInformer(t *testing.T) {
 				},
 				nil)
 			mockPodInterface.On("Watch", ctx, mockOptsWatch).Return(&mockWatcher{c: eventChan}, nil)
-			mockPodHandler := func(pod *k8sV1.Pod) {
+			mockPodHandler := func(event watch.Event) {
+				pod, _ := event.Object.(*k8sV1.Pod)
 				t.Logf("received pod %v", pod.Name)
 				ordering = append(ordering, pod.Name)
 				wg.Done()
 			}
 
 			// Test creating newInformer.
-			i, err := newInformer(context.TODO(),
+			i, err := newInformer(
+				context.TODO(),
+				determinedLabel,
+				"pod",
 				namespace,
 				mockPodInterface,
 				mockPodHandler)
@@ -179,10 +170,11 @@ func TestNodeInformer(t *testing.T) {
 				},
 				nil)
 			mockNode.On("Watch", ctx, mockOptsWatch).Return(&mockWatcher{c: eventChan}, nil)
-			mockNodeHandler := func(node *k8sV1.Node, action watch.EventType) {
+			mockNodeHandler := func(event watch.Event) {
+				node, _ := event.Object.(*k8sV1.Node)
 				if node.Name != "" {
 					t.Logf("received %v", node.Name)
-					switch action {
+					switch event.Type {
 					case watch.Added:
 						currNodes[node.Name] = true
 					case watch.Modified:
@@ -190,7 +182,7 @@ func TestNodeInformer(t *testing.T) {
 					case watch.Deleted:
 						delete(currNodes, node.Name)
 					default:
-						t.Logf("Node did not expect watch.EventType %v", action)
+						t.Logf("Node did not expect watch.EventType %v", event.Type)
 					}
 				}
 				wg.Done()
@@ -268,9 +260,10 @@ func TestEventListener(t *testing.T) {
 				nil)
 			mockEventInterface.On("Watch", ctx, mockOptsWatch).Return(&mockWatcher{c: eventChan}, nil)
 
-			mockEventHandler := func(event *k8sV1.Event) {
-				t.Logf("received event %v", event)
-				ordering = append(ordering, event.Name)
+			mockEventHandler := func(event watch.Event) {
+				newEvent, _ := event.Object.(*k8sV1.Event)
+				t.Logf("received event %v", newEvent)
+				ordering = append(ordering, newEvent.Name)
 				wg.Done()
 			}
 
@@ -310,7 +303,6 @@ func TestEventListener(t *testing.T) {
 		})
 	}
 }
-*/
 
 func TestPreemptionListener(t *testing.T) {
 	cases := []struct {
@@ -351,14 +343,17 @@ func TestPreemptionListener(t *testing.T) {
 				},
 				nil)
 			mockPodInterface.On("Watch", ctx, mockOptsWatch).Return(&mockWatcher{c: eventChan}, nil)
-			mockPreemptionHandler := func(name string) {
-				t.Logf("received pod name %v", name)
-				ordering = append(ordering, name)
+			mockPreemptionHandler := func(event watch.Event) {
+				pod, _ := event.Object.(*k8sV1.Pod)
+				t.Logf("received pod name %v", pod.Name)
+				ordering = append(ordering, pod.Name)
 				wg.Done()
 			}
 
-			i, err := newPreemptionListener(
+			i, err := newInformer(
 				context.TODO(),
+				determinedPreemptionLabel,
+				"preemption",
 				namespace,
 				mockPodInterface,
 				mockPreemptionHandler)
