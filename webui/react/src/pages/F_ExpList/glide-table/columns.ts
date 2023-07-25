@@ -292,27 +292,6 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.searcherMetric,
   },
-  searcherMetricsVal: {
-    id: 'searcherMetricsVal',
-    isNumerical: true,
-    renderer: (record: ExperimentWithTrial) => {
-      const sMetric = record.experiment.config.searcher.metric;
-      const sMetricValue = record.bestTrial?.bestValidationMetric?.metrics?.[sMetric];
-      return {
-        allowOverlay: false,
-        data: sMetricValue?.toString() || '',
-        displayData: sMetricValue
-          ? typeof sMetricValue === 'number'
-            ? humanReadableNumber(sMetricValue)
-            : sMetricValue
-          : '',
-        kind: GridCellKind.Text,
-      };
-    },
-    title: 'Searcher Metric Value',
-    tooltip: () => undefined,
-    width: columnWidths.searcherMetricsVal,
-  },
   searcherType: {
     id: 'searcherType',
     renderer: (record: ExperimentWithTrial) => ({
@@ -421,6 +400,40 @@ export const getColumnDefs = ({
   },
 });
 
+export const searcherMetricsValColumn = (
+  columnWidth?: number,
+  heatmapProps?: HeatmapProps,
+): ColumnDef => {
+  return {
+    id: 'searcherMetricsVal',
+    isNumerical: true,
+    renderer: (record: ExperimentWithTrial) => {
+      const sMetric = record.experiment.config.searcher.metric;
+      const sMetricValue = record.bestTrial?.bestValidationMetric?.metrics?.[sMetric];
+
+      let theme: Partial<GTheme> = {};
+      if (heatmapProps && sMetricValue) {
+        const { min, max, color } = heatmapProps;
+        theme = { bgCell: color(getHeatmapPercentage(min, max, sMetricValue)) };
+      }
+      return {
+        allowOverlay: false,
+        data: sMetricValue?.toString() || '',
+        displayData: sMetricValue
+          ? typeof sMetricValue === 'number'
+            ? humanReadableNumber(sMetricValue)
+            : sMetricValue
+          : '',
+        kind: GridCellKind.Text,
+        themeOverride: theme,
+      };
+    },
+    title: 'Searcher Metric Value',
+    tooltip: () => undefined,
+    width: columnWidth ?? columnWidthsFallback,
+  };
+};
+
 export const defaultTextColumn = (
   column: ProjectColumn,
   columnWidth?: number,
@@ -443,7 +456,7 @@ export const defaultTextColumn = (
   };
 };
 
-const getHeatmapOpacity = (min: number, max: number, value: number): number => {
+const getHeatmapPercentage = (min: number, max: number, value: number): number => {
   if (min >= max || value >= max) return 1;
   if (value <= min) return 0;
   return (value - min) / (max - min);
@@ -462,7 +475,7 @@ export const defaultNumberColumn = (
       let theme: Partial<GTheme> = {};
       if (heatmapProps && data) {
         const { min, max, color } = heatmapProps;
-        theme = { bgCell: color(getHeatmapOpacity(min, max, data)) };
+        theme = { bgCell: color(getHeatmapPercentage(min, max, data)) };
       }
       return {
         allowOverlay: false,

@@ -439,7 +439,7 @@ func (a *apiServer) GetProjectNumericMetricsRange(
 	if err != nil {
 		return nil, err
 	}
-	valMetricsRange, traMetricsRange, err := a.getProjectNumericMetricsRange(ctx, *curUser, p)
+	valMetricsRange, traMetricsRange, searcherMetricsValue, err := a.getProjectNumericMetricsRange(ctx, *curUser, p)
 	if err != nil {
 		return nil, err
 	}
@@ -460,16 +460,24 @@ func (a *apiServer) GetProjectNumericMetricsRange(
 		})
 	}
 
+		ranges = append(ranges, &projectv1.MetricsRange{
+			MetricsName: "searcherMetricsVal",
+			Min:         mathx.Min(searcherMetricsValue...),
+			Max:         mathx.Max(searcherMetricsValue...),
+		})
+	
+
 	return &apiv1.GetProjectNumericMetricsRangeResponse{Ranges: ranges}, nil
 }
 
 func (a *apiServer) getProjectNumericMetricsRange(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
-) (map[string]([]float64), map[string]([]float64), error) {
+) (map[string]([]float64), map[string]([]float64), []float64, error) {
 	query := db.Bun().NewSelect().Table("trials").Table("experiments").
 		ColumnExpr("summary_metrics -> 'validation_metrics' AS validation_metrics").
 		ColumnExpr("summary_metrics -> 'avg_metrics' AS avg_metrics").
 		ColumnExpr(`searcher_metric_value_signed = searcher_metric_value AS smaller_is_better`).
+		Column("searcher_metric_value").
 		Where("project_id = ?", project.Id).
 		Where("experiments.best_trial_id = trials.id")
 
@@ -483,17 +491,22 @@ func (a *apiServer) getProjectNumericMetricsRange(
 
 	var res []struct {
 		SmallerIsBetter   bool
+		SearcherMetricValue *float64
 		ValidationMetrics *map[string]metrics
 		AvgMetrics        *map[string]metrics
 	}
 
 	if err := query.Scan(ctx, &res); err != nil {
-		return nil, nil, errors.Wrapf(
+		return nil, nil, nil, errors.Wrapf(
 			err, "error fetching metrics range for project (%d) from database", project.Id)
 	}
 	valMetricsValues := make(map[string]([]float64))
 	traMetricsValues := make(map[string]([]float64))
+	searcherMetricsValue := []float64{}
 	for _, r := range res {
+		if r.SearcherMetricValue != nil {
+			searcherMetricsValue = append(searcherMetricsValue, *r.SearcherMetricValue)
+		}
 		if r.ValidationMetrics != nil {
 			for metricsName, value := range *r.ValidationMetrics {
 				if value.Count == nil {
@@ -540,7 +553,7 @@ func (a *apiServer) getProjectNumericMetricsRange(
 			}
 		}
 	}
-	return valMetricsValues, traMetricsValues, nil
+	return valMetricsValues, traMetricsValues, searcherMetricsValue, nil
 }
 
 func (a *apiServer) PostProject(

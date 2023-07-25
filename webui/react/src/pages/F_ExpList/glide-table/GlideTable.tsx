@@ -61,6 +61,7 @@ import {
   getHeaderIcons,
   MIN_COLUMN_WIDTH,
   MULTISELECT,
+  searcherMetricsValColumn,
 } from './columns';
 import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
@@ -438,9 +439,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               },
             ]),
         heatmapOn &&
-        column.type === V1ColumnType.NUMBER &&
-        (column.location === V1LocationType.VALIDATIONS ||
-          column.location === V1LocationType.TRAINING)
+        (column.column === 'searcherMetricsVal' ||
+          (column.type === V1ColumnType.NUMBER &&
+            (column.location === V1LocationType.VALIDATIONS ||
+              column.location === V1LocationType.TRAINING)))
           ? {
               icon: <Icon decorative name="heatmap" />,
               key: 'heatmap',
@@ -782,6 +784,24 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               columnWidths[currentColumn.column],
               dataPath,
             );
+        }
+        if (currentColumn.column === 'searcherMetricsVal') {
+          const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
+          if (heatmap && heatmapOn && !heatmapSkipped.includes(currentColumn.column)) {
+            columnDefs[currentColumn.column] = searcherMetricsValColumn(
+              columnWidths[currentColumn.column],
+              {
+                color: (o: number) =>
+                  o < 0.5 ? `rgba(255, 229, 179, ${-o + 0.5})` : `rgba(189, 171, 254, ${o - 0.5})`,
+                max: heatmap.max,
+                min: heatmap.min,
+              },
+            );
+          } else {
+            columnDefs[currentColumn.column] = searcherMetricsValColumn(
+              columnWidths[currentColumn.column],
+            );
+          }
         }
         return columnDefs[currentColumn.column];
       })

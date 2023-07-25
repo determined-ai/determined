@@ -537,9 +537,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         settings.columns
           .slice(0, settings.compare ? settings.pinnedColumnsCount : undefined)
           .includes(column.column) &&
-        column.type === V1ColumnType.NUMBER &&
-        (column.location === V1LocationType.VALIDATIONS ||
-          column.location === V1LocationType.TRAINING),
+        (column.column === 'searcherMetricsVal' ||
+          (column.type === V1ColumnType.NUMBER &&
+            (column.location === V1LocationType.VALIDATIONS ||
+              column.location === V1LocationType.TRAINING))),
     );
   }, [settings.columns, projectColumns, settings.pinnedColumnsCount, settings.compare]);
 
