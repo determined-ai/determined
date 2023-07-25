@@ -74,7 +74,6 @@ export type ColumnDefs = Record<string, ColumnDef>;
 interface HeatmapProps {
   min: number;
   max: number;
-  color: (opacity: number) => string;
 }
 
 interface Params {
@@ -413,8 +412,12 @@ export const searcherMetricsValColumn = (
 
       let theme: Partial<GTheme> = {};
       if (heatmapProps && sMetricValue) {
-        const { min, max, color } = heatmapProps;
-        theme = { bgCell: color(getHeatmapPercentage(min, max, sMetricValue)) };
+        const { min, max } = heatmapProps;
+        theme = {
+          accentLight: getHeatmapColor(min, max, sMetricValue),
+          bgCell: getHeatmapColor(min, max, sMetricValue),
+          textDark: 'white',
+        };
       }
       return {
         allowOverlay: false,
@@ -462,6 +465,16 @@ const getHeatmapPercentage = (min: number, max: number, value: number): number =
   return (value - min) / (max - min);
 };
 
+const getHeatmapColor = (min: number, max: number, value: number): string => {
+  const p = getHeatmapPercentage(min, max, value);
+  const red = [110, 9];
+  const green = [4, 55];
+  const blue = [33, 105];
+  return `rgb(${red[0] + (red[1] - red[0]) * p}, ${green[0] + (green[1] - green[0]) * p}, ${
+    blue[0] + (blue[1] - blue[0]) * p
+  })`;
+};
+
 export const defaultNumberColumn = (
   column: ProjectColumn,
   columnWidth?: number,
@@ -474,8 +487,12 @@ export const defaultNumberColumn = (
       const data = isString(dataPath) ? getPath<number>(record, dataPath) : undefined;
       let theme: Partial<GTheme> = {};
       if (heatmapProps && data) {
-        const { min, max, color } = heatmapProps;
-        theme = { bgCell: color(getHeatmapPercentage(min, max, data)) };
+        const { min, max } = heatmapProps;
+        theme = {
+          accentLight: getHeatmapColor(min, max, data),
+          bgCell: getHeatmapColor(min, max, data),
+          textDark: 'white',
+        };
       }
       return {
         allowOverlay: false,
