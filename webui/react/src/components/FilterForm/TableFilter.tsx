@@ -14,12 +14,14 @@ interface Props {
   loadableColumns: Loadable<V1ProjectColumn[]>;
   formStore: FilterFormStore;
   setIsOpenFilter: (value: boolean) => void;
+  isMobile?: boolean;
   isOpenFilter: boolean;
 }
 
 const TableFilter = ({
   loadableColumns,
   formStore,
+  isMobile = false,
   isOpenFilter,
   setIsOpenFilter,
 }: Props): JSX.Element => {
@@ -69,7 +71,7 @@ const TableFilter = ({
         placement="bottomLeft"
         trigger="click"
         onOpenChange={onIsOpenFilterChange}>
-        <Button icon={<Icon decorative name="filter" />}>
+        <Button hideChildren={isMobile} icon={<Icon decorative name="filter" />}>
           Filter{fieldCount > 0 && <span>({fieldCount})</span>}
         </Button>
       </Popover>

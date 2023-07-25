@@ -29,7 +29,7 @@ import {
   ExpListView,
   RowHeight,
 } from 'pages/F_ExpList/F_ExperimentList.settings';
-import { rowHeightLabels } from 'pages/F_ExpList/glide-table/RowHeightMenu';
+import { rowHeightItems } from 'pages/F_ExpList/glide-table/OptionsMenu';
 import { patchUser } from 'services/api';
 import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
@@ -59,6 +59,11 @@ interface Props {
   show: boolean;
   onClose: () => void;
 }
+
+const rowHeightLabels = rowHeightItems.reduce((acc, { rowHeight, label }) => {
+  acc[rowHeight] = label;
+  return acc;
+}, {} as Record<RowHeight, string>);
 
 const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
@@ -245,7 +250,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                     );
                   }}>
                   <Select searchable={false}>
-                    {Object.entries(rowHeightLabels).map(([rowHeight, label]) => (
+                    {rowHeightItems.map(({ rowHeight, label }) => (
                       <Option key={rowHeight} value={rowHeight}>
                         {label}
                       </Option>

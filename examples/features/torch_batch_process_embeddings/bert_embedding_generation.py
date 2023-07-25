@@ -26,7 +26,7 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
         self.last_index = 0
         self.rank = self.context.distributed.get_rank()
 
-        self.output_dir = "/tmp/data/embeddings"
+        self.output_dir = "/tmp/data/bert_scidocs_embeddings"
         os.makedirs(self.output_dir, exist_ok=True)
 
     def process_batch(self, batch, batch_idx) -> None:
@@ -84,8 +84,8 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
         if self.rank == 0:
             chroma_dir = "/tmp/chroma"
             os.makedirs(chroma_dir, exist_ok=True)
-            chroma_client = chromadb.Client(chromadb.config.Settings(persist_directory=chroma_dir))
-            collection = chroma_client.create_collection(name="scidocs_embedding")
+            chroma_client = chromadb.PersistentClient(chroma_dir)
+            collection = chroma_client.get_or_create_collection(name="scidocs_embedding")
 
             embeddings = []
             documents = []
@@ -101,7 +101,7 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
                     ids += batch["id"]
                     documents += batch["text"]
 
-            collection.add(embeddings=embeddings, documents=documents, ids=ids)
+            collection.upsert(embeddings=embeddings, documents=documents, ids=ids)
             logging.info(f"Embedding contains {collection.count()} entries")
 
             # Clean-up temporary embedding files
@@ -110,6 +110,9 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
 
 if __name__ == "__main__":
     dataset = load_dataset("BeIR/scidocs", "corpus", split="corpus")
+    # Persisting embeddings can take quite a while on Chroma
+    # Adding a limit on dataset size to ensure the example finishes sooner
+    dataset = dataset.select(list(range(100)))
     experimental.torch_batch_process(
         EmbeddingProcessor,
         dataset,

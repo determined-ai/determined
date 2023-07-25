@@ -101,8 +101,13 @@ class ClusterStore extends PollingStore {
   #resourcePoolBindings: WritableObservable<Map<string, number[]>> = observable(Map());
 
   public readonly agents = this.#agents.readOnly();
-  public readonly resourcePools = this.#resourcePools.readOnly();
   public readonly resourcePoolBindings = this.#resourcePoolBindings.readOnly();
+
+  public readonly resourcePools = this.#resourcePools.select((loadable) => {
+    return Loadable.map(loadable, (pools) => {
+      return pools.sort((a, b) => a.name.localeCompare(b.name));
+    });
+  });
 
   public readonly clusterOverview = this.#agents.select((agents) =>
     Loadable.map(agents, (agents) => {

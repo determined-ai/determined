@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 
 import Section from 'components/Section';
 import { V1RPQueueStat } from 'services/api-ts-sdk';
-import { DURATION_DAY } from 'utils/datetime';
+import { DURATION_DAY, durationInEnglish } from 'utils/datetime';
 
 import ClusterHistoricalUsageChart from '../Cluster/ClusterHistoricalUsageChart';
 
@@ -23,7 +23,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
       (item) => Date.parse(item.periodStart) >= Date.now() - viewDays * DURATION_DAY,
     );
     return {
-      hoursAverage: { average: aggd.map((item) => item.seconds / 60) },
+      hoursAverage: { average: aggd.map((item) => item.seconds) },
       time: aggd.map((item) => item.periodStart),
     };
   }, [poolStats, viewDays]);
@@ -45,8 +45,11 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
         title="Avg Queue Time">
         <ClusterHistoricalUsageChart
           chartKey={viewDays}
+          formatValues={(_: uPlot, splits: number[]) =>
+            splits.map((n) => durationInEnglish(n * 1000))
+          }
           hoursByLabel={queuedStats.hoursAverage}
-          label="Queued Minutes"
+          label=" "
           time={queuedStats.time}
         />
       </Section>
