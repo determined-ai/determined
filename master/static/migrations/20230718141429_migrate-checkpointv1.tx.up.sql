@@ -1,5 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- Endstate of checkpoint views / tables is
 -- raw_checkpoints is left unmodified.
 -- checkpoints_v2 has checkpoint_v2s and unarchived checkpoint_v1s.
@@ -18,7 +16,7 @@ INSERT INTO public.checkpoints_v2 (
     size
 )
 SELECT
-    COALESCE(c.uuid, uuid_generate_v4()),
+    COALESCE(c.uuid, uuid_in(overlay(overlay(md5(random()::text || ':' || random()::text) placing '4' from 13) placing to_hex(floor(random()*(11-8+1) + 8)::int)::text from 17)::cstring)),
     t.task_id,
     CASE
         WHEN a.allocation_id IS NULL THEN NULL
