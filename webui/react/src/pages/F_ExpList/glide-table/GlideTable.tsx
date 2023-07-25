@@ -335,7 +335,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     }
   }, [data, previousData, selectAll]);
 
-  const toggleHeadmap = useCallback(
+  const toggleHeatmap = useCallback(
     (col: string) => {
       setHeatmapApplied(
         heatmapSkipped.includes(col)
@@ -448,7 +448,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               key: 'heatmap',
               label: !heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
               onClick: () => {
-                toggleHeadmap(column.column);
+                toggleHeatmap(column.column);
               },
             }
           : null,
@@ -500,7 +500,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       setSortableColumnIds,
       setPinnedColumnsCount,
       heatmapSkipped,
-      toggleHeadmap,
+      toggleHeatmap,
       heatmapOn,
     ],
   );

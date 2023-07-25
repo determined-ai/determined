@@ -532,11 +532,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const heatmapBtnVisible = useMemo(() => {
-    return !!Loadable.getOrElse([], projectColumns).find(
+    const visibleColumns = settings.columns.slice(
+      0,
+      settings.compare ? settings.pinnedColumnsCount : undefined,
+    );
+    return Loadable.getOrElse([], projectColumns).some(
       (column) =>
-        settings.columns
-          .slice(0, settings.compare ? settings.pinnedColumnsCount : undefined)
-          .includes(column.column) &&
+        visibleColumns.includes(column.column) &&
         (column.column === 'searcherMetricsVal' ||
           (column.type === V1ColumnType.NUMBER &&
             (column.location === V1LocationType.VALIDATIONS ||

@@ -111,7 +111,6 @@ export const svgIcons = [
   'row-small',
   'row-xl',
   'heatmap',
-  'four-squares',
   'scroll',
 ] as const;
 
