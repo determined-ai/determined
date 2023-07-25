@@ -208,61 +208,41 @@ def test_deepspeed_autotune_happy_path_train_batch_size() -> None:
         assert search_runner.state.experiment_completed
 
 
-@pytest.mark.timeout(10)
+@pytest.mark.timeout(20)
 def test_deepspeed_autotune_happy_path_train_batch_size_and_divisible_by() -> None:
     """
     Simulate the Deepspeed Autotune Search Methods end to end and make sure
     nothing falls over when the train_batch_size and divisible_by flags are both set.
     """
     for search_method_name in _defaults.ALL_SEARCH_METHOD_NAMES:
-        # All of our search methods currently run all of the specified `max-trials` in the
-        # happy path
-        exp_num_trials = cast(int, _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"])
-        model_info_profile_trial_metrics: List[Dict[str, Any]] = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
-        default_metric_name = str(_defaults.AUTOTUNING_ARG_DEFAULTS["metric"])
-        successful_trial_metrics: List[Dict[str, Any]] = [
-            {default_metric_name: 0.0} for _ in range(exp_num_trials - 1)
+        slots = DEFAULT_CUSTOM_DSAT_EXP_CONFIG_DICT[search_method_name]["resources"][
+            "slots_per_trial"
         ]
-        all_metrics = model_info_profile_trial_metrics + successful_trial_metrics
-        search_runner = _run_searcher(
-            search_method_name, all_metrics, {"train_batch_size": 512, "divisible_by": 8}
-        )
-        assert len(search_runner.state.trials_created) == exp_num_trials
-        assert len(search_runner.state.trials_closed) == exp_num_trials
-        assert len(search_runner.state.trial_progress) == exp_num_trials
-        for trial_uuid in search_runner.state.trial_progress:
-            assert search_runner.state.trial_progress[trial_uuid] == 1.0
-        assert not search_runner.state.experiment_failed
-        assert search_runner.state.experiment_completed
-
-
-@pytest.mark.timeout(10)
-def test_deepspeed_autotune_happy_path_train_batch_size_and_divisible_by_long() -> None:
-    # GG_TODO: Delete this.
-    """
-    Simulate the Deepspeed Autotune Search Methods end to end and make sure
-    nothing falls over when the train_batch_size and divisible_by flags are both set.
-    """
-    for search_method_name in _defaults.ALL_SEARCH_METHOD_NAMES:
-        # All of our search methods currently run all of the specified `max-trials` in the
-        # happy path
-        exp_num_trials = cast(int, _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"])
-        model_info_profile_trial_metrics: List[Dict[str, Any]] = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
-        default_metric_name = str(_defaults.AUTOTUNING_ARG_DEFAULTS["metric"])
-        successful_trial_metrics: List[Dict[str, Any]] = [
-            {default_metric_name: 0.0} for _ in range(exp_num_trials - 1)
-        ]
-        all_metrics = model_info_profile_trial_metrics + successful_trial_metrics
-        search_runner = _run_searcher(
-            search_method_name, all_metrics, {"train_batch_size": 512, "divisible_by": 8}
-        )
-        assert len(search_runner.state.trials_created) == exp_num_trials
-        assert len(search_runner.state.trials_closed) == exp_num_trials
-        assert len(search_runner.state.trial_progress) == exp_num_trials
-        for trial_uuid in search_runner.state.trial_progress:
-            assert search_runner.state.trial_progress[trial_uuid] == 1.0
-        assert not search_runner.state.experiment_failed
-        assert search_runner.state.experiment_completed
+        train_batch_size = slots * 4
+        for divisible_by in (1, train_batch_size // 4, train_batch_size // 2):
+            # All of our search methods currently run all of the specified `max-trials` in the
+            # happy path
+            exp_num_trials = cast(int, _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"])
+            model_info_profile_trial_metrics: List[Dict[str, Any]] = [
+                MODEL_INFO_PROFILE_METRIC_FIXTURE
+            ]
+            default_metric_name = str(_defaults.AUTOTUNING_ARG_DEFAULTS["metric"])
+            successful_trial_metrics: List[Dict[str, Any]] = [
+                {default_metric_name: 0.0} for _ in range(exp_num_trials - 1)
+            ]
+            all_metrics = model_info_profile_trial_metrics + successful_trial_metrics
+            search_runner = _run_searcher(
+                search_method_name,
+                all_metrics,
+                {"train_batch_size": train_batch_size, "divisible_by": divisible_by},
+            )
+            assert len(search_runner.state.trials_created) == exp_num_trials
+            assert len(search_runner.state.trials_closed) == exp_num_trials
+            assert len(search_runner.state.trial_progress) == exp_num_trials
+            for trial_uuid in search_runner.state.trial_progress:
+                assert search_runner.state.trial_progress[trial_uuid] == 1.0
+            assert not search_runner.state.experiment_failed
+            assert search_runner.state.experiment_completed
 
 
 @pytest.mark.timeout(10)
