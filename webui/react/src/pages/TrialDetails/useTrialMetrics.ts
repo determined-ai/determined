@@ -129,6 +129,7 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
     if (trials.length === 0) {
       // If there are no trials selected then
       // no data is available.
+      setLoadableData(Loaded({}));
       return;
     }
     if (trials.length > 0) {
