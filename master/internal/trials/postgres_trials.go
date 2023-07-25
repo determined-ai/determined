@@ -39,7 +39,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	case "time":
 		queryColumn = "end_time"
 	default:
-		queryColumn = timeSeriesColumn
+		queryColumn = strings.ReplaceAll(timeSeriesColumn, ".", "·")
 	}
 	subq := db.BunSelectMetricsQuery(metricGroup, false).Table("metrics").
 		ColumnExpr("(select setseed(1)) as _seed").
@@ -86,7 +86,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 			Where("total_batches <= 0 OR total_batches <= ?", endBatches).
 			Where("end_time > ?", startTime)
 	default:
-		orderColumn = timeSeriesColumn
+		orderColumn = strings.ReplaceAll(timeSeriesColumn, ".", "·")
 		subq, err = db.ApplyPolymorphicFilter(subq, queryColumn, timeSeriesFilter)
 		if err != nil {
 			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
