@@ -1,0 +1,9 @@
+name: core-api-stage-1.1 generic metrics
+entrypoint: python3 11_generic_metrics.py
+
+searcher:
+   name: single
+   metric: x
+   max_length: 1
+
+max_restarts: 0
