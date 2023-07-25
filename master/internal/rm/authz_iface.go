@@ -13,7 +13,7 @@ type ResourceManagerAuthZ interface {
 	// GET /api/v1/resource-pools
 	FilterResourcePools(
 		ctx context.Context, curUser model.User, resourcePools []*resourcepoolv1.ResourcePool,
-		workspaceIDs []int32,
+		accessibleWorkspaces []int32,
 	) ([]*resourcepoolv1.ResourcePool, error)
 }
 
