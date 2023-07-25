@@ -236,11 +236,14 @@ func setupUserAuthzTest(
 	if authzUser == nil {
 		authzUser = &mocks.UserAuthZ{}
 		user.AuthZProvider.Register("mock", authzUser)
-		config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
 	}
-	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
+	enableAuthZMocks()
 
 	return api, authzUser, curUser, ctx
+}
+
+func enableAuthZMocks() {
+	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
 }
 
 func TestAuthzGetUsers(t *testing.T) {

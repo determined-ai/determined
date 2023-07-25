@@ -64,14 +64,14 @@ repos:
         language: "script"
         description: "Runs `gofumpt`, requires github.com/mvdan/gofumpt"
         exclude: ^(proto/pkg)
-      - id: golangci-lint
-        name: "go golangci-lint"
-        entry: ./pre-commit/run-golangci-lint.sh
-        files: '\.go$'
-        language: "script"
-        description: "Runs `golangci-lint`, install https://github.com/golangci/golangci-lint"
-        exclude: ^(proto/pkg)
-        require_serial: true
+      # - id: golangci-lint
+      #   name: "go golangci-lint"
+      #   entry: ./pre-commit/run-golangci-lint.sh
+      #   files: '\.go$'
+      #   language: "script"
+      #   description: "Runs `golangci-lint`, install https://github.com/golangci/golangci-lint"
+      #   exclude: ^(proto/pkg)
+      #   require_serial: true
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.28.0

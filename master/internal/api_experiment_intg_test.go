@@ -74,10 +74,7 @@ func setupExpAuthTest(t *testing.T, pgdb *db.PgDB) (
 	*apiServer, *mocks.ExperimentAuthZ, *mocks.ProjectAuthZ, model.User, context.Context,
 ) {
 	api, projectAuthZ, _, user, ctx := setupProjectAuthZTest(t, pgdb)
-	if authZExp == nil {
-		authZExp = &mocks.ExperimentAuthZ{}
-		expauth.AuthZProvider.Register("mock", authZExp)
-	}
+	authZExp := getMockExpAuth()
 	return api, authZExp, projectAuthZ, user, ctx
 }
 
@@ -88,6 +85,15 @@ func getMockModelAuth() *mocks.ModelAuthZ {
 	}
 
 	return authzModel
+}
+
+func getMockExpAuth() *mocks.ExperimentAuthZ {
+	if authZExp == nil {
+		authZExp = &mocks.ExperimentAuthZ{}
+		expauth.AuthZProvider.Register("mock", authZExp)
+	}
+
+	return authZExp
 }
 
 func createTestExp(

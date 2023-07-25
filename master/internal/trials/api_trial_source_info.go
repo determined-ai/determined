@@ -7,7 +7,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/experiment"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -24,7 +24,7 @@ func (a *TrialSourceInfoAPIServer) ReportTrialSourceInfo(
 ) (*apiv1.ReportTrialSourceInfoResponse, error) {
 	tsi := req.TrialSourceInfo
 	if err := CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(tsi.TrialId),
-		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
+		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
 	resp := &apiv1.ReportTrialSourceInfoResponse{}
@@ -63,7 +63,7 @@ func GetMetricsForTrialSourceInfoQuery(
 	numMetricsLimit := 1000
 	for _, val := range trialIds {
 		if err := CanGetTrialsExperimentAndCheckCanDoAction(ctx, val.TrialID,
-			experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+			expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 			// If the user can see the checkpoint, but not one of the inference
 			// or fine tuning trials that points to it, simply don't show those
 			// particular trials.

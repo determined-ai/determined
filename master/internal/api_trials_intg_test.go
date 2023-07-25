@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/maps"
@@ -596,6 +597,15 @@ func TestTrialAuthZ(t *testing.T) {
 			})
 			return err
 		}, false},
+		{"CanEditExperiment", func(id int) error {
+			req := &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: &trialv1.TrialSourceInfo{
+				TrialId:             int32(id),
+				CheckpointUuid:      uuid.NewString(),
+				TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+			}}
+			_, err := api.ReportTrialSourceInfo(ctx, req)
+			return err
+		}, false},
 	}
 
 	for _, curCase := range cases {
@@ -666,7 +676,7 @@ func TestCompareTrialsSampling(t *testing.T) {
 	require.Equal(t, sampleBatches1, sampleBatches2)
 }
 
-func TestReportTrialSourceInfo(t *testing.T) {
+func TestTrialSourceInfo(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
 	infTrial, _, _ := createTestTrialWithMetrics(
@@ -698,8 +708,7 @@ func TestReportTrialSourceInfo(t *testing.T) {
 	}
 
 	// Create a checkpoint to index with
-	startingResources := map[string]int64{"a": 1}
-	checkpointUUID := createVersionTwoCheckpoint(ctx, t, api, curUser, startingResources)
+	checkpointUUID := createVersionTwoCheckpoint(ctx, t, api, curUser, map[string]int64{"a": 1})
 
 	// Create a model_version to index with
 	conv := &protoconverter.ProtoConverter{}
@@ -756,4 +765,33 @@ func TestReportTrialSourceInfo(t *testing.T) {
 	// One trial is valid and it has one aggregated MetricsReport
 	require.Equal(t, len(getMVResp.Data), 1)
 	require.Equal(t, len(getCkptResp.Data[0].MetricReports), 1)
+
+	infTrialExp, err := db.ExperimentByID(ctx, infTrial.ExperimentID)
+	require.NoError(t, err)
+	infTrial2Exp, err := db.ExperimentByID(ctx, infTrial2.ExperimentID)
+	require.NoError(t, err)
+
+	// Test RBAC filtering
+	// Enable the mock for Experiment RBAC
+	enableAuthZMocks()
+	authZExp = getMockExpAuth()
+
+	// All experiments can be seen
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		Return(nil).Times(10)
+	// We can see the experiment that generated the checkpoint
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
+		Return(nil).Once()
+	// We can't see the experiment for infTrial
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, infTrialExp).
+		Return(authz2.PermissionDeniedError{}).Once()
+	// We can see the experiment for infTrial2
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, infTrial2Exp).
+		Return(nil).Once()
+	getCkptReq = &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID}
+	getCkptResp, getErr = api.GetTrialMetricsBySourceInfoCheckpoint(ctx, getCkptReq)
+	require.NoError(t, getErr)
+	// Only infTrial2 should be visible
+	require.Equal(t, len(getCkptResp.Data), 1)
+	require.Equal(t, getCkptResp.Data[0].TrialId, int32(infTrial2.ID))
 }
