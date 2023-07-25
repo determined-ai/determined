@@ -166,21 +166,25 @@ def get_full_parser() -> argparse.ArgumentParser:
     )
     asha_subparser.add_argument(
         "--max-rungs",
+        type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-rungs"],
         help="Maximum rungs to use in the ASHA algorithm",
     )
     asha_subparser.add_argument(
         "--min-binary-search-trials",
+        type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["min-binary-search-trials"],
         help="Minimum number of binary search trials to run per random configuration",
     )
     asha_subparser.add_argument(
         "--asha-early-stopping",
+        type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["asha-early-stopping"],
         help="ASHA early stopping parameter (`s` in arxiv:1810.05934)",
     )
     asha_subparser.add_argument(
         "--divisor",
+        type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["divisor"],
         help="ASHA divisor parameter (`eta` in arxiv:1810.05934)",
     )
