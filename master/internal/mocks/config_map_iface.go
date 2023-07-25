@@ -217,7 +217,8 @@ func (_m *ConfigMapInterface) Watch(ctx context.Context, opts metav1.ListOptions
 func NewConfigMapInterface(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *ConfigMapInterface {
+},
+) *ConfigMapInterface {
 	mock := &ConfigMapInterface{}
 	mock.Mock.Test(t)
 

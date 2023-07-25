@@ -100,6 +100,7 @@ func deleteAll(pods []*mockPod) {
 		p.delete()
 	}
 }
+
 func podList(m map[string]*k8sV1.Pod) *k8sV1.PodList {
 	podList := &k8sV1.PodList{}
 	for _, pod := range m {
@@ -174,7 +175,7 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 	numPods := 1
 	pods := make([]*mockPod, 0)
 	for i := 0; i < numPods; i++ {
-		name := "testing12345t543425" //petName.Generate(3, "-")
+		name := "testing12345t543425" // petName.Generate(3, "-")
 		pods = append(pods, startMockPod(k8sRequestQueue, name, nil))
 	}
 
