@@ -773,8 +773,10 @@ func TestTrialSourceInfo(t *testing.T) {
 
 	// Test RBAC filtering
 	// Enable the mock for Experiment RBAC
-	enableAuthZMocks()
-	authZExp = getMockExpAuth()
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
+
+	// enableAuthZMocks()
+	// authZExp = getMockExpAuth()
 
 	// All experiments can be seen
 	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
