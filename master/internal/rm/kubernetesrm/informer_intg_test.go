@@ -86,7 +86,7 @@ func TestPodInformer(t *testing.T) {
 			assert.Nil(t, err)
 
 			// Test run().
-			go i.run(context.TODO())
+			go i.run()
 			for _, name := range tt.podNames {
 				pod := &k8sV1.Pod{
 					ObjectMeta: metaV1.ObjectMeta{
@@ -194,7 +194,7 @@ func TestNodeInformer(t *testing.T) {
 			assert.Nil(t, err)
 
 			// Test run() & iterate through/apply a set of events received by the informer.
-			go n.run(context.TODO())
+			go n.run()
 			for _, n := range tt.operations {
 				node := &k8sV1.Node{
 					ObjectMeta: metaV1.ObjectMeta{
@@ -279,7 +279,7 @@ func TestEventListener(t *testing.T) {
 			assert.NotNil(t, i)
 			assert.Equal(t, tt.expected, err)
 
-			go i.run(context.TODO())
+			go i.run()
 			for _, name := range tt.eventNames {
 				event := &k8sV1.Event{
 					ObjectMeta: metaV1.ObjectMeta{
@@ -364,7 +364,7 @@ func TestPreemptionListener(t *testing.T) {
 			assert.NotNil(t, i)
 			assert.Equal(t, tt.expected, err)
 
-			go i.run(context.TODO())
+			go i.run()
 			for _, name := range tt.names {
 				pod := &k8sV1.Pod{
 					ObjectMeta: metaV1.ObjectMeta{
