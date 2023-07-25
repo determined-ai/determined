@@ -9,7 +9,7 @@ import sys
 import typing
 from argparse import Namespace
 from collections.abc import Sequence as abc_Sequence
-from typing import Any, Dict, List, Optional, OrderedDict, Sequence, Tuple, get_args, get_origin
+from typing import Any, Dict, List, Optional, OrderedDict, Tuple, get_args, get_origin
 from urllib import parse
 
 from termcolor import colored
@@ -71,7 +71,10 @@ def _bindings_sig(fn: Any) -> Tuple[str, List[inspect.Parameter]]:
     sig = inspect.signature(fn)
     # throw out session
     params = list(sig.parameters.values())[1:]
+    # stable order of arguments
     params.sort(key=lambda x: x.name)
+    # put non optionals first
+    params.sort(key=lambda x: x.default is inspect.Parameter.empty, reverse=True)
     return fn.__name__, params
 
 
@@ -89,7 +92,7 @@ def _is_primitive_annotation(a: Any) -> bool:
             a = eval(a.strip())
         except NameError:
             pass
-    # TODO bools
+    # TODO bool
     if a in [str, int, float, type(None)]:
         return True
 
@@ -101,6 +104,7 @@ def _is_primitive_annotation(a: Any) -> bool:
         if len(args) == 2 and type(None) in args:
             return _is_primitive_annotation(args[0])
     elif origin in [list, tuple, set, frozenset, abc_Sequence]:
+        return False  # TODO: we don't support the cli interface for these yet.
         # Assume all elements of the sequence are of the same type,
         # and check that type.
         if args is not None:
@@ -133,9 +137,9 @@ def _test():
     assert _can_be_called_via_cli(params) is False, params
     annots = [
         str,
-        Sequence[str],
         Optional[str],
-        Optional[Sequence[str]],
+        # Sequence[str],
+        # Optional[Sequence[str]],
     ]
     for a in annots:
         assert (
@@ -145,9 +149,9 @@ def _test():
             is True
         ), a
 
-    _, params = _bindings_sig(bindings.get_ExpMetricNames)
-    for p in params:
-        assert _is_primitive_parameter(p) is True, p
+    # _, params = _bindings_sig(bindings.get_ExpMetricNames)
+    # for p in params:
+    #     assert _is_primitive_parameter(p) is True, p
 
 
 # print(_bindings_sig(bindings.get_ExpMetricNames))
@@ -179,18 +183,22 @@ def list_bindings(args: Namespace) -> None:
 
 
 def _parse_args_to_kwargs(args: Namespace, params: List[inspect.Parameter]) -> Dict[str, Any]:
-    assert len(args.args) <= len(params), "too many arguments"
+    values = []
     kwargs: Dict[str, Any] = {}
 
-    for idx, arg in enumerate(args.args):
-        # by order
-        kwargs[params[idx].name] = arg
+    for arg in args.args:
+        if "=" in arg:
+            key, value = arg.split("=", 1)
+            kwargs[key] = value
+        else:
+            values.append(arg)
 
-    # for p in params:
-    #     if p.default is not inspect.Parameter.empty:
-    #         kwargs[p.name] = p.default
-    #     else:
-    #         kwargs[p.name] = getattr(args, p.name)
+    assert len(values) + len(kwargs) <= len(params), "too many arguments"
+
+    for idx, value in enumerate(values):
+        if params[idx].name in kwargs:
+            raise ValueError(f"Argument {params[idx].name} specified twice")
+        kwargs[params[idx].name] = value
     return kwargs
 
 
@@ -292,7 +300,7 @@ args_description = [
                             Arg(
                                 "args",
                                 nargs=argparse.REMAINDER,
-                                help="arguments to pass to the function",
+                                help="arguments to pass to the function, positional or kw=value",
                             ),
                         ],
                     ),
