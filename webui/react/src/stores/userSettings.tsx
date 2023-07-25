@@ -106,7 +106,11 @@ export class UserSettingsStore extends PollingStore {
    * @param value New value of the setting
    */
   public set<T>(type: t.Type<T>, key: string, value: T): void;
-  public set<T extends t.Props>(type: t.TypeC<T>, key: string, value: Partial<T>): void;
+  public set<T extends t.Props>(
+    type: t.TypeC<T>,
+    key: string,
+    value: t.TypeOfPartialProps<T>,
+  ): void;
   public set<T>(type: t.Encoder<T, Json>, key: string, value: T): void;
   public set<T>(type: t.Encoder<T, Json> | t.TypeC<t.Props>, key: string, value: T): void {
     if (isTypeC(type)) {
@@ -143,12 +147,15 @@ export class UserSettingsStore extends PollingStore {
 
   /**
    * This updates the value of a setting and persists it for future sessions.
-   * If the setting value is an object you can pass a partial value and
-   * if will be merged with the previous value.
    * @param type The type of the value or an encoder of the value to JSON.
    * @param key Unique key to store and retrieve the settings
    * @param fn Function to update the value of the setting at `key`
    */
+  public update<T extends t.Props, U = t.TypeOfProps<T>>(
+    type: t.TypeC<T>,
+    key: string,
+    fn: (value: U | undefined) => U,
+  ): void;
   public update<T>(type: t.Type<T, Json>, key: string, fn: (value: T | undefined) => T): void {
     this.#settings.update((settings) => {
       return Loadable.map(settings, (settings) => {
