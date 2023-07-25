@@ -12,22 +12,22 @@ import (
 	watchtools "k8s.io/client-go/tools/watch"
 )
 
-type callbackFunc func(watch.Event)
+type informerCallback func(watch.Event)
 
 type informer struct {
-	cb         callbackFunc
+	cb         informerCallback
 	name       string
 	syslog     *logrus.Entry
 	resultChan <-chan watch.Event
 }
 
-func newInformer(
+func newPodInformer(
 	ctx context.Context,
 	label string,
 	name string,
 	namespace string,
 	podInterface typedV1.PodInterface,
-	cb callbackFunc,
+	cb informerCallback,
 ) (*informer, error) {
 	pods, err := podInterface.List(ctx, metaV1.ListOptions{LabelSelector: label})
 	if err != nil {
@@ -46,7 +46,7 @@ func newInformer(
 
 	// Log when pods are first added to the informer (at start-up).
 	syslog := logrus.WithFields(logrus.Fields{
-		"component": fmt.Sprintf("%s-Informer", name),
+		"component": fmt.Sprintf("%s-informer", name),
 		"namespace": namespace,
 	})
 	for i := range pods.Items {
@@ -62,11 +62,11 @@ func newInformer(
 	}, nil
 }
 
-func newEventListener(
+func newEventInformer(
 	ctx context.Context,
 	eventInterface typedV1.EventInterface,
 	namespace string,
-	cb callbackFunc,
+	cb informerCallback,
 ) (*informer, error) {
 	events, err := eventInterface.List(ctx, metaV1.ListOptions{})
 	if err != nil {
@@ -84,11 +84,11 @@ func newEventListener(
 
 	// Log when pods are first added to the informer (at start-up).
 	syslog := logrus.WithFields(logrus.Fields{
-		"component": "eventListener",
+		"component": "event-informer",
 		"namespace": namespace,
 	})
 	for i := range events.Items {
-		syslog.Debugf("listener added event: %s", events.Items[i].Name)
+		syslog.Debugf("informer added event: %s", events.Items[i].Name)
 		cb(watch.Event{Object: &events.Items[i]})
 	}
 
@@ -103,7 +103,7 @@ func newEventListener(
 func newNodeInformer(
 	ctx context.Context,
 	nodeInterface typedV1.NodeInterface,
-	cb callbackFunc,
+	cb informerCallback,
 ) (*informer, error) {
 	nodes, err := nodeInterface.List(ctx, metaV1.ListOptions{})
 	if err != nil {
@@ -134,7 +134,7 @@ func newNodeInformer(
 	}, nil
 }
 
-func (i *informer) run() {
+func (i *informer) run(ctx context.Context) {
 	i.syslog.Debugf("%s informer is starting", i.name)
 	for event := range i.resultChan {
 		if event.Type == watch.Error {

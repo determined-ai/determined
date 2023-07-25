@@ -669,7 +669,7 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 
 func (p *pods) startPodInformer(s *actor.System) error {
 	for namespace := range p.namespaceToPoolName {
-		i, err := newInformer(
+		i, err := newPodInformer(
 			context.TODO(),
 			determinedLabel,
 			"pod",
@@ -685,13 +685,14 @@ func (p *pods) startPodInformer(s *actor.System) error {
 			return err
 		}
 
-		go i.run()
+		go i.run(context.TODO())
 	}
 	return nil
 }
 
 func (p *pods) startNodeInformer() error {
-	i, err := newNodeInformer(context.TODO(),
+	i, err := newNodeInformer(
+		context.TODO(),
 		p.clientSet.CoreV1().Nodes(),
 		func(event watch.Event) {
 			p.mu.Lock()
@@ -702,13 +703,13 @@ func (p *pods) startNodeInformer() error {
 		return err
 	}
 
-	go i.run()
+	go i.run(context.TODO())
 	return nil
 }
 
 func (p *pods) startEventListeners(s *actor.System) error {
 	for namespace := range p.namespaceToPoolName {
-		l, err := newEventListener(
+		l, err := newEventInformer(
 			context.TODO(),
 			p.clientSet.CoreV1().Events(namespace),
 			namespace,
@@ -720,14 +721,15 @@ func (p *pods) startEventListeners(s *actor.System) error {
 		if err != nil {
 			return err
 		}
-		go l.run()
+		go l.run(context.TODO())
 	}
 	return nil
 }
 
 func (p *pods) startPreemptionListeners(s *actor.System) error {
 	for namespace := range p.namespaceToPoolName {
-		l, err := newInformer(context.TODO(),
+		l, err := newPodInformer(
+			context.TODO(),
 			determinedPreemptionLabel,
 			"preemption",
 			namespace,
@@ -740,7 +742,7 @@ func (p *pods) startPreemptionListeners(s *actor.System) error {
 		if err != nil {
 			return err
 		}
-		go l.run()
+		go l.run(context.TODO())
 	}
 	return nil
 }
