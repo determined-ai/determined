@@ -440,7 +440,7 @@ def test_rp_workspace_mapping(client: _client.Determined) -> None:
             match="default resource pool default cannot be bound to any workspace",
         ):
             rp = resource_pool.ResourcePool(client._session, rp_names[0])
-            rp.bind(workspace_names)
+            rp.add_bindings(workspace_names)
     finally:
-        for id in workspace_ids:
-            bindings.delete_DeleteWorkspace(session=client._session, id=id)
+        for wid in workspace_ids:
+            bindings.delete_DeleteWorkspace(session=client._session, id=wid)
