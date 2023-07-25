@@ -1080,11 +1080,11 @@ func (a *allocation) terminated(reason string) {
 	}
 	switch {
 	case a.killedWhileRunning:
-		exitReason = fmt.Sprintf("allocation stopped after %s", reason)
+		exitReason = fmt.Sprintf("allocation killed after %s", reason)
 		a.syslog.Info(exitReason)
 		return
 	case a.req.Preemptible && preemptible.Acknowledged(a.req.AllocationID.String()):
-		exitReason = fmt.Sprintf("allocation stopped after %s", reason)
+		exitReason = fmt.Sprintf("allocation preempted after %s", reason)
 		a.syslog.Info(exitReason)
 		return
 	case a.exitErr == nil && len(a.resources.exited()) > 0:
@@ -1133,7 +1133,7 @@ func (a *allocation) terminated(reason string) {
 			return
 		}
 	case len(a.resources) == 0:
-		exitReason = fmt.Sprintf("allocation stopped after %s", reason)
+		exitReason = fmt.Sprintf("allocation aborted after %s", reason)
 		a.syslog.Info(exitReason)
 		return
 	default:
