@@ -10,6 +10,7 @@ import { Loadable } from 'utils/loadable';
 export type ValidFeature = 'chart' | 'explist_v2' | 'rp_binding';
 
 type FeatureDescription = {
+  friendlyName: string;
   description: string;
   defaultValue: boolean;
 };
@@ -18,14 +19,17 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
   chart: {
     defaultValue: false,
     description: 'Enable improved learning curve charts for experiment visualizations',
+    friendlyName: 'New Charts',
   },
   explist_v2: {
     defaultValue: false,
     description: 'Enable improved experiment listing, filtering, and comparison',
+    friendlyName: 'New Experiment List',
   },
   rp_binding: {
     defaultValue: false,
     description: 'Allow resource pools to be assigned to workspaces',
+    friendlyName: 'Resource Pool Binding',
   },
 } as const;
 export const FEATURE_SETTINGS_PATH = 'global-features';

@@ -147,14 +147,6 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
         };
         const shortcutSettings = { ...shortcutSettingsDefaults, ...(savedShortcutSettings ?? {}) };
 
-        const featureSettings = {
-          ...Object.keys(FEATURES).reduce((acc, key) => {
-            acc[key as ValidFeature] = null;
-            return acc;
-          }, {} as Record<ValidFeature, boolean | null>),
-          ...(savedFeatureSettings ?? {}),
-        };
-
         return (
           <Drawer open={show} placement="left" title="Settings" onClose={onClose}>
             <Section divider title="Profile">
@@ -328,9 +320,9 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
             <Section divider title="Experimental">
               <div className={css.section}>
                 {Object.entries(FEATURES).map(([feature, description]) => (
-                  <InlineForm<boolean | null>
+                  <InlineForm<boolean>
                     initialValue={
-                      featureSettings[feature as ValidFeature] ?? description.defaultValue
+                      savedFeatureSettings?.[feature as ValidFeature] ?? description.defaultValue
                     }
                     key={feature}
                     label={
@@ -338,19 +330,9 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                         {feature} <Icon name="info" showTooltip title={description.description} />
                       </Space>
                     }
-                    valueFormatter={(value) => {
-                      switch (value) {
-                        case null:
-                          return '';
-                        case true:
-                          return 'On';
-                        case false:
-                          return 'Off';
-                      }
-                    }}
+                    valueFormatter={(value) => (value ? 'On' : 'Off')}
                     onSubmit={(val) => {
                       userSettings.set(FeatureSettingsConfig, FEATURE_SETTINGS_PATH, {
-                        ...featureSettings,
                         [feature]: val,
                       });
                     }}>
