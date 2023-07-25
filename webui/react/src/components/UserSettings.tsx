@@ -332,7 +332,8 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                     key={feature}
                     label={
                       <Space>
-                        {feature} <Icon name="info" showTooltip title={description.description} />
+                        {description.friendlyName}
+                        <Icon name="info" showTooltip title={description.description} />
                       </Space>
                     }
                     valueFormatter={(value) => (value ? 'On' : 'Off')}
