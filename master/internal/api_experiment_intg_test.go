@@ -90,10 +90,6 @@ func getMockModelAuth() *mocks.ModelAuthZ {
 	return authzModel
 }
 
-// func getMockExpAuth() *mocks.ExperimentAuthZ {
-// 	return authZExp
-// }
-
 func createTestExp(
 	t *testing.T, api *apiServer, curUser model.User, labels ...string,
 ) *model.Experiment {
