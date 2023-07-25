@@ -1,6 +1,7 @@
 package dispatcherrm
 
 import (
+	"reflect"
 	"testing"
 
 	"gotest.tools/assert"
@@ -631,4 +632,95 @@ func makeTestHpcDetailsCache(v *hpcResources) *hpcResourceDetailsCache {
 	hpcDetailsDetails.sampled = c
 	hpcDetailsDetails.rmConfig = &config.DispatcherResourceManagerConfig{}
 	return &hpcDetailsDetails
+}
+
+func Test_dispatcherResourceManager_getTaskContainerDefaults(t *testing.T) {
+	// Set up some configurations with distinct values for DtrainNetworkInterface
+	// so we can tell where the result was obtained from.
+	partitionOverrideConfig := config.DispatcherPartitionOverrideConfigs{
+		TaskContainerDefaultsConfig: &model.TaskContainerDefaultsConfig{
+			DtrainNetworkInterface: "fromPartitionOverride",
+		},
+		Description: launcherPoolDescription,
+	}
+	partitionOverrides := make(map[string]config.DispatcherPartitionOverrideConfigs)
+	partitionOverrides[""] = partitionOverrideConfig
+
+	resourcePoolConfig := config.ResourcePoolConfig{
+		TaskContainerDefaults: &model.TaskContainerDefaultsConfig{
+			DtrainNetworkInterface: "fromResourcePoolConfig",
+		},
+	}
+
+	type fields struct {
+		rmConfig   *config.DispatcherResourceManagerConfig
+		poolConfig []config.ResourcePoolConfig
+	}
+	type args struct {
+		msg taskContainerDefaults
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    model.TaskContainerDefaultsConfig
+		wantErr bool
+	}{
+		{
+			name: "Use the default result",
+			fields: fields{
+				rmConfig: &config.DispatcherResourceManagerConfig{},
+			},
+			args: args{
+				msg: taskContainerDefaults{},
+			},
+			want:    model.TaskContainerDefaultsConfig{},
+			wantErr: false,
+		},
+		{
+			name: "Use partition override",
+			fields: fields{
+				rmConfig: &config.DispatcherResourceManagerConfig{
+					PartitionOverrides: partitionOverrides,
+				},
+			},
+			args: args{
+				msg: taskContainerDefaults{},
+			},
+			want: model.TaskContainerDefaultsConfig{
+				DtrainNetworkInterface: "fromPartitionOverride",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Use pool override",
+			fields: fields{
+				rmConfig:   &config.DispatcherResourceManagerConfig{},
+				poolConfig: []config.ResourcePoolConfig{resourcePoolConfig},
+			},
+			args: args{
+				msg: taskContainerDefaults{},
+			},
+			want: model.TaskContainerDefaultsConfig{
+				DtrainNetworkInterface: "fromResourcePoolConfig",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &dispatcherResourceManager{
+				rmConfig:   tt.fields.rmConfig,
+				poolConfig: tt.fields.poolConfig,
+			}
+			got, err := m.getTaskContainerDefaults(tt.args.msg)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getTaskContainerDefaults() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getTaskContainerDefaults() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
