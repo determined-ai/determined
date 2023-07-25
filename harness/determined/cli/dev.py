@@ -9,18 +9,7 @@ import sys
 import typing
 from argparse import Namespace
 from collections.abc import Sequence as abc_Sequence
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    OrderedDict,
-    Sequence,
-    Tuple,
-    get_args,
-    get_origin,
-)
+from typing import Any, Dict, List, Optional, OrderedDict, Sequence, Tuple, get_args, get_origin
 from urllib import parse
 
 from termcolor import colored
@@ -225,7 +214,6 @@ def call_bindings(args: Namespace) -> None:
     sess = cli.setup_session(args)
     fn_name: str = args.name
     fns = _get_available_bindings(show_unusable=False)
-    fn: Callable
     try:
         fn = getattr(bindings, fn_name)
     except AttributeError:
@@ -233,8 +221,12 @@ def call_bindings(args: Namespace) -> None:
         matches = [n for n in fns.keys() if re.match(f".*{fn_name}.*", n, re.IGNORECASE)]
         if not matches:
             raise errors.CliError(f"no such binding: {fn_name}")
+        # if len(matches) > 1:
+        #     raise errors.CliError(f"multiple bindings match for {fn_name}: {matches}")
+        input(f"did you mean '{matches[0]}'? (press enter to continue)")
+        fn_name = matches[0]
+        fn = getattr(bindings, fn_name)
 
-        raise errors.CliError(f"did you mean one of these? {matches}")
     params = fns[fn_name]
     try:
         kwargs = _parse_args_to_kwargs(args, params)
