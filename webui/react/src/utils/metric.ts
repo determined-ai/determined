@@ -1,18 +1,13 @@
-import { RecordKey } from 'types';
+import { OldMetric, RecordKey } from 'types';
 import { Metric, MetricType, WorkloadGroup } from 'types';
 
 import { alphaNumericSorter } from '../utils/sort';
 
-/*
- * Sort the metric names by having the validation metrics come first followed by training metrics.
- * Within each type of metric, sort in the order they appear in the `MetricNames` array.
- * Within the respective type of metrics, `MetricNames` is currently sorted alphanumerically.
+/**
+ * Metrics are sorted by their type first (alphabetically) followed by their name (alphabetically).
  */
 export const metricSorter = (a: Metric, b: Metric): number => {
-  const isAValidation = a.type === MetricType.Validation;
-  const isBValidation = b.type === MetricType.Validation;
-  if (isAValidation && !isBValidation) return -1;
-  if (isBValidation && !isAValidation) return 1;
+  if (a.type !== b.type) return alphaNumericSorter(a.type, b.type);
   return alphaNumericSorter(a.name, b.name);
 };
 
@@ -48,7 +43,7 @@ export const extractMetrics = (workloads: WorkloadGroup[]): Metric[] => {
 
 export const extractMetricSortValue = (
   workload: WorkloadGroup,
-  metric: Metric,
+  metric: OldMetric,
 ): number | undefined => {
   return (
     extractMetricValue(workload, metric) ??
@@ -57,7 +52,10 @@ export const extractMetricSortValue = (
   );
 };
 
-export const extractMetricValue = (workload: WorkloadGroup, metric: Metric): number | undefined => {
+export const extractMetricValue = (
+  workload: WorkloadGroup,
+  metric: OldMetric,
+): number | undefined => {
   const source = workload[metric.type]?.metrics ?? {};
   return source[metric.name];
 };
@@ -81,10 +79,16 @@ export const metricToStr = (metric: Metric, truncateLimit = 30): string => {
 };
 
 export const metricToKey = (metric: Metric): string => {
-  return `${metric.type}|${metric.name}`;
+  return `${metric.type}/${metric.name}`;
 };
 
 export const metricKeyToMetric = (value: string): Metric | undefined => {
+  const parts = value.split('/');
+  if (parts.length !== 2) return;
+  return { name: parts[1], type: parts[0] };
+};
+
+export const metricKeyToOldMetric = (value: string): OldMetric | undefined => {
   const parts = value.split('|');
   if (parts.length !== 2) return;
   if (![MetricType.Training, MetricType.Validation].includes(parts[0] as MetricType)) return;
@@ -94,7 +98,7 @@ export const metricKeyToMetric = (value: string): Metric | undefined => {
 export const metricKeyToName = (key: string): string => metricKeyToMetric(key)?.name ?? '';
 
 export const metricKeyToType = (key: string): MetricType | undefined =>
-  metricKeyToMetric(key)?.type;
+  metricKeyToOldMetric(key)?.type;
 
 export const metricKeyToStr = (key: string): string => {
   const metric = metricKeyToMetric(key);

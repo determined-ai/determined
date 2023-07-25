@@ -7,12 +7,14 @@ import { UPlotPoint } from 'components/UPlot/types';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
+import useMetricNames, { asLoadableOldMetrics } from 'hooks/useMetricNames';
 import { useCheckpointFlow } from 'hooks/useModal/Checkpoint/useCheckpointFlow';
 import {
   CheckpointWorkloadExtended,
   ExperimentBase,
   Metric,
   MetricType,
+  OldMetric,
   TrialDetails,
 } from 'types';
 import handleError from 'utils/error';

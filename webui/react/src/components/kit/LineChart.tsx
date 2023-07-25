@@ -5,7 +5,7 @@ import uPlot, { AlignedData, Plugin } from 'uplot';
 
 import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/internal/functions';
 import ScaleSelect from 'components/kit/internal/ScaleSelect';
-import { ErrorHandler, MetricType, Scale } from 'components/kit/internal/types';
+import { ErrorHandler, Scale } from 'components/kit/internal/types';
 import { SyncProvider } from 'components/kit/internal/UPlot/SyncProvider';
 import { UPlotPoint } from 'components/kit/internal/UPlot/types';
 import UPlotChart, { Options } from 'components/kit/internal/UPlot/UPlotChart';
@@ -38,7 +38,7 @@ export interface Serie {
   color?: string;
   data: Partial<Record<XAxisDomain, [x: number, y: number][]>>;
   key?: number;
-  metricType?: MetricType;
+  metricType?: string;
   name?: string;
 }
 

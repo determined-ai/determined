@@ -1,4 +1,3 @@
-// import { SelectValue } from 'antd/es/select';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/es/table/interface';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -15,7 +14,7 @@ import usePolling from 'hooks/usePolling';
 import { getTrialWorkloads } from 'services/api';
 import {
   ExperimentBase,
-  Metric,
+  OldMetric,
   Step,
   TrialDetails,
   TrialWorkloadFilter,
@@ -26,7 +25,7 @@ import handleError from 'utils/error';
 import {
   extractMetricSortValue,
   extractMetricValue,
-  metricKeyToMetric,
+  metricKeyToOldMetric,
   metricToKey,
 } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
@@ -38,10 +37,10 @@ import { Settings } from './TrialDetailsOverview.settings';
 import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
 
 export interface Props {
-  defaultMetrics: Metric[];
+  defaultMetrics: OldMetric[];
   experiment: ExperimentBase;
-  metricNames: Metric[];
-  metrics: Metric[];
+  metricNames: OldMetric[];
+  metrics: OldMetric[];
   settings: Settings;
   trial?: TrialDetails;
   updateSettings: (newSettings: Partial<Settings>) => void;
@@ -80,7 +79,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       return null;
     };
 
-    const metricRenderer = (metricName: Metric) => {
+    const metricRenderer = (metricName: OldMetric) => {
       const metricCol = (_: string, record: Step) => {
         const value = extractMetricValue(record, metricName);
         return <HumanReadableNumber num={value} />;
@@ -138,10 +137,10 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           filter: settings.filter,
           id: trial.id,
           limit: settings.tableLimit,
-          metricType: metricKeyToMetric(settings.sortKey)?.type || undefined,
+          metricType: metricKeyToOldMetric(settings.sortKey)?.type || undefined,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortKey: metricKeyToMetric(settings.sortKey)?.name || undefined,
+          sortKey: metricKeyToOldMetric(settings.sortKey)?.name || undefined,
         });
         setWorkloads(Loaded(wl.workloads));
         setWorkloadCount(wl.pagination.total || 0);
