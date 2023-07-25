@@ -1,9 +1,7 @@
 import pytest
-import responses
 
 from determined.common import api
 from determined.common.api import bindings
-from determined.common.experimental import resource_pool
 from tests.fixtures import api_responses
 
 _MASTER = "http://localhost:8080"
