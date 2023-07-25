@@ -7,6 +7,7 @@ import "google/protobuf/struct.proto";
 import "google/protobuf/wrappers.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/model/v1/model.proto";
+import "determined/trial/v1/trial.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 // Get the requested model.
@@ -357,3 +358,25 @@ message DeleteModelVersionRequest {
 
 // Response to DeleteModelVersionRequest
 message DeleteModelVersionResponse {}
+
+// Request for all metrics related to a given model version
+message GetTrialSourceInfoMetricsByModelVersionRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_name", "model_version_num" ] }
+  };
+  // The name of the model associated with the model version.
+  string model_name = 1;
+  // Sequential model version number.
+  int32 model_version_num = 2;
+  // Type of the TrialSourceInfo
+  optional determined.trial.v1.TrialSourceInfoType trial_source_info_type = 3;
+}
+
+// Response for all metrics related to a given checkpoint
+message GetTrialSourceInfoMetricsByModelVersionResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "data" ] }
+  };
+  // All the related trials and their metrics
+  repeated determined.trial.v1.TrialSourceInfoMetric data = 1;
+}

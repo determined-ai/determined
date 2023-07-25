@@ -819,8 +819,8 @@ func (a *apiServer) DeleteModelVersion(
 func (a *apiServer) GetTrialSourceInfoMetricsByModelVersion(
 	ctx context.Context, req *apiv1.GetTrialSourceInfoMetricsByModelVersionRequest,
 ) (*apiv1.GetTrialSourceInfoMetricsByModelVersionResponse, error) {
-	modelResp, err := a.ModelVersionFromID(
-		strconv.FormatInt(int64(req.ModelId), 10), req.ModelVersion,
+	modelVersionResp, err := a.ModelVersionFromID(
+		req.ModelName, req.ModelVersionNum,
 	)
 	if err != nil {
 		return nil, err
@@ -829,14 +829,14 @@ func (a *apiServer) GetTrialSourceInfoMetricsByModelVersion(
 	if err != nil {
 		return nil, err
 	}
-	if err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, modelResp.Model,
-		modelResp.Model.WorkspaceId); err != nil {
+	if err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, modelVersionResp.Model,
+		modelVersionResp.Model.WorkspaceId); err != nil {
 		return nil, err
 	}
 	resp := &apiv1.GetTrialSourceInfoMetricsByModelVersionResponse{}
 	trialIDsQuery := db.Bun().NewSelect().Table("trial_source_infos").
-		Where("model_id = ?", req.ModelId).
-		Where("model_version = ?", req.ModelVersion)
+		Where("model_id = ?", modelVersionResp.Model.Id).
+		Where("model_version = ?", modelVersionResp.Version)
 
 	if req.TrialSourceInfoType != nil {
 		trialIDsQuery.Where("trial_source_info_type = ?", req.TrialSourceInfoType.String())

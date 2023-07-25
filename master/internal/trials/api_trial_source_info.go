@@ -27,17 +27,18 @@ func (a *TrialSourceInfoAPIServer) ReportTrialSourceInfo(
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
-	resp := &apiv1.ReportTrialSourceInfoResponse{}
-	query := db.Bun().NewInsert().Model(tsi).
-		Value("trial_source_info_type", "?", tsi.TrialSourceInfoType.String()).
-		Returning("trial_id").Returning("checkpoint_uuid")
-	if tsi.ModelId == nil {
-		query.ExcludeColumn("model_id")
-	}
-	if tsi.ModelVersion == nil {
-		query.ExcludeColumn("model_version")
-	}
-	_, err := query.Exec(ctx, resp)
+	resp, err := CreateTrialSourceInfo(ctx, tsi)
+	// resp := &apiv1.ReportTrialSourceInfoResponse{}
+	// query := db.Bun().NewInsert().Model(tsi).
+	// 	Value("trial_source_info_type", "?", tsi.TrialSourceInfoType.String()).
+	// 	Returning("trial_id").Returning("checkpoint_uuid")
+	// if tsi.ModelId == nil {
+	// 	query.ExcludeColumn("model_id")
+	// }
+	// if tsi.ModelVersion == nil {
+	// 	query.ExcludeColumn("model_version")
+	// }
+	// _, err := query.Exec(ctx, resp)
 	return resp, err
 }
 
@@ -45,7 +46,7 @@ func (a *TrialSourceInfoAPIServer) ReportTrialSourceInfo(
 // trial_source_infos table, and fetches the metrics for each of the connected trials.
 func GetMetricsForTrialSourceInfoQuery(
 	ctx context.Context, q *bun.SelectQuery,
-) ([]*apiv1.TrialSourceInfoMetric, error) {
+) ([]*trialv1.TrialSourceInfoMetric, error) {
 	trialIds := []struct {
 		TrialID             int
 		TrialSourceInfoType string
@@ -59,7 +60,7 @@ func GetMetricsForTrialSourceInfoQuery(
 	// TODO (Taylor): If we reach a point where this becomes a performance bottleneck
 	// we should join on trial_source_infos -> trials -> experiments to get the
 	// workspace_id and get permissions on those without checking each trial individually
-	ret := []*apiv1.TrialSourceInfoMetric{}
+	ret := []*trialv1.TrialSourceInfoMetric{}
 	numMetricsLimit := 1000
 	for _, val := range trialIds {
 		if err := CanGetTrialsExperimentAndCheckCanDoAction(ctx, val.TrialID,
@@ -74,7 +75,7 @@ func GetMetricsForTrialSourceInfoQuery(
 		if err != nil {
 			return nil, fmt.Errorf("failed to get metrics %w", err)
 		}
-		trialSourceInfoMetric := &apiv1.TrialSourceInfoMetric{
+		trialSourceInfoMetric := &trialv1.TrialSourceInfoMetric{
 			TrialId:             int32(val.TrialID),
 			TrialSourceInfoType: trialv1.TrialSourceInfoType(sourceType),
 			MetricReports:       res,

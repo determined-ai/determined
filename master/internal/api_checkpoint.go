@@ -89,7 +89,7 @@ func (m *Master) canDoActionOnCheckpointThroughModel(
 	}
 	if len(modelIDs) == 0 {
 		// if length of model ids is zero then permission denied
-		// so return checkpoitn not found.
+		// so return checkpoint not found.
 		return api.NotFoundErrs("checkpoint", ckptID, true)
 	}
 

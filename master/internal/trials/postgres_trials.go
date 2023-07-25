@@ -10,7 +10,9 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 const (
@@ -137,4 +139,22 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 		metricMeasurements = append(metricMeasurements, metricM)
 	}
 	return metricMeasurements, nil
+}
+
+// CreateTrialSourceInfo creates a TrialSourceInfo object, which allows us to keep
+// track of the linkage between an inference/fine tuning trial and its checkpoint/model version.
+func CreateTrialSourceInfo(ctx context.Context, tsi *trialv1.TrialSourceInfo,
+) (*apiv1.ReportTrialSourceInfoResponse, error) {
+	resp := &apiv1.ReportTrialSourceInfoResponse{}
+	query := db.Bun().NewInsert().Model(tsi).
+		Value("trial_source_info_type", "?", tsi.TrialSourceInfoType.String()).
+		Returning("trial_id").Returning("checkpoint_uuid")
+	if tsi.ModelId == nil {
+		query.ExcludeColumn("model_id")
+	}
+	if tsi.ModelVersion == nil {
+		query.ExcludeColumn("model_version")
+	}
+	_, err := query.Exec(ctx, resp)
+	return resp, err
 }

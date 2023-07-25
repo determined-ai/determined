@@ -1515,6 +1515,18 @@ service Determined {
     };
   }
 
+  // Gets the metrics for all trials associated with this model version
+  rpc GetTrialSourceInfoMetricsByModelVersion(
+      GetTrialSourceInfoMetricsByModelVersionRequest)
+      returns (GetTrialSourceInfoMetricsByModelVersionResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/models/{model_name}/versions/{model_version_num}/trial-source-info-metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
+    };
+  }
+
   // Get the requested checkpoint.
   rpc GetCheckpoint(GetCheckpointRequest) returns (GetCheckpointResponse) {
     option (google.api.http) = {

@@ -23,6 +23,7 @@ import (
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -676,14 +677,7 @@ func TestCompareTrialsSampling(t *testing.T) {
 	require.Equal(t, sampleBatches1, sampleBatches2)
 }
 
-func TestTrialSourceInfo(t *testing.T) {
-	api, curUser, ctx := setupAPITest(t, nil)
-
-	infTrial, _, _ := createTestTrialWithMetrics(
-		ctx, t, api, curUser, false)
-	infTrial2, _, _ := createTestTrialWithMetrics(
-		ctx, t, api, curUser, false)
-
+func createTestTrialInferenceMetrics(ctx context.Context, t *testing.T, api *apiServer, id int32) {
 	var trialMetrics map[model.MetricGroup][]map[string]any
 	require.NoError(t, json.Unmarshal([]byte(
 		`{"inference": [{"a":1}, {"b":2}]}`,
@@ -694,7 +688,7 @@ func TestTrialSourceInfo(t *testing.T) {
 			require.NoError(t, err)
 			err = api.m.db.AddTrialMetrics(ctx,
 				&trialv1.TrialMetrics{
-					TrialId:        int32(infTrial.ID),
+					TrialId:        id,
 					TrialRunId:     int32(0),
 					StepsCompleted: int32(0),
 					Metrics: &commonv1.Metrics{
@@ -706,42 +700,49 @@ func TestTrialSourceInfo(t *testing.T) {
 			require.NoError(t, err)
 		}
 	}
+}
+
+func TestTrialSourceInfoCheckpoint(t *testing.T) {
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
+	infTrial := createTestTrial(t, api, curUser)
+	infTrial2 := createTestTrial(t, api, curUser)
+	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial.ID))
 
 	// Create a checkpoint to index with
 	checkpointUUID := createVersionTwoCheckpoint(ctx, t, api, curUser, map[string]int64{"a": 1})
 
-	// Create a model_version to index with
-	conv := &protoconverter.ProtoConverter{}
-	modelVersion := RegisterCheckpointAsModelVersion(t, api.m.db, conv.ToUUID(checkpointUUID))
-
 	// Create a TrialSourceInfo associated with each of the two trials.
-	trialSourceInfo := &trialv1.TrialSourceInfo{
-		TrialId:             int32(infTrial.ID),
-		CheckpointUuid:      checkpointUUID,
-		TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
-		ModelId:             &modelVersion.Model.Id,
-		ModelVersion:        &modelVersion.Version,
-	}
-	req := &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: trialSourceInfo}
-	resp, err := api.ReportTrialSourceInfo(ctx, req)
+	resp, err := trials.CreateTrialSourceInfo(
+		ctx, &trialv1.TrialSourceInfo{
+			TrialId:             int32(infTrial.ID),
+			CheckpointUuid:      checkpointUUID,
+			TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+		},
+	)
 	require.NoError(t, err)
 	require.Equal(t, resp.TrialId, int32(infTrial.ID))
 	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
 
-	trialSourceInfo2 := &trialv1.TrialSourceInfo{
-		TrialId:             int32(infTrial2.ID),
-		CheckpointUuid:      checkpointUUID,
-		TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
-	}
-	req = &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: trialSourceInfo2}
-	resp, err = api.ReportTrialSourceInfo(ctx, req)
+	resp, err = trials.CreateTrialSourceInfo(
+		ctx, &trialv1.TrialSourceInfo{
+			TrialId:             int32(infTrial2.ID),
+			CheckpointUuid:      checkpointUUID,
+			TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+		},
+	)
 	require.NoError(t, err)
 	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
 	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
 
-	// Get the trials and metrics based on checkpoint
-	getCkptReq := &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID}
-	getCkptResp, getErr := api.GetTrialMetricsBySourceInfoCheckpoint(ctx, getCkptReq)
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		Return(nil).Times(3)
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
+		Return(nil).Times(3)
+
+	// If there are no restrictions, we should see all the trials
+	getCkptResp, getErr := api.GetTrialMetricsBySourceInfoCheckpoint(
+		ctx, &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID},
+	)
 	require.NoError(t, getErr)
 	require.Equal(t, len(getCkptResp.Data), 2)
 
@@ -755,32 +756,14 @@ func TestTrialSourceInfo(t *testing.T) {
 		}
 	}
 
-	// Get the trials and metrics based on model version
-	getMVReq := &apiv1.GetTrialSourceInfoMetricsByModelVersionRequest{
-		ModelId:      modelVersion.Model.Id,
-		ModelVersion: modelVersion.Version,
-	}
-	getMVResp, getMVErr := api.GetTrialSourceInfoMetricsByModelVersion(ctx, getMVReq)
-	require.NoError(t, getMVErr)
-	// One trial is valid and it has one aggregated MetricsReport
-	require.Equal(t, len(getMVResp.Data), 1)
-	require.Equal(t, len(getCkptResp.Data[0].MetricReports), 1)
-
 	infTrialExp, err := db.ExperimentByID(ctx, infTrial.ExperimentID)
 	require.NoError(t, err)
 	infTrial2Exp, err := db.ExperimentByID(ctx, infTrial2.ExperimentID)
 	require.NoError(t, err)
 
-	// Test RBAC filtering
-	// Enable the mock for Experiment RBAC
-	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
-
-	// enableAuthZMocks()
-	// authZExp = getMockExpAuth()
-
 	// All experiments can be seen
 	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-		Return(nil).Times(10)
+		Return(nil).Times(3)
 	// We can see the experiment that generated the checkpoint
 	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
 		Return(nil).Once()
@@ -790,10 +773,61 @@ func TestTrialSourceInfo(t *testing.T) {
 	// We can see the experiment for infTrial2
 	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, infTrial2Exp).
 		Return(nil).Once()
-	getCkptReq = &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID}
-	getCkptResp, getErr = api.GetTrialMetricsBySourceInfoCheckpoint(ctx, getCkptReq)
+	getCkptResp, getErr = api.GetTrialMetricsBySourceInfoCheckpoint(
+		ctx, &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID},
+	)
 	require.NoError(t, getErr)
 	// Only infTrial2 should be visible
 	require.Equal(t, len(getCkptResp.Data), 1)
 	require.Equal(t, getCkptResp.Data[0].TrialId, int32(infTrial2.ID))
+}
+
+func TestTrialSourceInfoModelVersion(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	infTrial := createTestTrial(t, api, curUser)
+	infTrial2 := createTestTrial(t, api, curUser)
+	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial.ID))
+
+	// Create a checkpoint to index with
+	checkpointUUID := createVersionTwoCheckpoint(ctx, t, api, curUser, map[string]int64{"a": 1})
+
+	// Create a model_version to index with
+	conv := &protoconverter.ProtoConverter{}
+	modelVersion := RegisterCheckpointAsModelVersion(t, api.m.db, conv.ToUUID(checkpointUUID))
+
+	// Create a TrialSourceInfo associated with each of the two trials.
+	resp, err := trials.CreateTrialSourceInfo(
+		ctx, &trialv1.TrialSourceInfo{
+			TrialId:             int32(infTrial.ID),
+			CheckpointUuid:      checkpointUUID,
+			TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+			ModelId:             &modelVersion.Model.Id,
+			ModelVersion:        &modelVersion.Version,
+		},
+	)
+	require.NoError(t, err)
+	require.Equal(t, resp.TrialId, int32(infTrial.ID))
+	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
+
+	resp, err = trials.CreateTrialSourceInfo(
+		ctx, &trialv1.TrialSourceInfo{
+			TrialId:             int32(infTrial2.ID),
+			CheckpointUuid:      checkpointUUID,
+			TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+		},
+	)
+	require.NoError(t, err)
+	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
+	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
+
+	getMVResp, getMVErr := api.GetTrialSourceInfoMetricsByModelVersion(
+		ctx, &apiv1.GetTrialSourceInfoMetricsByModelVersionRequest{
+			ModelName:       modelVersion.Model.Name,
+			ModelVersionNum: modelVersion.Version,
+		},
+	)
+	require.NoError(t, getMVErr)
+	// One trial is valid and it has one aggregated MetricsReport
+	require.Equal(t, len(getMVResp.Data), 1)
+	require.Equal(t, len(getMVResp.Data[0].MetricReports), 1)
 }
