@@ -5,4 +5,4 @@ max_restarts: 0
 searcher:
    name: single
    max_length: 1
-   metric: val_loss
+   metric: test_loss
