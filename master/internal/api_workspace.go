@@ -307,13 +307,6 @@ func (a *apiServer) PostWorkspace(
 		}
 	}
 
-	if req.DefaultComputePool != "" || req.DefaultAuxPool != "" {
-		err = workspace.AuthZProvider.Get().CanModifyRPWorkspaceBindings(ctx, *curUser, []int32{})
-		if err != nil {
-			return nil, status.Error(codes.PermissionDenied, err.Error())
-		}
-	}
-
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -432,11 +425,6 @@ func (a *apiServer) PatchWorkspace(
 	}
 
 	if req.Workspace.DefaultComputePool != "" || req.Workspace.DefaultAuxPool != "" {
-		err = workspace.AuthZProvider.Get().CanModifyRPWorkspaceBindings(ctx, currUser,
-			[]int32{currWorkspace.Id})
-		if err != nil {
-			return nil, status.Error(codes.PermissionDenied, err.Error())
-		}
 		if req.Workspace.DefaultComputePool != "" {
 			updatedWorkspace.DefaultComputePool = req.Workspace.DefaultComputePool
 		}
