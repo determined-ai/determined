@@ -476,6 +476,11 @@ func TestUnusualMetricNames(t *testing.T) {
 		"a.loss": 1.5,
 		"b/loss": 2.5,
 	}
+	asciiSweep := ""
+	for i := 0; i <= 255; i++ {
+		asciiSweep += fmt.Sprintf("%c", i)
+	}
+	expectedMetricsMap[asciiSweep] = 3
 	expectedMetrics, err := structpb.NewStruct(expectedMetricsMap)
 	require.NoError(t, err)
 
