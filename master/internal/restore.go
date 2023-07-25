@@ -84,7 +84,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		)
 	}
 
-	workspaceModel, err := workspace.WorkspaceByName(context.TODO(), activeConfig.Workspace())
+	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), expModel.ProjectID)
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		return err
 	}

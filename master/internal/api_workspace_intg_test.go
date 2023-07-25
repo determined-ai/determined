@@ -384,7 +384,3 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 		require.Equal(t, expectedErr.Error(), curCase.IDToReqCall(id).Error())
 	}
 }
-
-func TestAuthZListRPsBoundToWorkspace(t *testing.T) {
-	return
-}
