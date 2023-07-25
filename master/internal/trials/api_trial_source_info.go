@@ -28,17 +28,6 @@ func (a *TrialSourceInfoAPIServer) ReportTrialSourceInfo(
 		return nil, err
 	}
 	resp, err := CreateTrialSourceInfo(ctx, tsi)
-	// resp := &apiv1.ReportTrialSourceInfoResponse{}
-	// query := db.Bun().NewInsert().Model(tsi).
-	// 	Value("trial_source_info_type", "?", tsi.TrialSourceInfoType.String()).
-	// 	Returning("trial_id").Returning("checkpoint_uuid")
-	// if tsi.ModelId == nil {
-	// 	query.ExcludeColumn("model_id")
-	// }
-	// if tsi.ModelVersion == nil {
-	// 	query.ExcludeColumn("model_version")
-	// }
-	// _, err := query.Exec(ctx, resp)
 	return resp, err
 }
 

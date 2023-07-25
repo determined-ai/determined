@@ -59,8 +59,6 @@ var (
 	TrialAvailableSeriesBatchWaitTime = 15 * time.Second
 )
 
-// func (a *apiServer) canGetTrialsExperimentAndCheckCanDoAction(ctx context.Context,
-
 // TrialLogBackend is an interface trial log backends, such as elastic or postgres,
 // must support to provide the features surfaced in API. This is deprecated, note it
 // no longer supports adding logs in favor of unified logs.

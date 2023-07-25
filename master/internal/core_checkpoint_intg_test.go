@@ -252,7 +252,6 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 	}
 }
 
-// TODO: nikita make this a utility and use it everywhere in intg tests etc.
 func RegisterCheckpointAsModelVersion(t *testing.T, pgDB *db.PgDB, ckptID uuid.UUID,
 ) *modelv1.ModelVersion {
 	require.NoError(t, etc.SetRootPath("../../master/static/srv"))
