@@ -815,7 +815,8 @@ func (a *allocation) releaseResources(msg *sproto.ReleaseResources) {
 // recover recovers a crash and stops the allocation.
 func (a *allocation) recover() {
 	if rec := recover(); rec != nil {
-		a.syslog.Error(rec, "\n", string(debug.Stack()))
+		a.syslog.Error(rec)
+		a.syslog.Error(string(debug.Stack()))
 		if a.exitErr == nil {
 			a.exitErr = errors.Errorf("unexpected panic: %v", rec)
 		}
@@ -857,19 +858,19 @@ func (a *allocation) tryExitOrTerminate(reason string, forcePreemption bool) {
 func (a *allocation) tryExit(reason string) (exited bool) {
 	switch {
 	case !a.resourcesStarted:
-		a.terminated(reason)
+		a.terminated(fmt.Sprintf("exit before start: %s", reason))
 		return true
 	case len(a.resources.exited()) == len(a.resources):
-		a.terminated(reason)
+		a.terminated(fmt.Sprintf("all resources exited: %s", reason))
 		return true
 	case a.allNonDaemonsExited():
 		a.killedDaemons = true
 		if a.exitedWithoutErr() {
 			a.killedDaemonsGracefully = true
 		}
-		a.kill(reason)
+		a.kill(fmt.Sprintf("all non-daemons exited: %s", reason))
 	case len(a.resources.failed()) > 0:
-		a.kill(reason)
+		a.kill(fmt.Sprintf("some resources failed: %s", reason))
 	}
 	return false
 }
@@ -1050,7 +1051,6 @@ func (a *allocation) terminated(reason string) {
 
 	defer a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
 	defer a.unregisterProxies()
-	defer a.wg.Cancel()
 
 	level := ptrs.Ptr(model.LogLevelInfo)
 	if a.exitErr != nil {
