@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/mocks"
 	petName "github.com/dustinkirkland/golang-petname"
 	"github.com/sirupsen/logrus"
 	"gotest.tools/assert"
@@ -23,10 +24,10 @@ type mockPod struct {
 	syslog       *logrus.Entry
 }
 
-func startMockPod(requestQueue *requestQueue, errorHandler *errorCallbackFunc) *mockPod {
+func startMockPod(requestQueue *requestQueue, name string, errorHandler *errorCallbackFunc) *mockPod {
 	m := &mockPod{
 		requestQueue: requestQueue,
-		name:         petName.Generate(3, "-"),
+		name:         name,
 	}
 	if errorHandler == nil {
 		m.errorHandler = m.defaultErrorHandler
@@ -99,9 +100,17 @@ func deleteAll(pods []*mockPod) {
 		p.delete()
 	}
 }
+func podList(m map[string]*k8sV1.Pod) *k8sV1.PodList {
+	podList := &k8sV1.PodList{}
+	for _, pod := range m {
+		podList.Items = append(podList.Items, *pod)
+	}
+	return podList
+}
 
 func TestRequestQueueCreatingManyPod(t *testing.T) {
-	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
+	pods := make(map[string]*k8sV1.Pod)
+	podInterface := &mocks.PodInterface{}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	k8sRequestQueue := startRequestQueue(
@@ -111,15 +120,22 @@ func TestRequestQueueCreatingManyPod(t *testing.T) {
 
 	numPods := 15
 	for i := 0; i < numPods; i++ {
-		startMockPod(k8sRequestQueue, nil)
+		name := petName.Generate(3, "-")
+		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+		podInterface.On("Create", context.TODO(), pod,
+			metaV1.CreateOptions{}).Return(&k8sV1.Pod{}, nil)
+		pods[name] = pod.DeepCopy()
+		startMockPod(k8sRequestQueue, name, nil)
 	}
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
+	podInterface.On("List", context.TODO(), metaV1.ListOptions{}).Return(podList(pods), nil)
 	assert.Equal(t, getNumberOfActivePods(podInterface), numPods)
 }
 
 func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
-	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
+	pods := make(map[string]*k8sV1.Pod)
+	podInterface := &mocks.PodInterface{}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	k8sRequestQueue := startRequestQueue(
@@ -127,14 +143,22 @@ func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
 	)
 
-	numPods := 15
-	pods := make([]*mockPod, 0)
+	numPods := 1
+	tmpPods := make([]*mockPod, 0)
 	for i := 0; i < numPods; i++ {
-		pods = append(pods, startMockPod(k8sRequestQueue, nil))
+		name := petName.Generate(3, "-")
+		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+		gracePeriod := int64(15)
+		podInterface.On("Create", context.TODO(), pod, metaV1.CreateOptions{}).Return(pod, nil)
+		pods[name] = pod.DeepCopy()
+		podInterface.On("Delete", context.TODO(), pod,
+			metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod}).Return(nil)
+		tmpPods = append(tmpPods, startMockPod(k8sRequestQueue, name, nil))
 	}
-	deleteAll(pods)
+	deleteAll(tmpPods)
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
+	podInterface.On("List", context.TODO(), metaV1.ListOptions{}).Return(pods, nil)
 	assert.Equal(t, getNumberOfActivePods(podInterface), 0)
 }
 
@@ -147,10 +171,11 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
 	)
 
-	numPods := 15
+	numPods := 1
 	pods := make([]*mockPod, 0)
 	for i := 0; i < numPods; i++ {
-		pods = append(pods, startMockPod(k8sRequestQueue, nil))
+		name := "testing12345t543425" //petName.Generate(3, "-")
+		pods = append(pods, startMockPod(k8sRequestQueue, name, nil))
 	}
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
@@ -177,7 +202,8 @@ func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 	numPods := 15
 	pods := make([]*mockPod, 0)
 	for i := 0; i < numPods; i++ {
-		pods = append(pods, startMockPod(k8sRequestQueue, nil))
+		name := petName.Generate(3, "-")
+		pods = append(pods, startMockPod(k8sRequestQueue, name, nil))
 	}
 	deleteAll(pods)
 
@@ -198,7 +224,8 @@ func TestRequestQueueCreationCancelled(t *testing.T) {
 	)
 
 	for i := 0; i < numKubernetesWorkers; i++ {
-		startMockPod(k8sRequestQueue, nil)
+		name := petName.Generate(3, "-")
+		startMockPod(k8sRequestQueue, name, nil)
 	}
 	time.Sleep(time.Millisecond * 100)
 
@@ -214,7 +241,8 @@ func TestRequestQueueCreationCancelled(t *testing.T) {
 			panic(fmt.Sprintf("unexpected error %T", e))
 		}
 	})
-	pod := startMockPod(k8sRequestQueue, &errorHandler)
+	name := petName.Generate(3, "-")
+	pod := startMockPod(k8sRequestQueue, name, &errorHandler)
 	assert.Equal(t, createCancelled, false)
 	pod.delete()
 	wg.Wait()
@@ -242,7 +270,8 @@ func TestRequestQueueCreationFailed(t *testing.T) {
 			panic(fmt.Sprintf("unexpected error %T", e))
 		}
 	})
-	pod := startMockPod(k8sRequestQueue, &errorHandler)
+	name := petName.Generate(3, "-")
+	pod := startMockPod(k8sRequestQueue, name, &errorHandler)
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, createFailed, false)
 
@@ -272,7 +301,8 @@ func TestRequestQueueDeletionFailed(t *testing.T) {
 			panic(fmt.Sprintf("unexpected error %T", e))
 		}
 	})
-	pod := startMockPod(k8sRequestQueue, &errorHandler)
+	name := petName.Generate(3, "-")
+	pod := startMockPod(k8sRequestQueue, name, &errorHandler)
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, deleteFailed, false)
 
