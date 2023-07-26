@@ -2168,6 +2168,19 @@ export interface V1DeleteCheckpointsRequest {
 export interface V1DeleteCheckpointsResponse {
 }
 /**
+ * Response to DeleteExperimentLabelRequest.
+ * @export
+ * @interface V1DeleteExperimentLabelResponse
+ */
+export interface V1DeleteExperimentLabelResponse {
+    /**
+     * The complete list of labels associated with the experiment.
+     * @type {Array<string>}
+     * @memberof V1DeleteExperimentLabelResponse
+     */
+    labels: Array<string>;
+}
+/**
  * Response to DeleteExperimentRequest.
  * @export
  * @interface V1DeleteExperimentResponse
@@ -7233,6 +7246,19 @@ export interface V1ProxyPortConfig {
      * @memberof V1ProxyPortConfig
      */
     unauthenticated?: boolean;
+}
+/**
+ * Response to PutExperimentLabelRequest.
+ * @export
+ * @interface V1PutExperimentLabelResponse
+ */
+export interface V1PutExperimentLabelResponse {
+    /**
+     * The complete list of labels associated with the experiment.
+     * @type {Array<string>}
+     * @memberof V1PutExperimentLabelResponse
+     */
+    labels: Array<string>;
 }
 /**
  * Request for setting project notes.
@@ -12989,6 +13015,48 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Delete a label from the experiment.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {string} label The label to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteExperimentLabel(experimentId: number, label: string, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling deleteExperimentLabel.');
+            }
+            // verify required parameter 'label' is not null or undefined
+            if (label === null || label === undefined) {
+                throw new RequiredError('label','Required parameter label was null or undefined when calling deleteExperimentLabel.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/labels/{label}`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)))
+                .replace(`{${"label"}}`, encodeURIComponent(String(label)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'DELETE', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Delete multiple experiments.
          * @param {V1DeleteExperimentsRequest} body
          * @param {*} [options] Override http request option.
@@ -14022,6 +14090,48 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Put a new label on the experiment.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {string} label The label to add.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperimentLabel(experimentId: number, label: string, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling putExperimentLabel.');
+            }
+            // verify required parameter 'label' is not null or undefined
+            if (label === null || label === undefined) {
+                throw new RequiredError('label','Required parameter label was null or undefined when calling putExperimentLabel.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/labels/{label}`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)))
+                .replace(`{${"label"}}`, encodeURIComponent(String(label)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PUT', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get experiments with grouping and search syntax
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
@@ -14459,6 +14569,26 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         deleteExperiment(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).deleteExperiment(experimentId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Delete a label from the experiment.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {string} label The label to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteExperimentLabel(experimentId: number, label: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteExperimentLabelResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).deleteExperimentLabel(experimentId, label, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -14945,6 +15075,26 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Put a new label on the experiment.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {string} label The label to add.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperimentLabel(experimentId: number, label: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutExperimentLabelResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).putExperimentLabel(experimentId, label, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get experiments with grouping and search syntax
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
@@ -15165,6 +15315,17 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         deleteExperiment(experimentId: number, options?: any) {
             return ExperimentsApiFp(configuration).deleteExperiment(experimentId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Delete a label from the experiment.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {string} label The label to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteExperimentLabel(experimentId: number, label: string, options?: any) {
+            return ExperimentsApiFp(configuration).deleteExperimentLabel(experimentId, label, options)(fetch, basePath);
         },
         /**
          * 
@@ -15435,6 +15596,17 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary Put a new label on the experiment.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {string} label The label to add.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperimentLabel(experimentId: number, label: string, options?: any) {
+            return ExperimentsApiFp(configuration).putExperimentLabel(experimentId, label, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get experiments with grouping and search syntax
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
@@ -15626,6 +15798,19 @@ export class ExperimentsApi extends BaseAPI {
      */
     public deleteExperiment(experimentId: number, options?: any) {
         return ExperimentsApiFp(this.configuration).deleteExperiment(experimentId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Delete a label from the experiment.
+     * @param {number} experimentId The ID of the experiment.
+     * @param {string} label The label to delete.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public deleteExperimentLabel(experimentId: number, label: string, options?: any) {
+        return ExperimentsApiFp(this.configuration).deleteExperimentLabel(experimentId, label, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -15939,6 +16124,19 @@ export class ExperimentsApi extends BaseAPI {
      */
     public previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
         return ExperimentsApiFp(this.configuration).previewHPSearch(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Put a new label on the experiment.
+     * @param {number} experimentId The ID of the experiment.
+     * @param {string} label The label to add.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public putExperimentLabel(experimentId: number, label: string, options?: any) {
+        return ExperimentsApiFp(this.configuration).putExperimentLabel(experimentId, label, options)(this.fetch, this.basePath)
     }
     
     /**

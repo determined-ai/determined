@@ -49,6 +49,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -2336,4 +2337,110 @@ func (a *apiServer) CreateTrial(
 	}
 
 	return resp, nil
+}
+
+func (a *apiServer) PutExperimentLabel(ctx context.Context,
+	req *apiv1.PutExperimentLabelRequest,
+) (*apiv1.PutExperimentLabelResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	exp, err := a.getExperiment(ctx, *curUser, int(req.ExperimentId))
+	if err != nil {
+		return nil, err
+	}
+
+	modelExp, err := model.ExperimentFromProto(exp)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = exputil.AuthZProvider.Get().CanEditExperimentsMetadata(
+		ctx, *curUser, modelExp); err != nil {
+		return nil, status.Errorf(codes.PermissionDenied, err.Error())
+	}
+
+	// Labels should be unique.
+	expLabels := set.New[string]()
+	for _, label := range exp.Labels {
+		expLabels.Insert(label)
+	}
+	if expLabels.Contains(req.Label) {
+		return &apiv1.PutExperimentLabelResponse{Labels: exp.Labels}, nil
+	}
+	expLabels.Insert(req.Label)
+
+	exp.Labels = expLabels.ToSlice()
+
+	type experimentPatch struct {
+		Labels []string `json:"labels"`
+	}
+	patch := experimentPatch{
+		Labels: exp.Labels,
+	}
+	marshalledPatches, patchErr := json.Marshal(patch)
+	if patchErr != nil {
+		return nil, status.Errorf(codes.Internal, "failed to marshal experiment patch")
+	}
+
+	_, err = a.m.db.RawQuery(
+		"patch_experiment", exp.Id, marshalledPatches, exp.Notes)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error updating experiment in database: %d", exp.Id)
+	}
+
+	return &apiv1.PutExperimentLabelResponse{Labels: exp.Labels}, nil
+}
+
+func (a *apiServer) DeleteExperimentLabel(ctx context.Context,
+	req *apiv1.DeleteExperimentLabelRequest,
+) (*apiv1.DeleteExperimentLabelResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	exp, err := a.getExperiment(ctx, *curUser, int(req.ExperimentId))
+	if err != nil {
+		return nil, err
+	}
+
+	modelExp, err := model.ExperimentFromProto(exp)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = exputil.AuthZProvider.Get().CanEditExperimentsMetadata(
+		ctx, *curUser, modelExp); err != nil {
+		return nil, status.Errorf(codes.PermissionDenied, err.Error())
+	}
+
+	for i, label := range exp.Labels {
+		if label == req.Label {
+			// Remove label from experiment.
+			exp.Labels = append(exp.Labels[:i], exp.Labels[i+1:]...)
+			break
+		}
+	}
+
+	type experimentPatch struct {
+		Labels []string `json:"labels"`
+	}
+	patch := experimentPatch{
+		Labels: exp.Labels,
+	}
+	marshalledPatches, patchErr := json.Marshal(patch)
+	if patchErr != nil {
+		return nil, status.Errorf(codes.Internal, "failed to marshal experiment patch")
+	}
+
+	_, err = a.m.db.RawQuery(
+		"patch_experiment", exp.Id, marshalledPatches, exp.Notes)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error updating experiment in database: %d", exp.Id)
+	}
+
+	return &apiv1.DeleteExperimentLabelResponse{Labels: exp.Labels}, nil
 }

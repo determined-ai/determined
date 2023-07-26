@@ -591,6 +591,28 @@ service Determined {
     };
   }
 
+  // Put a new label on the experiment.
+  rpc PutExperimentLabel(PutExperimentLabelRequest)
+      returns (PutExperimentLabelResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/experiments/{experiment_id}/labels/{label}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+
+  // Delete a label from the experiment.
+  rpc DeleteExperimentLabel(DeleteExperimentLabelRequest)
+      returns (DeleteExperimentLabelResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/experiments/{experiment_id}/labels/{label}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+
   // Preview hyperparameter search.
   rpc PreviewHPSearch(PreviewHPSearchRequest)
       returns (PreviewHPSearchResponse) {

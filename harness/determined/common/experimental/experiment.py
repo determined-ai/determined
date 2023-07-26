@@ -151,23 +151,24 @@ class Experiment:
         self.notes = resp.experiment.notes if resp.experiment else None
 
     def add_labels(self, labels: List[str]) -> None:
-        resp = bindings.get_GetExperiment(self._session, experimentId=self.id).experiment
-        patch_exp = bindings.v1PatchExperiment.from_json(resp.to_json())
-        current_labels = patch_exp or []
-        patch_exp.labels = set(current_labels + labels)
-        bindings.patch_PatchExperiment(self._session, body=patch_exp, experiment_id=self.id)
+        """Add a list of labels to the experiment.
+
+        Arguments:
+            labels: a list of string labels to add to the experiment. This list will be merged
+                with the current labels (self.labels) to update the master server. Duplicates
+                are ignored.
+
+        """
+        labels = set(self.labels + labels)
+        self.set_labels(labels=list(labels))
 
     def remove_labels(self, labels: List[str]) -> None:
-        resp = bindings.get_GetExperiment(self._session, experimentId=self.id).experiment
-        patch_exp = bindings.v1PatchExperiment.from_json(resp.to_json())
-        current_labels = patch_exp or []
-        patch_exp.labels = set(current_labels) - set(labels)
-        bindings.patch_PatchExperiment(self._session, body=patch_exp, experiment_id=self.id)
+        labels = set(self.labels) - set(labels)
+        self.set_labels(labels=list(labels))
 
-    def set_labels(self, labels: List[str]):
-        resp = bindings.get_GetExperiment(self._session, experimentId=self.id).experiment
-        patch_exp = bindings.v1PatchExperiment.from_json(resp.to_json())
-        patch_exp.labels = set(labels)
+    def set_labels(self, labels: List[str]) -> None:
+        self.labels = set(labels)
+        patch_exp = bindings.v1PatchExperiment(id=self.id, labels=list(self.labels))
         bindings.patch_PatchExperiment(self._session, body=patch_exp, experiment_id=self.id)
 
     def activate(self) -> None:

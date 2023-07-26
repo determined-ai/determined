@@ -146,6 +146,52 @@ message GetExperimentLabelsResponse {
   repeated string labels = 1;
 }
 
+// Request for adding a new experiment label.
+message PutExperimentLabelRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_id", "label" ] }
+  };
+
+  // The ID of the experiment.
+  int32 experiment_id = 1;
+
+  // The label to add.
+  string label = 2;
+}
+
+// Response to PutExperimentLabelRequest.
+message PutExperimentLabelResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "labels" ] }
+  };
+
+  // The complete list of labels associated with the experiment.
+  repeated string labels = 1;
+}
+
+// Request for deleting an experiment label.
+message DeleteExperimentLabelRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_id", "label" ] }
+  };
+
+  // The ID of the experiment.
+  int32 experiment_id = 1;
+
+  // The label to delete.
+  string label = 2;
+}
+
+// Response to DeleteExperimentLabelRequest.
+message DeleteExperimentLabelResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "labels" ] }
+  };
+
+  // The complete list of labels associated with the experiment.
+  repeated string labels = 1;
+}
+
 // Delete a single experiment.
 message DeleteExperimentRequest {
   // The ID of the experiment.

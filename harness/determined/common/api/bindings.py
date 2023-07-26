@@ -2422,6 +2422,28 @@ class v1DeleteCheckpointsRequest(Printable):
         }
         return out
 
+class v1DeleteExperimentLabelResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        labels: "typing.Sequence[str]",
+    ):
+        self.labels = labels
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DeleteExperimentLabelResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "labels": obj["labels"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "labels": self.labels,
+        }
+        return out
+
 class v1DeleteExperimentsRequest(Printable):
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
@@ -9313,6 +9335,28 @@ class v1ProxyPortConfig(Printable):
             out["unauthenticated"] = self.unauthenticated
         return out
 
+class v1PutExperimentLabelResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        labels: "typing.Sequence[str]",
+    ):
+        self.labels = labels
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutExperimentLabelResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "labels": obj["labels"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "labels": self.labels,
+        }
+        return out
+
 class v1PutProjectNotesRequest(Printable):
 
     def __init__(
@@ -13761,6 +13805,27 @@ def delete_DeleteExperiment(
         return
     raise APIHttpError("delete_DeleteExperiment", _resp)
 
+def delete_DeleteExperimentLabel(
+    session: "api.Session",
+    *,
+    experimentId: int,
+    label: str,
+) -> "v1DeleteExperimentLabelResponse":
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/experiments/{experimentId}/labels/{label}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1DeleteExperimentLabelResponse.from_json(_resp.json())
+    raise APIHttpError("delete_DeleteExperimentLabel", _resp)
+
 def delete_DeleteExperiments(
     session: "api.Session",
     *,
@@ -16909,6 +16974,27 @@ def post_PreviewHPSearch(
     if _resp.status_code == 200:
         return v1PreviewHPSearchResponse.from_json(_resp.json())
     raise APIHttpError("post_PreviewHPSearch", _resp)
+
+def put_PutExperimentLabel(
+    session: "api.Session",
+    *,
+    experimentId: int,
+    label: str,
+) -> "v1PutExperimentLabelResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/experiments/{experimentId}/labels/{label}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PutExperimentLabelResponse.from_json(_resp.json())
+    raise APIHttpError("put_PutExperimentLabel", _resp)
 
 def put_PutProjectNotes(
     session: "api.Session",
