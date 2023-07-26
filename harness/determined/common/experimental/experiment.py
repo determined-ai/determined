@@ -3,6 +3,7 @@ import sys
 import time
 import warnings
 from typing import Any, Dict, Iterator, List, Optional
+from urllib import parse
 
 from determined.common import api
 from determined.common.api import bindings
@@ -150,23 +151,44 @@ class Experiment:
         resp = bindings.patch_PatchExperiment(self._session, experiment_id=self.id, body=req_body)
         self.notes = resp.experiment.notes if resp.experiment else None
 
-    def add_labels(self, labels: List[str]) -> None:
-        """Add a list of labels to the experiment.
+    def add_label(self, label: str) -> None:
+        """Add a label to the experiment.
 
         Arguments:
-            labels: a list of string labels to add to the experiment. This list will be merged
-                with the current labels (self.labels) to update the master server. Duplicates
-                are ignored.
-
+            label: a string label to add to the experiment. If the label already exists,
+                the method call will be a no-op.
         """
-        labels = set(self.labels + labels)
-        self.set_labels(labels=list(labels))
 
-    def remove_labels(self, labels: List[str]) -> None:
-        labels = set(self.labels) - set(labels)
-        self.set_labels(labels=list(labels))
+        # URL-encode label for request.
+        label = parse.quote(label)
+        resp = bindings.put_PutExperimentLabel(
+            session=self._session, experimentId=self.id, label=label
+        )
+        self.labels = resp.labels
+
+    def remove_label(self, label: str) -> None:
+        """Removes a label from the experiment.
+
+        Arguments:
+            label: a string label to remove from the experiment. If the specified label does not
+                exist on the experiment, this method call will be a no-op.
+        """
+        # URL-encode label for request.
+        label = parse.quote(label)
+        resp = bindings.delete_DeleteExperimentLabel(
+            session=self._session, experimentId=self.id, label=label
+        )
+        self.labels = resp.labels
 
     def set_labels(self, labels: List[str]) -> None:
+        """Sets experiment labels to the specified list.
+
+        This method will overwrite any existing labels on the experiment with the specified
+        labels.
+
+        Arguments:
+            labels: a list of string labels to set on the experiment.
+        """
         self.labels = set(labels)
         patch_exp = bindings.v1PatchExperiment(id=self.id, labels=list(self.labels))
         bindings.patch_PatchExperiment(self._session, body=patch_exp, experiment_id=self.id)
