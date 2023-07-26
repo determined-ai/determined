@@ -36,7 +36,6 @@ import {
 import { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import useMobile from 'hooks/useMobile';
-import usePrevious from 'hooks/usePrevious';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'stores/contexts/UI';
@@ -294,16 +293,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     setExcludedExperimentIds(new Set());
     setSelectAll(true);
   }, [setSelectAll, setSelection, data, setExcludedExperimentIds]);
-
-  const previousData = usePrevious(data, undefined);
-  useEffect(() => {
-    if (selectAll && !!previousData && data.length > previousData.length) {
-      setSelection(({ columns, rows }: GridSelection) => ({
-        columns,
-        rows: rows.add([previousData.length - 1, data.length]),
-      }));
-    }
-  }, [data, previousData, selectAll, setSelection]);
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, { bounds, preventDefault }: HeaderClickedEventArgs) => {
