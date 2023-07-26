@@ -764,3 +764,23 @@ message CreateTrialResponse {
   // The requested trial.
   determined.trial.v1.Trial trial = 1;
 }
+
+// Create a TrialSourceInfo
+message ReportTrialSourceInfoRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_source_info" ] }
+  };
+  // Type of the TrialSourceInfo
+  determined.trial.v1.TrialSourceInfo trial_source_info = 1;
+}
+
+// Response to making a TrialSourceInfo
+message ReportTrialSourceInfoResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id", "checkpoint_uuid" ] }
+  };
+  // Trial ID of the created
+  int32 trial_id = 1;
+  // UUID of the checkpoint.
+  string checkpoint_uuid = 2;
+}

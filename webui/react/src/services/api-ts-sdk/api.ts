@@ -4128,6 +4128,19 @@ export interface V1GetTrialCheckpointsResponse {
     pagination: V1Pagination;
 }
 /**
+ * 
+ * @export
+ * @interface V1GetTrialMetricsBySourceInfoCheckpointResponse
+ */
+export interface V1GetTrialMetricsBySourceInfoCheckpointResponse {
+    /**
+     * All the related trials and their metrics
+     * @type {Array<V1TrialSourceInfoMetric>}
+     * @memberof V1GetTrialMetricsBySourceInfoCheckpointResponse
+     */
+    data: Array<V1TrialSourceInfoMetric>;
+}
+/**
  * Response to TrialProfilerAvailableSeriesRequest.
  * @export
  * @interface V1GetTrialProfilerAvailableSeriesResponse
@@ -4165,6 +4178,19 @@ export interface V1GetTrialResponse {
      * @memberof V1GetTrialResponse
      */
     trial: Trialv1Trial;
+}
+/**
+ * 
+ * @export
+ * @interface V1GetTrialSourceInfoMetricsByModelVersionResponse
+ */
+export interface V1GetTrialSourceInfoMetricsByModelVersionResponse {
+    /**
+     * All the related trials and their metrics
+     * @type {Array<V1TrialSourceInfoMetric>}
+     * @memberof V1GetTrialSourceInfoMetricsByModelVersionResponse
+     */
+    data: Array<V1TrialSourceInfoMetric>;
 }
 /**
  * Response to GetTrialWorkloadsRequest.
@@ -7468,6 +7494,38 @@ export interface V1ReportTrialSearcherEarlyExitResponse {
 /**
  * 
  * @export
+ * @interface V1ReportTrialSourceInfoRequest
+ */
+export interface V1ReportTrialSourceInfoRequest {
+    /**
+     * Type of the TrialSourceInfo
+     * @type {V1TrialSourceInfo}
+     * @memberof V1ReportTrialSourceInfoRequest
+     */
+    trialSourceInfo: V1TrialSourceInfo;
+}
+/**
+ * 
+ * @export
+ * @interface V1ReportTrialSourceInfoResponse
+ */
+export interface V1ReportTrialSourceInfoResponse {
+    /**
+     * Trial ID of the created
+     * @type {number}
+     * @memberof V1ReportTrialSourceInfoResponse
+     */
+    trialId: number;
+    /**
+     * UUID of the checkpoint.
+     * @type {string}
+     * @memberof V1ReportTrialSourceInfoResponse
+     */
+    checkpointUuid: string;
+}
+/**
+ * 
+ * @export
  * @interface V1ReportTrialTrainingMetricsResponse
  */
 export interface V1ReportTrialTrainingMetricsResponse {
@@ -9632,6 +9690,79 @@ export interface V1TrialSimulation {
      */
     occurrences?: number;
 }
+/**
+ * 
+ * @export
+ * @interface V1TrialSourceInfo
+ */
+export interface V1TrialSourceInfo {
+    /**
+     * ID of the trial.
+     * @type {number}
+     * @memberof V1TrialSourceInfo
+     */
+    trialId: number;
+    /**
+     * UUID of the checkpoint.
+     * @type {string}
+     * @memberof V1TrialSourceInfo
+     */
+    checkpointUuid: string;
+    /**
+     * Source `id`` for the model which generated the checkpoint (if applicable)
+     * @type {number}
+     * @memberof V1TrialSourceInfo
+     */
+    modelId?: number;
+    /**
+     * Source `version` in the model_version version field which generated the checkpoint (if applicable)
+     * @type {number}
+     * @memberof V1TrialSourceInfo
+     */
+    modelVersion?: number;
+    /**
+     * Type for this trial_source_info
+     * @type {V1TrialSourceInfoType}
+     * @memberof V1TrialSourceInfo
+     */
+    trialSourceInfoType: V1TrialSourceInfoType;
+}
+/**
+ * 
+ * @export
+ * @interface V1TrialSourceInfoMetric
+ */
+export interface V1TrialSourceInfoMetric {
+    /**
+     * Trial ID for the inference or fine-tuning run
+     * @type {number}
+     * @memberof V1TrialSourceInfoMetric
+     */
+    trialId: number;
+    /**
+     * Type of the TrialSourceInfo
+     * @type {V1TrialSourceInfoType}
+     * @memberof V1TrialSourceInfoMetric
+     */
+    trialSourceInfoType: V1TrialSourceInfoType;
+    /**
+     * All metrics for the trial
+     * @type {Array<V1MetricsReport>}
+     * @memberof V1TrialSourceInfoMetric
+     */
+    metricReports?: Array<V1MetricsReport>;
+}
+/**
+ * - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+ * @export
+ * @enum {string}
+ */
+export const V1TrialSourceInfoType = {
+    UNSPECIFIED: 'TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED',
+    INFERENCE: 'TRIAL_SOURCE_INFO_TYPE_INFERENCE',
+    FINETUNING: 'TRIAL_SOURCE_INFO_TYPE_FINE_TUNING',
+} as const
+export type V1TrialSourceInfoType = ValueOf<typeof V1TrialSourceInfoType>
 /**
  * 
  * @export
@@ -17047,6 +17178,94 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Gets the metrics for all trials associated with this checkpoint
+         * @param {string} checkpointUuid UUID of the checkpoint.
+         * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialMetricsBySourceInfoCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options: any = {}): FetchArgs {
+            // verify required parameter 'checkpointUuid' is not null or undefined
+            if (checkpointUuid === null || checkpointUuid === undefined) {
+                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling getTrialMetricsBySourceInfoCheckpoint.');
+            }
+            const localVarPath = `/api/v1/checkpoints/{checkpointUuid}/trial-source-info-metrics`
+                .replace(`{${"checkpointUuid"}}`, encodeURIComponent(String(checkpointUuid)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (trialSourceInfoType !== undefined) {
+                localVarQueryParameter['trialSourceInfoType'] = trialSourceInfoType
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Gets the metrics for all trials associated with this model version
+         * @param {string} modelName The name of the model associated with the model version.
+         * @param {number} modelVersionNum Sequential model version number.
+         * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialSourceInfoMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options: any = {}): FetchArgs {
+            // verify required parameter 'modelName' is not null or undefined
+            if (modelName === null || modelName === undefined) {
+                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling getTrialSourceInfoMetricsByModelVersion.');
+            }
+            // verify required parameter 'modelVersionNum' is not null or undefined
+            if (modelVersionNum === null || modelVersionNum === undefined) {
+                throw new RequiredError('modelVersionNum','Required parameter modelVersionNum was null or undefined when calling getTrialSourceInfoMetricsByModelVersion.');
+            }
+            const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionNum}/trial-source-info-metrics`
+                .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)))
+                .replace(`{${"modelVersionNum"}}`, encodeURIComponent(String(modelVersionNum)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (trialSourceInfoType !== undefined) {
+                localVarQueryParameter['trialSourceInfoType'] = trialSourceInfoType
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the list of workloads for a trial.
          * @param {number} trialId Limit workloads to those that are owned by the specified trial.
          * @param {V1OrderBy} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -17764,6 +17983,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{trialId}/early_exit`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+         * @param {V1ReportTrialSourceInfoRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        reportTrialSourceInfo(body: V1ReportTrialSourceInfoRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling reportTrialSourceInfo.');
+            }
+            const localVarPath = `/api/v1/trial-source-info`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -18716,6 +18973,47 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Gets the metrics for all trials associated with this checkpoint
+         * @param {string} checkpointUuid UUID of the checkpoint.
+         * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialMetricsBySourceInfoCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialMetricsBySourceInfoCheckpointResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialMetricsBySourceInfoCheckpoint(checkpointUuid, trialSourceInfoType, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Gets the metrics for all trials associated with this model version
+         * @param {string} modelName The name of the model associated with the model version.
+         * @param {number} modelVersionNum Sequential model version number.
+         * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialSourceInfoMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialSourceInfoMetricsByModelVersionResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialSourceInfoMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the list of workloads for a trial.
          * @param {number} trialId Limit workloads to those that are owned by the specified trial.
          * @param {V1OrderBy} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -19034,6 +19332,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         reportTrialSearcherEarlyExit(trialId: number, body: V1TrialEarlyExit, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialSearcherEarlyExitResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialSearcherEarlyExit(trialId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+         * @param {V1ReportTrialSourceInfoRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        reportTrialSourceInfo(body: V1ReportTrialSourceInfoRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialSourceInfoResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialSourceInfo(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19497,6 +19814,29 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Gets the metrics for all trials associated with this checkpoint
+         * @param {string} checkpointUuid UUID of the checkpoint.
+         * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialMetricsBySourceInfoCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
+            return InternalApiFp(configuration).getTrialMetricsBySourceInfoCheckpoint(checkpointUuid, trialSourceInfoType, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Gets the metrics for all trials associated with this model version
+         * @param {string} modelName The name of the model associated with the model version.
+         * @param {number} modelVersionNum Sequential model version number.
+         * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialSourceInfoMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
+            return InternalApiFp(configuration).getTrialSourceInfoMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the list of workloads for a trial.
          * @param {number} trialId Limit workloads to those that are owned by the specified trial.
          * @param {V1OrderBy} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -19680,6 +20020,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         reportTrialSearcherEarlyExit(trialId: number, body: V1TrialEarlyExit, options?: any) {
             return InternalApiFp(configuration).reportTrialSearcherEarlyExit(trialId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+         * @param {V1ReportTrialSourceInfoRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        reportTrialSourceInfo(body: V1ReportTrialSourceInfoRequest, options?: any) {
+            return InternalApiFp(configuration).reportTrialSourceInfo(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -20113,6 +20463,33 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Gets the metrics for all trials associated with this checkpoint
+     * @param {string} checkpointUuid UUID of the checkpoint.
+     * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getTrialMetricsBySourceInfoCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
+        return InternalApiFp(this.configuration).getTrialMetricsBySourceInfoCheckpoint(checkpointUuid, trialSourceInfoType, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Gets the metrics for all trials associated with this model version
+     * @param {string} modelName The name of the model associated with the model version.
+     * @param {number} modelVersionNum Sequential model version number.
+     * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getTrialSourceInfoMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
+        return InternalApiFp(this.configuration).getTrialSourceInfoMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Get the list of workloads for a trial.
      * @param {number} trialId Limit workloads to those that are owned by the specified trial.
      * @param {V1OrderBy} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -20327,6 +20704,18 @@ export class InternalApi extends BaseAPI {
      */
     public reportTrialSearcherEarlyExit(trialId: number, body: V1TrialEarlyExit, options?: any) {
         return InternalApiFp(this.configuration).reportTrialSearcherEarlyExit(trialId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+     * @param {V1ReportTrialSourceInfoRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public reportTrialSourceInfo(body: V1ReportTrialSourceInfoRequest, options?: any) {
+        return InternalApiFp(this.configuration).reportTrialSourceInfo(body, options)(this.fetch, this.basePath)
     }
     
     /**

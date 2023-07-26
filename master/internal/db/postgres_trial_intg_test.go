@@ -101,6 +101,7 @@ func addMetrics(ctx context.Context,
 	}
 }
 
+// Test helper function to add trial metrics.
 func addTestTrialMetrics(ctx context.Context,
 	t *testing.T, db *PgDB, trialID int, trialMetricsJSON string,
 ) {

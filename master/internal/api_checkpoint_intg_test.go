@@ -281,6 +281,11 @@ func TestCheckpointAuthZ(t *testing.T) {
 			})
 			return err
 		}, false},
+		{"CanGetExperimentArtifacts", func(id string) error {
+			_, err := api.GetTrialMetricsBySourceInfoCheckpoint(ctx,
+				&apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: id})
+			return err
+		}, false},
 	}
 
 	checkpointID := createVersionTwoCheckpoint(ctx, t, api, curUser, nil)

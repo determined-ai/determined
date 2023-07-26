@@ -15,6 +15,8 @@ const (
 	ValidationMetricGroup MetricGroup = "validation"
 	// TrainingMetricGroup designates metrics from training runs.
 	TrainingMetricGroup MetricGroup = "training"
+	// InferenceMetricGroup designates metrics from inference runs.
+	InferenceMetricGroup MetricGroup = "inference"
 )
 
 type metricName string

@@ -30,6 +30,7 @@ import (
 	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
+	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -485,7 +486,7 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 	}
 
 	for _, trialID := range req.TrialIds {
-		if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
+		if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
 			exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 			return nil, err
 		}

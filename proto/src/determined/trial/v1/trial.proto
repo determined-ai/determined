@@ -276,3 +276,50 @@ message MetricsReport {
   // Run ID of trial when metric was reported.
   int32 trial_run_id = 7;
 }
+
+// TrialSourceInfoType is the type of the TrialSourceInfo, which serves as a
+// link between a trial and a checkpoint or model version
+enum TrialSourceInfoType {
+  // The type is unspecified
+  TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED = 0;
+  // "Inference" Trial Source Info Type, used for batch inference
+  TRIAL_SOURCE_INFO_TYPE_INFERENCE = 1;
+  // "Fine Tuning" Trial Source Info Type, used in model hub
+  TRIAL_SOURCE_INFO_TYPE_FINE_TUNING = 2;
+}
+
+// Denotes a connection between a given trial and a
+// checkpoint or model_version
+message TrialSourceInfo {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "trial_id", "checkpoint_uuid", "trial_source_info_type" ]
+    }
+  };
+  // ID of the trial.
+  int32 trial_id = 1;
+  // UUID of the checkpoint.
+  string checkpoint_uuid = 2;
+  // Source `id`` for the model which generated the checkpoint (if applicable)
+  optional int32 model_id = 3;
+  // Source `version` in the model_version version field which generated the
+  // checkpoint (if applicable)
+  optional int32 model_version = 4;
+  // Type for this trial_source_info
+  TrialSourceInfoType trial_source_info_type = 5;
+}
+
+// Denotes a trial with a specific trial source info type and its metrics
+message TrialSourceInfoMetric {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "trial_id", "metric_report", "trial_source_info_type" ]
+    }
+  };
+  // Trial ID for the inference or fine-tuning run
+  int32 trial_id = 1;
+  // Type of the TrialSourceInfo
+  determined.trial.v1.TrialSourceInfoType trial_source_info_type = 2;
+  // All metrics for the trial
+  repeated determined.trial.v1.MetricsReport metric_reports = 3;
+}

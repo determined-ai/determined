@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	modelauth "github.com/determined-ai/determined/master/internal/model"
+	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
@@ -812,4 +813,40 @@ func (a *apiServer) DeleteModelVersion(
 
 	return &apiv1.DeleteModelVersionResponse{},
 		errors.Wrapf(err, "error deleting model version %v", modelVersionName)
+}
+
+// Query for all trials that use a given model_version and return their metrics.
+func (a *apiServer) GetTrialSourceInfoMetricsByModelVersion(
+	ctx context.Context, req *apiv1.GetTrialSourceInfoMetricsByModelVersionRequest,
+) (*apiv1.GetTrialSourceInfoMetricsByModelVersionResponse, error) {
+	modelVersionResp, err := a.ModelVersionFromID(
+		req.ModelName, req.ModelVersionNum,
+	)
+	if err != nil {
+		return nil, err
+	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, modelVersionResp.Model,
+		modelVersionResp.Model.WorkspaceId); err != nil {
+		return nil, err
+	}
+	resp := &apiv1.GetTrialSourceInfoMetricsByModelVersionResponse{}
+	trialIDsQuery := db.Bun().NewSelect().Table("trial_source_infos").
+		Where("model_id = ?", modelVersionResp.Model.Id).
+		Where("model_version = ?", modelVersionResp.Version)
+
+	if req.TrialSourceInfoType != nil {
+		trialIDsQuery.Where("trial_source_info_type = ?", req.TrialSourceInfoType.String())
+	}
+
+	trialSourceMetrics, err := trials.GetMetricsForTrialSourceInfoQuery(ctx, trialIDsQuery)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get trial source info %w", err)
+	}
+
+	resp.Data = append(resp.Data, trialSourceMetrics...)
+	return resp, nil
 }
