@@ -12,10 +12,10 @@
   min-height: 530px;
 }
 .chartgridContainer {
+  --grid-spacing: 6px;
   background-color: var(--theme-background);
   min-height: 530px;
   overflow-y: hidden;
-  --grid-spacing: 6px;
 }
 .chartgridCell {
   background-color: var(--theme-background);
@@ -27,8 +27,8 @@
   background-color: var(--theme-stage);
   border: 1px solid var(--theme-stage-border);
   border-radius: 4px;
-  padding: 24px;
   height: calc(100% - var(--grid-spacing));
+  padding: 24px;
 }
 .chartTitle {
   background-color: var(--theme-stage);
