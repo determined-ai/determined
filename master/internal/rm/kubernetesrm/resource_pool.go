@@ -579,19 +579,21 @@ func (k *kubernetesResourcePool) resourcesReleased(
 	ctx *actor.Context,
 	msg sproto.ResourcesReleased,
 ) {
+	req, ok := k.reqList.TaskByID(msg.AllocationID)
+	if !ok {
+		ctx.Log().Debugf("ignoring release for task not allocated to pool %s", msg.AllocationID)
+		return
+	}
+
 	if msg.ResourcesID != nil {
 		// Just ignore this minor optimization in Kubernetes.
 		return
 	}
 
 	ctx.Log().Infof("resources are released for %s", msg.AllocationID)
-
-	if req, ok := k.reqList.TaskByID(msg.AllocationID); ok {
-		group := k.groups[req.Group]
-
-		if group != nil {
-			k.slotsUsedPerGroup[group] -= req.SlotsNeeded
-		}
+	group := k.groups[req.Group]
+	if group != nil {
+		k.slotsUsedPerGroup[group] -= req.SlotsNeeded
 	}
 
 	k.reqList.RemoveTaskByID(msg.AllocationID)

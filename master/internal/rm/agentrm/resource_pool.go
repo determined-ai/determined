@@ -337,6 +337,12 @@ func (rp *resourcePool) resourcesReleased(
 	ctx *actor.Context,
 	msg sproto.ResourcesReleased,
 ) {
+	_, ok := rp.taskList.TaskByID(msg.AllocationID)
+	if !ok {
+		ctx.Log().Debugf("ignoring release for task not allocated to pool %s", msg.AllocationID)
+		return
+	}
+
 	switch allocated := rp.taskList.Allocation(msg.AllocationID); {
 	case allocated == nil:
 		ctx.Log().Infof("released before allocated for %s", msg.AllocationID)

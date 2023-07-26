@@ -490,23 +490,23 @@ func (_m *ResourceManager) Release(_a0 actor.Messenger, _a1 sproto.ResourcesRele
 	_m.Called(_a0, _a1)
 }
 
-// ResolveResourcePool provides a mock function with given fields: ctx, name, slots
-func (_m *ResourceManager) ResolveResourcePool(ctx actor.Messenger, name string, slots int) (string, error) {
-	ret := _m.Called(ctx, name, slots)
+// ResolveResourcePool provides a mock function with given fields: ctx, name, workspace, slots
+func (_m *ResourceManager) ResolveResourcePool(ctx actor.Messenger, name string, workspace int, slots int) (string, error) {
+	ret := _m.Called(ctx, name, workspace, slots)
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(actor.Messenger, string, int) (string, error)); ok {
-		return rf(ctx, name, slots)
+	if rf, ok := ret.Get(0).(func(actor.Messenger, string, int, int) (string, error)); ok {
+		return rf(ctx, name, workspace, slots)
 	}
-	if rf, ok := ret.Get(0).(func(actor.Messenger, string, int) string); ok {
-		r0 = rf(ctx, name, slots)
+	if rf, ok := ret.Get(0).(func(actor.Messenger, string, int, int) string); ok {
+		r0 = rf(ctx, name, workspace, slots)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(actor.Messenger, string, int) error); ok {
-		r1 = rf(ctx, name, slots)
+	if rf, ok := ret.Get(1).(func(actor.Messenger, string, int, int) error); ok {
+		r1 = rf(ctx, name, workspace, slots)
 	} else {
 		r1 = ret.Error(1)
 	}
