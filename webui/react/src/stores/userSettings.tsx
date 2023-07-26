@@ -48,7 +48,10 @@ export class UserSettingsStore extends PollingStore {
           value,
           type.decode,
           match(
-            () => null, // Silently swallow decoding errors
+            () => {
+              console.error(`Setting at key '${key}' could not be decoded as ${type.name}`);
+              return null; // Silently swallow decoding errors
+            },
             (v) => v,
           ),
         );
@@ -161,6 +164,8 @@ export class UserSettingsStore extends PollingStore {
             // Silently discard incorrectly formatted values
             if (isRight(attempt)) {
               value = attempt.right;
+            } else {
+              console.error(`Setting at key '${key}' could not be decoded as ${type.name}`);
             }
           }
           const newValue = fn(value);
