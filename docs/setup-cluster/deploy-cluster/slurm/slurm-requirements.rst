@@ -204,11 +204,11 @@ interacts with PBS, we recommend the following steps:
 
 -  Enable PBS to store job history.
 
-   In order for the HPC launcher to detect successful job completion, PBS must have job history
-   enabled. If this setting is not configured properly, then the HPC launcher will not be able to
-   resolve the status/information of a job after it finishes.
+   To ensure successful job completion detection by the HPC launcher, it is crucial to have the job
+   history enabled in PBS. In the absence of proper configuration, the HPC launcher would fail to
+   resolve the status or information of a job post-completion.
 
-   PBS administrators can use the following commands to set/verify the value of
+   PBS administrators can employ the following commands to set and confirm the value of
    ``job_history_enable``:
 
    -  Set the value of ``job_history_enable``.
@@ -221,7 +221,7 @@ interacts with PBS, we recommend the following steps:
 
       .. code:: bash
 
-         sudo qmgr -c "print server job_history_enable"
+         qmgr -c "print server job_history_enable"
 
 -  Configure PBS to manage GPU resources.
 
