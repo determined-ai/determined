@@ -452,7 +452,7 @@ If this field is not set, the task will be launched into one of the two default 
 compute pool. TensorBoards will be launched into the default auxiliary pool. Commands, shells, and
 notebooks that request a slot (which is the default behavior if the ``resources.slots`` field is not
 set) will be launched into the default compute pool. Commands, shells, and notebooks that explicitly
-request 0 slots (for example the "Launch CPU-only Notebook" button in the Web UI) will use the
+request 0 slots (for example the "Launch CPU-only Notebook" button in the WebUI) will use the
 auxiliary pool.
 
 .. _scheduling:

@@ -163,7 +163,7 @@ install and configure the Determined master:
    per :ref:`proxy-config-requirements`.
 
 #. Log into Determined, see :ref:`users`. The Determined user must be linked to a user on the HPC
-   cluster. If logged in with a Determined administrator account, the following example creates a
+   cluster. If signed in with a Determined administrator account, the following example creates a
    Determined user account that is linked to the current user's Linux account.
 
    .. code:: bash
