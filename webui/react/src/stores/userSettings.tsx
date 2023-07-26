@@ -151,11 +151,6 @@ export class UserSettingsStore extends PollingStore {
    * @param key Unique key to store and retrieve the settings
    * @param fn Function to update the value of the setting at `key`
    */
-  public update<T extends t.Props, U = t.TypeOfProps<T>>(
-    type: t.TypeC<T>,
-    key: string,
-    fn: (value: U | undefined) => U,
-  ): void;
   public update<T>(type: t.Type<T, Json>, key: string, fn: (value: T | undefined) => T): void {
     this.#settings.update((settings) => {
       return Loadable.map(settings, (settings) => {

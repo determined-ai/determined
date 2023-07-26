@@ -17,11 +17,11 @@ vi.mock('services/api', () => ({
 
 const Config = t.type({
   boolean: t.boolean,
-  booleanArray: t.union([t.array(t.boolean), t.undefined]),
-  number: t.union([t.undefined, t.number]),
+  booleanArray: t.union([t.array(t.boolean), t.null]),
+  number: t.union([t.null, t.number]),
   numberArray: t.array(t.number),
-  string: t.union([t.undefined, t.string]),
-  stringArray: t.union([t.undefined, t.array(t.string)]),
+  string: t.union([t.null, t.string]),
+  stringArray: t.union([t.null, t.array(t.string)]),
 });
 const configPath = 'settings-normal';
 
