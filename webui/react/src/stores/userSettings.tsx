@@ -163,6 +163,7 @@ export class UserSettingsStore extends PollingStore {
           let value: T | undefined = undefined;
           if (jsonValue !== undefined) {
             const attempt = type.decode(jsonValue);
+            // Silently discard incorrectly formatted values
             if (isRight(attempt)) {
               value = attempt.right;
             }
