@@ -29,6 +29,8 @@ type operations struct {
 	action watch.EventType
 }
 
+// Since preemption & pod informers share the same informer.go
+// code for newPodInformer() & run(), this tests serves to cover both.
 func TestPodInformer(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -295,88 +297,6 @@ func TestEventListener(t *testing.T) {
 			wg.Wait()
 			if reflect.DeepEqual(tt.eventNames, tt.ordering) {
 				assert.Equal(t, tt.eventNames, ordering)
-			} else {
-				assert.NotEqual(t, tt.ordering, ordering)
-			}
-		})
-	}
-}
-
-func TestPreemptionListener(t *testing.T) {
-	cases := []struct {
-		testName string
-		names    []string
-		ordering []string
-	}{
-		{"zero preemptions", []string{}, []string{}},
-		{"informer success", []string{"abc"}, []string{"abc"}},
-		{
-			"informer success & event ordering success",
-			[]string{"A", "B", "C", "D", "E"},
-			[]string{"A", "B", "C", "D", "E"},
-		},
-		{
-			"informer success & event ordering failure",
-			[]string{"A", "B", "C", "D", "E"},
-			[]string{"D", "A", "C", "B", "E"},
-		},
-	}
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
-	for _, tt := range cases {
-		t.Run(tt.testName, func(t *testing.T) {
-			var wg sync.WaitGroup
-			wg.Add(len(tt.names))
-
-			eventChan := make(chan watch.Event)
-			ordering := make([]string, 0)
-
-			mockOptsList, mockOptsWatch := initializeMockOpts("preemption")
-			mockPodInterface := &mocks.PodInterface{}
-			mockPodInterface.On("List", context.TODO(), mockOptsList).Return(
-				&k8sV1.PodList{
-					ListMeta: metaV1.ListMeta{
-						ResourceVersion: "1",
-					},
-				},
-				nil)
-			mockPodInterface.On("Watch", context.TODO(), mockOptsWatch).Return(
-				&mockWatcher{c: eventChan}, nil)
-			mockPreemptionHandler := func(event watch.Event) {
-				pod, _ := event.Object.(*k8sV1.Pod)
-				t.Logf("received pod name %v", pod.Name)
-				ordering = append(ordering, pod.Name)
-				wg.Done()
-			}
-
-			i, err := newPodInformer(
-				context.TODO(),
-				determinedPreemptionLabel,
-				"preemption",
-				namespace,
-				mockPodInterface,
-				mockPreemptionHandler,
-			)
-			assert.NotNil(t, i)
-			assert.Nil(t, err)
-
-			go i.run(ctx)
-			for _, name := range tt.names {
-				pod := &k8sV1.Pod{
-					ObjectMeta: metaV1.ObjectMeta{
-						ResourceVersion: "1",
-						Name:            name,
-					},
-				}
-				eventChan <- watch.Event{
-					Type:   watch.Modified,
-					Object: pod,
-				}
-			}
-
-			wg.Wait()
-			if reflect.DeepEqual(tt.names, tt.ordering) {
-				assert.Equal(t, tt.names, ordering)
 			} else {
 				assert.NotEqual(t, tt.ordering, ordering)
 			}
