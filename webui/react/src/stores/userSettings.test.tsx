@@ -86,6 +86,9 @@ describe('userSettings', () => {
       expect(spy).toBeCalledTimes(1);
       const result = store.get(Config, configPath).get();
       expect(Loadable.map(result, (r) => r?.string)).toStrictEqual(Loaded(expectedValue));
+      expect(Loadable.map(result, (r) => r?.stringArray)).toStrictEqual(
+        Loaded(expectedSettings.stringArray),
+      );
     });
   });
 });
