@@ -120,6 +120,13 @@ def _initialize_default_inference_context(
     )
 
 
+def _initialize_trial_source_info() -> None:
+    info = det.get_cluster_info()
+    if not info or not info.task_type == "TRIAL":
+        raise ValueError("TorchBatchProcessor must be run inside a determined cluster")
+    logging.info(f"trial.id: {info.trial.trial_id}")
+
+
 class TorchBatchProcessor(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def __init__(self, context: TorchBatchProcessorContext) -> None:
@@ -315,6 +322,7 @@ def torch_batch_process(
         dataloader_kwargs: Kwargs to pass to PyTorch dataloader
         distributed_context: Distributed context to initialize core context
     """
+    _initialize_trial_source_info()
     with _initialize_default_inference_context(distributed_context) as core_context:
         """
         (1) Set up necessary variables to run batch processing
