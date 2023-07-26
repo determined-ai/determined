@@ -387,6 +387,8 @@ commands:
                   ${CONDA_DIR}/bin/conda install python=${PYTHON_VERSION}
                   ${CONDA_DIR}/bin/conda update --prefix ${CONDA_DIR} --all -y
                   ${CONDA_DIR}/bin/conda clean --all -y
+                  
+                  pip install requests==2.27.0
                   EOF
 
             - run:
