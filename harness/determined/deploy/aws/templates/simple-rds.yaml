@@ -231,8 +231,14 @@ Parameters:
         host: "{{ .db.host }}"
         port: 5432
         name: "{{ .db.name }}"
-        {{- if .db.ssl_root_cert }}
+        {{- if .db.ssl_mode }}
+        ssl_mode: "{{ .db.ssl_mode }}"
+        {{- else if .db.ssl_root_cert }}
         ssl_mode: verify-ca
+        {{- else }}
+        ssl_mode: disable
+        {{- end }}
+        {{- if .db.ssl_root_cert }}
         ssl_root_cert: "{{ .db.ssl_root_cert }}"
         {{- end }}
 
@@ -667,6 +673,7 @@ Resources:
               password: "${DBPassword}"
               host: "${Database.Endpoint.Address}"
               name: postgres
+              ssl_mode: require
 
             enable_cors: ${EnableCORS}
 
@@ -737,9 +744,6 @@ Resources:
                stable"
             apt-get update
             apt-get install -y docker-ce docker-ce-cli containerd.io
-
-            curl -fsSL https://www.amazontrust.com/repository/AmazonRootCA1.pem > \
-              /usr/local/determined/etc/db_ssl_root_cert.pem
 
             if [ ! -z "${DockerUser}" ] && [ ! -z ${DockerPass} ]; then
               echo "${DockerPass}" | docker login --username "${DockerUser}" --password-stdin

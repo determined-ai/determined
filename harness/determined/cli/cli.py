@@ -34,6 +34,7 @@ from determined.cli.oauth import args_description as oauth_args_description
 from determined.cli.project import args_description as project_args_description
 from determined.cli.rbac import args_description as rbac_args_description
 from determined.cli.remote import args_description as remote_args_description
+from determined.cli.resource_pool import args_description as resource_pool_args_description
 from determined.cli.resources import args_description as resources_args_description
 from determined.cli.shell import args_description as shell_args_description
 from determined.cli.sso import args_description as auth_args_description
@@ -161,6 +162,7 @@ all_args_description: ArgsDescription = (
     + notebook_args_description
     + job_args_description
     + resources_args_description
+    + resource_pool_args_description
     + project_args_description
     + shell_args_description
     + task_args_description

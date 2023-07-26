@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -24,6 +25,7 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/project"
 	pkgTemplate "github.com/determined-ai/determined/master/internal/template"
+	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -315,8 +317,13 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 
 	defaulted := schemas.WithDefaults(config)
 	resources := defaulted.Resources()
+	workspaceModel, err := workspace.WorkspaceByProjectID(ctx, int(req.ProjectId))
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		return nil, config, nil, nil, err
+	}
+	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system, resources.ResourcePool(), resources.SlotsPerTrial())
+		m.system, resources.ResourcePool(), workspaceID, resources.SlotsPerTrial())
 	if err != nil {
 		return nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
 	}

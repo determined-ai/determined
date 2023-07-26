@@ -102,6 +102,14 @@ def set_project_item_status(project_id: str, item_id: str, status: str) -> None:
     )
 
 
+def set_project_pr_status(project_id: str, pr_id: str, status: str) -> None:
+    status_field_id, status_value_id = get_project_status_ids(project_id, status)
+    item_id = project_item_id_for_pr(project_id, pr_id)
+    gql.set_project_item_status(
+        project=project_id, item=item_id, field=status_field_id, value=status_value_id
+    )
+
+
 def add_tracking_issue_to_project(project_id: str, pr_id: str, status: str) -> None:
     issue_repo_id = gql.get_repo_id(owner=ORG, name=ISSUES_REPO)["repository"]["id"]
     issue_id = make_issue_for_pr(issue_repo_id, pr_id)
@@ -125,6 +133,19 @@ def current_project_id() -> str:
         "Current release",
         lambda p: p["title"].startswith("TEST Current release" if TEST else "Current release"),
     )["id"]
+
+
+def project_item_id_for_pr(project_id: str, pr_id: str):
+    after_cursor = None
+    while True:
+        items = gql.list_project_prs(project=project_id, after=after_cursor)["node"]["items"]
+        for item in items["nodes"]:
+            if item["content"] and item["content"]["id"] == pr_id:
+                return item["id"]
+        if not items["pageInfo"]["hasNextPage"]:
+            break
+        after_cursor = items["pageInfo"]["endCursor"]
+    return None
 
 
 def cherry_pick_pr(pr_id: str) -> None:
@@ -194,13 +215,13 @@ def cherry_pick_pr(pr_id: str) -> None:
             run("git", "push", ee_remote, f"{ee_release_branch}:{ee_release_branch}")
 
         print("Cherry-pick succeeded, updating item status")
-        set_project_item_status(current_project_id(), pr_id, FIX_UNRELEASED_STATUS)
+        set_project_pr_status(current_project_id(), pr_id, FIX_UNRELEASED_STATUS)
     except subprocess.CalledProcessError:
         import traceback
 
         traceback.print_exc()
         print("Cherry-pick failed, adding PR as conflicted")
-        set_project_item_status(current_project_id(), pr_id, FIX_CONFLICT_STATUS)
+        set_project_pr_status(current_project_id(), pr_id, FIX_CONFLICT_STATUS)
         requests.post(
             "https://casper.internal.infra.determined.ai/hubot/conflict",
             headers={"X-Casper-Token": CASPER_TOKEN},
@@ -263,7 +284,7 @@ class Actions:
     def cherry_pick_conflict_resolved(pr_id: str):
         # TODO Use Git to confirm the cherry-pick was done.
         project_id = current_project_id()
-        set_project_item_status(project_id, pr_id, FIX_UNRELEASED_STATUS)
+        set_project_pr_status(project_id, pr_id, FIX_UNRELEASED_STATUS)
 
     @staticmethod
     def release_unreleased_prs():

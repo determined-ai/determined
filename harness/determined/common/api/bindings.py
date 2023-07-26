@@ -1392,16 +1392,20 @@ class v1AwsCustomTag(Printable):
 
 class v1BindRPToWorkspaceRequest(Printable):
     workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
+    workspaceNames: "typing.Optional[typing.Sequence[str]]" = None
 
     def __init__(
         self,
         *,
         resourcePoolName: str,
         workspaceIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+        workspaceNames: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
     ):
         self.resourcePoolName = resourcePoolName
         if not isinstance(workspaceIds, Unset):
             self.workspaceIds = workspaceIds
+        if not isinstance(workspaceNames, Unset):
+            self.workspaceNames = workspaceNames
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1BindRPToWorkspaceRequest":
@@ -1410,6 +1414,8 @@ class v1BindRPToWorkspaceRequest(Printable):
         }
         if "workspaceIds" in obj:
             kwargs["workspaceIds"] = obj["workspaceIds"]
+        if "workspaceNames" in obj:
+            kwargs["workspaceNames"] = obj["workspaceNames"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -1418,6 +1424,8 @@ class v1BindRPToWorkspaceRequest(Printable):
         }
         if not omit_unset or "workspaceIds" in vars(self):
             out["workspaceIds"] = self.workspaceIds
+        if not omit_unset or "workspaceNames" in vars(self):
+            out["workspaceNames"] = self.workspaceNames
         return out
 
 class v1BulkExperimentFilters(Printable):
@@ -7564,16 +7572,20 @@ class v1OrderBy(DetEnum):
 
 class v1OverwriteRPWorkspaceBindingsRequest(Printable):
     workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
+    workspaceNames: "typing.Optional[typing.Sequence[str]]" = None
 
     def __init__(
         self,
         *,
         resourcePoolName: str,
         workspaceIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+        workspaceNames: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
     ):
         self.resourcePoolName = resourcePoolName
         if not isinstance(workspaceIds, Unset):
             self.workspaceIds = workspaceIds
+        if not isinstance(workspaceNames, Unset):
+            self.workspaceNames = workspaceNames
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1OverwriteRPWorkspaceBindingsRequest":
@@ -7582,6 +7594,8 @@ class v1OverwriteRPWorkspaceBindingsRequest(Printable):
         }
         if "workspaceIds" in obj:
             kwargs["workspaceIds"] = obj["workspaceIds"]
+        if "workspaceNames" in obj:
+            kwargs["workspaceNames"] = obj["workspaceNames"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -7590,6 +7604,8 @@ class v1OverwriteRPWorkspaceBindingsRequest(Printable):
         }
         if not omit_unset or "workspaceIds" in vars(self):
             out["workspaceIds"] = self.workspaceIds
+        if not omit_unset or "workspaceNames" in vars(self):
+            out["workspaceNames"] = self.workspaceNames
         return out
 
 class v1Pagination(Printable):
@@ -12776,16 +12792,20 @@ class v1UnarchiveExperimentsResponse(Printable):
 
 class v1UnbindRPFromWorkspaceRequest(Printable):
     workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
+    workspaceNames: "typing.Optional[typing.Sequence[str]]" = None
 
     def __init__(
         self,
         *,
         resourcePoolName: str,
         workspaceIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+        workspaceNames: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
     ):
         self.resourcePoolName = resourcePoolName
         if not isinstance(workspaceIds, Unset):
             self.workspaceIds = workspaceIds
+        if not isinstance(workspaceNames, Unset):
+            self.workspaceNames = workspaceNames
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1UnbindRPFromWorkspaceRequest":
@@ -12794,6 +12814,8 @@ class v1UnbindRPFromWorkspaceRequest(Printable):
         }
         if "workspaceIds" in obj:
             kwargs["workspaceIds"] = obj["workspaceIds"]
+        if "workspaceNames" in obj:
+            kwargs["workspaceNames"] = obj["workspaceNames"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -12802,6 +12824,8 @@ class v1UnbindRPFromWorkspaceRequest(Printable):
         }
         if not omit_unset or "workspaceIds" in vars(self):
             out["workspaceIds"] = self.workspaceIds
+        if not omit_unset or "workspaceNames" in vars(self):
+            out["workspaceNames"] = self.workspaceNames
         return out
 
 class v1UpdateGroupRequest(Printable):

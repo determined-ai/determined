@@ -8,6 +8,7 @@ import pytest
 
 from determined.common import yaml
 from determined.common.api import bindings, errors
+from determined.common.experimental import resource_pool
 from determined.common.experimental.trial import TrainingMetrics, ValidationMetrics
 from determined.experimental import client as _client
 from tests import config as conf
@@ -418,3 +419,28 @@ def test_model_versions(client: _client.Determined) -> None:
 
     finally:
         model.delete()
+
+
+@pytest.mark.e2e_cpu
+def test_rp_workspace_mapping(client: _client.Determined) -> None:
+    workspace_names = ["Workspace A", "Workspace B"]
+    overwrite_workspace_names = ["Workspace C", "Workspace D"]
+    rp_names = ["default"]  # TODO: not sure how to add more rp
+    workspace_ids = []
+
+    for wn in workspace_names + overwrite_workspace_names:
+        req = bindings.v1PostWorkspaceRequest(name=wn)
+        workspace_ids.append(
+            bindings.post_PostWorkspace(session=client._session, body=req).workspace.id
+        )
+
+    try:
+        with pytest.raises(
+            errors.APIException,
+            match="default resource pool default cannot be bound to any workspace",
+        ):
+            rp = resource_pool.ResourcePool(client._session, rp_names[0])
+            rp.add_bindings(workspace_names)
+    finally:
+        for wid in workspace_ids:
+            bindings.delete_DeleteWorkspace(session=client._session, id=wid)

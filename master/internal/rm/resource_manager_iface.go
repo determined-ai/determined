@@ -60,6 +60,7 @@ type ResourceManager interface {
 	ResolveResourcePool(
 		ctx actor.Messenger,
 		name string,
+		workspace,
 		slots int,
 	) (string, error)
 	ValidateResourcePoolAvailability(
