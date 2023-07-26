@@ -384,7 +384,8 @@ commands:
                   bash "./${CONDA_INSTALLER}" -u -b -p "${CONDA_DIR}"
                   rm -f "./${CONDA_INSTALLER}"
 
-                  ${CONDA_DIR}/bin/conda install python=${PYTHON_VERSION} requests==2.27.0
+                  ${CONDA_DIR}/bin/conda install requests==2.27.0
+                  ${CONDA_DIR}/bin/conda install python=${PYTHON_VERSION}
                   ${CONDA_DIR}/bin/conda update --prefix ${CONDA_DIR} --all -y
                   ${CONDA_DIR}/bin/conda clean --all -y
                   EOF
