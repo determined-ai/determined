@@ -15,7 +15,8 @@ func (a *ResourceManagerAuthZBasic) FilterResourcePools(
 	ctx context.Context, curUser model.User, resourcePools []*resourcepoolv1.ResourcePool,
 	_ []int32,
 ) ([]*resourcepoolv1.ResourcePool, error) {
-	return resourcePools, nil
+	test := ctx.Err()
+	return resourcePools, test
 }
 
 func init() {
