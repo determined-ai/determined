@@ -1,7 +1,7 @@
 import { Map } from 'immutable';
 import React, { createContext, useEffect, useRef } from 'react';
 
-import Spinner from 'components/Spinner';
+import Spinner from 'components/kit/Spinner';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';

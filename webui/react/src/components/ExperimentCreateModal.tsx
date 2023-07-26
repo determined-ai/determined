@@ -6,7 +6,7 @@ import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
-import Spinner from 'components/Spinner/Spinner';
+import Spinner from 'components/kit/Spinner';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
@@ -366,7 +366,7 @@ const ExperimentCreateModalComponent = ({
           <Alert message={modalState.configError} type="error" />
         )}
         {modalState.isAdvancedMode && (
-          <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
+          <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>
             <CodeEditor
               files={[{ content: Loaded(modalState.configString), key: 'config.yaml' }]}
               height="40vh"

@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 
-import Spinner from 'components/Spinner';
+import Spinner from 'components/kit/Spinner';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import usePermissions from 'hooks/usePermissions';

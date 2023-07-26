@@ -7,8 +7,8 @@ import k8sLogo from 'assets/images/k8s-logo.svg';
 import staticLogo from 'assets/images/on-prem-logo.svg';
 import Card from 'components/kit/Card';
 import Icon from 'components/kit/Icon';
+import Spinner from 'components/kit/Spinner';
 import SlotAllocationBar from 'components/SlotAllocationBar';
-import Spinner from 'components/Spinner';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -174,7 +174,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
               {pool.description && <Icon name="info" showTooltip title={pool.description} />}
             </div>
           </div>
-          <Suspense fallback={<Spinner center />}>
+          <Suspense fallback={<Spinner center spinning />}>
             <div className={css.body}>
               <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
               {rpBindingFlagOn && resourcePoolBindings.length > 0 && (

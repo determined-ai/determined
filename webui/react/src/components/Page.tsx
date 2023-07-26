@@ -3,9 +3,9 @@ import React, { MutableRefObject } from 'react';
 import { Helmet } from 'react-helmet-async';
 
 import { MenuItem } from 'components/kit/Dropdown';
+import Spinner from 'components/kit/Spinner';
 import PageHeader from 'components/PageHeader';
 import PageNotFound from 'components/PageNotFound';
-import Spinner from 'components/Spinner';
 import usePermissions from 'hooks/usePermissions';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 
@@ -75,7 +75,7 @@ const Page: React.FC<Props> = (props: Props) => {
         )}
       </Helmet>
       {!props.ignorePermissions && loadingPermissions ? (
-        <Spinner center />
+        <Spinner center spinning />
       ) : props.notFound ? (
         <PageNotFound /> // hide until permissions are loaded
       ) : (

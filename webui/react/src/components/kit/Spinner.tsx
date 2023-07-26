@@ -1,31 +1,29 @@
 import { Spin } from 'antd';
-import type { SpinProps } from 'antd/es/spin';
 import React from 'react';
 
 import Icon, { IconSize } from 'components/kit/Icon';
 
 import css from './Spinner.module.scss';
 
-interface Props extends Omit<SpinProps, 'size'> {
+interface Props {
   center?: boolean;
   children?: React.ReactNode;
   conditionalRender?: boolean;
-  inline?: boolean;
   size?: IconSize;
+  spinning: boolean;
+  tip?: React.ReactNode;
 }
 
 const Spinner: React.FC<Props> = ({
   center,
-  className,
+  children,
   conditionalRender,
   size,
   spinning,
   tip,
-  ...props
 }: Props) => {
   const classes = [css.base];
 
-  if (className) classes.push(className);
   if (center || tip) classes.push(css.center);
 
   return (
@@ -37,10 +35,9 @@ const Spinner: React.FC<Props> = ({
             <Icon name="spinner" size={size} title="Spinner" />
           </div>
         }
-        spinning={!!spinning}
-        tip={tip}
-        {...props}>
-        {conditionalRender ? (spinning ? null : props.children) : props.children}
+        spinning={spinning}
+        tip={tip}>
+        {conditionalRender ? (spinning ? null : children) : children}
       </Spin>
     </div>
   );

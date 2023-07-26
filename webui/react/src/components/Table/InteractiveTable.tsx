@@ -26,7 +26,7 @@ import {
   DraggableEventHandler,
 } from 'react-draggable';
 
-import Spinner from 'components/Spinner/Spinner';
+import Spinner from 'components/kit/Spinner';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
@@ -654,7 +654,7 @@ const InteractiveTable = <
 
   return (
     <div className={css.tableContainer} ref={tableRef}>
-      <Spinner spinning={spinning}>
+      <Spinner spinning={!!spinning}>
         {spinning || !settings ? (
           <SkeletonTable columns={renderColumns?.length} />
         ) : (

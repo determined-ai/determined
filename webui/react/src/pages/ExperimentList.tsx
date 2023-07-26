@@ -14,10 +14,10 @@ import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
+import Spinner from 'components/kit/Spinner';
 import Tags from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
-import Spinner from 'components/Spinner';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
