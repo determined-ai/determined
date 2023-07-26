@@ -274,7 +274,7 @@ OPT_PROTOCOL_aizn=http
 OPT_DEFAULTIMAGE_aizn=
 
 # Configuration for horizon
-OPT_name_horizon=horizon.us.cray.com
+OPT_name_horizon=horizon.hpc.amslabs.hpecorp.net
 OPT_LAUNCHERPORT_horizon=8181
 OPT_LAUNCHERPROTOCOL_horizon=http
 OPT_CHECKPOINTPATH_horizon=/lus/scratch/foundation_engineering/determined-cp
