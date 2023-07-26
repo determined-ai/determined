@@ -32,6 +32,9 @@ type operations struct {
 // Since preemption & pod informers share the same informer.go
 // code for newPodInformer() & run(), this tests serves to cover both.
 func TestPodInformer(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+
 	cases := []struct {
 		name     string
 		podNames []string
@@ -50,8 +53,6 @@ func TestPodInformer(t *testing.T) {
 			[]string{"C", "A", "B", "D", "E"},
 		},
 	}
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			var wg sync.WaitGroup
@@ -117,6 +118,9 @@ func TestPodInformer(t *testing.T) {
 }
 
 func TestNodeInformer(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+
 	cases := []struct {
 		name       string
 		operations []operations
@@ -155,8 +159,6 @@ func TestNodeInformer(t *testing.T) {
 			map[string]bool{"A": true, "C": true},
 		},
 	}
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			var wg sync.WaitGroup
@@ -224,6 +226,9 @@ func TestNodeInformer(t *testing.T) {
 }
 
 func TestEventListener(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+
 	cases := []struct {
 		name       string
 		eventNames []string
@@ -242,8 +247,6 @@ func TestEventListener(t *testing.T) {
 			[]string{"E", "D", "C", "A", "B"},
 		},
 	}
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			var wg sync.WaitGroup
