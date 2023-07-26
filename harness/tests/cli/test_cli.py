@@ -1,10 +1,11 @@
+import inspect
 import io
 import os
 import tempfile
 import uuid
 from collections import namedtuple
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from unittest import mock
 
 import pytest
@@ -15,6 +16,7 @@ import determined.cli.cli as cli
 import determined.cli.command as command
 from determined.cli import render
 from determined.common import constants, context
+from determined.common.api import bindings
 from tests.filetree import FileTree
 
 MINIMAL_CONFIG = '{"description": "test"}'
@@ -444,3 +446,30 @@ def test_colored_str_output(case: Case) -> None:
     stream = io.StringIO()
     render.render_colorized_json(case.input, stream, indent="  ")
     assert stream.getvalue() == case.output + "\n"
+
+
+def test_dev_bindings() -> None:
+    from determined.cli.dev import _bindings_sig, _can_be_called_via_cli, _is_primitive_parameter
+
+    _, params = _bindings_sig(bindings.get_GetExperiment)
+    assert _can_be_called_via_cli(params) is True, params
+
+    _, params = _bindings_sig(bindings.post_UpdateJobQueue)
+    assert _can_be_called_via_cli(params) is False, params
+    annots = [
+        str,
+        Optional[str],
+        # Sequence[str],
+        # Optional[Sequence[str]],
+    ]
+    for a in annots:
+        assert (
+            _is_primitive_parameter(
+                inspect.Parameter("x", inspect.Parameter.POSITIONAL_ONLY, annotation=a)
+            )
+            is True
+        ), a
+
+    # _, params = _bindings_sig(bindings.get_ExpMetricNames)
+    # for p in params:
+    #     assert _is_primitive_parameter(p) is True, p

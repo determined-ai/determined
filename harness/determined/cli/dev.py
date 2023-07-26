@@ -9,7 +9,7 @@ import sys
 import typing
 from argparse import Namespace
 from collections.abc import Sequence as abc_Sequence
-from typing import Any, Dict, List, Optional, OrderedDict, Tuple, get_args, get_origin
+from typing import Any, Dict, List, OrderedDict, Tuple
 from urllib import parse
 
 from termcolor import colored
@@ -87,6 +87,11 @@ def _bindings_sig_str(name: str, params: List[inspect.Parameter]) -> str:
 
 
 def _is_primitive_annotation(a: Any) -> bool:
+    # we don't need to support python < 3.8 try the import. if it fails raise
+    try:
+        from typing import get_args, get_origin  # type: ignore
+    except ImportError:
+        raise errors.CliError("python >= 3.8 is required to use this feature")
     if isinstance(a, str):
         try:
             a = eval(a.strip())
@@ -105,8 +110,6 @@ def _is_primitive_annotation(a: Any) -> bool:
             return _is_primitive_annotation(args[0])
     elif origin in [list, tuple, set, frozenset, abc_Sequence]:
         return False  # TODO: we don't support the cli interface for these yet.
-        # Assume all elements of the sequence are of the same type,
-        # and check that type.
         if args is not None:
             return all(_is_primitive_annotation(arg) for arg in args)
 
@@ -129,36 +132,9 @@ def _can_be_called_via_cli(params: List[inspect.Parameter]) -> bool:
     return True
 
 
-def _test():
-    _, params = _bindings_sig(bindings.get_GetExperiment)
-    assert _can_be_called_via_cli(params) is True, params
-
-    _, params = _bindings_sig(bindings.post_UpdateJobQueue)
-    assert _can_be_called_via_cli(params) is False, params
-    annots = [
-        str,
-        Optional[str],
-        # Sequence[str],
-        # Optional[Sequence[str]],
-    ]
-    for a in annots:
-        assert (
-            _is_primitive_parameter(
-                inspect.Parameter("x", inspect.Parameter.POSITIONAL_ONLY, annotation=a)
-            )
-            is True
-        ), a
-
-    # _, params = _bindings_sig(bindings.get_ExpMetricNames)
-    # for p in params:
-    #     assert _is_primitive_parameter(p) is True, p
-
-
-# print(_bindings_sig(bindings.get_ExpMetricNames))
-_test()
-
-
-def _get_available_bindings(show_unusable: bool = False):
+def _get_available_bindings(
+    show_unusable: bool = False,
+) -> OrderedDict[str, List[inspect.Parameter]]:
     rv: List[Tuple[str, List[inspect.Parameter]]] = []
     for name, obj in inspect.getmembers(bindings):
         if not inspect.isfunction(obj):
