@@ -134,14 +134,18 @@ func newNodeInformer(
 	}, nil
 }
 
-func (i *informer) run() {
+func (i *informer) run(ctx context.Context) {
 	i.syslog.Debugf("%s informer is starting", i.name)
-	for event := range i.resultChan {
-		if event.Type == watch.Error {
-			i.syslog.Warnf("%s informer emitted error %+v", i.name, event)
-			continue
+	for {
+		select {
+		case event := <-i.resultChan:
+			if event.Type == watch.Error {
+				i.syslog.Warnf("%s informer emitted error %+v", i.name, event)
+				continue
+			}
+			i.cb(event)
+		case <-ctx.Done():
+			panic(fmt.Sprintf("%s informer stopped unexpectedly: %s", i.name, ctx.Err()))
 		}
-		i.cb(event)
 	}
-	panic(fmt.Sprintf("%s informer stopped unexpectedly", i.name))
 }

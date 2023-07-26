@@ -685,7 +685,7 @@ func (p *pods) startPodInformer(s *actor.System) error {
 			return err
 		}
 
-		go i.run()
+		go i.run(context.TODO())
 	}
 	return nil
 }
@@ -703,7 +703,7 @@ func (p *pods) startNodeInformer() error {
 		return err
 	}
 
-	go i.run()
+	go i.run(context.TODO())
 	return nil
 }
 
@@ -721,7 +721,7 @@ func (p *pods) startEventListeners(s *actor.System) error {
 		if err != nil {
 			return err
 		}
-		go l.run()
+		go l.run(context.TODO())
 	}
 	return nil
 }
@@ -742,7 +742,7 @@ func (p *pods) startPreemptionListeners(s *actor.System) error {
 		if err != nil {
 			return err
 		}
-		go l.run()
+		go l.run(context.TODO())
 	}
 	return nil
 }
