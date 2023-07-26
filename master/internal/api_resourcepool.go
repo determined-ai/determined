@@ -198,10 +198,7 @@ func combineWorkspaceIDsAndNames(ctx context.Context, ids []int32, names []strin
 		return nil, err
 	}
 
-	idSet := set.New[int32]()
-	for _, id := range ids {
-		idSet.Insert(id)
-	}
+	idSet := set.FromSlice(workspaceIDs)
 	for _, id := range workspaceIDs {
 		idSet.Insert(id)
 	}
