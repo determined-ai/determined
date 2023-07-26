@@ -18,9 +18,9 @@ import (
 type RPWorkspaceBinding struct {
 	bun.BaseModel `bun:"table:rp_workspace_bindings"`
 
-	WorkspaceID   int    `bun:"workspace_id"`
-	PoolName      string `bun:"pool_name"`
-	Valid         bool   `bun:"valid"`
+	WorkspaceID int    `bun:"workspace_id"`
+	PoolName    string `bun:"pool_name"`
+	Valid       bool   `bun:"valid"`
 }
 
 // AddRPWorkspaceBindings inserts new bindings between workspaceIds and poolName.
