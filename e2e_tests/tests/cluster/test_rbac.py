@@ -283,94 +283,100 @@ def test_rbac_permission_assignment() -> None:
 @pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_rbac_permission_assignment_errors() -> None:
-    # Specifying args incorrectly.
-    det_cmd_expect_error(["rbac", "assign-role", "Viewer"], "must provide exactly one of")
-    det_cmd_expect_error(["rbac", "unassign-role", "Viewer"], "must provide exactly one of")
-    det_cmd_expect_error(
-        [
-            "rbac",
-            "assign-role",
-            "Viewer",
-            "--username-to-assign",
-            "u",
-            "--group-name-to-assign",
-            "g",
-        ],
-        "must provide exactly one of",
-    )
-    det_cmd_expect_error(
-        [
-            "rbac",
-            "unassign-role",
-            "Viewer",
-            "--username-to-assign",
-            "u",
-            "--group-name-to-assign",
-            "g",
-        ],
-        "must provide exactly one of",
-    )
-
-    # Non existent role.
-    det_cmd_expect_error(
-        ["rbac", "assign-role", "fakeRoleNameThatDoesntExist", "--username-to-assign", "admin"],
-        "could not find role name",
-    )
-    det_cmd_expect_error(
-        ["rbac", "unassign-role", "fakeRoleNameThatDoesntExist", "--username-to-assign", "admin"],
-        "could not find role name",
-    )
-
-    # Non existent user
-    det_cmd_expect_error(
-        ["rbac", "assign-role", "Viewer", "--username-to-assign", "fakeUserNotExist"],
-        "could not find user",
-    )
-    det_cmd_expect_error(
-        ["rbac", "unassign-role", "Viewer", "--username-to-assign", "fakeUserNotExist"],
-        "could not find user",
-    )
-
-    # Non existent group.
-    det_cmd_expect_error(
-        ["rbac", "assign-role", "Viewer", "--group-name-to-assign", "fakeGroupNotExist"],
-        "could not find user group",
-    )
-    det_cmd_expect_error(
-        ["rbac", "unassign-role", "Viewer", "--group-name-to-assign", "fakeGroupNotExist"],
-        "could not find user group",
-    )
-
-    # Non existent workspace
-    det_cmd_expect_error(
-        [
-            "rbac",
-            "assign-role",
-            "Viewer",
-            "--workspace-name",
-            "fakeWorkspace",
-            "--username-to-assign",
-            "admin",
-        ],
-        "not found",
-    )
-    det_cmd_expect_error(
-        [
-            "rbac",
-            "unassign-role",
-            "Viewer",
-            "--workspace-name",
-            "fakeWorkspace",
-            "--username-to-assign",
-            "admin",
-        ],
-        "not found",
-    )
-
     api_utils.configure_token_store(ADMIN_CREDENTIALS)
-    test_user_creds = api_utils.create_test_user()
-    group_name = get_random_string()
     with logged_in_user(ADMIN_CREDENTIALS):
+        # Specifying args incorrectly.
+        det_cmd_expect_error(["rbac", "assign-role", "Viewer"], "must provide exactly one of")
+        det_cmd_expect_error(["rbac", "unassign-role", "Viewer"], "must provide exactly one of")
+        det_cmd_expect_error(
+            [
+                "rbac",
+                "assign-role",
+                "Viewer",
+                "--username-to-assign",
+                "u",
+                "--group-name-to-assign",
+                "g",
+            ],
+            "must provide exactly one of",
+        )
+        det_cmd_expect_error(
+            [
+                "rbac",
+                "unassign-role",
+                "Viewer",
+                "--username-to-assign",
+                "u",
+                "--group-name-to-assign",
+                "g",
+            ],
+            "must provide exactly one of",
+        )
+
+        # Non existent role.
+        det_cmd_expect_error(
+            ["rbac", "assign-role", "fakeRoleNameThatDoesntExist", "--username-to-assign", "admin"],
+            "could not find role name",
+        )
+        det_cmd_expect_error(
+            [
+                "rbac",
+                "unassign-role",
+                "fakeRoleNameThatDoesntExist",
+                "--username-to-assign",
+                "admin",
+            ],
+            "could not find role name",
+        )
+
+        # Non existent user
+        det_cmd_expect_error(
+            ["rbac", "assign-role", "Viewer", "--username-to-assign", "fakeUserNotExist"],
+            "could not find user",
+        )
+        det_cmd_expect_error(
+            ["rbac", "unassign-role", "Viewer", "--username-to-assign", "fakeUserNotExist"],
+            "could not find user",
+        )
+
+        # Non existent group.
+        det_cmd_expect_error(
+            ["rbac", "assign-role", "Viewer", "--group-name-to-assign", "fakeGroupNotExist"],
+            "could not find user group",
+        )
+        det_cmd_expect_error(
+            ["rbac", "unassign-role", "Viewer", "--group-name-to-assign", "fakeGroupNotExist"],
+            "could not find user group",
+        )
+
+        # Non existent workspace
+        det_cmd_expect_error(
+            [
+                "rbac",
+                "assign-role",
+                "Viewer",
+                "--workspace-name",
+                "fakeWorkspace",
+                "--username-to-assign",
+                "admin",
+            ],
+            "not found",
+        )
+        det_cmd_expect_error(
+            [
+                "rbac",
+                "unassign-role",
+                "Viewer",
+                "--workspace-name",
+                "fakeWorkspace",
+                "--username-to-assign",
+                "admin",
+            ],
+            "not found",
+        )
+
+        test_user_creds = api_utils.create_test_user()
+        group_name = get_random_string()
         det_cmd(["user-group", "create", group_name], check=True)
         det_cmd(["rbac", "assign-role", "Viewer", "--group-name-to-assign", group_name], check=True)
         det_cmd(
@@ -569,7 +575,7 @@ def test_rbac_describe_role() -> None:
             check=True,
         )
 
-        sess = api_utils.determined_test_session()
+        sess = api_utils.determined_test_session(ADMIN_CREDENTIALS)
         user_id = usernames_to_user_ids(sess, [test_user_creds.username])[0]
         group_id = group_name_to_group_id(sess, group_name)
 
