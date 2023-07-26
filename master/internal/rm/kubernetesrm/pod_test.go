@@ -1,13 +1,16 @@
 package kubernetesrm
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"reflect"
 	"testing"
 	"time"
 
+	petName "github.com/dustinkirkland/golang-petname"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/mock"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -63,6 +66,7 @@ func createPod(
 	clusterHandler *actor.Ref,
 	resourceHandler *requestQueue,
 	task tasks.TaskSpec,
+	name string,
 ) *pod {
 	msg := StartTaskPod{
 		TaskActor: taskHandler,
@@ -88,6 +92,7 @@ func createPod(
 		podInterface, configMapInterface, resourceRequestQueue, leaveKubernetesResources,
 		slotType, slotResourceRequests, "default-scheduler", config.DefaultFluentConfig,
 	)
+	newPodHandler.pod.Name = name
 
 	return newPodHandler
 }
@@ -158,21 +163,26 @@ func createPodWithMockQueue(k8sRequestQueue *requestQueue) (
 	system := actor.NewSystem("test-sys")
 	podMap, actorMap := createReceivers(system)
 
-	if k8sRequestQueue == nil {
-		podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
-		configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
-		k8sRequestQueue = startRequestQueue(
-			map[string]typedV1.PodInterface{"default": podInterface},
-			map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		)
-	}
+	// pods := make(map[string]*k8sV1.Pod)
+	podInterface := &mocks.PodInterface{}
+	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
+	k8sRequestQueue = startRequestQueue(
+		map[string]typedV1.PodInterface{"default": podInterface},
+		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
+	)
 
+	name := petName.Generate(3, "-")
 	newPod := createPod(
 		actorMap["task"],
 		actorMap["cluster"],
 		k8sRequestQueue,
 		commandSpec.ToTaskSpec(),
+		name,
 	)
+	// pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+	podInterface.On("Create", context.TODO(), newPod, metaV1.CreateOptions{}).Return(
+		newPod, nil).Run(func(args mock.Arguments) {}) // pods[name] = newPod.DeepCopy() })
+
 	ref, _ := system.ActorOf(
 		actor.Addr("pod-actor-test"),
 		newPod,

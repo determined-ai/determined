@@ -7,14 +7,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/mocks"
 	petName "github.com/dustinkirkland/golang-petname"
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/mock"
 	"gotest.tools/assert"
 
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
+
+	"github.com/determined-ai/determined/master/internal/mocks"
 )
 
 type mockPod struct {
@@ -24,7 +26,11 @@ type mockPod struct {
 	syslog       *logrus.Entry
 }
 
-func startMockPod(requestQueue *requestQueue, name string, errorHandler *errorCallbackFunc) *mockPod {
+func startMockPod(
+	requestQueue *requestQueue,
+	name string,
+	errorHandler *errorCallbackFunc,
+) *mockPod {
 	m := &mockPod{
 		requestQueue: requestQueue,
 		name:         name,
@@ -66,15 +72,6 @@ func (m *mockPod) create() {
 
 func (m *mockPod) delete() {
 	m.requestQueue.deleteKubernetesResources(m.errorHandler, "default", m.name, m.name)
-}
-
-func getNumberOfActivePods(podInterface typedV1.PodInterface) int {
-	podList, err := podInterface.List(context.TODO(), metaV1.ListOptions{})
-	if err != nil {
-		panic(err)
-	}
-
-	return len(podList.Items)
 }
 
 func requestQueueIsDone(r *requestQueue) bool {
@@ -124,14 +121,14 @@ func TestRequestQueueCreatingManyPod(t *testing.T) {
 		name := petName.Generate(3, "-")
 		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
 		podInterface.On("Create", context.TODO(), pod,
-			metaV1.CreateOptions{}).Return(&k8sV1.Pod{}, nil)
-		pods[name] = pod.DeepCopy()
+			metaV1.CreateOptions{}).Return(&k8sV1.Pod{}, nil).Run(
+			func(args mock.Arguments) { pods[name] = pod.DeepCopy() })
 		startMockPod(k8sRequestQueue, name, nil)
 	}
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	podInterface.On("List", context.TODO(), metaV1.ListOptions{}).Return(podList(pods), nil)
-	assert.Equal(t, getNumberOfActivePods(podInterface), numPods)
+	assert.Equal(t, len(podList(pods).Items), numPods)
 }
 
 func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
@@ -148,54 +145,27 @@ func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 	tmpPods := make([]*mockPod, 0)
 	for i := 0; i < numPods; i++ {
 		name := petName.Generate(3, "-")
-		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
 		gracePeriod := int64(15)
-		podInterface.On("Create", context.TODO(), pod, metaV1.CreateOptions{}).Return(pod, nil)
-		pods[name] = pod.DeepCopy()
+		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+
+		podInterface.On("Create", context.TODO(), pod, metaV1.CreateOptions{}).Return(
+			&k8sV1.Pod{}, nil).Run(func(args mock.Arguments) { pods[name] = pod.DeepCopy() })
 		podInterface.On("Delete", context.TODO(), name,
-			metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod}).Return(nil)
-		// TODO CAROLINA delete(pods, name)
+			metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod}).Return(nil).Run(
+			func(args mock.Arguments) { delete(pods, name) })
+
 		tmpPods = append(tmpPods, startMockPod(k8sRequestQueue, name, nil))
 	}
+	waitForPendingRequestToFinish(k8sRequestQueue)
 	deleteAll(tmpPods)
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
-	podInterface.On("List", context.TODO(), metaV1.ListOptions{}).Return(&k8sV1.PodList{}, nil) // TODO CAROLINA
-	assert.Equal(t, getNumberOfActivePods(podInterface), 0)
+	podInterface.On("List", context.TODO(), metaV1.ListOptions{}).Return(podList(pods), nil)
+	assert.Equal(t, len(podList(pods).Items), 0)
 }
 
 func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
-	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
-	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
-
-	k8sRequestQueue := startRequestQueue(
-		map[string]typedV1.PodInterface{"default": podInterface},
-		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-	)
-
-	numPods := 1
-	pods := make([]*mockPod, 0)
-	for i := 0; i < numPods; i++ {
-		name := petName.Generate(3, "-")
-		pods = append(pods, startMockPod(k8sRequestQueue, name, nil))
-	}
-
-	waitForPendingRequestToFinish(k8sRequestQueue)
-	assert.Equal(t, getNumberOfActivePods(podInterface), numPods)
-
-	deleteAll(pods)
-
-	waitForPendingRequestToFinish(k8sRequestQueue)
-	assert.Equal(t, getNumberOfActivePods(podInterface), 0)
-}
-
-func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
-	/*
-		podInterface := &mockPodInterface{
-			pods:             make(map[string]*k8sV1.Pod),
-			operationalDelay: time.Millisecond * 500,
-		}
-	*/
+	pods := make(map[string]*k8sV1.Pod)
 	podInterface := &mocks.PodInterface{}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
@@ -205,28 +175,69 @@ func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 	)
 
 	numPods := 15
-	pods := make([]*mockPod, 0)
+	tmpPods := make([]*mockPod, 0)
 	for i := 0; i < numPods; i++ {
 		name := petName.Generate(3, "-")
 		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+
+		podInterface.On("Create", context.TODO(), pod, metaV1.CreateOptions{}).Return(
+			&k8sV1.Pod{}, nil).Run(func(args mock.Arguments) { pods[name] = pod.DeepCopy() })
+
 		gracePeriod := int64(15)
-		podInterface.On("Create", context.TODO(), pod, metaV1.CreateOptions{}).Return(pod, nil)
-		// pods[name] = pod.DeepCopy()
-		podInterface.On("Delete", context.TODO(), name, metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod}).Return(nil)
-		pods = append(pods, startMockPod(k8sRequestQueue, name, nil))
+		podInterface.On("Delete", context.TODO(), name,
+			metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod}).Return(nil).Run(
+			func(args mock.Arguments) { delete(pods, name) })
+
+		tmpPods = append(tmpPods, startMockPod(k8sRequestQueue, name, nil))
 	}
-	deleteAll(pods)
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
-	podInterface.On("List", context.TODO(), metaV1.ListOptions{}).Return(&k8sV1.PodList{}, nil) // TODO CAROLINA
-	assert.Equal(t, getNumberOfActivePods(podInterface), 0)
+	podInterface.On("List", context.TODO(), metaV1.ListOptions{}).Return(podList(pods), nil)
+	assert.Equal(t, len(podList(pods).Items), numPods)
+
+	deleteAll(tmpPods)
+
+	waitForPendingRequestToFinish(k8sRequestQueue)
+	podInterface.On("List", context.TODO(), metaV1.ListOptions{}).Return(podList(pods), nil)
+	assert.Equal(t, len(podList(pods).Items), 0)
+}
+
+func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
+	pods := make(map[string]*k8sV1.Pod)
+	podInterface := &mocks.PodInterface{}
+	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
+
+	k8sRequestQueue := startRequestQueue(
+		map[string]typedV1.PodInterface{"default": podInterface},
+		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
+	)
+
+	numPods := 15
+	tmpPods := make([]*mockPod, 0)
+	for i := 0; i < numPods; i++ {
+		name := petName.Generate(3, "-")
+		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+
+		podInterface.On("Create", context.TODO(), pod, metaV1.CreateOptions{}).Return(
+			&k8sV1.Pod{}, nil).Run(func(args mock.Arguments) { pods[name] = pod.DeepCopy() })
+
+		gracePeriod := int64(15)
+		podInterface.On("Delete", context.TODO(), name,
+			metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod}).Return(nil).Run(
+			func(args mock.Arguments) { delete(pods, name) })
+
+		tmpPods = append(tmpPods, startMockPod(k8sRequestQueue, name, nil))
+	}
+	deleteAll(tmpPods)
+
+	waitForPendingRequestToFinish(k8sRequestQueue)
+	podInterface.On("List", context.TODO(), metaV1.ListOptions{}).Return(podList(pods), nil)
+	assert.Equal(t, len(podList(pods).Items), 0)
 }
 
 func TestRequestQueueCreationCancelled(t *testing.T) {
-	podInterface := &mockPodInterface{
-		pods:             make(map[string]*k8sV1.Pod),
-		operationalDelay: time.Millisecond * 500,
-	}
+	pods := make(map[string]*k8sV1.Pod)
+	podInterface := &mocks.PodInterface{}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	k8sRequestQueue := startRequestQueue(
@@ -236,9 +247,15 @@ func TestRequestQueueCreationCancelled(t *testing.T) {
 
 	for i := 0; i < numKubernetesWorkers; i++ {
 		name := petName.Generate(3, "-")
+		gracePeriod := int64(15)
+		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+		podInterface.On("Create", context.TODO(), pod, metaV1.CreateOptions{}).Return(
+			&k8sV1.Pod{}, nil).Run(func(args mock.Arguments) { pods[name] = pod.DeepCopy() })
+		podInterface.On("Delete", context.TODO(), name,
+			metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod}).Return(nil).Run(
+			func(args mock.Arguments) { delete(pods, name) })
 		startMockPod(k8sRequestQueue, name, nil)
 	}
-	time.Sleep(time.Millisecond * 100)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -253,15 +270,24 @@ func TestRequestQueueCreationCancelled(t *testing.T) {
 		}
 	})
 	name := petName.Generate(3, "-")
-	pod := startMockPod(k8sRequestQueue, name, &errorHandler)
+	gracePeriod := int64(15)
+	mockPod := startMockPod(k8sRequestQueue, name, &errorHandler)
+	pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+	podInterface.On("Create", context.TODO(), pod, metaV1.CreateOptions{}).Return(
+		&k8sV1.Pod{}, nil).Run(func(args mock.Arguments) { pods[name] = pod.DeepCopy() })
+	podInterface.On("Delete", context.TODO(), name,
+		metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod}).Return(nil).Run(
+		func(args mock.Arguments) { delete(pods, name) })
+
 	assert.Equal(t, createCancelled, false)
-	pod.delete()
+	mockPod.delete()
 	wg.Wait()
 	assert.Equal(t, createCancelled, true)
 }
 
 func TestRequestQueueCreationFailed(t *testing.T) {
-	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
+	pods := make(map[string]*k8sV1.Pod)
+	podInterface := &mocks.PodInterface{}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	k8sRequestQueue := startRequestQueue(
@@ -282,17 +308,26 @@ func TestRequestQueueCreationFailed(t *testing.T) {
 		}
 	})
 	name := petName.Generate(3, "-")
-	pod := startMockPod(k8sRequestQueue, name, &errorHandler)
+	gracePeriod := int64(15)
+	mockPod := startMockPod(k8sRequestQueue, name, &errorHandler)
+	pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+	podInterface.On("Create", context.TODO(), pod, metaV1.CreateOptions{}).Return(
+		&k8sV1.Pod{}, nil).Run(func(args mock.Arguments) { pods[name] = pod.DeepCopy() })
+	podInterface.On("Delete", context.TODO(), name,
+		metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod}).Return(nil).Run(
+		func(args mock.Arguments) { delete(pods, name) })
+
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, createFailed, false)
 
-	pod.create()
+	mockPod.create()
 	wg.Wait()
 	assert.Equal(t, createFailed, true)
 }
 
 func TestRequestQueueDeletionFailed(t *testing.T) {
-	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
+	pods := make(map[string]*k8sV1.Pod)
+	podInterface := &mocks.PodInterface{}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	k8sRequestQueue := startRequestQueue(
@@ -313,15 +348,24 @@ func TestRequestQueueDeletionFailed(t *testing.T) {
 		}
 	})
 	name := petName.Generate(3, "-")
-	pod := startMockPod(k8sRequestQueue, name, &errorHandler)
+	gracePeriod := int64(15)
+	mockPod := startMockPod(k8sRequestQueue, name, &errorHandler)
+	pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+	podInterface.On("Create", context.TODO(), pod, metaV1.CreateOptions{}).Return(
+		&k8sV1.Pod{}, nil).Run(func(args mock.Arguments) { pods[name] = pod.DeepCopy() })
+	podInterface.On("Delete", context.TODO(), name,
+		metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod}).Return(nil).Run(
+		func(args mock.Arguments) { delete(pods, name) })
+
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, deleteFailed, false)
 
-	pod.delete()
+	mockPod.delete()
+
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, deleteFailed, false)
 
-	pod.delete()
+	mockPod.delete()
 	wg.Wait()
 	assert.Equal(t, deleteFailed, true)
 }
