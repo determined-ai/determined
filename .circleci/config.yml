@@ -392,7 +392,6 @@ commands:
             - run:
                 name: run conda install_python.sh
                 command: |
-                  pip install requests==2.27.0
                   sudo bash /tmp/install_python.sh <<parameters.python-version>>
 
             - run:
