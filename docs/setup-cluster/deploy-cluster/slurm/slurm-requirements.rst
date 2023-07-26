@@ -310,6 +310,26 @@ interacts with PBS, we recommend the following steps:
    the ``SIGTERM``. If after that period of time the job has not terminated, then send a ``SIGKILL``
    to forcibly release all resources.
 
+-  Enable PBS to store job history.
+
+   In order for the Determined launcher to detect successful job completion, PBS must be configured
+   such that ``job_history_enable = True``. If this setting is not configured properly, then the 
+   Determined launcher will not be able to resolve the status/information of a job after it completes. 
+
+   PBS administrators can use the following commands to set/verify the value of ``job_history_enable``:
+
+   -  Set the value of ``job_history_enable``
+
+      .. code:: bash
+
+         sudo qmgr -c "set server job_history_enable = True"
+
+   -  Verify that the new ``job_history_enable`` value is now set.
+
+      .. code:: bash
+
+         sudo qmgr -c 'print server job_history_enable'
+
 .. _singularity-config-requirements:
 
 ************************************
