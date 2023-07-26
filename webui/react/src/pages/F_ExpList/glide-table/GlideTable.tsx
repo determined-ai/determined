@@ -296,7 +296,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   }, [setSelectAll, setSelection, data, setExcludedExperimentIds]);
 
   const previousData = usePrevious(data, undefined);
-  useMemo(() => {
+  useEffect(() => {
     if (selectAll && !!previousData && data.length > previousData.length) {
       setSelection(({ columns, rows }: GridSelection) => ({
         columns,
