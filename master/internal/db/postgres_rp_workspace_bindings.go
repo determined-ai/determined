@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/determined-ai/determined/master/pkg/set"
+
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
@@ -60,21 +62,28 @@ func RemoveRPWorkspaceBindings(ctx context.Context,
 	if len(workspaceIds) == 0 {
 		return nil
 	}
-	// throw error if any of bindings don't exist
+
+	var rpWorkspaceBindings []*RPWorkspaceBinding
+	err := Bun().NewSelect().Model(&rpWorkspaceBindings).
+		Where("workspace_id IN (?)", bun.In(workspaceIds)).
+		Scan(ctx)
+	if err != nil {
+		return err
+	}
+
+	foundWorkspaces := set.New[int]()
+	for _, binding := range rpWorkspaceBindings {
+		foundWorkspaces.Insert(binding.WorkspaceID)
+	}
+
 	for _, workspaceID := range workspaceIds {
-		var rpWorkspaceBindings []*RPWorkspaceBinding
-		exists, err := Bun().NewSelect().Model(&rpWorkspaceBindings).Where("pool_name = ?",
-			poolName).Where("workspace_id = ?", workspaceID).Exists(ctx)
-		if err != nil {
-			return err
-		}
-		if !exists {
+		if !foundWorkspaces.Contains(int(workspaceID)) {
 			return errors.Errorf(" workspace with id %v and pool with name  %v binding doesn't exist",
 				workspaceID, poolName)
 		}
 	}
 
-	_, err := Bun().NewDelete().Table("rp_workspace_bindings").Where("workspace_id IN (?)",
+	_, err = Bun().NewDelete().Table("rp_workspace_bindings").Where("workspace_id IN (?)",
 		bun.In(workspaceIds)).Where("pool_name = ?", poolName).Exec(ctx)
 	return err
 }
