@@ -340,7 +340,6 @@ func (rp *resourcePool) resourcesReleased(
 	switch allocated := rp.taskList.Allocation(msg.AllocationID); {
 	case allocated == nil:
 		ctx.Log().Infof("released before allocated for %s", msg.AllocationID)
-		rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
 		rp.taskList.RemoveTaskByID(msg.AllocationID)
 	case msg.ResourcesID != nil:
 		ctx.Log().Infof("resources %v are released for %s", *msg.ResourcesID, msg.AllocationID)
@@ -360,7 +359,6 @@ func (rp *resourcePool) resourcesReleased(
 			typed := r.(*containerResources)
 			ctx.Tell(typed.agent.Handler, deallocateContainer{containerID: typed.containerID})
 		}
-		rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
 		rp.taskList.RemoveTaskByID(msg.AllocationID)
 	}
 }

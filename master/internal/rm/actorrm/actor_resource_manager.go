@@ -125,6 +125,9 @@ func (r *ResourceManager) Allocate(
 // Release releases some resources.
 func (r *ResourceManager) Release(ctx actor.Messenger, msg sproto.ResourcesReleased) {
 	r.Tell(ctx, msg)
+	if msg.ResourcesID == nil { // ResourceID == nil => everything is released
+		rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
+	}
 }
 
 // GetResourcePools requests information about the available resource pools.
