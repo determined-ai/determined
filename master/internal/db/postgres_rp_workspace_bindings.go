@@ -17,6 +17,7 @@ import (
 // RPWorkspaceBinding is a struct reflecting the db table rp_workspace_bindings.
 type RPWorkspaceBinding struct {
 	bun.BaseModel `bun:"table:rp_workspace_bindings"`
+
 	WorkspaceID   int    `bun:"workspace_id"`
 	PoolName      string `bun:"pool_name"`
 	Valid         bool   `bun:"valid"`
