@@ -276,14 +276,15 @@ def print_json(data: Union[str, Any]) -> None:
     """
     Print JSON data in a human-readable format.
     """
+    DEFAULT_INDENT = "  "
     try:
         if isinstance(data, str):
             data = json.loads(data)
         if _coloring_enabled():
-            render_colorized_json(data, sys.stdout, indent="  ", sort_keys=True)
-        else:
-            formatted_json = det_util.json_encode(data, sort_keys=True, indent="  ")
-            print(formatted_json)
+            render_colorized_json(data, sys.stdout, indent=DEFAULT_INDENT, sort_keys=True)
+            return
+        formatted_json = det_util.json_encode(data, sort_keys=True, indent=DEFAULT_INDENT)
+        print(formatted_json)
     except json.decoder.JSONDecodeError:
         print(data)
 
