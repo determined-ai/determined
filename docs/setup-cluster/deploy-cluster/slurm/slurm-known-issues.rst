@@ -375,7 +375,7 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
  PBS Known Issues
 ******************
 
--  When ``job_history_enable = False``, the following behavior is observed
+-  When ``job_history_enable = False``, the following behavior is observed:
 
    -  Jobs are treated as succesful even in the presence of a failure as the job cannot be accessed
       after completion. Further, jobs will show state ``COMPLETED`` in the UI even if an error
