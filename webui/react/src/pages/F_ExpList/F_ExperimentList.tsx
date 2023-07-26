@@ -210,7 +210,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             selectAll
               ? !settings.excludedExperiments.some((id) => id === e.experiment.id)
               : settings.selectedExperiments.some((id) => id === e.experiment.id),
-          )
+          ) ||
+          (!Loadable.isLoaded(ex) && selectAll)
         ) {
           rows = rows.add(ix);
         }
