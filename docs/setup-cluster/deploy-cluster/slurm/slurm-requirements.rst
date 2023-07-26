@@ -208,20 +208,11 @@ interacts with PBS, we recommend the following steps:
    history enabled in PBS. In the absence of proper configuration, the HPC launcher would fail to
    resolve the status or information of a job post-completion.
 
-   PBS administrators can employ the following commands to set and confirm the value of
-   ``job_history_enable``:
+   PBS administrators can employ the following command to set the value of ``job_history_enable``:
 
-   -  Set the value of ``job_history_enable``.
+   .. code:: bash
 
-      .. code:: bash
-
-         sudo qmgr -c "set server job_history_enable = True"
-
-   -  Verify that the new ``job_history_enable`` value is now set.
-
-      .. code:: bash
-
-         qmgr -c "print server job_history_enable"
+      sudo qmgr -c "set server job_history_enable = True"
 
 -  Configure PBS to manage GPU resources.
 
