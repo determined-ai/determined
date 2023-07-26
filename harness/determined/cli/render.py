@@ -2,6 +2,7 @@ import base64
 import csv
 import inspect
 import json
+import os
 import pathlib
 import sys
 from datetime import timezone
@@ -188,6 +189,10 @@ def yes_or_no(prompt: str) -> bool:
         return False
 
 
+def _coloring_enabled() -> bool:
+    return sys.stdout.isatty() and os.environ.get("DET_CLI_COLORIZE", "").lower() in ("1", "true")
+
+
 def print_json(data: Union[str, Any]) -> None:
     """
     Print JSON data in a human-readable format.
@@ -195,7 +200,7 @@ def print_json(data: Union[str, Any]) -> None:
     try:
         if isinstance(data, str):
             data = json.loads(data)
-        if sys.stdout.isatty():
+        if _coloring_enabled():
             cli.render_json(data, sys.stdout, indent="  ", sort_keys=True)
         else:
             formatted_json = det_util.json_encode(data, sort_keys=True, indent="  ")
