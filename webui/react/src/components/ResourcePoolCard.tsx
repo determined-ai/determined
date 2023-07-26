@@ -11,6 +11,7 @@ import SlotAllocationBar from 'components/SlotAllocationBar';
 import Spinner from 'components/Spinner';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import { maxPoolSlotCapacity } from 'stores/cluster';
@@ -94,6 +95,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
 
   const descriptionClasses = [css.description];
   const { rbacEnabled } = useObservable(determinedStore.info);
+  const { canManageResourcePoolBindings } = usePermissions();
   const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
   const resourcePoolBindings: number[] = resourcePoolBindingMap.get(pool.name, []);
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
@@ -148,7 +150,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
     <>
       <Card
         actionMenu={
-          rpBindingFlagOn && rbacEnabled
+          rpBindingFlagOn && canManageResourcePoolBindings
             ? [
                 {
                   icon: <Icon name="four-squares" title="manage-bindings" />,
