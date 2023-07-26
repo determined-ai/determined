@@ -18,8 +18,8 @@ artifacts, like experiments, to workspaces.
  Overview
 **********
 
-Binding and unbinding resource pools allows administrators to control their availability within the
-cluster.
+Binding and unbinding resource pools allows administrators to control resource pool availability
+within the cluster.
 
 Resource pools can be either unbound, meaning they are shared across the entire cluster, or bound to
 specific workspaces. Experiments, notebooks, Tensorboards, shells, or commands associated with a
@@ -41,6 +41,9 @@ related artifacts.
 You can bind or unbind a resource pool. By default, all resource pools are unbound, making them
 globally available to all workspaces in the cluster.
 
+WebUI
+=====
+
 An administrator who is an Admin in Determined or a user with the Cluster Admin role (requires
 Determined Enterprise Edition) can change resource pool bindings in the WebUI by following these
 steps:
@@ -57,19 +60,37 @@ steps:
    workspaces.
 -  Once you are satisfied with the list of bound workspaces, click **Apply**.
 
-To bind or unbind a resource pool using the CLI, run the following command:
+CLI
+===
+
+You can use the resource pool command, ``det rp bindings``, to add, list, replace, bind, or unbind a
+resource pool using the CLI. To get help, run the following command:
 
 .. code:: bash
 
-   det -u admin rbac bind-resource-pool –rp "<resource_pool_name>" –w "<workspace_name>"
+   det rp bindings -h
+
+For example, to bind a resource pool, run the following command:
+
+.. code:: bash
+
+   det rp bindings add "<resource_pool_name>" "<workspace_name>"
+
+To bind multiple workspaces to a resource pool, run the following command:
+
+.. code:: bash
+
+   det rp bindings add "<resource_pool_name>" "<workspace1_name>" "<workspace2_name>" "<workspace3_name>"
+
+To unbind a resource pool, run the following command:
+
+.. code:: bash
+
+   det rp bindings remove "<resource_pool_name>" "<workspace_name>"
 
 In the Cluster view, a bound resource pool is indicated by a lock symbol and the number of
 workspaces it is bound to. Moreover, clicking on a resource pool card from the Cluster view displays
 all the workspaces that are bound to that resource pool.
-
-To see all the resource pools bound to a specific workspace, click on the workspace and navigate to
-the **Resource Pools** tab. From there, you can set or remove a bound resource pool as the default
-auxiliary or compute pool by clicking the options "..." menu of the resource pool.
 
 The resource pool binding to workspaces follows a many-to-many relationship. This gives
 administrators the flexibility to bind multiple resource pools to the same workspace or the same
