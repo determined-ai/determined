@@ -708,6 +708,8 @@ class CheckpointContext:
         if self._tensorboard_mode == core.TensorboardMode.AUTO:
             self._tensorboard_manager.sync()
 
+    # def report_trial_source_info
+
 
 class DummyCheckpointContext(CheckpointContext):
     def __init__(

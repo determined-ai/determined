@@ -42,6 +42,7 @@ class Context:
         train: Optional[core.TrainContext] = None,
         searcher: Optional[core.SearcherContext] = None,
         _tensorboard_manager: Optional[tensorboard.TensorboardManager] = None,
+        utils: Optional[core.UtilsContext] = None,
     ) -> None:
         self.checkpoint = checkpoint
         self.distributed = distributed or core.DummyDistributedContext()
@@ -49,6 +50,7 @@ class Context:
         self.train = train or core.DummyTrainContext()
         self.searcher = searcher or core.DummySearcherContext(self.distributed)
         self._tensorboard_manager = _tensorboard_manager
+        self.utils = utils
 
     def __enter__(self) -> "Context":
         self.preempt.start()
@@ -208,6 +210,7 @@ def init(
     train = None
     searcher = None
     tensorboard_manager = None
+    utils = None
 
     storage_manager = _get_storage_manager(checkpoint_storage)
 
@@ -261,6 +264,7 @@ def init(
         )
 
         preempt = core.PreemptContext(session, info.allocation_id, distributed, preempt_mode)
+        utils = core.UtilsContext(session, info.trial.trial_id)
 
     else:
         # TODO: support checkpointing for non-trial tasks.
@@ -280,4 +284,5 @@ def init(
         train=train,
         searcher=searcher,
         _tensorboard_manager=tensorboard_manager,
+        utils=utils,
     )
