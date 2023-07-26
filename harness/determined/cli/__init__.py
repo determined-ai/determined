@@ -9,9 +9,6 @@ from determined.cli._util import (
     wait_ntsc_ready,
     not_found_errs,
 )
-from determined.cli._color_json import (
-    render_json,
-)
 from determined.cli import (
     agent,
     checkpoint,
