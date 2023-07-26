@@ -1,7 +1,11 @@
+import io
 import os
 import tempfile
 import uuid
+from collections import namedtuple
 from pathlib import Path
+from typing import List
+from unittest import mock
 
 import pytest
 import requests
@@ -9,6 +13,7 @@ import requests_mock
 
 import determined.cli.cli as cli
 import determined.cli.command as command
+from determined.cli import render
 from determined.common import constants, context
 from tests.filetree import FileTree
 
@@ -399,3 +404,43 @@ def test_cli_args_exist() -> None:
     with pytest.raises(SystemExit) as e:
         cli.main(["preview-search", "-h"])
     assert e.value.code == 0
+
+
+C = namedtuple("Case", ["input", "output", "colors"])
+color_test_cases: List[C] = [
+    C(1, "1", ["PRIMITIVES"]),
+    C(1.0, "1.0", ["PRIMITIVES"]),
+    C(True, "true", ["PRIMITIVES"]),
+    C(False, "false", ["PRIMITIVES"]),
+    C(None, "null", ["PRIMITIVES"]),
+    C([], "[]", ["SEPARATORS"]),
+    C({}, "{}", ["SEPARATORS"]),
+    C((), "[]", ["SEPARATORS"]),
+    C("foo", '"foo"', ["STRING"]),
+    C([1], "[\n  1\n]", ["SEPARATORS", "PRIMITIVES", "SEPARATORS"]),
+    C(
+        {"foo": 1},
+        '{\n  "foo": 1\n}',
+        ["SEPARATORS", "KEY", "SEPARATORS", "PRIMITIVES", "SEPARATORS"],
+    ),
+    C((1,), "[\n  1\n]", ["SEPARATORS", "PRIMITIVES", "SEPARATORS"]),
+]
+
+
+@mock.patch("termcolor.colored")
+@pytest.mark.parametrize("case", color_test_cases)
+def test_colored_color_values(mocked_colored: mock.Mock, case):
+    stream = mock.Mock()
+    render.render_colorized_json(case.input, stream)
+    calls = mocked_colored.mock_calls
+    assert len(calls) == len(case.colors)
+    for call, color_type in zip(calls, case.colors):
+        assert call[1][1] == render.COLORS[color_type], call
+    mocked_colored.reset_mock()
+
+
+@pytest.mark.parametrize("case", color_test_cases)
+def test_colored_str_output(case):
+    stream = io.StringIO()
+    render.render_colorized_json(case.input, stream, indent="  ")
+    assert stream.getvalue() == case.output + "\n"
