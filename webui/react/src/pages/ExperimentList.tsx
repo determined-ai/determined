@@ -584,8 +584,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       },
       {
         align: 'right',
-        dataIndex: 'checkpointCount',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpointCount'],
+        dataIndex: 'checkpoints',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpoints'],
         key: V1GetExperimentsRequestSortBy.CHECKPOINTCOUNT,
         sorter: true,
         title: 'Checkpoints',
