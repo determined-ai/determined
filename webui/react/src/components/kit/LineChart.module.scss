@@ -1,3 +1,7 @@
+.scrollContainer {
+  height: 100%;
+  overflow: auto;
+}
 .chartgridEmpty {
   align-items: center;
   display: flex;
@@ -9,21 +13,22 @@
 }
 .chartgridContainer {
   background-color: var(--theme-background);
-  margin: 5px;
   min-height: 530px;
   overflow-y: hidden;
+  --grid-spacing: 6px;
 }
 .chartgridCell {
   background-color: var(--theme-background);
   padding: 0;
-  padding-left: 6px;
-  padding-right: 6px;
+  padding-left: var(--grid-spacing);
+  padding-right: var(--grid-spacing);
 }
 .chartgridCellCard {
   background-color: var(--theme-stage);
   border: 1px solid var(--theme-stage-border);
   border-radius: 4px;
   padding: 24px;
+  height: calc(100% - var(--grid-spacing));
 }
 .chartTitle {
   background-color: var(--theme-stage);

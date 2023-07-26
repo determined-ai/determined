@@ -76,16 +76,14 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
   }, [colorMap, trials, xAxis, metricData, selectedExperiments]);
 
   return (
-    <div style={{ height: 'calc(100vh - 250px)', overflow: 'auto' }}>
-      <ChartGrid
-        chartsProps={chartsProps}
-        handleError={handleError}
-        scale={scale}
-        setScale={setScale}
-        xAxis={xAxis}
-        onXAxisChange={setXAxis}
-      />
-    </div>
+    <ChartGrid
+      chartsProps={chartsProps}
+      handleError={handleError}
+      scale={scale}
+      setScale={setScale}
+      xAxis={xAxis}
+      onXAxisChange={setXAxis}
+    />
   );
 };
 

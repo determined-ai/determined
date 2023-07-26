@@ -108,8 +108,8 @@ export const LineChart: React.FC<LineChartProps> = ({
         (s.metricType === MetricType.Training
           ? '[T] '
           : s.metricType === MetricType.Validation
-          ? '[V] '
-          : '') + (s.name || `Series ${idx + 1}`),
+            ? '[V] '
+            : '') + (s.name || `Series ${idx + 1}`),
     );
   }, [series]);
 
@@ -138,9 +138,9 @@ export const LineChart: React.FC<LineChartProps> = ({
   const xTickValues: uPlot.Axis.Values | undefined = useMemo(
     () =>
       xAxis === XAxisDomain.Time &&
-      chartData.length > 0 &&
-      chartData[0].length > 0 &&
-      chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
+        chartData.length > 0 &&
+        chartData[0].length > 0 &&
+        chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
         ? getTimeTickValues
         : undefined,
     [chartData, xAxis],
@@ -346,41 +346,43 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     }, [chartsProps]);
 
     return (
-      <div className={css.chartgridContainer} ref={chartGridRef}>
-        <Spinner
-          center
-          className={css.chartgridLoading}
-          spinning={isLoading}
-          tip="Loading chart data...">
-          {chartsProps.length > 0 && (
-            <>
-              <div className={css.filterContainer}>
-                <ScaleSelect value={scale} onChange={setScale} />
-                {xAxisOptions && xAxisOptions.length > 1 && (
-                  <XAxisFilter options={xAxisOptions} value={xAxis} onChange={onXAxisChange} />
-                )}
+      <div className={css.scrollContainer}>
+        <div className={css.chartgridContainer} ref={chartGridRef}>
+          <Spinner
+            center
+            className={css.chartgridLoading}
+            spinning={isLoading}
+            tip="Loading chart data...">
+            {chartsProps.length > 0 && (
+              <>
+                <div className={css.filterContainer}>
+                  <ScaleSelect value={scale} onChange={setScale} />
+                  {xAxisOptions && xAxisOptions.length > 1 && (
+                    <XAxisFilter options={xAxisOptions} value={xAxis} onChange={onXAxisChange} />
+                  )}
+                </div>
+                <SyncProvider>
+                  <FixedSizeGrid
+                    columnCount={columnCount}
+                    columnWidth={Math.floor(width / columnCount)}
+                    height={height - 40}
+                    itemData={{ chartsProps: chartsProps, columnCount, handleError, scale, xAxis }}
+                    rowCount={Math.ceil(chartsProps.length / columnCount)}
+                    rowHeight={465}
+                    style={{ height: '100%' }}
+                    width={width}>
+                    {VirtualChartRenderer}
+                  </FixedSizeGrid>
+                </SyncProvider>
+              </>
+            )}
+            {chartsProps.length === 0 && !isLoading && (
+              <div className={css.chartgridEmpty}>
+                <span>No data to plot.</span>
               </div>
-              <SyncProvider>
-                <FixedSizeGrid
-                  columnCount={columnCount}
-                  columnWidth={Math.floor(width / columnCount)}
-                  height={height - 40}
-                  itemData={{ chartsProps: chartsProps, columnCount, handleError, scale, xAxis }}
-                  rowCount={Math.ceil(chartsProps.length / columnCount)}
-                  rowHeight={480}
-                  style={{ height: '100%' }}
-                  width={width}>
-                  {VirtualChartRenderer}
-                </FixedSizeGrid>
-              </SyncProvider>
-            </>
-          )}
-          {chartsProps.length === 0 && !isLoading && (
-            <div className={css.chartgridEmpty}>
-              <span>No data to plot.</span>
-            </div>
-          )}
-        </Spinner>
+            )}
+          </Spinner>
+        </div>
       </div>
     );
   },
