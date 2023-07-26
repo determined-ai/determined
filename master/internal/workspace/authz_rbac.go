@@ -101,6 +101,42 @@ func (r *WorkspaceAuthZRBAC) FilterWorkspaces(
 	return result, nil
 }
 
+// FilterWorkspaceIDs filters workspace IDs based on which ones the user has view permissions on.
+func (r *WorkspaceAuthZRBAC) FilterWorkspaceIDs(
+	ctx context.Context, curUser model.User, workspaceIDs []int32,
+) (filteredWorkspaceIDs []int32, err error) {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionsRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE,
+			},
+			SubjectType: "workspaces",
+		},
+	}
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
+
+	ids, err := workspacesUserHasPermissionOn(ctx, curUser.ID, workspaceIDs,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
+	if err != nil {
+		return nil, errors.Wrap(err, ErrorLookup.Error())
+	}
+	if len(ids) == len(workspaceIDs) {
+		return workspaceIDs, nil
+	}
+
+	for _, id := range workspaceIDs {
+		if ids[id] {
+			filteredWorkspaceIDs = append(filteredWorkspaceIDs, id)
+		}
+	}
+
+	return filteredWorkspaceIDs, nil
+}
+
 // CanGetWorkspace determines whether a user can view a workspace.
 func (r *WorkspaceAuthZRBAC) CanGetWorkspace(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
@@ -114,6 +150,42 @@ func (r *WorkspaceAuthZRBAC) CanGetWorkspace(
 
 	return hasPermissionOnWorkspace(ctx, curUser.ID, workspace,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
+}
+
+// CanGetWorkspaceID determines whether a user can view a workspace given its id.
+func (r *WorkspaceAuthZRBAC) CanGetWorkspaceID(
+	ctx context.Context, curUser model.User, workspaceID int32,
+) (err error) {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	workspacePermission := rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE
+	fields["permissionsRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{workspacePermission},
+			SubjectType:     "workspace",
+			SubjectIDs:      []string{fmt.Sprint(workspaceID)},
+		},
+	}
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
+
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID, workspacePermission)
+}
+
+// CanModifyRPWorkspaceBindings requires user to be an admin.
+func (r *WorkspaceAuthZRBAC) CanModifyRPWorkspaceBindings(
+	ctx context.Context, curUser model.User, workspaceIDs []int32,
+) (err error) {
+	fields := audit.ExtractLogFields(ctx)
+	addInfoWithoutWorkspace(curUser, fields,
+		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_MASTER_CONFIG)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
+
+	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
+		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_MASTER_CONFIG)
 }
 
 // CanCreateWorkspace determines whether a user can create workspaces.

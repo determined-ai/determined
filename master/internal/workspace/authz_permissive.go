@@ -19,6 +19,22 @@ func (p *WorkspaceAuthZPermissive) CanGetWorkspace(
 	return (&WorkspaceAuthZBasic{}).CanGetWorkspace(ctx, curUser, workspace)
 }
 
+// CanGetWorkspaceID always return true and a nil error.
+func (p *WorkspaceAuthZPermissive) CanGetWorkspaceID(
+	ctx context.Context, curUser model.User, workspaceID int32,
+) error {
+	_ = (&WorkspaceAuthZRBAC{}).CanGetWorkspaceID(ctx, curUser, workspaceID)
+	return (&WorkspaceAuthZBasic{}).CanGetWorkspaceID(ctx, curUser, workspaceID)
+}
+
+// CanModifyRPWorkspaceBindings requires user to be an admin.
+func (p *WorkspaceAuthZPermissive) CanModifyRPWorkspaceBindings(
+	ctx context.Context, curUser model.User, workspaceIDs []int32,
+) error {
+	_ = (&WorkspaceAuthZRBAC{}).CanModifyRPWorkspaceBindings(ctx, curUser, workspaceIDs)
+	return (&WorkspaceAuthZBasic{}).CanModifyRPWorkspaceBindings(ctx, curUser, workspaceIDs)
+}
+
 // FilterWorkspaceProjects calls RBAC authz but enforces basic authz.
 func (p *WorkspaceAuthZPermissive) FilterWorkspaceProjects(
 	ctx context.Context, curUser model.User, projects []*projectv1.Project,
@@ -33,6 +49,14 @@ func (p *WorkspaceAuthZPermissive) FilterWorkspaces(
 ) ([]*workspacev1.Workspace, error) {
 	_, _ = (&WorkspaceAuthZRBAC{}).FilterWorkspaces(ctx, curUser, workspaces)
 	return (&WorkspaceAuthZBasic{}).FilterWorkspaces(ctx, curUser, workspaces)
+}
+
+// FilterWorkspaceIDs always returns provided list and a nil error.
+func (p *WorkspaceAuthZPermissive) FilterWorkspaceIDs(
+	ctx context.Context, curUser model.User, workspaceIDs []int32,
+) ([]int32, error) {
+	_, _ = (&WorkspaceAuthZRBAC{}).FilterWorkspaceIDs(ctx, curUser, workspaceIDs)
+	return (&WorkspaceAuthZBasic{}).FilterWorkspaceIDs(ctx, curUser, workspaceIDs)
 }
 
 // CanCreateWorkspace calls RBAC authz but enforces basic authz.
