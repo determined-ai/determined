@@ -10,7 +10,7 @@ from typing import Any, TextIO
 from termcolor import colored
 
 KEY = "blue"
-PRIMITIVES = "white"
+PRIMITIVES = None  # avoid coloring to common fg or bg colors.
 SEPARATORS = "yellow"
 STRING = "green"
 
