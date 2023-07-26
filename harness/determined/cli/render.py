@@ -11,8 +11,8 @@ import dateutil.parser
 import tabulate
 import termcolor
 
+from determined import cli
 from determined import util as det_util
-from determined.cli import render_json
 from determined.common import util, yaml
 
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
@@ -196,7 +196,7 @@ def print_json(data: Union[str, Any]) -> None:
         if isinstance(data, str):
             data = json.loads(data)
         if sys.stdout.isatty():
-            render_json(data, sys.stdout, indent="  ", sort_keys=True)
+            cli.render_json(data, sys.stdout, indent="  ", sort_keys=True)
         else:
             formatted_json = det_util.json_encode(data, sort_keys=True, indent="  ")
             print(formatted_json)

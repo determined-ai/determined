@@ -83,10 +83,3 @@ def render_json(obj: Any, out: TextIO, indent: str = "  ", sort_keys: bool = Fal
 
     do_render(obj, depth=0)
     out.write("\n")
-
-
-if __name__ == "__main__":
-    import sys
-
-    obj = json.load(sys.stdin)
-    render_json(obj, sys.stdout)
