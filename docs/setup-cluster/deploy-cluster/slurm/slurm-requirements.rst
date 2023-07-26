@@ -312,11 +312,12 @@ interacts with PBS, we recommend the following steps:
 
 -  Enable PBS to store job history.
 
-   In order for the Determined launcher to detect successful job completion, PBS must be configured
-   such that ``job_history_enable = True``. If this setting is not configured properly, then the 
-   Determined launcher will not be able to resolve the status/information of a job after it completes. 
+   In order for the HPC launcher to detect successful job completion, PBS must be configured such
+   that ``job_history_enable = True``. If this setting is not configured properly, then the HPC
+   launcher will not be able to resolve the status/information of a job after it finishes.
 
-   PBS administrators can use the following commands to set/verify the value of ``job_history_enable``:
+   PBS administrators can use the following commands to set/verify the value of
+   ``job_history_enable``:
 
    -  Set the value of ``job_history_enable``
 
@@ -328,7 +329,7 @@ interacts with PBS, we recommend the following steps:
 
       .. code:: bash
 
-         sudo qmgr -c 'print server job_history_enable'
+         sudo qmgr -c "print server job_history_enable"
 
 .. _singularity-config-requirements:
 
