@@ -152,14 +152,15 @@ func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 		gracePeriod := int64(15)
 		podInterface.On("Create", context.TODO(), pod, metaV1.CreateOptions{}).Return(pod, nil)
 		pods[name] = pod.DeepCopy()
-		podInterface.On("Delete", context.TODO(), pod,
+		podInterface.On("Delete", context.TODO(), name,
 			metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod}).Return(nil)
+		// TODO CAROLINA delete(pods, name)
 		tmpPods = append(tmpPods, startMockPod(k8sRequestQueue, name, nil))
 	}
 	deleteAll(tmpPods)
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
-	podInterface.On("List", context.TODO(), metaV1.ListOptions{}).Return(pods, nil)
+	podInterface.On("List", context.TODO(), metaV1.ListOptions{}).Return(&k8sV1.PodList{}, nil) // TODO CAROLINA
 	assert.Equal(t, getNumberOfActivePods(podInterface), 0)
 }
 
@@ -175,7 +176,7 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 	numPods := 1
 	pods := make([]*mockPod, 0)
 	for i := 0; i < numPods; i++ {
-		name := "testing12345t543425" // petName.Generate(3, "-")
+		name := petName.Generate(3, "-")
 		pods = append(pods, startMockPod(k8sRequestQueue, name, nil))
 	}
 
@@ -189,10 +190,13 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 }
 
 func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
-	podInterface := &mockPodInterface{
-		pods:             make(map[string]*k8sV1.Pod),
-		operationalDelay: time.Millisecond * 500,
-	}
+	/*
+		podInterface := &mockPodInterface{
+			pods:             make(map[string]*k8sV1.Pod),
+			operationalDelay: time.Millisecond * 500,
+		}
+	*/
+	podInterface := &mocks.PodInterface{}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	k8sRequestQueue := startRequestQueue(
@@ -204,11 +208,17 @@ func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 	pods := make([]*mockPod, 0)
 	for i := 0; i < numPods; i++ {
 		name := petName.Generate(3, "-")
+		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+		gracePeriod := int64(15)
+		podInterface.On("Create", context.TODO(), pod, metaV1.CreateOptions{}).Return(pod, nil)
+		// pods[name] = pod.DeepCopy()
+		podInterface.On("Delete", context.TODO(), name, metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod}).Return(nil)
 		pods = append(pods, startMockPod(k8sRequestQueue, name, nil))
 	}
 	deleteAll(pods)
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
+	podInterface.On("List", context.TODO(), metaV1.ListOptions{}).Return(&k8sV1.PodList{}, nil) // TODO CAROLINA
 	assert.Equal(t, getNumberOfActivePods(podInterface), 0)
 }
 
