@@ -63,9 +63,9 @@ build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	mockery --name=ExperimentAuthZ --dir=internal/experiment --output internal/mocks --filename authz_experiment_iface.go
 	mockery --name=NSCAuthZ --dir=internal/command --output internal/mocks --filename nsc_authz_iface.go
 	mockery --name=ModelAuthZ --dir=internal/model --output internal/mocks --filename authz_model_iface.go
-	mockery --name=PodInterface --srcpkg='k8s.io/client-go/kubernetes/typed/core/v1' --output internal/mocks --filename pod_iface.go     
-	mockery --name=EventInterface --srcpkg='k8s.io/client-go/kubernetes/typed/core/v1' --output internal/mocks --filename event_iface.go 
-	mockery --name=NodeInterface --srcpkg='k8s.io/client-go/kubernetes/typed/core/v1' --output internal/mocks --filename node_iface.go 
+	mockery --name=PodInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename pod_iface.go     
+	mockery --name=EventInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename event_iface.go 
+	mockery --name=NodeInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename node_iface.go 
 
 	# fmt once since the mocks are not generated formatted.
 	goimports -l -local github.com/determined-ai -w ./internal/mocks

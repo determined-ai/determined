@@ -341,8 +341,7 @@ func (_m *EventInterface) Watch(ctx context.Context, opts metav1.ListOptions) (w
 func NewEventInterface(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *EventInterface {
+}) *EventInterface {
 	mock := &EventInterface{}
 	mock.Mock.Test(t)
 
