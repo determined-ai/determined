@@ -1,6 +1,7 @@
 import inspect
 import io
 import os
+import sys
 import tempfile
 import uuid
 from collections import namedtuple
@@ -448,6 +449,7 @@ def test_colored_str_output(case: Case) -> None:
     assert stream.getvalue() == case.output + "\n"
 
 
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="requires Python3.8 or higher")
 def test_dev_bindings() -> None:
     from determined.cli.dev import _bindings_sig, _can_be_called_via_cli, _is_primitive_parameter
 
