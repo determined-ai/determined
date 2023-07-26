@@ -319,7 +319,7 @@ interacts with PBS, we recommend the following steps:
    PBS administrators can use the following commands to set/verify the value of
    ``job_history_enable``:
 
-   -  Set the value of ``job_history_enable``
+   -  Set the value of ``job_history_enable``.
 
       .. code:: bash
 
