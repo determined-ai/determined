@@ -235,8 +235,14 @@ Parameters:
         host: "{{ .db.host }}"
         port: 5432
         name: "{{ .db.name }}"
-        {{- if .db.ssl_root_cert }}
+        {{- if .db.ssl_mode }}
+        ssl_mode: "{{ .db.ssl_mode }}"
+        {{- else if .db.ssl_root_cert }}
         ssl_mode: verify-ca
+        {{- else }}
+        ssl_mode: disable
+        {{- end }}
+        {{- if .db.ssl_root_cert }}
         ssl_root_cert: "{{ .db.ssl_root_cert }}"
         {{- end }}
 
