@@ -101,7 +101,7 @@ const ComparisonView: React.FC<Props> = ({
           message="No experiments selected."
         />
       ) : (
-        <Pivot items={tabs} />
+        <Pivot destroyInactiveTabPane items={tabs} />
       )}
     </SplitPane>
   );
