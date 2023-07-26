@@ -384,16 +384,15 @@ commands:
                   bash "./${CONDA_INSTALLER}" -u -b -p "${CONDA_DIR}"
                   rm -f "./${CONDA_INSTALLER}"
 
-                  ${CONDA_DIR}/bin/conda install python=${PYTHON_VERSION}
+                  ${CONDA_DIR}/bin/conda install python=${PYTHON_VERSION} requests==2.27.0
                   ${CONDA_DIR}/bin/conda update --prefix ${CONDA_DIR} --all -y
                   ${CONDA_DIR}/bin/conda clean --all -y
-                  
-                  pip install requests==2.27.0
                   EOF
 
             - run:
                 name: run conda install_python.sh
                 command: |
+                  pip install requests==2.27.0
                   sudo bash /tmp/install_python.sh <<parameters.python-version>>
 
             - run:
