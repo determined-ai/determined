@@ -86,6 +86,7 @@ class Experiment:
             is 100% completion.
         description: (Mutable, string) Description of the experiment.
         notes: (Mutable, str) Notes for the experiment.
+        labels: (Mutable, Optional[List]) Labels associated with the experiment.
 
     Note:
         All attributes are cached by default.
@@ -119,6 +120,7 @@ class Experiment:
     def _hydrate(self, exp: bindings.v1Experiment) -> None:
         self.config = exp.config
         self.state = exp.state
+        self.labels = list(exp.labels) if exp.labels else None
         self.archived = exp.archived
         self.name = exp.name
         self.progress = exp.progress
@@ -164,7 +166,7 @@ class Experiment:
         resp = bindings.put_PutExperimentLabel(
             session=self._session, experimentId=self.id, label=label
         )
-        self.labels = resp.labels
+        self.labels = list(resp.labels)
 
     def remove_label(self, label: str) -> None:
         """Removes a label from the experiment.
@@ -178,7 +180,7 @@ class Experiment:
         resp = bindings.delete_DeleteExperimentLabel(
             session=self._session, experimentId=self.id, label=label
         )
-        self.labels = resp.labels
+        self.labels = list(resp.labels)
 
     def set_labels(self, labels: List[str]) -> None:
         """Sets experiment labels to the specified list.
@@ -187,11 +189,12 @@ class Experiment:
         labels.
 
         Arguments:
-            labels: a list of string labels to set on the experiment.
+            labels: a list of string labels to set on the experiment. Duplicates will be ignored.
         """
-        self.labels = set(labels)
-        patch_exp = bindings.v1PatchExperiment(id=self.id, labels=list(self.labels))
-        bindings.patch_PatchExperiment(self._session, body=patch_exp, experiment_id=self.id)
+        patch_exp = bindings.v1PatchExperiment(id=self.id, labels=labels)
+        resp = bindings.patch_PatchExperiment(self._session, body=patch_exp, experiment_id=self.id)
+        assert resp.experiment
+        self.labels = list(resp.experiment.labels) if resp.experiment.labels else None
 
     def activate(self) -> None:
         bindings.post_ActivateExperiment(self._session, id=self._id)
