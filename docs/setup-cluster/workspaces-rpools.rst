@@ -28,7 +28,9 @@ workspace.
 
 In addition, you can set a bound resource pool as the default compute or auxiliary pool for the
 workspace. If a user leaves the resource pool configuration option blank for their task, workloads
-will be sent to the default compute or auxiliary pool.
+will be sent to the default compute or auxiliary pool. If the resource pool does not have a default
+compute or auxiliary pool, the tasks will be sent to the cluster default compute or auxiliary pool.
+The cluster default pools can not be bound to any workspaces.
 
 When combined with :ref:`Role-Based Access Control (RBAC) <rbac>`, administrators can restrict
 compute resources to specific users and groups, enabling resource multi-tenancy for experiments and
@@ -51,11 +53,11 @@ steps:
 -  Navigate to the Cluster option in the left menu pane.
 -  Click the options "..." menu of the resource pool you want to bind.
 -  Select **Manage bindings** from the menu.
--  On the right side, choose the workspace you want to bind by clicking on it in the available
+-  On the left side, choose the workspace you want to bind by clicking on it in the available
    workspaces list.
 -  You can use the search bar to narrow down the list.
--  The selected workspace will be added to the list of bound workspaces on the left.
--  To remove a bound workspace, click on it in the list of bound workspaces on the left.
+-  The selected workspace will be added to the list of bound workspaces on the right.
+-  To remove a bound workspace, click on it in the list of bound workspaces on the right.
 -  If you want to remove all workspace bindings, click **Remove all** below the list of bound
    workspaces.
 -  Once you are satisfied with the list of bound workspaces, click **Apply**.
