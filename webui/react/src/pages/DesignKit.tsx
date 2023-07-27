@@ -35,6 +35,7 @@ import Notes, { Props as NotesProps } from 'components/kit/Notes';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
+import Spinner from 'components/kit/Spinner';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
@@ -107,6 +108,7 @@ const ComponentTitles = {
   Pagination: 'Pagination',
   Pivot: 'Pivot',
   Select: 'Select',
+  Spinner: 'Spinner',
   Tags: 'Tags',
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
@@ -2914,6 +2916,42 @@ const DrawerSection: React.FC = () => {
   );
 };
 
+const SpinnerSection = () => {
+  const [spinning, setSpinning] = useState(true);
+  return (
+    <ComponentSection id="Spinner" title="Spinner">
+      <AntDCard>
+        <Paragraph>
+          A <code>{'<Spinner>'}</code> is
+        </Paragraph>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Spinner default</strong>
+        <Spinner spinning />
+        <strong>Centered Spinner</strong>
+        <div style={{ border: '1px solid gray', height: 300, width: '100%' }}>
+          <Spinner center spinning />
+        </div>
+        <strong>Spinner with children</strong>
+        <Spinner spinning>
+          <Card size="medium" />
+        </Spinner>
+        <strong>Spinner with tip</strong>
+        <Spinner spinning tip="Tip" />
+        <strong>Spinner with conditional rendering</strong>
+        <Toggle checked={spinning} onChange={setSpinning} />
+        <Spinner conditionalRender spinning={spinning} />
+        <strong>Spinner sizes</strong>
+        <Space>
+          {IconSizeArray.map((size) => (
+            <Spinner key={size} size={size} spinning tip={size} />
+          ))}
+        </Space>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const Components = {
   Accordion: <AccordionSection />,
   Breadcrumbs: <BreadcrumbsSection />,
@@ -2944,6 +2982,7 @@ const Components = {
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
   Select: <SelectSection />,
+  Spinner: <SpinnerSection />,
   Tags: <TagsSection />,
   Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
