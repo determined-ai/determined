@@ -44,10 +44,10 @@ func (r ResourceConfig) DefaultResourcePools() (computePool, auxPool string, err
 	}
 	if r.ResourceManager.KubernetesRM != nil {
 		return r.ResourceManager.KubernetesRM.DefaultComputeResourcePool,
-			r.ResourceManager.KubernetesRM.DefaultComputeResourcePool, nil
+			r.ResourceManager.KubernetesRM.DefaultAuxResourcePool, nil
 	}
 	return r.ResourceManager.AgentRM.DefaultComputeResourcePool,
-		r.ResourceManager.AgentRM.DefaultComputeResourcePool, nil
+		r.ResourceManager.AgentRM.DefaultAuxResourcePool, nil
 }
 
 // Validate implements the check.Validatable interface.
