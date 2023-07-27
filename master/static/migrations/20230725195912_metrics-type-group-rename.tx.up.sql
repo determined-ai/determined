@@ -1,1 +1,1 @@
-ALTER TABLE metrics RENAME COLUMN custom_type TO "group";
+ALTER TABLE metrics RENAME COLUMN custom_type TO mgroup;
