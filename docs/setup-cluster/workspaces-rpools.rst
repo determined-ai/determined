@@ -28,7 +28,7 @@ workspace.
 
 In addition, you can set a bound resource pool as the default compute or auxiliary pool for the
 workspace. If a user leaves the resource pool configuration option blank for their task, workloads
-will be sent to the default compute or auxiliary pool. If the resource pool does not have a default
+will be sent to the default compute or auxiliary pool. If the workspace does not have a default
 compute or auxiliary pool, the tasks will be sent to the cluster default compute or auxiliary pool.
 The cluster default pools can not be bound to any workspaces.
 
