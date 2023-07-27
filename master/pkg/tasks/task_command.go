@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -105,10 +104,7 @@ func (s GenericCommandSpec) ToTaskSpec() TaskSpec {
 		wrapArchive(s.AdditionalFiles, rootDir),
 	}
 
-	// HACK: Don't break the description from what it looked like under actors to not break
-	// tests. It is likely fine to break, but the tests are surprisingly annoying to change.
-	// We should come back to them.
-	res.Description = fmt.Sprintf("/%ss/%s/", strings.ToLower(string(s.TaskType)), s.CommandID)
+	res.Description = fmt.Sprintf("cmd-%s", s.CommandID)
 
 	res.Entrypoint = s.Config.Entrypoint
 

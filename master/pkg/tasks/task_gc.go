@@ -97,7 +97,7 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 		),
 	}
 
-	res.Description = fmt.Sprintf("/experiments/%d/gc", g.ExperimentID)
+	res.Description = fmt.Sprintf("gc-%d", g.ExperimentID)
 
 	// We pass storage-config / delete / globs through a JSON file instead of a JSON string
 	// to avoid reaching any OS limitations on sizes of CLI arguments.
