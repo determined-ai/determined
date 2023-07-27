@@ -145,7 +145,8 @@ func (i *informer) run(ctx context.Context) {
 			}
 			i.cb(event)
 		case <-ctx.Done():
-			panic(fmt.Sprintf("%s informer stopped unexpectedly: %s", i.name, ctx.Err()))
+			i.syslog.Debugf("%s informer stopped unexpectedly: %s", i.name, ctx.Err())
+			panic(fmt.Errorf("informer stopped unexpectedly: %w", ctx.Err()))
 		}
 	}
 }

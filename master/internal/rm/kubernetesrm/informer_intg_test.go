@@ -6,6 +6,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/pkg/errors"
+
 	"github.com/stretchr/testify/assert"
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +17,8 @@ import (
 )
 
 const namespace = "default"
+
+var errCanceled = errors.New("informer stopped unexpectedly: context canceled")
 
 // mockWatcher implements watch.Interface so it can be returned by mocks' calls to Watch.
 type mockWatcher struct {
@@ -64,12 +68,7 @@ func TestPodInformer(t *testing.T) {
 			mockOptsList, mockOptsWatch := initializeMockOpts("pod")
 			mockPodInterface := &mocks.PodInterface{}
 			mockPodInterface.On("List", context.TODO(), mockOptsList).Return(
-				&k8sV1.PodList{
-					ListMeta: metaV1.ListMeta{
-						ResourceVersion: "1",
-					},
-				},
-				nil)
+				&k8sV1.PodList{ListMeta: metaV1.ListMeta{ResourceVersion: "1"}}, nil)
 			mockPodInterface.On("Watch", context.TODO(), mockOptsWatch).Return(
 				&mockWatcher{c: eventChan}, nil)
 			mockPodHandler := func(event watch.Event) {
@@ -80,29 +79,26 @@ func TestPodInformer(t *testing.T) {
 			}
 
 			// Test creating newPodInformer.
-			i, err := newPodInformer(
-				context.TODO(),
-				determinedLabel,
-				"pod",
-				namespace,
-				mockPodInterface,
-				mockPodHandler)
+			i, err := newPodInformer(context.TODO(), determinedLabel,
+				"pod", namespace, mockPodInterface, mockPodHandler)
 			assert.NotNil(t, i)
 			assert.Nil(t, err)
 
 			// Test run().
-			go i.run(ctx)
+			go func() {
+				defer func() {
+					// If the panic is not context.Canceled, re-panic
+					if r := recover().(error); errors.Is(r, errCanceled) {
+						panic(r)
+					}
+				}()
+				i.run(ctx)
+			}()
+
+			// Iterate through events for the informer.
 			for _, name := range tt.podNames {
-				pod := &k8sV1.Pod{
-					ObjectMeta: metaV1.ObjectMeta{
-						ResourceVersion: "1",
-						Name:            name,
-					},
-				}
-				eventChan <- watch.Event{
-					Type:   watch.Modified,
-					Object: pod,
-				}
+				pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{ResourceVersion: "1", Name: name}}
+				eventChan <- watch.Event{Type: watch.Modified, Object: pod}
 			}
 
 			// Assert correct ordering of pod-modified events
@@ -170,12 +166,7 @@ func TestNodeInformer(t *testing.T) {
 			mockOptsList, mockOptsWatch := initializeMockOpts("node")
 			mockNode := &mocks.NodeInterface{}
 			mockNode.On("List", context.TODO(), mockOptsList).Return(
-				&k8sV1.NodeList{
-					ListMeta: metaV1.ListMeta{
-						ResourceVersion: "1",
-					},
-				},
-				nil)
+				&k8sV1.NodeList{ListMeta: metaV1.ListMeta{ResourceVersion: "1"}}, nil)
 			mockNode.On("Watch", context.TODO(), mockOptsWatch).Return(&mockWatcher{c: eventChan}, nil)
 			mockNodeHandler := func(event watch.Event) {
 				node, _ := event.Object.(*k8sV1.Node)
@@ -201,20 +192,26 @@ func TestNodeInformer(t *testing.T) {
 			assert.Nil(t, err)
 
 			// Test run() & iterate through/apply a set of events received by the informer.
-			go n.run(ctx)
+			go func() {
+				defer func() {
+					// If the panic is not context.Canceled, re-panic
+					if r := recover().(error); errors.Is(r, errCanceled) {
+						panic(r)
+					}
+				}()
+				n.run(ctx)
+			}()
+
+			// Iterate through events for the informer.
 			for _, n := range tt.operations {
-				node := &k8sV1.Node{
-					ObjectMeta: metaV1.ObjectMeta{
-						ResourceVersion: "1",
-						Name:            n.name,
-					},
-				}
-				eventChan <- watch.Event{
-					Type:   n.action,
-					Object: node,
-				}
+				node := &k8sV1.Node{ObjectMeta: metaV1.ObjectMeta{
+					ResourceVersion: "1", Name: n.name,
+				}}
+				eventChan <- watch.Event{Type: n.action, Object: node}
 			}
 
+			// Assert correct ordering of node-modified events
+			// after all events are received and the channel is closed.
 			wg.Wait()
 			if reflect.DeepEqual(tt.output, tt.ordering) {
 				assert.Equal(t, tt.output, currNodes)
@@ -259,12 +256,7 @@ func TestEventListener(t *testing.T) {
 			mockEventInterface := &mocks.EventInterface{}
 
 			mockEventInterface.On("List", context.TODO(), mockOptsList).Return(
-				&k8sV1.EventList{
-					ListMeta: metaV1.ListMeta{
-						ResourceVersion: "1",
-					},
-				},
-				nil)
+				&k8sV1.EventList{ListMeta: metaV1.ListMeta{ResourceVersion: "1"}}, nil)
 			mockEventInterface.On("Watch", context.TODO(), mockOptsWatch).Return(
 				&mockWatcher{c: eventChan}, nil)
 
@@ -275,28 +267,31 @@ func TestEventListener(t *testing.T) {
 				wg.Done()
 			}
 
-			i, err := newEventInformer(
-				context.TODO(),
-				mockEventInterface,
-				namespace,
-				mockEventHandler)
+			i, err := newEventInformer(context.TODO(), mockEventInterface,
+				namespace, mockEventHandler)
 			assert.NotNil(t, i)
 			assert.Nil(t, err)
 
-			go i.run(ctx)
+			// Test run() & iterate through/apply a set of events received by the informer.
+			go func() {
+				defer func() {
+					// If the panic is not context.Canceled, re-panic
+					if r := recover().(error); errors.Is(r, errCanceled) {
+						panic(r)
+					}
+				}()
+				i.run(ctx)
+			}()
+
+			// Iterate through events for the informer.
 			for _, name := range tt.eventNames {
-				event := &k8sV1.Event{
-					ObjectMeta: metaV1.ObjectMeta{
-						ResourceVersion: "1",
-						Name:            name,
-					},
-				}
-				eventChan <- watch.Event{
-					Type:   watch.Modified,
-					Object: event,
-				}
+				event := &k8sV1.Event{ObjectMeta: metaV1.ObjectMeta{
+					ResourceVersion: "1", Name: name,
+				}}
+				eventChan <- watch.Event{Type: watch.Modified, Object: event}
 			}
 
+			// Assert correct ordering after all events are received and the channel is closed.
 			wg.Wait()
 			if reflect.DeepEqual(tt.eventNames, tt.ordering) {
 				assert.Equal(t, tt.eventNames, ordering)
