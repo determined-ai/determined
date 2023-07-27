@@ -202,6 +202,15 @@ interacts with Slurm, we recommend the following steps:
 Determined should function with your existing PBS configuration. To optimize how Determined
 interacts with PBS, we recommend the following steps:
 
+-  Enable PBS to store job history.
+
+   Job completion detection requires that the job history feature be enabled. PBS administrators can
+   employ the following command to set the value of ``job_history_enable``:
+
+   .. code:: bash
+
+      sudo qmgr -c "set server job_history_enable = True"
+
 -  Configure PBS to manage GPU resources.
 
    Determined works best when allocating GPUs. By default, Determined selects compute nodes with
