@@ -377,7 +377,7 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
 
 -  When ``job_history_enable = False``, the following behavior is observed:
 
-   -  Jobs are treated as successful even in the presences of a failure when PBS job history is not
+   -  Jobs are treated as successful even in the presence of a failure when PBS job history is not
       enabled. Without job history enabled, the launcher is unable to obtain the exit status of jobs
       and therefore they are all reported as successful. This will prevent failed jobs from
       automatically restarting, and in the case of a job that fails to start running at all, it may
