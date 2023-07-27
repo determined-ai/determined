@@ -49,7 +49,7 @@ to provide these credentials:
 
       gcloud auth application-default login
 
-   This command will open a login page in your browser where you can sign in to the Google account
+   This command will open a sign-in page in your browser where you can sign in to the Google account
    that has access to your project. Ensure your user account has ``Owner`` access to the project you
    want to deploy your cluster in.
 

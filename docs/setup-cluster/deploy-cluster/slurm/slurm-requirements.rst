@@ -222,7 +222,7 @@ interacts with PBS, we recommend the following steps:
 -  Configure PBS to report GPU Accelerator type.
 
    It is recommended that PBS administrators set the value for ``resources_available.accel_type`` on
-   each node that contains an accelerator. Otherwise, the Cluster tab on the Determined Web UI will
+   each node that contains an accelerator. Otherwise, the Cluster tab on the Determined WebUI will
    show ``unconfigured`` for the ``Accelerator`` field in the Resource Pool information.
 
    PBS administrators can use the following set of commands to set the value of
@@ -254,7 +254,7 @@ interacts with PBS, we recommend the following steps:
 
    Repeat the above steps to set the ``resources_available.accel_type`` value for every node
    containing GPU. Once the ``resources_available.accel_type`` value is set for all the necessary
-   nodes, admins can verify the Accelerator field on the Cluster tab of the Web UI.
+   nodes, admins can verify the Accelerator field on the Cluster pane of the WebUI.
 
 -  Ensure homogeneous PBS queues.
 

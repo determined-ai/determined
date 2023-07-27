@@ -506,11 +506,10 @@ Run the following command to run the experiment:
 
    det e create distributed.yaml .
 
-In the Determined WebUI, visit the **Cluster** tab.
+In the Determined WebUI, navigate to the **Cluster** pane.
 
-You should be able to see multiple slots active in the Cluster tab corresponding to the value you
-set for ``slots_per_trial`` you set in ``distributed.yaml``, as well as logs appearing from multiple
-ranks.
+You should be able to see multiple slots active corresponding to the value you set for
+``slots_per_trial`` you set in ``distributed.yaml``, as well as logs appearing from multiple ranks.
 
 ************
  Next Steps

@@ -75,4 +75,4 @@ field.
      client_secret: "Xxx0xXXXxxXXXxXXxxXX0xxxXXxxxXXxXXXXxXXXxXxXXxxXXXX0XXxXxX-XX0-X"
 
 Once the master is started with this configuration, users will be able to log in to Determined by
-clicking the 'Sign in with Okta' button on the login page.
+clicking the 'Sign in with Okta' button on the sign-in page.
