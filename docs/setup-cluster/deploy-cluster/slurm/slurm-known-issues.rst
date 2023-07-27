@@ -377,11 +377,12 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
 
 -  When ``job_history_enable = False``, the following behavior is observed:
 
-   -  Jobs are treated as succesful even in the presence of a failure as the job cannot be accessed
-      after completion. Further, jobs will show state ``COMPLETED`` in the UI even if an error
-      causes
-
-   -  Jobs are not restarted on failure since they are assumed successful.
+   -  Jobs are treated as successful even in the presences of a failure when PBS job history is not
+      enabled. Without job history enabled, the launcher is unable to obtain the exit status of jobs
+      and therefore they are all reported as successful. This will prevent failed jobs from
+      automatically restarting, and in the case of a job that fails to start running at all, it may
+      be reported as completed with no error message reported. Refer to :ref:`PBS Requirements
+      <pbs-config-requirements>`.
 
 ***********************
  AMD/ROCm Known Issues
