@@ -27,7 +27,7 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
     friendlyName: 'New Experiment List',
   },
   rp_binding: {
-    defaultValue: false,
+    defaultValue: true,
     description: 'Allow resource pools to be assigned to workspaces',
     friendlyName: 'Resource Pool Binding',
   },
