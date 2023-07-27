@@ -24,7 +24,7 @@ const useMetricNames = (
 
   useEffect(() => {
     if (actualExpIds.length === 0) {
-      setMetrics(NotLoaded);
+      setMetrics(Loaded([]));
       return;
     }
     const canceler = new AbortController();
