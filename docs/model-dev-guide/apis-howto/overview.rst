@@ -76,15 +76,15 @@ experiment is controlled by the container image that has been configured for tha
 Determined provides prebuilt Docker images that include TensorFlow 2.11, 1.15, and 2.8,
 respectively:
 
--  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.23.3`` (default)
+-  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2`` (default)
 -  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.2``
--  ``determinedai/environments:cuda-11.2-tf-2.8-gpu-0.23.3``
+-  ``determinedai/environments:cuda-11.2-tf-2.8-gpu-0.21.2``
 
 We also provide lightweight CPU-only counterparts:
 
--  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.23.3``
--  ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.23.3``
--  ``determinedai/environments:py-3.8-tf-2.8-cpu-0.23.3``
+-  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.21.2``
+-  ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.21.2``
+-  ``determinedai/environments:py-3.8-tf-2.8-cpu-0.21.2``
 
 To change the container image used for an experiment, specify :ref:`environment.image
 <exp-environment-image>` in the experiment configuration file. Please see :ref:`container-images`
@@ -100,7 +100,7 @@ images.
 Determined has experimental support for ROCm. Determined provides a prebuilt Docker image that
 includes ROCm 5.0, PyTorch 1.10 and TensorFlow 2.7:
 
--  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.23.3``
+-  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.2``
 
 Known limitations:
 
