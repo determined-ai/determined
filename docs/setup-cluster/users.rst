@@ -43,12 +43,12 @@ that were created by this user will remain).
 WebUI
 =====
 
-The WebUI will automatically redirect users to a login page if there is no valid Determined session
-established on that browser. After logging in, the user will be redirected to the URL they initially
-attempted to access.
+The WebUI will automatically redirect users to a sign-in page if there is no valid Determined
+session established on that browser. After signing in, the user will be redirected to the URL they
+initially attempted to access.
 
-A browser Determined session can be ended by clicking "Sign Out" under the user menu in the top
-right of the WebUI.
+Users can end their Determined session by selecting their profile name in the upper left corner and
+choosing **Sign Out**.
 
 CLI
 ===

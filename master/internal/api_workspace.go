@@ -316,7 +316,10 @@ func (a *apiServer) PostWorkspace(
 		}
 	}()
 
-	w := &model.Workspace{Name: req.Name, UserID: curUser.ID}
+	w := &model.Workspace{
+		Name: req.Name, UserID: curUser.ID,
+		DefaultComputePool: req.DefaultComputePool, DefaultAuxPool: req.DefaultAuxPool,
+	}
 
 	if req.AgentUserGroup != nil {
 		w.AgentUID = req.AgentUserGroup.AgentUid
@@ -418,6 +421,15 @@ func (a *apiServer) PatchWorkspace(
 		updatedWorkspace.AgentGroup = updateAug.AgentGroup
 
 		insertColumns = append(insertColumns, "uid", "user_", "gid", "group_")
+	}
+
+	if req.Workspace.DefaultComputePool != "" {
+		updatedWorkspace.DefaultComputePool = req.Workspace.DefaultComputePool
+		insertColumns = append(insertColumns, "default_compute_pool")
+	}
+	if req.Workspace.DefaultAuxPool != "" {
+		updatedWorkspace.DefaultAuxPool = req.Workspace.DefaultAuxPool
+		insertColumns = append(insertColumns, "default_aux_pool")
 	}
 
 	if req.Workspace.CheckpointStorageConfig != nil {
@@ -623,7 +635,32 @@ func (a *apiServer) UnpinWorkspace(
 }
 
 func (a *apiServer) ListRPsBoundToWorkspace(
-	ctx context.Context, request *apiv1.ListRPsBoundToWorkspaceRequest,
+	ctx context.Context, req *apiv1.ListRPsBoundToWorkspaceRequest,
 ) (*apiv1.ListRPsBoundToWorkspaceResponse, error) {
-	return &apiv1.ListRPsBoundToWorkspaceResponse{}, nil
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = workspace.AuthZProvider.Get().CanGetWorkspaceID(
+		ctx, *curUser, req.WorkspaceId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	rpConfigs, err := a.resourcePoolsAsConfigs()
+	if err != nil {
+		return nil, err
+	}
+	rpNames, pagination, err := db.ReadRPsAvailableToWorkspace(
+		ctx, req.WorkspaceId, req.Offset, req.Limit, rpConfigs,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.ListRPsBoundToWorkspaceResponse{
+		ResourcePools: rpNames,
+		Pagination:    pagination,
+	}, nil
 }

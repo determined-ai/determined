@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Spinner from 'components/kit/internal/Spinner/Spinner';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
+import Message, { MessageType } from 'components/Message';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
 import { useSettings } from 'hooks/useSettings';
@@ -46,7 +47,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
   projectId,
   metricData,
 }: Props) => {
-  const [chartData, setChartData] = useState<HpTrialData>();
+  const [chartData, setChartData] = useState<HpTrialData | undefined>();
   const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
 
   const fullHParams: string[] = useMemo(() => {
@@ -263,6 +264,10 @@ const CompareParallelCoordinates: React.FC<Props> = ({
 
   if (!isLoaded) {
     return <Spinner center spinning />;
+  }
+
+  if (trials.length === 0) {
+    return <Message title="No data to plot." type={MessageType.Empty} />;
   }
 
   if (!chartData || (selectedExperiments.length !== 0 && metrics.length === 0)) {

@@ -44,6 +44,7 @@ import {
 import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
+import { pluralizer } from '../../../utils/string';
 import { ExpListView, RowHeight } from '../F_ExperimentList.settings';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
@@ -330,6 +331,24 @@ const TableActionBar: React.FC<Props> = ({
     }));
   }, [availableBatchActions]);
 
+  const selectionLabel = useMemo(() => {
+    let label = `${totalExperiments.toLocaleString()} ${pluralizer(
+      totalExperiments,
+      'experiment',
+    )}`;
+
+    if (selectAll) {
+      const totalSelected = Loadable.isLoaded(total)
+        ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString() + ' '
+        : '';
+      label = `All ${totalSelected}experiments selected`;
+    } else if (selectedExperimentIds.length > 0) {
+      label = `${selectedExperimentIds.length} of ${label} selected`;
+    }
+
+    return label;
+  }, [excludedExperimentIds, selectAll, selectedExperimentIds, total, totalExperiments]);
+
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
   return (
@@ -369,11 +388,7 @@ const TableActionBar: React.FC<Props> = ({
               </Button>
             </Dropdown>
           )}
-          {!isMobile && (
-            <span className={css.expNum}>
-              {totalExperiments.toLocaleString()} experiment{totalExperiments > 1 && 's'}
-            </span>
-          )}
+          {!isMobile && <span className={css.expNum}>{selectionLabel}</span>}
         </Space>
       </Column>
       <Column align="right">

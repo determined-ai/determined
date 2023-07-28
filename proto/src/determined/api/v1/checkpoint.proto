@@ -4,6 +4,7 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "determined/checkpoint/v1/checkpoint.proto";
+import "determined/trial/v1/trial.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 // Get the requested checkpoint.
@@ -73,3 +74,23 @@ message DeleteCheckpointsRequest {
 
 // Response to DeleteCheckpointsRequest
 message DeleteCheckpointsResponse {}
+
+// Request for all metrics related to a given checkpoint
+message GetTrialMetricsBySourceInfoCheckpointRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "checkpoint_uuid" ] }
+  };
+  // UUID of the checkpoint.
+  string checkpoint_uuid = 1;
+  // Type of the TrialSourceInfo
+  optional determined.trial.v1.TrialSourceInfoType trial_source_info_type = 2;
+}
+
+// Response for all metrics related to a given checkpoint
+message GetTrialMetricsBySourceInfoCheckpointResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "data" ] }
+  };
+  // All the related trials and their metrics
+  repeated determined.trial.v1.TrialSourceInfoMetric data = 1;
+}

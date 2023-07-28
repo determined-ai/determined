@@ -36,6 +36,7 @@ func (r *ResourceManager) GetResourcePoolRef(
 func (r *ResourceManager) ResolveResourcePool(
 	ctx actor.Messenger,
 	name string,
+	workspaceID,
 	slots int,
 ) (string, error) {
 	return name, nil

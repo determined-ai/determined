@@ -4,7 +4,11 @@
  Web Interface (WebUI)
 #######################
 
-You can use the WebUI to create and monitor experiment progress.
+.. meta::
+   :description: Discover how to create and monitor experiment progress, organize your experiments into projects and workspaces, start a Jupyter Notebook, and more using the Determined WebUI.
+
+You can use the WebUI to create and monitor experiment progress, organize your experiments into
+projects and workspaces, start a Jupyter Notebook, and more.
 
 *****************
  Getting Started
@@ -15,9 +19,10 @@ To access the WebUI, go to the default URL ``http://master-addr:8080`` in your w
 enabled, use port ``8443`` instead.
 
 If you have not yet established a valid Determined session, the WebUI will automatically redirect
-you to the login page. Once you log in, you will be redirected to the initial URL you entered.
+you to the sign-in page. Once you sign in, you will be redirected to the initial URL you entered.
 
-To end the Determined session and log out of the WebUI, click **Sign Out**.
+To end the Determined session and sign out of the WebUI, select your profile name in the upper left
+corner and choose **Sign Out**.
 
 ************************
  Creating an Experiment
@@ -70,6 +75,49 @@ visit :ref:`users`.
 
 With the Determined Enterprise Edition, you can also create and manage user groups. To learn more,
 visit :ref:`rbac`.
+
+************************
+ Managing User Settings
+************************
+
+User settings allow you to manage profile settings, preferences, and shortcuts. You can also toggle
+experimental features on or off and access advanced features.
+
+To view user settings:
+
+-  Select your profile name in the upper left corner and choose **Settings**.
+
+To change user settings:
+
+-  Select the edit icon.
+-  Make changes to the setting.
+-  Confirm the changes by selecting the checkmark.
+
+To revert to default settings:
+
+-  Navigate to the Advanced section of the user settings.
+-  Select **I know what I'm doing**.
+-  Select **Reset to Default**.
+-  Confirm you want to reset all user settings to their default values.
+
+****************************************
+ Selecting a Table Density (Row Height)
+****************************************
+
+In the Preferences section of your user settings, you can set the table density so that the rows are
+shorter or taller.
+
+********************************************************
+ Toggling Experimental (Pre-Release) Features On or Off
+********************************************************
+
+In the Experimental section of your user settings, you can turn experimental features on or off.
+However, if you don't know what the feature is referring to or the possible impact, you likely
+should not turn it on.
+
+.. caution::
+
+   Experimental features are pre-release features. They can be changed or removed at any time.
 
 ***********************
  Configuring Telemetry

@@ -5,6 +5,7 @@ package db
 
 import (
 	"archive/tar"
+	"context"
 	"crypto/rand"
 	"database/sql"
 	"fmt"
@@ -17,6 +18,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
@@ -322,4 +324,48 @@ func (db *PgDB) MustExec(t *testing.T, sql string, args ...any) sql.Result {
 	out, err := db.sql.Exec(sql, args...)
 	require.NoError(t, err, "failed to run query")
 	return out
+}
+
+// MockWorkspaces creates as many new workspaces as in workspaceNames and
+// returns their ids.
+func MockWorkspaces(workspaceNames []string, userID model.UserID) ([]int32, error) {
+	ctx := context.Background()
+	var workspaceIDs []int32
+	var workspaces []model.Workspace
+
+	for _, workspaceName := range workspaceNames {
+		workspaces = append(workspaces, model.Workspace{
+			Name:   workspaceName,
+			UserID: userID,
+		})
+	}
+
+	_, err := Bun().NewInsert().Model(&workspaces).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	workspaces = []model.Workspace{}
+	err = Bun().NewSelect().Model(&workspaces).
+		Where("name IN (?)", bun.In(workspaceNames)).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, workspace := range workspaces {
+		workspaceIDs = append(workspaceIDs, int32(workspace.ID))
+	}
+
+	return workspaceIDs, nil
+}
+
+// CleanupMockWorkspace removes the specified workspaceIDs from the workspaces table.
+func CleanupMockWorkspace(workspaceIDs []int32) error {
+	var workspaces []model.Workspace
+	_, err := Bun().NewDelete().Model(&workspaces).
+		Where("id IN (?)", bun.In(workspaceIDs)).
+		Exec(context.Background())
+
+	return err
 }

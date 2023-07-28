@@ -577,7 +577,7 @@ func getDetContainerSecurityContext(
 				// Use det user link-with-agent-user to configure RunAsUser
 				// and/or RunAsGroup. We disallow this in security context.
 				if securityContext != nil {
-					userInput.RunAsUser = securityContext.RunAsGroup
+					userInput.RunAsUser = securityContext.RunAsUser
 					userInput.RunAsGroup = securityContext.RunAsGroup
 				} else {
 					userInput.RunAsUser = nil

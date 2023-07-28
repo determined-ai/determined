@@ -369,6 +369,19 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
    -  ``Resources``: Expected when resources are in use by other jobs. Otherwise, verify you have
       not requested more resources (GPUs, CPUs, nodes, memory) than are available in your cluster.
 
+.. _pbs-known-issues:
+
+******************
+ PBS Known Issues
+******************
+
+-  Jobs are treated as successful even in the presence of a failure when PBS job history is not
+   enabled. Without job history enabled, the launcher is unable to obtain the exit status of jobs
+   and therefore they are all reported as successful. This will prevent failed jobs from
+   automatically restarting, and in the case of a job that fails to start running at all, it may be
+   reported as completed with no error message reported. Refer to :ref:`PBS Requirements
+   <pbs-config-requirements>`.
+
 ***********************
  AMD/ROCm Known Issues
 ***********************

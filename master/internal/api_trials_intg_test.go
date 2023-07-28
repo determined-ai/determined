@@ -6,10 +6,12 @@ package internal
 import (
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/maps"
@@ -20,12 +22,13 @@ import (
 
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
-
-	"github.com/determined-ai/determined/master/internal/db"
 )
 
 func createTestTrial(
@@ -467,6 +470,45 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 	})
 }
 
+func TestUnusualMetricNames(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	expectedMetricsMap := map[string]any{
+		"a.loss": 1.5,
+		"b/loss": 2.5,
+	}
+	asciiSweep := ""
+	for i := 1; i <= 255; i++ {
+		asciiSweep += fmt.Sprintf("%c", i)
+	}
+	expectedMetricsMap[asciiSweep] = 3
+	expectedMetrics, err := structpb.NewStruct(expectedMetricsMap)
+	require.NoError(t, err)
+
+	trial := createTestTrial(t, api, curUser)
+	_, err = api.ReportTrialValidationMetrics(ctx, &apiv1.ReportTrialValidationMetricsRequest{
+		ValidationMetrics: &trialv1.TrialMetrics{
+			TrialId:        int32(trial.ID),
+			TrialRunId:     0,
+			StepsCompleted: 1,
+			Metrics: &commonv1.Metrics{
+				AvgMetrics: expectedMetrics,
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	req := &apiv1.CompareTrialsRequest{
+		TrialIds:      []int32{int32(trial.ID)},
+		MaxDatapoints: 3,
+		MetricNames:   []string{"a.loss", "b/loss", asciiSweep},
+		StartBatches:  0,
+		EndBatches:    1000,
+		MetricType:    apiv1.MetricType_METRIC_TYPE_VALIDATION,
+	}
+	_, err = api.CompareTrials(ctx, req)
+	require.NoError(t, err)
+}
+
 func TestTrialAuthZ(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 	authZNSC := setupNSCAuthZ()
@@ -595,6 +637,15 @@ func TestTrialAuthZ(t *testing.T) {
 			})
 			return err
 		}, false},
+		{"CanEditExperiment", func(id int) error {
+			req := &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: &trialv1.TrialSourceInfo{
+				TrialId:             int32(id),
+				CheckpointUuid:      uuid.NewString(),
+				TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+			}}
+			_, err := api.ReportTrialSourceInfo(ctx, req)
+			return err
+		}, false},
 	}
 
 	for _, curCase := range cases {
@@ -663,4 +714,159 @@ func TestCompareTrialsSampling(t *testing.T) {
 	sampleBatches2 := compareTrialsResponseToBatches(resp)
 
 	require.Equal(t, sampleBatches1, sampleBatches2)
+}
+
+func createTestTrialInferenceMetrics(ctx context.Context, t *testing.T, api *apiServer, id int32) {
+	var trialMetrics map[model.MetricGroup][]map[string]any
+	require.NoError(t, json.Unmarshal([]byte(
+		`{"inference": [{"a":1}, {"b":2}]}`,
+	), &trialMetrics))
+	for mType, metricsList := range trialMetrics {
+		for _, m := range metricsList {
+			metrics, err := structpb.NewStruct(m)
+			require.NoError(t, err)
+			err = api.m.db.AddTrialMetrics(ctx,
+				&trialv1.TrialMetrics{
+					TrialId:        id,
+					TrialRunId:     int32(0),
+					StepsCompleted: int32(0),
+					Metrics: &commonv1.Metrics{
+						AvgMetrics: metrics,
+					},
+				},
+				mType,
+			)
+			require.NoError(t, err)
+		}
+	}
+}
+
+func TestTrialSourceInfoCheckpoint(t *testing.T) {
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
+	infTrial := createTestTrial(t, api, curUser)
+	infTrial2 := createTestTrial(t, api, curUser)
+	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial.ID))
+
+	// Create a checkpoint to index with
+	checkpointUUID := createVersionTwoCheckpoint(ctx, t, api, curUser, map[string]int64{"a": 1})
+
+	// Create a TrialSourceInfo associated with each of the two trials.
+	resp, err := trials.CreateTrialSourceInfo(
+		ctx, &trialv1.TrialSourceInfo{
+			TrialId:             int32(infTrial.ID),
+			CheckpointUuid:      checkpointUUID,
+			TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+		},
+	)
+	require.NoError(t, err)
+	require.Equal(t, resp.TrialId, int32(infTrial.ID))
+	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
+
+	resp, err = trials.CreateTrialSourceInfo(
+		ctx, &trialv1.TrialSourceInfo{
+			TrialId:             int32(infTrial2.ID),
+			CheckpointUuid:      checkpointUUID,
+			TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+		},
+	)
+	require.NoError(t, err)
+	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
+	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
+
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		Return(nil).Times(3)
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
+		Return(nil).Times(3)
+
+	// If there are no restrictions, we should see all the trials
+	getCkptResp, getErr := api.GetTrialMetricsBySourceInfoCheckpoint(
+		ctx, &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID},
+	)
+	require.NoError(t, getErr)
+	require.Equal(t, len(getCkptResp.Data), 2)
+
+	// Only infTrial should have generic metrics attached.
+	for _, tsim := range getCkptResp.Data {
+		if tsim.TrialId == int32(infTrial.ID) {
+			// One aggregated MetricsReport
+			require.Equal(t, len(tsim.MetricReports), 1)
+		} else {
+			require.Empty(t, tsim.MetricReports)
+		}
+	}
+
+	infTrialExp, err := db.ExperimentByID(ctx, infTrial.ExperimentID)
+	require.NoError(t, err)
+	infTrial2Exp, err := db.ExperimentByID(ctx, infTrial2.ExperimentID)
+	require.NoError(t, err)
+
+	// All experiments can be seen
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		Return(nil).Times(3)
+	// We can see the experiment that generated the checkpoint
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
+		Return(nil).Once()
+	// We can't see the experiment for infTrial
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, infTrialExp).
+		Return(authz2.PermissionDeniedError{}).Once()
+	// We can see the experiment for infTrial2
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, infTrial2Exp).
+		Return(nil).Once()
+	getCkptResp, getErr = api.GetTrialMetricsBySourceInfoCheckpoint(
+		ctx, &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID},
+	)
+	require.NoError(t, getErr)
+	// Only infTrial2 should be visible
+	require.Equal(t, len(getCkptResp.Data), 1)
+	require.Equal(t, getCkptResp.Data[0].TrialId, int32(infTrial2.ID))
+}
+
+func TestTrialSourceInfoModelVersion(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	infTrial := createTestTrial(t, api, curUser)
+	infTrial2 := createTestTrial(t, api, curUser)
+	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial.ID))
+
+	// Create a checkpoint to index with
+	checkpointUUID := createVersionTwoCheckpoint(ctx, t, api, curUser, map[string]int64{"a": 1})
+
+	// Create a model_version to index with
+	conv := &protoconverter.ProtoConverter{}
+	modelVersion := RegisterCheckpointAsModelVersion(t, api.m.db, conv.ToUUID(checkpointUUID))
+
+	// Create a TrialSourceInfo associated with each of the two trials.
+	resp, err := trials.CreateTrialSourceInfo(
+		ctx, &trialv1.TrialSourceInfo{
+			TrialId:             int32(infTrial.ID),
+			CheckpointUuid:      checkpointUUID,
+			TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+			ModelId:             &modelVersion.Model.Id,
+			ModelVersion:        &modelVersion.Version,
+		},
+	)
+	require.NoError(t, err)
+	require.Equal(t, resp.TrialId, int32(infTrial.ID))
+	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
+
+	resp, err = trials.CreateTrialSourceInfo(
+		ctx, &trialv1.TrialSourceInfo{
+			TrialId:             int32(infTrial2.ID),
+			CheckpointUuid:      checkpointUUID,
+			TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+		},
+	)
+	require.NoError(t, err)
+	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
+	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
+
+	getMVResp, getMVErr := api.GetTrialSourceInfoMetricsByModelVersion(
+		ctx, &apiv1.GetTrialSourceInfoMetricsByModelVersionRequest{
+			ModelName:       modelVersion.Model.Name,
+			ModelVersionNum: modelVersion.Version,
+		},
+	)
+	require.NoError(t, getMVErr)
+	// One trial is valid and it has one aggregated MetricsReport
+	require.Equal(t, len(getMVResp.Data), 1)
+	require.Equal(t, len(getMVResp.Data[0].MetricReports), 1)
 }

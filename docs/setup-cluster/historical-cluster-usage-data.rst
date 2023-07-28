@@ -18,7 +18,7 @@ still report one GPU hour.
 .. warning::
 
    Our data is aggregated by Determined metadata (e.g., label, user). This aggregation is performed
-   nightly, so any data visualized on the web UI or downloaded via the endpoint is fresh as of the
+   nightly, so any data visualized on the WebUI or downloaded via the endpoint is fresh as of the
    last night. It will not reflect changes to the metadata of a previously run experiment (e.g.,
    labels) until the next nightly aggregation.
 

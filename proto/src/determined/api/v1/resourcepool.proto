@@ -34,8 +34,10 @@ message BindRPToWorkspaceRequest {
 
   // The resource pool name.
   string resource_pool_name = 1;
-  // The workspace IDs to be bound to the resouce pool.
+  // The workspace IDs to be bound to the resource pool.
   repeated int32 workspace_ids = 2;
+  // The workspace names to be bound to the resource pool.
+  repeated string workspace_names = 3;
 }
 
 // Bind a resource pool to workspaces response.
@@ -51,6 +53,8 @@ message UnbindRPFromWorkspaceRequest {
   string resource_pool_name = 1;
   // The workspace IDs to be unbound.
   repeated int32 workspace_ids = 2;
+  // The workspace names to be unbound.
+  repeated string workspace_names = 3;
 }
 
 // Unbind a resource pool to workspaces response.
@@ -66,6 +70,8 @@ message OverwriteRPWorkspaceBindingsRequest {
   string resource_pool_name = 1;
   // The new workspace IDs to bind to the resource_pool.
   repeated int32 workspace_ids = 2;
+  // The new workspace names to bind to the resource_pool.
+  repeated string workspace_names = 3;
 }
 
 // Overwrite and replace the workspaces bound to an RP response.
