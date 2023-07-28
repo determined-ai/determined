@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -49,7 +50,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
-	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -2347,11 +2347,27 @@ func (a *apiServer) PutExperimentLabel(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	exp, err := a.getExperiment(ctx, *curUser, int(req.ExperimentId))
+	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			logrus.WithError(err).Error("error rolling back transaction in create workspace")
+		}
+	}()
 
+	exp := &experimentv1.Experiment{}
+	query := db.Bun().NewSelect().
+		ModelTableExpr("experiments as e").
+		Model(exp).
+		Apply(getExperimentColumns).
+		Where("e.id = ?", req.ExperimentId).
+		Limit(1)
+
+	if err = query.Scan(ctx); err != nil {
+		return nil, err
+	}
 	modelExp, err := model.ExperimentFromProto(exp)
 	if err != nil {
 		return nil, err
@@ -2362,33 +2378,22 @@ func (a *apiServer) PutExperimentLabel(ctx context.Context,
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 
-	// Labels should be unique.
-	expLabels := set.New[string]()
-	for _, label := range exp.Labels {
-		expLabels.Insert(label)
-	}
-	if expLabels.Contains(req.Label) {
+	if slices.Contains(exp.Labels, req.Label) {
 		return &apiv1.PutExperimentLabelResponse{Labels: exp.Labels}, nil
 	}
-	expLabels.Insert(req.Label)
+	exp.Labels = append(exp.Labels, req.Label)
 
-	exp.Labels = expLabels.ToSlice()
+	_, err = tx.NewUpdate().Model(modelExp).
+		Set("config = jsonb_set(config, '{labels}', ?, true)", exp.Labels).
+		Where("id = ?", exp.Id).
+		Exec(ctx)
 
-	type experimentPatch struct {
-		Labels []string `json:"labels"`
-	}
-	patch := experimentPatch{
-		Labels: exp.Labels,
-	}
-	marshalledPatches, patchErr := json.Marshal(patch)
-	if patchErr != nil {
-		return nil, status.Errorf(codes.Internal, "failed to marshal experiment patch")
-	}
-
-	_, err = a.m.db.RawQuery(
-		"patch_experiment", exp.Id, marshalledPatches, exp.Notes)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error updating experiment in database: %d", exp.Id)
+		return nil, errors.Wrapf(err, "error updating experiment %v in database", exp.Id)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, errors.Wrap(err, "could not commit patch experiment labels transaction")
 	}
 
 	return &apiv1.PutExperimentLabelResponse{Labels: exp.Labels}, nil
@@ -2402,8 +2407,25 @@ func (a *apiServer) DeleteExperimentLabel(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	exp, err := a.getExperiment(ctx, *curUser, int(req.ExperimentId))
+	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			logrus.WithError(err).Error("error rolling back transaction in create workspace")
+		}
+	}()
+
+	exp := &experimentv1.Experiment{}
+	query := db.Bun().NewSelect().
+		ModelTableExpr("experiments as e").
+		Model(exp).
+		Apply(getExperimentColumns).
+		Where("e.id = ?", req.ExperimentId).
+		Limit(1)
+
+	if err = query.Scan(ctx); err != nil {
 		return nil, err
 	}
 
@@ -2425,21 +2447,17 @@ func (a *apiServer) DeleteExperimentLabel(ctx context.Context,
 		}
 	}
 
-	type experimentPatch struct {
-		Labels []string `json:"labels"`
-	}
-	patch := experimentPatch{
-		Labels: exp.Labels,
-	}
-	marshalledPatches, patchErr := json.Marshal(patch)
-	if patchErr != nil {
-		return nil, status.Errorf(codes.Internal, "failed to marshal experiment patch")
+	_, err = tx.NewUpdate().Model(modelExp).
+		Set("config = jsonb_set(config, '{labels}', ?, true)", exp.Labels).
+		Where("id = ?", exp.Id).
+		Exec(ctx)
+
+	if err != nil {
+		return nil, errors.Wrapf(err, "error updating experiment %v in database", exp.Id)
 	}
 
-	_, err = a.m.db.RawQuery(
-		"patch_experiment", exp.Id, marshalledPatches, exp.Notes)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error updating experiment in database: %d", exp.Id)
+	if err = tx.Commit(); err != nil {
+		return nil, errors.Wrap(err, "could not commit delete experiment labels transaction")
 	}
 
 	return &apiv1.DeleteExperimentLabelResponse{Labels: exp.Labels}, nil
