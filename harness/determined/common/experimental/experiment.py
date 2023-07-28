@@ -2,7 +2,7 @@ import enum
 import sys
 import time
 import warnings
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Dict, Iterator, List, Optional, Set
 from urllib import parse
 
 from determined.common import api
@@ -106,6 +106,7 @@ class Experiment:
         # These properties may be mutable and will be set by _hydrate()
         self.config: Optional[Dict[str, Any]] = None
         self.state: Optional[bindings.experimentv1State] = None
+        self.labels: Optional[Set[str]] = None
         self.labels: Optional[List[str]] = None
         self.archived: Optional[bool] = None
         self.name: Optional[str] = None
@@ -120,13 +121,13 @@ class Experiment:
     def _hydrate(self, exp: bindings.v1Experiment) -> None:
         self.config = exp.config
         self.state = exp.state
-        self.labels = list(exp.labels) if exp.labels else None
         self.archived = exp.archived
         self.name = exp.name
         self.progress = exp.progress
         self.description = exp.description
         self.notes = exp.notes
         self.labels = exp.labels
+        self.labels = set(exp.labels) if exp.labels else None
 
     def reload(self) -> None:
         """
@@ -166,7 +167,7 @@ class Experiment:
         resp = bindings.put_PutExperimentLabel(
             session=self._session, experimentId=self.id, label=label
         )
-        self.labels = list(resp.labels)
+        self.labels = set(resp.labels)
 
     def remove_label(self, label: str) -> None:
         """Removes a label from the experiment.
@@ -180,9 +181,9 @@ class Experiment:
         resp = bindings.delete_DeleteExperimentLabel(
             session=self._session, experimentId=self.id, label=label
         )
-        self.labels = list(resp.labels)
+        self.labels = set(resp.labels)
 
-    def set_labels(self, labels: List[str]) -> None:
+    def set_labels(self, labels: Set[str]) -> None:
         """Sets experiment labels to the specified list.
 
         This method will overwrite any existing labels on the experiment with the specified
@@ -191,10 +192,10 @@ class Experiment:
         Arguments:
             labels: a list of string labels to set on the experiment. Duplicates will be ignored.
         """
-        patch_exp = bindings.v1PatchExperiment(id=self.id, labels=labels)
+        patch_exp = bindings.v1PatchExperiment(id=self.id, labels=list(labels))
         resp = bindings.patch_PatchExperiment(self._session, body=patch_exp, experiment_id=self.id)
         assert resp.experiment
-        self.labels = list(resp.experiment.labels) if resp.experiment.labels else None
+        self.labels = set(resp.experiment.labels) if resp.experiment.labels else None
 
     def activate(self) -> None:
         bindings.post_ActivateExperiment(self._session, id=self._id)
