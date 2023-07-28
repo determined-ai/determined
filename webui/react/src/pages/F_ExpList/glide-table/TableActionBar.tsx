@@ -369,15 +369,7 @@ const TableActionBar: React.FC<Props> = ({
           />
           {(selectAll || selectedExperimentIds.length > 0) && (
             <Dropdown menu={editMenuItems} onClick={handleAction}>
-              <Button hideChildren={isMobile} icon={<Icon decorative name="pencil" />}>
-                Edit (
-                {selectAll
-                  ? Loadable.isLoaded(total)
-                    ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString()
-                    : 'All'
-                  : selectedExperimentIds.length}
-                )
-              </Button>
+              <Button hideChildren={isMobile}>Actions</Button>
             </Dropdown>
           )}
           {!isMobile && <span className={css.expNum}>{selectionLabel}</span>}
