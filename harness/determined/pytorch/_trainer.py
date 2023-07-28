@@ -72,6 +72,7 @@ class Trainer:
         latest_checkpoint: Optional[str] = None,
         step_zero_validation: bool = False,
         test_mode: bool = False,
+        enable_tensorboard_logging: bool = True,
     ) -> None:
         """
         ``fit()`` trains a ``PyTorchTrial`` configured from the ``Trainer`` and handles
@@ -114,6 +115,7 @@ class Trainer:
                 before training.
             test_mode: Runs a minimal loop of training for testing and debugging purposes. Will
                 train and validate one batch. Defaults to false.
+            enable_tensorboard_logging: Configures if upload to tensorboard is enabled
         """
         # Set defaults.
         if checkpoint_period is None:
@@ -166,6 +168,8 @@ class Trainer:
             global_batch_size = self._info.trial.hparams.get("global_batch_size", None)
             if global_batch_size:
                 global_batch_size = int(global_batch_size)
+
+        self._trial.set_enable_tensorboard_logging(enable_tensorboard_logging)
 
         trial_controller = pytorch._PyTorchTrialController(
             trial_inst=self._trial,

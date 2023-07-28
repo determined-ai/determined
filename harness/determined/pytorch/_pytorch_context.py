@@ -128,6 +128,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         self._stop_requested = False
 
         self._tbd_writer = None  # type: Optional[Any]
+        self._enable_tensorboard_logging = False
 
     def get_global_batch_size(self) -> int:
         """
@@ -211,6 +212,21 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             "at the end of the current step."
         )
         self._stop_requested = stop_requested
+
+    def set_enable_tensorboard_logging(self, enable_tensorboard_logging: bool) -> None:
+        """
+        Set a flag to indicate whether automatic upload to tensorboard is enabled.
+        """
+        if not isinstance(enable_tensorboard_logging, bool):
+            raise AssertionError("disable_tensorboard_logging must be a boolean")
+
+        self._enable_tensorboard_logging = enable_tensorboard_logging
+
+    def get_enable_tensorboard_logging(self):
+        """
+        Return whether automatic tensorboard logging is disabled
+        """
+        return self._enable_tensorboard_logging
 
     def autocast_forward_pass(self, to_wrap: torch.nn.Module) -> torch.nn.Module:
         # First, ensure the forward pass is wrapped in an autocast context:
