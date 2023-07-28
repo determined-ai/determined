@@ -104,6 +104,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._check_experiment_config_optimizations()
 
         self._tbd_writer = None  # type: Optional[Any]
+        self._enable_tensorboard_logging = True
 
     def _check_experiment_config_optimizations(self) -> None:
         """
@@ -367,3 +368,18 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
     def _maybe_reset_tbd_writer(self) -> None:
         if self._tbd_writer is not None:
             self._tbd_writer.close()
+
+    def set_enable_tensorboard_logging(self, enable_tensorboard_logging: bool) -> None:
+        """
+        Set a flag to indicate whether automatic upload to tensorboard is enabled.
+        """
+        if not isinstance(enable_tensorboard_logging, bool):
+            raise AssertionError("enable_tensorboard_logging must be a boolean")
+
+        self._enable_tensorboard_logging = enable_tensorboard_logging
+
+    def get_enable_tensorboard_logging(self):
+        """
+        Return whether automatic tensorboard logging is enabled
+        """
+        return self._enable_tensorboard_logging
