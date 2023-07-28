@@ -128,7 +128,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         self._stop_requested = False
 
         self._tbd_writer = None  # type: Optional[Any]
-        self._enable_tensorboard_logging = False
+        self._enable_tensorboard_logging = True
 
     def get_global_batch_size(self) -> int:
         """
@@ -218,13 +218,13 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         Set a flag to indicate whether automatic upload to tensorboard is enabled.
         """
         if not isinstance(enable_tensorboard_logging, bool):
-            raise AssertionError("disable_tensorboard_logging must be a boolean")
+            raise AssertionError("enable_tensorboard_logging must be a boolean")
 
         self._enable_tensorboard_logging = enable_tensorboard_logging
 
     def get_enable_tensorboard_logging(self):
         """
-        Return whether automatic tensorboard logging is disabled
+        Return whether automatic tensorboard logging is enabled
         """
         return self._enable_tensorboard_logging
 
