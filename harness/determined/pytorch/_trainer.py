@@ -169,7 +169,11 @@ class Trainer:
             if global_batch_size:
                 global_batch_size = int(global_batch_size)
 
-        self._trial.set_enable_tensorboard_logging(enable_tensorboard_logging)
+        # Tensorboard logging is enabled by default
+        # We only need to call set_enable_tensorboard_logging on the trial object of user pass in
+        # enable_tensorboard_logging = False
+        if not enable_tensorboard_logging:
+            self._trial.set_enable_tensorboard_logging(enable_tensorboard_logging)
 
         trial_controller = pytorch._PyTorchTrialController(
             trial_inst=self._trial,
