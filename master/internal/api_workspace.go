@@ -16,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/workspace"
@@ -649,9 +648,12 @@ func (a *apiServer) ListRPsBoundToWorkspace(
 		return nil, err
 	}
 
-	masterConfig := config.GetMasterConfig()
+	rpConfigs, err := a.getResourcePoolConfigs()
+	if err != nil {
+		return nil, err
+	}
 	rpNames, pagination, err := db.ReadRPsAvailableToWorkspace(
-		ctx, req.WorkspaceId, req.Offset, req.Limit, masterConfig.ResourceConfig.ResourcePools,
+		ctx, req.WorkspaceId, req.Offset, req.Limit, rpConfigs,
 	)
 	if err != nil {
 		return nil, err
