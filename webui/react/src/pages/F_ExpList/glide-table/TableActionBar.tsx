@@ -43,6 +43,7 @@ import {
 import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
+import { pluralizer } from '../../../utils/string';
 import { ExpListView, RowHeight } from '../F_ExperimentList.settings';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
@@ -323,7 +324,10 @@ const TableActionBar: React.FC<Props> = ({
   }, [availableBatchActions]);
 
   const selectionLabel = useMemo(() => {
-    let label = `${totalExperiments.toLocaleString()} experiment${totalExperiments > 1 && 's'}`;
+    let label = `${totalExperiments.toLocaleString()} ${pluralizer(
+      totalExperiments,
+      'experiment',
+    )}`;
 
     if (selectAll) {
       const totalSelected = Loadable.isLoaded(total)
