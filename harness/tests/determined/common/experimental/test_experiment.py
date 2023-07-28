@@ -1,5 +1,6 @@
 import math
 from typing import Callable
+from unittest import mock
 
 import pytest
 import responses
@@ -147,3 +148,28 @@ def test_list_trials_requests_pages_lazily(
         assert len(responses.calls) == page_num
     total_pages = math.ceil((len(tr_resp.trials)) / page_size)
     assert len(responses.calls) == total_pages
+
+
+@pytest.mark.parametrize(
+    "attr_name,attr_value",
+    [
+        ("name", "test_name"),
+        ("description", "test description"),
+        ("notes", "test notes"),
+    ],
+)
+@mock.patch("determined.common.api.bindings.patch_PatchExperiment")
+@responses.activate
+def test_experiment_sets_attributes(
+    mock_bindings: mock.MagicMock,
+    make_expref: Callable[[int], experiment.Experiment],
+    attr_name: str,
+    attr_value: str,
+) -> None:
+    expref = make_expref(1)
+
+    # Call associated set_ method for attribute.
+    attr_setter = getattr(expref, f"set_{attr_name}")
+    attr_setter(attr_value)
+    _, kwargs = mock_bindings.call_args
+    assert getattr(kwargs["body"], attr_name) == attr_value
