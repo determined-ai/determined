@@ -323,18 +323,15 @@ const TableActionBar: React.FC<Props> = ({
   }, [availableBatchActions]);
 
   const selectionLabel = useMemo(() => {
-    let label = '';
+    let label = `${totalExperiments.toLocaleString()} experiment${totalExperiments > 1 && 's'}`;
 
     if (selectAll) {
       const totalSelected = Loadable.isLoaded(total)
         ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString() + ' '
         : '';
-      label += `All ${totalSelected}experiments selected`;
-    } else {
-      label += selectedExperimentIds.length > 0 ? `${selectedExperimentIds.length} of ` : '';
-      label += `${totalExperiments.toLocaleString()} experiment${
-        totalExperiments > 1 && 's'
-      } selected`;
+      label = `All ${totalSelected}experiments selected`;
+    } else if (selectedExperimentIds.length > 0) {
+      label = `${selectedExperimentIds.length} of ${label} selected`;
     }
 
     return label;
