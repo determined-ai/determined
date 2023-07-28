@@ -65,6 +65,22 @@ const batchActions = [
 
 export type BatchAction = (typeof batchActions)[number];
 
+type BatchActionMenuItem = 'divider' | BatchAction;
+
+const dividedBatchActions: BatchActionMenuItem[] = [
+  ExperimentAction.OpenTensorBoard,
+  'divider',
+  ExperimentAction.Move,
+  ExperimentAction.Archive,
+  ExperimentAction.Unarchive,
+  ExperimentAction.Delete,
+  'divider',
+  ExperimentAction.Activate,
+  ExperimentAction.Pause,
+  ExperimentAction.Cancel,
+  ExperimentAction.Kill,
+];
+
 const actionIcons: Record<BatchAction, IconName> = {
   [ExperimentAction.Activate]: 'play',
   [ExperimentAction.Pause]: 'pause',
@@ -309,18 +325,22 @@ const TableActionBar: React.FC<Props> = ({
   );
 
   const editMenuItems: MenuItem[] = useMemo(() => {
-    return batchActions.map((action) => ({
-      danger: action === ExperimentAction.Delete,
-      disabled: !availableBatchActions.includes(action),
-      // The icon doesn't show up without being wrapped in a div.
-      icon: (
-        <div>
-          <Icon name={actionIcons[action]} title={action} />
-        </div>
-      ),
-      key: action,
-      label: action,
-    }));
+    return dividedBatchActions.map((action) => {
+      return action === 'divider'
+        ? { type: 'divider' }
+        : {
+            danger: action === ExperimentAction.Delete,
+            disabled: !availableBatchActions.includes(action),
+            // The icon doesn't show up without being wrapped in a div.
+            icon: (
+              <div>
+                <Icon name={actionIcons[action]} title={action} />
+              </div>
+            ),
+            key: action,
+            label: action,
+          };
+    });
   }, [availableBatchActions]);
 
   const selectionLabel = useMemo(() => {

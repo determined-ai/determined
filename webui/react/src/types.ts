@@ -382,7 +382,7 @@ export interface ExperimentConfig {
 /* Experiment */
 
 export const ExperimentAction = {
-  Activate: 'Activate',
+  Activate: 'Resume',
   Archive: 'Archive',
   Cancel: 'Cancel',
   CompareTrials: 'Compare Trials',
