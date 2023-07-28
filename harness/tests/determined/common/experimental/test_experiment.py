@@ -230,7 +230,6 @@ def test_add_label_url_encodes_label(
     assert call_kwargs["label"] == url_encoded_label
 
 
-@responses.activate
 @mock.patch("determined.common.api.bindings.delete_DeleteExperimentLabel")
 def test_remove_label_url_encodes_label(
     mock_bindings: mock.MagicMock,
