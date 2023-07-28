@@ -16,6 +16,11 @@ Once the VM is created and SSH connection is established, one can also directly 
 gcloud compute ssh --zone <zone_name> <instance_name> --project <project_name>
 ```
 
+For example:
+```
+gcloud compute ssh --zone us-west1-b phillipgaisford-dev-box --project determined-ai
+```
+
 [1] It is fine to exit this and restart it with `make slurmcluster` again as you please.
 
 To see usage of the `make slurmcluster` target, run `make -C tools/slurm usage`.
