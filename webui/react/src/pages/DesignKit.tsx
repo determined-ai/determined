@@ -2918,11 +2918,24 @@ const DrawerSection: React.FC = () => {
 
 const SpinnerSection = () => {
   const [spinning, setSpinning] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (loaded) return;
+    let active = true;
+    setTimeout(() => {
+      if (active) setLoaded(true);
+    }, 100000);
+    return () => {
+      active = false;
+    };
+  }, [loaded]);
+
   return (
     <ComponentSection id="Spinner" title="Spinner">
       <AntDCard>
         <Paragraph>
-          A <code>{'<Spinner>'}</code> is
+          A <code>{'<Spinner>'}</code> indicates a loading state of a page or section.
         </Paragraph>
       </AntDCard>
       <AntDCard title="Usage">
@@ -2949,6 +2962,11 @@ const SpinnerSection = () => {
             <Spinner key={size} size={size} spinning tip={size} />
           ))}
         </Space>
+        <strong>Loadable spinner</strong>
+        <Button onClick={() => setLoaded(false)}>Unload</Button>
+        <Spinner data={loaded ? Loaded(loaded) : NotLoaded}>
+          {() => <Paragraph>Loaded!</Paragraph>}
+        </Spinner>
       </AntDCard>
     </ComponentSection>
   );
