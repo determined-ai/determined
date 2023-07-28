@@ -5,7 +5,7 @@ source /run/determined/task-logging-setup.sh
 
 set -e
 
-# JUST A TEST
+# JUST A TEST  
 
 trap_and_forward_signals
 if [ "$#" -eq 1 ]; then
