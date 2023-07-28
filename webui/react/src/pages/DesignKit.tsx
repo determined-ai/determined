@@ -2940,7 +2940,9 @@ const SpinnerSection = () => {
         <Spinner spinning tip="Tip" />
         <strong>Spinner with conditional rendering</strong>
         <Toggle checked={spinning} onChange={setSpinning} />
-        <Spinner conditionalRender spinning={spinning} />
+        <Spinner conditionalRender spinning={spinning}>
+          <Card size="medium" />
+        </Spinner>
         <strong>Spinner sizes</strong>
         <Space>
           {IconSizeArray.map((size) => (

@@ -18,7 +18,7 @@ const Spinner: React.FC<Props> = ({
   center,
   children,
   conditionalRender,
-  size,
+  size = 'medium',
   spinning,
   tip,
 }: Props) => {
@@ -37,7 +37,7 @@ const Spinner: React.FC<Props> = ({
         }
         spinning={spinning}
         tip={tip}>
-        {conditionalRender ? (spinning ? null : children) : children}
+        {conditionalRender && spinning ? null : children}
       </Spin>
     </div>
   );

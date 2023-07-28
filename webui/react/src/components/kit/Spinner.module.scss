@@ -26,9 +26,9 @@
     color: var(--theme-brand);
     display: flex;
   }
-}
-.base.center {
-  align-items: center;
-  display: flex;
-  justify-content: center;
+  &.center {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+  }
 }
