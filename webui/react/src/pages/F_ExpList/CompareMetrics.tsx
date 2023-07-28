@@ -44,7 +44,7 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
               ? `${expNameById[t.experimentId]} (${t.experimentId})`
               : String(t.experimentId),
           });
-        chartedMetrics[key] ||= series.length > 0 || !!t.endTime;
+        chartedMetrics[key] ||= series.length > 0;
       });
       out.push({
         series: Loaded(series),
