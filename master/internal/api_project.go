@@ -214,7 +214,33 @@ func (a *apiServer) getProjectColumnsByID(
 	}
 
 	summaryMetricsSet := make(map[string]struct{})
+	validationMetricsSet := make(map[string]struct{})
 	for _, trial := range summaryMetrics {
+		if rawMetrics, ok := trial.SummaryMetrics["validation_metrics"]; ok {
+			metrics := rawMetrics.(map[string]interface{})
+			metricsKeys := make([]string, 0, len(metrics))
+			for metricKey := range metrics {
+				metricsKeys = append(metricsKeys, metricKey)
+			}
+			sort.Strings(metricsKeys)
+
+			for _, key := range metricsKeys {
+				if _, seen := validationMetricsSet[key]; !seen {
+					validationMetricsSet[key] = struct{}{}
+					var columnType projectv1.ColumnType
+					metric := metrics[key].(map[string]interface{})
+					if metricType, ok := metric["type"]; ok {
+						columnType = parseMetricsType(metricType)
+						columns = append(columns, &projectv1.ProjectColumn{
+							Column:   fmt.Sprintf("validation.%s", key),
+							Location: projectv1.LocationType_LOCATION_TYPE_VALIDATIONS,
+							Type:     columnType,
+						})
+					}
+					
+				}
+			}
+		}
 		if rawMetrics, ok := trial.SummaryMetrics["avg_metrics"]; ok {
 			// iterate in order
 			metrics := rawMetrics.(map[string]interface{})
@@ -230,19 +256,8 @@ func (a *apiServer) getProjectColumnsByID(
 					var columnType projectv1.ColumnType
 					metric := metrics[key].(map[string]interface{})
 					if metricType, ok := metric["type"]; ok {
-						switch metricType.(string) {
-						case db.MetricTypeString:
-							columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
-						case db.MetricTypeNumber:
-							columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
-						case db.MetricTypeDate:
-							columnType = projectv1.ColumnType_COLUMN_TYPE_DATE
-						case db.MetricTypeBool:
-							columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
-						default:
-							// unsure of how to treat arrays/objects/nulls
-							columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
-						}
+						columnType = parseMetricsType(metricType)
+
 						// don't surface aggregates that don't make sense for non-numbers
 						if columnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER {
 							aggregates := []string{"count", "last", "max", "min", "sum"}
@@ -308,64 +323,25 @@ func (a *apiServer) getProjectColumnsByID(
 		}
 	}
 
-	// Get metrics columns
-	metricNames, err := a.getProjectMetricsNames(ctx, curUser, p)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, mn := range metricNames {
-		columns = append(columns, &projectv1.ProjectColumn{
-			Column:   fmt.Sprintf("validation.%s", mn),
-			Location: projectv1.LocationType_LOCATION_TYPE_VALIDATIONS,
-			Type:     projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-		})
-	}
-
 	return &apiv1.GetProjectColumnsResponse{
 		Columns: columns,
 	}, nil
 }
 
-func (a *apiServer) getProjectMetricsNames(
-	ctx context.Context, curUser model.User, project *projectv1.Project,
-) ([]string, error) {
-	metricNames := []struct {
-		Vname       []string
-		WorkspaceID int
-	}{}
-
-	metricQuery := db.Bun().
-		NewSelect().
-		TableExpr("exp_metrics_name").
-		TableExpr("LATERAL json_array_elements_text(vname) AS vnames").
-		ColumnExpr("array_to_json(array_agg(DISTINCT vnames)) AS vname").
-		ColumnExpr("?::int as workspace_id", project.WorkspaceId).
-		Where("project_id = ?", project.Id)
-
-	metricQuery, err := exputil.AuthZProvider.Get().FilterExperimentsQuery(
-		ctx,
-		curUser,
-		project,
-		db.Bun().NewSelect().TableExpr("(?) AS subq", metricQuery),
-		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS},
-	)
-	if err != nil {
-		return nil, err
+func parseMetricsType(metricType interface{}) projectv1.ColumnType {
+	switch metricType.(string) {
+	case db.MetricTypeString:
+		return projectv1.ColumnType_COLUMN_TYPE_TEXT
+	case db.MetricTypeNumber:
+		return projectv1.ColumnType_COLUMN_TYPE_NUMBER
+	case db.MetricTypeDate:
+		return projectv1.ColumnType_COLUMN_TYPE_DATE
+	case db.MetricTypeBool:
+		return projectv1.ColumnType_COLUMN_TYPE_TEXT
+	default:
+		// unsure of how to treat arrays/objects/nulls
+		return projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
 	}
-
-	err = metricQuery.Scan(ctx, &metricNames)
-	if err != nil {
-		return nil, errors.Wrapf(
-			err, "error fetching metrics names for project (%d) from database", project.Id)
-	}
-	var names []string
-	for _, n := range metricNames {
-		for _, m := range n.Vname {
-			names = append(names, m)
-		}
-	}
-	return names, nil
 }
 
 func (a *apiServer) getProjectAndCheckCanDoActions(
