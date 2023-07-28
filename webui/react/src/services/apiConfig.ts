@@ -873,7 +873,7 @@ export const getExpTrials: DetApi<
   postProcess: (response) => {
     return {
       pagination: response.pagination,
-      trials: response.trials.map(decoder.decodeV1TrialToTrialItem),
+      trials: response.trials.map((t) => decoder.decodeV1TrialToTrialItem(t)),
     };
   },
   request: (params, options) => {

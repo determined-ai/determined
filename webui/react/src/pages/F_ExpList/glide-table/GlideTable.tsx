@@ -709,7 +709,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             )}.val`;
             break;
           case V1LocationType.VALIDATIONS:
-            dataPath = `bestTrial.bestValidationMetric.metrics.${currentColumn.column.replace(
+            dataPath = `bestTrial.summaryValidationMetrics.metrics.${currentColumn.column.replace(
               'validation.',
               '',
             )}`;
