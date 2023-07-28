@@ -322,6 +322,24 @@ const TableActionBar: React.FC<Props> = ({
     }));
   }, [availableBatchActions]);
 
+  const selectionLabel = useMemo(() => {
+    let label = '';
+
+    if (selectAll) {
+      const totalSelected = Loadable.isLoaded(total)
+        ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString() + ' '
+        : '';
+      label += `All ${totalSelected}experiments selected`;
+    } else {
+      label += selectedExperimentIds.length > 0 ? `${selectedExperimentIds.length} of ` : '';
+      label += `${totalExperiments.toLocaleString()} experiment${
+        totalExperiments > 1 && 's'
+      } selected`;
+    }
+
+    return label;
+  }, [excludedExperimentIds, selectAll, selectedExperimentIds, total, totalExperiments]);
+
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
   return (
@@ -361,11 +379,7 @@ const TableActionBar: React.FC<Props> = ({
               </Button>
             </Dropdown>
           )}
-          {!isMobile && (
-            <span className={css.expNum}>
-              {totalExperiments.toLocaleString()} experiment{totalExperiments > 1 && 's'}
-            </span>
-          )}
+          {!isMobile && <span className={css.expNum}>{selectionLabel}</span>}
         </Space>
       </Column>
       <Column align="right">
