@@ -102,8 +102,8 @@ export const getColumnDefs = ({
     isNumerical: true,
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: Number(record.experiment.checkpointCount),
-      displayData: String(record.experiment.checkpointCount),
+      data: Number(record.experiment.checkpoints),
+      displayData: String(record.experiment.checkpoints),
       kind: GridCellKind.Number,
     }),
     title: 'Checkpoints',
