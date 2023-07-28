@@ -648,7 +648,7 @@ func (a *apiServer) ListRPsBoundToWorkspace(
 		return nil, err
 	}
 
-	rpConfigs, err := a.getResourcePoolConfigs()
+	rpConfigs, err := a.resourcePoolsAsConfigs()
 	if err != nil {
 		return nil, err
 	}

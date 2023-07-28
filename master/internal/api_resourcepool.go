@@ -80,7 +80,7 @@ func (a *apiServer) BindRPToWorkspace(
 				curUser.Username))
 	}
 
-	rpConfigs, err := a.getResourcePoolConfigs()
+	rpConfigs, err := a.resourcePoolsAsConfigs()
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (a *apiServer) OverwriteRPWorkspaceBindings(
 				curUser.Username))
 	}
 
-	rpConfigs, err := a.getResourcePoolConfigs()
+	rpConfigs, err := a.resourcePoolsAsConfigs()
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func (a *apiServer) UnbindRPFromWorkspace(
 func (a *apiServer) ListWorkspacesBoundToRP(
 	ctx context.Context, req *apiv1.ListWorkspacesBoundToRPRequest,
 ) (*apiv1.ListWorkspacesBoundToRPResponse, error) {
-	rpConfigs, err := a.getResourcePoolConfigs()
+	rpConfigs, err := a.resourcePoolsAsConfigs()
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +203,7 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 	}, nil
 }
 
-func (a *apiServer) getResourcePoolConfigs() ([]config.ResourcePoolConfig, error) {
+func (a *apiServer) resourcePoolsAsConfigs() ([]config.ResourcePoolConfig, error) {
 	resp, err := a.m.rm.GetResourcePools(a.m.system, &apiv1.GetResourcePoolsRequest{})
 	if err != nil {
 		return nil, err
