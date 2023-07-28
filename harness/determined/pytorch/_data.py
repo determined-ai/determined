@@ -124,7 +124,7 @@ class DataLoader:
         multiprocessing_context: Any = None,
         generator: Any = None,
         *,
-        prefetch_factor: int = 2,
+        prefetch_factor: Optional[int] = None,
         persistent_workers: bool = False,
     ):
         # Don't allow IterableDatasets in our DataLoader.
@@ -159,12 +159,15 @@ class DataLoader:
         if timeout < 0:
             raise ValueError("timeout option should be non-negative")
 
-        if num_workers == 0 and prefetch_factor != 2:
+        if num_workers == 0 and prefetch_factor is not None:
             raise ValueError(
                 "prefetch_factor option could only be specified in multiprocessing. "
                 "let num_workers > 0 to enable multiprocessing."
             )
-        assert prefetch_factor > 0
+        elif num_workers > 0 and prefetch_factor is None:
+            prefetch_factor = 2
+        elif prefetch_factor is not None and prefetch_factor < 0:
+            raise ValueError("prefetch_factor option should be non-negative")
 
         if persistent_workers and num_workers == 0:
             raise ValueError("persistent_workers option needs num_workers > 0")
@@ -201,11 +204,7 @@ class DataLoader:
 
         if sampler is None:  # give default samplers
             if shuffle:
-                # The generator arg to RandomSampler was added in torch 1.6.
-                if version.parse(torch.__version__) >= version.parse("1.6.0"):
-                    sampler = RandomSampler(dataset, generator=generator)  # type: ignore
-                else:
-                    sampler = RandomSampler(dataset)  # type: ignore
+                sampler = RandomSampler(dataset, generator=generator)  # type: ignore
             else:
                 sampler = SequentialSampler(dataset)  # type: ignore
 
@@ -245,15 +244,16 @@ class DataLoader:
             batch_sampler, repeat=repeat, skip=skip, num_replicas=num_replicas, rank=rank
         )
 
-        # Try to no break any torch version as old as v1.0.
         extra_kwargs = {}
-        if version.parse(torch.__version__) >= version.parse("1.2.0"):
-            extra_kwargs["multiprocessing_context"] = self.multiprocessing_context
-        if version.parse(torch.__version__) >= version.parse("1.6.0"):
-            extra_kwargs["generator"] = self.generator
-        if version.parse(torch.__version__) >= version.parse("1.7.0"):
-            extra_kwargs["prefetch_factor"] = self.prefetch_factor
-            extra_kwargs["persistent_workers"] = self.persistent_workers
+        if version.parse(torch.__version__) < version.parse("2.0.0"):
+            # prefetch_factor became optional in 2.0.
+            if self.prefetch_factor is None and self.num_workers == 0:
+                self.prefetch_factor = 2
+
+        extra_kwargs["multiprocessing_context"] = self.multiprocessing_context
+        extra_kwargs["generator"] = self.generator
+        extra_kwargs["prefetch_factor"] = self.prefetch_factor
+        extra_kwargs["persistent_workers"] = self.persistent_workers
 
         return torch.utils.data.DataLoader(
             self.dataset,
