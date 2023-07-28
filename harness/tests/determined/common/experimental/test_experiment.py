@@ -3,6 +3,7 @@ from typing import Callable
 from unittest import mock
 
 import pytest
+import requests
 import responses
 
 from determined.common import api
@@ -159,7 +160,6 @@ def test_list_trials_requests_pages_lazily(
     ],
 )
 @mock.patch("determined.common.api.bindings.patch_PatchExperiment")
-@responses.activate
 def test_experiment_sets_attributes(
     mock_bindings: mock.MagicMock,
     make_expref: Callable[[int], experiment.Experiment],
@@ -173,3 +173,39 @@ def test_experiment_sets_attributes(
     attr_setter(attr_value)
     _, kwargs = mock_bindings.call_args
     assert getattr(kwargs["body"], attr_name) == attr_value
+
+
+@mock.patch("determined.common.api.bindings.post_ArchiveExperiment")
+def test_archive_doesnt_update_local_on_rest_failure(
+    mock_bindings: mock.MagicMock,
+    make_expref: Callable[[int], experiment.Experiment],
+) -> None:
+    expref = make_expref(1)
+
+    mock_bindings.side_effect = bindings.APIHttpError("post_ArchiveExperiment", requests.Response())
+
+    assert expref.archived is None
+    try:
+        expref.archive()
+        raise AssertionError("bindings API call should raise an exception")
+    except bindings.APIHttpError:
+        assert expref.archived is None
+
+
+@mock.patch("determined.common.api.bindings.post_UnarchiveExperiment")
+def test_unarchive_doesnt_update_local_on_rest_failure(
+    mock_bindings: mock.MagicMock,
+    make_expref: Callable[[int], experiment.Experiment],
+) -> None:
+    expref = make_expref(1)
+
+    mock_bindings.side_effect = bindings.APIHttpError(
+        "post_UnarchiveExperiment", requests.Response()
+    )
+
+    assert expref.archived is None
+    try:
+        expref.unarchive()
+        raise AssertionError("bindings API call should raise an exception")
+    except bindings.APIHttpError:
+        assert expref.archived is None
