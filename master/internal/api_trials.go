@@ -922,6 +922,7 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 		req.IncludeBatchMetrics,
 		//nolint:staticcheck // SA1019: backward compatibility
 		req.MetricType.String(),
+		req.RemoveDeletedCheckpoints,
 	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d workloads not found:", req.TrialId)
