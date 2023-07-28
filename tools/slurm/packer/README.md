@@ -6,6 +6,12 @@ documentation for interacting with and building this code. To build, you will ne
 
 It was last built with `Packer v1.8.6`.
 
+## Packer Initialization
+
+This needs doing once:
+
+`packer init tools/slurm/packer`
+
 ## How to Build an Image
 
 After the pre-requisite software is installed, one can run `make build WORKLOAD_MANAGER=[type]` where `type` is either `slurm` or `pbs` (default value is `slurm`) to build a SLURM or PBS image, respectively. Upon succesful completion of the build, the image name will be placed in the appropriate value in `../terraform/images.conf` (either `slurm` or `pbs` depending on what was specified).
