@@ -12,7 +12,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/mock"
-	"gopkg.in/inf.v0"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -27,8 +26,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -180,30 +177,28 @@ func createPodWithMockQueue() (
 		k8sRequestQueue,
 		commandSpec.ToTaskSpec(),
 	)
+	newPod.createPodSpec(newPod.scheduler)
 
 	pod := &k8sV1.Pod{
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:      newPod.podName,
 			Labels:    map[string]string{"determined": "task"},
 			Namespace: "default",
-		},
-		Spec: v1.PodSpec{Volumes: []v1.Volume{{
-			Name: "det-shm-volume",
-			VolumeSource: v1.VolumeSource{
-				HostPath:             (*v1.HostPathVolumeSource)(nil),
-				EmptyDir:             (*v1.EmptyDirVolumeSource)(0x140009540a8),
-				GCEPersistentDisk:    (*v1.GCEPersistentDiskVolumeSource)(nil),
-				AWSElasticBlockStore: (*v1.AWSElasticBlockStoreVolumeSource)(nil),
-				GitRepo:              (*v1.GitRepoVolumeSource)(nil),
-				Secret:               (*v1.SecretVolumeSource)(nil),
-				NFS:                  (*v1.NFSVolumeSource)(nil),
-				ISCSI:                (*v1.ISCSIVolumeSource)(nil), Glusterfs: (*v1.GlusterfsVolumeSource)(nil), PersistentVolumeClaim: (*v1.PersistentVolumeClaimVolumeSource)(nil), RBD: (*v1.RBDVolumeSource)(nil), FlexVolume: (*v1.FlexVolumeSource)(nil), Cinder: (*v1.CinderVolumeSource)(nil), CephFS: (*v1.CephFSVolumeSource)(nil), Flocker: (*v1.FlockerVolumeSource)(nil), DownwardAPI: (*v1.DownwardAPIVolumeSource)(nil), FC: (*v1.FCVolumeSource)(nil), AzureFile: (*v1.AzureFileVolumeSource)(nil), ConfigMap: (*v1.ConfigMapVolumeSource)(nil), VsphereVolume: (*v1.VsphereVirtualDiskVolumeSource)(nil), Quobyte: (*v1.QuobyteVolumeSource)(nil), AzureDisk: (*v1.AzureDiskVolumeSource)(nil), PhotonPersistentDisk: (*v1.PhotonPersistentDiskVolumeSource)(nil), Projected: (*v1.ProjectedVolumeSource)(nil), PortworxVolume: (*v1.PortworxVolumeSource)(nil), ScaleIO: (*v1.ScaleIOVolumeSource)(nil), StorageOS: (*v1.StorageOSVolumeSource)(nil), CSI: (*v1.CSIVolumeSource)(nil), Ephemeral: (*v1.EphemeralVolumeSource)(nil),
-			},
-		}, {Name: "archive-volume", VolumeSource: v1.VolumeSource{HostPath: (*v1.HostPathVolumeSource)(nil), EmptyDir: (*v1.EmptyDirVolumeSource)(nil), GCEPersistentDisk: (*v1.GCEPersistentDiskVolumeSource)(nil), AWSElasticBlockStore: (*v1.AWSElasticBlockStoreVolumeSource)(nil), GitRepo: (*v1.GitRepoVolumeSource)(nil), Secret: (*v1.SecretVolumeSource)(nil), NFS: (*v1.NFSVolumeSource)(nil), ISCSI: (*v1.ISCSIVolumeSource)(nil), Glusterfs: (*v1.GlusterfsVolumeSource)(nil), PersistentVolumeClaim: (*v1.PersistentVolumeClaimVolumeSource)(nil), RBD: (*v1.RBDVolumeSource)(nil), FlexVolume: (*v1.FlexVolumeSource)(nil), Cinder: (*v1.CinderVolumeSource)(nil), CephFS: (*v1.CephFSVolumeSource)(nil), Flocker: (*v1.FlockerVolumeSource)(nil), DownwardAPI: (*v1.DownwardAPIVolumeSource)(nil), FC: (*v1.FCVolumeSource)(nil), AzureFile: (*v1.AzureFileVolumeSource)(nil), ConfigMap: (*v1.ConfigMapVolumeSource)(0x14000612180), VsphereVolume: (*v1.VsphereVirtualDiskVolumeSource)(nil), Quobyte: (*v1.QuobyteVolumeSource)(nil), AzureDisk: (*v1.AzureDiskVolumeSource)(nil), PhotonPersistentDisk: (*v1.PhotonPersistentDiskVolumeSource)(nil), Projected: (*v1.ProjectedVolumeSource)(nil), PortworxVolume: (*v1.PortworxVolumeSource)(nil), ScaleIO: (*v1.ScaleIOVolumeSource)(nil), StorageOS: (*v1.StorageOSVolumeSource)(nil), CSI: (*v1.CSIVolumeSource)(nil), Ephemeral: (*v1.EphemeralVolumeSource)(nil)}}, {Name: "entrypoint-volume", VolumeSource: v1.VolumeSource{HostPath: (*v1.HostPathVolumeSource)(nil), EmptyDir: (*v1.EmptyDirVolumeSource)(nil), GCEPersistentDisk: (*v1.GCEPersistentDiskVolumeSource)(nil), AWSElasticBlockStore: (*v1.AWSElasticBlockStoreVolumeSource)(nil), GitRepo: (*v1.GitRepoVolumeSource)(nil), Secret: (*v1.SecretVolumeSource)(nil), NFS: (*v1.NFSVolumeSource)(nil), ISCSI: (*v1.ISCSIVolumeSource)(nil), Glusterfs: (*v1.GlusterfsVolumeSource)(nil), PersistentVolumeClaim: (*v1.PersistentVolumeClaimVolumeSource)(nil), RBD: (*v1.RBDVolumeSource)(nil), FlexVolume: (*v1.FlexVolumeSource)(nil), Cinder: (*v1.CinderVolumeSource)(nil), CephFS: (*v1.CephFSVolumeSource)(nil), Flocker: (*v1.FlockerVolumeSource)(nil), DownwardAPI: (*v1.DownwardAPIVolumeSource)(nil), FC: (*v1.FCVolumeSource)(nil), AzureFile: (*v1.AzureFileVolumeSource)(nil), ConfigMap: (*v1.ConfigMapVolumeSource)(0x14000612200), VsphereVolume: (*v1.VsphereVirtualDiskVolumeSource)(nil), Quobyte: (*v1.QuobyteVolumeSource)(nil), AzureDisk: (*v1.AzureDiskVolumeSource)(nil), PhotonPersistentDisk: (*v1.PhotonPersistentDiskVolumeSource)(nil), Projected: (*v1.ProjectedVolumeSource)(nil), PortworxVolume: (*v1.PortworxVolumeSource)(nil), ScaleIO: (*v1.ScaleIOVolumeSource)(nil), StorageOS: (*v1.StorageOSVolumeSource)(nil), CSI: (*v1.CSIVolumeSource)(nil), Ephemeral: (*v1.EphemeralVolumeSource)(nil)}}, {Name: "additional-files-volume", VolumeSource: v1.VolumeSource{HostPath: (*v1.HostPathVolumeSource)(nil), EmptyDir: (*v1.EmptyDirVolumeSource)(0x140009540c0), GCEPersistentDisk: (*v1.GCEPersistentDiskVolumeSource)(nil), AWSElasticBlockStore: (*v1.AWSElasticBlockStoreVolumeSource)(nil), GitRepo: (*v1.GitRepoVolumeSource)(nil), Secret: (*v1.SecretVolumeSource)(nil), NFS: (*v1.NFSVolumeSource)(nil), ISCSI: (*v1.ISCSIVolumeSource)(nil), Glusterfs: (*v1.GlusterfsVolumeSource)(nil), PersistentVolumeClaim: (*v1.PersistentVolumeClaimVolumeSource)(nil), RBD: (*v1.RBDVolumeSource)(nil), FlexVolume: (*v1.FlexVolumeSource)(nil), Cinder: (*v1.CinderVolumeSource)(nil), CephFS: (*v1.CephFSVolumeSource)(nil), Flocker: (*v1.FlockerVolumeSource)(nil), DownwardAPI: (*v1.DownwardAPIVolumeSource)(nil), FC: (*v1.FCVolumeSource)(nil), AzureFile: (*v1.AzureFileVolumeSource)(nil), ConfigMap: (*v1.ConfigMapVolumeSource)(nil), VsphereVolume: (*v1.VsphereVirtualDiskVolumeSource)(nil), Quobyte: (*v1.QuobyteVolumeSource)(nil), AzureDisk: (*v1.AzureDiskVolumeSource)(nil), PhotonPersistentDisk: (*v1.PhotonPersistentDiskVolumeSource)(nil), Projected: (*v1.ProjectedVolumeSource)(nil), PortworxVolume: (*v1.PortworxVolumeSource)(nil), ScaleIO: (*v1.ScaleIOVolumeSource)(nil), StorageOS: (*v1.StorageOSVolumeSource)(nil), CSI: (*v1.CSIVolumeSource)(nil), Ephemeral: (*v1.EphemeralVolumeSource)(nil)}}, {Name: "det-logs", VolumeSource: v1.VolumeSource{HostPath: (*v1.HostPathVolumeSource)(nil), EmptyDir: (*v1.EmptyDirVolumeSource)(0x140009540d8), GCEPersistentDisk: (*v1.GCEPersistentDiskVolumeSource)(nil), AWSElasticBlockStore: (*v1.AWSElasticBlockStoreVolumeSource)(nil), GitRepo: (*v1.GitRepoVolumeSource)(nil), Secret: (*v1.SecretVolumeSource)(nil), NFS: (*v1.NFSVolumeSource)(nil), ISCSI: (*v1.ISCSIVolumeSource)(nil), Glusterfs: (*v1.GlusterfsVolumeSource)(nil), PersistentVolumeClaim: (*v1.PersistentVolumeClaimVolumeSource)(nil), RBD: (*v1.RBDVolumeSource)(nil), FlexVolume: (*v1.FlexVolumeSource)(nil), Cinder: (*v1.CinderVolumeSource)(nil), CephFS: (*v1.CephFSVolumeSource)(nil), Flocker: (*v1.FlockerVolumeSource)(nil), DownwardAPI: (*v1.DownwardAPIVolumeSource)(nil), FC: (*v1.FCVolumeSource)(nil), AzureFile: (*v1.AzureFileVolumeSource)(nil), ConfigMap: (*v1.ConfigMapVolumeSource)(nil), VsphereVolume: (*v1.VsphereVirtualDiskVolumeSource)(nil), Quobyte: (*v1.QuobyteVolumeSource)(nil), AzureDisk: (*v1.AzureDiskVolumeSource)(nil), PhotonPersistentDisk: (*v1.PhotonPersistentDiskVolumeSource)(nil), Projected: (*v1.ProjectedVolumeSource)(nil), PortworxVolume: (*v1.PortworxVolumeSource)(nil), ScaleIO: (*v1.ScaleIOVolumeSource)(nil), StorageOS: (*v1.StorageOSVolumeSource)(nil), CSI: (*v1.CSIVolumeSource)(nil), Ephemeral: (*v1.EphemeralVolumeSource)(nil)}}, {Name: "det-fluent", VolumeSource: v1.VolumeSource{HostPath: (*v1.HostPathVolumeSource)(nil), EmptyDir: (*v1.EmptyDirVolumeSource)(nil), GCEPersistentDisk: (*v1.GCEPersistentDiskVolumeSource)(nil), AWSElasticBlockStore: (*v1.AWSElasticBlockStoreVolumeSource)(nil), GitRepo: (*v1.GitRepoVolumeSource)(nil), Secret: (*v1.SecretVolumeSource)(nil), NFS: (*v1.NFSVolumeSource)(nil), ISCSI: (*v1.ISCSIVolumeSource)(nil), Glusterfs: (*v1.GlusterfsVolumeSource)(nil), PersistentVolumeClaim: (*v1.PersistentVolumeClaimVolumeSource)(nil), RBD: (*v1.RBDVolumeSource)(nil), FlexVolume: (*v1.FlexVolumeSource)(nil), Cinder: (*v1.CinderVolumeSource)(nil), CephFS: (*v1.CephFSVolumeSource)(nil), Flocker: (*v1.FlockerVolumeSource)(nil), DownwardAPI: (*v1.DownwardAPIVolumeSource)(nil), FC: (*v1.FCVolumeSource)(nil), AzureFile: (*v1.AzureFileVolumeSource)(nil), ConfigMap: (*v1.ConfigMapVolumeSource)(0x14000612600), VsphereVolume: (*v1.VsphereVirtualDiskVolumeSource)(nil), Quobyte: (*v1.QuobyteVolumeSource)(nil), AzureDisk: (*v1.AzureDiskVolumeSource)(nil), PhotonPersistentDisk: (*v1.PhotonPersistentDiskVolumeSource)(nil), Projected: (*v1.ProjectedVolumeSource)(nil), PortworxVolume: (*v1.PortworxVolumeSource)(nil), ScaleIO: (*v1.ScaleIOVolumeSource)(nil), StorageOS: (*v1.StorageOSVolumeSource)(nil), CSI: (*v1.CSIVolumeSource)(nil), Ephemeral: (*v1.EphemeralVolumeSource)(nil)}}, {Name: "root-volume-0", VolumeSource: v1.VolumeSource{HostPath: (*v1.HostPathVolumeSource)(nil), EmptyDir: (*v1.EmptyDirVolumeSource)(nil), GCEPersistentDisk: (*v1.GCEPersistentDiskVolumeSource)(nil), AWSElasticBlockStore: (*v1.AWSElasticBlockStoreVolumeSource)(nil), GitRepo: (*v1.GitRepoVolumeSource)(nil), Secret: (*v1.SecretVolumeSource)(nil), NFS: (*v1.NFSVolumeSource)(nil), ISCSI: (*v1.ISCSIVolumeSource)(nil), Glusterfs: (*v1.GlusterfsVolumeSource)(nil), PersistentVolumeClaim: (*v1.PersistentVolumeClaimVolumeSource)(nil), RBD: (*v1.RBDVolumeSource)(nil), FlexVolume: (*v1.FlexVolumeSource)(nil), Cinder: (*v1.CinderVolumeSource)(nil), CephFS: (*v1.CephFSVolumeSource)(nil), Flocker: (*v1.FlockerVolumeSource)(nil), DownwardAPI: (*v1.DownwardAPIVolumeSource)(nil), FC: (*v1.FCVolumeSource)(nil), AzureFile: (*v1.AzureFileVolumeSource)(nil), ConfigMap: (*v1.ConfigMapVolumeSource)(0x14000612a40), VsphereVolume: (*v1.VsphereVirtualDiskVolumeSource)(nil), Quobyte: (*v1.QuobyteVolumeSource)(nil), AzureDisk: (*v1.AzureDiskVolumeSource)(nil), PhotonPersistentDisk: (*v1.PhotonPersistentDiskVolumeSource)(nil), Projected: (*v1.ProjectedVolumeSource)(nil), PortworxVolume: (*v1.PortworxVolumeSource)(nil), ScaleIO: (*v1.ScaleIOVolumeSource)(nil), StorageOS: (*v1.StorageOSVolumeSource)(nil), CSI: (*v1.CSIVolumeSource)(nil), Ephemeral: (*v1.EphemeralVolumeSource)(nil)}}}, InitContainers: []v1.Container{{Name: "determined-init-container", Image: "", Command: []string{"/run/determined/temp/k8_init_container_entrypoint.sh"}, Args: []string{"2", "/run/determined/temp/tar/src", "/run/determined/temp/tar/dst"}, WorkingDir: "/run/determined/temp/", Ports: []v1.ContainerPort(nil), EnvFrom: []v1.EnvFromSource(nil), Env: []v1.EnvVar(nil), Resources: v1.ResourceRequirements{Limits: v1.ResourceList(nil), Requests: v1.ResourceList(nil)}, VolumeMounts: []v1.VolumeMount{{Name: "archive-volume", ReadOnly: true, MountPath: "/run/determined/temp/tar/src", SubPath: "", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}, {Name: "entrypoint-volume", ReadOnly: true, MountPath: "/run/determined/temp/", SubPath: "", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}, {Name: "additional-files-volume", ReadOnly: false, MountPath: "/run/determined/temp/tar/dst", SubPath: "", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}}, VolumeDevices: []v1.VolumeDevice(nil), LivenessProbe: (*v1.Probe)(nil), ReadinessProbe: (*v1.Probe)(nil), StartupProbe: (*v1.Probe)(nil), Lifecycle: (*v1.Lifecycle)(nil), TerminationMessagePath: "", TerminationMessagePolicy: "", ImagePullPolicy: "IfNotPresent", SecurityContext: (*v1.SecurityContext)(0x14000a06120), Stdin: false, StdinOnce: false, TTY: false}}, Containers: []v1.Container{{Name: "determined-fluent-container", Image: "fluent/fluent-bit:1.6", Command: []string{"/fluent-bit/bin/fluent-bit", "-c", "fluent.conf"}, Args: []string(nil), WorkingDir: "/run/determined/fluent/", Ports: []v1.ContainerPort(nil), EnvFrom: []v1.EnvFromSource(nil), Env: []v1.EnvVar(nil), Resources: v1.ResourceRequirements{Limits: v1.ResourceList(nil), Requests: v1.ResourceList(nil)}, VolumeMounts: []v1.VolumeMount{{Name: "det-logs", ReadOnly: false, MountPath: "/run/determined/train/logs", SubPath: "", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}, {Name: "det-fluent", ReadOnly: false, MountPath: "/run/determined/fluent/", SubPath: "", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}}, VolumeDevices: []v1.VolumeDevice(nil), LivenessProbe: (*v1.Probe)(nil), ReadinessProbe: (*v1.Probe)(nil), StartupProbe: (*v1.Probe)(nil), Lifecycle: (*v1.Lifecycle)(nil), TerminationMessagePath: "", TerminationMessagePolicy: "", ImagePullPolicy: "IfNotPresent", SecurityContext: (*v1.SecurityContext)(0x14000a06180), Stdin: false, StdinOnce: false, TTY: false}, {Name: "determined-container", Image: "", Command: []string(nil), Args: []string(nil), WorkingDir: "/run/determined/workdir", Ports: []v1.ContainerPort(nil), EnvFrom: []v1.EnvFromSource(nil), Env: []v1.EnvVar{{Name: "PYTHONUSERBASE", Value: "/run/determined/pythonuserbase", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_TASK_ID", Value: "", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_RESOURCES_ID", Value: "", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_WORKDIR", Value: "/run/determined/workdir", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_USER", Value: "determined", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_SEGMENT_ENABLED", Value: "false", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_MASTER_ADDR", Value: "0.0.0.0", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_AGENT_ID", Value: "k8agent", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_ALLOCATION_ID", Value: "task", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_SESSION_TOKEN", Value: "", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_CLUSTER_ID", Value: "test", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_MASTER_HOST", Value: "0.0.0.0", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_MASTER_PORT", Value: "32", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_SLOT_IDS", Value: "[0]", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_CONTAINER_ID", Value: "container", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_USER_TOKEN", Value: "bogus", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_USE_TLS", Value: "false", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_MASTER", Value: "http://0.0.0.0:32", ValueFrom: (*v1.EnvVarSource)(nil)}, {Name: "DET_K8S_LOG_TO_FILE", Value: "true", ValueFrom: (*v1.EnvVarSource)(nil)}}, Resources: v1.ResourceRequirements{Limits: v1.ResourceList{"nvidia.com/gpu": resource.Quantity{i: resource.int64Amount{value: 1, scale: 0}, d: resource.infDecAmount{Dec: (*inf.Dec)(nil)}, s: "", Format: "DecimalSI"}}, Requests: v1.ResourceList{"nvidia.com/gpu": resource.Quantity{i: resource.int64Amount{value: 1, scale: 0}, d: resource.infDecAmount{Dec: (*inf.Dec)(nil)}, s: "", Format: "DecimalSI"}}}, VolumeMounts: []v1.VolumeMount{{Name: "det-shm-volume", ReadOnly: false, MountPath: "/dev/shm", SubPath: "", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}, {Name: "additional-files-volume", ReadOnly: false, MountPath: "/run/determined", SubPath: "0/run/determined", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}, {Name: "additional-files-volume", ReadOnly: false, MountPath: "/run/determined/info", SubPath: "0/run/determined/info", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}, {Name: "additional-files-volume", ReadOnly: false, MountPath: "/run/determined/pythonuserbase", SubPath: "0/run/determined/pythonuserbase", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}, {Name: "additional-files-volume", ReadOnly: false, MountPath: "/run/determined/workdir", SubPath: "0/run/determined/workdir", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}, {Name: "additional-files-volume", ReadOnly: false, MountPath: "/run/determined/task-logging-setup.sh", SubPath: "1/task-logging-setup.sh", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}, {Name: "additional-files-volume", ReadOnly: false, MountPath: "/run/determined/enrich_task_logs.py", SubPath: "1/enrich_task_logs.py", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}, {Name: "additional-files-volume", ReadOnly: false, MountPath: "/run/determined/task-logging-teardown.sh", SubPath: "1/task-logging-teardown.sh", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}, {Name: "additional-files-volume", ReadOnly: false, MountPath: "/run/determined/task-signal-handling.sh", SubPath: "1/task-signal-handling.sh", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}, {Name: "additional-files-volume", ReadOnly: false, MountPath: "/run/determined/singularity-entrypoint-wrapper.sh", SubPath: "1/singularity-entrypoint-wrapper.sh", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}, {Name: "det-logs", ReadOnly: false, MountPath: "/run/determined/train/logs", SubPath: "", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}, {Name: "det-fluent", ReadOnly: false, MountPath: "/run/determined/fluent/", SubPath: "", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}, {Name: "root-volume-0", ReadOnly: true, MountPath: "/run/determined/etc", SubPath: "", MountPropagation: (*v1.MountPropagationMode)(nil), SubPathExpr: ""}}, VolumeDevices: []v1.VolumeDevice(nil), LivenessProbe: (*v1.Probe)(nil), ReadinessProbe: (*v1.Probe)(nil), StartupProbe: (*v1.Probe)(nil), Lifecycle: (*v1.Lifecycle)(nil), TerminationMessagePath: "", TerminationMessagePolicy: "", ImagePullPolicy: "IfNotPresent", SecurityContext: (*v1.SecurityContext)(0x14000a061e0), Stdin: false, StdinOnce: false, TTY: false}}},
-	}
-	podInterface.On("Create", context.TODO(), pod,
+		}}
+	podInterface.On("Create", context.TODO(), mock.Anything,
 		metaV1.CreateOptions{}).Return(&k8sV1.Pod{}, nil).Run(
 		func(args mock.Arguments) { pods[newPod.podName] = pod.DeepCopy() })
+
+	gracePeriod := int64(15)
+	podInterface.On("Delete", context.TODO(), newPod.podName,
+		metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod}).Return(nil).Run(
+		func(args mock.Arguments) {
+			delete(pods, newPod.podName)
+			podMap["task"].Receive(&actor.Context{})
+		})
+
+	podInterface.On("GetLogs", newPod.podName,
+		&k8sV1.PodLogOptions{Container: "determined-container", Follow: true}).Return(mock.Anything)
 
 	ref, _ := system.ActorOf(
 		actor.Addr("pod-actor-test"),
@@ -556,6 +551,7 @@ func TestReceivePodStatusUpdateStarting(t *testing.T) {
 	assert.Equal(t, newPod.container.State, cproto.Starting)
 }
 
+// TODO CAROLINA
 func TestMultipleContainersRunning(t *testing.T) {
 	// Status update test involving two containers.
 	setupEntrypoint(t)
@@ -781,47 +777,31 @@ func TestReceiveContainerLog(t *testing.T) {
 	assert.Equal(t, containerMsg.RunMessage.Value, mockLogMessage)
 }
 
-/*
 func TestKillTaskPod(t *testing.T) {
 	setupEntrypoint(t)
 	defer cleanup(t)
 
-	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
-	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
-	k8sRequestQueue := startRequestQueue(
-		map[string]typedV1.PodInterface{"default": podInterface},
-		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-	)
-	system, newPod, ref, _, _ := createPodWithMockQueue(k8sRequestQueue)
+	system, newPod, ref, _, _, pods := createPodWithMockQueue()
 
 	// We take a quick nap immediately so we can purge the start message after it arrives.
 	time.Sleep(time.Second)
-	assert.Check(t, podInterface.pods[newPod.podName] != nil)
+	assert.Check(t, pods[newPod.podName] != nil)
 	system.Ask(ref, KillTaskPod{})
 	time.Sleep(time.Second)
-	assert.Check(t, podInterface.pods[newPod.podName] == nil)
+	assert.Check(t, pods[newPod.podName] == nil)
 	assert.Check(t, newPod.resourcesDeleted.Load())
 }
 
+// TODO CAROLINA
 func TestResourceCreationCancelled(t *testing.T) {
 	setupEntrypoint(t)
 	defer cleanup(t)
 
-	podInterface := &mockPodInterface{
-		pods:             make(map[string]*k8sV1.Pod),
-		operationalDelay: time.Minute * numKubernetesWorkers,
-	}
-	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
-	k8sRequestQueue := startRequestQueue(
-		map[string]typedV1.PodInterface{"default": podInterface},
-		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-	)
-
 	for i := 0; i < numKubernetesWorkers; i++ {
-		createPodWithMockQueue(k8sRequestQueue)
+		createPodWithMockQueue()
 	}
 	time.Sleep(time.Second)
-	system, _, ref, podMap, _ := createPodWithMockQueue(k8sRequestQueue)
+	system, _, ref, podMap, _, _ := createPodWithMockQueue()
 
 	podMap["task"].Purge()
 	assert.Equal(t, podMap["task"].GetLength(), 0)
@@ -853,8 +833,8 @@ func TestResourceCreationCancelled(t *testing.T) {
 	assert.Equal(t, containerMsg.ResourcesStopped.Failure.ErrMsg, correctErrMsg)
 	assert.Equal(t, containerMsg.ResourcesStopped.Failure.ExitCode, correctCode)
 }
-*/
 
+// TODO CAROLINA
 func TestResourceDeletionFailed(t *testing.T) {
 	setupEntrypoint(t)
 	defer cleanup(t)
