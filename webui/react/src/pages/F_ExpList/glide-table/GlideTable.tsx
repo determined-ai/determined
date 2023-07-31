@@ -315,6 +315,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             key: `select-${n}`,
             label: `Select first ${n}`,
             onClick: () => {
+              setSelectAll(false);
               setSelection((s) => ({
                 ...s,
                 rows: CompactSelection.fromSingleSelection([0, n]),
