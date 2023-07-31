@@ -169,6 +169,29 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 	}, nil
 }
 
+func (a *apiServer) GetUnboundResourcePools(ctx context.Context,
+	req *apiv1.GetUnboundResourcePoolsRequest,
+) (*apiv1.GetUnboundResourcePoolsResponse, error) {
+	getPoolsResp, err := a.m.rm.GetResourcePools(a.m.system, &apiv1.GetResourcePoolsRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	var poolNames []string
+	for _, pool := range getPoolsResp.ResourcePools {
+		poolNames = append(poolNames, pool.Name)
+	}
+
+	unboundPools, err := db.GetUnboundRPs(ctx, poolNames)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := apiv1.GetUnboundResourcePoolsResponse{ResourcePools: unboundPools}
+
+	return &resp, a.paginate(&resp.Pagination, &resp.ResourcePools, req.Offset, req.Limit)
+}
+
 func (a *apiServer) checkIfPoolIsDefault(poolName string) error {
 	defaultComputePool, err := a.m.rm.GetDefaultComputeResourcePool(
 		a.m.system,
