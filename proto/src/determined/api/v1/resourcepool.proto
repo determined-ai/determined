@@ -101,3 +101,19 @@ message ListWorkspacesBoundToRPResponse {
   // Pagination information of the full dataset.
   Pagination pagination = 2;
 }
+
+// List all unbound resource pools
+message GetUnboundResourcePoolsRequest {
+  // The offset to use with pagination
+  int32 offset = 1;
+  // The maximum number of results to return
+  int32 limit = 2;
+}
+
+// Response to ListUnboundRPsRequest
+message GetUnboundResourcePoolsResponse {
+  // The names of unbound resource pools.
+  repeated string resource_pools = 1;
+  // Pagination information of the full dataset
+  Pagination pagination = 2;
+}
