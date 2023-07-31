@@ -22,7 +22,7 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
   const { scale, setScale } = metricData;
 
   const chartsProps = useMemo(() => {
-    const { metrics, data, isLoaded } = metricData;
+    const { metricHasData, metrics, data, isLoaded } = metricData;
     const chartedMetrics: Record<string, boolean> = {};
     const out: ChartsProps = [];
     const expNameById: Record<number, string> = {};
@@ -61,7 +61,7 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
     // spinner.
     const chartDataIsLoaded = metrics.every((metric) => {
       const metricKey = `${metric.type}|${metric.name}`;
-      return !!chartedMetrics?.[metricKey];
+      return metricHasData?.[metricKey] ? !!chartedMetrics?.[metricKey] : true;
     });
     if (!isLoaded) {
       // When trial metrics hasn't loaded metric names or individual trial metrics.
