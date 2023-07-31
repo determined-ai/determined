@@ -1,10 +1,10 @@
-import { Popover } from 'antd';
 import * as io from 'io-ts';
 
 import Button from 'components/kit/Button';
 import { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Select from 'components/kit/Select';
+import Tooltip from 'components/kit/Tooltip';
 import { V1ColumnType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -126,9 +126,9 @@ export const sortMenuItemsForColumn = (
             s.column !== column.column
               ? s
               : {
-                  ...s,
-                  direction: option.value as DirectionType,
-                },
+                ...s,
+                direction: option.value as DirectionType,
+              },
           );
         } else {
           newSort = [{ column: column.column, direction: option.value as DirectionType }];
@@ -267,7 +267,7 @@ const MultiSortMenu: React.FC<MultiSortProps> = ({
   };
 
   return (
-    <Popover
+    <Tooltip
       content={<MultiSort columns={columns} sorts={sorts} onChange={onChange} />}
       placement="bottomLeft"
       showArrow={false}
@@ -276,7 +276,7 @@ const MultiSortMenu: React.FC<MultiSortProps> = ({
       <Button hideChildren={isMobile} icon={<SortButtonIcon />}>
         Sort {validSorts.length ? `(${validSorts.length})` : ''}
       </Button>
-    </Popover>
+    </Tooltip>
   );
 };
 

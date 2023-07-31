@@ -1,4 +1,3 @@
-import { Popover } from 'antd';
 import { useObservable } from 'micro-observables';
 import { useCallback } from 'react';
 
@@ -7,6 +6,7 @@ import { FilterFormStore } from 'components/FilterForm/components/FilterFormStor
 import { FormKind } from 'components/FilterForm/components/type';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
+import Tooltip from 'components/kit/Tooltip';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
 import { Loadable } from 'utils/loadable';
 
@@ -55,7 +55,7 @@ const TableFilter = ({
 
   return (
     <div>
-      <Popover
+      <Tooltip
         content={
           <div
             onKeyDown={(e) => {
@@ -66,15 +66,15 @@ const TableFilter = ({
             <FilterForm columns={columns} formStore={formStore} onHidePopOver={onHidePopOver} />
           </div>
         }
-        destroyTooltipOnHide
         open={isOpenFilter}
         placement="bottomLeft"
+        showArrow={false}
         trigger="click"
         onOpenChange={onIsOpenFilterChange}>
         <Button hideChildren={isMobile} icon={<Icon decorative name="filter" />}>
           Filter{fieldCount > 0 && <span>({fieldCount})</span>}
         </Button>
-      </Popover>
+      </Tooltip>
     </div>
   );
 };

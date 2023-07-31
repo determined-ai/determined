@@ -2212,34 +2212,11 @@ const TooltipsSection: React.FC = () => {
     <ComponentSection id="Tooltips" title="Tooltips">
       <AntDCard>
         <p>
-          A good tooltip (<code>{'<Tooltip>'}</code>) briefly describes unlabeled controls or
-          provides a bit of additional information about labeled controls, when this is useful. It
-          can also help customers navigate the UI by offering additional—not redundant—information
-          about control labels, icons, and links. A tooltip should always add valuable information;
-          use sparingly.
+          A (<code>{'<Tooltip>'}</code>) is used to display a string or component when triggered by interaction (either by click or hover) with a child element.
         </p>
       </AntDCard>
-      <AntDCard title="Best practices">
-        <strong>Content</strong>
-        <ul>
-          <li>
-            Don&apos;t use a tooltip to restate a button name that&apos;s already shown in the UI.
-          </li>
-          <li>
-            When a control or UI element is unlabeled, use a simple, descriptive noun phrase. For
-            Only use periods for complete sentences.italize the first word (unless a subsequent word
-            is a proper noun), and don&apos;t use a period.
-          </li>
-          <li>
-            For a disabled control that could use an explanation, provide a brief description of the
-            state in which the control will be enabled. For example: “This feature is available for
-            line charts.”
-          </li>
-          <li>Only use periods for complete sentences.</li>
-        </ul>
-      </AntDCard>
       <AntDCard title="Usage">
-        <strong>Tooltips default</strong>
+        <strong>Tooltip triggers</strong>
         <Space>
           <Tooltip content={text}>
             <Button>Trigger on hover</Button>
@@ -2251,19 +2228,14 @@ const TooltipsSection: React.FC = () => {
             <Button>Trigger on right click</Button>
           </Tooltip>
         </Space>
+        <strong>Variations</strong>
+        <p>Without arrow</p>
         <Space>
           <Tooltip content={text} placement="bottom" showArrow={false}>
             <Button>Tooltip without arrow</Button>
           </Tooltip>
         </Space>
-        <strong>Considerations</strong>
-        <ul>
-          <li>
-            Nest the tooltip where the content in a cell/text is. Don’t let it levitate in the
-            nothingness.
-          </li>
-        </ul>
-        <strong>Variations</strong>
+        <p>With string content</p>
         <div>
           <div style={{ marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
             <Tooltip content={text} placement="topLeft">
@@ -2310,10 +2282,12 @@ const TooltipsSection: React.FC = () => {
             </Tooltip>
           </div>
         </div>
-        <strong>Tooltip with complex content</strong>
+        <p>With component content</p>
         <p>
-          <Tooltip content={<UserAvatar />}>
-            <Button>{'Hover to see user avatars'}</Button>
+          <Tooltip
+            content={<Input defaultValue="Test" />}
+            trigger="click">
+            <Button>{'Click to see input'}</Button>
           </Tooltip>
         </p>
       </AntDCard>
