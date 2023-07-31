@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -31,6 +32,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 const (
@@ -317,6 +320,54 @@ func MockModelCheckpoint(
 	}
 
 	return ckpt
+}
+
+// MockModelCheckpointSteps returns a mock model checkpoint with specified steps.
+func MockModelCheckpointSteps(
+	ckptUUID uuid.UUID, tr *model.Trial, a *model.Allocation, stepsCompleted int,
+) model.CheckpointV2 {
+	ckpt := model.CheckpointV2{
+		UUID:         ckptUUID,
+		TaskID:       tr.TaskID,
+		AllocationID: &a.AllocationID,
+		ReportTime:   time.Now().UTC(),
+		State:        model.CompletedState,
+		Resources: map[string]int64{
+			"ok": 1.0,
+		},
+		Metadata: map[string]interface{}{
+			"framework":          "some framework",
+			"determined_version": "1.0.0",
+			"steps_completed":    float64(stepsCompleted),
+		},
+	}
+
+	return ckpt
+}
+
+// MockTrialMetrics returns a mock Trial Metric.
+func MockTrialMetrics(
+	ctx context.Context, ckptUUID uuid.UUID, tr *model.Trial, stepsCompleted int32,
+	valMetric int32, pgDB *PgDB,
+) error {
+	trialMetrics := trialv1.TrialMetrics{
+		TrialId:        int32(tr.ID),
+		TrialRunId:     int32(0),
+		StepsCompleted: stepsCompleted,
+		Metrics: &commonv1.Metrics{
+			AvgMetrics: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"okness": {
+						Kind: &structpb.Value_NumberValue{
+							NumberValue: float64(valMetric),
+						},
+					},
+				},
+			},
+		},
+	}
+	err := pgDB.AddValidationMetrics(ctx, &trialMetrics)
+	return err
 }
 
 // MustExec allows integration tests to run raw queries directly against a PgDB.
