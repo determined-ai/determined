@@ -2423,8 +2423,8 @@ func (a *apiServer) DeleteExperimentLabel(ctx context.Context,
 		Model(exp).
 		Apply(getExperimentColumns).
 		Where("e.id = ?", req.ExperimentId).
+		For("UPDATE").
 		Limit(1)
-
 	if err = query.Scan(ctx); err != nil {
 		return nil, err
 	}
