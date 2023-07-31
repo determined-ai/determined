@@ -108,7 +108,9 @@ func podList(m map[string]*k8sV1.Pod) *k8sV1.PodList {
 func TestRequestQueueCreatingManyPod(t *testing.T) {
 	pods := make(map[string]*k8sV1.Pod)
 	podInterface := &mocks.PodInterface{}
-	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
+
+	configMaps := make(map[string]*k8sV1.ConfigMap)
+	configMapInterface := &mocks.ConfigMapInterface{}
 
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
@@ -118,9 +120,15 @@ func TestRequestQueueCreatingManyPod(t *testing.T) {
 	numPods := 15
 	for i := 0; i < numPods; i++ {
 		name := petName.Generate(3, "-")
+
 		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
 		podInterface.On("Create", mock.Anything, pod, mock.Anything).Return(&k8sV1.Pod{}, nil).Run(
 			func(args mock.Arguments) { pods[name] = pod.DeepCopy() })
+
+		configMap := &k8sV1.ConfigMap{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+		configMapInterface.On("Create", mock.Anything, configMap, mock.Anything).Return(
+			&k8sV1.ConfigMap{}, nil).Run(
+			func(args mock.Arguments) { configMaps[name] = configMap.DeepCopy() })
 		startMockPod(k8sRequestQueue, name, nil)
 	}
 
@@ -132,7 +140,9 @@ func TestRequestQueueCreatingManyPod(t *testing.T) {
 func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 	pods := make(map[string]*k8sV1.Pod)
 	podInterface := &mocks.PodInterface{}
-	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
+
+	configMaps := make(map[string]*k8sV1.ConfigMap)
+	configMapInterface := &mocks.ConfigMapInterface{}
 
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
@@ -143,12 +153,19 @@ func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 	tmpPods := make([]*mockPod, 0)
 	for i := 0; i < numPods; i++ {
 		name := petName.Generate(3, "-")
-		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
 
+		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
 		podInterface.On("Create", mock.Anything, pod, mock.Anything).Return(
 			&k8sV1.Pod{}, nil).Run(func(args mock.Arguments) { pods[name] = pod.DeepCopy() })
 		podInterface.On("Delete", mock.Anything, name, mock.Anything).Return(nil).Run(
 			func(args mock.Arguments) { delete(pods, name) })
+
+		configMap := &k8sV1.ConfigMap{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+		configMapInterface.On("Create", mock.Anything, configMap, mock.Anything).Return(
+			&k8sV1.ConfigMap{}, nil).Run(
+			func(args mock.Arguments) { configMaps[name] = configMap.DeepCopy() })
+		configMapInterface.On("Delete", mock.Anything, name, mock.Anything).Return(nil).Run(
+			func(args mock.Arguments) { delete(configMaps, name) })
 
 		tmpPods = append(tmpPods, startMockPod(k8sRequestQueue, name, nil))
 	}
@@ -163,7 +180,9 @@ func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 	pods := make(map[string]*k8sV1.Pod)
 	podInterface := &mocks.PodInterface{}
-	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
+
+	configMaps := make(map[string]*k8sV1.ConfigMap)
+	configMapInterface := &mocks.ConfigMapInterface{}
 
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
@@ -174,12 +193,19 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 	tmpPods := make([]*mockPod, 0)
 	for i := 0; i < numPods; i++ {
 		name := petName.Generate(3, "-")
-		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
 
+		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
 		podInterface.On("Create", mock.Anything, pod, mock.Anything).Return(
 			&k8sV1.Pod{}, nil).Run(func(args mock.Arguments) { pods[name] = pod.DeepCopy() })
 		podInterface.On("Delete", mock.Anything, name, mock.Anything).Return(nil).Run(
 			func(args mock.Arguments) { delete(pods, name) })
+
+		configMap := &k8sV1.ConfigMap{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+		configMapInterface.On("Create", mock.Anything, configMap, mock.Anything).Return(
+			&k8sV1.ConfigMap{}, nil).Run(
+			func(args mock.Arguments) { configMaps[name] = configMap.DeepCopy() })
+		configMapInterface.On("Delete", mock.Anything, name, mock.Anything).Return(nil).Run(
+			func(args mock.Arguments) { delete(configMaps, name) })
 
 		tmpPods = append(tmpPods, startMockPod(k8sRequestQueue, name, nil))
 	}
@@ -198,7 +224,9 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 	pods := make(map[string]*k8sV1.Pod)
 	podInterface := &mocks.PodInterface{}
-	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
+
+	configMaps := make(map[string]*k8sV1.ConfigMap)
+	configMapInterface := &mocks.ConfigMapInterface{}
 
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
@@ -209,13 +237,19 @@ func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 	tmpPods := make([]*mockPod, 0)
 	for i := 0; i < numPods; i++ {
 		name := petName.Generate(3, "-")
-		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
 
+		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
 		podInterface.On("Create", mock.Anything, pod, mock.Anything).Return(
 			&k8sV1.Pod{}, nil).Run(func(args mock.Arguments) { pods[name] = pod.DeepCopy() })
-
 		podInterface.On("Delete", mock.Anything, name, mock.Anything).Return(nil).Run(
 			func(args mock.Arguments) { delete(pods, name) })
+
+		configMap := &k8sV1.ConfigMap{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+		configMapInterface.On("Create", mock.Anything, configMap, mock.Anything).Return(
+			&k8sV1.ConfigMap{}, nil).Run(
+			func(args mock.Arguments) { configMaps[name] = configMap.DeepCopy() })
+		configMapInterface.On("Delete", mock.Anything, name, mock.Anything).Return(nil).Run(
+			func(args mock.Arguments) { delete(configMaps, name) })
 
 		tmpPods = append(tmpPods, startMockPod(k8sRequestQueue, name, nil))
 	}
@@ -229,7 +263,9 @@ func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 func TestRequestQueueCreationCancelled(t *testing.T) {
 	pods := make(map[string]*k8sV1.Pod)
 	podInterface := &mocks.PodInterface{}
-	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
+
+	configMaps := make(map[string]*k8sV1.ConfigMap)
+	configMapInterface := &mocks.ConfigMapInterface{}
 
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
@@ -238,11 +274,20 @@ func TestRequestQueueCreationCancelled(t *testing.T) {
 
 	for i := 0; i < numKubernetesWorkers; i++ {
 		name := petName.Generate(3, "-")
+
 		pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
 		podInterface.On("Create", mock.Anything, pod, mock.Anything).Return(
 			&k8sV1.Pod{}, nil).Run(func(args mock.Arguments) { pods[name] = pod.DeepCopy() })
 		podInterface.On("Delete", mock.Anything, name, mock.Anything).Return(nil).Run(
 			func(args mock.Arguments) { delete(pods, name) })
+
+		configMap := &k8sV1.ConfigMap{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+		configMapInterface.On("Create", mock.Anything, configMap, mock.Anything).Return(
+			&k8sV1.ConfigMap{}, nil).Run(
+			func(args mock.Arguments) { configMaps[name] = configMap.DeepCopy() })
+		configMapInterface.On("Delete", mock.Anything, name, mock.Anything).Return(nil).Run(
+			func(args mock.Arguments) { delete(configMaps, name) })
+
 		startMockPod(k8sRequestQueue, name, nil)
 	}
 
@@ -275,7 +320,9 @@ func TestRequestQueueCreationCancelled(t *testing.T) {
 func TestRequestQueueCreationFailed(t *testing.T) {
 	pods := make(map[string]*k8sV1.Pod)
 	podInterface := &mocks.PodInterface{}
-	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
+
+	configMaps := make(map[string]*k8sV1.ConfigMap)
+	configMapInterface := &mocks.ConfigMapInterface{}
 
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
@@ -295,12 +342,20 @@ func TestRequestQueueCreationFailed(t *testing.T) {
 		}
 	})
 	name := petName.Generate(3, "-")
+
 	mockPod := startMockPod(k8sRequestQueue, name, &errorHandler)
 	pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
 	podInterface.On("Create", mock.Anything, pod, mock.Anything).Return(
 		&k8sV1.Pod{}, nil).Run(func(args mock.Arguments) { pods[name] = pod.DeepCopy() })
 	podInterface.On("Delete", mock.Anything, name, mock.Anything).Return(nil).Run(
 		func(args mock.Arguments) { delete(pods, name) })
+
+	configMap := &k8sV1.ConfigMap{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+	configMapInterface.On("Create", mock.Anything, configMap, mock.Anything).Return(
+		&k8sV1.ConfigMap{}, nil).Run(
+		func(args mock.Arguments) { configMaps[name] = configMap.DeepCopy() })
+	configMapInterface.On("Delete", mock.Anything, name, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) { delete(configMaps, name) })
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, createFailed, false)
@@ -313,7 +368,9 @@ func TestRequestQueueCreationFailed(t *testing.T) {
 func TestRequestQueueDeletionFailed(t *testing.T) {
 	pods := make(map[string]*k8sV1.Pod)
 	podInterface := &mocks.PodInterface{}
-	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
+
+	configMaps := make(map[string]*k8sV1.ConfigMap)
+	configMapInterface := &mocks.ConfigMapInterface{}
 
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
@@ -334,11 +391,19 @@ func TestRequestQueueDeletionFailed(t *testing.T) {
 	})
 	name := petName.Generate(3, "-")
 	mockPod := startMockPod(k8sRequestQueue, name, &errorHandler)
+
 	pod := &k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
 	podInterface.On("Create", mock.Anything, pod, mock.Anything).Return(
 		&k8sV1.Pod{}, nil).Run(func(args mock.Arguments) { pods[name] = pod.DeepCopy() })
 	podInterface.On("Delete", mock.Anything, name, mock.Anything).Return(nil).Run(
 		func(args mock.Arguments) { delete(pods, name) })
+
+	configMap := &k8sV1.ConfigMap{ObjectMeta: metaV1.ObjectMeta{Name: name, Namespace: "default"}}
+	configMapInterface.On("Create", mock.Anything, configMap, mock.Anything).Return(
+		&k8sV1.ConfigMap{}, nil).Run(
+		func(args mock.Arguments) { configMaps[name] = configMap.DeepCopy() })
+	configMapInterface.On("Delete", mock.Anything, name, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) { delete(configMaps, name) })
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, deleteFailed, false)
