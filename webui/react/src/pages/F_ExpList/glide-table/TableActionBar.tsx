@@ -65,22 +65,6 @@ const batchActions = [
 
 export type BatchAction = (typeof batchActions)[number];
 
-type BatchActionMenuItem = 'divider' | BatchAction;
-
-const dividedBatchActions: BatchActionMenuItem[] = [
-  ExperimentAction.OpenTensorBoard,
-  'divider',
-  ExperimentAction.Move,
-  ExperimentAction.Archive,
-  ExperimentAction.Unarchive,
-  ExperimentAction.Delete,
-  'divider',
-  ExperimentAction.Activate,
-  ExperimentAction.Pause,
-  ExperimentAction.Cancel,
-  ExperimentAction.Kill,
-];
-
 const actionIcons: Record<BatchAction, IconName> = {
   [ExperimentAction.Activate]: 'play',
   [ExperimentAction.Pause]: 'pause',
@@ -324,23 +308,27 @@ const TableActionBar: React.FC<Props> = ({
     [BatchActionConfirmModal, submitBatchAction, sendBatchActions],
   );
 
-  const editMenuItems: MenuItem[] = useMemo(() => {
-    return dividedBatchActions.map((action) => {
-      return action === 'divider'
-        ? { type: 'divider' }
-        : {
-            danger: action === ExperimentAction.Delete,
-            disabled: !availableBatchActions.includes(action),
-            // The icon doesn't show up without being wrapped in a div.
-            icon: (
-              <div>
-                <Icon name={actionIcons[action]} title={action} />
-              </div>
-            ),
-            key: action,
-            label: action,
-          };
-    });
+  const editMenuItems = useMemo(() => {
+    const groupedBatchActions = [
+      batchActions.slice(0, 1), // View in TensorBoard
+      batchActions.slice(1, 5), // Move, Archive, Unarchive, Delete
+      batchActions.slice(5), // Resume, Pause, Cancel, Kill
+    ];
+    const groupSize = groupedBatchActions.length;
+    return groupedBatchActions.reduce((acc, group, index) => {
+      const isLastGroup = index === groupSize - 1;
+      group.forEach((action) =>
+        acc.push({
+          danger: action === ExperimentAction.Delete,
+          disabled: !availableBatchActions.includes(action),
+          icon: <Icon name={actionIcons[action]} title={action} />,
+          key: action,
+          label: action,
+        }),
+      );
+      if (!isLastGroup) acc.push({ type: 'divider' });
+      return acc;
+    }, [] as MenuItem[]);
   }, [availableBatchActions]);
 
   const selectionLabel = useMemo(() => {
