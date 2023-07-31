@@ -126,9 +126,9 @@ export const sortMenuItemsForColumn = (
             s.column !== column.column
               ? s
               : {
-                ...s,
-                direction: option.value as DirectionType,
-              },
+                  ...s,
+                  direction: option.value as DirectionType,
+                },
           );
         } else {
           newSort = [{ column: column.column, direction: option.value as DirectionType }];
