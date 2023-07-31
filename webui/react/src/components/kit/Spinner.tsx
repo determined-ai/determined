@@ -17,7 +17,7 @@ type Props<T> = (
       children?: React.ReactNode;
       conditionalRender?: boolean;
       data?: never;
-      spinning: boolean;
+      spinning?: boolean;
     }
   | {
       children: (data: T) => JSX.Element;
@@ -33,7 +33,7 @@ function Spinner<T>({
   children,
   conditionalRender,
   size = 'medium',
-  spinning,
+  spinning = true,
   tip,
   data,
 }: Props<T>): JSX.Element {
@@ -50,14 +50,14 @@ function Spinner<T>({
             <Icon name="spinner" size={size} title="Spinner" />
           </div>
         }
-        spinning={spinning ?? true}
+        spinning={spinning}
         tip={tip}>
-        {spinning === undefined || (conditionalRender && spinning) ? null : children}
+        {data !== undefined || (conditionalRender && spinning) ? null : children}
       </Spin>
     </div>
   );
 
-  if (spinning !== undefined) {
+  if (!data) {
     return spinner;
   } else {
     return Loadable.match(data, {

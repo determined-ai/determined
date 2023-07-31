@@ -69,7 +69,7 @@ import {
   Surface,
 } from 'utils/colors';
 import handleError from 'utils/error';
-import { Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum, { loremIpsumSentence } from 'utils/loremIpsum';
 import { noOp } from 'utils/service';
 import { KeyboardShortcut } from 'utils/shortcut';
@@ -2918,18 +2918,18 @@ const DrawerSection: React.FC = () => {
 
 const SpinnerSection = () => {
   const [spinning, setSpinning] = useState(true);
-  const [loaded, setLoaded] = useState(false);
+  const [loadableData, setLoadableData] = useState<Loadable<string>>(NotLoaded);
 
   useEffect(() => {
-    if (loaded) return;
+    if (Loadable.isLoaded(loadableData)) return;
     let active = true;
     setTimeout(() => {
-      if (active) setLoaded(true);
-    }, 100000);
+      if (active) setLoadableData(Loaded('This text has been loaded!'));
+    }, 1000);
     return () => {
       active = false;
     };
-  }, [loaded]);
+  }, [loadableData]);
 
   return (
     <ComponentSection id="Spinner" title="Spinner">
@@ -2941,32 +2941,46 @@ const SpinnerSection = () => {
       <AntDCard title="Usage">
         <strong>Spinner default</strong>
         <Spinner spinning />
+        <strong>Spinner with children</strong>
+        <div style={{ border: '1px solid var(--theme-surface-border)', padding: 8, width: '100%' }}>
+          <Spinner spinning>
+            <Card.Group size="medium">
+              <Card size="medium" />
+              <Card size="medium" />
+            </Card.Group>
+          </Spinner>
+        </div>
+        <strong>Spinner with conditional rendering</strong>
+        <Toggle checked={spinning} label="Loading" onChange={setSpinning} />
+        <div
+          style={{
+            border: '1px solid var(--theme-surface-border)',
+            height: 300,
+            padding: 8,
+            width: '100%',
+          }}>
+          <Spinner conditionalRender spinning={spinning}>
+            <Card size="medium" />
+          </Spinner>
+        </div>
+        <strong>Loadable spinner</strong>
+        <Button onClick={() => setLoadableData(NotLoaded)}>Unload</Button>
+        <Spinner data={loadableData}>{(data) => <Paragraph>{data}</Paragraph>}</Spinner>
+        <hr />
+        <Header>Variations</Header>
         <strong>Centered Spinner</strong>
-        <div style={{ border: '1px solid gray', height: 300, width: '100%' }}>
+        <div
+          style={{ border: '1px solid var(--theme-surface-border)', height: 200, width: '100%' }}>
           <Spinner center spinning />
         </div>
-        <strong>Spinner with children</strong>
-        <Spinner spinning>
-          <Card size="medium" />
-        </Spinner>
         <strong>Spinner with tip</strong>
         <Spinner spinning tip="Tip" />
-        <strong>Spinner with conditional rendering</strong>
-        <Toggle checked={spinning} onChange={setSpinning} />
-        <Spinner conditionalRender spinning={spinning}>
-          <Card size="medium" />
-        </Spinner>
         <strong>Spinner sizes</strong>
         <Space>
           {IconSizeArray.map((size) => (
             <Spinner key={size} size={size} spinning tip={size} />
           ))}
         </Space>
-        <strong>Loadable spinner</strong>
-        <Button onClick={() => setLoaded(false)}>Unload</Button>
-        <Spinner data={loaded ? Loaded(loaded) : NotLoaded}>
-          {() => <Paragraph>Loaded!</Paragraph>}
-        </Spinner>
       </AntDCard>
     </ComponentSection>
   );
