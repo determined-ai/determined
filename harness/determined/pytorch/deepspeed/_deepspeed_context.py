@@ -378,7 +378,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         self._enable_tensorboard_logging = enable_tensorboard_logging
 
-    def get_enable_tensorboard_logging(self):
+    def get_enable_tensorboard_logging(self) -> bool:
         """
         Return whether automatic tensorboard logging is enabled
         """
