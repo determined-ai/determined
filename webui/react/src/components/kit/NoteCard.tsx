@@ -6,8 +6,8 @@ import { unstable_useBlocker as useBlocker } from 'react-router-dom';
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
 import Markdown from 'components/kit/internal/Markdown';
-import Spinner from 'components/kit/internal/Spinner/Spinner';
 import { ErrorHandler, ErrorType, Note } from 'components/kit/internal/types';
+import Spinner from 'components/kit/Spinner';
 import Tooltip from 'components/kit/Tooltip';
 
 import css from './NoteCard.module.scss';

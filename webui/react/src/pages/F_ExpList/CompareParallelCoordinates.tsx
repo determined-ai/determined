@@ -2,8 +2,8 @@ import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Spinner from 'components/kit/internal/Spinner/Spinner';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
+import Spinner from 'components/kit/Spinner';
 import Message, { MessageType } from 'components/Message';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
