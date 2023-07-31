@@ -164,8 +164,10 @@ func createPodWithMockQueue() (
 	podMap, actorMap := createReceivers(system)
 	pods := make(map[string]*k8sV1.Pod)
 	podInterface := &mocks.PodInterface{}
-	// configMaps  :=  make(map[string]*k8sV1.ConfigMap)
+
+	configMaps := make(map[string]*k8sV1.ConfigMap)
 	configMapInterface := &mocks.ConfigMapInterface{}
+
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
@@ -191,10 +193,22 @@ func createPodWithMockQueue() (
 	podInterface.On("Delete", mock.Anything, newPod.podName, mock.Anything).Return(nil).Run(
 		func(args mock.Arguments) {
 			delete(pods, newPod.podName)
-			// podMap["task"].Receive(&actor.Context{}) TODO CAROLINA
 		})
-
 	podInterface.On("GetLogs", mock.Anything).Return(mock.Anything)
+
+	configMap := &k8sV1.ConfigMap{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      newPod.podName,
+			Labels:    map[string]string{"determined": "task"},
+			Namespace: "default",
+		},
+	}
+	configMapInterface.On("Create", mock.Anything, mock.Anything, mock.Anything).Return(&k8sV1.Pod{}, nil).Run(
+		func(args mock.Arguments) { pods[newPod.podName] = pod.DeepCopy() })
+	configMapInterface.On("Delete", mock.Anything, newPod.podName, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			delete(configMaps[newPod.podName], newPod.podName)
+		})
 
 	ref, _ := system.ActorOf(
 		actor.Addr("pod-actor-test"),
