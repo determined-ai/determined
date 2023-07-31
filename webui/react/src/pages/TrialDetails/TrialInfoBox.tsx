@@ -125,7 +125,7 @@ export const TrialInfoBoxMultiTrial: React.FC<Props> = ({ experiment }: Props) =
         )}
         {checkpointsSize && (
           <OverviewStats title="Checkpoints">
-            {`${experiment.checkpointCount} (${checkpointsSize})`}
+            {`${experiment.checkpoints} (${checkpointsSize})`}
           </OverviewStats>
         )}
       </Card.Group>
