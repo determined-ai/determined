@@ -8,3 +8,6 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+
+DROP TABLE exp_metrics_name;
