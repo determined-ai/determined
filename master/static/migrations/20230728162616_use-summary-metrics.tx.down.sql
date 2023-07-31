@@ -45,3 +45,19 @@ INSERT INTO public.exp_metrics_name (project_id, experiment_id, vname) (
     WHERE 
         validation_metrics_names.experiment_id = e.id
 );
+
+CREATE OR REPLACE FUNCTION autoupdate_exp_validation_metrics_name() RETURNS trigger AS $$
+BEGIN
+    WITH mname AS (
+        SELECT array_to_json(array_agg(DISTINCT names)) AS mdata
+        FROM LATERAL (SELECT jsonb_object_keys(NEW.metrics->'validation_metrics') AS names
+        UNION SELECT json_array_elements_text(vname) FROM exp_metrics_name WHERE experiment_id = (SELECT experiment_id FROM trials WHERE id = NEW.trial_id)) AS foo
+    )
+    INSERT INTO exp_metrics_name (project_id, experiment_id, vname) (
+        SELECT e.project_id, e.id, mname.mdata AS vname
+        FROM experiments e, trials t, mname
+        WHERE t.id = NEW.trial_id AND e.id = t.experiment_id 
+    )  ON CONFLICT(experiment_id) DO UPDATE SET vname = EXCLUDED.vname;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
