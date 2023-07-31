@@ -6,6 +6,42 @@
  Release Notes
 ###############
 
+**Release Date:** July 31, 2023
+
+**Breaking Changes**
+
+-  API: Changed `/api/v1/users/setting` endpoint to no longer accept a `storagePath` param and to
+   accept an array of `settings` instead of a single `setting` param.
+
+**New Features**
+
+-  Allow non-intersecting dictionaries of metrics to be merged on the same total_batches. This
+   update used to be rejected before.
+
+-  API: A new patch API end point ``/api/v1/master/config`` has been added that allows the user to
+   make changes to the master config while the cluster is still running. Currently, only changing
+   the log config is supported.
+
+-  CLI: A new CLI command has been added ``det master config --log --level <log_level> --color
+   <on/off>`` that allows the user to change the log level and/or color of the master config while
+   the cluster is still running. ``det master config`` can still be used to get master config.
+
+-  Cluster: Add resource pool to workspace mapping feature, allowing resource pools to be bound to
+   specific workspaces. Bound resource pools can only be used by the workspaces they are bound to.
+   Additionally adds the ability to configure a default compute resource pool and a default
+   auxiliary resource pool for each workspace.
+
+-  K8s: We now allow users to populate all securityContext fields within the podspec of the
+   determined-container except for RunAsUser and RunAsGroup. Use ``det user link-with-agent-user``
+   instead.
+
+-  WebUI: In addition to improved performance and stability, we've added the following features to
+   the experiment list page: Metrics and hyperparameters can be selected as columns; The list can be
+   filtered on any available column; Users can specify complex filters; The list can be sorted on
+   any available column; Display total number of experiments matching the filter; Compare view
+   allows comparison metrics, hyperparameters, and trial details across experiments; Toggle between
+   pagination and infinite scroll; Select preferred table density
+
 **************
  Version 0.23
 **************
