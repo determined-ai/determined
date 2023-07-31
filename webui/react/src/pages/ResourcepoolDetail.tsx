@@ -180,7 +180,7 @@ const ResourcepoolDetailInner: React.FC = () => {
 
     if (rpBindingFlagOn && canManageResourcePoolBindings) {
       tabItems.push({
-        children: <ResourcePoolBindings poolName={pool.name} />,
+        children: <ResourcePoolBindings pool={pool} />,
         key: TabType.Bindings,
         label: 'Bindings',
       });

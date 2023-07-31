@@ -153,6 +153,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
           rpBindingFlagOn && canManageResourcePoolBindings
             ? [
                 {
+                  disabled: pool.defaultAuxPool || pool.defaultComputePool,
                   icon: <Icon name="four-squares" title="manage-bindings" />,
                   key: 'bindings',
                   label: 'Manage bindings',
