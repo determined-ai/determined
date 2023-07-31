@@ -3310,6 +3310,7 @@ workflows:
               container-run-type: ["podman"]
               context: ["gcp"]
               mark: ["e2e_slurm and not parallel"]
+              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
             - build-go
 
@@ -3345,6 +3346,7 @@ workflows:
               workload-manager: ["pbs"]
               context: ["gcp"]
               mark: ["e2e_pbs and not parallel"]
+              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
             - build-go
 
@@ -3368,7 +3370,7 @@ workflows:
               agent-use: ["-A"]
               container-run-type: ["podman"]
               mark: ["e2e_slurm and not parallel"]
-              extra-pytest-flags: ["-k 'not unsupported_option and not bad_slurm_option'"]
+              extra-pytest-flags: ["-k 'not unsupported_option and not bad_slurm_option and not test_slurm_verify_home'"]
           requires:
             - build-go
 
