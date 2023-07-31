@@ -41,6 +41,7 @@ _INTEG_MARKERS = {
     "managed_devcluster",
     "port_registry",
     "model_hub_mmdetection_quarantine",
+    "nightly_quarantine",
     "det_deploy_local_quarantine",
 }
 

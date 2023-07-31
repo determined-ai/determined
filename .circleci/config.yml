@@ -3356,6 +3356,14 @@ workflows:
               cluster-id-prefix: ["nightly"]
               mark: ["nightly"]
       - test-e2e-aws:
+          name: test-e2e-gpu-nightly-quarantine
+          context: aws
+          matrix:
+            parameters:
+              parallelism: [2]
+              cluster-id-prefix: ["nightly-quarantine"]
+              mark: ["nightly_quarantine"]
+      - test-e2e-aws:
           name: test-e2e-gpu-distributed
           context: aws
           matrix:

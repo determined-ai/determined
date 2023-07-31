@@ -68,7 +68,7 @@ def test_gfl_distributed_fake() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_mmdetection
+@pytest.mark.model_hub_mmdetection_quarantine
 def test_yolo_distributed_fake() -> None:
     example_path = conf.fixtures_path("mmdetection")
     config = conf.load_config(os.path.join(example_path, "distributed_fake_data.yaml"))
