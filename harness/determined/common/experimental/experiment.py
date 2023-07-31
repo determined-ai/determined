@@ -67,8 +67,7 @@ class ExperimentOrderBy(enum.Enum):
 
 
 class Experiment:
-    """
-    A class representing an Experiment object.
+    """A class representing an Experiment object.
 
     An Experiment object is usually obtained from
     ``determined.experimental.client.create_experiment()``
@@ -80,12 +79,18 @@ class Experiment:
         session: HTTP request session.
         config: (Mutable, Optional[Dict]) Experiment config for the experiment.
         state: (Mutable, Optional[experimentv1State) State of the experiment.
+        archived: (Mutable, bool) True if experiment is archived, else false.
+        name: (Mutable, str) Human-friendly name of the experiment.
+        progress: (Mutable, float) Completion progress of experiment in range (0, 1.0) where 1.0
+            is 100% completion.
+        description: (Mutable, string) Description of the experiment.
+        notes: (Mutable, str) Notes for the experiment.
 
     Note:
         All attributes are cached by default.
 
-        The `config` and `state` attributes are mutable and may be changed by methods that update
-        these values, either automatically (eg. `wait()`) or explicitly with `reload()`.
+        Some attributes are mutable and may be changed by methods that update these values,
+        either automatically (eg. `wait()`) or explicitly with `reload()`.
     """
 
     def __init__(
@@ -99,6 +104,11 @@ class Experiment:
         # These properties may be mutable and will be set by _hydrate()
         self.config: Optional[Dict[str, Any]] = None
         self.state: Optional[bindings.experimentv1State] = None
+        self.archived: Optional[bool] = None
+        self.name: Optional[str] = None
+        self.progress: Optional[float] = None
+        self.description: Optional[str] = None
+        self.notes: Optional[str] = None
 
     @property
     def id(self) -> int:
@@ -107,6 +117,11 @@ class Experiment:
     def _hydrate(self, exp: bindings.v1Experiment) -> None:
         self.config = exp.config
         self.state = exp.state
+        self.archived = exp.archived
+        self.name = exp.name
+        self.progress = exp.progress
+        self.description = exp.description
+        self.notes = exp.notes
 
     def reload(self) -> None:
         """
@@ -115,11 +130,30 @@ class Experiment:
         resp = bindings.get_GetExperiment(self._session, experimentId=self.id).experiment
         self._hydrate(resp)
 
+    def set_name(self, name: str) -> None:
+        """Set (overwrite if existing) name on the experiment."""
+        req_body = bindings.v1PatchExperiment(id=self.id, name=name)
+        resp = bindings.patch_PatchExperiment(self._session, experiment_id=self.id, body=req_body)
+        self.name = resp.experiment.name if resp.experiment else None
+
+    def set_description(self, description: str) -> None:
+        """Set description (overwrite if existing) description on the experiment."""
+        req_body = bindings.v1PatchExperiment(id=self.id, description=description)
+        resp = bindings.patch_PatchExperiment(self._session, experiment_id=self.id, body=req_body)
+        self.description = resp.experiment.description if resp.experiment else None
+
+    def set_notes(self, notes: str) -> None:
+        """Set notes (overwrite if existing) description on the experiment."""
+        req_body = bindings.v1PatchExperiment(id=self.id, notes=notes)
+        resp = bindings.patch_PatchExperiment(self._session, experiment_id=self.id, body=req_body)
+        self.notes = resp.experiment.notes if resp.experiment else None
+
     def activate(self) -> None:
         bindings.post_ActivateExperiment(self._session, id=self._id)
 
     def archive(self) -> None:
         bindings.post_ArchiveExperiment(self._session, id=self._id)
+        self.archived = True
 
     def cancel(self) -> None:
         bindings.post_CancelExperiment(self._session, id=self._id)
@@ -207,6 +241,7 @@ class Experiment:
 
     def unarchive(self) -> None:
         bindings.post_UnarchiveExperiment(self._session, id=self._id)
+        self.archived = False
 
     def wait(self, interval: float = 5.0) -> ExperimentState:
         """
