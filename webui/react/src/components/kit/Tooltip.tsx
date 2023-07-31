@@ -3,8 +3,6 @@ import React, { ReactNode } from 'react';
 
 import { isString } from 'utils/data';
 
-import css from './Tooltip.module.scss';
-
 export type Placement =
   | 'top'
   | 'left'
@@ -43,7 +41,6 @@ const Tooltip: React.FC<TooltipProps> = ({
         autoAdjustOverflow
         mouseEnterDelay={mouseEnterDelay}
         open={open}
-        overlayClassName={css.content}
         placement={placement}
         title={content}
         {...props}
@@ -55,7 +52,6 @@ const Tooltip: React.FC<TooltipProps> = ({
       autoAdjustOverflow
       mouseEnterDelay={mouseEnterDelay}
       open={open}
-      overlayClassName={css.content}
       placement={placement}
       title={content}
       {...props}
