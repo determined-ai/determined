@@ -2212,7 +2212,8 @@ const TooltipsSection: React.FC = () => {
     <ComponentSection id="Tooltips" title="Tooltips">
       <AntDCard>
         <p>
-          A (<code>{'<Tooltip>'}</code>) is used to display a string or component when triggered by interaction (either by click or hover) with a child element.
+          A (<code>{'<Tooltip>'}</code>) is used to display a string or component when triggered by
+          interaction (either by click or hover) with a child element.
         </p>
       </AntDCard>
       <AntDCard title="Usage">
@@ -2284,9 +2285,7 @@ const TooltipsSection: React.FC = () => {
         </div>
         <p>With component content</p>
         <p>
-          <Tooltip
-            content={<Input defaultValue="Test" />}
-            trigger="click">
+          <Tooltip content={<Input defaultValue="Test" />} trigger="click">
             <Button>{'Click to see input'}</Button>
           </Tooltip>
         </p>
