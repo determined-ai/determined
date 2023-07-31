@@ -237,7 +237,6 @@ func (a *apiServer) getProjectColumnsByID(
 							Type:     columnType,
 						})
 					}
-
 				}
 			}
 		}
