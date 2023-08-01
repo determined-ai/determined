@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -x
+
 # Warning: this script is not meant to be ran directly. It is invoked by 'make build'.
 
 # This part of the script ensures that an HPC Launcher installation file is available in the build directory
@@ -8,17 +10,35 @@
 
 # Base URL of the hpe-hpc-launcher release tree to download from if necessary
 ARTIFACT_BASE_URL=https://arti.hpc.amslabs.hpecorp.net/artifactory/analytics-misc-stable-local/release/
+
 # Checks the build directory for any debian files. If there is no launcher debians,
 # the latest launcher version is downloaded. Otherwise, the debian in build/ is used
 CURRENT_VERSION=$(ls build/ | grep hpe-hpc-launcher | grep .deb)
-if [ -z "$CURRENT_VERSION" ]; then
+LATEST_VERSION=$(curl -X GET $ARTIFACT_BASE_URL | sed 's/<[^>]*>//g' | grep "^[1-9]" | tail -n 1 | cut -d/ -f1)
+
+if [ -n "$CURRENT_VERSION" ]; then
+    # If current version exists and it's not the latest version, prompt the user for action
+    if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
+        read -p "Your launcher version is out of date. Do you want to overwrite the outdated version with the new version? (y/n): " answer
+        case ${answer:0:1} in
+            y | Y)
+                echo >&2 "INFO: Downloading hpe-hpc-launcher_${LATEST_VERSION}.deb"
+                rm -rf build/$CURRENT_VERSION
+                wget -P build/ $ARTIFACT_BASE_URL$LATEST_VERSION/rocky_9_0/${LATEST_VERSION: -1}-0_amd64/hpe-hpc-launcher_$LATEST_VERSION-0_amd64.deb
+                CURRENT_VERSION=$(ls build/ | grep hpe-hpc-launcher | grep .deb)
+                ;;
+            *)
+                echo >&2 "INFO: Using existing ${CURRENT_VERSION}"
+                ;;
+        esac
+    else
+        echo >&2 "INFO: Using existing ${CURRENT_VERSION}"
+    fi
+elif [ -z "$CURRENT_VERSION" ]; then
     # Runs a curl command that sorts all of the versions on artifactory and chooses the latest one
-    LATEST_VERSION=$(curl -X GET $ARTIFACT_BASE_URL | sed 's/<[^>]*>//g' | grep "^[1-9]" | tail -n 1 | cut -d/ -f1)
-    echo >&2 "INFO: Downloading hpe-hpc-launcher_$(LATEST_VERSION).deb"
+    echo >&2 "INFO: Downloading hpe-hpc-launcher_${LATEST_VERSION}.deb"
     wget -P build/ $ARTIFACT_BASE_URL$LATEST_VERSION/rocky_9_0/${LATEST_VERSION: -1}-0_amd64/hpe-hpc-launcher_$LATEST_VERSION-0_amd64.deb
     CURRENT_VERSION=$(ls build/ | grep hpe-hpc-launcher | grep .deb)
-else
-    echo >&2 "INFO: Using existing ${CURRENT_VERSION}"
 fi
 
 # This part of the script sets the workload manager as specified by the user

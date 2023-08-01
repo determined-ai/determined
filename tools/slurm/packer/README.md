@@ -8,7 +8,7 @@ It was last built with `Packer v1.8.6`.
 
 ## Packer Initialization
 
-This needs doing once:
+This needs to be done prior to `packer build`:
 
 `packer init tools/slurm/packer`
 
@@ -21,12 +21,12 @@ After the pre-requisite software is installed, one can run `make build WORKLOAD_
 When building a new image for `make slurmcluster WORKLOAD_MANAGER=[type]` the build will use the `hpe-hpc-launcher-*.deb` debian located in `tools/slurm/packer/build`. If there is none present, a script will download and build with the latest launcher version. The value for the generated image (either SLURM or PBS) in `../terraform/images.conf` is automatically updated with the newly built image after the build finishes (depending on the workload manager specified). The workflow for building and updating the image with the latest released launcher should be as follows:
 
 1. Checkout clean branch
-2. make -C tools/slurm/packer clean build
-3. git add  tools/slurm/terraform/images.conf
-4. git commit
+2. `make -C tools/slurm/packer clean build WORKLOAD_MANAGER=[slurm|pbs]`
+3. `git add  tools/slurm/terraform/images.conf`
+4. `git commit`
 5. Post PR to update the default image.
 
-To build with a specific launcher version, put the hpe-hpc-launcher-*.deb in the `tools/slurm/packer/build` directory and run `make -C tools/slurm/packer build`.
+To build with a specific launcher version, put the `hpe-hpc-launcher-*.deb` in the `tools/slurm/packer/build` directory and run `make -C tools/slurm/packer build`.
 
 Make sure you are on a vpn or have credentials to access arti.hpc.amslabs.hpecorp.net to download the latest launcher version.
 
@@ -37,4 +37,6 @@ by committing it and someone picks up your change, by default, `make slurmcluste
 
 # When to do this
 
-Whenever it breaks, or you want to add something.
+Whenever it breaks, or you want to add something. 
+
+This should also be done as part of the release process for each new HPC Launcher version published so that we are always testing with the latest released HPC launcher. Running `packer build` uses the `scripts/generate-pkr-vars.sh` script to automatically detect if the local Launcher version is out of date and prompts the developer if they would like to replace the local outdated version with the newest version. 
