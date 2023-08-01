@@ -321,7 +321,7 @@ export const calculateChartProps = (
   trials: TrialItem[],
   xAxis: XAxisDomain,
   colorMap: MapOfIdsToColors,
-): Loadable<ChartProps> => {
+): Loadable<ChartsProps> => {
   const { metricHasData, metrics, data, isLoaded, selectedMetrics } = metricData;
   const chartedMetrics: Record<string, boolean> = {};
   const out: ChartsProps = [];
