@@ -44,13 +44,13 @@ def _local_container_ids_with_labels() -> Iterator[Tuple[str, str]]:
 
 def _local_container_ids_for_experiment(exp_id: int) -> Iterator[str]:
     for container_id, labels in _local_container_ids_with_labels():
-        if f"/experiments/{exp_id}/" in labels:
+        if f"exp-{exp_id}" in labels:
             yield container_id
 
 
 def _local_container_ids_for_command(command_id: str) -> Iterator[str]:
     for container_id, labels in _local_container_ids_with_labels():
-        if f"/commands/{command_id}/" in labels:
+        if f"cmd-{command_id}" in labels:
             yield container_id
 
 

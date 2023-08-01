@@ -67,7 +67,7 @@ func Acknowledged(id string) bool {
 // Preempt preempts all watchers, marks us as preempted and begins the preemption deadline.
 // The preemption deadline callback can fire until Close is called.
 // ID must be a globally unique identifier for the preemptible.
-func Preempt(id string, timeoutCallback func(error)) {
+func Preempt(id string, timeoutCallback TimeoutFn) {
 	p, ok := preemptibles.Load(id)
 	if !ok {
 		return

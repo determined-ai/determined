@@ -33,8 +33,6 @@ type checkpointGCTask struct {
 	jobID             model.JobID
 	jobSubmissionTime time.Time
 
-	allocation *actor.Ref
-
 	logCtx logger.Context
 }
 
@@ -103,7 +101,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			return fmt.Errorf("resolving resource pool: %w", err)
 		}
 
-		allocation := task.NewAllocation(t.logCtx, sproto.AllocateRequest{
+		err = task.DefaultService.StartAllocation(t.logCtx, sproto.AllocateRequest{
 			TaskID:            t.taskID,
 			JobID:             t.jobID,
 			JobSubmissionTime: t.jobSubmissionTime,
@@ -112,11 +110,14 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,
 			},
-			AllocationRef: ctx.Self(),
-			ResourcePool:  rp,
-		}, t.db, t.rm, t.GCCkptSpec)
-
-		t.allocation, _ = ctx.ActorOf(t.allocationID, allocation)
+			Group:        ctx.Self(),
+			ResourcePool: rp,
+		}, t.db, t.rm, t.GCCkptSpec, ctx.Self().System(), func(ae *task.AllocationExited) {
+			ctx.Tell(ctx.Self(), ae)
+		})
+		if err != nil {
+			return err
+		}
 
 		// t.Base is just a shallow copy of the m.taskSpec on the master, so
 		// use caution when mutating it.
@@ -135,12 +136,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		}
 
 		t.completeTask(ctx)
-	case actor.ChildStopped:
-	case actor.ChildFailed:
-		if msg.Child.Address().Local() == t.allocationID.String() {
-			t.completeTask(ctx)
-			return errors.Wrapf(msg.Error, "checkpoint GC task failed (actor.ChildFailed)")
-		}
 	case actor.PostStop:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

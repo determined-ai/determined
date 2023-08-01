@@ -56,6 +56,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
+		msg.CommandID = string(taskID)
 		if err := createGenericCommandActor(
 			ctx, t.db, t.rm, taskID, model.TaskTypeTensorboard, jobID,
 			model.JobTypeTensorboard, msg,

@@ -24,6 +24,9 @@ var ErrIdle = fmt.Errorf("service is inactive")
 // TickInterval is the interval at which to check the proxy activity.
 var TickInterval = 5 * time.Second
 
+// TimeoutFn is called when the service is idle.
+type TimeoutFn func(context.Context, error)
+
 // Watcher watches the proxy activity to handle a task actor idle timeout.
 type Watcher struct {
 	// System dependencies.
@@ -31,7 +34,7 @@ type Watcher struct {
 
 	// Configuration.
 	cfg    sproto.IdleTimeoutConfig
-	action func(error)
+	action TimeoutFn
 
 	// Mutable internal state.
 	mu                   sync.Mutex
@@ -40,7 +43,7 @@ type Watcher struct {
 }
 
 // New creates a new idle timeout watcher. The action can be triggered until Close is called.
-func New(cfg sproto.IdleTimeoutConfig, action func(error)) *Watcher {
+func New(cfg sproto.IdleTimeoutConfig, action TimeoutFn) *Watcher {
 	w := &Watcher{
 		syslog: syslog.WithField("id", cfg.ServiceID),
 		cfg:    cfg,
@@ -71,16 +74,17 @@ func (w *Watcher) run(ctx context.Context) {
 	for {
 		select {
 		case <-t.C:
-			if w.tick() {
-				return
-			}
 		case <-ctx.Done():
+			return
+		}
+
+		if w.tick(ctx) {
 			return
 		}
 	}
 }
 
-func (w *Watcher) tick() (done bool) {
+func (w *Watcher) tick(ctx context.Context) (done bool) {
 	var lastActivity *time.Time
 	if w.cfg.UseProxyState {
 		service, ok := proxy.DefaultProxy.Summary(w.cfg.ServiceID)
@@ -114,7 +118,7 @@ func (w *Watcher) tick() (done bool) {
 
 	if time.Now().After(lastActivity.Add(w.cfg.TimeoutDuration)) {
 		err := fmt.Errorf("idle for more than %s: %w", w.cfg.TimeoutDuration.Round(time.Second), ErrIdle)
-		w.action(err)
+		w.action(ctx, err)
 		return true
 	}
 	return false

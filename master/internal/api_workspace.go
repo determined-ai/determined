@@ -509,9 +509,9 @@ func (a *apiServer) deleteWorkspace(
 }
 
 func (a *apiServer) DeleteWorkspace(
-	ctx context.Context, req *apiv1.DeleteWorkspaceRequest) (*apiv1.DeleteWorkspaceResponse,
-	error,
-) {
+	ctx context.Context,
+	req *apiv1.DeleteWorkspaceRequest,
+) (*apiv1.DeleteWorkspaceResponse, error) {
 	_, _, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
 		workspace.AuthZProvider.Get().CanDeleteWorkspace)
 	if err != nil {
