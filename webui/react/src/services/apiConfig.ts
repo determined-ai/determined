@@ -945,16 +945,17 @@ export const timeSeries: DetApi<
   postProcess: (response: Api.V1CompareTrialsResponse) => {
     return response.trials.map(decoder.decodeTrialSummary);
   },
-  request: (params: Service.TimeSeriesParams) =>
-    detApi.Experiments.compareTrials(
+  request: (params: Service.TimeSeriesParams) => {
+    return detApi.Experiments.compareTrials(
       params.trialIds,
       params.maxDatapoints,
-      params.metricNames.map((m) => m.name),
+      params.metricNames.map((metric) => metric.name),
       params.startBatches,
       params.endBatches,
       params.metricType ? Type.metricTypeParamMap[params.metricType] : 'METRIC_TYPE_UNSPECIFIED',
       undefined,
-    ),
+    );
+  },
 };
 
 export const getExperimentFileTree: DetApi<

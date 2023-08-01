@@ -3,6 +3,9 @@ import { Metric, MetricType, WorkloadGroup } from 'types';
 
 import { alphaNumericSorter } from '../utils/sort';
 
+export const METRIC_KEY_DELIMITER = '||||';
+export const METRIC_API_DELIMITER = '/';
+
 /**
  * Metrics are sorted by their type first (alphabetically) followed by their name (alphabetically).
  */
@@ -57,7 +60,7 @@ export const extractMetricValue = (
   metric: OldMetric,
 ): number | undefined => {
   const source = workload[metric.type]?.metrics ?? {};
-  return source[metric.name];
+  return source[metricToKey(metric)];
 };
 
 export const getMetricValue = (
@@ -66,6 +69,11 @@ export const getMetricValue = (
 ): number | undefined => {
   if (!metric || !workload?.metrics) return undefined;
   return workload?.metrics[metric];
+};
+
+export const getMetricName = (metric: string): string => {
+  const position = metric.indexOf(METRIC_API_DELIMITER);
+  return position !== -1 ? metric.substring(position + METRIC_API_DELIMITER.length) : metric;
 };
 
 export const isMetric = (metric?: Metric): metric is Metric => metric !== undefined;
@@ -79,13 +87,26 @@ export const metricToStr = (metric: Metric, truncateLimit = 30): string => {
 };
 
 export const metricToKey = (metric: Metric): string => {
-  return `${metric.type}/${metric.name}`;
+  try {
+    return JSON.stringify(metric);
+  } catch (e) {
+    return `${metric.type}${METRIC_KEY_DELIMITER}${metric.name}`;
+  }
 };
 
-export const metricKeyToMetric = (value: string): Metric | undefined => {
-  const parts = value.split('/');
-  if (parts.length !== 2) return;
-  return { name: parts[1], type: parts[0] };
+export const metricWithTypeToKey = (metric: string, type: string): string => {
+  return metricToKey({ name: metric, type });
+};
+
+export const metricKeyToMetric = (value: string): Metric => {
+  try {
+    return JSON.parse(value);
+  } catch (e) {
+    const parts = value.split(METRIC_KEY_DELIMITER);
+    return parts.length < 2
+      ? { name: value, type: parts[0] ?? 'NO_TYPE' }
+      : { name: parts.slice(1).join(METRIC_KEY_DELIMITER), type: parts[0] };
+  }
 };
 
 export const metricKeyToOldMetric = (value: string): OldMetric | undefined => {
@@ -95,7 +116,7 @@ export const metricKeyToOldMetric = (value: string): OldMetric | undefined => {
   return { name: parts[1], type: parts[0] as MetricType };
 };
 
-export const metricKeyToName = (key: string): string => metricKeyToMetric(key)?.name ?? '';
+export const metricKeyToName = (key: string): string => metricKeyToMetric(key).name;
 
 export const metricKeyToType = (key: string): MetricType | undefined =>
   metricKeyToOldMetric(key)?.type;

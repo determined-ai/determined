@@ -86,7 +86,6 @@ const useMetricNames = (
           return Loaded(
             Array.from(updatedMetricsSet)
               .map((metricKey) => metricKeyToMetric(metricKey))
-              .filter((metric): metric is Metric => !!metric)
               .sort(metricSorter),
           );
         });

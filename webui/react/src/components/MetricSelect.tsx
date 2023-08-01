@@ -2,11 +2,16 @@ import { RefSelectProps } from 'antd/es/select';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import Select, { OptGroup, Option, SelectValue } from 'components/kit/Select';
-import { Metric, MetricType } from 'types';
-import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
+import { Metric } from 'types';
+import {
+  getMetricName,
+  metricKeyToMetric,
+  metricSorter,
+  metricToKey,
+  metricWithTypeToKey,
+} from 'utils/metric';
 
 import BadgeTag from './BadgeTag';
-import MetricBadgeTag from './MetricBadgeTag';
 
 const allOptionId = 'ALL_RESULTS';
 const resetOptionId = 'RESET_RESULTS';
@@ -40,25 +45,28 @@ const MetricSelect: React.FC<Props> = ({
   const [filterString, setFilterString] = useState('');
   const selectRef = useRef<RefSelectProps>(null);
 
+  const metricsByType = useMemo(() => {
+    const groups = metrics.reduce((acc, metric) => {
+      acc[metric.type] = acc[metric.type] || [];
+      acc[metric.type].push(metric.name);
+      return acc;
+    }, {} as Record<string, string[]>);
+    return Object.keys(groups).map((key) => {
+      return { metrics: groups[key], type: key };
+    });
+  }, [metrics]);
+
   const metricValues = useMemo(() => {
     if (multiple && Array.isArray(value)) return value.map((metric) => metricToKey(metric));
     if (!multiple && !Array.isArray(value) && value) return metricToKey(value);
     return undefined;
   }, [multiple, value]);
 
-  const trainingMetrics = useMemo(() => {
-    return metrics.filter((metric) => metric.type === MetricType.Training);
-  }, [metrics]);
-
-  const validationMetrics = useMemo(() => {
-    return metrics.filter((metric) => metric.type === MetricType.Validation);
-  }, [metrics]);
-
   const totalNumMetrics = useMemo(() => {
     return metrics.length;
   }, [metrics]);
 
-  /*
+  /**
    * visibleMetrics should always match the list of metrics that antd displays to
    * the user, including any filtering.
    */
@@ -84,8 +92,6 @@ const MetricSelect: React.FC<Props> = ({
       }
 
       const metric = metricKeyToMetric(newValue as string);
-      if (!metric) return;
-
       if (multiple) {
         const newMetric = Array.isArray(value) ? [...value] : [];
         if (newMetric.indexOf(metric) === -1) newMetric.push(metric);
@@ -109,6 +115,7 @@ const MetricSelect: React.FC<Props> = ({
     },
     [multiple, onChange, value],
   );
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleFiltering = useCallback((search: string, option: any) => {
     if (option.key === allOptionId || option.key === resetOptionId) return true;
@@ -120,13 +127,9 @@ const MetricSelect: React.FC<Props> = ({
     return filterFn(search, metric.name);
   }, []);
 
-  const handleSearchInputChange = (searchInput: string) => {
-    setFilterString(searchInput);
-  };
+  const handleSearchInputChange = (searchInput: string) => setFilterString(searchInput);
 
-  const handleBlur = () => {
-    setFilterString('');
-  };
+  const handleBlur = () => setFilterString('');
 
   const allOption = useMemo(() => {
     const numVisibleOptions = visibleMetrics.length;
@@ -158,30 +161,20 @@ const MetricSelect: React.FC<Props> = ({
         </Option>
       )}
       {multiple && visibleMetrics.length > 1 && allOption}
-      {validationMetrics.length > 0 && (
-        <OptGroup label="Validation Metrics">
-          {validationMetrics.map((key) => {
-            const value = metricToKey(key);
+      {metricsByType.map((group) => (
+        <OptGroup key={group.type} label={group.type}>
+          {group.metrics.map((metric) => {
+            const value = metricWithTypeToKey(metric, group.type);
             return (
               <Option key={value} value={value}>
-                <MetricBadgeTag metric={key} />
+                <BadgeTag label={getMetricName(metric)} tooltip={group.type}>
+                  {group.type.substring(0, 1).toUpperCase()}
+                </BadgeTag>
               </Option>
             );
           })}
         </OptGroup>
-      )}
-      {trainingMetrics.length > 0 && (
-        <OptGroup label="Training Metrics">
-          {trainingMetrics.map((key) => {
-            const value = metricToKey(key);
-            return (
-              <Option key={value} value={value}>
-                <MetricBadgeTag metric={key} />
-              </Option>
-            );
-          })}
-        </OptGroup>
-      )}
+      ))}
     </Select>
   );
 };
