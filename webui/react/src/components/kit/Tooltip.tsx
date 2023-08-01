@@ -1,7 +1,5 @@
-import { Popover as AntdPopover, Tooltip as AntdTooltip } from 'antd';
+import { Tooltip as AntdTooltip } from 'antd';
 import React, { ReactNode } from 'react';
-
-import { isString } from 'utils/data';
 
 export type Placement =
   | 'top'
@@ -22,7 +20,6 @@ export interface TooltipProps {
   content?: ReactNode;
   mouseEnterDelay?: number;
   open?: boolean;
-  onOpenChange?: (open: boolean) => void;
   placement?: Placement;
   trigger?: 'hover' | 'focus' | 'click' | 'contextMenu' | Array<string>;
   showArrow?: boolean;
@@ -35,20 +32,8 @@ const Tooltip: React.FC<TooltipProps> = ({
   placement = 'top',
   ...props
 }: TooltipProps) => {
-  if (isString(content)) {
-    return (
-      <AntdTooltip // use default antd Tooltip styling for string content
-        autoAdjustOverflow
-        mouseEnterDelay={mouseEnterDelay}
-        open={open}
-        placement={placement}
-        title={content}
-        {...props}
-      />
-    );
-  }
   return (
-    <AntdPopover // use default antd Popover styling for component content
+    <AntdTooltip
       autoAdjustOverflow
       mouseEnterDelay={mouseEnterDelay}
       open={open}
@@ -58,4 +43,5 @@ const Tooltip: React.FC<TooltipProps> = ({
     />
   );
 };
+
 export default Tooltip;

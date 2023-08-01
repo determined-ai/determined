@@ -5,8 +5,8 @@ import FilterForm from 'components/FilterForm/components/FilterForm';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import { FormKind } from 'components/FilterForm/components/type';
 import Button from 'components/kit/Button';
+import Dropdown from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
-import Tooltip from 'components/kit/Tooltip';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
 import { Loadable } from 'utils/loadable';
 
@@ -55,7 +55,7 @@ const TableFilter = ({
 
   return (
     <div>
-      <Tooltip
+      <Dropdown
         content={
           <div
             onKeyDown={(e) => {
@@ -68,13 +68,11 @@ const TableFilter = ({
         }
         open={isOpenFilter}
         placement="bottomLeft"
-        showArrow={false}
-        trigger="click"
         onOpenChange={onIsOpenFilterChange}>
         <Button hideChildren={isMobile} icon={<Icon decorative name="filter" />}>
           Filter{fieldCount > 0 && <span>({fieldCount})</span>}
         </Button>
-      </Tooltip>
+      </Dropdown>
     </div>
   );
 };
