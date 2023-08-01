@@ -2,8 +2,7 @@ package internal
 
 import (
 	"context"
-
-	"github.com/pkg/errors"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/pkg/set"
 
@@ -171,22 +170,28 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 }
 
 func (a *apiServer) checkIfPoolIsDefault(poolName string) error {
-	defaultComputePool, err := a.m.rm.GetDefaultComputeResourcePool(a.m.system,
+	defaultComputePool, err := a.m.rm.GetDefaultComputeResourcePool(
+		a.m.system,
 		sproto.GetDefaultComputeResourcePoolRequest{})
 	if err != nil {
 		return err
 	}
 
-	defaultAuxPool, err := a.m.rm.GetDefaultAuxResourcePool(a.m.system,
-		sproto.GetDefaultAuxResourcePoolRequest{})
+	defaultAuxPool, err := a.m.rm.GetDefaultAuxResourcePool(
+		a.m.system,
+		sproto.GetDefaultAuxResourcePoolRequest{},
+	)
 	if err != nil {
 		return err
 	}
 
-	if poolName == defaultComputePool.PoolName ||
-		poolName == defaultAuxPool.PoolName {
-		return errors.Errorf("default resource pool %s cannot be bound to any workspace",
-			poolName)
+	isDefaultCompute := poolName == defaultComputePool.PoolName
+	isDefaultAux := poolName == defaultAuxPool.PoolName
+	if isDefaultCompute || isDefaultAux {
+		return fmt.Errorf(
+			"default resource pool %s cannot be bound to any workspace",
+			poolName,
+		)
 	}
 	return nil
 }
@@ -200,8 +205,8 @@ func (a *apiServer) canUserModifyWorkspaces(ctx context.Context, ids []int32) er
 	if err = workspaceauth.AuthZProvider.Get().CanModifyRPWorkspaceBindings(ctx, *curUser,
 		ids); err != nil {
 		return authz.SubIfUnauthorized(err,
-			errors.Errorf(
-				`current user %q doesn't have permissions to modify resource pool bindings.`,
+			fmt.Errorf(
+				`current user %q doesn't have permissions to modify resource pool bindings`,
 				curUser.Username))
 	}
 	return nil
