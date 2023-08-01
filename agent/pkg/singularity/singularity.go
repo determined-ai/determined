@@ -388,9 +388,6 @@ func (s *SingularityClient) setCommandEnvironment(
 	// current environment.
 	if req.DeviceType == device.CUDA {
 		cudaVisibleDevicesVar := strings.Join(cudaVisibleDevices, ",")
-
-		// NVIDIA_VISIBLE_DEVICES together with options on the singularity/apptainer run
-		// command control the visibility of the GPUs in the container.
 		visibleDevices := fmt.Sprintf("NVIDIA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar)
 		s.log.Trace(visibleDevices)
 		cmd.Env = append(cmd.Env, visibleDevices)
