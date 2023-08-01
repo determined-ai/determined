@@ -36,7 +36,6 @@ import {
 import { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import useMobile from 'hooks/useMobile';
-import usePrevious from 'hooks/usePrevious';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'stores/contexts/UI';
@@ -75,11 +74,9 @@ import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
 
 export interface GlideTableProps {
-  clearSelectionTrigger?: number;
   colorMap: MapOfIdsToColors;
   columnWidths: Record<string, number>;
   comparisonViewOpen?: boolean;
-  excludedExperimentIds: Set<number>;
   data: Loadable<ExperimentWithTrial>[];
   dataTotal: number;
   handleScroll?: (r: Rectangle) => void;
@@ -91,13 +88,13 @@ export interface GlideTableProps {
   project?: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
-  selectedExperimentIds: number[];
+  selection: GridSelection;
+  setSelection: Dispatch<SetStateAction<GridSelection>>;
   setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
-  setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
   selectAll: boolean;
   staticColumns: string[];
   setColumnWidths: (newWidths: Record<string, number>) => void;
-  setSelectAll: Dispatch<SetStateAction<boolean>>;
+  setSelectAll: (arg0: boolean) => void;
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   sorts: Sort[];
   onSortChange: (sorts: Sort[]) => void;
@@ -133,8 +130,8 @@ const rowHeightMap: Record<RowHeight, number> = {
 export const GlideTable: React.FC<GlideTableProps> = ({
   data,
   dataTotal,
-  clearSelectionTrigger,
-  setSelectedExperimentIds,
+  selection,
+  setSelection,
   sortableColumnIds,
   setSortableColumnIds,
   colorMap,
@@ -213,32 +210,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [comparisonViewOpen, pinnedColumnsCount, sortableColumnIds, staticColumns],
   );
 
-  const [selection, setSelection] = React.useState<GridSelection>({
-    columns: CompactSelection.empty(),
-    rows: CompactSelection.empty(),
-  });
-
   // Detect if user just click a row away from current selected group.
   // If this stand alone select is set, use it as the base when doing multi select.
   const [standAloneSelect, setStandAloneSelect] = React.useState<number>();
-
-  useEffect(() => {
-    if (clearSelectionTrigger === 0) return;
-    setSelection({ columns: CompactSelection.empty(), rows: CompactSelection.empty() });
-  }, [clearSelectionTrigger]);
-
-  useEffect(() => {
-    const selectedRowIndices = selection.rows.toArray();
-    setSelectedExperimentIds((prevIds) => {
-      const selectedIds = selectedRowIndices
-        .map((idx) => data?.[idx])
-        .filter((row) => row !== undefined)
-        .filter(Loadable.isLoaded)
-        .map((record) => record.data.experiment.id);
-      if (prevIds === selectedIds) return prevIds;
-      return selectedIds;
-    });
-  }, [selection.rows, setSelectedExperimentIds, data]);
 
   const columnDefs = useMemo<Record<string, ColumnDef>>(
     () =>
@@ -306,28 +280,19 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   );
 
   const deselectAllRows = useCallback(() => {
-    setSelectAll(false);
     setSelection((prev) => ({ ...prev, rows: CompactSelection.empty() }));
-  }, [setSelectAll, setSelection]);
+    setSelectAll(false);
+    setExcludedExperimentIds(new Set());
+  }, [setSelectAll, setSelection, setExcludedExperimentIds]);
 
   const selectAllRows = useCallback(() => {
-    setExcludedExperimentIds(new Set());
-    setSelectAll(true);
     setSelection(({ columns, rows }: GridSelection) => ({
       columns,
       rows: rows.add([0, data.length]),
     }));
+    setExcludedExperimentIds(new Set());
+    setSelectAll(true);
   }, [setSelectAll, setSelection, data, setExcludedExperimentIds]);
-
-  const previousData = usePrevious(data, undefined);
-  useEffect(() => {
-    if (selectAll && previousData && data.length > previousData.length) {
-      setSelection(({ columns, rows }: GridSelection) => ({
-        columns,
-        rows: rows.add([previousData.length, data.length]),
-      }));
-    }
-  }, [data, previousData, selectAll]);
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, { bounds, preventDefault }: HeaderClickedEventArgs) => {
@@ -350,6 +315,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             key: `select-${n}`,
             label: `Select first ${n}`,
             onClick: () => {
+              setSelectAll(false);
               setSelection((s) => ({
                 ...s,
                 rows: CompactSelection.fromSingleSelection([0, n]),
@@ -468,6 +434,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       sortableColumnIds,
       setSortableColumnIds,
       setPinnedColumnsCount,
+      setSelection,
+      setSelectAll,
     ],
   );
 
@@ -598,7 +566,16 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         }
       });
     },
-    [data, columnIds, columnDefs, selection, selectAll, setExcludedExperimentIds, standAloneSelect],
+    [
+      data,
+      columnIds,
+      columnDefs,
+      selection,
+      selectAll,
+      setExcludedExperimentIds,
+      standAloneSelect,
+      setSelection,
+    ],
   );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(

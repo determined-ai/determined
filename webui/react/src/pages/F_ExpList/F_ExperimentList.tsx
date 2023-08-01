@@ -1,4 +1,4 @@
-import { Rectangle } from '@hpe.com/glide-data-grid';
+import { CompactSelection, GridSelection, Rectangle } from '@hpe.com/glide-data-grid';
 import { Space } from 'antd';
 import { isLeft } from 'fp-ts/lib/Either';
 import { observable, useObservable } from 'micro-observables';
@@ -123,6 +123,22 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   });
   const isMobile = useMobile();
 
+  const [selection, setSelection] = React.useState<GridSelection>({
+    columns: CompactSelection.empty(),
+    rows: CompactSelection.empty(),
+  });
+
+  const selectAll = useMemo<boolean>(
+    () => !isLoadingSettings && settings.selectAll,
+    [isLoadingSettings, settings.selectAll],
+  );
+  const setSelectAll = useCallback(
+    (selectAll: boolean) => {
+      updateSettings({ selectAll });
+    },
+    [updateSettings],
+  );
+
   const setPinnedColumnsCount = useCallback(
     (newCount: number) => {
       updateSettings({ pinnedColumnsCount: newCount });
@@ -163,12 +179,18 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, [settings.filterset, isLoadingSettings]);
 
-  const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
-  const [excludedExperimentIds, setExcludedExperimentIds] = useState<Set<number>>(
-    new Set<number>(),
-  );
-  const [selectAll, setSelectAll] = useState(false);
-  const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
+  const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>(() => {
+    if (isLoadingSettings) {
+      return [];
+    }
+    return settings.selectedExperiments;
+  });
+  const [excludedExperimentIds, setExcludedExperimentIds] = useState<Set<number>>(() => {
+    if (isLoadingSettings) {
+      return new Set();
+    }
+    return new Set(settings.excludedExperiments);
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
@@ -178,6 +200,63 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const height =
     containerHeight - 2 * parseInt(getCssVar('--theme-stroke-width')) - (isPagedView ? 40 : 0);
   const [scrollPositionSetCount] = useState(observable(0));
+
+  useMemo(() => {
+    if (isLoading) {
+      return;
+    }
+    let rows = CompactSelection.empty();
+    experiments.forEach((ex, ix) => {
+      if (
+        Loadable.exists(ex, (e) =>
+          selectAll
+            ? !settings.excludedExperiments.some((id) => id === e.experiment.id)
+            : settings.selectedExperiments.some((id) => id === e.experiment.id),
+        ) ||
+        (!Loadable.isLoaded(ex) && selectAll)
+      ) {
+        rows = rows.add(ix);
+      }
+    });
+    setSelection({
+      columns: CompactSelection.empty(),
+      rows: rows,
+    });
+  }, [
+    experiments,
+    selectAll,
+    settings.selectedExperiments,
+    settings.excludedExperiments,
+    isLoading,
+  ]);
+
+  useMemo(() => {
+    if (isLoading) {
+      return;
+    }
+    const selectedRowIndices = selection.rows.toArray();
+    setSelectedExperimentIds((prevIds) => {
+      const selectedIds = selectedRowIndices
+        .map((idx) => experiments?.[idx])
+        .filter((row) => row !== undefined)
+        .filter(Loadable.isLoaded)
+        .map((record) => record.data.experiment.id);
+      if (prevIds === selectedIds) return prevIds;
+      return selectedIds;
+    });
+  }, [selection.rows, setSelectedExperimentIds, experiments, isLoading]);
+
+  useEffect(() => {
+    updateSettings({
+      selectedExperiments: selectedExperimentIds,
+    });
+  }, [updateSettings, selectedExperimentIds]);
+
+  useEffect(() => {
+    updateSettings({
+      excludedExperiments: Array.from(excludedExperimentIds),
+    });
+  }, [updateSettings, excludedExperimentIds]);
 
   const handleScroll = useCallback(
     ({ y, height }: Rectangle) => {
@@ -338,12 +417,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
      * Deselect selected rows since their states may have changed where they
      * are no longer part of the filter criteria.
      */
-    setClearSelectionTrigger((prev) => prev + 1);
+    setSelection({
+      columns: CompactSelection.empty(),
+      rows: CompactSelection.empty(),
+    });
     setSelectAll(false);
 
     // Refetch experiment list to get updates based on batch action.
     await fetchExperiments();
-  }, [fetchExperiments]);
+  }, [fetchExperiments, setSelectAll, setSelection]);
 
   const handleUpdateExperimentList = useCallback(
     (action: BatchAction, successfulIds: number[]) => {
@@ -413,8 +495,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setClearSelectionTrigger((prev) => prev + 1);
         setSelectAll(false);
+        setSelection({
+          columns: CompactSelection.empty(),
+          rows: CompactSelection.empty(),
+        });
       }
     };
     window.addEventListener('keydown', handleEsc);
@@ -422,7 +507,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     return () => {
       window.removeEventListener('keydown', handleEsc);
     };
-  }, []);
+  }, [setSelectAll, setSelection]);
 
   const updateExpListView = useCallback(
     (view: ExpListView) => {
@@ -439,7 +524,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       // Pagination component is assuming starting index of 1.
       if (cPage - 1 !== page) {
         setExperiments(Array(cPageSize).fill(NotLoaded));
-        setClearSelectionTrigger((t) => t + 1);
       }
       setPage(cPage - 1);
     },
@@ -572,13 +656,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               selectedExperiments={selectedExperiments}
               onWidthChange={handleCompareWidthChange}>
               <GlideTable
-                clearSelectionTrigger={clearSelectionTrigger}
                 colorMap={colorMap}
                 columnWidths={settings.columnWidths}
                 comparisonViewOpen={settings.compare}
                 data={experimentsIfLoaded}
                 dataTotal={isPagedView ? experiments.length : Loadable.getOrElse(0, total)}
-                excludedExperimentIds={excludedExperimentIds}
                 formStore={formStore}
                 handleScroll={isPagedView ? undefined : handleScroll}
                 handleUpdateExperimentList={handleUpdateExperimentList}
@@ -590,12 +672,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 rowHeight={globalSettings.rowHeight}
                 scrollPositionSetCount={scrollPositionSetCount}
                 selectAll={selectAll}
-                selectedExperimentIds={selectedExperimentIds}
+                selection={selection}
                 setColumnWidths={handleColumnWidthChange}
                 setExcludedExperimentIds={setExcludedExperimentIds}
                 setPinnedColumnsCount={setPinnedColumnsCount}
                 setSelectAll={setSelectAll}
-                setSelectedExperimentIds={setSelectedExperimentIds}
+                setSelection={setSelection}
                 setSortableColumnIds={setVisibleColumns}
                 sortableColumnIds={columnsIfLoaded}
                 sorts={sorts}

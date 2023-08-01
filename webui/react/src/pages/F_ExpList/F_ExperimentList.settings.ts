@@ -20,10 +20,13 @@ export interface F_ExperimentListSettings {
   columns: string[];
   columnWidths: Record<string, number>;
   compare: boolean;
+  excludedExperiments: number[];
   filterset: string; // save FilterFormSet as string
   sortString: string;
   pageLimit: number;
   pinnedColumnsCount: number;
+  selectAll: boolean;
+  selectedExperiments: Array<number>;
 }
 export const settingsConfigForProject = (id: number): SettingsConfig<F_ExperimentListSettings> => ({
   settings: {
@@ -44,6 +47,12 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       storageKey: 'compare',
       type: boolean,
     },
+    excludedExperiments: {
+      defaultValue: [],
+      skipUrlEncoding: true,
+      storageKey: 'excludedExperiments',
+      type: array(number),
+    },
     filterset: {
       defaultValue: JSON.stringify(INIT_FORMSET),
       skipUrlEncoding: true,
@@ -61,6 +70,18 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       skipUrlEncoding: true,
       storageKey: 'pinnedColumnsCount',
       type: number,
+    },
+    selectAll: {
+      defaultValue: false,
+      skipUrlEncoding: true,
+      storageKey: 'selectAll',
+      type: boolean,
+    },
+    selectedExperiments: {
+      defaultValue: [],
+      skipUrlEncoding: true,
+      storageKey: 'selectedExperiments',
+      type: array(number),
     },
     sortString: {
       defaultValue: '',
