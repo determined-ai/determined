@@ -80,8 +80,13 @@ func (a *apiServer) BindRPToWorkspace(
 				curUser.Username))
 	}
 
+	rpConfigs, err := a.resourcePoolsAsConfigs()
+	if err != nil {
+		return nil, err
+	}
+
 	err = db.AddRPWorkspaceBindings(ctx, allWorkspaceIDs, req.ResourcePoolName,
-		config.GetMasterConfig().ResourceConfig.ResourcePools)
+		rpConfigs)
 	if err != nil {
 		return nil, err
 	}
@@ -118,9 +123,12 @@ func (a *apiServer) OverwriteRPWorkspaceBindings(
 				curUser.Username))
 	}
 
-	masterConfig := config.GetMasterConfig()
+	rpConfigs, err := a.resourcePoolsAsConfigs()
+	if err != nil {
+		return nil, err
+	}
 	err = db.OverwriteRPWorkspaceBindings(ctx, allWorkspaceIDs, req.ResourcePoolName,
-		masterConfig.ResourcePools)
+		rpConfigs)
 	if err != nil {
 		return nil, err
 	}
@@ -161,9 +169,13 @@ func (a *apiServer) UnbindRPFromWorkspace(
 func (a *apiServer) ListWorkspacesBoundToRP(
 	ctx context.Context, req *apiv1.ListWorkspacesBoundToRPRequest,
 ) (*apiv1.ListWorkspacesBoundToRPResponse, error) {
+	rpConfigs, err := a.resourcePoolsAsConfigs()
+	if err != nil {
+		return nil, err
+	}
 	rpWorkspaceBindings, pagination, err := db.ReadWorkspacesBoundToRP(
 		ctx, req.ResourcePoolName, req.Offset, req.Limit,
-		config.GetMasterConfig().ResourcePools,
+		rpConfigs,
 	)
 	if err != nil {
 		return nil, err
@@ -189,6 +201,25 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 	return &apiv1.ListWorkspacesBoundToRPResponse{
 		WorkspaceIds: workspaceIDs, Pagination: pagination,
 	}, nil
+}
+
+func (a *apiServer) resourcePoolsAsConfigs() ([]config.ResourcePoolConfig, error) {
+	resp, err := a.m.rm.GetResourcePools(a.m.system, &apiv1.GetResourcePoolsRequest{})
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil {
+		return []config.ResourcePoolConfig{}, nil
+	}
+
+	var rpConfigs []config.ResourcePoolConfig
+	for _, rp := range resp.ResourcePools {
+		rpConfigs = append(rpConfigs, config.ResourcePoolConfig{
+			PoolName: rp.Name,
+		})
+	}
+
+	return rpConfigs, nil
 }
 
 func combineWorkspaceIDsAndNames(ctx context.Context, ids []int32, names []string,

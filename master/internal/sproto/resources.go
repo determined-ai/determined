@@ -364,13 +364,14 @@ type ResourcesStateChanged struct {
 	ResourcesStopped *ResourcesStopped
 
 	// More granular information about specific resource types.
+	// TODO(DET-9700): This can be removed now.
 	Container *cproto.Container
 }
 
 // FromContainerStateChanged converts an aproto.ContainerStateChanged message to
 // ResourcesStateChanged.
-func FromContainerStateChanged(sc aproto.ContainerStateChanged) ResourcesStateChanged {
-	return ResourcesStateChanged{
+func FromContainerStateChanged(sc aproto.ContainerStateChanged) *ResourcesStateChanged {
+	return &ResourcesStateChanged{
 		ResourcesID:      FromContainerID(sc.Container.ID),
 		ResourcesState:   FromContainerState(sc.Container.State),
 		ResourcesStarted: FromContainerStarted(sc.ContainerStarted),

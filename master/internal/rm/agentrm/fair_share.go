@@ -51,7 +51,7 @@ func (g groupState) String() string {
 		address, g.disabled, g.slotDemand, g.activeSlots, g.offered)
 }
 
-func (f *fairShare) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
+func (f *fairShare) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []model.AllocationID) {
 	return fairshareSchedule(
 		rp.taskList,
 		rp.groups,
@@ -87,9 +87,9 @@ func fairshareSchedule(
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
 	allowHeterogeneousAgentFits bool,
-) ([]*sproto.AllocateRequest, []*actor.Ref) {
+) ([]*sproto.AllocateRequest, []model.AllocationID) {
 	allToAllocate := make([]*sproto.AllocateRequest, 0)
-	allToRelease := make([]*actor.Ref, 0)
+	allToRelease := make([]model.AllocationID, 0)
 
 	for it := taskList.Iterator(); it.Next(); {
 		req := it.Value()
@@ -338,9 +338,9 @@ func calculateSmallestAllocatableTask(state *groupState) (smallest *sproto.Alloc
 func assignTasks(
 	agents map[*actor.Ref]*agentState, states []*groupState, fittingMethod SoftConstraint,
 	allowHetergenousAgentFits bool,
-) ([]*sproto.AllocateRequest, []*actor.Ref) {
+) ([]*sproto.AllocateRequest, []model.AllocationID) {
 	toAllocate := make([]*sproto.AllocateRequest, 0)
-	toRelease := make([]*actor.Ref, 0)
+	toRelease := make([]model.AllocationID, 0)
 
 	for _, state := range states {
 		if state.activeSlots > state.offered {
@@ -349,7 +349,7 @@ func assignTasks(
 			// TODO: We should terminate running tasks more intelligently.
 			for _, req := range state.allocatedReqs {
 				if req.Preemptible {
-					toRelease = append(toRelease, req.AllocationRef)
+					toRelease = append(toRelease, req.AllocationID)
 					state.activeSlots -= req.SlotsNeeded
 					if state.activeSlots <= state.offered {
 						break

@@ -16,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/workspace"
@@ -510,9 +509,9 @@ func (a *apiServer) deleteWorkspace(
 }
 
 func (a *apiServer) DeleteWorkspace(
-	ctx context.Context, req *apiv1.DeleteWorkspaceRequest) (*apiv1.DeleteWorkspaceResponse,
-	error,
-) {
+	ctx context.Context,
+	req *apiv1.DeleteWorkspaceRequest,
+) (*apiv1.DeleteWorkspaceResponse, error) {
 	_, _, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
 		workspace.AuthZProvider.Get().CanDeleteWorkspace)
 	if err != nil {
@@ -649,9 +648,12 @@ func (a *apiServer) ListRPsBoundToWorkspace(
 		return nil, err
 	}
 
-	masterConfig := config.GetMasterConfig()
+	rpConfigs, err := a.resourcePoolsAsConfigs()
+	if err != nil {
+		return nil, err
+	}
 	rpNames, pagination, err := db.ReadRPsAvailableToWorkspace(
-		ctx, req.WorkspaceId, req.Offset, req.Limit, masterConfig.ResourceConfig.ResourcePools,
+		ctx, req.WorkspaceId, req.Offset, req.Limit, rpConfigs,
 	)
 	if err != nil {
 		return nil, err

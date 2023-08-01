@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import ActionDropdown, { Triggers } from 'components/ActionDropdown/ActionDropdown';
 import Icon from 'components/kit/Icon';
+import { DetError } from 'components/kit/internal/types';
 import Section from 'components/Section';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
@@ -112,6 +113,10 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
       // Process job stats response.
       setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));
     } catch (e) {
+      if ((e as DetError)?.publicMessage === 'offset out of bounds' && settings.tableOffset !== 0) {
+        updateSettings({ tableOffset: 0 });
+        return;
+      }
       handleError(e, {
         level: ErrorLevel.Error,
         publicSubject: 'Unable to fetch job queue and stats.',
@@ -121,7 +126,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
     } finally {
       setPageState((cur) => ({ ...cur, isLoading: false }));
     }
-  }, [canceler.signal, selectedRp.name, settings, jobState, topJob]);
+  }, [canceler.signal, selectedRp.name, settings, jobState, topJob, updateSettings]);
 
   useEffect(() => {
     fetchAll();

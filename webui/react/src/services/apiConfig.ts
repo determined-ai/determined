@@ -1021,6 +1021,8 @@ export const getTrialWorkloads: DetApi<
           ? 'METRIC_TYPE_TRAINING'
           : 'METRIC_TYPE_VALIDATION'
         : undefined,
+      undefined,
+      true, // remove deleted checkpoints
     ),
 };
 

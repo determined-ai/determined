@@ -382,7 +382,7 @@ export interface ExperimentConfig {
 /* Experiment */
 
 export const ExperimentAction = {
-  Activate: 'Activate',
+  Activate: 'Resume',
   Archive: 'Archive',
   Cancel: 'Cancel',
   CompareTrials: 'Compare Trials',
@@ -640,7 +640,7 @@ export interface TrialSummary extends TrialItem {
 
 export interface ExperimentItem {
   archived: boolean;
-  checkpointCount?: number;
+  checkpoints?: number;
   checkpointSize?: number;
   config: ExperimentConfig;
   configRaw: RawJson; // Readonly unparsed config object.

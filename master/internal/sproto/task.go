@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
@@ -26,6 +27,7 @@ type (
 		AllocationID      model.AllocationID
 		TaskID            model.TaskID
 		JobID             model.JobID
+		RequestTime       time.Time
 		JobSubmissionTime time.Time
 		// IsUserVisible determines whether the AllocateRequest should
 		// be considered in user-visible reports.
@@ -33,8 +35,7 @@ type (
 		State         SchedulingState
 		Name          string
 		// Allocation actor
-		AllocationRef *actor.Ref
-		Group         *actor.Ref
+		Group *actor.Ref
 
 		// Resource configuration.
 		SlotsNeeded         int
@@ -112,15 +113,73 @@ type (
 		// - true: ok or unknown
 		Fulfillable bool
 	}
-	// AllocationSignal is an interface for signals that can be sent to an allocation.
-	AllocationSignal string
-	// AllocationSignalWithReason is an message for signals that can be sent to an allocation
-	// along with an informational reason about why the signal was sent.
-	AllocationSignalWithReason struct {
-		AllocationSignal    AllocationSignal
-		InformationalReason string
-	}
 )
+
+// ResourcesEvent describes a change in status or state of an allocation's resources.
+type ResourcesEvent interface{ ResourcesEvent() }
+
+// ResourcesReleasedEvent notes when the RM has acknowledged resources are released.
+type ResourcesReleasedEvent struct{}
+
+// ResourcesEvent implements ResourcesEvent.
+func (ResourcesReleasedEvent) ResourcesEvent() {}
+
+// ResourcesEvent implements ResourcesEvent.
+func (*ResourcesAllocated) ResourcesEvent() {}
+
+// ResourcesEvent implements ResourcesEvent.
+func (*InvalidResourcesRequestError) ResourcesEvent() {}
+
+// ResourcesEvent implements ResourcesEvent.
+func (*ReleaseResources) ResourcesEvent() {}
+
+// ResourcesEvent implements ResourcesEvent.
+func (*ResourcesStateChanged) ResourcesEvent() {}
+
+// ResourcesEvent implements ResourcesEvent.
+func (*ResourcesFailure) ResourcesEvent() {}
+
+// ResourcesEvent implements ResourcesEvent.
+func (*ContainerLog) ResourcesEvent() {}
+
+// ResourcesUnsubscribeFn closes a subscription.
+type ResourcesUnsubscribeFn func()
+
+// ResourcesSubscription is a subscription for streaming ResourcesEvents's. It must be closed when
+// you are finished consuming events. Blocking on C forever can cause the publisher to backup
+// and adversely affect the system.
+type ResourcesSubscription struct {
+	// C is never closed, because only the consumer knows, by aggregating events, when events stop.
+	inbox *queue.Queue[ResourcesEvent]
+	unsub ResourcesUnsubscribeFn
+}
+
+// NewAllocationSubscription create a new subcription.
+func NewAllocationSubscription(
+	inbox *queue.Queue[ResourcesEvent],
+	cl ResourcesUnsubscribeFn,
+) *ResourcesSubscription {
+	return &ResourcesSubscription{
+		inbox: inbox,
+		unsub: cl,
+	}
+}
+
+// Get blocks until an event is published for our subscription's topic. When the
+// subscription is closed, ResourcesReleasedEvent is returned.
+func (a *ResourcesSubscription) Get() ResourcesEvent {
+	return a.inbox.Get()
+}
+
+// Close unsubscribes us from further updates.
+func (a *ResourcesSubscription) Close() {
+	a.unsub()
+}
+
+// Len returns the count of pending events.
+func (a *ResourcesSubscription) Len() int {
+	return a.inbox.Len()
+}
 
 // Proto returns the proto representation of ProxyPortConfig.
 func (p *ProxyPortConfig) Proto() *taskv1.ProxyPortConfig {
@@ -176,13 +235,6 @@ func (a *AllocationSummary) Proto() *taskv1.AllocationSummary {
 	return &pbAllocationSummary
 }
 
-const (
-	// KillAllocation is the signal to kill an allocation; analogous to in SIGKILL.
-	KillAllocation AllocationSignal = "kill"
-	// TerminateAllocation is the signal to kill an allocation; analogous to in SIGTERM.
-	TerminateAllocation AllocationSignal = "terminate"
-)
-
 // Incoming task actor messages; task actors must accept these messages.
 type (
 	// ChangeRP notifies the task actor that to set itself for a new resource pool.
@@ -214,10 +266,11 @@ type (
 
 	// ReleaseResources notifies the task actor to release resources.
 	ReleaseResources struct {
-		ResourcePool string
+		Reason string
 		// If specified as true (default false), Requestor wants to force
 		// a preemption attempt instead of an immediate kill.
 		ForcePreemption bool
+		ForceKill       bool
 	}
 	// ResourcesRuntimeInfo is all the inforamation provided at runtime to make a task spec.
 	ResourcesRuntimeInfo struct {
@@ -245,8 +298,8 @@ const (
 )
 
 // Clone clones ResourcesAllocated. Used to not pass mutable refs to other actors.
-func (ra ResourcesAllocated) Clone() ResourcesAllocated {
-	return ResourcesAllocated{
+func (ra ResourcesAllocated) Clone() *ResourcesAllocated {
+	return &ResourcesAllocated{
 		ID:                ra.ID,
 		ResourcePool:      ra.ResourcePool,
 		Resources:         maps.Clone(ra.Resources),
@@ -320,8 +373,8 @@ func (s ResourcesSummary) Slots() int {
 // to start tasks on assigned resources.
 type Resources interface {
 	Summary() ResourcesSummary
-	Start(*actor.Context, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo) error
-	Kill(*actor.Context, logger.Context)
+	Start(*actor.System, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo) error
+	Kill(*actor.System, logger.Context)
 }
 
 // ResourceList is a wrapper for a list of resources.
