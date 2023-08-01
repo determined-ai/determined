@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
+
 	"github.com/google/uuid"
 	echoV4 "github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -683,10 +685,12 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		ctx.Log().Infof("PendingPreemption of %s.  Terminating.", msg.AllocationID)
 		allocReq, ok := m.reqList.TaskByID(msg.AllocationID)
 		if ok {
-			ctx.Tell(allocReq.AllocationRef, sproto.ReleaseResources{ForcePreemption: true})
+			rmevents.Publish(allocReq.AllocationID, &sproto.ReleaseResources{
+				Reason:          "preempted by the scheduler",
+				ForcePreemption: true,
+			})
 		} else {
-			ctx.Log().Errorf("unable to find Allocation actor for AllocationID %s",
-				msg.AllocationID)
+			ctx.Log().Errorf("unable to find Allocation actor for AllocationID %s", msg.AllocationID)
 		}
 
 	case sproto.NotifyContainerRunning:
@@ -748,9 +752,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		_, exist := m.dispatchIDToHPCJobID.Load(msg.DispatchID)
 		if !exist && msg.HPCJobID != "" {
 			hpcJobIDMsg := "HPC Job ID: " + msg.HPCJobID
-			ctx.Tell(task.AllocationRef, sproto.ContainerLog{
-				AuxMessage: &hpcJobIDMsg,
-			})
+			rmevents.Publish(task.AllocationID, &sproto.ContainerLog{AuxMessage: &hpcJobIDMsg})
 			m.dispatchIDToHPCJobID.Store(msg.DispatchID, msg.HPCJobID)
 
 			log.WithField("hpc-job-id", msg.HPCJobID).
@@ -761,7 +763,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		rID := r.Summary().ResourcesID
 
 		task.State = schedulingStateFromDispatchState(msg.State)
-		ctx.Tell(task.AllocationRef, sproto.ResourcesStateChanged{
+		rmevents.Publish(task.AllocationID, &sproto.ResourcesStateChanged{
 			ResourcesID:      rID,
 			ResourcesState:   resourcesStateFromDispatchState(msg.IsPullingImage, msg.State),
 			ResourcesStarted: &sproto.ResourcesStarted{},
@@ -774,9 +776,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			return nil
 		}
 
-		ctx.Tell(task.AllocationRef, sproto.ContainerLog{
-			AuxMessage: &msg.Message,
-		})
+		rmevents.Publish(task.AllocationID, &sproto.ContainerLog{AuxMessage: &msg.Message})
 
 	case DispatchExited:
 		// Perform any necessary accesses to the m.reqList directly in
@@ -853,7 +853,7 @@ func (m *dispatcherResourceManager) dispatchExited(
 	rID := r.Summary().ResourcesID
 
 	if strings.TrimSpace(msg.Message) != "" {
-		ctx.Tell(task.AllocationRef, sproto.ContainerLog{
+		rmevents.Publish(task.AllocationID, &sproto.ContainerLog{
 			AuxMessage: &msg.Message,
 			Level:      ptrs.Ptr("ERROR"),
 		})
@@ -879,7 +879,7 @@ func (m *dispatcherResourceManager) dispatchExited(
 
 	log.Infof("Dispatch exited with exit code %d", msg.ExitCode)
 
-	ctx.Tell(task.AllocationRef, sproto.ResourcesStateChanged{
+	rmevents.Publish(task.AllocationID, &sproto.ResourcesStateChanged{
 		ResourcesID:      rID,
 		ResourcesState:   sproto.Terminated,
 		ResourcesStopped: &stopped,
@@ -1060,7 +1060,7 @@ func (m *dispatcherResourceManager) startLauncherJob(
 		msg.UserConfiguredPriority, m.rmConfig.LauncherContainerRunType)
 
 	if len(warning) > 0 {
-		ctx.Tell(msg.TaskActor, sproto.ContainerLog{
+		rmevents.Publish(msg.AllocationID, &sproto.ContainerLog{
 			AuxMessage: &warning,
 			Level:      ptrs.Ptr("WARNING"),
 		})
@@ -1116,7 +1116,7 @@ func (m *dispatcherResourceManager) startLauncherJob(
 				WithField("description", msg.Spec.Description).
 				Errorf("Launcher did not honor DispatchID assignment of %s.  "+
 					incompMsg, dispatchID)
-			ctx.Tell(req.AllocationRef, sproto.ContainerLog{
+			rmevents.Publish(req.AllocationID, &sproto.ContainerLog{
 				AuxMessage: &incompMsg,
 				Level:      ptrs.Ptr("ERROR"),
 			})
@@ -1230,7 +1230,7 @@ func sendResourceStateChangedErrorResponse(
 		errors.Wrapf(err, errMessageStr).Error(),
 		nil,
 	)
-	ctx.Tell(msg.TaskActor, sproto.ResourcesStateChanged{
+	rmevents.Publish(msg.AllocationID, &sproto.ResourcesStateChanged{
 		ResourcesID: msg.ResourcesID,
 		// Could be a better message("container failed with non-zero exit code")
 		ResourcesState:   sproto.Terminated,
@@ -1607,22 +1607,12 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 }
 
 func (m *dispatcherResourceManager) addTask(ctx *actor.Context, msg sproto.AllocateRequest) {
-	actors.NotifyOnStop(ctx, msg.AllocationRef, sproto.ResourcesReleased{
-		AllocationID: msg.AllocationID,
-	})
-
-	if msg.Group == nil {
-		msg.Group = msg.AllocationRef
-	}
 	m.getOrCreateGroup(ctx, msg.Group)
 	if len(msg.Name) == 0 {
 		msg.Name = "Unnamed-Launcher-Job"
 	}
 
-	ctx.Log().Infof(
-		"resources are requested by %s (Allocation ID: %s)",
-		msg.AllocationRef.Address(), msg.AllocationID,
-	)
+	ctx.Log().Infof("resources are requested by %s (Allocation ID: %s)", msg.Name, msg.AllocationID)
 	m.reqList.AddTask(&msg)
 }
 
@@ -1689,7 +1679,7 @@ func (m *dispatcherResourceManager) assignResources(
 
 	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Resources: allocations}
 	m.reqList.AddAllocationRaw(req.AllocationID, &assigned)
-	req.AllocationRef.System().Tell(req.AllocationRef, assigned)
+	rmevents.Publish(req.AllocationID, assigned.Clone())
 
 	if req.Restore {
 		if len(dispatchID) == 0 {
@@ -1698,7 +1688,7 @@ func (m *dispatcherResourceManager) assignResources(
 				"Unable to locate HPC job on restart.", nil)
 			stopped := sproto.ResourcesStopped{}
 			stopped.Failure = failed
-			ctx.Tell(req.AllocationRef, sproto.ResourcesStateChanged{
+			rmevents.Publish(req.AllocationID, &sproto.ResourcesStateChanged{
 				ResourcesID:      rID,
 				ResourcesState:   sproto.Terminated,
 				ResourcesStopped: &stopped,
@@ -1713,7 +1703,7 @@ func (m *dispatcherResourceManager) assignResources(
 	} else {
 		ctx.Log().
 			WithField("allocation-id", req.AllocationID).
-			WithField("task-handler", req.AllocationRef.Address()).
+			WithField("task-handler", req.Name).
 			Infof("resources assigned")
 	}
 }
@@ -1924,7 +1914,6 @@ type (
 	StartDispatcherResources struct {
 		AllocationID           model.AllocationID
 		ResourcesID            sproto.ResourcesID
-		TaskActor              *actor.Ref
 		Spec                   tasks.TaskSpec
 		UserConfiguredPriority bool
 	}
@@ -1971,7 +1960,7 @@ func (r DispatcherResources) Summary() sproto.ResourcesSummary {
 
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
 func (r DispatcherResources) Start(
-	ctx *actor.Context, _ logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
+	ctx *actor.System, _ logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) error {
 	spec.ResourcesID = string(r.id)
 	spec.AllocationID = string(r.req.AllocationID)
@@ -2000,7 +1989,6 @@ func (r DispatcherResources) Start(
 	ctx.Tell(r.rm, StartDispatcherResources{
 		AllocationID:           r.req.AllocationID,
 		ResourcesID:            r.id,
-		TaskActor:              r.req.AllocationRef,
 		Spec:                   spec,
 		UserConfiguredPriority: userConfiguredPriority,
 	})
@@ -2009,7 +1997,7 @@ func (r DispatcherResources) Start(
 }
 
 // Kill notifies the pods actor that it should stop the pod.
-func (r DispatcherResources) Kill(ctx *actor.Context, _ logger.Context) {
+func (r DispatcherResources) Kill(ctx *actor.System, _ logger.Context) {
 	ctx.Tell(r.rm,
 		KillDispatcherResources{
 			ResourcesID:  r.id,
