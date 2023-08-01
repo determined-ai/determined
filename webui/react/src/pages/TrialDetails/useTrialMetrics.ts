@@ -28,6 +28,7 @@ export interface TrialMetricData {
   scale: Scale;
   setScale: React.Dispatch<React.SetStateAction<Scale>>;
   metricHasData: Record<string, boolean>;
+  selectedMetrics: Metric[];
 }
 
 const summarizedMetricToSeries = (
@@ -36,6 +37,7 @@ const summarizedMetricToSeries = (
 ): {
   data: Record<MetricName, Serie>;
   metricHasData: Record<MetricName, boolean>;
+  selectedMetrics: Metric[];
 } => {
   const rawBatchValuesMap: Record<string, [number, number][]> = {};
   const rawBatchTimesMap: Record<string, [number, number][]> = {};
@@ -87,7 +89,7 @@ const summarizedMetricToSeries = (
       (xAxis) => (trialData?.[key]?.data?.[xAxis]?.length ?? 0) > 0,
     );
   });
-  return { data: trialData, metricHasData };
+  return { data: trialData, metricHasData, selectedMetrics };
 };
 
 export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetricData => {
@@ -120,6 +122,7 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
     useState<Loadable<Record<number, Record<string, Serie>>>>(NotLoaded);
   const [metricHasData, setMetricHasData] = useState<Record<string, boolean>>({});
   const [scale, setScale] = useState<Scale>(Scale.Linear);
+  const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
 
   const previousTrials = usePrevious(trials, []);
 
@@ -131,6 +134,7 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
     if (trials.length === 0) {
       // If there are no trials selected then
       // no data is available.
+      setMetricHasData({});
       setLoadableData(Loaded({}));
       return;
     }
@@ -145,11 +149,16 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
         });
         const newData: Record<number, Record<string, Serie>> = {};
         response.forEach((r) => {
-          const { data: trialData, metricHasData } = summarizedMetricToSeries(r?.metrics, metrics);
+          const {
+            data: trialData,
+            metricHasData,
+            selectedMetrics: s,
+          } = summarizedMetricToSeries(r?.metrics, metrics);
           Object.keys(metricHasData).forEach((key) => {
             metricsHaveData[key] ||= metricHasData[key];
           });
           newData[r.id] = trialData;
+          setSelectedMetrics((prev) => (isEqual(selectedMetrics, s) ? prev : s));
         });
         setLoadableData((prev) =>
           isEqual(Loadable.getOrElse([], prev), newData) ? prev : Loaded(newData),
@@ -163,7 +172,7 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
         message.error('Error fetching metrics');
       }
     }
-  }, [loadableMetrics, metrics, trials, previousTrials]);
+  }, [loadableMetrics, metrics, selectedMetrics, trials, previousTrials]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchTrialSummary()]);
@@ -187,6 +196,7 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
     metricHasData,
     metrics,
     scale,
+    selectedMetrics,
     setScale,
   };
 };
