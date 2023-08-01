@@ -2,10 +2,11 @@ import base64
 import csv
 import inspect
 import json
+import os
 import pathlib
 import sys
 from datetime import timezone
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, TextIO, Union
 
 import dateutil.parser
 import tabulate
@@ -187,14 +188,102 @@ def yes_or_no(prompt: str) -> bool:
         return False
 
 
+COLORS = {
+    "KEY": "blue",
+    "PRIMITIVES": None,  # avoid coloring to common fg or bg colors.
+    "SEPARATORS": "yellow",
+    "STRING": "green",
+}
+
+
+def render_colorized_json(
+    obj: Any, out: TextIO, indent: str = "  ", sort_keys: bool = False
+) -> None:
+    """
+    Render JSON object to output stream with color.
+    """
+
+    def do_render(obj: Any, depth: int = 0) -> None:
+        if obj is None:
+            out.write(termcolor.colored("null", COLORS["PRIMITIVES"]))
+            return
+
+        if isinstance(obj, bool):
+            out.write(termcolor.colored(str(obj).lower(), COLORS["PRIMITIVES"]))
+            return
+
+        if isinstance(obj, str):
+            out.write(termcolor.colored(json.dumps(obj), COLORS["STRING"]))
+            return
+
+        if isinstance(obj, (int, float)):
+            out.write(termcolor.colored(str(obj), COLORS["PRIMITIVES"]))
+            return
+
+        if isinstance(obj, (list, tuple)):
+            if len(obj) == 0:
+                out.write(termcolor.colored("[]", COLORS["SEPARATORS"]))
+                return
+
+            out.write(termcolor.colored("[", COLORS["SEPARATORS"]))
+            first = True
+            for item in obj:
+                if not first:
+                    out.write(termcolor.colored(",", COLORS["SEPARATORS"]))
+                first = False
+                out.write("\n")
+                out.write(indent * (depth + 1))
+                do_render(item, depth + 1)
+            out.write("\n")
+            out.write(indent * depth)
+            out.write(termcolor.colored("]", COLORS["SEPARATORS"]))
+            return
+
+        if isinstance(obj, dict):
+            if len(obj) == 0:
+                out.write(termcolor.colored("{}", COLORS["SEPARATORS"]))
+                return
+
+            out.write(termcolor.colored("{", COLORS["SEPARATORS"]))
+            first = True
+            keys = sorted(obj.keys()) if sort_keys else obj.keys()
+            for key in keys:
+                value = obj[key]
+                if not first:
+                    out.write(termcolor.colored(",", COLORS["SEPARATORS"]))
+                first = False
+                out.write("\n")
+                out.write(indent * (depth + 1))
+                out.write(termcolor.colored(json.dumps(key), COLORS["KEY"]))
+                out.write(termcolor.colored(": ", COLORS["SEPARATORS"]))
+                do_render(value, depth + 1)
+            out.write("\n")
+            out.write(indent * depth)
+            out.write(termcolor.colored("}", COLORS["SEPARATORS"]))
+            return
+
+        raise ValueError(f"unsupported type: {type(obj).__name__}")
+
+    do_render(obj, depth=0)
+    out.write("\n")
+
+
+def _coloring_enabled() -> bool:
+    return sys.stdout.isatty() and os.environ.get("DET_CLI_COLORIZE", "").lower() in ("1", "true")
+
+
 def print_json(data: Union[str, Any]) -> None:
     """
     Print JSON data in a human-readable format.
     """
+    DEFAULT_INDENT = "  "
     try:
         if isinstance(data, str):
             data = json.loads(data)
-        formatted_json = det_util.json_encode(data, sort_keys=True, indent="  ")
+        if _coloring_enabled():
+            render_colorized_json(data, sys.stdout, indent=DEFAULT_INDENT, sort_keys=True)
+            return
+        formatted_json = det_util.json_encode(data, sort_keys=True, indent=DEFAULT_INDENT)
         print(formatted_json)
     except json.decoder.JSONDecodeError:
         print(data)
