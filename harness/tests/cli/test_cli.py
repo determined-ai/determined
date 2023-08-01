@@ -406,30 +406,30 @@ def test_cli_args_exist() -> None:
     assert e.value.code == 0
 
 
-C = namedtuple("Case", ["input", "output", "colors"])
-color_test_cases: List[C] = [
-    C(1, "1", ["PRIMITIVES"]),
-    C(1.0, "1.0", ["PRIMITIVES"]),
-    C(True, "true", ["PRIMITIVES"]),
-    C(False, "false", ["PRIMITIVES"]),
-    C(None, "null", ["PRIMITIVES"]),
-    C([], "[]", ["SEPARATORS"]),
-    C({}, "{}", ["SEPARATORS"]),
-    C((), "[]", ["SEPARATORS"]),
-    C("foo", '"foo"', ["STRING"]),
-    C([1], "[\n  1\n]", ["SEPARATORS", "PRIMITIVES", "SEPARATORS"]),
-    C(
+Case = namedtuple("Case", ["input", "output", "colors"])
+color_test_cases: List[Case] = [
+    Case(1, "1", ["PRIMITIVES"]),
+    Case(1.0, "1.0", ["PRIMITIVES"]),
+    Case(True, "true", ["PRIMITIVES"]),
+    Case(False, "false", ["PRIMITIVES"]),
+    Case(None, "null", ["PRIMITIVES"]),
+    Case([], "[]", ["SEPARATORS"]),
+    Case({}, "{}", ["SEPARATORS"]),
+    Case((), "[]", ["SEPARATORS"]),
+    Case("foo", '"foo"', ["STRING"]),
+    Case([1], "[\n  1\n]", ["SEPARATORS", "PRIMITIVES", "SEPARATORS"]),
+    Case(
         {"foo": 1},
         '{\n  "foo": 1\n}',
         ["SEPARATORS", "KEY", "SEPARATORS", "PRIMITIVES", "SEPARATORS"],
     ),
-    C((1,), "[\n  1\n]", ["SEPARATORS", "PRIMITIVES", "SEPARATORS"]),
+    Case((1,), "[\n  1\n]", ["SEPARATORS", "PRIMITIVES", "SEPARATORS"]),
 ]
 
 
 @mock.patch("termcolor.colored")
 @pytest.mark.parametrize("case", color_test_cases)
-def test_colored_color_values(mocked_colored: mock.Mock, case):
+def test_colored_color_values(mocked_colored: mock.Mock, case: Case) -> None:
     stream = mock.Mock()
     render.render_colorized_json(case.input, stream)
     calls = mocked_colored.mock_calls
@@ -440,7 +440,7 @@ def test_colored_color_values(mocked_colored: mock.Mock, case):
 
 
 @pytest.mark.parametrize("case", color_test_cases)
-def test_colored_str_output(case):
+def test_colored_str_output(case: Case) -> None:
     stream = io.StringIO()
     render.render_colorized_json(case.input, stream, indent="  ")
     assert stream.getvalue() == case.output + "\n"
