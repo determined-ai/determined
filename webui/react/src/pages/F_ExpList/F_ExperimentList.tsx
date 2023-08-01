@@ -202,26 +202,27 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [scrollPositionSetCount] = useState(observable(0));
 
   useEffect(() => {
-    if (experiments.some(Loadable.isLoaded)) {
-      let rows = CompactSelection.empty();
-      experiments.forEach((ex, ix) => {
-        if (
-          Loadable.exists(ex, (e) =>
-            selectAll
-              ? !settings.excludedExperiments.some((id) => id === e.experiment.id)
-              : settings.selectedExperiments.some((id) => id === e.experiment.id),
-          ) ||
-          (!Loadable.isLoaded(ex) && selectAll)
-        ) {
-          rows = rows.add(ix);
-        }
-      });
-      setSelection({
-        columns: CompactSelection.empty(),
-        rows: rows,
-      });
+    if (isLoading) {
+      return;
     }
-  }, [experiments, selectAll, settings.selectedExperiments, settings.excludedExperiments]);
+    let rows = CompactSelection.empty();
+    experiments.forEach((ex, ix) => {
+      if (
+        Loadable.exists(ex, (e) =>
+          selectAll
+            ? !settings.excludedExperiments.some((id) => id === e.experiment.id)
+            : settings.selectedExperiments.some((id) => id === e.experiment.id),
+        ) ||
+        (!Loadable.isLoaded(ex) && selectAll)
+      ) {
+        rows = rows.add(ix);
+      }
+    });
+    setSelection({
+      columns: CompactSelection.empty(),
+      rows: rows,
+    });
+  }, [experiments, selectAll, settings.selectedExperiments, settings.excludedExperiments, isLoading]);
 
   useEffect(() => {
     if (isLoading) {
@@ -235,15 +236,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         .filter(Loadable.isLoaded)
         .map((record) => record.data.experiment.id);
       if (prevIds === selectedIds) return prevIds;
+      // updateSettings({ selectedExperiments: selectedIds });
       return selectedIds;
     });
-  }, [selection.rows, setSelectedExperimentIds, experiments, isLoading]);
-
-  useEffect(() => {
-    updateSettings({
-      selectedExperiments: selectedExperimentIds,
-    });
-  }, [updateSettings, selectedExperimentIds]);
+  }, [selection.rows, setSelectedExperimentIds, experiments, isLoading, updateSettings]);
 
   useEffect(() => {
     updateSettings({
