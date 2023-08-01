@@ -98,7 +98,7 @@ func BunSelectMetricsQuery(metricGroup model.MetricGroup, inclArchived bool) *bu
 		Where("partition_type = ?", pType).
 		Where("archived = ?", inclArchived)
 	if pType == GenericMetric {
-		q.Where("mgroup = ?", metricGroup)
+		q.Where("metric_group = ?", metricGroup)
 	}
 	return q
 }
@@ -158,7 +158,7 @@ WHERE archived = false
 AND total_batches = $1
 AND trial_id = $2
 AND partition_type = $3
-AND mgroup = $4), NULL)
+AND metric_group = $4), NULL)
 FOR UPDATE`,
 		lastProcessedBatch, trialID,
 		customMetricGroupToPartitionType(mGroup), mGroup).Scan(&existingBodyJSON)
@@ -200,7 +200,7 @@ SET metrics = $1
 WHERE archived = false
 AND trial_id = $2
 AND partition_type = $3
-AND mgroup = $4
+AND metric_group = $4
 AND total_batches = $5
 RETURNING id`,
 		*mBody.ToJSONObj(), trialID, pType, mGroup, lastProcessedBatch,
@@ -225,7 +225,7 @@ func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metricsBo
 	//nolint:execinquery // we want to get the id.
 	if err := tx.QueryRowContext(ctx, `
 INSERT INTO metrics
-	(trial_id, trial_run_id, end_time, metrics, total_batches, partition_type, mgroup)
+	(trial_id, trial_run_id, end_time, metrics, total_batches, partition_type, metric_group)
 VALUES
 	($1, $2, now(), $3, $4, $5, $6)
 RETURNING id`,
@@ -293,7 +293,7 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 	if pType == GenericMetric {
 		// Going off of our current schema were looking for custom types in our legacy
 		// metrics tables is pointless.
-		query.Where("mgroup = ?", mGroup)
+		query.Where("metric_group = ?", mGroup)
 	}
 
 	err := query.

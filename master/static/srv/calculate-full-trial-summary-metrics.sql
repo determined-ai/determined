@@ -34,10 +34,10 @@ FROM (
 		SELECT DISTINCT
 		jsonb_object_keys(s.metrics->$2) as name
 		FROM metrics s
-		WHERE s.trial_id = $1 AND partition_type = $3 AND mgroup = $4 AND not archived
+		WHERE s.trial_id = $1 AND partition_type = $3 AND metric_group = $4 AND not archived
 	) names, metrics
 	JOIN trials ON trial_id = trials.id
-	WHERE trials.id = $1 AND metrics.partition_type = $3 AND metrics.mgroup = $4 AND not metrics.archived
+	WHERE trials.id = $1 AND metrics.partition_type = $3 AND metrics.metric_group = $4 AND not metrics.archived
 	GROUP BY name, metric_type, trial_id
 ) typed
 where metric_type IS NOT NULL
@@ -63,7 +63,7 @@ SELECT
 	'number' as metric_type
 FROM numeric_trial_metrics ntm INNER JOIN metrics
 ON metrics.trial_id=ntm.trial_id
-WHERE metrics.metrics->$2->name IS NOT NULL AND metrics.partition_type = $3 AND metrics.mgroup = $4 AND not metrics.archived
+WHERE metrics.metrics->$2->name IS NOT NULL AND metrics.partition_type = $3 AND metrics.metric_group = $4 AND not metrics.archived
 GROUP BY 1, 2
 UNION
 SELECT
@@ -92,7 +92,7 @@ latest_metrics as (
 		) as rank
 	  FROM metrics s
 	  JOIN trials ON s.trial_id = trials.id
-	  WHERE s.trial_id = $1 AND partition_type = $3 AND mgroup = $4 AND not archived
+	  WHERE s.trial_id = $1 AND partition_type = $3 AND metric_group = $4 AND not archived
 	) s, jsonb_each(s.metrics->$2) unpacked
   WHERE s.rank = 1
 ),
