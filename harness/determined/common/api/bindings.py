@@ -15767,6 +15767,7 @@ def get_GetTrialWorkloads(
     metricType: "typing.Optional[v1MetricType]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
+    removeDeletedCheckpoints: "typing.Optional[bool]" = None,
     sortKey: "typing.Optional[str]" = None,
 ) -> "v1GetTrialWorkloadsResponse":
     _params = {
@@ -15777,6 +15778,7 @@ def get_GetTrialWorkloads(
         "metricType": metricType.value if metricType is not None else None,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
+        "removeDeletedCheckpoints": str(removeDeletedCheckpoints).lower() if removeDeletedCheckpoints is not None else None,
         "sortKey": sortKey,
     }
     _resp = session._do_request(
