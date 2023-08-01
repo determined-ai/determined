@@ -36,20 +36,6 @@ func (r *ResourceConfig) ResolveResource() error {
 	return nil
 }
 
-// DefaultResourcePools returns the default resource pool of the resource config.
-func (r ResourceConfig) DefaultResourcePools() (computePool, auxPool string, err error) {
-	if r.ResourceManager == nil ||
-		(r.ResourceManager.AgentRM == nil && r.ResourceManager.KubernetesRM == nil) {
-		return "", "", errors.New("resource manager not set - must resolve config first")
-	}
-	if r.ResourceManager.KubernetesRM != nil {
-		return r.ResourceManager.KubernetesRM.DefaultComputeResourcePool,
-			r.ResourceManager.KubernetesRM.DefaultAuxResourcePool, nil
-	}
-	return r.ResourceManager.AgentRM.DefaultComputeResourcePool,
-		r.ResourceManager.AgentRM.DefaultAuxResourcePool, nil
-}
-
 // Validate implements the check.Validatable interface.
 func (r ResourceConfig) Validate() []error {
 	errs := make([]error, 0)
