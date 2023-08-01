@@ -252,7 +252,6 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
         </div>
       }
       open={open}
-      placement="bottomLeft"
       onOpenChange={handleOpenChange}>
       <Button hideChildren={isMobile} icon={<Icon name="columns" title="column picker" />}>
         Columns

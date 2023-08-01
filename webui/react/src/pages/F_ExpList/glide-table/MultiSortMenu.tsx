@@ -268,7 +268,6 @@ const MultiSortMenu: React.FC<MultiSortProps> = ({
   return (
     <Dropdown
       content={<MultiSort columns={columns} sorts={sorts} onChange={onChange} />}
-      placement="bottomLeft"
       onOpenChange={onSortPopoverOpenChange}>
       <Button hideChildren={isMobile} icon={<SortButtonIcon />}>
         Sort {validSorts.length ? `(${validSorts.length})` : ''}

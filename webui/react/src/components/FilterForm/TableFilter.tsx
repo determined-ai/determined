@@ -67,7 +67,6 @@ const TableFilter = ({
           </div>
         }
         open={isOpenFilter}
-        placement="bottomLeft"
         onOpenChange={onIsOpenFilterChange}>
         <Button hideChildren={isMobile} icon={<Icon decorative name="filter" />}>
           Filter{fieldCount > 0 && <span>({fieldCount})</span>}
