@@ -305,7 +305,8 @@ func (a *allocation) SetProxyAddress(_ context.Context, address string) error {
 	defer a.mu.Unlock()
 
 	if len(a.req.ProxyPorts) == 0 {
-		return ErrBehaviorUnsupported{Behavior: "proxying"}
+		a.syslog.Debug("No ports to proxy. Skipping proxy registration.")
+		return nil
 	}
 	a.model.ProxyAddress = &address
 	if err := a.db.UpdateAllocationProxyAddress(a.model); err != nil {
