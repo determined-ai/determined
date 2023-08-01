@@ -41,7 +41,7 @@ type Params = {
 
 const TabType = {
   Active: 'active',
-  Bindings: 'Bindings',
+  Bindings: 'bindings',
   Configuration: 'configuration',
   Queued: 'queued',
   Stats: 'stats',

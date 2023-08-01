@@ -17,7 +17,6 @@ import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api
 import { maxPoolSlotCapacity } from 'stores/cluster';
 import clusterStore from 'stores/cluster';
 import useUI from 'stores/contexts/UI';
-import determinedStore from 'stores/determinedInfo';
 import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
 import { isDeviceType, JsonObject, ResourcePool } from 'types';
@@ -94,7 +93,6 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
   const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
 
   const descriptionClasses = [css.description];
-  const { rbacEnabled } = useObservable(determinedStore.info);
   const { canManageResourcePoolBindings } = usePermissions();
   const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
   const resourcePoolBindings: number[] = resourcePoolBindingMap.get(pool.name, []);
@@ -179,7 +177,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
           <Suspense fallback={<Spinner center />}>
             <div className={css.body}>
               <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
-              {rpBindingFlagOn && rbacEnabled && resourcePoolBindings.length > 0 && (
+              {rpBindingFlagOn && resourcePoolBindings.length > 0 && (
                 <section className={css.resoucePoolBoundContainer}>
                   <div>Bound to:</div>
                   <div className={css.resoucePoolBoundCount}>
