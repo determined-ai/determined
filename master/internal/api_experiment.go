@@ -2362,9 +2362,7 @@ func (a *apiServer) PutExperimentLabel(ctx context.Context,
 		ModelTableExpr("experiments as e").
 		Model(exp).
 		Apply(getExperimentColumns).
-		Where("e.id = ?", req.ExperimentId).
-		Limit(1)
-
+		Where("e.id = ?", req.ExperimentId)
 	if err = query.Scan(ctx); err != nil {
 		return nil, err
 	}
@@ -2387,13 +2385,12 @@ func (a *apiServer) PutExperimentLabel(ctx context.Context,
 		Set("config = jsonb_set(config, '{labels}', ?, true)", exp.Labels).
 		Where("id = ?", exp.Id).
 		Exec(ctx)
-
 	if err != nil {
-		return nil, errors.Wrapf(err, "error updating experiment %v in database", exp.Id)
+		return nil, fmt.Errorf("error updating experiment %v in database %w", exp.Id, err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		return nil, errors.Wrap(err, "could not commit patch experiment labels transaction")
+		return nil, fmt.Errorf("could not commit patch experiment labels transaction %w", err)
 	}
 
 	return &apiv1.PutExperimentLabelResponse{Labels: exp.Labels}, nil
@@ -2423,8 +2420,7 @@ func (a *apiServer) DeleteExperimentLabel(ctx context.Context,
 		Model(exp).
 		Apply(getExperimentColumns).
 		Where("e.id = ?", req.ExperimentId).
-		For("UPDATE").
-		Limit(1)
+		For("UPDATE")
 	if err = query.Scan(ctx); err != nil {
 		return nil, err
 	}
@@ -2439,13 +2435,11 @@ func (a *apiServer) DeleteExperimentLabel(ctx context.Context,
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 
-	for i, label := range exp.Labels {
-		if label == req.Label {
-			// Remove label from experiment.
-			exp.Labels = append(exp.Labels[:i], exp.Labels[i+1:]...)
-			break
-		}
+	i := slices.Index(exp.Labels, req.Label)
+	if i == -1 {
+		return &apiv1.DeleteExperimentLabelResponse{Labels: exp.Labels}, nil
 	}
+	exp.Labels = slices.Delete(exp.Labels, i, i+1)
 
 	_, err = tx.NewUpdate().Model(modelExp).
 		Set("config = jsonb_set(config, '{labels}', ?, true)", exp.Labels).
@@ -2453,11 +2447,11 @@ func (a *apiServer) DeleteExperimentLabel(ctx context.Context,
 		Exec(ctx)
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "error updating experiment %v in database", exp.Id)
+		return nil, fmt.Errorf("error updating experiment %v in database: %w", exp.Id, err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		return nil, errors.Wrap(err, "could not commit delete experiment labels transaction")
+		return nil, fmt.Errorf("could not commit delete experiment labels transaction: %w", err)
 	}
 
 	return &apiv1.DeleteExperimentLabelResponse{Labels: exp.Labels}, nil
