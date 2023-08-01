@@ -13,14 +13,18 @@ import (
 	"github.com/determined-ai/determined/master/pkg/syncx/mapx"
 )
 
-const DispatchID1 = "dispatchID1"
-const DispatchID2 = "dispatchID2"
-const DispatchID3 = "dispatchID3"
-const DispatchID4 = "dispatchID4"
-const DispatchID5 = "dispatchID5"
+const (
+	DispatchID1 = "dispatchID1"
+	DispatchID2 = "dispatchID2"
+	DispatchID3 = "dispatchID3"
+	DispatchID4 = "dispatchID4"
+	DispatchID5 = "dispatchID5"
+)
 
-const HpcJobID1 = "hpcJobID1"
-const HpcJobID2 = "hpcJobID2"
+const (
+	HpcJobID1 = "hpcJobID1"
+	HpcJobID2 = "hpcJobID2"
+)
 
 const NoneReasonCode = "None"
 

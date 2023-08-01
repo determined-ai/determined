@@ -506,7 +506,8 @@ func (m *launcherMonitor) processReasonCodeForPendingJobs(
 	reasonCode string,
 	reasonDesc string,
 	ctx *actor.Context,
-	job *launcherJob) {
+	job *launcherJob,
+) {
 	// Only log a message for this reason code if we did not already log
 	// it. This avoids logging the same message over and over again.
 	if reasonCode != job.jobPendingReasonCode {
@@ -527,7 +528,8 @@ func (m *launcherMonitor) processReasonCodeForRunningJobs(
 	reasonCode string,
 	reasonDesc string,
 	ctx *actor.Context,
-	job *launcherJob) {
+	job *launcherJob,
+) {
 	// Only log a message for this reason code if we did not already log
 	// it. This avoids logging the same message over and over again.
 	if reasonCode != job.jobPendingReasonCode {
