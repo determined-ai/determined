@@ -5,9 +5,9 @@
 1. Install Terraform following [these instructions](https://developer.hashicorp.com/terraform/downloads).
 2. Download the [GCP CLI](https://cloud.google.com/sdk/docs/install-sdk) and run `gcloud auth application-default login` to get credentials.
 3. Run `make slurmcluster` from the root of the repo and wait (up to 10 minutes) for it to start.
-   - To specify which container run time environment to use, pass in `flags="-c {container_run_type}"` to `make slurmcluster`. Choose from either `singularity` (default), `podman`, or `enroot`.
-   - To specify which workload manager to use, pass in `flags="-w {workload_manager}"` to `make slurmcluster`. Choose from either `slurm` (default) or `pbs`. Note: in specifying the workload manager, `make slurmcluster` will automatically load the appropriate boot disk image (found in `terraform/images.conf`).
-   - By default, all VMs created with `make slurmcluster` will be destroyed after 7200 seconds (2 hours). To sepcify a different amount of time, pass in `flags="-t {time_seconds}"` to `make slurmcluster`.
+   - To specify which container runtime environment to use, pass in `FLAGS="-c {container_run_type}"` to `make slurmcluster`. Choose from either `singularity` (default), `podman`, or `enroot`.
+   - To specify which workload manager to use, pass in `FLAGS="-w {workload_manager}"` to `make slurmcluster`. Choose from either `slurm` (default) or `pbs`. Note: in specifying the workload manager, `make slurmcluster` will automatically load the appropriate boot disk image (found in `terraform/images.conf`).
+   - By default, all VMs created with `make slurmcluster` will be destroyed after 7200 seconds (2 hours). To sepcify a different amount of time, pass in `FLAGS="-t {time_seconds}"` to `make slurmcluster`.
 4. Step 2 will ultimately launch a local devcluster. Use this as you typically would [1].
 5. Release the resources with `make unslurmcluster` when you are done.
 
@@ -51,17 +51,17 @@ with `devcluster` works from here as always.
 
 ## Automatic VM Deletion
 
-By default, each devbox invoked by `make slurmcluster` will automatically delete the VM after two hours of runtime. If you want to override this time limit, one can run `make slurm cluster vmtime=[seconds]`. Where `seconds` is a value between 0 to 315,576,000,000 seconds inclusive. The two hour time limit ensures that devboxes are being deleted if they are not used to prevent excess costs.
+By default, each devbox invoked by `make slurmcluster` will automatically delete the VM after two hours of runtime. If you want to override this time limit, one can run `FLAGS="-t {time_seconds}"`. Where `seconds` is a value between 0 to 10,281,600 seconds inclusive. The two hour time limit ensures that devboxes are being deleted if they are not used to prevent excess costs.
 
 ## Using Slurmcluster with Determined Agents
 
 `make slurmcluster` supports using Determined agents to run jobs. To do this with `make slurmcluster` do the following steps from the `determined-ee/` directory:
 
-1. make -C agent build package
-2. make slurmcluster FLAGS="-A"
-3. gcloud compute scp agent/dist/determined-agent_linux_amd64_v1/determined-agent $USER-dev-box:/home/\$USER --zone us-west1-b
+1. `make -C agent build package`
+2. `make slurmcluster FLAGS="-A"`
+3. `gcloud compute scp agent/dist/determined-agent_linux_amd64_v1/determined-agent $USER-dev-box:/home/\$USER --zone us-west1-b`
 
-The `FLAGS="-A"` in `make slurmcluster` removes the resource_manager section in the slurmcluster.yaml that would otherwise be used. This then defaults to the agent rm and the master waits for agents to connect and provide resources. The scp command brings the determined-agent to the dev-box. $USER will be replaced with your username when initiating GCP.
+The `FLAGS="-A"` in `make slurmcluster` removes the resource_manager section in the slurmcluster.yaml that would otherwise be used. This then defaults to the agent rm and the master waits for agents to connect and provide resources. The scp command brings the determined-agent to the dev-box. `$USER` will be replaced with your username when initiating GCP.
 
 Then, connect to your dev-box. This can be done with `make -C tools/slurm/terraform connect` or `gcloud compute ssh $USER-dev-box --project=determined-ai --zone=us-west1-b`. Input the following command on the devbox in order to allocate resources on slurm.
 
@@ -96,7 +96,7 @@ pytest --capture=tee-sys -vv \
 
 ## On CircleCI
 
-Upon each commit and push, CircleCI invokes three test suites: `test-e2e-singularity-gcp`, `test-e2e-podman-gcp`, and `test-e2e-enroot-gcp`. Each of these CircleCI jobs actually invoke the same exact tests, only in different container runtime environments (see section 3.1 of [Quick start](#quick-start)). The pytests on CircleCI are invoked by the following command [2]:
+Upon each commit and push, CircleCI invokes three test suites: `test-e2e-singularity-gcp`, `test-e2e-podman-gcp`, and `test-e2e-enroot-gcp`. Each of these CircleCI jobs actually invoke the same exact tests, only in different container runtime environments (see section 3.1 of [Quick start](#quick-start)). The pytests on CircleCI are invoked by the following command:
 
 ```
 pytest --capture=tee-sys -vv \
@@ -109,7 +109,6 @@ pytest --capture=tee-sys -vv \
 --junit-xml="/tmp/test-results/e2e/tests.xml" \
 -k 'not cifar10_pytorch_distributed'
 ```
-[2]: When invoking `make slurmcluster flags="-w pbs"`, append `and not test_docker_image and not test_bad_slurm_option and not test_launch_layer_exit` to the end of the existing `-k` argument string. These tests do not currently run on PBS instances.
 
 This invocation specifies that all tests are to be run via the remote launcher running on `localhost:8080`. The command specifies that all pytests with the `e2e_slurm` mark should be run except those that have the `parallel` mark as well (this is due to the fact that there are no GPUs and only 1 node on the GCP compute instances). The `and not cifar10_pytorch_distributed` specifies also not to run the `cifar10_pytorch_distributed` test. This test is omitted because it takes too long to run on instances with only one node.
 
