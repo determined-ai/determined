@@ -14207,7 +14207,7 @@ def post_EnableSlot(
 def get_ExpMetricNames(
     session: "api.Session",
     *,
-    ids: "typing.Optional[typing.Sequence[int]]" = None,
+    ids: "typing.Sequence[int]",
     periodSeconds: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1ExpMetricNamesResponse]":
     _params = {
