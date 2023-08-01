@@ -193,7 +193,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
           <Form.Item label={USERS_LABEL} name={USERS_NAME}>
             <Select mode="multiple" optionFilterProp="children" placeholder="Add Users" showSearch>
               {users?.map((u) => (
-                <Select.Option key={u.id} value={u.id}>
+                <Select.Option disabled={!u.isActive} key={u.id} value={u.id}>
                   {getDisplayName(u)}
                 </Select.Option>
               ))}
