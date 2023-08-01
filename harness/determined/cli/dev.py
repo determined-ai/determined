@@ -178,22 +178,14 @@ def _parse_args_to_kwargs(args: Namespace, params: List[inspect.Parameter]) -> D
     return kwargs
 
 
-def _print_resposne(d: Any, args: Namespace) -> None:
+def _print_resposne(d: Any) -> None:
     if d is None:
         return
     if hasattr(d, "to_json"):
-        d = d.to_json()
-        breakpoint()
-        if len(d) == 1 and not args.disable_auto_expand:
-            # many of our endpoints, due to how proto messages are defined, return a
-            # dict with a single key. if that's the case, we might want to just print that value.
-            val = next(iter(d.values()))
-            if isinstance(val, dict):
-                d = val
-        cli.render.print_json(d)
+        cli.render.print_json(d.to_json())
     elif inspect.isgenerator(d):
         for v in d:
-            _print_resposne(v, args)
+            _print_resposne(v)
     else:
         print(d)
 
@@ -234,7 +226,7 @@ def call_bindings(args: Namespace) -> None:
             e,
         )
 
-    _print_resposne(rv, args)
+    _print_resposne(rv)
 
 
 args_description = [
@@ -281,11 +273,6 @@ args_description = [
                         "call a function from bindings",
                         [
                             Arg("name", help="name of the function to call"),
-                            Arg(
-                                "--disable-auto-expand",
-                                action="store_true",
-                                help="disable auto expansion of the response",
-                            ),
                             Arg(
                                 "args",
                                 nargs=argparse.REMAINDER,
