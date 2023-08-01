@@ -41,7 +41,7 @@ type Params = {
 
 const TabType = {
   Active: 'active',
-  Bindings: 'Bindings',
+  Bindings: 'bindings',
   Configuration: 'configuration',
   Queued: 'queued',
   Stats: 'stats',
@@ -180,7 +180,7 @@ const ResourcepoolDetailInner: React.FC = () => {
 
     if (rpBindingFlagOn && canManageResourcePoolBindings) {
       tabItems.push({
-        children: <ResourcePoolBindings poolName={pool.name} />,
+        children: <ResourcePoolBindings pool={pool} />,
         key: TabType.Bindings,
         label: 'Bindings',
       });
