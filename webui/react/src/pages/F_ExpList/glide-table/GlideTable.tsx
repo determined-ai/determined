@@ -435,6 +435,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       setSortableColumnIds,
       setPinnedColumnsCount,
       setSelection,
+      setSelectAll,
     ],
   );
 

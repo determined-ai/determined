@@ -338,7 +338,7 @@ const TableActionBar: React.FC<Props> = ({
     )}`;
 
     if (selectAll) {
-      const all = !excludedExperimentIds?.size ? 'All ' : ''; 
+      const all = !excludedExperimentIds?.size ? 'All ' : '';
       const totalSelected = Loadable.isLoaded(total)
         ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString() + ' '
         : '';

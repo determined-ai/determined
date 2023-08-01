@@ -201,7 +201,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     containerHeight - 2 * parseInt(getCssVar('--theme-stroke-width')) - (isPagedView ? 40 : 0);
   const [scrollPositionSetCount] = useState(observable(0));
 
-  useEffect(() => {
+  useMemo(() => {
     if (isLoading) {
       return;
     }
@@ -222,9 +222,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       columns: CompactSelection.empty(),
       rows: rows,
     });
-  }, [experiments, selectAll, settings.selectedExperiments, settings.excludedExperiments, isLoading]);
+  }, [
+    experiments,
+    selectAll,
+    settings.selectedExperiments,
+    settings.excludedExperiments,
+    isLoading,
+  ]);
 
-  useEffect(() => {
+  useMemo(() => {
     if (isLoading) {
       return;
     }
@@ -236,10 +242,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         .filter(Loadable.isLoaded)
         .map((record) => record.data.experiment.id);
       if (prevIds === selectedIds) return prevIds;
-      // updateSettings({ selectedExperiments: selectedIds });
       return selectedIds;
     });
-  }, [selection.rows, setSelectedExperimentIds, experiments, isLoading, updateSettings]);
+  }, [selection.rows, setSelectedExperimentIds, experiments, isLoading]);
+
+  useEffect(() => {
+    updateSettings({
+      selectedExperiments: selectedExperimentIds,
+    });
+  }, [updateSettings, selectedExperimentIds]);
 
   useEffect(() => {
     updateSettings({
