@@ -9,3 +9,18 @@
 /master   @determined-ai/backend
 /agent    @determined-ai/backend
 /proto    @determined-ai/backend
+
+# Harness is mapped to ml-sys by default, except for `cli`, `deploy`,
+# and auto-generated bindings and version files.
+/harness  @determined-ai/ml-sys
+/harness/determined/deploy
+/harness/determined/cli
+/harness/tests/cli
+/harness/determined/common/api/bindings.py
+/harness/determined/__version__.py
+
+/schemas                          @determined-ai/ml-sys
+/bindings/generate_bindings_py.py @determined-ai/ml-sys
+/e2e_tests/tests/*.py             @determined-ai/ml-sys
+/e2e_tests/tests/experiment/      @determined-ai/ml-sys
+/e2e_tests/tests/nightly/         @determined-ai/ml-sys
