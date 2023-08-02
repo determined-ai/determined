@@ -1,10 +1,10 @@
 WITH const AS (
-    SELECT
-        daterange($1 :: date, $2 :: date, '[]') AS period
+    SELECT daterange($1::date, $2::date, '[]') AS period
 ),
+
 months AS (
     SELECT
-        date_trunc('month', resource_aggregates.date :: date) AT time zone 'UTC' AS period_start,
+        date_trunc('month', resource_aggregates.date::date) AT TIME ZONE 'UTC' AS period_start,
         aggregation_type,
         resource_aggregates.aggregation_key,
         sum(seconds) AS seconds
@@ -15,22 +15,22 @@ months AS (
         -- `@>` determines whether the range contains the time.
         const.period @> resource_aggregates.date
     GROUP BY
-        date_trunc('month', resource_aggregates.date :: date) AT time zone 'UTC',
+        date_trunc('month', resource_aggregates.date::date) AT TIME ZONE 'UTC',
         resource_aggregates.aggregation_type,
         resource_aggregates.aggregation_key
 ),
+
 starts AS (
-    SELECT
-        DISTINCT(period_start) AS period_start
+    SELECT DISTINCT period_start AS period_start
     FROM
         months
 )
+
 SELECT
     to_char(period_start, 'YYYY-MM') AS period_start,
     'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY' AS period,
     (
-        SELECT
-            seconds
+        SELECT seconds
         FROM
             months
         WHERE
@@ -40,8 +40,7 @@ SELECT
             1
     ) AS seconds,
     (
-        SELECT
-            jsonb_object_agg(aggregation_key, seconds)
+        SELECT jsonb_object_agg(aggregation_key, seconds)
         FROM
             months
         WHERE
@@ -49,8 +48,7 @@ SELECT
             AND months.period_start = starts.period_start
     ) AS by_username,
     (
-        SELECT
-            jsonb_object_agg(aggregation_key, seconds)
+        SELECT jsonb_object_agg(aggregation_key, seconds)
         FROM
             months
         WHERE
@@ -58,8 +56,7 @@ SELECT
             AND months.period_start = starts.period_start
     ) AS by_experiment_label,
     (
-        SELECT
-            jsonb_object_agg(aggregation_key, seconds)
+        SELECT jsonb_object_agg(aggregation_key, seconds)
         FROM
             months
         WHERE

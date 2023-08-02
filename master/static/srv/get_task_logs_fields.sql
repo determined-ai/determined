@@ -2,8 +2,7 @@ SELECT
     array_to_json(
         array_remove(
             array(
-                SELECT
-                    DISTINCT allocation_id
+                SELECT DISTINCT allocation_id
                 FROM
                     task_logs
                 WHERE
@@ -15,8 +14,7 @@ SELECT
     array_to_json(
         array_remove(
             array(
-                SELECT
-                    DISTINCT agent_id
+                SELECT DISTINCT agent_id
                 FROM
                     task_logs
                 WHERE
@@ -28,8 +26,7 @@ SELECT
     array_to_json(
         array_remove(
             array(
-                SELECT
-                    DISTINCT container_id
+                SELECT DISTINCT container_id
                 FROM
                     task_logs
                 WHERE
@@ -41,8 +38,7 @@ SELECT
     array_to_json(
         array_remove(
             array(
-                SELECT
-                    DISTINCT rank_id
+                SELECT DISTINCT rank_id
                 FROM
                     task_logs
                 WHERE
@@ -54,8 +50,7 @@ SELECT
     array_to_json(
         array_remove(
             array(
-                SELECT
-                    DISTINCT stdtype
+                SELECT DISTINCT stdtype
                 FROM
                     task_logs
                 WHERE
@@ -67,8 +62,7 @@ SELECT
     array_to_json(
         array_remove(
             array(
-                SELECT
-                    DISTINCT source
+                SELECT DISTINCT source
                 FROM
                     task_logs
                 WHERE
