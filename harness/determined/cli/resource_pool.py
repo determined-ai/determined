@@ -92,7 +92,7 @@ def list_resource_pools(args: Namespace) -> None:
 
     render.tabulate_or_csv(
         headers=["resource pool"],
-        values=[[rp.name for r in resps for rp in r.resourcePools]],
+        values=[[rp.name] for r in resps for rp in r.resourcePools],
         as_csv=False,
     )
 
