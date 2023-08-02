@@ -1,9 +1,12 @@
 from argparse import ONE_OR_MORE, Namespace
+from pathlib import Path
 from typing import Any, List
 
+from determined import cli
 from determined.cli import default_pagination_args, render, setup_session
-from determined.common.api import authentication, bindings, read_paginated
-from determined.common.declarative_argparse import Arg, Cmd
+from determined.common.api import authentication, bindings
+from determined.common.declarative_argparse import Arg, Cmd, Group
+from determined.common.experimental import resource_pool
 
 
 @authentication.required
@@ -80,41 +83,38 @@ def list_workspaces(args: Namespace) -> None:
 @authentication.required
 def list_resource_pools(args: Namespace) -> None:
     session = setup_session(args)
+    resource_pools = resource_pool._list(session, args.offset, args.limit, args.pages)
 
-    def get_with_offset(offset: int) -> bindings.v1GetResourcePoolsResponse:
-        return bindings.get_GetResourcePools(
-            session=session,
-            offset=offset,
-            limit=args.limit,
-        )
+    if args.json:
+        cli.render.print_json([r.to_json() for r in resource_pools])
+        return
 
-    resps = read_paginated(get_with_offset, offset=args.offset, pages=args.pages)
-
-    render.tabulate_or_csv(
-        headers=[
-            "resource pool",
-            "Num of Agents",
-            "Slots per Agent",
-            "Slots Available",
-            "Slot Used",
-            "Default Compute Pool",
-            "Default Aux Pool",
-        ],
-        values=[
-            [
-                rp.name,
-                rp.numAgents,
-                rp.slotsPerAgent,
-                rp.slotsAvailable,
-                rp.slotsUsed,
-                rp.defaultComputePool,
-                rp.defaultAuxPool,
-            ]
-            for r in resps
-            for rp in r.resourcePools
-        ],
-        as_csv=False,
-    )
+    headers = [
+        "resource pool",
+        "Num of Agents",
+        "Slots per Agent",
+        "Slots Available",
+        "Slot Used",
+        "Default Compute Pool",
+        "Default Aux Pool",
+    ]
+    values = [
+        [
+            r.name,
+            r.numAgents,
+            r.slotsPerAgent,
+            r.slotsAvailable,
+            r.slotsUsed,
+            r.defaultComputePool,
+            r.defaultAuxPool,
+        ]
+        for r in resource_pools
+    ]
+    if not args.outdir:
+        outfile = None
+    else:
+        outfile = args.outdir.joinpath("resource_pools.csv")
+    render.tabulate_or_csv(headers, values, args.csv, outfile)
 
 
 args_description = [
@@ -187,7 +187,14 @@ args_description = [
                 "list ls",
                 list_resource_pools,
                 "list resource pools",
-                [*default_pagination_args],
+                [
+                    *default_pagination_args,
+                    Group(
+                        cli.output_format_args["csv"],
+                        cli.output_format_args["json"],
+                        Arg("--outdir", type=Path, help="directory to save output"),
+                    ),
+                ],
                 is_default=True,
             ),
         ],

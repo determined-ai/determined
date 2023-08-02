@@ -107,3 +107,23 @@ class ResourcePool:
         bindings.put_OverwriteRPWorkspaceBindings(
             self._session, body=req, resourcePoolName=self.name
         )
+
+
+def _list(
+    session: api.Session,
+    offset: int = 0,
+    limit: int = 200,
+    pages: api.PageOpts = api.PageOpts.all,
+) -> List[bindings.v1ResourcePool]:
+    """List resource pools available to the cluster."""
+
+    def get_with_offset(inner_offset: int) -> bindings.v1GetResourcePoolsResponse:
+        return bindings.get_GetResourcePools(
+            session=session,
+            offset=inner_offset,
+            limit=limit,
+        )
+
+    resps = api.read_paginated(get_with_offset, offset, pages)
+
+    return [rp for r in resps if r.resourcePools is not None for rp in r.resourcePools]
