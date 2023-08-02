@@ -121,7 +121,7 @@ check-all: check check-sql
 fmt-sql:
 	# there are complaints from this tool that cannot be auto-fixed
 	# and we ignore them for now.
-	# exclude old migrations before 2023/07/01
+	# exclude old migrations before 2023/08/01
 	find . -name "*.sql" | grep -Ev 'migrations\/202([0-2].*|30[0-7])' | xargs sqlfluff format -p 0 --dialect postgres > /dev/null || exit 0
 	# sqlfluff fix -p 0 --dialect postgres . || exit 0
 
