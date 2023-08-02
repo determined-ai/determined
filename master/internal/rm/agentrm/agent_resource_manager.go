@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -380,6 +381,9 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 	case taskContainerDefaults:
 		ctx.Respond(a.getTaskContainerDefaults(msg))
+
+	case sproto.GetNonDaiJobs:
+		return rmerrors.ErrNotSupported
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

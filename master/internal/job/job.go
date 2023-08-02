@@ -102,12 +102,20 @@ func (j *Manager) GetJobs(
 		return nil, err
 	}
 
-	nonDaiJobs, _ := j.rm.GetNonDaiJobs(j.system, sproto.GetNonDaiJobs{
+	jobCount := len(jobQ)
+
+	// Try to fetch Non-DAI jobs if supported by the Resource Manager.
+	// If the Resource Manager returned Non-DAI jobs, increase the job count.
+	// Otherwise, we do not show any Non-DAI jobs.
+	nonDaiJobs, err := j.rm.GetNonDaiJobs(j.system, sproto.GetNonDaiJobs{
 		ResourcePool: resourcePool,
 	})
+	if err == nil {
+		jobCount += len(nonDaiJobs)
+	}
 
 	// Merge the results.
-	jobsInRM := make([]*jobv1.Job, 0, len(jobQ)+len(nonDaiJobs))
+	jobsInRM := make([]*jobv1.Job, 0, jobCount)
 	for jID, jRMInfo := range jobQ {
 		v1Job, ok := jobs[jID]
 		if ok {
@@ -139,7 +147,10 @@ func (j *Manager) GetJobs(
 		return jobsInRM[i].JobId < jobsInRM[j].JobId
 	})
 
-	jobsInRM = append(jobsInRM, nonDaiJobs...)
+	// Append any Non-DAI jobs at the bottom of the list.
+	if len(nonDaiJobs) > 0 {
+		jobsInRM = append(jobsInRM, nonDaiJobs...)
+	}
 
 	return jobsInRM, nil
 }

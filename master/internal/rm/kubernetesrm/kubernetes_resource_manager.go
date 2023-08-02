@@ -446,6 +446,9 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		resp := ctx.Ask(k.podsActor, msg)
 		ctx.Respond(resp.Get())
 
+	case sproto.GetNonDaiJobs:
+		return rmerrors.ErrNotSupported
+
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
