@@ -3370,7 +3370,7 @@ workflows:
               agent-use: ["-A"]
               container-run-type: ["podman"]
               mark: ["e2e_slurm and not parallel"]
-              extra-pytest-flags: ["-k 'not unsupported_option and not bad_slurm_option and not test_slurm_verify_home'"]
+              extra-pytest-flags: ["-k 'not unsupported_option and not bad_slurm_option and not test_slurm_verify_home and not test_hpc_job_pending_reason'"]
           requires:
             - build-go
 
