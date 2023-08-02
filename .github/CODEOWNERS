@@ -22,5 +22,6 @@
 /schemas                          @determined-ai/ml-sys
 /bindings/generate_bindings_py.py @determined-ai/ml-sys
 /e2e_tests/tests/*.py             @determined-ai/ml-sys
+/e2e_tests/tests/requirements.txt @determined-ai/ml-sys
 /e2e_tests/tests/experiment/      @determined-ai/ml-sys
 /e2e_tests/tests/nightly/         @determined-ai/ml-sys
