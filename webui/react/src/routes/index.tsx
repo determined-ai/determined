@@ -1,31 +1,29 @@
 import React from 'react';
 
-import TaskList from 'components/TaskList';
 import Admin from 'pages/Admin';
 import ClusterLogs from 'pages/ClusterLogs';
 import Clusters from 'pages/Clusters';
 import Dashboard from 'pages/Dashboard';
 import DefaultRoute from 'pages/DefaultRoute';
 import Deprecated from 'pages/Deprecated';
-import DesignKit from 'pages/DesignKit';
 import ExperimentDetails from 'pages/ExperimentDetails';
 import InteractiveTask from 'pages/InteractiveTask';
 import ModelDetails from 'pages/ModelDetails';
-import ModelRegistry from 'pages/ModelRegistry';
+import ModelRegistryPage from 'pages/ModelRegistryPage';
 import ModelVersionDetails from 'pages/ModelVersionDetails';
 import ProjectDetails from 'pages/ProjectDetails';
 import Reload from 'pages/Reload';
 import ResourcepoolDetail from 'pages/ResourcepoolDetail';
-import Settings from 'pages/Settings';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
+import TaskListPage from 'pages/TaskListPage';
 import { TaskLogsWrapper } from 'pages/TaskLogs';
 import TrialDetails from 'pages/TrialDetails';
 import Wait from 'pages/Wait';
 import Webhooks from 'pages/WebhookList';
 import WorkspaceDetails from 'pages/WorkspaceDetails';
 import WorkspaceList from 'pages/WorkspaceList';
-import { RouteConfig } from 'shared/types';
+import { RouteConfig } from 'types';
 
 import Routes from './routes';
 
@@ -37,20 +35,18 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   clusters: <Clusters />,
   dashboard: <Dashboard />,
   default: <DefaultRoute />,
-  designKit: <DesignKit />,
   experimentDetails: <ExperimentDetails />,
   interactive: <InteractiveTask />,
   jobs: <Deprecated />,
   modelDetails: <ModelDetails />,
-  models: <ModelRegistry />,
+  models: <ModelRegistryPage />,
   modelVersionDetails: <ModelVersionDetails />,
   projectDetails: <ProjectDetails key="projectdetails" />,
   reload: <Reload />,
   resourcepool: <ResourcepoolDetail />,
-  settings: <Settings />,
   signIn: <SignIn />,
   signOut: <SignOut />,
-  taskList: <TaskList />,
+  taskList: <TaskListPage />,
   taskLogs: <TaskLogsWrapper />,
   trialDetails: <TrialDetails />,
   uncategorized: <ProjectDetails key="uncategorized" />,

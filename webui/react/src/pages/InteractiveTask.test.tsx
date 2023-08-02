@@ -2,9 +2,12 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
+import { BrowserRouter } from 'react-router-dom';
 
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
+import { StoreProvider as UIProvider } from 'stores/contexts/UI';
+
+import { ConfirmationProvider } from '../components/kit/useConfirm';
 
 import InteractiveTask from './InteractiveTask';
 
@@ -33,11 +36,15 @@ const InteractiveTaskPageContainer: React.FC = () => {
 
 const InteractiveTaskContainer: React.FC = () => {
   return (
-    <UIProvider>
-      <HelmetProvider>
-        <InteractiveTaskPageContainer />
-      </HelmetProvider>
-    </UIProvider>
+    <BrowserRouter>
+      <UIProvider>
+        <HelmetProvider>
+          <ConfirmationProvider>
+            <InteractiveTaskPageContainer />
+          </ConfirmationProvider>
+        </HelmetProvider>
+      </UIProvider>
+    </BrowserRouter>
   );
 };
 

@@ -10,8 +10,8 @@ import {
   MAX_RANGE_DAY,
   MAX_RANGE_MONTH,
 } from 'pages/Cluster/ClusterHistoricalUsage';
-import { ValueOf } from 'shared/types';
-import { capitalize } from 'shared/utils/string';
+import { ValueOf } from 'types';
+import { capitalize } from 'utils/string';
 
 const GroupBy = {
   Day: 'day',

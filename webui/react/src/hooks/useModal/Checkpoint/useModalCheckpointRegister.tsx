@@ -5,19 +5,19 @@ import Input from 'components/kit/Input';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
 import usePermissions from 'hooks/usePermissions';
+import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getModels, postModelVersion } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
-import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
-import usePrevious from 'shared/hooks/usePrevious';
-import { isEqual } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
-import { validateDetApiEnum } from 'shared/utils/service';
-import { pluralizer } from 'shared/utils/string';
 import { Metadata, ModelItem } from 'types';
+import { isEqual } from 'utils/data';
 import { notification } from 'utils/dialogApi';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { validateDetApiEnum } from 'utils/service';
+import { pluralizer } from 'utils/string';
 
 import css from './useModalCheckpointRegister.module.scss';
 

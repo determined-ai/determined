@@ -1,6 +1,8 @@
 package apiutils
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -64,6 +66,10 @@ func MapAndFilterErrors(err error, passthrough map[error]bool, mapping map[error
 	}
 	if mapping == nil {
 		mapping = ErrorMapping
+	}
+
+	if errors.Is(err, context.Canceled) {
+		return status.Error(codes.Canceled, err.Error())
 	}
 
 	// Filter

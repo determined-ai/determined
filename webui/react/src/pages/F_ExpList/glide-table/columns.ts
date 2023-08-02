@@ -4,74 +4,74 @@ import {
   GridCell,
   GridCellKind,
   SizedGridColumn,
-} from '@glideapps/glide-data-grid';
-import { NavigateFunction } from 'react-router-dom';
+} from '@hpe.com/glide-data-grid';
 
+import { getColor, getInitials } from 'components/Avatar';
 import { terminalRunStates } from 'constants/states';
 import { paths } from 'routes/utils';
-import { getColor, getInitials } from 'shared/components/Avatar';
-import { DarkLight, Theme } from 'shared/themes';
-import { humanReadableNumber } from 'shared/utils/number';
-import { humanReadableBytes } from 'shared/utils/string';
-import { DetailedUser, ExperimentItem } from 'types';
+import { DetailedUser, ExperimentWithTrial, ProjectColumn } from 'types';
+import { getPath, isString } from 'utils/data';
+import { formatDatetime } from 'utils/datetime';
 import { Loadable } from 'utils/loadable';
+import { humanReadableNumber } from 'utils/number';
+import { humanReadableBytes } from 'utils/string';
+import { DarkLight, Theme } from 'utils/themes';
 import { getDisplayName } from 'utils/user';
 
 import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
-const experimentColumns = [
+export const MIN_COLUMN_WIDTH = 40;
+export const NO_PINS_WIDTH = 200;
+
+export const MULTISELECT = 'selected';
+
+// order used in ColumnPickerMenu
+export const experimentColumns = [
+  MULTISELECT,
   'archived',
-  'checkpointCount',
-  'checkpointSize',
-  'description',
-  'duration',
-  'forkedFrom',
-  'id',
   'name',
-  'progress',
+  'id',
+  'forkedFrom',
+  'startTime',
+  'user',
+  'description',
+  'tags',
+  'state',
+  'duration',
   'resourcePool',
   'searcherType',
-  'searcherMetricValue',
-  'selected',
-  'startTime',
-  'state',
-  'tags',
+  'progress',
   'numTrials',
-  'user',
+  'checkpointCount',
+  'checkpointSize',
+  'searcherMetric',
+  'searcherMetricsVal',
 ] as const;
 
 export type ExperimentColumn = (typeof experimentColumns)[number];
 
 export const defaultExperimentColumns: ExperimentColumn[] = [
-  'id',
+  'name',
+  'startTime',
+  'user',
   'description',
   'tags',
-  'forkedFrom',
-  'progress',
-  'startTime',
   'state',
-  'searcherType',
-  'user',
   'duration',
-  'numTrials',
-  'resourcePool',
-  'checkpointSize',
-  'checkpointCount',
-  'searcherMetricValue',
+  'searcherType',
 ];
 
 export type ColumnDef = SizedGridColumn & {
-  id: ExperimentColumn;
+  id: string;
   isNumerical?: boolean;
-  renderer: (record: ExperimentItem, idx: number) => GridCell;
-  tooltip: (record: ExperimentItem) => string | undefined;
+  renderer: (record: ExperimentWithTrial, idx: number) => GridCell;
+  tooltip: (record: ExperimentWithTrial) => string | undefined;
 };
 
-export type ColumnDefs = Record<ExperimentColumn, ColumnDef>;
+export type ColumnDefs = Record<string, ColumnDef>;
 interface Params {
   appTheme: Theme;
-  columnWidths: Record<ExperimentColumn, number>;
-  navigate: NavigateFunction;
+  columnWidths: Record<string, number>;
   rowSelection: CompactSelection;
   darkLight: DarkLight;
   users: Loadable<DetailedUser[]>;
@@ -79,7 +79,6 @@ interface Params {
 }
 export const getColumnDefs = ({
   columnWidths,
-  navigate,
   rowSelection,
   darkLight,
   users,
@@ -88,10 +87,10 @@ export const getColumnDefs = ({
 }: Params): ColumnDefs => ({
   archived: {
     id: 'archived',
-    renderer: (record: ExperimentItem) => ({
+    renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: String(record.archived),
-      displayData: record.archived ? '📦' : '',
+      data: String(record.experiment.archived),
+      displayData: record.experiment.archived ? '📦' : '',
       kind: GridCellKind.Text,
     }),
     title: 'Archived',
@@ -101,23 +100,27 @@ export const getColumnDefs = ({
   checkpointCount: {
     id: 'checkpointCount',
     isNumerical: true,
-    renderer: (record: ExperimentItem) => ({
+    renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: Number(record.checkpointCount),
-      displayData: String(record.checkpointCount),
+      data: Number(record.experiment.checkpoints),
+      displayData: String(record.experiment.checkpoints),
       kind: GridCellKind.Number,
     }),
-    title: 'Checkpoint Count',
+    title: 'Checkpoints',
     tooltip: () => undefined,
     width: columnWidths.checkpointCount,
   },
   checkpointSize: {
     id: 'checkpointSize',
     isNumerical: true,
-    renderer: (record: ExperimentItem) => ({
+    renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: record.checkpointSize ? humanReadableBytes(record.checkpointSize) : '',
-      displayData: record.checkpointSize ? humanReadableBytes(record.checkpointSize) : '',
+      data: record.experiment.checkpointSize
+        ? humanReadableBytes(record.experiment.checkpointSize)
+        : '',
+      displayData: record.experiment.checkpointSize
+        ? humanReadableBytes(record.experiment.checkpointSize)
+        : '',
       kind: GridCellKind.Text,
     }),
     title: 'Checkpoint Size',
@@ -126,10 +129,10 @@ export const getColumnDefs = ({
   },
   description: {
     id: 'description',
-    renderer: (record: ExperimentItem) => ({
+    renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: String(record.description),
-      displayData: String(record.description),
+      data: String(record.experiment.description),
+      displayData: String(record.experiment.description),
       kind: GridCellKind.Text,
     }),
     title: 'Description',
@@ -139,10 +142,10 @@ export const getColumnDefs = ({
   duration: {
     id: 'duration',
     isNumerical: true,
-    renderer: (record: ExperimentItem) => ({
+    renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: getDurationInEnglish(record),
-      displayData: getDurationInEnglish(record),
+      data: getDurationInEnglish(record.experiment),
+      displayData: getDurationInEnglish(record.experiment),
       kind: GridCellKind.Text,
     }),
     title: 'Duration',
@@ -151,18 +154,19 @@ export const getColumnDefs = ({
   },
   forkedFrom: {
     id: 'forkedFrom',
-    renderer: (record: ExperimentItem) => ({
+    renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      copyData: String(record.forkedFrom ?? ''),
-      cursor: record.forkedFrom ? 'pointer' : undefined,
+      copyData: String(record.experiment.forkedFrom ?? ''),
+      cursor: record.experiment.forkedFrom ? 'pointer' : undefined,
       data: {
         kind: 'link-cell',
         link:
-          record.forkedFrom !== undefined
+          record.experiment.forkedFrom !== undefined
             ? {
-                onClick: () =>
-                  record.forkedFrom && navigate(paths.experimentDetails(record.forkedFrom)),
-                title: String(record.forkedFrom ?? ''),
+                href: record.experiment.forkedFrom
+                  ? paths.experimentDetails(record.experiment.forkedFrom)
+                  : undefined,
+                title: String(record.experiment.forkedFrom ?? ''),
               }
             : undefined,
         navigateOn: 'click',
@@ -177,15 +181,15 @@ export const getColumnDefs = ({
   },
   id: {
     id: 'id',
-    renderer: (record: ExperimentItem) => ({
+    renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      copyData: String(record.id),
+      copyData: String(record.experiment.id),
       cursor: 'pointer',
       data: {
         kind: 'link-cell',
         link: {
-          onClick: () => navigate(paths.experimentDetails(record.id)),
-          title: String(record.id),
+          href: paths.experimentDetails(record.experiment.id),
+          title: String(record.experiment.id),
         },
 
         navigateOn: 'click',
@@ -200,15 +204,15 @@ export const getColumnDefs = ({
   },
   name: {
     id: 'name',
-    renderer: (record: ExperimentItem) => ({
+    renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      copyData: String(record.name),
+      copyData: String(record.experiment.name),
       cursor: 'pointer',
       data: {
         kind: 'link-cell',
         link: {
-          onClick: () => navigate(paths.experimentDetails(record.id)),
-          title: String(record.name),
+          href: paths.experimentDetails(record.experiment.id),
+          title: String(record.experiment.name),
         },
         navigateOn: 'click',
         underlineOffset: 6,
@@ -216,7 +220,6 @@ export const getColumnDefs = ({
       kind: GridCellKind.Custom,
       readonly: true,
     }),
-    themeOverride: { horizontalBorderColor: '#225588' },
     title: 'Name',
     tooltip: () => undefined,
     width: columnWidths.name,
@@ -224,10 +227,10 @@ export const getColumnDefs = ({
   numTrials: {
     id: 'numTrials',
     isNumerical: true,
-    renderer: (record: ExperimentItem) => ({
+    renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: record.numTrials,
-      displayData: String(record.numTrials),
+      data: record.experiment.numTrials,
+      displayData: String(record.experiment.numTrials),
       kind: GridCellKind.Number,
     }),
     title: 'Trials',
@@ -236,10 +239,10 @@ export const getColumnDefs = ({
   },
   progress: {
     id: 'progress',
-    renderer: (record: ExperimentItem) => {
-      const progress = [...terminalRunStates.keys()].includes(record.state)
+    renderer: (record: ExperimentWithTrial) => {
+      const progress = [...terminalRunStates.keys()].includes(record.experiment.state)
         ? 1
-        : record.progress ?? 0;
+        : record.experiment.progress ?? 0;
       const percentage = `${(progress * 100).toFixed()}%`;
 
       return {
@@ -255,53 +258,74 @@ export const getColumnDefs = ({
   },
   resourcePool: {
     id: 'resourcePool',
-    renderer: (record: ExperimentItem) => ({
+    renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: String(record.resourcePool),
-      displayData: String(record.resourcePool),
+      data: String(record.experiment.resourcePool),
+      displayData: String(record.experiment.resourcePool),
       kind: GridCellKind.Text,
     }),
     title: 'Resource Pool',
     tooltip: () => undefined,
     width: columnWidths.resourcePool,
   },
-  searcherMetricValue: {
-    id: 'searcherMetricValue',
-    isNumerical: true,
-    renderer: (record: ExperimentItem) => ({
-      allowOverlay: false,
-      data:
-        record.searcherMetricValue !== undefined
-          ? humanReadableNumber(record.searcherMetricValue)
-          : '',
-      displayData: String(record.searcherMetricValue ?? ''),
-      kind: GridCellKind.Text,
-    }),
-    title: 'Searcher Metric Values',
+  searcherMetric: {
+    id: 'searcherMetric',
+    isNumerical: false,
+    renderer: (record: ExperimentWithTrial) => {
+      const sMetric = record.experiment.config.searcher.metric;
+      return {
+        allowOverlay: false,
+        data: sMetric,
+        displayData: sMetric,
+        kind: GridCellKind.Text,
+      };
+    },
+    title: 'Searcher Metric',
     tooltip: () => undefined,
-    width: columnWidths.searcherMetricValue,
+    width: columnWidths.searcherMetric,
+  },
+  searcherMetricsVal: {
+    id: 'searcherMetricsVal',
+    isNumerical: true,
+    renderer: (record: ExperimentWithTrial) => {
+      const sMetric = record.experiment.config.searcher.metric;
+      const sMetricValue = record.bestTrial?.bestValidationMetric?.metrics?.[sMetric];
+      return {
+        allowOverlay: false,
+        data: sMetricValue?.toString() || '',
+        displayData: sMetricValue
+          ? typeof sMetricValue === 'number'
+            ? humanReadableNumber(sMetricValue)
+            : sMetricValue
+          : '',
+        kind: GridCellKind.Text,
+      };
+    },
+    title: 'Searcher Metric Value',
+    tooltip: () => undefined,
+    width: columnWidths.searcherMetricsVal,
   },
   searcherType: {
     id: 'searcherType',
-    renderer: (record: ExperimentItem) => ({
+    renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: String(record.searcherType),
-      displayData: String(record.searcherType),
+      data: String(record.experiment.searcherType),
+      displayData: String(record.experiment.searcherType),
       kind: GridCellKind.Text,
     }),
-    title: 'Searcher Type',
+    title: 'Searcher',
     tooltip: () => undefined,
     width: columnWidths.searcherType,
   },
   selected: {
     icon: selectAll ? 'allSelected' : rowSelection.length ? 'someSelected' : 'noneSelected',
-    id: 'selected',
-    renderer: (_: ExperimentItem, idx) => ({
+    id: MULTISELECT,
+    renderer: (_: ExperimentWithTrial, idx) => ({
       allowOverlay: false,
       contentAlign: 'left',
       copyData: String(rowSelection.hasIndex(idx)),
       data: {
-        checked: selectAll || rowSelection.hasIndex(idx),
+        checked: rowSelection.hasIndex(idx),
         kind: 'checkbox-cell',
       },
       kind: GridCellKind.Custom,
@@ -314,10 +338,10 @@ export const getColumnDefs = ({
   startTime: {
     id: 'startTime',
     isNumerical: true,
-    renderer: (record: ExperimentItem) => ({
+    renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: getTimeInEnglish(new Date(record.startTime)),
-      displayData: getTimeInEnglish(new Date(record.startTime)),
+      data: getTimeInEnglish(new Date(record.experiment.startTime)),
+      displayData: getTimeInEnglish(new Date(record.experiment.startTime)),
       kind: GridCellKind.Text,
     }),
     title: 'Start Time',
@@ -326,32 +350,32 @@ export const getColumnDefs = ({
   },
   state: {
     id: 'state',
-    renderer: (record: ExperimentItem) => ({
+    renderer: (record: ExperimentWithTrial) => ({
       allowAdd: false,
       allowOverlay: true,
-      copyData: record.state.toLocaleLowerCase(),
+      copyData: record.experiment.state.toLocaleLowerCase(),
       data: {
         appTheme,
         kind: 'experiment-state-cell',
-        state: record.state,
+        state: record.experiment.state,
       },
       kind: GridCellKind.Custom,
     }),
     themeOverride: { cellHorizontalPadding: 13 },
     title: 'State',
-    tooltip: (record: ExperimentItem) => record.state.toLocaleLowerCase(),
+    tooltip: (record: ExperimentWithTrial) => record.experiment.state.toLocaleLowerCase(),
     width: columnWidths.state,
   },
   tags: {
     id: 'tags',
-    renderer: (record: ExperimentItem) => ({
+    renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: true,
-      copyData: record['labels'].join(', '),
+      copyData: record.experiment['labels'].join(', '),
       data: {
         kind: 'tags-cell',
         possibleTags: [],
         readonly: true,
-        tags: record['labels'],
+        tags: record.experiment['labels'],
       },
       kind: GridCellKind.Custom,
     }),
@@ -361,14 +385,14 @@ export const getColumnDefs = ({
   },
   user: {
     id: 'user',
-    renderer: (record: ExperimentItem) => {
+    renderer: (record: ExperimentWithTrial) => {
       const displayName = Loadable.match(users, {
-        Loaded: (users) => getDisplayName(users?.find((u) => u.id === record.userId)),
+        Loaded: (users) => getDisplayName(users?.find((u) => u.id === record.experiment.userId)),
         NotLoaded: () => undefined,
       });
       return {
         allowOverlay: true,
-        copyData: String(record.userId),
+        copyData: String(record.experiment.userId),
         data: {
           image: undefined,
           initials: getInitials(displayName),
@@ -379,36 +403,104 @@ export const getColumnDefs = ({
       };
     },
     title: 'User',
-    tooltip: (record: ExperimentItem) => {
-      const displayName = Loadable.match(users, {
-        Loaded: (users) => getDisplayName(users?.find((u) => u.id === record.userId)),
+    tooltip: (record: ExperimentWithTrial) => {
+      return Loadable.match(users, {
+        Loaded: (users) => getDisplayName(users?.find((u) => u.id === record.experiment.userId)),
         NotLoaded: () => undefined,
       });
-      return displayName;
     },
     width: columnWidths.user,
   },
 });
 
+export const defaultTextColumn = (
+  column: ProjectColumn,
+  columnWidth?: number,
+  dataPath?: string,
+): ColumnDef => {
+  return {
+    id: column.column,
+    renderer: (record: ExperimentWithTrial) => {
+      const data = isString(dataPath) ? getPath<string>(record, dataPath) : undefined;
+      return {
+        allowOverlay: false,
+        data: String(data),
+        displayData: String(data ?? ''),
+        kind: GridCellKind.Text,
+      };
+    },
+    title: column.displayName || column.column,
+    tooltip: () => undefined,
+    width: columnWidth ?? columnWidthsFallback,
+  };
+};
+
+export const defaultNumberColumn = (
+  column: ProjectColumn,
+  columnWidth?: number,
+  dataPath?: string,
+): ColumnDef => {
+  return {
+    id: column.column,
+    renderer: (record: ExperimentWithTrial) => {
+      const data = isString(dataPath) ? getPath<number>(record, dataPath) : undefined;
+      return {
+        allowOverlay: false,
+        data: Number(data),
+        displayData: data !== undefined ? String(data) : '',
+        kind: GridCellKind.Number,
+      };
+    },
+    title: column.displayName || column.column,
+    tooltip: () => undefined,
+    width: columnWidth ?? columnWidthsFallback,
+  };
+};
+
+export const defaultDateColumn = (
+  column: ProjectColumn,
+  columnWidth?: number,
+  dataPath?: string,
+): ColumnDef => {
+  return {
+    id: column.column,
+    renderer: (record: ExperimentWithTrial) => {
+      const data = isString(dataPath) ? getPath<string>(record, dataPath) : undefined;
+      return {
+        allowOverlay: false,
+        data: String(data),
+        displayData: formatDatetime(String(data), { outputUTC: false }),
+        kind: GridCellKind.Text,
+      };
+    },
+    title: column.displayName || column.column,
+    tooltip: () => undefined,
+    width: columnWidth ?? columnWidthsFallback,
+  };
+};
+
+export const columnWidthsFallback = 140;
+
 export const defaultColumnWidths: Record<ExperimentColumn, number> = {
   archived: 80,
-  checkpointCount: 140,
-  checkpointSize: 140,
+  checkpointCount: 120,
+  checkpointSize: 110,
   description: 148,
-  duration: 96,
-  forkedFrom: 128,
+  duration: 86,
+  forkedFrom: 86,
   id: 50,
   name: 290,
-  numTrials: 74,
-  progress: 111,
+  numTrials: 50,
+  progress: 65,
   resourcePool: 140,
-  searcherMetricValue: 160,
-  searcherType: 140,
+  searcherMetric: 120,
+  searcherMetricsVal: 120,
+  searcherType: 120,
   selected: 40,
   startTime: 118,
-  state: 106,
+  state: 60,
   tags: 106,
-  user: 85,
+  user: 50,
 };
 
 // TODO: use theme here

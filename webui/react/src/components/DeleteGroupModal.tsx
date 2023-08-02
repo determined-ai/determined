@@ -3,8 +3,8 @@ import React from 'react';
 import { Modal } from 'components/kit/Modal';
 import { deleteGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import { ErrorType } from 'shared/utils/error';
 import { message } from 'utils/dialogApi';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 
 export const API_SUCCESS_MESSAGE = 'Group deleted.';
@@ -37,6 +37,7 @@ const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
       danger
       size="small"
       submit={{
+        handleError,
         handler: handleSubmit,
         text: 'Delete',
       }}

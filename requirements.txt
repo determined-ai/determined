@@ -1,7 +1,4 @@
 -e harness
--e common
--e cli
--e deploy
 -e model_hub
 -r docs/requirements.txt
 -r harness/tests/requirements/requirements-harness.txt
@@ -9,9 +6,10 @@
 -r e2e_tests/tests/requirements.txt
 -r bindings/requirements.txt
 
+build
 black==23.3.0 # Note: this should be kept in sync with the version in `.pre-commit-config.yaml`.
 click<=8.0.4  # Unpin click after tensorflow update.
-flake8>=3.8.0
+flake8==3.9.2 # Note: this should be kept in sync with the version in `.pre-commit-config.yaml`.
 flake8-bugbear>=19.8.0
 flake8-builtins>=1.5.3
 flake8-colors>=0.1.6
@@ -20,7 +18,7 @@ flake8-comprehensions>=2.2.0
 flake8-docstrings>=1.4.0
 flake8-quotes>=2.1.0
 flake8-tuple>=0.4.0
-isort==5.9.3
+isort==5.11.5 # Note: this should be kept in sync with the version in `.pre-commit-config.yaml`.
 jax==0.3.15  # Versions 0.4.* use self-documenting f-strings, which are incompatible with Python 3.7, which mypy is configured for. Later patches of 0.3.* cause other mypy errors.
 mypy==0.910
 bump2version>=1.0.1

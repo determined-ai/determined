@@ -9,6 +9,7 @@ import (
 	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner"
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -33,8 +34,10 @@ type resourcePool struct {
 
 	scheduler        Scheduler
 	fittingMethod    SoftConstraint
-	provisioner      *actor.Ref
 	slotsPerInstance int
+
+	provisioner      *provisioner.Provisioner
+	provisionerError error
 
 	agents           map[*actor.Ref]bool
 	agentStatesCache map[*actor.Ref]*agentState
@@ -98,28 +101,22 @@ func (rp *resourcePool) setupProvisioner(ctx *actor.Context) error {
 		ctx.Log().Infof("not enabling provisioner for resource pool: %s", rp.config.PoolName)
 		return nil
 	}
-	p, pRef, err := provisioner.Setup(ctx, rp.config.Provider, rp.config.PoolName, rp.cert, rp.db)
+	p, err := provisioner.Setup(ctx, rp.config.Provider, rp.config.PoolName, rp.cert, rp.db)
 	if err != nil {
 		return errors.Wrapf(err, "cannot create resource pool: %s", rp.config.PoolName)
 	}
 	rp.slotsPerInstance = p.SlotsPerInstance()
-	rp.provisioner = pRef
+	rp.provisioner = p
 	return nil
 }
 
 func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateRequest) {
-	rp.notifyOnStop(ctx, msg.AllocationRef, sproto.ResourcesReleased{
-		AllocationRef: msg.AllocationRef,
-	})
 	log := ctx.Log().
 		WithField("allocation-id", msg.AllocationID).
 		WithField("restoring", msg.Restore)
 
 	if len(msg.AllocationID) == 0 {
 		msg.AllocationID = model.AllocationID(uuid.New().String())
-	}
-	if msg.Group == nil {
-		msg.Group = msg.AllocationRef
 	}
 	rp.getOrCreateGroup(ctx, msg.Group)
 	if len(msg.Name) == 0 {
@@ -128,7 +125,7 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 
 	log.Infof(
 		"resources are requested by %s (Allocation ID: %s)",
-		msg.AllocationRef.Address(), msg.AllocationID,
+		msg.Name, msg.AllocationID,
 	)
 	if msg.IsUserVisible {
 		if _, ok := rp.queuePositions[msg.JobID]; !ok {
@@ -147,13 +144,11 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 			log.WithError(err).Error("error restoring resources")
 
 			// Clear out the state / close and terminate the allocation.
-			rf := sproto.ResourcesFailure{
+			rmevents.Publish(msg.AllocationID, &sproto.ResourcesFailure{
 				FailureType: sproto.RestoreError,
 				ErrMsg:      err.Error(),
 				ExitCode:    nil,
-			}
-			ctx.Tell(msg.AllocationRef, rf)
-
+			})
 			return
 		}
 	}
@@ -217,14 +212,14 @@ func (rp *resourcePool) restoreResources(
 	}
 
 	rp.taskList.AddTask(req)
-	rp.taskList.AddAllocation(req.AllocationRef, &allocated)
-	ctx.Tell(req.AllocationRef, allocated.Clone())
+	rp.taskList.AddAllocation(req.AllocationID, &allocated)
+	rmevents.Publish(req.AllocationID, allocated.Clone())
 
 	return nil
 }
 
 func (rp *resourcePool) receiveSetTaskName(ctx *actor.Context, msg sproto.SetAllocationName) {
-	if task, found := rp.taskList.TaskByHandler(msg.AllocationRef); found {
+	if task, found := rp.taskList.TaskByID(msg.AllocationID); found {
 		task.Name = msg.Name
 	}
 }
@@ -317,8 +312,8 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		Resources:         sprotoResources,
 		JobSubmissionTime: req.JobSubmissionTime,
 	}
-	rp.taskList.AddAllocation(req.AllocationRef, &allocated)
-	ctx.Tell(req.AllocationRef, allocated)
+	rp.taskList.AddAllocation(req.AllocationID, &allocated)
+	rmevents.Publish(req.AllocationID, allocated.Clone())
 
 	// Refresh state for the updated agents.
 	allocatedAgents := make([]*actor.Ref, 0, len(resources))
@@ -328,44 +323,49 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 
 	rp.refreshAgentStateCacheFor(ctx, allocatedAgents)
 
-	ctx.Log().Infof("allocated resources to %s", req.AllocationRef.Address())
+	ctx.Log().Infof("allocated resources to %s", req.Name)
 
 	return true
 }
 
-func (rp *resourcePool) releaseResource(ctx *actor.Context, handler *actor.Ref) {
-	ctx.Log().Infof("releasing resources taken by %s", handler.Address())
-	handler.System().Tell(handler, sproto.ReleaseResources{ResourcePool: rp.config.PoolName})
+func (rp *resourcePool) releaseResource(ctx *actor.Context, aID model.AllocationID) {
+	ctx.Log().Infof("releasing resources taken by %s (preempted by the scheduler)", aID)
+	rmevents.Publish(aID, &sproto.ReleaseResources{Reason: "preempted by the scheduler"})
 }
 
 func (rp *resourcePool) resourcesReleased(
 	ctx *actor.Context,
 	msg sproto.ResourcesReleased,
 ) {
-	switch a := rp.taskList.Allocation(msg.AllocationRef); {
-	case a == nil:
-		rp.taskList.RemoveTaskByHandler(msg.AllocationRef)
+	_, ok := rp.taskList.TaskByID(msg.AllocationID)
+	if !ok {
+		ctx.Log().Debugf("ignoring release for task not allocated to pool %s", msg.AllocationID)
+		return
+	}
+
+	switch allocated := rp.taskList.Allocation(msg.AllocationID); {
+	case allocated == nil:
+		ctx.Log().Infof("released before allocated for %s", msg.AllocationID)
+		rp.taskList.RemoveTaskByID(msg.AllocationID)
 	case msg.ResourcesID != nil:
-		ctx.Log().Infof(
-			"resources %v are released for %s",
-			*msg.ResourcesID, msg.AllocationRef.Address())
-		for rID, r := range a.Resources {
+		ctx.Log().Infof("resources %v are released for %s", *msg.ResourcesID, msg.AllocationID)
+		for rID, r := range allocated.Resources {
 			if r.Summary().ResourcesID != *msg.ResourcesID {
 				continue
 			}
 
 			typed := r.(*containerResources)
 			ctx.Tell(typed.agent.Handler, deallocateContainer{containerID: typed.containerID})
-			delete(a.Resources, rID)
+			delete(allocated.Resources, rID)
 			break
 		}
 	default:
-		ctx.Log().Infof("all resources are released for %s", msg.AllocationRef.Address())
-		for _, r := range a.Resources {
+		ctx.Log().Infof("all resources are released for %s", msg.AllocationID)
+		for _, r := range allocated.Resources {
 			typed := r.(*containerResources)
 			ctx.Tell(typed.agent.Handler, deallocateContainer{containerID: typed.containerID})
 		}
-		rp.taskList.RemoveTaskByHandler(msg.AllocationRef)
+		rp.taskList.RemoveTaskByID(msg.AllocationID)
 	}
 }
 
@@ -386,7 +386,7 @@ func (rp *resourcePool) getOrCreateGroup(
 
 	rp.groups[handler] = g
 	if ctx != nil && handler != nil { // ctx is nil only for testing purposes.
-		actors.NotifyOnStop(ctx, handler, tasklist.GroupActorStopped{})
+		actors.NotifyOnStop(ctx, handler, tasklist.GroupActorStopped{Ref: handler})
 	}
 	return g
 }
@@ -414,7 +414,7 @@ func (rp *resourcePool) updateScalingInfo() bool {
 
 func (rp *resourcePool) sendScalingInfo(ctx *actor.Context) {
 	if rp.provisioner != nil && rp.updateScalingInfo() {
-		ctx.Tell(rp.provisioner, *rp.scalingInfo)
+		rp.provisioner.UpdateScalingInfo(rp.scalingInfo)
 	}
 }
 
@@ -462,10 +462,6 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		sproto.DeleteJob:
 		return rp.receiveJobQueueMsg(ctx)
 
-	case sproto.GetAllocationHandler:
-		reschedule = false
-		ctx.Respond(rp.taskList.TaskHandler(msg.ID))
-
 	case sproto.GetAllocationSummary:
 		reschedule = false
 		if resp := rp.taskList.TaskSummary(
@@ -486,6 +482,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		ctx.Respond(resourceSummaryFromAgentStates(rp.agentStatesCache))
 
 	case sproto.CapacityCheck:
+		reschedule = false
 		var totalSlots int
 		switch {
 		case rp.config.Provider == nil:
@@ -522,18 +519,34 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		})
 
 	case schedulerTick:
+		if rp.provisioner != nil {
+			if err := rp.provisioner.LaunchError(); err != rp.provisionerError {
+				rp.provisionerError = err
+				if err != nil {
+					rp.reschedule = true
+				}
+			}
+		}
 		if rp.reschedule {
+			ctx.Log().Debug("scheduling")
 			rp.agentStatesCache = rp.fetchAgentStates(ctx)
 			defer func() {
 				rp.agentStatesCache = nil
 			}()
 
+			rp.pruneTaskList(ctx)
 			toAllocate, toRelease := rp.scheduler.Schedule(rp)
+			if len(toAllocate) > 0 || len(toRelease) > 0 {
+				ctx.Log().
+					WithField("toAllocate", len(toAllocate)).
+					WithField("toRelease", len(toRelease)).
+					Debugf("scheduled")
+			}
 			for _, req := range toAllocate {
 				rp.allocateResources(ctx, req)
 			}
-			for _, taskActor := range toRelease {
-				rp.releaseResource(ctx, taskActor)
+			for _, aID := range toRelease {
+				rp.releaseResource(ctx, aID)
 			}
 			rp.sendScalingInfo(ctx)
 		}
@@ -542,6 +555,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
 	case sproto.ValidateCommandResourcesRequest:
+		reschedule = false
 		fulfillable := true // Default to "true" when unknown.
 		if rp.slotsPerInstance > 0 {
 			fulfillable = rp.slotsPerInstance >= msg.Slots
@@ -823,4 +837,41 @@ func (rp *resourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*
 			delete(rp.agentStatesCache, ref)
 		}
 	}
+}
+
+func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
+	if rp.provisioner == nil || rp.provisionerError == nil {
+		return
+	}
+
+	before := rp.taskList.Len()
+	slotCount, err := rp.provisioner.CurrentSlotCount()
+	if err != nil {
+		return
+	}
+
+	ctx.Log().
+		WithError(rp.provisionerError).
+		WithField("slotCount", slotCount).
+		Error("provisioner in error state")
+
+	var allocationsToRemove []model.AllocationID
+	for it := rp.taskList.Iterator(); it.Next(); {
+		task := it.Value()
+		if rp.taskList.IsScheduled(task.AllocationID) {
+			ctx.Log().Debugf("task %s already in progress", task.AllocationID)
+			continue
+		}
+		if task.SlotsNeeded <= slotCount {
+			ctx.Log().Debugf("task %s can be scheduled with number of available slots", task.AllocationID)
+			continue
+		}
+		ctx.Log().WithError(rp.provisionerError).Warnf("removing task %s from list", task.AllocationID)
+		allocationsToRemove = append(allocationsToRemove, task.AllocationID)
+	}
+	for _, aID := range allocationsToRemove {
+		rmevents.Publish(aID, &sproto.InvalidResourcesRequestError{Cause: rp.provisionerError})
+	}
+	after := rp.taskList.Len()
+	ctx.Log().WithField("before", before).WithField("after", after).Warn("pruned task list")
 }

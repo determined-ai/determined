@@ -59,7 +59,6 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         """
 
         if not self.base_path.exists():
-            logging.warning(f"{self.base_path} directory does not exist.")
             return []
         return [
             file
@@ -172,6 +171,11 @@ class _TensorboardUploadThread(threading.Thread):
 
     def close(self) -> None:
         self._work_queue.put(None)
+        self.join(10)
+        was_waiting = False
         while self.is_alive():
+            was_waiting = True
             logging.info("Waiting for Tensorboard files to finish uploading")
             self.join(10)
+        if was_waiting:
+            logging.info("Tensorboard upload completed")

@@ -106,7 +106,7 @@ func testGetCheckpoint(
 			checkpointMeta := model.CheckpointV2{
 				UUID:         conv.ToUUID(checkpointUUID),
 				TaskID:       trial.TaskID,
-				AllocationID: allocation.AllocationID,
+				AllocationID: &allocation.AllocationID,
 				ReportTime:   timestamppb.Now().AsTime(),
 				State:        conv.ToCheckpointState(checkpointv1.State_STATE_COMPLETED),
 				Resources:    map[string]int64{"ok": 1.0},
@@ -168,7 +168,7 @@ func testGetExperimentCheckpoints(
 		checkpointMeta := model.CheckpointV2{
 			UUID:         conv.ToUUID(checkpointUUID),
 			TaskID:       trial.TaskID,
-			AllocationID: allocation.AllocationID,
+			AllocationID: &allocation.AllocationID,
 			ReportTime:   timestamppb.Now().AsTime(),
 			State:        conv.ToCheckpointState(checkpointv1.State_STATE_COMPLETED),
 			Resources:    map[string]int64{"ok": 1.0},
@@ -283,7 +283,7 @@ func testGetTrialCheckpoints(
 		checkpointMeta := model.CheckpointV2{
 			UUID:         conv.ToUUID(checkpointUUID),
 			TaskID:       trial.TaskID,
-			AllocationID: allocation.AllocationID,
+			AllocationID: &allocation.AllocationID,
 			ReportTime:   timestamppb.Now().AsTime(),
 			State:        conv.ToCheckpointState(checkpointv1.State_STATE_COMPLETED),
 			Resources:    map[string]int64{"ok": 1.0},
@@ -359,7 +359,6 @@ func createPrereqs(t *testing.T, pgDB *db.PgDB) (
 	task := db.RequireMockTask(t, pgDB, experiment.OwnerID)
 	trial := &model.Trial{
 		TaskID:       task.TaskID,
-		JobID:        experiment.JobID,
 		ExperimentID: experiment.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),

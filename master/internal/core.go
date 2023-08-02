@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -21,6 +20,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
 
 	"github.com/coreos/go-systemd/activation"
 	"github.com/google/uuid"
@@ -51,12 +52,10 @@ import (
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
-	"github.com/determined-ai/determined/master/internal/template"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -74,15 +73,15 @@ import (
 
 const (
 	maxConcurrentRestores = 10
-	defaultAskTimeout     = 2 * time.Second
 	webuiBaseRoute        = "/det"
 )
 
 // staticWebDirectoryPaths are the locations of static files that comprise the webui.
 var staticWebDirectoryPaths = map[string]bool{
-	"/docs":          true,
-	webuiBaseRoute:   true,
-	"/docs/rest-api": true,
+	"/docs":                    true,
+	webuiBaseRoute + "/design": true,
+	webuiBaseRoute:             true,
+	"/docs/rest-api":           true,
 }
 
 // Master manages the Determined master state.
@@ -93,16 +92,14 @@ type Master struct {
 	config   *config.Config
 	taskSpec *tasks.TaskSpec
 
-	logs       *logger.LogBuffer
-	system     *actor.System
-	echo       *echo.Echo
-	db         *db.PgDB
-	rm         rm.ResourceManager
-	proxy      *actor.Ref
-	taskLogger *task.Logger
+	logs   *logger.LogBuffer
+	system *actor.System
+	echo   *echo.Echo
+	db     *db.PgDB
+	rm     rm.ResourceManager
 
 	trialLogBackend TrialLogBackend
-	taskLogBackend  task.LogBackend
+	taskLogBackend  TaskLogBackend
 }
 
 // New creates an instance of the Determined master.
@@ -113,10 +110,6 @@ func New(logStore *logger.LogBuffer, config *config.Config) *Master {
 		logs:     logStore,
 		config:   config,
 	}
-}
-
-func (m *Master) getConfig(ctx echo.Context) (interface{}, error) {
-	return m.config.Printable()
 }
 
 // Info returns this master's information.
@@ -160,7 +153,7 @@ func (m *Master) getInfo(echo.Context) (interface{}, error) {
 //	@Param		timestamp_after		query	string	true	"Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
 //	@Param		timestamp_before	query	string	true	"End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
 //	@Success	200					{}		string	"A CSV file containing the fields experiment_id,kind,username,labels,slots,start_time,end_time,seconds"
-//	@Router		/allocation/raw [get]
+//	@Router		/resources/allocation/raw [get]
 //	@Deprecated
 //
 // nolint:lll
@@ -293,6 +286,7 @@ type AllocationMetadata struct {
 	StartTime        time.Time
 	EndTime          time.Time
 	ImagepullingTime float64
+	GPUHours         float64
 }
 
 // canGetUsageDetails checks if the user has permission to get cluster usage details.
@@ -324,7 +318,7 @@ func (m *Master) canGetUsageDetails(ctx context.Context, user *model.User) error
 // nolint:lll
 //
 //	@Success	200					{}		string	"A CSV file containing the fields allocation_id, task_type, username, workspace_name, experiment_id, slots, start_time, end_time, checkpointing_time, imagepulling_time"
-//	@Router		/allocations/allocations-csv [get]
+//	@Router		/resources/allocation/allocations-csv [get]
 func (m *Master) getResourceAllocations(c echo.Context) error {
 	// Get start and end times from context
 	args := struct {
@@ -354,7 +348,7 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		ColumnExpr("t.task_type").
 		ColumnExpr("t.job_id").
 		TableExpr("tasks t").
-		Where("tstzrange(start_time - interval '1 minute', greatest(start_time, end_time)) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
+		Where("tstzrange(start_time - interval '1 minute', greatest(start_time, coalesce(end_time, now()))) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
 
 	// Get allocation info for allocations in time range
 	allocationsInRange := db.Bun().NewSelect().
@@ -363,8 +357,9 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		ColumnExpr("a.start_time").
 		ColumnExpr("a.end_time").
 		ColumnExpr("a.slots").
+		ColumnExpr("CASE WHEN a.start_time is NULL THEN 0.0 ELSE extract(epoch FROM (LEAST(GREATEST(coalesce(a.end_time, now()), a.start_time), ? :: timestamptz) - GREATEST(a.start_time, ? :: timestamptz))) * a.slots END AS gpu_seconds", end, start).
 		TableExpr("allocations a").
-		Where("tstzrange(start_time - interval '1 minute', greatest(start_time, end_time)) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
+		Where("tstzrange(start_time - interval '1 microsecond', greatest(start_time, coalesce(end_time, now()))) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
 
 	// Get task owner names
 	taskOwners := db.Bun().NewSelect().
@@ -377,7 +372,7 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 	// Get imagepull times for tasks within time range
 	imagePullTimes := db.Bun().NewSelect().
 		ColumnExpr("a.allocation_id").
-		ColumnExpr("SUM(EXTRACT(EPOCH FROM (ts.end_time - ts.start_time))) imagepulling_time").
+		ColumnExpr("SUM(EXTRACT(EPOCH FROM (greatest(coalesce(ts.end_time, now()), ts.start_time) - ts.start_time))) imagepulling_time").
 		TableExpr("allocations_in_range a").
 		Join("INNER JOIN task_stats ts ON a.allocation_id = ts.allocation_id").
 		Where("ts.event_type = 'IMAGEPULL'").
@@ -404,6 +399,7 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		ColumnExpr("a.start_time").
 		ColumnExpr("a.end_time").
 		ColumnExpr("ip.imagepulling_time").
+		ColumnExpr("a.gpu_seconds / 3600.0 AS gpu_hours").
 		With("tasks_in_range", tasksInRange).
 		With("allocations_in_range", allocationsInRange).
 		With("task_owners", taskOwners).
@@ -434,6 +430,7 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		"start_time",
 		"end_time",
 		"imagepulling_time",
+		"gpu_hours",
 	}
 
 	formatTimestamp := func(t time.Time) string {
@@ -471,6 +468,7 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 			formatTimestamp(allocationMetadata.StartTime),
 			formatTimestamp(allocationMetadata.EndTime),
 			formatDuration(allocationMetadata.ImagepullingTime),
+			formatDuration(allocationMetadata.GPUHours),
 		}
 		if err := csvWriter.Write(fields); err != nil {
 			return err
@@ -491,7 +489,7 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 //
 //	@Param		period		query	string	true	"Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)"
 //	@Success	200			{}		string	"aggregation_type,aggregation_key,date,seconds"
-//	@Router		/allocation/aggregated [get]
+//	@Router		/resources/allocation/aggregated [get]
 //
 // nolint:lll
 // To make both gofmt and swag fmt happy we need an unindented comment matched with the swagger
@@ -646,7 +644,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 
 			if agentRM.ClientCA != "" {
 				clientCAs = x509.NewCertPool()
-				clientRootCA, iErr := ioutil.ReadFile(agentRM.ClientCA)
+				clientRootCA, iErr := os.ReadFile(agentRM.ClientCA)
 				if iErr != nil {
 					return errors.Wrap(err, "failed to read agent CA file")
 				}
@@ -785,7 +783,7 @@ func (m *Master) restoreNonTerminalExperiments() error {
 }
 
 func (m *Master) closeOpenAllocations() error {
-	allocationIds := allocationmap.GetAllAllocationIds()
+	allocationIds := task.DefaultService.GetAllAllocationIDs()
 	if err := m.db.CloseOpenAllocations(allocationIds); err != nil {
 		return err
 	}
@@ -864,7 +862,7 @@ func (m *Master) Run(ctx context.Context) error {
 		ClusterID:             m.ClusterID,
 		HarnessPath:           filepath.Join(m.config.Root, "wheels"),
 		TaskContainerDefaults: m.config.TaskContainerDefaults,
-		MasterCert:            cert,
+		MasterCert:            config.GetCertPEM(cert),
 		SSHRsaSize:            m.config.Security.SSH.RsaKeySize,
 		SegmentEnabled:        m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "",
 		SegmentAPIKey:         m.config.Telemetry.SegmentMasterKey,
@@ -913,16 +911,12 @@ func (m *Master) Run(ctx context.Context) error {
 	default:
 		panic("unsupported logging backend")
 	}
-	m.taskLogger = task.NewLogger(m.system, m.taskLogBackend)
+	tasklogger.SetDefaultLogger(tasklogger.New(m.taskLogBackend))
 
 	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
 	userService := user.GetService()
 
-	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{
-		HTTPAuth: processProxyAuthentication,
-	})
-
-	allocationmap.InitAllocationMap()
+	proxy.InitProxy(processProxyAuthentication)
 	portregistry.InitPortRegistry()
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
 
@@ -1012,11 +1006,12 @@ func (m *Master) Run(ctx context.Context) error {
 		},
 		cert,
 	)
+	jobservice.SetDefaultService(job.NewManager(m.rm, m.system))
+
 	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
-	m.system.ActorOf(sproto.JobsActorAddr, job.NewJobs(m.rm))
 
 	if err = m.restoreNonTerminalExperiments(); err != nil {
 		return err
@@ -1035,7 +1030,6 @@ func (m *Master) Run(ctx context.Context) error {
 		m.echo,
 		m.db,
 		m.rm,
-		m.taskLogger,
 	)
 
 	if err = m.closeOpenAllocations(); err != nil {
@@ -1059,12 +1053,15 @@ func (m *Master) Run(ctx context.Context) error {
 		return errors.Wrap(err, "failed to get absolute path to react root")
 	}
 	reactIndex := filepath.Join(reactRoot, "index.html")
+	designIndex := filepath.Join(reactRoot, "design", "index.html")
 
 	// Docs.
 	m.echo.Static("/docs/rest-api", filepath.Join(webuiRoot, "docs", "rest-api"))
 	m.echo.Static("/docs", filepath.Join(webuiRoot, "docs"))
 
 	webuiGroup := m.echo.Group(webuiBaseRoute)
+	webuiGroup.File("/design", designIndex)
+	webuiGroup.File("/design/", designIndex)
 	webuiGroup.File("", reactIndex)
 	webuiGroup.File("/", reactIndex)
 	webuiGroup.GET("/*", func(c echo.Context) error {
@@ -1109,25 +1106,18 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.File("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
-	m.echo.GET("/config", api.Route(m.getConfig))
 	m.echo.GET("/info", api.Route(m.getInfo))
 
 	experimentsGroup := m.echo.Group("/experiments")
 	experimentsGroup.GET("/:experiment_id/model_def", m.getExperimentModelDefinition)
 	experimentsGroup.GET("/:experiment_id/file/download", m.getExperimentModelFile)
 	experimentsGroup.GET("/:experiment_id/preview_gc", api.Route(m.getExperimentCheckpointsToGC))
-	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
-	experimentsGroup.POST("", api.Route(m.postExperiment))
 
 	checkpointsGroup := m.echo.Group("/checkpoints")
 	checkpointsGroup.GET("/:checkpoint_uuid", m.getCheckpoint)
 
 	searcherGroup := m.echo.Group("/searcher")
 	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))
-
-	trialsGroup := m.echo.Group("/trials")
-	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
-	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
 
 	resourcesGroup := m.echo.Group("/resources", cluster.CanGetUsageDetails())
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
@@ -1172,17 +1162,19 @@ func (m *Master) Run(ctx context.Context) error {
 			api.Route(m.getPrometheusTargets))
 	}
 
-	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceID: "service"})
-	m.echo.Any("/proxy/:service/*", handler.Get().(echo.HandlerFunc))
+	handler := proxy.DefaultProxy.NewProxyHandler("service")
+	m.echo.Any("/proxy/:service/*", handler)
 
 	// Catch-all for requests not matched by any above handler
 	// echo does not set the response error on the context if no handler is matched
 	m.echo.Any("/*", func(c echo.Context) error {
-		return echo.ErrNotFound
+		id := fmt.Sprintf("%s %s", c.Request().Method, c.Request().URL.Path)
+		log.Debugf("unmatched request: %s", id)
+		return echo.NewHTTPError(http.StatusNotFound,
+			fmt.Sprintf("api not found: %s", id))
 	})
 
 	user.RegisterAPIHandler(m.echo, userService)
-	template.RegisterAPIHandler(m.echo, m.db)
 
 	telemetry.Setup(
 		m.system,

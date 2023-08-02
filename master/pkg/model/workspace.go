@@ -15,6 +15,8 @@ import (
 const (
 	// DefaultWorkspaceID is a special, always-existing, workspace titled "Uncategorized".
 	DefaultWorkspaceID = 1
+	// DefaultProjectID is the default project ID for the default workspace.
+	DefaultProjectID = 1
 )
 
 // Workspace is the bun model of a workspace.
@@ -32,6 +34,8 @@ type Workspace struct {
 	AgentGID                *int32                           `bun:"gid"`
 	AgentGroup              *string                          `bun:"group_"`
 	CheckpointStorageConfig *expconf.CheckpointStorageConfig `bun:"checkpoint_storage_config"`
+	DefaultComputePool      string                           `bun:"default_compute_pool"`
+	DefaultAuxPool          string                           `bun:"default_aux_pool"`
 }
 
 // ToProto converts a bun model of a workspace to a proto object.
@@ -70,6 +74,8 @@ func (w *Workspace) ToProto() (*workspacev1.Workspace, error) {
 		State:                   w.State.ToProto(),
 		AgentUserGroup:          aug,
 		CheckpointStorageConfig: storageConfig,
+		DefaultComputePool:      w.DefaultComputePool,
+		DefaultAuxPool:          w.DefaultAuxPool,
 	}, nil
 }
 

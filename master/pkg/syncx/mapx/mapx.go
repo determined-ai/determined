@@ -23,11 +23,13 @@ func (m *Map[K, V]) Load(k K) (V, bool) {
 }
 
 // Delete the value corresponding to k, idempotently.
-func (m *Map[K, V]) Delete(k K) {
+func (m *Map[K, V]) Delete(k K) (V, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	v, ok := m.inner[k]
 	delete(m.inner, k)
+	return v, ok
 }
 
 // Store the (k,v) pair.

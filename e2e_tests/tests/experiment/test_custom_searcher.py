@@ -20,6 +20,14 @@ from tests.fixtures.custom_searcher import searchers
 TIMESTAMP = int(time.time())
 
 
+def check_trial_state(trial: bindings.trialv1Trial, expect: bindings.trialv1State) -> bool:
+    """If the trial is in an unexpected state, dump logs and return False."""
+    if trial.state == expect:
+        return True
+    exp.print_trial_logs(trial.id)
+    return False
+
+
 @pytest.fixture
 def client_login() -> Iterator[None]:
     client.login(master=conf.make_master_url())
@@ -154,8 +162,13 @@ def test_run_random_searcher_exp_core_api(
     assert experiment.numTrials == 5
 
     trials = bindings.get_GetExperimentTrials(session, experimentId=experiment.id).trials
+
+    ok = True
     for trial in trials:
-        assert trial.state == bindings.experimentv1State.COMPLETED
+        ok = ok and check_trial_state(trial, bindings.trialv1State.COMPLETED)
+    assert ok, "some trials failed"
+
+    for trial in trials:
         assert trial.totalBatchesProcessed == 500
 
     # check logs to ensure failures actually happened
@@ -219,8 +232,13 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
     trials = bindings.get_GetExperimentTrials(
         api_utils.determined_test_session(), experimentId=experiment.id
     ).trials
+
+    ok = True
     for trial in trials:
-        assert trial.state == bindings.experimentv1State.COMPLETED
+        ok = ok and check_trial_state(trial, bindings.trialv1State.COMPLETED)
+    assert ok, "some trials failed"
+
+    for trial in trials:
         assert trial.totalBatchesProcessed == 500
 
 
@@ -348,8 +366,10 @@ def test_run_asha_batches_exp(tmp_path: pathlib.Path, client_login: None) -> Non
     # at least 1 trial in rung 3 (#batches = 2000)
     assert sum(t.totalBatchesProcessed == 2000 for t in response_trials) >= 1
 
+    ok = True
     for trial in response_trials:
-        assert trial.state == bindings.experimentv1State.COMPLETED
+        ok = ok and check_trial_state(trial, bindings.trialv1State.COMPLETED)
+    assert ok, "some trials failed"
 
 
 @pytest.mark.e2e_cpu_2a
@@ -419,7 +439,7 @@ def test_run_asha_searcher_exp_core_api(
     assert sum(t.totalBatchesProcessed == 2400 for t in response_trials) >= 1
 
     for trial in response_trials:
-        assert trial.state == bindings.experimentv1State.COMPLETED
+        assert trial.state == bindings.trialv1State.COMPLETED
 
     # check logs to ensure failures actually happened
     logs = str(
@@ -535,7 +555,7 @@ def test_resume_asha_batches_exp(exceptions: List[str], client_login: None) -> N
     assert sum(t.totalBatchesProcessed == 2000 for t in response_trials) >= 1
 
     for trial in response_trials:
-        assert trial.state == bindings.experimentv1State.COMPLETED
+        assert trial.state == bindings.trialv1State.COMPLETED
 
     assert search_method.progress(search_runner.state) == pytest.approx(1.0)
 

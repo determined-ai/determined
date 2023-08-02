@@ -1,14 +1,16 @@
 import { isLeft } from 'fp-ts/lib/Either';
 import * as io from 'io-ts';
 
-import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
+import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import {
   CheckpointStorageType,
   ExperimentSearcherName,
   HyperparameterType,
   LogLevel,
   RunState,
+  ValueOf,
 } from 'types';
+import { DetError, ErrorLevel, ErrorType } from 'utils/error';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const decode = <T>(type: io.Mixed, data: any): T => {
@@ -28,6 +30,76 @@ export const decode = <T>(type: io.Mixed, data: any): T => {
 export const optional = (x: io.Mixed): io.Mixed | io.NullC | io.UndefinedC => {
   return io.union([x, io.null, io.undefined]);
 };
+
+export class ValueofType<D extends { [key: string]: unknown }> extends io.Type<ValueOf<D>> {
+  readonly _tag: 'ValueofType' = 'ValueofType' as const;
+  constructor(
+    name: string,
+    is: ValueofType<D>['is'],
+    validate: ValueofType<D>['validate'],
+    encode: ValueofType<D>['encode'],
+    readonly values: D,
+  ) {
+    super(name, is, validate, encode);
+  }
+}
+
+class Float extends io.Type<number, number | string, unknown> {
+  readonly _tag: 'FloatType' = 'FloatType' as const;
+  constructor() {
+    super(
+      'float',
+      (u): u is number => io.number.is(u),
+      (u, c) => {
+        let u_ = u;
+        if (u === 'Infinity') {
+          u_ = Infinity;
+        }
+        if (u === '-Infinity') {
+          u_ = -Infinity;
+        }
+        if (u === 'NaN') {
+          u_ = NaN;
+        }
+        return io.number.validate(u_, c);
+      },
+      (f) => {
+        if (f === Infinity) {
+          return 'Infinity';
+        }
+        if (f === -Infinity) {
+          return '-Infinity';
+        }
+        if (Number.isNaN(f)) {
+          return 'NaN';
+        }
+        return io.number.encode(f);
+      },
+    );
+  }
+}
+
+export const float = new Float();
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface ValueofC<D extends { [key: string]: unknown }> extends ValueofType<D> {}
+
+export function valueof<D extends { [key: string]: unknown }>(
+  values: D,
+  name: string = Object.values(values)
+    .map((k) => JSON.stringify(k))
+    .join(' | '),
+): ValueofC<D> {
+  const valueSet = new Set(Object.values(values));
+  const is = (u: unknown): u is ValueOf<D> => valueSet.has(u);
+  return new ValueofType(
+    name,
+    is,
+    (u, c) => (is(u) ? io.success(u) : io.failure(u, c)),
+    io.identity,
+    values,
+  );
+}
 
 /* Slot */
 
@@ -79,6 +151,29 @@ const runStatesIoType = io.keyof(runStates);
 const ioMetricValue = io.unknown;
 const ioMetric = io.record(io.string, ioMetricValue);
 export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
+
+const ioMetricSummary = io.type({
+  count: optional(io.union([io.number, io.undefined])),
+  last: optional(io.union([io.number, io.string, io.boolean])),
+  max: optional(float),
+  min: optional(float),
+  sum: optional(float),
+  type: io.union([
+    io.literal('string'),
+    io.literal('number'),
+    io.literal('boolean'),
+    io.literal('date'),
+    io.literal('object'),
+    io.literal('array'),
+    io.literal('null'),
+  ]),
+});
+
+export const ioSummaryMetrics = io.partial({
+  avg_metrics: io.record(io.string, ioMetricSummary),
+  validation_metrics: io.record(io.string, ioMetricSummary),
+});
+export type ioSummaryMetrics = io.TypeOf<typeof ioSummaryMetrics>;
 
 /* Experiments */
 
@@ -205,3 +300,32 @@ export const ioTaskLogs = io.array(ioTaskLog);
 
 export type ioTypeTaskLog = io.TypeOf<typeof ioTaskLog>;
 export type ioTypeTaskLogs = io.TypeOf<typeof ioTaskLogs>;
+
+export const ioLocationType: io.Type<V1LocationType> = io.keyof({
+  [V1LocationType.EXPERIMENT]: null,
+  [V1LocationType.HYPERPARAMETERS]: null,
+  [V1LocationType.TRAINING]: null,
+  [V1LocationType.VALIDATIONS]: null,
+  [V1LocationType.UNSPECIFIED]: null,
+});
+export const ioColumnType: io.Type<V1ColumnType> = io.keyof({
+  [V1ColumnType.DATE]: null,
+  [V1ColumnType.NUMBER]: null,
+  [V1ColumnType.TEXT]: null,
+  [V1ColumnType.UNSPECIFIED]: null,
+});
+const ioProjectColumnRequired = io.type({
+  column: io.string,
+  location: ioLocationType,
+  type: ioColumnType,
+});
+const ioProjectColumnOptionals = io.partial({
+  displayName: io.string,
+});
+const ioProjectColumn = io.intersection([ioProjectColumnRequired, ioProjectColumnOptionals]);
+const ioProjectColumns = io.array(ioProjectColumn);
+export const ioProjectColumnsResponse = io.type({
+  columns: ioProjectColumns,
+});
+
+export type ioTypeProjectColumnsResponse = io.TypeOf<typeof ioProjectColumnsResponse>;

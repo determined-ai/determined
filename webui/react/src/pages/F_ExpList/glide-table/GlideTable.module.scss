@@ -1,0 +1,8 @@
+.base {
+  border: var(--theme-stroke-width) solid var(--theme-ix-border);
+  border-radius: var(--theme-border-radius);
+
+  .compareTable {
+    overflow-x: hidden !important;
+  }
+}

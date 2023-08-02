@@ -191,8 +191,7 @@ def test_drain_agent() -> None:
     with _disable_agent(agent_id, drain=True):
         # Check for 15 seconds it doesn't get scheduled into the same slot.
         for _ in range(15):
-            trials = exp.experiment_trials(experiment_id_no_start)
-            assert len(trials) == 0
+            assert not exp.experiment_has_active_workload(experiment_id_no_start)
 
         # Ensure the first one has finished with the correct number of workloads.
         exp.wait_for_experiment_state(experiment_id, experimentv1State.COMPLETED)

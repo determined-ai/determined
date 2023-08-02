@@ -1,10 +1,10 @@
 import { Modal } from 'components/kit/Modal';
 import { paths } from 'routes/utils';
 import { deleteModel } from 'services/api';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { ModelItem } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { routeToReactUrl } from 'utils/routes';
 
 interface Props {
   model: ModelItem;
@@ -30,7 +30,11 @@ const DeleteModelModal = ({ model }: Props): JSX.Element => {
     <Modal
       danger
       size="small"
-      submit={{ handler: handleOk, text: 'Delete Model' }}
+      submit={{
+        handleError,
+        handler: handleOk,
+        text: 'Delete Model',
+      }}
       title="Confirm Delete Model">
       <div>
         Are you sure you want to delete this model &quot;{model?.name}&quot; and all of its versions

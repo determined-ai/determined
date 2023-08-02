@@ -98,6 +98,7 @@ export const configForExperiment = (id: number): SettingsConfig<Settings> => ({
             literal(CheckpointState.Active),
             literal(CheckpointState.Completed),
             literal(CheckpointState.Deleted),
+            literal(CheckpointState.PartiallyDeleted),
             literal(CheckpointState.Error),
             literal(CheckpointState.Unspecified),
           ]),

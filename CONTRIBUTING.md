@@ -14,7 +14,7 @@ We welcome outside contributions. If you'd like to make a contribution, please:
 1. Tell us about what you'd like to contribute on
    [our Slack](https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew)
    or [community mailing list](https://groups.google.com/a/determined.ai/forum/#!forum/community).
-   We'd hate for you to duplicate effort is already in-flight.
+   We'd hate for you to duplicate efforts that are already in-flight.
 
 1. Apply the linter with `make fmt` and test locally with `make test` before
    submitting your code. Make sure that your code doesn't accidentally include
@@ -47,11 +47,11 @@ git clone --recurse-submodules https://github.com/determined-ai/determined.git
 #### Prerequisites
 
 - Go (>= 1.20)
-- Python (>= 3.6, <= 3.9), including:
+- Python (>= 3.7.4, <= 3.9), including:
   - python3-venv
   - python3-wheel
   - python3-dev
-- Node (>= 16.13, < 20)
+- Node (>= 18.16.0, < 19)
 - NPM (>= 8)
 - Docker (>= 19.03)
 - Helm (>= 3.0.0)
@@ -248,3 +248,7 @@ git secrets --register-aws
 # Add GCP regex
 git secrets --add '"private_key":\s"-----BEGIN\sPRIVATE\sKEY-----'
 ```
+
+## Documentation
+
+Visit our [Documentation Guide](https://github.com/determined-ai/determined/blob/main/docs/README.md) to find out how we generate and maintain our docs.

@@ -1,27 +1,37 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import { Card as AntDCard, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
+import Grid from 'components/Grid';
 import Accordion from 'components/kit/Accordion';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
+import ClipboardButton from 'components/kit/ClipboardButton';
+import CodeEditor from 'components/kit/CodeEditor';
+import { Column, Columns } from 'components/kit/Columns';
+import Drawer from 'components/kit/Drawer';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
-import IconicButton from 'components/kit/IconicButton';
+import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
+import InlineForm from 'components/kit/InlineForm';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
+import InputShortcut from 'components/kit/InputShortcut';
+import { TypographySize } from 'components/kit/internal/fonts';
 import { LineChart, Serie } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
 import { Modal, useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
+import Notes, { Props as NotesProps } from 'components/kit/Notes';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
@@ -33,29 +43,39 @@ import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
 import Logo from 'components/Logo';
-import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
-import ProjectCard from 'components/ProjectCard';
-import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
-import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
+import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
+import { CheckpointsDict } from 'pages/TrialDetails/F_TrialDetailsOverview';
+import { serverAddress } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
-import Icon from 'shared/components/Icon';
-import useUI from 'shared/contexts/stores/UI';
-import { ValueOf } from 'shared/types';
-import { noOp } from 'shared/utils/service';
+import useUI from 'stores/contexts/UI';
 import { BrandingType } from 'stores/determinedInfo';
-import { MetricType, Project, ResourcePool, User } from 'types';
-import { NotLoaded } from 'utils/loadable';
-import { generateTestProjectData, generateTestWorkspaceData } from 'utils/tests/generateTestData';
+import { ValueOf } from 'types';
+import { Note } from 'types';
+import { MetricType, User } from 'types';
+import {
+  Background,
+  Brand,
+  Float,
+  Interactive,
+  Overlay,
+  Stage,
+  Status,
+  Surface,
+} from 'utils/colors';
+import handleError from 'utils/error';
+import { Loaded, NotLoaded } from 'utils/loadable';
+import loremIpsum, { loremIpsumSentence } from 'utils/loremIpsum';
+import { noOp } from 'utils/service';
+import { KeyboardShortcut } from 'utils/shortcut';
+
+import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 
 import css from './DesignKit.module.scss';
-import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
-import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
 const ComponentTitles = {
   Accordion: 'Accordion',
@@ -64,16 +84,26 @@ const ComponentTitles = {
   Cards: 'Cards',
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
+  ClipboardButton: 'ClipboardButton',
+  CodeEditor: 'CodeEditor',
+  Color: 'Color',
+  Columns: 'Columns',
+  Drawer: 'Drawer',
+  Dropdown: 'Dropdown',
   Empty: 'Empty',
   Facepile: 'Facepile',
   Form: 'Form',
+  Icons: 'Icons',
+  InlineForm: 'InlineForm',
   Input: 'Input',
   InputNumber: 'InputNumber',
   InputSearch: 'InputSearch',
+  InputShortcut: 'InputShortcut',
   Lists: 'Lists (tables)',
   LogViewer: 'LogViewer',
   Modals: 'Modals',
   Nameplate: 'Nameplate',
+  Notes: 'Notes',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
   Select: 'Select',
@@ -107,6 +137,10 @@ const ComponentSection: React.FC<Props> = ({ children, id, title }: Props): JSX.
 };
 
 const ButtonsSection: React.FC = () => {
+  const menu: MenuItem[] = [
+    { key: 'start', label: 'Start' },
+    { key: 'stop', label: 'Stop' },
+  ];
   return (
     <ComponentSection id="Buttons" title="Buttons">
       <AntDCard>
@@ -161,15 +195,17 @@ const ButtonsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Default Button variations</strong>
+        Transparent background, solid border
         <Space>
           <Button>Default</Button>
           <Button danger>Danger</Button>
           <Button disabled>Disabled</Button>
-          <Button ghost>Ghost</Button>
           <Button loading>Loading</Button>
+          <Button selected>Selected</Button>
         </Space>
         <hr />
         <strong>Primary Button variations</strong>
+        Solid background, no border
         <Space>
           <Button type="primary">Primary</Button>
           <Button danger type="primary">
@@ -178,29 +214,13 @@ const ButtonsSection: React.FC = () => {
           <Button disabled type="primary">
             Disabled
           </Button>
-          <Button ghost type="primary">
-            Ghost
-          </Button>
           <Button loading type="primary">
             Loading
           </Button>
         </Space>
         <hr />
-        <strong>Link Button variations</strong>
-        <Space>
-          <Button type="link">Link</Button>
-          <Button danger type="link">
-            Danger
-          </Button>
-          <Button disabled type="link">
-            Disabled
-          </Button>
-          <Button loading type="link">
-            Loading
-          </Button>
-        </Space>
-        <hr />
         <strong>Text Button variations</strong>
+        Transparent background, no border
         <Space>
           <Button type="text">Text</Button>
           <Button danger type="text">
@@ -214,24 +234,8 @@ const ButtonsSection: React.FC = () => {
           </Button>
         </Space>
         <hr />
-        <strong>Ghost Button variations</strong>
-        <Space>
-          <Button type="ghost">Ghost</Button>
-          <Button danger type="ghost">
-            Danger
-          </Button>
-          <Button disabled type="ghost">
-            Disabled
-          </Button>
-          <Button ghost type="ghost">
-            Ghost
-          </Button>
-          <Button loading type="ghost">
-            Loading
-          </Button>
-        </Space>
-        <hr />
         <strong>Dashed Button variations</strong>
+        Transparent background, dashed border
         <Space>
           <Button type="dashed">Dashed</Button>
           <Button danger type="dashed">
@@ -240,19 +244,12 @@ const ButtonsSection: React.FC = () => {
           <Button disabled type="dashed">
             Disabled
           </Button>
-          <Button ghost type="dashed">
-            Ghost
-          </Button>
           <Button loading type="dashed">
             Loading
           </Button>
-        </Space>
-        <hr />
-        <strong>Shapes</strong>
-        <Space>
-          <Button shape="circle">Circle</Button>
-          <Button shape="default">Default</Button>
-          <Button shape="round">Round</Button>
+          <Button selected type="dashed">
+            Selected
+          </Button>
         </Space>
         <hr />
         <strong>Sizes</strong>
@@ -263,21 +260,36 @@ const ButtonsSection: React.FC = () => {
         </Space>
         <hr />
         <strong>Default Button with icon</strong>
+        With SVG Icon
         <Space>
-          <Button icon={<PoweroffOutlined />} type="primary">
-            ButtonWithIcon
+          <Button icon={<PoweroffOutlined />} />
+          <Button icon={<PoweroffOutlined />}>ButtonText</Button>
+        </Space>
+        With Font Icon
+        <Space>
+          <Button icon={<Icon name="play" size="large" title="Play" />} />
+          <Button icon={<Icon name="play" size="large" title="Play" />}>
+            ButtonWithLargeFontIcon
           </Button>
-          <Button icon={<PoweroffOutlined />}>ButtonWithIcon</Button>
-          <Button disabled icon={<PoweroffOutlined />}>
-            ButtonWithIcon
+          <Button icon={<Icon name="play" size="tiny" title="Play" />}>
+            ButtonWithTinyFontIcon
           </Button>
         </Space>
-        <hr />
-        <strong>Large iconic buttons</strong>
+        As Dropdown trigger
         <Space>
-          <IconicButton iconName="searcher-grid" text="Iconic button" type="primary" />
-          <IconicButton iconName="searcher-grid" text="Iconic button" />
-          <IconicButton disabled iconName="searcher-grid" text="Iconic button" />
+          <Dropdown menu={menu}>
+            <Button icon={<Icon name="play" size="large" title="Play" />}>Font icon Button</Button>
+          </Dropdown>
+          <Dropdown menu={menu}>
+            <Button icon={<PoweroffOutlined />}>SVG icon Button</Button>
+          </Dropdown>
+        </Space>
+        <hr />
+        <strong>Button with icon and text displayed in a column</strong>
+        <Space>
+          <Button column icon={<PoweroffOutlined />}>
+            ColumnButtonWithIcon
+          </Button>
         </Space>
       </AntDCard>
     </ComponentSection>
@@ -475,50 +487,67 @@ const SelectSection: React.FC = () => {
           width={999999}
         />
         <span>
-          Also see{' '}
-          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
-            Form
-          </Link>{' '}
-          for form-specific variations
+          Also see <a href={`#${ComponentTitles.Form}`}>Form</a> for form-specific variations
         </span>
       </AntDCard>
     </ComponentSection>
   );
 };
 
-const line1BatchesDataRaw: [number, number][] = [
-  [0, -2],
-  [2, Math.random() * 12],
-  [4, 15],
-  [6, Math.random() * 60],
-  [9, Math.random() * 40],
-  [10, Math.random() * 76],
-  [18, Math.random() * 80],
-  [19, 89],
-];
-const line2BatchesDataRaw: [number, number][] = [
-  [1, 15],
-  [2, 10.123456789],
-  [2.5, Math.random() * 22],
-  [3, 10.3909],
-  [3.25, 19],
-  [3.75, 4],
-  [4, 12],
-];
-
 const ChartsSection: React.FC = () => {
-  const timerRef = useRef<NodeJS.Timer | null>(null);
-  const [timer, setTimer] = useState(1);
+  const [line1Data, setLine1Data] = useState<[number, number][]>([
+    [0, -2],
+    [2, 7],
+    [4, 15],
+    [6, 35],
+    [9, 22],
+    [10, 76],
+    [18, 1],
+    [19, 89],
+  ]);
+  const [line2Data, setLine2Data] = useState<[number, number][]>([
+    [1, 15],
+    [2, 10.123456789],
+    [2.5, 22],
+    [3, 10.3909],
+    [3.25, 19],
+    [3.75, 4],
+    [4, 12],
+  ]);
+  const [timer, setTimer] = useState(line1Data.length);
   useEffect(() => {
-    timerRef.current = setInterval(() => setTimer((t) => t + 1), 2000);
+    let timeout: NodeJS.Timer | void;
+    if (timer <= line1Data.length) {
+      timeout = setTimeout(() => setTimer((t) => t + 1), 2000);
+    }
+    return () => timeout && clearTimeout(timeout);
+  }, [timer, line1Data]);
 
-    return () => {
-      if (timerRef.current !== null) clearInterval(timerRef.current);
-    };
+  const randomizeLineData = useCallback(() => {
+    setLine1Data([
+      [0, -2],
+      [2, Math.random() * 12],
+      [4, 15],
+      [6, Math.random() * 60],
+      [9, Math.random() * 40],
+      [10, Math.random() * 76],
+      [18, Math.random() * 80],
+      [19, 89],
+    ]);
+    setLine2Data([
+      [1, 15],
+      [2, 10.123456789],
+      [2.5, Math.random() * 22],
+      [3, 10.3909],
+      [3.25, 19],
+      [3.75, 4],
+      [4, 12],
+    ]);
   }, []);
+  const streamLineData = useCallback(() => setTimer(1), []);
 
-  const line1BatchesDataStreamed = useMemo(() => line1BatchesDataRaw.slice(0, timer), [timer]);
-  const line2BatchesDataStreamed = useMemo(() => line2BatchesDataRaw.slice(0, timer), [timer]);
+  const line1BatchesDataStreamed = useMemo(() => line1Data.slice(0, timer), [timer, line1Data]);
+  const line2BatchesDataStreamed = useMemo(() => line2Data.slice(0, timer), [timer, line2Data]);
 
   const line1: Serie = {
     color: '#009BDE',
@@ -587,18 +616,50 @@ const ChartsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Label options">
         <p>A chart with two metrics, a title, a legend, an x-axis label, a y-axis label.</p>
-        <LineChart height={250} series={[line1, line2]} showLegend={true} title="Sample" />
+        <div>
+          <Button onClick={randomizeLineData}>Randomize line data</Button>
+          <Button onClick={streamLineData}>Stream line data</Button>
+        </div>
+        <LineChart
+          handleError={handleError}
+          height={250}
+          series={[line1, line2]}
+          showLegend={true}
+          title="Sample"
+        />
       </AntDCard>
       <AntDCard title="Focus series">
         <p>Highlight a specific metric in the chart.</p>
-        <LineChart focusedSeries={1} height={250} series={[line1, line2]} title="Sample" />
+        <div>
+          <Button onClick={randomizeLineData}>Randomize line data</Button>
+          <Button onClick={streamLineData}>Stream line data</Button>
+        </div>
+        <LineChart
+          focusedSeries={1}
+          handleError={handleError}
+          height={250}
+          series={[line1, line2]}
+          title="Sample"
+        />
       </AntDCard>
       <AntDCard title="States without data">
         <strong>Loading</strong>
-        <LineChart height={250} series={NotLoaded} showLegend={true} title="Loading state" />
+        <LineChart
+          handleError={handleError}
+          height={250}
+          series={NotLoaded}
+          showLegend={true}
+          title="Loading state"
+        />
         <hr />
         <strong>Empty</strong>
-        <LineChart height={250} series={[]} showLegend={true} title="Empty state" />
+        <LineChart
+          handleError={handleError}
+          height={250}
+          series={[]}
+          showLegend={true}
+          title="Empty state"
+        />
       </AntDCard>
       <AntDCard title="Chart Grid">
         <p>
@@ -639,6 +700,7 @@ const ChartsSection: React.FC = () => {
               xLabel: xAxis,
             },
           ],
+          handleError,
           onXAxisChange: setXAxis,
           xAxis: xAxis,
         })}
@@ -646,6 +708,7 @@ const ChartsSection: React.FC = () => {
         <strong>Loading</strong>
         {createChartGrid({
           chartsProps: NotLoaded,
+          handleError,
           onXAxisChange: setXAxis,
           xAxis: xAxis,
         })}
@@ -653,6 +716,7 @@ const ChartsSection: React.FC = () => {
         <strong>Empty</strong>
         {createChartGrid({
           chartsProps: [],
+          handleError,
           onXAxisChange: setXAxis,
           xAxis: xAxis,
         })}
@@ -719,6 +783,300 @@ const CheckboxesSection: React.FC = () => {
   );
 };
 
+const ClipboardButtonSection: React.FC = () => {
+  const defaultContent = 'This is the content to copy to clipboard.';
+  const [content, setContent] = useState(defaultContent);
+  const getContent = useCallback(() => content, [content]);
+  return (
+    <ComponentSection id="ClipboardButton" title="ClipboardButton">
+      <AntDCard>
+        <p>
+          ClipboardButton (<code>{'<ClipboardButton>'}</code> provides a special button for the
+          purpose of copying some text into the browser clipboard.
+          <br />
+          <b>Note:</b> This capability is only available on `https` and `localhost` hosts. `http`
+          protocol is purposefully blocked for&nbsp;
+          <a href="https://developer.mozilla.org/en-US/docs/Web/API/Clipboard">security reasons</a>.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <Label>Copy Content</Label>
+        <Input value={content} onChange={(s) => setContent(String(s.target.value))} />
+        <hr />
+        <strong>Default Clipboard Button</strong>
+        <ClipboardButton getContent={getContent} />
+        <strong>Disabled Clipboard Button</strong>
+        <ClipboardButton disabled getContent={getContent} />
+        <strong>Custom Copied Message Clipboard Button</strong>
+        <ClipboardButton copiedMessage="Yay it's copied!" getContent={getContent} />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const DropdownSection: React.FC = () => {
+  const menu: MenuItem[] = [
+    { key: 'start', label: 'Start' },
+    { key: 'stop', label: 'Stop' },
+  ];
+  const menuWithDivider: MenuItem[] = [
+    ...menu,
+    { type: 'divider' },
+    { key: 'archive', label: 'Archive' },
+  ];
+  const menuWithDanger: MenuItem[] = [...menu, { danger: true, key: 'delete', label: 'Delete' }];
+  const menuWithDisabled: MenuItem[] = [
+    ...menu,
+    { disabled: true, key: 'delete', label: 'Delete' },
+  ];
+
+  return (
+    <ComponentSection id="Dropdown" title="Dropdown">
+      <AntDCard>
+        <p>
+          Dropdown (<code>{'<Dropdown>'}</code>) give people a way to select one item from a group
+          of choices. The item is typically an action to apply to a relevant entity. For example, an
+          experiment dropdown would show actions you can perform on the relevant experiment, such as
+          `Activate`, `Stop`, `Archive`, etc.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Basic Dropdowns</strong>
+        <Space>
+          <Dropdown menu={menu}>
+            <Button>Basic Dropdown</Button>
+          </Dropdown>
+          <Dropdown menu={menuWithDivider}>
+            <Button>Dropdown with a Divider</Button>
+          </Dropdown>
+          <Dropdown disabled menu={menu}>
+            <Button>Disabled Dropdown</Button>
+          </Dropdown>
+        </Space>
+        <strong>Various Dropdown Options</strong>
+        <Space>
+          <Dropdown menu={menuWithDanger}>
+            <Button>Dangerous Options</Button>
+          </Dropdown>
+          <Dropdown menu={menuWithDisabled}>
+            <Button>Disabled Options</Button>
+          </Dropdown>
+        </Space>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const CodeEditorSection: React.FC = () => {
+  return (
+    <ComponentSection id="CodeEditor" title="CodeEditor">
+      <AntDCard>
+        <p>
+          The Code Editor (<code>{'<CodeEditor>'}</code>) shows Python and YAML files with syntax
+          highlighting. If multiple files are sent, the component shows a file tree browser.
+        </p>
+        <ul>
+          <li>Use the readonly attribute to make code viewable but not editable.</li>
+        </ul>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Editable Python file</strong>
+        <CodeEditor
+          files={[
+            {
+              content: Loaded('import math\nprint(math.pi)\n\n'),
+              key: 'test.py',
+              title: 'test.py',
+            },
+          ]}
+          onError={handleError}
+        />
+        <strong>Read-only YAML file</strong>
+        <CodeEditor
+          files={[
+            {
+              content: Loaded(
+                'name: Unicode Test 日本😃\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2',
+              ),
+              key: 'test1.yaml',
+              title: 'test1.yaml',
+            },
+          ]}
+          readonly={true}
+          onError={handleError}
+        />
+        <strong>Multiple files, one not finished loading.</strong>
+        <CodeEditor
+          files={[
+            {
+              content: Loaded(
+                'hyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 512\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5',
+              ),
+              isLeaf: true,
+              key: 'one.yaml',
+              title: 'one.yaml',
+            },
+            {
+              content: Loaded('searcher:\n  name: single\n  metric: validation_loss\n'),
+              isLeaf: true,
+              key: 'two.yaml',
+              title: 'two.yaml',
+            },
+            { content: NotLoaded, isLeaf: true, key: 'unloaded.yaml', title: 'unloaded.yaml' },
+          ]}
+          readonly={true}
+          onError={handleError}
+        />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const InlineFormSection: React.FC = () => {
+  const [inputWithValidatorValue, setInputWithValidatorValue] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [numberInput, setNumberInput] = useState(1234);
+  const [textAreaValue, setTextAreaValue] = useState(loremIpsumSentence);
+  const [passwordInputValue, setPasswordInputValue] = useState('123456789');
+  const [selectValue, setSelectValue] = useState('off');
+
+  const inputWithValidatorCallback = useCallback((newValue: string) => {
+    setInputWithValidatorValue(newValue);
+  }, []);
+  const numberInputCallback = useCallback((newValue: number) => {
+    setNumberInput(newValue);
+  }, []);
+  const searchCallback = useCallback((newValue: string) => {
+    setSearchInput(newValue);
+  }, []);
+  const textAreaCallback = useCallback((newValue: string) => {
+    setTextAreaValue(newValue);
+  }, []);
+  const passwordInputCallback = useCallback((newValue: string) => {
+    setPasswordInputValue(newValue);
+  }, []);
+  const selectCallback = useCallback((newValue: string) => {
+    setSelectValue(newValue === '1' ? 'off' : 'on');
+  }, []);
+
+  return (
+    <ComponentSection id="InlineForm" title="InlineForm">
+      <AntDCard>
+        <p>
+          The <code>{'<InlineForm>'}</code> allows people to have a simple form with just one input
+          to interact with.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <p>
+          If using the <code>{'Input.Password'}</code> component, is important to pass the{' '}
+          <code>{'isPassword'}</code> prop.
+        </p>
+        <br />
+        <h5>Controlled</h5>
+        <div style={{ maxWidth: '700px' }}>
+          <InlineForm<string>
+            initialValue={''}
+            label="Input with validator"
+            rules={[{ message: 'Please input something here!', required: true }]}
+            value={inputWithValidatorValue}
+            onSubmit={inputWithValidatorCallback}>
+            <Input maxLength={32} />
+          </InlineForm>
+          <hr />
+          <InlineForm<string>
+            initialValue={textAreaValue}
+            label="Text Area"
+            value={textAreaValue}
+            onSubmit={textAreaCallback}>
+            <Input.TextArea />
+          </InlineForm>
+          <hr />
+          <InlineForm<string>
+            initialValue={''}
+            isPassword
+            label="Password"
+            value={passwordInputValue}
+            onSubmit={passwordInputCallback}>
+            <Input.Password />
+          </InlineForm>
+          <hr />
+          <InlineForm<string>
+            initialValue={selectValue}
+            label="Select"
+            value={selectValue}
+            onSubmit={selectCallback}>
+            <Select defaultValue={1} searchable={false}>
+              {[
+                { label: 'off', value: 1 },
+                { label: 'on', value: 2 },
+              ].map((opt) => (
+                <Option key={opt.value as React.Key} value={opt.value}>
+                  {opt.label}
+                </Option>
+              ))}
+            </Select>
+          </InlineForm>
+          <hr />
+          <InlineForm<number>
+            initialValue={numberInput}
+            label="Input Number"
+            value={numberInput}
+            onSubmit={numberInputCallback}>
+            <InputNumber />
+          </InlineForm>
+          <hr />
+          <InlineForm<string>
+            initialValue={searchInput}
+            label="Input Search"
+            value={searchInput}
+            onSubmit={searchCallback}>
+            <InputSearch allowClear enterButton placeholder="Input Search" />
+          </InlineForm>
+        </div>
+        <h5>Uncontrolled</h5>
+        <div style={{ maxWidth: '700px' }}>
+          <InlineForm<string>
+            initialValue={'initial value'}
+            label="Input with validator"
+            rules={[{ message: 'Please input something here!', required: true }]}>
+            <Input />
+          </InlineForm>
+          <hr />
+          <InlineForm<string> initialValue={textAreaValue} label="Text Area">
+            <Input.TextArea />
+          </InlineForm>
+          <hr />
+          <InlineForm<string> initialValue={''} isPassword label="Password">
+            <Input.Password />
+          </InlineForm>
+          <hr />
+          <InlineForm<string> initialValue={selectValue} label="Select">
+            <Select defaultValue={1} searchable={false}>
+              {[
+                { label: 'off', value: 1 },
+                { label: 'on', value: 2 },
+              ].map((opt) => (
+                <Option key={opt.value as React.Key} value={opt.value}>
+                  {opt.label}
+                </Option>
+              ))}
+            </Select>
+          </InlineForm>
+          <hr />
+          <InlineForm<number> initialValue={1234} label="Input Number">
+            <InputNumber />
+          </InlineForm>
+          <hr />
+          <InlineForm<string> initialValue={''} label="Input Search">
+            <InputSearch allowClear enterButton placeholder="Input Search" />
+          </InlineForm>
+        </div>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const InputSearchSection: React.FC = () => {
   return (
     <ComponentSection id="InputSearch" title="InputSearch">
@@ -774,6 +1132,28 @@ const InputSearchSection: React.FC = () => {
   );
 };
 
+const InputShortcutSection: React.FC = () => {
+  const [value, setValue] = useState<KeyboardShortcut>();
+  const onChange = (k: KeyboardShortcut | undefined) => {
+    setValue(k);
+  };
+  return (
+    <ComponentSection id="InputShortcut" title="InputShortcut">
+      <AntDCard>
+        <p>
+          An input box (<code>{'<InputShortcut>'}</code>) for keyboard shortcuts.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Default Input for Shortcut</strong>
+        <InputShortcut />
+        <strong>Controlled Input for Shortcut</strong>
+        <InputShortcut value={value} onChange={onChange} />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const InputNumberSection: React.FC = () => {
   return (
     <ComponentSection id="InputNumber" title="InputNumber">
@@ -808,11 +1188,7 @@ const InputNumberSection: React.FC = () => {
         <InputNumber disabled />
         <hr />
         <span>
-          Also see{' '}
-          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
-            Form
-          </Link>{' '}
-          for form-specific variations
+          Also see <a href={`#${ComponentTitles.Form}`}>Form</a> for form-specific variations
         </span>
       </AntDCard>
     </ComponentSection>
@@ -868,11 +1244,7 @@ const InputSection: React.FC = () => {
         <Input.Password disabled />
         <hr />
         <span>
-          Also see{' '}
-          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
-            Form
-          </Link>{' '}
-          for form-specific variations
+          Also see <a href={`#${ComponentTitles.Form}`}>Form</a> for form-specific variations
         </span>
       </AntDCard>
     </ComponentSection>
@@ -959,6 +1331,11 @@ const ListsSection: React.FC = () => {
 };
 
 const BreadcrumbsSection: React.FC = () => {
+  const menuItems: MenuItem[] = [
+    { key: 'Action 1', label: 'Action 1' },
+    { key: 'Action 2', label: 'Action 2' },
+  ];
+
   return (
     <ComponentSection id="Breadcrumbs" title="Breadcrumbs">
       <AntDCard>
@@ -989,6 +1366,11 @@ const BreadcrumbsSection: React.FC = () => {
           <Breadcrumb.Item>Level 0</Breadcrumb.Item>
           <Breadcrumb.Item>Level 1</Breadcrumb.Item>
           <Breadcrumb.Item>Level 2</Breadcrumb.Item>
+        </Breadcrumb>
+        <strong>Breadcrumb with actions</strong>
+        <Breadcrumb menuItems={menuItems}>
+          <Breadcrumb.Item>Level 0</Breadcrumb.Item>
+          <Breadcrumb.Item>Level 1</Breadcrumb.Item>
         </Breadcrumb>
       </AntDCard>
     </ComponentSection>
@@ -1104,6 +1486,50 @@ const FacepileSection: React.FC = () => {
   );
 };
 
+const useNoteDemo = (): ((props?: Omit<NotesProps, 'multiple'>) => JSX.Element) => {
+  const [note, setNote] = useState<Note>({ contents: '', name: 'Untitled' });
+  const onSave = async (n: Note) => await setNote(n);
+  return (props) => <Notes onError={handleError} {...props} notes={note} onSave={onSave} />;
+};
+
+const useNotesDemo = (): ((props?: NotesProps) => JSX.Element) => {
+  const [notes, setNotes] = useState<Note[]>([]);
+  const onDelete = (p: number) => setNotes((n) => n.filter((_, idx) => idx !== p));
+  const onNewPage = () => setNotes((n) => [...n, { contents: '', name: 'Untitled' }]);
+  const onSave = async (n: Note[]) => await setNotes(n);
+  return (props) => (
+    <Notes
+      {...props}
+      multiple
+      notes={notes}
+      onDelete={onDelete}
+      onError={handleError}
+      onNewPage={onNewPage}
+      onSave={onSave}
+    />
+  );
+};
+
+const NotesSection: React.FC = () => {
+  return (
+    <ComponentSection id="Notes" title="Notes">
+      <AntDCard>
+        <p>
+          A <code>{'<Notes>'}</code> is used for taking notes. It can be single page note or multi
+          pages notes. Each page of note consists of a title and a sheet of note.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Single page note</strong>
+        {useNoteDemo()()}
+        <hr />
+        <strong>Multi pages notes</strong>
+        {useNotesDemo()()}
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const UserAvatarSection: React.FC = () => {
   return (
     <ComponentSection id="UserAvatar" title="UserAvatar">
@@ -1149,9 +1575,9 @@ const NameplateSection: React.FC = () => {
           name={testUser.username}
         />
         <li>No alias</li>
-        <Nameplate icon={<Icon name="group" />} name="testGroup123" />
+        <Nameplate icon={<Icon name="group" title="Group" />} name="testGroup123" />
         <li>Compact, no alias</li>
-        <Nameplate compact icon={<Icon name="group" />} name="testGroup123" />
+        <Nameplate compact icon={<Icon name="group" title="Group" />} name="testGroup123" />
       </AntDCard>
     </ComponentSection>
   );
@@ -1277,10 +1703,6 @@ const PaginationSection: React.FC = () => {
 };
 
 const CardsSection: React.FC = () => {
-  const rps = resourcePools as unknown as ResourcePool[];
-  const project: Project = { ...generateTestProjectData(), lastExperimentStartedAt: new Date() };
-  const workspace = generateTestWorkspaceData();
-
   return (
     <ComponentSection id="Cards" title="Cards">
       <AntDCard>
@@ -1331,18 +1753,18 @@ const CardsSection: React.FC = () => {
         <strong>Card variations</strong>
         <p>Small cards (default)</p>
         <Card.Group>
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }}>Card with actions</Card>
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} disabled>
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]}>Card with actions</Card>
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]} disabled>
             Disabled card
           </Card>
           <Card onClick={noOp}>Clickable card</Card>
         </Card.Group>
         <p>Medium cards</p>
         <Card.Group size="medium">
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} size="medium">
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]} size="medium">
             Card with actions
           </Card>
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} disabled size="medium">
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]} disabled size="medium">
             Disabled card
           </Card>
           <Card size="medium" onClick={noOp}>
@@ -1370,51 +1792,6 @@ const CardsSection: React.FC = () => {
           <Card size="medium" />
           <Card size="medium" />
         </Card.Group>
-        <strong>Card examples</strong>
-        <ul>
-          <li>
-            Project card (<code>{'<ProjectCard>'}</code>)
-          </li>
-          <Card.Group>
-            <ProjectCard project={project} />
-            <ProjectCard project={{ ...project, archived: true }} />
-            <ProjectCard
-              project={{
-                ...project,
-                name: 'Project with a very long name that spans many lines and eventually gets cut off',
-              }}
-            />
-            <ProjectCard
-              project={{
-                ...project,
-                workspaceId: 2,
-              }}
-              showWorkspace
-            />
-          </Card.Group>
-          <li>
-            Workspace card (<code>{'<WorkspaceCard>'}</code>)
-          </li>
-          <Card.Group size="medium">
-            <WorkspaceCard workspace={workspace} />
-            <WorkspaceCard workspace={{ ...workspace, archived: true }} />
-          </Card.Group>
-          <li>
-            Stats overview (<code>{'<OverviewStats>'}</code>)
-          </li>
-          <Card.Group>
-            <OverviewStats title="Active Experiments">0</OverviewStats>
-            <OverviewStats title="Clickable card" onClick={noOp}>
-              Example
-            </OverviewStats>
-          </Card.Group>
-          <li>
-            Resource pool card (<code>{'<ResourcePoolCard>'}</code>)
-          </li>
-          <Card.Group size="medium">
-            <ResourcePoolCard resourcePool={rps[0]} />
-          </Card.Group>
-        </ul>
       </AntDCard>
     </ComponentSection>
   );
@@ -1488,7 +1865,13 @@ const LogViewerSection: React.FC = () => {
       <AntDCard title="Usage">
         <strong>LogViewer default</strong>
         <div style={{ height: '300px' }}>
-          <LogViewer decoder={mapV1LogsResponse} initialLogs={sampleLogs} sortKey="id" />
+          <LogViewer
+            decoder={mapV1LogsResponse}
+            initialLogs={sampleLogs}
+            serverAddress={serverAddress}
+            sortKey="id"
+            onError={handleError}
+          />
         </div>
         <strong>Considerations</strong>
         <ul>
@@ -1518,11 +1901,7 @@ const FormSection: React.FC = () => {
       <AntDCard title="Usage">
         <Form>
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
-              Input
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>Input</a> variations
           </strong>
           <br />
           <Form.Item label="Required input" name="required_input" required>
@@ -1539,11 +1918,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
-              TextArea
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>TextArea</a> variations
           </strong>
           <br />
           <Form.Item label="Required TextArea" name="required_textarea" required>
@@ -1560,11 +1935,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
-              Password
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>Password</a> variations
           </strong>
           <br />
           <Form.Item label="Required Password" name="required_label" required>
@@ -1581,11 +1952,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.InputNumber}`}>
-              InputNumber
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>InputNumber</a> variations
           </strong>
           <Form.Item label="Required InputNumber" name="number" required>
             <InputNumber />
@@ -1600,11 +1967,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Select}`}>
-              Select
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Select}>Select</a> variations
           </strong>
           <Form.Item initialValue={1} label="Required dropdown" name="required_dropdown" required>
             <Select
@@ -1695,6 +2058,148 @@ const TypographySection: React.FC = () => {
           <Paragraph>this is a paragraph!</Paragraph>
         </Space>
       </AntDCard>
+      <AntDCard title="Font Families">
+        <Paragraph>For general UI --theme-font-family</Paragraph>
+        <Paragraph font="code">For displaying code --theme-font-family-code</Paragraph>
+      </AntDCard>
+      <AntDCard title="Font Sizing">
+        <div>
+          <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+            <Header>Header</Header>
+            <Header size={TypographySize.XL}>
+              Model Registry - XL (f.s. 28px, line-height 36px)
+            </Header>
+            <Header size={TypographySize.L}>
+              Model Registry - L (f.s. 24px, line-height 32px)
+            </Header>
+            <Header size={TypographySize.default}>
+              Model Registry - default (f.s. 22px line-height 28px)
+            </Header>
+            <Header size={TypographySize.S}>Model Registry - s (f.s. 18px line-height 23px)</Header>
+            <Header size={TypographySize.XS}>
+              Model Registry - xs (f.s. 16px line-height 21px)
+            </Header>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+            <Header>Multi Line</Header>
+            <Paragraph size={TypographySize.XL} type="multi line">
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - XL (f.s. 16px line-height 26px)
+            </Paragraph>
+            <br />
+            <Paragraph size={TypographySize.L} type="multi line">
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - L (f.s. 14px line-height 22px)
+            </Paragraph>
+            <br />
+            <Paragraph size={TypographySize.default} type="multi line">
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - default (f.s. 12px line-height 20px)
+            </Paragraph>
+            <br />
+            <Paragraph size={TypographySize.S} type="multi line">
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - s (f.s. 11px line-height 18px)
+            </Paragraph>
+            <br />
+            <Paragraph size={TypographySize.XS} type="multi line">
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - xs (f.s. 10px line-height 16px)
+            </Paragraph>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+            <Header>Single Line</Header>
+            <Paragraph size={TypographySize.XL}>
+              Model Registry - XL (f.s. 16px line-height 20px)
+            </Paragraph>
+            <Paragraph size={TypographySize.L}>
+              Model Registry - L (f.s. 14px line-height 18px)
+            </Paragraph>
+            <Paragraph size={TypographySize.default}>
+              Model Registry - default (f.s. 12px line-height 16px)
+            </Paragraph>
+            <Paragraph size={TypographySize.S}>
+              Model Registry - s (f.s. 11px line-height 14px)
+            </Paragraph>
+            <Paragraph size={TypographySize.XS}>
+              Model Registry - xs (f.s. 10px line-height 12px)
+            </Paragraph>
+          </div>
+        </div>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const ColorSection: React.FC = () => {
+  const themeStatus = Object.values(Status);
+  const backgrounds = Object.values(Background);
+  const stage = Object.values(Stage);
+  const surface = Object.values(Surface);
+  const float = Object.values(Float);
+  const overlay = Object.values(Overlay);
+  const brand = Object.values(Brand);
+  const interactive = Object.values(Interactive);
+
+  const renderColorComponent = (colorArray: string[], name: string) => (
+    <AntDCard title={`${name} Colors`}>
+      <Grid>
+        {colorArray.map((cName, idx) => (
+          <div
+            key={`${idx}-${name.toLowerCase()}`}
+            style={{
+              marginBottom: '20px',
+              width: '250px',
+            }}>
+            <span>{cName.replace(/(var\(|\))/g, '')}</span>
+            <div
+              style={{
+                backgroundColor: cName,
+                border: 'var(--theme-stroke-width) solid var(--theme-surface-border)',
+                borderRadius: 'var(--theme-border-radius)',
+                height: '40px',
+                width: '100%',
+              }}
+            />
+          </div>
+        ))}
+      </Grid>
+    </AntDCard>
+  );
+  const iterateOverThemes = (themes: Array<string[]>, names: string[]) =>
+    themes.map((theme, idx) => renderColorComponent(theme, names[idx]));
+
+  return (
+    <ComponentSection id="Color" title="Color">
+      <AntDCard>
+        <Paragraph>
+          We have a variety of colors that are available for use with the components in the UI Kit.
+        </Paragraph>
+      </AntDCard>
+      {iterateOverThemes(
+        [themeStatus, backgrounds, stage, surface, float, overlay, brand, interactive],
+        ['Status', 'Background', 'Stage', 'Surface', 'Float', 'Overlay', 'Brand', 'Interactive'],
+      )}
     </ComponentSection>
   );
 };
@@ -1736,14 +2241,19 @@ const TooltipsSection: React.FC = () => {
       <AntDCard title="Usage">
         <strong>Tooltips default</strong>
         <Space>
-          <Tooltip title={text}>
-            <span>Trigger on hover</span>
+          <Tooltip content={text}>
+            <Button>Trigger on hover</Button>
           </Tooltip>
-          <Tooltip title={text} trigger="click">
-            <span>Trigger on click</span>
+          <Tooltip content={text} trigger="click">
+            <Button>Trigger on click</Button>
           </Tooltip>
-          <Tooltip title={text} trigger="contextMenu">
-            <span>Trigger on right click</span>
+          <Tooltip content={text} trigger="contextMenu">
+            <Button>Trigger on right click</Button>
+          </Tooltip>
+        </Space>
+        <Space>
+          <Tooltip content={text} placement="bottom" showArrow={false}>
+            <Button>Tooltip without arrow</Button>
           </Tooltip>
         </Space>
         <strong>Considerations</strong>
@@ -1756,50 +2266,161 @@ const TooltipsSection: React.FC = () => {
         <strong>Variations</strong>
         <div>
           <div style={{ marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
-            <Tooltip placement="topLeft" title={text}>
+            <Tooltip content={text} placement="topLeft">
               <Button>TL</Button>
             </Tooltip>
-            <Tooltip placement="top" title={text}>
+            <Tooltip content={text} placement="top">
               <Button>Top</Button>
             </Tooltip>
-            <Tooltip placement="topRight" title={text}>
+            <Tooltip content={text} placement="topRight">
               <Button>TR</Button>
             </Tooltip>
           </div>
           <div style={{ float: 'left', width: buttonWidth }}>
-            <Tooltip placement="leftTop" title={text}>
+            <Tooltip content={text} placement="leftTop">
               <Button>LT</Button>
             </Tooltip>
-            <Tooltip placement="left" title={text}>
+            <Tooltip content={text} placement="left">
               <Button>Left</Button>
             </Tooltip>
-            <Tooltip placement="leftBottom" title={text}>
+            <Tooltip content={text} placement="leftBottom">
               <Button>LB</Button>
             </Tooltip>
           </div>
           <div style={{ marginLeft: buttonWidth * 4 + 24, width: buttonWidth }}>
-            <Tooltip placement="rightTop" title={text}>
+            <Tooltip content={text} placement="rightTop">
               <Button>RT</Button>
             </Tooltip>
-            <Tooltip placement="right" title={text}>
+            <Tooltip content={text} placement="right">
               <Button>Right</Button>
             </Tooltip>
-            <Tooltip placement="rightBottom" title={text}>
+            <Tooltip content={text} placement="rightBottom">
               <Button>RB</Button>
             </Tooltip>
           </div>
           <div style={{ clear: 'both', marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
-            <Tooltip placement="bottomLeft" title={text}>
+            <Tooltip content={text} placement="bottomLeft">
               <Button>BL</Button>
             </Tooltip>
-            <Tooltip placement="bottom" title={text}>
+            <Tooltip content={text} placement="bottom">
               <Button>Bottom</Button>
             </Tooltip>
-            <Tooltip placement="bottomRight" title={text}>
+            <Tooltip content={text} placement="bottomRight">
               <Button>BR</Button>
             </Tooltip>
           </div>
         </div>
+        <strong>Tooltip with complex content</strong>
+        <p>
+          <Tooltip content={<UserAvatar />}>
+            <Button>{'Hover to see user avatars'}</Button>
+          </Tooltip>
+        </p>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const ColumnsSection: React.FC = () => {
+  return (
+    <ComponentSection id="Columns" title="Columns">
+      <AntDCard>
+        <p>
+          The <code>{'<Columns>'}</code> component wraps child components to be displayed in
+          multiple columns.
+          <br />
+          The <code>{'<Column>'}</code> component can optionally be used to wrap the content for
+          each column and set its alignment.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <p>
+          With <code>{'<Columns>'}</code> wrapper only, and <code>{'gap'}</code> set to 8 (default):
+        </p>
+        <Columns>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+        </Columns>
+        <p>
+          With <code>{'gap'}</code> set to 0:
+        </p>
+        <Columns gap={0}>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+        </Columns>
+        <p>
+          With <code>{'gap'}</code> set to 16:
+        </p>
+        <Columns gap={16}>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+        </Columns>
+        <p>
+          With left-aligned <code>{'<Column>'}</code>s (default):
+        </p>
+        <Columns>
+          <Column>
+            <Button>Content</Button>
+          </Column>
+          <Column>
+            <Button>Content</Button>
+          </Column>
+          <Column>
+            <Button>Content</Button>
+          </Column>
+        </Columns>
+        <p>
+          With center-aligned <code>{'<Column>'}</code>s:
+        </p>
+        <Columns>
+          <Column align="center">
+            <Button>Content</Button>
+          </Column>
+          <Column align="center">
+            <Button>Content</Button>
+          </Column>
+          <Column align="center">
+            <Button>Content</Button>
+          </Column>
+        </Columns>
+        <p>
+          With right-aligned <code>{'<Column>'}</code>s:
+        </p>
+        <Columns>
+          <Column align="right">
+            <Button>Content</Button>
+          </Column>
+          <Column align="right">
+            <Button>Content</Button>
+          </Column>
+          <Column align="right">
+            <Button>Content</Button>
+          </Column>
+        </Columns>
+        <p>
+          Variant with <code>{'page'}</code> prop, with margins and wrapping behavior, used for
+          page-level layouts/headers:
+        </p>
+        <Columns page>
+          <Column>
+            <Button>Content 1</Button>
+            <Button>Content 2</Button>
+            <Button>Content 3</Button>
+          </Column>
+          <Column>
+            <Button>Content 1</Button>
+            <Button>Content 2</Button>
+            <Button>Content 3</Button>
+          </Column>
+          <Column>
+            <Button>Content 1</Button>
+            <Button>Content 2</Button>
+            <Button>Content 3</Button>
+          </Column>
+        </Columns>
       </AntDCard>
     </ComponentSection>
   );
@@ -1824,6 +2445,38 @@ const EmptySection: React.FC = () => {
           icon="warning-large"
           title="Empty title"
         />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const IconsSection: React.FC = () => {
+  return (
+    <ComponentSection id="Icons" title="Icons">
+      <AntDCard>
+        <p>
+          An <code>{'<Icon>'}</code> component displays an icon from a custom font along with an
+          optional tooltip.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Icon default</strong>
+        <Icon name="star" title="star" />
+        <strong>Icon variations</strong>
+        <p>Icon with tooltip</p>
+        <Icon name="star" title="Tooltip" />
+        <p>Icon sizes</p>
+        <Space wrap>
+          {IconSizeArray.map((size) => (
+            <Icon key={size} name="star" showTooltip size={size} title={size} />
+          ))}
+        </Space>
+        <p>All icons</p>
+        <Space wrap>
+          {IconNameArray.map((name) => (
+            <Icon key={name} name={name} showTooltip title={name} />
+          ))}
+        </Space>
       </AntDCard>
     </ComponentSection>
   );
@@ -1881,20 +2534,6 @@ const LargeModalComponent: React.FC<{ value: string }> = ({ value }) => {
   );
 };
 
-const DangerousModalComponent: React.FC<{ value: string }> = ({ value }) => {
-  return (
-    <Modal
-      danger
-      submit={{
-        handler: handleSubmit,
-        text: 'Submit',
-      }}
-      title={value}>
-      <div>{value}</div>
-    </Modal>
-  );
-};
-
 const IconModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
     <Modal icon="experiment" title={value}>
@@ -1920,6 +2559,7 @@ const FormModalComponent: React.FC<{ value: string; fail?: boolean }> = ({ value
     <Modal
       cancel
       submit={{
+        handleError,
         handler: () => handleSubmit(fail),
         text: 'Submit',
       }}
@@ -1975,6 +2615,7 @@ const ValidationModalComponent: React.FC<{ value: string }> = ({ value }) => {
       cancel
       submit={{
         disabled: !alias,
+        handleError,
         handler: handleSubmit,
         text: 'Submit',
       }}
@@ -1996,16 +2637,27 @@ const ModalSection: React.FC = () => {
   const SmallModal = useModal(SmallModalComponent);
   const MediumModal = useModal(MediumModalComponent);
   const LargeModal = useModal(LargeModalComponent);
-  const DangerousModal = useModal(DangerousModalComponent);
   const FormModal = useModal(FormModalComponent);
   const FormFailModal = useModal(FormModalComponent);
   const LinksModal = useModal(LinksModalComponent);
   const IconModal = useModal(IconModalComponent);
   const ValidationModal = useModal(ValidationModalComponent);
 
+  const confirm = useConfirm();
+  const config = { content: text, title: text };
+  const confirmDefault = () =>
+    confirm({ ...config, onConfirm: voidPromiseFn, onError: handleError });
+  const confirmDangerous = () =>
+    confirm({
+      ...config,
+      danger: true,
+      onConfirm: voidPromiseFn,
+      onError: handleError,
+    });
+
   return (
     <ComponentSection id="Modals" title="Modals">
-      <AntDCard>
+      <AntDCard title="Usage">
         <Label>State value that gets passed to modal via props</Label>
         <Input value={text} onChange={(s) => setText(String(s.target.value))} />
         <hr />
@@ -2035,13 +2687,13 @@ const ModalSection: React.FC = () => {
         <hr />
         <strong>Variations</strong>
         <Space>
-          <Button onClick={DangerousModal.open}>Open Dangerous Modal</Button>
+          <Button onClick={confirmDefault}>Open Confirmation</Button>
+          <Button onClick={confirmDangerous}>Open Dangerous Confirmation</Button>
         </Space>
       </AntDCard>
       <SmallModal.Component value={text} />
       <MediumModal.Component value={text} />
       <LargeModal.Component value={text} />
-      <DangerousModal.Component value={text} />
       <FormModal.Component value={text} />
       <FormFailModal.Component fail value={text} />
       <LinksModal.Component value={text} />
@@ -2200,6 +2852,68 @@ const AccordionSection: React.FC = () => {
   );
 };
 
+const DrawerSection: React.FC = () => {
+  const [openLeft, setOpenLeft] = useState(false);
+  const [openRight, setOpenRight] = useState(false);
+  const scrollLines = [];
+  for (let i = 0; i < 100; i++) {
+    scrollLines.push(i);
+  }
+
+  return (
+    <ComponentSection id="Drawer" title="Drawer">
+      <AntDCard>
+        <p>
+          An <code>{'<Drawer>'}</code> is a full-height overlaid sidebar which moves into the
+          viewport from the left or right side.
+        </p>
+      </AntDCard>
+      <AntDCard title="Left side">
+        <p>
+          Drawer appears from the left side in an animation. Similar to a Modal, it can be closed
+          only by clicking a Close button (at top right) or Escape key.
+        </p>
+        <p>If the drawer body has extra content, it is scrollable without hiding the header.</p>
+        <Space>
+          <Button onClick={() => setOpenLeft(true)}>Open Drawer</Button>
+        </Space>
+        <Drawer
+          open={openLeft}
+          placement="left"
+          title="Left Drawer"
+          onClose={() => setOpenLeft(!openLeft)}>
+          {scrollLines.map((i) => (
+            <p key={i}>Sample scrollable content</p>
+          ))}
+        </Drawer>
+      </AntDCard>
+      <AntDCard title="Right side">
+        <p>Drawer appears from the right side.</p>
+        <p>
+          When a drawer has stateful content, that state is persisted when closed and re-opened.
+        </p>
+        <Space>
+          <Button onClick={() => setOpenRight(true)}>Open Drawer</Button>
+        </Space>
+        <Drawer
+          open={openRight}
+          placement="right"
+          title="Right Drawer"
+          onClose={() => setOpenRight(!openRight)}>
+          <p>Sample content</p>
+          <Checkbox>A</Checkbox>
+          <Checkbox>B</Checkbox>
+          <Checkbox>C</Checkbox>
+          <Checkbox>D</Checkbox>
+          <Form.Item label="Sample Persistent Input" name="sample_drawer">
+            <Input.TextArea />
+          </Form.Item>
+        </Drawer>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const Components = {
   Accordion: <AccordionSection />,
   Breadcrumbs: <BreadcrumbsSection />,
@@ -2207,16 +2921,26 @@ const Components = {
   Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
+  ClipboardButton: <ClipboardButtonSection />,
+  CodeEditor: <CodeEditorSection />,
+  Color: <ColorSection />,
+  Columns: <ColumnsSection />,
+  Drawer: <DrawerSection />,
+  Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,
+  Icons: <IconsSection />,
+  InlineForm: <InlineFormSection />,
   Input: <InputSection />,
   InputNumber: <InputNumberSection />,
   InputSearch: <InputSearchSection />,
+  InputShortcut: <InputShortcutSection />,
   Lists: <ListsSection />,
   LogViewer: <LogViewerSection />,
   Modals: <ModalSection />,
   Nameplate: <NameplateSection />,
+  Notes: <NotesSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
   Select: <SelectSection />,
@@ -2229,13 +2953,25 @@ const Components = {
 
 const DesignKit: React.FC = () => {
   const { actions } = useUI();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isExclusiveMode = searchParams.get('exclusive') === 'true';
 
   useEffect(() => {
     actions.hideChrome();
   }, [actions]);
 
+  useEffect(() => {
+    // move to the specified anchor tag in the url after refreshing page
+    if (window.location.hash) {
+      const hashSave = window.location.hash;
+      window.location.hash = ''; // clear hash first
+      window.location.hash = hashSave; // set hash again
+    }
+  }, []);
+
   return (
-    <Page bodyNoPadding docTitle="Design Kit">
+    <Page bodyNoPadding breadcrumb={[]} docTitle="Design Kit">
       <div className={css.base}>
         <nav>
           <Link reloadDocument to={'/'}>
@@ -2245,17 +2981,17 @@ const DesignKit: React.FC = () => {
           <ul>
             {componentOrder.map((componentId) => (
               <li key={componentId}>
-                <Link reloadDocument to={`#${componentId}`}>
-                  {ComponentTitles[componentId]}
-                </Link>
+                <a href={`#${componentId}`}>{ComponentTitles[componentId]}</a>
               </li>
             ))}
           </ul>
         </nav>
         <article>
-          {componentOrder.map((componentId) => (
-            <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
-          ))}
+          {componentOrder
+            .filter((id) => !isExclusiveMode || !location.hash || id === location.hash.substring(1))
+            .map((componentId) => (
+              <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
+            ))}
         </article>
       </div>
     </Page>

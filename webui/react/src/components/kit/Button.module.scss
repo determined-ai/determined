@@ -1,3 +1,61 @@
-.base:global(.ant-btn-dangerous):global(.ant-btn-primary) {
-  background-color: var(--theme-status-critical);
+.base:global(.ant-btn-dangerous) {
+  &:global(.ant-btn-default) {
+    border-color: var(--theme-status-critical);
+    color: var(--theme-status-critical);
+  }
+  &:global(.ant-btn-primary) {
+    background-color: var(--theme-status-critical);
+  }
+  &:global(.ant-btn-text) {
+    color: var(--theme-status-critical);
+  }
+  &:global(.ant-btn-dashed) {
+    border-color: var(--theme-status-critical);
+    color: var(--theme-status-critical);
+  }
+}
+.base:global(.ant-btn[disabled].ant-btn-text:disabled) {
+  background-color: transparent;
+  border: none;
+
+  &:hover {
+    background-color: transparent;
+    border: none;
+  }
+}
+.selected {
+  &:global(.ant-btn-default) {
+    border-color: #177ddc;
+    color: #177ddc;
+  }
+  &:global(.ant-btn-dashed) {
+    border-color: #177ddc;
+    color: #177ddc;
+  }
+}
+.column {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+  justify-content: center;
+
+  &:global(.ant-btn:not(.ant-btn-sm)) {
+    padding: 8px;
+  }
+  &:global(.ant-btn > .anticon + span) {
+    margin-inline-start: 0;
+  }
+}
+.withIcon {
+  align-items: center;
+  display: flex;
+
+  &.withChildren {
+    [class^='icon-']::before,
+    [class*=' icon-']::before {
+      margin-inline-end: 0.25em;
+    }
+  }
 }

@@ -1,10 +1,19 @@
-import { getAgents, getResourcePools } from 'services/api';
+import { Map } from 'immutable';
+
+import {
+  addResourcePoolBindings,
+  deleteResourcePoolBindings,
+  getAgents,
+  getResourcePoolBindings,
+  getResourcePools,
+  overwriteResourcePoolBindings,
+} from 'services/api';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
-import { clone, isEqual } from 'shared/utils/data';
-import { percent } from 'shared/utils/number';
 import { Agent, ClusterOverview, ClusterOverviewResource, ResourcePool, ResourceType } from 'types';
+import { clone, isEqual } from 'utils/data';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { percent } from 'utils/number';
 import { Observable, observable, WritableObservable } from 'utils/observable';
 
 import PollingStore from './polling';
@@ -21,7 +30,6 @@ const initClusterOverview: ClusterOverview = {
 /**
  * maximum theoretcial capacity of the resource pool in terms of the advertised
  * compute slot type.
- *
  * @param pool resource pool
  */
 export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
@@ -42,7 +50,7 @@ export const maxClusterSlotCapacity = (
   agents: Agent[],
 ): { [key in ResourceType]: number } => {
   const allPoolsStatic = pools.reduce((acc, pool) => {
-    return acc && pool.type === V1ResourcePoolType.STATIC;
+    return acc && (pool.type === V1ResourcePoolType.STATIC || pool.type === V1ResourcePoolType.K8S);
   }, true);
 
   if (allPoolsStatic) {
@@ -84,12 +92,22 @@ const clusterStatusText = (
   )}%`;
 };
 
+const updateIfChanged = <T, V extends WritableObservable<T>>(o: V, next: T) =>
+  o.update((prev) => (isEqual(prev, next) ? prev : next));
+
 class ClusterStore extends PollingStore {
   #agents: WritableObservable<Loadable<Agent[]>> = observable(NotLoaded);
   #resourcePools: WritableObservable<Loadable<ResourcePool[]>> = observable(NotLoaded);
+  #resourcePoolBindings: WritableObservable<Map<string, number[]>> = observable(Map());
 
   public readonly agents = this.#agents.readOnly();
-  public readonly resourcePools = this.#resourcePools.readOnly();
+  public readonly resourcePoolBindings = this.#resourcePoolBindings.readOnly();
+
+  public readonly resourcePools = this.#resourcePools.select((loadable) => {
+    return Loadable.map(loadable, (pools) => {
+      return pools.sort((a, b) => a.name.localeCompare(b.name));
+    });
+  });
 
   public readonly clusterOverview = this.#agents.select((agents) =>
     Loadable.map(agents, (agents) => {
@@ -135,21 +153,19 @@ class ClusterStore extends PollingStore {
 
     getAgents({}, { signal: signal ?? canceler.signal })
       .then((response) => {
-        const next = Loaded(response);
-        this.#agents.update((prev) => (isEqual(prev, next) ? prev : next));
+        updateIfChanged(this.#agents, Loaded(response));
       })
       .catch(handleError);
 
     return () => canceler.abort();
   }
 
-  public fetchResourcePools(signal?: AbortSignal) {
+  public fetchResourcePools(signal?: AbortSignal): () => void {
     const canceler = new AbortController();
 
     getResourcePools({}, { signal: signal ?? canceler.signal })
       .then((response) => {
-        const next = Loaded(response);
-        this.#resourcePools.update((prev) => (isEqual(prev, next) ? prev : next));
+        updateIfChanged(this.#resourcePools, Loaded(response));
       })
       .catch(handleError);
 
@@ -157,10 +173,93 @@ class ClusterStore extends PollingStore {
   }
 
   public async poll() {
-    await Promise.all([
-      this.fetchResourcePools(this.canceler?.signal),
-      this.fetchAgents(this.canceler?.signal),
-    ]);
+    const agentRequest = getAgents({}, { signal: this.canceler?.signal });
+    const poolsRequest = getResourcePools({}, { signal: this.canceler?.signal });
+    const [agents, resourcePools] = await Promise.all([agentRequest, poolsRequest]);
+    updateIfChanged(this.#resourcePools, Loaded(resourcePools));
+    updateIfChanged(this.#agents, Loaded(agents));
+  }
+
+  public readonly boundWorkspaces = (resourcePool: string) =>
+    this.#resourcePoolBindings.select((map) => map.get(resourcePool));
+
+  public fetchResourcePoolBindings(resourcePoolName: string, signal?: AbortSignal): () => void {
+    const canceler = new AbortController();
+
+    getResourcePoolBindings({ resourcePoolName }, { signal: signal ?? canceler.signal })
+      .then((response) => {
+        this.#resourcePoolBindings.update((map) =>
+          map.set(resourcePoolName, response.workspaceIds ?? []),
+        );
+      })
+      .catch(handleError);
+
+    return () => canceler.abort();
+  }
+
+  public addResourcePoolBindings(
+    resourcePool: string,
+    workspaceIds: number[],
+    signal?: AbortSignal,
+  ): () => void {
+    const canceler = new AbortController();
+
+    addResourcePoolBindings(
+      { resourcePoolName: resourcePool, workspaceIds },
+      { signal: signal ?? canceler.signal },
+    )
+      .then(() => {
+        this.#resourcePoolBindings.update((map) =>
+          map.update(resourcePool, (prevWorkspaceIds) =>
+            prevWorkspaceIds ? [...new Set([...prevWorkspaceIds, ...workspaceIds])] : workspaceIds,
+          ),
+        );
+      })
+      .catch(handleError);
+
+    return () => canceler.abort();
+  }
+
+  public deleteResourcePoolBindings(
+    resourcePool: string,
+    workspaceIds: number[],
+    signal?: AbortSignal,
+  ): () => void {
+    const canceler = new AbortController();
+
+    deleteResourcePoolBindings(
+      { resourcePoolName: resourcePool, workspaceIds },
+      { signal: signal ?? canceler.signal },
+    )
+      .then(() => {
+        this.#resourcePoolBindings.update((map) =>
+          map.update(resourcePool, (oldWorkspaceIds) =>
+            oldWorkspaceIds?.filter((id) => !workspaceIds.includes(id)),
+          ),
+        );
+      })
+      .catch(handleError);
+
+    return () => canceler.abort();
+  }
+
+  public overwriteResourcePoolBindings(
+    resourcePool: string,
+    workspaceIds: number[],
+    signal?: AbortSignal,
+  ): () => void {
+    const canceler = new AbortController();
+
+    overwriteResourcePoolBindings(
+      { resourcePoolName: resourcePool, workspaceIds },
+      { signal: signal ?? canceler.signal },
+    )
+      .then(() => {
+        this.#resourcePoolBindings.update((map) => map.set(resourcePool, workspaceIds));
+      })
+      .catch(handleError);
+
+    return () => canceler.abort();
   }
 }
 

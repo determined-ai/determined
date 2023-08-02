@@ -1,20 +1,14 @@
 import { Map } from 'immutable';
 
 import { getCurrentUser, getUsers } from 'services/api';
-import { V1Pagination } from 'services/api-ts-sdk';
 import type { GetUsersParams } from 'services/types';
-import { DetailedUser } from 'types';
+import { DetailedUser, DetailedUserList } from 'types';
+import { isEqual } from 'utils/data';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { observable, WritableObservable } from 'utils/observable';
-import { encodeParams } from 'utils/store';
 
 import PollingStore from './polling';
-
-type UsersPagination = {
-  pagination: V1Pagination;
-  userIds: number[];
-};
 
 function compareUser(a: DetailedUser, b: DetailedUser): number {
   const aName = a.displayName ?? a.username;
@@ -23,8 +17,8 @@ function compareUser(a: DetailedUser, b: DetailedUser): number {
 }
 
 class UserStore extends PollingStore {
+  #userIds: WritableObservable<Loadable<number[]>> = observable(NotLoaded);
   #usersById: WritableObservable<Map<number, DetailedUser>> = observable(Map());
-  #usersBySearch: WritableObservable<Map<string, UsersPagination>> = observable(Map());
   #currentUser: WritableObservable<Loadable<DetailedUser>> = observable(NotLoaded);
 
   public readonly currentUser = this.#currentUser.readOnly();
@@ -36,14 +30,10 @@ class UserStore extends PollingStore {
     });
   }
 
-  public getUsers(params: GetUsersParams = {}) {
-    return this.getLoadableUsersByParams(params);
-  }
-
-  protected getLoadableUsersByParams(params: GetUsersParams = {}) {
-    return this.#usersBySearch.select((map) => {
-      const userIds = map.get(encodeParams(params))?.userIds;
-      if (!userIds) return NotLoaded;
+  public getUsers() {
+    return this.#userIds.select((loadable) => {
+      const userIds = Loadable.getOrElse([], loadable);
+      if (userIds.length === 0) return NotLoaded;
 
       const users = userIds
         .map((id) => this.#usersById.get().get(id))
@@ -84,22 +74,12 @@ class UserStore extends PollingStore {
     return () => canceler.abort();
   }
 
-  public fetchUsers(params: GetUsersParams = {}, signal?: AbortSignal) {
+  public fetchUsers(signal?: AbortSignal) {
     const canceler = new AbortController();
 
-    getUsers(params, { signal: signal ?? canceler.signal })
+    getUsers({}, { signal: signal ?? canceler.signal })
       .then((response) => {
-        this.#usersBySearch.update((map) =>
-          map.set(encodeParams(params), {
-            pagination: response.pagination,
-            userIds: response.users.map((user) => user.id),
-          }),
-        );
-        this.#usersById.update((prev) =>
-          prev.withMutations((map) => {
-            response.users.forEach((user) => map.set(user.id, user));
-          }),
-        );
+        this.updateUsersFromResponse(response);
       })
       .catch((e) => handleError(e, { publicSubject: 'Unable to fetch users.' }));
 
@@ -107,24 +87,33 @@ class UserStore extends PollingStore {
   }
 
   public reset() {
+    this.#userIds.set(NotLoaded);
     this.#currentUser.set(NotLoaded);
     this.#usersById.set(Map());
-    this.#usersBySearch.set(Map());
   }
 
   protected async poll(params: GetUsersParams = {}) {
     const response = await getUsers(params, { signal: this.canceler?.signal });
-    this.#usersBySearch.update((map) =>
-      map.set(encodeParams(params), {
-        pagination: response.pagination,
-        userIds: response.users.map((user) => user.id),
-      }),
-    );
+    this.updateUsersFromResponse(response);
+  }
+
+  protected updateUsersFromResponse(response: DetailedUserList) {
+    let hasUserChanges = false;
     this.#usersById.update((prev) =>
       prev.withMutations((map) => {
-        response.users.forEach((user) => map.set(user.id, user));
+        response.users.forEach((newUser) => {
+          const oldUser = map.get(newUser.id);
+          if (!isEqual(oldUser, newUser)) {
+            map.set(newUser.id, newUser);
+            hasUserChanges = true;
+          }
+        });
       }),
     );
+
+    if (hasUserChanges) {
+      this.#userIds.set(Loaded(response.users.map((user) => user.id)));
+    }
   }
 }
 

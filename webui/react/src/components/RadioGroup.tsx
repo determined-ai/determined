@@ -4,9 +4,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { throttle } from 'throttle-debounce';
 
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import Icon, { IconName, IconSize } from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import useResize from 'hooks/useResize';
-import Icon, { IconSize } from 'shared/components/Icon/Icon';
 
 import css from './RadioGroup.module.scss';
 
@@ -19,10 +19,10 @@ interface Props {
 }
 
 export interface RadioGroupOption {
-  icon?: string;
+  icon?: IconName;
   iconSize?: IconSize;
   id: string;
-  label?: string;
+  label: string;
 }
 
 interface SizeInfo {
@@ -113,12 +113,12 @@ const RadioGroup: React.FC<Props> = ({
           condition={!showLabels || iconOnly}
           key={option.id}
           wrapper={(children) => (
-            <Tooltip placement="top" title={option.label}>
+            <Tooltip content={option.label} placement="top">
               {children}
             </Tooltip>
           )}>
           <Radio.Button className={css.option} value={option.id}>
-            {option.icon && <Icon name={option.icon} size={option.iconSize} title={option.label} />}
+            {option.icon && <Icon decorative name={option.icon} size={option.iconSize} />}
             {option.label && showLabels && !iconOnly && (
               <span className={css.label}>{option.label}</span>
             )}

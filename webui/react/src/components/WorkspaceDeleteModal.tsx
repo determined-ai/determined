@@ -4,11 +4,11 @@ import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import { paths } from 'routes/utils';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { routeToReactUrl } from 'utils/routes';
 
 import css from './WorkspaceDeleteModal.module.scss';
 
@@ -54,6 +54,7 @@ const WorkspaceDeleteModalComponent: React.FC<Props> = ({
       size="small"
       submit={{
         disabled: workspaceNameValue !== workspace.name,
+        handleError,
         handler: handleSubmit,
         text: 'Delete Workspace',
       }}

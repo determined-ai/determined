@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
@@ -56,7 +55,7 @@ func (db *PgDB) ProjectExperiments(id int) (experiments []*model.Experiment, err
 	rows, err := db.sql.Queryx(`
 SELECT e.id, state, config, model_definition, start_time, end_time, archived,
 	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-		 job_id, u.username as username, project_id
+		 job_id, u.username as username, project_id, unmanaged
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
 WHERE e.project_id = $1`, id)
@@ -117,63 +116,84 @@ func (db *PgDB) GetExperimentStatus(experimentID int) (state model.State, progre
 	return state, progress, err
 }
 
-// MetricNames returns the set of training and validation metric names that have been recorded for
-// an experiment.
-func (db *PgDB) MetricNames(experimentID int, sStartTime time.Time, vStartTime time.Time) (
-	training []string, validation []string, sEndTime time.Time, vEndTime time.Time, err error,
+// GetNonTerminalExperimentCount returns the number of non terminal experiments.
+func GetNonTerminalExperimentCount(ctx context.Context,
+	experimentIDs []int32,
+) (count int, err error) {
+	return Bun().NewSelect().Table("experiments").
+		Where("id IN (?)", bun.In(experimentIDs)).
+		Where("state NOT IN (?)", bun.In(model.StatesToStrings(model.TerminalStates))).
+		Count(ctx)
+}
+
+// MetricNames returns a list of metric names for the given experiment IDs.
+func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
+	map[model.MetricGroup][]string, error,
 ) {
-	type namesWrapper struct {
-		Name    string    `db:"name"`
-		EndTime time.Time `db:"end_time"`
+	type MetricNamesRow struct {
+		MetricName string
+		JSONPath   string
 	}
+	rows := []MetricNamesRow{}
 
-	var rows []namesWrapper
-	err = db.queryRows(`
-SELECT
-  jsonb_object_keys(s.metrics->'avg_metrics') AS name,
-  max(s.end_time) AS end_time
-FROM trials t
-JOIN steps s ON t.id=s.trial_id
-WHERE t.experiment_id=$1
-  AND s.end_time > $2
-GROUP BY name`, &rows, experimentID, sStartTime)
+	metricNames := BunSelectMetricGroupNames().
+		Where("experiment_id IN (?)", bun.In(experimentIDs))
+
+	err := Bun().NewSelect().TableExpr("(?) as metric_names", metricNames).
+		Column("json_path").
+		Column("metric_name").
+		Scan(ctx, &rows)
 	if err != nil {
-		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
-			"error querying training metric names for experiment %d", experimentID)
-	}
-	for _, row := range rows {
-		training = append(training, row.Name)
-		if row.EndTime.After(sEndTime) {
-			sEndTime = row.EndTime
-		}
+		return nil, err
 	}
 
-	err = db.queryRows(`
-SELECT
-  jsonb_object_keys(v.metrics->'validation_metrics') AS name,
-  max(v.end_time) AS end_time
-FROM trials t
-JOIN validations v ON t.id = v.trial_id
-WHERE t.experiment_id=$1
-  AND v.end_time > $2
-GROUP BY name`, &rows, experimentID, vStartTime)
-	if err != nil {
-		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
-			"error querying validation metric names for experiment %d", experimentID)
-	}
+	metricNamesMap := make(map[model.MetricGroup][]string)
 	for _, row := range rows {
-		validation = append(validation, row.Name)
-		if row.EndTime.After(sEndTime) {
-			sEndTime = row.EndTime
+		mGroup := model.TrialSummaryMetricGroup(row.JSONPath)
+		if _, ok := metricNamesMap[mGroup]; !ok {
+			metricNamesMap[mGroup] = make([]string, 0)
 		}
+		metricNamesMap[mGroup] = append(metricNamesMap[mGroup], row.MetricName)
 	}
 
-	return training, validation, sEndTime, vEndTime, err
+	return metricNamesMap, nil
 }
 
 type batchesWrapper struct {
-	Batches int32     `db:"batches_processed"`
+	Batches int32     `db:"batches_processed" bun:"batches_processed"`
 	EndTime time.Time `db:"end_time"`
+}
+
+// MetricBatches returns the milestones (in batches processed) at which a specific metric
+// was recorded.
+func MetricBatches(
+	experimentID int, metricName string, startTime time.Time, metricGroup model.MetricGroup,
+) (
+	batches []int32, endTime time.Time, err error,
+) {
+	var rows []*batchesWrapper
+	JSONKey := model.TrialMetricsJSONPath(metricGroup == model.ValidationMetricGroup)
+
+	err = BunSelectMetricsQuery(metricGroup, false).
+		TableExpr("trials t").
+		Join("INNER JOIN metrics m ON t.id=m.trial_id").
+		ColumnExpr("m.total_batches AS batches_processed, max(t.end_time) as end_time").
+		Where("t.experiment_id = ?", experimentID).
+		Where(fmt.Sprintf("m.metrics->'%s' ? '%s'", JSONKey, metricName)).
+		Where("m.end_time > ?", startTime).
+		Group("batches_processed").Scan(context.Background(), &rows)
+
+	if err != nil {
+		return nil, endTime, errors.Wrapf(err, "error querying DB for metric batches")
+	}
+	for _, row := range rows {
+		batches = append(batches, row.Batches)
+		if row.EndTime.After(endTime) {
+			endTime = row.EndTime
+		}
+	}
+
+	return batches, endTime, nil
 }
 
 // TrainingMetricBatches returns the milestones (in batches processed) at which a specific training
@@ -181,26 +201,7 @@ type batchesWrapper struct {
 func (db *PgDB) TrainingMetricBatches(experimentID int, metricName string, startTime time.Time) (
 	batches []int32, endTime time.Time, err error,
 ) {
-	var rows []*batchesWrapper
-	err = db.queryRows(`
-SELECT s.total_batches AS batches_processed,
-  max(s.end_time) as end_time
-FROM trials t INNER JOIN steps s ON t.id=s.trial_id
-WHERE t.experiment_id=$1
-  AND s.metrics->'avg_metrics' ? $2
-  AND s.end_time > $3
-GROUP BY batches_processed;`, &rows, experimentID, metricName, startTime)
-	if err != nil {
-		return nil, endTime, errors.Wrapf(err, "error querying DB for training metric batches")
-	}
-	for _, row := range rows {
-		batches = append(batches, row.Batches)
-		if row.EndTime.After(endTime) {
-			endTime = row.EndTime
-		}
-	}
-
-	return batches, endTime, nil
+	return MetricBatches(experimentID, metricName, startTime, model.TrainingMetricGroup)
 }
 
 // ValidationMetricBatches returns the milestones (in batches processed) at which a specific
@@ -208,28 +209,7 @@ GROUP BY batches_processed;`, &rows, experimentID, metricName, startTime)
 func (db *PgDB) ValidationMetricBatches(experimentID int, metricName string, startTime time.Time) (
 	batches []int32, endTime time.Time, err error,
 ) {
-	var rows []*batchesWrapper
-	err = db.queryRows(`
-SELECT
-  v.total_batches AS batches_processed,
-  max(v.end_time) as end_time
-FROM trials t
-JOIN validations v ON t.id = v.trial_id
-WHERE t.experiment_id=$1
-  AND v.metrics->'validation_metrics' ? $2
-  AND v.end_time > $3
-GROUP BY batches_processed`, &rows, experimentID, metricName, startTime)
-	if err != nil {
-		return nil, endTime, errors.Wrapf(err, "error querying DB for validation metric batches")
-	}
-	for _, row := range rows {
-		batches = append(batches, row.Batches)
-		if row.EndTime.After(endTime) {
-			endTime = row.EndTime
-		}
-	}
-
-	return batches, endTime, nil
+	return MetricBatches(experimentID, metricName, startTime, model.ValidationMetricGroup)
 }
 
 type snapshotWrapper struct {
@@ -340,27 +320,46 @@ ORDER BY v.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, 
 
 // TopTrialsByMetric chooses the subset of trials from an experiment that recorded the best values
 // for the specified metric at any point during the trial.
-func (db *PgDB) TopTrialsByMetric(experimentID int, maxTrials int, metric string,
-	smallerIsBetter bool,
-) (trials []int32, err error) {
-	order := desc
-	aggregate := max
+func TopTrialsByMetric(
+	ctx context.Context, experimentID int, maxTrials int, metric string, smallerIsBetter bool,
+) ([]int32, error) {
+	query := Bun().NewSelect().Table("trials").
+		Column("id").
+		ColumnExpr("summary_metrics->'validation_metrics'->? AS summary_metrics", metric).
+		Where("experiment_id = ?", experimentID).
+		Limit(maxTrials)
 	if smallerIsBetter {
-		order = asc
-		aggregate = min
+		query = query.OrderExpr(
+			"(summary_metrics->'validation_metrics'->?->>'min')::float ASC NULLS LAST", metric)
+	} else {
+		query = query.OrderExpr(
+			"(summary_metrics->'validation_metrics'->?->>'max')::float DESC NULLS LAST", metric)
 	}
-	err = db.sql.Select(&trials, fmt.Sprintf(`
-SELECT t.id FROM (
-  SELECT t.id,
-    %s((v.metrics->'validation_metrics'->>$1)::float8) as best_metric
-  FROM trials t
-  LEFT JOIN validations v ON t.id = v.trial_id
-  WHERE t.experiment_id=$2
-  GROUP BY t.id
-  ORDER BY best_metric %s NULLS LAST
-  LIMIT $3
-) t;`, aggregate, order), metric, experimentID, maxTrials)
-	return trials, err
+
+	var res []struct {
+		ID             int
+		SummaryMetrics *map[string]any
+	}
+	if err := query.Scan(ctx, &res); err != nil {
+		return nil, errors.Wrapf(err,
+			"error getting top trials for metric for experiment ID %d", experimentID)
+	}
+
+	// Return an error if any result was non numeric.
+	// This is somewhat weird behavior given we don't return an error for nulls
+	// but doing this to keep compatibility with old query.
+	trials := make([]int32, 0, len(res))
+	for _, r := range res {
+		if r.SummaryMetrics != nil && (*r.SummaryMetrics)["count"] == nil {
+			return nil, fmt.Errorf("error getting top trials for experimentID %d and metric %s "+
+				"because trial %d has reported a non numeric value for this report",
+				experimentID, metric, r.ID)
+		}
+
+		trials = append(trials, int32(r.ID))
+	}
+
+	return trials, nil
 }
 
 // TopTrialsByTrainingLength chooses the subset of trials that has been training for the highest
@@ -393,7 +392,7 @@ SELECT t.id FROM (
 // MetricMeasurements represents a metric measured by all possible
 // independent variables.
 type MetricMeasurements struct {
-	Value   float64
+	Values  map[string]interface{}
 	Batches uint
 	Time    time.Time
 	Epoch   *int32 `json:"epoch,omitempty"`
@@ -401,8 +400,8 @@ type MetricMeasurements struct {
 }
 
 // ExperimentBestSearcherValidation returns the best searcher validation for an experiment.
-func (db *PgDB) ExperimentBestSearcherValidation(id int) (float32, error) {
-	exp, err := db.ExperimentByID(id)
+func ExperimentBestSearcherValidation(ctx context.Context, id int) (float32, error) {
+	exp, err := ExperimentByID(ctx, id)
 	if err != nil {
 		return 0, errors.Wrap(err, "failed to get experiment config")
 	}
@@ -413,17 +412,14 @@ func (db *PgDB) ExperimentBestSearcherValidation(id int) (float32, error) {
 	}
 
 	var metric float32
-	switch err := db.sql.QueryRowx(fmt.Sprintf(`
-SELECT (v.metrics->'validation_metrics'->>$2)::float8
+	if err := Bun().NewRaw(fmt.Sprintf(`
+SELECT (v.metrics->'validation_metrics'->>?)::float8 as metric
 FROM validations v, trials t
 WHERE v.trial_id = t.id
-  AND t.experiment_id = $1
-ORDER BY (v.metrics->'validation_metrics'->>$2)::float8 %s
-LIMIT 1`, metricOrdering), id, exp.Config.Searcher.Metric).Scan(&metric); {
-	case errors.Is(err, sql.ErrNoRows):
-		return 0, ErrNotFound
-	case err != nil:
-		return 0, errors.Wrap(err, "querying best experiment validation")
+  AND t.experiment_id = ?
+ORDER BY metric %s
+LIMIT 1`, metricOrdering), exp.Config.Searcher.Metric, id).Scan(ctx, &metric); err != nil {
+		return 0, MatchSentinelError(err)
 	}
 	return metric, nil
 }
@@ -488,6 +484,12 @@ func (db *PgDB) AddExperiment(
 	if experiment.ID != 0 {
 		return errors.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
 	}
+
+	activeConfigStr, err := json.Marshal(activeConfig)
+	if err != nil {
+		return errors.Wrapf(err, "error handling experiment config %v", activeConfig)
+	}
+
 	ctx := context.TODO()
 	tx, err := Bun().BeginTx(ctx, nil)
 	defer func() {
@@ -507,13 +509,14 @@ func (db *PgDB) AddExperiment(
 	}
 	err = tx.NewRaw(`INSERT INTO experiments
 	(state, config, model_definition, start_time, end_time, archived, parent_id, progress,
-	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes, job_id,
- 	project_id)
-	VALUES (?, 'null'::jsonb, ?, ?, ?, ?, ?,
-					0, ?, ?, ?, ?, ?,
-					?, ?, ?, ?)
+	 git_remote, git_commit, git_committer, git_commit_date,
+	 owner_id, original_config, notes, job_id, project_id, unmanaged)
+	VALUES (?, ?, ?, ?, ?, ?, ?, 0,
+		    ?, ?, ?, ?,
+	        ?, ?, ?, ?, ?, ?)
 	RETURNING id`,
 		experiment.State,
+		string(activeConfigStr),
 		experiment.ModelDefinitionBytes,
 		experiment.StartTime,
 		experiment.EndTime,
@@ -527,19 +530,10 @@ func (db *PgDB) AddExperiment(
 		experiment.OriginalConfig,
 		experiment.Notes,
 		experiment.JobID,
-		experiment.ProjectID).Scan(ctx, &experiment.ID)
+		experiment.ProjectID,
+		experiment.Unmanaged).Scan(ctx, &experiment.ID)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting experiment %v", experiment)
-	}
-	activeConfigStr, err := json.Marshal(activeConfig)
-	if err != nil {
-		return errors.Wrapf(err, "error handling experiment config %v", activeConfig)
-	}
-	_, err = tx.Exec(
-		`UPDATE experiments SET config = ? WHERE id = ?`, string(activeConfigStr), experiment.ID,
-	)
-	if err != nil {
-		return errors.Wrapf(err, "error inserting experiment config")
 	}
 	if err = AddProjectHyperparameters(
 		ctx, tx, int32(experiment.ProjectID), []int32{int32(experiment.ID)}); err != nil {
@@ -623,17 +617,17 @@ func AddProjectHyperparameters(
 }
 
 // ExperimentByID looks up an experiment by ID in a database, returning an error if none exists.
-func (db *PgDB) ExperimentByID(id int) (*model.Experiment, error) {
+func ExperimentByID(ctx context.Context, expID int) (*model.Experiment, error) {
 	var experiment model.Experiment
 
-	if err := db.query(`
+	if err := Bun().NewRaw(`
 SELECT e.id, state, config, model_definition, start_time, end_time, archived,
 	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-		 job_id, u.username as username, project_id
+		 job_id, u.username as username, project_id, unmanaged
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
-WHERE e.id = $1`, &experiment, id); err != nil {
-		return nil, err
+WHERE e.id = ?`, expID).Scan(ctx, &experiment); err != nil {
+		return nil, MatchSentinelError(err)
 	}
 
 	return &experiment, nil
@@ -641,18 +635,18 @@ WHERE e.id = $1`, &experiment, id); err != nil {
 
 // ExperimentByTrialID looks up an experiment by a given trialID, returning an error
 // if none exists.
-func (db *PgDB) ExperimentByTrialID(trialID int) (*model.Experiment, error) {
+func ExperimentByTrialID(ctx context.Context, trialID int) (*model.Experiment, error) {
 	var experiment model.Experiment
 
-	if err := db.query(`
+	if err := Bun().NewRaw(`
 SELECT e.id, e.state, e.config, e.model_definition, e.start_time, e.end_time, e.archived,
        e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, e.notes,
-       e.job_id, u.username as username, e.project_id
+       e.job_id, u.username as username, e.project_id, unmanaged
 FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
 JOIN users u ON (e.owner_id = u.id)
-WHERE t.id = $1`, &experiment, trialID); err != nil {
-		return nil, err
+WHERE t.id = ?`, trialID).Scan(ctx, &experiment); err != nil {
+		return nil, MatchSentinelError(err)
 	}
 
 	return &experiment, nil
@@ -665,14 +659,14 @@ func ExperimentByTaskID(
 ) (*model.Experiment, error) {
 	var experiment model.Experiment
 	if err := Bun().NewRaw(`
-SELECT e.id, e.state, e.config, e.model_definition AS model_definition_bytes, e.start_time,
+SELECT e.id, e.state, e.config, e.model_definition, e.start_time,
        e.end_time, e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date,
-       e.owner_id, e.notes, e.job_id, u.username as username, e.project_id
+       e.owner_id, e.notes, e.job_id, u.username as username, e.project_id, e.unmanaged
 FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
 JOIN users u ON e.owner_id = u.id
 WHERE t.task_id = ?`, taskID).Scan(ctx, &experiment); err != nil {
-		return nil, err
+		return nil, MatchSentinelError(err)
 	}
 
 	return &experiment, nil
@@ -713,7 +707,7 @@ func (db *PgDB) NonTerminalExperiments() ([]*model.Experiment, error) {
 	rows, err := db.sql.Queryx(`
 SELECT e.id, state, config, model_definition, start_time, end_time, archived,
        git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id,
-       u.username as username, project_id
+       u.username as username, project_id, unmanaged
 FROM experiments e
 JOIN users u ON e.owner_id = u.id
 WHERE state IN (
@@ -884,68 +878,80 @@ WHERE id = :id`
 	return db.namedExecOne(query, experiment)
 }
 
-// DeleteExperiment deletes an existing experiment.
-func (db *PgDB) DeleteExperiment(id int) error {
-	return db.withTransaction("delete experiment", func(tx *sqlx.Tx) error {
-		if _, err := tx.Exec(`
-DELETE FROM raw_steps
-WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
-`, id); err != nil {
-			return errors.Wrapf(err, "error deleting steps for experiment %v", id)
+// DeleteExperiments deletes zero or more experiments.
+func (db *PgDB) DeleteExperiments(ctx context.Context, ids []int) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	tx, err := Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		txErr := tx.Rollback()
+		if txErr != nil && txErr != sql.ErrTxDone {
+			log.WithError(txErr).Error("error rolling back transaction in DeleteExperiments")
 		}
+	}()
+	var delIDs []int32
+	if _, err = tx.NewDelete().Model(&delIDs).Table("raw_steps").
+		Where("trial_id IN (SELECT id FROM trials WHERE experiment_id IN (?))", bun.In(ids)).
+		Returning("id").
+		Exec(ctx); err != nil {
+		return errors.Wrapf(err, "error deleting steps for experiments %v", ids)
+	}
 
-		if _, err := tx.Exec(`
-DELETE FROM raw_validations
-WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
-`, id); err != nil {
-			return errors.Wrapf(err, "error deleting validations for experiment %v", id)
-		}
+	if _, err = tx.NewDelete().Model(&delIDs).Table("raw_validations").
+		Where("trial_id IN (SELECT id FROM trials WHERE experiment_id IN (?))", bun.In(ids)).
+		Returning("id").
+		Exec(ctx); err != nil {
+		return errors.Wrapf(err, "error deleting validations for experiments %v", ids)
+	}
 
-		if _, err := tx.Exec(`
-DELETE FROM raw_checkpoints
-WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
-`, id); err != nil {
-			return errors.Wrapf(err, "error deleting checkpoints for experiment %v", id)
-		}
+	// Even with migration away from checkpoints_v1,
+	// Keeping this to keep behavior of fully deleting checkpoints.
+	if _, err = tx.NewDelete().Model(&delIDs).Table("raw_checkpoints").
+		Where("trial_id IN (SELECT id FROM trials WHERE experiment_id IN (?))", bun.In(ids)).
+		Returning("id").
+		Exec(ctx); err != nil {
+		return errors.Wrapf(err, "error deleting checkpoints for experiments %v", ids)
+	}
 
-		if _, err := tx.Exec(`
-DELETE FROM checkpoints_v2
-WHERE task_id IN (
+	if _, err = tx.NewDelete().Model(&delIDs).Table("checkpoints_v2").
+		Where(`task_id IN (
 	SELECT tk.task_id
 	FROM tasks tk
 	JOIN trials t ON t.task_id = tk.task_id
 	JOIN experiments e ON t.experiment_id = e.id
-	WHERE experiment_id = $1
-)`, id); err != nil {
-			return errors.Wrapf(err, "error deleting checkpoints (v2) for experiment %v", id)
-		}
+	WHERE experiment_id IN (?)
+)`, bun.In(ids)).
+		Returning("id").
+		Exec(ctx); err != nil {
+		return errors.Wrapf(err, "error deleting checkpoints (v2) for experiments %v", ids)
+	}
 
-		if err := db.deleteSnapshotsForExperiment(id)(tx); err != nil {
-			return errors.Wrapf(err, "error deleting snapshots for experiment %v", id)
-		}
+	if err := db.DeleteSnapshotsForExperiments(ids)(ctx, &tx); err != nil {
+		return errors.Wrapf(err, "error deleting snapshots for experiments %v", ids)
+	}
 
-		if _, err := tx.Exec(`
-DELETE FROM trials
-WHERE experiment_id = $1;
-`, id); err != nil {
-			return errors.Wrapf(err, "error deleting trials for experiment %v", id)
-		}
+	if _, err = tx.NewDelete().Model(&delIDs).Table("trials").
+		Where("experiment_id IN (?)", bun.In(ids)).
+		Returning("id").
+		Exec(ctx); err != nil {
+		return errors.Wrapf(err, "error deleting trials for experiments %v", ids)
+	}
 
-		result, err := tx.Exec(`
-DELETE FROM experiments
-WHERE id = $1
-`, id)
-		if err != nil {
-			return errors.Wrapf(err, "error deleting experiment %v", id)
-		}
-		switch num, err := result.RowsAffected(); {
-		case err != nil:
-			return errors.Wrapf(err, "error in RowsAffected when deleting experiment %v", id)
-		case num != 1:
-			return errors.Errorf("error deleting non-existing experiment %v", id)
-		}
-		return nil
-	})
+	_, err = tx.NewDelete().Model(&delIDs).Table("experiments").
+		Where("id IN (?)", bun.In(ids)).
+		Returning("id").
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, "error deleting experiments %v", ids)
+	}
+	if len(delIDs) != len(ids) {
+		return errors.Errorf("mis-match in delete-able experiments versus requested %v", ids)
+	}
+	return tx.Commit()
 }
 
 // ExperimentHasCheckpointsInRegistry checks if the experiment has any checkpoints in the registry.
@@ -1040,18 +1046,25 @@ WHERE trials.experiment_id = $1
 	return trialIDs, nil
 }
 
-// ExperimentTrialAndTaskIDs returns the trial and task IDs for the experiment.
-func (db *PgDB) ExperimentTrialAndTaskIDs(expID int) ([]int, []model.TaskID, error) {
+// ExperimentsTrialAndTaskIDs returns the trial and task IDs for one or more experiments.
+func (db *PgDB) ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int,
+	[]model.TaskID, error,
+) {
+	if len(expIDs) == 0 {
+		return nil, nil, nil
+	}
 	var trialIDRows []struct {
 		ID     int          `db:"id"`
 		TaskID model.TaskID `db:"task_id"`
 	}
-	if err := db.queryRows(`
-SELECT id, task_id
-FROM trials
-WHERE trials.experiment_id = $1
-`, &trialIDRows, expID); err != nil {
-		return nil, nil, errors.Wrapf(err, "querying for trial IDs of experiment %v", expID)
+	query := idb.NewSelect().
+		ColumnExpr("id").
+		ColumnExpr("task_id").
+		Table("trials").
+		Model(&trialIDRows).
+		Where("trials.experiment_id IN (?)", bun.In(expIDs))
+	if err := query.Scan(ctx); err != nil {
+		return nil, nil, errors.Wrapf(err, "querying for trial IDs of experiments %v", expIDs)
 	}
 	var trialIDs []int
 	var taskIDs []model.TaskID

@@ -49,7 +49,7 @@ build-%:
 	$(MAKE) -C $(subst -,/,$*) build
 
 .PHONY: build-docs
-build-docs: build-common build-harness build-cli build-deploy build-model_hub build-examples build-helm build-proto
+build-docs: build-harness build-model_hub build-examples build-helm build-proto
 	$(MAKE) -C docs build
 
 .PHONY: build-bindings
@@ -75,20 +75,20 @@ build: build-master build-agent build-webui build-docs
 clean-%:
 	$(MAKE) -C $(subst -,/,$*) clean
 .PHONY: clean
-clean: clean-tools clean-proto clean-common clean-harness clean-cli clean-deploy clean-model_hub clean-examples clean-docs clean-webui clean-master clean-agent clean-bindings
+clean: clean-tools clean-proto clean-harness clean-model_hub clean-examples clean-docs clean-webui clean-master clean-agent clean-bindings
 
 .PHONY: check-%
 check-%:
 	$(MAKE) -C $(subst -,/,$*) check
 .PHONY: check
-check: check-common check-proto check-harness check-cli check-deploy check-model_hub check-e2e_tests check-tools check-master check-webui check-examples check-docs check-schemas
+check: check-proto check-harness check-model_hub check-e2e_tests check-tools check-master check-webui check-examples check-docs check-schemas
 	$(MAKE) check-agent
 
 .PHONY: fmt-%
 fmt-%:
 	$(MAKE) -C $(subst -,/,$*) fmt
 .PHONY: fmt
-fmt: fmt-common fmt-harness fmt-cli fmt-deploy fmt-model_hub fmt-e2e_tests fmt-tools fmt-master fmt-agent fmt-webui fmt-examples fmt-docs fmt-schemas fmt-proto
+fmt: fmt-harness fmt-model_hub fmt-e2e_tests fmt-tools fmt-master fmt-agent fmt-webui fmt-examples fmt-docs fmt-schemas fmt-proto
 
 .PHONY: test-%
 test-%:

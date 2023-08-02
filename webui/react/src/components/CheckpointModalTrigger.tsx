@@ -1,14 +1,14 @@
 import React, { useCallback } from 'react';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
-import Tooltip from 'components/kit/Tooltip';
 import ModelCreateModal from 'components/ModelCreateModal';
-import useModalCheckpoint from 'hooks/useModal/Checkpoint/useModalCheckpoint';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
-import Icon from 'shared/components/Icon/Icon';
-import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
+import { ModalCloseReason } from 'hooks/useModal/useModal';
 import { CheckpointWorkloadExtended, CoreApiGenericCheckpoint, ExperimentBase } from 'types';
+
+import CheckpointModalComponent from './CheckpointModal';
 
 interface Props {
   checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
@@ -24,6 +24,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
   children,
 }: Props) => {
   const modelCreateModal = useModal(ModelCreateModal);
+  const checkpointModal = useModal(CheckpointModalComponent);
 
   const {
     contextHolder: modalCheckpointRegisterContextHolder,
@@ -54,17 +55,9 @@ const CheckpointModalTrigger: React.FC<Props> = ({
     [checkpoint, openModalCheckpointRegister],
   );
 
-  const { contextHolder: modalCheckpointContextHolder, modalOpen: openModalCheckpoint } =
-    useModalCheckpoint({
-      checkpoint,
-      config: experiment.config,
-      onClose: handleOnCloseCheckpoint,
-      title,
-    });
-
   const handleModalCheckpointClick = useCallback(() => {
-    openModalCheckpoint();
-  }, [openModalCheckpoint]);
+    checkpointModal.open();
+  }, [checkpointModal]);
 
   return (
     <>
@@ -72,14 +65,20 @@ const CheckpointModalTrigger: React.FC<Props> = ({
         {children !== undefined ? (
           children
         ) : (
-          <Tooltip title="View Checkpoint">
-            <Button aria-label="View Checkpoint" icon={<Icon name="checkpoint" />} />
-          </Tooltip>
+          <Button
+            aria-label="View Checkpoint"
+            icon={<Icon name="checkpoint" showTooltip title="View Checkpoint" />}
+          />
         )}
       </span>
-      {modalCheckpointContextHolder}
       {modalCheckpointRegisterContextHolder}
       <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
+      <checkpointModal.Component
+        checkpoint={checkpoint}
+        config={experiment.config}
+        title={title}
+        onClose={handleOnCloseCheckpoint}
+      />
     </>
   );
 };

@@ -1,0 +1,3 @@
+DROP INDEX generic_metrics_trial_id_total_batches_run_id_custom_type_unique;
+CREATE UNIQUE INDEX generic_metrics_trial_id_total_batches_run_id_unique ON generic_metrics (trial_id, total_batches, trial_run_id);
+

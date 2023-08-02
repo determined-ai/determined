@@ -2,10 +2,10 @@ package model
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/uptrace/bun"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 )
@@ -16,15 +16,15 @@ type ModelAuthZBasic struct{}
 // CanGetModels always returns true and a nil error.
 func (a *ModelAuthZBasic) CanGetModels(ctx context.Context,
 	curUser model.User, workspaceIDs []int32,
-) (workspaceIDsWithPermsFilter []int32, canGetModels bool, serverError error) {
-	return workspaceIDs, true, nil
+) (workspaceIDsWithPermsFilter []int32, serverError error) {
+	return workspaceIDs, nil
 }
 
 // CanGetModel always returns true and a nil error.
 func (a *ModelAuthZBasic) CanGetModel(ctx context.Context, curUser model.User,
 	m *modelv1.Model, workspaceID int32,
-) (canGetModel bool, serverError error) {
-	return true, nil
+) error {
+	return nil
 }
 
 // CanEditModel always returns true and a nil error.
@@ -49,7 +49,24 @@ func (a *ModelAuthZBasic) CanDeleteModel(ctx context.Context, curUser model.User
 	// TODO: Modify model UserID to use UserID
 	curUserIsOwner := m.UserId == int32(curUser.ID)
 	if !curUser.Admin && !curUserIsOwner {
-		return fmt.Errorf("non admin users may not delete another user's models")
+		return authz.PermissionDeniedError{}.WithPrefix(
+			"non-admin users may not delete other users' models",
+		)
+	}
+	return nil
+}
+
+// CanDeleteModelVersion returns an error if the model/model version
+// is not owned by the current user and the current user is not an admin.
+func (a *ModelAuthZBasic) CanDeleteModelVersion(ctx context.Context, curUser model.User,
+	modelVersion *modelv1.ModelVersion, workspaceID int32,
+) error {
+	curUserIsOwner := modelVersion.UserId == int32(curUser.ID) ||
+		modelVersion.Model.UserId == int32(curUser.ID)
+	if !curUser.Admin && !curUserIsOwner {
+		return authz.PermissionDeniedError{}.WithPrefix(
+			"non-admin users may not delete other users' model versions",
+		)
 	}
 	return nil
 }

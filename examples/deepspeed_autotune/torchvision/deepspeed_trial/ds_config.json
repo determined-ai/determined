@@ -1,0 +1,29 @@
+{
+  "train_batch_size": 256,
+  "steps_per_print": 2000,
+  "optimizer": {
+    "type": "Adam",
+    "params": {
+      "lr": 0.001,
+      "betas": [0.8, 0.999],
+      "eps": 1e-8,
+      "weight_decay": 3e-7
+    }
+  },
+  "gradient_clipping": 1.0,
+  "prescale_gradients": false,
+  "fp16": {
+    "enabled": true
+  },
+  "wall_clock_breakdown": false,
+  "zero_optimization": {
+    "stage": 1,
+    "allgather_partitions": true,
+    "reduce_scatter": true,
+    "allgather_bucket_size": 50000000,
+    "reduce_bucket_size": 50000000,
+    "overlap_comm": true,
+    "contiguous_gradients": true,
+    "cpu_offload": false
+  }
+}

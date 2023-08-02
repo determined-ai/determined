@@ -42,19 +42,6 @@
     save_trial_best: 1
     save_trial_latest: 1
 
-- name: hdfs checkpoint storage (valid)
-  sane_as:
-    - http://determined.ai/schemas/expconf/v0/hdfs.json
-    - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
-  case:
-    type: hdfs
-    hdfs_url: hfds://hdfs.hdfs
-    hdfs_path: /a/b/c/d
-    user: user
-    save_experiment_best: 0
-    save_trial_best: 1
-    save_trial_latest: 1
-
 - name: records length (valid)
   sane_as:
     - http://determined.ai/schemas/expconf/v0/length.json

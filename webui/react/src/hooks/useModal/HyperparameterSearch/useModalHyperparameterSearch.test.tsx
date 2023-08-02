@@ -155,7 +155,7 @@ describe('useModalHyperparameterSearch', () => {
   it('should show count fields when using grid searcher', async () => {
     const { view } = await setup();
 
-    await user.click(view.getByRole('radio', { name: 'Grid' }));
+    await user.click(view.getByRole('button', { name: /grid/i }));
     await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
 
     expect(view.getByText('Grid Count')).toBeInTheDocument();
@@ -164,10 +164,10 @@ describe('useModalHyperparameterSearch', () => {
   it('should remove adaptive fields when not using adaptive searcher', async () => {
     const { view } = await setup();
 
-    await user.click(view.getByRole('radio', { name: /adaptive/i }));
+    await user.click(view.getByRole('button', { name: /adaptive/i }));
     expect(view.getByText(/Early stopping mode/i)).toBeInTheDocument();
 
-    await user.click(view.getByRole('radio', { name: 'Grid' }));
+    await user.click(view.getByRole('button', { name: /grid/i }));
     await waitFor(() => {
       expect(view.queryByText(/Early stopping mode/i)).not.toBeInTheDocument();
     });

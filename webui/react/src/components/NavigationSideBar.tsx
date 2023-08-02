@@ -1,30 +1,36 @@
-import { Menu, MenuProps, Typography } from 'antd';
+import { Typography } from 'antd';
 import { boolean } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
-import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
+import Icon, { IconName, IconSize } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
+import Spinner from 'components/Spinner/Spinner';
+import UserSettings from 'components/UserSettings';
+import shortCutSettingsConfig, {
+  Settings as ShortcutSettings,
+} from 'components/UserSettings.settings';
+import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
-import Icon, { IconSize } from 'shared/components/Icon/Icon';
-import Spinner from 'shared/components/Spinner/Spinner';
-import useUI from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
+import useUI from 'stores/contexts/UI';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { matchesShortcut, shortcutToString } from 'utils/shortcut';
 
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
@@ -34,12 +40,12 @@ import WorkspaceCreateModalComponent from './WorkspaceCreateModal';
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;
   badge?: number;
-  icon: string | React.ReactNode;
+  icon: IconName | React.ReactElement;
   iconSize?: IconSize;
   label: string;
   labelRender?: React.ReactNode;
   status?: string;
-  tooltip?: boolean;
+  tooltip?: string | boolean;
 }
 
 interface Settings {
@@ -84,7 +90,7 @@ export const NavigationItem: React.FC<ItemProps> = ({
       <Link className={classes.join(' ')} path={path} {...props}>
         {typeof props.icon === 'string' ? (
           <div className={css.icon}>
-            <Icon name={props.icon} size={props.iconSize ?? 'large'} />
+            <Icon decorative name={props.icon} size={props.iconSize ?? 'large'} />
           </div>
         ) : (
           <div className={css.icon}>{props.icon}</div>
@@ -103,7 +109,9 @@ export const NavigationItem: React.FC<ItemProps> = ({
   );
 
   return props.tooltip ? (
-    <Tooltip placement="right" title={props.label}>
+    <Tooltip
+      content={typeof props.tooltip === 'string' ? props.tooltip : props.label}
+      placement="right">
       <div>{link}</div>
     </Tooltip>
   ) : (
@@ -115,6 +123,8 @@ const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
 
+  const [showSettings, setShowSettings] = useState<boolean>(false);
+
   const clusterStatus = useObservable(clusterStore.clusterStatus);
 
   const isAuthenticated = useObservable(authStore.isAuthenticated);
@@ -124,6 +134,9 @@ const NavigationSideBar: React.FC = () => {
   const { ui } = useUI();
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const {
+    settings: { navbarCollapsed: navbarCollapsedShortcut },
+  } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
 
@@ -138,16 +151,26 @@ const NavigationSideBar: React.FC = () => {
 
   const pinnedWorkspaces = useObservable(workspaceStore.pinned);
 
-  const menuConfig = useMemo(() => {
-    const topNav = canAccessUncategorized
+  interface MenuItemProps {
+    icon: IconName;
+    label: string;
+    path: string;
+    external?: boolean;
+    popout?: boolean;
+  }
+
+  const menuConfig: { bottom: MenuItemProps[]; top: MenuItemProps[] } = useMemo(() => {
+    const topNav: MenuItemProps[] = canAccessUncategorized
       ? [{ icon: 'experiment', label: 'Uncategorized', path: paths.uncategorized() }]
       : [];
-    const dashboardTopNav = [{ icon: 'home', label: 'Home', path: paths.dashboard() }];
-    const topItems = [
+    const dashboardTopNav: MenuItemProps[] = [
+      { icon: 'home', label: 'Home', path: paths.dashboard() },
+    ];
+    const topItems: MenuItemProps[] = [
       ...dashboardTopNav.concat(topNav),
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
-      { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
+      { icon: 'cluster', label: 'Cluster', path: paths.clusters() },
     ];
     if (canEditWebhooks) {
       topItems.splice(topItems.length - 1, 0, {
@@ -182,13 +205,27 @@ const NavigationSideBar: React.FC = () => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
   }, [settings.navbarCollapsed, updateSettings]);
 
+  useEffect(() => {
+    const keyDownListener = (e: KeyboardEvent) => {
+      if (matchesShortcut(e, navbarCollapsedShortcut)) {
+        handleCollapse();
+      }
+    };
+
+    keyEmitter.on(KeyEvent.KeyDown, keyDownListener);
+
+    return () => {
+      keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
+    };
+  }, [handleCollapse, navbarCollapsedShortcut]);
+
   const { canAdministrateUsers } = usePermissions();
 
-  const menuItems: MenuProps['items'] = useMemo(() => {
-    const items = [
+  const menuItems = useMemo(() => {
+    const items: MenuItem[] = [
       {
         key: 'settings',
-        label: <Link path={paths.settings('account')}>Settings</Link>,
+        label: <Link onClick={() => setShowSettings(true)}>Settings</Link>,
       },
       { key: 'theme-toggle', label: <ThemeToggle /> },
       { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
@@ -205,140 +242,150 @@ const NavigationSideBar: React.FC = () => {
   if (!showNavigation) return null;
 
   return (
-    <CSSTransition
-      appear={true}
-      classNames={{
-        appear: css.collapsedAppear,
-        appearActive: settings.navbarCollapsed ? css.collapsedEnterActive : css.collapsedExitActive,
-        appearDone: settings.navbarCollapsed ? css.collapsedEnterDone : css.collapsedExitDone,
-        enter: css.collapsedEnter,
-        enterActive: css.collapsedEnterActive,
-        enterDone: css.collapsedEnterDone,
-        exit: css.collapsedExit,
-        exitActive: css.collapsedExitActive,
-        exitDone: css.collapsedExitDone,
-      }}
-      in={settings.navbarCollapsed}
-      nodeRef={nodeRef}
-      timeout={200}>
-      <nav className={css.base} ref={nodeRef}>
-        <header>
-          <Dropdown
-            content={<Menu items={menuItems} selectable={false} />}
-            offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
-            placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
-            <div className={css.user}>
-              <UserBadge compact hideAvatarTooltip user={currentUser} />
-            </div>
-          </Dropdown>
-        </header>
-        <section>
-          <section className={css.top}>
-            {menuConfig.top.map((config) => (
+    <>
+      <CSSTransition
+        appear
+        classNames={{
+          appear: css.collapsedAppear,
+          appearActive: settings.navbarCollapsed
+            ? css.collapsedEnterActive
+            : css.collapsedExitActive,
+          appearDone: settings.navbarCollapsed ? css.collapsedEnterDone : css.collapsedExitDone,
+          enter: css.collapsedEnter,
+          enterActive: css.collapsedEnterActive,
+          enterDone: css.collapsedEnterDone,
+          exit: css.collapsedExit,
+          exitActive: css.collapsedExitActive,
+          exitDone: css.collapsedExitDone,
+        }}
+        in={settings.navbarCollapsed}
+        nodeRef={nodeRef}
+        timeout={200}>
+        <nav className={css.base} ref={nodeRef}>
+          <header>
+            <Dropdown menu={menuItems}>
+              <div className={css.user}>
+                <UserBadge compact hideAvatarTooltip user={currentUser} />
+              </div>
+            </Dropdown>
+          </header>
+          <section>
+            <section className={css.top}>
+              {menuConfig.top.map((config) => (
+                <NavigationItem
+                  key={config.icon}
+                  status={config.icon === 'cluster' ? clusterStatus : undefined}
+                  tooltip={settings.navbarCollapsed}
+                  {...config}
+                />
+              ))}
+            </section>
+            <section className={css.workspaces}>
               <NavigationItem
-                key={config.icon}
-                status={config.icon === 'cluster' ? clusterStatus : undefined}
-                tooltip={settings.navbarCollapsed}
-                {...config}
-              />
-            ))}
-          </section>
-          <section className={css.workspaces}>
-            <NavigationItem
-              action={
-                <div className={css.actionButtons}>
-                  <WorkspaceQuickSearch>
-                    <Button type="text">
-                      <Icon name="search" size="tiny" />
-                    </Button>
-                  </WorkspaceQuickSearch>
-                  {canCreateWorkspace && (
-                    <Button type="text" onClick={WorkspaceCreateModal.open}>
-                      <Icon name="add-small" size="tiny" />
-                    </Button>
-                  )}
-                </div>
-              }
-              icon="workspaces"
-              key="workspaces"
-              label="Workspaces"
-              path={paths.workspaceList()}
-              tooltip={settings.navbarCollapsed}
-            />
-            {Loadable.match(pinnedWorkspaces, {
-              Loaded: (workspaces) => (
-                <ul className={css.pinnedWorkspaces} role="list">
-                  {workspaces
-                    .sort((a, b) => ((a.pinnedAt ?? 0) < (b.pinnedAt ?? 0) ? -1 : 1))
-                    .map((workspace) => (
-                      <WorkspaceActionDropdown
-                        key={workspace.id}
-                        returnIndexOnDelete={false}
-                        trigger={['contextMenu']}
-                        workspace={workspace}>
-                        <li>
-                          <NavigationItem
-                            icon={<DynamicIcon name={workspace.name} size={24} />}
-                            label={workspace.name}
-                            labelRender={
-                              <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
-                                {workspace.name}
-                              </Typography.Paragraph>
-                            }
-                            path={paths.workspaceDetails(workspace.id)}
-                          />
-                        </li>
-                      </WorkspaceActionDropdown>
-                    ))}
-                  {canCreateWorkspace ? (
-                    <li>
-                      <NavigationItem
-                        icon="add-small"
-                        iconSize="tiny"
-                        label="New Workspace"
-                        labelRender={
-                          <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
-                            New Workspace
-                          </Typography.Paragraph>
-                        }
-                        tooltip={settings.navbarCollapsed}
+                action={
+                  <div className={css.actionButtons}>
+                    <WorkspaceQuickSearch>
+                      <Button
+                        icon={<Icon name="search" size="tiny" title="Search workspaces" />}
+                        type="text"
+                      />
+                    </WorkspaceQuickSearch>
+                    {canCreateWorkspace && (
+                      <Button
+                        icon={<Icon name="add-small" size="tiny" title="Create workspace" />}
+                        type="text"
                         onClick={WorkspaceCreateModal.open}
                       />
-                    </li>
-                  ) : workspaces.length === 0 ? (
-                    <div className={css.noWorkspaces}>No pinned workspaces</div>
-                  ) : null}
-                </ul>
-              ),
-              NotLoaded: () => <Spinner center />,
-            })}
+                    )}
+                  </div>
+                }
+                icon="workspaces"
+                key="workspaces"
+                label="Workspaces"
+                path={paths.workspaceList()}
+                tooltip={settings.navbarCollapsed}
+              />
+              {Loadable.match(pinnedWorkspaces, {
+                Loaded: (workspaces) => (
+                  <ul className={css.pinnedWorkspaces} role="list">
+                    {workspaces
+                      .sort((a, b) => ((a.pinnedAt ?? 0) < (b.pinnedAt ?? 0) ? -1 : 1))
+                      .map((workspace) => (
+                        <WorkspaceActionDropdown
+                          isContextMenu
+                          key={workspace.id}
+                          returnIndexOnDelete={false}
+                          workspace={workspace}>
+                          <li>
+                            <NavigationItem
+                              icon={<DynamicIcon name={workspace.name} size={24} />}
+                              label={workspace.name}
+                              labelRender={
+                                <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                                  {workspace.name}
+                                </Typography.Paragraph>
+                              }
+                              path={paths.workspaceDetails(workspace.id)}
+                            />
+                          </li>
+                        </WorkspaceActionDropdown>
+                      ))}
+                    {workspaces.length === 0 && (
+                      <div className={css.noWorkspaces}>No pinned workspaces</div>
+                    )}
+                    {canCreateWorkspace && (
+                      <li>
+                        <NavigationItem
+                          icon="add-small"
+                          iconSize="tiny"
+                          label="New Workspace"
+                          labelRender={
+                            <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                              New Workspace
+                            </Typography.Paragraph>
+                          }
+                          tooltip={settings.navbarCollapsed}
+                          onClick={WorkspaceCreateModal.open}
+                        />
+                      </li>
+                    )}
+                  </ul>
+                ),
+                NotLoaded: () => <Spinner center />,
+              })}
+            </section>
+            <section className={css.bottom}>
+              {menuConfig.bottom.map((config) => (
+                <NavigationItem key={config.icon} tooltip={settings.navbarCollapsed} {...config} />
+              ))}
+              <NavigationItem
+                icon={settings.navbarCollapsed ? 'expand' : 'collapse'}
+                label={settings.navbarCollapsed ? 'Expand' : 'Collapse'}
+                tooltip={
+                  settings.navbarCollapsed
+                    ? `Expand (${shortcutToString(navbarCollapsedShortcut)})`
+                    : `Collapse (${shortcutToString(navbarCollapsedShortcut)})`
+                }
+                onClick={handleCollapse}
+              />
+            </section>
           </section>
-          <section className={css.bottom}>
-            {menuConfig.bottom.map((config) => (
-              <NavigationItem key={config.icon} tooltip={settings.navbarCollapsed} {...config} />
-            ))}
-            <NavigationItem
-              icon={settings.navbarCollapsed ? 'expand' : 'collapse'}
-              label={settings.navbarCollapsed ? 'Expand' : 'Collapse'}
-              tooltip={settings.navbarCollapsed}
-              onClick={handleCollapse}
-            />
-          </section>
-        </section>
-        <footer>
-          <div className={css.version}>
-            {isVersionLong && settings.navbarCollapsed ? (
-              <Tooltip placement="right" title={`Version ${version}`}>
-                <span className={css.versionLabel}>{shortVersion}</span>
-              </Tooltip>
-            ) : (
-              <span className={css.versionLabel}>{version}</span>
-            )}
-          </div>
-        </footer>
-        <WorkspaceCreateModal.Component />
-      </nav>
-    </CSSTransition>
+          <footer>
+            <div className={css.version}>
+              {isVersionLong && settings.navbarCollapsed ? (
+                <Tooltip content={`Version ${version}`} placement="right">
+                  <span className={css.versionLabel}>{shortVersion}</span>
+                </Tooltip>
+              ) : (
+                <span className={css.versionLabel}>{version}</span>
+              )}
+            </div>
+          </footer>
+          <WorkspaceCreateModal.Component />
+        </nav>
+      </CSSTransition>
+      <UserSettings show={showSettings} onClose={() => setShowSettings(false)} />
+    </>
   );
 };
 

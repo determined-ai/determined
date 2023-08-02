@@ -18,7 +18,7 @@ app.use(morgan('dev'));
 
 const proxyTo = (targetServer) => {
   return (req, res) => {
-    const url = targetServer + req.url;
+    const url = targetServer + req.url; // include query parameters
     res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.setHeader('Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -32,12 +32,21 @@ const proxyTo = (targetServer) => {
     if ('OPTIONS' === req.method) {
       res.send(200);
     } else {
-      req.pipe(
-        request({ qs: req.query, uri: url }).on('error', err => {
-          console.error(err);
-          res.status(500).send('proxy: error piping the request');
-        }),
-      ).pipe(res);
+      req
+        .pipe(
+          request({ uri: url }).on('error', (err) => {
+            console.error(err);
+            const statusText = err.response?.statusText || 'Error proxying request';
+            const statusCode = err.response?.status || 500;
+            console.error(statusText);
+            res.status(statusCode).send({
+              code: statusCode,
+              error: err.message,
+              message: statusText,
+            });
+          }),
+        )
+        .pipe(res);
     }
   };
 };

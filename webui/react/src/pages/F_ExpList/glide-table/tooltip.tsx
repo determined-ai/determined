@@ -1,10 +1,10 @@
-import { DataEditorProps, GridMouseEventArgs } from '@glideapps/glide-data-grid';
+import { DataEditorProps, GridMouseEventArgs } from '@hpe.com/glide-data-grid';
 import { Tooltip } from 'antd';
 import React, { ReactNode, useCallback, useEffect, useMemo } from 'react';
 
 import { Loadable } from 'utils/loadable';
 
-import { ColumnDefs, ExperimentColumn } from './columns';
+import { ColumnDefs } from './columns';
 import { GlideTableProps } from './GlideTable';
 
 export interface TooltipProps {
@@ -16,7 +16,7 @@ export interface TooltipProps {
 
 interface UseTooltipParams {
   data: GlideTableProps['data'];
-  columnIds: ExperimentColumn[];
+  columnIds: string[];
   columnDefs: ColumnDefs;
 }
 interface UseTooltipReturn {
@@ -48,7 +48,7 @@ export const useTableTooltip = ({
         const record = data[rowIdx];
         if (record && Loadable.isLoaded(record)) {
           const columnId = columnIds[columnIdx];
-          const text = columnDefs[columnId].tooltip(record.data);
+          const text = columnDefs?.[columnId]?.tooltip(record.data);
           if (text) {
             timeoutRef.current = window.setTimeout(() => {
               setTooltipProps({

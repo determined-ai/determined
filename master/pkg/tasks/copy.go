@@ -2,10 +2,7 @@ package tasks
 
 import (
 	"archive/tar"
-	"crypto/tls"
-	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -49,7 +46,7 @@ func harnessArchive(harnessPath string, aug *model.AgentUserGroup) cproto.RunArc
 			panic(errors.Wrapf(err, "error retrieving stats for harness file: %s", path))
 		}
 		var content []byte
-		content, err = ioutil.ReadFile(path) // #nosec: G304
+		content, err = os.ReadFile(path) // #nosec: G304
 		if err != nil {
 			panic(errors.Wrapf(err, "error reading harness file: %s", path))
 		}
@@ -80,18 +77,7 @@ func harnessArchive(harnessPath string, aug *model.AgentUserGroup) cproto.RunArc
 	return wrapArchive(aug.OwnArchive(harnessFiles), "/")
 }
 
-func masterCertArchive(cert *tls.Certificate) cproto.RunArchive {
-	var certBytes []byte
-	if cert != nil {
-		for _, c := range cert.Certificate {
-			b := pem.EncodeToMemory(&pem.Block{
-				Type:  "CERTIFICATE",
-				Bytes: c,
-			})
-			certBytes = append(certBytes, b...)
-		}
-	}
-
+func masterCertArchive(certBytes []byte) cproto.RunArchive {
 	var arch archive.Archive
 	if len(certBytes) != 0 {
 		arch = append(arch, archive.RootItem(certPath, certBytes, 0o644, tar.TypeReg))

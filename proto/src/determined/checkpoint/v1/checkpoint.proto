@@ -21,6 +21,8 @@ enum State {
   STATE_ERROR = 3;
   // The checkpoint has been deleted.
   STATE_DELETED = 4;
+  // The checkpoint has been partially deleted.
+  STATE_PARTIALLY_DELETED = 5;
 }
 
 // CheckpointTrainingMetadata is specifically metadata about training.
@@ -55,7 +57,7 @@ message Checkpoint {
   // ID of the task which generated this checkpoint.
   string task_id = 1;
   // ID of the allocation which generated this checkpoint.
-  string allocation_id = 2;
+  optional string allocation_id = 2;
   // UUID of the checkpoint.
   string uuid = 3;
   // Timestamp when the checkpoint was reported.
@@ -69,4 +71,28 @@ message Checkpoint {
   State state = 7;
   // Training-related data for this checkpoint.
   CheckpointTrainingMetadata training = 8;
+}
+
+// Request to change checkpoint database information.
+message PatchCheckpoint {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "uuid" ] }
+  };
+
+  // Gets around not being able to do "Optional map<string, int64>".
+  // Not ideal but this API is marked internal for now.
+  message OptionalResources {
+    // Resources.
+    map<string, int64> resources = 1;
+  }
+
+  // The uuid of the checkpoint.
+  string uuid = 1;
+
+  // Dictionary of file paths to file sizes in bytes of all files in the
+  // checkpoint. This won't update actual checkpoint files.
+  // If len(resources) == 0 => the checkpoint is considered deleted
+  // Otherwise if resources are updated the checkpoint is considered partially
+  // deleted.
+  optional OptionalResources resources = 2;
 }

@@ -6,12 +6,17 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
+	"os/user"
 	"path"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg"
 )
@@ -243,7 +248,7 @@ func FromTarGz(zippedTarfile []byte) (Archive, error) {
 
 		if header.Typeflag == tar.TypeReg {
 			var err error
-			item.Content, err = ioutil.ReadAll(tarReader)
+			item.Content, err = io.ReadAll(tarReader)
 			if err != nil {
 				return nil, err
 			}
@@ -255,4 +260,64 @@ func FromTarGz(zippedTarfile []byte) (Archive, error) {
 	}
 
 	return ar, nil
+}
+
+// Write writes the given archive to the destination.
+func Write(dst string, a Archive, p func(level, log string) error) error {
+	cu, err := user.Current()
+	if err != nil {
+		return err
+	}
+
+	if _, err := os.Stat(dst); err != nil {
+		if err := os.MkdirAll(dst, 0o700); err != nil {
+			return err
+		}
+	}
+
+	for _, i := range a {
+		// TODO(DET-9072): Do something better than this.
+		if strconv.Itoa(i.UserID) != cu.Uid || strconv.Itoa(i.GroupID) != cu.Gid {
+			// TODO(DET-9073): Cannot import model levels due to import cycle.
+			if err := p("WARNING", fmt.Sprintf(
+				"archive file %s has user %d:%d but agent can only write as %s:%s, writing anyway",
+				i.Path, i.UserID, i.GroupID, cu.Uid, cu.Gid,
+			)); err != nil {
+				return err
+			}
+		}
+
+		target := filepath.Join(dst, i.Path)
+		switch i.Type {
+		case tar.TypeDir:
+			if _, err := os.Stat(target); err != nil {
+				if err := os.MkdirAll(target, i.FileMode); err != nil {
+					return fmt.Errorf("creating dir for %s: %w", target, err)
+				}
+			}
+		case tar.TypeReg:
+			targetDir := filepath.Dir(target)
+			if _, err := os.Stat(targetDir); err != nil {
+				if err := os.MkdirAll(targetDir, 0o700); err != nil {
+					return err
+				}
+			}
+
+			// #nosec G304 // This is a from a constant archive we build.
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, i.FileMode)
+			if err != nil {
+				return fmt.Errorf("opening file for %s: %w", target, err)
+			}
+			defer func(path string) {
+				if err := f.Close(); err != nil {
+					logrus.WithError(err).Errorf("closing archive file %s", path)
+				}
+			}(i.Path)
+
+			if _, err := io.Copy(f, bytes.NewReader(i.Content)); err != nil {
+				return fmt.Errorf("copying content for %s: %w", target, err)
+			}
+		}
+	}
+	return nil
 }

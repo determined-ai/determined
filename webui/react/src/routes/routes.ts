@@ -1,4 +1,4 @@
-import { RouteConfig } from 'shared/types';
+import { RouteConfig } from 'types';
 
 const routes: RouteConfig[] = [
   { id: 'default', needAuth: true, path: '/' },
@@ -223,19 +223,6 @@ const routes: RouteConfig[] = [
     title: 'Job Queue',
   },
   {
-    id: 'settings',
-    needAuth: true,
-    path: '/settings/:tab',
-    title: 'Settings',
-  },
-  {
-    id: 'settings',
-    needAuth: true,
-    path: '/settings',
-    redirect: '/settings/account',
-    title: 'Settings',
-  },
-  {
     id: 'admin',
     needAuth: true,
     path: '/admin/:tab',
@@ -253,12 +240,6 @@ const routes: RouteConfig[] = [
     needAuth: true,
     path: '/webhooks',
     title: 'Webhooks',
-  },
-  {
-    id: 'designKit',
-    needAuth: false,
-    path: '/design',
-    title: 'Design Kit',
   },
 ];
 

@@ -1,20 +1,25 @@
 import base64
 import csv
 import inspect
+import json
+import os
 import pathlib
 import sys
 from datetime import timezone
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, TextIO, Union
 
 import dateutil.parser
 import tabulate
+import termcolor
 
+from determined import util as det_util
 from determined.common import util, yaml
 
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
 # a filter like `head`.
 _FORMAT = "presto"
 _DEFAULT_VALUE = "N/A"
+OMITTED_VALUE = "***"
 
 
 def select_values(values: List[Dict[str, Any]], headers: Dict[str, str]) -> List[Dict[str, Any]]:
@@ -41,6 +46,39 @@ def unmarshal(
         transform = transforms.get(arg, lambda x: x)
         init_args[arg] = transform(data[arg])
     return class_(**init_args)
+
+
+class Animator:
+    """
+    Animator is a simple class for rendering a loading animation in the terminal.
+    Use to communicate progress to the user when a call may take a while.
+    """
+
+    MAX_LINE_LENGTH = 80
+
+    def __init__(self, message: str = "Loading") -> None:
+        self.message = message
+        self.step = 0
+
+    def next(self) -> None:
+        self.render_frame(self.step, self.message)
+        self.step += 1
+
+    @staticmethod
+    def render_frame(step: int, message: str) -> None:
+        animation = "|/-\\"
+        sys.stdout.write("\r" + message + " " + animation[step % len(animation)] + " ")
+        sys.stdout.flush()
+
+    def reset(self) -> None:
+        self.clear()
+        self.step = 0
+
+    @staticmethod
+    def clear(message: str = "Loading done.") -> None:
+        sys.stdout.write("\r" + " " * Animator.MAX_LINE_LENGTH + "\r")
+        sys.stdout.write("\r" + message + "\n")
+        sys.stdout.flush()
 
 
 def render_objects(
@@ -148,3 +186,109 @@ def yes_or_no(prompt: str) -> bool:
         # Add a newline to mimic a return when sending normal inputs.
         print()
         return False
+
+
+COLORS = {
+    "KEY": "blue",
+    "PRIMITIVES": None,  # avoid coloring to common fg or bg colors.
+    "SEPARATORS": "yellow",
+    "STRING": "green",
+}
+
+
+def render_colorized_json(
+    obj: Any, out: TextIO, indent: str = "  ", sort_keys: bool = False
+) -> None:
+    """
+    Render JSON object to output stream with color.
+    """
+
+    def do_render(obj: Any, depth: int = 0) -> None:
+        if obj is None:
+            out.write(termcolor.colored("null", COLORS["PRIMITIVES"]))
+            return
+
+        if isinstance(obj, bool):
+            out.write(termcolor.colored(str(obj).lower(), COLORS["PRIMITIVES"]))
+            return
+
+        if isinstance(obj, str):
+            out.write(termcolor.colored(json.dumps(obj), COLORS["STRING"]))
+            return
+
+        if isinstance(obj, (int, float)):
+            out.write(termcolor.colored(str(obj), COLORS["PRIMITIVES"]))
+            return
+
+        if isinstance(obj, (list, tuple)):
+            if len(obj) == 0:
+                out.write(termcolor.colored("[]", COLORS["SEPARATORS"]))
+                return
+
+            out.write(termcolor.colored("[", COLORS["SEPARATORS"]))
+            first = True
+            for item in obj:
+                if not first:
+                    out.write(termcolor.colored(",", COLORS["SEPARATORS"]))
+                first = False
+                out.write("\n")
+                out.write(indent * (depth + 1))
+                do_render(item, depth + 1)
+            out.write("\n")
+            out.write(indent * depth)
+            out.write(termcolor.colored("]", COLORS["SEPARATORS"]))
+            return
+
+        if isinstance(obj, dict):
+            if len(obj) == 0:
+                out.write(termcolor.colored("{}", COLORS["SEPARATORS"]))
+                return
+
+            out.write(termcolor.colored("{", COLORS["SEPARATORS"]))
+            first = True
+            keys = sorted(obj.keys()) if sort_keys else obj.keys()
+            for key in keys:
+                value = obj[key]
+                if not first:
+                    out.write(termcolor.colored(",", COLORS["SEPARATORS"]))
+                first = False
+                out.write("\n")
+                out.write(indent * (depth + 1))
+                out.write(termcolor.colored(json.dumps(key), COLORS["KEY"]))
+                out.write(termcolor.colored(": ", COLORS["SEPARATORS"]))
+                do_render(value, depth + 1)
+            out.write("\n")
+            out.write(indent * depth)
+            out.write(termcolor.colored("}", COLORS["SEPARATORS"]))
+            return
+
+        raise ValueError(f"unsupported type: {type(obj).__name__}")
+
+    do_render(obj, depth=0)
+    out.write("\n")
+
+
+def _coloring_enabled() -> bool:
+    return sys.stdout.isatty() and os.environ.get("DET_CLI_COLORIZE", "").lower() in ("1", "true")
+
+
+def print_json(data: Union[str, Any]) -> None:
+    """
+    Print JSON data in a human-readable format.
+    """
+    DEFAULT_INDENT = "  "
+    try:
+        if isinstance(data, str):
+            data = json.loads(data)
+        if _coloring_enabled():
+            render_colorized_json(data, sys.stdout, indent=DEFAULT_INDENT, sort_keys=True)
+            return
+        formatted_json = det_util.json_encode(data, sort_keys=True, indent=DEFAULT_INDENT)
+        print(formatted_json)
+    except json.decoder.JSONDecodeError:
+        print(data)
+
+
+def report_job_launched(_type: str, _id: str) -> None:
+    msg = f"Launched {_type} (id: {_id})."
+    print(termcolor.colored(msg, "green"))

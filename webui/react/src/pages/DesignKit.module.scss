@@ -1,10 +1,10 @@
 /* stylelint-disable no-descending-specificity */
 
+@import '../globalCssVar.css';
+
 .base {
   display: flex;
   gap: 8px;
-  height: 100%;
-  overflow: auto;
 
   & nav:not(:global(.ant-breadcrumb)) {
     // this was breaking the CSS for the Actionbar
@@ -13,16 +13,21 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    height: 100%;
-    padding: 16px;
+    height: 100vh;
+    left: 0;
+    max-height: 100vh;
+    min-width: var(--nav-side-bar-width-max);
+    padding: 16px 0 0 16px;
     position: sticky;
     top: 0;
-    width: var(--nav-side-bar-width-max);
 
     ul {
       list-style-type: none;
       margin: 0;
-      padding: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: none;
+      padding: 0 0 16px;
 
       li {
         margin-inline: -16px;
@@ -96,4 +101,64 @@
     padding: 0.2em 0.4em;
     white-space: break-spaces;
   }
+}
+.headerXL {
+  font-size: var(--header-size-xl);
+  line-height: var(--header-ln-xl);
+}
+.headerL {
+  font-size: var(--header-size-l);
+  line-height: var(--header-ln-l);
+}
+.headerDefault {
+  font-size: var(--header-size-default);
+  line-height: var(--header-ln-default);
+}
+.headerS {
+  font-size: var(--header-size-s);
+  line-height: var(--header-ln-s);
+}
+.headerXS {
+  font-size: var(--header-size-xs);
+  line-height: var(--header-ln-xs);
+}
+.multiLineXL {
+  font-size: var(--multi-line-size-xl);
+  line-height: var(--multi-line-ln-xl);
+}
+.multiLineL {
+  font-size: var(--multi-line-size-l);
+  line-height: var(--multi-line-ln-l);
+}
+.multiLineDefault {
+  font-size: var(--multi-line-size-default);
+  line-height: var(--multi-line-ln-default);
+}
+.multiLineS {
+  font-size: var(--single-line-size-s);
+  line-height: var(--single-line-ln-s);
+}
+.multiLineXS {
+  font-size: var(--single-line-size-xs);
+  line-height: var(--single-line-ln-xs);
+}
+.singleLineXL {
+  font-size: var(--single-line-size-xl);
+  line-height: var(--single-line-ln-xl);
+}
+.singleLineL {
+  font-size: var(--single-line-size-l);
+  line-height: var(--single-line-ln-l);
+}
+.singleLineDefault {
+  font-size: var(--single-line-size-default);
+  line-height: var(--single-line-ln-default);
+}
+.singleLineS {
+  font-size: var(--single-line-size-s);
+  line-height: var(--single-line-ln-s);
+}
+.singleLineXS {
+  font-size: var(--single-line-size-xs);
+  line-height: var(--single-line-ln-xs);
 }

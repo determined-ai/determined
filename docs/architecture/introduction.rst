@@ -31,10 +31,10 @@ Determined CLI
 One of the key components of the Determined platform is the :ref:`command-line interface (CLI)
 <cli-ug>`. The CLI serves as a primary entry point for interacting with Determined, providing a way
 to efficiently manage and control various aspects of the system. The following list describes some
-of the tasks users can perform with the Determined CLI:
+of the tasks you can perform with the Determined CLI:
 
 -  Experiment management: Running experiments is a fundamental part of the machine learning process.
-   With the CLI, users can effortlessly create, list, and manage experiments, as well as access
+   With the CLI, you can effortlessly create, list, and manage experiments, as well as access
    important experiment metrics and logs.
 
 -  Queue management: The CLI enables users to manage their job queues, monitor the progress of
@@ -69,8 +69,8 @@ Configuration Templates
 At a typical organization, many Determined configuration files will contain similar settings. For
 example, all of the training workloads run at a given organization might use the same checkpoint
 storage configuration. One way to reduce this redundancy is to use *configuration templates*. With
-this feature, users can move settings that are shared by many experiments into a single YAML file
-that can then be referenced by configurations that require those settings.
+this feature, you can move settings that are shared by many experiments into a single YAML file that
+can then be referenced by configurations that require those settings.
 
 Each configuration template has a unique name and is stored by the Determined master. If a
 configuration specifies a template, the effective configuration of the task will be the result of
@@ -80,7 +80,7 @@ template will not affect the reproducibility of experiments that used a previous
 configuration template.
 
 A single configuration file can use at most one configuration template. A configuration template
-cannot itself use another configuration template.
+cannot use another configuration template.
 
 Queue Management
 ================
@@ -91,7 +91,7 @@ information about job ordering, such as which jobs are queued, and permits dynam
 
 Queue Management is a new feature that is available to the fair share scheduler and the priority
 scheduler. Queue Management, described in detail in the following sections, shows all submitted jobs
-and their states, and lets you modify some configuration options, such as priority, position in the
+and their states and lets you modify some configuration options, such as priority, position in the
 queue, and resource pool.
 
 To begin managing job queues, navigate to the WebUI ``Job Queue`` section or use the ``det job`` set
@@ -100,11 +100,10 @@ of CLI commands.
 Model Registry
 ==============
 
-The Model Registry is a way to group together conceptually related checkpoints (including ones
-across different experiments), storing metadata and longform notes about a model, and retrieving the
-latest version of a model for use or futher development. The Model Registry can be accessed through
-the WebUI, Python SDK, REST API, or CLI, though the WebUI has some features that the others are
-missing.
+The Model Registry is a way to group conceptually related checkpoints (including ones across
+different experiments), store metadata and long-form notes about a model, and retrieve the latest
+version of a model for use or further development. The Model Registry can be accessed through the
+WebUI, Python SDK, REST API, or CLI, though the WebUI has some features that the others are missing.
 
 The Model Registry is a top-level option in the navigation bar. This will take you to a page listing
 all of the models that currently exist in the registry, and allow you to create new models. You can
@@ -162,74 +161,63 @@ practitioners might find inconvenient to implement. The Determined cohesive, end
 platform provides best-in-class functionality for deep learning model training, including the
 following benefits:
 
-+------------------------------------------------+----------------------------------------------+
-| Implementation                                 | Benefit                                      |
-+================================================+==============================================+
-| Automated model tuning                         | Optimize models by searching through         |
-|                                                | conventional hyperparameters or macro-       |
-|                                                | architectures, using a variety of search     |
-|                                                | algorithms. Hyperparameter searches are      |
-|                                                | automatically parallelized across the        |
-|                                                | accelerators in the cluster. See             |
-|                                                | :doc:`/training/hyperparameter/overview`.    |
-+------------------------------------------------+----------------------------------------------+
-| Cluster-backed notebooks, commands, and shells | Leverage your shared cluster computing       |
-|                                                | devices in a more versatile environment. See |
-|                                                | :doc:`/interfaces/notebooks` and             |
-|                                                | :doc:`/interfaces/commands-and-shells`.      |
-+------------------------------------------------+----------------------------------------------+
-| Cluster management                             | Automatically manage ML accelerators, such   |
-|                                                | as GPUs, on-premise or in cloud VMs using    |
-|                                                | your own environment, automatically scaling  |
-|                                                | for your on-demand workloads. Determined     |
-|                                                | runs in either AWS or GCP, so you can switch |
-|                                                | easily according to your requirements. See   |
-|                                                | :ref:`Resource Pools <resource-pools>`,      |
-|                                                | :ref:`Scheduling <scheduling>`, and          |
-|                                                | :ref:`Elastic Infrastructure                 |
-|                                                | <elastic-infrastructure>`.                   |
-+------------------------------------------------+----------------------------------------------+
-| Containerization                               | Develop and train models in customizable     |
-|                                                | containers that enable simple, consistent    |
-|                                                | dependency management throughout the model   |
-|                                                | development lifecycle. See                   |
-|                                                | :doc:`/training/setup-guide/custom-env`.     |
-+------------------------------------------------+----------------------------------------------+
-| Distributed training                           | Easily distribute a single training job      |
-|                                                | across multiple accelerators to speed up     |
-|                                                | model training and reduce model development  |
-|                                                | iteration time. Determined uses synchronous, |
-|                                                | data-parallel distributed training, with key |
-|                                                | performance optimizations over other         |
-|                                                | available options. See                       |
-|                                                | :doc:`/training/dtrain-introduction`.        |
-+------------------------------------------------+----------------------------------------------+
-| Experiment collaboration                       | Automatically track your experiment          |
-|                                                | configuration and environment to facilitate  |
-|                                                | reproducibility and collaboration among      |
-|                                                | teams. See                                   |
-|                                                | :doc:`/training/submit-experiment`.          |
-+------------------------------------------------+----------------------------------------------+
-| Fault tolerance                                | Models are checkpointed throughout the       |
-|                                                | training process and can be restarted from   |
-|                                                | the latest checkpoint, automatically. This   |
-|                                                | enables training jobs to automatically       |
-|                                                | tolerate transient hardware or system issues |
-|                                                | in the cluster.                              |
-+------------------------------------------------+----------------------------------------------+
-| Framework support                              | Broad framework support leverages these      |
-|                                                | capabilities using any of the leading        |
-|                                                | machine learning frameworks without needing  |
-|                                                | to manage a different cluster for each.      |
-|                                                | Different frameworks for different models    |
-|                                                | can be used without risking future lock-in.  |
-|                                                | See :doc:`/training/apis-howto/overview`.    |
-+------------------------------------------------+----------------------------------------------+
-| Visualization                                  | Visualize your model and training procedure  |
-|                                                | by using The built-in WebUI and by launching |
-|                                                | managed :doc:`/interfaces/tensorboard`       |
-|                                                | instances.                                   |
-+------------------------------------------------+----------------------------------------------+
++------------------------------------------------+-----------------------------------------------------------+
+| Implementation                                 | Benefit                                                   |
++================================================+===========================================================+
+| Automated model tuning                         | Optimize models by searching through conventional         |
+|                                                | hyperparameters or macro- architectures, using a variety  |
+|                                                | of search algorithms. Hyperparameter searches are         |
+|                                                | automatically parallelized across the accelerators in the |
+|                                                | cluster. See                                              |
+|                                                | :doc:`/model-dev-guide/hyperparameter/overview`.          |
++------------------------------------------------+-----------------------------------------------------------+
+| Cluster-backed notebooks, commands, and shells | Leverage your shared cluster computing devices in a more  |
+|                                                | versatile environment. See :doc:`/interfaces/notebooks`   |
+|                                                | and :doc:`/interfaces/commands-and-shells`.               |
++------------------------------------------------+-----------------------------------------------------------+
+| Cluster management                             | Automatically manage ML accelerators, such as GPUs,       |
+|                                                | on-premise or in cloud VMs using your own environment,    |
+|                                                | automatically scaling for your on-demand workloads.       |
+|                                                | Determined runs in either AWS or GCP, so you can switch   |
+|                                                | easily according to your requirements. See :ref:`Resource |
+|                                                | Pools <resource-pools>`, :ref:`Scheduling <scheduling>`,  |
+|                                                | and :ref:`Elastic Infrastructure                          |
+|                                                | <elastic-infrastructure>`.                                |
++------------------------------------------------+-----------------------------------------------------------+
+| Containerization                               | Develop and train models in customizable containers that  |
+|                                                | enable simple, consistent dependency management           |
+|                                                | throughout the model development lifecycle. See           |
+|                                                | :doc:`/model-dev-guide/prepare-container/custom-env`.     |
++------------------------------------------------+-----------------------------------------------------------+
+| Distributed training                           | Easily distribute a single training job across multiple   |
+|                                                | accelerators to speed up model training and reduce model  |
+|                                                | development iteration time. Determined uses synchronous,  |
+|                                                | data-parallel distributed training, with key performance  |
+|                                                | optimizations over other available options. See           |
+|                                                | :doc:`/model-dev-guide/dtrain/dtrain-introduction`.       |
++------------------------------------------------+-----------------------------------------------------------+
+| Experiment collaboration                       | Automatically track your experiment configuration and     |
+|                                                | environment to facilitate reproducibility and             |
+|                                                | collaboration among teams. See                            |
+|                                                | :doc:`/model-dev-guide/submit-experiment`.                |
++------------------------------------------------+-----------------------------------------------------------+
+| Fault tolerance                                | Models are checkpointed throughout the training process   |
+|                                                | and can be restarted from the latest checkpoint,          |
+|                                                | automatically. This enables training jobs to              |
+|                                                | automatically tolerate transient hardware or system       |
+|                                                | issues in the cluster.                                    |
++------------------------------------------------+-----------------------------------------------------------+
+| Framework support                              | Broad framework support leverages these capabilities      |
+|                                                | using any of the leading machine learning frameworks      |
+|                                                | without needing to manage a different cluster for each.   |
+|                                                | Different frameworks for different models can be used     |
+|                                                | without risking future lock-in. See                       |
+|                                                | :doc:`/model-dev-guide/apis-howto/overview`.              |
++------------------------------------------------+-----------------------------------------------------------+
+| Visualization                                  | Visualize your model and training procedure by using The  |
+|                                                | built-in WebUI and by launching managed                   |
+|                                                | :doc:`/interfaces/tensorboard` instances.                 |
++------------------------------------------------+-----------------------------------------------------------+
 
 **********
  Concepts
@@ -247,6 +235,7 @@ instances as the set of deep learning workloads on the cluster changes. This cap
 The diagram below outlines the high-level system architecture when using dynamic agents:
 
 .. image:: /assets/images/det-arch-elastic-infra.png
+   :alt: Determined AI system architecture when using dynamic agents
 
 Following the diagram, the execution would be:
 
@@ -278,13 +267,13 @@ with learning rates of .001, .01, and .1.
 
 To run experiments, you need to write your model training code. A *model definition* represents a
 specification of a deep learning model and its training procedure. It contains training code that
-implements training APIs. Visit the :doc:`Training API Guides </training/apis-howto/overview>` for
-more information.
+implements training APIs. Visit the :doc:`Training API Guides
+</model-dev-guide/apis-howto/overview>` for more information.
 
 For each experiment, you can configure a *searcher*, also known as a *search algorithm*. The search
 algorithm determines how many trials will be run for a particular experiment and how the
 hyperparameters will be set. More information can be found at
-:doc:`/training/hyperparameter/overview`.
+:doc:`/model-dev-guide/hyperparameter/overview`.
 
 .. _resource-pools:
 
@@ -299,14 +288,14 @@ GPU machines, while you want your TensorBoards to run on cheap CPU machines with
 
 Determined has the concept of a *resource pool*, which is a collection of identical resources that
 are located physically close to each other. Determined allows you to configure your cluster to have
-multiple resource pools and to assign tasks to a specific resource pool, so that you can use
+multiple resource pools and to assign tasks to a specific resource pool so that you can use
 different sets of resources for different tasks. Each resource pool handles scheduling and instance
 provisioning independently.
 
 When you configure a cluster, you set which pool is the default for auxiliary tasks and which pool
 is the default for compute tasks. CPU-only tasks such as TensorBoards will run on the default
 auxiliary pool unless you specify that they should run in a different pool when launching the task.
-Tasks which require a slot, such as experiments or GPU-notebooks, will use the default compute pool
+Tasks that require a slot, such as experiments or GPU notebooks, will use the default compute pool
 unless otherwise specified. For this reason it is recommended that you always create a cluster with
 at least two pools, one with low-cost CPU instances for auxiliary tasks and one with GPU instances
 for compute tasks. This is the default setup when launching a cluster on AWS or GCP using ``det
@@ -331,8 +320,8 @@ Here are some scenarios where it can be valuable to use multiple resource pools:
    in the ``us-east-1b`` availability zone. You can launch an experiment into
    ``aws-v100-us-east-1a`` and, if AWS does not have sufficient ``p3dn.24xlarge`` capacity in that
    availability zone, you can launch the experiment in ``aws-v100-us-east-1b`` to check if that
-   availability zone has capacity. Note that currently the "AWS does not have capacity" notification
-   is only visible in the master logs, not on the experiment itself.
+   availability zone has capacity. Note that the "AWS does not have capacity" notification is only
+   visible in the master logs, not on the experiment itself.
 
 -  *Use spot/preemptible instances and fall back to on-demand if needed.*
 
@@ -344,7 +333,7 @@ Here are some scenarios where it can be valuable to use multiple resource pools:
    spot instances in the AWS region they are using. For more information on using spot instances,
    refer to :ref:`aws-spot`.
 
--  *Use cheaper GPUs for prototyping on small datasets and expensive GPU for training on full
+-  *Use cheaper GPUs for prototyping on small datasets and expensive GPUs for training on full
    datasets.*
 
    You have one pool with less expensive GPUs that you use for initial prototyping on small data
@@ -368,34 +357,36 @@ PENDING permanently.
 Set up Resource Pools
 ---------------------
 
-Resource pools are configured using the :ref:`master-config-reference`. For each resource pool, you
-can configure scheduler and provider information.
+Resource pools are configured using the :ref:`master configuration <master-config-reference>`. For
+each resource pool, you can configure scheduler and provider information.
 
 If you are using static resource pools and launching agents by hand, you will need to update the
-:ref:`agent-config-reference` to specify which resource pool the agent should join.
+:ref:`agent configuration <agent-config-reference>` to specify which resource pool the agent should
+join.
 
 Migrate to Resource Pools
 -------------------------
 
-With the introduction of resource pools, the :ref:`master-config-reference` format has changed to a
-new format.
+Resource pools were introduced with Determined 0.14.0, resulting in changes to the :ref:`master
+configuration <master-config-reference>` format.
 
-This is a backwards compatible change and cluster configurations in the old format will continue to
-work. A configuration in the old format is interpreted as a cluster with a single resource pool that
-is the default for both CPU and GPU tasks. However, to take full advantage of resource pools, you
-will need to convert to the new format, which is a simple process of moving around and renaming a
-small number of top-level fields.
+Since the change is backwards-compatible, cluster configurations that use earlier formats (prior to
+Determined 0.14.0) will still work. A configuration in the earlier format is interpreted as a
+cluster with a single resource pool that is the default for both CPU and GPU tasks. To take full
+advantage of resource pools, convert to the latest format. Converting is a simple process of moving
+around and renaming a small number of top-level fields.
 
-The old format had the top level fields of ``scheduler`` and ``provisioner`` which set the scheduler
-and provisioner settings for the cluster. The new format has the top level fields
-``resource_manager`` and ``resource_pools``. The ``resource_manager`` section is for cluster level
-setting such as which pools should be used by default and the default scheduler settings. The
-``scheduler`` information is identical to the ``scheduler`` field in the legacy format. The
-``resource_pools`` section is a list of resource pools each of which has a name, description and
-resource pool level settings. Each resource pool can be configured with a ``provider`` field that
-contains the same information as the ``provisioner`` field in the legacy format. Each resource pool
-can also have a ``scheduler`` field that sets resource pool specific scheduler settings. If the
-``scheduler`` field is not set for a specific resource pool, the default settings are used.
+The earlier format had the top-level fields of ``scheduler`` and ``provisioner`` which set the
+scheduler and provisioner settings for the cluster. By contrast, the latest format has the top-level
+fields of ``resource_manager`` and ``resource_pools``. The ``resource_manager`` section is for
+cluster level setting such as which pools should be used by default and the default scheduler
+settings. The ``scheduler`` information is identical to the ``scheduler`` field in the legacy
+format. The ``resource_pools`` section is a list of resource pools each of which has a name,
+description and resource pool level settings. Each resource pool can be configured with a
+``provider`` field that contains the same information as the ``provisioner`` field in the legacy
+format. Each resource pool can also have a ``scheduler`` field that sets resource pool specific
+scheduler settings. If the ``scheduler`` field is not set for a specific resource pool, the default
+settings are used.
 
 Note that defining resource pool-specific ``scheduler`` settings is all-or-nothing. If the
 pool-specific ``scheduler`` field is blank, all scheduler settings will be inherited from the
@@ -457,11 +448,12 @@ When creating a task, the job configuration file has a section called "resources
        resource_pool: pool1
 
 If this field is not set, the task will be launched into one of the two default pools defined in the
-:ref:`master-config-reference`. Experiments will be launched into the default compute pool.
-TensorBoards will be launched into the default auxiliary pool. Commands, shells, and notebooks that
-request a slot (which is the default behavior if the ``resources.slots`` field is not set) will be
-launched into the default compute pool. Commands, shells, and notebooks that explicitly request 0
-slots (for example the "Launch CPU-only Notebook" button in the Web UI) will use the auxiliary pool.
+:ref:`master configuration <master-config-reference>`. Experiments will be launched into the default
+compute pool. TensorBoards will be launched into the default auxiliary pool. Commands, shells, and
+notebooks that request a slot (which is the default behavior if the ``resources.slots`` field is not
+set) will be launched into the default compute pool. Commands, shells, and notebooks that explicitly
+request 0 slots (for example the "Launch CPU-only Notebook" button in the WebUI) will use the
+auxiliary pool.
 
 .. _scheduling:
 
@@ -489,7 +481,7 @@ scheduling behavior of an individual task is influenced by several task configur
 
 .. note::
 
-   Zero-slot tasks (e.g., CPU-only notebooks, tensorboards) are scheduled independently of tasks
+   Zero-slot tasks (e.g., CPU-only notebooks, TensorBoards) are scheduled independently of tasks
    that require slots (e.g., experiments, GPU notebooks). The fair-share scheduler schedules
    zero-slot tasks on a FIFO basis. The priority scheduler schedules zero-slot tasks based on
    priority.
@@ -529,7 +521,7 @@ resources can be reallocated to high priority tasks more promptly and backfilled
 use of the idle resources; however, preemption can also result in additional overhead due to
 checkpointing low priority tasks, which might be expensive for some models.
 
-Notebooks, tensorboards, shells, and commands are not preemptible. These tasks will continue to
+Notebooks, TensorBoards, shells, and commands are not preemptible. These tasks will continue to
 occupy cluster resources until they complete or are terminated.
 
 The priority of any task can be changed after it is created using one of the following commands:
@@ -713,14 +705,14 @@ Workspaces and Projects
 
 **Workspaces** and **projects** provide a way to organize experiments. A project is a collection of
 experiments, and a workspace is a collection of projects. Learn more about workspaces and projects
-at :doc:`/cluster-setup-guide/workspaces`.
+at :doc:`/setup-cluster/workspaces`.
 
 RBAC and User Groups
 ====================
 
 **Role Based Access Control (RBAC)** enables administrators to control user access to various
 actions and data within Determined. RBAC feature requires Determined Enterprise Edition. Learn more
-about RBAC and User Group usage at :doc:`/cluster-setup-guide/security/rbac`.
+about RBAC and User Group usage at :doc:`/setup-cluster/security/rbac`.
 
 .. _topic-guides_yaml:
 

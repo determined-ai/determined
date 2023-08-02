@@ -1,36 +1,43 @@
-import { Dropdown, Space } from 'antd';
-import type { DropDownProps, MenuProps } from 'antd';
+import { Space } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import Button from 'components/kit/Button';
+import Dropdown from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Page from 'components/Page';
-import InteractiveTable, {
-  ColumnDef,
-  InteractiveTableSettings,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import WebhookCreateModalComponent from 'components/WebhookCreateModal';
 import WebhookDeleteModalComponent from 'components/WebhookDeleteModal';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import usePolling from 'hooks/usePolling';
+import { useSettings } from 'hooks/useSettings';
+import { paths } from 'routes/utils';
 import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
-import Icon from 'shared/components/Icon/Icon';
-import usePolling from 'shared/hooks/usePolling';
-import { ValueOf } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
-import { alphaNumericSorter } from 'shared/utils/sort';
 import { Webhook } from 'types';
+import { isEqual } from 'utils/data';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { alphaNumericSorter } from 'utils/sort';
 
 import css from './WebhookList.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, Settings } from './WebhookList.settings';
+
+const MenuKey = {
+  DeleteWebhook: 'delete-webhook',
+  TestWebhook: 'test-webhook',
+} as const;
+
+const DROPDOWN_MENU = [
+  { key: MenuKey.TestWebhook, label: 'Test Webhook' },
+  { danger: true, key: MenuKey.DeleteWebhook, label: 'Delete Webhook' },
+];
 
 const WebhooksView: React.FC = () => {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
@@ -79,19 +86,14 @@ const WebhooksView: React.FC = () => {
     fetchWebhooks();
   }, [fetchWebhooks]);
 
-  const WebhookActionMenu = useCallback(
-    (record: Webhook): DropDownProps['menu'] => {
-      const MenuKey = {
-        DeleteWebhook: 'delete-webhook',
-        TestWebhook: 'test-webhook',
-      } as const;
-
-      const funcs = {
-        [MenuKey.DeleteWebhook]: () => {
+  const handleDropdown = useCallback(
+    async (key: string, record: Webhook) => {
+      switch (key) {
+        case MenuKey.DeleteWebhook:
           setSelectedWebhook(record);
           WebhookDeleteModal.open();
-        },
-        [MenuKey.TestWebhook]: async () => {
+          break;
+        case MenuKey.TestWebhook:
           try {
             await testWebhook({ id: record.id });
           } catch (e) {
@@ -100,27 +102,16 @@ const WebhooksView: React.FC = () => {
               silent: false,
             });
           }
-        },
-      };
-
-      const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as ValueOf<typeof MenuKey>]();
-      };
-
-      const menuItems: MenuProps['items'] = [
-        { key: MenuKey.TestWebhook, label: 'Test Webhook' },
-        { danger: true, key: MenuKey.DeleteWebhook, label: 'Delete Webhook' },
-      ];
-
-      return { items: menuItems, onClick: onItemClick };
+          break;
+      }
     },
     [WebhookDeleteModal],
   );
 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: Webhook) => (
-      <Dropdown menu={WebhookActionMenu(record)} trigger={['click']}>
-        <Button icon={<Icon name="overflow-vertical" />} type="text" />
+      <Dropdown menu={DROPDOWN_MENU} onClick={(key) => handleDropdown(key, record)}>
+        <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
       </Dropdown>
     );
 
@@ -170,7 +161,7 @@ const WebhooksView: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ] as ColumnDef<Webhook>[];
-  }, [WebhookActionMenu]);
+  }, [handleDropdown]);
 
   const handleTableChange = useCallback(
     (
@@ -200,6 +191,12 @@ const WebhooksView: React.FC = () => {
 
   return (
     <Page
+      breadcrumb={[
+        {
+          breadcrumbName: 'Webhooks',
+          path: paths.webhooks(),
+        },
+      ]}
       containerRef={pageRef}
       id="webhooks"
       options={
@@ -211,11 +208,11 @@ const WebhooksView: React.FC = () => {
       {webhooks.length === 0 && !isLoading ? (
         <Empty
           description="Call external services when experiments complete or throw errors."
-          icon="inbox"
+          icon="webhooks"
           title="No Webhooks Registered"
         />
       ) : settings ? (
-        <InteractiveTable
+        <InteractiveTable<Webhook, Settings>
           columns={columns}
           containerRef={pageRef}
           dataSource={webhooks}
@@ -229,10 +226,10 @@ const WebhooksView: React.FC = () => {
           )}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="id"
-          settings={settings as InteractiveTableSettings}
+          settings={settings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings}
+          updateSettings={updateSettings}
           onChange={handleTableChange}
         />
       ) : (

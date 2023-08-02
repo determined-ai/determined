@@ -1,5 +1,7 @@
-# In this stage, we perform a hyperparameter search to search for optimal model parameters. You should expect to see a graph in the WebUI
-# showing the various trials initiated by the Adaptive ASHA hyperparameter search algorithm.
+# In this stage, we perform a hyperparameter search to search for optimal
+# model parameters. You should expect to see a graph in the WebUI
+# showing the various trials initiated by the Adaptive ASHA
+# hyperparameter search algorithm.
 
 from __future__ import print_function
 
@@ -17,6 +19,7 @@ import determined as det
 
 
 class Net(nn.Module):
+    # Docs snippet start: per trial basis
     # NEW: Add hparams to __init__.
     def __init__(self, hparams):
         # NEW: Read hyperparameters provided for this trial.
@@ -27,6 +30,8 @@ class Net(nn.Module):
         self.dropout2 = nn.Dropout(hparams["dropout2"])
         self.fc1 = nn.Linear(144 * hparams["n_filters2"], 128)
         self.fc2 = nn.Linear(128, 10)
+
+    # Docs snippet end: per trial basis
 
     def forward(self, x):
         x = self.conv1(x)
@@ -44,7 +49,8 @@ class Net(nn.Module):
         return output
 
 
-# NEW: Modify function header to include op for reporting training progress to master.
+# NEW: Modify function header to include op for reporting training
+# progress to master.
 def train(args, model, device, train_loader, optimizer, core_context, epoch_idx, op):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -77,7 +83,8 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch_idx,
     op.report_progress(epoch_idx)
 
 
-# NEW: Modify function header to include op for reporting training progress to master and return test loss.
+# NEW: Modify function header to include op for reporting training
+# progress to master and return test loss.
 def test(args, model, device, test_loader, core_context, steps_completed, op) -> int:
     model.eval()
     test_loss = 0
@@ -115,8 +122,8 @@ def load_state(checkpoint_directory, trial_id):
     with checkpoint_directory.joinpath("state").open("r") as f:
         epochs_completed, ckpt_trial_id = [int(field) for field in f.read().split(",")]
 
-    # If trial ID does not match our current trial ID, we'll ignore epochs
-    # completed and start training from epoch_idx = 0
+    # If trial ID does not match our current trial ID, we'll ignore
+    # epochs completed and start training from epoch_idx = 0
     if ckpt_trial_id != trial_id:
         epochs_completed = 0
 
@@ -207,22 +214,28 @@ def main(core_context):
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )
-    dataset1 = datasets.MNIST("../data", train=True, download=True, transform=transform)
-    dataset2 = datasets.MNIST("../data", train=False, transform=transform)
-    train_loader = torch.utils.data.DataLoader(dataset1, **train_kwargs)
-    test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
+    train_dataset = datasets.MNIST("../data", train=True, download=True, transform=transform)
+    test_dataset = datasets.MNIST("../data", train=False, transform=transform)
+    train_loader = torch.utils.data.DataLoader(train_dataset, **train_kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dataset, **test_kwargs)
 
+    # Docs snippet start: get hparams
     # NEW: Get hparams chosen for this trial from cluster info object.
     hparams = info.trial.hparams
+    # Docs snippet end: get hparams
 
+    # Docs snippet start: pass hyperparameters
     # NEW: Pass relevant hparams to model and optimizer.
     model = Net(hparams).to(device)
     optimizer = optim.Adadelta(model.parameters(), lr=hparams["learning_rate"])
+    # Docs snippet end: pass hyperparameters
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
 
-    # NEW: Iterate through the core_context.searcher.operations() to decide how long to train for.
-    # Start with the number of epochs completed, in case of pausing and resuming the experiment.
+    # NEW: Iterate through the core_context.searcher.operations() to
+    # decide how long to train for.
+    # Start with the number of epochs completed, in case of pausing
+    # and resuming the experiment.
     epoch_idx = epochs_completed
     last_checkpoint_batch = None
 
@@ -251,7 +264,8 @@ def main(core_context):
             if core_context.preempt.should_preempt():
                 return
 
-        # NEW: After training for each op, validate and report the searcher metric to the master.
+        # NEW: After training for each op, validate and report the
+        # searcher metric to the master.
         op.report_completed(test_loss)
 
 

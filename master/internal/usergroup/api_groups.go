@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -125,11 +126,9 @@ func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRe
 
 	gid := int(req.GroupId)
 
-	canGet, err := AuthZProvider.Get().CanGetGroup(ctx, *curUser, gid)
-	if err != nil {
-		return nil, err
-	} else if !canGet {
-		return nil, errors.Wrapf(db.ErrNotFound, "Error getting group %d", gid)
+	if err := AuthZProvider.Get().CanGetGroup(ctx, *curUser, gid); err != nil {
+		return nil, authz.SubIfUnauthorized(err,
+			errors.Wrapf(db.ErrNotFound, "Error getting group %d", gid))
 	}
 
 	g, err := GroupByIDTx(ctx, nil, gid)

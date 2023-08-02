@@ -34,7 +34,6 @@ interface InputProps {
   title?: string;
   type?: string;
   value?: string;
-  width?: string | number;
 }
 
 interface TextAreaProps {

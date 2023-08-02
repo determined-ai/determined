@@ -5,10 +5,10 @@ package db
 
 import (
 	"archive/tar"
+	"context"
 	"crypto/rand"
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -18,8 +18,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/uptrace/bun"
 
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
@@ -27,11 +26,11 @@ import (
 	"github.com/google/uuid"
 	"gopkg.in/guregu/null.v3"
 
+	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-
 	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 const (
@@ -246,7 +245,7 @@ func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 func ReadTestModelDefiniton(t *testing.T, folderPath string) []byte {
 	path, err := filepath.Abs(folderPath)
 	require.NoError(t, err)
-	files, err := ioutil.ReadDir(path)
+	files, err := os.ReadDir(path)
 	require.NoError(t, err)
 	var arcs []archive.Item
 	for _, file := range files {
@@ -255,9 +254,11 @@ func ReadTestModelDefiniton(t *testing.T, folderPath string) []byte {
 		}
 		name := file.Name()
 		var bytes []byte
-		bytes, err = ioutil.ReadFile(filepath.Join(path, name)) //nolint: gosec
+		bytes, err = os.ReadFile(filepath.Join(path, name)) //nolint: gosec
 		require.NoError(t, err)
-		arcs = append(arcs, archive.UserItem(name, bytes, tar.TypeReg, byte(file.Mode()), 0, 0))
+		info, err := file.Info()
+		require.NoError(t, err)
+		arcs = append(arcs, archive.UserItem(name, bytes, tar.TypeReg, byte(info.Mode()), 0, 0))
 	}
 	targz, err := archive.ToTarGz(archive.Archive(arcs))
 	require.NoError(t, err)
@@ -275,7 +276,6 @@ func RequireMockTrial(t *testing.T, db *PgDB, exp *model.Experiment) *model.Tria
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
 		HParams:      model.JSONObj{"global_batch_size": 1},
-		JobID:        exp.JobID,
 	}
 	err := db.AddTrial(&tr)
 	require.NoError(t, err, "failed to add trial")
@@ -303,7 +303,7 @@ func MockModelCheckpoint(
 	ckpt := model.CheckpointV2{
 		UUID:         ckptUUID,
 		TaskID:       tr.TaskID,
-		AllocationID: a.AllocationID,
+		AllocationID: &a.AllocationID,
 		ReportTime:   time.Now().UTC(),
 		State:        model.CompletedState,
 		Resources: map[string]int64{
@@ -324,4 +324,48 @@ func (db *PgDB) MustExec(t *testing.T, sql string, args ...any) sql.Result {
 	out, err := db.sql.Exec(sql, args...)
 	require.NoError(t, err, "failed to run query")
 	return out
+}
+
+// MockWorkspaces creates as many new workspaces as in workspaceNames and
+// returns their ids.
+func MockWorkspaces(workspaceNames []string, userID model.UserID) ([]int32, error) {
+	ctx := context.Background()
+	var workspaceIDs []int32
+	var workspaces []model.Workspace
+
+	for _, workspaceName := range workspaceNames {
+		workspaces = append(workspaces, model.Workspace{
+			Name:   workspaceName,
+			UserID: userID,
+		})
+	}
+
+	_, err := Bun().NewInsert().Model(&workspaces).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	workspaces = []model.Workspace{}
+	err = Bun().NewSelect().Model(&workspaces).
+		Where("name IN (?)", bun.In(workspaceNames)).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, workspace := range workspaces {
+		workspaceIDs = append(workspaceIDs, int32(workspace.ID))
+	}
+
+	return workspaceIDs, nil
+}
+
+// CleanupMockWorkspace removes the specified workspaceIDs from the workspaces table.
+func CleanupMockWorkspace(workspaceIDs []int32) error {
+	var workspaces []model.Workspace
+	_, err := Bun().NewDelete().Model(&workspaces).
+		Where("id IN (?)", bun.In(workspaceIDs)).
+		Exec(context.Background())
+
+	return err
 }

@@ -6,19 +6,19 @@ import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import DynamicIcon from 'components/DynamicIcon';
 import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
+import Spinner from 'components/Spinner';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
+import { OMITTED_STR } from 'constants/accessControl';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
-import Spinner from 'shared/components/Spinner';
-import { Pagination } from 'shared/types';
-import { getDuration } from 'shared/utils/datetime';
 import { StateOfUnion } from 'themes';
+import { Pagination } from 'types';
 import {
   CommandTask,
   CommandType,
@@ -32,6 +32,7 @@ import {
   TrialItem,
   Workspace,
 } from 'types';
+import { getDuration } from 'utils/datetime';
 import { canBeOpened } from 'utils/task';
 import { openCommand } from 'utils/wait';
 
@@ -62,6 +63,27 @@ export type ExperimentRenderer = (
   index: number,
 ) => React.ReactNode;
 
+/**
+ * Creates a renderer that will render the omittedEl if the key does not exist
+ * T: reresenting the more generic type and K: representing the more specific type
+ * @param key The key of the record to check for existence
+ * @param render The renderer to use if the key exists
+ * @param omittedEl The element to render if the key does not exist
+ * @returns A renderer that will render the omittedEl if the key does not exist
+ */
+export const createOmitableRenderer = <T extends object, K>(
+  key: keyof K,
+  render: Renderer<K>,
+  omittedEl: React.ReactNode = OMITTED_STR,
+): Renderer<T> => {
+  return (text: string, record: T, index: number): React.ReactNode => {
+    if (key in record) {
+      return render(text, record as unknown as K, index);
+    }
+    return omittedEl;
+  };
+};
+
 export type TaskRenderer = (text: string, record: CommandTask, index: number) => React.ReactNode;
 
 export const MINIMUM_PAGE_SIZE = 10;
@@ -76,7 +98,7 @@ export const defaultPaginationConfig = {
 /* Table Column Renderers */
 
 export const checkmarkRenderer = (yesNo: boolean): React.ReactNode => {
-  return yesNo ? <Icon name="checkmark" /> : null;
+  return yesNo ? <Icon name="checkmark" title="Checkmark" /> : null;
 };
 
 export const durationRenderer = (times: StartEndTimes): React.ReactNode => (
@@ -104,7 +126,7 @@ export const expStateRenderer: Renderer<{ state: RunState }> = (_, record) => (
 );
 
 export const tooltipRenderer: Renderer = (text) => (
-  <Tooltip placement="topLeft" title={text}>
+  <Tooltip content={text} placement="topLeft">
     <span>{text}</span>
   </Tooltip>
 );
@@ -120,7 +142,7 @@ export const userRenderer: React.FC<DetailedUser | undefined> = (user) => {
 /* Command Task Table Column Renderers */
 
 export const taskIdRenderer: TaskRenderer = (_, record) => (
-  <Tooltip placement="topLeft" title={record.id}>
+  <Tooltip content={record.id} placement="topLeft">
     <div className={css.centerVertically}>
       <ConditionalWrapper
         condition={canBeOpened(record)}
@@ -132,9 +154,9 @@ export const taskIdRenderer: TaskRenderer = (_, record) => (
 );
 
 export const taskTypeRenderer: TaskRenderer = (_, record) => (
-  <Tooltip placement="topLeft" title={commandTypeToLabel[record.type as unknown as CommandType]}>
+  <Tooltip content={commandTypeToLabel[record.type as unknown as CommandType]} placement="topLeft">
     <div className={css.centerVertically}>
-      <Icon name={record.type.toLowerCase()} />
+      <Icon name={record.type} title={record.displayName || record.name} />
     </div>
   </Tooltip>
 );
@@ -162,7 +184,7 @@ export const taskWorkspaceRenderer = (
   const isUncategorized = workspaceId === 1;
 
   return (
-    <Tooltip placement="top" title={workspace?.name}>
+    <Tooltip content={workspace?.name} placement="top">
       <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
         <Link
           path={
@@ -203,7 +225,7 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
 export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => (
   <Space className={css.wordBreak}>
     <div style={{ paddingInline: 4 }}>
-      <Icon name="model" size="medium" />
+      <Icon name="model" size="medium" title="Model" />
     </div>
     <Link path={paths.modelDetails(String(record.id))}>{value}</Link>
   </Space>

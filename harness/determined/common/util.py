@@ -7,6 +7,8 @@ import pathlib
 import platform
 import random
 import sys
+import time
+import warnings
 from typing import (
     IO,
     Any,
@@ -14,8 +16,10 @@ from typing import (
     Iterator,
     Optional,
     Sequence,
+    Tuple,
     TypeVar,
     Union,
+    cast,
     no_type_check,
     overload,
 )
@@ -25,6 +29,10 @@ import urllib3
 from determined.common import yaml
 
 _yaml = yaml.YAML(typ="safe", pure=True)
+
+_LEGACY_TRAINING = "training"
+_LEGACY_VALIDATION = "validation"
+
 
 T = TypeVar("T")
 
@@ -200,3 +208,41 @@ def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
     if ts.endswith("Z"):
         ts = ts[:-1] + "+00:00"
     return datetime.datetime.fromisoformat(ts)
+
+
+def wait_for(
+    predicate: Callable[[], Tuple[bool, T]], timeout: int = 60, interval: float = 0.1
+) -> T:
+    """
+    Wait for the predicate to return (Done, ReturnValue) while
+    checking for a timeout. without preempting the predicate.
+    """
+
+    start = time.time()
+    done = False
+    while not done:
+        if time.time() - start > timeout:
+            raise TimeoutError("timed out waiting for predicate")
+        done, rv = predicate()
+        time.sleep(interval)
+    return rv
+
+
+U = TypeVar("U", bound=Callable[..., Any])
+
+
+def deprecated(message: Optional[str] = None) -> Callable[[U], U]:
+    def decorator(func: U) -> U:
+        @functools.wraps(func)
+        def wrapper_deprecated(*args: Any, **kwargs: Any) -> Any:
+            warning_message = (
+                f"{func.__name__} is deprecated and will be removed in a future version."
+            )
+            if message:
+                warning_message += f" {message}."
+            warnings.warn(warning_message, category=DeprecationWarning, stacklevel=2)
+            return func(*args, **kwargs)
+
+        return cast(U, wrapper_deprecated)
+
+    return decorator

@@ -3,13 +3,13 @@ import React, { ReactNode, useEffect, useMemo } from 'react';
 import Card from 'components/kit/Card';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner';
 import { activeRunStates } from 'constants/states';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { GetExperimentsParams } from 'services/types';
-import Spinner from 'shared/components/Spinner';
 import clusterStore from 'stores/cluster';
 import { maxClusterSlotCapacity } from 'stores/cluster';
+import determinedStore from 'stores/determinedInfo';
 import experimentStore from 'stores/experiments';
 import taskStore from 'stores/tasks';
 import { ResourceType } from 'types';
@@ -29,7 +29,7 @@ export const ClusterOverallStats: React.FC = () => {
   const activeExperiments = useObservable(
     experimentStore.getExperimentsByParams(ACTIVE_EXPERIMENTS_PARAMS),
   );
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
 
   const auxContainers = useMemo(() => {
     const tally = {

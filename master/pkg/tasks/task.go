@@ -2,7 +2,6 @@ package tasks
 
 import (
 	"archive/tar"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -18,18 +17,19 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
+// File location constants.
 const (
 	// DefaultWorkDir is the default workdir.
 	DefaultWorkDir    = "/run/determined/workdir"
 	userPythonBaseDir = "/run/determined/pythonuserbase"
-	runDir            = "/run/determined"
+	RunDir            = "/run/determined"
 	infoDir           = "/run/determined/info"
 	trainDir          = "/run/determined/train"
 	modelCopy         = "/run/determined/train/model"
 	rootDir           = "/"
-	passwdPath        = "/run/determined/etc/passwd"
-	shadowPath        = "/run/determined/etc/shadow"
-	groupPath         = "/run/determined/etc/group"
+	PasswdPath        = "/run/determined/etc/passwd"
+	ShadowPath        = "/run/determined/etc/shadow"
+	GroupPath         = "/run/determined/etc/group"
 	certPath          = "/run/determined/etc/ssl/master.crt"
 	// DtrainSSHPortBase is starting range for Dtrain ports.
 	DtrainSSHPortBase = 12350
@@ -49,6 +49,11 @@ const (
 	C10DPort = "C10D_PORT"
 )
 
+// TaskSpecifier creates a TaskSpec. ToTaskSpec must only be called once per specifier.
+type TaskSpecifier interface {
+	ToTaskSpec() TaskSpec
+}
+
 // TaskSpec defines the spec of a task.
 type TaskSpec struct {
 	// Fields that are only for task logics.
@@ -59,7 +64,7 @@ type TaskSpec struct {
 	// Fields that are set on the cluster level.
 	ClusterID   string
 	HarnessPath string
-	MasterCert  *tls.Certificate
+	MasterCert  []byte
 	SSHRsaSize  int
 
 	SegmentEnabled bool
@@ -191,7 +196,7 @@ func (t TaskSpec) EnvVars() map[string]string {
 		e["DET_INTER_NODE_NETWORK_INTERFACE"] = networkInterface
 	}
 
-	if t.MasterCert != nil {
+	if len(t.MasterCert) != 0 {
 		e["DET_USE_TLS"] = "true"
 		e["DET_MASTER_CERT_FILE"] = certPath
 	} else {
@@ -282,6 +287,8 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 			},
 			Archives:         append(runArchives, rootArchives...),
 			UseFluentLogging: true,
+			DeviceType:       deviceType,
+			Registry:         env.RegistryAuth(),
 		},
 	}
 
@@ -293,7 +300,7 @@ func workDirArchive(
 	aug *model.AgentUserGroup, workDir string, createWorkDir bool,
 ) cproto.RunArchive {
 	a := archive.Archive{
-		aug.OwnedArchiveItem(runDir, nil, 0o700, tar.TypeDir),
+		aug.OwnedArchiveItem(RunDir, nil, 0o700, tar.TypeDir),
 		aug.OwnedArchiveItem(infoDir, nil, 0o755, tar.TypeDir),
 		aug.OwnedArchiveItem(userPythonBaseDir, nil, 0o700, tar.TypeDir),
 	}
@@ -330,7 +337,13 @@ func runDirHelpersArchive(aug *model.AgentUserGroup) cproto.RunArchive {
 			taskSignalHandlingMode,
 			tar.TypeReg,
 		),
-	}, runDir)
+		aug.OwnedArchiveItem(
+			SingularityEntrypointWrapperScript,
+			etc.MustStaticFile(etc.SingularityEntrypointWrapperScriptResource),
+			singularityEntrypointWrapperMode,
+			tar.TypeReg,
+		),
+	}, RunDir)
 }
 
 // injectUserArchive creates the user/UID/group/GID for a user by adding passwd/shadow/group files
@@ -348,9 +361,9 @@ func injectUserArchive(aug *model.AgentUserGroup, workDir string) cproto.RunArch
 
 	return wrapArchive(
 		archive.Archive{
-			archive.RootItem(passwdPath, passwdBytes, 0o644, tar.TypeReg),
-			archive.RootItem(shadowPath, shadowBytes, 0o600, tar.TypeReg),
-			archive.RootItem(groupPath, groupBytes, 0o644, tar.TypeReg),
+			archive.RootItem(PasswdPath, passwdBytes, 0o644, tar.TypeReg),
+			archive.RootItem(ShadowPath, shadowBytes, 0o600, tar.TypeReg),
+			archive.RootItem(GroupPath, groupBytes, 0o644, tar.TypeReg),
 		},
 		rootDir,
 	)

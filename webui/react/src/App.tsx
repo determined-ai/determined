@@ -4,16 +4,21 @@ import React, { useEffect, useLayoutEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
+import { useParams } from 'react-router-dom';
 
+import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Button from 'components/kit/Button';
+import { ConfirmationProvider } from 'components/kit/useConfirm';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
+import Spinner from 'components/Spinner/Spinner';
 import { ThemeProvider } from 'components/ThemeProvider';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useKeyTracker from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
+import usePermissions from 'hooks/usePermissions';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
@@ -21,11 +26,13 @@ import useTelemetry from 'hooks/useTelemetry';
 import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
 import { paths, serverAddress } from 'routes/utils';
-import Spinner from 'shared/components/Spinner/Spinner';
 import { StoreProvider } from 'stores';
 import authStore from 'stores/auth';
+import clusterStore from 'stores/cluster';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
+import userSettings from 'stores/userSettings';
+import workspaceStore from 'stores/workspaces';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
@@ -33,7 +40,7 @@ import { Loadable } from 'utils/loadable';
 import css from './App.module.scss';
 
 import 'antd/dist/reset.css';
-import '@glideapps/glide-data-grid/dist/index.css';
+import '@hpe.com/glide-data-grid/dist/index.css';
 
 const AppView: React.FC = () => {
   const resize = useResize();
@@ -56,7 +63,16 @@ const AppView: React.FC = () => {
   useRouteTracker();
 
   useEffect(() => (isAuthenticated ? userStore.fetchCurrentUser() : undefined), [isAuthenticated]);
-  useEffect(() => (isAuthenticated ? userStore.fetchUsers() : undefined), [isAuthenticated]);
+  useEffect(() => (isAuthenticated ? clusterStore.startPolling() : undefined), [isAuthenticated]);
+  useEffect(() => (isAuthenticated ? userSettings.startPolling() : undefined), [isAuthenticated]);
+  useEffect(
+    () => (isAuthenticated ? userStore.startPolling({ delay: 60_000 }) : undefined),
+    [isAuthenticated],
+  );
+  useEffect(
+    () => (isAuthenticated ? workspaceStore.startPolling({ delay: 60_000 }) : undefined),
+    [isAuthenticated],
+  );
   useEffect(() => determinedStore.startPolling({ delay: 600_000 }), []);
 
   useEffect(() => {
@@ -108,6 +124,14 @@ const AppView: React.FC = () => {
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [resize]);
 
+  // Check permissions and params for JupyterLabGlobal.
+  const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
+  const { workspaceId } = useParams<{
+    workspaceId: string;
+  }>();
+  const loadableWorkspace = useObservable(workspaceStore.getWorkspace(Number(workspaceId ?? '')));
+  const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
+
   return Loadable.match(loadableInfo, {
     Loaded: () => (
       <div className={css.base}>
@@ -117,11 +141,21 @@ const AppView: React.FC = () => {
               <SettingsProvider>
                 <ThemeProvider>
                   <AntdApp>
-                    <Navigation>
-                      <main>
-                        <Router routes={appRoutes} />
-                      </main>
-                    </Navigation>
+                    <ConfirmationProvider>
+                      <Navigation>
+                        <JupyterLabGlobal
+                          enabled={
+                            Loadable.isLoaded(loadableUser) &&
+                            (workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC)
+                          }
+                          workspace={workspace ?? undefined}
+                        />
+                        <Omnibar />
+                        <main>
+                          <Router routes={appRoutes} />
+                        </main>
+                      </Navigation>
+                    </ConfirmationProvider>
                   </AntdApp>
                 </ThemeProvider>
               </SettingsProvider>
@@ -134,7 +168,6 @@ const AppView: React.FC = () => {
                 <Button onClick={refreshPage}>Try Again</Button>
               </PageMessage>
             )}
-            <Omnibar />
           </>
         ) : (
           <Spinner center />

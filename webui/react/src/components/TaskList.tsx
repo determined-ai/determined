@@ -1,4 +1,3 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal, Space } from 'antd';
 import {
   FilterDropdownProps,
@@ -13,12 +12,9 @@ import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
 import JupyterLabButton from 'components/JupyterLabButton';
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Link from 'components/Link';
-import Page from 'components/Page';
-import InteractiveTable, {
-  ColumnDef,
-  InteractiveTableSettings,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
   defaultRowClassName,
   getFullPaginationConfig,
@@ -43,18 +39,14 @@ import settingsConfig, {
 } from 'components/TaskList.settings';
 import { commandTypeToLabel } from 'constants/states';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import usePolling from 'hooks/usePolling';
+import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
-import usePolling from 'shared/hooks/usePolling';
-import { ValueOf } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
+import { ValueOf } from 'types';
 import {
   ExperimentAction as Action,
   AnyTask,
@@ -63,13 +55,17 @@ import {
   CommandType,
   Workspace,
 } from 'types';
-import { modal } from 'utils/dialogApi';
+import { isEqual } from 'utils/data';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'utils/sort';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 
+import BatchActionConfirmModalComponent from './BatchActionConfirmModal';
+import { useModal } from './kit/Modal';
 import css from './TaskList.module.scss';
 import WorkspaceFilter from './WorkspaceFilter';
 
@@ -112,6 +108,8 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
   const { canModifyWorkspaceNSC } = usePermissions();
   const canceler = useRef(new AbortController());
+
+  const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
 
@@ -187,7 +185,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
 
   const handleActionComplete = useCallback(() => fetchTasks(), [fetchTasks]);
 
-  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" title="Search" />, []);
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
@@ -380,10 +378,11 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'type',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['type'],
         filterDropdown: typeFilterDropdown,
+        filterIcon: <Icon name="filter" title="filter" />,
         filters: Object.values(CommandType).map((value) => ({
           text: (
             <div className={css.typeFilter}>
-              <Icon name={value.toLocaleLowerCase()} />
+              <Icon name={value} title={commandTypeToLabel[value]} />
               <span>{commandTypeToLabel[value]}</span>
             </div>
           ),
@@ -422,6 +421,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
+        filterIcon: <Icon name="filter" title="filter" />,
         filters: Object.values(CommandState).map((value) => ({
           text: <Badge state={value} type={BadgeType.State} />,
           value,
@@ -444,6 +444,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
+        filterIcon: <Icon name="filter" title="filter" />,
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.user,
         key: 'user',
@@ -461,6 +462,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'workspace',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['workspace'],
         filterDropdown: workspaceFilterDropdown,
+        filterIcon: <Icon name="filter" title="filter" />,
         filters: workspaces.map((ws) => ({
           text: <WorkspaceFilter workspace={ws} />,
           value: ws.id,
@@ -530,24 +532,9 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     }
   }, [fetchTasks, selectedTasks, updateSettings, canModifyWorkspaceNSC]);
 
-  const showConfirmation = useCallback(() => {
-    modal.confirm({
-      content: `
-        Are you sure you want to kill
-        all the eligible selected tasks?
-      `,
-      icon: <ExclamationCircleOutlined />,
-      okText: 'Kill',
-      onOk: handleBatchKill,
-      title: 'Confirm Batch Kill',
-    });
-  }, [handleBatchKill]);
-
   const handleBatchAction = useCallback(
-    (action?: string) => {
-      if (action === Action.Kill) showConfirmation();
-    },
-    [showConfirmation],
+    () => BatchActionConfirmModal.open(),
+    [BatchActionConfirmModal],
   );
 
   const handleTableChange = useCallback(
@@ -582,8 +569,6 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
 
   useEffect(() => workspaceStore.fetch(), []);
 
-  useEffect(() => userStore.startPolling(), []);
-
   useEffect(() => {
     const currentCanceler = canceler.current;
     return () => currentCanceler.abort();
@@ -611,10 +596,8 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   return (
-    <Page
-      containerRef={pageRef}
-      id="tasks"
-      options={
+    <>
+      <div className={css.options}>
         <Space>
           {filterCount > 0 && (
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
@@ -624,8 +607,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
             workspace={workspace}
           />
         </Space>
-      }
-      title="Tasks">
+      </div>
       <div className={css.base}>
         <TableBatch
           actions={[{ disabled: !hasKillable, label: Action.Kill, value: Action.Kill }]}
@@ -633,7 +615,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           onAction={handleBatchAction}
           onClear={clearSelected}
         />
-        <InteractiveTable
+        <InteractiveTable<CommandTask, Settings>
           columns={columns}
           containerRef={pageRef}
           ContextMenu={TaskActionDropdownCM}
@@ -654,13 +636,18 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
             preserveSelectedRowKeys: true,
             selectedRowKeys: settings.row ?? [],
           }}
-          settings={settings as InteractiveTableSettings}
+          settings={settings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings}
+          updateSettings={updateSettings}
           onChange={handleTableChange}
         />
       </div>
+      <BatchActionConfirmModal.Component
+        batchAction={Action.Kill}
+        itemName="task"
+        onConfirm={handleBatchKill}
+      />
       <Modal
         footer={null}
         open={!!sourcesModal}
@@ -680,7 +667,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           </Grid>
         </div>
       </Modal>
-    </Page>
+    </>
   );
 };
 

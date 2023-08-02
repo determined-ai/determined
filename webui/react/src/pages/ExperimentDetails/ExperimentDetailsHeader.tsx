@@ -1,7 +1,6 @@
 import { Button, Space, Typography } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import BreadcrumbBar from 'components/BreadcrumbBar';
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
 } from 'components/ExperimentCreateModal';
@@ -11,10 +10,12 @@ import ExperimentIcons from 'components/ExperimentIcons';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentStopModalComponent from 'components/ExperimentStopModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tags from 'components/kit/Tags';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
+import Spinner from 'components/Spinner/Spinner';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import { pausableRunStates, stateToLabel, terminalRunStates } from 'constants/states';
@@ -30,10 +31,6 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
-import Spinner from 'shared/components/Spinner/Spinner';
-import { getDuration } from 'shared/utils/datetime';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { getStateColorCssVar } from 'themes';
 import {
   ExperimentAction as Action,
@@ -43,6 +40,8 @@ import {
   RunState,
   TrialItem,
 } from 'types';
+import { getDuration } from 'utils/datetime';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
@@ -91,7 +90,6 @@ const isShownAnimation = (state: CompoundRunState): boolean => {
     case RunState.Paused:
     case RunState.Unspecified:
     case JobState.UNSPECIFIED:
-      return false;
     default:
       return false;
   }
@@ -266,7 +264,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         onClick: handleHyperparameterSearch,
       },
       [Action.DownloadCode]: {
-        icon: <Icon name="download" size="small" />,
+        icon: <Icon name="download" size="small" title={Action.DownloadCode} />,
         key: 'download-model',
         label: 'Download Experiment Code',
         onClick: (e) => {
@@ -274,7 +272,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         },
       },
       [Action.Fork]: {
-        icon: <Icon name="fork" size="small" />,
+        icon: <Icon name="fork" size="small" title={Action.Fork} />,
         key: 'fork',
         label: 'Fork',
         onClick: ForkModal.open,
@@ -290,7 +288,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         onClick: ExperimentMoveModal.open,
       },
       [Action.OpenTensorBoard]: {
-        icon: <Icon name="tensor-board" size="small" />,
+        icon: <Icon name="tensor-board" size="small" title={Action.OpenTensorBoard} />,
         isLoading: isRunningTensorBoard,
         key: 'tensorboard',
         label: 'TensorBoard',
@@ -373,7 +371,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
         return isShownAnimation(experiment.state) ? (
           <>
-            <ExperimentIcons isTooltipVisible={false} state={experiment.state} style={cssProps} />
+            <ExperimentIcons showTooltip={false} state={experiment.state} style={cssProps} />
             <div className={css.icon}>{iconNode}</div>
           </>
         ) : (
@@ -466,7 +464,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   return (
     <>
-      <BreadcrumbBar experiment={experiment} id={experiment.id} type="experiment" />
       <PageHeaderFoldable
         foldableContent={<InfoBox rows={foldableRows} />}
         leftContent={
@@ -483,7 +480,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                             : css.buttonPause
                         }
                         disabled={!canPausePlay}
-                        icon={returnStatusIcon(<Icon name="pause" size="large" />)}
+                        icon={returnStatusIcon(<Icon name="pause" size="large" title="Pause" />)}
                         shape="circle"
                         onClick={handlePauseClick}
                       />
@@ -496,7 +493,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                             : css.buttonPlay
                         }
                         disabled={!canPausePlay}
-                        icon={returnStatusIcon(<Icon name="play" size="large" />)}
+                        icon={returnStatusIcon(<Icon name="play" size="large" title="Play" />)}
                         shape="circle"
                         onClick={handlePlayClick}
                       />
@@ -505,7 +502,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                       <Button
                         className={css.buttonStop}
                         disabled={!canPausePlay}
-                        icon={<Icon name="stop" size="large" />}
+                        icon={<Icon name="stop" size="large" title="Stop" />}
                         shape="circle"
                         onClick={ExperimentStopModal.open}
                       />
@@ -523,7 +520,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             </div>
             {trial ? (
               <>
-                <Icon name="arrow-right" size="tiny" />
+                <Icon name="arrow-right" size="tiny" title="Trial" />
                 <div className={css.trial}>Trial {trial.id}</div>
               </>
             ) : null}

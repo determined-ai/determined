@@ -190,7 +190,7 @@ class Rebuilder(threading.Thread):
                 # Reset rebuild flag.
                 self.want_rebuild = False
             # Rebuild.
-            p = subprocess.Popen(["make", "build/stamp"])
+            p = subprocess.Popen(["make", "build/sp-html.stamp"])
             ret = p.wait()
             if ret != 0:
                 print("rebuild failed", file=sys.stderr)

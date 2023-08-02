@@ -3,6 +3,7 @@ from argparse import ArgumentError, Namespace
 from time import sleep
 from typing import Any, Dict, List, Optional, Sequence
 
+import determined.cli.render
 from determined import cli
 from determined.cli.user import AGENT_USER_GROUP_ARGS
 from determined.common import api, util
@@ -20,6 +21,8 @@ WORKSPACE_HEADERS = [
     "Agent Gid",
     "Agent User",
     "Agent Group",
+    "Default Compute Pool",
+    "Default Aux Pool",
 ]
 
 workspace_arg: Arg = Arg("-w", "--workspace-name", type=str, help="workspace name")
@@ -28,11 +31,7 @@ workspace_arg: Arg = Arg("-w", "--workspace-name", type=str, help="workspace nam
 def get_workspace_id_from_args(args: Namespace) -> Optional[int]:
     workspace_id = None
     if args.workspace_name:
-        workspace = cli.workspace.get_workspace_by_name(
-            cli.setup_session(args), args.workspace_name
-        )
-        if workspace is None:
-            raise ArgumentError(None, f'Workspace "{args.workspace_name}" not found.')
+        workspace = cli.workspace.workspace_by_name(cli.setup_session(args), args.workspace_name)
         if workspace.archived:
             raise ArgumentError(None, f'Workspace "{args.workspace_name}" is archived.')
         workspace_id = workspace.id
@@ -49,19 +48,6 @@ def get_workspace_names(session: api.Session) -> Dict[int, str]:
     return mapping
 
 
-def get_workspace_by_name(
-    session: api.Session, workspace_name: str
-) -> Optional[bindings.v1Workspace]:
-    """Get a workspace by name."""
-    assert workspace_name, "workspace name cannot be empty"
-    resp = bindings.get_GetWorkspaces(session, name=workspace_name)
-    assert len(resp.workspaces) <= 1, "workspace name are assumed to be unique."
-    if len(resp.workspaces) == 0:
-        return None
-    workspace = resp.workspaces[0]
-    return workspace
-
-
 def render_workspaces(
     workspaces: Sequence[bindings.v1Workspace], from_list_api: bool = False
 ) -> None:
@@ -75,6 +61,8 @@ def render_workspaces(
             w.agentUserGroup.agentGid if w.agentUserGroup else None,
             w.agentUserGroup.agentUser if w.agentUserGroup else None,
             w.agentUserGroup.agentGroup if w.agentUserGroup else None,
+            w.defaultComputePool if w.defaultComputePool else None,
+            w.defaultAuxPool if w.defaultAuxPool else None,
         ]
         if not from_list_api:
             value.append(w.checkpointStorageConfig)
@@ -87,17 +75,19 @@ def render_workspaces(
 
 
 def workspace_by_name(sess: api.Session, name: str) -> bindings.v1Workspace:
+    assert name, "workspace name cannot be empty"
     w = bindings.get_GetWorkspaces(sess, name=name).workspaces
+    assert len(w) <= 1, "workspace name is assumed to be unique."
     if len(w) == 0:
-        raise errors.EmptyResultException(f'Did not find a workspace with name "{name}".')
+        raise cli.not_found_errs("workspace", name, sess)
     return bindings.get_GetWorkspace(sess, id=w[0].id).workspace
 
 
 @authentication.required
 def list_workspaces(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    orderArg = bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"]
-    sortArg = bindings.v1GetWorkspacesRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"]
+    orderArg = bindings.v1OrderBy[args.order_by.upper()]
+    sortArg = bindings.v1GetWorkspacesRequestSortBy[args.sort_by.upper()]
     internal_offset = args.offset or 0
     all_workspaces: List[bindings.v1Workspace] = []
     while True:
@@ -114,7 +104,7 @@ def list_workspaces(args: Namespace) -> None:
             break
 
     if args.json:
-        print(json.dumps([w.to_json() for w in all_workspaces], indent=2))
+        determined.cli.render.print_json([w.to_json() for w in all_workspaces])
     else:
         render_workspaces(all_workspaces, from_list_api=True)
 
@@ -123,8 +113,8 @@ def list_workspaces(args: Namespace) -> None:
 def list_workspace_projects(args: Namespace) -> None:
     sess = cli.setup_session(args)
     w = workspace_by_name(sess, args.workspace_name)
-    orderArg = bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"]
-    sortArg = bindings.v1GetWorkspaceProjectsRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"]
+    orderArg = bindings.v1OrderBy[args.order_by.upper()]
+    sortArg = bindings.v1GetWorkspaceProjectsRequestSortBy[args.sort_by.upper()]
     internal_offset = args.offset if ("offset" in args and args.offset) else 0
     limit = args.limit if "limit" in args else 200
     all_projects: List[bindings.v1Project] = []
@@ -144,7 +134,7 @@ def list_workspace_projects(args: Namespace) -> None:
             break
 
     if args.json:
-        print(json.dumps([p.to_json() for p in all_projects], indent=2))
+        determined.cli.render.print_json([p.to_json() for p in all_projects])
     else:
         values = [
             [
@@ -157,6 +147,22 @@ def list_workspace_projects(args: Namespace) -> None:
             for p in all_projects
         ]
         render.tabulate_or_csv(PROJECT_HEADERS, values, False)
+
+
+@authentication.required
+def list_pools(args: Namespace) -> None:
+    session = cli.setup_session(args)
+    w = workspace_by_name(session, args.workspace_name)
+    resp = bindings.get_ListRPsBoundToWorkspace(session, workspaceId=w.id)
+    pools_str = ""
+    if resp.resourcePools:
+        pools_str = ", ".join(resp.resourcePools)
+
+    render.tabulate_or_csv(
+        headers=["Workspace", "Available Resource Pools"],
+        values=[[args.workspace_name, pools_str]],
+        as_csv=False,
+    )
 
 
 def _parse_agent_user_group_args(args: Namespace) -> Optional[bindings.v1AgentUserGroup]:
@@ -192,11 +198,13 @@ def create_workspace(args: Namespace) -> None:
         name=args.name,
         agentUserGroup=agent_user_group,
         checkpointStorageConfig=checkpoint_storage,
+        defaultComputePool=args.default_compute_pool,
+        defaultAuxPool=args.default_aux_pool,
     )
     w = bindings.post_PostWorkspace(cli.setup_session(args), body=content).workspace
 
     if args.json:
-        print(json.dumps(w.to_json(), indent=2))
+        determined.cli.render.print_json(w.to_json())
     else:
         render_workspaces([w])
 
@@ -206,7 +214,7 @@ def describe_workspace(args: Namespace) -> None:
     sess = cli.setup_session(args)
     w = workspace_by_name(sess, args.workspace_name)
     if args.json:
-        print(json.dumps(w.to_json(), indent=2))
+        determined.cli.render.print_json(w.to_json())
     else:
         render_workspaces([w])
         print("\nAssociated Projects")
@@ -222,7 +230,7 @@ def delete_workspace(args: Namespace) -> None:
     if args.yes or render.yes_or_no(
         'Deleting workspace "' + args.workspace_name + '" will result \n'
         "in the unrecoverable deletion of all associated projects, experiments,\n"
-        "Notebooks, shells, commands, and Tensorboards.\n"
+        "Notebooks, shells, commands, Tensorboards, and Templates.\n"
         "For a recoverable alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
     ):
@@ -270,12 +278,16 @@ def edit_workspace(args: Namespace) -> None:
     current = workspace_by_name(sess, args.workspace_name)
     agent_user_group = _parse_agent_user_group_args(args)
     updated = bindings.v1PatchWorkspace(
-        name=args.name, agentUserGroup=agent_user_group, checkpointStorageConfig=checkpoint_storage
+        name=args.name,
+        agentUserGroup=agent_user_group,
+        checkpointStorageConfig=checkpoint_storage,
+        defaultComputePool=args.default_compute_pool,
+        defaultAuxPool=args.default_aux_pool,
     )
     w = bindings.patch_PatchWorkspace(sess, body=updated, id=current.id).workspace
 
     if args.json:
-        print(json.dumps(w.to_json(), indent=2))
+        determined.cli.render.print_json(w.to_json())
     else:
         render_workspaces([w])
 
@@ -295,6 +307,19 @@ CHECKPOINT_STORAGE_WORKSPACE_ARGS = [
         "--checkpoint-storage-config-file",
         type=yaml_file_arg,
         help="Storage config (path to YAML or JSON formatted file)",
+    ),
+]
+
+DEFAULT_POOL_ARGS = [
+    Arg(
+        "--default-compute-pool",
+        type=str,
+        help="name of the pool to set as the default compute pool",
+    ),
+    Arg(
+        "--default-aux-pool",
+        type=str,
+        help="name of the pool to set as the default auxiliary pool",
     ),
 ]
 
@@ -370,6 +395,14 @@ args_description = [
                 ],
             ),
             Cmd(
+                "list-pools",
+                list_pools,
+                "list the resource pools available to a workspace",
+                [
+                    Arg("workspace_name", type=str, help="name of the workspace"),
+                ],
+            ),
+            Cmd(
                 "create",
                 create_workspace,
                 "create workspace",
@@ -377,6 +410,7 @@ args_description = [
                     Arg("name", type=str, help="unique name of the workspace"),
                     *AGENT_USER_GROUP_ARGS,
                     *CHECKPOINT_STORAGE_WORKSPACE_ARGS,
+                    *DEFAULT_POOL_ARGS,
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
@@ -412,6 +446,7 @@ args_description = [
                     Arg("--name", type=str, help="new name of the workspace"),
                     *AGENT_USER_GROUP_ARGS,
                     *CHECKPOINT_STORAGE_WORKSPACE_ARGS,
+                    *DEFAULT_POOL_ARGS,
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),

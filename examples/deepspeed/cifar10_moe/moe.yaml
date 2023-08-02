@@ -13,20 +13,20 @@ hyperparameters:
   moe_param_group: true
 
 environment:
-    environment_variables:                                                                          
-        - NCCL_DEBUG=INFO                                                                           
-        # You may need to modify this to match your network configuration.                          
-        - NCCL_SOCKET_IFNAME=ens,eth,ib
-    #    - CUDA_LAUNCH_BLOCKING=1
-    #    - NCCL_BLOCKING_WAIT=1
-    #    - NCCL_IB_DISABLE=1
-    image:
-        gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.7.0-gpu-9b5db1b
+  environment_variables:
+    - NCCL_DEBUG=INFO
+    # You may need to modify this to match your network configuration.
+    - NCCL_SOCKET_IFNAME=ens,eth,ib
+  #    - CUDA_LAUNCH_BLOCKING=1
+  #    - NCCL_BLOCKING_WAIT=1
+  #    - NCCL_IB_DISABLE=1
+  image:
+    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
 bind_mounts:
-    - host_path: /tmp
-      container_path: /data
-    - host_path: /tmp
-      container_path: /root/.cache
+  - host_path: /tmp
+    container_path: /data
+  - host_path: /tmp
+    container_path: /root/.cache
 resources:
   slots_per_trial: 2
 records_per_epoch: 50000

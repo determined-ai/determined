@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
-import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
-import { isEqual } from 'shared/utils/data';
-import { camelCaseToSentence } from 'shared/utils/string';
+import Link from 'components/Link';
+import { isEqual } from 'utils/data';
+import { camelCaseToSentence } from 'utils/string';
 
 import DraggableListItem from './DraggableListItem';
 import css from './Transfer.module.scss';
@@ -17,6 +17,7 @@ interface Props {
   reorder?: boolean;
   sourceListTitle?: string;
   targetListTitle?: string;
+  persistentEntries?: string[]; // Entries still exist when clicking "Remove all"
 }
 
 const Transfer: React.FC<Props> = ({
@@ -26,6 +27,7 @@ const Transfer: React.FC<Props> = ({
   sourceListTitle = 'Source',
   targetListTitle = 'Target',
   reorder = true,
+  persistentEntries,
   onChange,
 }: Props) => {
   const [targetEntries, setTargetEntries] = useState<string[]>(
@@ -195,17 +197,13 @@ const Transfer: React.FC<Props> = ({
             width="100%">
             {renderHiddenRow}
           </List>
-          <Button type="link" onClick={() => moveToRight(filteredHiddenEntries)}>
-            Add All
-          </Button>
+          <Link onClick={() => moveToRight(filteredHiddenEntries)}>Add All</Link>
         </div>
         <div className={css.column}>
           <div className={css.targetTitleRow}>
             <h2>{targetListTitle}</h2>
             {!isEqual(defaultTargetEntries, targetEntries) && (
-              <Button type="link" onClick={resetEntries}>
-                Reset
-              </Button>
+              <Link onClick={resetEntries}>Reset</Link>
             )}
           </div>
           <List
@@ -217,15 +215,14 @@ const Transfer: React.FC<Props> = ({
             width="100%">
             {renderVisibleRow}
           </List>
-          <Button
-            type="link"
+          <Link
             onClick={() => {
               moveToLeft(filteredVisibleEntries);
               // removing everything was keeping the columns out of sync with the UI...
-              moveToRight(['id', 'name']);
+              if (persistentEntries && persistentEntries.length > 0) moveToRight(persistentEntries);
             }}>
             Remove All
-          </Button>
+          </Link>
         </div>
       </div>
     </div>

@@ -5,10 +5,10 @@ import pickle
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from determined import searcher
-from determined.common.api import bindings
+from determined.common.api import bindings, errors
 from determined.experimental import client
 
 EXPERIMENT_ID_FILE = "experiment_id.txt"
@@ -49,9 +49,11 @@ class SearchRunner:
             operations.append(searcher.Progress(progress))
         elif event.trialExitedEarly:
             # duplicate exit accounting already performed by master
+            searcher_exit_reason = searcher.ExitedReason._from_bindings(
+                event.trialExitedEarly.exitedReason
+            )
             logger.info(
-                f"trialExitedEarly({event.trialExitedEarly.requestId},"
-                f" {event.trialExitedEarly.exitedReason})"
+                f"trialExitedEarly({event.trialExitedEarly.requestId}, {searcher_exit_reason})"
             )
             if event.trialExitedEarly.exitedReason is None:
                 raise RuntimeError("trialExitedEarly event is invalid without exitedReason")
@@ -69,9 +71,7 @@ class SearchRunner:
             operations = self.search_method.on_trial_exited_early(
                 self.state,
                 request_id,
-                exited_reason=searcher.ExitedReason._from_bindings(
-                    event.trialExitedEarly.exitedReason
-                ),
+                exited_reason=searcher_exit_reason,
             )
             # add progress operation
             progress = self.search_method.progress(self.state)
@@ -120,13 +120,13 @@ class SearchRunner:
         experiment_id: int,
         session: client.Session,
         prior_operations: Optional[List[searcher.Operation]],
+        sleep_time: float = 1.0,
     ) -> None:
         experiment_is_active = True
-
         try:
             while experiment_is_active:
                 time.sleep(
-                    1
+                    sleep_time
                 )  # we don't want to call long polling API more often than every second.
                 events = self.get_events(session, experiment_id)
                 if not events:
@@ -157,6 +157,11 @@ class SearchRunner:
                                 == bindings.experimentv1State.COMPLETED
                             ):
                                 self.state.experiment_completed = True
+                            elif (
+                                event.experimentInactive.experimentState
+                                == bindings.experimentv1State.ERROR
+                            ):
+                                self.state.experiment_failed = True
 
                             if (
                                 event.experimentInactive.experimentState
@@ -191,11 +196,28 @@ class SearchRunner:
             searcherOperations=[op._to_searcher_operation() for op in operations],
             triggeredByEvent=event,
         )
-        bindings.post_PostSearcherOperations(
-            session,
-            body=body,
-            experimentId=experiment_id,
-        )
+
+        # This try/except is intended to catch a specific error which occurs for DeepSpeed Autotune.
+        # DeepSpeed makes an explicit `exit()` call internally when autotuning flags are enabled in
+        # the DS config. When we also post a `Close` operation, there is a resulting race condition
+        # and intermittently the process and its corresponding agent die before the `Close`
+        # operation reaches the agent, resulting in a `APIException` with a `failed to post
+        # operations: rpc error: code = NotFound desc = actor /experiments/xxx could not be found`
+        # message. This try/except allows the experiment to continue uninterrupted in such cases.
+        try:
+            bindings.post_PostSearcherOperations(
+                session,
+                body=body,
+                experimentId=experiment_id,
+            )
+        except errors.APIException as e:
+            logging.warning(f"Catching errors.APIException: {str(e)}")
+            close_op_in_operations = any((isinstance(o, searcher.Close) for o in operations))
+            logging.warning(f"operations: {operations}")
+            if close_op_in_operations and "could not be found" in str(e):
+                pass
+            else:
+                raise e
 
     def get_events(
         self,
@@ -247,6 +269,7 @@ class LocalSearchRunner(SearchRunner):
         self,
         exp_config: Union[Dict[str, Any], str],
         model_dir: Optional[str] = None,
+        includes: Optional[Iterable[Union[str, Path]]] = None,
     ) -> int:
         """
         Run custom search.
@@ -254,6 +277,8 @@ class LocalSearchRunner(SearchRunner):
         Args:
             exp_config (dictionary, string): experiment config filename (.yaml) or a dict.
             model_dir (string): directory containing model definition.
+            includes (Iterable[Union[str, pathlib.Path]], optional): Additional files
+                or directories to include in the model definition.  (default: ``None``)
         """
         logger.info("LocalSearchRunner.run")
 
@@ -268,16 +293,17 @@ class LocalSearchRunner(SearchRunner):
             # load searcher state and search method state
             _, operations = self.load_state(experiment_id)
         else:
-            exp = client.create_experiment(exp_config, model_dir)
+            exp = client.create_experiment(exp_config, model_dir, includes)
             with experiment_id_file.open("w") as f:
                 f.write(str(exp.id))
             state_path = self._get_state_path(exp.id)
             state_path.mkdir(parents=True)
-            logger.info(f"Starting HP searcher for experiment {exp.id}")
             self.state.experiment_id = exp.id
             self.state.last_event_id = 0
             self.save_state(exp.id, [])
             experiment_id = exp.id
+            # Note: Simulating the same print functionality as our CLI when making an experiment.
+            logger.info(f"Created experiment {experiment_id}")
 
         # make sure client is initialized
         client._require_singleton(lambda: None)()

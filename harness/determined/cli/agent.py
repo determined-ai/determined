@@ -1,5 +1,4 @@
 import argparse
-import json
 import os
 import sys
 import typing
@@ -7,6 +6,7 @@ from collections import OrderedDict
 from operator import attrgetter
 from typing import Any, Callable, Dict, List
 
+import determined.cli.render
 from determined import cli
 from determined.cli import render
 from determined.cli import task as cli_task
@@ -47,7 +47,7 @@ def list_agents(args: argparse.Namespace) -> None:
     ]
 
     if args.json:
-        print(json.dumps(agents, indent=4))
+        determined.cli.render.print_json(agents)
         return
 
     headers = [
@@ -62,7 +62,6 @@ def list_agents(args: argparse.Namespace) -> None:
         "Addresses",
     ]
     values = [a.values() for a in agents]
-
     render.tabulate_or_csv(headers, values, args.csv)
 
 
@@ -148,7 +147,7 @@ def list_slots(args: argparse.Namespace) -> None:
     ]
 
     if args.json:
-        print(json.dumps(slots, indent=4))
+        determined.cli.render.print_json(slots)
         return
 
     values = [s.values() for s in slots]
@@ -167,8 +166,8 @@ def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
         if args.agent_id:
             agent_ids = [args.agent_id]
         else:
-            r = api.get(args.master, "agents")
-            agent_ids = sorted(local_id(a) for a in r.json().keys())
+            resp = bindings.get_GetAgents(cli.setup_session(args))
+            agent_ids = sorted(local_id(a.id) for a in resp.agents or [])
 
         drain_mode = None if enabled else args.drain
 
@@ -233,8 +232,8 @@ def patch_slot(enabled: bool) -> Callable[[argparse.Namespace], None]:
 
 
 def agent_id_completer(_1: str, parsed_args: argparse.Namespace, _2: Any) -> List[str]:
-    r = api.get(parsed_args.master, "agents")
-    return list(r.json().keys())
+    resp = bindings.get_GetAgents(cli.setup_session(parsed_args))
+    return [a.id for a in resp.agents or []]
 
 
 # fmt: off

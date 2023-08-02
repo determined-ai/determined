@@ -2,7 +2,7 @@
 SHELL := bash
 GENERATED := packaging/LICENSE
 GENERATION_INPUTS = ../schemas/gen.py $(shell find ./pkg/schemas/ -name '*.go') $(shell find ../schemas/expconf -name '*.json')
-MOCK_GENERATION_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go
+MOCK_GENERATION_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go ./go.mod ./go.sum ./internal/rm/resource_manager_iface.go ./internal/task/allocation_service_iface.go
 GORELEASER = goreleaser
 
 export VERSION := $(shell cat ../VERSION)
@@ -63,9 +63,14 @@ build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	mockery --name=ExperimentAuthZ --dir=internal/experiment --output internal/mocks --filename authz_experiment_iface.go
 	mockery --name=NSCAuthZ --dir=internal/command --output internal/mocks --filename nsc_authz_iface.go
 	mockery --name=ModelAuthZ --dir=internal/model --output internal/mocks --filename authz_model_iface.go
+	mockery --name=PodInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename pod_iface.go     
+	mockery --name=EventInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename event_iface.go 
+	mockery --name=NodeInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename node_iface.go 
+	mockery --name=ResourceManager --dir=internal/rm --output internal/mocks --filename rm.go
+	mockery --name=AllocationService --dir=internal/task --output internal/mocks/allocationmocks --filename allocation_service.go --outpkg allocationmocks
 
 	# fmt once since the mocks are not generated formatted.
-	goimports -l -local github.com/determined-ai -w ./internal/mocks
+	goimports -l -local github.com/determined-ai -w ./internal/mocks ./internal/mocks/allocationmocks
 	mkdir -p build
 	touch $@
 

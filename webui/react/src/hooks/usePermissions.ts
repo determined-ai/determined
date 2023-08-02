@@ -1,8 +1,8 @@
 import { useObservable } from 'micro-observables';
 import { useMemo } from 'react';
 
-import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
+import determinedStore from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import userStore from 'stores/users';
 import {
@@ -39,9 +39,7 @@ interface ProjectPermissionsArgs {
 
 interface RbacOptsProps {
   currentUser?: DetailedUser;
-  rbacAllPermission: boolean;
   rbacEnabled: boolean;
-  rbacReadPermission: boolean;
   userAssignments?: UserAssignment[];
   userRoles?: UserRole[];
 }
@@ -67,6 +65,7 @@ interface PermissionsHook {
   canDeleteProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canDeleteWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canEditWebhooks: boolean;
+  canManageResourcePoolBindings: boolean;
   canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyExperimentMetadata: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyGroups: boolean;
@@ -94,10 +93,7 @@ interface PermissionsHook {
 }
 
 const usePermissions = (): PermissionsHook => {
-  const rbacEnabled = useFeature().isOn('rbac'),
-    rbacAllPermission = useFeature().isOn('mock_permissions_all'),
-    rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission;
-
+  const { rbacEnabled } = useObservable(determinedStore.info);
   const loadableCurrentUser = useObservable(userStore.currentUser);
   const currentUser = Loadable.getOrElse(undefined, loadableCurrentUser);
 
@@ -110,13 +106,11 @@ const usePermissions = (): PermissionsHook => {
   const rbacOpts = useMemo(
     () => ({
       currentUser,
-      rbacAllPermission,
       rbacEnabled,
-      rbacReadPermission,
       userAssignments: myAssignments,
       userRoles: myRoles,
     }),
-    [currentUser, myAssignments, myRoles, rbacAllPermission, rbacEnabled, rbacReadPermission],
+    [currentUser, myAssignments, myRoles, rbacEnabled],
   );
 
   const permissions = useMemo(
@@ -146,6 +140,7 @@ const usePermissions = (): PermissionsHook => {
       canDeleteWorkspace: (args: WorkspacePermissionsArgs) =>
         canDeleteWorkspace(rbacOpts, args.workspace),
       canEditWebhooks: canEditWebhooks(rbacOpts),
+      canManageResourcePoolBindings: canManageResourcePoolBindings(rbacOpts),
       canModifyExperiment: (args: WorkspacePermissionsArgs) =>
         canModifyExperiment(rbacOpts, args.workspace),
       canModifyExperimentMetadata: (args: WorkspacePermissionsArgs) =>
@@ -225,53 +220,42 @@ const relevantPermissions = (
 // User actions
 const canAdministrateUsers = ({
   currentUser,
-  rbacAllPermission,
   rbacEnabled,
   userAssignments,
   userRoles,
 }: RbacOptsProps): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
   return (
-    rbacAllPermission ||
-    (!!currentUser &&
-      (rbacEnabled ? permitted.has(V1PermissionType.ADMINISTRATEUSER) : currentUser.isAdmin))
+    !!currentUser &&
+    (rbacEnabled ? permitted.has(V1PermissionType.ADMINISTRATEUSER) : currentUser.isAdmin)
   );
 };
 
-const canViewGroups = ({
-  currentUser,
-  rbacReadPermission,
-  rbacEnabled,
-}: RbacOptsProps): boolean => {
-  return rbacReadPermission || (!!currentUser && (rbacEnabled || currentUser.isAdmin));
+const canViewGroups = ({ currentUser, rbacEnabled }: RbacOptsProps): boolean => {
+  return !!currentUser && (rbacEnabled || currentUser.isAdmin);
 };
 
 const canViewModelRegistry = (
-  { rbacReadPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspace?: PermissionWorkspace,
 ): boolean => {
   // For OSS, everyone can view model registry
-  // For RBAC, users with rbacReadPermission or VIEWMODELREGISTRY permission can view model resgistry
+  // For RBAC, users with VIEWMODELREGISTRY permission can view model registry
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return !rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.VIEWMODELREGISTRY);
+  return !rbacEnabled || permitted.has(V1PermissionType.VIEWMODELREGISTRY);
 };
 
 const canCreateModelWorkspace = (
-  { rbacReadPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspaceId: number,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspaceId);
-  return !rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.CREATEMODELREGISTRY);
+  return !rbacEnabled || permitted.has(V1PermissionType.CREATEMODELREGISTRY);
 };
 
-const canCreateModels = ({
-  rbacReadPermission,
-  rbacEnabled,
-  userRoles,
-}: RbacOptsProps): boolean => {
+const canCreateModels = ({ rbacEnabled, userRoles }: RbacOptsProps): boolean => {
   return (
     !rbacEnabled ||
-    rbacReadPermission ||
     (!!userRoles &&
       !!userRoles.find(
         (r) => !!r.permissions.find((p) => p.id === V1PermissionType.CREATEMODELREGISTRY),
@@ -281,405 +265,365 @@ const canCreateModels = ({
 
 const canModifyGroups = ({
   currentUser,
-  rbacAllPermission,
   rbacEnabled,
   userAssignments,
   userRoles,
 }: RbacOptsProps): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
   return (
-    rbacAllPermission ||
-    (!!currentUser &&
-      (rbacEnabled ? permitted.has(V1PermissionType.UPDATEGROUP) : currentUser.isAdmin))
+    !!currentUser &&
+    (rbacEnabled ? permitted.has(V1PermissionType.UPDATEGROUP) : currentUser.isAdmin)
   );
 };
 
 const canModifyPermissions = ({
-  rbacAllPermission,
   rbacEnabled,
   userAssignments,
   userRoles,
 }: RbacOptsProps): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
-  return rbacAllPermission || (rbacEnabled && permitted.has(V1PermissionType.ADMINISTRATEUSER));
+  return rbacEnabled && permitted.has(V1PermissionType.ADMINISTRATEUSER);
 };
 
 // Experiment actions
 const canCreateExperiment = (
-  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspace?: PermissionWorkspace,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return (
-    !!workspace &&
-    (!rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.CREATEEXPERIMENT))
-  );
+  return !!workspace && (!rbacEnabled || permitted.has(V1PermissionType.CREATEEXPERIMENT));
 };
 
 const canDeleteExperiment = (
-  { currentUser, rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   experiment: ProjectExperiment,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, experiment.workspaceId);
   return (
-    rbacAllPermission ||
-    (!!experiment &&
-      !!currentUser &&
-      (rbacEnabled
-        ? permitted.has(V1PermissionType.DELETEEXPERIMENT)
-        : currentUser.isAdmin || currentUser.id === experiment.userId))
+    !!experiment &&
+    !!currentUser &&
+    (rbacEnabled
+      ? permitted.has(V1PermissionType.DELETEEXPERIMENT)
+      : currentUser.isAdmin || currentUser.id === experiment.userId)
   );
 };
 
 const canModifyExperiment = (
-  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspace?: PermissionWorkspace,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return (
-    rbacAllPermission ||
-    (!!workspace && (!rbacEnabled || permitted.has(V1PermissionType.UPDATEEXPERIMENT)))
-  );
+  return !!workspace && (!rbacEnabled || permitted.has(V1PermissionType.UPDATEEXPERIMENT));
 };
 
 const canModifyExperimentMetadata = (
-  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspace?: PermissionWorkspace,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return (
-    !!workspace &&
-    (!rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.UPDATEEXPERIMENTMETADATA))
-  );
+  return !!workspace && (!rbacEnabled || permitted.has(V1PermissionType.UPDATEEXPERIMENTMETADATA));
 };
 
 const canMoveExperiment = (
-  { currentUser, rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   experiment: ProjectExperiment,
 ): boolean => {
   const srcPermit = relevantPermissions(userAssignments, userRoles, experiment.workspaceId);
   return (
-    rbacAllPermission ||
-    (!!currentUser &&
-      (rbacEnabled
-        ? srcPermit.has(V1PermissionType.DELETEEXPERIMENT)
-        : currentUser.isAdmin || currentUser.id === experiment.userId))
+    !!currentUser &&
+    (rbacEnabled
+      ? srcPermit.has(V1PermissionType.DELETEEXPERIMENT)
+      : currentUser.isAdmin || currentUser.id === experiment.userId)
   );
 };
 
 const canMoveExperimentsTo = (
-  { currentUser, rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   destination?: PermissionWorkspace,
 ): boolean => {
   const destPermit = relevantPermissions(userAssignments, userRoles, destination?.id);
-  return (
-    rbacAllPermission ||
-    (!!currentUser && (!rbacEnabled || destPermit.has(V1PermissionType.CREATEEXPERIMENT)))
-  );
+  return !!currentUser && (!rbacEnabled || destPermit.has(V1PermissionType.CREATEEXPERIMENT));
 };
 
 // experiment artifacts (checkpoints, metrics, etc.)
 const canViewExperimentArtifacts = (
-  { rbacEnabled, rbacReadPermission, userAssignments, userRoles }: RbacOptsProps,
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspace?: PermissionWorkspace,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return (
-    !!workspace &&
-    (!rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.VIEWEXPERIMENTARTIFACTS))
-  );
+  return !!workspace && (!rbacEnabled || permitted.has(V1PermissionType.VIEWEXPERIMENTARTIFACTS));
 };
 
 // Model and ModelVersion actions
 const canDeleteModel = (
-  { currentUser, rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   model: ModelItem,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, model.workspaceId);
-  return (
-    rbacAllPermission ||
-    (rbacEnabled
-      ? permitted.has(V1PermissionType.DELETEMODELREGISTRY)
-      : !!currentUser && (currentUser.isAdmin || currentUser.id === model?.userId))
-  );
+  return rbacEnabled
+    ? permitted.has(V1PermissionType.DELETEMODELREGISTRY)
+    : !!currentUser && (currentUser.isAdmin || currentUser.id === model?.userId);
 };
 
 const canModifyModel = (
-  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   model: ModelItem,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, model.workspaceId);
-  return rbacAllPermission || !rbacEnabled || permitted.has(V1PermissionType.EDITMODELREGISTRY);
+  return !rbacEnabled || permitted.has(V1PermissionType.EDITMODELREGISTRY);
 };
 
 const canCreateModelVersion = (
-  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   model: ModelItem,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, model.workspaceId);
-  return rbacAllPermission || !rbacEnabled || permitted.has(V1PermissionType.CREATEMODELREGISTRY);
+  return !rbacEnabled || permitted.has(V1PermissionType.CREATEMODELREGISTRY);
 };
 
 const canDeleteModelVersion = (
-  { currentUser, rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   modelVersion: ModelVersion,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, modelVersion.model.workspaceId);
-  return (
-    rbacAllPermission ||
-    (rbacEnabled
-      ? permitted.has(V1PermissionType.DELETEMODELREGISTRY)
-      : !!currentUser && (currentUser.isAdmin || currentUser.id === modelVersion?.userId))
-  );
+  return rbacEnabled
+    ? permitted.has(V1PermissionType.DELETEMODELREGISTRY)
+    : !!currentUser && (currentUser.isAdmin || currentUser.id === modelVersion?.userId);
 };
 
 const canModifyModelVersion = (
-  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   modelVersion: ModelVersion,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, modelVersion.model.workspaceId);
-  return !rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.EDITMODELREGISTRY);
+  return !rbacEnabled || permitted.has(V1PermissionType.EDITMODELREGISTRY);
 };
 
 // Project actions
 // Currently the smallest scope is workspace
 const canCreateProject = (
-  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspace?: PermissionWorkspace,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return !rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.CREATEPROJECT);
+  return !rbacEnabled || permitted.has(V1PermissionType.CREATEPROJECT);
 };
 
 const canDeleteWorkspaceProjects = (
-  { currentUser, rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspace?: PermissionWorkspace,
   project?: Project,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
-    rbacAllPermission ||
-    (!!workspace &&
-      !!currentUser &&
-      !!project &&
-      (rbacEnabled
-        ? permitted.has(V1PermissionType.DELETEPROJECT)
-        : currentUser.isAdmin || currentUser.id === project.userId))
+    !!workspace &&
+    !!currentUser &&
+    !!project &&
+    (rbacEnabled
+      ? permitted.has(V1PermissionType.DELETEPROJECT)
+      : currentUser.isAdmin || currentUser.id === project.userId)
   );
 };
 
 const canModifyWorkspaceProjects = (
-  { currentUser, rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspace?: PermissionWorkspace,
   project?: Project,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
-    rbacAllPermission ||
-    (!!workspace &&
-      !!currentUser &&
-      !!project &&
-      (rbacEnabled
-        ? permitted.has(V1PermissionType.UPDATEPROJECT)
-        : currentUser.isAdmin || currentUser.id === project.userId))
+    !!workspace &&
+    !!currentUser &&
+    !!project &&
+    (rbacEnabled
+      ? permitted.has(V1PermissionType.UPDATEPROJECT)
+      : currentUser.isAdmin || currentUser.id === project.userId)
   );
 };
 
 const canMoveWorkspaceProjects = (
-  { currentUser, rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   project?: Project,
 ): boolean => {
   const srcPermit = relevantPermissions(userAssignments, userRoles, project?.workspaceId);
   return (
-    rbacAllPermission ||
-    (!!currentUser &&
-      !!project &&
-      (rbacEnabled
-        ? srcPermit.has(V1PermissionType.DELETEPROJECT)
-        : currentUser.isAdmin || currentUser.id === project.userId))
+    !!currentUser &&
+    !!project &&
+    (rbacEnabled
+      ? srcPermit.has(V1PermissionType.DELETEPROJECT)
+      : currentUser.isAdmin || currentUser.id === project.userId)
   );
 };
 
 const canMoveProjectsTo = (
-  { currentUser, rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   destination?: PermissionWorkspace,
 ): boolean => {
   const destPermit = relevantPermissions(userAssignments, userRoles, destination?.id);
-  return (
-    rbacAllPermission ||
-    (!!currentUser && (!rbacEnabled || destPermit.has(V1PermissionType.CREATEPROJECT)))
-  );
+  return !!currentUser && (!rbacEnabled || destPermit.has(V1PermissionType.CREATEPROJECT));
 };
 
 const canMoveModel = (
-  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   destination?: PermissionWorkspace,
 ): boolean => {
   const destPermit = relevantPermissions(userAssignments, userRoles, destination?.id);
-  return rbacAllPermission || !rbacEnabled || destPermit.has(V1PermissionType.CREATEMODELREGISTRY);
+  return !rbacEnabled || destPermit.has(V1PermissionType.CREATEMODELREGISTRY);
 };
 
 // Workspace actions
 const canCreateWorkspace = ({
-  rbacAllPermission,
   rbacEnabled,
   userAssignments,
   userRoles,
 }: RbacOptsProps): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
-  return !rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.CREATEWORKSPACE);
+  return !rbacEnabled || permitted.has(V1PermissionType.CREATEWORKSPACE);
 };
 
 const canDeleteWorkspace = (
-  { currentUser, rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
-  workspace?: PermissionWorkspace,
-): boolean => {
-  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return (
-    rbacAllPermission ||
-    (!!workspace &&
-      !!currentUser &&
-      (rbacEnabled
-        ? permitted.has(V1PermissionType.DELETEWORKSPACE)
-        : currentUser.isAdmin || currentUser.id === workspace.userId))
-  );
-};
-
-const canModifyWorkspace = (
-  { currentUser, rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
-  workspace?: PermissionWorkspace,
-): boolean => {
-  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return (
-    rbacAllPermission ||
-    (!!workspace &&
-      !!currentUser &&
-      (rbacEnabled
-        ? permitted.has(V1PermissionType.UPDATEWORKSPACE)
-        : currentUser.isAdmin || currentUser.id === workspace.userId))
-  );
-};
-
-const canModifyWorkspaceAgentUserGroup = (
-  { currentUser, rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
-  workspace?: PermissionWorkspace,
-): boolean => {
-  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return (
-    rbacAllPermission ||
-    (!!currentUser &&
-      (rbacEnabled
-        ? permitted.has(V1PermissionType.SETWORKSPACEAGENTUSERGROUP)
-        : currentUser.isAdmin))
-  );
-};
-
-const canModifyWorkspaceCheckpointStorage = (
-  { currentUser, rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
-  workspace?: PermissionWorkspace,
-): boolean => {
-  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return (
-    rbacAllPermission ||
-    (!!currentUser &&
-      (rbacEnabled
-        ? permitted.has(V1PermissionType.SETWORKSPACECHECKPOINTSTORAGECONFIG)
-        : currentUser.isAdmin))
-  );
-};
-
-const canViewWorkspace = (
-  { rbacEnabled, rbacReadPermission, userAssignments, userRoles }: RbacOptsProps,
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspace?: PermissionWorkspace,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
     !!workspace &&
-    (!rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.VIEWWORKSPACE))
+    !!currentUser &&
+    (rbacEnabled
+      ? permitted.has(V1PermissionType.DELETEWORKSPACE)
+      : currentUser.isAdmin || currentUser.id === workspace.userId)
   );
 };
 
-const canViewWorkspaces = ({
-  rbacEnabled,
-  rbacReadPermission,
-  userRoles,
-}: RbacOptsProps): boolean => {
+const canModifyWorkspace = (
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspace?: PermissionWorkspace,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return (
+    !!workspace &&
+    !!currentUser &&
+    (rbacEnabled
+      ? permitted.has(V1PermissionType.UPDATEWORKSPACE)
+      : currentUser.isAdmin || currentUser.id === workspace.userId)
+  );
+};
+
+const canModifyWorkspaceAgentUserGroup = (
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspace?: PermissionWorkspace,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return (
+    !!currentUser &&
+    (rbacEnabled ? permitted.has(V1PermissionType.SETWORKSPACEAGENTUSERGROUP) : currentUser.isAdmin)
+  );
+};
+
+const canModifyWorkspaceCheckpointStorage = (
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspace?: PermissionWorkspace,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return (
+    !!currentUser &&
+    (rbacEnabled
+      ? permitted.has(V1PermissionType.SETWORKSPACECHECKPOINTSTORAGECONFIG)
+      : currentUser.isAdmin)
+  );
+};
+
+const canViewWorkspace = (
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspace?: PermissionWorkspace,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return !!workspace && (!rbacEnabled || permitted.has(V1PermissionType.VIEWWORKSPACE));
+};
+
+const canViewWorkspaces = ({ rbacEnabled, userRoles }: RbacOptsProps): boolean => {
   return (
     !rbacEnabled ||
-    rbacReadPermission ||
     (!!userRoles &&
       !!userRoles.find((r) => !!r.permissions.find((p) => p.id === V1PermissionType.VIEWWORKSPACE)))
   );
 };
 
 const canUpdateRoles = (
-  { currentUser, rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspace?: PermissionWorkspace,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
-    rbacAllPermission ||
-    (!!workspace &&
-      !!currentUser &&
-      (rbacEnabled
-        ? permitted.has(V1PermissionType.UPDATEROLES)
-        : currentUser.isAdmin || currentUser.id === workspace.userId))
+    !!workspace &&
+    !!currentUser &&
+    (rbacEnabled
+      ? permitted.has(V1PermissionType.UPDATEROLES)
+      : currentUser.isAdmin || currentUser.id === workspace.userId)
   );
 };
 
 const canAssignRoles = (
-  { currentUser, rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspace?: PermissionWorkspace,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
-    rbacAllPermission ||
     (!!currentUser && !!workspace && currentUser.id === workspace.userId) ||
     (!!currentUser &&
       (rbacEnabled ? permitted.has(V1PermissionType.ASSIGNROLES) : currentUser.isAdmin))
   );
 };
 
-const canCreateNSC = ({ rbacEnabled, rbacReadPermission, userRoles }: RbacOptsProps): boolean => {
+const canCreateNSC = ({ rbacEnabled, userRoles }: RbacOptsProps): boolean => {
   return (
     !rbacEnabled ||
-    rbacReadPermission ||
     (!!userRoles &&
       !!userRoles.find((r) => !!r.permissions.find((p) => p.id === V1PermissionType.CREATENSC)))
   );
 };
 
 const canCreateWorkspaceNSC = (
-  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspace?: PermissionWorkspace,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return (
-    rbacAllPermission ||
-    (!!workspace && (!rbacEnabled || permitted.has(V1PermissionType.CREATENSC)))
-  );
+  return !!workspace && (!rbacEnabled || permitted.has(V1PermissionType.CREATENSC));
 };
 
 const canModifyWorkspaceNSC = (
-  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspace?: PermissionWorkspace,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return rbacAllPermission || !rbacEnabled || permitted.has(V1PermissionType.UPDATENSC);
+  return !rbacEnabled || permitted.has(V1PermissionType.UPDATENSC);
 };
 
 /* Webhooks */
 
 const canEditWebhooks = ({
   currentUser,
-  rbacAllPermission,
   rbacEnabled,
   userAssignments,
   userRoles,
 }: RbacOptsProps): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
   return rbacEnabled
-    ? rbacAllPermission || permitted.has(V1PermissionType.EDITWEBHOOKS)
+    ? permitted.has(V1PermissionType.EDITWEBHOOKS)
+    : !!currentUser && currentUser.isAdmin;
+};
+
+/* Resource Pools */
+
+const canManageResourcePoolBindings = ({
+  currentUser,
+  rbacEnabled,
+  userAssignments,
+  userRoles,
+}: RbacOptsProps): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return rbacEnabled
+    ? permitted.has(V1PermissionType.UPDATEMASTERCONFIG)
     : !!currentUser && currentUser.isAdmin;
 };
 

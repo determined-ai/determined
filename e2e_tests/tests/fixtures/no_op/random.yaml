@@ -1,4 +1,4 @@
-description: noop_random
+name: noop_random
 checkpoint_storage:
   type: shared_fs
   host_path: /tmp

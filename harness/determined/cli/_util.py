@@ -5,6 +5,7 @@ from typing import Any, Callable, Dict, List, Sequence
 
 import termcolor
 
+from determined.cli import errors, render
 from determined.common import api, declarative_argparse, util
 from determined.common.api import authentication, bindings, certs
 from determined.experimental import client
@@ -98,8 +99,9 @@ def login_sdk_client(func: Callable[[argparse.Namespace], Any]) -> Callable[...,
 def setup_session(args: argparse.Namespace) -> api.Session:
     master_url = args.master or util.get_default_master_address()
     cert = certs.default_load(master_url)
+    retry = api.default_retry()
 
-    return api.Session(master_url, args.user, authentication.cli_auth, cert)
+    return api.Session(master_url, args.user, authentication.cli_auth, cert, retry)
 
 
 def require_feature_flag(feature_flag: str, error_message: str) -> Callable[..., Any]:
@@ -118,3 +120,28 @@ def require_feature_flag(feature_flag: str, error_message: str) -> Callable[...,
 def print_warnings(warnings: Sequence[bindings.v1LaunchWarning]) -> None:
     for warning in warnings:
         print(termcolor.colored(api.WARNING_MESSAGE_MAP[warning], "yellow"), file=sys.stderr)
+
+
+def wait_ntsc_ready(session: api.Session, ntsc_type: api.NTSC_Kind, eid: str) -> None:
+    """
+    Use to wait for a notebook, tensorboard, or shell command to become ready.
+    """
+    name = ntsc_type.value
+    loading_animator = render.Animator(f"Waiting for {name} to become ready")
+    err_msg = api.task_is_ready(session, eid, loading_animator.next)
+    msg = f"{name} (id: {eid}) is ready." if not err_msg else f"Waiting stopped: {err_msg}"
+    loading_animator.clear(msg)
+    if err_msg:
+        raise errors.CliError(err_msg)
+
+
+# not_found_errs mirrors NotFoundErrs from the golang api/errors.go. In the cases where
+# Python errors override the golang errors, this ensures the error messages stay consistent.
+def not_found_errs(
+    category: str, name: str, session: api.Session
+) -> api.errors.BadRequestException:
+    resp = bindings.get_GetMaster(session)
+    msg = f"{category} '{name}' not found"
+    if not resp.to_json().get("rbacEnabled"):
+        return api.errors.NotFoundException(msg)
+    return api.errors.NotFoundException(msg + ", please check your permissions.")

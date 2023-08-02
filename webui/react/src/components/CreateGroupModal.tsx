@@ -7,7 +7,7 @@ import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Link from 'components/Link';
-import useFeature from 'hooks/useFeature';
+import Spinner from 'components/Spinner';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
@@ -19,12 +19,12 @@ import {
   updateGroup,
 } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner';
-import { isEqual } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
+import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import { DetailedUser, UserRole } from 'types';
+import { isEqual } from 'utils/data';
 import { message } from 'utils/dialogApi';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
@@ -50,7 +50,7 @@ interface Props {
 
 const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: Props) => {
   const [form] = Form.useForm();
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyPermissions } = usePermissions();
   const [groupRoles, setGroupRoles] = useState<UserRole[]>([]);
   const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();
@@ -175,6 +175,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
       size="small"
       submit={{
         disabled: !groupName,
+        handleError,
         handler: handleSubmit,
         text: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
       }}

@@ -1,7 +1,7 @@
 import logging
 import os
 import tempfile
-from typing import Optional, Union, no_type_check
+from typing import Dict, List, Optional, Union, no_type_check
 
 import requests.exceptions
 import urllib3.exceptions
@@ -139,10 +139,23 @@ class GCSStorageManager(storage.CloudStorageManager):
             raise errors.CheckpointNotFound(f"Did not find checkpoint {path} in GCS")
 
     @util.preserve_random_state
-    def delete(self, storage_id: str) -> None:
+    def delete(self, storage_id: str, globs: List[str]) -> Dict[str, int]:
         prefix = self.get_storage_prefix(storage_id)
         logging.info(f"Deleting checkpoint {prefix} from GCS")
 
-        for blob in self.bucket.list_blobs(prefix=prefix):
-            logging.debug(f"Deleting {blob.name} from GCS")
-            blob.delete()
+        blob_name_to_blob = {obj.name: obj for obj in self.bucket.list_blobs(prefix=prefix)}
+        blob_name_to_size = {obj.name: obj.size for obj in blob_name_to_blob.values()}
+
+        resources = {}
+        if "**/*" not in globs:
+            prefixed_resources = self._apply_globs_to_resources(blob_name_to_size, prefix, globs)
+            for obj in list(blob_name_to_size):
+                if obj in prefixed_resources:
+                    resources[obj.replace(f"{prefix}/", "")] = blob_name_to_size[obj]
+                    del blob_name_to_size[obj]
+
+        for blob_name in blob_name_to_size:
+            logging.debug(f"Deleting {blob_name} from GCS")
+            blob_name_to_blob[blob_name].delete()
+
+        return resources

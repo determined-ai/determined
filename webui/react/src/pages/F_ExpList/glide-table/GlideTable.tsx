@@ -1,19 +1,20 @@
 import DataEditor, {
   CellClickedEventArgs,
   CompactSelection,
-  CustomCell,
   DataEditorProps,
   DataEditorRef,
+  getMiddleCenterBias,
   GridCell,
   GridCellKind,
   GridColumn,
+  GridMouseEventArgs,
   GridSelection,
   HeaderClickedEventArgs,
   Item,
   Rectangle,
   Theme,
-} from '@glideapps/glide-data-grid';
-import { MenuProps } from 'antd';
+} from '@hpe.com/glide-data-grid';
+import { DrawHeaderCallback } from '@hpe.com/glide-data-grid/dist/ts/data-grid/data-grid-types';
 import React, {
   Dispatch,
   SetStateAction,
@@ -23,57 +24,86 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useNavigate } from 'react-router';
+import { v4 as uuidv4 } from 'uuid';
 
-import useUI from 'shared/contexts/stores/UI';
+import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
+import {
+  AvailableOperators,
+  FormKind,
+  Operator,
+  SpecialColumnNames,
+} from 'components/FilterForm/components/type';
+import { MenuItem } from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
+import { MapOfIdsToColors } from 'hooks/useGlasbey';
+import useMobile from 'hooks/useMobile';
+import { handlePath } from 'routes/utils';
+import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
+import useUI from 'stores/contexts/UI';
 import usersStore from 'stores/users';
-import { ExperimentItem, Project } from 'types';
+import { ExperimentWithTrial, Project, ProjectColumn } from 'types';
+import { Float, Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
+import { AnyMouseEvent } from 'utils/routes';
+import { getCssVar } from 'utils/themes';
 
 import { PAGE_SIZE } from '../F_ExperimentList';
-import { MapOfIdsToColors } from '../useGlasbey';
+import { RowHeight } from '../F_ExperimentList.settings';
 
 import {
   ColumnDef,
-  defaultColumnWidths,
-  ExperimentColumn,
+  defaultDateColumn,
+  defaultNumberColumn,
+  defaultTextColumn,
   getColumnDefs,
   getHeaderIcons,
+  MIN_COLUMN_WIDTH,
+  MULTISELECT,
 } from './columns';
 import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
 import { LinkCell } from './custom-renderers/cells/linkCell';
-import { placeholderMenuItems, TableActionMenu, TableActionMenuProps } from './menu';
+import { drawArrow, drawTextWithEllipsis } from './custom-renderers/utils';
+import css from './GlideTable.module.scss';
+import { TableActionMenu, TableActionMenuProps } from './menu';
+import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
+import { BatchAction } from './TableActionBar';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
 
 export interface GlideTableProps {
-  clearSelectionTrigger?: number;
   colorMap: MapOfIdsToColors;
-  data: Loadable<ExperimentItem>[];
-  fetchExperiments: () => Promise<void>;
+  columnWidths: Record<string, number>;
+  comparisonViewOpen?: boolean;
+  data: Loadable<ExperimentWithTrial>[];
+  dataTotal: number;
   handleScroll?: (r: Rectangle) => void;
   height: number;
   scrollPositionSetCount: WritableObservable<number>;
-  sortableColumnIds: ExperimentColumn[];
-  setSortableColumnIds: Dispatch<SetStateAction<ExperimentColumn[]>>;
+  sortableColumnIds: string[];
+  setSortableColumnIds: (newColumns: string[]) => void;
   page: number;
   project?: Project;
-  selectedExperimentIds: number[];
-  setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
+  projectColumns: Loadable<ProjectColumn[]>;
+  rowHeight: RowHeight;
+  selection: GridSelection;
+  setSelection: Dispatch<SetStateAction<GridSelection>>;
+  setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
   selectAll: boolean;
-  setSelectAll: Dispatch<SetStateAction<boolean>>;
+  staticColumns: string[];
+  setColumnWidths: (newWidths: Record<string, number>) => void;
+  setSelectAll: (arg0: boolean) => void;
+  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
+  sorts: Sort[];
+  onSortChange: (sorts: Sort[]) => void;
+  formStore: FilterFormStore;
+  onIsOpenFilterChange: (value: boolean) => void;
+  onContextMenuComplete?: () => void;
+  pinnedColumnsCount: number;
+  setPinnedColumnsCount: (count: number) => void;
 }
-
-type ClickableCell = CustomCell<LinkCell> & {
-  data: {
-    link: {
-      onClick: () => void;
-    };
-  };
-};
 
 /**
  * Number of renders with gridRef.current !== null
@@ -84,27 +114,52 @@ type ClickableCell = CustomCell<LinkCell> & {
  * Otherwise handleScroll would erroneously set the page to 0
  * when the table is first initialized.
  */
-export const SCROLL_SET_COUNT_NEEDED = 2;
+export const SCROLL_SET_COUNT_NEEDED = 3;
 
-const STATIC_COLUMNS: ExperimentColumn[] = ['selected', 'name'];
+const isLinkCell = (cell: GridCell): cell is LinkCell => {
+  return !!(cell as LinkCell).data?.link?.href;
+};
+
+const rowHeightMap: Record<RowHeight, number> = {
+  [RowHeight.EXTRA_TALL]: 44,
+  [RowHeight.TALL]: 40,
+  [RowHeight.MEDIUM]: 36,
+  [RowHeight.SHORT]: 32,
+};
 
 export const GlideTable: React.FC<GlideTableProps> = ({
   data,
-  fetchExperiments,
-  clearSelectionTrigger,
-  setSelectedExperimentIds,
+  dataTotal,
+  selection,
+  setSelection,
   sortableColumnIds,
   setSortableColumnIds,
   colorMap,
   height,
+  rowHeight,
   selectAll,
   setSelectAll,
+  setExcludedExperimentIds,
   handleScroll,
   scrollPositionSetCount,
   page,
   project,
+  handleUpdateExperimentList,
+  onSortChange,
+  sorts,
+  projectColumns,
+  formStore,
+  onIsOpenFilterChange,
+  onContextMenuComplete,
+  comparisonViewOpen = false,
+  columnWidths,
+  setColumnWidths,
+  staticColumns,
+  pinnedColumnsCount,
+  setPinnedColumnsCount,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
+  const [hoveredRow, setHoveredRow] = useState<number>();
 
   useEffect(() => {
     if (scrollPositionSetCount.get() >= SCROLL_SET_COUNT_NEEDED) return;
@@ -116,21 +171,26 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   });
 
   const [menuIsOpen, setMenuIsOpen] = useState(false);
-  const handleMenuClose = useCallback(() => {
-    setMenuIsOpen(false);
-  }, []);
   const [menuProps, setMenuProps] = useState<Omit<TableActionMenuProps, 'open'>>({
-    handleClose: handleMenuClose,
-    x: 0,
-    y: 0,
+    bounds: {
+      height: 0,
+      width: 0,
+      x: 0,
+      y: 0,
+    },
+    handleClose: () => setMenuIsOpen(false),
   });
+
+  const handleContextMenuComplete = useCallback(() => {
+    onContextMenuComplete?.();
+  }, [onContextMenuComplete]);
 
   const [contextMenuOpen] = useState(observable(false));
   const contextMenuIsOpen = useObservable(contextMenuOpen);
 
   const [contextMenuProps, setContextMenuProps] = useState<null | Omit<
     TableContextMenuProps,
-    'open' | 'fetchExperiments'
+    'open' | 'handleUpdateExperimentList'
   >>(null);
 
   const {
@@ -140,53 +200,40 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const users = useObservable(usersStore.getUsers());
 
-  const columnIds = useMemo<ExperimentColumn[]>(
-    () => [...STATIC_COLUMNS, ...sortableColumnIds],
-    [sortableColumnIds],
+  const isMobile = useMobile();
+
+  const columnIds = useMemo(
+    () =>
+      comparisonViewOpen
+        ? [...staticColumns, ...sortableColumnIds.slice(0, pinnedColumnsCount)]
+        : [...staticColumns, ...sortableColumnIds],
+    [comparisonViewOpen, pinnedColumnsCount, sortableColumnIds, staticColumns],
   );
-  const navigate = useNavigate();
 
-  const [selection, setSelection] = React.useState<GridSelection>({
-    columns: CompactSelection.empty(),
-    rows: CompactSelection.empty(),
-  });
+  // Detect if user just click a row away from current selected group.
+  // If this stand alone select is set, use it as the base when doing multi select.
+  const [standAloneSelect, setStandAloneSelect] = React.useState<number>();
 
-  useEffect(() => {
-    if (clearSelectionTrigger === 0) return;
-    setSelection({ columns: CompactSelection.empty(), rows: CompactSelection.empty() });
-  }, [clearSelectionTrigger]);
-
-  useEffect(() => {
-    const selectedRowIndices = selection.rows.toArray();
-    setSelectedExperimentIds((prevIds) => {
-      const selectedIds = selectedRowIndices
-        .map((idx) => data?.[idx])
-        .filter((row) => row !== undefined)
-        .filter(Loadable.isLoaded)
-        .map((record) => record.data.id);
-      if (prevIds === selectedIds) return prevIds;
-      return selectedIds;
-    });
-  }, [selection.rows, setSelectedExperimentIds, data]);
-
-  const [columnWidths, setColumnWidths] =
-    useState<Record<ExperimentColumn, number>>(defaultColumnWidths);
-
-  const columnDefs = useMemo<Record<ExperimentColumn, ColumnDef>>(
+  const columnDefs = useMemo<Record<string, ColumnDef>>(
     () =>
       getColumnDefs({
         appTheme,
         columnWidths,
         darkLight,
-        navigate,
         rowSelection: selection.rows,
         selectAll,
         users,
       }),
-    [navigate, selectAll, selection.rows, columnWidths, users, darkLight, appTheme],
+    [selectAll, selection.rows, columnWidths, users, darkLight, appTheme],
   );
 
   const headerIcons = useMemo(() => getHeaderIcons(appTheme), [appTheme]);
+
+  const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = useMemo(() => {
+    return Loadable.map(projectColumns, (columns) => {
+      return columns.reduce((acc, col) => ({ ...acc, [col.column]: col }), {});
+    });
+  }, [projectColumns]);
 
   const { tooltip, onItemHovered, closeTooltip } = useTableTooltip({
     columnDefs,
@@ -196,151 +243,515 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const getRowThemeOverride: DataEditorProps['getRowThemeOverride'] = React.useCallback(
     (row: number): Partial<Theme> | undefined => {
-      const baseRowTheme = { borderColor: appTheme.stageStrong };
       // to put a border on the bottom row (actually the top of the row below it)
-      if (row === data.length) return baseRowTheme;
+      if (row === data.length) return;
+
       // avoid showing 'empty rows' below data
-      if (!data[row]) return;
+      if (!data[row]) {
+        return { borderColor: getCssVar(Surface.Surface) };
+      }
+
+      const hoverStyle: { accentLight?: string; bgCell?: string } = {};
+      if (row === hoveredRow) {
+        hoverStyle.bgCell = getCssVar(Surface.SurfaceStrong);
+        if (selection.rows.toArray().includes(hoveredRow)) {
+          hoverStyle.accentLight = getCssVar(Float.FloatStrong);
+        }
+      }
+
       const rowColorTheme = Loadable.match(data[row], {
-        Loaded: (record) => (colorMap[record.id] ? { accentColor: colorMap[record.id] } : {}),
+        Loaded: (record) =>
+          colorMap[record.experiment.id] ? { accentColor: colorMap[record.experiment.id] } : {},
         NotLoaded: () => ({}),
       });
-      return { ...baseRowTheme, ...rowColorTheme };
+
+      return { ...rowColorTheme, ...hoverStyle };
     },
-    [colorMap, data, appTheme],
+    [colorMap, data, hoveredRow, selection.rows],
   );
 
   const onColumnResize: DataEditorProps['onColumnResize'] = useCallback(
     (column: GridColumn, width: number) => {
       const columnId = column.id;
-      if (columnId === undefined || columnId === 'selected') return;
-      setColumnWidths((prevWidths) => {
-        const prevWidth = prevWidths[columnId as ExperimentColumn];
-        if (width === prevWidth) return prevWidths;
-        return { ...prevWidths, [columnId]: width };
-      });
+      if (columnId === undefined || columnId === MULTISELECT) return;
+      setColumnWidths({ ...columnWidths, [columnId]: width });
     },
-    [],
+    [columnWidths, setColumnWidths],
   );
 
-  const onColumnResizeEnd: DataEditorProps['onColumnResizeEnd'] = useCallback(() => {
-    // presumably update the settings, but maybe have a different API
-    // like Record<ColumnName, width>
-  }, []);
+  const deselectAllRows = useCallback(() => {
+    setSelection((prev) => ({ ...prev, rows: CompactSelection.empty() }));
+    setSelectAll(false);
+    setExcludedExperimentIds(new Set());
+  }, [setSelectAll, setSelection, setExcludedExperimentIds]);
+
+  const selectAllRows = useCallback(() => {
+    setSelection(({ columns, rows }: GridSelection) => ({
+      columns,
+      rows: rows.add([0, data.length]),
+    }));
+    setExcludedExperimentIds(new Set());
+    setSelectAll(true);
+  }, [setSelectAll, setSelection, data, setExcludedExperimentIds]);
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
-    (col: number, args: HeaderClickedEventArgs) => {
+    (col: number, { bounds, preventDefault }: HeaderClickedEventArgs) => {
+      preventDefault();
       const columnId = columnIds[col];
 
-      if (columnId === 'selected') {
-        setSelectAll((prev) => !prev);
+      if (columnId === MULTISELECT) {
+        const items: MenuItem[] = [
+          selection.rows.length > 0
+            ? {
+                key: 'select-none',
+                label: 'Clear selected',
+                onClick: () => {
+                  deselectAllRows();
+                  setMenuIsOpen(false);
+                },
+              }
+            : null,
+          ...[5, 10, 25].map((n) => ({
+            key: `select-${n}`,
+            label: `Select first ${n}`,
+            onClick: () => {
+              setSelectAll(false);
+              setSelection((s) => ({
+                ...s,
+                rows: CompactSelection.fromSingleSelection([0, n]),
+              }));
+              if (gridRef.current) {
+                // scroll first row into view for feedback
+                gridRef.current.scrollTo(0, 0);
+              }
+              setMenuIsOpen(false);
+            },
+          })),
+          {
+            key: 'select-all',
+            label: 'Select all',
+            onClick: () => {
+              selectAllRows();
+              setMenuIsOpen(false);
+            },
+          },
+        ];
+        setMenuProps((prev) => ({ ...prev, bounds, items, title: 'Selection menu' }));
+        setMenuIsOpen(true);
+        return;
+      }
+      const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
+      if (!column) {
         return;
       }
 
-      const { bounds } = args;
-      const items: MenuProps['items'] = placeholderMenuItems;
-      const x = bounds.x;
-      const y = bounds.y + bounds.height;
-      setMenuProps((prev) => ({ ...prev, items, title: `${columnId} menu`, x, y }));
+      const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
+      const loadableFormset = formStore.formset.get();
+      const filterMenuItemsForColumn = () => {
+        const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(
+          column.column,
+        );
+        formStore.addChild(ROOT_ID, FormKind.Field, {
+          index: Loadable.match(loadableFormset, {
+            Loaded: (formset) => formset.filterGroup.children.length,
+            NotLoaded: () => 0,
+          }),
+          item: {
+            columnName: column.column,
+            id: uuidv4(),
+            kind: FormKind.Field,
+            location: column.location,
+            operator: isSpecialColumn ? Operator.Eq : AvailableOperators[column.type][0],
+            type: column.type,
+            value: null,
+          },
+        });
+        onIsOpenFilterChange(true);
+        setMenuIsOpen(false);
+      };
+
+      const items: MenuItem[] = [
+        ...(BANNED_FILTER_COLUMNS.includes(column.column)
+          ? []
+          : [
+              ...sortMenuItemsForColumn(column, sorts, onSortChange),
+              { type: 'divider' as const },
+              {
+                icon: <Icon decorative name="filter" />,
+                key: 'filter',
+                label: 'Filter by this column',
+                onClick: () => {
+                  setTimeout(() => {
+                    filterMenuItemsForColumn();
+                  }, 5);
+                },
+              },
+            ]),
+        // Column is pinned if the index is inside of the frozen columns
+        col < staticColumns.length || isMobile
+          ? null
+          : col > pinnedColumnsCount + staticColumns.length - 1
+          ? {
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
+                newSortableColumns.splice(pinnedColumnsCount, 0, column.column);
+                setSortableColumnIds(newSortableColumns);
+                setPinnedColumnsCount(Math.min(pinnedColumnsCount + 1, sortableColumnIds.length));
+                setMenuIsOpen(false);
+              },
+            }
+          : {
+              disabled: pinnedColumnsCount <= 1,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
+                newSortableColumns.splice(pinnedColumnsCount - 1, 0, column.column);
+                setSortableColumnIds(newSortableColumns);
+                setPinnedColumnsCount(Math.max(pinnedColumnsCount - 1, 0));
+                setMenuIsOpen(false);
+              },
+            },
+      ];
+      setMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
       setMenuIsOpen(true);
     },
-    [columnIds, setSelectAll],
+    [
+      columnIds,
+      projectColumns,
+      formStore,
+      sorts,
+      onSortChange,
+      staticColumns.length,
+      isMobile,
+      pinnedColumnsCount,
+      selection.rows.length,
+      deselectAllRows,
+      selectAllRows,
+      onIsOpenFilterChange,
+      sortableColumnIds,
+      setSortableColumnIds,
+      setPinnedColumnsCount,
+      setSelection,
+      setSelectAll,
+    ],
   );
 
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
     (cell: Item): GridCell => {
-      const [colIdx, rowIdx] = cell;
-      const columnId = columnIds[colIdx];
-      const row = data[rowIdx];
-      if (row && Loadable.isLoaded(row)) {
-        return columnDefs[columnId].renderer(row.data, rowIdx);
-      }
-      return {
+      const [col, row] = cell;
+
+      const loadingCell: GridCell = {
         allowOverlay: true,
         copyData: '',
-        data: {
-          kind: 'spinner-cell',
-        },
+        data: { appTheme, kind: 'loading-cell' },
         kind: GridCellKind.Custom,
+        readonly: true,
       };
+
+      if (!data[row]) {
+        // When data length is changed, data[row] can be undefined
+        return loadingCell;
+      }
+
+      return Loadable.match(data[row], {
+        Loaded: (rowData) => {
+          const columnId = columnIds[col];
+          return columnDefs[columnId]?.renderer?.(rowData, row) || loadingCell;
+        },
+        NotLoaded: () => loadingCell,
+      });
     },
-    [data, columnIds, columnDefs],
+    [appTheme, data, columnIds, columnDefs],
   );
 
   const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(
-    (cell: Item) => {
-      const [col, row] = cell;
-      if (row === undefined) return;
-
-      const columnId = columnIds[col];
-      const rowData = data[row];
-      if (Loadable.isLoaded(rowData)) {
-        const cell = columnDefs[columnId].renderer(rowData.data, row) as ClickableCell;
-        if (String(cell?.data?.kind) === 'link-cell') {
-          cell.data.link?.onClick?.();
-          return;
+    (cell: Item, event: CellClickedEventArgs) => {
+      const findConsecutiveBefore = (rows: number[], row: number) => {
+        while (row >= 0) {
+          row = row - 1;
+          if (!rows.includes(row)) return row + 1;
         }
-      }
+        return row;
+      };
+      const findConsecutiveAfter = (rows: number[], row: number) => {
+        while (row < data.length) {
+          row = row + 1;
+          if (!rows.includes(row)) return row - 1;
+        }
+        return row;
+      };
+      const isStandAlone = (rows: CompactSelection, row: number) => {
+        if (row === 0) return !rows.hasIndex(row + 1);
+        if (row === data.length - 1) return !rows.hasIndex(row - 1);
+        return !rows.hasIndex(row - 1) && !rows.hasIndex(row + 1);
+      };
 
-      setSelection(({ rows }: GridSelection) => ({
-        columns: CompactSelection.empty(),
-        rows: rows.hasIndex(row) ? rows.remove(row) : rows.add(row),
-      }));
+      setStandAloneSelect(undefined);
+
+      const [col, row] = cell;
+      Loadable.forEach(data[row], (rowData) => {
+        const columnId = columnIds[col];
+        const cell = columnDefs[columnId].renderer(rowData, row);
+
+        if (isLinkCell(cell)) {
+          handlePath(event as unknown as AnyMouseEvent, { path: cell.data.link.href });
+        } else {
+          if (event.shiftKey) {
+            setSelection(({ rows }: GridSelection) => {
+              if (standAloneSelect && standAloneSelect > row) {
+                return {
+                  columns: CompactSelection.empty(),
+                  rows: event.metaKey
+                    ? rows.add([row, standAloneSelect + 1])
+                    : CompactSelection.fromSingleSelection([row, standAloneSelect + 1]),
+                };
+              }
+              const rowsArray = rows.toArray();
+              const smallestClosest = rowsArray.filter((r) => r < row).last();
+              const largestClosest = rowsArray.filter((r) => r > row).first();
+              const smallestLinked = findConsecutiveBefore(rowsArray, smallestClosest);
+              const greatestLinked = findConsecutiveAfter(rowsArray, largestClosest);
+              return {
+                columns: CompactSelection.empty(),
+                rows:
+                  smallestClosest >= 0
+                    ? event.metaKey
+                      ? rows.add([smallestClosest, row + 1])
+                      : CompactSelection.fromSingleSelection([smallestLinked, row + 1])
+                    : largestClosest
+                    ? event.metaKey
+                      ? rows.add([row, largestClosest + 1])
+                      : CompactSelection.fromSingleSelection([row, greatestLinked + 1])
+                    : CompactSelection.fromSingleSelection(row),
+              };
+            });
+          } else {
+            isStandAlone(selection.rows, row) &&
+              !selection.rows.hasIndex(row) &&
+              setStandAloneSelect(row);
+
+            if (selection.rows.hasIndex(row)) {
+              setSelection(({ columns, rows }: GridSelection) => ({
+                columns,
+                rows: rows.remove(row),
+              }));
+              if (selectAll) {
+                const experiment = data[row];
+                if (Loadable.isLoaded(experiment)) {
+                  setExcludedExperimentIds((prev) => {
+                    if (experiment.data.experiment) {
+                      return new Set([...prev, experiment.data.experiment?.id]);
+                    } else {
+                      return prev;
+                    }
+                  });
+                }
+              }
+            } else {
+              setSelection(({ columns, rows }: GridSelection) => ({
+                columns,
+                rows: rows.add(row),
+              }));
+              const experiment = data[row];
+              if (Loadable.isLoaded(experiment)) {
+                setExcludedExperimentIds((prev) => {
+                  return new Set([...prev].filter((id) => id !== experiment.data.experiment?.id));
+                });
+              }
+            }
+          }
+        }
+      });
     },
-    [data, columnIds, columnDefs],
+    [
+      data,
+      columnIds,
+      columnDefs,
+      selection,
+      selectAll,
+      setExcludedExperimentIds,
+      standAloneSelect,
+      setSelection,
+    ],
   );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
+      // Close existing context menu.
       contextMenuOpen.set(false);
-      const [, row] = cell;
-      const experiment = Loadable.match(data?.[row], {
-        Loaded: (record) => record,
-        NotLoaded: () => null,
-      });
-      if (!experiment) return;
 
-      event.preventDefault();
-      setContextMenuProps({
-        experiment: getProjectExperimentForExperimentItem(experiment, project),
-        handleClose: (e?: Event) => {
-          if (contextMenuOpen.get()) {
-            e?.stopPropagation();
-          }
-          contextMenuOpen.set(false);
-        },
-        x: Math.max(0, event.bounds.x + event.localEventX - 4),
-        y: Math.max(0, event.bounds.y + event.localEventY - 4),
+      const [col, row] = cell;
+      Loadable.forEach(data[row], (rowData) => {
+        // Prevent the browser native context menu from showing up.
+        event.preventDefault();
+
+        // Delay needed due to the call to close previously existing context menu.
+        setTimeout(() => {
+          const columnId = columnIds[col];
+          const cell = columnDefs[columnId].renderer(rowData, row);
+
+          // Update the context menu based on the cell context.
+          setContextMenuProps({
+            experiment: getProjectExperimentForExperimentItem(rowData.experiment, project),
+            handleClose: (e?: Event) => {
+              // Prevent the context menu closing click from triggering something else.
+              if (contextMenuOpen.get()) e?.stopPropagation();
+              contextMenuOpen.set(false);
+            },
+            link: isLinkCell(cell) ? cell.data.link.href : undefined,
+            x: Math.max(0, event.bounds.x + event.localEventX - 4),
+            y: Math.max(0, event.bounds.y + event.localEventY - 4),
+          });
+
+          contextMenuOpen.set(true);
+        }, 50);
       });
-      setTimeout(() => contextMenuOpen.set(true), 25);
     },
-    [data, project, setContextMenuProps, contextMenuOpen],
+    [columnDefs, columnIds, data, project, setContextMenuProps, contextMenuOpen],
   );
 
   const onColumnMoved: DataEditorProps['onColumnMoved'] = useCallback(
     (columnIdsStartIdx: number, columnIdsEndIdx: number): void => {
-      const sortableColumnIdsStartIdx = columnIdsStartIdx - STATIC_COLUMNS.length;
-      const sortableColumnIdsEndIdx = Math.max(columnIdsEndIdx - STATIC_COLUMNS.length, 0);
-      if (sortableColumnIdsStartIdx > -1) {
-        setSortableColumnIds((prevCols) => {
-          const newCols = [...prevCols];
-          const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
-          newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
-          return newCols;
-        });
-      }
+      // Prevent the static columns from moving.
+      if (columnIdsStartIdx < staticColumns.length) return;
+
+      // Update the pinned column count based on where the column is sourced from and where it lands.
+      const pinnedColumnEnd = staticColumns.length + pinnedColumnsCount;
+      const isIntoPinned =
+        columnIdsStartIdx >= pinnedColumnEnd && columnIdsEndIdx < pinnedColumnEnd;
+      const isOutOfPinned =
+        columnIdsStartIdx < pinnedColumnEnd && columnIdsEndIdx >= pinnedColumnEnd;
+      if (isIntoPinned) setPinnedColumnsCount(pinnedColumnsCount + 1);
+      if (isOutOfPinned) setPinnedColumnsCount(pinnedColumnsCount - 1);
+
+      // Update the column list with the updated column.
+      const sortableColumnIdsStartIdx = columnIdsStartIdx - staticColumns.length;
+      const sortableColumnIdsEndIdx = Math.max(columnIdsEndIdx - staticColumns.length, 0);
+      const newCols = [...sortableColumnIds];
+      const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
+      newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
+      setSortableColumnIds(newCols);
     },
-    [setSortableColumnIds],
+    [
+      pinnedColumnsCount,
+      setPinnedColumnsCount,
+      setSortableColumnIds,
+      sortableColumnIds,
+      staticColumns.length,
+    ],
   );
 
-  const columns: DataEditorProps['columns'] = useMemo(
-    () => columnIds.map((columnName) => columnDefs[columnName as ExperimentColumn]) as GridColumn[],
-    [columnIds, columnDefs],
+  const onColumnHovered = useCallback(
+    (args: GridMouseEventArgs) => {
+      const [, row] = args.location;
+      setHoveredRow(args.kind !== 'cell' ? undefined : row);
+      onItemHovered?.(args);
+    },
+    [onItemHovered],
   );
+
+  const columns: DataEditorProps['columns'] = useMemo(() => {
+    const gridColumns = columnIds
+      .map((columnName) => {
+        if (columnName in columnDefs) return columnDefs[columnName];
+        if (!Loadable.isLoaded(projectColumnsMap)) return;
+        const currentColumn = projectColumnsMap.data[columnName];
+        if (!currentColumn) return;
+        let dataPath: string | undefined = undefined;
+        switch (currentColumn.location) {
+          case V1LocationType.EXPERIMENT:
+            dataPath = `experiment.${currentColumn.column}`;
+            break;
+          case V1LocationType.HYPERPARAMETERS:
+            dataPath = `experiment.config.hyperparameters.${currentColumn.column.replace(
+              'hp.',
+              '',
+            )}.val`;
+            break;
+          case V1LocationType.VALIDATIONS:
+            dataPath = `bestTrial.bestValidationMetric.metrics.${currentColumn.column.replace(
+              'validation.',
+              '',
+            )}`;
+            break;
+          case V1LocationType.TRAINING:
+            dataPath = `bestTrial.summaryMetrics.avgMetrics.${currentColumn.column.replace(
+              'training.',
+              '',
+            )}`;
+            break;
+          case V1LocationType.UNSPECIFIED:
+            break;
+        }
+        switch (currentColumn.type) {
+          case V1ColumnType.NUMBER:
+            columnDefs[currentColumn.column] = defaultNumberColumn(
+              currentColumn,
+              columnWidths[currentColumn.column],
+              dataPath,
+            );
+            break;
+          case V1ColumnType.DATE:
+            columnDefs[currentColumn.column] = defaultDateColumn(
+              currentColumn,
+              columnWidths[currentColumn.column],
+              dataPath,
+            );
+            break;
+          case V1ColumnType.TEXT:
+          case V1ColumnType.UNSPECIFIED:
+          default:
+            columnDefs[currentColumn.column] = defaultTextColumn(
+              currentColumn,
+              columnWidths[currentColumn.column],
+              dataPath,
+            );
+        }
+        return columnDefs[currentColumn.column];
+      })
+      .flatMap((col) => (col ? [col] : []));
+    return gridColumns;
+  }, [columnIds, columnDefs, projectColumnsMap, columnWidths]);
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(
-    (col: number) => columnIds[col] === 'name',
-    [columnIds],
+    (col: number) => !comparisonViewOpen && col === staticColumns.length + pinnedColumnsCount,
+    [comparisonViewOpen, pinnedColumnsCount, staticColumns.length],
+  );
+
+  const sortMap = useMemo(() => {
+    return sorts.reduce((acc, sort) => {
+      if (sort.column && sort.direction) acc[sort.column] = sort.direction;
+      return acc;
+    }, {} as Record<string, string>);
+  }, [sorts]);
+
+  const drawHeader: DrawHeaderCallback = useCallback(
+    ({ ctx, column, rect, theme }) => {
+      if (!column.id || column.id === MULTISELECT) return false;
+
+      const sortDirection = column.id && sortMap[column.id];
+      if (sortDirection) {
+        const arrowDirection = sortDirection === 'asc' ? 'up' : 'down';
+        ctx.strokeStyle = theme.textLight;
+        drawArrow(ctx, arrowDirection, rect.x + rect.width - 16, 12);
+      }
+
+      const xPad = theme.cellHorizontalPadding;
+      const font = `${theme.baseFontStyle} ${theme.fontFamily}`;
+      const middleCenterBias = getMiddleCenterBias(ctx, font);
+      const x = rect.x + xPad;
+      const y = rect.y + rect.height / 2 + middleCenterBias;
+      const maxWidth = rect.width - (sortDirection ? 12 : 0) - 2 * theme.cellHorizontalPadding;
+
+      ctx.fillStyle = theme.textHeader;
+      drawTextWithEllipsis(ctx, column.title, x, y, maxWidth);
+
+      return true;
+    },
+    [sortMap],
   );
 
   return (
@@ -350,39 +761,46 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         closeTooltip();
       }}>
       {tooltip}
-      <DataEditor
-        columns={columns}
-        customRenderers={customRenderers}
-        freezeColumns={2}
-        getCellContent={getCellContent}
-        getRowThemeOverride={getRowThemeOverride}
-        gridSelection={selection}
-        headerHeight={36}
-        headerIcons={headerIcons}
-        height={height}
-        ref={gridRef}
-        rowHeight={40}
-        rows={data.length}
-        smoothScrollX
-        smoothScrollY
-        theme={theme}
-        verticalBorder={verticalBorder}
-        width="100%"
-        onCellClicked={onCellClicked}
-        onCellContextMenu={onCellContextMenu}
-        onColumnMoved={onColumnMoved}
-        onColumnResize={onColumnResize}
-        onColumnResizeEnd={onColumnResizeEnd}
-        onHeaderClicked={onHeaderClicked}
-        onItemHovered={onItemHovered}
-        onVisibleRegionChanged={handleScroll}
-      />
+      <div className={css.base}>
+        <DataEditor
+          className={comparisonViewOpen ? css.compareTable : undefined}
+          columns={columns}
+          customRenderers={customRenderers}
+          drawHeader={drawHeader}
+          freezeColumns={isMobile ? 0 : staticColumns.length + pinnedColumnsCount}
+          getCellContent={getCellContent}
+          getCellsForSelection // `getCellsForSelection` is required for double click column resize to content.
+          getRowThemeOverride={getRowThemeOverride}
+          gridSelection={selection}
+          headerHeight={36}
+          headerIcons={headerIcons}
+          height={height}
+          minColumnWidth={MIN_COLUMN_WIDTH}
+          ref={gridRef}
+          rowHeight={rowHeightMap[rowHeight]}
+          rows={dataTotal}
+          smoothScrollX
+          smoothScrollY
+          theme={theme}
+          verticalBorder={verticalBorder}
+          width="100%"
+          onCellClicked={onCellClicked}
+          onCellContextMenu={onCellContextMenu}
+          onColumnMoved={onColumnMoved}
+          onColumnResize={onColumnResize}
+          onHeaderClicked={onHeaderClicked}
+          onHeaderContextMenu={onHeaderClicked} // right-click
+          onItemHovered={onColumnHovered}
+          onVisibleRegionChanged={handleScroll}
+        />
+      </div>
       <TableActionMenu {...menuProps} open={menuIsOpen} />
       {contextMenuProps && (
         <TableContextMenu
           {...contextMenuProps}
-          fetchExperiments={fetchExperiments}
+          handleUpdateExperimentList={handleUpdateExperimentList}
           open={contextMenuIsOpen}
+          onComplete={handleContextMenuComplete}
         />
       )}
     </div>

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/ghodss/yaml"
@@ -118,7 +117,7 @@ func readConfigFile(configPath string) ([]byte, error) {
 		}
 		return nil, errors.Wrap(err, "error finding configuration file")
 	}
-	bs, err := ioutil.ReadFile(configPath) // #nosec G304
+	bs, err := os.ReadFile(configPath) // #nosec G304
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading configuration file")
 	}

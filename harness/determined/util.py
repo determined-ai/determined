@@ -1,5 +1,6 @@
 import collections
 import contextlib
+import copy
 import datetime
 import enum
 import errno
@@ -32,6 +33,8 @@ from typing import (
     Union,
     cast,
 )
+
+import psutil
 
 import determined as det
 from determined import constants
@@ -134,6 +137,20 @@ def _dict_to_list(dict_of_lists: Dict[str, List]) -> List[Dict[str, Any]]:
             output_list[i][k] = dict_of_lists[k][i]
 
     return output_list
+
+
+def merge_dicts(base_dict: Dict[Any, Any], source_dict: Dict[Any, Any]) -> Dict[Any, Any]:
+    """
+    Recursively replace and merge values from source_dict into base_dict. Returns a new
+    dictionary, leaving both inputs unmodified.
+    """
+    merged_dict = copy.deepcopy(base_dict)
+    for key, value in source_dict.items():
+        if key in base_dict and isinstance(value, dict):
+            merged_dict[key] = merge_dicts(base_dict[key], value)
+        else:
+            merged_dict[key] = value
+    return merged_dict
 
 
 def validate_batch_metrics(batch_metrics: List[Dict[str, Any]]) -> None:
@@ -391,15 +408,39 @@ def force_create_symlink(src: str, dst: str) -> None:
             logging.warning(f"{err} trying to remove {dst}")
 
 
+def signal_process_tree(p: subprocess.Popen, signum: Any) -> None:
+    """Send a signal to all children under the specified process, but
+    not the process itself.  This was specifically added for SIGTERM
+    which may leave some children running due to multiple layers of
+    processes (particularly children of sshd).
+    """
+
+    try:
+        children = psutil.Process(p.pid).children(recursive=True)
+        for cp in children:
+            cp.send_signal(signum)
+    except Exception as err:
+        logging.error(f"{err} trying to forward signal {signum} to children")
+        pass
+
+
 @contextlib.contextmanager
-def forward_signals(p: subprocess.Popen, *signums: signal.Signals) -> Iterator[None]:
-    """Forward a list of signals to a subprocess, restoring the original handlers afterwards."""
+def forward_signals(
+    p: subprocess.Popen, *signums: signal.Signals, signal_children: bool = False
+) -> Iterator[None]:
+    """Forward a list of signals to a subprocess (and optionally all its children),
+    restoring the original handlers afterwards.
+
+    @param signal_children If true forward the signal to all the children as well.
+    """
     if not signums:
         # Pick a useful default for wrapper processes.
         names = ["SIGINT", "SIGTERM", "SIGHUP", "SIGUSR1", "SIGUSR2", "SIGWINCH", "SIGBREAK"]
         signums = tuple(getattr(signal, name) for name in names if hasattr(signal, name))
 
     def signal_passthru(signum: Any, frame: Any) -> None:
+        if signal_children:
+            signal_process_tree(p, signum)
         p.send_signal(signum)
 
     old_handlers = [None for n in signums]  # type: List[Any]
@@ -440,3 +481,33 @@ def is_numerical_scalar(n: Any) -> bool:
         return True
 
     return False
+
+
+def mask_checkpoint_storage(d: Dict) -> Dict:
+    mask = "********"
+    new_dict = copy.deepcopy(d)
+
+    # checkpoint_storage
+    for key in ("access_key", "secret_key"):
+        if key in new_dict:
+            new_dict[key] = mask
+
+    return new_dict
+
+
+def mask_config_dict(d: Dict) -> Dict:
+    mask = "********"
+    new_dict = copy.deepcopy(d)
+
+    try:
+        new_dict["checkpoint_storage"] = mask_checkpoint_storage(new_dict["checkpoint_storage"])
+    except (KeyError, AttributeError):
+        pass
+
+    try:
+        if new_dict["environment"]["registry_auth"].get("password") is not None:
+            new_dict["environment"]["registry_auth"]["password"] = mask
+    except (KeyError, AttributeError):
+        pass
+
+    return new_dict

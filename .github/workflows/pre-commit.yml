@@ -14,7 +14,7 @@ jobs:
     env:
       # these checks currently require a ridiculous number of dependencies :)
       # consider repackaging them in a container in the future
-      SKIP: "web-js-lint-check,web-css-lint-check,web-misc-lint-check,black"
+      SKIP: "web-js-lint-check,web-css-lint-check,web-misc-lint-check,black,golangci-lint"
     steps:
       - uses: actions/checkout@v3
         with:

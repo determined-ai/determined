@@ -35,12 +35,6 @@ type RMJobInfo struct { // rename ?
 	AllocatedSlots int
 }
 
-// GetJobSummary requests a summary of the job.
-type GetJobSummary struct {
-	JobID        model.JobID
-	ResourcePool string
-}
-
 // GetJob requests a job representation from a job.
 type GetJob struct{}
 
@@ -117,18 +111,6 @@ type RecoverJobPosition struct {
 	JobID        model.JobID
 	JobPosition  decimal.Decimal
 	ResourcePool string
-}
-
-// RegisterJob Registers an active job with the jobs actor.
-// Used as to denote a child actor.
-type RegisterJob struct {
-	JobID    model.JobID
-	JobActor *actor.Ref
-}
-
-// UnregisterJob removes a job from the jobs actor.
-type UnregisterJob struct {
-	JobID model.JobID
 }
 
 // SchedulingState denotes the scheduling state of a job and in order of its progression value.

@@ -1,9 +1,10 @@
-import { Dropdown, Space } from 'antd';
-import type { DropDownProps, MenuProps } from 'antd';
+import { Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
+import Dropdown from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
@@ -13,14 +14,13 @@ import TableFilterSearch from 'components/Table/TableFilterSearch';
 import UserBadge from 'components/UserBadge';
 import WorkspaceMemberAddModalComponent from 'components/WorkspaceMemberAddModal';
 import WorkspaceMemberRemoveComponent from 'components/WorkspaceMemberRemoveModal';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { V1Group, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
-import { ValueOf } from 'shared/types';
-import { alphaNumericSorter } from 'shared/utils/sort';
+import determinedStore from 'stores/determinedInfo';
 import { User, UserOrGroup, UserOrGroupWithRoleInfo, Workspace } from 'types';
+import { useObservable } from 'utils/observable';
+import { alphaNumericSorter } from 'utils/sort';
 import { getUserOrGroupWithRoleInfo, isUserWithRoleInfo } from 'utils/user';
 
 import RoleRenderer from './RoleRenderer';
@@ -51,6 +51,12 @@ interface GroupOrMemberActionDropdownProps {
   workspace: Workspace;
 }
 
+const MenuKey = {
+  Remove: 'Remove',
+} as const;
+
+const DROPDOWN_MENU = [{ danger: true, key: MenuKey.Remove, label: MenuKey.Remove }];
+
 const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = ({
   name,
   roleIds,
@@ -60,31 +66,21 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
 }) => {
   const WorkspaceMemberRemoveModal = useModal(WorkspaceMemberRemoveComponent);
 
-  const menuItems: DropDownProps['menu'] = useMemo(() => {
-    const MenuKey = {
-      Remove: 'remove',
-    } as const;
-
-    const funcs = {
-      [MenuKey.Remove]: () => {
-        WorkspaceMemberRemoveModal.open();
-      },
-    };
-
-    const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as ValueOf<typeof MenuKey>]();
-    };
-
-    return {
-      items: [{ danger: true, key: MenuKey.Remove, label: 'Remove' }],
-      onClick: onItemClick,
-    };
-  }, [WorkspaceMemberRemoveModal]);
+  const handleDropdown = useCallback(
+    (key: string) => {
+      switch (key) {
+        case MenuKey.Remove:
+          WorkspaceMemberRemoveModal.open();
+          break;
+      }
+    },
+    [WorkspaceMemberRemoveModal],
+  );
 
   return (
     <div className={css.dropdown}>
-      <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
-        <Button icon={<Icon name="overflow-vertical" />} type="text" />
+      <Dropdown menu={DROPDOWN_MENU} placement="bottomRight" onClick={handleDropdown}>
+        <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
       </Dropdown>
       <WorkspaceMemberRemoveModal.Component
         {...{
@@ -126,7 +122,7 @@ const WorkspaceMembers: React.FC<Props> = ({
 
   const WorkspaceMemberAddModal = useModal(WorkspaceMemberAddModalComponent);
 
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
 
   useEffect(() => {
     onFilterUpdate(settings.name);
@@ -155,7 +151,7 @@ const WorkspaceMembers: React.FC<Props> = ({
     [handleNameSearchApply, handleNameSearchReset, settings.name],
   );
 
-  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" title="Search" />, []);
 
   const generateTableKey = useCallback((record: Readonly<UserOrGroupWithRoleInfo>) => {
     const roleId = record.roleAssignment.role.roleId;
@@ -174,7 +170,7 @@ const WorkspaceMembers: React.FC<Props> = ({
         };
         return <UserBadge user={member} />;
       }
-      return <Nameplate icon={<Icon name="group" />} name={record.groupName ?? ''} />;
+      return <Nameplate icon={<Icon name="group" title="Group" />} name={record.groupName ?? ''} />;
     };
 
     const roleRenderer = (value: string, record: Readonly<UserOrGroupWithRoleInfo>) => (
@@ -255,7 +251,7 @@ const WorkspaceMembers: React.FC<Props> = ({
         </Space>
       </div>
       {settings ? (
-        <InteractiveTable
+        <InteractiveTable<UserOrGroupWithRoleInfo, WorkspaceMembersSettings>
           columns={columns}
           containerRef={pageRef}
           dataSource={userOrGroupWithRoles}
@@ -267,7 +263,7 @@ const WorkspaceMembers: React.FC<Props> = ({
           settings={settings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings}
+          updateSettings={updateSettings}
         />
       ) : (
         <SkeletonTable columns={columns.length} />

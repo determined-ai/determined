@@ -4,10 +4,10 @@ import { TableProps } from 'antd/es/table';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
 
+import Spinner from 'components/Spinner/Spinner';
 import useResize from 'hooks/useResize';
-import Spinner from 'shared/components/Spinner/Spinner';
-import { hasObjectKeys } from 'shared/utils/data';
 import { TrialItem } from 'types';
+import { hasObjectKeys } from 'utils/data';
 
 import SkeletonTable from './SkeletonTable';
 

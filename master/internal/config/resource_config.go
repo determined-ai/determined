@@ -1,6 +1,8 @@
 package config
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+)
 
 // DefaultResourceConfig returns the default resource configuration.
 func DefaultResourceConfig() *ResourceConfig {

@@ -6,26 +6,30 @@ package internal
 import (
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	apiPkg "github.com/determined-ai/determined/master/internal/api"
+	authz2 "github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
-
-func errTrialNotFound(id int) error {
-	return status.Errorf(codes.NotFound, "trial %d not found", id)
-}
 
 func createTestTrial(
 	t *testing.T, api *apiServer, curUser model.User,
@@ -62,14 +66,25 @@ func createTestTrialWithMetrics(
 		trainMetrics := &commonv1.Metrics{
 			AvgMetrics: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
+					"epoch": {
+						Kind: &structpb.Value_NumberValue{
+							NumberValue: float64(i),
+						},
+					},
 					"loss": {
 						Kind: &structpb.Value_NumberValue{
 							NumberValue: float64(i),
 						},
 					},
-					"epoch": {
+
+					"loss2": {
 						Kind: &structpb.Value_NumberValue{
 							NumberValue: float64(i),
+						},
+					},
+					"textMetric": {
+						Kind: &structpb.Value_StringValue{
+							StringValue: "random_text",
 						},
 					},
 				},
@@ -104,14 +119,25 @@ func createTestTrialWithMetrics(
 		valMetrics := &commonv1.Metrics{
 			AvgMetrics: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"val_loss": {
+					"epoch": {
 						Kind: &structpb.Value_NumberValue{
 							NumberValue: float64(i),
 						},
 					},
-					"epoch": {
+					"loss": {
 						Kind: &structpb.Value_NumberValue{
 							NumberValue: float64(i),
+						},
+					},
+
+					"val_loss2": {
+						Kind: &structpb.Value_NumberValue{
+							NumberValue: float64(i),
+						},
+					},
+					"textMetric": {
+						Kind: &structpb.Value_StringValue{
+							StringValue: "random_text",
 						},
 					},
 				},
@@ -175,10 +201,93 @@ func compareMetrics(
 			Id:           actual.Id,
 		}
 		proto.Equal(actual, expectedRow)
-		require.Equal(t, actual, expectedRow)
+		require.Equal(t, expectedRow.Metrics.AsMap(), actual.Metrics.AsMap())
 
 		totalBatches++
 	}
+}
+
+func isMultiTrialSampleCorrect(expectedMetrics []*commonv1.Metrics,
+	actualMetrics *apiv1.DownsampledMetrics,
+) bool {
+	// Checking if metric names and their values are equal.
+	for i := 0; i < len(actualMetrics.Data); i++ {
+		allActualAvgMetrics := actualMetrics.Data
+		epoch := int(*allActualAvgMetrics[i].Epoch)
+		// use epoch to match because in downsampling returned values are randomized.
+		expectedAvgMetrics := expectedMetrics[epoch].AvgMetrics.AsMap()
+		for metricName := range expectedAvgMetrics {
+			actualAvgMetrics := allActualAvgMetrics[i].Values.AsMap()
+			switch expectedAvgMetrics[metricName].(type) { //nolint:gocritic
+			case float64:
+				expectedVal := expectedAvgMetrics[metricName].(float64)
+				if metricName == "epoch" {
+					if expectedVal != float64(*allActualAvgMetrics[i].Epoch) {
+						return false
+					}
+					continue
+				}
+				if actualAvgMetrics[metricName] == nil {
+					return false
+				}
+				actualVal := actualAvgMetrics[metricName].(float64)
+				if expectedVal != actualVal {
+					return false
+				}
+			case string:
+				if actual, ok := actualAvgMetrics[metricName].(string); !ok {
+					return false
+				} else if actual != expectedAvgMetrics[metricName].(string) {
+					return false
+				}
+			default:
+				panic("unexpected metric type in multi trial sample")
+			}
+		}
+	}
+	return true
+}
+
+func TestMultiTrialSampleMetrics(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	trial, expectedTrainMetrics, expectedValMetrics := createTestTrialWithMetrics(
+		ctx, t, api, curUser, false)
+
+	var trainMetricNames []string
+	var metricIds []string
+	for metricName := range expectedTrainMetrics[0].AvgMetrics.AsMap() {
+		trainMetricNames = append(trainMetricNames, metricName)
+		metricIds = append(metricIds, "training."+metricName)
+	}
+
+	maxDataPoints := 7
+	actualTrainingMetrics, err := api.multiTrialSample(int32(trial.ID), trainMetricNames,
+		model.TrainingMetricGroup, maxDataPoints, 0, 10, nil, []string{})
+	require.NoError(t, err)
+	require.Equal(t, 1, len(actualTrainingMetrics))
+	var validationMetricNames []string
+	for metricName := range expectedValMetrics[0].AvgMetrics.AsMap() {
+		validationMetricNames = append(validationMetricNames, metricName)
+		metricIds = append(metricIds, "validation."+metricName)
+	}
+
+	actualValidationTrainingMetrics, err := api.multiTrialSample(int32(trial.ID),
+		validationMetricNames, model.ValidationMetricGroup, maxDataPoints,
+		0, 10, nil, []string{})
+	require.Equal(t, 1, len(actualValidationTrainingMetrics))
+	require.NoError(t, err)
+	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualTrainingMetrics[0]))
+	require.True(t, isMultiTrialSampleCorrect(expectedValMetrics, actualValidationTrainingMetrics[0]))
+
+	actualAllMetrics, err := api.multiTrialSample(int32(trial.ID), []string{},
+		"", maxDataPoints, 0, 10, nil, metricIds)
+	require.Equal(t, 2, len(actualAllMetrics))
+	require.NoError(t, err)
+	require.Equal(t, maxDataPoints, len(actualAllMetrics[0].Data)) // max datapoints check
+	require.Equal(t, maxDataPoints, len(actualAllMetrics[1].Data)) // max datapoints check
+	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualAllMetrics[0]))
+	require.True(t, isMultiTrialSampleCorrect(expectedValMetrics, actualAllMetrics[1]))
 }
 
 func TestStreamTrainingMetrics(t *testing.T) {
@@ -260,8 +369,149 @@ func TestStreamTrainingMetrics(t *testing.T) {
 	}
 }
 
+func TestNonNumericEpochMetric(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	expectedMetricsMap := map[string]any{
+		"numeric_met": 1.5,
+		"epoch":       "x",
+	}
+	expectedMetrics, err := structpb.NewStruct(expectedMetricsMap)
+	require.NoError(t, err)
+
+	trial := createTestTrial(t, api, curUser)
+	_, err = api.ReportTrialValidationMetrics(ctx, &apiv1.ReportTrialValidationMetricsRequest{
+		ValidationMetrics: &trialv1.TrialMetrics{
+			TrialId:        int32(trial.ID),
+			TrialRunId:     0,
+			StepsCompleted: 1,
+			Metrics: &commonv1.Metrics{
+				AvgMetrics: expectedMetrics,
+			},
+		},
+	})
+	require.Equal(t, fmt.Errorf("cannot add metric with non numeric 'epoch' value got x"), err)
+}
+
+func TestTrialsNonNumericMetrics(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	expectedMetricsMap := map[string]any{
+		"string_met":  "abc",
+		"numeric_met": 1.5,
+		"date_met":    "2021-03-15T13:32:18.91626111111Z",
+		"bool_met":    false,
+		"null_met":    nil,
+	}
+	expectedMetrics, err := structpb.NewStruct(expectedMetricsMap)
+	require.NoError(t, err)
+
+	trial := createTestTrial(t, api, curUser)
+	_, err = api.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
+		Metrics: &trialv1.TrialMetrics{
+			TrialId:        int32(trial.ID),
+			TrialRunId:     0,
+			StepsCompleted: 1,
+			Metrics: &commonv1.Metrics{
+				AvgMetrics: expectedMetrics,
+			},
+		},
+		Group: model.ValidationMetricGroup.ToString(),
+	})
+	require.NoError(t, err)
+
+	t.Run("CompareTrialsNonNumeric", func(t *testing.T) {
+		resp, err := api.CompareTrials(ctx, &apiv1.CompareTrialsRequest{
+			TrialIds:    []int32{int32(trial.ID)},
+			MetricNames: maps.Keys(expectedMetricsMap),
+		})
+		require.NoError(t, err)
+
+		require.Len(t, resp.Trials, 1)
+		require.Len(t, resp.Trials[0].Metrics, 1)
+		require.Len(t, resp.Trials[0].Metrics[0].Data, 1)
+		require.Equal(t, expectedMetricsMap, resp.Trials[0].Metrics[0].Data[0].Values.AsMap())
+	})
+
+	t.Run("TrialsSample", func(t *testing.T) {
+		_, err := db.Bun().NewUpdate().Table("experiments").
+			Set("config = jsonb_set(config, '{searcher,name}', ?, true)", `"custom"`).
+			Where("id = ?", trial.ExperimentID).
+			Exec(ctx)
+		require.NoError(t, err)
+
+		for metricName := range expectedMetricsMap {
+			childCtx, cancel := context.WithCancel(ctx)
+			resp := &mockStream[*apiv1.TrialsSampleResponse]{ctx: childCtx}
+			go func() {
+				for i := 0; i < 100; i++ {
+					if len(resp.data) > 0 {
+						cancel()
+					}
+					time.Sleep(50 * time.Millisecond)
+				}
+				cancel()
+			}()
+
+			err = api.TrialsSample(&apiv1.TrialsSampleRequest{
+				ExperimentId:  int32(trial.ExperimentID),
+				MetricType:    apiv1.MetricType_METRIC_TYPE_VALIDATION,
+				MetricName:    metricName,
+				PeriodSeconds: 1,
+			}, resp)
+			require.NoError(t, err)
+
+			require.Greater(t, len(resp.data), 0)
+			require.Len(t, resp.data[0].Trials, 1)
+			require.Len(t, resp.data[0].Trials[0].Data, 1)
+			require.Equal(t, map[string]any{
+				metricName: expectedMetricsMap[metricName],
+			}, resp.data[0].Trials[0].Data[0].Values.AsMap())
+		}
+	})
+}
+
+func TestUnusualMetricNames(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	expectedMetricsMap := map[string]any{
+		"a.loss": 1.5,
+		"b/loss": 2.5,
+	}
+	asciiSweep := ""
+	for i := 1; i <= 255; i++ {
+		asciiSweep += fmt.Sprintf("%c", i)
+	}
+	expectedMetricsMap[asciiSweep] = 3
+	expectedMetrics, err := structpb.NewStruct(expectedMetricsMap)
+	require.NoError(t, err)
+
+	trial := createTestTrial(t, api, curUser)
+	_, err = api.ReportTrialValidationMetrics(ctx, &apiv1.ReportTrialValidationMetricsRequest{
+		ValidationMetrics: &trialv1.TrialMetrics{
+			TrialId:        int32(trial.ID),
+			TrialRunId:     0,
+			StepsCompleted: 1,
+			Metrics: &commonv1.Metrics{
+				AvgMetrics: expectedMetrics,
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	req := &apiv1.CompareTrialsRequest{
+		TrialIds:      []int32{int32(trial.ID)},
+		MaxDatapoints: 3,
+		MetricNames:   []string{"a.loss", "b/loss", asciiSweep},
+		StartBatches:  0,
+		EndBatches:    1000,
+		MetricType:    apiv1.MetricType_METRIC_TYPE_VALIDATION,
+	}
+	_, err = api.CompareTrials(ctx, req)
+	require.NoError(t, err)
+}
+
 func TestTrialAuthZ(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
+	authZNSC := setupNSCAuthZ()
 	trial := createTestTrial(t, api, curUser)
 
 	cases := []struct {
@@ -297,12 +547,6 @@ func TestTrialAuthZ(t *testing.T) {
 			})
 			return err
 		}, true},
-		{"CanGetExperimentArtifacts", func(id int) error {
-			_, err := api.SummarizeTrial(ctx, &apiv1.SummarizeTrialRequest{
-				TrialId: int32(id),
-			})
-			return err
-		}, false},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.CompareTrials(ctx, &apiv1.CompareTrialsRequest{
 				TrialIds: []int32{int32(id)},
@@ -386,31 +630,42 @@ func TestTrialAuthZ(t *testing.T) {
 			return err
 		}, false},
 		{"CanGetExperimentArtifacts", func(id int) error {
+			authZNSC.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
+				mock.Anything).Return(nil).Once()
 			_, err := api.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{
 				TrialIds: []int32{int32(id)},
 			})
 			return err
 		}, false},
+		{"CanEditExperiment", func(id int) error {
+			req := &apiv1.ReportTrialSourceInfoRequest{TrialSourceInfo: &trialv1.TrialSourceInfo{
+				TrialId:             int32(id),
+				CheckpointUuid:      uuid.NewString(),
+				TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+			}}
+			_, err := api.ReportTrialSourceInfo(ctx, req)
+			return err
+		}, false},
 	}
 
 	for _, curCase := range cases {
-		require.ErrorIs(t, curCase.IDToReqCall(-999), errTrialNotFound(-999))
-
+		require.ErrorIs(t, curCase.IDToReqCall(-999), apiPkg.NotFoundErrs("trial", "-999", true))
 		// Can't view trials experiment gives same error.
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-			Return(false, nil).Once()
-		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), errTrialNotFound(trial.ID))
+			Return(authz2.PermissionDeniedError{}).Once()
+		require.ErrorIs(t, curCase.IDToReqCall(trial.ID),
+			apiPkg.NotFoundErrs("trial", fmt.Sprint(trial.ID), true))
 
 		// Experiment view error returns error unmodified.
 		expectedErr := fmt.Errorf("canGetTrialError")
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-			Return(false, expectedErr).Once()
+			Return(expectedErr).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), expectedErr)
 
 		// Action func error returns error in forbidden.
 		expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-			Return(true, nil).Once()
+			Return(nil).Once()
 		authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), expectedErr)
@@ -445,7 +700,6 @@ func TestCompareTrialsSampling(t *testing.T) {
 		StartBatches:  0,
 		EndBatches:    1000,
 		MetricType:    apiv1.MetricType_METRIC_TYPE_TRAINING,
-		Scale:         apiv1.Scale_SCALE_LINEAR,
 	}
 
 	resp, err := api.CompareTrials(ctx, req)
@@ -460,4 +714,159 @@ func TestCompareTrialsSampling(t *testing.T) {
 	sampleBatches2 := compareTrialsResponseToBatches(resp)
 
 	require.Equal(t, sampleBatches1, sampleBatches2)
+}
+
+func createTestTrialInferenceMetrics(ctx context.Context, t *testing.T, api *apiServer, id int32) {
+	var trialMetrics map[model.MetricGroup][]map[string]any
+	require.NoError(t, json.Unmarshal([]byte(
+		`{"inference": [{"a":1}, {"b":2}]}`,
+	), &trialMetrics))
+	for mType, metricsList := range trialMetrics {
+		for _, m := range metricsList {
+			metrics, err := structpb.NewStruct(m)
+			require.NoError(t, err)
+			err = api.m.db.AddTrialMetrics(ctx,
+				&trialv1.TrialMetrics{
+					TrialId:        id,
+					TrialRunId:     int32(0),
+					StepsCompleted: int32(0),
+					Metrics: &commonv1.Metrics{
+						AvgMetrics: metrics,
+					},
+				},
+				mType,
+			)
+			require.NoError(t, err)
+		}
+	}
+}
+
+func TestTrialSourceInfoCheckpoint(t *testing.T) {
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
+	infTrial := createTestTrial(t, api, curUser)
+	infTrial2 := createTestTrial(t, api, curUser)
+	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial.ID))
+
+	// Create a checkpoint to index with
+	checkpointUUID := createVersionTwoCheckpoint(ctx, t, api, curUser, map[string]int64{"a": 1})
+
+	// Create a TrialSourceInfo associated with each of the two trials.
+	resp, err := trials.CreateTrialSourceInfo(
+		ctx, &trialv1.TrialSourceInfo{
+			TrialId:             int32(infTrial.ID),
+			CheckpointUuid:      checkpointUUID,
+			TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+		},
+	)
+	require.NoError(t, err)
+	require.Equal(t, resp.TrialId, int32(infTrial.ID))
+	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
+
+	resp, err = trials.CreateTrialSourceInfo(
+		ctx, &trialv1.TrialSourceInfo{
+			TrialId:             int32(infTrial2.ID),
+			CheckpointUuid:      checkpointUUID,
+			TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+		},
+	)
+	require.NoError(t, err)
+	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
+	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
+
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		Return(nil).Times(3)
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
+		Return(nil).Times(3)
+
+	// If there are no restrictions, we should see all the trials
+	getCkptResp, getErr := api.GetTrialMetricsBySourceInfoCheckpoint(
+		ctx, &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID},
+	)
+	require.NoError(t, getErr)
+	require.Equal(t, len(getCkptResp.Data), 2)
+
+	// Only infTrial should have generic metrics attached.
+	for _, tsim := range getCkptResp.Data {
+		if tsim.TrialId == int32(infTrial.ID) {
+			// One aggregated MetricsReport
+			require.Equal(t, len(tsim.MetricReports), 1)
+		} else {
+			require.Empty(t, tsim.MetricReports)
+		}
+	}
+
+	infTrialExp, err := db.ExperimentByID(ctx, infTrial.ExperimentID)
+	require.NoError(t, err)
+	infTrial2Exp, err := db.ExperimentByID(ctx, infTrial2.ExperimentID)
+	require.NoError(t, err)
+
+	// All experiments can be seen
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		Return(nil).Times(3)
+	// We can see the experiment that generated the checkpoint
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
+		Return(nil).Once()
+	// We can't see the experiment for infTrial
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, infTrialExp).
+		Return(authz2.PermissionDeniedError{}).Once()
+	// We can see the experiment for infTrial2
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, infTrial2Exp).
+		Return(nil).Once()
+	getCkptResp, getErr = api.GetTrialMetricsBySourceInfoCheckpoint(
+		ctx, &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID},
+	)
+	require.NoError(t, getErr)
+	// Only infTrial2 should be visible
+	require.Equal(t, len(getCkptResp.Data), 1)
+	require.Equal(t, getCkptResp.Data[0].TrialId, int32(infTrial2.ID))
+}
+
+func TestTrialSourceInfoModelVersion(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	infTrial := createTestTrial(t, api, curUser)
+	infTrial2 := createTestTrial(t, api, curUser)
+	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial.ID))
+
+	// Create a checkpoint to index with
+	checkpointUUID := createVersionTwoCheckpoint(ctx, t, api, curUser, map[string]int64{"a": 1})
+
+	// Create a model_version to index with
+	conv := &protoconverter.ProtoConverter{}
+	modelVersion := RegisterCheckpointAsModelVersion(t, api.m.db, conv.ToUUID(checkpointUUID))
+
+	// Create a TrialSourceInfo associated with each of the two trials.
+	resp, err := trials.CreateTrialSourceInfo(
+		ctx, &trialv1.TrialSourceInfo{
+			TrialId:             int32(infTrial.ID),
+			CheckpointUuid:      checkpointUUID,
+			TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+			ModelId:             &modelVersion.Model.Id,
+			ModelVersion:        &modelVersion.Version,
+		},
+	)
+	require.NoError(t, err)
+	require.Equal(t, resp.TrialId, int32(infTrial.ID))
+	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
+
+	resp, err = trials.CreateTrialSourceInfo(
+		ctx, &trialv1.TrialSourceInfo{
+			TrialId:             int32(infTrial2.ID),
+			CheckpointUuid:      checkpointUUID,
+			TrialSourceInfoType: trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_INFERENCE,
+		},
+	)
+	require.NoError(t, err)
+	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
+	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
+
+	getMVResp, getMVErr := api.GetTrialSourceInfoMetricsByModelVersion(
+		ctx, &apiv1.GetTrialSourceInfoMetricsByModelVersionRequest{
+			ModelName:       modelVersion.Model.Name,
+			ModelVersionNum: modelVersion.Version,
+		},
+	)
+	require.NoError(t, getMVErr)
+	// One trial is valid and it has one aggregated MetricsReport
+	require.Equal(t, len(getMVResp.Data), 1)
+	require.Equal(t, len(getMVResp.Data[0].MetricReports), 1)
 }

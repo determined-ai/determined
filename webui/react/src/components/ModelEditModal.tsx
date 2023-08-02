@@ -42,9 +42,8 @@ const ModelEditModal = ({ model, fetchModel }: Props): JSX.Element => {
 
   return (
     <Modal
-      okButtonProps={{ form: FORM_ID, htmlType: 'submit' }}
       size="small"
-      submit={{ handler: handleOk, text: 'Save' }}
+      submit={{ form: FORM_ID, handleError, handler: handleOk, text: 'Save' }}
       title="Edit Model"
       onClose={handleClose}>
       <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">

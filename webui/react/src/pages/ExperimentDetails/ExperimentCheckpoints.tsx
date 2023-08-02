@@ -1,6 +1,7 @@
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { Key, useCallback, useEffect, useMemo, useState } from 'react';
 
+import ActionDropdown from 'components/ActionDropdown/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import { useModal } from 'components/kit/Modal';
@@ -17,16 +18,13 @@ import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import useModalCheckpointDelete from 'hooks/useModal/Checkpoint/useModalCheckpointDelete';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { ModalCloseReason } from 'hooks/useModal/useModal';
+import usePolling from 'hooks/usePolling';
+import { useSettings } from 'hooks/useSettings';
 import { getExperimentCheckpoints } from 'services/api';
 import { Checkpointv1State, V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeCheckpointState } from 'services/decoder';
-import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
-import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
-import usePolling from 'shared/hooks/usePolling';
-import { RecordKey } from 'shared/types';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
+import { RecordKey } from 'types';
 import {
   checkpointAction,
   CheckpointAction,
@@ -35,7 +33,9 @@ import {
   ExperimentBase,
 } from 'types';
 import { canActionCheckpoint, getActionsForCheckpointsUnion } from 'utils/checkpoint';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
 
 import { configForExperiment, Settings } from './ExperimentCheckpoints.settings';
 import { columns as defaultColumns } from './ExperimentCheckpoints.table';
@@ -143,7 +143,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   const CheckpointActionDropdown: React.FC<ContextMenuProps<CoreApiGenericCheckpoint>> =
     useCallback(
-      ({ record, onVisibleChange, children }) => {
+      ({ record, children }) => {
         return (
           <ActionDropdown<CheckpointAction>
             actionOrder={batchActions}
@@ -153,11 +153,10 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
               [checkpointAction.Delete]: !canActionCheckpoint(checkpointAction.Delete, record),
             }}
             id={record.uuid}
+            isContextMenu
             kind="checkpoint"
-            trigger={['contextMenu']}
             onError={handleError}
-            onTrigger={dropDownOnTrigger(record.uuid)}
-            onVisibleChange={onVisibleChange}>
+            onTrigger={dropDownOnTrigger(record.uuid)}>
             {children}
           </ActionDropdown>
         );
@@ -321,7 +320,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
           onClear={clearSelected}
         />
         {settings ? (
-          <InteractiveTable
+          <InteractiveTable<CoreApiGenericCheckpoint, Settings>
             columns={columns}
             containerRef={pageRef}
             ContextMenu={CheckpointActionDropdown}
@@ -344,7 +343,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
             settings={settings}
             showSorterTooltip={false}
             size="small"
-            updateSettings={updateSettings as UpdateSettings}
+            updateSettings={updateSettings}
           />
         ) : (
           <SkeletonTable columns={columns.length} />

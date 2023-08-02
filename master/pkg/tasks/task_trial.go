@@ -28,10 +28,12 @@ type TrialSpec struct {
 	TrialSeed        uint32
 	LatestCheckpoint *model.Checkpoint
 	StepsCompleted   int
+
+	Keys ssh.PrivateAndPublicKeys
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
+func (s TrialSpec) ToTaskSpec() TaskSpec {
 	res := s.Base
 
 	res.Environment = s.MakeEnvPorts()
@@ -61,15 +63,15 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 	additionalSSHFiles := archive.Archive{
 		s.Base.AgentUserGroup.OwnedArchiveItem(sshDir, nil, sshDirMode, tar.TypeDir),
 		s.Base.AgentUserGroup.OwnedArchiveItem(trialAuthorizedKeysFile,
-			keys.PublicKey,
+			s.Keys.PublicKey,
 			trialAuthorizedKeysMode,
 			tar.TypeReg,
 		),
 		s.Base.AgentUserGroup.OwnedArchiveItem(
-			pubKeyFile, keys.PublicKey, pubKeyMode, tar.TypeReg,
+			pubKeyFile, s.Keys.PublicKey, pubKeyMode, tar.TypeReg,
 		),
 		s.Base.AgentUserGroup.OwnedArchiveItem(
-			privKeyFile, keys.PrivateKey, privKeyMode, tar.TypeReg,
+			privKeyFile, s.Keys.PrivateKey, privKeyMode, tar.TypeReg,
 		),
 		s.Base.AgentUserGroup.OwnedArchiveItem(sshdConfigFile,
 			etc.MustStaticFile(etc.SSHDConfigResource),

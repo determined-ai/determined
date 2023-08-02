@@ -34,6 +34,7 @@ from determined.cli.oauth import args_description as oauth_args_description
 from determined.cli.project import args_description as project_args_description
 from determined.cli.rbac import args_description as rbac_args_description
 from determined.cli.remote import args_description as remote_args_description
+from determined.cli.resource_pool import args_description as resource_pool_args_description
 from determined.cli.resources import args_description as resources_args_description
 from determined.cli.shell import args_description as shell_args_description
 from determined.cli.sso import args_description as auth_args_description
@@ -50,7 +51,13 @@ from determined.cli.workspace import args_description as workspace_args_descript
 from determined.common import api, yaml
 from determined.common.api import authentication, bindings, certs
 from determined.common.check import check_not_none
-from determined.common.declarative_argparse import Arg, Cmd, add_args, generate_aliases
+from determined.common.declarative_argparse import (
+    Arg,
+    ArgsDescription,
+    Cmd,
+    add_args,
+    generate_aliases,
+)
 from determined.common.util import (
     chunks,
     debug_mode,
@@ -120,29 +127,32 @@ def preview_search(args: Namespace) -> None:
     print(tabulate.tabulate(values, headers, tablefmt="presto"), flush=False)
 
 
-# fmt: off
-
 args_description = [
-    Arg("-u", "--user",
-        help="run as the given user", metavar="username",
-        default=None),
-    Arg("-m", "--master",
-        help="master address", metavar="address",
-        default=get_default_master_address()),
-    Arg("-v", "--version",
-        action="version", help="print CLI version and exit",
-        version="%(prog)s {}".format(determined.__version__)),
-
-    Cmd("preview-search", preview_search, "preview search", [
-        Arg("config_file", type=FileType("r"),
-            help="experiment config file (.yaml)")
-    ]),
+    Arg("-u", "--user", help="run as the given user", metavar="username", default=None),
+    Arg(
+        "-m",
+        "--master",
+        help="master address",
+        metavar="address",
+        default=get_default_master_address(),
+    ),
+    Arg(
+        "-v",
+        "--version",
+        action="version",
+        help="print CLI version and exit",
+        version="%(prog)s {}".format(determined.__version__),
+    ),
+    Cmd(
+        "preview-search",
+        preview_search,
+        "preview search",
+        [Arg("config_file", type=FileType("r"), help="experiment config file (.yaml)")],
+    ),
     deploy_cmd,
-]  # type: List[object]
+]  # type: ArgsDescription
 
-# fmt: on
-
-all_args_description = (
+all_args_description: ArgsDescription = (
     args_description
     + experiment_args_description
     + checkpoint_args_description
@@ -152,6 +162,7 @@ all_args_description = (
     + notebook_args_description
     + job_args_description
     + resources_args_description
+    + resource_pool_args_description
     + project_args_description
     + shell_args_description
     + task_args_description
@@ -174,6 +185,16 @@ def make_parser() -> ArgumentParser:
     return ArgumentParser(
         description="Determined command-line client", formatter_class=ArgumentDefaultsHelpFormatter
     )
+
+
+def die(message: str, always_print_traceback: bool = False, exit_code: int = 1) -> None:
+    if always_print_traceback or debug_mode():
+        import traceback
+
+        traceback.print_exc(file=sys.stderr)
+
+    print(colored(message, "red"), file=sys.stderr, end="\n")
+    exit(exit_code)
 
 
 def main(
@@ -199,14 +220,6 @@ def main(
         argcomplete.autocomplete(parser)
 
         parsed_args = parser.parse_args(args)
-
-        def die(message: str, always_print_traceback: bool = False, exit_code: int = 1) -> None:
-            if always_print_traceback or debug_mode():
-                import traceback
-
-                traceback.print_exc(file=sys.stderr)
-
-            parser.exit(exit_code, colored(message + "\n", "red"))
 
         v = vars(parsed_args)
         if not v.get("func"):
@@ -278,7 +291,7 @@ def main(
         except KeyboardInterrupt as e:
             raise e
         except (api.errors.BadRequestException, api.errors.BadResponseException) as e:
-            die("Failed to {}: {}".format(parsed_args.func.__name__, e))
+            die(f"Failed to {parsed_args.func.__name__}: {e}")
         except api.errors.CorruptTokenCacheException:
             die(
                 "Failed to login: Attempted to read a corrupted token cache. "
@@ -293,15 +306,8 @@ def main(
         except ArgumentError as e:
             die(e.message, exit_code=2)
         except bindings.APIHttpError as e:
-            die("Failed on operation {}: {}".format(e.operation_name, e.message))
+            die(f"Failed on operation {e.operation_name}: {e.message}")
         except Exception:
-            die("Failed to {}".format(parsed_args.func.__name__), always_print_traceback=True)
+            die(f"Failed to {parsed_args.func.__name__}", always_print_traceback=True)
     except KeyboardInterrupt:
-        # die() may not be defined yet.
-        if debug_mode():
-            import traceback
-
-            traceback.print_exc(file=sys.stderr)
-
-        print(colored("Interrupting...\n", "red"), file=sys.stderr)
-        exit(3)
+        die("Interrupting...", exit_code=3)

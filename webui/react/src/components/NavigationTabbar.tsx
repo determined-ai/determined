@@ -3,21 +3,22 @@ import { useLocation } from 'react-router-dom';
 
 import ActionSheet, { ActionItem } from 'components/ActionSheet';
 import DynamicIcon from 'components/DynamicIcon';
+import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Link, { Props as LinkProps } from 'components/Link';
+import Spinner from 'components/Spinner/Spinner';
+import UserSettings from 'components/UserSettings';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
-import Spinner from 'shared/components/Spinner/Spinner';
-import useUI from 'shared/contexts/stores/UI';
-import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
+import useUI from 'stores/contexts/UI';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { AnyMouseEvent, routeToReactUrl } from 'utils/routes';
 
 import css from './NavigationTabbar.module.scss';
 import UserBadge from './UserBadge';
@@ -25,7 +26,7 @@ import WorkspaceCreateModalComponent from './WorkspaceCreateModal';
 
 interface ToolbarItemProps extends LinkProps {
   badge?: number;
-  icon: string;
+  icon: IconName;
   label: string;
   status?: string;
 }
@@ -41,7 +42,7 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 
   return (
     <Link className={classes.join(' ')} path={path} {...props}>
-      <Icon name={props.icon} size="large" />
+      <Icon name={props.icon} size="large" title={props.label} />
       {status && <div className={css.status}>{status}</div>}
     </Link>
   );
@@ -67,6 +68,8 @@ const NavigationTabbar: React.FC = () => {
   const { canCreateWorkspace } = usePermissions();
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
+
+  const [showSettings, setShowSettings] = useState<boolean>(false);
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
   const handleWorkspacesOpen = useCallback(() => {
@@ -106,14 +109,25 @@ const NavigationTabbar: React.FC = () => {
 
   if (canCreateWorkspace) {
     workspaceActions.push({
-      icon: <Icon name="add-small" size="large" />,
+      icon: <Icon name="add-small" size="large" title="Create Workspace" />,
       label: 'New Workspace',
       onClick: WorkspaceCreateModal.open,
     });
   }
 
-  const overflowActionsTop = [
+  interface OverflowActionProps {
+    external?: boolean;
+    icon?: IconName;
+    label: string;
+    onClick?: (e: AnyMouseEvent) => void;
+    path?: string;
+    popout?: boolean;
+    render?: () => JSX.Element;
+  }
+
+  const overflowActionsTop: OverflowActionProps[] = [
     {
+      label: 'Current user',
       render: () => (
         <div className={css.user}>
           <UserBadge compact key="avatar" user={currentUser} />
@@ -123,7 +137,7 @@ const NavigationTabbar: React.FC = () => {
     {
       icon: 'settings',
       label: 'Settings',
-      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.settings('account')),
+      onClick: () => setShowSettings(true),
     },
     {
       icon: 'user',
@@ -132,7 +146,7 @@ const NavigationTabbar: React.FC = () => {
     },
   ];
 
-  const overflowActionsBottom = [
+  const overflowActionsBottom: OverflowActionProps[] = [
     {
       icon: 'logs',
       label: 'Cluster Logs',
@@ -162,36 +176,48 @@ const NavigationTabbar: React.FC = () => {
   ];
 
   return (
-    <nav className={css.base}>
-      <div className={css.toolbar}>
-        <ToolbarItem icon="home" label="Home" path={paths.dashboard()} />
-        <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
-        <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
-        <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
-        <ToolbarItem icon="cluster" label="Cluster" path={paths.cluster()} status={clusterStatus} />
-        <ToolbarItem icon="workspaces" label="Workspaces" onClick={handleWorkspacesOpen} />
-        <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
-      </div>
-      <ActionSheet
-        actions={[
-          {
-            icon: 'workspaces',
-            label: 'Workspaces',
-            onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.workspaceList()),
-            path: paths.workspaceList(),
-          },
-          ...workspaceActions,
-        ]}
-        show={isShowingPinnedWorkspaces}
-        onCancel={handleActionSheetCancel}
-      />
-      <ActionSheet
-        actions={[...overflowActionsTop, ...overflowActionsBottom]}
-        show={isShowingOverflow}
-        onCancel={handleActionSheetCancel}
-      />
-      <WorkspaceCreateModal.Component />
-    </nav>
+    <>
+      <nav className={css.base}>
+        <div className={css.toolbar}>
+          <ToolbarItem icon="home" label="Home" path={paths.dashboard()} />
+          <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
+          <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
+          <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
+          <ToolbarItem
+            icon="cluster"
+            label="Cluster"
+            path={paths.clusters()}
+            status={clusterStatus}
+          />
+          <ToolbarItem icon="workspaces" label="Workspaces" onClick={handleWorkspacesOpen} />
+          <ToolbarItem
+            icon="overflow-vertical"
+            label="Overflow Menu"
+            onClick={handleOverflowOpen}
+          />
+        </div>
+        <ActionSheet
+          actions={[
+            {
+              icon: 'workspaces',
+              label: 'Workspaces',
+              onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.workspaceList()),
+              path: paths.workspaceList(),
+            },
+            ...workspaceActions,
+          ]}
+          show={isShowingPinnedWorkspaces}
+          onCancel={handleActionSheetCancel}
+        />
+        <ActionSheet
+          actions={[...overflowActionsTop, ...overflowActionsBottom]}
+          show={isShowingOverflow}
+          onCancel={handleActionSheetCancel}
+        />
+        <WorkspaceCreateModal.Component />
+      </nav>
+      <UserSettings show={showSettings} onClose={() => setShowSettings(false)} />
+    </>
   );
 };
 

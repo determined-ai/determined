@@ -1,0 +1,15 @@
+.base {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 72px 7fr;
+  padding-bottom: 8px;
+}
+.fieldCard {
+  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(100px, 1fr)) 32px 32px;
+}
+.fullWidth {
+  width: 100%;
+}

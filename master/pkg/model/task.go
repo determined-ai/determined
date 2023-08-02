@@ -10,6 +10,7 @@ import (
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -80,6 +81,14 @@ type Task struct {
 // allocations run.
 type AllocationID string
 
+// NewAllocationID casts string ptr to AllocationID ptr.
+func NewAllocationID(in *string) *AllocationID {
+	if in == nil {
+		return nil
+	}
+	return ptrs.Ptr(AllocationID(*in))
+}
+
 func (a AllocationID) String() string {
 	return string(a)
 }
@@ -102,6 +111,9 @@ type Allocation struct {
 	State        *AllocationState `db:"state" bun:"state"`
 	IsReady      *bool            `db:"is_ready" bun:"is_ready"`
 	Ports        map[string]int   `db:"ports" bun:"ports,notnull"`
+	// ProxyAddress stores the explicitly provided task-provided proxy address for resource
+	// managers that do not supply us with it. Comes from `determined.exec.prep_container --proxy`.
+	ProxyAddress *string `db:"proxy_address" bun:"proxy_address"`
 }
 
 // AllocationState represents the current state of the task. Value indicates a partial ordering.

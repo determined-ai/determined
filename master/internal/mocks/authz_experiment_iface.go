@@ -21,13 +21,13 @@ type ExperimentAuthZ struct {
 	mock.Mock
 }
 
-// CanCreateExperiment provides a mock function with given fields: ctx, curUser, proj, e
-func (_m *ExperimentAuthZ) CanCreateExperiment(ctx context.Context, curUser model.User, proj *projectv1.Project, e *model.Experiment) error {
-	ret := _m.Called(ctx, curUser, proj, e)
+// CanCreateExperiment provides a mock function with given fields: ctx, curUser, proj
+func (_m *ExperimentAuthZ) CanCreateExperiment(ctx context.Context, curUser model.User, proj *projectv1.Project) error {
+	ret := _m.Called(ctx, curUser, proj)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, *projectv1.Project, *model.Experiment) error); ok {
-		r0 = rf(ctx, curUser, proj, e)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *projectv1.Project) error); ok {
+		r0 = rf(ctx, curUser, proj)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -92,27 +92,17 @@ func (_m *ExperimentAuthZ) CanForkFromExperiment(ctx context.Context, curUser mo
 }
 
 // CanGetExperiment provides a mock function with given fields: ctx, curUser, e
-func (_m *ExperimentAuthZ) CanGetExperiment(ctx context.Context, curUser model.User, e *model.Experiment) (bool, error) {
+func (_m *ExperimentAuthZ) CanGetExperiment(ctx context.Context, curUser model.User, e *model.Experiment) error {
 	ret := _m.Called(ctx, curUser, e)
 
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, *model.Experiment) (bool, error)); ok {
-		return rf(ctx, curUser, e)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, *model.Experiment) bool); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *model.Experiment) error); ok {
 		r0 = rf(ctx, curUser, e)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, model.User, *model.Experiment) error); ok {
-		r1 = rf(ctx, curUser, e)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // CanGetExperimentArtifacts provides a mock function with given fields: ctx, curUser, e

@@ -1,18 +1,17 @@
-import queryString from 'query-string';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
 import PageMessage from 'components/PageMessage';
+import Spinner from 'components/Spinner/Spinner';
 import { terminalCommandStates } from 'constants/states';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
-import Spinner from 'shared/components/Spinner/Spinner';
-import useUI from 'shared/contexts/stores/UI';
-import { ErrorType } from 'shared/utils/error';
-import { capitalize } from 'shared/utils/string';
+import useUI from 'stores/contexts/UI';
 import { CommandState } from 'types';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { capitalize } from 'utils/string';
 import { WaitStatus } from 'utils/wait';
 
 import css from './Wait.module.scss';
@@ -22,24 +21,20 @@ type Params = {
   taskType: string;
 };
 
-interface Queries {
-  eventUrl?: string;
-  serviceAddr?: string;
-}
-
 const Wait: React.FC = () => {
   const {
     actions: { showChrome, hideChrome },
   } = useUI();
+  const [searchParams] = useSearchParams();
   const { taskType } = useParams<Params>();
   const [waitStatus, setWaitStatus] = useState<WaitStatus>();
-  const { eventUrl, serviceAddr }: Queries = queryString.parse(location.search);
+  const serviceAddr = searchParams.get('serviceAddr');
 
   const capitalizedTaskType = capitalize(taskType ?? '');
   const isLoading = !waitStatus || !terminalCommandStates.has(waitStatus.state);
 
   let message = `Waiting for ${capitalizedTaskType} ...`;
-  if (!eventUrl || !serviceAddr) {
+  if (!serviceAddr) {
     message = 'Missing required parameters.';
   } else if (waitStatus && terminalCommandStates.has(waitStatus.state)) {
     message = `${capitalizedTaskType} has been terminated.`;
@@ -66,7 +61,7 @@ const Wait: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!eventUrl || !serviceAddr) return;
+    if (!serviceAddr) return;
     const taskId = (serviceAddr.match(/[0-f-]+/) || ' ')[0];
     const ival = setInterval(async () => {
       try {
@@ -84,12 +79,13 @@ const Wait: React.FC = () => {
           clearInterval(ival);
           window.location.assign(serverAddress(serviceAddr));
         }
+        // TODO: use task.endTime to determine if the task is terminated.
         setWaitStatus(lastRun);
       } catch (e) {
         handleTaskError(e as Error);
       }
     }, 1000);
-  }, [eventUrl, serviceAddr]);
+  }, [serviceAddr]);
 
   return (
     <PageMessage title={capitalizedTaskType}>

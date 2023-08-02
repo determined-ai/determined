@@ -2,9 +2,11 @@ package expconf
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
@@ -37,6 +39,39 @@ func getCheckpointStorage(raw map[string]interface{}) (CheckpointStorageConfig, 
 	var cs CheckpointStorageConfig
 
 	csOnly := raw["checkpoint_storage"]
+
+	// Special case for hdfs.
+	switch m := csOnly.(type) {
+	case map[string]any:
+		if t, ok := m["type"].(string); ok && t == "hdfs" {
+			var saveExpBest, saveTrialBest, saveTrialLatest *int
+			var i float64
+			if i, ok = m["save_experiment_best"].(float64); ok {
+				saveExpBest = ptrs.Ptr(int(i))
+			}
+			if i, ok = m["save_trial_best"].(float64); ok {
+				saveTrialBest = ptrs.Ptr(int(i))
+			}
+			if i, ok = m["save_trial_latest"].(float64); ok {
+				saveTrialLatest = ptrs.Ptr(int(i))
+			}
+
+			// nolint: exhaustivestruct
+			dummyHDFSSharedFS := schemas.WithDefaults(CheckpointStorageConfig{
+				RawSharedFSConfig: &SharedFSConfig{
+					RawHostPath: ptrs.Ptr("/legacy-hdfs-checkpoint-path"),
+				},
+				RawSaveExperimentBest: saveExpBest,
+				RawSaveTrialBest:      saveTrialBest,
+				RawSaveTrialLatest:    saveTrialLatest,
+			})
+
+			if err := schemas.IsComplete(dummyHDFSSharedFS); err != nil {
+				return cs, fmt.Errorf("shared fs shim for hdfs is incomplete: %w", err)
+			}
+			return dummyHDFSSharedFS, nil
+		}
+	}
 
 	csByts, err := json.Marshal(csOnly)
 	if err != nil {

@@ -6,7 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
-	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
 
@@ -141,7 +141,7 @@ func (t *TLSClientConfig) Resolve() error {
 	if t.CertificatePath == "" {
 		return nil
 	}
-	certBytes, err := ioutil.ReadFile(t.CertificatePath)
+	certBytes, err := os.ReadFile(t.CertificatePath)
 	if err != nil {
 		return err
 	}

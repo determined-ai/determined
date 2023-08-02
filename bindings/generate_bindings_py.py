@@ -1,6 +1,7 @@
 import os
-import swagger_parser
 import typing
+
+import swagger_parser
 from typing_extensions import assert_never
 
 SWAGGER = "proto/build/swagger/determined/api/v1/api.swagger.json"
@@ -264,7 +265,7 @@ def gen_class(klass: swagger_parser.Class) -> Code:
     required = sorted((k, v) for k, v in klass.params.items() if v.required)
     optional = sorted((k, v) for k, v in klass.params.items() if not v.required)
 
-    out = [f"class {klass.name}:"]
+    out = [f"class {klass.name}(Printable):"]
     for k, v in optional:
         out += [f'    {k}: "typing.Optional[{annotation(v.type, prequoted=True)}]" = None']
     out += [""]
@@ -323,7 +324,7 @@ def gen_class(klass: swagger_parser.Class) -> Code:
 
 
 def gen_enum(enum: swagger_parser.Enum) -> Code:
-    out = [f"class {enum.name}(enum.Enum):"]
+    out = [f"class {enum.name}(DetEnum):"]
     prefix = os.path.commonprefix(enum.members)
     skip = len(prefix) if prefix.endswith("_") else 0
     out += [f'    {v[skip:]} = "{v}"' for v in enum.members]
@@ -373,6 +374,7 @@ def pybindings(swagger: swagger_parser.ParseResult) -> str:
 import enum
 import json
 import math
+import os
 import typing
 
 import requests
@@ -424,6 +426,35 @@ class APIHttpStreamError(APIHttpError):
 
     def __str__(self) -> str:
         return self.message
+
+
+class DetEnum(enum.Enum):
+    def __str__(self) -> str:
+        skip = len(self.prefix())
+        return f"{self.value[skip:]}"
+    @classmethod
+    def prefix(cls) -> str:
+        prefix: str = os.path.commonprefix([e.value for e in cls])
+        return prefix if prefix.endswith("_") else ""
+
+
+class Printable:
+    # A mixin to provide a __str__ method for classes with attributes.
+    def __str__(self) -> str:
+        allowed_types = (str, int, float, bool, DetEnum)
+        attrs = []
+        for k, v in self.__dict__.items():
+            if v is None: continue
+            if isinstance(v, list):
+                vals = [str(x) if isinstance(x, allowed_types) else "..." for x in v]
+                attrs.append(f'{k}=[{", ".join(vals)}]')
+            elif isinstance(v, allowed_types):
+                attrs.append(f'{k}={v}')
+            else:
+                attrs.append(f'{k}=...')
+        attrs_str = ', '.join(attrs)
+        return f'{self.__class__.__name__}({attrs_str})'
+
 
 """.lstrip()
 

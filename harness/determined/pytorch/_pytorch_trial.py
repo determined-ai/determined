@@ -221,7 +221,8 @@ class _PyTorchTrialController:
         else:
             self.trial_id = self.core_context.train._trial_id
 
-        self.state = _TrialState(trial_id=self.trial_id)
+        # Don't initialize the state here because it will be invalid until we load a checkpoint.
+        self.state = None  # type: Optional[_TrialState]
         self.start_from_batch = steps_completed
         self.val_from_previous_run = self.core_context.train._get_last_validation()
         self.step_zero_validation = step_zero_validation
@@ -333,6 +334,7 @@ class _PyTorchTrialController:
         avg_metrics = metrics.get("avg_metrics", {})
         batch_metrics = metrics.get("batch_metrics", [])
 
+        assert self.state
         det.pytorch._log_tb_metrics(
             self.context.get_tensorboard_writer(),
             "train",
@@ -379,6 +381,8 @@ class _PyTorchTrialController:
     def _checkpoint(self, already_exiting: bool) -> None:
         if self.is_chief:
             self.core_context.train.set_status("checkpointing")
+
+        assert self.state
         self.state.last_ckpt = self.state.batches_trained
 
         try:
@@ -426,7 +430,7 @@ class _PyTorchTrialController:
         return util.is_overridden(self.trial.evaluate_full_dataset, PyTorchTrial)
 
     def _set_data_loaders(self) -> None:
-        skip_batches = self.state.batches_trained
+        skip_batches = self.start_from_batch
 
         num_replicas = self.context.distributed.size
         rank = self.context.distributed.rank
@@ -487,6 +491,7 @@ class _PyTorchTrialController:
                 self.validation_loader = validation_data
 
     def _step_batch(self) -> None:
+        assert self.state
         self.state.batches_trained += 1
 
         epoch_len = self.context._epoch_len
@@ -508,6 +513,7 @@ class _PyTorchTrialController:
     def _report_searcher_progress(
         self, op: core.SearcherOperation, unit: Optional[core.Unit]
     ) -> None:
+        assert self.state
         if unit == core.Unit.BATCHES:
             op.report_progress(self.state.batches_trained)
         elif unit == core.Unit.RECORDS:
@@ -517,15 +523,18 @@ class _PyTorchTrialController:
             op.report_progress(self.state.epochs_trained)
 
     def _checkpoint_is_current(self) -> bool:
+        assert self.state
         # State always persists checkpoint step in batches
         return self.state.last_ckpt == self.state.batches_trained
 
     def _validation_is_current(self) -> bool:
+        assert self.state
         # State persists validation step in batches
         return self.state.last_val == self.state.batches_trained
 
     def _steps_until_complete(self, train_unit: TrainUnit) -> int:
         assert isinstance(train_unit.value, int), "invalid length type"
+        assert self.state
         if isinstance(train_unit, Batch):
             return train_unit.value - self.state.batches_trained
         elif isinstance(train_unit, Epoch):
@@ -553,7 +562,7 @@ class _PyTorchTrialController:
                 with self.prof.record_timing(
                     f"callbacks.{callback.__class__.__name__}.on_trial_startup"
                 ):
-                    callback.on_trial_startup(self.state.batches_trained, self.latest_checkpoint)
+                    callback.on_trial_startup(self.start_from_batch, self.latest_checkpoint)
                 exit_stack.enter_context(
                     defer(on_shutdown, callback.__class__.__name__, callback.on_trial_shutdown)
                 )
@@ -587,6 +596,9 @@ class _PyTorchTrialController:
                     self.latest_checkpoint
                 ) as load_path:
                     self._load(load_path)
+            else:
+                # If we are not loading, initialize a fresh state.
+                self.state = _TrialState(trial_id=self.trial_id)
 
             if self.context.distributed.size > 1 and self.use_horovod:
                 hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
@@ -604,6 +616,7 @@ class _PyTorchTrialController:
 
     def _run(self) -> None:
         ops: Iterator[det.core.SearcherOperation]
+        assert self.state
 
         try:
             if (
@@ -1004,6 +1017,7 @@ class _PyTorchTrialController:
         for callback in self.callbacks.values():
             callback.on_validation_end(metrics)
 
+        assert self.state
         self.state.last_val = self.state.batches_trained
 
         # Report metrics.
@@ -1019,6 +1033,10 @@ class _PyTorchTrialController:
             det.pytorch._log_tb_metrics(
                 self.context.get_tensorboard_writer(), "val", self.state.batches_trained, metrics
             )
+
+            # Get best validation before reporting metrics.
+            best_validation_before = self.core_context.train.get_experiment_best_validation()
+
             self.core_context.train.report_validation_metrics(self.state.batches_trained, metrics)
 
         searcher_metric = None
@@ -1051,9 +1069,6 @@ class _PyTorchTrialController:
                     ), "checkpoint policy 'best' but searcher metric name not defined"
                     assert searcher_metric is not None
 
-                    best_validation_before = (
-                        self.core_context.train.get_experiment_best_validation()
-                    )
                     if self._is_best_validation(now=searcher_metric, before=best_validation_before):
                         should_checkpoint = True
 
@@ -1221,12 +1236,13 @@ class _PyTorchTrialController:
     def _load_state(self, state: Any) -> None:
         # Load our state from the checkpoint if we are continuing training after a pause or restart.
         # If the trial_id doesn't match our current trial id, we're continuing training a previous
-        # trial and the state in the checkpoint should be discarded.
-
+        # trial and should start from a fresh state.
         if state.get("trial_id") != self.trial_id:
+            self.state = _TrialState(trial_id=self.trial_id)
             return
 
         self.state = _TrialState(**state)
+        assert self.state
 
         # Detect the case where the final validation we made was against this exact checkpoint.  In
         # that case, the master will know about the validation, but it would not appear in the
@@ -1238,6 +1254,7 @@ class _PyTorchTrialController:
 
     def _load_wlsq_state(self, state: Any) -> None:
         if state.get("trial_id") != self.trial_id:
+            self.state = _TrialState(trial_id=self.trial_id)
             return
 
         self.state = _TrialState(
@@ -1251,6 +1268,7 @@ class _PyTorchTrialController:
             epochs_trained=self._get_epoch_idx(state.get("steps_completed")),
         )
 
+        assert self.state
         if self.state.batches_trained == self.val_from_previous_run:
             self.state.last_val = self.state.batches_trained
 
@@ -1298,6 +1316,7 @@ class _PyTorchTrialController:
 
         torch.save(checkpoint, str(path.joinpath("state_dict.pth")))
 
+        assert self.state
         with path.joinpath("trial_state.pkl").open("wb") as f:
             pickle.dump(vars(self.state), f)
 

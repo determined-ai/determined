@@ -1,7 +1,8 @@
 import logging
 import os
 import pickle
-from typing import Any, Dict, List, Optional, Tuple, Union
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import determined as det
 from determined import searcher
@@ -32,6 +33,7 @@ class RemoteSearchRunner(searcher.SearchRunner):
         self,
         exp_config: Union[Dict[str, Any], str],
         model_dir: Optional[str] = None,
+        includes: Optional[Iterable[Union[str, Path]]] = None,
     ) -> int:
         """
         Run custom search as a Core API experiment (on-cluster).
@@ -39,6 +41,8 @@ class RemoteSearchRunner(searcher.SearchRunner):
         Args:
             exp_config (dictionary, string): experiment config filename (.yaml) or a dict.
             model_dir (string): directory containing model definition.
+            includes (Iterable[Union[str, pathlib.Path]], optional): Additional files
+                or directories to include in the model definition.  (default: ``None``)
         """
         logger.info("RemoteSearchRunner.run")
 
@@ -52,11 +56,14 @@ class RemoteSearchRunner(searcher.SearchRunner):
             logger.info(f"Resuming HP searcher for experiment {experiment_id}")
         else:
             logger.info("No latest checkpoint. Starting new experiment.")
-            exp = client.create_experiment(exp_config, model_dir)
+            exp = client.create_experiment(exp_config, model_dir, includes)
             self.state.experiment_id = exp.id
             self.state.last_event_id = 0
             self.save_state(exp.id, [])
             experiment_id = exp.id
+            # Note: Simulating the same print functionality as our CLI when making an experiment.
+            # This line is needed for the e2e tests
+            logger.info(f"Created experiment {exp.id}")
 
         # make sure client is initialized
         client._require_singleton(lambda: None)()

@@ -2,12 +2,12 @@ import React, { CSSProperties, useMemo } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
 import { stateToLabel } from 'constants/states';
-import useUI from 'shared/contexts/stores/UI';
-import { DarkLight, getCssVar } from 'shared/themes';
-import { ValueOf } from 'shared/types';
-import { hsl2str, str2hsl } from 'shared/utils/color';
+import useUI from 'stores/contexts/UI';
 import { getStateColorCssVar, StateOfUnion } from 'themes';
+import { ValueOf } from 'types';
 import { ResourceState, RunState, SlotState } from 'types';
+import { hsl2str, str2hsl } from 'utils/color';
+import { DarkLight, getCssVar } from 'utils/themes';
 
 import css from './Badge.module.scss';
 
@@ -75,7 +75,7 @@ const Badge: React.FC<BadgeProps> = ({
     </span>
   );
 
-  return tooltip ? <Tooltip title={tooltip}>{badge}</Tooltip> : badge;
+  return tooltip ? <Tooltip content={tooltip}>{badge}</Tooltip> : badge;
 };
 
 export default Badge;

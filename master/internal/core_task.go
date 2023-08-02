@@ -3,6 +3,7 @@ package internal
 import (
 	"github.com/labstack/echo/v4"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/context"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -17,23 +18,20 @@ func (m *Master) getTasks(c echo.Context) (interface{}, error) {
 	curUser := c.(*context.DetContext).MustGetUser()
 	ctx := c.Request().Context()
 	for allocationID, allocationSummary := range summary {
-		isExp, exp, err := expFromTaskID(m, allocationSummary.TaskID)
+		isExp, exp, err := expFromTaskID(ctx, allocationSummary.TaskID)
 		if err != nil {
 			return nil, err
 		}
 
-		var ok bool
 		if !isExp {
-			ok, err = canAccessNTSCTask(ctx, curUser, summary[allocationID].TaskID)
+			_, err = canAccessNTSCTask(ctx, curUser, summary[allocationID].TaskID)
 		} else {
-			ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp)
+			err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp)
 		}
-		if err != nil {
-			return nil, err
-		}
-
-		if !ok {
+		if authz.IsPermissionDenied(err) {
 			delete(summary, allocationID)
+		} else if err != nil {
+			return nil, err
 		}
 	}
 	return summary, nil

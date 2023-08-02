@@ -1,4 +1,4 @@
-import { Modal as AntdModal, ModalProps as AntdModalProps } from 'antd';
+import { Modal as AntdModal } from 'antd';
 import React, {
   createContext,
   Dispatch,
@@ -10,11 +10,11 @@ import React, {
 } from 'react';
 
 import Button from 'components/kit/Button';
-import Link from 'components/Link';
-import Icon from 'shared/components/Icon';
-import Spinner from 'shared/components/Spinner';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import handleError from 'utils/error';
+import Icon, { IconName } from 'components/kit/Icon';
+import Link from 'components/kit/internal/Link';
+import Spinner from 'components/kit/internal/Spinner';
+import { ErrorHandler } from 'components/kit/internal/types';
+import { ErrorLevel, ErrorType } from 'components/kit/internal/types';
 
 import css from './Modal.module.scss';
 
@@ -40,8 +40,10 @@ export type ModalContext = {
 export interface ModalSubmitParams {
   disabled?: boolean;
   text: string;
-  handler: () => Promise<void>;
-  onComplete?: () => Promise<void>;
+  handler: () => Promise<void> | void;
+  onComplete?: () => Promise<void> | void;
+  handleError: ErrorHandler;
+  form?: string;
 }
 
 interface ModalProps {
@@ -50,15 +52,16 @@ interface ModalProps {
   danger?: boolean;
   footerLink?: LinkParams;
   headerLink?: LinkParams;
-  icon?: string;
+  icon?: IconName;
   key?: string;
   onClose?: () => void;
   size?: ModalSize;
   submit?: ModalSubmitParams;
   title: string;
-  okButtonProps?: AntdModalProps['okButtonProps'];
   children: ReactNode;
 }
+
+export const DEFAULT_CANCEL_LABEL = 'Cancel';
 
 const ModalContext = createContext<ModalContext | null>(null);
 
@@ -74,7 +77,6 @@ export const Modal: React.FC<ModalProps> = ({
   size = 'large',
   submit,
   title,
-  okButtonProps,
   children: modalBody,
 }: ModalProps) => {
   const modalContext = useContext(ModalContext);
@@ -99,7 +101,7 @@ export const Modal: React.FC<ModalProps> = ({
       setIsOpen(false);
       await submit?.onComplete?.();
     } catch (err) {
-      handleError(err, {
+      submit?.handleError(err, {
         level: ErrorLevel.Error,
         publicMessage: err instanceof Error ? err.message : '',
         publicSubject: 'Could not submit form',
@@ -114,7 +116,7 @@ export const Modal: React.FC<ModalProps> = ({
     <AntdModal
       cancelText={cancelText}
       className={css.modalContent}
-      closeIcon={<Icon name="close" size="small" />}
+      closeIcon={<Icon name="close" size="small" title="Close modal" />}
       footer={
         <div className={css.footer}>
           <div className={css.footerLink}>
@@ -127,17 +129,17 @@ export const Modal: React.FC<ModalProps> = ({
           <div className={css.buttons}>
             {(cancel || cancelText) && (
               <Button key="back" onClick={close}>
-                {cancelText || 'Cancel'}
+                {cancelText || DEFAULT_CANCEL_LABEL}
               </Button>
             )}
             <Button
               danger={danger}
               disabled={!!submit?.disabled}
+              form={submit?.form}
               key="submit"
               loading={isSubmitting}
               tooltip={submit?.disabled ? 'Address validation errors before proceeding' : undefined}
               type="primary"
-              {...okButtonProps}
               onClick={handleSubmit}>
               {submit?.text ?? 'OK'}
             </Button>
@@ -151,10 +153,10 @@ export const Modal: React.FC<ModalProps> = ({
         <div className={css.header}>
           {danger ? (
             <div className={css.dangerIcon}>
-              <Icon name="warning-large" size="large" />
+              <Icon name="warning-large" size="large" title="Danger" />
             </div>
           ) : (
-            icon && <Icon name={icon} size="large" />
+            icon && <Icon decorative name={icon} size="large" />
           )}
           <div className={css.headerTitle}>{title}</div>
           <div className={css.headerLink}>

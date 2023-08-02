@@ -1,6 +1,7 @@
-import { SmileOutlined } from '@ant-design/icons';
-import { Menu, MenuProps } from 'antd';
+import { Rectangle } from '@hpe.com/glide-data-grid';
 import React, { MutableRefObject, useEffect, useRef } from 'react';
+
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 
 // eslint-disable-next-line
 function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void) {
@@ -22,50 +23,38 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void)
   }, [ref, handler]);
 }
 
-export interface TableActionMenuProps extends MenuProps {
-  x: number;
-  y: number;
+export interface TableActionMenuProps {
+  bounds: Rectangle;
   open: boolean;
   handleClose: () => void;
+  items?: MenuItem[];
 }
 
 export const TableActionMenu: React.FC<TableActionMenuProps> = ({
-  x,
-  y,
+  bounds,
   open,
   handleClose,
   items,
 }) => {
-  const containerRef = useRef(null);
-  useOutsideClickHandler(containerRef, handleClose);
-
+  const divRef = useRef<HTMLDivElement | null>(null);
+  useOutsideClickHandler(divRef, handleClose);
   return (
-    <div
-      ref={containerRef}
-      style={{
-        border: 'solid 1px gold',
-        display: !open ? 'none' : undefined,
-        left: x,
-        position: 'fixed',
-        top: y,
-        width: 200,
-      }}>
-      <Menu items={items} />
-    </div>
+    <Dropdown autoWidthOverlay menu={items} open={open} placement="bottomLeft">
+      <div
+        ref={divRef}
+        style={
+          open
+            ? {
+                height: bounds.height,
+                left: bounds.x,
+                position: 'fixed',
+                top: bounds.y,
+                width: bounds.width,
+              }
+            : {}
+        }
+        onClick={handleClose}
+      />
+    </Dropdown>
   );
 };
-
-export const placeholderMenuItems: MenuProps['items'] = [
-  {
-    disabled: false,
-    icon: <SmileOutlined />,
-    key: '1',
-    label: 'Menu Placeholder',
-  },
-  {
-    disabled: false,
-    icon: <SmileOutlined />,
-    key: '2',
-    label: 'Other Menu Thing',
-  },
-];

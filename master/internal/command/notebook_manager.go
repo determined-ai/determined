@@ -9,7 +9,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -18,15 +17,14 @@ import (
 )
 
 type notebookManager struct {
-	db         *db.PgDB
-	rm         rm.ResourceManager
-	taskLogger *task.Logger
+	db *db.PgDB
+	rm rm.ResourceManager
 }
 
 func (n *notebookManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		tryRestoreCommandsByType(ctx, n.db, n.rm, n.taskLogger, model.TaskTypeNotebook)
+		tryRestoreCommandsByType(ctx, n.db, n.rm, model.TaskTypeNotebook)
 
 	case actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
@@ -59,8 +57,9 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
+		msg.CommandID = string(taskID)
 		if err := createGenericCommandActor(
-			ctx, n.db, n.rm, n.taskLogger, taskID, model.TaskTypeNotebook, jobID,
+			ctx, n.db, n.rm, taskID, model.TaskTypeNotebook, jobID,
 			model.JobTypeNotebook, msg,
 		); err != nil {
 			ctx.Log().WithError(err).Error("failed to launch notebook")

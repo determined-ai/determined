@@ -5,7 +5,7 @@ SHORT_GIT_HASH := $(shell git rev-parse --short HEAD)
 ARTIFACTS_DIR := /tmp/artifacts
 
 # Model-hub library environments will be built on top of the default GPU and CPU images in master/pkg/model/defaults.go
-DEFAULT_GPU_IMAGE := determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-9b5db1b
+DEFAULT_GPU_IMAGE := determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca
 
 ############REMINDER############
 # When bumping third-party library versions, remember to bump versions in
@@ -43,7 +43,8 @@ clean:
 
 .PHONY: build
 build:
-	python setup.py -q bdist_wheel
+	PYTHONWARNINGS=ignore:Normalizing:UserWarning:setuptools.dist \
+		python -m build -nxw >/dev/null
 
 build-examples/stamp: $(HF_EXAMPLES_DIRS) $(MMDET_EXAMPLE_DIR)
 	touch $@

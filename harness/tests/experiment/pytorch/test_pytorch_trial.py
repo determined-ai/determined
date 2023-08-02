@@ -1,18 +1,22 @@
 # type: ignore
+import contextlib
 import importlib
+import io
 import os
 import pathlib
-import random
 import sys
 import typing
+from unittest import mock
 
 import numpy as np
 import pytest
 import torch
+from _pytest import monkeypatch
+from torch.distributed import launcher
 
 import determined as det
-from determined import gpu, pytorch
-from tests.experiment import utils  # noqa: I100
+from determined import pytorch
+from tests.experiment import pytorch_utils, utils  # noqa: I100
 from tests.experiment.fixtures import pytorch_onevar_model
 
 # Apex is included only for GPU trials.
@@ -49,6 +53,7 @@ def check_equal_structures(a: typing.Any, b: typing.Any) -> None:
         assert a == b
 
 
+@pytest.mark.pytorch
 class TestPyTorchTrial:
     def setup_method(self) -> None:
         # This training setup is not guaranteed to converge in general,
@@ -64,12 +69,14 @@ class TestPyTorchTrial:
             "disable_dataset_reproducibility_checks": False,
         }
 
-    def test_onevar_single(self) -> None:
+    def test_onevar_single(self, tmp_path: pathlib.Path) -> None:
         """Assert that the training loss and validation error decrease monotonically."""
-        trial, trial_controller = create_trial_and_trial_controller(
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+        trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             trial_seed=self.trial_seed,
+            tensorboard_path=tensorboard_path,
         )
 
         train_steps, metrics = trial_controller._train_with_boundaries(
@@ -94,11 +101,14 @@ class TestPyTorchTrial:
         for older, newer in zip(metrics, metrics[1:]):
             assert newer["loss"] <= older["loss"]
 
-    def test_training_metrics(self) -> None:
-        trial, trial_controller = create_trial_and_trial_controller(
+    def test_training_metrics(self, tmp_path: pathlib.Path) -> None:
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
+        trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrialWithTrainingMetrics,
             hparams=self.hparams,
             trial_seed=self.trial_seed,
+            tensorboard_path=tensorboard_path,
         )
 
         train_steps, metrics = trial_controller._train_with_boundaries(
@@ -116,12 +126,15 @@ class TestPyTorchTrial:
         for metric in metrics:
             assert "mse" in metric
 
-    def test_nonscalar_validation(self) -> None:
-        trial, trial_controller = create_trial_and_trial_controller(
+    def test_nonscalar_validation(self, tmp_path: pathlib.Path) -> None:
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
+        trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrialWithNonScalarValidation,
             hparams=self.hparams,
             expose_gpus=True,
             trial_seed=self.trial_seed,
+            tensorboard_path=tensorboard_path,
         )
 
         val_metrics = trial_controller._validate()
@@ -133,7 +146,9 @@ class TestPyTorchTrial:
             "lr_scheduler_step_mode": pytorch.LRScheduler.StepMode.STEP_EVERY_BATCH.value,
             **self.hparams,
         }
-        self.checkpoint_and_restore(updated_hparams, tmp_path, (100, 100))
+        self.checkpoint_and_check_metrics(
+            pytorch_onevar_model.OneVarTrialWithLRScheduler, updated_hparams, tmp_path, (100, 100)
+        )
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
@@ -159,8 +174,11 @@ class TestPyTorchTrial:
             **self.hparams,
         }
 
-        tm_a, tm_b = self.checkpoint_and_restore(
-            hparams=updated_hparams, tmp_path=tmp_path, steps=(200, 200)
+        tm_a, tm_b = self.checkpoint_and_check_metrics(
+            trial_class=pytorch_onevar_model.OneVarApexAMPTrial,
+            hparams=updated_hparams,
+            tmp_path=tmp_path,
+            steps=(1, 1),
         )
 
         amp_metrics_test(trial_class, tm_a)
@@ -169,9 +187,10 @@ class TestPyTorchTrial:
     def test_restore_invalid_checkpoint(self, tmp_path: pathlib.Path) -> None:
         # Build, train, and save a checkpoint with the normal hyperparameters.
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        tensorboard_path = tmp_path.joinpath("tensorboard")
 
         # Trial A: run with 100 batches and checkpoint
-        trial_A, trial_controller_A = create_trial_and_trial_controller(
+        trial_A, trial_controller_A = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             trial_seed=self.trial_seed,
@@ -179,6 +198,7 @@ class TestPyTorchTrial:
             min_validation_batches=100,
             min_checkpoint_batches=100,
             checkpoint_dir=checkpoint_dir,
+            tensorboard_path=tensorboard_path,
         )
 
         trial_controller_A.run()
@@ -190,7 +210,7 @@ class TestPyTorchTrial:
         assert invalid_hparams != self.hparams
 
         with pytest.raises(RuntimeError):
-            trial_A, trial_controller_A = create_trial_and_trial_controller(
+            trial_A, trial_controller_A = pytorch_utils.create_trial_and_trial_controller(
                 trial_class=pytorch_onevar_model.OneVarTrial,
                 hparams=invalid_hparams,
                 trial_seed=self.trial_seed,
@@ -198,23 +218,27 @@ class TestPyTorchTrial:
                 min_validation_batches=100,
                 min_checkpoint_batches=sys.maxsize,
                 checkpoint_dir=checkpoint_dir,
+                tensorboard_path=tensorboard_path,
                 latest_checkpoint=trial_A.checkpoint_callback.uuids[0],
                 steps_completed=trial_controller_A.state.batches_trained,
             )
             trial_controller_A.run()
 
-    def test_reproducibility(self) -> None:
+    def test_reproducibility(self, tmp_path: pathlib.Path) -> None:
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
         training_metrics = {"A": [], "B": []}
         validation_metrics = {"A": [], "B": []}
 
         # Trial A
-        trial_A, trial_controller_A = create_trial_and_trial_controller(
+        trial_A, trial_controller_A = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             trial_seed=self.trial_seed,
             max_batches=1000,
             min_validation_batches=100,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
         )
         trial_controller_A.run()
 
@@ -223,13 +247,14 @@ class TestPyTorchTrial:
         validation_metrics["A"] = metrics_callback.validation_metrics
 
         # Trial B
-        trial_B, trial_controller_B = create_trial_and_trial_controller(
+        trial_B, trial_controller_B = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             trial_seed=self.trial_seed,
             max_batches=1000,
             min_validation_batches=100,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
         )
         trial_controller_B.run()
 
@@ -245,17 +270,20 @@ class TestPyTorchTrial:
         for A, B in zip(validation_metrics["A"], validation_metrics["B"]):
             utils.assert_equivalent_metrics(A, B)
 
-    def test_custom_eval(self) -> None:
+    def test_custom_eval(self, tmp_path: pathlib.Path) -> None:
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
         training_metrics = {"A": [], "B": []}  # type: typing.Dict
         validation_metrics = {"A": [], "B": []}  # type: typing.Dict
 
-        trial_A, trial_controller_A = create_trial_and_trial_controller(
+        trial_A, trial_controller_A = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             trial_seed=self.trial_seed,
             max_batches=900,
             min_validation_batches=100,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
         )
         trial_controller_A.run()
 
@@ -264,7 +292,7 @@ class TestPyTorchTrial:
         training_metrics["A"] = metrics_callback.training_metrics
         validation_metrics["A"] = metrics_callback.validation_metrics
 
-        trial_B, trial_controller_B = create_trial_and_trial_controller(
+        trial_B, trial_controller_B = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrialCustomEval,
             hparams=self.hparams,
             trial_seed=self.trial_seed,
@@ -272,6 +300,7 @@ class TestPyTorchTrial:
             max_batches=900,
             min_validation_batches=100,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
         )
         trial_controller_B.run()
 
@@ -285,17 +314,20 @@ class TestPyTorchTrial:
         for original, custom_eval in zip(validation_metrics["A"], validation_metrics["B"]):
             assert np.allclose(original["val_loss"], custom_eval["val_loss"], atol=1e-6)
 
-    def test_grad_clipping(self) -> None:
+    def test_grad_clipping(self, tmp_path: pathlib.Path) -> None:
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
         training_metrics = {"original": [], "clipped_by_norm": [], "clipped_by_val": []}
         validation_metrics = {"original": [], "clipped_by_norm": [], "clipped_by_val": []}
 
-        trial, controller = create_trial_and_trial_controller(
+        trial, controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrialGradClipping,
             hparams=self.hparams,
             trial_seed=self.trial_seed,
             max_batches=100,
             min_validation_batches=10,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
         )
         controller.run()
 
@@ -305,13 +337,14 @@ class TestPyTorchTrial:
         validation_metrics["original"] = metrics_callback.validation_metrics
 
         updated_hparams = {"gradient_clipping_l2_norm": 0.0001, **self.hparams}
-        trial, controller = create_trial_and_trial_controller(
+        trial, controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrialGradClipping,
             hparams=updated_hparams,
             trial_seed=self.trial_seed,
             max_batches=100,
             min_validation_batches=10,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
         )
         controller.run()
 
@@ -328,13 +361,14 @@ class TestPyTorchTrial:
             assert original["loss"] != clipped["loss"]
 
         updated_hparams = {"gradient_clipping_value": 0.0001, **self.hparams}
-        trial, controller = create_trial_and_trial_controller(
+        trial, controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrialGradClipping,
             hparams=updated_hparams,
             trial_seed=self.trial_seed,
             max_batches=100,
             min_validation_batches=10,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
         )
         controller.run()
 
@@ -350,19 +384,23 @@ class TestPyTorchTrial:
                 continue
             assert original["loss"] != clipped["loss"]
 
-    def test_per_metric_reducers(self) -> None:
-        _, trial_controller = create_trial_and_trial_controller(
+    def test_per_metric_reducers(self, tmp_path: pathlib.Path) -> None:
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
+        _, trial_controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrialPerMetricReducers,
             hparams=self.hparams,
             trial_seed=self.trial_seed,
             max_batches=2,
             min_validation_batches=1,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
         )
         trial_controller.run()
 
     def test_callbacks(self, tmp_path: pathlib.Path) -> None:
         checkpoint_dir = tmp_path.joinpath("checkpoint")
+        tensorboard_path = tmp_path.joinpath("tensorboard")
 
         hparams1 = dict(self.hparams)
         hparams1["global_batch_size"] = 2
@@ -373,10 +411,11 @@ class TestPyTorchTrial:
             // hparams1["global_batch_size"]
         )
 
-        trial, trial_controller = create_trial_and_trial_controller(
+        trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrialCallbacks,
             hparams=hparams1,
             checkpoint_dir=str(checkpoint_dir),
+            tensorboard_path=tensorboard_path,
             max_batches=num_batches,
             min_checkpoint_batches=sys.maxsize,
             min_validation_batches=sys.maxsize,
@@ -400,10 +439,11 @@ class TestPyTorchTrial:
         }
         assert trial.legacy_counter.__dict__ == {"legacy_on_training_epochs_start_calls": 2}
 
-        trial, trial_controller = create_trial_and_trial_controller(
+        trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrialCallbacks,
             hparams=hparams1,
             checkpoint_dir=str(checkpoint_dir),
+            tensorboard_path=tensorboard_path,
             max_batches=num_batches,
             min_checkpoint_batches=sys.maxsize,
             min_validation_batches=num_batches // 2,
@@ -428,10 +468,11 @@ class TestPyTorchTrial:
         }
         assert trial.legacy_counter.__dict__ == {"legacy_on_training_epochs_start_calls": 2}
 
-        trial, trial_controller = create_trial_and_trial_controller(
+        trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrialCallbacks,
             hparams=hparams1,
             checkpoint_dir=str(checkpoint_dir),
+            tensorboard_path=tensorboard_path,
             max_batches=num_batches,
             min_checkpoint_batches=num_batches // 2,
             min_validation_batches=sys.maxsize,
@@ -461,30 +502,37 @@ class TestPyTorchTrial:
     )
     def test_context(
         self,
+        tmp_path: pathlib.Path,
         lr_scheduler_step_mode,
     ) -> None:
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
         hparams = self.hparams.copy()
         hparams["lr_scheduler_step_mode"] = lr_scheduler_step_mode
         hparams["global_batch_size"] = 64
 
-        _, controller = create_trial_and_trial_controller(
+        _, controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrialAccessContext,
             hparams=hparams,
             trial_seed=self.trial_seed,
             max_batches=1,
             min_validation_batches=1,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
         )
         controller.run()
 
-    def test_variable_workload_size(self) -> None:
-        trial, controller = create_trial_and_trial_controller(
+    def test_variable_workload_size(self, tmp_path: pathlib.Path) -> None:
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
+        trial, controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             trial_seed=self.trial_seed,
             max_batches=100,
             min_validation_batches=10,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
         )
 
         training_metrics = []
@@ -509,8 +557,10 @@ class TestPyTorchTrial:
             range(1, total_steps)
         ), "total batches did not match expected"
 
-    def test_custom_reducers(self) -> None:
-        trial, controller = create_trial_and_trial_controller(
+    def test_custom_reducers(self, tmp_path: pathlib.Path) -> None:
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
+        trial, controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             trial_seed=self.trial_seed,
@@ -518,6 +568,7 @@ class TestPyTorchTrial:
             min_validation_batches=30,
             min_checkpoint_batches=sys.maxsize,
             scheduling_unit=10,
+            tensorboard_path=tensorboard_path,
         )
         controller.run()
         metrics_callback = trial.metrics_callback
@@ -540,14 +591,17 @@ class TestPyTorchTrial:
             assert "fn_reducer" in metrics
             assert metrics["fn_reducer"] == expect
 
-    def test_reject_unnamed_nondict_metric(self) -> None:
-        trial, controller = create_trial_and_trial_controller(
+    def test_reject_unnamed_nondict_metric(self, tmp_path: pathlib.Path) -> None:
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
+        trial, controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             trial_seed=self.trial_seed,
             max_batches=100,
             min_validation_batches=10,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
         )
 
         def reducer_fn(_):
@@ -559,17 +613,20 @@ class TestPyTorchTrial:
         with pytest.raises(AssertionError, match="name=None but it did not return a dict"):
             controller.run()
 
-    def test_reject_named_dict_metric(self) -> None:
+    def test_reject_named_dict_metric(self, tmp_path: pathlib.Path) -> None:
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
         # If at some point in the future the webui is able to render scalar metrics inside
         # nested dictionary metrics, this test could go away.
 
-        _, controller = create_trial_and_trial_controller(
+        _, controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             trial_seed=self.trial_seed,
             max_batches=100,
             min_validation_batches=10,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
         )
 
         def reducer_fn(_):
@@ -581,34 +638,40 @@ class TestPyTorchTrial:
         with pytest.raises(AssertionError, match="with name set but it returned a dict anyway"):
             controller.run()
 
-    def test_require_disable_dataset_reproducibility(self) -> None:
+    def test_require_disable_dataset_reproducibility(self, tmp_path: pathlib.Path) -> None:
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
         hparams = dict(self.hparams)
         hparams["dataloader_type"] = "torch"
         hparams["disable_dataset_reproducibility_checks"] = False
 
         with pytest.raises(RuntimeError, match="you can disable this check by calling"):
-            trial, controller = create_trial_and_trial_controller(
+            trial, controller = pytorch_utils.create_trial_and_trial_controller(
                 trial_class=pytorch_onevar_model.OneVarTrial,
                 hparams=hparams,
                 trial_seed=self.trial_seed,
                 max_batches=100,
                 min_validation_batches=10,
                 min_checkpoint_batches=sys.maxsize,
+                tensorboard_path=tensorboard_path,
             )
             controller.run()
 
-    def test_custom_dataloader(self) -> None:
+    def test_custom_dataloader(self, tmp_path: pathlib.Path) -> None:
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
         hparams = dict(self.hparams)
         hparams["dataloader_type"] = "torch"
         hparams["disable_dataset_reproducibility_checks"] = True
 
-        trial, controller = create_trial_and_trial_controller(
+        trial, controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=hparams,
             trial_seed=self.trial_seed,
             max_batches=100,
             min_validation_batches=10,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
         )
         controller.run()
 
@@ -628,7 +691,9 @@ class TestPyTorchTrial:
         for older, newer in zip(training_metrics, training_metrics[1:]):
             assert newer["loss"] <= older["loss"]
 
-    def test_gradient_aggregation(self) -> None:
+    def test_gradient_aggregation(self, tmp_path: pathlib.Path) -> None:
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
         AGG_FREQ = 2
         exp_config = utils.make_default_exp_config(
             self.hparams,
@@ -642,7 +707,7 @@ class TestPyTorchTrial:
             }
         )
 
-        trial, controller = create_trial_and_trial_controller(
+        trial, controller = pytorch_utils.create_trial_and_trial_controller(
             exp_config=exp_config,
             trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
@@ -650,6 +715,7 @@ class TestPyTorchTrial:
             max_batches=100,
             min_validation_batches=10,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
         )
 
         controller.run()
@@ -689,13 +755,15 @@ class TestPyTorchTrial:
             "apex-with-noop-scaler",
         ],
     )
-    def test_amp(self, trial_class) -> None:
+    def test_amp(self, tmp_path: pathlib.Path, trial_class) -> None:
         """Train a linear model using Determined with Automated Mixed Precision in three ways:
         Using Apex and using PyTorch AMP both "automatically" and "manually". In the "manual" case,
         we use the context manager ``autoscale`` in the model's training and
         evaluating methods; a scaler object is wrapped in a Determined context. The same
         is done under the hood in the first two cases.
         """
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
         if trial_class is pytorch_onevar_model.OneVarApexAMPTrial and not HAVE_APEX:
             pytest.skip("Apex not available")
 
@@ -703,7 +771,7 @@ class TestPyTorchTrial:
         hparams = dict(self.hparams)
         hparams["global_batch_size"] = 1
 
-        trial, controller = create_trial_and_trial_controller(
+        trial, controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
@@ -711,6 +779,7 @@ class TestPyTorchTrial:
             max_batches=20,
             min_validation_batches=1,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
         )
 
         controller.run()
@@ -735,46 +804,52 @@ class TestPyTorchTrial:
             "manual",
         ],
     )
-    def test_amp_with_gradient_aggregation(self, trial_class) -> None:
+    def test_amp_with_gradient_aggregation(self, tmp_path: pathlib.Path, trial_class) -> None:
         """Similar to test_amp but with gradient aggregation."""
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
         if trial_class is pytorch_onevar_model.OneVarApexAMPTrial and not HAVE_APEX:
             pytest.skip("Apex not available")
 
         # The assertions logic in make_amp_workloads require a batch size of one
         hparams = dict(self.hparams)
         hparams["global_batch_size"] = 1
+        aggregation_frequency = 2
 
-        AGG_FREQ = 2
         exp_config = utils.make_default_exp_config(
             hparams,
             scheduling_unit=1,
             searcher_metric=trial_class._searcher_metric,
         )
-        exp_config["optimizations"].update(
-            {
-                "aggregation_frequency": AGG_FREQ,
-                "average_aggregated_gradients": True,
-            }
-        )
 
-        trial, trial_controller = create_trial_and_trial_controller(
+        trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
             exp_config=exp_config,
             trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
             expose_gpus=True,
-            max_batches=20 * AGG_FREQ,
+            max_batches=20 * aggregation_frequency,
             min_validation_batches=1,
             min_checkpoint_batches=sys.maxsize,
+            tensorboard_path=tensorboard_path,
+            aggregation_frequency=aggregation_frequency,
         )
         trial_controller.run()
 
         metrics_callback = trial.metrics_callback
         training_metrics = metrics_callback.training_metrics
 
-        amp_metrics_test(trial_class, training_metrics, agg_freq=AGG_FREQ)
+        amp_metrics_test(trial_class, training_metrics, agg_freq=aggregation_frequency)
 
-    def test_trainer(self) -> None:
+    def test_trainer(self, monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Path) -> None:
+        # there is no direct way to set tensorboard path in Trainer API
+        def mock_get_tensorboard_path(dummy: typing.Dict[str, typing.Any]) -> pathlib.Path:
+            return tmp_path.joinpath("tensorboard")
+
+        monkeypatch.setattr(
+            pytorch.PyTorchTrialContext, "get_tensorboard_path", mock_get_tensorboard_path
+        )
+
         # Train for 100 batches, checkpoint and validate every 50 batches
         max_batches = 100
         with pytorch.init(hparams=self.hparams) as train_context:
@@ -800,7 +875,17 @@ class TestPyTorchTrial:
             len(checkpoint_callback.uuids) == 2
         ), "checkpoint callback did not return expected length of uuids"
 
-    def test_trainer_callbacks(self) -> None:
+    def test_trainer_callbacks(
+        self, monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Path
+    ) -> None:
+        # there is no direct way to set tensorboard path in Trainer API
+        def mock_get_tensorboard_path(dummy: typing.Dict[str, typing.Any]) -> pathlib.Path:
+            return tmp_path.joinpath("tensorboard")
+
+        monkeypatch.setattr(
+            pytorch.PyTorchTrialContext, "get_tensorboard_path", mock_get_tensorboard_path
+        )
+
         max_epochs = 2
         checkpoint_batches = 5
         validation_batches = 10
@@ -839,24 +924,103 @@ class TestPyTorchTrial:
 
         assert trial.legacy_counter.__dict__ == {"legacy_on_training_epochs_start_calls": 2}
 
-    def checkpoint_and_restore(
-        self, hparams: typing.Dict, tmp_path: pathlib.Path, steps: typing.Tuple[int, int] = (1, 1)
+    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
+    @pytest.mark.gpu_parallel
+    def test_gradient_aggregation_parallel(self, tmp_path: pathlib.Path):
+        launch_config = pytorch_utils.setup_torch_distributed()
+
+        val_metrics = launcher.elastic_launch(launch_config, run_identity)(tmp_path)
+
+        # weights returned by both models are the same.
+        model_1_metrics = val_metrics[0]
+        model_1_weights = [model_1_metrics[i]["weight"] for i in range(len(model_1_metrics))]
+        model_2_metrics = val_metrics[1]
+        model_2_weights = [model_2_metrics[i]["weight"] for i in range(len(model_2_metrics))]
+
+        expected_weights = calculate_gradients(num_epochs=1)
+
+        assert model_1_weights == pytest.approx(
+            expected_weights
+        ), f"{model_1_weights} != {expected_weights}"
+
+        assert model_2_weights == pytest.approx(
+            expected_weights
+        ), f"{model_2_weights} != {expected_weights}"
+
+    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
+    @pytest.mark.gpu_parallel
+    @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"])
+    def test_pytorch_distributed_with_amp(self, tmp_path: pathlib.Path, api_style):
+        launch_config = pytorch_utils.setup_torch_distributed()
+
+        outputs = launcher.elastic_launch(launch_config, run_amp)(tmp_path, api_style)
+        launcher.elastic_launch(launch_config, run_amp)(tmp_path, api_style, outputs[0])
+
+    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
+    @pytest.mark.gpu_parallel
+    def test_distributed_logging(self, tmp_path: pathlib.Path):
+        num_procs = 2
+
+        launch_config = pytorch_utils.setup_torch_distributed(local_procs=num_procs)
+
+        outputs = launcher.elastic_launch(launch_config, run_no_op)(tmp_path)
+
+        log_output = sum([outputs[i] for i in range(num_procs)], [])
+
+        patterns = [f"finished train_batch for rank {i}" for i in range(num_procs)]
+
+        utils.assert_patterns_in_logs(log_output, patterns)
+
+    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
+    @pytest.mark.gpu_parallel
+    @pytest.mark.parametrize("dataset_len", [2, 3])
+    def test_epoch_sync(self, tmp_path: pathlib.Path, dataset_len: int):
+        num_procs = 2
+
+        launch_config = pytorch_utils.setup_torch_distributed(local_procs=num_procs)
+
+        num_steps = 10
+        global_batch_size = 2
+        outputs = launcher.elastic_launch(launch_config, run_no_op)(
+            tmp_path, num_steps, global_batch_size, dataset_len
+        )
+
+        log_output = sum([outputs[i] for i in range(num_procs)], [])
+
+        batches_per_epoch = (dataset_len + global_batch_size - 1) // global_batch_size  # ceil
+
+        patterns = []
+        for rank in range(num_procs):
+            for batch_idx in range(num_steps):
+                epoch_idx = batch_idx // batches_per_epoch
+                patterns.append(f"rank {rank} finished batch {batch_idx} in epoch {epoch_idx}")
+
+        utils.assert_patterns_in_logs(log_output, patterns)
+
+    def checkpoint_and_check_metrics(
+        self,
+        trial_class: pytorch_onevar_model.OneVarTrial,
+        hparams: typing.Dict,
+        tmp_path: pathlib.Path,
+        steps: typing.Tuple[int, int] = (1, 1),
     ) -> typing.Tuple[
         typing.Sequence[typing.Dict[str, typing.Any]], typing.Sequence[typing.Dict[str, typing.Any]]
     ]:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        tensorboard_path = tmp_path.joinpath("tensorboard")
         training_metrics = {"A": [], "B": []}
         validation_metrics = {"A": [], "B": []}
 
-        # Trial A: train 100 batches and checkpoint
-        trial_A, trial_controller_A = create_trial_and_trial_controller(
-            trial_class=pytorch_onevar_model.OneVarTrialWithLRScheduler,
+        # Trial A: train some batches and checkpoint
+        trial_A, trial_controller_A = pytorch_utils.create_trial_and_trial_controller(
+            trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
             max_batches=steps[0],
             min_validation_batches=steps[0],
             min_checkpoint_batches=steps[0],
             checkpoint_dir=checkpoint_dir,
+            tensorboard_path=tensorboard_path,
         )
 
         trial_controller_A.run()
@@ -872,15 +1036,16 @@ class TestPyTorchTrial:
 
         assert len(checkpoint_callback.uuids) == 1, "trial did not return a checkpoint UUID"
 
-        # Trial A: restore from checkpoint and train for 100 more batches
-        trial_A, trial_controller_A = create_trial_and_trial_controller(
-            trial_class=pytorch_onevar_model.OneVarTrialWithLRScheduler,
+        # Trial A: restore from checkpoint and train
+        trial_A, trial_controller_A = pytorch_utils.create_trial_and_trial_controller(
+            trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
             max_batches=steps[0] + steps[1],
             min_validation_batches=steps[1],
             min_checkpoint_batches=sys.maxsize,
             checkpoint_dir=checkpoint_dir,
+            tensorboard_path=tensorboard_path,
             latest_checkpoint=checkpoint_callback.uuids[0],
             steps_completed=trial_controller_A.state.batches_trained,
         )
@@ -894,15 +1059,16 @@ class TestPyTorchTrial:
             len(training_metrics["A"]) == steps[0] + steps[1]
         ), "training metrics returned did not match expected length"
 
-        # Trial B: run for 200 steps
-        trial_B, trial_controller_B = create_trial_and_trial_controller(
-            trial_class=pytorch_onevar_model.OneVarTrialWithLRScheduler,
+        # Trial B: run for some steps
+        trial_B, trial_controller_B = pytorch_utils.create_trial_and_trial_controller(
+            trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
             max_batches=steps[0] + steps[1],
-            min_validation_batches=steps[0] + steps[1],
+            min_validation_batches=steps[0],
             min_checkpoint_batches=sys.maxsize,
             checkpoint_dir=checkpoint_dir,
+            tensorboard_path=tensorboard_path,
         )
         trial_controller_B.run()
 
@@ -919,20 +1085,78 @@ class TestPyTorchTrial:
 
         return (training_metrics["A"], training_metrics["B"])
 
+    def test_trial_validation_checkpointing(self, tmp_path: pathlib.Path):
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
+        trial, controller = pytorch_utils.create_trial_and_trial_controller(
+            trial_class=pytorch_onevar_model.OneVarTrial,
+            hparams=self.hparams,
+            trial_seed=self.trial_seed,
+            max_batches=100,
+            tensorboard_path=tensorboard_path,
+        )
+
+        # Checkpoint only if the following conditions are met:
+        # - the checkpoint is not current
+        # - the best validation metric returned is better per smaller_is_better
+        checkpoint_conditions = [
+            {
+                "checkpoint_is_current": False,
+                "best_validation": float("inf"),
+                "smaller_is_better": True,
+                "checkpoint": True,
+            },
+            {
+                "checkpoint_is_current": False,
+                "best_validation": float("-inf"),
+                "smaller_is_better": False,
+                "checkpoint": True,
+            },
+            {
+                "checkpoint_is_current": False,
+                "best_validation": sys.maxsize,
+                "smaller_is_better": False,
+                "checkpoint": False,
+            },
+            {
+                "checkpoint_is_current": True,
+                "best_validation": sys.maxsize,
+                "smaller_is_better": False,
+                "checkpoint": False,
+            },
+        ]
+        for checkpoint_condition in checkpoint_conditions:
+            controller.smaller_is_better = checkpoint_condition["smaller_is_better"]
+            controller._checkpoint_is_current = mock.MagicMock(
+                return_value=checkpoint_condition["checkpoint_is_current"]
+            )
+            controller.core_context.train.get_experiment_best_validation = mock.MagicMock(
+                return_value=checkpoint_condition["best_validation"]
+            )
+            controller._checkpoint = mock.MagicMock()
+            controller._validate(det.core.DummySearcherOperation(length=100, is_chief=True))
+            controller.core_context.train.get_experiment_best_validation.assert_called_once()
+            if checkpoint_condition["checkpoint"]:
+                controller._checkpoint.assert_called_once()
+            controller.core_context.train.get_experiment_best_validation.reset_mock()
+            controller._checkpoint.reset_mock()
+
     @pytest.mark.parametrize(
         "ckpt",
         [
             "0.20.0-pytorch",
         ],
     )
-    def test_legacy_checkpoint_loading(self, ckpt: str):
+    def test_legacy_checkpoint_loading(self, tmp_path: pathlib.Path, ckpt: str):
         """
         This test exists to validate the checkpoint load path from older checkpoints into
         post-Trainer API checkpoints. Trainer API deprecated workload_sequencer.pkl and
         replaced it with trial_state.pkl. It can be deleted some time after Trainer API release.
         """
         checkpoint_dir = os.path.join(utils.fixtures_path("ancient-checkpoints"), f"{ckpt}")
-        trial, trial_controller = create_trial_and_trial_controller(
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
+        trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrial,
             hparams={"dataloader_type": "determined", "global_batch_size": 16},
             trial_seed=0,
@@ -940,6 +1164,7 @@ class TestPyTorchTrial:
             min_validation_batches=1,
             min_checkpoint_batches=1,
             checkpoint_dir=checkpoint_dir,
+            tensorboard_path=tensorboard_path,
         )
 
         # Manually set trial ID to match checkpoint.
@@ -957,7 +1182,73 @@ class TestPyTorchTrial:
         assert state.batches_trained == 1, "batches_trained does not match"
         assert state.epochs_trained == 0, "epochs_trained does not match"
 
+    @pytest.mark.gpu
+    @pytest.mark.cpu
+    def test_rng_restore(self, tmp_path: pathlib.Path):
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        tensorboard_path = tmp_path.joinpath("tensorboard")
 
+        config_base = utils.load_config(utils.fixtures_path("pytorch_no_op/const.yaml"))
+        hparams = config_base["hyperparameters"]
+
+        exp_config = utils.make_default_exp_config(
+            hparams,
+            scheduling_unit=1,
+            searcher_metric="validation_loss",
+            checkpoint_dir=checkpoint_dir,
+        )
+        exp_config.update(config_base)
+
+        example_path = utils.fixtures_path("pytorch_no_op/model_def.py")
+        trial_class = utils.import_class_from_module("NoopPyTorchTrial", example_path)
+        trial_class._searcher_metric = "validation_error"
+
+        trial_A, trial_controller_A = pytorch_utils.create_trial_and_trial_controller(
+            trial_class=trial_class,
+            hparams=hparams,
+            trial_seed=self.trial_seed,
+            exp_config=exp_config,
+            max_batches=5,
+            min_validation_batches=1,
+            min_checkpoint_batches=1,
+            checkpoint_dir=checkpoint_dir,
+            tensorboard_path=tensorboard_path,
+            expose_gpus=True,
+        )
+
+        trial_controller_A.run()
+
+        # reset random seed before rerun
+        trial_controller_A._set_random_seeds(0)
+
+        checkpoints = trial_A.checkpoint_callback.uuids
+
+        assert len(checkpoints) == 5, "trial did not create all checkpoints"
+
+        # Trial B: restore from checkpoint and train for 4 more batches, not passing trial seed
+        trial_B, trial_controller_B = pytorch_utils.create_trial_and_trial_controller(
+            trial_class=trial_class,
+            hparams=hparams,
+            exp_config=exp_config,
+            max_batches=5,
+            min_validation_batches=1,
+            min_checkpoint_batches=1,
+            checkpoint_dir=checkpoint_dir,
+            tensorboard_path=tensorboard_path,
+            latest_checkpoint=checkpoints[0],
+            steps_completed=1,
+            expose_gpus=True,
+        )
+        trial_controller_B.run()
+
+        # compare every aligning batch
+        metrics_before = trial_A.metrics_callback.validation_metrics[1:]
+        metrics_after = trial_B.metrics_callback.validation_metrics
+
+        assert metrics_before == metrics_after, "mismatched metrics in RNG restore"
+
+
+@pytest.mark.pytorch
 @pytest.mark.parametrize(
     "ckpt,istrial,trial_spec,trial_kwargs",
     [
@@ -1018,7 +1309,7 @@ def amp_metrics_test(trial_class, training_metrics, agg_freq=1):
             assert metrics["scale"] == scale, "scale is inconsistent between batches"
         else:
             metrics["scale"] = scale
-        loss = metrics["loss"].item()
+        loss = metrics["loss"]
         scale_before = metrics["scale_before"]
         scaled_loss = loss * scale_before
         scale = metrics["scale"]
@@ -1055,81 +1346,176 @@ def amp_metrics_test(trial_class, training_metrics, agg_freq=1):
                 loss_prev = loss
 
 
-def create_trial_and_trial_controller(
-    trial_class: pytorch.PyTorchTrial,
-    hparams: typing.Dict,
-    scheduling_unit: int = 1,
-    trial_seed: int = None,
-    exp_config: typing.Optional[typing.Dict] = None,
-    checkpoint_dir: typing.Optional[str] = None,
-    latest_checkpoint: typing.Optional[str] = None,
-    steps_completed: int = 0,
-    expose_gpus: bool = False,
-    max_batches: int = 100,
-    min_checkpoint_batches: int = sys.maxsize,
-    min_validation_batches: int = sys.maxsize,
-) -> typing.Tuple[pytorch.PyTorchTrial, pytorch._PyTorchTrialController]:
-    assert issubclass(
-        trial_class, pytorch.PyTorchTrial
-    ), "pytorch test method called for non-pytorch trial"
+def run_identity(tmp_path: pathlib.Path):
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
-    if not exp_config:
-        assert hasattr(
-            trial_class, "_searcher_metric"
-        ), "Trial classes for unit tests should be annotated with a _searcher_metric attribute"
-        searcher_metric = trial_class._searcher_metric
-        exp_config = utils.make_default_exp_config(
-            hparams, scheduling_unit, searcher_metric, checkpoint_dir=checkpoint_dir
-        )
+    config = utils.load_config(utils.fixtures_path("pytorch_identity/distributed.yaml"))
+    hparams = config["hyperparameters"]
 
-    if not trial_seed:
-        trial_seed = random.randint(0, 1 << 31)
+    exp_config = utils.make_default_exp_config(
+        hparams,
+        scheduling_unit=1,
+        searcher_metric="validation_loss",
+        checkpoint_dir=checkpoint_dir,
+    )
+    exp_config.update(config)
+    exp_config["searcher"]["smaller_is_better"] = True
 
-    checkpoint_dir = checkpoint_dir or "/tmp"
-    with det.core._dummy_init(checkpoint_storage=checkpoint_dir) as core_context:
-        core_context.train._trial_id = "1"
-        distributed_backend = det._DistributedBackend()
-        if expose_gpus:
-            gpu_uuids = gpu.get_gpu_uuids()
-        else:
-            gpu_uuids = []
+    # each subprocess must import separately as trial_class cannot be pickled.
+    example_path = utils.fixtures_path("pytorch_identity/model_def.py")
+    trial_class = utils.import_class_from_module("IdentityPyTorchTrial", example_path)
+    trial_class._searcher_metric = "weight"
 
-        pytorch._PyTorchTrialController.pre_execute_hook(trial_seed, distributed_backend)
-        trial_context = pytorch.PyTorchTrialContext(
-            core_context=core_context,
-            trial_seed=trial_seed,
+    tensorboard_path = tmp_path.joinpath("tensorboard")
+
+    trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
+        trial_class=trial_class,
+        hparams=hparams,
+        slots_per_trial=2,
+        max_batches=16,
+        min_validation_batches=1,
+        min_checkpoint_batches=16,
+        checkpoint_dir=checkpoint_dir,
+        tensorboard_path=tensorboard_path,
+        aggregation_frequency=2,
+    )
+
+    trial_controller.run()
+
+    metrics_callback = trial.metrics_callback
+
+    validation_metrics = metrics_callback.validation_metrics
+
+    return validation_metrics
+
+
+def run_amp(tmp_path: pathlib.Path, api_style: str, batches_trained: typing.Optional[int] = 0):
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+    class_selector = {
+        "apex": "MNistApexAMPTrial",
+        "auto": "MNistAutoAMPTrial",
+        "manual": "MNistManualAMPTrial",
+    }
+
+    config = utils.load_config(utils.fixtures_path(f"pytorch_amp/{api_style}_amp_distributed.yaml"))
+    config = config.copy()
+    config.setdefault("profiling", {})
+    config["profiling"]["enabled"] = True
+
+    hparams = config["hyperparameters"]
+
+    exp_config = utils.make_default_exp_config(
+        hparams,
+        scheduling_unit=1,
+        searcher_metric="validation_loss",
+        checkpoint_dir=checkpoint_dir,
+    )
+    exp_config.update(config)
+    exp_config["searcher"]["smaller_is_better"] = True
+
+    example_path = utils.fixtures_path(f"pytorch_amp/{api_style}_amp_model_def.py")
+    trial_class = utils.import_class_from_module(class_selector[api_style], example_path)
+    trial_class._searcher_metric = "validation_loss"
+
+    if batches_trained == 0:
+        return pytorch_utils.train_for_checkpoint(
+            trial_class=trial_class,
             hparams=hparams,
-            slots_per_trial=1,
-            num_gpus=len(gpu_uuids),
-            exp_conf=exp_config,
-            aggregation_frequency=1,
-            steps_completed=steps_completed,
-            managed_training=False,
-            debug_enabled=False,
+            slots_per_trial=2,
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            steps=1,
         )
-        trial_context._set_default_gradient_compression(False)
-        trial_context._set_default_average_aggregated_gradients(True)
-        trial_inst = trial_class(trial_context)
+    else:
+        pytorch_utils.train_from_checkpoint(
+            trial_class=trial_class,
+            hparams=hparams,
+            slots_per_trial=2,
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            steps=(1, 1),
+            batches_trained=batches_trained,
+        )
+        return True
 
-        trial_controller = pytorch._PyTorchTrialController(
-            trial_inst=trial_inst,
-            context=trial_context,
-            max_length=pytorch.Batch(max_batches),
-            checkpoint_period=pytorch.Batch(min_checkpoint_batches),
-            validation_period=pytorch.Batch(min_validation_batches),
-            searcher_metric_name=trial_class._searcher_metric,
-            reporting_period=pytorch.Batch(scheduling_unit),
-            local_training=True,
-            latest_checkpoint=latest_checkpoint,
-            steps_completed=steps_completed,
-            smaller_is_better=bool(exp_config["searcher"]["smaller_is_better"]),
-            test_mode=False,
-            checkpoint_policy=exp_config["checkpoint_policy"],
-            step_zero_validation=bool(exp_config["perform_initial_validation"]),
-            det_profiler=None,
-            global_batch_size=None,
+
+def run_no_op(
+    tmp_path: pathlib.Path,
+    num_steps: int = 1,
+    global_batch_size: int = 32,
+    dataset_len: int = 64,
+):
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+
+    config = utils.load_config(utils.fixtures_path("pytorch_no_op/const.yaml"))
+    hparams = config["hyperparameters"]
+    hparams["dataset_len"] = dataset_len
+    hparams["global_batch_size"] = global_batch_size
+
+    exp_config = utils.make_default_exp_config(
+        hparams,
+        scheduling_unit=1,
+        searcher_metric="validation_loss",
+        checkpoint_dir=checkpoint_dir,
+    )
+    exp_config.update(config)
+    exp_config["searcher"]["smaller_is_better"] = True
+
+    example_path = utils.fixtures_path("pytorch_no_op/model_def.py")
+    trial_class = utils.import_class_from_module("NoopPyTorchTrial", example_path)
+    trial_class._searcher_metric = "validation_error"
+
+    f = io.StringIO()
+
+    with contextlib.redirect_stdout(f):
+        pytorch_utils.train_for_checkpoint(
+            hparams=hparams,
+            trial_class=trial_class,
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            slots_per_trial=2,
+            steps=num_steps,
         )
 
-        trial_controller._set_data_loaders()
-        trial_controller.training_iterator = iter(trial_controller.training_loader)
-        return trial_inst, trial_controller
+    return f.getvalue().split("\n")
+
+
+def calculate_gradients(
+    batch_size: int = 4,
+    epoch_size: int = 64,
+    num_epochs: int = 3,
+    lr: float = 0.001,
+) -> typing.List[float]:
+    # independently compute expected metrics
+    batches = [
+        (v[:], v[:])
+        for v in (
+            [x * 0.1 + 1.0 for x in range(y, y + batch_size)]
+            for y in (z % epoch_size for z in range(0, epoch_size * num_epochs, batch_size))
+        )
+    ]
+
+    def compute_expected_weight(
+        data: typing.List[float], label: typing.List[float], w: float
+    ) -> float:
+        n = len(data)
+        expected_step = 2.0 * lr * sum((d * (l - d * w) for d, l in zip(data, label))) / n
+        return w + expected_step
+
+    expected_weights = []
+    weight = 0.0
+    data: typing.List[float] = []
+    label: typing.List[float] = []
+    for i, batch in enumerate(batches):
+        if i % 2 == 0:
+            # for even-numbered batches the optimizer step is a no-op:
+            # the weights don't change
+            data, label = batch
+        else:
+            additional_data, additional_label = batch
+            data += additional_data
+            label += additional_label
+            weight = compute_expected_weight(data, label, weight)
+        expected_weights.append(weight)
+
+    return expected_weights

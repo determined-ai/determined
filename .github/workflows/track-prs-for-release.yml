@@ -1,0 +1,62 @@
+---
+name: "Track PRs for release"
+
+on:  # yamllint disable-line rule:truthy
+  pull_request_target:
+    types:
+      - closed
+      - labeled
+      - unlabeled
+    branches:
+      - main
+
+concurrency:
+  group: track-prs-for-release
+
+# All jobs require a specifically generated token to run, since we want to
+# access org-level projects and the normal GITHUB_TOKEN only has access to this
+# repository.
+
+jobs:
+  handle_merged_pr:
+    if: github.event.action == 'closed' && github.event.pull_request.merged
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.base_ref }}
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@v1.8.0
+        with:
+          app_id: ${{ secrets.RELEASE_APP_ID }}
+          private_key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+      - name: Handle merged PR
+        env:
+          CASPER_TOKEN: ${{ secrets.CASPER_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          PR_ID: ${{ github.event.pull_request.node_id }}
+        run: tools/scripts/track-pr pr-merged "$PR_ID"
+
+  handle_labeled_pr:
+    if: github.event.action == 'labeled' || github.event.action == 'unlabeled'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.base_ref }}
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@v1.8.0
+        with:
+          app_id: ${{ secrets.RELEASE_APP_ID }}
+          private_key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+      - name: Handle labeled PR
+        env:
+          CASPER_TOKEN: ${{ secrets.CASPER_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          PR_ID: ${{ github.event.pull_request.node_id }}
+          PR_LABEL: ${{ github.event.label.name }}
+        run: tools/scripts/track-pr pr-${{ github.event.action }} "$PR_ID" "$PR_LABEL"

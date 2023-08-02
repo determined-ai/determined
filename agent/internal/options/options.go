@@ -52,6 +52,12 @@ type Options struct {
 	AgentReconnectBackoff int `json:"agent_reconnect_backoff"`
 
 	Hooks HooksOptions `json:"hooks"`
+
+	ContainerRuntime   string             `json:"container_runtime"`
+	SingularityOptions SingularityOptions `json:"singularity_options"`
+	PodmanOptions      PodmanOptions      `json:"podman_options"`
+
+	Debug bool `json:"debug"`
 }
 
 // Validate validates the state of the Options struct.
@@ -140,4 +146,27 @@ type FluentOptions struct {
 // HooksOptions contains external commands to be run when specific things happen.
 type HooksOptions struct {
 	OnConnectionLost []string `json:"on_connection_lost"`
+}
+
+// ContainerRuntime configures which container runtime to use.
+type ContainerRuntime string
+
+// Available container runtimes.
+const (
+	SingularityContainerRuntime = "singularity"
+	DockerContainerRuntime      = "docker"
+	PodmanContainerRuntime      = "podman"
+)
+
+// SingularityOptions configures how we interact with Singularity.
+type SingularityOptions struct {
+	// AllowNetworkCreation allows the agent to use `singularity run`'s `--net` option, which sets
+	// up and launches containers into a new network namespace. Disabled by default since this
+	// requires root or a suid installation with /etc/subuid --fakeroot.
+	AllowNetworkCreation bool `json:"allow_network_creation"`
+}
+
+// PodmanOptions configures how we interact with podman.
+type PodmanOptions struct {
+	AllowNetworkCreation bool `json:"allow_network_creation"` // review
 }

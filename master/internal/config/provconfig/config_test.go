@@ -192,7 +192,7 @@ boot_disk_source_image: test-source_image3
 	assert.NilError(t, err)
 
 	expectedGCP := *DefaultGCPClusterConfig()
-	expectedGCP.BaseConfig = &compute.Instance{
+	expectedGCP.BaseConfig = &compute.InstanceProperties{
 		Disks: []*compute.AttachedDisk{
 			{
 				Mode: "READ_ONLY",

@@ -1,0 +1,28 @@
+.columns {
+  display: flex;
+  gap: var(--columns-gap);
+
+  &.page {
+    margin-bottom: 16px;
+  }
+  .column {
+    display: flex;
+    flex-grow: 1;
+
+    &.left {
+      justify-content: start;
+    }
+    &.center {
+      justify-content: center;
+    }
+    &.right {
+      justify-content: right;
+    }
+  }
+}
+
+@media only screen and (max-width: $breakpoint-tablet) {
+  .columns.page {
+    flex-wrap: wrap;
+  }
+}

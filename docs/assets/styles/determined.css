@@ -2,16 +2,19 @@
 
 html {
   --pst-font-family-base-system: "Open Sans", "Metric HPE", Arial, sans-serif;
+  --docsearch-modal-max-width: 1000px;
 }
 
 html[data-theme="light"] {
   --pst-color-primary: #f37a22;
   --pst-color-inline-code: #323232;
+  --docsearch-modal-width: var(--docsearch-modal-max-width);
 }
 
 html[data-theme="dark"] {
   --pst-color-primary: #f37a22;
   --pst-color-inline-code: #cecece;
+  --docsearch-modal-width: var(--docsearch-modal-max-width);
 }
 
 #site-navigation {
@@ -28,13 +31,33 @@ html[data-theme="dark"] {
   margin: 0;
 }
 
-.version.centered {
-  text-align: center;
+.DocSearch-Modal{
+  max-height: 800px;
+}
+
+.version.centered i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+}
+
+.version.centered .version-switcher__container {
+  margin-left: 8px;
 }
 
 .bd-header-article {
   min-width: 488px;
   z-index: 200; /* sphinx-book-theme default is 1020, lower this enough to stay below algolia modal */
+}
+
+.bd-sidebar-primary {
+  overscroll-behavior: none;
+}
+
+.bd-main {
+  /* Book theme overrides flex-grow: 0 but we want to align content center.  */
+  flex-grow: 1;
 }
 
 .header-links-left a {
@@ -60,24 +83,17 @@ html[data-theme="dark"] {
 }
 
 .tiles-flex {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px
 }
 
-.tile-container {
-  width: calc(33% - 20px);
-}
 
 .tile {
   /* looks */
-  background-color: var(--pst-color-surface);
-  border: 1px solid var(--pst-color-text-muted);
   border-radius: 5px;
   /* sizing/boxing */
-  height: 200px;
-  margin: 10px;
+  height: 220px;
   padding: 10px;
   /* animation */
   -webkit-transition: 250ms;
@@ -87,10 +103,44 @@ html[data-theme="dark"] {
   will-change: transform;
   /* layout */
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 24px 40px auto;
+  grid-template-areas:
+    'icon'
+    'title'
+    'description';
+  gap: 4px;
 }
 
+.tile-icon {
+  background-color: transparent !important;
+  grid-area: icon;
+  height: 24px;
+  width: 24px;
+}
+.tile-container:nth-child(6n - 5) > .tile {
+  background-color: #f2f2f3;
+}
+
+.tile-container:nth-child(6n - 4) > .tile {
+  background-color: #c8caca;
+}
+
+.tile-container:nth-child(6n - 3) > .tile {
+  background-color: #f2f2f3;
+}
+
+.tile-container:nth-child(6n - 2) > .tile {
+  background-color: #c8caca;
+}
+
+.tile-container:nth-child(6n - 1) > .tile {
+  background-color: #f2f2f3;
+}
+
+.tile-container:nth-child(6n) > .tile {
+  background-color: #c8caca;
+}
 .tile:hover {
   -webkit-transform: translate3d(0, -6px, 0);
   transform: translate3d(0, -6px, 0);
@@ -98,15 +148,16 @@ html[data-theme="dark"] {
 
 .tile .tile-title {
   /* looks */
+  color: black;
   font-size: 18px;
   text-align: center;
   /* sizing/boxing */
-  height: 30%;
   margin: 0px;
   /* layout */
   display: flex;
   flex-direction: column;
   justify-content: space-around;
+  grid-area: title;
 }
 
 .tile .tile-divider {
@@ -121,8 +172,10 @@ html[data-theme="dark"] {
 
 .tile .tile-description {
   /* looks */
+  color: black;
   font-size: 14px;
   margin: 0.5rem 0;
+  grid-area: description;
 }
 
 /* Legacy styles from furo theme layout: */
@@ -484,22 +537,14 @@ h6 {
     width: 420px;
   }
 
-  .tile-container {
-    width: 50%;
-  }
-
   .tile {
-    height: auto;
+    height: 100%;
   }
 }
 
 @media screen and (max-width: 508px) {
   .landing .landing-search {
     display: none;
-  }
-
-  .tile-container {
-    width: calc(100% - 20px);
   }
 
   .tile {

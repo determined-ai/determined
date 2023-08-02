@@ -1,0 +1,28 @@
+.formBase {
+  align-items: start;
+  display: inline-grid;
+  grid-template-columns: 168px auto 84px;
+  width: 100%;
+
+  .buttonsContainer {
+    display: inline-flex;
+    justify-content: end;
+
+    & > button {
+      transition: none; // there's a transition (RTL slide) when enabling edit mode...
+
+      &:last-of-type {
+        margin-left: 10px;
+      }
+    }
+  }
+  label {
+    margin: 5px 0;
+  }
+  .formItemInput {
+    margin-inline-end: 0;
+  }
+  .readOnlyElement {
+    padding: 12px;
+  }
+}

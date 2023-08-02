@@ -273,15 +273,11 @@ var (
     },
     "then": {
         "union": {
-            "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'hdfs', 's3', 'gcs' or 'azure'",
+            "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 's3', 'gcs' or 'azure'",
             "items": [
                 {
                     "unionKey": "const:type=shared_fs",
                     "$ref": "http://determined.ai/schemas/expconf/v0/shared-fs.json"
-                },
-                {
-                    "unionKey": "const:type=hdfs",
-                    "$ref": "http://determined.ai/schemas/expconf/v0/hdfs.json"
                 },
                 {
                     "unionKey": "const:type=s3",
@@ -313,8 +309,6 @@ var (
         "credential": true,
         "endpoint_url": true,
         "prefix": true,
-        "hdfs_path": true,
-        "hdfs_url": true,
         "host_path": true,
         "propagation": true,
         "secret_key": true,
@@ -675,7 +669,6 @@ var (
     "additionalProperties": false,
     "eventuallyRequired": [
         "checkpoint_storage",
-        "entrypoint",
         "name",
         "hyperparameters",
         "reproducibility",
@@ -1001,76 +994,6 @@ var (
                     }
                 }
             },
-            "default": null
-        },
-        "save_experiment_best": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": 0,
-            "minimum": 0
-        },
-        "save_trial_best": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": 1,
-            "minimum": 0
-        },
-        "save_trial_latest": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": 1,
-            "minimum": 0
-        }
-    }
-}
-`)
-	textHDFSConfigV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/hdfs.json",
-    "title": "HDFSConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "type"
-    ],
-    "eventuallyRequired": [
-        "hdfs_url",
-        "hdfs_path"
-    ],
-    "properties": {
-        "type": {
-            "const": "hdfs"
-        },
-        "hdfs_url": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "hdfs_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null,
-            "checks": {
-                "hdfs_path must be an absolute path": {
-                    "pattern": "^/"
-                }
-            }
-        },
-        "user": {
-            "type": [
-                "string",
-                "null"
-            ],
             "default": null
         },
         "save_experiment_best": {
@@ -2897,10 +2820,6 @@ var (
             },
             {
                 "unionKey": "never",
-                "$ref": "http://determined.ai/schemas/expconf/v0/hdfs.json"
-            },
-            {
-                "unionKey": "never",
                 "$ref": "http://determined.ai/schemas/expconf/v0/s3.json"
             },
             {
@@ -3095,8 +3014,6 @@ var (
 	schemaExperimentConfigV0 interface{}
 
 	schemaGCSConfigV0 interface{}
-
-	schemaHDFSConfigV0 interface{}
 
 	schemaPbsConfigV0 interface{}
 
@@ -3479,26 +3396,6 @@ func ParsedGCSConfigV0() interface{} {
 		panic("invalid embedded json for GCSConfigV0")
 	}
 	return schemaGCSConfigV0
-}
-
-func ParsedHDFSConfigV0() interface{} {
-	cacheLock.RLock()
-	if schemaHDFSConfigV0 != nil {
-		cacheLock.RUnlock()
-		return schemaHDFSConfigV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaHDFSConfigV0 != nil {
-		return schemaHDFSConfigV0
-	}
-	err := json.Unmarshal(textHDFSConfigV0, &schemaHDFSConfigV0)
-	if err != nil {
-		panic("invalid embedded json for HDFSConfigV0")
-	}
-	return schemaHDFSConfigV0
 }
 
 func ParsedPbsConfigV0() interface{} {
@@ -4306,8 +4203,6 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textExperimentConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/gcs.json"
 	cachedSchemaBytesMap[url] = textGCSConfigV0
-	url = "http://determined.ai/schemas/expconf/v0/hdfs.json"
-	cachedSchemaBytesMap[url] = textHDFSConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/hpc-cluster-pbs.json"
 	cachedSchemaBytesMap[url] = textPbsConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json"

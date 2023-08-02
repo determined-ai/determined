@@ -64,6 +64,7 @@ def error_no_credentials() -> None:
 def get_deployment_class(deployment_type: str) -> Type[base.DeterminedDeployment]:
     deployment_type_map = {
         constants.deployment_types.SIMPLE: simple.Simple,
+        constants.deployment_types.SIMPLE_RDS: simple.SimpleRDS,
         constants.deployment_types.SECURE: secure.Secure,
         constants.deployment_types.EFS: vpc.EFS,
         constants.deployment_types.FSX: vpc.FSx,
@@ -139,7 +140,10 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     ):
         raise CliError("If a CPU or GPU environment image is specified, both should be.")
 
-    if args.deployment_type != constants.deployment_types.SIMPLE:
+    if (
+        args.deployment_type != constants.deployment_types.SIMPLE
+        or args.deployment_type != constants.deployment_types.SIMPLE_RDS
+    ):
         if args.agent_subnet_id is not None:
             raise ValueError(
                 f"The agent-subnet-id can only be set if the deployment-type=simple. "

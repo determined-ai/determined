@@ -62,6 +62,8 @@ enum PermissionType {
   // Allows updating other users passwords making this
   // permission give all other permissions effectively.
   PERMISSION_TYPE_ADMINISTRATE_USER = 91001;
+  // Ability to manage OAuth clients and settings.
+  PERMISSION_TYPE_ADMINISTRATE_OAUTH = 91002;
 
   // Ability to create experiments.
   PERMISSION_TYPE_CREATE_EXPERIMENT = 2001;
@@ -119,8 +121,14 @@ enum PermissionType {
   PERMISSION_TYPE_EDIT_MODEL_REGISTRY = 7002;
   // Ability to create model registry.
   PERMISSION_TYPE_CREATE_MODEL_REGISTRY = 7003;
-  // Ability to delete model registry
+  // Ability to delete model registry.
   PERMISSION_TYPE_DELETE_MODEL_REGISTRY = 7004;
+  // Ability to delete model version.
+  PERMISSION_TYPE_DELETE_MODEL_VERSION = 7005;
+  // Ability to delete another user's model registry.
+  PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY = 7006;
+  // Ability to delete another user's model version.
+  PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION = 7007;
 
   // Ability to view master logs.
   PERMISSION_TYPE_VIEW_MASTER_LOGS = 8001;
@@ -128,6 +136,24 @@ enum PermissionType {
   PERMISSION_TYPE_VIEW_CLUSTER_USAGE = 8002;
   // Ability to update agents.
   PERMISSION_TYPE_UPDATE_AGENTS = 8003;
+  // Ability to view sensitive subset of agent info.
+  PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO = 8004;
+  // Ability to view master configs.
+  PERMISSION_TYPE_VIEW_MASTER_CONFIG = 8005;
+  // Ability to update master configs.
+  PERMISSION_TYPE_UPDATE_MASTER_CONFIG = 8006;
+
+  // Ability to control strict job queue.
+  PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE = 8101;
+
+  // Ability to view templates.
+  PERMISSION_TYPE_VIEW_TEMPLATES = 9001;
+  // Ability to update templates.
+  PERMISSION_TYPE_UPDATE_TEMPLATES = 9002;
+  // Ability to create templates.
+  PERMISSION_TYPE_CREATE_TEMPLATES = 9003;
+  // Ability to delete templates.
+  PERMISSION_TYPE_DELETE_TEMPLATES = 9004;
 
   // Ability to create and update role definitions.
   PERMISSION_TYPE_UPDATE_ROLES = 96001;

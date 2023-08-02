@@ -1,0 +1,39 @@
+---
+name: "Notify on PRs from forks"
+
+on:  # yamllint disable-line rule:truthy
+  pull_request_target:
+    branches:
+      - main
+    types:
+      - opened
+
+jobs:
+  notify-fork-prs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify on PRs from forks
+        id: notify-fork-prs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          BASE_REPO: ${{ github.event.pull_request.base.repo.full_name }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          USER: ${{ github.actor }}
+        run: |
+          if [ "$BASE_REPO" = "$HEAD_REPO" ]; then
+            echo "PR is from a branch on this repo."
+            exit
+          fi
+
+          echo "PR is from $HEAD_REPO to $BASE_REPO by $USER."
+
+          # Check if the user has write access to the repository. The HTTP status code for a
+          # collaborator is 204 (which makes `gh` have exit code 0); for a non-collaborator, it is
+          # 404 (exit code 1).
+          if ! gh api "repos/$BASE_REPO/collaborators/$USER"; then
+            echo "$USER does not have write access to $BASE_REPO."
+            exit
+          fi
+
+          gh pr comment "$PR_URL" --body "This PR was opened from a forked repository. You should use a branch on the central repository instead."

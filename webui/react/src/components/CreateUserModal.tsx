@@ -6,8 +6,8 @@ import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Link from 'components/Link';
+import Spinner from 'components/Spinner';
 import useAuthCheck from 'hooks/useAuthCheck';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
@@ -17,12 +17,12 @@ import {
   postUser,
   removeRolesFromUser,
 } from 'services/api';
-import Spinner from 'shared/components/Spinner';
-import { ErrorType } from 'shared/utils/error';
+import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
 import { DetailedUser, UserRole } from 'types';
 import { message } from 'utils/dialogApi';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -59,7 +59,7 @@ interface FormInputs {
 
 const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: Props) => {
   const [form] = Form.useForm<FormInputs>();
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
   const { canAssignRoles, canModifyPermissions } = usePermissions();
@@ -140,16 +140,13 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
     });
   }, [form, user, userRoles]);
 
-  if (user !== undefined && userRoles === null && rbacEnabled && canAssignRoles({})) {
-    return <Spinner tip="Loading roles..." />;
-  }
-
   return (
     <Modal
       cancel
       size="small"
       submit={{
         disabled: !username,
+        handleError,
         handler: handleSubmit,
         text: viewOnly ? 'Close' : BUTTON_NAME,
       }}
@@ -161,54 +158,58 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
           : MODAL_HEADER_LABEL_CREATE
       }
       onClose={form.resetFields}>
-      <Form form={form}>
-        <Form.Item
-          initialValue={user?.username}
-          label={USER_NAME_LABEL}
-          name={USER_NAME_NAME}
-          required
-          validateTrigger={['onSubmit']}>
-          <Input autoFocus disabled={!!user} maxLength={128} placeholder="User Name" />
-        </Form.Item>
-        <Form.Item label={DISPLAY_NAME_LABEL} name={DISPLAY_NAME_NAME}>
-          <Input disabled={viewOnly} maxLength={128} placeholder="Display Name" />
-        </Form.Item>
-        {!rbacEnabled && (
-          <Form.Item label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
-            <Switch disabled={viewOnly} />
+      <Spinner
+        spinning={user !== undefined && userRoles === null && rbacEnabled && canAssignRoles({})}
+        tip="Loading roles...">
+        <Form form={form}>
+          <Form.Item
+            initialValue={user?.username}
+            label={USER_NAME_LABEL}
+            name={USER_NAME_NAME}
+            required
+            validateTrigger={['onSubmit']}>
+            <Input autoFocus disabled={!!user} maxLength={128} placeholder="User Name" />
           </Form.Item>
-        )}
-        {rbacEnabled && canModifyPermissions && (
-          <>
-            <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
-              <Select
-                disabled={(user !== undefined && userRoles === null) || viewOnly}
-                loading={Loadable.isLoading(knownRoles)}
-                mode="multiple"
-                optionFilterProp="children"
-                placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
-                showSearch>
-                {Loadable.isLoaded(knownRoles) ? (
-                  <>
-                    {knownRoles.data.map((r: UserRole) => (
-                      <Select.Option key={r.id} value={r.id}>
-                        {r.name}
-                      </Select.Option>
-                    ))}
-                  </>
-                ) : undefined}
-              </Select>
+          <Form.Item label={DISPLAY_NAME_LABEL} name={DISPLAY_NAME_NAME}>
+            <Input disabled={viewOnly} maxLength={128} placeholder="Display Name" />
+          </Form.Item>
+          {!rbacEnabled && (
+            <Form.Item label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
+              <Switch disabled={viewOnly} />
             </Form.Item>
-            <Typography.Text type="secondary">
-              Users may have additional inherited global or workspace roles not reflected here.
-              &nbsp;
-              <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
-                Learn more
-              </Link>
-            </Typography.Text>
-          </>
-        )}
-      </Form>
+          )}
+          {rbacEnabled && canModifyPermissions && (
+            <>
+              <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
+                <Select
+                  disabled={(user !== undefined && userRoles === null) || viewOnly}
+                  loading={Loadable.isLoading(knownRoles)}
+                  mode="multiple"
+                  optionFilterProp="children"
+                  placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
+                  showSearch>
+                  {Loadable.isLoaded(knownRoles) ? (
+                    <>
+                      {knownRoles.data.map((r: UserRole) => (
+                        <Select.Option key={r.id} value={r.id}>
+                          {r.name}
+                        </Select.Option>
+                      ))}
+                    </>
+                  ) : undefined}
+                </Select>
+              </Form.Item>
+              <Typography.Text type="secondary">
+                Users may have additional inherited global or workspace roles not reflected here.
+                &nbsp;
+                <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
+                  Learn more
+                </Link>
+              </Typography.Text>
+            </>
+          )}
+        </Form>
+      </Spinner>
     </Modal>
   );
 };

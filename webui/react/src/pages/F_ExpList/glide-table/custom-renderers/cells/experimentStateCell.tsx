@@ -1,7 +1,7 @@
-import { CustomCell, CustomRenderer, GridCellKind } from '@glideapps/glide-data-grid';
+import { CustomCell, CustomRenderer, GridCellKind } from '@hpe.com/glide-data-grid';
 
-import { Theme } from 'shared/themes';
 import { CompoundRunState, JobState, RunState } from 'types';
+import { Theme } from 'utils/themes';
 
 import { roundedRect } from '../utils';
 
@@ -200,6 +200,7 @@ const renderer: CustomRenderer<ExperimentStateCell> = {
   isMatch: (cell: CustomCell): cell is ExperimentStateCell =>
     (cell.data as ExperimentStateCellProps).kind === 'experiment-state-cell',
   kind: GridCellKind.Custom,
+  measure: () => 60,
   provideEditor: () => undefined,
 };
 

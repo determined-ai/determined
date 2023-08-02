@@ -70,6 +70,7 @@ from determined.common.experimental.trial import (  # noqa: F401
     TrialReference,
     TrialSortBy,
     ValidationMetrics,
+    _TrialMetrics,
 )
 from determined.common.experimental.user import User
 
@@ -395,6 +396,7 @@ def list_oauth_clients() -> Sequence[Oauth2ScimClient]:
     return _determined.list_oauth_clients()
 
 
+@_require_singleton
 def add_oauth_client(domain: str, name: str) -> Oauth2ScimClient:
     """
     Add an oauth client.
@@ -406,6 +408,7 @@ def add_oauth_client(domain: str, name: str) -> Oauth2ScimClient:
     return _determined.add_oauth_client(domain, name)
 
 
+@_require_singleton
 def remove_oauth_client(client_id: str) -> None:
     """
     Arguments:
@@ -413,6 +416,19 @@ def remove_oauth_client(client_id: str) -> None:
     """
     assert _determined is not None
     return _determined.remove_oauth_client(client_id)
+
+
+@_require_singleton
+def _stream_trials_metrics(trial_ids: List[int], group: str) -> Iterable[_TrialMetrics]:
+    """
+    Streams trial metrics for one or more trials sorted by
+    trial_id, trial_run_id and steps_completed.
+
+    Arguments:
+        trial_ids: List of trial IDs to get metrics for.
+    """
+    assert _determined is not None
+    return _determined._stream_trials_metrics(trial_ids, group=group)
 
 
 @_require_singleton
@@ -439,3 +455,9 @@ def stream_trials_validation_metrics(trial_ids: List[int]) -> Iterable[Validatio
     """
     assert _determined is not None
     return _determined.stream_trials_validation_metrics(trial_ids)
+
+
+@_require_singleton
+def _get_singleton_session() -> Session:
+    assert _determined is not None
+    return _determined._session

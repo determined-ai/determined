@@ -40,28 +40,29 @@ def start_notebook(args: Namespace) -> None:
         print(nb.id)
         return
 
+    render.report_job_launched("notebook", resp.notebook.id)
+
     if resp.warnings:
         cli.print_warnings(resp.warnings)
     currentSlotsExceeded = (resp.warnings is not None) and (
         bindings.v1LaunchWarning.CURRENT_SLOTS_EXCEEDED in resp.warnings
     )
 
-    with api.ws(args.master, "notebooks/{}/events".format(nb.id)) as ws:
-        for msg in ws:
-            if msg["service_ready_event"] and nb.serviceAddress and not args.no_browser:
-                url = api.browser_open(
-                    args.master,
-                    request.make_interactive_task_url(
-                        task_id=nb.id,
-                        service_address=nb.serviceAddress,
-                        description=nb.description,
-                        resource_pool=nb.resourcePool,
-                        task_type="notebook",
-                        currentSlotsExceeded=currentSlotsExceeded,
-                    ),
-                )
-                print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
-            command.render_event_stream(msg)
+    cli.wait_ntsc_ready(cli.setup_session(args), api.NTSC_Kind.notebook, nb.id)
+
+    assert nb.serviceAddress is not None, "missing tensorboard serviceAddress"
+    nb_path = request.make_interactive_task_url(
+        task_id=nb.id,
+        service_address=nb.serviceAddress,
+        description=nb.description,
+        resource_pool=nb.resourcePool,
+        task_type="jupyter-lab",
+        currentSlotsExceeded=currentSlotsExceeded,
+    )
+    url = api.make_url(args.master, nb_path)
+    if not args.no_browser:
+        api.browser_open(args.master, nb_path)
+    print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
 
 
 @authentication.required
@@ -77,7 +78,7 @@ def open_notebook(args: Namespace) -> None:
             service_address=resp["serviceAddress"],
             description=resp["description"],
             resource_pool=resp["resourcePool"],
-            task_type="notebook",
+            task_type="jupyter-lab",
             currentSlotsExceeded=False,
         ),
     )

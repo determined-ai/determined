@@ -3,11 +3,10 @@ import { Tag } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Input, { InputRef } from 'components/kit/Input';
+import { alphaNumericSorter, toHtmlId, truncate } from 'components/kit/internal/functions';
+import Link from 'components/kit/internal/Link';
+import { ValueOf } from 'components/kit/internal/types';
 import Tooltip from 'components/kit/Tooltip';
-import Link from 'components/Link';
-import { ValueOf } from 'shared/types';
-import { alphaNumericSorter } from 'shared/utils/sort';
-import { toHtmlId, truncate } from 'shared/utils/string';
 
 import css from './Tags.module.scss';
 export const TagAction = {
@@ -137,7 +136,6 @@ const Tags: React.FC<Props> = ({ compact, disabled = false, ghost, tags, onActio
                 ref={editInputRef}
                 size="small"
                 style={{ width: inputWidth }}
-                width={inputWidth}
                 onBlur={(e) => handleInputConfirm(e, tag, index)}
                 onPressEnter={(e) => handleInputConfirm(e, tag, index)}
               />
@@ -166,7 +164,7 @@ const Tags: React.FC<Props> = ({ compact, disabled = false, ghost, tags, onActio
             </Tag>
           );
           return isLongTag && !compact ? (
-            <Tooltip key={tag} title={tag}>
+            <Tooltip content={tag} key={tag}>
               {tagElement}
             </Tooltip>
           ) : (

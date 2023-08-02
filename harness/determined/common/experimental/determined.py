@@ -47,7 +47,8 @@ class Determined:
         )
 
         auth = authentication.Authentication(self._master, user, password, cert=cert)
-        self._session = api.Session(self._master, user, auth, cert)
+        retry = api.default_retry()
+        self._session = api.Session(self._master, user, auth, cert, retry)
         token_user = auth.token_store.get_active_user()
         if token_user is not None:
             self._token = auth.token_store.get_token(token_user)
@@ -379,6 +380,18 @@ class Determined:
             api.delete(self._master, "oauth2/clients/{}".format(client_id), headers=headers)
         except api.errors.NotFoundException:
             raise det.errors.EnterpriseOnlyError("API not found: oauth2/clients")
+
+    def _stream_trials_metrics(
+        self, trial_ids: List[int], group: str
+    ) -> Iterable[trial._TrialMetrics]:
+        """
+        Streams metrics for one or more trials sorted by
+        trial_id, trial_run_id and total_batches.
+
+        Arguments:
+            trial_ids: List of trial IDs to get metrics for.
+        """
+        return trial._stream_trials_metrics(self._session, trial_ids, group=group)
 
     def stream_trials_training_metrics(
         self, trial_ids: List[int]

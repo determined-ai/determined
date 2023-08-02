@@ -1,7 +1,6 @@
 package sproto
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
@@ -14,8 +13,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
@@ -28,6 +27,7 @@ type (
 		AllocationID      model.AllocationID
 		TaskID            model.TaskID
 		JobID             model.JobID
+		RequestTime       time.Time
 		JobSubmissionTime time.Time
 		// IsUserVisible determines whether the AllocateRequest should
 		// be considered in user-visible reports.
@@ -35,8 +35,7 @@ type (
 		State         SchedulingState
 		Name          string
 		// Allocation actor
-		AllocationRef *actor.Ref
-		Group         *actor.Ref
+		Group *actor.Ref
 
 		// Resource configuration.
 		SlotsNeeded         int
@@ -44,11 +43,11 @@ type (
 		FittingRequirements FittingRequirements
 
 		// Behavioral configuration.
-		Preemptible  bool
-		IdleTimeout  *IdleTimeoutConfig
-		ProxyPorts   []*ProxyPortConfig
-		StreamEvents *EventStreamConfig
-		Restore      bool
+		Preemptible bool
+		IdleTimeout *IdleTimeoutConfig
+		ProxyPorts  []*ProxyPortConfig
+		Restore     bool
+		ProxyTLS    bool
 
 		// Logging context of the allocation actor.
 		LogContext logger.Context
@@ -71,18 +70,11 @@ type (
 		Unauthenticated bool   `json:"unauthenticated"`
 	}
 
-	// EventStreamConfig configures an event stream.
-	EventStreamConfig struct {
-		To *actor.Ref
-	}
-
 	// ResourcesReleased notifies resource providers to return resources from a task.
 	ResourcesReleased struct {
-		AllocationRef *actor.Ref
-		ResourcesID   *ResourcesID
+		AllocationID model.AllocationID
+		ResourcesID  *ResourcesID
 	}
-	// GetAllocationHandler returns a ref to the handler for the specified task.
-	GetAllocationHandler struct{ ID model.AllocationID }
 	// GetAllocationSummary returns the summary of the specified task.
 	GetAllocationSummary struct{ ID model.AllocationID }
 	// GetAllocationSummaries returns the summaries of all the tasks in the cluster.
@@ -102,8 +94,8 @@ type (
 	}
 	// SetAllocationName sets the name of the task.
 	SetAllocationName struct {
-		Name          string
-		AllocationRef *actor.Ref
+		Name         string
+		AllocationID model.AllocationID
 	}
 
 	// ValidateCommandResourcesRequest is a message asking resource manager whether the given
@@ -121,15 +113,73 @@ type (
 		// - true: ok or unknown
 		Fulfillable bool
 	}
-	// AllocationSignal is an interface for signals that can be sent to an allocation.
-	AllocationSignal string
-	// AllocationSignalWithReason is an message for signals that can be sent to an allocation
-	// along with an informational reason about why the signal was sent.
-	AllocationSignalWithReason struct {
-		AllocationSignal    AllocationSignal
-		InformationalReason string
-	}
 )
+
+// ResourcesEvent describes a change in status or state of an allocation's resources.
+type ResourcesEvent interface{ ResourcesEvent() }
+
+// ResourcesReleasedEvent notes when the RM has acknowledged resources are released.
+type ResourcesReleasedEvent struct{}
+
+// ResourcesEvent implements ResourcesEvent.
+func (ResourcesReleasedEvent) ResourcesEvent() {}
+
+// ResourcesEvent implements ResourcesEvent.
+func (*ResourcesAllocated) ResourcesEvent() {}
+
+// ResourcesEvent implements ResourcesEvent.
+func (*InvalidResourcesRequestError) ResourcesEvent() {}
+
+// ResourcesEvent implements ResourcesEvent.
+func (*ReleaseResources) ResourcesEvent() {}
+
+// ResourcesEvent implements ResourcesEvent.
+func (*ResourcesStateChanged) ResourcesEvent() {}
+
+// ResourcesEvent implements ResourcesEvent.
+func (*ResourcesFailure) ResourcesEvent() {}
+
+// ResourcesEvent implements ResourcesEvent.
+func (*ContainerLog) ResourcesEvent() {}
+
+// ResourcesUnsubscribeFn closes a subscription.
+type ResourcesUnsubscribeFn func()
+
+// ResourcesSubscription is a subscription for streaming ResourcesEvents's. It must be closed when
+// you are finished consuming events. Blocking on C forever can cause the publisher to backup
+// and adversely affect the system.
+type ResourcesSubscription struct {
+	// C is never closed, because only the consumer knows, by aggregating events, when events stop.
+	inbox *queue.Queue[ResourcesEvent]
+	unsub ResourcesUnsubscribeFn
+}
+
+// NewAllocationSubscription create a new subcription.
+func NewAllocationSubscription(
+	inbox *queue.Queue[ResourcesEvent],
+	cl ResourcesUnsubscribeFn,
+) *ResourcesSubscription {
+	return &ResourcesSubscription{
+		inbox: inbox,
+		unsub: cl,
+	}
+}
+
+// Get blocks until an event is published for our subscription's topic. When the
+// subscription is closed, ResourcesReleasedEvent is returned.
+func (a *ResourcesSubscription) Get() ResourcesEvent {
+	return a.inbox.Get()
+}
+
+// Close unsubscribes us from further updates.
+func (a *ResourcesSubscription) Close() {
+	a.unsub()
+}
+
+// Len returns the count of pending events.
+func (a *ResourcesSubscription) Len() int {
+	return a.inbox.Len()
+}
 
 // Proto returns the proto representation of ProxyPortConfig.
 func (p *ProxyPortConfig) Proto() *taskv1.ProxyPortConfig {
@@ -185,13 +235,6 @@ func (a *AllocationSummary) Proto() *taskv1.AllocationSummary {
 	return &pbAllocationSummary
 }
 
-const (
-	// KillAllocation is the signal to kill an allocation; analogous to in SIGKILL.
-	KillAllocation AllocationSignal = "kill"
-	// TerminateAllocation is the signal to kill an allocation; analogous to in SIGTERM.
-	TerminateAllocation AllocationSignal = "terminate"
-)
-
 // Incoming task actor messages; task actors must accept these messages.
 type (
 	// ChangeRP notifies the task actor that to set itself for a new resource pool.
@@ -223,10 +266,11 @@ type (
 
 	// ReleaseResources notifies the task actor to release resources.
 	ReleaseResources struct {
-		ResourcePool string
+		Reason string
 		// If specified as true (default false), Requestor wants to force
 		// a preemption attempt instead of an immediate kill.
 		ForcePreemption bool
+		ForceKill       bool
 	}
 	// ResourcesRuntimeInfo is all the inforamation provided at runtime to make a task spec.
 	ResourcesRuntimeInfo struct {
@@ -254,8 +298,8 @@ const (
 )
 
 // Clone clones ResourcesAllocated. Used to not pass mutable refs to other actors.
-func (ra ResourcesAllocated) Clone() ResourcesAllocated {
-	return ResourcesAllocated{
+func (ra ResourcesAllocated) Clone() *ResourcesAllocated {
+	return &ResourcesAllocated{
 		ID:                ra.ID,
 		ResourcePool:      ra.ResourcePool,
 		Resources:         maps.Clone(ra.Resources),
@@ -329,78 +373,8 @@ func (s ResourcesSummary) Slots() int {
 // to start tasks on assigned resources.
 type Resources interface {
 	Summary() ResourcesSummary
-	Start(*actor.Context, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo) error
-	Kill(*actor.Context, logger.Context)
-}
-
-// Event is the union of all event types during the parent lifecycle.
-type Event struct {
-	ParentID    string    `json:"parent_id"`
-	ID          string    `json:"id"`
-	Seq         int       `json:"seq"`
-	Time        time.Time `json:"time"`
-	Description string    `json:"description"`
-	IsReady     bool      `json:"is_ready"`
-	ContainerID string    `json:"container_id"`
-	Level       *string   `json:"level"`
-
-	ScheduledEvent *model.AllocationID `json:"scheduled_event"`
-	// AssignedEvent is triggered when the parent was assigned to an agent.
-	AssignedEvent *AllocatedEvent `json:"assigned_event"`
-	// ResourcesStartedEvent is triggered when the resources started on an agent.
-	ResourcesStartedEvent *ResourcesStarted `json:"resources_started_event"`
-	// ServiceReadyEvent is triggered when the service running in the container is ready to serve.
-	ServiceReadyEvent *bool `json:"service_ready_event"`
-	// TerminateRequestEvent is triggered when the scheduler has requested the container to
-	// terminate.
-	TerminateRequestEvent *ReleaseResources `json:"terminate_request_event"`
-	// ExitedEvent is triggered when the command has terminated.
-	ExitedEvent *string `json:"exited_event"`
-	// LogEvent is triggered when a new log message is available.
-	LogEvent *string `json:"log_event"`
-}
-
-// ToTaskLog converts an event to a task log.
-func (ev *Event) ToTaskLog() model.TaskLog {
-	description := ev.Description
-	var message string
-	switch {
-	case ev.ScheduledEvent != nil:
-		message = fmt.Sprintf("Scheduling %s (id: %s)", description, ev.ParentID)
-	case ev.ResourcesStartedEvent != nil:
-		message = fmt.Sprintf("Resources for %s have started", description)
-	case ev.TerminateRequestEvent != nil:
-		message = fmt.Sprintf("%s was requested to terminate", description)
-	case ev.ExitedEvent != nil:
-		message = fmt.Sprintf("%s was terminated: %s", description, *ev.ExitedEvent)
-	case ev.LogEvent != nil:
-		message = fmt.Sprintf(*ev.LogEvent)
-	case ev.ServiceReadyEvent != nil:
-		message = fmt.Sprintf("Service of %s is available", description)
-	case ev.AssignedEvent != nil:
-		if ev.AssignedEvent.Recovered {
-			message = fmt.Sprintf("%s was recovered on an agent", description)
-		} else {
-			message = fmt.Sprintf("%s was assigned to an agent", description)
-		}
-	default:
-		// The client could rely on logEntry IDs and since some of these events aren't actually log
-		// events we'd need to notify of them about these non existing logs either by adding a new
-		// attribute to our response or a sentient log entry or we could keep it simple and normalize
-		// command events as log struct by setting a special message.
-		message = ""
-	}
-
-	level := ptrs.Ptr(model.LogLevelInfo)
-	if ev.Level != nil {
-		level = ev.Level
-	}
-	return model.TaskLog{
-		Level:       level,
-		ContainerID: &ev.ContainerID,
-		Timestamp:   &ev.Time,
-		Log:         message,
-	}
+	Start(*actor.System, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo) error
+	Kill(*actor.System, logger.Context)
 }
 
 // ResourceList is a wrapper for a list of resources.
@@ -423,9 +397,4 @@ func NewProxyPortConfig(input expconf.ProxyPortsConfig, taskID model.TaskID) []*
 	}
 
 	return out
-}
-
-// AllocatedEvent is sent the allocation's resources are granted.
-type AllocatedEvent struct {
-	Recovered bool
 }

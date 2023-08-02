@@ -30,12 +30,12 @@ describe('SamlAuth', () => {
   });
 
   describe('handleRelayState', () => {
-    const QUERIES_WITHOUT_RELAY = { someKey: 'noRelayState' };
-    const QUERIES_INPUT = {
+    const QUERIES_WITHOUT_RELAY = new URLSearchParams({ someKey: 'noRelayState' });
+    const QUERIES_INPUT = new URLSearchParams({
       relayState: 'columns=id&columns=user&sortDesc=false&tableLimit=20',
       someKey: 'someValue',
-    };
-    const QUERIES_OUTPUT = {
+    });
+    const QUERIES_OUTPUT: { [key: string]: unknown } = {
       columns: ['id', 'user'],
       someKey: 'someValue',
       sortDesc: 'false',
@@ -43,11 +43,18 @@ describe('SamlAuth', () => {
     };
 
     it('should return original queries object without relay state', () => {
-      expect(utils.handleRelayState(QUERIES_WITHOUT_RELAY)).toStrictEqual(QUERIES_WITHOUT_RELAY);
+      const result = utils.handleRelayState(QUERIES_WITHOUT_RELAY);
+      for (const [key, val] of QUERIES_WITHOUT_RELAY.entries()) {
+        expect(result.get(key)).toEqual(val);
+      }
     });
 
     it('should decode and flatten relayState query param', () => {
-      expect(utils.handleRelayState(QUERIES_INPUT)).toStrictEqual(QUERIES_OUTPUT);
+      const result = utils.handleRelayState(QUERIES_INPUT);
+      for (const key of result.keys()) {
+        const val = result.getAll(key);
+        expect(val.length === 1 ? val[0] : val).toStrictEqual(QUERIES_OUTPUT[key]);
+      }
     });
   });
 });

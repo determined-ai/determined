@@ -1,13 +1,13 @@
-import json
 from argparse import Namespace
 from collections import namedtuple
 from typing import Any, Dict, List, Optional
 
+import determined.cli.render
 from determined.cli import default_pagination_args, render, require_feature_flag, setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.experimental import session
+from determined.experimental import Session
 
 v1UserHeaders = namedtuple(
     "v1UserHeaders",
@@ -50,7 +50,7 @@ def list_groups(args: Namespace) -> None:
     body = bindings.v1GetGroupsRequest(offset=args.offset, limit=args.limit, userId=user_id)
     resp = bindings.post_GetGroups(sess, body=body)
     if args.json:
-        print(json.dumps(resp.to_json(), indent=2))
+        determined.cli.render.print_json(resp.to_json())
     else:
         if resp.groups is None:
             resp.groups = []
@@ -74,7 +74,7 @@ def describe_group(args: Namespace) -> None:
     group_details = resp.group
 
     if args.json:
-        print(json.dumps(group_details.to_json(), indent=2))
+        determined.cli.render.print_json(group_details.to_json())
     else:
         print(f"group ID {group_details.groupId} group name {group_details.name} with users added")
         if group_details.users is None:
@@ -145,7 +145,7 @@ def delete_group(args: Namespace) -> None:
         print("Skipping group deletion.")
 
 
-def usernames_to_user_ids(session: session.Session, usernames: List[str]) -> List[int]:
+def usernames_to_user_ids(session: Session, usernames: List[str]) -> List[int]:
     usernames_to_ids: Dict[str, Optional[int]] = {u: None for u in usernames}
     users = bindings.get_GetUsers(session).users or []
     for user in users:
@@ -167,7 +167,7 @@ def usernames_to_user_ids(session: session.Session, usernames: List[str]) -> Lis
     return user_ids
 
 
-def group_name_to_group_id(session: session.Session, group_name: str) -> int:
+def group_name_to_group_id(session: Session, group_name: str) -> int:
     body = bindings.v1GetGroupsRequest(name=group_name, limit=1, offset=0)
     resp = bindings.post_GetGroups(session, body=body)
     groups = resp.groups

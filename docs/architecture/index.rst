@@ -16,11 +16,15 @@ With Determined you can:
 Determined integrates these features into an easy-to-use, high-performance deep learning environment
 so you can spend your time building models instead of managing infrastructure.
 
-.. image:: /assets/images/det-ai-sys-arch-01-start-dark.png
+.. image:: /assets/images/_det-ai-sys-arch-01-start-dark.png
    :class: only-dark
+   :alt: Determined AI system architecture diagram dark mode
 
-.. image:: /assets/images/det-ai-sys-arch-01-start-light.png
+.. image:: /assets/images/_det-ai-sys-arch-01-start-light.png
    :class: only-light
+   :alt: Determined AI system architecture diagram light mode
+
+*Determined AI System Architecture*
 
 Learn more:
 
@@ -28,12 +32,14 @@ Learn more:
    features and benefits.
 -  :doc:`System Architecture <system-architecture>`: Learn about the main components of the
    Determined system architecture.
--  :doc:`Distributed Training <../training/dtrain-introduction>`: A conceptual overview of
-   distributed training with Determined.
+-  :doc:`Distributed Training <../model-dev-guide/dtrain/dtrain-introduction>`: A conceptual
+   overview of distributed training with Determined.
 
 .. toctree::
+   :maxdepth: 1
    :caption: How Determined Works
    :hidden:
 
    introduction
    system-architecture
+   Distributed Training <../model-dev-guide/dtrain/index>

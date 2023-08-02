@@ -3,26 +3,35 @@ package internal
 import (
 	"context"
 	"fmt"
+	"sort"
+
+	"github.com/uptrace/bun"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
+	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/project"
+	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
 func (a *apiServer) GetProjectByID(
 	ctx context.Context, id int32, curUser model.User,
 ) (*projectv1.Project, error) {
-	notFoundErr := status.Errorf(codes.NotFound, "project (%d) not found", id)
+	notFoundErr := api.NotFoundErrs("project", fmt.Sprint(id), true)
 	p := &projectv1.Project{}
 	if err := a.m.db.QueryProto("get_project", p, id); errors.Is(err, db.ErrNotFound) {
 		return nil, notFoundErr
@@ -30,10 +39,8 @@ func (a *apiServer) GetProjectByID(
 		return nil, errors.Wrapf(err, "error fetching project (%d) from database", id)
 	}
 
-	if ok, err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, p); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, notFoundErr
+	if err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, p); err != nil {
+		return nil, authz.SubIfUnauthorized(err, notFoundErr)
 	}
 	return p, nil
 }
@@ -41,58 +48,324 @@ func (a *apiServer) GetProjectByID(
 func (a *apiServer) getProjectColumnsByID(
 	ctx context.Context, id int32, curUser model.User,
 ) (*apiv1.GetProjectColumnsResponse, error) {
-	notFoundErr := status.Errorf(codes.NotFound, "project (%d) not found", id)
-	p := &projectv1.Project{}
-	if err := a.m.db.QueryProto("get_project", p, id); errors.Is(err, db.ErrNotFound) {
-		return nil, notFoundErr
-	} else if err != nil {
-		return nil, errors.Wrapf(err, "error fetching project (%d) from database", id)
-	}
-	if ok, err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, p); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, notFoundErr
-	}
-	// Get general columns
-	generalColumns := make([]projectv1.GeneralColumn, 0, len(projectv1.GeneralColumn_value))
-	for gc := range projectv1.GeneralColumn_value {
-		generalColumns = append(
-			generalColumns, projectv1.GeneralColumn(projectv1.GeneralColumn_value[gc]))
-	}
-	// Get hyperpatameters columns
-	hyperparameters := struct {
-		Hyperparameters []string
-	}{}
-	err := db.Bun().
-		NewSelect().Table("projects").Column("hyperparameters").Where(
-		"id = ?", id).Scan(ctx, &hyperparameters)
+	p, err := a.GetProjectByID(ctx, id, curUser)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get metrics columns
-	metricNames := []struct {
-		Vname []string
+	columns := []*projectv1.ProjectColumn{
+		{
+			Column:      "id",
+			DisplayName: "ID",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "name",
+			DisplayName: "Name",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "description",
+			DisplayName: "Description",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "tags",
+			DisplayName: "Tags",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "forkedFrom",
+			DisplayName: "Forked",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "startTime",
+			DisplayName: "Start time",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_DATE,
+		},
+		{
+			Column:      "duration",
+			DisplayName: "Duration",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "numTrials",
+			DisplayName: "Trial count",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "state",
+			DisplayName: "State",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "searcherType",
+			DisplayName: "Searcher",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "resourcePool",
+			DisplayName: "Resource pool",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "progress",
+			DisplayName: "Progress",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "checkpointSize",
+			DisplayName: "Checkpoint size",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "checkpointCount",
+			DisplayName: "Checkpoints",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "user",
+			DisplayName: "User",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "searcherMetric",
+			DisplayName: "Searcher Metric",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "searcherMetricsVal",
+			DisplayName: "Searcher Metric Value",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+	}
+
+	hyperparameters := []struct {
+		WorkspaceID     int
+		Hyperparameters expconf.HyperparametersV0
+		BestTrialID     *int
 	}{}
-	metricColumns := make([]string, 0)
-	err = db.Bun().
+
+	// get all experiments in project
+	experimentQuery := db.Bun().NewSelect().
+		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
+		ColumnExpr("config->'hyperparameters' as hyperparameters").
+		Column("best_trial_id").
+		Table("experiments").
+		Where("config->>'hyperparameters' IS NOT NULL").
+		Where("project_id = ?", id).
+		Order("id")
+
+	experimentQuery, err = exputil.AuthZProvider.Get().FilterExperimentsQuery(
+		ctx,
+		curUser,
+		p,
+		db.Bun().NewSelect().TableExpr("(?) AS subq", experimentQuery),
+		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = experimentQuery.Scan(ctx, &hyperparameters)
+	if err != nil {
+		return nil, err
+	}
+
+	trialIDs := make([]int, 0, len(hyperparameters))
+	for _, hparam := range hyperparameters {
+		if hparam.BestTrialID != nil {
+			trialIDs = append(trialIDs, *hparam.BestTrialID)
+		}
+	}
+	summaryMetrics := []struct {
+		ID             int
+		SummaryMetrics model.JSONObj
+	}{}
+
+	if len(trialIDs) > 0 {
+		trialsQuery := db.Bun().NewSelect().
+			Column("id", "summary_metrics").
+			Table("trials").
+			Where("id IN (?)", bun.In(trialIDs)).
+			Order("id")
+		err = trialsQuery.Scan(ctx, &summaryMetrics)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	summaryMetricsSet := make(map[string]struct{})
+	for _, trial := range summaryMetrics {
+		if rawMetrics, ok := trial.SummaryMetrics["avg_metrics"]; ok {
+			// iterate in order
+			metrics := rawMetrics.(map[string]interface{})
+			metricsKeys := make([]string, 0, len(metrics))
+			for metricKey := range metrics {
+				metricsKeys = append(metricsKeys, metricKey)
+			}
+			sort.Strings(metricsKeys)
+
+			for _, key := range metricsKeys {
+				if _, seen := summaryMetricsSet[key]; !seen {
+					summaryMetricsSet[key] = struct{}{}
+					var columnType projectv1.ColumnType
+					metric := metrics[key].(map[string]interface{})
+					if metricType, ok := metric["type"]; ok {
+						switch metricType.(string) {
+						case db.MetricTypeString:
+							columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
+						case db.MetricTypeNumber:
+							columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
+						case db.MetricTypeDate:
+							columnType = projectv1.ColumnType_COLUMN_TYPE_DATE
+						case db.MetricTypeBool:
+							columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
+						default:
+							// unsure of how to treat arrays/objects/nulls
+							columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+						}
+						// don't surface aggregates that don't make sense for non-numbers
+						if columnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER {
+							aggregates := []string{"count", "last", "max", "min", "sum"}
+							for _, aggregate := range aggregates {
+								columns = append(columns, &projectv1.ProjectColumn{
+									Column:   fmt.Sprintf("training.%s.%s", key, aggregate),
+									Location: projectv1.LocationType_LOCATION_TYPE_TRAINING,
+									Type:     columnType,
+								})
+							}
+						} else {
+							columns = append(columns, &projectv1.ProjectColumn{
+								Column:   fmt.Sprintf("training.%s.last", key),
+								Location: projectv1.LocationType_LOCATION_TYPE_TRAINING,
+								Type:     columnType,
+							})
+						}
+					}
+				}
+			}
+		}
+	}
+	hparamSet := make(map[string]struct{})
+	for _, hparam := range hyperparameters {
+		flatHparam := expconf.FlattenHPs(hparam.Hyperparameters)
+
+		// ensure we're iterating in order
+		paramKeys := make([]string, len(flatHparam))
+		for key := range flatHparam {
+			paramKeys = append(paramKeys, key)
+		}
+		sort.Strings(paramKeys)
+
+		for _, key := range paramKeys {
+			value := flatHparam[key]
+			_, seen := hparamSet[key]
+			if !seen {
+				hparamSet[key] = struct{}{}
+				var columnType projectv1.ColumnType
+				switch {
+				case value.RawIntHyperparameter != nil ||
+					value.RawDoubleHyperparameter != nil ||
+					value.RawLogHyperparameter != nil:
+					columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
+				case value.RawConstHyperparameter != nil:
+					switch value.RawConstHyperparameter.RawVal.(type) {
+					case float64:
+						columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
+					case string:
+						columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
+					default:
+						columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+					}
+				default:
+					columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+				}
+				columns = append(columns, &projectv1.ProjectColumn{
+					Column:   fmt.Sprintf("hp.%s", key),
+					Location: projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS,
+					Type:     columnType,
+				})
+			}
+		}
+	}
+
+	// Get metrics columns
+	metricNames, err := a.getProjectMetricsNames(ctx, curUser, p)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, mn := range metricNames {
+		columns = append(columns, &projectv1.ProjectColumn{
+			Column:   fmt.Sprintf("validation.%s", mn),
+			Location: projectv1.LocationType_LOCATION_TYPE_VALIDATIONS,
+			Type:     projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		})
+	}
+
+	return &apiv1.GetProjectColumnsResponse{
+		Columns: columns,
+	}, nil
+}
+
+func (a *apiServer) getProjectMetricsNames(
+	ctx context.Context, curUser model.User, project *projectv1.Project,
+) ([]string, error) {
+	metricNames := []struct {
+		Vname       []string
+		WorkspaceID int
+	}{}
+
+	metricQuery := db.Bun().
 		NewSelect().
 		TableExpr("exp_metrics_name").
 		TableExpr("LATERAL json_array_elements_text(vname) AS vnames").
 		ColumnExpr("array_to_json(array_agg(DISTINCT vnames)) AS vname").
-		Where("project_id = ?", id).Scan(ctx, &metricNames)
+		ColumnExpr("?::int as workspace_id", project.WorkspaceId).
+		Where("project_id = ?", project.Id)
+
+	metricQuery, err := exputil.AuthZProvider.Get().FilterExperimentsQuery(
+		ctx,
+		curUser,
+		project,
+		db.Bun().NewSelect().TableExpr("(?) AS subq", metricQuery),
+		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS},
+	)
 	if err != nil {
 		return nil, err
 	}
-	for _, mn := range metricNames {
-		for _, mnv := range mn.Vname {
-			metricColumns = append(metricColumns, fmt.Sprintf("%s.%s", "validation", mnv))
+
+	err = metricQuery.Scan(ctx, &metricNames)
+	if err != nil {
+		return nil, errors.Wrapf(
+			err, "error fetching metrics names for project (%d) from database", project.Id)
+	}
+	var names []string
+	for _, n := range metricNames {
+		for _, m := range n.Vname {
+			names = append(names, m)
 		}
 	}
-
-	return &apiv1.GetProjectColumnsResponse{
-		General: generalColumns, Hyperparameters: hyperparameters.Hyperparameters, Metrics: metricColumns,
-	}, nil
+	return names, nil
 }
 
 func (a *apiServer) getProjectAndCheckCanDoActions(
@@ -152,6 +425,107 @@ func (a *apiServer) GetProjectColumns(
 	}
 
 	return a.getProjectColumnsByID(ctx, req.Id, *curUser)
+}
+
+func (a *apiServer) GetProjectNumericMetricsRange(
+	ctx context.Context, req *apiv1.GetProjectNumericMetricsRangeRequest,
+) (*apiv1.GetProjectNumericMetricsRangeResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := a.GetProjectByID(ctx, req.Id, *curUser)
+	if err != nil {
+		return nil, err
+	}
+	valMetricsRange, traMetricsRange, err := a.getProjectNumericMetricsRange(ctx, *curUser, p)
+	if err != nil {
+		return nil, err
+	}
+
+	var ranges []*projectv1.MetricsRange
+	for mn, mr := range valMetricsRange {
+		ranges = append(ranges, &projectv1.MetricsRange{
+			MetricsName: fmt.Sprintf("validation.%s", mn),
+			Min:         mathx.Min(mr...),
+			Max:         mathx.Max(mr...),
+		})
+	}
+	for mn, mr := range traMetricsRange {
+		ranges = append(ranges, &projectv1.MetricsRange{
+			MetricsName: fmt.Sprintf("training.%s", mn),
+			Min:         mathx.Min(mr...),
+			Max:         mathx.Max(mr...),
+		})
+	}
+
+	return &apiv1.GetProjectNumericMetricsRangeResponse{Ranges: ranges}, nil
+}
+
+func (a *apiServer) getProjectNumericMetricsRange(
+	ctx context.Context, curUser model.User, project *projectv1.Project,
+) (map[string]([]float64), map[string]([]float64), error) {
+	query := db.Bun().NewSelect().Table("trials").Table("experiments").
+		ColumnExpr("summary_metrics -> 'validation_metrics' AS validation_metrics").
+		ColumnExpr("summary_metrics -> 'avg_metrics' AS avg_metrics").
+		ColumnExpr(`searcher_metric_value_signed = searcher_metric_value AS smaller_is_better`).
+		Where("project_id = ?", project.Id).
+		Where("experiments.best_trial_id = trials.id")
+
+	type metrics struct {
+		Min   float64
+		Max   float64
+		Count *int32
+	}
+
+	var res []struct {
+		SmallerIsBetter   bool
+		ValidationMetrics *map[string]metrics
+		AvgMetrics        *map[string]metrics
+	}
+
+	if err := query.Scan(ctx, &res); err != nil {
+		return nil, nil, errors.Wrapf(
+			err, "error fetching metrics range for project (%d) from database", project.Id)
+	}
+	valMetricsValues := make(map[string]([]float64))
+	traMetricsValues := make(map[string]([]float64))
+	for _, r := range res {
+		if r.ValidationMetrics != nil {
+			for metricsName, value := range *r.ValidationMetrics {
+				if value.Count == nil {
+					continue
+				}
+				metricsValue := value.Min
+				if !r.SmallerIsBetter {
+					metricsValue = value.Max
+				}
+				if _, ok := valMetricsValues[metricsName]; !ok {
+					valMetricsValues[metricsName] = []float64{metricsValue}
+				} else {
+					valMetricsValues[metricsName] = append(valMetricsValues[metricsName], metricsValue)
+				}
+			}
+		}
+		if r.AvgMetrics != nil {
+			for metricsName, value := range *r.AvgMetrics {
+				if value.Count == nil {
+					continue
+				}
+				metricsValue := value.Min
+				if !r.SmallerIsBetter {
+					metricsValue = value.Max
+				}
+				if _, ok := traMetricsValues[metricsName]; !ok {
+					traMetricsValues[metricsName] = []float64{metricsValue}
+				} else {
+					traMetricsValues[metricsName] = append(traMetricsValues[metricsName], metricsValue)
+				}
+			}
+		}
+	}
+	return valMetricsValues, traMetricsValues, nil
 }
 
 func (a *apiServer) PostProject(
@@ -277,12 +651,10 @@ func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 	}
 
 	log.Debugf("deleting project %d experiments", projectID)
-	for _, exp := range expList {
-		if err = a.deleteExperiment(exp, user); err != nil {
-			log.WithError(err).Errorf("failed to delete experiment %d", exp.ID)
-			_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
-			return err
-		}
+	if _, err = a.deleteExperiments(expList, user); err != nil {
+		log.WithError(err).Errorf("failed to delete experiments")
+		_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
+		return err
 	}
 	log.Debugf("project %d experiments deleted successfully", projectID)
 	err = a.m.db.QueryProto("delete_project", holder, projectID)
@@ -473,12 +845,12 @@ func (a *apiServer) GetProjectsByUserActivity(
 	viewableProjects := []*projectv1.Project{}
 
 	for _, pr := range projects {
-		canView, err := project.AuthZProvider.Get().CanGetProject(ctx, *curUser, pr)
-		if err != nil {
-			return nil, err
-		}
-		if canView {
+		err := project.AuthZProvider.Get().CanGetProject(ctx, *curUser, pr)
+		if err == nil {
 			viewableProjects = append(viewableProjects, pr)
+			// omit projects user doesn't have access to
+		} else if !authz.IsPermissionDenied(err) {
+			return nil, err
 		}
 	}
 

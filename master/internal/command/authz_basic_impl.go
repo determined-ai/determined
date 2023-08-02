@@ -15,8 +15,8 @@ type NSCAuthZBasic struct{}
 // CanGetNSC returns true and nil error.
 func (a *NSCAuthZBasic) CanGetNSC(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
-) (canGetCmd bool, serverError error) {
-	return true, nil
+) error {
+	return nil
 }
 
 // CanGetActiveTasksCount always returns a nil error.
@@ -81,8 +81,8 @@ func (a *NSCAuthZBasic) FilterTensorboards(
 func (a *NSCAuthZBasic) CanGetTensorboard(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 	experimentIDs []int32, trialIDs []int32,
-) (canGetTensorboards bool, serverError error) {
-	return true, nil
+) error {
+	return nil
 }
 
 // CanTerminateTensorboard always returns nil.

@@ -1,6 +1,4 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Dropdown, MenuProps, Space, Typography } from 'antd';
-import type { DropDownProps } from 'antd';
+import { Space, Typography } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
@@ -12,15 +10,16 @@ import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import FilterCounter from 'components/FilterCounter';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Button from 'components/kit/Button';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
 import Tags from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
-import Page from 'components/Page';
+import Spinner from 'components/Spinner';
 import InteractiveTable, {
   ColumnDef,
-  InteractiveTableSettings,
   onRightClickableCell,
 } from 'components/Table/InteractiveTable';
 import {
@@ -40,7 +39,8 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import useExperimentTags from 'hooks/useExperimentTags';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import usePolling from 'hooks/usePolling';
+import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {
   activateExperiment,
@@ -58,15 +58,8 @@ import {
 import { Experimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { GetExperimentsParams } from 'services/types';
-import Icon from 'shared/components/Icon/Icon';
-import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import { RecordKey, ValueOf } from 'shared/types';
-import { ErrorLevel } from 'shared/utils/error';
-import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
-import { alphaNumericSorter } from 'shared/utils/sort';
-import { humanReadableBytes } from 'shared/utils/string';
 import userStore from 'stores/users';
+import { RecordKey } from 'types';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -77,7 +70,7 @@ import {
   ProjectExperiment,
   RunState,
 } from 'types';
-import { modal } from 'utils/dialogApi';
+import { ErrorLevel } from 'utils/error';
 import handleError from 'utils/error';
 import {
   canActionExperiment,
@@ -86,8 +79,13 @@ import {
 } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
+import { alphaNumericSorter } from 'utils/sort';
+import { humanReadableBytes } from 'utils/string';
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
+
+import BatchActionConfirmModalComponent from '../components/BatchActionConfirmModal';
 
 import {
   DEFAULT_COLUMN_WIDTHS,
@@ -116,12 +114,19 @@ interface Props {
   project: Project;
 }
 
+const MenuKey = {
+  Columns: 'columns',
+  ResultFilter: 'resetFilters',
+  SwitchArchived: 'switchArchive',
+} as const;
+
 const ExperimentList: React.FC<Props> = ({ project }) => {
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
   const [batchMovingExperimentIds, setBatchMovingExperimentIds] = useState<number[]>();
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [batchAction, setBatchAction] = useState<Action>();
   const canceler = useRef(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
 
@@ -132,8 +137,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const settingsConfig = useMemo(() => settingsConfigForProject(id), [id]);
 
-  const { settings, updateSettings, resetSettings, activeSettings } =
-    useSettings<ExperimentListSettings>(settingsConfig);
+  const {
+    settings,
+    isLoading: isLoadingSettings,
+    updateSettings,
+    resetSettings,
+    activeSettings,
+  } = useSettings<ExperimentListSettings>(settingsConfig);
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
@@ -155,7 +165,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const usersString = useMemo(() => settings.user?.join('.'), [settings.user]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
-    if (!settings) return;
+    if (!settings || isLoadingSettings) return;
     try {
       const states = statesString
         ?.split('.')
@@ -210,7 +220,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, settings, labelsString, pinnedString, statesString, usersString]);
+  }, [id, isLoadingSettings, settings, labelsString, pinnedString, statesString, usersString]);
 
   const fetchLabels = useCallback(async () => {
     try {
@@ -235,7 +245,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const handleActionComplete = useCallback(() => fetchExperiments(), [fetchExperiments]);
 
-  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" title="Search" />, []);
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
@@ -379,6 +389,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       return (
         <ExperimentActionDropdown
           experiment={getProjectExperimentForExperimentItem(record, project)}
+          isContextMenu
           settings={settings}
           updateSettings={updateSettings}
           onComplete={handleActionComplete}
@@ -471,6 +482,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'tags',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
         filterDropdown: labelFilterDropdown,
+        filterIcon: <Icon name="filter" title="filter" />,
         filters: labels.map((label) => ({ text: label, value: label })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.label,
         key: 'labels',
@@ -520,6 +532,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
+        filterIcon: <Icon name="filter" title="filter" />,
         filters: [
           RunState.Active,
           RunState.Paused,
@@ -571,11 +584,11 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       },
       {
         align: 'right',
-        dataIndex: 'checkpointCount',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpointCount'],
+        dataIndex: 'checkpoints',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpoints'],
         key: V1GetExperimentsRequestSortBy.CHECKPOINTCOUNT,
         sorter: true,
-        title: 'Checkpoint Count',
+        title: 'Checkpoints',
       },
       {
         align: 'right',
@@ -589,6 +602,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
+        filterIcon: <Icon name="filter" title="filter" />,
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
@@ -672,6 +686,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     [settings.columns, transferColumns],
   );
 
+  const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
 
   const sendBatchActions = useCallback(
@@ -754,31 +769,16 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     [fetchExperiments, sendBatchActions, updateSettings],
   );
 
-  const showConfirmation = useCallback(
-    (action: Action) => {
-      modal.confirm({
-        content: `
-        Are you sure you want to ${action.toLocaleLowerCase()}
-        all the eligible selected experiments?
-      `,
-        icon: <ExclamationCircleOutlined />,
-        okText: /cancel/i.test(action) ? 'Confirm' : action,
-        onOk: () => submitBatchAction(action),
-        title: 'Confirm Batch Action',
-      });
-    },
-    [submitBatchAction],
-  );
-
   const handleBatchAction = useCallback(
     (action?: string) => {
       if (action === Action.OpenTensorBoard || action === Action.Move) {
         submitBatchAction(action);
       } else {
-        showConfirmation(action as Action);
+        setBatchAction(action as Action);
+        BatchActionConfirmModal.open();
       }
     },
-    [submitBatchAction, showConfirmation],
+    [BatchActionConfirmModal, submitBatchAction],
   );
 
   const handleTableRowSelect = useCallback(
@@ -861,49 +861,36 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     return () => stopPolling();
   }, [stopPolling]);
 
-  useEffect(() => userStore.startPolling(), []);
-
   useEffect(() => {
     const currentCanceler = canceler.current;
     return () => currentCanceler.abort();
   }, []);
 
   const tabBarContent = useMemo(() => {
-    const getMenuProps = (): DropDownProps['menu'] => {
-      const MenuKey = {
-        Columns: 'columns',
-        ResultFilter: 'resetFilters',
-        SwitchArchived: 'switchArchive',
-      } as const;
-
-      const funcs = {
-        [MenuKey.SwitchArchived]: () => {
-          switchShowArchived(!settings.archived);
-        },
-        [MenuKey.Columns]: () => {
+    const menuItems: MenuItem[] = [
+      {
+        key: MenuKey.SwitchArchived,
+        label: settings.archived ? 'Hide Archived' : 'Show Archived',
+      },
+      { key: MenuKey.Columns, label: 'Columns' },
+    ];
+    if (filterCount > 0) {
+      menuItems.push({ key: MenuKey.ResultFilter, label: `Clear Filters (${filterCount})` });
+    }
+    const handleDropdown = (key: string) => {
+      switch (key) {
+        case MenuKey.Columns:
           ColumnsCustomizeModal.open();
-        },
-        [MenuKey.ResultFilter]: () => {
+          break;
+        case MenuKey.ResultFilter:
           resetFilters();
-        },
-      };
-
-      const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as ValueOf<typeof MenuKey>]();
-      };
-
-      const menuItems: MenuProps['items'] = [
-        {
-          key: MenuKey.SwitchArchived,
-          label: settings.archived ? 'Hide Archived' : 'Show Archived',
-        },
-        { key: MenuKey.Columns, label: 'Columns' },
-      ];
-      if (filterCount > 0) {
-        menuItems.push({ key: MenuKey.ResultFilter, label: `Clear Filters (${filterCount})` });
+          break;
+        case MenuKey.SwitchArchived:
+          switchShowArchived(!settings.archived);
+          break;
       }
-      return { items: menuItems, onClick: onItemClick };
     };
+
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
@@ -912,9 +899,9 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
         <div className={css.actionOverflow} title="Open actions menu">
-          <Dropdown menu={getMenuProps()} trigger={['click']}>
+          <Dropdown menu={menuItems} onClick={handleDropdown}>
             <div>
-              <Icon name="overflow-vertical" />
+              <Icon name="overflow-vertical" title="Action menu" />
             </div>
           </Dropdown>
         </div>
@@ -924,52 +911,51 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   useSetDynamicTabBar(tabBarContent);
   return (
-    <Page
-      bodyNoPadding
-      containerRef={pageRef}
-      // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
-      docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
-      id="projectDetails">
-      <>
-        <TableBatch
-          actions={batchActions.map((action) => ({
-            disabled: !availableBatchActions.includes(action),
-            label: action,
-            value: action,
-          }))}
-          selectedRowCount={(settings.row ?? []).length}
-          onAction={handleBatchAction}
-          onClear={clearSelected}
+    <>
+      <TableBatch
+        actions={batchActions.map((action) => ({
+          disabled: !availableBatchActions.includes(action),
+          label: action,
+          value: action,
+        }))}
+        selectedRowCount={(settings.row ?? []).length}
+        onAction={handleBatchAction}
+        onClear={clearSelected}
+      />
+      <InteractiveTable<ExperimentItem, ExperimentListSettings>
+        areRowsSelected={!!settings.row}
+        columns={columns}
+        containerRef={pageRef}
+        ContextMenu={ContextMenu}
+        dataSource={experiments}
+        loading={isLoading}
+        numOfPinned={(settings.pinned?.[id] ?? []).length}
+        pagination={getFullPaginationConfig(
+          {
+            limit: settings.tableLimit || 0,
+            offset: settings.tableOffset || 0,
+          },
+          total,
+        )}
+        rowClassName={defaultRowClassName({ clickable: false })}
+        rowKey="id"
+        rowSelection={{
+          onChange: handleTableRowSelect,
+          preserveSelectedRowKeys: true,
+          selectedRowKeys: settings.row ?? [],
+        }}
+        scroll={{ y: `calc(100vh - ${availableBatchActions.length === 0 ? '230' : '280'}px)` }}
+        settings={settings}
+        showSorterTooltip={false}
+        size="small"
+        updateSettings={updateSettings}
+      />
+      {batchAction && (
+        <BatchActionConfirmModal.Component
+          batchAction={batchAction}
+          onConfirm={() => submitBatchAction(batchAction)}
         />
-        <InteractiveTable
-          areRowsSelected={!!settings.row}
-          columns={columns}
-          containerRef={pageRef}
-          ContextMenu={ContextMenu}
-          dataSource={experiments}
-          loading={isLoading}
-          numOfPinned={(settings.pinned?.[id] ?? []).length}
-          pagination={getFullPaginationConfig(
-            {
-              limit: settings.tableLimit || 0,
-              offset: settings.tableOffset || 0,
-            },
-            total,
-          )}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="id"
-          rowSelection={{
-            onChange: handleTableRowSelect,
-            preserveSelectedRowKeys: true,
-            selectedRowKeys: settings.row ?? [],
-          }}
-          scroll={{ y: `calc(100vh - ${availableBatchActions.length === 0 ? '230' : '280'}px)` }}
-          settings={settings as InteractiveTableSettings}
-          showSorterTooltip={false}
-          size="small"
-          updateSettings={updateSettings as UpdateSettings}
-        />
-      </>
+      )}
       <ColumnsCustomizeModal.Component
         columns={transferColumns}
         defaultVisibleColumns={DEFAULT_COLUMNS}
@@ -982,7 +968,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         sourceWorkspaceId={project?.workspaceId}
         onSubmit={handleActionComplete}
       />
-    </Page>
+    </>
   );
 };
 

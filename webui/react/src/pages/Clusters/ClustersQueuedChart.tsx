@@ -1,10 +1,9 @@
 import { Radio } from 'antd';
 import React, { useMemo, useState } from 'react';
 
-import Page from 'components/Page';
 import Section from 'components/Section';
 import { V1RPQueueStat } from 'services/api-ts-sdk';
-import { DURATION_DAY } from 'shared/utils/datetime';
+import { DURATION_DAY, durationInEnglish } from 'utils/datetime';
 
 import ClusterHistoricalUsageChart from '../Cluster/ClusterHistoricalUsageChart';
 
@@ -20,20 +19,18 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
   const queuedStats = useMemo(() => {
     if (!poolStats?.aggregates) return;
     const { aggregates } = poolStats;
-    const agg = aggregates.filter(
+    const aggd = aggregates.filter(
       (item) => Date.parse(item.periodStart) >= Date.now() - viewDays * DURATION_DAY,
     );
-    // If aggregates only has one record of today, then do not display.
-    const aggd = agg.length > 1 ? agg : [];
     return {
-      hoursAverage: { average: aggd.map((item) => item.seconds / 60) },
+      hoursAverage: { average: aggd.map((item) => item.seconds) },
       time: aggd.map((item) => item.periodStart),
     };
   }, [poolStats, viewDays]);
 
   if (!queuedStats) return <div />;
   return (
-    <Page bodyNoPadding>
+    <>
       <Section
         bodyBorder
         options={
@@ -48,12 +45,15 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
         title="Avg Queue Time">
         <ClusterHistoricalUsageChart
           chartKey={viewDays}
+          formatValues={(_: uPlot, splits: number[]) =>
+            splits.map((n) => durationInEnglish(n * 1000))
+          }
           hoursByLabel={queuedStats.hoursAverage}
-          label="Queued Minuts"
+          label=" "
           time={queuedStats.time}
         />
       </Section>
-    </Page>
+    </>
   );
 };
 

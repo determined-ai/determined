@@ -15,6 +15,3 @@ github_checks:
   annotations: false
 
 comment: false
-
-ignore:
-  - "webui/react/src/shared/configs"

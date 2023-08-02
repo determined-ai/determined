@@ -6,7 +6,8 @@ from typing import Dict, List, Set, Union
 import pytest
 
 from determined.common import api
-from determined.common.api import authentication, certs
+from determined.common.api import authentication, bindings, certs
+from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
@@ -66,13 +67,13 @@ def test_streaming_metrics_api() -> None:
 def request_metric_names(experiment_id):  # type: ignore
     response = api.get(
         conf.make_master_url(),
-        "api/v1/experiments/{}/metrics-stream/metric-names".format(experiment_id),
+        "api/v1/experiments/metrics-stream/metric-names?ids={}".format(experiment_id),
         params={"period_seconds": 1},
     )
     results = [message["result"] for message in map(json.loads, response.text.splitlines())]
 
     # First let's verify an empty response was sent back before any real work was done
-    if results[0]["searcherMetric"] != "validation_loss":
+    if results[0]["searcherMetrics"][0] != "validation_loss":
         return ("unexpected searcher metric in first response", results)
     if results[0]["trainingMetrics"] != []:
         return ("unexpected training metric in first response", results)
@@ -315,3 +316,14 @@ def test_trial_describe_metrics() -> None:
     losses = [m["loss"] for m in flattened_batch_metrics]
 
     assert len(losses) == 100
+
+    # assert summary metrics in trial
+    sess = api_utils.determined_test_session(admin=True)
+    resp = bindings.get_GetTrial(session=sess, trialId=trial_id)
+    summaryMetrics = resp.trial.summaryMetrics
+    assert summaryMetrics is not None
+    assert summaryMetrics["avg_metrics"]["loss"]["count"] == 100
+    assert summaryMetrics["avg_metrics"]["loss"]["max"] is not None
+    assert summaryMetrics["avg_metrics"]["loss"]["min"] is not None
+    assert summaryMetrics["avg_metrics"]["loss"]["sum"] is not None
+    assert summaryMetrics["avg_metrics"]["loss"]["type"] == "number"

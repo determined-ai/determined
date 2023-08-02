@@ -19,8 +19,7 @@ type UserAuthZ interface {
 	// GET /api/v1/users/:user_id
 	// Denying a user shouldn't return an error. Only a server error that needs to be
 	// reported to the user should return an errr.
-	CanGetUser(ctx context.Context, curUser, targetUser model.User) (
-		canGetUser bool, serverError error)
+	CanGetUser(ctx context.Context, curUser, targetUser model.User) error
 
 	// GET /users
 	// GET /api/v1/users
@@ -59,11 +58,11 @@ type UserAuthZ interface {
 
 	// GET /api/v1/users/setting
 	CanGetUsersOwnSettings(ctx context.Context, curUser model.User) error
-	// POST /api/v1/users/setting/reset
-	CanCreateUsersOwnSetting(
-		ctx context.Context, curUser model.User, setting model.UserWebSetting,
-	) error
 	// POST /api/v1/users/setting
+	CanCreateUsersOwnSetting(
+		ctx context.Context, curUser model.User, settings []*model.UserWebSetting,
+	) error
+	// POST /api/v1/users/setting/reset
 	CanResetUsersOwnSettings(ctx context.Context, curUser model.User) error
 }
 

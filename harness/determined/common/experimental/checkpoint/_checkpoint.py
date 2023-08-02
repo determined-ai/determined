@@ -4,6 +4,7 @@ import json
 import logging
 import pathlib
 import shutil
+import sys
 import tarfile
 from typing import Any, Dict, List, Optional
 
@@ -14,11 +15,21 @@ from determined.common.storage import shared
 
 
 class DownloadMode(enum.Enum):
-    """A list of supported checkpoint download modes."""
+    """
+    A list of supported checkpoint download modes.
 
-    DIRECT = "direct"  # Download directly from checkpoint storage.
-    MASTER = "master"  # Proxy download through the master.
-    AUTO = "auto"  # Attemp DIRECT and fall back to MASTER.
+    Attributes:
+        DIRECT
+            Download directly from checkpoint storage.
+        MASTER
+            Proxy download through the master.
+        AUTO
+            Attempt DIRECT and fall back to MASTER.
+    """
+
+    DIRECT = "direct"
+    MASTER = "master"
+    AUTO = "auto"
 
     def __str__(self) -> str:
         return self.value
@@ -35,6 +46,7 @@ class CheckpointState(enum.Enum):
     COMPLETED = bindings.checkpointv1State.COMPLETED.value
     ERROR = bindings.checkpointv1State.ERROR.value
     DELETED = bindings.checkpointv1State.DELETED.value
+    PARTIALLY_DELETED = bindings.checkpointv1State.PARTIALLY_DELETED.value
 
 
 @dataclasses.dataclass
@@ -140,12 +152,15 @@ class Checkpoint:
                 checkpoint under. If this parameter is not set, the checkpoint will
                 be downloaded to ``checkpoints/<checkpoint_uuid>`` relative to the
                 current working directory.
-            mode (DownloadMode): Mode governs how a checkpoint is downloaded. Refer to
-                the definition of DownloadMode for details.
+            mode (DownloadMode, optional): Governs how a checkpoint is downloaded. Defaults to
+                ``AUTO``.
         """
-        if self.state != CheckpointState.COMPLETED:
+        if (
+            self.state != CheckpointState.COMPLETED
+            and self.state != CheckpointState.PARTIALLY_DELETED
+        ):
             raise errors.CheckpointStateException(
-                "Only COMPLETED checkpoints can be downloaded. "
+                "Only COMPLETED or PARTIALLY_DELETED checkpoints can be downloaded. "
                 f"Checkpoint state: {self.state.value}"
             )
         if path is not None:
@@ -215,7 +230,15 @@ class Checkpoint:
     ) -> None:
         if checkpoint_storage["type"] == "shared_fs":
             src_ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
-            shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
+            # TODO: remove version check once we drop support for Python 3.7
+            if sys.version_info.minor >= 8:
+                shutil.copytree(
+                    str(src_ckpt_dir),
+                    str(local_ckpt_dir),
+                    dirs_exist_ok=True,
+                )  # type: ignore
+            else:
+                shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
         else:
             local_ckpt_dir.mkdir(parents=True, exist_ok=True)
             manager = storage.build(
@@ -268,19 +291,6 @@ class Checkpoint:
         with open(path, "w") as f:
             json.dump(self.metadata, f, indent=2)
 
-    def _push_metadata(self) -> None:
-        # TODO: in a future version of this REST API, an entire, well-formed Checkpoint object.
-        req = bindings.v1PostCheckpointMetadataRequest(
-            checkpoint=bindings.v1Checkpoint(
-                uuid=self.uuid,
-                metadata=self.metadata,
-                resources={},
-                training=bindings.v1CheckpointTrainingMetadata(),
-                state=bindings.checkpointv1State.UNSPECIFIED,
-            ),
-        )
-        bindings.post_PostCheckpointMetadata(self._session, body=req, checkpoint_uuid=self.uuid)
-
     def add_metadata(self, metadata: Dict[str, Any]) -> None:
         """
         Adds user-defined metadata to the checkpoint. The ``metadata`` argument must be a
@@ -293,10 +303,12 @@ class Checkpoint:
         Arguments:
             metadata (dict): Dictionary of metadata to add to the checkpoint.
         """
-        for key, val in metadata.items():
-            self.metadata[key] = val
+        updated_metadata = dict(self.metadata, **metadata)
 
-        self._push_metadata()
+        req = _metadata_update_request(self.uuid, updated_metadata)
+        bindings.post_PostCheckpointMetadata(self._session, body=req, checkpoint_uuid=self.uuid)
+
+        self.metadata = updated_metadata
 
     def remove_metadata(self, keys: List[str]) -> None:
         """
@@ -309,11 +321,15 @@ class Checkpoint:
             keys (List[string]): Top-level keys to remove from the checkpoint metadata.
         """
 
+        updated_metadata = dict(self.metadata)
         for key in keys:
-            if key in self.metadata:
-                del self.metadata[key]
+            if key in updated_metadata:
+                del updated_metadata[key]
 
-        self._push_metadata()
+        req = _metadata_update_request(self.uuid, updated_metadata)
+        bindings.post_PostCheckpointMetadata(self._session, body=req, checkpoint_uuid=self.uuid)
+
+        self.metadata = updated_metadata
 
     def delete(self) -> None:
         """
@@ -324,6 +340,27 @@ class Checkpoint:
         delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=[self.uuid])
         bindings.delete_DeleteCheckpoints(self._session, body=delete_body)
         logging.info(f"Deletion of checkpoint {self.uuid} is in progress.")
+
+    def remove_files(self, globs: List[str]) -> None:
+        """
+        Removes any files from the checkpoint in checkpoint storage that match one or more of
+        the provided ``globs``. The checkpoint resources and state will be updated in master
+        asynchronously to reflect checkpoint storage. If ``globs`` is the empty list then no
+        files will be deleted and the resources and state will only be refreshed in master.
+
+        Arguments:
+            globs (List[string]): Globs to match checkpoint files against.
+        """
+        remove_body = bindings.v1CheckpointsRemoveFilesRequest(
+            checkpointGlobs=globs,
+            checkpointUuids=[self.uuid],
+        )
+        bindings.post_CheckpointsRemoveFiles(self._session, body=remove_body)
+
+        if len(globs) == 0:
+            logging.info(f"Refresh of checkpoint {self.uuid} is in progress.")
+        else:
+            logging.info(f"Partial deletion of checkpoint {self.uuid} is in progress.")
 
     def __repr__(self) -> str:
         if self.training is not None:
@@ -347,3 +384,19 @@ class Checkpoint:
             state=CheckpointState(ckpt.state.value),
             training=CheckpointTrainingMetadata._from_bindings(ckpt.training),
         )
+
+
+def _metadata_update_request(
+    uuid: str, metadata: Dict[str, Any]
+) -> bindings.v1PostCheckpointMetadataRequest:
+    """Returns a request for updating checkpoint metadata."""
+    # TODO: in a future version of this REST API, an entire, well-formed Checkpoint object.
+    return bindings.v1PostCheckpointMetadataRequest(
+        checkpoint=bindings.v1Checkpoint(
+            uuid=uuid,
+            metadata=metadata,
+            resources={},
+            training=bindings.v1CheckpointTrainingMetadata(),
+            state=bindings.checkpointv1State.UNSPECIFIED,
+        ),
+    )

@@ -1,4 +1,4 @@
-description: mnist_pytorch_const
+name: mnist_pytorch_const
 hyperparameters:
   global_batch_size: 64
 searcher:

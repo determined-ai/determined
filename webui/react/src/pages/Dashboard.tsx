@@ -5,10 +5,12 @@ import JupyterLabButton from 'components/JupyterLabButton';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Card from 'components/kit/Card';
 import Empty from 'components/kit/Empty';
+import Icon from 'components/kit/Icon';
 import Link from 'components/Link';
-import Page from 'components/Page';
+import Page, { BreadCrumbRoute } from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import {
   experimentNameRenderer,
@@ -17,6 +19,7 @@ import {
   taskTypeRenderer,
 } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import {
   getCommands,
@@ -26,16 +29,14 @@ import {
   getShells,
   getTensorBoards,
 } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
-import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import { ErrorType } from 'shared/utils/error';
-import { dateTimeStringSorter } from 'shared/utils/sort';
 import userStore from 'stores/users';
+import workspaceStore from 'stores/workspaces';
 import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { dateTimeStringSorter } from 'utils/sort';
 
 import css from './Dashboard.module.scss';
 
@@ -52,6 +53,7 @@ const Dashboard: React.FC = () => {
   const [submissionsLoading, setSubmissionsLoading] = useState<boolean>(true);
   const [projectsLoading, setProjectsLoading] = useState<boolean>(true);
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const { canCreateNSC } = usePermissions();
   type Submission = ExperimentItem & CommandTask;
 
@@ -170,16 +172,23 @@ const Dashboard: React.FC = () => {
     };
   }, [canceler, stopPolling]);
 
+  const pageBreadCrumb: BreadCrumbRoute[] = [{ breadcrumbName: 'Home', path: paths.dashboard() }];
   if (projectsLoading && submissionsLoading) {
     return (
-      <Page options={<JupyterLabButton enabled={canCreateNSC} />} title="Home">
+      <Page
+        breadcrumb={pageBreadCrumb}
+        options={<JupyterLabButton enabled={canCreateNSC} />}
+        title="Home">
         <Spinner center />
       </Page>
     );
   }
 
   return (
-    <Page options={<JupyterLabButton enabled={canCreateNSC} />} title="Home">
+    <Page
+      breadcrumb={pageBreadCrumb}
+      options={<JupyterLabButton enabled={canCreateNSC} />}
+      title="Home">
       {projectsLoading ? (
         <Section>
           <Spinner center />
@@ -239,7 +248,19 @@ const Dashboard: React.FC = () => {
               {
                 dataIndex: 'projectId',
                 render: (projectId, row) => {
-                  if (row.workspaceId && row.projectId !== 1) {
+                  if (row.workspaceId && !row.projectId) {
+                    // Tasks
+                    return (
+                      <Breadcrumb>
+                        <Breadcrumb.Item>
+                          <Link path={paths.workspaceDetails(row.workspaceId)}>
+                            {workspaces.find((w) => w.id === row.workspaceId)?.name ||
+                              String(row.workspaceId)}
+                          </Link>
+                        </Breadcrumb.Item>
+                      </Breadcrumb>
+                    );
+                  } else if (row.workspaceId && row.projectId !== 1) {
                     return (
                       <Breadcrumb>
                         <Breadcrumb.Item>

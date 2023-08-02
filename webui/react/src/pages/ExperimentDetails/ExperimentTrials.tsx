@@ -1,14 +1,15 @@
-import { Dropdown, TablePaginationConfig } from 'antd';
-import type { MenuProps } from 'antd';
+import { TablePaginationConfig } from 'antd';
 import { FilterDropdownProps, FilterValue, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import ActionDropdown from 'components/ActionDropdown/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Dropdown from 'components/kit/Dropdown';
 import Link from 'components/Link';
 import Section from 'components/Section';
-import InteractiveTable, { InteractiveTableSettings } from 'components/Table/InteractiveTable';
+import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import { Renderer } from 'components/Table/Table';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
@@ -16,18 +17,13 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import usePolling from 'hooks/usePolling';
+import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
 import { Experimentv1State, V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
-import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
-import usePolling from 'shared/hooks/usePolling';
-import { ValueOf } from 'shared/types';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
-import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
-import { humanReadableBytes } from 'shared/utils/string';
+import { ValueOf } from 'types';
 import {
   ExperimentAction as Action,
   CheckpointWorkloadExtended,
@@ -37,17 +33,16 @@ import {
   RunState,
   TrialItem,
 } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { getMetricValue } from 'utils/metric';
+import { routeToReactUrl } from 'utils/routes';
+import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
+import { humanReadableBytes } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentTrials.module.scss';
-import {
-  configForExperiment,
-  DEFAULT_COLUMNS,
-  isOfSortKey,
-  Settings,
-} from './ExperimentTrials.settings';
+import { configForExperiment, isOfSortKey, Settings } from './ExperimentTrials.settings';
 import { columns as defaultColumns } from './ExperimentTrials.table';
 import TrialsComparisonModal from './TrialsComparisonModal';
 
@@ -219,6 +214,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       column.sortOrder = null;
       if (column.key === 'checkpoint') {
         column.render = checkpointRenderer;
+        column.onCell = onRightClickableCell;
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.ID) {
         column.render = idRenderer;
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.BESTVALIDATIONMETRIC) {
@@ -385,7 +381,6 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const TrialActionDropdown = useCallback(
     ({
       record,
-      onVisibleChange,
       children,
     }: {
       children: React.ReactNode;
@@ -398,33 +393,28 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         ViewLogs: 'view-logs',
       } as const;
 
-      const funcs = {
-        [MenuKey.OpenTensorboard]: () => {
-          handleOpenTensorBoard(record);
-        },
-        [MenuKey.HyperparameterSearch]: () => {
-          handleHyperparameterSearch(record);
-        },
-        [MenuKey.ViewLogs]: () => {
-          handleViewLogs(record);
-        },
-      };
-
-      const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as ValueOf<typeof MenuKey>]();
-      };
-
       const menuItems = [
         { key: MenuKey.OpenTensorboard, label: TrialAction.OpenTensorBoard },
         { key: MenuKey.HyperparameterSearch, label: TrialAction.HyperparameterSearch },
         { key: MenuKey.ViewLogs, label: TrialAction.ViewLogs },
       ];
 
+      const handleDropdown = (key: string) => {
+        switch (key) {
+          case MenuKey.HyperparameterSearch:
+            handleHyperparameterSearch(record);
+            break;
+          case MenuKey.OpenTensorboard:
+            handleOpenTensorBoard(record);
+            break;
+          case MenuKey.ViewLogs:
+            handleViewLogs(record);
+            break;
+        }
+      };
+
       return (
-        <Dropdown
-          menu={{ items: menuItems, onClick: onItemClick }}
-          trigger={['contextMenu']}
-          onOpenChange={onVisibleChange}>
+        <Dropdown isContextMenu menu={menuItems} onClick={handleDropdown}>
           {children}
         </Dropdown>
       );
@@ -444,7 +434,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           onAction={(action) => submitBatchAction(action as Action)}
           onClear={clearSelected}
         />
-        <InteractiveTable
+        <InteractiveTable<TrialItem, Settings>
           columns={columns}
           containerRef={pageRef}
           ContextMenu={TrialActionDropdown}
@@ -464,17 +454,17 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
             preserveSelectedRowKeys: true,
             selectedRowKeys: settings.row ?? [],
           }}
-          settings={{ ...settings, columns: DEFAULT_COLUMNS } as InteractiveTableSettings}
+          settings={settings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings}
+          updateSettings={updateSettings}
           onChange={handleTableChange}
         />
       </Section>
       {settings.compare && (
         <TrialsComparisonModal
           experiment={experiment}
-          trials={settings.row ?? []}
+          trialIds={settings.row ?? []}
           visible={settings.compare}
           onCancel={handleTrialCompareCancel}
           onUnselect={handleTrialUnselect}

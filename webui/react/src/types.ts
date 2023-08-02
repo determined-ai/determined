@@ -1,6 +1,113 @@
+import { DataNode } from 'antd/lib/tree';
+import { RouteProps } from 'react-router-dom';
+
 import * as Api from 'services/api-ts-sdk';
 import { V1AgentUserGroup, V1Group, V1LaunchWarning, V1Trigger } from 'services/api-ts-sdk';
-import { Primitive, RawJson, RecordKey, ValueOf } from 'shared/types';
+import { Loadable } from 'utils/loadable';
+
+export type Primitive = boolean | number | string;
+export type RecordKey = string | number | symbol;
+export type UnknownRecord = Record<RecordKey, unknown>;
+export type NullOrUndefined<T = undefined> = T | null | undefined;
+export type Point = { x: number; y: number };
+export type Range<T = Primitive> = [T, T];
+export type Eventually<T> = T | Promise<T>;
+
+// DEPRECATED
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export type RawJson = Record<string, any>;
+
+export type JsonArray = Array<Json>;
+export interface JsonObject {
+  [key: string]: Json;
+}
+export type Json = string | number | null | JsonArray | JsonObject;
+
+export interface Pagination {
+  limit: number;
+  offset: number;
+  total?: number;
+}
+
+export interface FetchOptions {
+  signal?: AbortSignal;
+}
+
+interface ApiBase {
+  name: string;
+  stubbedResponse?: unknown;
+  unAuthenticated?: boolean;
+  // middlewares?: Middleware[]; // success/failure middlewares
+}
+
+export type RecordUnknown = Record<RecordKey, unknown>;
+
+// Designed for use with Swagger generated api bindings.
+export interface DetApi<Input, DetOutput, Output> extends ApiBase {
+  postProcess: (response: DetOutput) => Output;
+  request: (params: Input, options?: FetchOptions) => Promise<DetOutput>;
+  stubbedResponse?: DetOutput;
+}
+
+/**
+ * @description helper to organize storing api response data.
+ */
+export interface ApiState<T> {
+  data?: T;
+  /**
+   * error, if any, with the last state update.
+   * this should be cleared on the next successful update.
+   */
+  error?: Error;
+  /**
+   * indicates whether the state has been fetched at least once or not.
+   * should always be initialized to false.
+   */
+  hasBeenInitialized?: boolean;
+  /** is the state being updated? */
+  isLoading?: boolean;
+}
+
+export interface SingleEntityParams {
+  id: number;
+}
+
+/* eslint-disable-next-line @typescript-eslint/ban-types */
+export type EmptyParams = {};
+
+/**
+ * Router Configuration
+ * If the component is not defined, the route is assumed to be an external route,
+ * meaning React will attempt to load the path outside of the internal routing
+ * mechanism.
+ */
+export type RouteConfig = {
+  icon?: string;
+  id: string;
+  needAuth?: boolean;
+  path: string;
+  popout?: boolean;
+  redirect?: string;
+  suffixIcon?: string;
+  title?: string;
+} & RouteProps;
+
+export interface ClassNameProp {
+  /** classname to be applied to the base element */
+  className?: string;
+}
+export interface CommonProps extends ClassNameProp {
+  children?: React.ReactNode;
+  title?: string;
+}
+
+export interface SemanticVersion {
+  major: number;
+  minor: number;
+  patch: number;
+}
+
+export type ValueOf<T> = T[keyof T];
 
 interface WithPagination {
   pagination: Api.V1Pagination; // probably should use this or Pagination
@@ -178,7 +285,6 @@ export const CheckpointStorageType = {
   AWS: 'aws',
   AZURE: 'azure',
   GCS: 'gcs',
-  HDFS: 'hdfs',
   S3: 's3',
   SharedFS: 'shared_fs',
 } as const;
@@ -276,7 +382,7 @@ export interface ExperimentConfig {
 /* Experiment */
 
 export const ExperimentAction = {
-  Activate: 'Activate',
+  Activate: 'Resume',
   Archive: 'Archive',
   Cancel: 'Cancel',
   CompareTrials: 'Compare Trials',
@@ -343,6 +449,7 @@ export const CheckpointState = {
   Completed: 'COMPLETED',
   Deleted: 'DELETED',
   Error: 'ERROR',
+  PartiallyDeleted: 'PARTIALLY_DELETED',
   Unspecified: 'UNSPECIFIED',
 } as const;
 
@@ -420,7 +527,7 @@ export interface Metrics extends Api.V1Metrics {
   batchMetrics?: Array<MetricStruct>;
 }
 
-export type Metadata = Record<RecordKey, string>;
+export type Metadata = Record<RecordKey, string | object>;
 
 export interface CoreApiGenericCheckpoint {
   allocationId?: string;
@@ -458,6 +565,21 @@ export interface TrialPagination extends WithPagination {
 type HpValue = Primitive | RawJson;
 export type TrialHyperparameters = Record<string, HpValue>;
 
+export interface MetricSummary {
+  count?: number;
+  last?: Primitive;
+  max?: number;
+  min?: number;
+  sum?: number;
+  type: 'string' | 'number' | 'boolean' | 'date' | 'object' | 'array' | 'null';
+}
+
+export interface SummaryMetrics {
+  avgMetrics?: Record<string, MetricSummary>;
+  validationMetrics?: Record<string, MetricSummary>;
+  //[customMetricType: string]?: Record<string, MetricSummary> Uncomment once generic metrics lands
+}
+
 export interface TrialItem extends StartEndTimes {
   autoRestarts: number;
   bestAvailableCheckpoint?: CheckpointWorkload;
@@ -468,6 +590,7 @@ export interface TrialItem extends StartEndTimes {
   id: number;
   latestValidationMetric?: MetricsWorkload;
   state: RunState;
+  summaryMetrics?: SummaryMetrics;
   totalBatchesProcessed: number;
   totalCheckpointSize: number;
 }
@@ -491,7 +614,7 @@ export interface MetricDatapoint {
   batches: number;
   epoch?: number;
   time: Date;
-  value: number;
+  values: Record<string, number>;
 }
 
 export interface MetricDatapointTime {
@@ -507,7 +630,6 @@ export interface MetricDatapointEpoch {
 export interface MetricContainer {
   data: MetricDatapoint[];
   epochs?: MetricDatapointEpoch[];
-  name: string;
   time?: MetricDatapointTime[];
   type: MetricType;
 }
@@ -518,11 +640,12 @@ export interface TrialSummary extends TrialItem {
 
 export interface ExperimentItem {
   archived: boolean;
-  checkpointCount?: number;
+  checkpoints?: number;
   checkpointSize?: number;
   config: ExperimentConfig;
   configRaw: RawJson; // Readonly unparsed config object.
   description?: string;
+  duration?: number;
   endTime?: string;
   forkedFrom?: number;
   hyperparameters: HyperparametersFlattened; // Nested HP keys are flattened, eg) foo.bar
@@ -548,7 +671,7 @@ export interface ExperimentItem {
 }
 
 export interface ExperimentWithTrial {
-  experiment?: ExperimentItem;
+  experiment: ExperimentItem;
   bestTrial?: TrialItem;
 }
 
@@ -771,9 +894,13 @@ export interface ResourcePool extends Omit<Api.V1ResourcePool, 'slotType'> {
 
 /* Jobs */
 
-export interface Job extends Api.V1Job {
+export interface LimitedJob extends Api.V1LimitedJob {
   summary: Api.V1JobSummary;
 }
+export interface FullJob extends Api.V1Job {
+  summary: Api.V1JobSummary;
+}
+export type Job = LimitedJob | FullJob;
 export const JobType = Api.Jobv1Type;
 export type JobType = Api.Jobv1Type;
 export const JobState = Api.Jobv1State;
@@ -807,6 +934,8 @@ export interface Workspace {
   pinnedAt?: Date;
   state: WorkspaceState;
   userId: number;
+  defaultComputePool?: string;
+  defaultAuxPool?: string;
 }
 
 export interface WorkspacePagination extends WithPagination {
@@ -848,6 +977,13 @@ export interface Project {
 
 export interface ProjectPagination extends WithPagination {
   projects: Project[];
+}
+
+export interface ProjectColumn {
+  column: string;
+  location: Api.V1LocationType;
+  type: Api.V1ColumnType;
+  displayName?: string;
 }
 
 export interface Permission {
@@ -917,3 +1053,26 @@ export type UserWithRoleInfo = {
 };
 
 export type UserOrGroupWithRoleInfo = UserWithRoleInfo | GroupWithRoleInfo;
+
+export interface TreeNode extends DataNode {
+  /**
+   * DataNode is the interface antd works with. DateNode properties we are interested in:
+   *
+   * key: we use V1FileNode.path
+   * title: name of node
+   * icon: custom Icon component
+   */
+  children?: TreeNode[];
+  content: Loadable<string>;
+  download?: string;
+  get?: (path: string) => Promise<string>;
+  isConfig?: boolean;
+  isLeaf?: boolean;
+}
+
+export interface HpTrialData {
+  data: Record<string, Primitive[]>;
+  metricRange?: Range<number>;
+  metricValues: number[];
+  trialIds: number[];
+}

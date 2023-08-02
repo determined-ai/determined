@@ -14,6 +14,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
@@ -135,6 +137,8 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 		ctx = c.Request().Context()
 	}
 
+	serviceNotFoundErr := api.NotFoundErrs("service", fmt.Sprint(taskID), false)
+
 	spec, err := db.IdentifyTask(ctx, taskID)
 	if errors.Is(err, db.ErrNotFound) || errors.Cause(err) == sql.ErrNoRows {
 		// Check if it's an experiment.
@@ -147,13 +151,8 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 			return true, fmt.Errorf("error looking up task experiment: %w", err)
 		}
 
-		if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, *user, e); err != nil {
-			return true, err
-		} else if !ok {
-			return true, echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID)
-		}
-
-		return false, nil
+		err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *user, e)
+		return err != nil, authz.SubIfUnauthorized(err, serviceNotFoundErr)
 	}
 
 	if err != nil {
@@ -161,19 +160,12 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 	}
 
 	// Continue NTSC task checks.
-	var ok bool
 	if spec.TaskType == model.TaskTypeTensorboard {
-		ok, err = command.AuthZProvider.Get().CanGetTensorboard(
+		err = command.AuthZProvider.Get().CanGetTensorboard(
 			ctx, *user, spec.WorkspaceID, spec.ExperimentIDs, spec.TrialIDs)
 	} else {
-		ok, err = command.AuthZProvider.Get().CanGetNSC(
+		err = command.AuthZProvider.Get().CanGetNSC(
 			ctx, *user, spec.WorkspaceID)
 	}
-	if err != nil {
-		return true, err
-	} else if !ok {
-		return true, echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID)
-	}
-
-	return false, nil
+	return err != nil, authz.SubIfUnauthorized(err, serviceNotFoundErr)
 }

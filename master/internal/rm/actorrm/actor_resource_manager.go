@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -36,6 +38,7 @@ func (r *ResourceManager) GetResourcePoolRef(
 func (r *ResourceManager) ResolveResourcePool(
 	ctx actor.Messenger,
 	name string,
+	workspaceID,
 	slots int,
 ) (string, error) {
 	return name, nil
@@ -72,14 +75,6 @@ func (r *ResourceManager) Ref() *actor.Ref {
 	return r.ref
 }
 
-// GetAllocationHandler requests the allocation actor for the given allocation.
-func (r *ResourceManager) GetAllocationHandler(
-	ctx actor.Messenger,
-	msg sproto.GetAllocationHandler,
-) (resp *actor.Ref, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
-}
-
 // GetAllocationSummary requests a summary of the given allocation.
 func (r *ResourceManager) GetAllocationSummary(
 	ctx actor.Messenger,
@@ -113,13 +108,26 @@ func (r *ResourceManager) ValidateCommandResources(
 }
 
 // Allocate allocates some resources.
-func (r *ResourceManager) Allocate(ctx actor.Messenger, msg sproto.AllocateRequest) error {
-	return r.Ask(ctx, msg, nil)
+func (r *ResourceManager) Allocate(
+	ctx actor.Messenger,
+	msg sproto.AllocateRequest,
+) (*sproto.ResourcesSubscription, error) {
+	sub := rmevents.Subscribe(msg.AllocationID)
+	err := r.Ask(ctx, msg, nil)
+	if err != nil {
+		r.Release(ctx, sproto.ResourcesReleased{AllocationID: msg.AllocationID})
+		sub.Close()
+		return nil, err
+	}
+	return sub, nil
 }
 
 // Release releases some resources.
 func (r *ResourceManager) Release(ctx actor.Messenger, msg sproto.ResourcesReleased) {
 	r.Tell(ctx, msg)
+	if msg.ResourcesID == nil { // ResourceID == nil => everything is released
+		rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
+	}
 }
 
 // GetResourcePools requests information about the available resource pools.

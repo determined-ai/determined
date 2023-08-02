@@ -21,7 +21,6 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -71,15 +70,28 @@ const (
 	DeleteFailedState State = "DELETE_FAILED"
 	// DeletedState constant.
 	DeletedState State = "DELETED"
+	// PartiallyDeletedState constant.
+	PartiallyDeletedState State = "PARTIALLY_DELETED"
 
 	// TrialWorkloadSequencerType constant.
 	TrialWorkloadSequencerType WorkloadSequencerType = "TRIAL_WORKLOAD_SEQUENCER"
+
+	// Legacy json path for validation metrics.
+	legacyValidationMetricsPath = "validation_metrics"
+	// Legacy json path for training metrics.
+	legacyTrainingMetricsPath = "avg_metrics"
 )
 
 // StateFromProto maps experimentv1.State to State.
 func StateFromProto(state experimentv1.State) State {
 	str := state.String()
 	return State(strings.TrimPrefix(str, "STATE_"))
+}
+
+// StateToProto maps State to experimentv1.State.
+func StateToProto(state State) experimentv1.State {
+	stateEnum := experimentv1.State_value["STATE_"+string(state)]
+	return experimentv1.State(stateEnum)
 }
 
 // States and transitions
@@ -98,6 +110,13 @@ func reverseTransitions(
 		}
 	}
 	return ret
+}
+
+// DeletingStates are the valid deleting states.
+var DeletingStates = map[State]bool{
+	DeletedState:      true,
+	DeleteFailedState: true,
+	DeletingState:     true,
 }
 
 // RunningStates are the valid running states.
@@ -188,6 +207,26 @@ var ExperimentTransitions = map[State]map[State]bool{
 	},
 	DeletedState: {},
 }
+
+// StatesToStrings converts a State map to a list of strings for db queries.
+func StatesToStrings(inStates map[State]bool) []string {
+	states := make([]string, 0, len(inStates))
+	for state := range inStates {
+		states = append(states, string(state))
+	}
+	return states
+}
+
+// NonTerminalStates where an experiment can be canceled or killed.
+var NonTerminalStates = func() []State {
+	var states []State
+	for s := range ExperimentTransitions {
+		if !TerminalStates[s] && !DeletingStates[s] {
+			states = append(states, s)
+		}
+	}
+	return states
+}()
 
 // ExperimentReverseTransitions lists possible ancestor states.
 var ExperimentReverseTransitions = reverseTransitions(ExperimentTransitions)
@@ -291,7 +330,7 @@ type Experiment struct {
 	OriginalConfig string               `db:"original_config"`
 
 	// The model definition is stored as a .tar.gz file (raw bytes).
-	ModelDefinitionBytes []byte     `db:"model_definition"`
+	ModelDefinitionBytes []byte     `db:"model_definition" bun:"model_definition"`
 	StartTime            time.Time  `db:"start_time"`
 	EndTime              *time.Time `db:"end_time"`
 	ParentID             *int       `db:"parent_id"`
@@ -303,6 +342,7 @@ type Experiment struct {
 	OwnerID              *UserID    `db:"owner_id"`
 	Username             string     `db:"username"`
 	ProjectID            int        `db:"project_id"`
+	Unmanaged            bool       `db:"unmanaged"`
 }
 
 // ExperimentFromProto converts a experimentv1.Experiment to a model.Experiment.
@@ -347,16 +387,8 @@ func ExperimentFromProto(e *experimentv1.Experiment) (*Experiment, error) {
 		OwnerID:   uid,
 		Username:  e.Username,
 		ProjectID: int(e.ProjectId),
+		Unmanaged: e.Unmanaged,
 	}, nil
-}
-
-// ExperimentDescriptor is a minimal description of an experiment.
-type ExperimentDescriptor struct {
-	ID       int                      `json:"id"`
-	Archived bool                     `json:"archived"`
-	Config   expconf.ExperimentConfig `json:"config"`
-	Labels   []string                 `json:"labels"`
-	Warnings []command.LaunchWarning  `json:"warnings"`
 }
 
 // NewExperiment creates a new experiment struct in the paused state.  Note
@@ -430,14 +462,12 @@ type Trial struct {
 	WarmStartCheckpointID *int       `db:"warm_start_checkpoint_id"`
 	Seed                  int64      `db:"seed"`
 	TotalBatches          int        `db:"total_batches"`
-
-	JobID JobID
 }
 
-// NewTrial creates a new trial in the active state.  Note that the trial ID
+// NewTrial creates a new trial in the specified state.  Note that the trial ID
 // will not be set.
 func NewTrial(
-	jobID JobID,
+	state State,
 	taskID TaskID,
 	requestID RequestID,
 	experimentID int,
@@ -453,13 +483,11 @@ func NewTrial(
 		TaskID:                taskID,
 		RequestID:             &requestID,
 		ExperimentID:          experimentID,
-		State:                 ActiveState,
+		State:                 state,
 		StartTime:             time.Now().UTC(),
 		HParams:               hparams,
 		WarmStartCheckpointID: warmStartCheckpointID,
 		Seed:                  trialSeed,
-
-		JobID: jobID,
 	}
 }
 
@@ -471,6 +499,40 @@ type TrialMetrics struct {
 	TotalBatches int        `db:"total_batches" json:"total_batches"`
 	EndTime      *time.Time `db:"end_time" json:"end_time"`
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
+}
+
+// TrialMetricsJSONPath returns the legacy JSON path to the metrics field in the metrics table.
+func TrialMetricsJSONPath(isValidation bool) string {
+	if isValidation {
+		return legacyValidationMetricsPath
+	}
+	return legacyTrainingMetricsPath
+}
+
+// TrialSummaryMetricsJSONPath returns the JSON path to the trials metric summary.
+func TrialSummaryMetricsJSONPath(metricGroup MetricGroup) string {
+	switch metricGroup {
+	case ValidationMetricGroup:
+		return legacyValidationMetricsPath
+	case TrainingMetricGroup:
+		return legacyTrainingMetricsPath
+	default:
+		return metricGroup.ToString()
+	}
+}
+
+// TrialSummaryMetricGroup returns the metric group for the given summary JSON path.
+func TrialSummaryMetricGroup(jsonPath string) MetricGroup {
+	var mGroup MetricGroup
+	switch jsonPath {
+	case TrialSummaryMetricsJSONPath(TrainingMetricGroup):
+		mGroup = TrainingMetricGroup
+	case TrialSummaryMetricsJSONPath(ValidationMetricGroup):
+		mGroup = ValidationMetricGroup
+	default:
+		mGroup = MetricGroup(jsonPath)
+	}
+	return mGroup
 }
 
 // Represent order of active states (Queued -> Pulling -> Starting -> Running).
@@ -507,39 +569,10 @@ func MostProgressedExperimentState(
 	return state2
 }
 
-// CheckpointVersion describes the format in which some checkpoint metadata is saved.
-type CheckpointVersion int
-
 const (
-	// CheckpointVersionV1 was the original way checkpoints were stored, in a trial-attached
-	// checkpoint table.
-	CheckpointVersionV1 = 1
-	// CheckpointVersionV2 changed checkpoints to be non-trial-attached and generic.
-	CheckpointVersionV2 = 2
-	// CurrentCheckpointVersion is the current way checkpoints are stored.
-	CurrentCheckpointVersion = CheckpointVersionV2
-
 	// StepsCompletedMetadataKey is the key within metadata to find steps completed now, if it exists.
 	StepsCompletedMetadataKey = "steps_completed"
 )
-
-// CheckpointV1 represents a row from the `raw_checkpoints` table.
-type CheckpointV1 struct {
-	bun.BaseModel     `bun:"table:raw_checkpoints"`
-	ID                int        `db:"id" json:"id" bun:"id,pk,autoincrement"`
-	TrialID           int        `db:"trial_id" json:"trial_id"`
-	TrialRunID        int        `db:"trial_run_id" json:"-"`
-	TotalBatches      int        `db:"total_batches" json:"total_batches"`
-	State             State      `db:"state" json:"state"`
-	EndTime           *time.Time `db:"end_time" json:"end_time"`
-	UUID              *string    `db:"uuid" json:"uuid"`
-	Resources         JSONObj    `db:"resources" json:"resources"`
-	Metadata          JSONObj    `db:"metadata" json:"metadata"`
-	Framework         string     `db:"framework" json:"framework"`
-	Format            string     `db:"format" json:"format"`
-	DeterminedVersion string     `db:"determined_version" json:"determined_version"`
-	Size              int64      `db:"size"`
-}
 
 // CheckpointV2 represents a row from the `checkpoints_v2` table.
 type CheckpointV2 struct {
@@ -547,7 +580,7 @@ type CheckpointV2 struct {
 	ID            int                    `db:"id" bun:"id,pk,autoincrement"`
 	UUID          uuid.UUID              `db:"uuid"`
 	TaskID        TaskID                 `db:"task_id"`
-	AllocationID  AllocationID           `db:"allocation_id"`
+	AllocationID  *AllocationID          `db:"allocation_id"`
 	ReportTime    time.Time              `db:"report_time"`
 	State         State                  `db:"state"`
 	Resources     map[string]int64       `db:"resources"`
@@ -582,8 +615,6 @@ type Checkpoint struct {
 	Size         int64         `db:"size"`
 
 	CheckpointTrainingMetadata
-
-	CheckpointVersion CheckpointVersion `db:"checkpoint_version"`
 }
 
 // TrialLog represents a row from the `trial_logs` table.
@@ -781,16 +812,6 @@ func (t TrialProfilerMetricsBatchBatch) ForEach(f func(interface{}) error) error
 	}
 	return nil
 }
-
-// MetricType denotes what type of step (training / validation) a metric is from.
-type MetricType int
-
-const (
-	// TrainingMetric designates metrics from training steps.
-	TrainingMetric MetricType = iota
-	// ValidationMetric designates metrics from validation steps.
-	ValidationMetric MetricType = iota
-)
 
 // ExitedReason defines why a workload exited early.
 type ExitedReason string

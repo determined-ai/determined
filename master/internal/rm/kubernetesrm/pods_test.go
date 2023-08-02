@@ -40,7 +40,8 @@ func TestTaintTolerated(t *testing.T) {
 					Key:      "baz",
 					Value:    "qux",
 					Operator: k8sV1.TolerationOpEqual,
-				}},
+				},
+			},
 		}, {
 			expected: false,
 			taint:    taintFooBar,
@@ -99,10 +100,8 @@ func TestAllTaintsTolerated(t *testing.T) {
 	}
 }
 
-var (
-	taintFooBar = k8sV1.Taint{
-		Key:    "foo",
-		Value:  "bar",
-		Effect: k8sV1.TaintEffectNoSchedule,
-	}
-)
+var taintFooBar = k8sV1.Taint{
+	Key:    "foo",
+	Value:  "bar",
+	Effect: k8sV1.TaintEffectNoSchedule,
+}

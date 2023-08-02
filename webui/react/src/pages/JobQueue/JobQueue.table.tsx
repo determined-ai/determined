@@ -1,16 +1,16 @@
 import React, { ReactNode } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import { ColumnDef } from 'components/Table/InteractiveTable';
-import { relativeTimeRenderer } from 'components/Table/Table';
+import { createOmitableRenderer, relativeTimeRenderer } from 'components/Table/Table';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
-import { floatToPercent, truncate } from 'shared/utils/string';
-import { CommandTask, Job, JobType } from 'types';
+import { CommandTask, FullJob, Job, JobType } from 'types';
 import { jobTypeIconName, jobTypeLabel } from 'utils/job';
+import { floatToPercent, truncate } from 'utils/string';
 import { openCommand } from 'utils/wait';
 
 import css from './JobQueue.module.scss';
@@ -43,6 +43,7 @@ const routeToTask = async (taskId: string, jobType: JobType): Promise<void> => {
 };
 
 const linkToEntityPage = (job: Job, label: ReactNode): ReactNode => {
+  if (!('entityId' in job)) return label;
   switch (job.type) {
     case JobType.EXPERIMENT:
       return <Link path={paths.experimentDetails(job.entityId)}>{label}</Link>;
@@ -85,9 +86,9 @@ export const columns: ColumnDef<Job>[] = [
     render: (_: unknown, record: Job): ReactNode => {
       const title = jobTypeLabel(record.type);
       const TypeCell = (
-        <Tooltip placement="topLeft" title={title}>
+        <Tooltip content={title} placement="topLeft">
           <div>
-            <Icon name={jobTypeIconName(record.type)} />
+            <Icon name={jobTypeIconName(record.type)} title={jobTypeLabel(record.type)} />
           </div>
         </Tooltip>
       );
@@ -99,14 +100,14 @@ export const columns: ColumnDef<Job>[] = [
     dataIndex: 'name',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
     key: 'name',
-    render: (_: unknown, record: Job): ReactNode => {
+    render: createOmitableRenderer<Job, FullJob>('entityId', (_, record): ReactNode => {
       let label: ReactNode = null;
       switch (record.type) {
         case JobType.EXPERIMENT:
           label = (
             <div>
               {record.name}
-              <Tooltip title="Experiment ID">{` (${record.entityId})`}</Tooltip>
+              <Tooltip content="Experiment ID">{` (${record.entityId})`}</Tooltip>
             </div>
           );
           break;
@@ -118,9 +119,8 @@ export const columns: ColumnDef<Job>[] = [
           );
           break;
       }
-
       return linkToEntityPage(record, label);
-    },
+    }),
     title: 'Job Name',
   },
   {
@@ -134,8 +134,11 @@ export const columns: ColumnDef<Job>[] = [
     dataIndex: 'submissionTime',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['submissionTime'],
     key: 'submitted',
-    render: (_: unknown, record: Job): ReactNode =>
-      record.submissionTime && relativeTimeRenderer(record.submissionTime),
+    render: createOmitableRenderer<Job, FullJob>(
+      'entityId',
+      (_, record): ReactNode =>
+        record.submissionTime && relativeTimeRenderer(record.submissionTime),
+    ),
     title: 'Submitted',
   },
   {
@@ -146,9 +149,9 @@ export const columns: ColumnDef<Job>[] = [
     render: (_: unknown, record: Job): ReactNode => {
       const cell = (
         <span>
-          <Tooltip title="Allocated (scheduled) slots">{record.allocatedSlots}</Tooltip>
+          <Tooltip content="Allocated (scheduled) slots">{record.allocatedSlots}</Tooltip>
           {' / '}
-          <Tooltip title="Requested (queued) slots">{record.requestedSlots}</Tooltip>
+          <Tooltip content="Requested (queued) slots">{record.requestedSlots}</Tooltip>
         </span>
       );
       return cell;

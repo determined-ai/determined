@@ -1,4 +1,3 @@
-import json
 from argparse import Namespace
 from functools import partial
 from typing import Any, Dict, List, Union, cast
@@ -30,7 +29,7 @@ def render_tasks(args: Namespace, tasks: Dict[str, v1AllocationSummary]) -> None
         return agents
 
     if args.json:
-        print(json.dumps({a: t.to_json() for (a, t) in tasks.items()}, indent=4))
+        render.print_json({a: t.to_json() for (a, t) in tasks.items()})
         return
 
     headers = [
@@ -96,8 +95,9 @@ def logs(args: Namespace) -> None:
             timestamp_before=args.timestamp_before,
             timestamp_after=args.timestamp_after,
         )
-        if args.json:
-            api.print_json_logs(logs)
+        if "json" in args and args.json:
+            for log in logs:
+                render.print_json(log.to_json())
         else:
             api.pprint_logs(logs)
     finally:
@@ -116,6 +116,9 @@ common_log_options: List[Any] = [
         "--follow",
         action="store_true",
         help="follow the logs of a running task, similar to tail -f",
+    ),
+    Group(
+        cli.output_format_args["json"],
     ),
     Group(
         Arg(
@@ -211,7 +214,6 @@ args_description: List[Any] = [
                 "fetch task logs",
                 [
                     Arg("task_id", help="task ID"),
-                    cli.output_format_args["json"],
                     *common_log_options,
                 ],
             ),

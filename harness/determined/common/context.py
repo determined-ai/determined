@@ -5,8 +5,6 @@ import pathlib
 import tarfile
 from typing import Any, Dict, Iterable, List, Optional
 
-import pathspec
-
 from determined.common import constants
 from determined.common.api import bindings
 from determined.common.util import sizeof_fmt
@@ -112,6 +110,9 @@ class _Builder:
         if ignore_path.is_file():
             with ignore_path.open("r") as detignore_file:
                 ignore.extend(detignore_file)
+
+        import pathspec
+
         ignore_spec = pathspec.PathSpec.from_lines(pathspec.patterns.GitWildMatchPattern, ignore)
 
         # We could use pathlib.Path.rglob for scanning the directory;

@@ -21,8 +21,43 @@ permissions:
   contents: read
 
 jobs:
+  pre-check-rebaseable:
+    runs-on: ubuntu-latest
+    outputs:
+      rebase_exit: ${{ steps.rebase.outputs.rebase_exit }}
+    steps:
+      - name: get EE
+        # https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability
+        # the env context is only available on the runner, so can only be used
+        # in parts of the job which are on the runner. :/
+        if: github.repository != env.EE_REPO
+        uses: actions/checkout@v3
+        with:
+          # fetch-depth: 1  # we only need the default branch
+          fetch-depth: 0
+          token: ${{ secrets.DETERMINED_TOKEN }}
+          repository: ${{ env.EE_REPO }}
+      - name: add OSS repository remote and get candidate branch
+        if: github.repository != env.EE_REPO
+        run: |
+          # ssh checkout of additional remotes fails :/
+          git remote add OSS https://github.com/${{ env.OSS_REPO }}
+          git fetch OSS "$REF":proposed_base
+          git config --global user.email "autorebase@address.invalid"
+          git config --global user.name  "Automatic rebase check"
+      - name: attempt rebase
+        id: rebase
+        if: github.repository != env.EE_REPO
+        continue-on-error: true
+        run: |
+          git rebase proposed_base 1>&2
+          printf 'rebase_exit=%s' $? >> "$GITHUB_OUTPUT"
+
+
   check-rebaseable:
     runs-on: ubuntu-latest
+    needs: pre-check-rebaseable
+    if: ${{ needs.pre-check-rebaseable.outputs.rebase_exit == 0 }}
     steps:
       - name: get EE
         # the env context is only available on the runner, so can only be used
@@ -30,7 +65,7 @@ jobs:
         if: github.repository != env.EE_REPO
         uses: actions/checkout@v3
         with:
-          #fetch-depth: 1  # we only need the default branch
+          # fetch-depth: 1  # we only need the default branch
           fetch-depth: 0
           token: ${{ secrets.DETERMINED_TOKEN }}
           repository: ${{ env.EE_REPO }}

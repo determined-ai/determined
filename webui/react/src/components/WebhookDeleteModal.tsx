@@ -3,10 +3,10 @@ import React from 'react';
 import { Modal } from 'components/kit/Modal';
 import { paths } from 'routes/utils';
 import { deleteWebhook } from 'services/api';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { Webhook } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { routeToReactUrl } from 'utils/routes';
 
 interface Props {
   webhook?: Webhook;
@@ -35,6 +35,7 @@ const WebhookDeleteModalComponent: React.FC<Props> = ({ webhook }: Props) => {
       danger
       size="small"
       submit={{
+        handleError,
         handler: handleSubmit,
         text: 'Delete Webhook',
       }}

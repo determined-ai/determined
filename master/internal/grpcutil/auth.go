@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	// TODO switch to google.golang.org/protobuf/proto/.
 	"github.com/golang/protobuf/proto" //nolint: staticcheck
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -151,17 +152,19 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 	var session *model.UserSession
 	var err error
 	userModel, session, err = user.UserByToken(token, &extConfig)
-	switch err {
-	case nil:
-		if !userModel.Active {
-			return nil, nil, ErrPermissionDenied
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) ||
+			errors.Is(err, db.ErrNotFound) ||
+			errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, nil, ErrInvalidCredentials
 		}
-		return userModel, session, nil
-	case sql.ErrNoRows, db.ErrNotFound:
-		return nil, nil, ErrInvalidCredentials
-	default:
 		return nil, nil, err
 	}
+
+	if !userModel.Active {
+		return nil, nil, ErrPermissionDenied
+	}
+	return userModel, session, nil
 }
 
 // GetUserExternalToken returns the external token for the currently logged in user.

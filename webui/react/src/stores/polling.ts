@@ -1,8 +1,8 @@
 import handleError from 'utils/error';
 
-const POLLING_DELAY_MS = 5000;
+const POLLING_DELAY_MS = 10_000;
 const RETRY_DELAY_MS = 1000;
-const MAX_RETRY_DELAY_MS = 60_000;
+const MAX_RETRY_DELAY_MS = 600_000;
 
 // Less than 0 means to keep trying indefinitely.
 const MAX_RETRY = -1;

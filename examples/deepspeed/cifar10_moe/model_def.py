@@ -2,6 +2,7 @@ import datetime
 import os
 from typing import Any, Dict
 
+import deepspeed
 import filelock
 import torch
 import torch.nn as nn
@@ -10,7 +11,6 @@ import torchvision
 import torchvision.transforms as transforms
 from attrdict import AttrDict
 
-import deepspeed
 from determined.pytorch import DataLoader
 from determined.pytorch.deepspeed import (
     DeepSpeedTrial,

@@ -3,35 +3,35 @@ Mappings:
   RegionMap:
     ap-northeast-1:
       Master: ami-00910ef9457f0df47
-      Agent: ami-0bb9d169eea880f0c
+      Agent: ami-0d1f4953a665df453
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
     #   Master: ami-035e3e44dc41db6a2
-    #   Agent: ami-04b2a73ef7923efe6
+    #   Agent: ami-019ca93bfb157bc91
     # ap-southeast-1:
     #   Master: ami-0fd1ee6c8b656f020
-    #   Agent: ami-024d675978237fa80
+    #   Agent: ami-040f0a455fb446aa7
     # ap-southeast-2:
     #   Master: ami-0b62ecd3babd1c548
-    #   Agent: ami-0238276397b254a83
+    #   Agent: ami-0485594a8551c03b1
     eu-central-1:
       Master: ami-0abbe417ed83c0b29
-      Agent: ami-09506c0a6df6626bc
+      Agent: ami-0e8881dae5c06fd24
     eu-west-1:
       Master: ami-0e3f7dd2dc743e48a
-      Agent: ami-0e2b716415874cb07
+      Agent: ami-01cfb074c5c8a551f
     # eu-west-2:
     #   Master: ami-0d78429fb6af30994
-    #   Agent: ami-0c8a8a8c7a2721ee7
+    #   Agent: ami-025f0f49e7cc01e82
     us-east-1:
       Master: ami-0172070f66a8ebe63
-      Agent: ami-0b18bcecbd428ae4c
+      Agent: ami-00664190dab9da6bd
     us-east-2:
       Master: ami-0bafa3699418551cd
-      Agent: ami-00e86d39577d39acf
+      Agent: ami-058ac473ddc822489
     us-west-2:
       Master: ami-0ceeab680f529cc36
-      Agent: ami-0c841a5d48a137ae2
+      Agent: ami-0f095c663126efe04
 
 Parameters:
   VpcCIDR:
@@ -101,7 +101,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.21.2-dev0
+    Default: 0.23.5-dev0
 
   DBPassword:
     Type: String
@@ -239,9 +239,17 @@ Parameters:
         password: "{{ .db.password }}"
         host: "{{ .db.host }}"
         port: 5432
-        name: determined
+        name: "{{ .db.name }}"
+        {{- if .db.ssl_mode }}
+        ssl_mode: "{{ .db.ssl_mode }}"
+        {{- else if .db.ssl_root_cert }}
         ssl_mode: verify-ca
-        ssl_root_cert: /etc/determined/db_ssl_root_cert.pem
+        {{- else }}
+        ssl_mode: disable
+        {{- end }}
+        {{- if .db.ssl_root_cert }}
+        ssl_root_cert: "{{ .db.ssl_root_cert }}"
+        {{- end }}
 
       enable_cors: {{ .enable_cors }}
 
@@ -588,7 +596,6 @@ Resources:
       Engine: aurora-postgresql
       EngineMode: serverless
       DatabaseName: determined
-      DBClusterParameterGroupName: 'default.aurora-postgresql10'
       DBSubnetGroupName: !Ref DatabaseSubnetGroup
       MasterUsername: postgres
       MasterUserPassword: !Ref DBPassword
@@ -599,7 +606,7 @@ Resources:
         - !GetAtt DatabaseSecurityGroup.GroupId
       ScalingConfiguration:
         AutoPause: false
-        MinCapacity: 8
+        MinCapacity: 2
         MaxCapacity: 32
 
   LogGroup:
@@ -821,6 +828,8 @@ Resources:
             db:
               password: "${DBPassword}"
               host: "${Database.Endpoint.Address}"
+              name: determined
+              ssl_root_cert: /etc/determined/db_ssl_root_cert.pem
 
             enable_cors: ${EnableCORS}
 

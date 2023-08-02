@@ -63,8 +63,6 @@ func storageConfig2Str(config any) string {
 		return "azure"
 	case expconf.GCSConfig:
 		return "gcs"
-	case expconf.HDFSConfig:
-		return "hdfs"
 	case expconf.S3Config:
 		return "s3"
 	case expconf.SharedFSConfig:

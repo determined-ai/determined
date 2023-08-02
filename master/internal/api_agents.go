@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
@@ -18,12 +19,31 @@ import (
 )
 
 func (a *apiServer) GetAgents(
-	_ context.Context, req *apiv1.GetAgentsRequest,
+	ctx context.Context, req *apiv1.GetAgentsRequest,
 ) (*apiv1.GetAgentsResponse, error) {
 	resp, err := a.m.rm.GetAgents(a.m.system, req)
 	if err != nil {
 		return nil, err
 	}
+
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	permErr, err := cluster.AuthZProvider.Get().CanGetSensitiveAgentInfo(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	if permErr != nil {
+		for _, agent := range resp.Agents {
+			if err := authz.ObfuscateAgent(agent); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	a.sort(resp.Agents, req.OrderBy, req.SortBy, apiv1.GetAgentsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Agents, req.Offset, req.Limit)
 }
@@ -37,21 +57,81 @@ func slotAddr(agentID, slotID string) actor.Address {
 }
 
 func (a *apiServer) GetAgent(
-	_ context.Context, req *apiv1.GetAgentRequest,
+	ctx context.Context, req *apiv1.GetAgentRequest,
 ) (resp *apiv1.GetAgentResponse, err error) {
-	return resp, a.ask(agentAddr(req.AgentId), req, &resp)
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.ask(agentAddr(req.AgentId), req, &resp); err != nil {
+		return nil, err
+	}
+
+	permErr, err := cluster.AuthZProvider.Get().CanGetSensitiveAgentInfo(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	if permErr != nil {
+		if err := authz.ObfuscateAgent(resp.Agent); err != nil {
+			return nil, err
+		}
+	}
+
+	return resp, nil
 }
 
 func (a *apiServer) GetSlots(
-	_ context.Context, req *apiv1.GetSlotsRequest,
+	ctx context.Context, req *apiv1.GetSlotsRequest,
 ) (resp *apiv1.GetSlotsResponse, err error) {
-	return resp, a.ask(agentAddr(req.AgentId), req, &resp)
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.ask(agentAddr(req.AgentId), req, &resp); err != nil {
+		return nil, err
+	}
+
+	permErr, err := cluster.AuthZProvider.Get().CanGetSensitiveAgentInfo(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	if permErr != nil {
+		for _, slot := range resp.Slots {
+			if err := authz.ObfuscateSlot(slot); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return resp, nil
 }
 
 func (a *apiServer) GetSlot(
-	_ context.Context, req *apiv1.GetSlotRequest,
+	ctx context.Context, req *apiv1.GetSlotRequest,
 ) (resp *apiv1.GetSlotResponse, err error) {
-	return resp, a.ask(slotAddr(req.AgentId, req.SlotId), req, &resp)
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.ask(slotAddr(req.AgentId, req.SlotId), req, &resp); err != nil {
+		return nil, err
+	}
+
+	permErr, err := cluster.AuthZProvider.Get().CanGetSensitiveAgentInfo(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	if permErr != nil {
+		if err := authz.ObfuscateSlot(resp.Slot); err != nil {
+			return resp, err
+		}
+	}
+	return resp, nil
 }
 
 func (a *apiServer) canUpdateAgents(ctx context.Context) error {

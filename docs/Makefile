@@ -39,7 +39,7 @@ build/examples.stamp: ../examples/build/stamp ../model_hub/build-examples/stamp
 attributions.rst: $(shell find ../tools/scripts/licenses -type f)
 	../tools/scripts/gen-attributions.py sphinx $@
 
-build/sp-%.stamp: $(SPHINXWRAPPER) conf.py attributions.rst $(shell find . -name site -prune -o -type f \( -name '*.rst' -o -name '*.html' -o -name '*.css' \) -print) $(shell find assets -type f) $(shell find _templates -type f)
+build/sp-%.stamp: $(SPHINXWRAPPER) conf.py attributions.rst $(shell find . -name site -prune -o -type f \( -name '*.rst' -o -name '*.html' -o -name '*.css' \) -print) $(shell find assets -type f) $(shell find _templates -type f) build/examples.stamp build/helm.stamp build/swagger.stamp
 	@$(SPHINXWRAPPER) $(SPHINXBUILD) -M $* . site $(SPHINXOPTS)
 	mkdir -p build
 	touch $@
@@ -52,14 +52,15 @@ build/swagger.stamp: ../proto/build/swagger/determined/api/v1/api.swagger.json s
 	mkdir -p build
 	touch $@
 
-build/stamp: build/examples.stamp build/helm.stamp build/swagger.stamp build/sp-html.stamp
-	touch $@
-
 .PHONY: build
-build: build/stamp
+build: build/sp-html.stamp
 
 .PHONY: xml
 xml: build/sp-xml.stamp
+
+.PHONY: upload-search-index
+upload-search-index: build/sp-xml.stamp
+	python3 deploy/scrape.py --upload
 
 .PHONY: clean
 clean:
@@ -69,11 +70,18 @@ clean:
 pre-publish:
 	cp ./swagger-ui/swagger-ui-main-deploy.js ./site/html/rest-api/swagger-ui-main.js
 
+.PHONY: publish-check
+	python3 redirects.py publish-check
+
 .PHONY: publish
-publish: pre-publish
+publish: pre-publish publish-check
 	$(MAKE) -C deploy publish
 
-live: build/stamp
+.PHONY: preview
+preview: build
+	python deploy/upload.py --preview
+
+live: build/sp-html.stamp
 	python3 live.py
 
 RSTFMT_WIDTH = 100
@@ -83,5 +91,10 @@ fmt:
 	git ls-files -z '*.rst' | xargs -0 rstfmt -w $(RSTFMT_WIDTH)
 
 .PHONY: check
-check:
+check: attributions.rst
 	git ls-files -z '*.rst' | xargs -0 rstfmt -w $(RSTFMT_WIDTH) --check
+	python3 redirects.py check
+
+.PHONY: get-deps
+get-deps:
+	pip install -r requirements.txt

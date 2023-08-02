@@ -1,14 +1,3 @@
-- name: check entrypoint conditional (missing)
-  completeness_errors:
-    http://determined.ai/schemas/expconf/v0/experiment.json:
-      - entrypoint is a required property
-  case:
-    searcher:
-      name: single
-      metric: loss
-      max_length:
-        batches: 1000
-
 - name: entrypoint check (command string, valid)
   sane_as:
     - http://determined.ai/schemas/expconf/v0/experiment.json

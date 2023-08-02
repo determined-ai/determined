@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import Page from 'components/Page';
+import ActionDropdown, { Triggers } from 'components/ActionDropdown/ActionDropdown';
+import Icon from 'components/kit/Icon';
+import { DetError } from 'components/kit/internal/types';
 import Section from 'components/Section';
-import InteractiveTable, { InteractiveTableSettings } from 'components/Table/InteractiveTable';
+import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   checkmarkRenderer,
+  createOmitableRenderer,
   defaultRowClassName,
   getFullPaginationConfig,
   userRenderer,
@@ -16,16 +19,11 @@ import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/Jo
 import { paths } from 'routes/utils';
 import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
-import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/ActionDropdown';
-import Icon from 'shared/components/Icon/Icon';
-import { isEqual } from 'shared/utils/data';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
-import { numericSorter } from 'shared/utils/sort';
-import { capitalize } from 'shared/utils/string';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
-import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
+import { FullJob, Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
+import { isEqual } from 'utils/data';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import {
   canManageJob,
@@ -36,18 +34,20 @@ import {
 } from 'utils/job';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { routeToReactUrl } from 'utils/routes';
+import { numericSorter } from 'utils/sort';
+import { capitalize } from 'utils/string';
 
 import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';
 import ManageJob from './ManageJob';
 
 interface Props {
-  bodyNoPadding?: boolean;
   jobState: JobState;
   selectedRp: ResourcePool;
 }
 
-const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
+const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const resourcePools = useObservable(clusterStore.resourcePools);
   const [managingJob, setManagingJob] = useState<Job>();
@@ -69,7 +69,9 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const [pageState, setPageState] = useState<{ isLoading: boolean }>({ isLoading: true });
   const pageRef = useRef<HTMLElement>(null);
 
-  const { settings, updateSettings } = useSettings<Settings>(settingsConfig(jobState));
+  const { settings, updateSettings } = useSettings<Settings>(
+    useMemo(() => settingsConfig(jobState), [jobState]),
+  );
   const settingsColumns = useMemo(() => [...settings.columns], [settings.columns]);
 
   const isJobOrderAvailable = orderedSchedulers.has(selectedRp.schedulerType);
@@ -111,6 +113,10 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       // Process job stats response.
       setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));
     } catch (e) {
+      if ((e as DetError)?.publicMessage === 'offset out of bounds' && settings.tableOffset !== 0) {
+        updateSettings({ tableOffset: 0 });
+        return;
+      }
       handleError(e, {
         level: ErrorLevel.Error,
         publicSubject: 'Unable to fetch job queue and stats.',
@@ -120,9 +126,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
     } finally {
       setPageState((cur) => ({ ...cur, isLoading: false }));
     }
-  }, [canceler.signal, selectedRp.name, settings, jobState, topJob]);
-
-  useEffect(() => clusterStore.startPolling(), []);
+  }, [canceler.signal, selectedRp.name, settings, jobState, topJob, updateSettings]);
 
   useEffect(() => {
     fetchAll();
@@ -139,6 +143,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
 
   const dropDownOnTrigger = useCallback(
     (job: Job) => {
+      if (!('entityId' in job)) return {};
       const triggers: Triggers<JobAction> = {};
       const commandType = jobTypeToCommandType(job.type);
 
@@ -220,89 +225,107 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
 
   const columns = useMemo(() => {
     return defaultColumns
-      .map((col) => {
+      .map<ColumnDef<Job>>((col) => {
         switch (col.key) {
           case 'actions':
-            col.render = (_, record) => {
-              return (
-                <div>
-                  <ActionDropdown<JobAction>
-                    actionOrder={[
-                      JobAction.ManageJob,
-                      JobAction.MoveToTop,
-                      JobAction.ViewLog,
-                      JobAction.Cancel,
-                      JobAction.Kill,
-                    ]}
-                    confirmations={{
-                      [JobAction.Cancel]: { cancelText: 'Abort' },
-                      [JobAction.Kill]: {},
-                      [JobAction.MoveToTop]: {},
-                    }}
-                    id={record.name}
-                    kind="job"
-                    onError={handleError}
-                    onTrigger={dropDownOnTrigger(record)}
-                  />
-                </div>
-              );
+            return {
+              ...col,
+              render: createOmitableRenderer<Job, FullJob>(
+                'entityId',
+                (_, record) => (
+                  <div>
+                    <ActionDropdown<JobAction>
+                      actionOrder={[
+                        JobAction.ManageJob,
+                        JobAction.MoveToTop,
+                        JobAction.ViewLog,
+                        JobAction.Cancel,
+                        JobAction.Kill,
+                      ]}
+                      confirmations={{
+                        [JobAction.Cancel]: { cancelText: 'Abort', onError: handleError },
+                        [JobAction.Kill]: { danger: true, onError: handleError },
+                        [JobAction.MoveToTop]: { onError: handleError },
+                      }}
+                      id={record.name}
+                      kind="job"
+                      onError={handleError}
+                      onTrigger={dropDownOnTrigger(record)}
+                    />
+                  </div>
+                ),
+                null,
+              ),
             };
-            break;
           case SCHEDULING_VAL_KEY: {
-            if (!settingsColumns) break;
+            if (!settingsColumns) return col;
 
             switch (selectedRp.schedulerType) {
               case Api.V1SchedulerType.SLURM:
-                col.title = 'Partition';
-                col.dataIndex = 'resourcePool';
-                break;
+                return {
+                  ...col,
+                  dataIndex: 'resourcePool',
+                  title: 'Partition',
+                };
               case Api.V1SchedulerType.PBS:
-                col.title = 'Queue';
-                col.dataIndex = 'resourcePool';
-                break;
+                return {
+                  ...col,
+                  dataIndex: 'resourcePool',
+                  title: 'Queue',
+                };
               case Api.V1SchedulerType.PRIORITY:
               case Api.V1SchedulerType.KUBERNETES:
-                col.title = 'Priority';
-                col.dataIndex = 'priority';
-                break;
+                return {
+                  ...col,
+                  dataIndex: 'priority',
+                  title: 'Priority',
+                };
               case Api.V1SchedulerType.FAIRSHARE:
-                col.title = 'Weight';
-                col.dataIndex = 'weight';
-                col.align = 'right';
-                break;
+                return {
+                  ...col,
+                  align: 'right',
+                  dataIndex: 'weight',
+                  title: 'Weight',
+                };
+              case Api.V1SchedulerType.UNSPECIFIED:
+              case Api.V1SchedulerType.ROUNDROBIN:
+                return col;
             }
-            break;
           }
           case 'jobsAhead':
             if (!isJobOrderAvailable) {
-              col.sorter = undefined;
-              col.title = 'Preemptible';
-              col.render = (_: unknown, record) => {
-                return (
+              return {
+                ...col,
+                render: (_, record) => (
                   <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
                     {checkmarkRenderer(record.isPreemptible)}
                   </div>
-                );
+                ),
+                title: 'Preemptible',
               };
             } else {
-              col.sorter = (a: Job, b: Job): number =>
-                numericSorter(a.summary.jobsAhead, b.summary.jobsAhead);
-              col.title = '#';
-              col.render = (_: unknown, record) => {
-                return (
+              return {
+                ...col,
+                render: (_: unknown, record) => (
                   <div className={css.centerVertically}>
                     {record.summary.jobsAhead}
-                    {!record.isPreemptible && <Icon name="lock" title="Not Preemtible" />}
+                    {!record.isPreemptible && <Icon name="lock" title="Not Preemptible" />}
                   </div>
-                );
+                ),
+                sorter: (a, b) => numericSorter(a.summary.jobsAhead, b.summary.jobsAhead),
+                title: '#',
               };
             }
-            break;
           case 'user':
-            col.render = (_, r) => userRenderer(users.find((u) => u.id === r.userId));
-            break;
+            return {
+              ...col,
+              render: createOmitableRenderer<Job, FullJob>('entityId', (_, r) =>
+                userRenderer(users.find((u) => u.id === r.userId)),
+              ),
+            };
+          default:
+            return col;
         }
-        return col;
       })
       .map((column) => {
         column.sortOrder = null;
@@ -335,16 +358,10 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   }, [selectedRp]);
 
   return (
-    <Page
-      bodyNoPadding={bodyNoPadding}
-      className={css.base}
-      containerRef={pageRef}
-      headerComponent={<div />}
-      id="jobs"
-      title="Job Queue by Resource Pool">
+    <div className={css.base} id="jobs">
       <Section hideTitle={!!selectedRp} title={tableTitle}>
         {settings ? (
-          <InteractiveTable
+          <InteractiveTable<Job, Settings>
             columns={columns}
             containerRef={pageRef}
             dataSource={jobs}
@@ -359,7 +376,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             rowClassName={defaultRowClassName({ clickable: false })}
             rowKey="jobId"
             scroll={{ x: 1000 }}
-            settings={settings as InteractiveTableSettings}
+            settings={settings}
             showSorterTooltip={false}
             size="small"
             updateSettings={updateSettings}
@@ -378,7 +395,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
           onFinish={onModalClose}
         />
       )}
-    </Page>
+    </div>
   );
 };
 

@@ -7,14 +7,13 @@ from tensorflow.keras.losses import binary_crossentropy
 from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Sequential
 
-# TODO MLG-443 Migrate from legacy Keras optimizers
-if version.parse(tf.__version__) >= version.parse("2.11.0"):
-    from tensorflow.keras.optimizers.legacy import SGD, Adam
-else:
+if version.parse(tf.__version__) < version.parse("2.11.0"):
     from tensorflow.keras.optimizers import SGD, Adam
+else:
+    from tensorflow.keras.optimizers.legacy import SGD, Adam  # TODO MLG-443
 
 from determined import keras
-from tests.experiment.utils import make_xor_data_sequences  # noqa: I202, I100
+from tests.experiment.tf_utils import make_xor_data_sequences  # noqa: I202, I100
 
 
 class StopVeryEarlyCallback(keras.callbacks.Callback):

@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 
 import { Modal } from 'components/kit/Modal';
 import Transfer from 'components/Transfer';
+import handleError from 'utils/error';
 
 interface Props {
   columns: string[];
@@ -26,6 +27,7 @@ const ColumnsCustomizeModalComponent: React.FC<Props> = ({
       cancel
       size="medium"
       submit={{
+        handleError,
         handler: async () => {
           return await onSave?.(visibleColumns);
         },
@@ -36,6 +38,7 @@ const ColumnsCustomizeModalComponent: React.FC<Props> = ({
         defaultTargetEntries={defaultVisibleColumns}
         entries={columnList}
         initialTargetEntries={visibleColumns}
+        persistentEntries={['id', 'name']}
         sourceListTitle="Hidden"
         targetListTitle="Visible"
         onChange={setVisibleColumns}

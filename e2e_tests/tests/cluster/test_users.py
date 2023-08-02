@@ -1037,3 +1037,37 @@ def test_patch_agentusergroup(clean_auth: None, login_admin: None) -> None:
     assert test_user.id
     with pytest.raises(errors.APIException):
         bindings.patch_PatchUser(sess, body=patch_user, userId=test_user.id)
+
+
+@pytest.mark.e2e_cpu
+def test_logout_all(clean_auth: None, login_admin: None) -> None:
+    creds = api_utils.create_test_user(True)
+
+    # Set Determined password to something in order to disable auto-login.
+    password = get_random_string()
+    assert change_user_password(constants.DEFAULT_DETERMINED_USER, password) == 0
+
+    # Log in as determined.
+    api_utils.configure_token_store(
+        authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password)
+    )
+    # login test user.
+    api_utils.configure_token_store(creds)
+    child = det_spawn(["user", "logout", "--all"])
+    child.wait()
+    child.close()
+    assert child.status == 0
+    # Trying to list experiments should result in an error.
+    child = det_spawn(["e", "list"])
+    expected = "Unauthenticated"
+    assert expected in str(child.read())
+    child.wait()
+    child.close()
+    assert child.status != 0
+
+    # Log in as determined.
+    api_utils.configure_token_store(
+        authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password)
+    )
+    # Change Determined password back to "".
+    change_user_password(constants.DEFAULT_DETERMINED_USER, "")

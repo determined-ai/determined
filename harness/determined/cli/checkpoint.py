@@ -2,11 +2,9 @@ import json
 from argparse import Namespace
 from typing import Any, List, Optional
 
-from determined import cli, errors
-from determined.common import experimental
+from determined import cli, errors, experimental
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.experimental import Determined
 from determined.experimental.client import DownloadMode
 
 from . import render
@@ -81,7 +79,7 @@ def list_checkpoints(args: Namespace) -> None:
         [
             c.training.trialId,
             c.metadata.get("steps_completed", None),
-            c.state.value.replace("STATE_", "") if c.state is not None else "UNSPECIFIED",
+            c.state,
             get_validation_metric(c, searcher_metric),
             c.uuid,
             render.format_resources(c.resources),
@@ -94,7 +92,7 @@ def list_checkpoints(args: Namespace) -> None:
 
 
 def download(args: Namespace) -> None:
-    checkpoint = Determined(args.master, None).get_checkpoint(args.uuid)
+    checkpoint = experimental.Determined(args.master, args.user).get_checkpoint(args.uuid)
 
     try:
         path = checkpoint.download(path=args.output_dir, mode=args.mode)
@@ -108,7 +106,7 @@ def download(args: Namespace) -> None:
 
 
 def describe(args: Namespace) -> None:
-    checkpoint = Determined(args.master, None).get_checkpoint(args.uuid)
+    checkpoint = experimental.Determined(args.master, args.user).get_checkpoint(args.uuid)
     render_checkpoint(checkpoint)
 
 
@@ -123,7 +121,35 @@ def delete_checkpoints(args: Namespace) -> None:
         bindings.delete_DeleteCheckpoints(cli.setup_session(args), body=delete_body)
         print("Deletion of checkpoints {} is in progress".format(args.checkpoints_uuids))
     else:
-        print("Aborting deletion of checkpoints.")
+        print("Stopping deletion of checkpoints.")
+
+
+@authentication.required
+def checkpoints_file_rm(args: Namespace) -> None:
+    if (
+        args.yes
+        or len(args.glob) == 0
+        or render.yes_or_no(
+            "All files matching specified globs will be deleted in all checkpoints provided\n"
+            "in checkpoint storage. Do you still want to proceed?"
+        )
+    ):
+        c_uuids = args.checkpoints_uuids.split(",")
+        remove_body = bindings.v1CheckpointsRemoveFilesRequest(
+            checkpointGlobs=args.glob,
+            checkpointUuids=c_uuids,
+        )
+        bindings.post_CheckpointsRemoveFiles(cli.setup_session(args), body=remove_body)
+
+        if len(args.glob) == 0:
+            print(
+                "No glob patterns provided, "
+                + f"refreshing resources of checkpoints {args.checkpoints_uuids} is in progress."
+            )
+        else:
+            print(f"Removal of files from checkpoints {args.checkpoints_uuids} is in progress.")
+    else:
+        print("Stopping removal of files from checkpoints.")
 
 
 main_cmd = Cmd(
@@ -176,6 +202,31 @@ main_cmd = Cmd(
             "delete checkpoints",
             [
                 Arg("checkpoints_uuids", help="comma-separated list of checkpoints to delete"),
+                Arg(
+                    "--yes",
+                    action="store_true",
+                    default=False,
+                    help="automatically answer yes to prompts",
+                ),
+            ],
+        ),
+        Cmd(
+            "rm",
+            checkpoints_file_rm,
+            "remove files from checkpoints",
+            [
+                Arg(
+                    "checkpoints_uuids",
+                    help="comma-separated list of checkpoints to remove files from",
+                ),
+                Arg(
+                    "--glob",
+                    action="append",
+                    default=[],
+                    help="glob to specify which files will be deleted, if unspecified no files "
+                    + "will be deleted and checkpoint resources will "
+                    + "be read from storage and refreshed",
+                ),
                 Arg(
                     "--yes",
                     action="store_true",

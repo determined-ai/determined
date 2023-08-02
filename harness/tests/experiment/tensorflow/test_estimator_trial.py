@@ -1,8 +1,8 @@
 # type: ignore
 import os
+import pathlib
 import tempfile
-from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import pytest
 import tensorflow as tf
@@ -75,7 +75,7 @@ class TestXORTrial:
             controller_fn=controller_fn, steps=3, validation_freq=1, scheduling_unit=100
         )
 
-    def test_checkpointing(self, tmp_path: Path) -> None:
+    def test_checkpointing(self, tmp_path: pathlib.Path) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         latest_checkpoint = None
         steps_completed = 0
@@ -126,7 +126,7 @@ class TestXORTrial:
         )
         controller.run()
 
-    def test_checkpointing_with_serving_fn(self, tmp_path: Path) -> None:
+    def test_checkpointing_with_serving_fn(self, tmp_path: pathlib.Path) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         latest_checkpoint = None
 
@@ -163,7 +163,7 @@ class TestXORTrial:
         assert len(dirs) == 1
         load_saved_model(os.path.join(export_path, dirs[0]))
 
-    def test_optimizer_state(self, tmp_path: Path) -> None:
+    def test_optimizer_state(self, tmp_path: pathlib.Path) -> None:
         def make_trial_controller_fn(
             workloads: workload.Stream,
             checkpoint_dir: Optional[str] = None,
@@ -212,7 +212,7 @@ class TestXORTrial:
             with open(hparams["val_log_path"], "r") as fp:
                 assert int(fp.readline()) == steps / validation_freq
 
-    def test_custom_hook(self, tmp_path: Path) -> None:
+    def test_custom_hook(self, tmp_path: pathlib.Path) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         latest_checkpoint = None
         steps_completed = 0
@@ -339,3 +339,67 @@ def test_checkpoint_loading(ckpt_ver):
     )
     estm = estimator.load_estimator_from_checkpoint_path(checkpoint_dir)
     assert isinstance(estm, tracking.AutoTrackable), type(estm)
+
+
+@pytest.mark.tf1_cpu
+def test_rng_restore():
+    def make_checkpoint() -> workload.Stream:
+        trainer = utils.TrainAndValidate()
+
+        yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
+
+    def make_workloads_with_metrics(metrics_storage: List) -> workload.Stream:
+        trainer = utils.TrainAndValidate()
+
+        yield from trainer.send(steps=5, validation_freq=1, scheduling_unit=1)
+        _, validation_metrics = trainer.result()
+
+        metrics_storage += validation_metrics
+
+    config_base = utils.load_config(utils.fixtures_path("estimator_no_op/const.yaml"))
+    hparams = config_base["hyperparameters"]
+
+    example_path = utils.fixtures_path("estimator_no_op/model_def.py")
+    trial_class = utils.import_class_from_module("NoopEstimator", example_path)
+    trial_class._searcher_metric = "validation_error"
+
+    trial_B_metrics = []
+    trial_C_metrics = []
+
+    trial_A_controller = utils.make_trial_controller_from_trial_implementation(
+        trial_class=trial_class, hparams=hparams, workloads=make_checkpoint(), trial_seed=325
+    )
+
+    trial_A_controller.run()
+
+    # copy checkpoint
+    checkpoint_dir = trial_A_controller.estimator_dir
+
+    # reset random seed after checkpointing
+    trial_A_controller.set_random_seed(0)
+
+    trial_B_controller = utils.make_trial_controller_from_trial_implementation(
+        trial_class=trial_class,
+        hparams=hparams,
+        workloads=make_workloads_with_metrics(trial_B_metrics),
+        latest_checkpoint=str(checkpoint_dir),
+        steps_completed=1,
+    )
+
+    trial_B_controller.run()
+
+    # reset random seed before rerun
+    trial_B_controller.set_random_seed(1)
+
+    trial_C_controller = utils.make_trial_controller_from_trial_implementation(
+        trial_class=trial_class,
+        hparams=hparams,
+        workloads=make_workloads_with_metrics(trial_C_metrics),
+        latest_checkpoint=str(checkpoint_dir),
+        steps_completed=1,
+    )
+
+    trial_C_controller.run()
+
+    assert len(trial_B_metrics) == len(trial_C_metrics) == 5
+    assert trial_B_metrics == trial_C_metrics

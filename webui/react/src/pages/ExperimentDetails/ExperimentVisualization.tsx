@@ -5,6 +5,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
 import Link from 'components/Link';
+import Message, { MessageType } from 'components/Message';
+import Spinner from 'components/Spinner/Spinner';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import useStorage from 'hooks/useStorage';
@@ -12,11 +14,8 @@ import { paths } from 'routes/utils';
 import { V1MetricBatchesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner/Spinner';
-import useUI from 'shared/contexts/stores/UI';
-import { ValueOf } from 'shared/types';
-import { alphaNumericSorter } from 'shared/utils/sort';
+import useUI from 'stores/contexts/UI';
+import { ValueOf } from 'types';
 import {
   ExperimentBase,
   ExperimentSearcherName,
@@ -26,6 +25,8 @@ import {
   RunState,
   Scale,
 } from 'types';
+import { Loadable } from 'utils/loadable';
+import { alphaNumericSorter } from 'utils/sort';
 
 import ExperimentVisualizationFilters, {
   MAX_HPARAM_COUNT,
@@ -96,7 +97,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     batchMargin: DEFAULT_BATCH_MARGIN,
     hParams: [],
     maxTrial: DEFAULT_MAX_TRIALS,
-    metric: null,
+    metric: undefined,
     scale: Scale.Linear,
     view: DEFAULT_VIEW,
   };
@@ -108,7 +109,6 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   });
   const [filters, setFilters] = useState<VisualizationFilters>(initFilters);
-  const [activeMetric, setActiveMetric] = useState<Metric | null>(initFilters.metric);
   const [hasSearcherMetric, setHasSearcherMetric] = useState<boolean>(false);
   const [batches, setBatches] = useState<number[]>();
   const [pageError, setPageError] = useState<PageError>();
@@ -118,24 +118,28 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   }, []);
 
   // Stream available metrics.
-  const metrics = useMetricNames(experiment.id, handleMetricNamesError);
+  const loadableMetrics = useMetricNames([experiment.id], handleMetricNamesError);
+  const metrics = Loadable.getOrElse([], loadableMetrics);
 
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
       hasData: !!metrics?.length,
-      hasLoaded: batches && metrics,
+      hasLoaded: Loadable.isLoaded(loadableMetrics) && !!batches,
       isExperimentTerminal: terminalRunStates.has(experiment.state),
       isSupported: !(
         ExperimentSearcherName.Single === experiment.config.searcher.name ||
         ExperimentSearcherName.Pbt === experiment.config.searcher.name
       ),
     };
-  }, [batches, experiment, metrics]);
+  }, [batches, experiment, loadableMetrics, metrics]);
 
   const handleFiltersChange = useCallback(
-    (filters: VisualizationFilters) => {
-      setFilters(filters);
-      storage.set(STORAGE_FILTERS_KEY, filters);
+    (newFilters: Partial<VisualizationFilters>) => {
+      setFilters((prevFilters) => {
+        const result = { ...prevFilters, ...newFilters };
+        storage.set(STORAGE_FILTERS_KEY, result);
+        return result;
+      });
     },
     [storage],
   );
@@ -143,10 +147,6 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   const handleFiltersReset = useCallback(() => {
     storage.remove(STORAGE_FILTERS_KEY);
   }, [storage]);
-
-  const handleMetricChange = useCallback((metric: Metric) => {
-    setActiveMetric(metric);
-  }, []);
 
   useEffect(() => {
     if (!hasSearcherMetric) {
@@ -157,20 +157,18 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
       );
       if (activeMetricFound) {
         setHasSearcherMetric(true);
-        setActiveMetric(searcherMetric.current);
         handleFiltersChange({
           ...filters,
           metric: searcherMetric.current,
         });
-      } else if (metrics.length > 0 && !activeMetric) {
-        setActiveMetric(metrics[0]);
+      } else if (metrics.length > 0 && !filters.metric) {
         handleFiltersChange({
           ...filters,
           metric: metrics[0],
         });
       }
     }
-  }, [hasSearcherMetric, setActiveMetric, handleFiltersChange, filters, metrics, activeMetric]);
+  }, [hasSearcherMetric, handleFiltersChange, filters, metrics]);
 
   const handleTabChange = useCallback(
     (type: string) => {
@@ -189,25 +187,24 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
         metrics={metrics}
         type={typeKey}
         onChange={handleFiltersChange}
-        onMetricChange={handleMetricChange}
         onReset={handleFiltersReset}
       />
     );
-  }, [
-    batches,
-    filters,
-    handleFiltersChange,
-    handleFiltersReset,
-    handleMetricChange,
-    metrics,
-    typeKey,
-  ]);
+  }, [batches, filters, handleFiltersChange, handleFiltersReset, metrics, typeKey]);
 
   const tabItems: TabsProps['items'] = useMemo(() => {
     /**
      * In the case of Custom Searchers, all the tabs besides
      * "Learning Curve" aren't helpful or relevant, so we are hiding them
      */
+    if (
+      filters.maxTrial === undefined ||
+      filters.batchMargin === undefined ||
+      filters.batch === undefined
+    ) {
+      return [];
+    }
+
     const tabs: TabsProps['items'] = [
       {
         children: (
@@ -216,7 +213,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
             filters={visualizationFilters}
             fullHParams={fullHParams.current}
             selectedMaxTrial={filters.maxTrial}
-            selectedMetric={activeMetric}
+            selectedMetric={filters.metric}
             selectedScale={filters.scale}
           />
         ),
@@ -235,7 +232,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
               selectedBatch={filters.batch}
               selectedBatchMargin={filters.batchMargin}
               selectedHParams={filters.hParams}
-              selectedMetric={activeMetric}
+              selectedMetric={filters.metric}
               selectedScale={filters.scale}
             />
           ),
@@ -251,7 +248,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
               selectedBatch={filters.batch}
               selectedBatchMargin={filters.batchMargin}
               selectedHParams={filters.hParams}
-              selectedMetric={activeMetric}
+              selectedMetric={filters.metric}
               selectedScale={filters.scale}
             />
           ),
@@ -267,7 +264,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
               selectedBatch={filters.batch}
               selectedBatchMargin={filters.batchMargin}
               selectedHParams={filters.hParams}
-              selectedMetric={activeMetric}
+              selectedMetric={filters.metric}
               selectedScale={filters.scale}
               selectedView={filters.view}
             />
@@ -284,7 +281,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     filters.batchMargin,
     filters.hParams,
     filters.maxTrial,
-    activeMetric,
+    filters.metric,
     filters.scale,
     filters.view,
     visualizationFilters,
@@ -301,18 +298,21 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
   // Stream available batches.
   useEffect(() => {
-    if (!isSupported || ui.isPageHidden || !activeMetric) return;
+    if (!isSupported || ui.isPageHidden || !filters.metric) return;
 
     const canceler = new AbortController();
     const metricTypeParam =
-      activeMetric.type === MetricType.Training ? 'METRIC_TYPE_TRAINING' : 'METRIC_TYPE_VALIDATION';
+      filters.metric.type === MetricType.Training
+        ? 'METRIC_TYPE_TRAINING'
+        : 'METRIC_TYPE_VALIDATION';
     const batchesMap: Record<number, number> = {};
 
     readStream<V1MetricBatchesResponse>(
       detApi.StreamingInternal.metricBatches(
         experiment.id,
-        activeMetric.name,
+        filters.metric.name,
         metricTypeParam,
+        undefined,
         undefined,
         { signal: canceler.signal },
       ),
@@ -326,7 +326,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     );
 
     return () => canceler.abort();
-  }, [activeMetric, experiment.id, filters.batch, isSupported, ui.isPageHidden]);
+  }, [filters.metric, experiment.id, filters.batch, isSupported, ui.isPageHidden]);
 
   // Set the default filter batch.
   useEffect(() => {
@@ -372,11 +372,13 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
         />
       </div>
     );
+  } else if (experiment.state === RunState.Error) {
+    return <Message title="No data to plot." type={MessageType.Empty} />;
   } else if (pageError !== undefined) {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
   } else if (!hasLoaded && experiment.state !== RunState.Paused) {
     return <Spinner spinning tip="Fetching metrics..." />;
-  } else if (!hasData) {
+  } else if (hasLoaded && !hasData) {
     return isExperimentTerminal || experiment.state === RunState.Paused ? (
       <Message title="No data to plot." type={MessageType.Empty} />
     ) : (

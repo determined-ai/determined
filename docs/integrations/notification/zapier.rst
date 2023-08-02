@@ -32,6 +32,7 @@ intead of **Catch Hook** because headers are needed to verify each webhook reque
 
 .. image:: /assets/images/zapier_webhook.png
    :width: 100%
+   :alt: Zapier Webhooks page displaying Catch Raw Hook event selected
 
 .. _webhook-in-determined:
 
@@ -43,12 +44,14 @@ Then, you need to create a webhook in Determined using the **Webhook URL** from 
 
 .. image:: /assets/images/zapier_webhook_url.png
    :width: 100%
+   :alt: This is where your webhook URL displays in Zapier
 
 Navigate to ``/det/webhooks`` or click on the "Webhooks" item in navigation side menu, then click
 the **New Webhook** button in the top right corner of the page.
 
 .. image:: /assets/images/zapier_new_webhook.png
    :width: 100%
+   :alt: Webhooks page displaying New Webhook fields including triggers.
 
 Paste the **Webhook URL** that was copied from Zapier in the **URL** field. Select **Default** for
 the webhook type and then select the triggers that you want to receive notifications for. Finally,
@@ -65,12 +68,14 @@ Webhook**.
 
 .. image:: /assets/images/zapier_test.png
    :width: 100%
+   :alt: Webhooks page displaying where to find the Test Webhook action.
 
 Then navigate back to Zapier and click on **Test Trigger**, then you should be able to see the test
 request.
 
 .. image:: /assets/images/zapier_request_found.png
    :width: 100%
+   :alt: Zapier Webhooks request page showing that your request was found.
 
 .. _verification:
 
@@ -88,6 +93,7 @@ Add a new action and choose **Code by Zapier**, select **Run Python** as an exam
 
 .. image:: /assets/images/zapier_python.png
    :width: 100%
+   :alt: Code by Zapier action with a Run Python event
 
 Construct input data as following:
 
@@ -98,6 +104,7 @@ Construct input data as following:
 
 .. image:: /assets/images/zapier_code_input.png
    :width: 100%
+   :alt: Code by Zapier showing set up action input data like webhook_signing_key
 
 Input code as following:
 
@@ -120,6 +127,7 @@ Under **Test Action**, test the code above, you should be able to see that verif
 
 .. image:: /assets/images/zapier_code_result.png
    :width: 100%
+   :alt: Code by Zapier showing that a Run Python event was sent
 
 .. _configuring_destination:
 

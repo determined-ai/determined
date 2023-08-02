@@ -1,0 +1,34 @@
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rotateCentered {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.base {
+  height: 100%;
+  position: relative;
+  width: 100%;
+
+  .spin {
+    animation: rotate 1s linear infinite;
+    color: var(--theme-brand);
+    display: flex;
+  }
+}
+.base.center {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}

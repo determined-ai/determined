@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -23,7 +23,7 @@ func stdinData() map[string]interface{} {
 	if (stat.Mode() & os.ModeCharDevice) != 0 {
 		return nil
 	}
-	stdin, err := ioutil.ReadAll(os.Stdin)
+	stdin, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -110,7 +110,7 @@ Adds:
 	}
 
 	if input != "" {
-		d, err := ioutil.ReadFile(filepath.Clean(input))
+		d, err := os.ReadFile(filepath.Clean(input))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -141,7 +141,7 @@ Adds:
 	b := RunTmpl(data, files)
 
 	if output != "" {
-		err := ioutil.WriteFile(output, b.Bytes(), 0o644) //nolint: gosec
+		err := os.WriteFile(output, b.Bytes(), 0o644) //nolint: gosec
 		if err != nil {
 			log.Fatal(err)
 		}

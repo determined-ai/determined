@@ -15,8 +15,25 @@ type WorkspaceAuthZBasic struct{}
 // CanGetWorkspace always return true and a nil error.
 func (a *WorkspaceAuthZBasic) CanGetWorkspace(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-) (canGetWorkspace bool, serverError error) {
-	return true, nil
+) error {
+	return nil
+}
+
+// CanGetWorkspaceID always return true and a nil error.
+func (a *WorkspaceAuthZBasic) CanGetWorkspaceID(
+	ctx context.Context, curUser model.User, workspaceID int32,
+) error {
+	return nil
+}
+
+// CanModifyRPWorkspaceBindings requires user to be an admin.
+func (a *WorkspaceAuthZBasic) CanModifyRPWorkspaceBindings(
+	ctx context.Context, curUser model.User, workspaceIDs []int32,
+) error {
+	if !curUser.Admin {
+		return fmt.Errorf("only admin privileged users can bind resource pool to a workspace")
+	}
+	return nil
 }
 
 // FilterWorkspaceProjects always returns the list provided and a nil error.
@@ -31,6 +48,13 @@ func (a *WorkspaceAuthZBasic) FilterWorkspaces(
 	ctx context.Context, curUser model.User, workspaces []*workspacev1.Workspace,
 ) ([]*workspacev1.Workspace, error) {
 	return workspaces, nil
+}
+
+// FilterWorkspaceIDs always returns provided list and a nil error.
+func (a *WorkspaceAuthZBasic) FilterWorkspaceIDs(
+	ctx context.Context, curUser model.User, workspaceIDs []int32,
+) ([]int32, error) {
+	return workspaceIDs, nil
 }
 
 // CanCreateWorkspace always returns a nil error.

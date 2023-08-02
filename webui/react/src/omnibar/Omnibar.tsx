@@ -1,12 +1,17 @@
 import OmnibarNpm from 'omnibar';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import shortCutSettingsConfig, {
+  Settings as ShortcutSettings,
+} from 'components/UserSettings.settings';
 import { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
+import { useSettings } from 'hooks/useSettings';
 import * as Tree from 'omnibar/tree-extension/index';
 import TreeNode from 'omnibar/tree-extension/TreeNode';
 import { BaseNode } from 'omnibar/tree-extension/types';
 import { isTreeNode } from 'omnibar/tree-extension/utils';
 import handleError from 'utils/error';
+import { matchesShortcut } from 'utils/shortcut';
 
 import css from './Omnibar.module.scss';
 
@@ -20,10 +25,13 @@ const omnibarInput = () =>
 
 const Omnibar: React.FC = () => {
   const [showing, setShowing] = useState(false);
+  const {
+    settings: { omnibar: omnibarShortcut },
+  } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
 
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
-      if (e.code === KeyCode.Space && e.ctrlKey) {
+      if (matchesShortcut(e, omnibarShortcut)) {
         setShowing((showing) => !showing);
       } else if (showing && e.code === KeyCode.Escape) {
         setShowing(false);
@@ -35,7 +43,7 @@ const Omnibar: React.FC = () => {
     return () => {
       keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
     };
-  }, [showing]);
+  }, [showing, omnibarShortcut]);
 
   const hideBar = useCallback(() => {
     setShowing(false);

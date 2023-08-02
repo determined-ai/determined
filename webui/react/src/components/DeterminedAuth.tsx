@@ -3,21 +3,22 @@ import React, { useCallback, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
-import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
 import { login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { isLoginFailure } from 'services/utils';
-import Icon from 'shared/components/Icon/Icon';
-import useUI from 'shared/contexts/stores/UI';
-import { ErrorType } from 'shared/utils/error';
-import { StorageManager } from 'shared/utils/storage';
 import authStore from 'stores/auth';
+import useUI from 'stores/contexts/UI';
+import determinedStore from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import userStore from 'stores/users';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { useObservable } from 'utils/observable';
+import { StorageManager } from 'utils/storage';
 
 import css from './DeterminedAuth.module.scss';
 
@@ -45,7 +46,7 @@ const buttonTheme = {
 
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const { actions: uiActions } = useUI();
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
   const [canSubmit, setCanSubmit] = useState<boolean>(!!storage.get(STORAGE_KEY_LAST_USERNAME));
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
@@ -112,10 +113,17 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
             required: true,
           },
         ]}>
-        <Input autoFocus placeholder="username" prefix={<Icon name="user-small" size="small" />} />
+        <Input
+          autoFocus
+          placeholder="username"
+          prefix={<Icon name="user-small" size="small" title="Username" />}
+        />
       </Form.Item>
       <Form.Item name="password">
-        <Input.Password placeholder="password" prefix={<Icon name="lock" size="small" />} />
+        <Input.Password
+          placeholder="password"
+          prefix={<Icon name="lock" size="small" title="Password" />}
+        />
       </Form.Item>
       {isBadCredentials && (
         <p className={[css.errorMessage, css.message].join(' ')}>Incorrect username or password.</p>

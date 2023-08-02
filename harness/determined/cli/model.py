@@ -2,17 +2,12 @@ import json
 from argparse import Namespace
 from typing import Any, List
 
+import determined.cli.render
 from determined import cli
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.experimental import (
-    Determined,
-    Model,
-    ModelOrderBy,
-    ModelSortBy,
-    ModelVersion,
-)
+from determined.experimental import Determined, Model, ModelOrderBy, ModelSortBy, ModelVersion
 
 from . import render
 
@@ -66,13 +61,13 @@ def list_models(args: Namespace) -> None:
     workspace_names = None
     if args.workspace_names is not None:
         workspace_names = args.workspace_names.split(",")
-    models = Determined(args.master, None).get_models(
+    models = Determined(args.master, args.user).get_models(
         sort_by=ModelSortBy[args.sort_by.upper()],
         order_by=ModelOrderBy[args.order_by.upper()],
         workspace_names=workspace_names,
     )
     if args.json:
-        print(json.dumps([m.to_json() for m in models], indent=2))
+        determined.cli.render.print_json([m.to_json() for m in models])
     else:
         headers = ["ID", "Name", "Workspace ID", "Creation Time", "Last Updated Time", "Metadata"]
 
@@ -92,7 +87,7 @@ def list_models(args: Namespace) -> None:
 
 
 def model_by_name(args: Namespace) -> Model:
-    models = Determined(args.master, None).get_models(name=args.name)
+    models = Determined(args.master, args.user).get_models(name=args.name)
     if len(models) == 0:
         raise Exception("No model was found with the given name.")
     if len(models) > 1:
@@ -106,7 +101,7 @@ def list_versions(args: Namespace) -> None:
     if args.json:
         r = api.get(args.master, "api/v1/models/{}/versions".format(model.model_id))
         data = r.json()
-        print(json.dumps(data, indent=2))
+        determined.cli.render.print_json(data)
 
     else:
         render_model(model)
@@ -141,12 +136,12 @@ def list_versions(args: Namespace) -> None:
 
 
 def create(args: Namespace) -> None:
-    model = Determined(args.master, None).create_model(
+    model = Determined(args.master, args.user).create_model(
         args.name, args.description, workspace_name=args.workspace_name
     )
 
     if args.json:
-        print(json.dumps(model.to_json(), indent=2))
+        determined.cli.render.print_json(model.to_json())
     else:
         render_model(model)
 
@@ -161,7 +156,7 @@ def describe(args: Namespace) -> None:
     model_version = model.get_version(args.version)
 
     if args.json:
-        print(json.dumps(model.to_json(), indent=2))
+        determined.cli.render.print_json(model.to_json())
     else:
         render_model(model)
         if model_version is not None:
@@ -179,7 +174,7 @@ def register_version(args: Namespace) -> None:
             json={"checkpointUuid": args.uuid},
         )
 
-        print(json.dumps(resp.json(), indent=2))
+        determined.cli.render.print_json(resp.json())
     else:
         model_version = model.register_version(args.uuid)
         render_model(model)

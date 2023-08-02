@@ -10,7 +10,7 @@ import { getResourceAllocationAggregated } from 'services/api';
 import { V1ResourceAllocationAggregatedResponse } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import css from './ClusterHistoricalUsage.module.scss';
@@ -28,9 +28,7 @@ export const MAX_RANGE_DAY = 31;
 export const MAX_RANGE_MONTH = 36;
 
 const ClusterHistoricalUsage: React.FC = () => {
-  const [aggRes, setAggRes] = useState<V1ResourceAllocationAggregatedResponse>({
-    resourceEntries: [],
-  });
+  const [aggRes, setAggRes] = useState<Loadable<V1ResourceAllocationAggregatedResponse>>(NotLoaded);
   const [isCsvModalVisible, setIsCsvModalVisible] = useState<boolean>(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const loadableUsers = useObservable(userStore.getUsers());
@@ -94,7 +92,7 @@ const ClusterHistoricalUsage: React.FC = () => {
 
   const fetchResourceAllocationAggregated = useCallback(async () => {
     try {
-      const res = await getResourceAllocationAggregated({
+      const response = await getResourceAllocationAggregated({
         endDate: filters.beforeDate,
         period:
           filters.groupBy === GroupBy.Month
@@ -102,15 +100,21 @@ const ClusterHistoricalUsage: React.FC = () => {
             : 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY',
         startDate: filters.afterDate,
       });
-      setAggRes(res);
+      setAggRes(Loaded(response));
     } catch (e) {
       handleError(e);
     }
   }, [filters.afterDate, filters.beforeDate, filters.groupBy]);
 
   const chartSeries = useMemo(() => {
-    return mapResourceAllocationApiToChartSeries(aggRes.resourceEntries, filters.groupBy, users);
-  }, [aggRes.resourceEntries, filters.groupBy, users]);
+    return Loadable.map(aggRes, (response) => {
+      return mapResourceAllocationApiToChartSeries(
+        response.resourceEntries,
+        filters.groupBy,
+        users,
+      );
+    });
+  }, [aggRes, filters.groupBy, users]);
 
   useEffect(() => {
     fetchResourceAllocationAggregated();
@@ -123,47 +127,68 @@ const ClusterHistoricalUsage: React.FC = () => {
           <ClusterHistoricalUsageFilters value={filters} onChange={handleFilterChange} />
           <Button onClick={() => setIsCsvModalVisible(true)}>Download CSV</Button>
         </Space>
-        <Section bodyBorder loading={!chartSeries} title="Compute Hours Allocated">
-          {chartSeries && (
-            <ClusterHistoricalUsageChart
-              groupBy={chartSeries.groupedBy}
-              hoursByLabel={chartSeries.hoursTotal}
-              time={chartSeries.time}
-            />
-          )}
+        <Section
+          bodyBorder
+          loading={Loadable.isLoading(chartSeries)}
+          title="Compute Hours Allocated">
+          {Loadable.match(chartSeries, {
+            Loaded: (series) => (
+              <ClusterHistoricalUsageChart
+                groupBy={series.groupedBy}
+                hoursByLabel={series.hoursTotal}
+                time={series.time}
+              />
+            ),
+            NotLoaded: () => null,
+          })}
         </Section>
         <Section
           bodyBorder
-          loading={Loadable.isLoading(loadableUsers)}
+          loading={Loadable.isLoading(Loadable.all([loadableUsers, chartSeries]))}
           title="Compute Hours by User">
-          {chartSeries && (
-            <ClusterHistoricalUsageChart
-              groupBy={chartSeries.groupedBy}
-              hoursByLabel={chartSeries.hoursByUsername}
-              hoursTotal={chartSeries?.hoursTotal?.total}
-              time={chartSeries.time}
-            />
-          )}
+          {Loadable.match(chartSeries, {
+            Loaded: (series) => (
+              <ClusterHistoricalUsageChart
+                groupBy={series.groupedBy}
+                hoursByLabel={series.hoursByUsername}
+                hoursTotal={series?.hoursTotal?.total}
+                time={series.time}
+              />
+            ),
+            NotLoaded: () => null,
+          })}
         </Section>
-        <Section bodyBorder loading={!chartSeries} title="Compute Hours by Label">
-          {chartSeries && (
-            <ClusterHistoricalUsageChart
-              groupBy={chartSeries.groupedBy}
-              hoursByLabel={chartSeries.hoursByExperimentLabel}
-              hoursTotal={chartSeries?.hoursTotal?.total}
-              time={chartSeries.time}
-            />
-          )}
+        <Section
+          bodyBorder
+          loading={Loadable.isLoading(chartSeries)}
+          title="Compute Hours by Label">
+          {Loadable.match(chartSeries, {
+            Loaded: (series) => (
+              <ClusterHistoricalUsageChart
+                groupBy={series.groupedBy}
+                hoursByLabel={series.hoursByExperimentLabel}
+                hoursTotal={series?.hoursTotal?.total}
+                time={series.time}
+              />
+            ),
+            NotLoaded: () => null,
+          })}
         </Section>
-        <Section bodyBorder loading={!chartSeries} title="Compute Hours by Resource Pool">
-          {chartSeries && (
-            <ClusterHistoricalUsageChart
-              groupBy={chartSeries.groupedBy}
-              hoursByLabel={chartSeries.hoursByResourcePool}
-              hoursTotal={chartSeries?.hoursTotal?.total}
-              time={chartSeries.time}
-            />
-          )}
+        <Section
+          bodyBorder
+          loading={Loadable.isLoading(chartSeries)}
+          title="Compute Hours by Resource Pool">
+          {Loadable.match(chartSeries, {
+            Loaded: (series) => (
+              <ClusterHistoricalUsageChart
+                groupBy={series.groupedBy}
+                hoursByLabel={series.hoursByResourcePool}
+                hoursTotal={series?.hoursTotal?.total}
+                time={series.time}
+              />
+            ),
+            NotLoaded: () => null,
+          })}
         </Section>
         {isCsvModalVisible && (
           <ClusterHistoricalUsageCsvModal

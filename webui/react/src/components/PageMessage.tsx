@@ -15,7 +15,7 @@ interface Props {
 const PageMessage: React.FC<Props> = ({ title, children }: Props) => {
   const info = useObservable(determinedStore.info);
   return (
-    <Page docTitle={title}>
+    <Page breadcrumb={[]} docTitle={title} noScroll>
       <div className={css.base}>
         <div className={css.content}>
           <Logo

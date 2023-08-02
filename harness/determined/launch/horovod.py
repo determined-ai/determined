@@ -34,6 +34,7 @@ def create_sshd_worker_cmd(
         "SIGTERM",
         "--on-exit",
         "SIGTERM",
+        "--signal-children",
         f"/tmp/pid_server-{allocation_id}",
         str(num_slot_ids),
         "--",

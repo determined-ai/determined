@@ -14,10 +14,11 @@ import tabulate
 import termcolor
 
 import determined as det
+import determined.cli.render
 import determined.experimental
 import determined.load
 from determined import cli
-from determined.cli import checkpoint, proxy, render
+from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
 from determined.cli.errors import CliError
 from determined.common import api, context, set_logger, util, yaml
@@ -32,12 +33,6 @@ from .trial import logs_args_description
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
 # a filter like `head`.
 FLUSH = False
-
-
-def patch_experiment(args: Namespace, patch_doc: Dict[str, Any]) -> None:
-    path = f"experiments/{args.experiment_id}"
-    headers = {"Content-Type": "application/merge-patch+json"}
-    cli.setup_session(args).patch(path, json=patch_doc, headers=headers)
 
 
 @authentication.required
@@ -123,9 +118,9 @@ def _parse_config_text_or_exit(
     if not experiment_config or not isinstance(experiment_config, dict):
         raise ArgumentError(None, f"Error: invalid experiment config file {path}")
 
-    parse_config_overrides(experiment_config, config_overrides)
+    config = parse_config_overrides(experiment_config, config_overrides)
 
-    return experiment_config
+    return config
 
 
 def _follow_experiment_logs(sess: api.Session, exp_id: int) -> None:
@@ -293,6 +288,8 @@ def submit_experiment(args: Namespace) -> None:
 
         if not args.paused and args.follow_first_trial:
             if args.publish:
+                from determined.cli import proxy
+
                 port_map = proxy.parse_port_map_flag(args.publish)
                 with proxy.tunnel_experiment(sess, resp.experiment.id, port_map):
                     _follow_experiment_logs(sess, resp.experiment.id)
@@ -360,7 +357,7 @@ def describe(args: Namespace) -> None:
         responses.append(r)
 
     if args.json:
-        print(json.dumps([resp.to_json() for resp in responses], indent=4))
+        determined.cli.render.print_json([resp.to_json() for resp in responses])
         return
     exps = [resp.experiment for resp in responses]
 
@@ -380,7 +377,7 @@ def describe(args: Namespace) -> None:
     values: List[List] = [
         [
             exp.id,
-            exp.state.value.replace("STATE_", ""),
+            exp.state,
             render.format_percent(exp.progress),
             render.format_time(exp.startTime),
             render.format_time(exp.endTime),
@@ -594,11 +591,7 @@ def experiment_logs(args: Namespace) -> None:
     sess = cli.setup_session(args)
     trials = bindings.get_GetExperimentTrials(sess, experimentId=args.experiment_id).trials
     if len(trials) == 0:
-        print(
-            f"No trials found for experiment {args.experiment_id}. "
-            "Try again after the experiment has a trial running."
-        )
-        return
+        raise cli.not_found_errs("experiment", args.experiment_id, sess)
     first_trial_id = sorted(t_id.id for t_id in trials)[0]
     try:
         logs = api.trial_logs(
@@ -617,7 +610,8 @@ def experiment_logs(args: Namespace) -> None:
             timestamp_after=args.timestamp_after,
         )
         if args.json:
-            api.print_json_logs(logs)
+            for log in logs:
+                render.print_json(log.to_json())
         else:
             api.pprint_logs(logs)
     finally:
@@ -646,6 +640,7 @@ def download_model_def(args: Namespace) -> None:
         f.write(base64.b64decode(resp.b64Tgz))
 
 
+@authentication.required
 def download(args: Namespace) -> None:
     exp = client.ExperimentReference(args.experiment_id, cli.setup_session(args))
     checkpoints = exp.top_n_checkpoints(
@@ -685,7 +680,7 @@ def list_experiments(args: Namespace) -> None:
         return bindings.get_GetExperiments(
             session,
             offset=offset,
-            archived=False if args.all else None,
+            archived=None if args.all else False,
             limit=args.limit,
             users=None if args.all else [authentication.must_cli_auth().get_session_user()],
         )
@@ -852,31 +847,45 @@ def remove_label(args: Namespace) -> None:
 
 @authentication.required
 def set_max_slots(args: Namespace) -> None:
-    patch_experiment(args, {"resources": {"max_slots": args.max_slots}})
+    session = cli.setup_session(args)
+    exp_patch = bindings.v1PatchExperiment(
+        id=args.experiment_id,
+        resources=bindings.PatchExperimentPatchResources(maxSlots=args.max_slots),
+    )
+    bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print(f"Set `max_slots` of experiment {args.experiment_id} to {args.max_slots}")
 
 
 @authentication.required
 def set_weight(args: Namespace) -> None:
-    patch_experiment(args, {"resources": {"weight": args.weight}})
+    session = cli.setup_session(args)
+    exp_patch = bindings.v1PatchExperiment(
+        id=args.experiment_id, resources=bindings.PatchExperimentPatchResources(weight=args.weight)
+    )
+    bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print(f"Set `weight` of experiment {args.experiment_id} to {args.weight}")
 
 
 @authentication.required
 def set_priority(args: Namespace) -> None:
-    patch_experiment(args, {"resources": {"priority": args.priority}})
+    session = cli.setup_session(args)
+    exp_patch = bindings.v1PatchExperiment(
+        id=args.experiment_id,
+        resources=bindings.PatchExperimentPatchResources(priority=args.priority),
+    )
+    bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print(f"Set `priority` of experiment {args.experiment_id} to {args.priority}")
 
 
 @authentication.required
 def set_gc_policy(args: Namespace) -> None:
-    policy = {
-        "save_experiment_best": args.save_experiment_best,
-        "save_trial_best": args.save_trial_best,
-        "save_trial_latest": args.save_trial_latest,
-    }
-
     if not args.yes:
+        policy = {
+            "save_experiment_best": args.save_experiment_best,
+            "save_trial_best": args.save_trial_best,
+            "save_trial_latest": args.save_trial_latest,
+        }
+
         r = api.get(args.master, f"experiments/{args.experiment_id}/preview_gc", params=policy)
         response = r.json()
         checkpoints = response["checkpoints"]
@@ -922,7 +931,16 @@ def set_gc_policy(args: Namespace) -> None:
         "in the unrecoverable deletion of checkpoints.  Do you wish to "
         "proceed?"
     ):
-        patch_experiment(args, {"checkpoint_storage": policy})
+        session = cli.setup_session(args)
+        exp_patch = bindings.v1PatchExperiment(
+            id=args.experiment_id,
+            checkpointStorage=bindings.PatchExperimentPatchCheckpointStorage(
+                saveExperimentBest=args.save_experiment_best,
+                saveTrialBest=args.save_trial_best,
+                saveTrialLatest=args.save_trial_latest,
+            ),
+        )
+        bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
         print(f"Set GC policy of experiment {args.experiment_id} to\n{pformat(policy)}")
     else:
         print("Aborting operations.")
@@ -1005,8 +1023,8 @@ main_cmd = Cmd(
             [
                 experiment_id_arg("experiment ID"),
                 cli.output_format_args["json"],
-            ]
-            + logs_args_description,
+                *logs_args_description,
+            ],
         ),
         Cmd(
             "download-model-def",

@@ -5,17 +5,16 @@ import { useParams } from 'react-router-dom';
 
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
+import Notes from 'components/kit/Notes';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
+import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
-import NotesCard from 'components/NotesCard';
-import Page from 'components/Page';
+import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
-import InteractiveTable, {
-  ColumnDef,
-  InteractiveTableSettings,
-} from 'components/Table/InteractiveTable';
+import Spinner from 'components/Spinner/Spinner';
+import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
   defaultRowClassName,
   getFullPaginationConfig,
@@ -25,7 +24,9 @@ import {
   userRenderer,
 } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import usePolling from 'hooks/usePolling';
+import { useSettings } from 'hooks/useSettings';
+import { paths } from 'routes/utils';
 import {
   archiveModel,
   getModelDetails,
@@ -34,18 +35,15 @@ import {
   unarchiveModel,
 } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import { isEqual } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
-import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
-import { Metadata, ModelVersion, ModelVersions } from 'types';
+import { Metadata, ModelVersion, ModelVersions, Note } from 'types';
+import { isEqual } from 'utils/data';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { isAborted, isNotFound, validateDetApiEnum } from 'utils/service';
 
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
@@ -55,6 +53,7 @@ import settingsConfig, {
 import ModelHeader from './ModelDetails/ModelHeader';
 import ModelVersionActionDropdown from './ModelDetails/ModelVersionActionDropdown';
 import css from './ModelDetails.module.scss';
+import { WorkspaceDetailsTab } from './WorkspaceDetails';
 
 type Params = {
   modelId: string;
@@ -69,19 +68,19 @@ const ModelDetails: React.FC = () => {
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
-  const workspasces = useObservable(workspaceStore.workspaces);
+  const workspaces = useObservable(workspaceStore.workspaces);
   const workspace = Loadable.getOrElse(
     undefined,
-    useObservable(workspaceStore.getWorkspace(model?.model.workspaceId)),
+    useObservable(workspaceStore.getWorkspace(model ? Loaded(model.model.workspaceId) : NotLoaded)),
   );
 
   const { canModifyModel, canModifyModelVersion, loading: rbacLoading } = usePermissions();
 
-  const {
-    settings,
-    isLoading: isLoadingSettings,
-    updateSettings,
-  } = useSettings<Settings>(settingsConfig(modelId));
+  const config = useMemo(() => {
+    return settingsConfig(modelId);
+  }, [modelId]);
+
+  const { settings, isLoading: isLoadingSettings, updateSettings } = useSettings<Settings>(config);
 
   const fetchModel = useCallback(async () => {
     if (!settings) return;
@@ -111,9 +110,7 @@ const ModelDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
-    const abortFetchWorkspaces = workspaceStore.fetch();
-
-    return () => abortFetchWorkspaces();
+    return workspaceStore.fetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -320,7 +317,8 @@ const ModelDetails: React.FC = () => {
   );
 
   const saveNotes = useCallback(
-    async (editedNotes: string) => {
+    async (notes: Note) => {
+      const editedNotes = notes.contents;
       try {
         const modelName = model?.model.name;
         if (modelName) {
@@ -375,17 +373,9 @@ const ModelDetails: React.FC = () => {
   }, [model?.model.archived, model?.model.name]);
 
   const actionDropdown = useCallback(
-    ({
-      record,
-      onVisibleChange,
-      children,
-    }: {
-      children: React.ReactNode;
-      onVisibleChange?: (visible: boolean) => void;
-      record: ModelVersion;
-    }) => (
+    ({ record, children }: { children: React.ReactNode; record: ModelVersion }) => (
       <ModelVersionActionDropdown
-        trigger={['contextMenu']}
+        isContextMenu
         version={record}
         onDelete={() => {
           setModelVersion(record);
@@ -394,8 +384,7 @@ const ModelDetails: React.FC = () => {
         onDownload={() => {
           setModelVersion(record);
           modelDownloadModal.open();
-        }}
-        onVisibleChange={onVisibleChange}>
+        }}>
         {children}
       </ModelVersionActionDropdown>
     ),
@@ -409,19 +398,46 @@ const ModelDetails: React.FC = () => {
     return <Message title={message} type={MessageType.Warning} />;
   } else if (pageError && isNotFound(pageError)) {
     return <PageNotFound />;
-  } else if (!model || Loadable.isLoading(workspasces) || rbacLoading) {
+  } else if (!model || Loadable.isLoading(workspaces) || rbacLoading) {
     return <Spinner spinning tip={`Loading model ${modelId} details...`} />;
   }
 
+  const pageBreadcrumb: BreadCrumbRoute[] = [];
+  if (workspace) {
+    pageBreadcrumb.push(
+      workspace.id === 1
+        ? {
+            breadcrumbName: 'Uncategorized Experiments',
+            path: paths.projectDetails(1),
+          }
+        : {
+            breadcrumbName: workspace.name,
+            path: paths.workspaceDetails(workspace.id),
+          },
+      {
+        breadcrumbName: 'Model Registry',
+        path:
+          workspace.id === 1
+            ? paths.modelList()
+            : paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry),
+      },
+    );
+  }
+  pageBreadcrumb.push({
+    breadcrumbName: `${model.model.name} (${model.model.id})`,
+    path: paths.modelDetails(model.model.id.toString()),
+  });
+
   return (
     <Page
+      breadcrumb={pageBreadcrumb}
       containerRef={pageRef}
       docTitle="Model Details"
       headerComponent={
         <ModelHeader
           fetchModel={fetchModel}
           model={model.model}
-          workspace={workspace}
+          workspace={workspace || undefined}
           onSwitchArchive={switchArchive}
           onUpdateTags={saveModelTags}
         />
@@ -437,7 +453,7 @@ const ModelDetails: React.FC = () => {
             </p>
           </div>
         ) : (
-          <InteractiveTable
+          <InteractiveTable<ModelVersion, Settings>
             columns={columns}
             containerRef={pageRef}
             ContextMenu={actionDropdown}
@@ -452,16 +468,18 @@ const ModelDetails: React.FC = () => {
             )}
             rowClassName={defaultRowClassName({ clickable: false })}
             rowKey="version"
-            settings={settings as InteractiveTableSettings}
+            settings={settings}
             showSorterTooltip={false}
             size="small"
-            updateSettings={updateSettings as UpdateSettings}
+            updateSettings={updateSettings}
             onChange={handleTableChange}
           />
         )}
-        <NotesCard
+        <Notes
           disabled={model.model.archived || !canModifyModel({ model: model.model })}
-          notes={model.model.notes ?? ''}
+          disableTitle
+          notes={{ contents: model.model.notes ?? '', name: 'Notes' }}
+          onError={handleError}
           onSave={saveNotes}
         />
         <MetadataCard

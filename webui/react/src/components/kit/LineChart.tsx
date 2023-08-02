@@ -1,21 +1,24 @@
-import React, { useMemo, useRef } from 'react';
+import React, { ReactNode, useMemo, useRef } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
+import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/internal/functions';
+import ScaleSelect from 'components/kit/internal/ScaleSelect';
+import Spinner from 'components/kit/internal/Spinner/Spinner';
+import { ErrorHandler, MetricType, Scale } from 'components/kit/internal/types';
+import { SyncProvider } from 'components/kit/internal/UPlot/SyncProvider';
+import { UPlotPoint } from 'components/kit/internal/UPlot/types';
+import UPlotChart, { Options } from 'components/kit/internal/UPlot/UPlotChart';
+import { closestPointPlugin } from 'components/kit/internal/UPlot/UPlotChart/closestPointPlugin';
+import { tooltipsPlugin } from 'components/kit/internal/UPlot/UPlotChart/tooltipsPlugin';
+import useResize from 'components/kit/internal/useResize';
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
-import ScaleSelect from 'components/ScaleSelect';
-import { SyncProvider } from 'components/UPlot/SyncProvider';
-import { UPlotPoint } from 'components/UPlot/types';
-import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
-import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
-import useResize from 'hooks/useResize';
-import Spinner from 'shared/components/Spinner/Spinner';
-import { getCssVar } from 'shared/themes';
-import { glasbeyColor } from 'shared/utils/color';
-import { MetricType, Scale } from 'types';
-import { getTimeTickValues } from 'utils/chart';
-import { Loadable } from 'utils/loadable';
+import MetricBadgeTag from 'components/MetricBadgeTag';
+import { MapOfIdsToColors } from 'hooks/useGlasbey';
+import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
+import { ExperimentWithTrial, TrialItem } from 'types';
+import { isEqual } from 'utils/data';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import css from './LineChart.module.scss';
 
@@ -60,9 +63,9 @@ interface ChartProps {
   onPointFocus?: (point: UPlotPoint | undefined) => void;
   plugins?: Plugin[];
   scale?: Scale;
-  series: Serie[];
+  series: Serie[] | Loadable<Serie[]>;
   showLegend?: boolean;
-  title?: string;
+  title?: ReactNode;
   xAxis?: XAxisDomain;
   xLabel?: string;
   yLabel?: string;
@@ -71,11 +74,13 @@ interface ChartProps {
 
 interface LineChartProps extends Omit<ChartProps, 'series'> {
   series: Serie[] | Loadable<Serie[]>;
+  handleError: ErrorHandler;
 }
 
 export const LineChart: React.FC<LineChartProps> = ({
   experimentId,
   focusedSeries,
+  handleError,
   height = 350,
   onPointClick,
   onPointFocus,
@@ -238,6 +243,7 @@ export const LineChart: React.FC<LineChartProps> = ({
         allowDownload={hasPopulatedSeries}
         data={chartData}
         experimentId={experimentId}
+        handleError={handleError}
         isLoading={isLoading}
         options={chartOptions}
       />
@@ -269,6 +275,7 @@ export type ChartsProps = ChartProps[];
  * @param {ChartsProps} chartsProps - Provide series to plot on each chart, and any chart-specific config.
  * @param {XAxisDomain[]} [xAxisOptions] - A list of possible x-axes to select in a dropdown; examples: Batches, Time, Epoch.
  * @param {Scale} scale - Scale of chart, can be linear or log
+ * @param {handleError} handleError - Error handler
  */
 export interface GroupProps {
   chartsProps: ChartsProps | Loadable<ChartsProps>;
@@ -276,6 +283,7 @@ export interface GroupProps {
   scale: Scale;
   setScale: React.Dispatch<React.SetStateAction<Scale>>;
   xAxis: XAxisDomain;
+  handleError: ErrorHandler;
 }
 
 /**
@@ -288,9 +296,10 @@ const VirtualChartRenderer: React.FC<
     columnCount: number;
     scale: Scale;
     xAxis: XAxisDomain;
+    handleError: ErrorHandler;
   }>
 > = ({ columnIndex, rowIndex, style, data }) => {
-  const { chartsProps, columnCount, scale, xAxis } = data;
+  const { chartsProps, columnCount, scale, xAxis, handleError } = data;
 
   const cellIndex = rowIndex * columnCount + columnIndex;
 
@@ -300,14 +309,86 @@ const VirtualChartRenderer: React.FC<
   return (
     <div className={css.chartgridCell} key={`${rowIndex}, ${columnIndex}`} style={style}>
       <div className={css.chartgridCellCard}>
-        <LineChart {...chartProps} scale={scale} xAxis={xAxis} />
+        <LineChart {...chartProps} handleError={handleError} scale={scale} xAxis={xAxis} />
       </div>
     </div>
   );
 };
 
+export const calculateChartProps = (
+  metricData: TrialMetricData,
+  experiments: ExperimentWithTrial[],
+  trials: TrialItem[],
+  xAxis: XAxisDomain,
+  colorMap: MapOfIdsToColors,
+): Loadable<ChartsProps> => {
+  const { metricHasData, metrics, data, isLoaded, selectedMetrics } = metricData;
+  const chartedMetrics: Record<string, boolean> = {};
+  const out: ChartsProps = [];
+  const expNameById: Record<number, string> = {};
+  experiments.forEach((e) => {
+    expNameById[e.experiment.id] = e.experiment.name;
+  });
+  metrics.forEach((metric) => {
+    const series: Serie[] = [];
+    const key = `${metric.type}|${metric.name}`;
+    trials.forEach((t) => {
+      const m = data[t?.id || 0];
+      m?.[key] &&
+        t &&
+        series.push({
+          ...m[key],
+          color: colorMap[t.experimentId],
+          metricType: undefined,
+          name: expNameById[t.experimentId]
+            ? `${expNameById[t.experimentId]} (${t.experimentId})`
+            : String(t.experimentId),
+        });
+      chartedMetrics[key] ||= series.length > 0;
+    });
+    out.push({
+      series: Loaded(series),
+      title: <MetricBadgeTag metric={metric} />,
+      xAxis,
+      xLabel: String(xAxis),
+    });
+  });
+
+  // In order to show the spinner for each chart in the ChartGrid until
+  // metrics are visible, we must determine whether the metrics have been
+  // loaded and whether the chart props have been updated.
+  // If any metric has data but no chartProps contain data for the metric,
+  // then the charts have not been updated and we need to continue to show the
+  // spinner.
+  const chartDataIsLoaded = metrics.every((metric) => {
+    const metricKey = `${metric.type}|${metric.name}`;
+    return metricHasData?.[metricKey] ? !!chartedMetrics?.[metricKey] : true;
+  });
+  if (!isLoaded) {
+    // When trial metrics hasn't loaded metric names or individual trial metrics.
+    return NotLoaded;
+  } else if (!chartDataIsLoaded || !isEqual(selectedMetrics, metrics)) {
+    // In some cases the selectedMetrics returned may not be up to date
+    // with the metrics selected by the user. In this case we want to
+    // show a loading state until the metrics match.
+
+    // returns the chartProps with a NotLoaded series which enables
+    // the ChartGrid to show a spinner for the loading charts.
+    return Loaded(out.map((chartProps) => ({ ...chartProps, series: NotLoaded })));
+  } else {
+    return Loaded(out);
+  }
+};
+
 export const ChartGrid: React.FC<GroupProps> = React.memo(
-  ({ chartsProps: propChartsProps, xAxis, onXAxisChange, scale, setScale }: GroupProps) => {
+  ({
+    chartsProps: propChartsProps,
+    xAxis,
+    onXAxisChange,
+    scale,
+    setScale,
+    handleError,
+  }: GroupProps) => {
     const chartGridRef = useRef<HTMLDivElement | null>(null);
     const { width, height } = useResize(chartGridRef);
     const columnCount = Math.max(1, Math.floor(width / 540));
@@ -315,12 +396,15 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
       ? Loadable.getOrElse([], propChartsProps)
       : propChartsProps;
     const isLoading = Loadable.isLoadable(propChartsProps) && Loadable.isLoading(propChartsProps);
-
     // X-Axis control
+
     const xAxisOptions = useMemo(() => {
       const xOpts = new Set<string>();
       chartsProps.forEach((chart) => {
-        chart.series.forEach((serie) => {
+        const series = Loadable.isLoadable(chart.series)
+          ? Loadable.getOrElse([], chart.series)
+          : chart.series;
+        series.forEach((serie) => {
           Object.entries(serie.data).forEach(([xAxisOption, dataPoints]) => {
             if (dataPoints.length > 0) {
               xOpts.add(xAxisOption);
@@ -332,44 +416,43 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     }, [chartsProps]);
 
     return (
-      <div className={css.chartgridContainer} ref={chartGridRef}>
-        <Spinner
-          center
-          className={css.chartgridLoading}
-          spinning={isLoading}
-          tip="Loading chart data...">
-          {chartsProps.length > 0 && (
-            <>
-              <div className={css.filterContainer}>
-                <ScaleSelect value={scale} onChange={setScale} />
-                {xAxisOptions && xAxisOptions.length > 1 && (
-                  <XAxisFilter options={xAxisOptions} value={xAxis} onChange={onXAxisChange} />
-                )}
-              </div>
-              <SyncProvider>
-                <FixedSizeGrid
-                  columnCount={columnCount}
-                  columnWidth={Math.floor(width / columnCount)}
-                  height={Math.min(
-                    height - 40,
-                    (chartsProps.length > columnCount ? 2.1 : 1.05) * 480,
+      <div className={css.scrollContainer}>
+        <div className={css.chartgridContainer} ref={chartGridRef}>
+          <Spinner
+            center
+            className={css.chartgridLoading}
+            spinning={isLoading}
+            tip="Loading chart data...">
+            {chartsProps.length > 0 && (
+              <>
+                <div className={css.filterContainer}>
+                  <ScaleSelect value={scale} onChange={setScale} />
+                  {xAxisOptions && xAxisOptions.length > 1 && (
+                    <XAxisFilter options={xAxisOptions} value={xAxis} onChange={onXAxisChange} />
                   )}
-                  itemData={{ chartsProps: chartsProps, columnCount, scale, xAxis }}
-                  rowCount={Math.ceil(chartsProps.length / columnCount)}
-                  rowHeight={480}
-                  style={{ height: '100%' }}
-                  width={width}>
-                  {VirtualChartRenderer}
-                </FixedSizeGrid>
-              </SyncProvider>
-            </>
-          )}
-          {chartsProps.length === 0 && !isLoading && (
-            <div className={css.chartgridEmpty}>
-              <span>No data to plot.</span>
-            </div>
-          )}
-        </Spinner>
+                </div>
+                <SyncProvider>
+                  <FixedSizeGrid
+                    columnCount={columnCount}
+                    columnWidth={Math.floor(width / columnCount)}
+                    height={height - 40}
+                    itemData={{ chartsProps: chartsProps, columnCount, handleError, scale, xAxis }}
+                    rowCount={Math.ceil(chartsProps.length / columnCount)}
+                    rowHeight={465}
+                    style={{ height: '100%' }}
+                    width={width}>
+                    {VirtualChartRenderer}
+                  </FixedSizeGrid>
+                </SyncProvider>
+              </>
+            )}
+            {chartsProps.length === 0 && !isLoading && (
+              <div className={css.chartgridEmpty}>
+                <span>No data to plot.</span>
+              </div>
+            )}
+          </Spinner>
+        </div>
       </div>
     );
   },

@@ -1,11 +1,10 @@
-import { Dropdown } from 'antd';
-import type { DropdownProps, MenuProps } from 'antd';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import Dropdown, { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
-import Icon from 'shared/components/Icon/Icon';
-import { isMouseEvent } from 'shared/utils/routes';
+import { isMouseEvent } from 'utils/routes';
 
 import css from './PageHeaderFoldable.module.scss';
 
@@ -27,7 +26,7 @@ interface Props {
 
 const renderOptionLabel = (option: Option): React.ReactNode => {
   return option.tooltip ? (
-    <Tooltip title={option.tooltip}>
+    <Tooltip content={option.tooltip}>
       <span>{option.label}</span>
     </Tooltip>
   ) : (
@@ -39,28 +38,24 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
   const [isExpanded, setIsExpanded] = useState(false);
 
   const dropdownClasses = [css.optionsDropdown];
+  if (options?.length === 1) dropdownClasses.push(css.optionsDropdownOneChild);
+  if (options?.length === 2) dropdownClasses.push(css.optionsDropdownTwoChild);
+  if (options?.length === 3) dropdownClasses.push(css.optionsDropdownThreeChild);
 
-  let dropdownOptions: DropdownProps['menu'] = {};
-  if (options && options.length > 0) {
-    if (options.length === 1) dropdownClasses.push(css.optionsDropdownOneChild);
-    if (options.length === 2) dropdownClasses.push(css.optionsDropdownTwoChild);
-    if (options.length === 3) dropdownClasses.push(css.optionsDropdownThreeChild);
-    const onItemClick: MenuProps['onClick'] = (e) => {
-      const opt = options.find((opt) => opt.key === e.key) as Option;
-      if (isMouseEvent(e.domEvent)) {
-        opt.onClick?.(e.domEvent);
-      }
-    };
+  const menu: MenuItem[] = (options ?? []).map((option) => ({
+    className: css.optionsDropdownItem,
+    disabled: option.disabled || !option.onClick,
+    key: option.key,
+    label: renderOptionLabel(option),
+  }));
 
-    const menuItems: MenuProps['items'] = options.map((opt) => ({
-      className: css.optionsDropdownItem,
-      disabled: opt.disabled || !opt.onClick,
-      key: opt.key,
-      label: renderOptionLabel(opt),
-    }));
-
-    dropdownOptions = { items: menuItems, onClick: onItemClick };
-  }
+  const handleDropdown = useCallback(
+    (key: string, e: DropdownEvent) => {
+      const option = options?.find((option) => option.key === key);
+      if (isMouseEvent(e)) option?.onClick?.(e);
+    },
+    [options],
+  );
 
   return (
     <div className={css.base}>
@@ -68,18 +63,24 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
         <div className={css.left}>{leftContent}</div>
         <div className={css.options}>
           {foldableContent && (
-            <Tooltip title="Toggle">
-              <Button type="text" onClick={() => setIsExpanded((prev) => !prev)}>
-                <Icon name={isExpanded ? 'arrow-up' : 'arrow-down'} size="tiny" />
-              </Button>
-            </Tooltip>
+            <Button
+              icon={
+                <Icon
+                  name={isExpanded ? 'arrow-up' : 'arrow-down'}
+                  showTooltip
+                  size="tiny"
+                  title="Toggle expansion"
+                />
+              }
+              type="text"
+              onClick={() => setIsExpanded((prev) => !prev)}
+            />
           )}
           <div className={css.optionsButtons}>
             {options?.slice(0, 3).map((option) => (
               <div className={css.optionsMainButton} key={option.key}>
                 <Button
                   disabled={option.disabled || !option.onClick}
-                  ghost
                   icon={option?.icon}
                   key={option.key}
                   loading={option.isLoading}
@@ -89,10 +90,10 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
               </div>
             ))}
           </div>
-          {dropdownOptions && (
-            <Dropdown menu={dropdownOptions} placement="bottomRight" trigger={['click']}>
+          {menu.length !== 0 && (
+            <Dropdown menu={menu} placement="bottomRight" onClick={handleDropdown}>
               <div className={dropdownClasses.join(' ')}>
-                <Button ghost icon={<Icon name="overflow-vertical" />} />
+                <Button icon={<Icon name="overflow-vertical" title="Action menu" />} />
               </div>
             </Dropdown>
           )}

@@ -4,8 +4,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ColorLegend from 'components/ColorLegend';
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
+import Message, { MessageType } from 'components/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner/Spinner';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
@@ -13,12 +15,8 @@ import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner/Spinner';
-import useUI from 'shared/contexts/stores/UI';
-import { Primitive, Range, ValueOf } from 'shared/types';
-import { rgba2str, str2rgba } from 'shared/utils/color';
-import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
+import useUI from 'stores/contexts/UI';
+import { Primitive, Range } from 'types';
 import {
   ExperimentBase,
   HyperparameterType,
@@ -28,8 +26,11 @@ import {
   Scale,
 } from 'types';
 import { getColorScale } from 'utils/chart';
+import { rgba2str, str2rgba } from 'utils/color';
+import { clone, flattenObject, isBoolean, isObject, isString } from 'utils/data';
 import { metricToStr } from 'utils/metric';
 
+import { ViewType } from './ExperimentVisualizationFilters';
 import css from './HpHeatMaps.module.scss';
 
 interface Props {
@@ -39,9 +40,9 @@ interface Props {
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
-  selectedMetric: Metric | null;
+  selectedMetric?: Metric;
   selectedScale: Scale;
-  selectedView: ViewType;
+  selectedView?: ViewType;
 }
 
 type HpValue = Record<string, (number | string)[]>;
@@ -50,18 +51,11 @@ interface HpData {
   hpLabelValues: Record<string, number[]>;
   hpLabels: Record<string, string[]>;
   hpLogScales: Record<string, boolean>;
-  hpMetrics: Record<string, (number | null)[]>;
+  hpMetrics: Record<string, (number | undefined)[]>;
   hpValues: HpValue;
   metricRange: Range<number>;
   trialIds: number[];
 }
-
-const ViewType = {
-  Grid: 'grid',
-  List: 'list',
-} as const;
-
-type ViewType = ValueOf<typeof ViewType>;
 
 const generateHpKey = (hParam1: string, hParam2: string): string => {
   return `${hParam1}:${hParam2}`;
@@ -80,7 +74,7 @@ const HpHeatMaps: React.FC<Props> = ({
   selectedBatchMargin,
   selectedHParams,
   selectedMetric,
-  selectedView,
+  selectedView = ViewType.Grid,
   selectedScale,
 }: Props) => {
   const { ui } = useUI();
@@ -220,7 +214,7 @@ const HpHeatMaps: React.FC<Props> = ({
 
     const canceler = new AbortController();
     const trialIds: number[] = [];
-    const hpMetricMap: Record<number, Record<string, number | null>> = {};
+    const hpMetricMap: Record<number, Record<string, number | undefined>> = {};
     const hpValueMap: Record<number, Record<string, Primitive>> = {};
     const hpLabelMap: Record<string, string[]> = {};
     const hpLabelValueMap: Record<string, number[]> = {};
@@ -231,8 +225,9 @@ const HpHeatMaps: React.FC<Props> = ({
       detApi.StreamingInternal.trialsSnapshot(
         experiment.id,
         selectedMetric.name,
-        metricTypeParamMap[selectedMetric.type],
         selectedBatch,
+        metricTypeParamMap[selectedMetric.type],
+        undefined, // custom metric group
         selectedBatchMargin,
         undefined,
         { signal: canceler.signal },
@@ -241,7 +236,7 @@ const HpHeatMaps: React.FC<Props> = ({
         if (!event?.trials || !Array.isArray(event.trials)) return;
 
         const hpLogScaleMap: Record<string, boolean> = {};
-        const hpMetrics: Record<string, (number | null)[]> = {};
+        const hpMetrics: Record<string, (number | undefined)[]> = {};
         const hpValues: HpValue = {};
         const metricRange: Range<number> = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
 
@@ -258,7 +253,7 @@ const HpHeatMaps: React.FC<Props> = ({
            * TODO: filtering NaN, +/- Infinity for now, but handle it later with
            * dynamic min/max ranges via uPlot.Scales.
            */
-          const trialMetric = Number.isFinite(trial.metric) ? trial.metric : null;
+          const trialMetric = Number.isFinite(trial.metric) ? trial.metric : undefined;
 
           trialIds.push(trialId);
           hpMetricMap[trialId] = hpMetricMap[trialId] || {};
@@ -271,8 +266,10 @@ const HpHeatMaps: React.FC<Props> = ({
             });
           });
 
-          if (trialMetric !== null && trialMetric < metricRange[0]) metricRange[0] = trialMetric;
-          if (trialMetric !== null && trialMetric > metricRange[1]) metricRange[1] = trialMetric;
+          if (trialMetric !== undefined && trialMetric < metricRange[0])
+            metricRange[0] = trialMetric;
+          if (trialMetric !== undefined && trialMetric > metricRange[1])
+            metricRange[1] = trialMetric;
         });
 
         fullHParams.forEach((hParam1) => {

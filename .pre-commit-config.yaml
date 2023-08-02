@@ -7,7 +7,7 @@ repos:
         name: Web JS Lint Check
         entry: ./pre-commit/web_lint_check.py js
         language: system
-        files: '^webui/react/src/'
+        files: '^webui/react/'
         types_or: [javascript, jsx, ts, tsx]
         stages:
           - commit
@@ -49,7 +49,29 @@ repos:
         entry: ./pre-commit/check.py
         require_serial: true
         language: python
-
+      # golang hooks based on https://github.com/Bahjat/pre-commit-golang
+      - id: go-fmt-import
+        name: "go import/fmt"
+        entry: ./pre-commit/run-go-fmt-import.sh
+        files: '\.go$'
+        language: "script"
+        description: "Runs `goimport,gofmt`, requires golang"
+        exclude: ^(proto/pkg)
+      - id: gofumpt
+        name: "gofumpt"
+        entry: ./pre-commit/run-go-gofumpt.sh
+        files: '\.go$'
+        language: "script"
+        description: "Runs `gofumpt`, requires github.com/mvdan/gofumpt"
+        exclude: ^(proto/pkg)
+      - id: golangci-lint
+        name: "go golangci-lint"
+        entry: ./pre-commit/run-golangci-lint.sh
+        files: '\.go$'
+        language: "script"
+        description: "Runs `golangci-lint`, install https://github.com/golangci/golangci-lint"
+        exclude: ^(proto/pkg)
+        require_serial: true
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.28.0
@@ -74,6 +96,20 @@ repos:
     hooks:
       - id: black
         exclude: ^(harness/determined/common/api/bindings.py)
+  - repo: https://github.com/pycqa/flake8
+    # Note: this should be kept in sync with the version in `requirements.txt`.
+    rev: 3.9.2
+    hooks:
+      - id: flake8
+        files: ^(harness|e2e_tests)/.*
+        exclude: ^harness/tests/experiment/fixtures/ancient-checkpoints/.*
+  - repo: https://github.com/pycqa/isort
+    # Note: this should be kept in sync with the version in `requirements.txt`.
+    rev: 5.11.5
+    hooks:
+      - id: isort
+        name: isort (python)
+        exclude: ^examples/deepspeed/.*
 
   # - repo: https://github.com/jumanjihouse/pre-commit-hooks
   #   rev: 3.0.0

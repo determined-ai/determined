@@ -1,4 +1,4 @@
-description: mnist-estimator-single
+name: mnist-estimator-single
 hyperparameters:
   learning_rate: 1.0e-3
   global_batch_size: 64

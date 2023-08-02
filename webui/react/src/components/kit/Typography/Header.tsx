@@ -1,9 +1,27 @@
 import React from 'react';
 
-import css from './index.module.scss';
+import { TypographySize } from 'components/kit/internal/fonts';
 
-const Header: React.FC<React.PropsWithChildren> = ({ children }) => {
-  return <h1 className={css.header}>{children}</h1>;
+import css from './index.module.scss';
+interface Props {
+  size?: TypographySize;
+}
+
+const Header: React.FC<React.PropsWithChildren<Props>> = ({ children, size }) => {
+  const getThemeClass = () => {
+    if (!size) return '';
+
+    if (size === TypographySize.XL) return css.headerXL;
+    if (size === TypographySize.L) return css.headerL;
+    if (size === TypographySize.default) return css.headerDefault;
+    if (size === TypographySize.S) return css.headerS;
+
+    return css.headerXS;
+  };
+
+  const classes = [css.header, getThemeClass()];
+
+  return <h1 className={classes.join(' ')}>{children}</h1>;
 };
 
 export default Header;

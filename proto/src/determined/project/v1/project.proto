@@ -10,42 +10,47 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
-// GeneralColumn is the pre-defined column names for experiment list table.
-enum GeneralColumn {
-  // Unspecified column.
-  GENERAL_COLUMN_UNSPECIFIED = 0;
-  // Column id.
-  GENERAL_COLUMN_ID = 1;
-  // Column name.
-  GENERAL_COLUMN_NAME = 2;
-  // Column description.
-  GENERAL_COLUMN_DESCRIPTION = 3;
-  // Column tags.
-  GENERAL_COLUMN_TAGS = 4;
-  // Column forked.
-  GENERAL_COLUMN_FORKED = 5;
-  // Column starttime.
-  GENERAL_COLUMN_STARTTIME = 6;
-  // Column duration.
-  GENERAL_COLUMN_DURATION = 7;
-  // Column trial count.
-  GENERAL_COLUMN_COUNT = 8;
-  // Column state.
-  GENERAL_COLUMN_STATE = 9;
-  // Column searcher type.
-  GENERAL_COLUMN_SEARCHER_TYPE = 10;
-  // Column resourse pool.
-  GENERAL_COLUMN_RESOURSE_POOL = 11;
-  // Column progress.
-  GENERAL_COLUMN_PROGRESS = 12;
-  // Column checkpoint size.
-  GENERAL_COLUMN_CHECKPOINT_SIZE = 13;
-  // Column checkpoint count.
-  GENERAL_COLUMN_CHECKPOINT_COUNT = 14;
-  // Column user.
-  GENERAL_COLUMN_USER = 15;
+// LocationType indicates where a column comes from
+enum LocationType {
+  // Location unknown
+  LOCATION_TYPE_UNSPECIFIED = 0;
+  // Column is located on the experiment
+  LOCATION_TYPE_EXPERIMENT = 1;
+  // Column is located in the hyperparameter config of the experiment
+  LOCATION_TYPE_HYPERPARAMETERS = 2;
+  // Column is located on the experiment's validation metrics
+  LOCATION_TYPE_VALIDATIONS = 3;
+  // Column is located on the experiment's training steps
+  LOCATION_TYPE_TRAINING = 4;
 }
 
+// ColumnType indicates the type of data under the column
+enum ColumnType {
+  // data type is unknown/mixed
+  COLUMN_TYPE_UNSPECIFIED = 0;
+  // data type is textual
+  COLUMN_TYPE_TEXT = 1;
+  // data type is numeric
+  COLUMN_TYPE_NUMBER = 2;
+  // data type is a date
+  COLUMN_TYPE_DATE = 3;
+}
+
+// Project Column is a description of a column used on experiments in the
+// project.
+message ProjectColumn {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "column", "location", "type" ] }
+  };
+  // Raw column name.
+  string column = 1;
+  // Where the column comes from.
+  determined.project.v1.LocationType location = 2;
+  // Type of data in the column.
+  determined.project.v1.ColumnType type = 3;
+  // Human-friendly name.
+  string display_name = 4;
+}
 // Note is a user comment connected to a project.
 message Note {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -128,4 +133,18 @@ message PatchProject {
   google.protobuf.StringValue name = 1;
   // The new description for the project.
   google.protobuf.StringValue description = 2;
+}
+
+// MetricsRange represents the range of a metrics. Range is a in the format of
+// [min, max].
+message MetricsRange {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "metrics_name", "min", "max" ] }
+  };
+  // The name of metrics formatted as <type>.<name>.
+  string metrics_name = 1;
+  // The min of metrics values.
+  double min = 2;
+  // The max of metrics values.
+  double max = 3;
 }

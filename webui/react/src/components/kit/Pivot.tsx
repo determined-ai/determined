@@ -5,6 +5,7 @@ import css from './Pivot.module.scss';
 
 export type TabItem = {
   children?: ReactNode;
+  forceRender?: boolean;
   key: string;
   label: ReactNode;
 };

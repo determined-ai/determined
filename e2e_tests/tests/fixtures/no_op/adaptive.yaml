@@ -1,4 +1,4 @@
-description: noop_adaptive
+name: noop_adaptive
 checkpoint_storage:
   type: shared_fs
   host_path: /tmp

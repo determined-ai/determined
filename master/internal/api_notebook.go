@@ -16,9 +16,13 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/proxy"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
+	"github.com/determined-ai/determined/master/internal/task/idle"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -41,6 +45,8 @@ const (
 	jupyterRuntimeDir = "/run/determined/jupyter/runtime"
 	jupyterEntrypoint = "/run/determined/jupyter/notebook-entrypoint.sh"
 	jupyterIdleCheck  = "/run/determined/jupyter/check_idle.py"
+	jupyterCertPath   = "/run/determined/jupyter/jupyterCert.pem"
+	jupyterKeyPath    = "/run/determined/jupyter/jupyterKey.key"
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minNotebookPort     = 2900
 	maxNotebookPort     = minNotebookPort + 299
@@ -96,13 +102,12 @@ func (a *apiServer) GetNotebook(
 		return nil, err
 	}
 
-	if ok, err := command.AuthZProvider.Get().CanGetNSC(
+	ctx = audit.SupplyEntityID(ctx, req.NotebookId)
+	if err := command.AuthZProvider.Get().CanGetNSC(
 		ctx, *curUser, model.AccessScopeID(resp.Notebook.WorkspaceId),
 	); err != nil {
-		return nil, err
-	} else if !ok { // permission denied.
-		// report the error as if the notebook does not exist.
-		return nil, errActorNotFound(addr)
+		return nil, authz.SubIfUnauthorized(err,
+			api.NotFoundErrs("actor", fmt.Sprint(addr), true))
 	}
 	return resp, nil
 }
@@ -117,6 +122,7 @@ func (a *apiServer) validateToKillNotebook(ctx context.Context, notebookID strin
 		return err
 	}
 
+	ctx = audit.SupplyEntityID(ctx, notebookID)
 	err = command.AuthZProvider.Get().CanTerminateNSC(
 		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
 	)
@@ -125,12 +131,15 @@ func (a *apiServer) validateToKillNotebook(ctx context.Context, notebookID strin
 
 func (a *apiServer) IdleNotebook(
 	ctx context.Context, req *apiv1.IdleNotebookRequest,
-) (resp *apiv1.IdleNotebookResponse, err error) {
-	err = a.validateToKillNotebook(ctx, req.NotebookId)
+) (*apiv1.IdleNotebookResponse, error) {
+	err := a.validateToKillNotebook(ctx, req.NotebookId)
 	if err != nil {
 		return nil, err
 	}
-	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
+	if !req.Idle {
+		idle.RecordActivity(req.NotebookId)
+	}
+	return &apiv1.IdleNotebookResponse{}, nil
 }
 
 func (a *apiServer) KillNotebook(
@@ -156,6 +165,7 @@ func (a *apiServer) SetNotebookPriority(
 		return nil, err
 	}
 
+	ctx = audit.SupplyEntityID(ctx, req.NotebookId)
 	err = command.AuthZProvider.Get().CanSetNSCsPriority(
 		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId), int(req.Priority),
 	)
@@ -169,20 +179,15 @@ func (a *apiServer) SetNotebookPriority(
 // isNTSCPermittedToLaunch checks authorization to launch in a given
 // workspace.
 func (a *apiServer) isNTSCPermittedToLaunch(
-	ctx context.Context, spec *tasks.GenericCommandSpec,
+	ctx context.Context, spec *tasks.GenericCommandSpec, user *model.User,
 ) error {
 	workspaceID := spec.Metadata.WorkspaceID
 	if workspaceID == 0 {
-		panic("workspace ID must be set")
-	}
-
-	user, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return status.Errorf(codes.Internal, "failed to get the user: %s", err)
+		return status.Errorf(codes.InvalidArgument, "workspace_id is required")
 	}
 
 	w := &workspacev1.Workspace{}
-	notFoundErr := status.Errorf(codes.NotFound, "workspace (%d) not found", workspaceID)
+	notFoundErr := api.NotFoundErrs("workspace", fmt.Sprint(workspaceID), true)
 	if err := a.m.db.QueryProto(
 		"get_workspace", w, workspaceID, user.ID,
 	); errors.Is(err, db.ErrNotFound) {
@@ -195,15 +200,14 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 	}
 
 	if spec.TaskType == model.TaskTypeTensorboard {
-		if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
+		if err := command.AuthZProvider.Get().CanGetTensorboard(
 			ctx, *user, workspaceID, spec.Metadata.ExperimentIDs, spec.Metadata.TrialIDs,
-		); err != nil || !ok {
-			return err
+		); err != nil {
+			return authz.SubIfUnauthorized(err, apiutils.MapAndFilterErrors(err, nil, nil))
 		}
 	} else {
 		if err := command.AuthZProvider.Get().CanCreateNSC(
-			ctx, *user, workspaceID,
-		); err != nil {
+			ctx, *user, workspaceID); err != nil {
 			return apiutils.MapAndFilterErrors(err, nil, nil)
 		}
 	}
@@ -214,20 +218,28 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
-	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
-		TemplateName: req.TemplateName,
-		Config:       req.Config,
-		Files:        req.Files,
-	})
+	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
-	if req.WorkspaceId != 0 {
-		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
+	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
+		TemplateName: req.TemplateName,
+		WorkspaceID:  req.WorkspaceId,
+		Config:       req.Config,
+		Files:        req.Files,
+	}, user)
+	if err != nil {
+		return nil, api.WrapWithFallbackCode(err, codes.InvalidArgument,
+			"failed to prepare launch params")
 	}
-	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
+
+	if err = a.isNTSCPermittedToLaunch(ctx, spec, user); err != nil {
+		return nil, err
+	}
+
+	notebookKey, notebookCert, err := proxy.GenSignedCert()
+	if err != nil {
 		return nil, err
 	}
 
@@ -302,6 +314,18 @@ func (a *apiServer) LaunchNotebook(
 			notebookDefaultPage,
 			etc.MustStaticFile(etc.NotebookTemplateResource),
 			0o644,
+			tar.TypeReg,
+		),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			jupyterKeyPath,
+			notebookKey,
+			0o600,
+			tar.TypeReg,
+		),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			jupyterCertPath,
+			notebookCert,
+			0o600,
 			tar.TypeReg,
 		),
 	}

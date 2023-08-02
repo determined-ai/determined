@@ -10,11 +10,8 @@ import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
+import usePolling from 'hooks/usePolling';
 import { getTrialWorkloads } from 'services/api';
-import usePolling from 'shared/hooks/usePolling';
-import { isEqual } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
-import { numericSorter } from 'shared/utils/sort';
 import {
   ExperimentBase,
   Metric,
@@ -23,6 +20,8 @@ import {
   TrialWorkloadFilter,
   WorkloadGroup,
 } from 'types';
+import { isEqual } from 'utils/data';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import {
   extractMetricSortValue,
@@ -30,7 +29,10 @@ import {
   metricKeyToMetric,
   metricToKey,
 } from 'utils/metric';
+import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
+
+import { Loadable, Loaded, NotLoaded } from '../../utils/loadable';
 
 import { Settings } from './TrialDetailsOverview.settings';
 import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
@@ -126,7 +128,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     });
   }, [metrics, settings, trial, experiment]);
 
-  const [workloads, setWorkloads] = useState<WorkloadGroup[]>([]);
+  const [workloads, setWorkloads] = useState<Loadable<WorkloadGroup[]>>(NotLoaded);
   const [workloadCount, setWorkloadCount] = useState<number>(0);
 
   const fetchWorkloads = useCallback(async () => {
@@ -141,10 +143,9 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortKey: metricKeyToMetric(settings.sortKey)?.name || undefined,
         });
-        setWorkloads(wl.workloads);
+        setWorkloads(Loaded(wl.workloads));
         setWorkloadCount(wl.pagination.total || 0);
       } else {
-        setWorkloads([]);
         setWorkloadCount(0);
       }
     } catch (e) {
@@ -167,7 +168,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   const { stopPolling } = usePolling(fetchWorkloads, { rerunOnNewFn: true });
 
   const workloadSteps = useMemo(() => {
-    const data = workloads ?? [];
+    const data = Loadable.getOrElse([], workloads);
     const workloadSteps = workloadsToSteps(data);
     return settings.filter === TrialWorkloadFilter.All
       ? workloadSteps
@@ -233,28 +234,26 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   }, [stopPolling]);
 
   return (
-    <>
-      <Section options={options} title="Workloads">
-        <ResponsiveTable<Step>
-          columns={columns}
-          dataSource={workloadSteps}
-          loading={!trial}
-          pagination={getFullPaginationConfig(
-            {
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
-            },
-            workloadCount,
-          )}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="batchNum"
-          scroll={{ x: 1000 }}
-          showSorterTooltip={false}
-          size="small"
-          onChange={handleTableChange}
-        />
-      </Section>
-    </>
+    <Section options={options} title="Workloads">
+      <ResponsiveTable<Step>
+        columns={columns}
+        dataSource={workloadSteps}
+        loading={Loadable.isLoading(workloads)}
+        pagination={getFullPaginationConfig(
+          {
+            limit: settings.tableLimit,
+            offset: settings.tableOffset,
+          },
+          workloadCount,
+        )}
+        rowClassName={defaultRowClassName({ clickable: false })}
+        rowKey="batchNum"
+        scroll={{ x: 1000 }}
+        showSorterTooltip={false}
+        size="small"
+        onChange={handleTableChange}
+      />
+    </Section>
   );
 };
 

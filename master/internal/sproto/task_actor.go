@@ -27,14 +27,11 @@ type (
 		// Level is typically unset, but set by parts of the system that know a log shouldn't
 		// look as scary as is it. For example, it is set when an Allocation is killed intentionally
 		// on the Killed logs.
-		Level *string
+		Level   *string
+		Source  *string
+		AgentID *string
 	}
 
-	// GetResourcesContainerState requests cproto.Container state for a given clump of resources.
-	// If the resources aren't a container, this request returns a failure.
-	GetResourcesContainerState struct {
-		ResourcesID ResourcesID
-	}
 	// UpdatePodStatus notifies the resource manager of job state changes.
 	UpdatePodStatus struct {
 		ContainerID string
@@ -77,22 +74,14 @@ func (c ContainerLog) String() string {
 	return fmt.Sprintf("[%s] %s || %s", timestamp, shortID, c.Message())
 }
 
-// ToEvent converts a container log to a container event.
-func (c ContainerLog) ToEvent() Event {
-	return Event{
-		ContainerID: c.ContainerID.String(),
-		Time:        c.Timestamp.UTC(),
-		LogEvent:    ptrs.Ptr(c.Message()),
-		Level:       c.Level,
-	}
-}
-
 // ToTaskLog converts a container log to a task log.
-func (c ContainerLog) ToTaskLog() model.TaskLog {
-	return model.TaskLog{
+func (c ContainerLog) ToTaskLog() *model.TaskLog {
+	return &model.TaskLog{
 		ContainerID: ptrs.Ptr(c.ContainerID.String()),
 		Level:       c.Level,
 		Timestamp:   ptrs.Ptr(c.Timestamp.UTC()),
 		Log:         c.Message(),
+		Source:      c.Source,
+		AgentID:     c.AgentID,
 	}
 }

@@ -15,9 +15,12 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	modelauth "github.com/determined-ai/determined/master/internal/model"
+	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
@@ -77,12 +80,11 @@ func (a *apiServer) GetModel(
 	if err != nil {
 		return nil, err
 	}
-	if ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, m,
+	if err = modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, m,
 		m.WorkspaceId); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
-			curUser.Username, m.Name)
+		return nil, authz.SubIfUnauthorized(err,
+			errors.Errorf("current user %q doesn't have permissions to get model %q.",
+				curUser.Username, m.Name))
 	}
 	return &apiv1.GetModelResponse{Model: m}, err
 }
@@ -152,13 +154,11 @@ func (a *apiServer) GetModels(
 	// function below returns a list of workspaces that have permissions
 	// filtered according to user given workspaces.
 	// if global permissions and no filter list given by user then it's an empty list.
-	workspaceIdsWithPermsAndFilterList, ok, err := modelauth.AuthZProvider.Get().
+	workspaceIdsWithPermsAndFilterList, err := modelauth.AuthZProvider.Get().
 		CanGetModels(ctx, *curUser, workspaceIdsGiven)
 	if err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errors.Errorf(
-			"current user doesn't have view permissions in related workspaces.")
+		return nil, authz.SubIfUnauthorized(err, errors.Errorf(
+			"current user doesn't have view permissions in related workspaces."))
 	}
 	var workspaceIds []string
 	var workspaceIdsWithPermsAndFilter string
@@ -526,11 +526,6 @@ func (a *apiServer) DeleteModel(
 	ctx context.Context, req *apiv1.DeleteModelRequest) (*apiv1.DeleteModelResponse,
 	error,
 ) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
-	if err != nil {
-		return nil, err
-	}
-
 	currModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
@@ -545,8 +540,7 @@ func (a *apiServer) DeleteModel(
 		return nil, err
 	}
 	holder := &modelv1.Model{}
-	err = a.m.db.QueryProto("delete_model", holder, currModel.Name, user.User.Id,
-		user.User.Admin)
+	err = a.m.db.QueryProto("delete_model", holder, currModel.Name)
 
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "model %q does not exist or not deletable by this user",
@@ -569,18 +563,17 @@ func (a *apiServer) GetModelVersion(
 	if err != nil {
 		return nil, err
 	}
-	currModel, err := a.ModelFromIdentifier(req.ModelName)
-	if ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, currModel,
+	currModel, _ := a.ModelFromIdentifier(req.ModelName)
+	if err = modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, currModel,
 		currModel.WorkspaceId); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
-			curUser.Username, currModel.Name)
+		return nil, authz.SubIfUnauthorized(err,
+			errors.Errorf("current user %q doesn't have permissions to get model %q.",
+				curUser.Username, currModel.Name))
 	}
 
 	resp := &apiv1.GetModelVersionResponse{}
 	resp.ModelVersion = mv
-	return resp, err
+	return resp, nil
 }
 
 func (a *apiServer) GetModelVersions(
@@ -596,12 +589,11 @@ func (a *apiServer) GetModelVersions(
 		return nil, err
 	}
 
-	if ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, parentModel,
+	if err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, parentModel,
 		parentModel.WorkspaceId); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
-			curUser.Username, parentModel.Name)
+		return nil, authz.SubIfUnauthorized(err,
+			errors.Errorf("current user %q doesn't have permissions to get model %q.",
+				curUser.Username, parentModel.Name))
 	}
 
 	resp := &apiv1.GetModelVersionsResponse{Model: parentModel}
@@ -642,8 +634,7 @@ func (a *apiServer) PostModelVersion(
 
 	switch getCheckpointErr := a.m.db.QueryProto("get_checkpoint", c, req.CheckpointUuid); {
 	case getCheckpointErr == db.ErrNotFound:
-		return nil, status.Errorf(
-			codes.NotFound, "checkpoint %s not found", req.CheckpointUuid)
+		return nil, api.NotFoundErrs("checkpoint", req.CheckpointUuid, true)
 	case getCheckpointErr != nil:
 		return nil, getCheckpointErr
 	}
@@ -793,11 +784,6 @@ func (a *apiServer) DeleteModelVersion(
 	ctx context.Context, req *apiv1.DeleteModelVersionRequest) (*apiv1.DeleteModelVersionResponse,
 	error,
 ) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
-	if err != nil {
-		return nil, err
-	}
-
 	modelVersion, err := a.ModelVersionFromID(req.ModelName, req.ModelVersionNum)
 	if err != nil {
 		return nil, err
@@ -811,14 +797,13 @@ func (a *apiServer) DeleteModelVersion(
 	if err != nil {
 		return nil, err
 	}
-	if err := modelauth.AuthZProvider.Get().CanDeleteModel(ctx, *curUser, currModel,
-		currModel.WorkspaceId); err != nil {
+	if err := modelauth.AuthZProvider.Get().CanDeleteModelVersion(ctx, *curUser,
+		modelVersion, currModel.WorkspaceId); err != nil {
 		return nil, err
 	}
 
 	holder := &modelv1.ModelVersion{}
-	err = a.m.db.QueryProto("delete_model_version", holder, modelVersion.Id,
-		user.User.Id, user.User.Admin)
+	err = a.m.db.QueryProto("delete_model_version", holder, modelVersion.Id)
 
 	modelVersionName := fmt.Sprintf("%v:%v", req.ModelName, req.ModelVersionNum)
 	if holder.Id == 0 {
@@ -828,4 +813,40 @@ func (a *apiServer) DeleteModelVersion(
 
 	return &apiv1.DeleteModelVersionResponse{},
 		errors.Wrapf(err, "error deleting model version %v", modelVersionName)
+}
+
+// Query for all trials that use a given model_version and return their metrics.
+func (a *apiServer) GetTrialSourceInfoMetricsByModelVersion(
+	ctx context.Context, req *apiv1.GetTrialSourceInfoMetricsByModelVersionRequest,
+) (*apiv1.GetTrialSourceInfoMetricsByModelVersionResponse, error) {
+	modelVersionResp, err := a.ModelVersionFromID(
+		req.ModelName, req.ModelVersionNum,
+	)
+	if err != nil {
+		return nil, err
+	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, modelVersionResp.Model,
+		modelVersionResp.Model.WorkspaceId); err != nil {
+		return nil, err
+	}
+	resp := &apiv1.GetTrialSourceInfoMetricsByModelVersionResponse{}
+	trialIDsQuery := db.Bun().NewSelect().Table("trial_source_infos").
+		Where("model_id = ?", modelVersionResp.Model.Id).
+		Where("model_version = ?", modelVersionResp.Version)
+
+	if req.TrialSourceInfoType != nil {
+		trialIDsQuery.Where("trial_source_info_type = ?", req.TrialSourceInfoType.String())
+	}
+
+	trialSourceMetrics, err := trials.GetMetricsForTrialSourceInfoQuery(ctx, trialIDsQuery)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get trial source info %w", err)
+	}
+
+	resp.Data = append(resp.Data, trialSourceMetrics...)
+	return resp, nil
 }

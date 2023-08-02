@@ -1,9 +1,14 @@
 # pytest 6.0 has linter-breaking changes
 pytest>=6.0.1
 mypy==0.910
-responses
+# responses 0.23.2 requires urllib3>=2, which breaks several other dependencies
+responses<=0.23.1
 requests_mock
 coverage
 pytorch_lightning==1.5.9
-deepspeed==0.6.0
-attrdict
+deepspeed==0.8.3
+transformers>=4.8.2,<4.29.0
+attrdict3
+moto
+# Pydantic V2 has changes that break existing tests
+pydantic<2

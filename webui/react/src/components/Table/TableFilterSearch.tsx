@@ -2,8 +2,8 @@ import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Input, { InputRef } from 'components/kit/Input';
-import Icon from 'shared/components/Icon/Icon';
 
 import css from './TableFilterSearch.module.scss';
 
@@ -54,7 +54,7 @@ const TableFilterSearch: React.FC<Props> = ({
           allowClear
           bordered={false}
           placeholder="search"
-          prefix={<Icon name="search" size="tiny" />}
+          prefix={<Icon name="search" size="tiny" title="Search" />}
           ref={inputRef}
           value={search}
           onChange={handleSearchChange}
@@ -62,7 +62,7 @@ const TableFilterSearch: React.FC<Props> = ({
         />
       </div>
       <div className={css.footer}>
-        <Button aria-label="Reset Search" size="small" type="link" onClick={handleReset}>
+        <Button aria-label="Reset Search" size="small" onClick={handleReset}>
           Reset
         </Button>
         <Button aria-label="Apply Search" size="small" type="primary" onClick={handleSearch}>

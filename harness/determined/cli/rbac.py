@@ -1,8 +1,8 @@
-import json
 from argparse import Namespace
 from collections import namedtuple
 from typing import Any, Dict, List, Set, Tuple
 
+import determined.cli.render
 from determined.cli import (
     default_pagination_args,
     render,
@@ -63,7 +63,7 @@ def my_permissions(args: Namespace) -> None:
     session = setup_session(args)
     resp = bindings.get_GetPermissionsSummary(session)
     if args.json:
-        print(json.dumps(resp.to_json(), indent=2))
+        determined.cli.render.print_json(resp.to_json())
         return
 
     role_id_to_permissions: Dict[int, Set[bindings.v1Permission]] = {}
@@ -114,7 +114,7 @@ def list_roles(args: Namespace) -> None:
     )
     resp = bindings.post_SearchRolesAssignableToScope(setup_session(args), body=req)
     if args.json:
-        print(json.dumps(resp.to_json(), indent=2))
+        determined.cli.render.print_json(resp.to_json())
         return
 
     if resp.roles is None or len(resp.roles) == 0:
@@ -165,7 +165,7 @@ def list_users_roles(args: Namespace) -> None:
     user_id = user_groups.usernames_to_user_ids(session, [args.username])[0]
     resp = bindings.get_GetRolesAssignedToUser(session, userId=user_id)
     if args.json:
-        print(json.dumps(resp.to_json(), indent=2))
+        determined.cli.render.print_json(resp.to_json())
         return
 
     if resp.roles is None or len(resp.roles) == 0:
@@ -201,7 +201,7 @@ def list_groups_roles(args: Namespace) -> None:
     group_id = user_groups.group_name_to_group_id(session, args.group_name)
     resp = bindings.get_GetRolesAssignedToGroup(session, groupId=group_id)
     if args.json:
-        print(json.dumps(resp.to_json(), indent=2))
+        determined.cli.render.print_json(resp.to_json())
         return
 
     if resp.roles is None or len(resp.roles) == 0:
@@ -242,7 +242,7 @@ def describe_role(args: Namespace) -> None:
     req = bindings.v1GetRolesByIDRequest(roleIds=[role_id])
     resp = bindings.post_GetRolesByID(session, body=req)
     if args.json:
-        print(json.dumps(resp.roles[0].to_json() if resp.roles else None, indent=2))
+        determined.cli.render.print_json(resp.roles[0].to_json() if resp.roles else None)
         return
 
     if resp.roles is None or len(resp.roles) != 1:

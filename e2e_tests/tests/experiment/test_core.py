@@ -2,7 +2,6 @@ import json
 import subprocess
 import tempfile
 
-import numpy as np
 import pytest
 
 from determined.common import yaml
@@ -12,7 +11,6 @@ from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 from tests.cluster.test_checkpoints import wait_for_gc_to_finish
-from tests.fixtures.metric_maker.metric_maker import structure_equal, structure_to_metrics
 
 
 @pytest.mark.e2e_cpu
@@ -30,97 +28,6 @@ def test_invalid_experiment() -> None:
         conf.fixtures_path("invalid_experiment/const.yaml"), conf.cv_examples_path("mnist_tf")
     )
     assert completed_process.returncode != 0
-
-
-@pytest.mark.e2e_cpu
-def test_metric_gathering() -> None:
-    """
-    Confirm that metrics are gathered from the trial the way that we expect.
-    """
-    experiment_id = exp.run_basic_test(
-        conf.fixtures_path("metric_maker/const.yaml"), conf.fixtures_path("metric_maker"), 1
-    )
-
-    trials = exp.experiment_trials(experiment_id)
-    assert len(trials) == 1
-
-    # Read the structure of the metrics directly from the config file
-    config = conf.load_config(conf.fixtures_path("metric_maker/const.yaml"))
-
-    base_value = config["hyperparameters"]["starting_base_value"]
-    gain_per_batch = config["hyperparameters"]["gain_per_batch"]
-    training_structure = config["hyperparameters"]["training_structure"]["val"]
-    validation_structure = config["hyperparameters"]["validation_structure"]["val"]
-
-    scheduling_unit = 100
-
-    # Check training metrics.
-    full_trial_metrics = exp.trial_metrics(trials[0].trial.id)
-    batches_trained = 0
-    for step in full_trial_metrics["steps"]:
-        metrics = step["metrics"]
-
-        actual = metrics["batch_metrics"]
-        assert len(actual) == scheduling_unit
-
-        first_base_value = base_value + batches_trained
-        batch_values = first_base_value + gain_per_batch * np.arange(scheduling_unit)
-        expected = [structure_to_metrics(value, training_structure) for value in batch_values]
-        assert structure_equal(expected, actual)
-        batches_trained = step["total_batches"]
-
-    # Check validation metrics.
-    validation_workloads = exp.workloads_with_validation(trials[0].workloads)
-    for validation in validation_workloads:
-        actual = validation.metrics.avgMetrics
-        batches_trained = validation.totalBatches
-
-        value = base_value + batches_trained
-        expected = structure_to_metrics(value, validation_structure)
-        assert structure_equal(expected, actual)
-
-
-@pytest.mark.e2e_cpu
-def test_nan_metrics() -> None:
-    """
-    Confirm that NaN and Infinity metrics are gathered from the trial.
-    """
-    exp_id = exp.run_basic_test(
-        conf.fixtures_path("metric_maker/nans.yaml"), conf.fixtures_path("metric_maker"), 1
-    )
-    trials = exp.experiment_trials(exp_id)
-    config = conf.load_config(conf.fixtures_path("metric_maker/nans.yaml"))
-    base_value = config["hyperparameters"]["starting_base_value"]
-    gain_per_batch = config["hyperparameters"]["gain_per_batch"]
-
-    # Infinity and NaN cannot be processed in the YAML->JSON deserializer
-    # Add them to expected values here
-    training_structure = config["hyperparameters"]["training_structure"]["val"]
-    training_structure["inf"] = "Infinity"
-    training_structure["nan"] = "NaN"
-    training_structure["nanarray"] = ["NaN", "NaN"]
-    validation_structure = config["hyperparameters"]["validation_structure"]["val"]
-    validation_structure["neg_inf"] = "-Infinity"
-
-    # Check training metrics.
-    full_trial_metrics = exp.trial_metrics(trials[0].trial.id)
-    batches_trained = 0
-    for step in full_trial_metrics["steps"]:
-        metrics = step["metrics"]
-        actual = metrics["batch_metrics"]
-        first_base_value = base_value + batches_trained
-        batch_values = first_base_value + gain_per_batch * np.arange(5)
-        expected = [structure_to_metrics(value, training_structure) for value in batch_values]
-        assert structure_equal(expected, actual)
-        batches_trained = step["total_batches"]
-
-    # Check validation metrics.
-    validation_workloads = exp.workloads_with_validation(trials[0].workloads)
-    for validation in validation_workloads:
-        actual = validation.metrics.avgMetrics
-        batches_trained = validation.totalBatches
-        expected = structure_to_metrics(base_value, validation_structure)
-        assert structure_equal(expected, actual)
 
 
 @pytest.mark.e2e_cpu
@@ -511,14 +418,28 @@ def test_experiment_list_columns() -> None:
     ]
     exp_metrics = ["validation.validation_error"]
     columns = bindings.get_GetProjectColumns(api_utils.determined_test_session(), id=1)
-    assert len(columns.general) == len(bindings.v1GeneralColumn)
 
-    hyperparameters = columns.hyperparameters
+    column_values = {c.column for c in columns.columns}
     for hp in exp_hyperparameters:
-        assert hyperparameters.index(hp) >= 0
-    metrics = columns.metrics
+        assert "hp." + hp in column_values
     for mc in exp_metrics:
-        assert metrics.index(mc) >= 0
+        assert mc in column_values
+
+
+@pytest.mark.e2e_cpu
+def test_metrics_range_by_project() -> None:
+    exp.run_basic_test(
+        conf.fixtures_path("core_api/arbitrary_workload_order.yaml"),
+        conf.fixtures_path("core_api"),
+        1,
+        expect_workloads=True,
+        expect_checkpoints=True,
+    )
+    ranges = bindings.get_GetProjectNumericMetricsRange(api_utils.determined_test_session(), id=1)
+
+    assert ranges.ranges is not None
+    for r in ranges.ranges:
+        assert r.min <= r.max
 
 
 @pytest.mark.e2e_cpu

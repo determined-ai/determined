@@ -9,9 +9,10 @@ import (
 	"math/rand"
 
 	petname "github.com/dustinkirkland/golang-petname"
-	"github.com/ghodss/yaml"
 	pstruct "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
+
+	k8sV1 "k8s.io/api/core/v1"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -19,10 +20,12 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	mconfig "github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -31,6 +34,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -51,15 +55,23 @@ func getRandomPort(min, max int) int {
 
 type protoCommandParams struct {
 	TemplateName string
+	WorkspaceID  int32
 	Config       *pstruct.Struct
 	Files        []*utilv1.File
 	MustZeroSlot bool
 }
 
-func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoCommandParams) (
+func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoCommandParams,
+	aUser *model.User) (
 	*tasks.GenericCommandSpec, []pkgCommand.LaunchWarning, error,
 ) {
 	var err error
+	cmdSpec := tasks.GenericCommandSpec{}
+
+	cmdSpec.Metadata.WorkspaceID = model.DefaultWorkspaceID
+	if req.WorkspaceID != 0 {
+		cmdSpec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceID)
+	}
 
 	// Validate the userModel and get the agent userModel group.
 	userModel, _, err := grpcutil.GetUser(ctx)
@@ -90,7 +102,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		resources.Slots = 0
 	}
 	poolName, err := a.m.rm.ResolveResourcePool(
-		a.m.system, resources.ResourcePool, resources.Slots)
+		a.m.system, resources.ResourcePool, int(req.WorkspaceID), resources.Slots)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
@@ -127,19 +139,13 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 
 	// Get the full configuration.
 	config := model.DefaultConfig(&taskSpec.TaskContainerDefaults)
-
-	workDirInDefaults := config.WorkDir
 	if req.TemplateName != "" {
-		template, err := a.m.db.TemplateByName(req.TemplateName)
+		err := a.m.unmarshalTemplateConfig(ctx, req.TemplateName, aUser, &config, false)
 		if err != nil {
-			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
-				errors.Wrapf(err, "failed to find template: %s", req.TemplateName).Error())
-		}
-		if err := yaml.Unmarshal(template.Config, &config); err != nil {
-			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
-				errors.Wrapf(err, "failed to unmarshal template: %s", req.TemplateName).Error())
+			return nil, launchWarnings, err
 		}
 	}
+	workDirInDefaults := config.WorkDir
 	if len(configBytes) != 0 {
 		dec := json.NewDecoder(bytes.NewBuffer(configBytes))
 		dec.DisallowUnknownFields()
@@ -157,13 +163,15 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	if req.MustZeroSlot {
 		config.Resources.Slots = 0
 	}
-	if config.Environment.PodSpec == nil {
-		if config.Resources.Slots == 0 {
-			config.Environment.PodSpec = taskSpec.TaskContainerDefaults.CPUPodSpec
-		} else {
-			config.Environment.PodSpec = taskSpec.TaskContainerDefaults.GPUPodSpec
-		}
+
+	taskContainerPodSpec := taskSpec.TaskContainerDefaults.GPUPodSpec
+	if config.Resources.Slots == 0 {
+		taskContainerPodSpec = taskSpec.TaskContainerDefaults.CPUPodSpec
 	}
+	config.Environment.PodSpec = (*k8sV1.Pod)(schemas.Merge(
+		(*expconf.PodSpec)(config.Environment.PodSpec),
+		(*expconf.PodSpec)(taskContainerPodSpec),
+	))
 
 	var userFiles archive.Archive
 	if len(req.Files) > 0 {
@@ -198,11 +206,10 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	}
 	taskSpec.UserSessionToken = token
 
-	return &tasks.GenericCommandSpec{
-		Base:      taskSpec,
-		Config:    config,
-		UserFiles: userFiles,
-	}, launchWarnings, nil
+	cmdSpec.Base = taskSpec
+	cmdSpec.Config = config
+	cmdSpec.UserFiles = userFiles
+	return &cmdSpec, launchWarnings, nil
 }
 
 func (a *apiServer) GetCommands(
@@ -218,7 +225,7 @@ func (a *apiServer) GetCommands(
 		return nil, err
 	}
 
-	workspaceNotFoundErr := status.Errorf(codes.NotFound, "workspace %d not found", req.WorkspaceId)
+	workspaceNotFoundErr := api.NotFoundErrs("workspace", fmt.Sprint(req.WorkspaceId), true)
 
 	if req.WorkspaceId != 0 {
 		// check if the workspace exists.
@@ -264,11 +271,10 @@ func (a *apiServer) GetCommand(
 		return nil, err
 	}
 
-	if ok, err := command.AuthZProvider.Get().CanGetNSC(
+	ctx = audit.SupplyEntityID(ctx, req.CommandId)
+	if err := command.AuthZProvider.Get().CanGetNSC(
 		ctx, *curUser, model.AccessScopeID(resp.Command.WorkspaceId)); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errActorNotFound(addr)
+		return nil, authz.SubIfUnauthorized(err, api.NotFoundErrs("actor", fmt.Sprint(addr), true))
 	}
 	return resp, nil
 }
@@ -291,6 +297,7 @@ func (a *apiServer) KillCommand(
 		return nil, err
 	}
 
+	ctx = audit.SupplyEntityID(ctx, req.CommandId)
 	if err = command.AuthZProvider.Get().CanTerminateNSC(
 		ctx, *curUser, model.AccessScopeID(targetCmd.Command.WorkspaceId),
 	); err != nil {
@@ -317,6 +324,7 @@ func (a *apiServer) SetCommandPriority(
 		return nil, err
 	}
 
+	ctx = audit.SupplyEntityID(ctx, req.CommandId)
 	if err = command.AuthZProvider.Get().CanSetNSCsPriority(
 		ctx, *curUser, model.AccessScopeID(targetCmd.Command.WorkspaceId), int(req.Priority),
 	); err != nil {
@@ -329,20 +337,23 @@ func (a *apiServer) SetCommandPriority(
 func (a *apiServer) LaunchCommand(
 	ctx context.Context, req *apiv1.LaunchCommandRequest,
 ) (*apiv1.LaunchCommandResponse, error) {
-	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
-		TemplateName: req.TemplateName,
-		Config:       req.Config,
-		Files:        req.Files,
-	})
+	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, api.APIErrToGRPC(err)
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
-	if req.WorkspaceId != 0 {
-		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
+	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
+		TemplateName: req.TemplateName,
+		WorkspaceID:  req.WorkspaceId,
+		Config:       req.Config,
+		Files:        req.Files,
+	}, user)
+	if err != nil {
+		return nil, api.WrapWithFallbackCode(err, codes.InvalidArgument,
+			"failed to prepare launch params")
 	}
-	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
+
+	if err = a.isNTSCPermittedToLaunch(ctx, spec, user); err != nil {
 		return nil, err
 	}
 

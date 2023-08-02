@@ -6,18 +6,19 @@ import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
+import Spinner from 'components/Spinner/Spinner';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner/Spinner';
-import { RawJson, ValueOf } from 'shared/types';
-import { clone, isEqual } from 'shared/utils/data';
-import { DetError, ErrorLevel, ErrorType, isDetError, isError } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
+import { RawJson, ValueOf } from 'types';
 import { ExperimentBase, TrialHyperparameters, TrialItem } from 'types';
+import { clone, isEqual } from 'utils/data';
+import { DetError, ErrorLevel, ErrorType, isDetError, isError } from 'utils/error';
 import handleError, { handleWarning } from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
+import { Loaded } from 'utils/loadable';
+import { routeToReactUrl } from 'utils/routes';
 
 export const FULL_CONFIG_BUTTON_TEXT = 'Show Full Config';
 export const SIMPLE_CONFIG_BUTTON_TEXT = 'Show Simple Config';
@@ -90,7 +91,7 @@ const trialContinueConfig = (
   };
 };
 
-const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
+const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 
 const DEFAULT_MODAL_STATE = {
   config: {},
@@ -353,6 +354,7 @@ const ExperimentCreateModalComponent = ({
       size={modalState.isAdvancedMode ? (isFork ? 'medium' : 'large') : 'small'}
       submit={{
         disabled,
+        handleError,
         handler: handleSubmit,
         text: type,
       }}
@@ -365,10 +367,11 @@ const ExperimentCreateModalComponent = ({
         )}
         {modalState.isAdvancedMode && (
           <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
-            <MonacoEditor
+            <CodeEditor
+              files={[{ content: Loaded(modalState.configString), key: 'config.yaml' }]}
               height="40vh"
-              value={modalState.configString}
               onChange={handleEditorChange}
+              onError={handleError}
             />
           </React.Suspense>
         )}

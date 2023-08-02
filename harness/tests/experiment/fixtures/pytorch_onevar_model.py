@@ -336,9 +336,7 @@ class OneVarAMPBaseTrial(OneVarTrial):
 
     def __init__(self, context: pytorch.PyTorchTrialContext):
         super().__init__(context)
-        self._agg_freq = self.context.env.experiment_config.get_optimizations_config()[
-            "aggregation_frequency"
-        ]
+        self._agg_freq = self.context._aggregation_frequency
 
     def build_training_data_loader(self) -> torch.utils.data.DataLoader:
         return pytorch.DataLoader(

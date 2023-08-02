@@ -2,18 +2,19 @@ import { Select as AntdSelect, SelectProps as AntdSelectProps } from 'antd';
 import type { DefaultOptionType, RefSelectProps, SelectValue } from 'antd/es/select';
 import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 
-import Label, { LabelTypes } from 'components/Label';
-import Icon from 'shared/components/Icon/Icon';
+import Icon from 'components/kit/Icon';
+import Label, { LabelTypes } from 'components/kit/internal/Label';
 
 import css from './Select.module.scss';
 
 const { OptGroup, Option } = AntdSelect;
 
-export { Option, SelectValue };
+export { Option, OptGroup, SelectValue };
 
 type Options = DefaultOptionType | DefaultOptionType[];
 export interface SelectProps<T extends SelectValue = SelectValue> {
   allowClear?: boolean;
+  autoFocus?: boolean;
   defaultValue?: T;
   disableTags?: boolean;
   disabled?: boolean;
@@ -31,9 +32,11 @@ export interface SelectProps<T extends SelectValue = SelectValue> {
   options?: AntdSelectProps['options'];
   placeholder?: string;
   ref?: React.Ref<RefSelectProps>;
+  dropdownMatchSelectWidth?: boolean | number;
   searchable?: boolean;
   value?: T;
-  width?: number;
+  width?: React.CSSProperties['width'];
+  onDropdownVisibleChange?: (open: boolean) => void;
 }
 
 const countOptions = (children: React.ReactNode, options?: Options): number => {
@@ -59,27 +62,19 @@ const countOptions = (children: React.ReactNode, options?: Options): number => {
 
 const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(function Select(
   {
-    allowClear,
-    defaultValue,
     disabled,
     disableTags = false,
     searchable = true,
+    dropdownMatchSelectWidth = true,
     filterOption,
-    filterSort,
-    id,
     label,
     loading,
-    mode,
-    onChange,
-    onBlur,
-    onDeselect,
     onSearch,
-    onSelect,
     options,
-    placeholder,
     width,
     value,
     children,
+    ...passthrough
   }: React.PropsWithChildren<SelectProps>,
   ref?: React.Ref<RefSelectProps>,
 ) {
@@ -119,30 +114,20 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
     <div className={classes.join(' ')}>
       {label && <Label type={LabelTypes.TextOnly}>{label}</Label>}
       <AntdSelect
-        allowClear={allowClear}
-        defaultValue={defaultValue}
         disabled={disabled || loading}
-        dropdownMatchSelectWidth
+        dropdownMatchSelectWidth={dropdownMatchSelectWidth}
         filterOption={filterOption ?? (searchable ? handleFilter : true)}
-        filterSort={filterSort}
-        id={id}
-        loading={loading}
         maxTagCount={maxTagCount}
         maxTagPlaceholder={maxTagPlaceholder}
-        mode={mode}
         options={options}
-        placeholder={placeholder}
         ref={ref}
         showSearch={!!onSearch || !!filterOption || searchable}
         style={{ width }}
-        suffixIcon={!loading ? <Icon name="arrow-down" size="tiny" /> : undefined}
+        suffixIcon={!loading ? <Icon name="arrow-down" size="tiny" title="Open" /> : undefined}
         value={value}
-        onBlur={onBlur}
-        onChange={onChange}
-        onDeselect={onDeselect}
         onDropdownVisibleChange={handleDropdownVisibleChange}
         onSearch={onSearch}
-        onSelect={onSelect}>
+        {...passthrough}>
         {children}
       </AntdSelect>
     </div>

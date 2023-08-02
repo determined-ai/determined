@@ -1,10 +1,11 @@
 import { string, undefined as undefinedType, union } from 'io-ts';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
 import { LineChart } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
+import handleError from 'utils/error';
 
 import { ChartProps } from '../types';
 import { MetricType } from '../types';
@@ -42,7 +43,11 @@ const config = (trialId: number): SettingsConfig<Settings> => ({
 });
 
 const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
-  const { settings, updateSettings } = useSettings<Settings>(config(trial.id));
+  const useSettingsConfig = useMemo(() => {
+    return config(trial.id);
+  }, [trial.id]);
+
+  const { settings, updateSettings } = useSettings<Settings>(useSettingsConfig);
 
   const systemSeries = useFetchProfilerSeries(trial.id)[MetricType.System];
 
@@ -91,6 +96,7 @@ const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
       title="System Metrics">
       <LineChart
         experimentId={trial.id}
+        handleError={handleError}
         series={systemMetrics.data}
         xAxis={XAxisDomain.Time}
         xLabel="Time"

@@ -13,7 +13,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	intApi "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/connsave"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -31,10 +30,15 @@ func initializeAgents(
 	agentsRef, ok := system.ActorOf(sproto.AgentsAddr, &agents{rm: rm, opts: opts})
 	check.Panic(check.True(ok, "agents address already taken"))
 	system.Ask(agentsRef, actor.Ping{}).Get()
-	// Route /agents and /agents/<agent id>/slots to the agents actor and slots actors.
-	e.Any("/agents*", api.Route(system, nil))
-	e.PATCH("/agents*", func(c echo.Context) error {
-		return intApi.ErrAPIRemoved
+	e.GET("/agent*", func(c echo.Context) error {
+		if c.IsWebSocket() {
+			handler := api.Route(system, nil)
+			if err := handler(c); err != nil {
+				return err
+			}
+			return nil
+		}
+		return echo.ErrNotFound
 	})
 }
 

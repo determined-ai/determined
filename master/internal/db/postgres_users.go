@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgconn"
@@ -90,16 +91,16 @@ const PersonalGroupPostfix = "DeterminedPersonalGroup"
 
 func addUserPersonalGroup(tx *sqlx.Tx, userID model.UserID) error {
 	query := `
-INSERT INTO groups(group_name, user_id) 
-SELECT username || $2 AS group_name, id AS user_id FROM users 
-WHERE id = $1`
-	if _, err := tx.Exec(query, userID, PersonalGroupPostfix); err != nil {
+INSERT INTO groups(group_name, user_id)
+SELECT $1 || $3 AS group_name, id AS user_id FROM users
+WHERE id = $2`
+	if _, err := tx.Exec(query, strconv.Itoa(int(userID)), userID, PersonalGroupPostfix); err != nil {
 		return errors.WithStack(err)
 	}
 
 	query = `
 INSERT INTO user_group_membership(user_id, group_id)
-SELECT user_id AS user_id, id AS group_id FROM groups 
+SELECT user_id AS user_id, id AS group_id FROM groups
 WHERE user_id = $1`
 	if _, err := tx.Exec(query, userID); err != nil {
 		return errors.WithStack(err)
@@ -316,17 +317,19 @@ func (db *PgDB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 }
 
 // UpdateUserSetting updates user setting.
-func UpdateUserSetting(setting *model.UserWebSetting) error {
-	if len(setting.Value) == 0 {
-		_, err := Bun().NewDelete().Model(setting).Where(
-			"user_id = ?", setting.UserID).Where(
-			"storage_path = ?", setting.StoragePath).Where(
-			"key = ?", setting.Key).Exec(context.TODO())
-		return err
+func UpdateUserSetting(settings []*model.UserWebSetting) error {
+	var err error
+	for _, setting := range settings {
+		if len(setting.Value) == 0 {
+			_, err = Bun().NewDelete().Model(setting).Where(
+				"user_id = ?", setting.UserID).Where(
+				"storage_path = ?", setting.StoragePath).Where(
+				"key = ?", setting.Key).Exec(context.TODO())
+		} else {
+			_, err = Bun().NewInsert().Model(setting).On("CONFLICT (user_id, key, storage_path) DO UPDATE").
+				Set("value = EXCLUDED.value").Exec(context.TODO())
+		}
 	}
-
-	_, err := Bun().NewInsert().Model(setting).On("CONFLICT (user_id, key, storage_path) DO UPDATE").
-		Set("value = EXCLUDED.value").Exec(context.TODO())
 	return err
 }
 

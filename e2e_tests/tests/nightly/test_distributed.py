@@ -4,6 +4,7 @@ import tempfile
 import warnings
 
 import pytest
+import yaml
 
 from tests import config as conf
 from tests import experiment as exp
@@ -65,10 +66,10 @@ def test_cifar10_pytorch_distributed(image_type: str) -> None:
 
 @pytest.mark.distributed
 def test_mnist_estimator_distributed() -> None:
-    config = conf.load_config(conf.cv_examples_path("mnist_estimator/distributed.yaml"))
+    config = conf.load_config(conf.fixtures_path("mnist_estimator/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
 
-    exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("mnist_estimator"), 1)
+    exp.run_basic_test_with_temp_config(config, conf.fixtures_path("mnist_estimator"), 1)
 
 
 @pytest.mark.distributed
@@ -206,11 +207,9 @@ def test_byol_pytorch_distributed() -> None:
 @pytest.mark.distributed
 @pytest.mark.gpu_required
 def test_hf_trainer_api_integration() -> None:
-    config = conf.load_config(conf.integrations_examples_path("hf_trainer_api/distributed.yaml"))
-
-    exp.run_basic_test_with_temp_config(
-        config, conf.integrations_examples_path("hf_trainer_api"), 1
-    )
+    test_dir = "hf_image_classification"
+    config = conf.load_config(conf.hf_trainer_examples_path(f"{test_dir}/distributed.yaml"))
+    exp.run_basic_test_with_temp_config(config, conf.hf_trainer_examples_path(test_dir), 1)
 
 
 @pytest.mark.deepspeed
@@ -355,3 +354,91 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
             pytest.skip("HF_READ_ONLY_TOKEN CircleCI environment variable missing, skipping test")
         else:
             raise k
+
+
+@pytest.mark.distributed
+@pytest.mark.gpu_required
+@pytest.mark.deepspeed
+def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
+    test_dir = "hf_image_classification"
+    config_path = conf.hf_trainer_examples_path(f"{test_dir}/deepspeed.yaml")
+    config = conf.load_config(config_path)
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+        _ = exp.run_basic_autotuning_test(
+            tf.name,
+            conf.hf_trainer_examples_path(test_dir),
+            1,
+            search_method_name="asha",
+        )
+
+
+@pytest.mark.distributed
+@pytest.mark.gpu_required
+@pytest.mark.deepspeed
+def test_hf_trainer_language_modeling_deepspeed_autotuning() -> None:
+    test_dir = "hf_language_modeling"
+    config_path = conf.hf_trainer_examples_path(f"{test_dir}/deepspeed.yaml")
+    config = conf.load_config(config_path)
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+        _ = exp.run_basic_autotuning_test(
+            tf.name,
+            conf.hf_trainer_examples_path(test_dir),
+            1,
+            search_method_name="binary",
+        )
+
+
+@pytest.mark.distributed
+@pytest.mark.gpu_required
+@pytest.mark.deepspeed
+def test_torchvision_core_api_deepspeed_autotuning() -> None:
+    test_dir = "torchvision/core_api"
+    config_path = conf.deepspeed_autotune_examples_path(f"{test_dir}/deepspeed.yaml")
+    config = conf.load_config(config_path)
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+        _ = exp.run_basic_autotuning_test(
+            tf.name,
+            conf.deepspeed_autotune_examples_path(test_dir),
+            1,
+            search_method_name="asha",
+        )
+
+
+@pytest.mark.distributed
+@pytest.mark.gpu_required
+@pytest.mark.deepspeed
+def test_torchvision_deepspeed_trial_deepspeed_autotuning() -> None:
+    test_dir = "torchvision/deepspeed_trial"
+    config_path = conf.deepspeed_autotune_examples_path(f"{test_dir}/deepspeed.yaml")
+    config = conf.load_config(config_path)
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+        _ = exp.run_basic_autotuning_test(
+            tf.name,
+            conf.deepspeed_autotune_examples_path(test_dir),
+            1,
+            search_method_name="random",
+        )
+
+
+@pytest.mark.distributed
+@pytest.mark.gpu_required
+def test_torch_batch_process_generate_embedding() -> None:
+    config = conf.load_config(
+        conf.features_examples_path("torch_batch_process_embeddings/distributed.yaml")
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        copy_destination = os.path.join(tmpdir, "example")
+        shutil.copytree(
+            conf.features_examples_path("torch_batch_process_embeddings"),
+            copy_destination,
+        )
+        exp.run_basic_test_with_temp_config(config, copy_destination, 1)

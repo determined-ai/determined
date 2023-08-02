@@ -114,8 +114,9 @@ func (d *Client) Inner() *client.Client {
 // filters and returns whether it can be reattached or has terminated.
 func (d *Client) ReattachContainer(
 	ctx context.Context,
-	filter filters.Args,
+	id cproto.ID,
 ) (*Container, *aproto.ExitCode, error) {
+	filter := LabelFilter(ContainerIDLabel, id.String())
 	containers, err := d.cl.ContainerList(ctx, types.ContainerListOptions{Filters: filter})
 	if err != nil {
 		return nil, nil, fmt.Errorf("while reattaching container: %w", err)
@@ -240,6 +241,7 @@ func (d *Client) PullImage(ctx context.Context, req PullImage, p events.Publishe
 // will block the call.
 func (d *Client) CreateContainer(
 	ctx context.Context,
+	id cproto.ID,
 	req cproto.RunSpec,
 	p events.Publisher[Event],
 ) (string, error) {
@@ -248,7 +250,7 @@ func (d *Client) CreateContainer(
 	if err != nil {
 		return "", fmt.Errorf("creating container: %w", err)
 	}
-	id := response.ID
+	dockerID := response.ID
 	for _, w := range response.Warnings {
 		if err = p.Publish(ctx, NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
 			"warning when creating container: %s", w,
@@ -268,11 +270,17 @@ func (d *Client) CreateContainer(
 		if cErr != nil {
 			return "", fmt.Errorf("converting RunSpec Archive files to io.Reader: %w", cErr)
 		}
-		if err = d.cl.CopyToContainer(ctx, id, copyArx.Path, files, copyArx.CopyOptions); err != nil {
+		if err = d.cl.CopyToContainer(
+			ctx,
+			dockerID,
+			copyArx.Path,
+			files,
+			copyArx.CopyOptions,
+		); err != nil {
 			return "", fmt.Errorf("copying files to container: %w", err)
 		}
 	}
-	return id, nil
+	return dockerID, nil
 }
 
 // RunContainer runs a container by docker container ID. It takes a caller-provided channel on which
@@ -284,6 +292,7 @@ func (d *Client) RunContainer(
 	ctx context.Context,
 	waitCtx context.Context,
 	id string,
+	p events.Publisher[Event],
 ) (*Container, error) {
 	// Wait before start to not miss immediate exits.
 	waiter, errs := d.cl.ContainerWait(waitCtx, id, dcontainer.WaitConditionNextExit)

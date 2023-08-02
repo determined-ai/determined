@@ -1,15 +1,20 @@
 .base {
   align-items: center;
   display: flex;
+  gap: 16px;
 
   .text {
-    display: flex;
-    flex-direction: column;
-    margin-left: 16px;
-    max-width: 60px;
+    overflow: hidden;
 
     .alias {
       font-size: larger;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .name {
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
     }
   }

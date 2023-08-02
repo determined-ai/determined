@@ -280,6 +280,16 @@ func NewShutdown() Shutdown {
 	return Shutdown{}
 }
 
+// ShutdownFromProto creates a Shutdown from its protobuf representation.
+func ShutdownFromProto(
+	op *experimentv1.SearcherOperation_ShutDown,
+) (*Shutdown, error) {
+	return &Shutdown{
+		Cancel:  op.ShutDown.Cancel,
+		Failure: op.ShutDown.Failure,
+	}, nil
+}
+
 func (shutdown Shutdown) String() string {
-	return "{Shutdown}"
+	return fmt.Sprintf("{Shutdown Cancel: %v Failure: %v}", shutdown.Cancel, shutdown.Failure)
 }

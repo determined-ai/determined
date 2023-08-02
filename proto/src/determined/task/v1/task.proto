@@ -4,6 +4,7 @@ package determined.task.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/taskv1";
 
 import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 import "determined/device/v1/device.proto";
 
 // The current state of the task.
@@ -27,8 +28,31 @@ enum State {
   STATE_QUEUED = 8;
 }
 
+// Type of the task
+enum TaskType {
+  // The task type is unknown
+  TASK_TYPE_UNSPECIFIED = 0;
+  // "TRIAL" task type for the enum public.task_type in Postgres.
+  TASK_TYPE_TRIAL = 1;
+  // "NOTEBOOK" task type for the enum public.task_type in Postgres.
+  TASK_TYPE_NOTEBOOK = 2;
+  // "SHELL" task type for the enum public.task_type in Postgres.
+  TASK_TYPE_SHELL = 3;
+  // "COMMAND" task type for the enum public.task_type in Postgres.
+  TASK_TYPE_COMMAND = 4;
+  // "TENSORBOARD" task type for the enum public.task_type in Postgres.
+  TASK_TYPE_TENSORBOARD = 5;
+  // "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
+  TASK_TYPE_CHECKPOINT_GC = 6;
+}
+
 // Allocation tracks a specific instance of a Task.
 message Allocation {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "task_id", "state", "is_ready", "allocation_id" ]
+    }
+  };
   // Unique ID of task associated with the allocation.
   string task_id = 1;
   // The current state of the allocation.
@@ -45,12 +69,21 @@ message Allocation {
 
 // Task is the model for a task in the database.
 message Task {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "task_id", "task_type", "allocations", "start_time" ]
+    }
+  };
   // Unique ID of task.
   string task_id = 1;
   // Type of Task.
-  string task_type = 2;
+  TaskType task_type = 2;
   // List of Allocations.
   repeated Allocation allocations = 4;
+  // Start timestamp.
+  google.protobuf.Timestamp start_time = 5;
+  // End timestamp if completed.
+  optional google.protobuf.Timestamp end_time = 6;
 }
 
 // Address represents an exposed port on a container.

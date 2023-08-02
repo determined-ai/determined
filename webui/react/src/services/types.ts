@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs';
 
-import { FetchOptions, RecordKey, SingleEntityParams } from 'shared/types';
+import { FetchOptions, RecordKey, SingleEntityParams } from 'types';
 import {
   DetailedUser,
   Job,
@@ -9,7 +9,6 @@ import {
   MetricType,
   Note,
   RunState,
-  Scale,
   TrialWorkloadFilter,
 } from 'types';
 
@@ -32,7 +31,6 @@ export interface TrialSummaryBaseParams {
   maxDatapoints: number;
   metricNames: Metric[];
   metricType?: MetricType;
-  scale?: Scale;
   startBatches?: number;
 }
 
@@ -97,12 +95,13 @@ export interface GetExperimentsParams extends PaginationParams {
 }
 
 export interface SearchExperimentsParams extends PaginationParams {
+  filter?: string;
   projectId?: number;
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  options?: any;
+  sort?: string;
 }
 
 export interface BulkActionParams {
+  excludedExperimentIds?: number[];
   experimentIds: number[];
   filters?: Api.V1BulkExperimentFilters;
 }
@@ -205,7 +204,7 @@ export interface PatchModelParams {
   body: {
     description?: string;
     labels?: string[];
-    metadata?: Record<RecordKey, string>;
+    metadata?: Record<RecordKey, string | object>;
     name: string;
     notes?: string;
   };
@@ -216,7 +215,7 @@ export interface PatchModelVersionParams {
   body: {
     comment?: string;
     labels?: string[];
-    metadata?: Record<RecordKey, string>;
+    metadata?: Record<RecordKey, string | object>;
     modelName: string;
     name?: string;
     notes?: string;
@@ -263,6 +262,7 @@ export interface PatchExperimentParams extends ExperimentIdParams {
 }
 
 export interface LaunchTensorBoardParams {
+  excludedExperimentIds?: Array<number>;
   experimentIds?: Array<number>;
   trialIds?: Array<number>;
   workspaceId?: number;
@@ -318,7 +318,8 @@ export interface GetJobQParams extends PaginationParams, FetchOptions {
   states?: Api.Jobv1State[];
 }
 
-export interface GetJobsResponse extends Api.V1GetJobsResponse {
+export interface GetJobsResponse {
+  pagination: Api.V1Pagination;
   jobs: Job[];
 }
 export interface GetJobQStatsParams extends FetchOptions {
@@ -359,8 +360,7 @@ export interface CreateGroupsParams {
   name: string;
 }
 export interface UpdateUserSettingParams {
-  setting: Api.V1UserWebSetting;
-  storagePath: string;
+  settings: Api.V1UserWebSetting | Api.V1UserWebSetting[];
 }
 
 export interface UpdateGroupParams {
@@ -437,10 +437,6 @@ export interface GetWorkspacesParams extends PaginationParams {
   users?: string[];
 }
 
-export interface GetWorkspaceParams {
-  id: number;
-}
-
 export interface GetWorkspaceProjectsParams extends PaginationParams {
   archived?: boolean;
   id: number;
@@ -463,10 +459,6 @@ export interface GetWorkspaceMembersParams {
   workspaceId: number;
 }
 
-export interface DeleteWorkspaceParams {
-  id: number;
-}
-
 export interface DeleteProjectParams {
   id: number;
 }
@@ -485,17 +477,13 @@ export interface ArchiveProjectParams {
 
 export type UnarchiveProjectParams = ArchiveProjectParams;
 
-export interface ArchiveWorkspaceParams {
+export interface GetProjectColumnsParams {
   id: number;
 }
 
-export type UnarchiveWorkspaceParams = ArchiveWorkspaceParams;
-
-export interface PinWorkspaceParams {
-  id: number;
+export interface ActionWorkspaceParams {
+  workspaceId: number;
 }
-
-export type UnpinWorkspaceParams = PinWorkspaceParams;
 
 export interface GetWebhookParams {
   id: number;
@@ -509,4 +497,13 @@ export interface SearchRolesAssignableToScopeParams {
 
 export interface GetProjectsByUserActivityParams {
   limit?: number;
+}
+
+export interface GetResourcePoolBindingsParams {
+  resourcePoolName: string;
+}
+
+export interface ModifyResourcePoolBindingsParams {
+  resourcePoolName: string;
+  workspaceIds: number[];
 }

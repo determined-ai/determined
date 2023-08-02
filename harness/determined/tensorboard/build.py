@@ -3,7 +3,7 @@ import pathlib
 from typing import Any, Dict, Optional
 
 from determined.common.storage.shared import _full_storage_path
-from determined.tensorboard import azure, base, gcs, hdfs, s3, shared
+from determined.tensorboard import azure, base, gcs, s3, shared
 
 
 def get_sync_path(cluster_id: str, experiment_id: str, trial_id: str) -> pathlib.Path:
@@ -112,19 +112,6 @@ def build(
             checkpoint_config.get("connection_string", None),
             checkpoint_config.get("access_url", None),
             checkpoint_config.get("credential", None),
-            base_path,
-            sync_path,
-            async_upload=async_upload,
-        )
-
-    # Return the base_path.TensorboardManager for known but unsupported storage
-    # backends. This will result in a noop action when the workload_manager
-    # attempts to sync the tfevent files to persistent storage.
-    elif type_name == "hdfs":
-        return hdfs.HDFSTensorboardManager(
-            checkpoint_config["hdfs_url"],
-            checkpoint_config["hdfs_path"],
-            checkpoint_config.get("user"),
             base_path,
             sync_path,
             async_upload=async_upload,

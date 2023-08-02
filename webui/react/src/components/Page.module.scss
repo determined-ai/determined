@@ -1,0 +1,48 @@
+.base {
+  display: flex;
+  flex-direction: column;
+  height: inherit;
+  justify-content: flex-start;
+  overflow: auto;
+  width: 100%;
+
+  .breadcrumb {
+    padding: 16px;
+  }
+  .body {
+    align-items: center;
+    flex-shrink: 0;
+    height: max-content;
+    min-height: 0;
+    padding: 16px;
+    width: 100%;
+  }
+  &.bodyNoPadding {
+    .body {
+      padding: 0;
+      padding-bottom: 16px;
+    }
+  }
+  &.stickyHeader {
+    overflow: inherit;
+
+    .body {
+      overflow: auto;
+      padding-bottom: 0;
+    }
+  }
+  &.noScroll {
+    max-height: 100vh;
+    overflow: hidden;
+
+    .body {
+      flex: 1 1 auto;
+    }
+  }
+}
+
+@media only screen and (max-width: $breakpoint-mobile) {
+  .base.noScroll {
+    max-height: inherit;
+  }
+}

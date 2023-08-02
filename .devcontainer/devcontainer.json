@@ -1,0 +1,76 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/go
+{
+	"name": "determined-backend-dev-go",
+	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	"image": "mcr.microsoft.com/devcontainers/go:0-1.20",
+	"features": {
+		"ghcr.io/guiyomh/features/golangci-lint:0": {},
+		"ghcr.io/devcontainers/features/python:1": {},
+		"ghcr.io/devcontainers/features/node:1": {
+			"nodeGypDependencies": true,
+			"version": "18.16.0"
+		}
+	},
+
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	"forwardPorts": [ 8080 ],
+	"appPort": [ 8080 ],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "go version",
+
+	// Configure tool-specific properties.
+	// "customizations": {},
+
+	"mounts": [
+		{
+			"type": "bind",
+			"source": "/usr/local/determined/etc",
+			"target": "/etc/determined"
+		},
+		{
+			"type": "volume",
+			"source": "dev-home",
+			"target": "/home"
+		},
+		{
+			"type": "bind",
+			"source": "${localEnv:HOME}/.ssh",
+			"target": "/home/vscode/.ssh"
+		},
+		{
+			"type": "bind",
+			"source": "${localEnv:HOME}/.gitconfig",
+			"target": "/home/vscode/.gitconfig"
+		},
+		{
+			"type": "volume",
+			"source": "dev-go",
+			"target": "/go"
+		},
+		{
+			"type": "volume",
+			"source": "dev-usr",
+			"target": "/usr"
+		},
+		{
+			"type": "volume",
+			"source": "dev-var",
+			"target": "/var"
+		}
+	],
+
+	"runArgs": [
+		"--network=host"
+	],
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root",
+	"privileged": true,
+
+	"postStartCommand": ".devcontainer/start.sh"
+}

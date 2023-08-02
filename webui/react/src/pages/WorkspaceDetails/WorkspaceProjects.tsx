@@ -4,14 +4,17 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
+import { Column, Columns } from 'components/kit/Columns';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
+import Message, { MessageType } from 'components/Message';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import ProjectCard from 'components/ProjectCard';
 import ProjectCreateModalComponent from 'components/ProjectCreateModal';
+import Spinner from 'components/Spinner';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -25,21 +28,19 @@ import {
   userRenderer,
 } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import usePrevious from 'hooks/usePrevious';
+import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner';
-import usePrevious from 'shared/hooks/usePrevious';
-import { isEqual } from 'shared/utils/data';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { validateDetApiEnum } from 'shared/utils/service';
 import userStore from 'stores/users';
 import { Project, Workspace } from 'types';
+import { isEqual } from 'utils/data';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { validateDetApiEnum } from 'utils/service';
 
 import css from './WorkspaceProjects.module.scss';
 import {
@@ -147,11 +148,11 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         updateSettings({ user: undefined });
         break;
       case WhoseProjects.Mine:
-        updateSettings({ user: currentUser ? [currentUser.id] : undefined });
+        updateSettings({ user: currentUser ? [currentUser.id.toString()] : undefined });
         break;
       case WhoseProjects.Others:
         updateSettings({
-          user: users.filter((u) => u.id !== currentUser?.id).map((u) => u.id),
+          user: users.filter((u) => u.id !== currentUser?.id).map((u) => u.id.toString()),
         });
         break;
     }
@@ -315,8 +316,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       record: Project;
     }) => (
       <ProjectActionDropdown
+        isContextMenu
         project={record}
-        trigger={['contextMenu']}
         workspaceArchived={workspace?.archived}
         onComplete={fetchProjects}
         onVisibleChange={onVisibleChange}>
@@ -346,7 +347,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         );
       case GridListView.List:
         return (
-          <InteractiveTable
+          <InteractiveTable<Project, WorkspaceDetailsSettings>
             columns={columns}
             containerRef={pageRef}
             ContextMenu={actionDropdown}
@@ -362,7 +363,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             rowKey="id"
             settings={settings}
             size="small"
-            updateSettings={updateSettings as UpdateSettings}
+            updateSettings={updateSettings}
           />
         );
     }
@@ -389,40 +390,44 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   }, [canceler]);
 
   return (
-    <div className={css.base}>
-      <div className={css.controls}>
-        <Select value={settings.whose} width={160} onSelect={handleViewSelect}>
-          <Option value={WhoseProjects.All}>All Projects</Option>
-          <Option value={WhoseProjects.Mine}>My Projects</Option>
-          <Option value={WhoseProjects.Others}>Others&apos; Projects</Option>
-        </Select>
-        <Space wrap>
-          {!workspace.archived && (
-            <Toggle
-              checked={settings.archived}
-              label="Show Archived"
-              onChange={switchShowArchived}
-            />
-          )}
-          <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
-            <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
-            <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
-              Last Updated
-            </Option>
-            <Option value={V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME}>
-              Newest to Oldest
-            </Option>
+    <>
+      <Columns page>
+        <Column>
+          <Select value={settings.whose} width={160} onSelect={handleViewSelect}>
+            <Option value={WhoseProjects.All}>All Projects</Option>
+            <Option value={WhoseProjects.Mine}>My Projects</Option>
+            <Option value={WhoseProjects.Others}>Others&apos; Projects</Option>
           </Select>
-          {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
-          <div className={css.headerButton}>
-            {!workspace.immutable &&
-              !workspace.archived &&
-              canCreateProject({ workspace: workspace }) && (
-                <Button onClick={handleProjectCreateClick}>New Project</Button>
-              )}
-          </div>
-        </Space>
-      </div>
+        </Column>
+        <Column align="right">
+          <Space wrap>
+            {!workspace.archived && (
+              <Toggle
+                checked={settings.archived}
+                label="Show Archived"
+                onChange={switchShowArchived}
+              />
+            )}
+            <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
+              <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
+              <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
+                Last Updated
+              </Option>
+              <Option value={V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME}>
+                Newest to Oldest
+              </Option>
+            </Select>
+            {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
+            <div className={css.headerButton}>
+              {!workspace.immutable &&
+                !workspace.archived &&
+                canCreateProject({ workspace: workspace }) && (
+                  <Button onClick={handleProjectCreateClick}>New Project</Button>
+                )}
+            </div>
+          </Space>
+        </Column>
+      </Columns>
       <Spinner spinning={isLoading}>
         {projects.length !== 0 ? (
           projectsList
@@ -441,7 +446,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         )}
       </Spinner>
       <ProjectCreateModal.Component workspaceId={workspace.id} />
-    </div>
+    </>
   );
 };
 

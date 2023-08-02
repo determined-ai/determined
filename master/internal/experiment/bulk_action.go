@@ -14,6 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -108,6 +109,10 @@ func nonTerminalExperiments(system *actor.System, expIDs []int32,
 func queryBulkExperiments(query *bun.SelectQuery,
 	filters *apiv1.BulkExperimentFilters,
 ) *bun.SelectQuery {
+	if len(filters.ExcludedExperimentIds) > 0 {
+		query = query.Where("e.id NOT IN (?)", bun.In(filters.ExcludedExperimentIds))
+	}
+
 	if filters.Description != "" {
 		query = query.Where("e.config->>'description' ILIKE ('%%' || ? || '%%')", filters.Description)
 	}
@@ -128,11 +133,11 @@ func queryBulkExperiments(query *bun.SelectQuery,
 		query = query.Where("e.archived = ?", filters.Archived.Value)
 	}
 	if len(filters.States) > 0 {
-		var allStates []string
+		var states []string
 		for _, state := range filters.States {
-			allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
+			states = append(states, strings.TrimPrefix(state.String(), "STATE_"))
 		}
-		query = query.Where("e.state IN (?)", bun.In(allStates))
+		query = query.Where("e.state IN (?)", bun.In(states))
 	}
 	if len(filters.UserIds) > 0 {
 		query = query.Where("e.owner_id IN (?)", bun.In(filters.UserIds))
@@ -185,6 +190,7 @@ func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
 		Model(&expIDs).
 		Column("e.id").
 		Join("JOIN projects p ON e.project_id = p.id").
+		Where("NOT e.archived").
 		Where("e.id IN (?)", bun.In(experimentIDList))
 
 	if query, err = AuthZProvider.Get().
@@ -220,6 +226,9 @@ func ToAPIResults(results []ExperimentActionResult) []*apiv1.ExperimentActionRes
 func ActivateExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
+	if filters != nil && filters.States == nil {
+		filters.States = []experimentv1.State{experimentv1.State_STATE_PAUSED}
+	}
 	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
 	if err != nil {
 		return nil, err
@@ -230,7 +239,7 @@ func ActivateExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
 					ID:    originalID,
 				})
 			}
@@ -246,6 +255,11 @@ func ActivateExperiments(ctx context.Context, system *actor.System,
 func CancelExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
+	if filters != nil && filters.States == nil {
+		for _, s := range model.NonTerminalStates {
+			filters.States = append(filters.States, model.StateToProto(s))
+		}
+	}
 	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
 	if err != nil {
 		return nil, err
@@ -256,7 +270,7 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
 					ID:    originalID,
 				})
 			}
@@ -285,6 +299,11 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 func KillExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
+	if filters != nil && filters.States == nil {
+		for _, s := range model.NonTerminalStates {
+			filters.States = append(filters.States, model.StateToProto(s))
+		}
+	}
 	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
 	if err != nil {
 		return nil, err
@@ -295,7 +314,7 @@ func KillExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
 					ID:    originalID,
 				})
 			}
@@ -324,6 +343,9 @@ func KillExperiments(ctx context.Context, system *actor.System,
 func PauseExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
+	if filters != nil && filters.States == nil {
+		filters.States = []experimentv1.State{experimentv1.State_STATE_ACTIVE}
+	}
 	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
 	if err != nil {
 		return nil, err
@@ -334,7 +356,7 @@ func PauseExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
 					ID:    originalID,
 				})
 			}
@@ -362,6 +384,7 @@ func DeleteExperiments(ctx context.Context, system *actor.System,
 		Column("e.id").
 		ColumnExpr(ProtoStateDBCaseString(experimentv1.State_value, "e.state", "state", "STATE_")).
 		ColumnExpr("COUNT(model_versions.id) AS versions").
+		Join("JOIN projects p ON e.project_id = p.id").
 		Join("LEFT JOIN checkpoints_view c ON c.experiment_id = e.id").
 		Join("LEFT JOIN model_versions ON model_versions.checkpoint_uuid = c.uuid").
 		Group("e.id")
@@ -369,7 +392,8 @@ func DeleteExperiments(ctx context.Context, system *actor.System,
 	if filters == nil {
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
 	} else {
-		query = queryBulkExperiments(query, filters)
+		query = queryBulkExperiments(query, filters).
+			Where("state IN (?)", bun.In(model.StatesToStrings(model.TerminalStates)))
 	}
 
 	query, err = AuthZProvider.Get().
@@ -408,9 +432,8 @@ func DeleteExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found or no delete permission: %d",
-						originalID),
-					ID: originalID,
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					ID:    originalID,
 				})
 			}
 		}
@@ -455,16 +478,15 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 		Model(&expChecks).
 		Column("e.archived").
 		Column("e.id").
-		ColumnExpr("e.state IN (?) AS state", bun.In([]string{
-			"CANCELED",
-			"COMPLETED",
-			"ERROR",
-		}))
+		ColumnExpr("e.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates))).
+		Join("JOIN projects p ON e.project_id = p.id")
 
 	if filters == nil {
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
 	} else {
-		query = queryBulkExperiments(query, filters)
+		query = queryBulkExperiments(query, filters).
+			Where("NOT e.archived").
+			Where("e.state IN (?)", bun.In(model.StatesToStrings(model.TerminalStates)))
 	}
 
 	query, err = AuthZProvider.Get().
@@ -503,7 +525,7 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
 					ID:    originalID,
 				})
 			}
@@ -548,16 +570,15 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 		Model(&expChecks).
 		Column("e.archived").
 		Column("e.id").
-		ColumnExpr("e.state IN (?) AS state", bun.In([]string{
-			"CANCELED",
-			"COMPLETED",
-			"ERROR",
-		}))
+		ColumnExpr("e.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates))).
+		Join("JOIN projects p ON e.project_id = p.id")
 
 	if filters == nil {
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
 	} else {
-		query = queryBulkExperiments(query, filters)
+		query = queryBulkExperiments(query, filters).
+			Where("archived").
+			Where("e.state IN (?)", bun.In(model.StatesToStrings(model.TerminalStates)))
 	}
 
 	query, err = AuthZProvider.Get().
@@ -596,7 +617,7 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
 					ID:    originalID,
 				})
 			}
@@ -648,7 +669,8 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 	if filters == nil {
 		getQ = getQ.Where("exp.id IN (?)", bun.In(experimentIds))
 	} else {
-		getQ = queryBulkExperiments(getQ, filters)
+		getQ = queryBulkExperiments(getQ, filters).
+			Where("NOT (exp.archived OR p.archived OR w.archived)")
 	}
 
 	if getQ, err = AuthZProvider.Get().FilterExperimentsQuery(ctx, *curUser, nil, getQ,
@@ -681,7 +703,7 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
 					ID:    originalID,
 				})
 			}

@@ -23,7 +23,8 @@ class RuntimeErrorTrial(det.keras.TFKerasTrial):
         model = keras.Sequential([keras.layers.Dense(10)])
         model = self.context.wrap_model(model)
         model.compile(
-            optimizer=tf.keras.optimizers.Adam(name="Adam"),
+            # TODO MLG-443 Migrate from legacy Keras optimizers
+            optimizer=tf.keras.optimizers.legacy.Adam(name="Adam"),
             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             metrics=[
                 tf.keras.metrics.Accuracy()

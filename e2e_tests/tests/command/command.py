@@ -29,7 +29,7 @@ class _InteractiveCommandProcess:
             while not m and iterations < max_iterations:
                 line = next(iterator)
                 iterations += 1
-                m = re.search(rb"Scheduling .* \(id: (.*)\)", line)
+                m = re.search(rb"Launched .* \(id: (.*)\)", line)
             assert m is not None
             self.task_id = m.group(1).decode() if m else None
 

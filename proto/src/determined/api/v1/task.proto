@@ -12,12 +12,19 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 // Get the requested task.
 message GetTaskRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
   // The requested task id.
   string task_id = 1;
 }
 
 // Response to GetTaskRequest.
 message GetTaskResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task" ] }
+  };
+
   // The requested task.
   determined.task.v1.Task task = 1;
 }

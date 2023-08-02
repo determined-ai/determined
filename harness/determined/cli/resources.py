@@ -1,12 +1,11 @@
 import sys
 from argparse import Namespace
-from typing import Any, List
 
 import requests
 
 from determined.common import api
 from determined.common.api import authentication
-from determined.common.declarative_argparse import Arg, Cmd
+from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd
 
 
 # Print the body of a response in chunks so we don't have to buffer the whole thing.
@@ -37,7 +36,7 @@ def aggregated(args: Namespace) -> None:
     print_response(api.get(args.master, path, params=params))
 
 
-args_description = [
+args_description: ArgsDescription = [
     Cmd(
         "res|ources",
         None,
@@ -70,4 +69,4 @@ args_description = [
             ),
         ],
     )
-]  # type: List[Any]
+]

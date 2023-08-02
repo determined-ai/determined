@@ -1,0 +1,842 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Determined Template
+Mappings:
+  RegionMap:
+    ap-northeast-1:
+      Master: ami-00910ef9457f0df47
+      Agent: ami-0d1f4953a665df453
+    # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
+    # ap-northeast-2:
+    #   Master: ami-035e3e44dc41db6a2
+    #   Agent: ami-019ca93bfb157bc91
+    # ap-southeast-1:
+    #   Master: ami-0fd1ee6c8b656f020
+    #   Agent: ami-040f0a455fb446aa7
+    # ap-southeast-2:
+    #   Master: ami-0b62ecd3babd1c548
+    #   Agent: ami-0485594a8551c03b1
+    eu-central-1:
+      Master: ami-0abbe417ed83c0b29
+      Agent: ami-0e8881dae5c06fd24
+    eu-west-1:
+      Master: ami-0e3f7dd2dc743e48a
+      Agent: ami-01cfb074c5c8a551f
+    # eu-west-2:
+    #   Master: ami-0d78429fb6af30994
+    #   Agent: ami-025f0f49e7cc01e82
+    us-east-1:
+      Master: ami-0172070f66a8ebe63
+      Agent: ami-00664190dab9da6bd
+    us-east-2:
+      Master: ami-0bafa3699418551cd
+      Agent: ami-058ac473ddc822489
+    us-west-2:
+      Master: ami-0ceeab680f529cc36
+      Agent: ami-0f095c663126efe04
+
+Parameters:
+  Keypair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Keypair to SSH
+
+  MasterInstanceType:
+    Type: String
+    Description: Instance Type of Master
+    Default: m5.large
+
+  AuxAgentInstanceType:
+    Type: String
+    Description: Instance Type of agents in the auxiliary resource pool
+    Default: t2.xlarge
+
+  ComputeAgentInstanceType:
+    Type: String
+    Description: Instance Type of Agents in the compute resource pool
+    Default: g4dn.metal
+
+  InboundCIDRRange:
+    Type: String
+    Description: Ip range for Inbound
+    Default: 0.0.0.0/0
+
+  SubnetId:
+    Type: String
+    Description: The subnet to deploy instances into. Optional.
+    Default: ''
+
+  ImageRepoPrefix:
+    Type: String
+    Description: Docker image repository to use for determined-master and determined-agent images
+    Default: determinedai
+
+  MasterImageName:
+    Type: String
+    Description: Name of the Docker image to use for the Determined master
+    Default: determined-master
+
+  AgentImageName:
+    Type: String
+    Description: Name of the Docker image to use for the Determined agent
+    Default: determined-agent
+
+  DockerUser:
+    Type: String
+    Description: Docker user to pull images that need authentication
+    Default: ""
+
+  DockerPass:
+    Type: String
+    Description: Docker password to pull images that need authentication
+    Default: ""
+
+  Version:
+    Type: String
+    Description: Determined version or commit for master docker image
+    Default: 0.23.5-dev0
+
+  DBPassword:
+    Type: String
+    Description: Password for database (eg. "postgres")
+    NoEcho: true
+
+  MaxAuxContainersPerAgent:
+    Type: Number
+    Description: Maximum number of CPU containers to launch on agents in the default auxiliary resource pool.
+    Default: 100
+
+  MaxIdleAgentPeriod:
+    Type: String
+    Description: How long before idle agents are shutdown
+    Default: 10m
+
+  MaxAgentStartingPeriod:
+    Type: String
+    Description: How long to wait for agents to start up before retrying
+    Default: 20m
+
+  MinDynamicAgents:
+    Type: Number
+    Description: Minimum number of agents to keep running
+    Default: 0
+
+  MaxDynamicAgents:
+    Type: Number
+    Description: Maximum number of agents to launch simultaneously
+    Default: 5
+
+  EnableCORS:
+    Type: String
+    Description: Whether to allow CORS requests or not
+    Default: false
+
+  MasterTLSCert:
+    Type: String
+    Description: Base64-encoded TLS certificate for the master
+    Default: ""
+
+  MasterTLSKey:
+    Type: String
+    Description: Base64-encoded TLS key for the master
+    Default: ""
+
+  MasterCertName:
+    Type: String
+    Description: Hostname to verify the master's TLS certificate against
+    Default: ""
+
+  SpotEnabled:
+    Type: String
+    Description: Whether to use spot instances or not
+    Default: false
+
+  SpotMaxPrice:
+    Type: String
+    Description: |
+                 The maximum hourly price you are willing to pay for the spot instance.
+                 Should be a number without a currency option, e.g. "5.00"
+    Default: ''
+
+  SchedulerType:
+    Type: String
+    Description: Scheduler to use in Determined.
+    Default: fair_share
+
+  PreemptionEnabled:
+    Type: String
+    Description: Whether preemption is enabled (only supported for priority scheduler).
+    Default: false
+
+  AgentReattachEnabled:
+    Type: String
+    Description: Whether master & agent try to recover running containers after a restart.
+    Default: false
+
+  AgentReconnectAttempts:
+    Type: Number
+    Description: Max attempts an agent has to reconnect
+    Default: 5
+
+  AgentReconnectBackoff:
+    Type: Number
+    Description: Time between reconnect attempts, with the exception of the first.
+    Default: 5
+
+  AgentConfigFileContents:
+    Type: String
+    Description: Contents of the agent config file
+    Default: ''
+
+  CpuEnvImage:
+    Type: String
+    Description: Docker image for CPU tasks
+    Default: ""
+
+  GpuEnvImage:
+    Type: String
+    Description: Docker image for GPU tasks
+    Default: ""
+
+  LogGroupPrefix:
+    Type: String
+    Description: Prefix for output CloudWatch log group (the full log group will be "/<prefix>/<stack>")
+    Default: determined
+
+  RetainLogGroup:
+    Type: String
+    Description: Whether to retain CloudWatch log group after the stack is deleted
+    Default: false
+
+  NotebookTimeout:
+    Type: Number
+    Description: Specifies the duration in seconds before idle notebook instances are automatically terminated.
+    Default: 0
+
+  MasterConfigTemplate:
+    Type: String
+    Description: Master config template
+    Default:
+### INJECT CODE: MasterConfigTemplate
+      |
+      checkpoint_storage:
+        type: s3
+        bucket: {{ .checkpoint_storage.bucket }}
+        save_experiment_best: 0
+        save_trial_best: 1
+        save_trial_latest: 1
+
+      db:
+        user: postgres
+        password: "{{ .db.password }}"
+        host: "{{ .db.host }}"
+        port: 5432
+        name: "{{ .db.name }}"
+        {{- if .db.ssl_mode }}
+        ssl_mode: "{{ .db.ssl_mode }}"
+        {{- else if .db.ssl_root_cert }}
+        ssl_mode: verify-ca
+        {{- else }}
+        ssl_mode: disable
+        {{- end }}
+        {{- if .db.ssl_root_cert }}
+        ssl_root_cert: "{{ .db.ssl_root_cert }}"
+        {{- end }}
+
+      enable_cors: {{ .enable_cors }}
+
+      resource_manager:
+        type: agent
+        default_aux_resource_pool: aux-pool
+        default_compute_resource_pool: compute-pool
+        scheduler:
+          type: {{ .resource_manager.scheduler.type }}
+          {{- if eq .resource_manager.scheduler.type "priority" }}
+          preemption: {{ .resource_manager.scheduler.preemption_enabled }}
+          {{- end }}
+
+      resource_pools:
+        - pool_name: aux-pool
+          max_aux_containers_per_agent: {{ .resource_pools.pools.aux_pool.max_aux_containers_per_agent }}
+          agent_reattach_enabled: {{ .resource_pools.pools.aux_pool.agent_reattach_enabled }}
+          provider:
+            instance_type: {{ .resource_pools.pools.aux_pool.instance_type }}
+            {{- toYaml .resource_pools.aws | nindent 6}}
+
+        - pool_name: compute-pool
+          max_aux_containers_per_agent: 0
+          agent_reattach_enabled: {{ .resource_pools.pools.compute_pool.agent_reattach_enabled }}
+          provider:
+            instance_type: {{ .resource_pools.pools.compute_pool.instance_type }}
+            cpu_slots_allowed: true
+            {{- toYaml .resource_pools.aws | nindent 6}}
+
+      {{ if eq .scheme "https" }}
+      security:
+        tls:
+          cert: /etc/determined/master.crt
+          key: /etc/determined/master.key
+      {{ end }}
+
+      {{ if or (or .cpu_env_image .gpu_env_image) .bind_mounts }}
+      task_container_defaults:
+        {{- if .bind_mounts }}
+        bind_mounts:
+          {{- toYaml .bind_mounts | nindent 4}}
+        {{- end }}
+        {{- if or .cpu_env_image .gpu_env_image }}
+        image:
+          cpu: {{ .cpu_env_image }}
+          gpu: {{ .gpu_env_image }}
+        {{- end }}
+      {{ end }}
+
+      {{ if ne .notebook_timeout 0.0 }}
+      notebook_timeout: {{ .notebook_timeout }}
+      {{ end }}
+### END INJECT CODE
+
+Conditions:
+  RetainLogGroup: !Equals [!Ref RetainLogGroup, true]
+  DeleteLogGroup: !Not [!Equals [!Ref RetainLogGroup, true]]
+  UseTLS: !And
+    - !Not [!Equals [!Ref MasterTLSCert, ""]]
+    - !Not [!Equals [!Ref MasterTLSKey, ""]]
+
+Resources:
+  CheckpointBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub det-${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
+
+  MasterSecurityGroupEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      DestinationSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+
+  MasterSecurityGroupInternet:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      CidrIp: 0.0.0.0/0
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+
+  MasterSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      FromPort: 8080
+      ToPort: 8080
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+
+  MasterSecurityGroupIngressUI:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      FromPort: 8080
+      ToPort: 8080
+      IpProtocol: tcp
+      CidrIp: !Ref InboundCIDRRange
+
+  MasterSecurityGroupTLSIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      FromPort: 8443
+      ToPort: 8443
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+
+  MasterSecurityGroupTLSIngressUI:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      FromPort: 8443
+      ToPort: 8443
+      IpProtocol: tcp
+      CidrIp: !Ref InboundCIDRRange
+
+  MasterSSHIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref InboundCIDRRange
+
+  AgentSecurityGroupEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt AgentSecurityGroup.GroupId
+      CidrIp: 0.0.0.0/0
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+
+  AgentSecurityGroupIngressMaster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt AgentSecurityGroup.GroupId
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+
+  AgentSecurityGroupIngressAgent:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt AgentSecurityGroup.GroupId
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+
+  AgentSSHIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt AgentSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref InboundCIDRRange
+
+  DatabaseEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt DatabaseSecurityGroup.GroupId
+      CidrIp: 0.0.0.0/0
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: -1
+
+  DatabaseIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt DatabaseSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+
+  MasterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group For Master
+      Tags:
+        - Key: user
+          Value: !Ref AWS::StackName
+
+  AgentSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group For Agent
+      Tags:
+        - Key: user
+          Value: !Ref AWS::StackName
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group For Database
+      Tags:
+        - Key: user
+          Value: !Ref AWS::StackName
+
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Delete
+    Properties:
+      DBInstanceClass: db.m7g.large
+      Engine: postgres
+      MasterUsername: postgres
+      MasterUserPassword: !Ref DBPassword
+      Tags:
+        - Key: user
+          Value: !Ref AWS::StackName
+      VPCSecurityGroups:
+        - !GetAtt DatabaseSecurityGroup.GroupId
+      AllocatedStorage: 20
+      StorageType: gp2
+
+  RetainedLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: RetainLogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /${LogGroupPrefix}/${AWS::StackName}
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: DeleteLogGroup
+    DeletionPolicy: Delete
+    Properties:
+      LogGroupName: !Sub /${LogGroupPrefix}/${AWS::StackName}
+
+  LogPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Roles:
+        - !Ref AgentRole
+        - !Ref MasterRole
+      PolicyName: agent-log-policy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - logs:DescribeLogStreams
+            Resource:
+              - !Sub arn:aws:logs:*:*:log-group:/${LogGroupPrefix}/${AWS::StackName},
+              - !Sub arn:aws:logs:*:*:log-group:/${LogGroupPrefix}/${AWS::StackName}:log-stream:*
+
+  MetricPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Roles:
+        - !Ref AgentRole
+        - !Ref MasterRole
+      PolicyName: agent-metric-policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - cloudwatch:PutMetricData
+            Effect: Allow
+            Resource: "*"
+
+  AgentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: agent-s3-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "s3:*"
+                Resource: "*"
+        - PolicyName: determined-ec2
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                Resource: "*"
+
+  AgentInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref AgentRole
+
+  MasterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: determined-agent-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:TerminateInstances
+                  - ec2:CreateTags
+                  - ec2:RunInstances
+                  - ec2:CancelSpotInstanceRequests
+                  - ec2:RequestSpotInstances
+                  - ec2:DescribeSpotInstanceRequests
+                Resource: "*"
+        - PolicyName: pass-role
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !GetAtt AgentRole.Arn
+        - PolicyName: master-s3-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "s3:*"
+                Resource: "*"
+      Tags:
+        - Key: user
+          Value: !Ref AWS::StackName
+
+  MasterInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref MasterRole
+
+  IMDSV2LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        MetadataOptions:
+          HttpTokens: required
+          HttpPutResponseHopLimit: 2
+
+  MasterInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref MasterInstanceType
+      ImageId: !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - Master
+      KeyName: !Ref Keypair
+      IamInstanceProfile: !Ref MasterInstanceProfile
+      LaunchTemplate:
+        LaunchTemplateId: !Ref IMDSV2LaunchTemplate
+        Version: !GetAtt IMDSV2LaunchTemplate.LatestVersionNumber
+      SecurityGroupIds:
+        - !Ref MasterSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 200
+            VolumeType: gp2
+      UserData:
+        Fn::Base64: !Sub
+          - |
+            Content-Type: multipart/mixed; boundary="//"
+            MIME-Version: 1.0
+
+            --//
+            Content-Type: text/cloud-config; charset="us-ascii"
+            MIME-Version: 1.0
+            Content-Transfer-Encoding: 7bit
+            Content-Disposition: attachment; filename="cloud-config.txt"
+
+            #cloud-config
+            cloud_final_modules:
+            - [scripts-user, always]
+
+            --//
+            Content-Type: text/x-shellscript; charset="us-ascii"
+            MIME-Version: 1.0
+            Content-Transfer-Encoding: 7bit
+            Content-Disposition: attachment; filename="userdata.txt"
+
+            #!/bin/bash
+            mkdir -p /usr/local/determined/etc
+
+            scheme=http
+            port=8080
+            if [ -n "${MasterTLSCert}" ] && [ -n "${MasterTLSKey}" ]; then
+              scheme=https
+              port=8443
+              base64 -d <<<"${MasterTLSCert}" | tee /usr/local/determined/etc/master.crt
+              base64 -d <<<"${MasterTLSKey}" | tee /usr/local/determined/etc/master.key
+            fi
+
+            cat << 'EOF' > /usr/local/determined/etc/master.yaml.tmpl
+            ${MasterConfigTemplate}
+            EOF
+
+            cat << EOF > /usr/local/determined/etc/master.yaml.context
+            checkpoint_storage:
+              bucket: ${CheckpointBucket}
+
+            db:
+              password: "${DBPassword}"
+              host: "${Database.Endpoint.Address}"
+              name: postgres
+              ssl_mode: require
+
+            enable_cors: ${EnableCORS}
+
+            resource_manager:
+              scheduler:
+                type: ${SchedulerType}
+                preemption: ${PreemptionEnabled}
+
+            resource_pools:
+              pools:
+                aux_pool:
+                  max_aux_containers_per_agent: ${MaxAuxContainersPerAgent}
+                  instance_type: ${AuxAgentInstanceType}
+                  agent_reattach_enabled: ${AgentReattachEnabled}
+                compute_pool:
+                  instance_type: ${ComputeAgentInstanceType}
+                  agent_reattach_enabled: ${AgentReattachEnabled}
+              aws:
+                master_cert_name: ${MasterCertName}
+                iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
+                image_id: ${AgentAmi}
+                agent_docker_image: ${ImageRepoPrefix}/${AgentImageName}:${Version}
+                instance_name: determined-agent-${AWS::StackName}
+                log_group: /${LogGroupPrefix}/${AWS::StackName}
+                log_stream: determined-agent
+                master_url: $scheme://local-ipv4:$port
+                max_idle_agent_period: ${MaxIdleAgentPeriod}
+                max_agent_starting_period: ${MaxAgentStartingPeriod}
+                min_instances: ${MinDynamicAgents}
+                max_instances: ${MaxDynamicAgents}
+                spot: ${SpotEnabled}
+                spot_max_price: "${SpotMaxPrice}"
+                network_interface:
+                  public_ip: true
+                  security_group_id: ${AgentSecurityGroup.GroupId}
+                  subnet_id: ${SubnetId}
+                type: aws
+                root_volume_size: 200
+                ssh_key_name: ${Keypair}
+                tag_key: det-${AWS::StackName}
+                tag_value: det-agent-${AWS::StackName}
+                agent_reconnect_attempts: ${AgentReconnectAttempts}
+                agent_reconnect_backoff: ${AgentReconnectBackoff}
+                agent_config_file_contents: ${AgentConfigFileContents}
+                startup_script: |
+                  if [ ! -z "${DockerUser}" ] && [ ! -z ${DockerPass} ]; then
+                    echo "${DockerPass}" | docker login --username "${DockerUser}" --password-stdin
+                  fi
+
+            scheme: $scheme
+            cpu_env_image: ${CpuEnvImage}
+            gpu_env_image: ${GpuEnvImage}
+            notebook_timeout: ${NotebookTimeout}
+            EOF
+
+            apt-get remove docker docker-engine docker.io containerd runc
+            apt-get update
+            apt-get install -y \
+                apt-transport-https \
+                ca-certificates \
+                curl \
+                gnupg-agent \
+                software-properties-common
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+            add-apt-repository \
+               "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+               $(lsb_release -cs) \
+               stable"
+            apt-get update
+            apt-get install -y docker-ce docker-ce-cli containerd.io
+
+            if [ ! -z "${DockerUser}" ] && [ ! -z ${DockerPass} ]; then
+              echo "${DockerPass}" | docker login --username "${DockerUser}" --password-stdin
+            fi
+
+            docker network create determined
+
+            docker stop $(docker ps -a -q)
+            docker rm $(docker ps -a -q)
+
+            touch /usr/local/determined/etc/master.yaml
+            docker run \
+                --name determined-master-configurator \
+                --rm \
+                -v /usr/local/determined/etc/:/etc/determined/ \
+                --entrypoint /bin/bash \
+                ${ImageRepoPrefix}/${MasterImageName}:${Version} \
+                -c "/usr/bin/determined-gotmpl -i /etc/determined/master.yaml.context /etc/determined/master.yaml.tmpl > /etc/determined/master.yaml"
+            test $? -eq 0 || ( echo "Failed to generate master.yaml" && exit 1 )
+
+            docker run \
+                --name determined-master \
+                --network determined \
+                --restart unless-stopped \
+                --log-driver=awslogs \
+                --log-opt awslogs-group=/${LogGroupPrefix}/${AWS::StackName} \
+                --log-opt awslogs-stream=determined-master \
+                -p "$port":"$port" \
+                -v /usr/local/determined/etc/:/etc/determined/ \
+                ${ImageRepoPrefix}/${MasterImageName}:${Version}
+            --//
+          -  AgentAmi: !FindInMap [RegionMap, !Ref "AWS::Region", Agent]
+
+      Tags:
+        - Key: user
+          Value: !Ref AWS::StackName
+        - Key: Name
+          Value: !Sub det-master-${AWS::StackName}
+
+  DeterminedAddress:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref MasterInstance
+      Domain: vpc
+      Tags:
+          - Key: user
+            Value: !Ref AWS::StackName
+
+Outputs:
+  MasterId:
+    Description: Id of Master Agent
+    Value: !Ref MasterInstance
+
+  MasterSecurityGroupId:
+    Description: Id of Master Security Group
+    Value: !GetAtt MasterSecurityGroup.GroupId
+
+  AgentSecurityGroupId:
+    Description: Id of Agent Security Group
+    Value: !GetAtt AgentSecurityGroup.GroupId
+
+  AgentInstanceProfile:
+    Description: Instance Profile for Agent
+    Value: !GetAtt AgentInstanceProfile.Arn
+
+  CheckpointBucket:
+    Description: S3 Bucket for checkpoints
+    Value: !Ref CheckpointBucket
+
+  Version:
+    Description: Determined version or commit
+    Value: !Ref Version
+
+  DeterminedAddress:
+    Description: Ip address of Determined Master
+    Value: !GetAtt MasterInstance.PublicDnsName
+
+  MasterPort:
+    Description: Network Port of Determined Master
+    Value: !If [UseTLS, "8443", "8080"]
+
+  MasterScheme:
+    Description: Determined Master URL scheme
+    Value: !If [UseTLS, "https", "http"]
+
+  AgentTagName:
+    Description: Tag Name for the agents
+    Value: !Sub determined-agent-${AWS::StackName}
+
+  LogGroup:
+    Description: The Log Group for Determined Logs
+    Value: !Sub /${LogGroupPrefix}/${AWS::StackName}
+
+  Region:
+    Description: The AWS Region the stack is deployed in
+    Value: !Ref AWS::Region

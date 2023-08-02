@@ -39,6 +39,12 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 	case actor.PostStop:
+		task := sproto.ResourcesReleased{AllocationID: t.ID}
+		if ctx.ExpectingResponse() {
+			ctx.Respond(ctx.Ask(t.RMRef, task).Get())
+		} else {
+			ctx.Tell(t.RMRef, task)
+		}
 	case SendRequestResourcesToResourceManager:
 		task := sproto.AllocateRequest{
 			AllocationID:      t.ID,
@@ -48,7 +54,6 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 			SlotsNeeded:       t.SlotsNeeded,
 			Preemptible:       !t.NonPreemptible,
 			ResourcePool:      t.ResourcePool,
-			AllocationRef:     ctx.Self(),
 		}
 		if t.Group == nil {
 			task.Group = ctx.Self()
@@ -61,7 +66,7 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 			ctx.Tell(t.RMRef, task)
 		}
 	case SendResourcesReleasedToResourceManager:
-		task := sproto.ResourcesReleased{AllocationRef: ctx.Self()}
+		task := sproto.ResourcesReleased{AllocationID: t.ID}
 		if ctx.ExpectingResponse() {
 			ctx.Respond(ctx.Ask(t.RMRef, task).Get())
 		} else {
@@ -75,18 +80,23 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 	case sproto.ResourcesAllocated:
 		rank := 0
 		for _, allocation := range msg.Resources {
-			if err := allocation.Start(ctx, nil, tasks.TaskSpec{}, sproto.ResourcesRuntimeInfo{
-				Token:        "",
-				AgentRank:    rank,
-				IsMultiAgent: len(msg.Resources) > 1,
-			}); err != nil {
+			if err := allocation.Start(
+				ctx.Self().System(),
+				nil,
+				tasks.TaskSpec{},
+				sproto.ResourcesRuntimeInfo{
+					Token:        "",
+					AgentRank:    rank,
+					IsMultiAgent: len(msg.Resources) > 1,
+				},
+			); err != nil {
 				ctx.Respond(err)
 				return nil
 			}
 			rank++
 		}
 	case sproto.ReleaseResources:
-		ctx.Tell(t.RMRef, sproto.ResourcesReleased{AllocationRef: ctx.Self()})
+		ctx.Tell(t.RMRef, sproto.ResourcesReleased{AllocationID: t.ID})
 
 	case sproto.ResourcesStateChanged:
 
@@ -132,7 +142,6 @@ func MockTaskToAllocateRequest(
 		JobID:             model.JobID(jobID),
 		SlotsNeeded:       mockTask.SlotsNeeded,
 		IsUserVisible:     true,
-		AllocationRef:     allocationRef,
 		Preemptible:       !mockTask.NonPreemptible,
 		JobSubmissionTime: jobSubmissionTime,
 	}

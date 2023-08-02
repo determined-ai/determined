@@ -51,7 +51,7 @@ if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
     ((DET_LOG_WAIT_COUNT += 2))
 fi
 
-if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
+if [ "$DET_RESOURCES_TYPE" == "slurm-job" ] || [ "$DET_NO_FLUENT" == "true" ]; then
     export PATH="/run/determined/pythonuserbase/bin:$PATH"
     if [ -z "$DET_PYTHON_EXECUTABLE" ]; then
         export DET_PYTHON_EXECUTABLE="python3"
@@ -72,6 +72,9 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
         fi
     fi
 
+    # Intercept stdout/stderr and send content to DET_MASTER via the log API.
+    # When completed, write a single character to the DET_LOG_WAIT_FIFO to signal
+    # completion of one procesor.
     exec 1> >(
         "$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stdout >&1
         printf x >$DET_LOG_WAIT_FIFO
@@ -82,7 +85,9 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
     )
 
     ((DET_LOG_WAIT_COUNT += 2))
+fi
 
+if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
     # Each container sends the Determined Master a notification that it's
     # running, so that the Determined Master knows whether to set the state
     # of the experiment to "Pulling", meaning some nodes are pulling down
@@ -103,6 +108,9 @@ fi
 # displays, here we simply replace them all with newlines to get a reasonable
 # effect in those cases. This must be after the multilog exec, since exec
 # redirections are applied in reverse order.
+#
+# When completed, write a single character to the DET_LOG_WAIT_FIFO to signal
+# completion of one procesor.
 exec > >(
     stdbuf -o0 tr '\r' '\n'
     printf x >$DET_LOG_WAIT_FIFO
@@ -113,4 +121,5 @@ exec > >(
 
 ((DET_LOG_WAIT_COUNT += 2))
 
+# As shell exits, wait for stdout/stderr processors to complete
 trap 'source /run/determined/task-logging-teardown.sh' EXIT

@@ -61,6 +61,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
       size="small"
       submit={{
         disabled,
+        handleError,
         handler: handleSubmit,
         text: BUTTON_TEXT,
       }}

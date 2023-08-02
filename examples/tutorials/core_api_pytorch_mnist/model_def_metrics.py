@@ -1,5 +1,6 @@
-# This script adds metric reporting via a Determined core.Context. This allows you to view metrics in the WebUI.
-# In this example we report training and testing losses as metrics to the Determined master.
+# This script reports training and testing losses as metrics
+# to the Determined master via a Determined core.Context.
+# This allows you to view metrics in the WebUI.
 
 from __future__ import print_function
 
@@ -42,7 +43,8 @@ class Net(nn.Module):
         return output
 
 
-# NEW: Modify function header to include core_context for metric reporting.
+# NEW: Modify function header to include core_context for metric
+# reporting.
 def train(args, model, device, train_loader, optimizer, epoch_idx, core_context):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -53,8 +55,10 @@ def train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
         loss.backward()
         optimizer.step()
 
-        # NEW: Increment batch_idx by 1 in if statement to avoid reporting metrics at batch_idx 0.
-        if (batch_idx + 1) % args.log_interval == 0:
+        # NEW: Print training progress and loss at specified intervals
+        # starting from the first batch.
+        batches_completed = batch_idx + 1
+        if batches_completed % args.log_interval == 0:
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch_idx,
@@ -64,19 +68,25 @@ def train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
                     loss.item(),
                 )
             )
-
-            # NEW: Report epoch-based training metrics to Determined master via core_context.
-            # Index by (batch_idx + 1) * (epoch-1) * len(train_loader) to continuously plot loss on one graph for consecutive epochs.
+            # Docs snippet start: report training metrics
+            # NEW: Report training metrics to Determined
+            # master via core_context.
+            # Index by (batch_idx + 1) * (epoch-1) * len(train_loader)
+            # to continuously plot loss on one graph for consecutive
+            # epochs.
             core_context.train.report_training_metrics(
-                steps_completed=(batch_idx + 1) + epoch_idx * len(train_loader),
-                metrics={"train_loss": loss.item(), "epoch": epoch_idx},
+                steps_completed=batches_completed + epoch_idx * len(train_loader),
+                metrics={"train_loss": loss.item()},
             )
-
+            # Docs snippet end: report training metrics
             if args.dry_run:
                 break
 
 
-# NEW: Modify function header to include args, epoch, test_loader, core_context for metric reporting and a steps_completed parameter to plot metrics.
+# Docs snippet start: include args
+# NEW: Modify function header to include args, epoch, test_loader,
+# core_context for metric reporting and a steps_completed parameter to
+# plot metrics.
 def test(args, model, device, test_loader, epoch, core_context, steps_completed):
     model.eval()
     test_loss = 0
@@ -96,12 +106,15 @@ def test(args, model, device, test_loader, epoch, core_context, steps_completed)
             test_loss, correct, len(test_loader.dataset), 100.0 * correct / len(test_loader.dataset)
         )
     )
-
-    # NEW: Report epoch_based validation metrics to Determined master via core_context.
+    # Docs snippet end: include args
+    # Docs snippet start: report validation metrics
+    # NEW: Report validation metrics to Determined master
+    # via core_context.
     core_context.train.report_validation_metrics(
         steps_completed=steps_completed,
-        metrics={"test_loss": test_loss, "epoch": epoch},
+        metrics={"test_loss": test_loss},
     )
+    # Docs snippet end: report validation metrics
 
 
 def main(core_context):
@@ -149,6 +162,7 @@ def main(core_context):
     )
     parser.add_argument("--seed", type=int, default=1, metavar="S", help="random seed (default: 1)")
 
+    ## Docs snippet start: log interval
     # NEW: Change log interval to 100 to reduce network overhead.
     parser.add_argument(
         "--log-interval",
@@ -157,14 +171,18 @@ def main(core_context):
         metavar="N",
         help="how many batches to wait before logging training status",
     )
-    # NEW: Remove save_model arg since this example only runs on Determined and we do not need it
-    # for model checkpointing as shown in later stages.
+    # Docs snippet end: log interval
+    # Docs snippet start: remove save model
+    # NEW: Remove save_model arg since this example only runs on
+    # Determined and we do not need it for model checkpointing as
+    # shown in later stages.
 
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     use_mps = not args.no_mps and torch.backends.mps.is_available()
 
     torch.manual_seed(args.seed)
+    # Docs snippet end: remove save model
 
     if use_cuda:
         device = torch.device("cuda")
@@ -183,23 +201,29 @@ def main(core_context):
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )
-    dataset1 = datasets.MNIST("../data", train=True, download=True, transform=transform)
-    dataset2 = datasets.MNIST("../data", train=False, transform=transform)
-    train_loader = torch.utils.data.DataLoader(dataset1, **train_kwargs)
-    test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
+
+    # NEW: change dataset1 to train_dataset and dataset_2 to test_dataset
+    train_dataset = datasets.MNIST("../data", train=True, download=True, transform=transform)
+    test_dataset = datasets.MNIST("../data", train=False, transform=transform)
+    train_loader = torch.utils.data.DataLoader(train_dataset, **train_kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dataset, **test_kwargs)
 
     model = Net().to(device)
     optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
     for epoch_idx in range(0, args.epochs):
+        # Docs snippet start: calculate steps completed
         # NEW: Calculate steps_completed for plotting test metrics.
         steps_completed = epoch_idx * len(train_loader)
+        # Docs snippet end: calculate steps completed
 
+        # Docs snippet start: pass core context
         # NEW: Pass core_context into train() and test().
         train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
 
-        # NEW: Pass args, test_loader, epoch, and steps_completed into test().
+        # NEW: Pass args, test_loader, epoch, and steps_completed into
+        # test().
         test(
             args,
             model,
@@ -210,11 +234,16 @@ def main(core_context):
             steps_completed=steps_completed,
         )
         scheduler.step()
+        # Docs snippet end: pass core context
 
-        # NEW: Remove model saving logic, checkpointing shown in next stage.
+        # NEW: Remove model saving logic, checkpointing shown in next
+        # stage.
 
 
+# Docs snippet start: modify main loop core context
 if __name__ == "__main__":
-    # NEW: Establish new determined.core.Context and pass to main function.
+    # NEW: Establish new determined.core.Context and pass to main
+    # function.
     with det.core.init() as core_context:
         main(core_context=core_context)
+# Docs snippet end: modify main loop core content

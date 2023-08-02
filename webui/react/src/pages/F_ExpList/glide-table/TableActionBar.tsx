@@ -1,12 +1,16 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Menu, Space } from 'antd';
-import { ItemType } from 'rc-menu/lib/interface';
-import React, { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
+import { Space } from 'antd';
+import React, { useCallback, useMemo, useState } from 'react';
 
-import Dropdown from 'components/Dropdown';
+import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
+import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
+import TableFilter from 'components/FilterForm/TableFilter';
 import Button from 'components/kit/Button';
+import { Column, Columns } from 'components/kit/Columns';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
+import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import {
   activateExperiments,
@@ -19,18 +23,17 @@ import {
   unarchiveExperiments,
 } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
-import { RecordKey } from 'shared/types';
-import { ErrorLevel } from 'shared/utils/error';
+import { RecordKey } from 'types';
 import {
   BulkActionResult,
   ExperimentAction,
-  ExperimentItem,
+  ExperimentWithTrial,
   Project,
+  ProjectColumn,
   ProjectExperiment,
-  RunState,
 } from 'types';
-import { modal, notification } from 'utils/dialogApi';
+import { notification } from 'utils/dialogApi';
+import { ErrorLevel } from 'utils/error';
 import handleError from 'utils/error';
 import {
   canActionExperiment,
@@ -40,6 +43,12 @@ import {
 import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
+import { pluralizer } from '../../../utils/string';
+import { ExpListView, RowHeight } from '../F_ExperimentList.settings';
+
+import ColumnPickerMenu from './ColumnPickerMenu';
+import MultiSortMenu, { Sort } from './MultiSortMenu';
+import { OptionsMenu } from './OptionsMenu';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -54,9 +63,9 @@ const batchActions = [
   ExperimentAction.Kill,
 ] as const;
 
-type BatchAction = (typeof batchActions)[number];
+export type BatchAction = (typeof batchActions)[number];
 
-const actionIcons: Record<BatchAction, string> = {
+const actionIcons: Record<BatchAction, IconName> = {
   [ExperimentAction.Activate]: 'play',
   [ExperimentAction.Pause]: 'pause',
   [ExperimentAction.Cancel]: 'stop',
@@ -69,32 +78,69 @@ const actionIcons: Record<BatchAction, string> = {
 } as const;
 
 interface Props {
-  experiments: Loadable<ExperimentItem>[];
+  experiments: Loadable<ExperimentWithTrial>[];
   filters: V1BulkExperimentFilters;
+  initialVisibleColumns: string[];
   onAction: () => Promise<void>;
-  selectAll: boolean;
-  selectedExperimentIds: number[];
-  setExperiments: Dispatch<SetStateAction<Loadable<ExperimentItem>[]>>;
+  sorts: Sort[];
+  onSortChange: (sorts: Sort[]) => void;
   project: Project;
+  projectColumns: Loadable<ProjectColumn[]>;
+  selectAll: boolean;
+  excludedExperimentIds?: Set<number>;
+  selectedExperimentIds: number[];
+  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
+  setVisibleColumns: (newColumns: string[]) => void;
+  toggleComparisonView?: () => void;
+  compareViewOn?: boolean;
   total: Loadable<number>;
+  formStore: FilterFormStore;
+  setIsOpenFilter: (value: boolean) => void;
+  isOpenFilter: boolean;
+  expListView: ExpListView;
+  setExpListView: (view: ExpListView) => void;
+  rowHeight: RowHeight;
+  onRowHeightChange: (r: RowHeight) => void;
 }
 
 const TableActionBar: React.FC<Props> = ({
   experiments,
+  excludedExperimentIds,
   filters,
   onAction,
+  onSortChange,
   selectAll,
   selectedExperimentIds,
-  setExperiments,
+  handleUpdateExperimentList,
+  sorts,
   project,
+  projectColumns,
   total,
+  initialVisibleColumns,
+  setVisibleColumns,
+  formStore,
+  setIsOpenFilter,
+  isOpenFilter,
+  expListView,
+  setExpListView,
+  toggleComparisonView,
+  rowHeight,
+  onRowHeightChange,
+  compareViewOn,
 }) => {
   const permissions = usePermissions();
+  const [batchAction, setBatchAction] = useState<BatchAction>();
+  const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const totalExperiments = Loadable.getOrElse(0, total);
+  const isMobile = useMobile();
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
-      acc[experiment.data.id] = getProjectExperimentForExperimentItem(experiment.data, project);
+      acc[experiment.data.experiment.id] = getProjectExperimentForExperimentItem(
+        experiment.data.experiment,
+        project,
+      );
       return acc;
     }, {} as Record<RecordKey, ProjectExperiment>);
   }, [experiments, project]);
@@ -109,12 +155,16 @@ const TableActionBar: React.FC<Props> = ({
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
+      let requestFilters = selectAll ? filters : undefined;
+      if (excludedExperimentIds?.size) {
+        requestFilters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds) };
+      }
       switch (action) {
         case ExperimentAction.OpenTensorBoard:
           return openCommandResponse(
             await openOrCreateTensorBoard({
               experimentIds: selectedExperimentIds,
-              filters: selectAll ? filters : undefined,
+              filters: requestFilters,
               workspaceId: project?.workspaceId,
             }),
           );
@@ -123,121 +173,48 @@ const TableActionBar: React.FC<Props> = ({
         case ExperimentAction.Activate:
           return await activateExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Archive:
           return await archiveExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Cancel:
           return await cancelExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Kill:
           return await killExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Pause:
           return await pauseExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Unarchive:
           return await unarchiveExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Delete:
           return await deleteExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
       }
     },
-    [selectedExperimentIds, selectAll, filters, project?.workspaceId, ExperimentMoveModal],
-  );
-
-  const handleUpdateExperimentList = useCallback(
-    (action: BatchAction, successfulIds: number[]) => {
-      const idSet = new Set(successfulIds);
-      switch (action) {
-        case ExperimentAction.OpenTensorBoard:
-          break;
-        case ExperimentAction.Activate:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, state: RunState.Active } : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Archive:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, archived: true } : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Cancel:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id)
-                  ? { ...experiment, state: RunState.StoppingCanceled }
-                  : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Kill:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id)
-                  ? { ...experiment, state: RunState.StoppingKilled }
-                  : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Pause:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, state: RunState.Paused } : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Unarchive:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, archived: false } : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Move:
-        case ExperimentAction.Delete:
-          setExperiments((prev) =>
-            prev.filter((expLoadable) =>
-              Loadable.match(expLoadable, {
-                Loaded: (experiment) => !idSet.has(experiment.id),
-                NotLoaded: () => true,
-              }),
-            ),
-          );
-          break;
-      }
-    },
-    [setExperiments],
+    [
+      selectedExperimentIds,
+      selectAll,
+      excludedExperimentIds,
+      filters,
+      project?.workspaceId,
+      ExperimentMoveModal,
+    ],
   );
 
   const handleSubmitMove = useCallback(
@@ -317,24 +294,6 @@ const TableActionBar: React.FC<Props> = ({
     [sendBatchActions, closeNotification, onAction, handleUpdateExperimentList],
   );
 
-  const showConfirmation = useCallback(
-    (action: BatchAction) => {
-      modal.confirm({
-        content: `
-        Are you sure you want to ${action.toLocaleLowerCase()}
-        all eligible ${
-          selectAll ? 'experiments matching the current filters' : 'selected experiments'
-        }?
-      `,
-        icon: <ExclamationCircleOutlined />,
-        okText: /cancel/i.test(action) ? 'Confirm' : action,
-        onOk: () => submitBatchAction(action),
-        title: 'Confirm Batch Action',
-      });
-    },
-    [selectAll, submitBatchAction],
-  );
-
   const handleBatchAction = useCallback(
     (action: string) => {
       if (action === ExperimentAction.OpenTensorBoard) {
@@ -342,52 +301,115 @@ const TableActionBar: React.FC<Props> = ({
       } else if (action === ExperimentAction.Move) {
         sendBatchActions(action);
       } else {
-        showConfirmation(action as BatchAction);
+        setBatchAction(action as BatchAction);
+        BatchActionConfirmModal.open();
       }
     },
-    [submitBatchAction, sendBatchActions, showConfirmation],
+    [BatchActionConfirmModal, submitBatchAction, sendBatchActions],
   );
 
-  const editMenuItems: ItemType[] = useMemo(() => {
-    return batchActions.map((action) => ({
-      danger: action === ExperimentAction.Delete,
-      disabled: !availableBatchActions.includes(action),
-      // The icon doesn't show up without being wrapped in a div.
-      icon: (
-        <div>
-          <Icon name={actionIcons[action]} />
-        </div>
-      ),
-      key: action,
-      label: action,
-    }));
+  const editMenuItems = useMemo(() => {
+    const groupedBatchActions = [
+      batchActions.slice(0, 1), // View in TensorBoard
+      batchActions.slice(1, 5), // Move, Archive, Unarchive, Delete
+      batchActions.slice(5), // Resume, Pause, Cancel, Kill
+    ];
+    const groupSize = groupedBatchActions.length;
+    return groupedBatchActions.reduce((acc, group, index) => {
+      const isLastGroup = index === groupSize - 1;
+      group.forEach((action) =>
+        acc.push({
+          danger: action === ExperimentAction.Delete,
+          disabled: !availableBatchActions.includes(action),
+          icon: <Icon name={actionIcons[action]} title={action} />,
+          key: action,
+          label: action,
+        }),
+      );
+      if (!isLastGroup) acc.push({ type: 'divider' });
+      return acc;
+    }, [] as MenuItem[]);
   }, [availableBatchActions]);
 
-  const handleAction = useCallback(
-    ({ key }: { key: string }) => {
-      handleBatchAction(key);
-    },
-    [handleBatchAction],
-  );
+  const selectionLabel = useMemo(() => {
+    let label = `${totalExperiments.toLocaleString()} ${pluralizer(
+      totalExperiments,
+      'experiment',
+    )}`;
+
+    if (selectAll) {
+      const all = !excludedExperimentIds?.size ? 'All ' : '';
+      const totalSelected = Loadable.isLoaded(total)
+        ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString() + ' '
+        : '';
+      label = `${all}${totalSelected}experiments selected`;
+    } else if (selectedExperimentIds.length > 0) {
+      label = `${selectedExperimentIds.length} of ${label} selected`;
+    }
+
+    return label;
+  }, [excludedExperimentIds, selectAll, selectedExperimentIds, total, totalExperiments]);
+
+  const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
   return (
-    <>
-      <Space className={css.base}>
-        {(selectAll || selectedExperimentIds.length > 0) && (
-          <Dropdown content={<Menu items={editMenuItems} onClick={handleAction} />}>
-            <Button icon={<Icon name="pencil" />}>
-              Edit (
-              {selectAll
-                ? Loadable.isLoaded(total)
-                  ? total.data.toLocaleString()
-                  : 'All'
-                : selectedExperimentIds.length}
-              )
+    <Columns>
+      <Column>
+        <Space className={css.base}>
+          <TableFilter
+            formStore={formStore}
+            isMobile={isMobile}
+            isOpenFilter={isOpenFilter}
+            loadableColumns={projectColumns}
+            setIsOpenFilter={setIsOpenFilter}
+          />
+          <MultiSortMenu
+            columns={projectColumns}
+            isMobile={isMobile}
+            sorts={sorts}
+            onChange={onSortChange}
+          />
+          <ColumnPickerMenu
+            initialVisibleColumns={initialVisibleColumns}
+            isMobile={isMobile}
+            projectColumns={projectColumns}
+            projectId={project.id}
+            setVisibleColumns={setVisibleColumns}
+          />
+          {(selectAll || selectedExperimentIds.length > 0) && (
+            <Dropdown menu={editMenuItems} onClick={handleAction}>
+              <Button hideChildren={isMobile}>Actions</Button>
+            </Dropdown>
+          )}
+          {!isMobile && <span className={css.expNum}>{selectionLabel}</span>}
+        </Space>
+      </Column>
+      <Column align="right">
+        <Columns>
+          <OptionsMenu
+            expListView={expListView}
+            rowHeight={rowHeight}
+            setExpListView={setExpListView}
+            onRowHeightChange={onRowHeightChange}
+          />
+          {!!toggleComparisonView && (
+            <Button
+              hideChildren={isMobile}
+              icon={<Icon name={compareViewOn ? 'panel-on' : 'panel'} title="compare" />}
+              onClick={toggleComparisonView}>
+              Compare
             </Button>
-          </Dropdown>
-        )}
-      </Space>
+          )}
+        </Columns>
+      </Column>
+      {batchAction && (
+        <BatchActionConfirmModal.Component
+          batchAction={batchAction}
+          onConfirm={() => submitBatchAction(batchAction)}
+        />
+      )}
       <ExperimentMoveModal.Component
+        excludedExperimentIds={excludedExperimentIds}
         experimentIds={selectedExperimentIds.filter(
           (id) =>
             canActionExperiment(ExperimentAction.Move, experimentMap[id]) &&
@@ -398,7 +420,7 @@ const TableActionBar: React.FC<Props> = ({
         sourceWorkspaceId={project.workspaceId}
         onSubmit={handleSubmitMove}
       />
-    </>
+    </Columns>
   );
 };
 

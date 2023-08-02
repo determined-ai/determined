@@ -1,6 +1,7 @@
 import { Alert } from 'antd';
 import React from 'react';
 
+import Empty from 'components/kit/Empty';
 import Link from 'components/Link';
 import Profiler from 'pages/TrialDetails/Profiles/Profiler';
 import { paths } from 'routes/utils';
@@ -19,21 +20,18 @@ const TrialDetailsProfiles: React.FC<Props> = ({ experiment, trial }: Props) => 
   return (
     <div className={css.base}>
       {!experiment.config.profiling?.enabled ? (
-        <Alert
+        <Empty
           description={
             <>
-              Learn about&nbsp;
+              Enable experiment profiling to analyze and debug model system performance.&nbsp;
               <Link
                 external
-                path={paths.docs('/training-apis/experiment-config.html#profiling')}
-                popout>
-                how to enable profiling on trials
+                path={paths.docs('/reference/training/experiment-config-reference.html#profiling')}>
+                Get started
               </Link>
-              .
             </>
           }
-          message="Profiling was not enabled for this trial."
-          type="warning"
+          title="No profiling enabled"
         />
       ) : !trial ? (
         <Alert message="Waiting for trial to become available." type="warning" />

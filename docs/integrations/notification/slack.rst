@@ -23,10 +23,11 @@ First, we need to create a Slack application and give the application permission
 appropriate Slack channel. Visit the `Slack App Managment page <https://api.slack.com/apps>`_ and
 click on the **Create New App** button.
 
-In the pop window asking for the app configuration choose the **From scratch** option.
+In app configuration, select **From scratch**.
 
 .. image:: /assets/images/slack-app-configuration.jpeg
    :width: 100%
+   :alt: Create an app showing the From Scratch option
 
 In the next window you will input an "App Name" and select the Workspace for the application.
 
@@ -42,6 +43,7 @@ Incoming Webhooks** as shown below.
 
 .. image:: /assets/images/slack-incoming-webhooks-page.jpeg
    :width: 100%
+   :alt: Slack API showing the Add New Webhook to Workspace option
 
 Now that webhooks are enabled we can set up a new webhook integration. Click the **Add New Webhook
 to Workspace** button at the bottom of the page. On the next page you will be asked to select the
@@ -77,11 +79,13 @@ If the **Base URL** is set correctly then Slack messages will include links as s
 
 .. image:: /assets/images/slack-message-with-links.png
    :width: 40%
+   :alt: Test Webhook Service when Base URL is set correctly
 
 If no **Base URL** is set then links will not be present in Slack messages.
 
 .. image:: /assets/images/slack-message-without-links.png
    :width: 40%
+   :alt: Test Webhook Service when no Base URL is set
 
 .. _setting-up-webhook-in-determined:
 
@@ -100,6 +104,7 @@ page.
 
 .. image:: /assets/images/slack-webhook-creation-in-determined.jpeg
    :width: 100%
+   :alt: Webhooks page displaying New Webhook fields you will interact with.
 
 In the pop up, paste the **Webhook URL** that was copied from Slack in the **URL** field. Choose
 **Slack** for the webhook type and then choose the triggers that you want to receive notifications
@@ -116,6 +121,7 @@ dots on the right side of any of the listed webhooks.
 
 .. image:: /assets/images/test-webhook.png
    :width: 100%
+   :alt: Webhooks page displaying where to find the Test Webhook action.
 
 If everything has been configured correctly you should receive a message from the Slack application
 you created with the message "test" as shown above.

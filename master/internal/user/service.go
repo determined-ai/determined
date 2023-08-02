@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"regexp"
 	"strings"
@@ -15,6 +15,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/config"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -61,7 +63,6 @@ var unauthenticatedPointsList = []string{
 
 // adminAuthPointsList contains the paths that require admin authentication.
 var adminAuthPointsList = []string{
-	"/config",
 	"/agents/.*/slots/.*",
 }
 
@@ -132,6 +133,8 @@ func (s *Service) extractToken(r *http.Request) (string, error) {
 			return "", echo.ErrUnauthorized
 		}
 		return strings.TrimPrefix(authRaw, "Bearer "), nil
+	} else if cookie, err := r.Cookie("det_jwt"); err == nil {
+		return cookie.Value, nil
 	} else if cookie, err := r.Cookie("auth"); err == nil {
 		return cookie.Value, nil
 	}
@@ -184,7 +187,7 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 			if !user.Active {
 				return echo.NewHTTPError(http.StatusForbidden, "user not active")
 			}
-			if adminOnly && !user.Admin {
+			if adminOnly && !user.Admin && !config.GetAuthZConfig().IsRBACEnabled() {
 				return echo.NewHTTPError(http.StatusForbidden, "user not admin")
 			}
 
@@ -235,7 +238,7 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 		}
 	)
 
-	body, err := ioutil.ReadAll(c.Request().Body)
+	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return nil, err
 	}
@@ -316,10 +319,8 @@ func (s *Service) getUsers(c echo.Context) (interface{}, error) {
 
 func canViewUserErrorHandle(currUser, user model.User, actionErr, notFoundErr error) error {
 	ctx := context.TODO()
-	if ok, err := AuthZProvider.Get().CanGetUser(ctx, currUser, user); err != nil {
-		return err
-	} else if !ok {
-		return notFoundErr
+	if err := AuthZProvider.Get().CanGetUser(ctx, currUser, user); err != nil {
+		return authz.SubIfUnauthorized(err, notFoundErr)
 	}
 	return actionErr
 }
@@ -348,7 +349,7 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 		}
 	)
 
-	body, err := ioutil.ReadAll(c.Request().Body)
+	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return nil, err
 	}
@@ -366,8 +367,8 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 		return nil, malformedRequestError
 	}
 
-	userNotFoundErr := echo.NewHTTPError(http.StatusBadRequest,
-		fmt.Sprintf("failed to get user '%s'", args.Username))
+	userNotFoundErr := api.NotFoundErrs("user", args.Username, false)
+
 	currUser := c.(*detContext.DetContext).MustGetUser()
 	user, err := UserByUsername(args.Username)
 	switch err {
@@ -447,7 +448,7 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 		}
 	)
 
-	body, err := ioutil.ReadAll(c.Request().Body)
+	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return nil, err
 	}
@@ -524,7 +525,7 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 		}
 	)
 
-	body, err := ioutil.ReadAll(c.Request().Body)
+	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return nil, err
 	}

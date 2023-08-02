@@ -2,6 +2,9 @@
  TensorFlow Keras Fashion MNIST Tutorial
 #########################################
 
+.. meta::
+   :description: Learn how to use a TensorFlow model in Determined by porting an existing tf.keras model. We'll use a simple image classification model for the Fashion MNIST dataset.
+
 This tutorial describes how to port an existing ``tf.keras`` model to Determined. We will port a
 simple image classification model for the Fashion MNIST dataset. This tutorial is based on the
 official `TensorFlow Basic Image Classification Tutorial

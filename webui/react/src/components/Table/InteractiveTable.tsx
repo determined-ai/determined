@@ -26,12 +26,12 @@ import {
   DraggableEventHandler,
 } from 'react-draggable';
 
+import Spinner from 'components/Spinner/Spinner';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
-import Spinner from 'shared/components/Spinner/Spinner';
-import { Primitive } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
+import { Primitive } from 'types';
+import { isEqual } from 'utils/data';
 
 import css from './InteractiveTable.module.scss';
 
@@ -78,7 +78,7 @@ export type ColumnDefs<ColumnName extends string, RecordType> = Record<
   ColumnDef<RecordType>
 >;
 
-interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
+interface InteractiveTableProps<RecordType, Settings> extends TableProps<RecordType> {
   ContextMenu?: React.FC<ContextMenuProps<RecordType>>;
   areRowsSelected?: boolean;
   columns: ColumnDef<RecordType>[];
@@ -86,8 +86,8 @@ interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
   defaultColumns?: string[];
   interactiveColumns?: boolean;
   numOfPinned?: number;
-  settings: InteractiveTableSettings;
-  updateSettings: UpdateSettings;
+  settings: Settings;
+  updateSettings: UpdateSettings<Settings>;
 }
 
 type DragState = 'draggingRight' | 'draggingLeft' | 'notDragging';
@@ -196,7 +196,7 @@ const Row = <T extends object>({
         <tr
           className={classes.join(' ')}
           {...props}
-          style={isPinned ? { position: 'sticky', top: 60 * index, zIndex: 10 } : undefined}>
+          style={isPinned ? { position: 'sticky', top: 48 * index, zIndex: 10 } : undefined}>
           {children}
         </tr>
       </ContextMenu>
@@ -347,7 +347,10 @@ const HeaderCell = ({
   return tableCell;
 };
 
-const InteractiveTable = <T extends object>({
+const InteractiveTable = <
+  T extends object,
+  S extends InteractiveTableSettings = InteractiveTableSettings,
+>({
   loading,
   scroll,
   dataSource,
@@ -362,7 +365,7 @@ const InteractiveTable = <T extends object>({
   defaultColumns,
   rowKey,
   ...props
-}: InteractiveTableProps<T>): JSX.Element => {
+}: InteractiveTableProps<T, S>): JSX.Element => {
   const columnDefs: ColumnDefs<string, T> = useMemo(
     () => columns.reduce((memo, column) => ({ ...memo, [column.dataIndex]: column }), {}),
     [columns],
@@ -430,10 +433,10 @@ const InteractiveTable = <T extends object>({
     ): void => {
       if (Array.isArray(tableSorter)) return;
 
-      const newSettings: Partial<InteractiveTableSettings> = {
-        tableLimit: tablePagination.pageSize,
-        tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
-      };
+      const newSettings: Partial<S> = {};
+      newSettings.tableLimit = tablePagination.pageSize ?? 0;
+      newSettings.tableOffset =
+        ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0);
 
       const { columnKey, order } = tableSorter;
       if (columnKey && settingsColumns.find((col) => columnDefs[col]?.key === columnKey)) {
@@ -458,7 +461,12 @@ const InteractiveTable = <T extends object>({
       const width = reorderedWidths.splice(fromIndex, 1)[0];
       reorderedColumns.splice(toIndex, 0, col);
       reorderedWidths.splice(toIndex, 0, width);
-      updateSettings({ columns: reorderedColumns, columnWidths: reorderedWidths });
+
+      const newSettings: Partial<S> = {};
+      newSettings.columns = reorderedColumns;
+      newSettings.columnWidths = reorderedWidths;
+
+      updateSettings(newSettings);
       setWidthData({ ...widthData, widths: reorderedWidths });
     },
     [settingsColumns, settings.columnWidths, widthData, updateSettings],
@@ -534,7 +542,9 @@ const InteractiveTable = <T extends object>({
   const handleResizeStop = useCallback(() => {
     setIsResizing(false);
 
-    updateSettings({ columnWidths: widthData.widths.map(Math.round) });
+    const newSettings: Partial<S> = {};
+    newSettings.columnWidths = widthData.widths.map(Math.round);
+    updateSettings(newSettings);
   }, [updateSettings, widthData]);
 
   const onHeaderCell = useCallback(

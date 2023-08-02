@@ -31,3 +31,8 @@ class Simple(base.DeterminedDeployment):
             update_terminate_agents=update_terminate_agents,
         )
         self.print_results()
+
+
+class SimpleRDS(Simple):
+    template = "simple-rds.yaml"
+    deployment_type = constants.deployment_types.SIMPLE_RDS

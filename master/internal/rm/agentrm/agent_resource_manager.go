@@ -6,21 +6,19 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/rm/actorrm"
-
 	"github.com/labstack/echo/v4"
-
-	"github.com/determined-ai/determined/master/pkg/aproto"
-	"github.com/determined-ai/determined/master/pkg/model"
-
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
@@ -103,25 +101,60 @@ func (a ResourceManager) CheckMaxSlotsExceeded(
 
 // ResolveResourcePool fully resolves the resource pool name.
 func (a ResourceManager) ResolveResourcePool(
-	ctx actor.Messenger, name string, slots int,
+	ctx actor.Messenger, name string, workspaceID, slots int,
 ) (string, error) {
+	ctxTODO := context.TODO()
+	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctxTODO, workspaceID)
+	if err != nil {
+		return "", err
+	}
 	// If the resource pool isn't set, fill in the default at creation time.
 	if name == "" && slots == 0 {
-		req := sproto.GetDefaultAuxResourcePoolRequest{}
-		resp, err := a.GetDefaultAuxResourcePool(ctx, req)
-		if err != nil {
-			return "", fmt.Errorf("defaulting to aux pool: %w", err)
+		if defaultAuxPool == "" {
+			req := sproto.GetDefaultAuxResourcePoolRequest{}
+			resp, err := a.GetDefaultAuxResourcePool(ctx, req)
+			if err != nil {
+				return "", fmt.Errorf("defaulting to aux pool: %w", err)
+			}
+			return resp.PoolName, nil
 		}
-		return resp.PoolName, nil
+		if err := a.ValidateResourcePool(ctx, defaultAuxPool); err != nil {
+			return "", fmt.Errorf("validating default aux pool: %w", err)
+		}
+		return defaultAuxPool, nil
 	}
 
 	if name == "" && slots >= 0 {
-		req := sproto.GetDefaultComputeResourcePoolRequest{}
-		resp, err := a.GetDefaultComputeResourcePool(ctx, req)
-		if err != nil {
-			return "", fmt.Errorf("defaulting to compute pool: %w", err)
+		if defaultComputePool == "" {
+			req := sproto.GetDefaultComputeResourcePoolRequest{}
+			resp, err := a.GetDefaultComputeResourcePool(ctx, req)
+			if err != nil {
+				return "", fmt.Errorf("defaulting to compute pool: %w", err)
+			}
+			return resp.PoolName, nil
 		}
-		return resp.PoolName, nil
+		if err := a.ValidateResourcePool(ctx, defaultComputePool); err != nil {
+			return "", fmt.Errorf("validating default compute pool: %w", err)
+		}
+		return defaultComputePool, nil
+	}
+
+	poolNames, _, err := db.ReadRPsAvailableToWorkspace(
+		context.TODO(), int32(workspaceID), 0, -1, config.GetMasterConfig().ResourcePools)
+	if err != nil {
+		return "", err
+	}
+	found := false
+	for _, poolName := range poolNames {
+		if name == poolName {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return "", fmt.Errorf(
+			"resource pool %s does not exist or is not available to workspace id %d",
+			name, workspaceID)
 	}
 
 	if err := a.ValidateResourcePool(ctx, name); err != nil {
@@ -243,13 +276,6 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 
 	case sproto.RecoverJobPosition:
 		a.forwardToPool(ctx, msg.ResourcePool, msg)
-
-	case sproto.GetAllocationHandler:
-		if handler, err := a.aggregateTaskHandler(a.forwardToAllPools(ctx, msg)); err != nil {
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(handler)
-		}
 
 	case sproto.GetAllocationSummary:
 		if summary := a.aggregateTaskSummary(a.forwardToAllPools(ctx, msg)); summary != nil {

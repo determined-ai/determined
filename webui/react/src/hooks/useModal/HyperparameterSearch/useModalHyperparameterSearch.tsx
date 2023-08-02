@@ -1,13 +1,5 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import {
-  Alert,
-  Select as AntdSelect,
-  ModalFuncProps,
-  Radio,
-  RadioChangeEvent,
-  Space,
-  Typography,
-} from 'antd';
+import { Alert, Select as AntdSelect, ModalFuncProps, Radio, Space, Typography } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -15,24 +7,19 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
 import Form from 'components/kit/Form';
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
-import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
-import { Primitive } from 'shared/types';
-import { clone, flattenObject, isBoolean, unflattenObject } from 'shared/utils/data';
-import { DetError, ErrorLevel, ErrorType, isDetError } from 'shared/utils/error';
-import { roundToPrecision } from 'shared/utils/number';
-import { routeToReactUrl } from 'shared/utils/routes';
-import { validateLength } from 'shared/utils/string';
 import { maxPoolSlotCapacity } from 'stores/cluster';
 import clusterStore from 'stores/cluster';
+import { Primitive } from 'types';
 import {
   ExperimentItem,
   ExperimentSearcherName,
@@ -43,9 +30,14 @@ import {
   TrialHyperparameters,
   TrialItem,
 } from 'types';
+import { clone, flattenObject, isBoolean, unflattenObject } from 'utils/data';
+import { DetError, ErrorLevel, ErrorType, isDetError } from 'utils/error';
 import { handleWarning } from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { roundToPrecision } from 'utils/number';
 import { useObservable } from 'utils/observable';
+import { routeToReactUrl } from 'utils/routes';
+import { validateLength } from 'utils/string';
 
 import css from './useModalHyperparameterSearch.module.scss';
 
@@ -73,17 +65,17 @@ interface SearchMethod {
 const SEARCH_METHODS: Record<string, SearchMethod> = {
   ASHA: {
     displayName: 'Adaptive',
-    icon: <Icon name="searcher-adaptive" />,
+    icon: <Icon name="searcher-adaptive" title="Adaptive" />,
     name: 'adaptive_asha',
   },
   Grid: {
     displayName: 'Grid',
-    icon: <Icon name="searcher-grid" />,
+    icon: <Icon name="searcher-grid" title="Grid" />,
     name: 'grid',
   },
   Random: {
     displayName: 'Random',
-    icon: <Icon name="searcher-random" />,
+    icon: <Icon name="searcher-random" title="Random" />,
     name: 'random',
   },
 } as const;
@@ -119,14 +111,6 @@ const useModalHyperparameterSearch = ({
   const [currentPage, setCurrentPage] = useState(0);
   const [validationError, setValidationError] = useState(false);
   const formValues = Form.useWatch([], form);
-
-  useEffect(() => {
-    const cancelerTemp = canceler.current;
-    clusterStore.fetchResourcePools(cancelerTemp.signal);
-    return () => {
-      cancelerTemp.abort();
-    };
-  }, []);
 
   const trialHyperparameters = useMemo(() => {
     if (!trial) return;
@@ -369,13 +353,16 @@ const useModalHyperparameterSearch = ({
     validateForm();
   }, [validateForm]);
 
-  const handleSelectSearcher = useCallback((e: RadioChangeEvent) => {
-    const value = e.target.value;
-    setSearcher(
-      Object.values(SEARCH_METHODS).find((searcher) => searcher.name === value) ??
-        SEARCH_METHODS.ASHA,
-    );
-  }, []);
+  const handleSelectSearcher = useCallback(
+    (searcherName: string) => {
+      const searcher =
+        Object.values(SEARCH_METHODS).find((searcher) => searcher.name === searcherName) ??
+        SEARCH_METHODS.ASHA;
+      setSearcher(searcher);
+      form.setFieldValue('searcher', searcher.name);
+    },
+    [form],
+  );
 
   const hyperparameterPage = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
@@ -446,17 +433,16 @@ const useModalHyperparameterSearch = ({
             </div>
           }
           name="searcher">
-          <Radio.Group
-            className={css.searcherGroup}
-            optionType="button"
-            onChange={handleSelectSearcher}>
-            {Object.values(SEARCH_METHODS).map((searcher) => (
-              <Radio.Button key={searcher.name} value={searcher.name}>
-                <div className={css.searcherButton}>
-                  {searcher.icon}
-                  <p>{searcher.displayName}</p>
-                </div>
-              </Radio.Button>
+          <Radio.Group className={css.searcherGroup} optionType="button">
+            {Object.values(SEARCH_METHODS).map((searcherOption) => (
+              <Button
+                column
+                icon={searcherOption.icon}
+                key={searcherOption.name}
+                selected={searcher.name === searcherOption.name}
+                onClick={() => handleSelectSearcher(searcherOption.name)}>
+                {searcherOption.displayName}
+              </Button>
             ))}
           </Radio.Group>
         </Form.Item>
@@ -524,7 +510,7 @@ const useModalHyperparameterSearch = ({
             label={
               <div className={css.labelWithTooltip}>
                 Early stopping mode
-                <Tooltip title="How aggressively to perform early stopping of underperforming trials">
+                <Tooltip content="How aggressively to perform early stopping of underperforming trials">
                   <InfoCircleOutlined />
                 </Tooltip>
               </div>
@@ -565,7 +551,7 @@ const useModalHyperparameterSearch = ({
             label={
               <div className={css.labelWithTooltip}>
                 Max concurrent trials
-                <Tooltip title="Use 0 for max possible parallelism">
+                <Tooltip content="Use 0 for max possible parallelism">
                   <InfoCircleOutlined style={{ color: 'var(--theme-colors-monochrome-8)' }} />
                 </Tooltip>
               </div>

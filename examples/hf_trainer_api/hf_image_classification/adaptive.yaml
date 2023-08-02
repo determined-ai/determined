@@ -1,0 +1,50 @@
+name: vision transformer adaptive
+debug: false
+environment:
+  environment_variables:
+    - NCCL_DEBUG=INFO
+    # You may need to modify this to match your network configuration.
+    - NCCL_SOCKET_IFNAME=ens,eth,ib
+resources:
+  slots_per_trial: 2
+searcher:
+  name: adaptive_asha
+  max_length:
+    batches: 100
+  max_trials: 64
+  max_rungs: 4
+  divisor: 4
+  metric: eval_loss
+hyperparameters:
+  training_arguments:
+    learning_rate:
+      type: log
+      base: 10
+      minval: -5
+      maxval: -2
+    adam_epsilon:
+      type: log
+      base: 10
+      minval: -10
+      maxval: -7
+entrypoint: >-
+  python -m determined.launch.torch_distributed
+  python image_classification.py
+  --dataset_name beans
+  --output_dir ./beans_outputs/
+  --remove_unused_columns False
+  --do_train
+  --do_eval
+  --max_steps 100
+  --per_device_train_batch_size 8
+  --per_device_eval_batch_size 8
+  --logging_strategy steps
+  --logging_steps 10
+  --evaluation_strategy steps
+  --eval_steps 10
+  --save_total_limit 3
+  --seed 1337
+  --save_strategy steps
+  --save_steps 20
+  --trust_remote_code false
+max_restarts: 0

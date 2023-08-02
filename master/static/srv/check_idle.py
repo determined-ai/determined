@@ -5,6 +5,7 @@ import socket
 import time
 
 import requests
+
 from determined.common import api
 from determined.common.api import certs
 
@@ -44,9 +45,9 @@ def wait_for_jupyter(addr):
 
 def is_idle(request_address, mode):
     try:
-        kernels = requests.get(request_address + "/api/kernels").json()
-        terminals = requests.get(request_address + "/api/terminals").json()
-        sessions = requests.get(request_address + "/api/sessions").json()
+        kernels = requests.get(request_address + "/api/kernels", verify=False).json()
+        terminals = requests.get(request_address + "/api/terminals", verify=False).json()
+        sessions = requests.get(request_address + "/api/sessions", verify=False).json()
     except Exception:
         logging.warning("Cannot get notebook kernel status", exc_info=True)
         return False
@@ -68,9 +69,10 @@ def is_idle(request_address, mode):
 
 
 def main():
+    requests.packages.urllib3.disable_warnings()
     port = os.environ["NOTEBOOK_PORT"]
     notebook_id = os.environ["DET_TASK_ID"]
-    notebook_server = f"http://127.0.0.1:{port}/proxy/{notebook_id}"
+    notebook_server = f"https://127.0.0.1:{port}/proxy/{notebook_id}"
     master_url = os.environ["DET_MASTER"]
     cert = certs.default_load(master_url)
     try:

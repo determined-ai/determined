@@ -1,0 +1,7 @@
+.. note::
+
+   For this tutorial, we've already created the script for you. Take a moment to review the changes
+   we've made to the provided script so that you'll know how to modify your own script. 
+   
+   To run the experiment, you can either use the provided scripts, which have already been modified, 
+   or you can build your own file by making changes to "model_def.py".

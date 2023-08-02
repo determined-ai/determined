@@ -1,11 +1,17 @@
-# In this stage we introduce distributed training. You should be able to see multiple slots active in the Cluster tab corresponding to
-# the value you set for slots_per_trial you set in distributed.yaml, as well as logs appearing from multiple ranks, in the WebUI.
+# In this stage we introduce distributed training. You should be able
+# to see multiple slots active in the Cluster tab corresponding to
+# the value you set for slots_per_trial you set in distributed.yaml,
+# as well as logs appearing from multiple ranks, in the WebUI.
 
 from __future__ import print_function
 
 import argparse
+import os
 import pathlib
 
+import filelock
+
+# Docs snippet start: import torch distrib
 # NEW: Import torch distributed libraries.
 import torch
 import torch.distributed as dist
@@ -18,6 +24,8 @@ from torch.utils.data.distributed import DistributedSampler
 from torchvision import datasets, transforms
 
 import determined as det
+
+# Docs snippet end: import torch distrib
 
 
 class Net(nn.Module):
@@ -65,14 +73,15 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch_idx,
                     loss.item(),
                 )
             )
-
-            # NEW: Report metrics only on rank 0: only the chief worker may report training metrics and progress,
-            # or upload checkpoints.
+            # Docs snippet start: report metrics rank 0
+            # NEW: Report metrics only on rank 0: only the chief worker
+            # may report training metrics and progress, or upload checkpoints.
             if core_context.distributed.rank == 0:
                 core_context.train.report_training_metrics(
                     steps_completed=(batch_idx + 1) + epoch_idx * len(train_loader),
                     metrics={"train_loss": loss.item()},
                 )
+            # Docs snippet end: report metrics rank 0
 
             if args.dry_run:
                 break
@@ -195,18 +204,21 @@ def main(core_context):
     torch.manual_seed(args.seed)
 
     if use_cuda:
+        # Docs snippet start: set device
         # NEW: Change selected device to the one with index of local_rank.
         device = torch.device(core_context.distributed.local_rank)
     elif use_mps:
         device = torch.device("mps")
     else:
         device = torch.device("cpu")
+        # Docs snippet end: set device
 
     train_kwargs = {"batch_size": args.batch_size}
     test_kwargs = {"batch_size": args.test_batch_size}
     if use_cuda:
-        # NEW: Remove DataLoader shuffle argument since it is mutually exlusive
-        # with DistributedSampler shuffle, set shuffle=True there instead.
+        # NEW: Remove DataLoader shuffle argument since it is mutually
+        # exlusive with DistributedSampler shuffle, set shuffle=True
+        # there instead.
         cuda_kwargs = {"num_workers": 1, "pin_memory": True}
         train_kwargs.update(cuda_kwargs)
         test_kwargs.update(cuda_kwargs)
@@ -215,32 +227,39 @@ def main(core_context):
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )
 
-    dataset1 = datasets.MNIST("../data", train=True, download=True, transform=transform)
-    dataset2 = datasets.MNIST("../data", train=False, transform=transform)
+    with filelock.FileLock(os.path.join(os.getcwd(), "lock")):
+        train_dataset = datasets.MNIST("../data", train=True, download=True, transform=transform)
+        test_dataset = datasets.MNIST("../data", train=False, transform=transform)
 
-    # NEW: Create DistributedSampler object for sharding data into core_context.distributed.size parts.
-    sampler1 = DistributedSampler(
-        dataset1,
+    # Docs snippet start: shard data
+    # NEW: Create DistributedSampler object for sharding data into
+    # core_context.distributed.size parts.
+    train_sampler = DistributedSampler(
+        train_dataset,
         num_replicas=core_context.distributed.size,
         rank=core_context.distributed.rank,
         shuffle=True,
     )
-    sampler2 = DistributedSampler(
-        dataset2,
+    test_sampler = DistributedSampler(
+        test_dataset,
         num_replicas=core_context.distributed.size,
         rank=core_context.distributed.rank,
         shuffle=True,
     )
 
     # NEW: Shard data.
-    train_loader = torch.utils.data.DataLoader(dataset1, sampler=sampler1, **train_kwargs)
-    test_loader = torch.utils.data.DataLoader(dataset2, sampler=sampler2, **test_kwargs)
+    train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, **train_kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dataset, sampler=test_sampler, **test_kwargs)
+    # Docs snippet end: shard data
 
     hparams = info.trial.hparams
 
+    # Docs snippet start: DDP
     model = Net(hparams).to(device)
-    # NEW: Wrap model with DDP. Aggregates gradients and synchronizes model training across slots.
+    # NEW: Wrap model with DDP. Aggregates gradients and synchronizes
+    # model training across slots.
     model = DDP(model, device_ids=[device], output_device=device)
+    # Docs snippet end: DDP
 
     optimizer = optim.Adadelta(model.parameters(), lr=hparams["learning_rate"])
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
@@ -281,12 +300,15 @@ def main(core_context):
             op.report_completed(test_loss)
 
 
+# Docs snippet start: initialize process group
 if __name__ == "__main__":
     # NEW: Initialize process group using torch.
     dist.init_process_group("nccl")
 
     # NEW: Initialize distributed context using from_torch_distributed
-    # (obtains info such as rank, size, etc. from default torch environment variables).
+    # (obtains info such as rank, size, etc. from default torch
+    # environment variables).
     distributed = det.core.DistributedContext.from_torch_distributed()
     with det.core.init(distributed=distributed) as core_context:
         main(core_context)
+    # Docs snippet end: initialize process group

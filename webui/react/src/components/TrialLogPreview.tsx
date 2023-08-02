@@ -11,8 +11,8 @@ import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
-import { formatDatetime } from 'shared/utils/datetime';
 import { LogLevel, RunState, TrialDetails } from 'types';
+import { formatDatetime } from 'utils/datetime';
 
 import css from './TrialLogPreview.module.scss';
 
@@ -121,7 +121,7 @@ const TrialLogPreview: React.FC<Props> = ({
   return (
     <div className={classes.join(' ')}>
       {children}
-      <Tooltip mouseEnterDelay={0.25} title="View Logs">
+      <Tooltip content="View Logs" mouseEnterDelay={0.25}>
         <div className={css.preview} onClick={handleClick}>
           <div className={css.container} ref={containerRef}>
             {logEntry && (

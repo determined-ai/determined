@@ -3,6 +3,7 @@ package provconfig
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -25,7 +26,7 @@ const MaxNamePrefixLen = 30
 
 // GCPClusterConfig describes the configuration for a GCP cluster managed by Determined.
 type GCPClusterConfig struct {
-	BaseConfig *compute.Instance `json:"base_config"`
+	BaseConfig *compute.InstanceProperties `json:"base_config"`
 
 	Project string `json:"project"`
 	Zone    string `json:"zone"`
@@ -55,8 +56,7 @@ type GCPClusterConfig struct {
 func DefaultGCPClusterConfig() *GCPClusterConfig {
 	return &GCPClusterConfig{
 		BootDiskSize:        200,
-		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-9b5db1b",
-		BootDiskType:        "pd-standard",
+		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-6eceaca",
 		LabelKey:            "managed-by",
 		InstanceType: gceInstanceType{
 			MachineType: "n1-standard-32",
@@ -96,6 +96,12 @@ func (c *GCPClusterConfig) InitDefaultValues() error {
 			return err
 		}
 	}
+	if len(c.BootDiskType) == 0 {
+		c.BootDiskType = fmt.Sprintf(
+			"projects/determined-ai/zones/%s/diskTypes/pd-standard",
+			c.Zone,
+		)
+	}
 
 	// One common reason that metadata.InstanceName() fails is that the master is not
 	// running in GCP. Use a default name here rather than holding up initializing the provider.
@@ -127,25 +133,21 @@ func (c *GCPClusterConfig) InitDefaultValues() error {
 	return nil
 }
 
-// Merge GCP cluster config.
-func (c *GCPClusterConfig) Merge() *compute.Instance {
-	rb := &compute.Instance{}
+// InstanceProperties GCP cluster config.
+func (c *GCPClusterConfig) InstanceProperties() *compute.InstanceProperties {
+	rb := &compute.InstanceProperties{}
 	if c.BaseConfig != nil {
 		*rb = *c.BaseConfig
 	}
 
 	if len(c.InstanceType.MachineType) > 0 {
-		rb.MachineType = fmt.Sprintf(
-			"zones/%s/machineTypes/%s", c.Zone, c.InstanceType.MachineType,
-		)
+		rb.MachineType = c.InstanceType.MachineType
 	}
 
 	if len(c.InstanceType.GPUType) > 0 && c.InstanceType.GPUNum > 0 {
 		rb.GuestAccelerators = []*compute.AcceleratorConfig{
 			{
-				AcceleratorType: fmt.Sprintf(
-					"zones/%s/acceleratorTypes/%s", c.Zone, c.InstanceType.GPUType,
-				),
+				AcceleratorType:  c.InstanceType.GPUType,
 				AcceleratorCount: int64(c.InstanceType.GPUNum),
 			},
 		}
@@ -158,7 +160,7 @@ func (c *GCPClusterConfig) Merge() *compute.Instance {
 				InitializeParams: &compute.AttachedDiskInitializeParams{
 					SourceImage: c.BootDiskSourceImage,
 					DiskSizeGb:  int64(c.BootDiskSize),
-					DiskType:    c.BootDiskType,
+					DiskType:    filepath.Base(c.BootDiskType),
 				},
 				AutoDelete: true,
 			},
@@ -182,6 +184,7 @@ func (c *GCPClusterConfig) Merge() *compute.Instance {
 			networkInterface.AccessConfigs = []*compute.AccessConfig{
 				{
 					NetworkTier: "PREMIUM",
+					Type:        "ONE_TO_ONE_NAT",
 				},
 			}
 		}

@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -56,34 +56,6 @@ var (
 	TrialAvailableSeriesBatchWaitTime = 15 * time.Second
 )
 
-func (a *apiServer) canGetTrialsExperimentAndCheckCanDoAction(ctx context.Context,
-	trialID int, actionFunc func(context.Context, model.User, *model.Experiment) error,
-) error {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return err
-	}
-
-	trialNotFound := status.Errorf(codes.NotFound, "trial %d not found", trialID)
-	exp, err := a.m.db.ExperimentByTrialID(trialID)
-	if errors.Is(err, db.ErrNotFound) {
-		return trialNotFound
-	} else if err != nil {
-		return err
-	}
-	var ok bool
-	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
-		return err
-	} else if !ok {
-		return trialNotFound
-	}
-
-	if err = actionFunc(ctx, *curUser, exp); err != nil {
-		return status.Error(codes.PermissionDenied, err.Error())
-	}
-	return nil
-}
-
 // TrialLogBackend is an interface trial log backends, such as elastic or postgres,
 // must support to provide the features surfaced in API. This is deprecated, note it
 // no longer supports adding logs in favor of unified logs.
@@ -123,27 +95,27 @@ func (a *apiServer) enrichTrialState(trials ...*trialv1.Trial) error {
 	}
 
 	// Collect state information by TaskID
-	byTaskID := make(map[model.TaskID]experimentv1.State, len(tasks))
+	byTaskID := make(map[model.TaskID]trialv1.State, len(tasks))
 	for _, task := range tasks {
 		switch {
 		case task.Running:
-			byTaskID[task.Task] = experimentv1.State_STATE_RUNNING
+			byTaskID[task.Task] = trialv1.State_STATE_RUNNING
 		case task.Starting:
-			byTaskID[task.Task] = experimentv1.State_STATE_STARTING
+			byTaskID[task.Task] = trialv1.State_STATE_STARTING
 		case task.Pulling:
-			byTaskID[task.Task] = experimentv1.State_STATE_PULLING
+			byTaskID[task.Task] = trialv1.State_STATE_PULLING
 		default:
-			byTaskID[task.Task] = experimentv1.State_STATE_QUEUED
+			byTaskID[task.Task] = trialv1.State_STATE_QUEUED
 		}
 	}
 
 	// Active trials converted to Queued, Pulling, Starting, or Running
 	for _, trial := range trials {
-		if trial.State == experimentv1.State_STATE_ACTIVE {
+		if trial.State == trialv1.State_STATE_ACTIVE {
 			if setState, ok := byTaskID[model.TaskID(trial.TaskId)]; ok {
 				trial.State = setState
 			} else {
-				trial.State = experimentv1.State_STATE_QUEUED
+				trial.State = trialv1.State_STATE_QUEUED
 			}
 		}
 	}
@@ -153,7 +125,7 @@ func (a *apiServer) enrichTrialState(trials ...*trialv1.Trial) error {
 func (a *apiServer) TrialLogs(
 	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer,
 ) error {
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(resp.Context(), int(req.TrialId),
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(), int(req.TrialId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return err
 	}
@@ -199,6 +171,7 @@ func (a *apiServer) TrialLogs(
 			Limit:           req.Limit,
 			Follow:          req.Follow,
 			AllocationIds:   nil,
+			AgentIds:        req.AgentIds,
 			ContainerIds:    req.ContainerIds,
 			RankIds:         req.RankIds,
 			Levels:          req.Levels,
@@ -256,7 +229,7 @@ func (a *apiServer) legacyTrialLogs(
 	trialLogsTimeSinceLastAuth := time.Now() // time.Now() to avoid recheck from a.TrialLogs.
 	fetch := func(r api.BatchRequest) (api.Batch, error) {
 		if time.Now().Sub(trialLogsTimeSinceLastAuth) >= recheckAuthPeriod {
-			if err = a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+			if err = trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err
 			}
@@ -350,7 +323,7 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 func (a *apiServer) TrialLogsFields(
 	req *apiv1.TrialLogsFieldsRequest, resp apiv1.Determined_TrialLogsFieldsServer,
 ) error {
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(resp.Context(), int(req.TrialId),
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(), int(req.TrialId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return err
 	}
@@ -370,7 +343,7 @@ func (a *apiServer) TrialLogsFields(
 		api.BatchRequest{Follow: req.Follow},
 		func(lr api.BatchRequest) (api.Batch, error) {
 			if time.Now().Sub(trialLogsTimeSinceLastAuth) >= recheckAuthPeriod {
-				if err := a.canGetTrialsExperimentAndCheckCanDoAction(resp.Context(),
+				if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(),
 					int(req.TrialId),
 					expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 					return nil, err
@@ -394,7 +367,7 @@ func (a *apiServer) TrialLogsFields(
 		api.BatchRequest{Follow: req.Follow},
 		func(lr api.BatchRequest) (api.Batch, error) {
 			if time.Now().Sub(taskLogsTimeSinceLastAuth) >= recheckAuthPeriod {
-				if err := a.canGetTrialsExperimentAndCheckCanDoAction(resp.Context(),
+				if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(),
 					int(req.TrialId),
 					expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 					return nil, err
@@ -434,7 +407,7 @@ func (a *apiServer) TrialLogsFields(
 func (a *apiServer) GetTrialCheckpoints(
 	ctx context.Context, req *apiv1.GetTrialCheckpointsRequest,
 ) (*apiv1.GetTrialCheckpointsResponse, error) {
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Id),
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Id),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -497,7 +470,7 @@ func (a *apiServer) GetTrialCheckpoints(
 func (a *apiServer) KillTrial(
 	ctx context.Context, req *apiv1.KillTrialRequest,
 ) (*apiv1.KillTrialResponse, error) {
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Id),
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Id),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -611,7 +584,7 @@ func (a *apiServer) GetExperimentTrials(
 func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 	*apiv1.GetTrialResponse, error,
 ) {
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -627,7 +600,7 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
 
-	if resp.Trial.State == experimentv1.State_STATE_ACTIVE {
+	if resp.Trial.State == trialv1.State_STATE_ACTIVE {
 		if err := a.enrichTrialState(resp.Trial); err != nil {
 			return nil, err
 		}
@@ -637,29 +610,48 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 }
 
 func (a *apiServer) formatMetrics(
-	m *apiv1.SummarizedMetric, metricMeasurements []db.MetricMeasurements,
-) {
+	m *apiv1.DownsampledMetrics, metricMeasurements []db.MetricMeasurements,
+) error {
 	for _, in := range metricMeasurements {
+		valueMap, err := structpb.NewStruct(in.Values) // in.Value is a map.
+		if err != nil {
+			return errors.Wrapf(err, "error formatting metrics")
+		}
 		out := apiv1.DataPoint{
 			Time:    timestamppb.New(in.Time),
 			Batches: int32(in.Batches),
-			Value:   in.Value,
+			Values:  valueMap,
 			Epoch:   in.Epoch,
 		}
 		m.Data = append(m.Data, &out)
 	}
+	return nil
 }
 
-func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
-	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
-	endBatches int, logScale bool,
-	timeSeriesFilter *commonv1.PolymorphicFilter,
+func (a *apiServer) parseMetricGroupArgs(
+	legacyType apiv1.MetricType, newType model.MetricGroup,
+) (model.MetricGroup, error) {
+	if legacyType != apiv1.MetricType_METRIC_TYPE_UNSPECIFIED && newType != "" {
+		return "", status.Errorf(codes.InvalidArgument, "cannot specify both legacy and new metric group")
+	}
+	if newType != "" {
+		return newType, nil
+	}
+	conv := &protoconverter.ProtoConverter{}
+	convertedLegacyType := conv.ToMetricGroup(legacyType)
+	if cErr := conv.Error(); cErr != nil {
+		return "", status.Errorf(codes.InvalidArgument, "converting metric group: %s", cErr)
+	}
+	return convertedLegacyType, nil
+}
+
+func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
+	metricGroup model.MetricGroup, maxDatapoints int, startBatches int,
+	endBatches int, timeSeriesFilter *commonv1.PolymorphicFilter,
 	metricIds []string,
-) ([]*apiv1.SummarizedMetric, error) {
+) ([]*apiv1.DownsampledMetrics, error) {
 	var startTime time.Time
-	var err error
-	var metrics []*apiv1.SummarizedMetric
-	var metricMeasurements []db.MetricMeasurements
+	var metrics []*apiv1.DownsampledMetrics
 	// For now "epoch" is the only custom xAxis metric label supported so we
 	// build the `MetricSeriesEpoch` array. In the future this logic should
 	// be updated to support any number of xAxis metric options
@@ -670,126 +662,97 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	}
 
 	if len(metricNames) > 0 && len(metricIds) > 0 {
-		return nil, fmt.Errorf(`error fetching time series of metrics cannot specify 
+		return nil, fmt.Errorf(`error fetching time series of metrics cannot specify
 		both metric ids and metric names`)
 	}
 
 	if endBatches == 0 {
 		endBatches = math.MaxInt32
 	}
+	if maxDatapoints == 0 {
+		maxDatapoints = 200
+	}
 
-	for _, name := range metricNames {
-		if (metricType == apiv1.MetricType_METRIC_TYPE_TRAINING) ||
-			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
-			var metric apiv1.SummarizedMetric
-			metric.Name = name
-			metricMeasurements, err = trials.MetricsTimeSeries(
-				trialID, startTime, name, startBatches, endBatches,
-				xAxisLabelMetrics,
-				maxDatapoints, batches, timeSeriesFilter, "training")
-			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
-			}
-			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
-			a.formatMetrics(&metric, metricMeasurements)
-			if len(metricMeasurements) > 0 {
-				metrics = append(metrics, &metric)
-			}
-		}
-		if (metricType == apiv1.MetricType_METRIC_TYPE_VALIDATION) ||
-			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
-			var metric apiv1.SummarizedMetric
-			metric.Name = name
-			metricMeasurements, err = trials.MetricsTimeSeries(
-				trialID, startTime, name, startBatches, endBatches,
-				xAxisLabelMetrics, maxDatapoints, batches, timeSeriesFilter, "validation")
-			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
-			}
-			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
-			a.formatMetrics(&metric, metricMeasurements)
-			if len(metricMeasurements) > 0 {
-				metrics = append(metrics, &metric)
-			}
+	var timeSeriesColumn *string
+
+	// If no time series filter column name is supplied then default to batches.
+	defaultTimeSeriesColumn := batches
+	if timeSeriesFilter == nil || timeSeriesFilter.Name == nil {
+		timeSeriesColumn = &defaultTimeSeriesColumn
+	} else {
+		timeSeriesColumn = timeSeriesFilter.Name
+	}
+
+	metricGroupToNames := make(map[model.MetricGroup][]string)
+	if len(metricNames) > 0 {
+		if metricGroup == "" {
+			// to keep backwards compatibility.
+			metricGroupToNames[model.TrainingMetricGroup] = metricNames
+			metricGroupToNames[model.ValidationMetricGroup] = metricNames
+		} else {
+			metricGroupToNames[metricGroup] = metricNames
 		}
 	}
-	if len(metricIds) > 0 {
-		var timeSeriesColumn *string
-
-		// If no time series filter column name is supplied then default to batches.
-		defaultTimeSeriesColumn := batches
-		if timeSeriesFilter == nil || timeSeriesFilter.Name == nil {
-			timeSeriesColumn = &defaultTimeSeriesColumn
-		} else {
-			timeSeriesColumn = timeSeriesFilter.Name
+	for _, metricIDStr := range metricIds {
+		metricID, err := model.DeserializeMetricIdentifier(metricIDStr)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error parsing metric id %s", metricIDStr)
 		}
+		metricGroupToNames[metricID.Group] = append(metricGroupToNames[metricID.Group],
+			string(metricID.Name))
+	}
 
-		for _, metricID := range metricIds {
-			nameAndType := strings.SplitN(metricID, ".", 2)
-			if len(nameAndType) < 2 {
-				return nil, fmt.Errorf(`error fetching time series of validation metrics 
-				invalid metricId %v metrics must be in the form metric_type.metric_name`,
-					metricID,
-				)
+	getDownSampledMetric := func(aMetricNames []string, aMetricGroup model.MetricGroup,
+	) (*apiv1.DownsampledMetrics, error) {
+		var metric apiv1.DownsampledMetrics
+		metricMeasurements, err := trials.MetricsTimeSeries(
+			trialID, startTime, aMetricNames, startBatches, endBatches,
+			xAxisLabelMetrics,
+			maxDatapoints, *timeSeriesColumn, timeSeriesFilter, aMetricGroup)
+		if err != nil {
+			return nil, errors.Wrapf(err, fmt.Sprintf("error fetching time series of %s metrics",
+				aMetricGroup))
+		}
+		//nolint:staticcheck // SA1019: backward compatibility
+		metric.Type = aMetricGroup.ToProto()
+		metric.Group = aMetricGroup.ToString()
+		if len(metricMeasurements) > 0 {
+			if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
+				return nil, err
 			}
-			metricIDName := nameAndType[1]
-			metricIDType := nameAndType[0]
-			var metric apiv1.SummarizedMetric
-			metric.Name = metricID
-			metric.Type = apiv1.MetricType_METRIC_TYPE_UNSPECIFIED
-			if maxDatapoints == 0 {
-				maxDatapoints = 200
-			}
-			metricMeasurements, err = trials.MetricsTimeSeries(
-				trialID, startTime, metricIDName, startBatches, endBatches,
-				xAxisLabelMetrics, maxDatapoints, *timeSeriesColumn,
-				timeSeriesFilter, metricIDType,
-			)
-			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of %v metrics", metricIDType)
-			}
-			if len(metricMeasurements) > 0 {
-				a.formatMetrics(&metric, metricMeasurements)
-				metrics = append(metrics, &metric)
-			}
+			return &metric, nil
+		}
+		return nil, nil
+	}
+
+	metricGroups := make([]model.MetricGroup, 0, len(metricGroupToNames))
+	for metricGroup := range metricGroupToNames {
+		metricGroups = append(metricGroups, metricGroup)
+	}
+	sort.Slice(metricGroups, func(i, j int) bool {
+		return metricGroups[i] < metricGroups[j]
+	})
+
+	for _, mGroup := range metricGroups {
+		metricNames := metricGroupToNames[mGroup]
+		metric, err := getDownSampledMetric(metricNames, mGroup)
+		if err != nil {
+			return nil, err
+		}
+		if metric != nil {
+			metrics = append(metrics, metric)
 		}
 	}
 
 	return metrics, nil
 }
 
-func (a *apiServer) SummarizeTrial(ctx context.Context,
-	req *apiv1.SummarizeTrialRequest,
-) (*apiv1.SummarizeTrialResponse, error) {
-	var metricIds []string
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-		return nil, err
-	}
-
-	resp := &apiv1.SummarizeTrialResponse{Trial: &trialv1.Trial{}}
-	if err := a.m.db.QueryProto("get_trial_basic", resp.Trial, req.TrialId); err != nil {
-		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
-	}
-
-	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
-		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-		(req.Scale == apiv1.Scale_SCALE_LOG),
-		nil, metricIds)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed sampling")
-	}
-	resp.Metrics = tsample
-
-	return resp, nil
-}
-
 func (a *apiServer) CompareTrials(ctx context.Context,
 	req *apiv1.CompareTrialsRequest,
 ) (*apiv1.CompareTrialsResponse, error) {
-	trials := make([]*apiv1.ComparableTrial, 0, len(req.TrialIds))
+	trialsList := make([]*apiv1.ComparableTrial, 0, len(req.TrialIds))
 	for _, trialID := range req.TrialIds {
-		if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
+		if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
 			expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 			return nil, err
 		}
@@ -802,16 +765,36 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 			return nil, errors.Wrapf(err, "failed to get trial %d", trialID)
 		}
 
-		tsample, err := a.MultiTrialSample(trialID, req.MetricNames, req.MetricType,
+		//nolint:staticcheck // SA1019: backward compatibility
+		metricGroup, err := a.parseMetricGroupArgs(req.MetricType, model.MetricGroup(req.Group))
+		if err != nil {
+			return nil, err
+		}
+
+		tsample, err := a.multiTrialSample(trialID, req.MetricNames, metricGroup,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-			(req.Scale == apiv1.Scale_SCALE_LOG), req.TimeSeriesFilter, req.MetricIds)
+			req.TimeSeriesFilter, req.MetricIds)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed sampling")
 		}
 		container.Metrics = tsample
-		trials = append(trials, container)
+		trialsList = append(trialsList, container)
 	}
-	return &apiv1.CompareTrialsResponse{Trials: trials}, nil
+	return &apiv1.CompareTrialsResponse{Trials: trialsList}, nil
+}
+
+func (a *apiServer) GetMetrics(
+	req *apiv1.GetMetricsRequest, resp apiv1.Determined_GetMetricsServer,
+) error {
+	sendFunc := func(m []*trialv1.MetricsReport) error {
+		return resp.Send(&apiv1.GetMetricsResponse{Metrics: m})
+	}
+	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
+		model.MetricGroup(req.Group)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (a *apiServer) GetTrainingMetrics(
@@ -820,7 +803,8 @@ func (a *apiServer) GetTrainingMetrics(
 	sendFunc := func(m []*trialv1.MetricsReport) error {
 		return resp.Send(&apiv1.GetTrainingMetricsResponse{Metrics: m})
 	}
-	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc, "steps"); err != nil {
+	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
+		model.TrainingMetricGroup); err != nil {
 		return err
 	}
 
@@ -833,7 +817,8 @@ func (a *apiServer) GetValidationMetrics(
 	sendFunc := func(m []*trialv1.MetricsReport) error {
 		return resp.Send(&apiv1.GetValidationMetricsResponse{Metrics: m})
 	}
-	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc, "validations"); err != nil {
+	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
+		model.ValidationMetricGroup); err != nil {
 		return err
 	}
 
@@ -841,7 +826,7 @@ func (a *apiServer) GetValidationMetrics(
 }
 
 func (a *apiServer) streamMetrics(ctx context.Context,
-	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, table string,
+	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, metricGroup model.MetricGroup,
 ) error {
 	if len(trialIDs) == 0 {
 		return status.Error(codes.InvalidArgument, "must specify at least one trialId")
@@ -855,7 +840,7 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 	slices.Sort(trialIDs)
 
 	for _, trialID := range trialIDs {
-		if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
+		if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
 			expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 			return err
 		}
@@ -866,18 +851,10 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 	trialIDIndex := 0
 	key := -1
 	for {
-		var res []*trialv1.MetricsReport
-		if err := db.Bun().NewSelect().Table(table).
-			Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
-			ColumnExpr("proto_time(end_time) AS end_time").
-			Where("trial_id = ?", trialIDs[trialIDIndex]).
-			Where("total_batches > ?", key).
-			Order("trial_id", "trial_run_id", "total_batches").
-			Limit(size).
-			Scan(ctx, &res); err != nil {
+		res, err := db.GetMetrics(ctx, int(trialIDs[trialIDIndex]), key, size, metricGroup)
+		if err != nil {
 			return err
 		}
-
 		if len(res) > 0 {
 			for i := 0; i < len(res); i++ {
 				// TODO we are giving too precise timestamps for our Python parsing code somehow.
@@ -909,7 +886,7 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWorkloadsRequest) (
 	*apiv1.GetTrialWorkloadsResponse, error,
 ) {
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -940,7 +917,9 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 		limit,
 		req.Filter.String(),
 		req.IncludeBatchMetrics,
+		//nolint:staticcheck // SA1019: backward compatibility
 		req.MetricType.String(),
+		req.RemoveDeletedCheckpoints,
 	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d workloads not found:", req.TrialId)
@@ -963,7 +942,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 	var timeSinceLastAuth time.Time
 	fetch := func(lr api.BatchRequest) (api.Batch, error) {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			if err := a.canGetTrialsExperimentAndCheckCanDoAction(resp.Context(),
+			if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(),
 				int(req.Labels.TrialId),
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err
@@ -1009,7 +988,7 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 	var timeSinceLastAuth time.Time
 	fetch := func(_ api.BatchRequest) (api.Batch, error) {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			if err := a.canGetTrialsExperimentAndCheckCanDoAction(resp.Context(),
+			if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(),
 				int(req.TrialId),
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err
@@ -1053,7 +1032,7 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	for _, batch := range req.Batches {
 		trialID := int(batch.Labels.TrialId)
 		if !existingTrials[trialID] {
-			if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, trialID,
+			if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, trialID,
 				expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 				return nil, err
 			}
@@ -1088,58 +1067,22 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, errs.ErrorOrNil()
 }
 
-func (a *apiServer) waitForAllocationToBeRestored(ctx context.Context, handler *actor.Ref) error {
-	for i := 0; i < 60; i++ {
-		var restoring bool
-		if err := a.ask(handler.Address(), task.IsAllocationRestoring{}, &restoring); err != nil {
-			return errors.Wrap(err, "failed to ask allocation actor about restoring status")
-		}
-		if !restoring {
-			return nil
-		}
-
-		time.Sleep(time.Second)
-	}
-	return fmt.Errorf("allocation stuck restoring after one minute of retrying")
-}
-
 func (a *apiServer) AllocationPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPreemptionSignalRequest,
 ) (*apiv1.AllocationPreemptionSignalResponse, error) {
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("checking if allocation is editable: %w", err)
 	}
-
-	allocationID := model.AllocationID(req.AllocationId)
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
-		return nil, err
-	}
-
-	id := uuid.New()
-	var w task.PreemptionWatcher
-	if err := a.ask(handler.Address(), task.WatchPreemption{
-		ID: id, AllocationID: allocationID,
-	}, &w); err != nil {
-		return nil, err
-	}
-	defer a.m.system.TellAt(handler.Address(), task.UnwatchPreemption{ID: id})
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(req.TimeoutSeconds)*time.Second)
 	defer cancel()
-	select {
-	case <-w.C:
-		return &apiv1.AllocationPreemptionSignalResponse{Preempt: true}, nil
-	case <-ctx.Done():
-		return &apiv1.AllocationPreemptionSignalResponse{Preempt: false}, nil
+
+	preempt, err := task.DefaultService.WatchPreemption(ctx, model.AllocationID(req.AllocationId))
+	if err != nil {
+		return nil, fmt.Errorf("watching preemption status: %w", err)
 	}
+	return &apiv1.AllocationPreemptionSignalResponse{Preempt: preempt}, nil
 }
 
 func (a *apiServer) AckAllocationPreemptionSignal(
@@ -1149,21 +1092,8 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 		return nil, err
 	}
 
-	allocationID := model.AllocationID(req.AllocationId)
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
+	err := task.DefaultService.AckPreemption(ctx, model.AllocationID(req.AllocationId))
 	if err != nil {
-		return nil, err
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
-		return nil, err
-	}
-
-	if err := a.ask(handler.Address(), task.AckPreemption{
-		AllocationID: allocationID,
-	}, nil); err != nil {
 		return nil, err
 	}
 	return &apiv1.AckAllocationPreemptionSignalResponse{}, nil
@@ -1216,23 +1146,13 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
 	}
-	allocationID := model.AllocationID(req.AllocationId)
 
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
+	err := task.DefaultService.SetResourcesAsDaemon(
+		ctx,
+		model.AllocationID(req.AllocationId),
+		sproto.ResourcesID(req.ResourcesId),
 	)
 	if err != nil {
-		return nil, err
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
-		return nil, err
-	}
-
-	if err := a.ask(handler.Address(), task.MarkResourcesDaemon{
-		AllocationID: allocationID,
-		ResourcesID:  sproto.ResourcesID(req.ResourcesId),
-	}, nil); err != nil {
 		return nil, err
 	}
 	return &apiv1.MarkAllocationResourcesDaemonResponse{}, nil
@@ -1241,7 +1161,7 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 func (a *apiServer) GetCurrentTrialSearcherOperation(
 	ctx context.Context, req *apiv1.GetCurrentTrialSearcherOperationRequest,
 ) (*apiv1.GetCurrentTrialSearcherOperationResponse, error) {
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -1271,7 +1191,7 @@ func (a *apiServer) GetCurrentTrialSearcherOperation(
 func (a *apiServer) CompleteTrialSearcherValidation(
 	ctx context.Context, req *apiv1.CompleteTrialSearcherValidationRequest,
 ) (*apiv1.CompleteTrialSearcherValidationResponse, error) {
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -1294,7 +1214,7 @@ func (a *apiServer) CompleteTrialSearcherValidation(
 func (a *apiServer) ReportTrialSearcherEarlyExit(
 	ctx context.Context, req *apiv1.ReportTrialSearcherEarlyExitRequest,
 ) (*apiv1.ReportTrialSearcherEarlyExitResponse, error) {
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -1316,7 +1236,7 @@ func (a *apiServer) ReportTrialSearcherEarlyExit(
 func (a *apiServer) ReportTrialProgress(
 	ctx context.Context, req *apiv1.ReportTrialProgressRequest,
 ) (*apiv1.ReportTrialProgressResponse, error) {
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -1335,30 +1255,41 @@ func (a *apiServer) ReportTrialProgress(
 	return &apiv1.ReportTrialProgressResponse{}, nil
 }
 
-func (a *apiServer) ReportTrialTrainingMetrics(
-	ctx context.Context, req *apiv1.ReportTrialTrainingMetricsRequest,
-) (*apiv1.ReportTrialTrainingMetricsResponse, error) {
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrainingMetrics.TrialId),
+func (a *apiServer) ReportTrialMetrics(
+	ctx context.Context, req *apiv1.ReportTrialMetricsRequest,
+) (*apiv1.ReportTrialMetricsResponse, error) {
+	metricGroup := model.MetricGroup(req.Group)
+	if err := metricGroup.Validate(); err != nil {
+		return nil, err
+	}
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Metrics.TrialId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
-	if err := a.m.db.AddTrainingMetrics(ctx, req.TrainingMetrics); err != nil {
+	if err := a.m.db.AddTrialMetrics(ctx, req.Metrics, metricGroup); err != nil {
 		return nil, err
 	}
-	return &apiv1.ReportTrialTrainingMetricsResponse{}, nil
+	return &apiv1.ReportTrialMetricsResponse{}, nil
+}
+
+func (a *apiServer) ReportTrialTrainingMetrics(
+	ctx context.Context, req *apiv1.ReportTrialTrainingMetricsRequest,
+) (*apiv1.ReportTrialTrainingMetricsResponse, error) {
+	_, err := a.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
+		Metrics: req.TrainingMetrics,
+		Group:   model.TrainingMetricGroup.ToString(),
+	})
+	return &apiv1.ReportTrialTrainingMetricsResponse{}, err
 }
 
 func (a *apiServer) ReportTrialValidationMetrics(
 	ctx context.Context, req *apiv1.ReportTrialValidationMetricsRequest,
 ) (*apiv1.ReportTrialValidationMetricsResponse, error) {
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.ValidationMetrics.TrialId),
-		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
-		return nil, err
-	}
-	if err := a.m.db.AddValidationMetrics(ctx, req.ValidationMetrics); err != nil {
-		return nil, err
-	}
-	return &apiv1.ReportTrialValidationMetricsResponse{}, nil
+	_, err := a.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
+		Metrics: req.ValidationMetrics,
+		Group:   model.ValidationMetricGroup.ToString(),
+	})
+	return &apiv1.ReportTrialValidationMetricsResponse{}, err
 }
 
 func (a *apiServer) ReportCheckpoint(
@@ -1407,7 +1338,7 @@ func checkpointV2FromProtoWithDefaults(p *checkpointv1.Checkpoint) (*model.Check
 	c := &model.CheckpointV2{
 		UUID:         conv.ToUUID(p.Uuid),
 		TaskID:       model.TaskID(p.TaskId),
-		AllocationID: model.AllocationID(p.AllocationId),
+		AllocationID: model.NewAllocationID(p.AllocationId),
 		ReportTime:   p.ReportTime.AsTime(),
 		State:        conv.ToCheckpointState(p.State),
 		Resources:    p.Resources,
@@ -1429,45 +1360,21 @@ func (a *apiServer) AllocationRendezvousInfo(
 		return nil, err
 	}
 
-	allocationID := model.AllocationID(req.AllocationId)
-	resourcesID := sproto.ResourcesID(req.ResourcesId)
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
+	info, err := task.DefaultService.WatchRendezvous(
+		ctx,
+		model.AllocationID(req.AllocationId),
+		sproto.ResourcesID(req.ResourcesId),
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
-		return nil, err
-	}
-
-	var w task.RendezvousWatcher
-	if err = a.ask(handler.Address(), task.WatchRendezvousInfo{
-		ResourcesID: resourcesID,
-	}, &w); err != nil {
-		return nil, err
-	}
-	defer a.m.system.TellAt(
-		handler.Address(), task.UnwatchRendezvousInfo{
-			ResourcesID: resourcesID,
-		})
-
-	select {
-	case rsp := <-w.C:
-		if rsp.Err != nil {
-			return nil, rsp.Err
-		}
-		return &apiv1.AllocationRendezvousInfoResponse{RendezvousInfo: rsp.Info}, nil
-	case <-ctx.Done():
-		return nil, nil
-	}
+	return &apiv1.AllocationRendezvousInfoResponse{RendezvousInfo: info}, nil
 }
 
 func (a *apiServer) PostTrialRunnerMetadata(
 	ctx context.Context, req *apiv1.PostTrialRunnerMetadataRequest,
 ) (*apiv1.PostTrialRunnerMetadataResponse, error) {
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}

@@ -13,18 +13,12 @@ from typing import List
 
 import pandas as pd
 import tensorflow as tf
-from packaging import version
 from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers.legacy import RMSprop
 from tensorflow.keras.utils import to_categorical
-
-# TODO MLG-443 Migrate from legacy Keras optimizers
-if version.parse(tf.__version__) >= version.parse("2.11.0"):
-    from tensorflow.keras.optimizers.legacy import RMSprop
-else:
-    from tensorflow.keras.optimizers import RMSprop
 
 from determined import keras
 

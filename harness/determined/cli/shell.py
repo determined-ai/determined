@@ -2,6 +2,7 @@ import contextlib
 import getpass
 import logging
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -15,9 +16,9 @@ import appdirs
 from termcolor import colored
 
 from determined import cli
-from determined.cli import command, task
+from determined.cli import command, render, task
 from determined.common import api
-from determined.common.api import authentication, certs
+from determined.common.api import authentication, bindings, certs
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
@@ -41,34 +42,31 @@ def start_shell(args: Namespace) -> None:
         workspace_id=workspace_id,
     )["shell"]
 
+    sid = resp["id"]
+
     if args.detach:
-        print(resp["id"])
+        print(sid)
         return
 
-    ready = False
-    with api.ws(args.master, f"shells/{resp['id']}/events") as ws:
-        for msg in ws:
-            if msg["service_ready_event"]:
-                ready = True
-                break
-            command.render_event_stream(msg)
-    if ready:
-        shell = api.get(args.master, f"api/v1/shells/{resp['id']}").json()["shell"]
-        check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
-        _open_shell(
-            args.master,
-            shell,
-            args.ssh_opts,
-            retain_keys_and_print=args.show_ssh_command,
-            print_only=False,
-        )
+    render.report_job_launched("shell", sid)
+
+    session = cli.setup_session(args)
+    cli.wait_ntsc_ready(cli.setup_session(args), api.NTSC_Kind.shell, sid)
+
+    shell = bindings.get_GetShell(session, shellId=sid).shell
+    _open_shell(
+        args.master,
+        shell.to_json(),
+        args.ssh_opts,
+        retain_keys_and_print=args.show_ssh_command,
+        print_only=False,
+    )
 
 
 @authentication.required
 def open_shell(args: Namespace) -> None:
     shell_id = command.expand_uuid_prefixes(args)
     shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
-    check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
     _open_shell(
         args.master,
         shell,
@@ -82,7 +80,6 @@ def open_shell(args: Namespace) -> None:
 def show_ssh_command(args: Namespace) -> None:
     shell_id = command.expand_uuid_prefixes(args)
     shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
-    check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
     _open_shell(args.master, shell, args.ssh_opts, retain_keys_and_print=True, print_only=True)
 
 
@@ -90,7 +87,15 @@ def _prepare_key(retention_dir: Union[Path, None]) -> Tuple[ContextManager[IO], 
     if retention_dir:
         key_path = retention_dir / "key"
         keyfile = key_path.open("w")
-        key_path.chmod(0o600)
+
+        if platform.system() == "Windows":
+            # On Windows, chmod only affects the read-only flag on the file. To emulate the
+            # actual functionality of chmod, an external library is used for Windows systems.
+            import oschmod
+
+            oschmod.set_mode(str(key_path), "600")
+        else:
+            key_path.chmod(0o600)
 
         return keyfile, str(key_path)
 
@@ -132,6 +137,7 @@ def _open_shell(
     print_only: bool,
 ) -> None:
     cache_dir = None
+    check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
     if retain_keys_and_print:
         cache_dir = Path(appdirs.user_cache_dir("determined")) / "shell" / shell["id"]
         if not cache_dir.exists():

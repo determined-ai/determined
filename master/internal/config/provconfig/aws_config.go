@@ -3,6 +3,7 @@ package provconfig
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"unicode"
 
@@ -49,16 +50,16 @@ type AWSClusterConfig struct {
 }
 
 var defaultAWSImageID = map[string]string{
-	"ap-northeast-1": "ami-0bb9d169eea880f0c",
-	"ap-northeast-2": "ami-04b2a73ef7923efe6",
-	"ap-southeast-1": "ami-024d675978237fa80",
-	"ap-southeast-2": "ami-0238276397b254a83",
-	"us-east-2":      "ami-00e86d39577d39acf",
-	"us-east-1":      "ami-0b18bcecbd428ae4c",
-	"us-west-2":      "ami-0c841a5d48a137ae2",
-	"eu-central-1":   "ami-09506c0a6df6626bc",
-	"eu-west-2":      "ami-0c8a8a8c7a2721ee7",
-	"eu-west-1":      "ami-0e2b716415874cb07",
+	"ap-northeast-1": "ami-0d1f4953a665df453",
+	"ap-northeast-2": "ami-019ca93bfb157bc91",
+	"ap-southeast-1": "ami-040f0a455fb446aa7",
+	"ap-southeast-2": "ami-0485594a8551c03b1",
+	"us-east-2":      "ami-058ac473ddc822489",
+	"us-east-1":      "ami-00664190dab9da6bd",
+	"us-west-2":      "ami-0f095c663126efe04",
+	"eu-central-1":   "ami-0e8881dae5c06fd24",
+	"eu-west-2":      "ami-025f0f49e7cc01e82",
+	"eu-west-1":      "ami-01cfb074c5c8a551f",
 }
 
 var defaultAWSClusterConfig = AWSClusterConfig{
@@ -89,12 +90,16 @@ func (c *AWSClusterConfig) BuildDockerLogString() string {
 func (c *AWSClusterConfig) InitDefaultValues() error {
 	metadata, err := getEC2MetadataSess()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get session: %w", err)
 	}
 
 	if len(c.Region) == 0 {
 		if c.Region, err = metadata.Region(); err != nil {
-			return err
+			region, ok := os.LookupEnv("AWS_DEFAULT_REGION")
+			if !ok {
+				return fmt.Errorf("unable to get region: %w", err)
+			}
+			c.Region = region
 		}
 	}
 

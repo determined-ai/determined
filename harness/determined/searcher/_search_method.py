@@ -1,3 +1,4 @@
+import abc
 import dataclasses
 import json
 import pathlib
@@ -6,7 +7,7 @@ from abc import abstractmethod
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from determined.common import experimental
+from determined import experimental
 from determined.common.api import bindings
 
 STATE_FILE = "state"
@@ -15,7 +16,7 @@ STATE_FILE = "state"
 @dataclasses.dataclass
 class SearcherState:
     """
-    Mutable Searcher state.
+    Custom Searcher State.
 
     Search runners maintain this state that can be used by a ``SearchMethod``
     to inform event handling. In other words, this state can be taken into account
@@ -37,6 +38,7 @@ class SearcherState:
     trials_created: Set[uuid.UUID]
     last_event_id: int = 0
     experiment_completed: bool = False
+    experiment_failed: bool = False
 
     def __init__(self) -> None:
         self.failures = set()
@@ -53,6 +55,7 @@ class SearcherState:
             "lastEventId": self.last_event_id,
             "experimentId": self.experiment_id,
             "experimentCompleted": self.experiment_completed,
+            "experimentFailed": self.experiment_failed,
         }
 
     def from_dict(self, d: Dict[str, Any]) -> None:
@@ -63,9 +66,20 @@ class SearcherState:
         self.last_event_id = d.get("lastEventId", 0)
         self.experiment_id = d.get("experimentId")
         self.experiment_completed = d.get("experimentCompleted", False)
+        self.experiment_failed = d.get("experimentFailed", False)
 
 
 class ExitedReason(Enum):
+    """
+    The reason why a trial exited early
+
+    The following reasons are supported:
+
+    - `ERRORED`: The Trial encountered an exception
+    - `USER_CANCELLED`: The Trial was manually closed by the user
+    - `INVALID_HP`: The hyperparameters the trial was created with were invalid
+    """
+
     ERRORED = "ERRORED"
     USER_CANCELED = "USER_CANCELED"
     INVALID_HP = "INVALID_HP"
@@ -83,12 +97,12 @@ class ExitedReason(Enum):
         raise RuntimeError(f"Invalid exited reason: {bindings_exited_reason}")
 
 
-class Operation:
+class Operation(metaclass=abc.ABCMeta):
     """
     Abstract base class for all Operations
     """
 
-    @abstractmethod
+    @abc.abstractmethod
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
         pass
 
@@ -117,7 +131,7 @@ class ValidateAfter(Operation):
 
 class Close(Operation):
     """
-    Operation closing the specified trial
+    Operation for closing the specified trial
     """
 
     def __init__(self, request_id: uuid.UUID):
@@ -131,6 +145,10 @@ class Close(Operation):
 
 
 class Progress(Operation):
+    """
+    Operation for signalling the relative progress of the hyperparameter search between 0 and 1
+    """
+
     def __init__(self, progress: float):
         super().__init__()
         self.progress = progress
@@ -143,19 +161,23 @@ class Progress(Operation):
 
 class Shutdown(Operation):
     """
-    Operation shutting the experiment down
+    Operation for shutting the experiment down
     """
 
-    def __init__(self) -> None:
+    def __init__(self, cancel: bool = False, failure: bool = False) -> None:
         super().__init__()
+        self.cancel = cancel
+        self.failure = failure
 
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
-        return bindings.v1SearcherOperation(shutDown=bindings.v1ShutDownOperation())
+        return bindings.v1SearcherOperation(
+            shutDown=bindings.v1ShutDownOperation(cancel=self.cancel, failure=self.failure)
+        )
 
 
 class Create(Operation):
     """
-    Operation creating a trial with a specified combination of hyperparameter values
+    Operation for creating a trial with a specified combination of hyperparameter values
     """
 
     def __init__(
@@ -182,8 +204,21 @@ class SearchMethod:
     The implementation of a custom hyperparameter tuning algorithm.
 
     To implement your specific hyperparameter tuning approach, subclass ``SearchMethod``
-    overriding the event handler methods. Each event handler, except ``progress`` returns a list of
-    operations (``List[Operation]``) that will be submitted to master for processing.
+    overriding the event handler methods.
+
+    Each event handler, except :meth:`progress() <determined.searcher.SearchMethod.progress>`
+    returns a list of operations (``List[Operation]``) that will be submitted to master for
+    processing.
+
+    Currently, we support the following :class:`~Operation`:
+
+    - :class:`~Create` - starts a new trial with a unique trial id and a set of hyperparameter
+      values.
+    - :class:`~ValidateAfter` - sets number of steps (i.e., batches or epochs) after which a
+      validation is run for a trial with a given id.
+    - :class:`~Progress` - updates the progress of the multi-trial experiment to the master.
+    - :class:`~Close` - closes a trial with a given id.
+    - :class:`~Shutdown` - closes the experiment.
 
     .. note::
 
@@ -193,16 +228,35 @@ class SearchMethod:
     @abstractmethod
     def initial_operations(self, searcher_state: SearcherState) -> List[Operation]:
         """
-        Returns a set of initial operations that the searcher will perform.
+        Returns a list of initial operations that the custom hyperparameter search should
+        perform. This is called by the Custom Searcher :class:`~SearchRunner`
+        to initialize the trials
 
-        Currently, we support the following operations:
+        Example:
 
-        - Create - starts a new trial with a unique trial id and a set of hyperparameter
-          values,
-        - ValidateAfter - sets number of steps (i.e., batches or epochs) after which a validation
-          is run for a trial with a given id,
-        - Close - closes a trial with a given id,
-        - Shutdown - closes the experiment.
+        .. code:: python
+
+            def initial_operations(self, _: searcher.SearcherState) -> List[searcher.Operation]:
+                ops: List[searcher.Operation] = []
+                N = 100
+                hparams = {
+                    # ...
+                }
+                for _ in range(0, N):
+                    create = searcher.Create(
+                        request_id=uuid.uuid4(),
+                        hparams=hparams,
+                        checkpoint=None,
+                    )
+                    ops.append(create)
+                return ops
+
+        Args:
+            searcher_state(:class:`~SearcherState`): Read-only current searcher state
+
+        Returns:
+            List[Operation]: Initial list of :class:`~Operation` to start the Hyperparameter
+            search
         """
         pass
 
@@ -213,6 +267,30 @@ class SearchMethod:
         """
         Informs the searcher that a trial has been created
         as a result of Create operation.
+
+        Example:
+
+        .. code:: python
+
+            def on_trial_created(
+                self, _: SearcherState, request_id: uuid.UUID
+            ) -> List[Operation]:
+                return [
+                    searcher.ValidateAfter(
+                        request_id=request_id,
+                        length=1,  # Run for one unit of time (epoch, etc.)
+                    )
+                ]
+
+        In this example, we are choosing to deterministically train for one unit of time
+
+        Args:
+            searcher_state(:class:`~SearcherState`): Read-only current searcher state
+            request_id (uuid.UUID): Request UUID of the Trial that was created
+
+        Returns:
+            List[Operation]: List of :class:`~Operation` to run upon creation of the given
+            trial
         """
         pass
 
@@ -221,9 +299,40 @@ class SearchMethod:
         self, searcher_state: SearcherState, request_id: uuid.UUID, metric: Any, train_length: int
     ) -> List[Operation]:
         """
-        Informs the searcher that the validation workload
-        initiated by the same searcher has completed after training for ``train_length`` units.
-        It returns any new operations as a result of this workload completing.
+        Informs the searcher that the validation workload has completed after training for
+        ``train_length`` units. It returns any new operations as a result of this workload
+        completing
+
+        Example:
+
+        .. code:: python
+
+            def on_validation_completed(
+                self,
+                searcher_state: SearcherState,
+                request_id: uuid.UUID,
+                metric: Any,
+                train_length: int
+            ) -> List[Operation]:
+                if train_length < self.max_train_length:
+                    return [
+                        searcher.ValidateAfter(
+                            request_id=request_id,
+                            length=train_length + 1,  # Run an additional unit of time
+                        )
+                    ]
+                return [searcher.Close(request_id=request_id)]
+
+        Args:
+            searcher_state (SearcherState): Read-only current searcher state
+            request_id (uuid.UUID): Request UUID of the Trial that was trained
+            metric (Any): Metric data returned by the trial
+            train_length (int): The cumulative units of time that that trial has finished
+                training for (epochs, etc.)
+
+        Returns:
+            List[Operation]: List of :class:`~Operation` to run upon completion of training for
+            the given trial
         """
         pass
 
@@ -232,8 +341,37 @@ class SearchMethod:
         self, searcher_state: SearcherState, request_id: uuid.UUID
     ) -> List[Operation]:
         """
-        Informs the searcher that a trial has been closed as a result of a Close
-        operation.
+        Informs the searcher that a trial has been closed as a result of a :class:`~Close`
+
+        Example:
+
+        .. code:: python
+
+            def on_trial_closed(
+                self, searcher_state: SearcherState, request_id: uuid.UUID
+            ) -> List[Operation]:
+                if searcher_state.trials_created < self.max_num_trials:
+                    hparams = {
+                        # ...
+                    }
+                    return [
+                        searcher.Create(
+                            request_id=uuid.uuid4(),
+                            hparams=hparams,
+                            checkpoint=None,
+                        )
+                    ]
+                if searcher_state.trials_closed >= self.max_num_trials:
+                    return [searcher.Shutdown()]
+                return []
+
+        Args:
+            searcher_state (SearcherState): Read-only current searcher state
+            request_id (uuid.UUID): Request UUID of the Trial that was closed
+
+        Returns:
+            List[Operation]: List of :class:`~Operation` to run after closing the given
+            trial
         """
         pass
 
@@ -241,6 +379,19 @@ class SearchMethod:
     def progress(self, searcher_state: SearcherState) -> float:
         """
         Returns experiment progress as a float between 0 and 1.
+
+        Example:
+
+        .. code:: python
+
+            def progress(self, searcher_state: SearcherState) -> float:
+                return searcher_state.trials_closed / float(self.max_num_trials)
+
+        Args:
+            searcher_state (SearcherState): Read-only current searcher state
+
+        Returns:
+            float: Experiment progress as a float between 0 and 1.
         """
         pass
 
@@ -253,6 +404,38 @@ class SearchMethod:
     ) -> List[Operation]:
         """
         Informs the searcher that a trial has exited earlier than expected.
+
+        Example:
+
+        .. code:: python
+
+            def on_trial_exited_early(
+                self,
+                searcher_state: SearcherState,
+                request_id: uuid.UUID,
+                exited_reason: ExitedReason,
+            ) -> List[Operation]:
+                if exited_reason == searcher.ExitedReason.USER_CANCELED:
+                    return [searcher.Shutdown(cancel=True)]
+                if exited_reason == searcher.ExitedReason.INVALID_HP:
+                    return [searcher.Shutdown(failure=True)]
+                if searcher_state.failures >= self.max_failures:
+                    return [searcher.Shutdown(failure=True)]
+                return []
+
+        .. note::
+
+            The trial has already been internally closed when this callback is run.
+            You do not need to explicitly issue a :class:`~Close` operation
+
+        Args:
+            searcher_state (SearcherState): Read-only current searcher state
+            request_id (uuid.UUID): Request UUID of the Trial that exited early
+            exited_reason (ExitedReason): The reason that the trial exited early
+
+        Returns:
+            List[Operation]: List of :class:`~Operation` to run in response to the given
+            trial exiting early
         """
         pass
 

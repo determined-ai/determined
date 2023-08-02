@@ -3,7 +3,6 @@ import os
 import shutil
 import tempfile
 import time
-from typing import Union
 
 import pytest
 
@@ -148,7 +147,11 @@ def test_noop_pause_with_multiexperiment_filter() -> None:
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
     exp.pause_experiments([], name=tf.name)
     exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.PAUSED)
-    exp.kill_experiments([experiment_id])
+    # test state=nonTerminalExperimentStates() filter in cancel/kill
+    exp.kill_experiments([], name=tf.name)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.CANCELED)
+    # test state=terminalExperimentStates() filter in archive
+    exp.archive_experiments([], name=tf.name)
 
 
 @pytest.mark.e2e_cpu
@@ -316,96 +319,6 @@ def test_large_model_def_experiment() -> None:
             f.write(os.urandom(94 * 1024 * 1024))
 
         exp.run_basic_test(conf.fixtures_path("no_op/single-one-short-step.yaml"), td, 1)
-
-
-def _test_rng_restore(fixture: str, metrics: list, tf2: Union[None, bool] = None) -> None:
-    """
-    This test confirms that an experiment can be restarted from a checkpoint
-    with the same RNG state. It requires a test fixture that will emit
-    random numbers from all of the RNGs used in the relevant framework as
-    metrics. The experiment must have a const.yaml, run for at least 3 steps,
-    checkpoint every step, and keep the first checkpoint (either by having
-    metrics get worse over time, or by configuring the experiment to keep all
-    checkpoints).
-    """
-    config_base = conf.load_config(conf.fixtures_path(fixture + "/const.yaml"))
-    config = copy.deepcopy(config_base)
-    if tf2 is not None:
-        config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
-
-    experiment = exp.run_basic_test_with_temp_config(
-        config,
-        conf.fixtures_path(fixture),
-        1,
-    )
-
-    first_trial = exp.experiment_trials(experiment)[0]
-
-    assert len(first_trial.workloads) >= 4
-
-    first_checkpoint = exp.workloads_with_checkpoint(first_trial.workloads)[0]
-    first_checkpoint_uuid = first_checkpoint.uuid
-
-    config = copy.deepcopy(config_base)
-    if tf2 is not None:
-        config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
-    config["searcher"]["source_checkpoint_uuid"] = first_checkpoint.uuid
-
-    experiment2 = exp.run_basic_test_with_temp_config(config, conf.fixtures_path(fixture), 1)
-
-    second_trial = exp.experiment_trials(experiment2)[0]
-
-    assert len(second_trial.workloads) >= 4
-    assert second_trial.trial.warmStartCheckpointUuid == first_checkpoint_uuid
-    first_trial_validations = exp.workloads_with_validation(first_trial.workloads)
-    second_trial_validations = exp.workloads_with_validation(second_trial.workloads)
-
-    for wl in range(0, 2):
-        for metric in metrics:
-            first_trial_val = first_trial_validations[wl + 1]
-            first_metric = first_trial_val.metrics.avgMetrics[metric]
-            second_trial_val = second_trial_validations[wl]
-            second_metric = second_trial_val.metrics.avgMetrics[metric]
-            assert (
-                first_metric == second_metric
-            ), f"failures on iteration: {wl} with metric: {metric}"
-
-
-@pytest.mark.e2e_cpu
-@pytest.mark.parametrize(
-    "tf2",
-    [
-        pytest.param(True, marks=pytest.mark.tensorflow2_cpu),
-        pytest.param(False, marks=pytest.mark.tensorflow1_cpu),
-    ],
-)
-def test_keras_rng_restore(tf2: bool) -> None:
-    _test_rng_restore("keras_no_op", ["val_rand_rand", "val_np_rand", "val_tf_rand"], tf2=tf2)
-
-
-@pytest.mark.e2e_cpu
-@pytest.mark.tensorflow1_cpu
-@pytest.mark.tensorflow2_cpu
-def test_estimator_rng_restore() -> None:
-    _test_rng_restore("estimator_no_op", ["rand_rand", "np_rand"])
-
-
-@pytest.mark.e2e_cpu
-def test_pytorch_cpu_rng_restore() -> None:
-    # Disable rand_rand test because tensorboard async uploading can mess with random state
-    # in unexpected way.
-    # We should reenable this test when the upcoming feature flag to enable/disable async
-    # tensorboard uploading is released.
-    _test_rng_restore("pytorch_no_op", ["np_rand", "torch_rand"])
-
-
-@pytest.mark.e2e_gpu
-def test_pytorch_gpu_rng_restore() -> None:
-    # Disable rand_rand test because tensorboard async uploading can mess with random state
-    # in unexpected way.
-    # We should reenable this test when the upcoming feature flag to enable/disable async
-    # tensorboard uploading is released.
-    _test_rng_restore("pytorch_no_op", ["np_rand", "torch_rand", "gpu_rand"])
 
 
 @pytest.mark.e2e_cpu

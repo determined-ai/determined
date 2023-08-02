@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 
-import 'shared/styles/index.scss';
+import 'styles/index.scss';
 
 class AppRouter {
   routerInstance: ReturnType<typeof createBrowserRouter> | null = null;

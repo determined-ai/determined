@@ -1,8 +1,8 @@
 import React from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
-import { CommonProps } from 'shared/types';
-import { humanReadableNumber } from 'shared/utils/number';
+import { CommonProps } from 'types';
+import { humanReadableNumber } from 'utils/number';
 
 interface Props extends CommonProps {
   num?: number | null;
@@ -21,7 +21,7 @@ const HumanReadableNumber: React.FC<Props> = ({
   const content = humanReadableNumber(num, precision);
 
   return (
-    <Tooltip title={`${tooltipPrefix}${stringNum}`}>
+    <Tooltip content={`${tooltipPrefix}${stringNum}`}>
       <span>{content}</span>
     </Tooltip>
   );

@@ -1,0 +1,110 @@
+.codeEditorBase {
+  display: grid;
+  grid-template-columns: minmax(15%, auto) minmax(52%, auto);
+  height: 100%;
+  max-width: 100vw;
+
+  .fileTree {
+    background-color: transparent;
+    color: var(--theme-background-on-strong);
+    grid-column: 1 / 2;
+    grid-row: 1 / 3;
+    height: 100%;
+    padding: 0.5em;
+
+    :global(.ant-tree-title),
+    :global(.ant-tree-node-content-wrapper) {
+      // text ellipsis for antd tree
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%;
+    }
+
+    @media screen and (max-width: 1024px) {
+      border-right: none;
+      grid-column: 1 / 3;
+      grid-row: 1 / 2;
+    }
+  }
+  h5 {
+    color: var(--theme-background-on-strong);
+    margin-top: 5em;
+    text-align: center;
+  }
+  .fileDir {
+    .fileInfo {
+      align-items: center;
+      background-color: var(--theme-stage);
+      border: solid var(--theme-stroke-width) var(--theme-stage-border);
+      border-bottom: none;
+      border-radius: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5em 1em;
+
+      .buttonContainer {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+      }
+      .filePath {
+        margin-left: 10px;
+      }
+      .fileDesc,
+      .readOnly {
+        color: var(--theme-stage-on-weak);
+        margin-left: 20px;
+      }
+      .readOnly {
+        font-variant: small-caps;
+      }
+      .buttonsContainer {
+        display: flex;
+
+        .noBorderButton {
+          border: 0;
+          cursor: pointer;
+          margin-right: -4px;
+          width: 20px;
+        }
+      }
+    }
+
+    @media screen and (max-width: 1024px) {
+      grid-column: 1 / 3;
+      grid-row: 2 / 2;
+    }
+  }
+  .editor {
+    border: solid var(--theme-stroke-width) var(--theme-stage-border);
+    grid-column: 2 / 3;
+    min-height: 250px;
+
+    @media screen and (max-width: 1024px) {
+      grid-column: 1 / 3;
+      grid-row: 3;
+    }
+  }
+  &.editorMode {
+    .editor,
+    .fileDir {
+      grid-column: span 2;
+    }
+  }
+
+  @media screen and (max-width: 1024px) {
+    grid-template-rows: auto;
+  }
+}
+.pageError {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+
+  @media screen and (max-width: 1024px) {
+    grid-column: 1 / 2;
+  }
+}
+.hideElement {
+  display: none;
+}

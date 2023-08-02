@@ -1,16 +1,16 @@
-import { Popover } from 'antd';
 import React, { useMemo } from 'react';
 
 import Badge from 'components/Badge';
 import Bar from 'components/Bar';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import Tooltip from 'components/kit/Tooltip';
 import { resourceStateToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
-import { routeToReactUrl } from 'shared/utils/routes';
-import { floatToPercent } from 'shared/utils/string';
 import { getStateColorCssVar, ShirtSize } from 'themes';
 import { ResourceState, SlotState } from 'types';
+import { routeToReactUrl } from 'utils/routes';
+import { floatToPercent } from 'utils/string';
 
 import { BadgeType } from './Badge';
 import css from './SlotAllocation.module.scss';
@@ -254,9 +254,9 @@ const SlotAllocationBar: React.FC<Props> = ({
         condition={!showLegends}
         wrapper={(ch) =>
           !isAux && hasLegend ? (
-            <Popover content={renderStateDetails()} placement="bottom">
+            <Tooltip content={renderStateDetails()} placement="bottom">
               {ch}
-            </Popover>
+            </Tooltip>
           ) : (
             <div>{ch}</div>
           )
@@ -292,9 +292,9 @@ const SlotAllocationBar: React.FC<Props> = ({
       {showLegends && (
         <div className={css.overallLegends}>
           {hasLegend ? (
-            <Popover content={renderStateDetails()} placement="bottom">
+            <Tooltip content={renderStateDetails()} placement="bottom">
               {renderLegend()}
-            </Popover>
+            </Tooltip>
           ) : (
             renderLegend()
           )}

@@ -3,24 +3,18 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { LineChart, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
-import LearningCurveChart from 'components/LearningCurveChart';
+import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner/Spinner';
 import TableBatch from 'components/Table/TableBatch';
 import { UPlotPoint } from 'components/UPlot/types';
 import { terminalRunStates } from 'constants/states';
-import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner/Spinner';
-import useUI from 'shared/contexts/stores/UI';
-import { glasbeyColor } from 'shared/utils/color';
-import { flattenObject, isEqual, isPrimitive } from 'shared/utils/data';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
+import useUI from 'stores/contexts/UI';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -33,7 +27,12 @@ import {
   RunState,
   Scale,
 } from 'types';
+import { glasbeyColor } from 'utils/color';
+import { flattenObject, isEqual, isPrimitive } from 'utils/data';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'utils/routes';
 import { openCommandResponse } from 'utils/wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';
@@ -46,7 +45,7 @@ interface Props {
   filters?: React.ReactNode;
   fullHParams: string[];
   selectedMaxTrial: number;
-  selectedMetric: Metric | null;
+  selectedMetric?: Metric;
   selectedScale: Scale;
 }
 
@@ -113,16 +112,13 @@ const LearningCurve: React.FC<Props> = ({
 }: Props) => {
   const { ui } = useUI();
   const [trialIds, setTrialIds] = useState<number[]>([]);
-  const [batches, setBatches] = useState<number[]>([]);
-  const [chartData, setChartData] = useState<(number | null)[][]>([]);
-  const [v2ChartData, setV2ChartData] = useState<Serie[]>([]);
+  const [chartData, setChartData] = useState<Loadable<Serie[]>>(NotLoaded);
   const [trialHps, setTrialHps] = useState<TrialHParams[]>([]);
   const [highlightedTrialId, setHighlightedTrialId] = useState<number>();
   const [hasLoaded, setHasLoaded] = useState(false);
   const [pageError, setPageError] = useState<Error>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [showCompareTrials, setShowCompareTrials] = useState(false);
-  const chartComponent = useFeature().isOn('chart');
 
   const hasTrials = trialHps.length !== 0;
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
@@ -184,11 +180,8 @@ const LearningCurve: React.FC<Props> = ({
 
     const canceler = new AbortController();
     const trialIdsMap: Record<number, number> = {};
-    const trialDataMap: Record<number, number[]> = {};
     const trialHpMap: Record<number, TrialHParams> = {};
-    const batchesMap: Record<number, number> = {};
-    const metricsMap: Record<number, Record<number, number>> = {};
-    const v2MetricsMap: Record<number, [number, number][]> = {};
+    const metricsMap: Record<number, [number, number][]> = {};
 
     setHasLoaded(false);
 
@@ -197,6 +190,7 @@ const LearningCurve: React.FC<Props> = ({
         experiment.id,
         selectedMetric.name,
         metricTypeParamMap[selectedMetric.type],
+        undefined,
         selectedMaxTrial,
         MAX_DATAPOINTS,
         undefined,
@@ -231,45 +225,26 @@ const LearningCurve: React.FC<Props> = ({
             trialHpMap[id] = { hparams: flatHParams, id, metric: null };
           }
 
-          trialDataMap[id] = trialDataMap[id] || [];
-          metricsMap[id] = metricsMap[id] || {};
-          v2MetricsMap[id] = [];
+          metricsMap[id] = [];
 
           trial.data.forEach((datapoint) => {
-            batchesMap[datapoint.batches] = datapoint.batches;
-            metricsMap[id][datapoint.batches] = datapoint.value;
-            v2MetricsMap[id].push([datapoint.batches, datapoint.value]);
-            trialHpMap[id].metric = datapoint.value;
+            metricsMap[id].push([datapoint.batches, datapoint.values[selectedMetric.name]]);
+            trialHpMap[id].metric = datapoint.values[selectedMetric.name];
           });
         });
 
         const newTrialHps = newTrialIds.map((id) => trialHpMap[id]);
         setTrialHps(newTrialHps);
 
-        const newBatches = Object.values(batchesMap);
-        setBatches(newBatches);
-
-        const newChartData = newTrialIds.map((trialId) =>
-          newBatches.map((batch) => {
-            /**
-             * TODO: filtering NaN, +/- Infinity for now, but handle it later with
-             * dynamic min/max ranges via uPlot.Scales.
-             */
-            const value = metricsMap[trialId][batch];
-            return Number.isFinite(value) ? value : null;
-          }),
-        );
-        setChartData(newChartData);
-
-        const v2NewChartData = newTrialIds
+        const newChartData = newTrialIds
           .filter((trialId) => !selectedRowKeys.length || selectedRowKeys.includes(trialId))
           .map((trialId) => ({
             color: glasbeyColor(trialId),
-            data: { [XAxisDomain.Batches]: v2MetricsMap[trialId] },
+            data: { [XAxisDomain.Batches]: metricsMap[trialId] },
             key: trialId,
             name: `trial ${trialId}`,
           }));
-        setV2ChartData(v2NewChartData);
+        setChartData(Loaded(newChartData));
 
         // One successful event as come through.
         setHasLoaded(true);
@@ -342,7 +317,7 @@ const LearningCurve: React.FC<Props> = ({
           description="Please wait until the experiment is further along."
           message="Not enough data points to plot."
         />
-        <Spinner />
+        <Spinner center spinning />
       </div>
     );
   }
@@ -352,29 +327,16 @@ const LearningCurve: React.FC<Props> = ({
       <Section bodyBorder bodyScroll filters={filters} loading={!hasLoaded}>
         <div className={css.container}>
           <div className={css.chart}>
-            {chartComponent ? (
-              <LineChart
-                focusedSeries={highlightedTrialId && trialIds.indexOf(highlightedTrialId)}
-                scale={selectedScale}
-                series={v2ChartData}
-                xLabel="Batches Processed"
-                yLabel={`[${selectedMetric.type[0].toUpperCase()}] ${selectedMetric.name}`}
-                onPointClick={handlePointClick}
-                onPointFocus={handlePointFocus}
-              />
-            ) : (
-              <LearningCurveChart
-                data={chartData}
-                focusedTrialId={highlightedTrialId}
-                selectedMetric={selectedMetric}
-                selectedScale={selectedScale}
-                selectedTrialIds={selectedRowKeys}
-                trialIds={trialIds}
-                xValues={batches}
-                onTrialClick={handleTrialClick}
-                onTrialFocus={handleTrialFocus}
-              />
-            )}
+            <LineChart
+              focusedSeries={highlightedTrialId && trialIds.indexOf(highlightedTrialId)}
+              handleError={handleError}
+              scale={selectedScale}
+              series={chartData}
+              xLabel="Batches Processed"
+              yLabel={`[${selectedMetric.type[0].toUpperCase()}] ${selectedMetric.name}`}
+              onPointClick={handlePointClick}
+              onPointFocus={handlePointFocus}
+            />
           </div>
           <TableBatch
             actions={[
@@ -402,7 +364,7 @@ const LearningCurve: React.FC<Props> = ({
       {showCompareTrials && (
         <TrialsComparisonModal
           experiment={experiment}
-          trials={selectedRowKeys}
+          trialIds={selectedRowKeys}
           visible={showCompareTrials}
           onCancel={() => setShowCompareTrials(false)}
           onUnselect={handleTrialUnselect}

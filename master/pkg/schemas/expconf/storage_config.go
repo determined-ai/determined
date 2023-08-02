@@ -23,7 +23,6 @@ const (
 //go:generate ../gen.sh
 type CheckpointStorageConfigV0 struct {
 	RawSharedFSConfig *SharedFSConfigV0 `union:"type,shared_fs" json:"-"`
-	RawHDFSConfig     *HDFSConfigV0     `union:"type,hdfs" json:"-"`
 	RawS3Config       *S3ConfigV0       `union:"type,s3" json:"-"`
 	RawGCSConfig      *GCSConfigV0      `union:"type,gcs" json:"-"`
 	RawAzureConfig    *AzureConfigV0    `union:"type,azure" json:"-"`
@@ -72,7 +71,6 @@ func (c CheckpointStorageConfigV0) Printable() CheckpointStorageConfigV0 {
 //go:generate ../gen.sh
 type TensorboardStorageConfigV0 struct {
 	RawSharedFSConfigV0 *SharedFSConfigV0 `union:"type,shared_fs" json:"-"`
-	RawHDFSConfig       *HDFSConfigV0     `union:"type,hdfs" json:"-"`
 	RawS3Config         *S3ConfigV0       `union:"type,s3" json:"-"`
 	RawGCSConfig        *GCSConfigV0      `union:"type,gcs" json:"-"`
 	RawAzureConfig      *AzureConfigV0    `union:"type,azure" json:"-"`
@@ -120,15 +118,6 @@ func (s SharedFSConfigV0) PathInContainer() string {
 		return filepath.Join(DefaultSharedFSContainerPath, relPath)
 	}
 	return filepath.Join(DefaultSharedFSContainerPath, *s.RawStoragePath)
-}
-
-// HDFSConfigV0 configures storing checkpoints in HDFS.
-//
-//go:generate ../gen.sh
-type HDFSConfigV0 struct {
-	RawURL  *string `json:"hdfs_url"`
-	RawPath *string `json:"hdfs_path"`
-	RawUser *string `json:"user"`
 }
 
 // S3ConfigV0 configures storing checkpoints on S3.

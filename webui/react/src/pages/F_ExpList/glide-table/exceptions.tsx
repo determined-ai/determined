@@ -1,13 +1,11 @@
-import { Row } from 'antd';
-import SkeletonButton from 'antd/es/skeleton/Button';
 import React, { ReactNode } from 'react';
 
+import { ImageAlert } from 'components/Image';
 import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
-import { ImageAlert } from 'shared/components/Image';
-import useUI from 'shared/contexts/stores/UI';
-import { DarkLight } from 'shared/themes';
+import useUI from 'stores/contexts/UI';
+import { DarkLight } from 'utils/themes';
 
 import css from './exceptions.module.scss';
 
@@ -89,14 +87,4 @@ export const Error: React.FC<{ fetchExperiments?: () => void }> = ({ fetchExperi
   <ExceptionMessage ImageComponent={ImageAlert} title="Failed to Load Data">
     <Button onClick={fetchExperiments}>Retry</Button>
   </ExceptionMessage>
-);
-
-export const Loading: React.FC<{ width: number }> = ({ width }) => (
-  <>
-    {[...Array(22)].map((x, i) => (
-      <Row key={i} style={{ paddingBottom: '4px' }}>
-        <SkeletonButton style={{ width: width - 20 }} />
-      </Row>
-    ))}
-  </>
 );

@@ -2,16 +2,16 @@ import { Select, Typography } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useState } from 'react';
 
+import Icon from 'components/kit/Icon';
 import { Modal } from 'components/kit/Modal';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { moveProject } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import workspaceStore from 'stores/workspaces';
 import { Project, Workspace } from 'types';
 import { notification } from 'utils/dialogApi';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -81,6 +81,7 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onClose, project }: Props)
       size="small"
       submit={{
         disabled: !destinationWorkspaceId,
+        handleError,
         handler: handleSubmit,
         text: 'Move Project',
       }}
@@ -99,8 +100,10 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onClose, project }: Props)
             <Option disabled={disabled} key={workspace.id} value={workspace.id}>
               <div className={disabled ? css.workspaceOptionDisabled : ''}>
                 <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
-                {workspace.archived && <Icon name="archive" />}
-                {workspace.id === project.workspaceId && <Icon name="checkmark" />}
+                {workspace.archived && <Icon name="archive" title="Archived" />}
+                {workspace.id === project.workspaceId && (
+                  <Icon name="checkmark" title="Project's current workspace" />
+                )}
               </div>
             </Option>
           );

@@ -4,3 +4,23 @@
 .filters {
   padding: 8px 0 0 8px;
 }
+.downloadConfirm {
+  p {
+    margin-bottom: 12px;
+  }
+  .code {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+  }
+  .codeSample {
+    background-color: var(--theme-float-strong);
+    border: solid var(--theme-stroke-width) var(--theme-float-border);
+    border-radius: 4px;
+    display: inline-block;
+    overflow-x: scroll;
+    padding: 8px;
+    white-space: nowrap;
+    width: 100%;
+  }
+}

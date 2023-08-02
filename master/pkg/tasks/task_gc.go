@@ -2,8 +2,10 @@ package tasks
 
 import (
 	"archive/tar"
+	"fmt"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/docker/docker/api/types/mount"
 
@@ -19,9 +21,12 @@ import (
 type GCCkptSpec struct {
 	Base TaskSpec
 
-	ExperimentID       int
-	LegacyConfig       expconf.LegacyConfig
-	ToDelete           string
+	ExperimentID int
+	LegacyConfig expconf.LegacyConfig
+	ToDelete     string
+	// If len(CheckpointGlobs) == 0 then we won't delete any checkpoint files
+	// and just refresh the state of the checkpoint.
+	CheckpointGlobs    []string
 	DeleteTensorboards bool
 }
 
@@ -46,22 +51,38 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 	res.Environment = schemas.WithDefaults(env)
 	res.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": string(model.TaskTypeCheckpointGC)}
 	res.ResourcesConfig = schemas.WithDefaults(res.ResourcesConfig)
+	res.SlurmConfig = defaultConfig.SlurmConfig()
+	res.PbsConfig = defaultConfig.PbsConfig()
 
 	res.WorkDir = DefaultWorkDir
 
+	globs := g.CheckpointGlobs
+	if globs == nil { // This matters for JSON parsing as [] vs None.
+		globs = []string{}
+	}
+
+	storageConfigPath := "checkpoint_gc/storage_config.json"
+	checkpointsToDeletePath := "checkpoint_gc/checkpoints_to_delete.json"
+	checkpointsGlobsPath := "checkpoint_gc/checkpoints_globs.json"
 	res.ExtraArchives = []cproto.RunArchive{
 		wrapArchive(
 			archive.Archive{
 				g.Base.AgentUserGroup.OwnedArchiveItem("checkpoint_gc", nil, 0o700, tar.TypeDir),
 				g.Base.AgentUserGroup.OwnedArchiveItem(
-					"checkpoint_gc/storage_config.json",
+					storageConfigPath,
 					[]byte(jsonify(g.LegacyConfig.CheckpointStorage)),
 					0o600,
 					tar.TypeReg,
 				),
 				g.Base.AgentUserGroup.OwnedArchiveItem(
-					"checkpoint_gc/checkpoints_to_delete.json",
-					[]byte(jsonify(g.ToDelete)),
+					checkpointsToDeletePath,
+					[]byte(jsonify(strings.Split(g.ToDelete, ","))),
+					0o600,
+					tar.TypeReg,
+				),
+				g.Base.AgentUserGroup.OwnedArchiveItem(
+					checkpointsGlobsPath,
+					[]byte(jsonify(globs)),
 					0o600,
 					tar.TypeReg,
 				),
@@ -72,22 +93,21 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 					tar.TypeReg,
 				),
 			},
-			runDir,
+			RunDir,
 		),
 	}
 
-	res.Description = "gc"
+	res.Description = fmt.Sprintf("gc-%d", g.ExperimentID)
 
+	// We pass storage-config / delete / globs through a JSON file instead of a JSON string
+	// to avoid reaching any OS limitations on sizes of CLI arguments.
 	res.Entrypoint = []string{
 		filepath.Join("/run/determined/checkpoint_gc", etc.GCCheckpointsEntrypointResource),
 		"--experiment-id",
 		strconv.Itoa(g.ExperimentID),
-		"--storage-config",
-		"/run/determined/checkpoint_gc/storage_config.json",
-	}
-	if g.ToDelete != "" {
-		res.Entrypoint = append(res.Entrypoint, "--delete")
-		res.Entrypoint = append(res.Entrypoint, g.ToDelete)
+		"--storage-config", fmt.Sprintf("/run/determined/%s", storageConfigPath),
+		"--delete", fmt.Sprintf("/run/determined/%s", checkpointsToDeletePath),
+		"--globs", fmt.Sprintf("/run/determined/%s", checkpointsGlobsPath),
 	}
 	if g.DeleteTensorboards {
 		res.Entrypoint = append(res.Entrypoint, "--delete-tensorboards")

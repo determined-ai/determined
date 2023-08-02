@@ -2,8 +2,8 @@ import { DefaultOptionType, LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
 import Select, { Option, SelectProps } from 'components/kit/Select';
-import { clone, isObject } from 'shared/utils/data';
 import { ALL_VALUE } from 'types';
+import { clone, isObject } from 'utils/data';
 
 import css from './HpSelect.module.scss';
 

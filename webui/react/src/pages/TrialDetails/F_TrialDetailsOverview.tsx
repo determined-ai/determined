@@ -2,17 +2,16 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import { ChartGrid, ChartsProps, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
+import Spinner from 'components/Spinner';
 import { UPlotPoint } from 'components/UPlot/types';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
+import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import useMetricNames from 'hooks/useMetricNames';
 import { useCheckpointFlow } from 'hooks/useModal/Checkpoint/useCheckpointFlow';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
-import Spinner from 'shared/components/Spinner';
-import { ErrorType } from 'shared/utils/error';
 import {
   CheckpointWorkloadExtended,
   ExperimentBase,
@@ -20,7 +19,9 @@ import {
   MetricType,
   TrialDetails,
 } from 'types';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 import { metricSorter, metricToKey } from 'utils/metric';
 
 import { Settings, settingsConfigForExperiment } from './TrialDetailsOverview.settings';
@@ -62,13 +63,17 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     [trial],
   );
 
-  const { contextHolders, openCheckpoint, modelCreateModalComponent } = useCheckpointFlow({
-    checkpoint,
-    config: experiment.config,
-    title: `Best checkpoint for Trial ${trial?.id}`,
-  });
+  const { contextHolders, openCheckpoint, modelCreateModalComponent, checkpointModalComponent } =
+    useCheckpointFlow({
+      checkpoint,
+      config: experiment.config,
+      title: `Best checkpoint for Trial ${trial?.id}`,
+    });
 
-  const { metrics, data, scale, setScale } = useTrialMetrics(trial);
+  const trials: (TrialDetails | undefined)[] = useMemo(() => [trial], [trial]);
+
+  const { metrics, data: allData, scale, setScale } = useTrialMetrics(trials);
+  const data = useMemo(() => allData?.[trial?.id || 0], [allData, trial?.id]);
 
   const checkpointsDict = useMemo<CheckpointsDict>(() => {
     const checkpointXHelpers: Record<XAxisVal, CheckpointWorkloadExtended> = {};
@@ -188,7 +193,8 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     [experiment.id],
   );
 
-  const metricNames = useMetricNames(experiment.id, handleMetricNamesError);
+  const loadableMetricNames = useMetricNames([experiment.id], handleMetricNamesError);
+  const metricNames = Loadable.getOrElse([], loadableMetricNames);
 
   const { defaultMetrics, workloadMetrics } = useMemo(() => {
     const validationMetric = experiment?.config?.searcher.metric;
@@ -214,6 +220,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         <>
           <ChartGrid
             chartsProps={chartsProps}
+            handleError={handleError}
             scale={scale}
             setScale={setScale}
             xAxis={xAxis}
@@ -238,6 +245,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         <React.Fragment key={i}>{contextHolder}</React.Fragment>
       ))}
       {modelCreateModalComponent}
+      {checkpointModalComponent}
     </>
   );
 };

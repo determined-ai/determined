@@ -1,9 +1,10 @@
 import { Divider } from 'antd';
 import { useObservable } from 'micro-observables';
-import queryString from 'query-string';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import LogoGoogle from 'assets/images/logo-sso-google-white.svg';
+import LogoOkta from 'assets/images/logo-sso-okta-white.svg';
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Button from 'components/kit/Button';
@@ -13,27 +14,18 @@ import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
-import useFeature from 'hooks/useFeature';
+import usePolling from 'hooks/usePolling';
 import { defaultRoute, rbacDefaultRoute } from 'routes';
 import { routeAll } from 'routes/utils';
-import LogoGoogle from 'shared/assets/images/logo-sso-google-white.svg';
-import LogoOkta from 'shared/assets/images/logo-sso-okta-white.svg';
-import useUI from 'shared/contexts/stores/UI';
-import usePolling from 'shared/hooks/usePolling';
-import { RecordKey } from 'shared/types';
-import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
-import { capitalize } from 'shared/utils/string';
 import authStore from 'stores/auth';
+import useUI from 'stores/contexts/UI';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
+import { RecordKey } from 'types';
 import { notification } from 'utils/dialogApi';
+import { locationToPath, routeToReactUrl } from 'utils/routes';
+import { capitalize } from 'utils/string';
 
 import css from './SignIn.module.scss';
-
-interface Queries {
-  cli?: boolean;
-  jwt?: string;
-  redirect?: string;
-}
 
 const logoConfig: Record<RecordKey, string> = {
   google: LogoGoogle,
@@ -47,15 +39,14 @@ const SignIn: React.FC = () => {
   const isAuthenticated = useObservable(authStore.isAuthenticated);
   const info = useObservable(determinedStore.info);
   const [canceler] = useState(new AbortController());
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
 
-  const queries: Queries = queryString.parse(location.search);
-  const ssoQueries = handleRelayState(queries) as Record<string, boolean | string | undefined>;
-  const ssoQueryString = queryString.stringify(ssoQueries);
+  const queries = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const ssoQueries = handleRelayState(queries);
 
   const externalAuthError = useMemo(() => {
-    return isAuthChecked && !isAuthenticated && !info.externalLoginUri && queries.jwt;
-  }, [isAuthChecked, isAuthenticated, info.externalLoginUri, queries.jwt]);
+    return isAuthChecked && !isAuthenticated && !info.externalLoginUri && queries.get('jwt');
+  }, [isAuthChecked, isAuthenticated, info.externalLoginUri, queries]);
 
   /*
    * Check every so often to see if the user is authenticated.
@@ -76,16 +67,17 @@ const SignIn: React.FC = () => {
       uiActions.hideSpinner();
 
       // Show auth token via notification if requested via query parameters.
-      if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });
+      if (queries.get('cli') === 'true')
+        notification.open({ description: <AuthToken />, duration: 0, message: '' });
 
       // Reroute the authenticated user to the app.
-      if (!queries.redirect) {
+      if (!queries.has('redirect')) {
         routeToReactUrl(
           locationToPath(location.state) ||
             (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path),
         );
       } else {
-        routeAll(queries.redirect);
+        routeAll(queries.get('redirect') || '');
       }
     } else if (isAuthChecked) {
       uiActions.hideSpinner();
@@ -110,7 +102,7 @@ const SignIn: React.FC = () => {
    * This will prevent the form from showing for a split second when
    * accessing a page from the browser when the user is already verified.
    */
-  if (queries.jwt || info.externalLoginUri || !isAuthChecked) return null;
+  if (queries.has('jwt') || info.externalLoginUri || !isAuthChecked) return null;
 
   /*
    * An external auth error occurs when there are external auth urls,
@@ -124,7 +116,7 @@ const SignIn: React.FC = () => {
     );
 
   return (
-    <Page docTitle="Sign In" ignorePermissions>
+    <Page breadcrumb={[]} docTitle="Sign In" ignorePermissions noScroll>
       <div className={css.base}>
         <div className={css.content}>
           <Logo
@@ -147,7 +139,7 @@ const SignIn: React.FC = () => {
                       <Button type="primary">
                         <a
                           className={css.ssoButton}
-                          href={samlUrl(ssoProvider.ssoUrl, ssoQueryString)}>
+                          href={samlUrl(ssoProvider.ssoUrl, ssoQueries.toString())}>
                           <div className={css.ssoProviderInfo}>
                             {logo}
                             <span>

@@ -16,12 +16,14 @@ serves as an alternative to the trainer used by MMDetection (see `mmcv's runner
 <https://mmcv.readthedocs.io/en/latest/understand_mmcv/runner.html>`_) and provides access to all of
 Determined's benefits including:
 
--  Easy :ref:`multi-node distributed training <multi-gpu-training>` with no code modifications.
-   Determined automatically sets up the distributed backend for you.
+-  Easy multi-node distributed training with no code modifications. Determined automatically sets up
+   the distributed backend for you.
 -  Experiment monitoring and tracking, artifact tracking, and :ref:`state-of-the-art hyperparameter
    search <hyperparameter-tuning>` without requiring third-party integrations.
 -  :ref:`Automated cluster management, fault tolerance, and job rescheduling <features>` so you
    don't have to worry about provisioning resources or babysitting your experiments.
+
+.. include:: ../../_shared/note-dtrain-learn-more.txt
 
 Given the benefits above, we think this library will be particularly useful to you if any of the
 following apply:

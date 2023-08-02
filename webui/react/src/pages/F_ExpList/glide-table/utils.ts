@@ -1,15 +1,15 @@
-import { DataEditorProps } from '@glideapps/glide-data-grid';
+import { DataEditorProps } from '@hpe.com/glide-data-grid';
 import dayjs from 'dayjs';
 
-import { Theme } from 'shared/themes';
+import { ExperimentItem } from 'types';
 import {
   DURATION_MINUTE,
   DURATION_UNIT_MEASURES,
   DURATION_YEAR,
   durationInEnglish,
   getDuration,
-} from 'shared/utils/datetime';
-import { ExperimentItem } from 'types';
+} from 'utils/datetime';
+import { Theme } from 'utils/themes';
 
 export const getDurationInEnglish = (record: ExperimentItem): string => {
   const duration = getDuration(record);
@@ -30,62 +30,41 @@ export const getTimeInEnglish = (d: Date): string => {
   const options = {
     conjunction: ' ',
     delimiter: ' ',
-    language: 'en',
     largest: 1,
     serialComma: false,
-    spacer: ' ',
   };
 
   const now = Date.now();
-
   const milliseconds = d.valueOf();
-
   const delta = milliseconds === undefined ? 0 : now - milliseconds;
 
-  return delta < DURATION_MINUTE
-    ? JUST_NOW
-    : delta >= DURATION_YEAR
-    ? dayjs(milliseconds).format(DATE_FORMAT)
-    : `${durationInEnglish(delta, options)} ago`;
+  if (delta < DURATION_MINUTE) {
+    return JUST_NOW;
+  } else if (delta >= DURATION_YEAR) {
+    return dayjs(milliseconds).format(DATE_FORMAT);
+  } else {
+    return `${durationInEnglish(delta, options)} ago`;
+  }
 };
 
+/**
+ * Glide Table Theme Reference
+ * https://github.com/glideapps/glide-data-grid/blob/main/packages/core/API.md#theme
+ */
 export const getTheme = (appTheme: Theme): DataEditorProps['theme'] => {
   return {
-    accentLight: appTheme.stage,
+    accentLight: appTheme.float,
     bgBubble: appTheme.ixStrong,
-    bgCell: appTheme.stageWeak,
+    bgCell: appTheme.surface,
     bgHeader: appTheme.surface,
     bgHeaderHovered: appTheme.surfaceStrong,
-    borderColor: '#00000000',
+    borderColor: appTheme.ixBorder,
     fontFamily: appTheme.fontFamily,
-    headerBottomBorderColor: appTheme.stageStrong,
+    headerBottomBorderColor: appTheme.ixBorder,
     headerFontStyle: 'normal 12px',
-    // horizontalBorderColor: appTheme.stageStrong,
-    linkColor: appTheme.statusActive,
-    textBubble: appTheme.stageBorderStrong,
-    textDark: appTheme.stageOnWeak,
-    textHeader: appTheme.stageOnWeak,
-    // bgBubble: '#F5F5F5',
-    // accentColor: '',
-    // accentFg: '',
-    // bgHeaderHasFocus: '',
-    // textLight: '',
-    // bgCellMedium: '',
-    // bgIconHeader: '',
-    // fgIconHeader: '',
-    // bgBubbleSelected: '',
-    // textMedium: '',
-    // bgSearchResult: '',
-    // cellHorizontalPadding: 0,
-    // textHeaderSelected: '',
-    // cellVerticalPadding: 0,
-    // drilldownBorder: '',
-    // editorFontSize: '',
-    // textGroupHeader: '',
-    // baseFontStyle: '',
-    // headerIconSize: 0,
-    // horizontalBorderColor: '',
-    // lineHeight: 0,
-    // linkColor: '',
+    linkColor: appTheme.surfaceOn,
+    textBubble: appTheme.surfaceBorderStrong,
+    textDark: appTheme.surfaceOnWeak,
+    textHeader: appTheme.surfaceOnWeak,
   };
 };

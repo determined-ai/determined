@@ -1,9 +1,10 @@
 import { pathToRegexp } from 'path-to-regexp';
-import queryString from 'query-string';
 
 import { globalStorage } from 'globalStorage';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
-import { RouteConfig } from 'shared/types';
+import { BrandingType } from 'stores/determinedInfo';
+import { RouteConfig } from 'types';
+import { CommandTask } from 'types';
 import {
   AnyMouseEvent,
   AnyMouseEventHandler,
@@ -14,9 +15,7 @@ import {
   reactHostAddress,
   routeToExternalUrl,
   routeToReactUrl,
-} from 'shared/utils/routes';
-import { BrandingType } from 'stores/determinedInfo';
-import { CommandTask } from 'types';
+} from 'utils/routes';
 import { waitPageUrl } from 'utils/wait';
 
 import routes from './routes';
@@ -71,9 +70,6 @@ const routeById: Record<string, RouteConfig> = routes.reduce((acc, cur) => {
 export const paths = {
   admin: (tab = ''): string => {
     return `/admin/${tab}`;
-  },
-  cluster: (): string => {
-    return '/clusters';
   },
   clusterLogs: (): string => {
     return '/logs';
@@ -140,13 +136,10 @@ export const paths = {
     return `/projects/${projectId}`;
   },
   reload: (path: string): string => {
-    return `/reload?${queryString.stringify({ path })}`;
+    return `/reload?${new URLSearchParams({ path })}`;
   },
   resourcePool: (name: string): string => {
     return `/resourcepool/${name}`;
-  },
-  settings: (tab = ''): string => {
-    return `/settings/${tab}`;
   },
   submitProductFeedback: (branding: BrandingType): string => {
     return branding === BrandingType.Determined
@@ -204,12 +197,9 @@ export const handlePath = (
     external?: boolean;
     onClick?: AnyMouseEventHandler;
     path?: string;
-    popout?: boolean;
+    popout?: boolean | 'tab' | 'window';
   } = {},
 ): void => {
-  // FIXME As of v17, e.persist() doesn’t do anything because the SyntheticEvent is no longer
-  // pooled.
-  // event.persist();
   event.preventDefault();
 
   const href = options.path ? linkPath(options.path, options.external) : undefined;
@@ -218,7 +208,12 @@ export const handlePath = (
     options.onClick(event);
   } else if (href) {
     if (isNewTabClickEvent(event) || options.popout) {
-      openBlank(href);
+      /**
+       * `location=0` forces a new window instead of a tab to open.
+       * https://stackoverflow.com/questions/726761/javascript-open-in-a-new-window-not-tab
+       */
+      const windowFeatures = options.popout === 'window' ? 'location=0' : undefined;
+      openBlank(href, undefined, windowFeatures);
     } else {
       routeAll(href);
     }

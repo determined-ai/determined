@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -31,22 +32,21 @@ type DB interface {
 	CheckTrialExists(id int) (bool, error)
 	TrialExperimentAndRequestID(id int) (int, model.RequestID, error)
 	AddExperiment(experiment *model.Experiment, activeConfig expconf.ExperimentConfig) error
-	ExperimentByID(id int) (*model.Experiment, error)
-	ExperimentByTrialID(trialID int) (*model.Experiment, error)
 	ExperimentIDByTrialID(trialID int) (int, error)
 	NonTerminalExperiments() ([]*model.Experiment, error)
 	TerminateExperimentInRestart(id int, state model.State) error
 	SaveExperimentConfig(id int, config expconf.ExperimentConfig) error
 	SaveExperimentState(experiment *model.Experiment) error
 	SaveExperimentArchiveStatus(experiment *model.Experiment) error
-	DeleteExperiment(id int) error
+	DeleteExperiments(ctx context.Context, ids []int) error
 	ExperimentHasCheckpointsInRegistry(id int) (bool, error)
 	SaveExperimentProgress(id int, progress *float64) error
 	ActiveExperimentConfig(id int) (expconf.ExperimentConfig, error)
 	ExperimentTotalStepTime(id int) (float64, error)
 	ExperimentNumTrials(id int) (int64, error)
 	ExperimentTrialIDs(expID int) ([]int, error)
-	ExperimentTrialAndTaskIDs(expID int) ([]int, []model.TaskID, error)
+	ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int,
+		[]model.TaskID, error)
 	ExperimentNumSteps(id int) (int64, error)
 	ExperimentModelDefinitionRaw(id int) ([]byte, error)
 	ExperimentCheckpointsToGCRaw(
@@ -86,9 +86,7 @@ type DB interface {
 		queryName string, args []interface{}, v interface{}, params ...interface{}) error
 	RawQuery(queryName string, params ...interface{}) ([]byte, error)
 	UpdateResourceAllocationAggregation() error
-	TemplateList() (values []model.Template, err error)
 	TemplateByName(name string) (value model.Template, err error)
-	UpsertTemplate(tpl *model.Template) error
 	DeleteTemplate(name string) error
 	InsertTrialProfilerMetricsBatch(
 		values []float32, batches []int32, timestamps []time.Time, labels []byte,
@@ -101,8 +99,6 @@ type DB interface {
 	ExperimentLabelUsage(projectID int32) (labelUsage map[string]int, err error)
 	GetExperimentStatus(experimentID int) (state model.State, progress float64,
 		err error)
-	MetricNames(experimentID int, sStartTime time.Time, vStartTime time.Time) (
-		training []string, validation []string, sEndTime time.Time, vEndTime time.Time, err error)
 	TrainingMetricBatches(experimentID int, metricName string, startTime time.Time) (
 		batches []int32, endTime time.Time, err error)
 	ValidationMetricBatches(experimentID int, metricName string, startTime time.Time) (
@@ -113,20 +109,20 @@ type DB interface {
 	ValidationTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
 		metricName string, startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial,
 		endTime time.Time, err error)
-	TopTrialsByMetric(experimentID int, maxTrials int, metric string,
-		smallerIsBetter bool) (trials []int32, err error)
 	TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)
-	ExperimentBestSearcherValidation(id int) (float32, error)
 	StartAllocationSession(allocationID model.AllocationID, owner *model.User) (string, error)
 	DeleteAllocationSession(allocationID model.AllocationID) error
 	UpdateAllocationState(allocation model.Allocation) error
 	UpdateAllocationStartTime(allocation model.Allocation) error
+	UpdateAllocationProxyAddress(allocation model.Allocation) error
 	ExperimentSnapshot(experimentID int) ([]byte, int, error)
 	SaveSnapshot(
 		experimentID int, version int, experimentSnapshot []byte,
 	) error
 	DeleteSnapshotsForExperiment(experimentID int) error
+	DeleteSnapshotsForExperiments(experimentIDs []int) func(ctx context.Context,
+		tx *bun.Tx) error
 	DeleteSnapshotsForTerminalExperiments() error
 	QueryProto(queryName string, v interface{}, args ...interface{}) error
 	QueryProtof(

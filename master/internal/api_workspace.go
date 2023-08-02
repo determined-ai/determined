@@ -13,6 +13,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -68,7 +70,7 @@ func validateWorkspaceName(name string) error {
 func (a *apiServer) GetWorkspaceByID(
 	ctx context.Context, id int32, curUser model.User, rejectImmutable bool,
 ) (*workspacev1.Workspace, error) {
-	notFoundErr := status.Errorf(codes.NotFound, "workspace (%d) not found", id)
+	notFoundErr := api.NotFoundErrs("workspace", fmt.Sprint(id), true)
 	w := &workspacev1.Workspace{}
 
 	if err := a.m.db.QueryProto("get_workspace", w, id, curUser.ID); errors.Is(err, db.ErrNotFound) {
@@ -77,10 +79,8 @@ func (a *apiServer) GetWorkspaceByID(
 		return nil, errors.Wrapf(err, "error fetching workspace (%d) from database", id)
 	}
 
-	if ok, err := workspace.AuthZProvider.Get().CanGetWorkspace(ctx, curUser, w); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, notFoundErr
+	if err := workspace.AuthZProvider.Get().CanGetWorkspace(ctx, curUser, w); err != nil {
+		return nil, authz.SubIfUnauthorized(err, notFoundErr)
 	}
 
 	if err := maskStorageConfigSecrets(w); err != nil {
@@ -156,12 +156,13 @@ func (a *apiServer) GetWorkspaceProjects(
 	// Construct the ordering expression.
 	startTime := apiv1.GetWorkspaceProjectsRequest_SORT_BY_LAST_EXPERIMENT_START_TIME
 	sortColMap := map[apiv1.GetWorkspaceProjectsRequest_SortBy]string{
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED:   "id",
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_CREATION_TIME: "created_at",
+		// `p` is an alias of `project` which is defined in master/static/srv/get_workspace_projects.sql
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED:   "p.id",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_CREATION_TIME: "p.created_at",
 		startTime: "last_experiment_started_at",
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_ID:          "id",
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_NAME:        "name",
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_DESCRIPTION: "description",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_ID:          "p.id",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_NAME:        "p.name",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_DESCRIPTION: "p.description",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -315,7 +316,10 @@ func (a *apiServer) PostWorkspace(
 		}
 	}()
 
-	w := &model.Workspace{Name: req.Name, UserID: curUser.ID}
+	w := &model.Workspace{
+		Name: req.Name, UserID: curUser.ID,
+		DefaultComputePool: req.DefaultComputePool, DefaultAuxPool: req.DefaultAuxPool,
+	}
 
 	if req.AgentUserGroup != nil {
 		w.AgentUID = req.AgentUserGroup.AgentUid
@@ -419,6 +423,15 @@ func (a *apiServer) PatchWorkspace(
 		insertColumns = append(insertColumns, "uid", "user_", "gid", "group_")
 	}
 
+	if req.Workspace.DefaultComputePool != "" {
+		updatedWorkspace.DefaultComputePool = req.Workspace.DefaultComputePool
+		insertColumns = append(insertColumns, "default_compute_pool")
+	}
+	if req.Workspace.DefaultAuxPool != "" {
+		updatedWorkspace.DefaultAuxPool = req.Workspace.DefaultAuxPool
+		insertColumns = append(insertColumns, "default_aux_pool")
+	}
+
 	if req.Workspace.CheckpointStorageConfig != nil {
 		if err = workspace.AuthZProvider.Get().
 			CanSetWorkspacesCheckpointStorageConfig(ctx, currUser, currWorkspace); err != nil {
@@ -496,9 +509,9 @@ func (a *apiServer) deleteWorkspace(
 }
 
 func (a *apiServer) DeleteWorkspace(
-	ctx context.Context, req *apiv1.DeleteWorkspaceRequest) (*apiv1.DeleteWorkspaceResponse,
-	error,
-) {
+	ctx context.Context,
+	req *apiv1.DeleteWorkspaceRequest,
+) (*apiv1.DeleteWorkspaceResponse, error) {
 	_, _, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
 		workspace.AuthZProvider.Get().CanDeleteWorkspace)
 	if err != nil {
@@ -529,6 +542,13 @@ func (a *apiServer) DeleteWorkspace(
 
 	log.Debugf("deleting workspace %d NTSC", req.Id)
 	command.TellNTSC(a.m.system, req)
+
+	log.Debugf("deleting workspace %d templates", req.Id)
+	_, err = db.Bun().NewDelete().Model(&model.Template{}).
+		Where("workspace_id = ?", req.Id).Exec(ctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error deleting workspace (%d) templates", req.Id)
+	}
 
 	if len(projects) == 0 {
 		err = a.m.db.QueryProto("delete_workspace", holder, req.Id)
@@ -612,4 +632,35 @@ func (a *apiServer) UnpinWorkspace(
 
 	return &apiv1.UnpinWorkspaceResponse{},
 		errors.Wrapf(err, "error un-pinning workspace (%d)", req.Id)
+}
+
+func (a *apiServer) ListRPsBoundToWorkspace(
+	ctx context.Context, req *apiv1.ListRPsBoundToWorkspaceRequest,
+) (*apiv1.ListRPsBoundToWorkspaceResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = workspace.AuthZProvider.Get().CanGetWorkspaceID(
+		ctx, *curUser, req.WorkspaceId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	rpConfigs, err := a.resourcePoolsAsConfigs()
+	if err != nil {
+		return nil, err
+	}
+	rpNames, pagination, err := db.ReadRPsAvailableToWorkspace(
+		ctx, req.WorkspaceId, req.Offset, req.Limit, rpConfigs,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.ListRPsBoundToWorkspaceResponse{
+		ResourcePools: rpNames,
+		Pagination:    pagination,
+	}, nil
 }

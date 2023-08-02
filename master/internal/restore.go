@@ -2,8 +2,11 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
+
+	"github.com/determined-ai/determined/master/internal/workspace"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -81,9 +84,15 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		)
 	}
 
+	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), expModel.ProjectID)
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		return err
+	}
+	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
 		m.system,
 		activeConfig.Resources().ResourcePool(),
+		workspaceID,
 		activeConfig.Resources().SlotsPerTrial(),
 	)
 	if err != nil {
@@ -147,7 +156,7 @@ func (e *experiment) restoreTrial(
 	var terminal bool
 	switch trial, err := e.db.TrialByExperimentAndRequestID(e.ID, searcher.Create.RequestID); {
 	case errors.Cause(err) == db.ErrNotFound:
-		l.Debug("trial was never previously allocated")
+		l.Debug("trial was not previously persisted")
 	case err != nil:
 		// This is the only place we _have_ to error, because if the trial did previously exist
 		// and we failed to retrieve it, continuing will result in an invalid state (we'll get a
@@ -177,16 +186,12 @@ func (e *experiment) restoreTrial(
 	config := schemas.Copy(e.activeConfig)
 	t := newTrial(
 		e.logCtx, trialTaskID(e.ID, searcher.Create.RequestID), e.JobID, e.StartTime, e.ID, e.State,
-		searcher, e.taskLogger, e.rm, e.db, config, ckpt, e.taskSpec, true,
+		searcher, e.rm, e.db, config, ckpt, e.taskSpec, e.generatedKeys, true,
 	)
 	if trialID != nil {
 		t.id = *trialID
 		t.idSet = true
-		if _, ok := e.searcher.TrialsCreated[searcher.Create.RequestID]; !ok {
-			ctx.Tell(ctx.Self(), trialCreated{
-				requestID: searcher.Create.RequestID,
-			})
-		}
+		t.trialCreationSent = e.searcher.TrialsCreated[searcher.Create.RequestID]
 	}
 	trialActor, _ := ctx.ActorOf(searcher.Create.RequestID, t)
 	ctx.Ask(trialActor, actor.Ping{}).Get()

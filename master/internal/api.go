@@ -28,8 +28,8 @@ type apiServer struct {
 
 	usergroup.UserGroupAPIServer
 	rbac.RBACAPIServerWrapper
-	trials.TrialsAPIServer
 	webhooks.WebhooksAPIServer
+	trials.TrialSourceInfoAPIServer
 }
 
 // paginate returns a paginated subset of the values and sets the pagination response.
@@ -172,10 +172,6 @@ func (a *apiServer) filter(values interface{}, check func(int) bool) {
 	rv.Elem().Set(results)
 }
 
-func errActorNotFound(addr actor.Address) error {
-	return status.Errorf(codes.NotFound, "actor %s could not be found", addr)
-}
-
 // ask asks at addr the req and puts the response into what v points at. When appropriate,
 // errors are converted appropriate for an API response. Error cases are enumerated below:
 //   - If v points to an unsettable value, a 500 is returned.
@@ -195,7 +191,7 @@ func (a *apiServer) ask(addr actor.Address, req interface{}, v interface{}) erro
 	expectingResponse := reflect.ValueOf(v).IsValid() && reflect.ValueOf(v).Elem().CanSet()
 	switch resp := a.m.system.AskAt(addr, req); {
 	case resp.Source() == nil:
-		return errActorNotFound(addr)
+		return api.NotFoundErrs("actor", fmt.Sprint(addr), true)
 	case expectingResponse && resp.Empty(), expectingResponse && resp.Get() == nil:
 		return status.Errorf(
 			codes.NotFound,

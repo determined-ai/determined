@@ -6,31 +6,35 @@ import argparse
 import os
 import re
 import sys
-from time import sleep
-from typing import Pattern, Optional
+import time
+from typing import Optional, Pattern
 
-import backoff
+from requests.exceptions import RequestException
+
 from determined.common import api
 from determined.common.api import certs
-from requests.exceptions import RequestException
 
 BACKOFF_SECONDS = 5
 
-# Since the service is virtually inaccessible by the user unless
-# the call completes, we may as well try forever or just wait for
-# them to kill us.
-@backoff.on_exception(  # type: ignore
-    lambda: backoff.constant(interval=BACKOFF_SECONDS),
-    RequestException,
-    giveup=lambda e: e.response is not None and e.response.status_code < 500,
-)
+
 def post_ready(master_url: str, cert: certs.Cert, allocation_id: str, state: str):
-    api.post(
-        master_url,
-        f"/api/v1/allocations/{allocation_id}/{state}",
-        {},
-        cert=cert,
-    )
+    # Since the service is virtually inaccessible by the user unless
+    # the call completes, we may as well try forever or just wait for
+    # them to kill us.
+    while True:
+        try:
+            api.post(
+                master_url,
+                f"/api/v1/allocations/{allocation_id}/{state}",
+                {},
+                cert=cert,
+            )
+            return
+        except RequestException as e:
+            if e.response is not None and e.response.status_code < 500:
+                raise e
+
+            time.sleep(BACKOFF_SECONDS)
 
 
 def main(ready: Pattern, waiting: Optional[Pattern] = None):

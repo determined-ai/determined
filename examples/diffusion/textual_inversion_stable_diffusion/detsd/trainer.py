@@ -635,7 +635,7 @@ class DetSDTextualInversionTrainer:
             # In tensorboard images, different rows correspond to different workers, and
             # num_pipeline_calls sets the number of columns.
             all_generated_img_ts = self.accelerator.gather(
-                generated_img_t.to(self.accelerator.device)
+                generated_img_t.to(self.accelerator.device).contiguous()
             )
             if self.accelerator.is_main_process:
                 tb_writer.add_image(

@@ -36,6 +36,37 @@ message GetJobsResponse {
   repeated determined.job.v1.Job jobs = 2;
 }
 
+// Get a list of jobs sorted by number of jobs ahead & job ID.
+message GetJobsV2Request {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [] }
+  };
+  // Pagination offset.
+  int32 offset = 10;
+  // Pagination limit.
+  int32 limit = 11;
+  // The target resource-pool for agent resource manager.
+  string resource_pool = 2;
+  // Order results in either ascending or descending order by the number of
+  // jobs ahead.
+  OrderBy order_by = 3;
+  // Filter to jobs with states among those given.
+  repeated determined.job.v1.State states = 4;
+}
+
+// Response to GetJobsV2Request.
+message GetJobsV2Response {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "jobs", "pagination" ] }
+  };
+
+  // Pagination information of the full dataset.
+  Pagination pagination = 1;
+
+  // List of the requested jobs.
+  repeated determined.job.v1.RBACJob jobs = 2;
+}
+
 // Request to update the job queue.
 message UpdateJobQueueRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

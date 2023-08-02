@@ -1,3 +1,4 @@
+# Note: This should be kept in sync with the .flake8 file in the root of the repo.
 [flake8]
 max-line-length = 100
 exclude =

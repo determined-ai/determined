@@ -10,9 +10,17 @@ db:
   password: "{{ .db.password }}"
   host: "{{ .db.host }}"
   port: 5432
-  name: determined
+  name: "{{ .db.name }}"
+  {{- if .db.ssl_mode }}
+  ssl_mode: "{{ .db.ssl_mode }}"
+  {{- else if .db.ssl_root_cert }}
   ssl_mode: verify-ca
-  ssl_root_cert: /etc/determined/db_ssl_root_cert.pem
+  {{- else }}
+  ssl_mode: disable
+  {{- end }}
+  {{- if .db.ssl_root_cert }}
+  ssl_root_cert: "{{ .db.ssl_root_cert }}"
+  {{- end }}
 
 enable_cors: {{ .enable_cors }}
 

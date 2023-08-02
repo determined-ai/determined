@@ -3,16 +3,10 @@ from typing import Any, Dict, List, cast
 
 import numpy as np
 import tensorflow as tf
-from packaging import version
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.losses import mean_squared_error
 from tensorflow.keras.models import Sequential
-
-# TODO MLG-443 Migrate from legacy Keras optimizers
-if version.parse(tf.__version__) >= version.parse("2.11.0"):
-    from tensorflow.keras.optimizers.legacy import SGD
-else:
-    from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.optimizers.legacy import SGD  # TODO MLG-443
 
 from determined import keras
 from tests.experiment.fixtures import keras_cb_checker

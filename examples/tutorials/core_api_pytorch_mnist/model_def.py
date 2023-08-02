@@ -1,4 +1,5 @@
-# The starting script. This script is the same as PyTorch's official MNIST example[1].
+# The starting script. This script is the same as PyTorch's official
+# MNIST example[1].
 #
 # [1] github.com/pytorch/examples/blob/main/mnist/main.py
 

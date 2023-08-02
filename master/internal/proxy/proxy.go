@@ -1,6 +1,8 @@
 package proxy
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,30 +12,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-
-	"github.com/determined-ai/determined/master/pkg/actor"
-)
-
-// Proxy-specific actor messages.
-type (
-	// Register registers the service name with the associated target URL. All requests with the
-	// format ".../:service-name/*" are forwarded to the service via the target URL.
-	Register struct {
-		ServiceID       string
-		URL             *url.URL
-		ProxyTCP        bool
-		Unauthenticated bool
-	}
-	// Unregister removes the service from the proxy. All future requests until the service name is
-	// registered again will be responded with a 404 response. If the service is not registered with
-	// the proxy, the message is ignored.
-	Unregister struct{ ServiceID string }
-	// NewProxyHandler returns a middleware function for proxying HTTP-like traffic to services
-	// running in the cluster.
-	NewProxyHandler struct{ ServiceID string }
-
-	// GetSummary returns a snapshot of the registered services.
-	GetSummary struct{}
+	"github.com/sirupsen/logrus"
 )
 
 // Service represents a registered service. The LastRequested field is used by
@@ -45,6 +24,17 @@ type Service struct {
 	AllowUnauthenticated bool
 }
 
+// Clone returns a deep copy of the Service.
+func (s Service) Clone() Service {
+	sURL := *s.URL
+	return Service{
+		URL:                  &sURL,
+		LastRequested:        s.LastRequested,
+		ProxyTCP:             s.ProxyTCP,
+		AllowUnauthenticated: s.AllowUnauthenticated,
+	}
+}
+
 // ProxyHTTPAuth processes a proxy request, returning true if the request should terminate
 // immediately and an error if one was encountered during authentication.
 type ProxyHTTPAuth func(echo.Context) (done bool, err error)
@@ -52,75 +42,93 @@ type ProxyHTTPAuth func(echo.Context) (done bool, err error)
 // Proxy is an actor that proxies requests to registered services.
 type Proxy struct {
 	lock     sync.RWMutex
-	services map[string]*Service
-
 	HTTPAuth ProxyHTTPAuth
+	services map[string]*Service
+	syslog   *logrus.Entry
 }
 
-// Receive implements the actor.Actor interface.
-func (p *Proxy) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		p.services = make(map[string]*Service)
-	case Register:
-		if msg.ServiceID == "" {
-			return nil
-		}
-		p.lock.Lock()
-		defer p.lock.Unlock()
-		ctx.Log().Infof("registering service: %s (%v)", msg.ServiceID, msg.URL)
-		p.services[msg.ServiceID] = &Service{
-			URL:                  msg.URL,
-			LastRequested:        time.Now(),
-			ProxyTCP:             msg.ProxyTCP,
-			AllowUnauthenticated: msg.Unauthenticated,
-		}
+// DefaultProxy is the global proxy singleton.
+var DefaultProxy *Proxy
 
-		if ctx.ExpectingResponse() {
-			ctx.Respond(nil)
-		}
-	case Unregister:
-		p.lock.Lock()
-		defer p.lock.Unlock()
-		delete(p.services, msg.ServiceID)
-	case NewProxyHandler:
-		ctx.Respond(p.newProxyHandler(msg.ServiceID))
-	case GetSummary:
-		ctx.Respond(p.getSummary())
-	case actor.PostStop:
-		p.lock.Lock()
-		defer p.lock.Unlock()
-		// Erase all services from the proxy in case any handlers are still active.
-		p.services = nil
+// InitProxy initializes the global proxy.
+func InitProxy(httpAuth ProxyHTTPAuth) {
+	if DefaultProxy != nil {
+		logrus.Warn(
+			"detected re-initialization of Proxy that should never occur outside of tests",
+		)
 	}
-	return nil
+	DefaultProxy = &Proxy{
+		HTTPAuth: httpAuth,
+		services: make(map[string]*Service),
+		syslog:   logrus.WithField("component", "proxy"),
+	}
+	err := LoadOrGenCA()
+	if err != nil {
+		logrus.Errorf("error generating key and cert: %t", err)
+	}
+	err = LoadOrGenSignedMasterCert()
+	if err != nil {
+		logrus.Errorf("error generating key and cert: %t", err)
+	}
 }
 
-func (p *Proxy) getService(serviceName string) *Service {
+// Register registers the service name with the associated target URL. All requests with the
+// format ".../:service-name/*" are forwarded to the service via the target URL.
+func (p *Proxy) Register(serviceID string, url *url.URL, proxyTCP bool, unauth bool) {
+	if serviceID == "" {
+		return
+	}
 	p.lock.Lock()
 	defer p.lock.Unlock()
-	service := p.services[serviceName]
+
+	p.syslog.Infof("registering service: %s (%v)", serviceID, url)
+	p.services[serviceID] = &Service{
+		URL:                  url,
+		LastRequested:        time.Now(),
+		ProxyTCP:             proxyTCP,
+		AllowUnauthenticated: unauth,
+	}
+	return
+}
+
+// Unregister removes the service from the proxy. All future requests until the service name is
+// registered again will be responded with a 404 response. If the service is not registered with
+// the proxy, the message is ignored.
+func (p *Proxy) Unregister(serviceID string) {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	delete(p.services, serviceID)
+}
+
+// ClearProxy erases all services from the proxy in case any handlers are still active.
+func (p *Proxy) ClearProxy() {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	p.services = make(map[string]*Service)
+}
+
+// GetService returns the Service, if any, given the serviceID key.
+func (p *Proxy) GetService(serviceID string) *Service {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	service := p.services[serviceID]
 	if service == nil {
 		return nil
 	}
 	service.LastRequested = time.Now()
 
 	// Make a copy to avoid callers mutating the object outside of this locked method.
-	sURL := *service.URL
-	return &Service{
-		URL:                  &sURL,
-		LastRequested:        service.LastRequested,
-		ProxyTCP:             service.ProxyTCP,
-		AllowUnauthenticated: service.AllowUnauthenticated,
-	}
+	clone := service.Clone()
+	return &clone
 }
 
-// Service an HTTP request through the /proxy/:service/* route.
-func (p *Proxy) newProxyHandler(serviceID string) echo.HandlerFunc {
+// NewProxyHandler returns a middleware function for proxying HTTP-like traffic to services
+// running in the cluster. Services an HTTP request through the /proxy/:service/* route.
+func (p *Proxy) NewProxyHandler(serviceID string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Look up the service name in the url path.
 		serviceName := c.Param(serviceID)
-		service := p.getService(serviceName)
+		service := p.GetService(serviceName)
 
 		if service == nil {
 			return echo.NewHTTPError(http.StatusNotFound,
@@ -156,7 +164,12 @@ func (p *Proxy) newProxyHandler(serviceID string) echo.HandlerFunc {
 		case c.IsWebSocket():
 			proxy = newSingleHostReverseWebSocketProxy(c, service.URL)
 		default:
-			proxy = httputil.NewSingleHostReverseProxy(service.URL)
+			newProxy, err := setUpProxy(service.URL)
+			if err != nil {
+				return err
+			}
+
+			proxy = newProxy
 		}
 		proxy.ServeHTTP(c.Response(), req)
 
@@ -164,22 +177,68 @@ func (p *Proxy) newProxyHandler(serviceID string) echo.HandlerFunc {
 	}
 }
 
-func (p *Proxy) getSummary() map[string]Service {
-	p.lock.RLock()
-	defer p.lock.RUnlock()
-	snapshot := make(map[string]Service)
-
-	for id, service := range p.services {
-		sURL := *service.URL
-		snapshot[id] = Service{
-			URL:                  &sURL,
-			LastRequested:        service.LastRequested,
-			ProxyTCP:             service.ProxyTCP,
-			AllowUnauthenticated: service.AllowUnauthenticated,
-		}
+func setUpProxy(serviceURL *url.URL) (*httputil.ReverseProxy, error) {
+	proxy := httputil.NewSingleHostReverseProxy(serviceURL)
+	if serviceURL.Scheme != https {
+		return proxy, nil
+	}
+	keyBytes, certBytes, err := MasterKeyAndCert()
+	if err != nil {
+		return nil, err
+	}
+	cert, err := tls.X509KeyPair(certBytes, keyBytes)
+	if err != nil {
+		return nil, err
 	}
 
+	masterCaBytes, err := MasterCACert()
+	if err != nil {
+		return nil, err
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(masterCaBytes)
+
+	//nolint:gosec,G402
+	proxy.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs:            caCertPool,
+			Certificates:       []tls.Certificate{cert},
+			InsecureSkipVerify: true,
+			VerifyConnection:   VerifyMasterSigned,
+		},
+	}
+
+	director := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		director(req)
+		req.Host = serviceURL.Host
+	}
+
+	return proxy, nil
+}
+
+// Summaries returns a snapshot of the registered services.
+func (p *Proxy) Summaries() map[string]Service {
+	p.lock.RLock()
+	defer p.lock.RUnlock()
+
+	snapshot := make(map[string]Service)
+	for id, service := range p.services {
+		snapshot[id] = service.Clone()
+	}
 	return snapshot
+}
+
+// Summary returns a snapshot of a specific registered service.
+func (p *Proxy) Summary(id string) (Service, bool) {
+	p.lock.RLock()
+	defer p.lock.RUnlock()
+
+	service, ok := p.services[id]
+	if !ok {
+		return Service{}, false
+	}
+	return service.Clone(), true
 }
 
 func asyncCopy(dst io.Writer, src io.Reader) chan error {

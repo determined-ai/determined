@@ -1,18 +1,20 @@
 import { Observable, useObservable } from 'micro-observables';
-import queryString from 'query-string';
 import { useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 import { globalStorage } from 'globalStorage';
 import { routeAll } from 'routes/utils';
+import { paths } from 'routes/utils';
+import { getCurrentUser } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import authStore, { AUTH_COOKIE_KEY } from 'stores/auth';
 import determinedStore from 'stores/determinedInfo';
 import { getCookie } from 'utils/browser';
+import { isAuthFailure } from 'utils/service';
 
-const useAuthCheck = (): (() => void) => {
+const useAuthCheck = (): (() => Promise<boolean>) => {
   const info = useObservable(determinedStore.info);
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   const updateBearerToken = useCallback((token: string) => {
     globalStorage.authToken = token;
@@ -20,20 +22,23 @@ const useAuthCheck = (): (() => void) => {
   }, []);
 
   const redirectToExternalSignin = useCallback(() => {
-    const redirect = encodeURIComponent(window.location.href);
+    const { pathname: path, origin, href } = window.location;
+    const redirect = [paths.login(), paths.logout()].some((p) => path.includes(p))
+      ? origin
+      : encodeURIComponent(href);
     const authUrl = `${info.externalLoginUri}?redirect=${redirect}`;
     routeAll(authUrl);
   }, [info.externalLoginUri]);
 
-  const checkAuth = useCallback((): void => {
+  const checkAuth = useCallback(async (): Promise<boolean> => {
     /*
      * Check for the auth token from the following sources:
      *   1 - query param jwt from external authentication.
      *   2 - server cookie
      *   3 - local storage
      */
-    const { jwt } = queryString.parse(location.search);
-    const jwtToken = jwt && !Array.isArray(jwt) ? jwt : null;
+    const jwt = searchParams.getAll('jwt');
+    const jwtToken = jwt.length === 1 ? jwt[0] : null;
     const cookieToken = getCookie(AUTH_COOKIE_KEY);
     const authToken = jwtToken ?? cookieToken ?? globalStorage.authToken;
 
@@ -51,11 +56,22 @@ const useAuthCheck = (): (() => void) => {
         authStore.setAuthChecked();
       });
     } else if (info.externalLoginUri) {
-      redirectToExternalSignin();
+      try {
+        await getCurrentUser({});
+      } catch (e) {
+        if (isAuthFailure(e)) {
+          authStore.setAuth({ isAuthenticated: false });
+          redirectToExternalSignin();
+          return false;
+        }
+      }
+      authStore.setAuth({ isAuthenticated: true });
+      authStore.setAuthChecked();
     } else {
       authStore.setAuthChecked();
     }
-  }, [info.externalLoginUri, location.search, redirectToExternalSignin, updateBearerToken]);
+    return authStore.isAuthenticated.get();
+  }, [info.externalLoginUri, searchParams, redirectToExternalSignin, updateBearerToken]);
 
   return checkAuth;
 };

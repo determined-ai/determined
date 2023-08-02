@@ -2,8 +2,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 
-import { generateAlphaNumeric, generateUUID } from 'shared/utils/string';
-import { LogLevelFromApi } from 'types';
+import { generateAlphaNumeric, generateUUID } from 'components/kit/internal/functions';
+import { LogLevelFromApi } from 'components/kit/internal/types';
 
 import LogViewerSelect, { ARIA_LABEL_RESET, Filters, LABELS } from './LogViewerSelect';
 
@@ -106,7 +106,6 @@ describe('LogViewerFilter', () => {
     await user.click(agentOption2);
 
     await waitFor(() => {
-      expect(handleOnChange).toHaveBeenCalledWith({ agentIds: [agentOptionText1] });
       expect(handleOnChange).toHaveBeenCalledWith({
         agentIds: [agentOptionText1, agentOptionText2],
       });

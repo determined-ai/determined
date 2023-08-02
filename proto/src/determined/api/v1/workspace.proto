@@ -150,6 +150,10 @@ message PostWorkspaceRequest {
 
   // Optional checkpoint storage config.
   optional google.protobuf.Struct checkpoint_storage_config = 13;
+  // The name of the default compute pool.
+  string default_compute_pool = 14;
+  // The name of the default aux pool.
+  string default_aux_pool = 15;
 }
 
 // Response to PostWorkspaceRequest.
@@ -255,3 +259,25 @@ message UnpinWorkspaceRequest {
 
 // Response to UnpinWorkspaceRequest.
 message UnpinWorkspaceResponse {}
+
+// List the resource pools bound to a workspace.
+message ListRPsBoundToWorkspaceRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspace_id", "limit" ] }
+  };
+
+  // Workspace ID.
+  int32 workspace_id = 1;
+  // The offset to use with pagination
+  int32 offset = 2;
+  // The maximum number of results to return
+  int32 limit = 3;
+}
+
+// Response to ListWorkspaceRPsRequest.
+message ListRPsBoundToWorkspaceResponse {
+  // List of resource pools bound to the workspace.
+  repeated string resource_pools = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
+}

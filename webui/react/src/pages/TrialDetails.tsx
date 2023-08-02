@@ -3,29 +3,33 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
+import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';
+import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import useFeature from 'hooks/useFeature';
+import usePolling from 'hooks/usePolling';
 import F_TrialDetailsOverview from 'pages/TrialDetails/F_TrialDetailsOverview';
 import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
-import TrialRangeHyperparameters from 'pages/TrialDetails/TrialRangeHyperparameters';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails } from 'services/api';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import { ApiState, ValueOf } from 'shared/types';
-import { ErrorType } from 'shared/utils/error';
-import { isAborted, isNotFound } from 'shared/utils/service';
-import { ExperimentBase, TrialDetails } from 'types';
+import workspaceStore from 'stores/workspaces';
+import { ApiState, ValueOf } from 'types';
+import { ExperimentBase, TrialDetails, Workspace } from 'types';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
+import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
+import { isAborted, isNotFound } from 'utils/service';
+
+import MultiTrialDetailsHyperparameters from './TrialDetails/MultiTrialDetailsHyperparameters';
 
 const TabType = {
   Hyperparameters: 'hyperparameters',
@@ -61,7 +65,7 @@ const TrialDetailsComp: React.FC = () => {
   });
   const pageRef = useRef<HTMLElement>(null);
   const chartFlagOn = useFeature().isOn('chart');
-
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const basePath = paths.trialDetails(trialId, experimentId);
   const trial = trialDetails.data;
 
@@ -143,7 +147,11 @@ const TrialDetailsComp: React.FC = () => {
         children: isSingleTrialExperiment(experiment) ? (
           <TrialDetailsHyperparameters pageRef={pageRef} trial={trial} />
         ) : (
-          <TrialRangeHyperparameters experiment={experiment} trial={trial} />
+          <MultiTrialDetailsHyperparameters
+            experiment={experiment}
+            pageRef={pageRef}
+            trial={trial}
+          />
         ),
         key: TabType.Hyperparameters,
         label: 'Hyperparameters',
@@ -201,8 +209,29 @@ const TrialDetailsComp: React.FC = () => {
     return <Spinner tip={`Fetching ${trial ? 'experiment' : 'trial'} information...`} />;
   }
 
+  const workspaceName = workspaces.find((ws: Workspace) => ws.id === experiment?.workspaceId)?.name;
+
   return (
     <Page
+      breadcrumb={[
+        workspaceName && experiment?.workspaceId !== 1
+          ? {
+              breadcrumbName: workspaceName,
+              path: paths.workspaceDetails(experiment?.workspaceId ?? 1),
+            }
+          : {
+              breadcrumbName: 'Uncategorized Experiments',
+              path: paths.projectDetails(1),
+            },
+        {
+          breadcrumbName: experiment?.name ?? '',
+          path: paths.experimentDetails(experiment.id),
+        },
+        {
+          breadcrumbName: `Trial ${trial.id}`,
+          path: paths.trialDetails(trial.id),
+        },
+      ]}
       containerRef={pageRef}
       headerComponent={
         <TrialDetailsHeader
@@ -221,6 +250,7 @@ const TrialDetailsComp: React.FC = () => {
         <Spinner spinning={isFetching}>
           <Pivot
             activeKey={tabKey}
+            destroyInactiveTabPane
             items={tabItems}
             tabBarExtraContent={
               <RoutePagination

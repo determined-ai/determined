@@ -14,7 +14,7 @@ vi.mock('services/api', () => ({
   deleteExperiment: vi.fn(),
 }));
 
-vi.mock('shared/utils/routes', () => ({
+vi.mock('utils/routes', () => ({
   routeToReactUrl: vi.fn(),
 }));
 

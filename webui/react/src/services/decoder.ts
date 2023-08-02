@@ -1,17 +1,11 @@
 import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
-import { Pagination, RawJson } from 'shared/types';
-import {
-  flattenObject,
-  isNullOrUndefined,
-  isNumber,
-  isObject,
-  isPrimitive,
-} from 'shared/utils/data';
-import { capitalize } from 'shared/utils/string';
 import { BrandingType, DeterminedInfo } from 'stores/determinedInfo';
+import { Pagination, RawJson } from 'types';
 import * as types from 'types';
+import { flattenObject, isNullOrUndefined, isNumber, isObject, isPrimitive } from 'utils/data';
+import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
 
@@ -383,6 +377,7 @@ const checkpointStateMap = {
   [Sdk.Checkpointv1State.COMPLETED]: types.CheckpointState.Completed,
   [Sdk.Checkpointv1State.ERROR]: types.CheckpointState.Error,
   [Sdk.Checkpointv1State.DELETED]: types.CheckpointState.Deleted,
+  [Sdk.Checkpointv1State.PARTIALLYDELETED]: types.CheckpointState.PartiallyDeleted,
 };
 
 const experimentStateMap = {
@@ -479,11 +474,12 @@ export const mapV1Experiment = (
   }) as types.HyperparametersFlattened;
   return {
     archived: data.archived,
-    checkpointCount: data.checkpointCount,
+    checkpoints: data.checkpointCount,
     checkpointSize: parseInt(data?.checkpointSize || '0'),
     config: ioToExperimentConfig(ioConfig),
     configRaw: data.config,
     description: data.description,
+    duration: data.duration,
     endTime: data.endTime as unknown as string,
     forkedFrom: data.forkedFrom,
     hyperparameters,
@@ -609,6 +605,14 @@ export const decodeCheckpoints = (
   };
 };
 
+const decodeSummaryMetrics = (data: unknown): types.SummaryMetrics => {
+  const ioSummaryMetrics = ioTypes.decode<ioTypes.ioSummaryMetrics>(ioTypes.ioSummaryMetrics, data);
+  return {
+    avgMetrics: ioSummaryMetrics.avg_metrics,
+    validationMetrics: ioSummaryMetrics.validation_metrics,
+  };
+};
+
 export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem => {
   return {
     autoRestarts: data.restarts,
@@ -622,21 +626,21 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     latestValidationMetric: data.latestValidation && decodeMetricsWorkload(data.latestValidation),
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
+    summaryMetrics: data.summaryMetrics && decodeSummaryMetrics(data.summaryMetrics),
     totalBatchesProcessed: data.totalBatchesProcessed,
     totalCheckpointSize: parseInt(data?.totalCheckpointSize || '0'),
   };
 };
 
-const decodeSummaryMetrics = (data: Sdk.V1SummarizedMetric[]): types.MetricContainer[] => {
+const decodeDownsampledMetrics = (data: Sdk.V1DownsampledMetrics[]): types.MetricContainer[] => {
   return data.map((m) => {
     const metrics: types.MetricContainer = {
       data: m.data.map((pt) => ({
         batches: pt.batches,
         epoch: pt.epoch,
         time: pt.time,
-        value: pt.value,
+        values: pt.values,
       })),
-      name: m.name,
       type:
         m.type === Sdk.V1MetricType.TRAINING
           ? types.MetricType.Training
@@ -646,12 +650,12 @@ const decodeSummaryMetrics = (data: Sdk.V1SummarizedMetric[]): types.MetricConta
   });
 };
 
-export const decodeTrialSummary = (data: Sdk.V1SummarizeTrialResponse): types.TrialSummary => {
+export const decodeTrialSummary = (data: Sdk.V1ComparableTrial): types.TrialSummary => {
   const trialItem = decodeV1TrialToTrialItem(data.trial);
 
   return {
     ...trialItem,
-    metrics: decodeSummaryMetrics(data.metrics),
+    metrics: decodeDownsampledMetrics(data.metrics),
   };
 };
 
@@ -829,3 +833,6 @@ export const mapV1ExperimentActionResults = (
     { failed: [], successful: [] } as types.BulkActionResult,
   );
 };
+
+export const decodeProjectColumnsResponse = (r: unknown): ioTypes.ioTypeProjectColumnsResponse =>
+  ioTypes.decode(ioTypes.ioProjectColumnsResponse, r);

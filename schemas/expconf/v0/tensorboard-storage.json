@@ -12,10 +12,6 @@
             },
             {
                 "unionKey": "never",
-                "$ref": "http://determined.ai/schemas/expconf/v0/hdfs.json"
-            },
-            {
-                "unionKey": "never",
                 "$ref": "http://determined.ai/schemas/expconf/v0/s3.json"
             },
             {

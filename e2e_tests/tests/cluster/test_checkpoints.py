@@ -392,6 +392,157 @@ def test_delete_experiment_with_no_checkpoints() -> None:
 
 
 @pytest.mark.e2e_cpu
+def test_checkpoint_partial_delete() -> None:
+    base_conf_path = conf.fixtures_path("no_op/single-default-ckpt.yaml")
+
+    host_path = "/tmp"
+    storage_path = "partial-delete-checkpoints-e2etest"
+    config = conf.load_config(str(base_conf_path))
+    config["checkpoint_storage"] = {
+        "type": "shared_fs",
+        "host_path": host_path,
+        "storage_path": storage_path,
+        "save_trial_latest": 10,
+    }
+    config["min_checkpoint_period"] = {"batches": 10}
+
+    exp_id = exp.run_basic_test_with_temp_config(
+        config, model_def_path=conf.fixtures_path("no_op"), expected_trials=1
+    )
+
+    test_session = api_utils.determined_test_session()
+    checkpoints = bindings.get_GetExperimentCheckpoints(
+        session=test_session,
+        id=exp_id,
+    ).checkpoints
+    completed_checkpoints = []
+    for c in checkpoints:
+        if c.state == bindings.checkpointv1State.COMPLETED:
+            completed_checkpoints.append(c)
+            if len(completed_checkpoints) >= 2:
+                break
+    else:
+        pytest.fail("did not find two checkpoints in state completed")
+
+    s = bindings.get_GetExperiment(
+        test_session,
+        experimentId=exp_id,
+    ).experiment.checkpointSize
+    assert s is not None
+    starting_size = int(s)
+
+    def assert_checkpoint_state(
+        uuid: str,
+        exp_size: int,
+        trial_size: int,
+        resources: Dict[str, Any],
+        state: checkpointv1State,
+    ) -> None:
+        s = bindings.get_GetExperiment(
+            test_session,
+            experimentId=exp_id,
+        ).experiment.checkpointSize
+        assert s is not None and int(s) == exp_size
+
+        trials = bindings.get_GetExperimentTrials(test_session, experimentId=exp_id).trials
+        assert len(trials) == 1
+        assert (
+            trials[0].totalCheckpointSize is not None
+            and int(trials[0].totalCheckpointSize) == trial_size
+        )
+
+        ckpt = bindings.get_GetCheckpoint(
+            test_session,
+            checkpointUuid=uuid,
+        ).checkpoint
+        assert ckpt.resources == resources
+        assert ckpt.state == state
+
+    # Unchanged and empty glob causes checkpoint state says the same.
+    remove_body = bindings.v1CheckpointsRemoveFilesRequest(
+        checkpointGlobs=[],
+        checkpointUuids=[completed_checkpoints[0].uuid],
+    )
+    bindings.post_CheckpointsRemoveFiles(test_session, body=remove_body)
+    wait_for_gc_to_finish(exp_id)
+
+    assert_checkpoint_state(
+        completed_checkpoints[0].uuid,
+        starting_size,
+        starting_size,
+        completed_checkpoints[0].resources,
+        bindings.checkpointv1State.COMPLETED,
+    )
+
+    # Delete from shared_fs with no glob => update state.
+    # metadata.json is being creatd somehow. This is the difference we are getting.
+    new_resources = {}
+    new_size = starting_size
+    for file_name, size in completed_checkpoints[0].resources.items():
+        if "pkl" in file_name:
+            os.remove(f"{host_path}/{storage_path}/{completed_checkpoints[0].uuid}/{file_name}")
+            new_size -= int(size)
+        else:
+            new_resources[file_name] = size
+
+    remove_body = bindings.v1CheckpointsRemoveFilesRequest(
+        checkpointGlobs=[],
+        checkpointUuids=[completed_checkpoints[0].uuid],
+    )
+    bindings.post_CheckpointsRemoveFiles(test_session, body=remove_body)
+    wait_for_gc_to_finish(exp_id)
+
+    assert_checkpoint_state(
+        completed_checkpoints[0].uuid,
+        new_size,
+        new_size,
+        new_resources,
+        bindings.checkpointv1State.PARTIALLY_DELETED,
+    )
+
+    # Competly delete checkpoint.
+    new_size -= sum(int(s) for s in new_resources.values())
+    # new_resources stays the same since we don't delete resources when we delete checkpoints..
+    remove_body = bindings.v1CheckpointsRemoveFilesRequest(
+        checkpointGlobs=["**/*"],
+        checkpointUuids=[completed_checkpoints[0].uuid],
+    )
+    bindings.post_CheckpointsRemoveFiles(test_session, body=remove_body)
+    wait_for_gc_to_finish(exp_id)
+
+    assert_checkpoint_state(
+        completed_checkpoints[0].uuid,
+        new_size,
+        new_size,
+        new_resources,
+        bindings.checkpointv1State.DELETED,
+    )
+
+    # Matching glob => update state and trials.
+    new_resources = {}
+    for file_name, size in completed_checkpoints[1].resources.items():
+        if "pkl" in file_name:
+            new_size -= int(size)
+        else:
+            new_resources[file_name] = size
+
+    remove_body = bindings.v1CheckpointsRemoveFilesRequest(
+        checkpointGlobs=["**/*.pkl"],
+        checkpointUuids=[completed_checkpoints[1].uuid],
+    )
+    bindings.post_CheckpointsRemoveFiles(test_session, body=remove_body)
+    wait_for_gc_to_finish(exp_id)
+
+    assert_checkpoint_state(
+        completed_checkpoints[1].uuid,
+        new_size,
+        new_size,
+        new_resources,
+        bindings.checkpointv1State.PARTIALLY_DELETED,
+    )
+
+
+@pytest.mark.e2e_cpu
 def test_fail_on_chechpoint_save() -> None:
     error_log = "failed on checkpoint save"
     config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))

@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-from typing import Iterable, List, Tuple, Union, Dict, Set
-from pathlib import Path
-import multiprocessing
-import subprocess
 import argparse
-import os
-import sys
 import concurrent.futures
+import multiprocessing
+import os
+import subprocess
+import sys
+from pathlib import Path
+from typing import Dict, Iterable, List, Set, Tuple, Union
 
 # TODO add option to pass in a git diff to check or git hash
 

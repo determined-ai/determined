@@ -3,12 +3,11 @@ import { ModalProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from 'components/kit/Button';
-import Tooltip from 'components/kit/Tooltip';
+import Icon from 'components/kit/Icon';
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import useResize from 'hooks/useResize';
-import Icon from 'shared/components/Icon';
-import { isNumber } from 'shared/utils/data';
-import { isPercent, percentToFloat } from 'shared/utils/number';
+import { isNumber } from 'utils/data';
+import { isPercent, percentToFloat } from 'utils/number';
 
 import css from './GalleryModal.module.scss';
 
@@ -70,18 +69,16 @@ const GalleryModal: React.FC<Props> = ({
       <div className={css.base} style={{ minHeight }}>
         {children}
         <div className={css.prev}>
-          <Tooltip placement="right" title="Previous">
-            <Button onClick={handlePrevious}>
-              <Icon name="arrow-left" />
-            </Button>
-          </Tooltip>
+          <Button
+            icon={<Icon name="arrow-left" showTooltip title="Previous" />}
+            onClick={handlePrevious}
+          />
         </div>
         <div className={css.next}>
-          <Tooltip placement="left" title="Next">
-            <Button onClick={handleNext}>
-              <Icon name="arrow-right" />
-            </Button>
-          </Tooltip>
+          <Button
+            icon={<Icon name="arrow-right" showTooltip title="Next" />}
+            onClick={handleNext}
+          />
         </div>
       </div>
     </Modal>

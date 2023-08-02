@@ -1,16 +1,17 @@
 import argparse
-import json
 import shlex
 import shutil
 import subprocess
 import sys
 from argparse import Namespace
 from typing import Any, List
+from urllib import parse
 
 from termcolor import colored
 
-from determined.common.api import authentication
-from determined.common.api.request import make_url
+import determined.cli.render
+from determined.cli import errors
+from determined.common.api import authentication, request
 from determined.common.declarative_argparse import Arg, Cmd
 
 
@@ -27,9 +28,16 @@ def curl(args: Namespace) -> None:
         print(colored("curl is not installed on this machine", "red"))
         sys.exit(1)
 
+    parsed = parse.urlparse(args.path)
+    if parsed.scheme:
+        raise errors.CliError(
+            "path argument does not support absolute URLs."
+            + " Set the host path through `det` command"
+        )
+
     cmd: List[str] = [
         "curl",
-        make_url(args.master, args.path),
+        request.make_url_new(args.master, args.path),
         "-H",
         f"Authorization: Bearer {authentication.cli_auth.get_session_token()}",
         "-s",
@@ -48,14 +56,7 @@ def curl(args: Namespace) -> None:
         print(output.stderr.decode("utf8"), file=sys.stderr)
 
     out = output.stdout.decode("utf8")
-    try:
-        json_resp = json.loads(out)
-        if shutil.which("jq") is not None:
-            subprocess.run(["jq", "."], input=out, text=True)
-        else:
-            print(json.dumps(json_resp, indent=4))
-    except json.decoder.JSONDecodeError:
-        print(out)
+    determined.cli.render.print_json(out)
 
     sys.exit(output.returncode)
 
@@ -75,7 +76,7 @@ args_description = [
                     Arg(
                         "-x", help="display the curl command that will be run", action="store_true"
                     ),
-                    Arg("path", help="path to curl (e.g. /api/v1/experiments?x=z)"),
+                    Arg("path", help="relative path to curl (e.g. /api/v1/experiments?x=z)"),
                     Arg("curl_args", nargs=argparse.REMAINDER, help="curl arguments"),
                 ],
             ),

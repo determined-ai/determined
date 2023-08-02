@@ -1,8 +1,8 @@
 import { MaybeMocked } from '@vitest/spy';
 
-import { RecordKey } from 'shared/types';
-import { generateUUID } from 'shared/utils/string';
+import { RecordKey } from 'types';
 import { CommandState, CommandTask, CommandType } from 'types';
+import { generateUUID } from 'utils/string';
 
 import * as utils from './wait';
 
@@ -59,20 +59,6 @@ const COMMAND_TASK: Record<RecordKey, CommandTask> = {
 };
 
 describe('Wait Page Utilities', () => {
-  describe('commandToEventUrl', () => {
-    const REGEX: Record<RecordKey, RegExp> = {
-      [CommandType.JupyterLab]: new RegExp(`notebooks/${UUID_REGEX}/events`, 'i'),
-      [CommandType.TensorBoard]: new RegExp(`tensorboard/${UUID_REGEX}/events`, 'i'),
-      [CommandType.Shell]: new RegExp('^$', 'i'),
-    };
-
-    it('should convert task to event url', () => {
-      for (const [type, task] of Object.entries(COMMAND_TASK)) {
-        expect(utils.commandToEventUrl(task)).toMatch(REGEX[type]);
-      }
-    });
-  });
-
   describe('openCommand', () => {
     let windowOpen: MaybeMocked<typeof global.open>;
 

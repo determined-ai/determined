@@ -12,6 +12,7 @@ import "determined/api/v1/command.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/common/v1/common.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
+import "determined/metric/v1/metric.proto";
 import "determined/experiment/v1/experiment.proto";
 import "determined/job/v1/job.proto";
 import "determined/util/v1/util.proto";
@@ -25,8 +26,8 @@ message DataPoint {
   };
   // Total batches processed by the time this measurement is taken.
   int32 batches = 1;
-  // Value of the requested metric at this point in the trial.
-  double value = 2;
+  // Values of the requested metrics at this point in the trial.
+  google.protobuf.Struct values = 2;
   // The time the measurement is taken.
   google.protobuf.Timestamp time = 3;
   // The epoch this measurement is taken.
@@ -265,6 +266,8 @@ message BulkExperimentFilters {
   // Limit experiments to those within a specified project, or 0 for all
   // projects.
   int32 project_id = 7;
+  // Experiment ids to exclude when filters are used.
+  repeated int32 excluded_experiment_ids = 8;
 }
 
 // Pause multiple experiments.
@@ -508,6 +511,8 @@ message CreateExperimentRequest {
   optional string git_committer = 10;
   // Git commit date at submission time.
   google.protobuf.Timestamp git_commit_date = 11;
+  // Unmanaged experiments are detached.
+  optional bool unmanaged = 40;
 }
 
 // Response to CreateExperimentRequest.
@@ -523,26 +528,24 @@ message CreateExperimentResponse {
   repeated LaunchWarning warnings = 3;
 }
 
-// Request for the set of metrics recorded by an experiment.
-message MetricNamesRequest {
-  // The id of the experiment.
-  int32 experiment_id = 1
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["experiment_id"];
-      }];
+// Request for the set of metrics recorded by multiple experiments.
+message ExpMetricNamesRequest {
+  // The ids for the experiments.
+  repeated int32 ids = 1;
   // Seconds to wait when polling for updates.
   int32 period_seconds = 2;
 }
 
-// Response to MetricNamesRequest.
-message MetricNamesResponse {
-  // The name of the searcher metric.
-  string searcher_metric = 1;
+// Response to ExpMetricNamesRequest.
+message ExpMetricNamesResponse {
+  // The names of the searcher metrics.
+  repeated string searcher_metrics = 1;
   // List of training metric names.
-  repeated string training_metrics = 2;
+  repeated string training_metrics = 2 [deprecated = true];
   // List of validation metric names.
-  repeated string validation_metrics = 3;
+  repeated string validation_metrics = 3 [deprecated = true];
+  // List of metric group-name pairs.
+  repeated determined.metric.v1.MetricIdentifier metric_names = 4;
 }
 
 // To distinguish the different categories of metrics.
@@ -571,11 +574,9 @@ message MetricBatchesRequest {
           ["metric_name"];
       }];
   // The type of metric.
-  MetricType metric_type = 3
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["metric_type"];
-      }];
+  MetricType metric_type = 3 [deprecated = true];
+  // Metric group (training, validation, etc).
+  string group = 5;
   // Seconds to wait when polling for updates.
   int32 period_seconds = 4;
 }
@@ -602,11 +603,9 @@ message TrialsSnapshotRequest {
           ["metric_name"];
       }];
   // The type of metric.
-  MetricType metric_type = 3
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["metric_type"];
-      }];
+  MetricType metric_type = 3 [deprecated = true];
+  // Metric group (training, validation, etc).
+  string group = 7;
   // The point of progress at which to query metrics.
   int32 batches_processed = 4
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
@@ -659,11 +658,9 @@ message TrialsSampleRequest {
           ["metric_name"];
       }];
   // The type of metric.
-  MetricType metric_type = 3
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["metric_type"];
-      }];
+  MetricType metric_type = 3 [deprecated = true];
+  // Metric group (training, validation, etc).
+  string group = 9;
   // Maximum number of trials to fetch data for.
   int32 max_trials = 4;
   // Maximum number of initial / historical data points.
@@ -698,7 +695,7 @@ message TrialsSampleResponse {
   repeated Trial trials = 1;
   // IDs of trials that are newly included in the data.
   repeated int32 promoted_trials = 2;
-  // IDs of trials that are no loger included in the top N trials.
+  // IDs of trials that are no longer included in the top N trials.
   repeated int32 demoted_trials = 3;
 }
 
@@ -817,10 +814,15 @@ message SearchExperimentsRequest {
   int32 limit = 3;
   // Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc)
   optional string sort = 4;
+  // Filter expression
+  optional string filter = 5;
 }
 
 // combination of experiment and best trial with metrics
 message SearchExperimentExperiment {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment" ] }
+  };
   // The experiment in question
   determined.experiment.v1.Experiment experiment = 1;
   // The best performing trial associated with the experiment

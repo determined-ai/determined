@@ -16,11 +16,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/mocks"
-	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -33,6 +33,8 @@ import (
 A set of tests to ensure that the NTSC APIs call the expected AuthZ methods.
 */
 
+var authZNSC *mocks.NSCAuthZ
+
 func setupNTSCAuthzTest(t *testing.T) (
 	*apiServer, *mocks.NSCAuthZ, model.User, context.Context,
 ) {
@@ -43,12 +45,19 @@ func setupNTSCAuthzTest(t *testing.T) (
 		nil,
 		master.db,
 		master.rm,
-		&task.Logger{},
 	)
-	authZNSC := &mocks.NSCAuthZ{}
+	authZNSC = &mocks.NSCAuthZ{}
 	command.AuthZProvider.RegisterOverride("mock", authZNSC)
 	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
 	return api, authZNSC, curUser, ctx
+}
+
+func setupNSCAuthZ() *mocks.NSCAuthZ {
+	if authZNSC == nil {
+		authZNSC = &mocks.NSCAuthZ{}
+		command.AuthZProvider.RegisterOverride("mock", authZNSC)
+	}
+	return authZNSC
 }
 
 func setupMockNBActor(t *testing.T, master *Master) model.TaskID {
@@ -132,8 +141,7 @@ func TestCanGetNTSC(t *testing.T) {
 
 	// check permission errors are returned with not found status and follow the same pattern.
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
-		false, nil,
-	).Times(3)
+		authz2.PermissionDeniedError{}).Times(3)
 
 	invalidID := "non-existing"
 
@@ -142,48 +150,49 @@ func TestCanGetNTSC(t *testing.T) {
 	nbsActor := actor.Addr(command.NotebookActorPath)
 
 	_, err = api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: invalidID})
-	require.Equal(t, errActorNotFound(nbsActor.Child(invalidID)), err)
+	require.Equal(t, apiPkg.NotFoundErrs("actor", fmt.Sprint(nbsActor.Child(invalidID)), true), err)
 
 	_, err = api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: string(nbID)})
-	require.Equal(t, errActorNotFound(nbsActor.Child(nbID)), err)
+	require.Equal(t, apiPkg.NotFoundErrs("actor", fmt.Sprint(nbsActor.Child(nbID)), true), err)
 
 	// Commands.
 	cmdID := setupMockCMDActor(t, api.m)
 	cmdsActor := actor.Addr(command.CommandActorPath)
 
 	_, err = api.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: invalidID})
-	require.Equal(t, errActorNotFound(cmdsActor.Child(invalidID)), err)
+	require.Equal(t, apiPkg.NotFoundErrs("actor", fmt.Sprint(cmdsActor.Child(invalidID)), true), err)
 
 	_, err = api.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: string(cmdID)})
-	require.Equal(t, errActorNotFound(cmdsActor.Child(cmdID)), err)
+	require.Equal(t, apiPkg.NotFoundErrs("actor", fmt.Sprint(cmdsActor.Child(cmdID)), true), err)
 
 	// Shells.
 	shellID := setupMockShellActor(t, api.m)
 	shellsActor := actor.Addr(command.ShellActorPath)
 
 	_, err = api.GetShell(ctx, &apiv1.GetShellRequest{ShellId: invalidID})
-	require.Equal(t, errActorNotFound(shellsActor.Child(invalidID)), err)
+	require.Equal(t, apiPkg.NotFoundErrs("actor",
+		fmt.Sprint(shellsActor.Child(invalidID)), true), err)
 
 	_, err = api.GetShell(ctx, &apiv1.GetShellRequest{ShellId: string(shellID)})
-	require.Equal(t, errActorNotFound(shellsActor.Child(shellID)), err)
+	require.Equal(t, apiPkg.NotFoundErrs("actor", fmt.Sprint(shellsActor.Child(shellID)), true), err)
 
 	// Tensorboards.
 	// check permission errors are returned with not found status and follow the same pattern.
 	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
-		mock.Anything).Return(false, nil).Once()
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 
 	tbID := setupMockTensorboardActor(t, api.m)
 	tbActor := actor.Addr(command.TensorboardActorPath)
 
 	_, err = api.GetTensorboard(ctx, &apiv1.GetTensorboardRequest{TensorboardId: invalidID})
-	require.Equal(t, errActorNotFound(tbActor.Child(invalidID)), err)
+	require.Equal(t, apiPkg.NotFoundErrs("actor", fmt.Sprint(tbActor.Child(invalidID)), true), err)
 
 	_, err = api.GetTensorboard(ctx, &apiv1.GetTensorboardRequest{TensorboardId: string(tbID)})
-	require.Equal(t, errActorNotFound(tbActor.Child(tbID)), err)
+	require.Equal(t, apiPkg.NotFoundErrs("actor", fmt.Sprint(tbActor.Child(tbID)), true), err)
 
 	// check other errors are not returned with permission denied status.
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
-		false, errors.New("other error"),
+		errors.New("other error"),
 	).Times(3)
 	_, err = api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: string(nbID)})
 	require.NotNil(t, err)
@@ -201,7 +210,7 @@ func TestCanGetNTSC(t *testing.T) {
 	require.NotEqual(t, codes.NotFound, status.Code(err))
 
 	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
-		mock.Anything).Return(false, errors.New("other error")).Once()
+		mock.Anything).Return(errors.New("other error")).Once()
 
 	_, err = api.GetTensorboard(ctx, &apiv1.GetTensorboardRequest{TensorboardId: string(tbID)})
 	require.NotNil(t, err)
@@ -213,10 +222,10 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
 	var err error
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
-		true, nil,
+		nil,
 	)
 	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
-		mock.Anything).Return(true, nil)
+		mock.Anything).Return(nil)
 
 	// check permission errors are returned with permission denied status.
 	authz.On("CanTerminateNSC", mock.Anything, curUser, mock.Anything).Return(
@@ -275,10 +284,10 @@ func TestAuthZCanSetNSCsPriority(t *testing.T) {
 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
 	var err error
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
-		true, nil,
+		nil,
 	)
 	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
-		mock.Anything).Return(true, nil)
+		mock.Anything).Return(nil)
 
 	// check permission errors are returned with permission denied status.
 	authz.On("CanSetNSCsPriority", mock.Anything, curUser, mock.Anything, mock.Anything).Return(

@@ -8,7 +8,7 @@ import { FormListFieldData as AntdFormListFieldData } from 'antd/lib/form/FormLi
 import { FieldData as AntdFieldData, NamePath as AntdNamePath } from 'rc-field-form/lib/interface';
 import React, { FC, ReactNode, Ref } from 'react';
 
-import { Primitive } from 'shared/types';
+import { Primitive } from 'components/kit/internal/types';
 
 import css from './Form.module.scss';
 

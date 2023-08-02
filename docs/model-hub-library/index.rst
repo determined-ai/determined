@@ -2,6 +2,9 @@
  Model Hub Library
 ###################
 
+.. meta::
+   :description: The Model Hub Library page contains info about Transformers and MMDetection where you can access the benefits of using Determined.
+
 +------------------------------+----------------------------------------------------------------+
 | Title                        | Description                                                    |
 +==============================+================================================================+

@@ -3,11 +3,9 @@ from argparse import Namespace
 from collections import namedtuple
 from typing import Any, List
 
-from termcolor import colored
-
-from determined.cli import login_sdk_client
+from determined.cli import errors, login_sdk_client, setup_session
 from determined.common import api
-from determined.common.api import authentication, certs
+from determined.common.api import authentication, bindings, certs
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.experimental import client
 
@@ -27,11 +25,28 @@ FullUser = namedtuple(
         "agent_group",
     ],
 )
+FullUserNoAdmin = namedtuple(
+    "FullUserNoAdmin",
+    [
+        "user_id",
+        "username",
+        "active",
+        "remote",
+        "agent_uid",
+        "agent_gid",
+        "agent_user",
+        "agent_group",
+    ],
+)
 
 
 @login_sdk_client
 def list_users(args: Namespace) -> None:
-    render.render_objects(FullUser, client.list_users())
+    resp = bindings.get_GetMaster(setup_session(args))
+    if resp.to_json().get("rbacEnabled"):
+        render.render_objects(FullUserNoAdmin, client.list_users())
+    else:
+        render.render_objects(FullUser, client.list_users())
 
 
 @login_sdk_client
@@ -62,8 +77,11 @@ def log_in_user(parsed_args: Namespace) -> None:
 
 
 def log_out_user(parsed_args: Namespace) -> None:
-    # Log out of the user specified by the command line, or the active user.
-    authentication.logout(parsed_args.master, parsed_args.user, certs.cli_cert)
+    if parsed_args.all:
+        authentication.logout_all(parsed_args.master, certs.cli_cert)
+    else:
+        # Log out of the user specified by the command line, or the active user.
+        authentication.logout(parsed_args.master, parsed_args.user, certs.cli_cert)
 
 
 @login_sdk_client
@@ -83,15 +101,13 @@ def change_password(parsed_args: Namespace) -> None:
 
     if not username:
         # The default user should have been set by now by autologin.
-        print(colored("Please log in as an admin or user to change passwords", "red"))
-        return
+        raise errors.CliError("Please log in as an admin or user to change passwords")
 
     password = getpass.getpass("New password for user '{}': ".format(username))
     check_password = getpass.getpass("Confirm password: ")
 
     if password != check_password:
-        print(colored("Passwords do not match", "red"))
-        return
+        raise errors.CliError("Passwords do not match")
 
     user_obj = client.get_user_by_name(username)
     user_obj.change_password(new_password=password)
@@ -161,7 +177,14 @@ args_description = [
         Cmd("change-password", change_password, "change password for user", [
             Arg("target_user", nargs="?", default=None, help="name of user to change password of")
         ]),
-        Cmd("logout", log_out_user, "log out user", []),
+        Cmd("logout", log_out_user, "log out user", [
+            Arg(
+                "--all",
+                "-a",
+                action="store_true",
+                help="log out of all cached sessions for the current master",
+            ),
+        ]),
         Cmd("activate", activate_user, "activate user", [
             Arg("username", help="name of user to activate")
         ]),

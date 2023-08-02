@@ -213,7 +213,10 @@ func TestExhaustiveEnums(t *testing.T) {
 	}
 	addCheck("JobType", "public.job_type", map[string]bool{})
 	addCheck("TaskType", "public.task_type", map[string]bool{})
-	addCheck("State", "public.experiment_state", map[string]bool{"DELETED": true})
+	addCheck("State", "public.experiment_state", map[string]bool{
+		"PARTIALLY_DELETED": true,
+		"DELETED":           true,
+	})
 	addCheck("AllocationState", "public.allocation_state", map[string]bool{})
 
 	// Populate postgres types.

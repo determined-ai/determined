@@ -1,7 +1,11 @@
 import functools
 import itertools
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
-from typing import Any, Callable, List, NamedTuple, Optional, Tuple, cast
+from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union, cast
+
+from termcolor import colored
+
+from determined.common import util
 
 
 def make_prefixes(desc: str) -> List[str]:
@@ -30,6 +34,15 @@ def generate_aliases(spec: str) -> Tuple[str, List[str]]:
     return main, list(itertools.chain.from_iterable(prefixes))
 
 
+# ArgsDescription is a description of the subcommands and arguments for CLI arg parsing.
+ArgsDescription = List[Union["Arg", "Cmd", "Group", "ArgGroup", "BoolOptArg"]]
+
+
+def deprecation_warning(message: str, color: bool = True) -> str:
+    msg = f"DEPRECATED: {message}"
+    return colored(msg, "yellow") if color else msg
+
+
 # Classes used to represent the structure of an argument parser setup; these
 # are turned into actual `argparse` objects by `add_args`.
 class Cmd:
@@ -40,8 +53,9 @@ class Cmd:
         name: str,
         func: Optional[Callable],
         help_str: str,
-        subs: List[Any],
+        subs: ArgsDescription,
         is_default: bool = False,
+        deprecation_message: Optional[str] = None,
     ) -> None:
         """
         `subs` is a list containing `Cmd`, `Arg`, and `Group` that describes
@@ -50,7 +64,12 @@ class Cmd:
         """
         self.name = name
         self.help_str = help_str
+        self.deprecation_message = deprecation_message
         self.func = func
+        # wrap the fn in deprecation warning.
+        if self.deprecation_message and self.func:
+            self.func = util.deprecated(deprecation_warning(self.deprecation_message))(self.func)
+
         if self.func:
             # Force the help string onto the actual function for later. This
             # can be used to print the help string
@@ -131,7 +150,7 @@ def help_func(parser: ArgumentParser) -> Callable:
     return inner_func
 
 
-def add_args(parser: ArgumentParser, description: List[Any], depth: int = 0) -> None:
+def add_args(parser: ArgumentParser, description: ArgsDescription, depth: int = 0) -> None:
     """
     Populate the given parser with arguments, as specified by the
     description. The description is a list of Arg, Cmd, and Group objects.
@@ -170,6 +189,10 @@ def add_args(parser: ArgumentParser, description: List[Any], depth: int = 0) -> 
                 "formatter_class": ArgumentDefaultsHelpFormatter,
             }
             if thing.help_str != SUPPRESS:
+                if thing.deprecation_message:
+                    thing.help_str += " " + deprecation_warning(
+                        thing.deprecation_message, color=False
+                    )
                 subparser_kwargs["help"] = thing.help_str
             subparser = subparsers.add_parser(main_name, **subparser_kwargs)
 

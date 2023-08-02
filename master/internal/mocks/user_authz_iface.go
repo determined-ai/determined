@@ -29,13 +29,13 @@ func (_m *UserAuthZ) CanCreateUser(ctx context.Context, curUser model.User, user
 	return r0
 }
 
-// CanCreateUsersOwnSetting provides a mock function with given fields: ctx, curUser, setting
-func (_m *UserAuthZ) CanCreateUsersOwnSetting(ctx context.Context, curUser model.User, setting model.UserWebSetting) error {
-	ret := _m.Called(ctx, curUser, setting)
+// CanCreateUsersOwnSetting provides a mock function with given fields: ctx, curUser, settings
+func (_m *UserAuthZ) CanCreateUsersOwnSetting(ctx context.Context, curUser model.User, settings []*model.UserWebSetting) error {
+	ret := _m.Called(ctx, curUser, settings)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.UserWebSetting) error); ok {
-		r0 = rf(ctx, curUser, setting)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, []*model.UserWebSetting) error); ok {
+		r0 = rf(ctx, curUser, settings)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -44,27 +44,17 @@ func (_m *UserAuthZ) CanCreateUsersOwnSetting(ctx context.Context, curUser model
 }
 
 // CanGetUser provides a mock function with given fields: ctx, curUser, targetUser
-func (_m *UserAuthZ) CanGetUser(ctx context.Context, curUser model.User, targetUser model.User) (bool, error) {
+func (_m *UserAuthZ) CanGetUser(ctx context.Context, curUser model.User, targetUser model.User) error {
 	ret := _m.Called(ctx, curUser, targetUser)
 
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.User) (bool, error)); ok {
-		return rf(ctx, curUser, targetUser)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.User) bool); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.User) error); ok {
 		r0 = rf(ctx, curUser, targetUser)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, model.User, model.User) error); ok {
-		r1 = rf(ctx, curUser, targetUser)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // CanGetUsersImage provides a mock function with given fields: ctx, curUser, targetUsername

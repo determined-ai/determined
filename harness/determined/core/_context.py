@@ -2,6 +2,7 @@ import logging
 import pathlib
 import signal
 import sys
+import threading
 import traceback
 from typing import Any, Dict, Optional, Union
 
@@ -70,6 +71,10 @@ class Context:
 def _install_stacktrace_on_sigusr1() -> None:
     """Install a SIGUSR1 handler that prints a stack trace to stderr."""
     if not hasattr(signal, "SIGUSR1"):
+        return
+
+    # Signal handlers can only be registered on main threads.
+    if threading.current_thread() is not threading.main_thread():
         return
 
     old_handler = None

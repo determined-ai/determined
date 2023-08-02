@@ -27,13 +27,13 @@ def _experiment_task_id(exp_id: int) -> str:
     return task_id
 
 
-def _probe_tunnel(proc: "subprocess.Popen[str]") -> None:
+def _probe_tunnel(proc: "subprocess.Popen[str]", port: int = 8265) -> None:
     max_tunnel_time = 300
     start = time.time()
     ctr = 0
     while time.time() - start < max_tunnel_time:
         try:
-            r = requests.get("http://localhost:8265", timeout=5)
+            r = requests.get(f"http://localhost:{port}", timeout=5)
             if r.status_code == 200:
                 break
         except requests.exceptions.ConnectionError:
@@ -52,9 +52,9 @@ def _probe_tunnel(proc: "subprocess.Popen[str]") -> None:
     print(f"Tunnel probe done after {ctr} ticks.")
 
 
-def _ray_job_submit(exp_path: pathlib.Path) -> None:
+def _ray_job_submit(exp_path: pathlib.Path, port: int = 8265) -> None:
     env = os.environ.copy()
-    env["RAY_ADDRESS"] = "http://localhost:8265"
+    env["RAY_ADDRESS"] = f"http://localhost:{port}"
     subprocess.run(
         [
             "ray",
@@ -102,7 +102,8 @@ def test_experiment_proxy_ray_tunnel() -> None:
             _probe_tunnel(proc)
             _ray_job_submit(exp_path)
         finally:
-            proc.kill()
+            proc.terminate()
+            proc.wait(10)
     finally:
         sess = api_utils.determined_test_session()
         bindings.post_KillExperiment(sess, id=exp_id)
@@ -164,7 +165,7 @@ def test_experiment_proxy_ray_publish() -> None:
             "resources.slots=1",
             "-f",
             "-p",
-            "8265",
+            "8267:8265",
         ],
         stdout=subprocess.PIPE,
         text=True,
@@ -179,10 +180,11 @@ def test_experiment_proxy_ray_publish() -> None:
 
         try:
             exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
-            _probe_tunnel(proc)
-            _ray_job_submit(exp_path)
+            _probe_tunnel(proc, port=8267)
+            _ray_job_submit(exp_path, port=8267)
         finally:
             sess = api_utils.determined_test_session()
             bindings.post_KillExperiment(sess, id=exp_id)
     finally:
-        proc.kill()
+        proc.terminate()
+        proc.wait(10)

@@ -1,4 +1,4 @@
-description: grid_graceful_trial_termination
+name: grid_graceful_trial_termination
 checkpoint_storage:
   type: shared_fs
   host_path: /tmp

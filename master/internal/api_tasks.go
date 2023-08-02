@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
@@ -15,6 +16,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
@@ -39,7 +41,7 @@ var (
 )
 
 func expFromTaskID(
-	m *Master, taskID model.TaskID,
+	ctx context.Context, taskID model.TaskID,
 ) (isExperiment bool, exp *model.Experiment, err error) {
 	expID, err := experimentIDFromTrialTaskID(taskID)
 	if errors.Is(err, errIsNotTrialTaskID) {
@@ -48,7 +50,7 @@ func expFromTaskID(
 		return false, nil, err
 	}
 
-	exp, err = m.db.ExperimentByID(expID)
+	exp, err = db.ExperimentByID(ctx, expID)
 	if err != nil {
 		return false, nil, err
 	}
@@ -64,16 +66,16 @@ func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.Tas
 	} else if err != nil {
 		return false, err
 	}
-	return command.AuthZProvider.Get().CanGetNSC(
-		ctx, curUser, spec.WorkspaceID,
-	)
+	err = command.AuthZProvider.Get().CanGetNSC(
+		ctx, curUser, spec.WorkspaceID)
+	return !authz.IsPermissionDenied(err), err
 }
 
 func (a *apiServer) canDoActionsOnTask(
 	ctx context.Context, taskID model.TaskID,
 	actions ...func(context.Context, model.User, *model.Experiment) error,
 ) error {
-	errTaskNotFound := status.Errorf(codes.NotFound, "task not found: %s", taskID)
+	errTaskNotFound := api.NotFoundErrs("task", fmt.Sprint(taskID), true)
 	t, err := a.m.db.TaskByID(taskID)
 	if errors.Is(err, db.ErrNotFound) {
 		return errTaskNotFound
@@ -88,7 +90,7 @@ func (a *apiServer) canDoActionsOnTask(
 
 	switch t.TaskType {
 	case model.TaskTypeTrial:
-		isExp, exp, err := expFromTaskID(a.m, taskID)
+		isExp, exp, err := expFromTaskID(ctx, taskID)
 		if !isExp {
 			return fmt.Errorf("error we failed to look up an experiment "+
 				"from taskID %s when we think it is a trial task", taskID)
@@ -97,13 +99,9 @@ func (a *apiServer) canDoActionsOnTask(
 			return err
 		}
 
-		var ok bool
-		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
-			return err
-		} else if !ok {
-			return errTaskNotFound
+		if err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
+			return authz.SubIfUnauthorized(err, errTaskNotFound)
 		}
-
 		for _, action := range actions {
 			if err = action(ctx, *curUser, exp); err != nil {
 				return status.Error(codes.PermissionDenied, err.Error())
@@ -111,9 +109,10 @@ func (a *apiServer) canDoActionsOnTask(
 		}
 	default: // NTSC case + checkpointGC.
 		if ok, err := canAccessNTSCTask(ctx, *curUser, taskID); err != nil {
+			if !ok || authz.IsPermissionDenied(err) {
+				return errTaskNotFound
+			}
 			return err
-		} else if !ok {
-			return errTaskNotFound
 		}
 	}
 	return nil
@@ -131,8 +130,7 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 	}
 
 	taskID := model.AllocationID(allocationID).ToTaskID()
-	errAllocationNotFound := status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
-	isExp, exp, err := expFromTaskID(a.m, taskID)
+	isExp, exp, err := expFromTaskID(ctx, taskID)
 	if err != nil {
 		return err
 	}
@@ -141,16 +139,13 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 		if ok, err = canAccessNTSCTask(ctx, *curUser, taskID); err != nil {
 			return err
 		} else if !ok {
-			return errAllocationNotFound
+			return api.NotFoundErrs("allocation", allocationID, true)
 		}
 		return nil
 	}
 
-	var ok bool
-	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
-		return err
-	} else if !ok {
-		return errAllocationNotFound
+	if err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
+		return authz.SubIfUnauthorized(err, api.NotFoundErrs("allocation", allocationID, true))
 	}
 	if err = expauth.AuthZProvider.Get().CanEditExperiment(ctx, *curUser, exp); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
@@ -166,18 +161,8 @@ func (a *apiServer) AllocationReady(
 		return nil, err
 	}
 
-	resp, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
-	)
+	err := task.DefaultService.SetReady(ctx, model.AllocationID(req.AllocationId))
 	if err != nil {
-		return nil, err
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, resp); err != nil {
-		return nil, err
-	}
-
-	if err := a.ask(resp.Address(), task.AllocationReady{}, nil); err != nil {
 		return nil, err
 	}
 	return &apiv1.AllocationReadyResponse{}, nil
@@ -190,18 +175,8 @@ func (a *apiServer) AllocationWaiting(
 		return nil, err
 	}
 
-	resp, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
-	)
+	err := task.DefaultService.SetWaiting(ctx, model.AllocationID(req.AllocationId))
 	if err != nil {
-		return nil, err
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, resp); err != nil {
-		return nil, err
-	}
-
-	if err := a.ask(resp.Address(), task.AllocationWaiting{}, nil); err != nil {
 		return nil, err
 	}
 	return &apiv1.AllocationWaitingResponse{}, nil
@@ -217,41 +192,27 @@ func (a *apiServer) AllocationAllGather(
 		return nil, err
 	}
 
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
-		return nil, err
-	}
-
-	wID, err := uuid.Parse(req.RequestUuid)
+	id, err := uuid.Parse(req.RequestUuid)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	var w task.AllGatherWatcher
-	if err = a.ask(handler.Address(), task.WatchAllGather{
-		WatcherID: wID,
-		NumPeers:  int(req.NumPeers),
-		Data:      req.Data,
-	}, &w); err != nil {
+	data, err := task.DefaultService.AllGather(
+		ctx,
+		model.AllocationID(req.AllocationId),
+		id,
+		int(req.NumPeers),
+		req.Data,
+	)
+	if err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(handler.Address(), task.UnwatchAllGather{WatcherID: wID})
 
-	select {
-	case rsp := <-w.C:
-		if rsp.Err != nil {
-			return nil, rsp.Err
-		}
-		return &apiv1.AllocationAllGatherResponse{Data: rsp.Data}, nil
-	case <-ctx.Done():
-		return nil, nil
+	var out []*structpb.Struct
+	for _, d := range data {
+		out = append(out, d.(*structpb.Struct))
 	}
+	return &apiv1.AllocationAllGatherResponse{Data: out}, nil
 }
 
 func (a *apiServer) PostAllocationProxyAddress(
@@ -264,23 +225,31 @@ func (a *apiServer) PostAllocationProxyAddress(
 		return nil, err
 	}
 
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
+	err := task.DefaultService.SetProxyAddress(
+		ctx,
+		model.AllocationID(req.AllocationId),
+		req.ProxyAddress,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
-		return nil, err
-	}
-
-	if err := a.ask(handler.Address(), task.SetAllocationProxyAddress{
-		ProxyAddress: req.ProxyAddress,
-	}, nil); err != nil {
-		return nil, err
-	}
 	return &apiv1.PostAllocationProxyAddressResponse{}, nil
+}
+
+// TaskLogBackend is an interface task log backends, such as elastic or postgres,
+// must support to provide the features surfaced in our API.
+type TaskLogBackend interface {
+	TaskLogs(
+		taskID model.TaskID, limit int, filters []api.Filter, order apiv1.OrderBy, state interface{},
+	) ([]*model.TaskLog, interface{}, error)
+	AddTaskLogs([]*model.TaskLog) error
+	TaskLogsCount(taskID model.TaskID, filters []api.Filter) (int, error)
+	TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResponse, error)
+	DeleteTaskLogs(taskIDs []model.TaskID) error
+	// MaxTerminationDelay is the max delay before a consumer can be sure all logs have been
+	// recevied. A better interface may be an interface for streaming, rather than helper
+	// interfaces to aid streaming, but it's not bad enough to motivate changing it.
+	MaxTerminationDelay() time.Duration
 }
 
 func (a *apiServer) TaskLogs(
@@ -384,7 +353,7 @@ func (a *apiServer) GetTasks(
 
 	pbAllocationIDToSummary := make(map[string]*taskv1.AllocationSummary)
 	for allocationID, allocationSummary := range summary {
-		isExp, exp, err := expFromTaskID(a.m, allocationSummary.TaskID)
+		isExp, exp, err := expFromTaskID(ctx, allocationSummary.TaskID)
 		if err != nil {
 			return nil, err
 		}
@@ -393,14 +362,12 @@ func (a *apiServer) GetTasks(
 		if !isExp {
 			ok, err = canAccessNTSCTask(ctx, *curUser, summary[allocationID].TaskID)
 		} else {
-			ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp)
+			err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp)
 		}
-		if err != nil {
-			return nil, err
-		}
-
-		if ok {
+		if !authz.IsPermissionDenied(err) || !ok {
 			pbAllocationIDToSummary[string(allocationID)] = allocationSummary.Proto()
+		} else if err != nil {
+			return nil, err
 		}
 	}
 

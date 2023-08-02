@@ -1,13 +1,11 @@
 import React, { useEffect } from 'react';
 
-import useFeature from 'hooks/useFeature';
-import Spinner from 'shared/components/Spinner/Spinner';
-import useUI from 'shared/contexts/stores/UI';
+import Spinner from 'components/Spinner/Spinner';
 import clusterStore from 'stores/cluster';
+import useUI from 'stores/contexts/UI';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import userStore from 'stores/users';
-import workspaceStore from 'stores/workspaces';
 import { ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import { useInitApi } from 'utils/dialogApi';
@@ -29,8 +27,6 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const loadableCurrentUser = useObservable(userStore.currentUser);
   const clusterOverview = useObservable(clusterStore.clusterOverview);
 
-  useEffect(() => workspaceStore.startPolling(), []);
-
   useEffect(() => {
     updateFaviconType(
       Loadable.quickMatch(clusterOverview, false, (o) => o[ResourceType.ALL].allocation !== 0),
@@ -38,18 +34,12 @@ const Navigation: React.FC<Props> = ({ children }) => {
     );
   }, [clusterOverview, info]);
 
-  const rbacEnabled = useFeature().isOn('rbac'),
-    mockAllPermission = useFeature().isOn('mock_permissions_all'),
-    mockReadPermission = useFeature().isOn('mock_permissions_read');
+  const { rbacEnabled } = useObservable(determinedStore.info);
 
   useEffect(() => {
-    const shouldPoll =
-      rbacEnabled &&
-      !mockAllPermission &&
-      !mockReadPermission &&
-      Loadable.isLoaded(loadableCurrentUser);
+    const shouldPoll = rbacEnabled && Loadable.isLoaded(loadableCurrentUser);
     return permissionStore.startPolling({ condition: shouldPoll, delay: 120_000 });
-  }, [loadableCurrentUser, mockAllPermission, mockReadPermission, rbacEnabled]);
+  }, [loadableCurrentUser, rbacEnabled]);
 
   return (
     <Spinner spinning={ui.showSpinner}>

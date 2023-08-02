@@ -1,0 +1,35 @@
+.base {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 500px;
+  max-width: calc(100vw - 26px);
+  width: 376px;
+}
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+.sortRow {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr min-content;
+
+  .select {
+    min-width: 0;
+  }
+}
+.actions {
+  display: flex;
+  justify-content: space-between;
+}
+.sortIcon {
+  margin-right: 10px;
+  vertical-align: -0.125em;
+}
+.sortIcon--desc {
+  transform: rotate(180deg);
+}

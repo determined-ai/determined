@@ -60,11 +60,11 @@ To analyze multiple experiments, use ``det tensorboard start <experiment-id> <ex
  Customizing TensorBoard Instances
 ***********************************
 
-Determined allows you to initialize TensorBoard with an experiment configuration (YAML) file. This
-can be useful for running TensorBoard with a specific container image or for enabling access to
-additional data through a bind-mount.
+Determined allows you to initialize TensorBoard with a job configuration (YAML) file. This can be
+useful for running TensorBoard with a specific container image or for enabling access to additional
+data through a bind-mount.
 
-Example experiment configuration file:
+Example job configuration file:
 
 .. code:: yaml
 
@@ -74,13 +74,17 @@ Example experiment configuration file:
      - host_path: /my/agent/path
        container_path: /my/container/path
        read_only: true
+   tensorboard_args: ['--samples_per_plugin=images=100']
+
+The tensorboard_args field allows you to provide optional Tensorboard arguments. In the example
+above, we set the maximum number of image to display to 100, overriding Tensorboard's default value.
 
 For detailed configuration settings, refer to the :ref:`command-notebook-configuration`.
 
-To launch Tensorboard with an experiment configuration file, use ``det tensorboard start
+To launch TensorBoard with an experiment configuration file, use ``det tensorboard start
 <experiment-id> --config-file=my_config.yaml``.
 
-To view the configuration of a running Tensorboard instance, use ``det tensorboard config
+To view the configuration of a running TensorBoard instance, use ``det tensorboard config
 <tensorboard_id>``.
 
 ***************************

@@ -1,14 +1,13 @@
-import queryString from 'query-string';
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 import TaskBar from 'components/TaskBar';
 import { getTask } from 'services/api';
-import useUI from 'shared/contexts/stores/UI';
-import { ValueOf } from 'shared/types';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import useUI from 'stores/contexts/UI';
+import { ValueOf } from 'types';
 import { CommandState, CommandType } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError, { handleWarning } from 'utils/error';
 
 import css from './InteractiveTask.module.scss';
@@ -21,10 +20,6 @@ type Params = {
   taskType: CommandType;
   taskUrl: string;
 };
-
-interface Queries {
-  currentSlotsExceeded?: string;
-}
 
 const PageView = {
   IFRAME: 'Iframe',
@@ -65,7 +60,8 @@ export const InteractiveTask: React.FC = () => {
     taskUrl: tUrl,
   } = useParams<Params>();
   const [taskState, setTaskState] = useState<CommandState>();
-  const { currentSlotsExceeded }: Queries = queryString.parse(location.search);
+  const [searchParams] = useSearchParams();
+  const currentSlotsExceeded = searchParams.get('currentSlotsExceeded');
   const { actions: uiActions, ui } = useUI();
 
   const slotsExceeded = currentSlotsExceeded ? currentSlotsExceeded === 'true' : false;

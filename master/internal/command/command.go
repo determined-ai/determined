@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
+
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -60,7 +62,6 @@ func createGenericCommandActor(
 	ctx *actor.Context,
 	db *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
 	taskID model.TaskID,
 	taskType model.TaskType,
 	jobID model.JobID,
@@ -69,9 +70,8 @@ func createGenericCommandActor(
 ) error {
 	spec.TaskType = taskType
 	cmd := &command{
-		db:         db,
-		rm:         rm,
-		taskLogger: taskLogger,
+		db: db,
+		rm: rm,
 
 		GenericCommandSpec: spec,
 
@@ -103,7 +103,6 @@ func commandFromSnapshot(
 	ctx *actor.Context,
 	db *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
 	snapshot *CommandSnapshot,
 ) *command {
 	taskID := snapshot.TaskID
@@ -112,7 +111,6 @@ func commandFromSnapshot(
 	cmd := &command{
 		db:             db,
 		rm:             rm,
-		taskLogger:     taskLogger,
 		registeredTime: snapshot.RegisteredTime,
 
 		GenericCommandSpec: snapshot.GenericCommandSpec,
@@ -138,7 +136,6 @@ func remakeCommandsByType(
 	ctx *actor.Context,
 	pgDB *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
 	taskType model.TaskType,
 ) ([]*command, error) {
 	snapshots := []CommandSnapshot{}
@@ -160,7 +157,7 @@ func remakeCommandsByType(
 	for i := range snapshots {
 		if rm.IsReattachEnabledForRP(ctx,
 			snapshots[i].GenericCommandSpec.Config.Resources.ResourcePool) {
-			cmd := commandFromSnapshot(ctx, pgDB, rm, taskLogger, &snapshots[i])
+			cmd := commandFromSnapshot(ctx, pgDB, rm, &snapshots[i])
 			results = append(results, cmd)
 		}
 	}
@@ -172,10 +169,9 @@ func restoreCommandsByType(
 	ctx *actor.Context,
 	pgDB *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
 	taskType model.TaskType,
 ) error {
-	commands, err := remakeCommandsByType(ctx, pgDB, rm, taskLogger, taskType)
+	commands, err := remakeCommandsByType(ctx, pgDB, rm, taskType)
 	if err != nil {
 		return err
 	}
@@ -197,11 +193,10 @@ func tryRestoreCommandsByType(
 	ctx *actor.Context,
 	pgDB *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
 	taskType model.TaskType,
 ) {
 	if rm.IsReattachEnabled(ctx) {
-		err := restoreCommandsByType(ctx, pgDB, rm, taskLogger, taskType)
+		err := restoreCommandsByType(ctx, pgDB, rm, taskType)
 		if err != nil {
 			ctx.Log().WithError(err).Warnf("failed to restoreCommandsByType: %s", taskType)
 		}
@@ -210,10 +205,8 @@ func tryRestoreCommandsByType(
 
 // command is executed in a containerized environment on a Determined cluster.
 type command struct {
-	db          *db.PgDB
-	rm          rm.ResourceManager
-	eventStream *actor.Ref
-	taskLogger  *task.Logger
+	db *db.PgDB
+	rm rm.ResourceManager
 
 	tasks.GenericCommandSpec
 
@@ -223,7 +216,6 @@ type command struct {
 	jobType        model.JobType
 	jobID          model.JobID
 	allocationID   model.AllocationID
-	allocation     *actor.Ref
 	lastState      task.AllocationState
 	exitStatus     *task.AllocationExited
 	restored       bool
@@ -265,15 +257,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		c.eventStream, _ = ctx.ActorOf("events", newEventManager(c.Config.Description))
-
-		var eventStreamConfig *sproto.EventStreamConfig
-		if c.eventStream != nil {
-			eventStreamConfig = &sproto.EventStreamConfig{
-				To: c.eventStream,
-			}
-		}
-
 		var idleWatcherConfig *sproto.IdleTimeoutConfig
 		if c.Config.IdleTimeout != nil && (c.WatchProxyIdleTimeout || c.WatchRunnerIdleTimeout) {
 			idleWatcherConfig = &sproto.IdleTimeoutConfig{
@@ -285,14 +268,13 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		allocation := task.NewAllocation(c.logCtx, sproto.AllocateRequest{
+		err := task.DefaultService.StartAllocation(c.logCtx, sproto.AllocateRequest{
 			AllocationID:      c.allocationID,
 			TaskID:            c.taskID,
 			JobID:             c.jobID,
 			JobSubmissionTime: c.registeredTime,
 			IsUserVisible:     true,
 			Name:              c.Config.Description,
-			AllocationRef:     ctx.Self(),
 			Group:             ctx.Self(),
 
 			SlotsNeeded:  c.Config.Resources.Slots,
@@ -301,19 +283,19 @@ func (c *command) Receive(ctx *actor.Context) error {
 				SingleAgent: true,
 			},
 
-			StreamEvents: eventStreamConfig,
-			ProxyPorts:   sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), c.taskID),
-			IdleTimeout:  idleWatcherConfig,
-			Restore:      c.restored,
-		}, c.db, c.rm, c.taskLogger)
-		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
-
-		ctx.Self().System().TellAt(sproto.JobsActorAddr, sproto.RegisterJob{
-			JobID:    c.jobID,
-			JobActor: ctx.Self(),
+			ProxyPorts:  sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), c.taskID),
+			IdleTimeout: idleWatcherConfig,
+			Restore:     c.restored,
+			ProxyTLS:    c.TaskType == model.TaskTypeNotebook,
+		}, c.db, c.rm, c.GenericCommandSpec, ctx.Self().System(), func(ae *task.AllocationExited) {
+			ctx.Tell(ctx.Self(), ae)
 		})
+		if err != nil {
+			return err
+		}
 
-		ctx.Ask(c.allocation, actor.Ping{}).Get()
+		jobservice.Default.RegisterJob(c.jobID, ctx.Self())
+
 		if err := c.persist(); err != nil {
 			ctx.Log().WithError(err).Warnf("command persist failure")
 		}
@@ -326,32 +308,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
-		ctx.Self().System().TellAt(sproto.JobsActorAddr, sproto.UnregisterJob{
-			JobID: c.jobID,
-		})
+		jobservice.Default.UnregisterJob(c.jobID)
 		if err := c.db.DeleteUserSessionByToken(c.GenericCommandSpec.Base.UserSessionToken); err != nil {
 			ctx.Log().WithError(err).Errorf(
 				"failure to delete user session for task: %v", c.taskID)
-		}
-	case actor.ChildStopped:
-	case actor.ChildFailed:
-		if msg.Child.Address().Local() == c.allocationID.String() && c.exitStatus == nil {
-			c.exitStatus = &task.AllocationExited{
-				FinalState: task.AllocationState{State: model.AllocationStateTerminated},
-				Err:        errors.New("command allocation actor failed"),
-			}
-			if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
-				ctx.Log().WithError(err).Error("marking task complete")
-			}
-		}
-	case task.BuildTaskSpec:
-		if ctx.ExpectingResponse() {
-			ctx.Respond(c.ToTaskSpec(c.GenericCommandSpec.Keys))
-			// Evict the context from memory after starting the command as it is no longer needed. We
-			// evict as soon as possible to prevent the master from hitting an OOM.
-			// TODO: Consider not storing the userFiles in memory at all.
-			c.UserFiles = nil
-			c.AdditionalFiles = nil
 		}
 	case *task.AllocationExited:
 		c.exitStatus = msg
@@ -376,17 +336,12 @@ func (c *command) Receive(ctx *actor.Context) error {
 			Notebook: c.toNotebook(ctx),
 			Config:   protoutils.ToStruct(c.Config),
 		})
-	case *apiv1.IdleNotebookRequest:
-		if !msg.Idle {
-			ctx.Tell(c.allocation, task.IdleWatcherNoteActivity{LastActivity: time.Now()})
-		}
-		ctx.Respond(&apiv1.IdleNotebookResponse{})
 	case *apiv1.KillNotebookRequest:
 		// TODO(Brad): Do the same thing to allocations that we are doing to RMs.
-		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
-			AllocationSignal:    sproto.KillAllocation,
-			InformationalReason: "user requested kill",
-		})
+		err := task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+		if err != nil {
+			ctx.Log().WithError(err).Warn("failed to kill allocation")
+		}
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
 	case *apiv1.SetNotebookPriorityRequest:
 		err := c.setPriority(ctx, int(msg.Priority), true)
@@ -406,10 +361,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillCommandRequest:
-		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
-			AllocationSignal:    sproto.KillAllocation,
-			InformationalReason: "user requested kill",
-		})
+		err := task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+		if err != nil {
+			ctx.Log().WithError(err).Warn("failed to kill allocation")
+		}
 		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
 
 	case *apiv1.SetCommandPriorityRequest:
@@ -430,10 +385,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillShellRequest:
-		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
-			AllocationSignal:    sproto.KillAllocation,
-			InformationalReason: "user requested kill",
-		})
+		err := task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+		if err != nil {
+			ctx.Log().WithError(err).Warn("failed to kill allocation")
+		}
 		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
 
 	case *apiv1.SetShellPriorityRequest:
@@ -454,10 +409,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillTensorboardRequest:
-		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
-			AllocationSignal:    sproto.KillAllocation,
-			InformationalReason: "user requested kill",
-		})
+		err := task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+		if err != nil {
+			ctx.Log().WithError(err).Warn("failed to kill allocation")
+		}
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
 
 	case *apiv1.SetTensorboardPriorityRequest:
@@ -470,10 +425,14 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case *apiv1.DeleteWorkspaceRequest:
 		if c.Metadata.WorkspaceID == model.AccessScopeID(msg.Id) {
-			ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
-				AllocationSignal:    sproto.KillAllocation,
-				InformationalReason: "user requested workspace delete",
-			})
+			err := task.DefaultService.Signal(
+				c.allocationID,
+				task.KillAllocation,
+				"user requested workspace delete",
+			)
+			if err != nil {
+				ctx.Log().WithError(err).Warn("failed to kill allocation while deleting workspace")
+			}
 		}
 
 	case sproto.NotifyRMPriorityChange:
@@ -568,7 +527,7 @@ func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 		Id:             c.stringID(),
 		State:          state,
 		Description:    c.Config.Description,
-		Container:      allo.FirstContainer().ToProto(),
+		Container:      allo.SingleContainer().ToProto(),
 		ServiceAddress: c.serviceAddress(),
 		StartTime:      protoutils.ToTimestamp(c.registeredTime),
 		Username:       c.Base.Owner.Username,
@@ -588,7 +547,7 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		Id:           c.stringID(),
 		State:        state,
 		Description:  c.Config.Description,
-		Container:    allo.FirstContainer().ToProto(),
+		Container:    allo.SingleContainer().ToProto(),
 		StartTime:    protoutils.ToTimestamp(c.registeredTime),
 		Username:     c.Base.Owner.Username,
 		UserId:       int32(c.Base.Owner.ID),
@@ -608,7 +567,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		State:          state,
 		Description:    c.Config.Description,
 		StartTime:      protoutils.ToTimestamp(c.registeredTime),
-		Container:      allo.FirstContainer().ToProto(),
+		Container:      allo.SingleContainer().ToProto(),
 		PrivateKey:     *c.Metadata.PrivateKey,
 		PublicKey:      *c.Metadata.PublicKey,
 		Username:       c.Base.Owner.Username,
@@ -616,7 +575,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		DisplayName:    c.Base.Owner.DisplayName.ValueOrZero(),
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
-		Addresses:      toProto(allo.FirstContainerAddresses()),
+		Addresses:      toProto(allo.SingleContainerAddresses()),
 		AgentUserGroup: protoutils.ToStruct(c.Base.AgentUserGroup),
 		JobId:          c.jobID.String(),
 		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
@@ -631,7 +590,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		State:          state,
 		Description:    c.Config.Description,
 		StartTime:      protoutils.ToTimestamp(c.registeredTime),
-		Container:      allo.FirstContainer().ToProto(),
+		Container:      allo.SingleContainer().ToProto(),
 		ServiceAddress: c.serviceAddress(),
 		ExperimentIds:  c.Metadata.ExperimentIDs,
 		TrialIds:       c.Metadata.TrialIDs,
@@ -654,14 +613,12 @@ func (c *command) refreshAllocationState(ctx *actor.Context) task.AllocationStat
 		return c.exitStatus.FinalState
 	}
 
-	resp, ok := ctx.Ask(c.allocation, task.AllocationState{}).GetOrTimeout(5 * time.Second)
-	state, sOk := resp.(task.AllocationState)
-	if !(ok && sOk) {
-		ctx.Log().WithField("resp", resp).Warnf("getting allocation state")
+	state, err := task.DefaultService.State(c.allocationID)
+	if err != nil {
+		ctx.Log().WithError(err).Warn("refreshing allocation state")
 	} else {
 		c.lastState = state
 	}
-
 	return c.lastState
 }
 
@@ -683,6 +640,7 @@ func (c *command) toV1Job() *jobv1.Job {
 		UserId:         int32(c.Base.Owner.ID),
 		Weight:         c.Config.Resources.Weight,
 		Name:           c.Config.Description,
+		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 
 	j.IsPreemptible = false

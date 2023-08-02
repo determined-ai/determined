@@ -1,0 +1,7 @@
+.codeContainer {
+  height: calc(100vh - 236px);
+
+  &.multitrialContainer {
+    height: calc(100vh - 270px);
+  }
+}

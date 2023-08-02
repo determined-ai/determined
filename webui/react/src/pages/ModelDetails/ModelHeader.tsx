@@ -1,28 +1,22 @@
-import { LeftOutlined } from '@ant-design/icons';
-import { Alert, Dropdown, Space, Typography } from 'antd';
-import type { DropDownProps, MenuProps } from 'antd';
-import React, { useMemo } from 'react';
+import { Alert, Space, Typography } from 'antd';
+import React, { useCallback, useMemo } from 'react';
 
 import DeleteModelModal from 'components/DeleteModelModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
-import Link from 'components/Link';
 import ModelEditModal from 'components/ModelEditModal';
 import ModelMoveModal from 'components/ModelMoveModal';
+import Spinner from 'components/Spinner';
 import TimeAgo from 'components/TimeAgo';
 import usePermissions from 'hooks/usePermissions';
-import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
-import { paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
-import Spinner from 'shared/components/Spinner';
-import { ValueOf } from 'shared/types';
-import { formatDatetime } from 'shared/utils/datetime';
 import userStore from 'stores/users';
 import { ModelItem, Workspace } from 'types';
+import { formatDatetime } from 'utils/datetime';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
@@ -37,9 +31,15 @@ interface Props {
   workspace?: Workspace;
 }
 
+const MenuKey = {
+  DeleteModel: 'delete-model',
+  EditModelName: 'edit-model-name',
+  MoveModel: 'move-model',
+  SwitchArchived: 'switch-archive',
+} as const;
+
 const ModelHeader: React.FC<Props> = ({
   model,
-  workspace,
   fetchModel,
   onSwitchArchive,
   onUpdateTags,
@@ -98,34 +98,8 @@ const ModelHeader: React.FC<Props> = ({
     ] as InfoRow[];
   }, [canModifyModelFlag, loadableUsers, model, onUpdateTags, users]);
 
-  const menu: DropDownProps['menu'] = useMemo(() => {
-    const MenuKey = {
-      DeleteModel: 'delete-model',
-      EditModelName: 'edit-model-name',
-      MoveModel: 'move-model',
-      SwitchArchived: 'switch-archive',
-    } as const;
-
-    const funcs = {
-      [MenuKey.SwitchArchived]: () => {
-        onSwitchArchive();
-      },
-      [MenuKey.EditModelName]: () => {
-        modelEditModal.open();
-      },
-      [MenuKey.MoveModel]: () => {
-        modelMoveModal.open();
-      },
-      [MenuKey.DeleteModel]: () => {
-        deleteModelModal.open();
-      },
-    };
-
-    const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as ValueOf<typeof MenuKey>]();
-    };
-
-    const menuItems: MenuProps['items'] = [
+  const menu = useMemo(() => {
+    const menuItems: MenuItem[] = [
       {
         disabled: model.archived || !canModifyModelFlag,
         key: MenuKey.EditModelName,
@@ -146,55 +120,31 @@ const ModelHeader: React.FC<Props> = ({
       menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete' });
     }
 
-    return { items: menuItems, onClick: onItemClick };
-  }, [
-    model.archived,
-    canModifyModelFlag,
-    canDeleteModelFlag,
-    onSwitchArchive,
-    modelEditModal,
-    modelMoveModal,
-    deleteModelModal,
-  ]);
+    return menuItems;
+  }, [model.archived, canModifyModelFlag, canDeleteModelFlag]);
+
+  const handleDropdown = useCallback(
+    (key: string) => {
+      switch (key) {
+        case MenuKey.DeleteModel:
+          deleteModelModal.open();
+          break;
+        case MenuKey.EditModelName:
+          modelEditModal.open();
+          break;
+        case MenuKey.MoveModel:
+          modelMoveModal.open();
+          break;
+        case MenuKey.SwitchArchived:
+          onSwitchArchive();
+          break;
+      }
+    },
+    [deleteModelModal, modelEditModal, modelMoveModal, onSwitchArchive],
+  );
 
   return (
     <header className={css.base}>
-      <div className={css.breadcrumbs}>
-        <Breadcrumb separator="">
-          <Breadcrumb.Item>
-            <Link path={paths.modelList()}>
-              <LeftOutlined className={css.leftIcon} />
-            </Link>
-          </Breadcrumb.Item>
-          {workspace && (
-            <Breadcrumb.Item>
-              <Link
-                path={
-                  workspace.id === 1
-                    ? paths.projectDetails(1)
-                    : paths.workspaceDetails(workspace.id)
-                }>
-                {workspace.name}
-              </Link>
-            </Breadcrumb.Item>
-          )}
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>
-            <Link
-              path={
-                workspace?.id
-                  ? paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)
-                  : paths.modelList()
-              }>
-              Model Registry
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>
-            {model.name} ({model.id})
-          </Breadcrumb.Item>
-        </Breadcrumb>
-      </div>
       {model.archived && (
         <Alert
           message="This model has been archived and is now read-only."
@@ -206,17 +156,18 @@ const ModelHeader: React.FC<Props> = ({
       <div className={css.headerContent}>
         <div className={css.mainRow}>
           <Space className={css.nameAndIcon}>
-            <Icon name="model" size="big" />
+            <Icon name="model" size="big" title="Model name" />
             <h1 className={css.name}>{model.name}</h1>
           </Space>
           <Space size="small">
             <Dropdown
               disabled={!canDeleteModelFlag && !canModifyModelFlag}
               menu={menu}
-              trigger={['click']}>
-              <Button type="text">
-                <Icon name="overflow-horizontal" size="tiny" />
-              </Button>
+              onClick={handleDropdown}>
+              <Button
+                icon={<Icon name="overflow-horizontal" size="small" title="Action menu" />}
+                type="text"
+              />
             </Dropdown>
           </Space>
         </div>

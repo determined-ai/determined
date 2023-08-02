@@ -3,7 +3,7 @@ import { userPreferencesStorage } from 'hooks/useStorage';
 import { alertAction } from 'omnibar/tree-extension/trees/actions';
 import { Children, TreeNode } from 'omnibar/tree-extension/types';
 import { checkServerAlive, serverAddress } from 'routes/utils';
-import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
+import { DetError, ErrorLevel, ErrorType } from 'utils/error';
 
 const dev: TreeNode[] = [
   {

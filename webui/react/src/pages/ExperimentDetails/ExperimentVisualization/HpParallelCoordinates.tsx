@@ -1,36 +1,39 @@
-import Hermes, { DimensionType } from '@determined-ai/hermes-parallel-coordinates';
 import { Alert } from 'antd';
+import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import Empty from 'components/kit/Empty';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner/Spinner';
 import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner/Spinner';
-import useUI from 'shared/contexts/stores/UI';
-import { Primitive, Range } from 'shared/types';
-import { clone, flattenObject, isPrimitive } from 'shared/utils/data';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { numericSorter } from 'shared/utils/sort';
+import useUI from 'stores/contexts/UI';
+import { Primitive, Range } from 'types';
 import {
   ExperimentAction as Action,
   CommandResponse,
   ExperimentBase,
+  HpTrialData,
   Hyperparameter,
   HyperparameterType,
   Metric,
   MetricType,
   metricTypeParamMap,
   Scale,
+  TrialDetails,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
+import { rgba2str, str2rgba } from 'utils/color';
+import { clone, flattenObject, isPrimitive } from 'utils/data';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { metricToStr } from 'utils/metric';
+import { numericSorter } from 'utils/sort';
 import { openCommandResponse } from 'utils/wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';
@@ -45,26 +48,9 @@ interface Props {
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
-  selectedMetric: Metric | null;
+  selectedMetric?: Metric;
   selectedScale: Scale;
-}
-
-interface HpTrialData {
-  data: Record<string, Primitive[]>;
-  metricRange?: Range<number>;
-  metricValues: number[];
-  trialIds: number[];
-}
-
-export interface HermesInternalFilter {
-  p0: number;
-  p1: number;
-  value0: Primitive;
-  value1: Primitive;
-}
-
-export interface HermesInternalFilters {
-  [key: string]: HermesInternalFilter[];
+  focusedTrial?: TrialDetails;
 }
 
 const HpParallelCoordinates: React.FC<Props> = ({
@@ -76,6 +62,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   selectedHParams,
   selectedMetric,
   selectedScale,
+  focusedTrial,
 }: Props) => {
   const { ui } = useUI();
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -88,7 +75,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [filteredTrialIdMap, setFilteredTrialIdMap] = useState<Record<number, boolean>>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [showCompareTrials, setShowCompareTrials] = useState(false);
-  const [hermesCreatedFilters, setHermesCreatedFilters] = useState<HermesInternalFilters>({});
+  const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
 
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {
@@ -111,7 +98,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   }, [experiment.config.searcher, selectedMetric]);
 
   const resetFilteredTrials = useCallback(() => {
-    // Skip if there aren't any chart data.
+    // Skip if there isn't any chart data.
     if (!chartData) return;
 
     // Initialize a new trial id filter map.
@@ -121,17 +108,16 @@ const HpParallelCoordinates: React.FC<Props> = ({
     }, {} as Record<number, boolean>);
 
     // Figure out which trials are filtered out based on user filters.
-
     Object.entries(hermesCreatedFilters).forEach(([key, list]) => {
       if (!chartData.data[key] || list.length === 0) return;
 
       chartData.data[key].forEach((value, index) => {
         let isWithinFilter = false;
 
-        list.forEach((filter: HermesInternalFilter) => {
+        list.forEach((filter: Hermes.Filter) => {
           const min = Math.min(Number(filter.value0), Number(filter.value1));
           const max = Math.max(Number(filter.value0), Number(filter.value1));
-          if (value >= min && value <= max) {
+          if (Number(value) >= min && Number(value) <= max) {
             isWithinFilter = true;
           }
         });
@@ -158,22 +144,40 @@ const HpParallelCoordinates: React.FC<Props> = ({
     () => ({
       filters: hermesCreatedFilters,
       hooks: {
-        onFilterChange: setHermesCreatedFilters,
+        onFilterChange: (filters: Hermes.Filters) => {
+          // TODO: references are not changing, will need to address this in hermes.
+          setHermesCreatedFilters({ ...filters });
+        },
         onReset: () => setHermesCreatedFilters({}),
       },
       style: {
         axes: { label: { placement: 'after' } },
         data: {
-          colorScale: {
-            colors: colorScale.map((scale) => scale.color),
-            dimensionKey: selectedMetric ? metricToStr(selectedMetric) : '',
-          },
+          series: focusedTrial?.id
+            ? new Array(chartData?.trialIds.length).fill(undefined).map((_, index) => ({
+                lineWidth: chartData?.trialIds.indexOf(focusedTrial.id) === index ? 3 : 1,
+                strokeStyle:
+                  chartData?.trialIds.indexOf(focusedTrial.id) === index
+                    ? ui.theme.ixOnActive
+                    : rgba2str({ ...str2rgba(ui.theme.ixOn), a: 0.1 }),
+              }))
+            : undefined,
+          targetColorScale: colorScale.map((scale) => scale.color),
+          targetDimensionKey: selectedMetric ? metricToStr(selectedMetric) : '',
         },
         dimension: { label: { angle: Math.PI / 4, truncate: 24 } },
         padding: [4, 120, 4, 16],
       },
     }),
-    [colorScale, setHermesCreatedFilters, hermesCreatedFilters, selectedMetric],
+    [
+      hermesCreatedFilters,
+      colorScale,
+      selectedMetric,
+      focusedTrial?.id,
+      chartData?.trialIds,
+      ui.theme.ixOnActive,
+      ui.theme.ixOn,
+    ],
   );
 
   const dimensions = useMemo(() => {
@@ -232,8 +236,9 @@ const HpParallelCoordinates: React.FC<Props> = ({
       detApi.StreamingInternal.trialsSnapshot(
         experiment.id,
         selectedMetric.name,
-        metricTypeParamMap[selectedMetric.type],
         selectedBatch,
+        metricTypeParamMap[selectedMetric.type],
+        undefined, // custom metric group
         selectedBatchMargin,
         undefined,
         { signal: canceler.signal },
@@ -363,10 +368,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
   }, [selectedBatch, selectedBatchMargin, selectedHParams, selectedMetric]);
 
   if (pageError) {
-    return <Message title={pageError.message} />;
-  } else if ((hasLoaded && !chartData) || !selectedMetric) {
+    return <Empty description={pageError.message} />;
+  } else if (hasLoaded && !chartData) {
     return isExperimentTerminal ? (
-      <Message title="No data to plot." type={MessageType.Empty} />
+      <Empty description="No data to plot." />
     ) : (
       <div className={css.waiting}>
         <Alert
@@ -387,30 +392,33 @@ const HpParallelCoordinates: React.FC<Props> = ({
               config={config}
               data={chartData?.data ?? {}}
               dimensions={dimensions}
+              disableInteraction={!!focusedTrial}
             />
           </div>
-          <div>
-            <TableBatch
-              actions={[
-                { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
-                { label: Action.CompareTrials, value: Action.CompareTrials },
-              ]}
-              selectedRowCount={selectedRowKeys.length}
-              onAction={(action) => submitBatchAction(action as Action)}
-              onClear={clearSelected}
-            />
-            <HpTrialTable
-              colorScale={colorScale}
-              experimentId={experiment.id}
-              filteredTrialIdMap={filteredTrialIdMap}
-              handleTableRowSelect={handleTableRowSelect}
-              hyperparameters={hyperparameters}
-              metric={selectedMetric}
-              selectedRowKeys={selectedRowKeys}
-              selection={true}
-              trialHps={trialHps}
-            />
-          </div>
+          {!focusedTrial && !!selectedMetric && (
+            <div>
+              <TableBatch
+                actions={[
+                  { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+                  { label: Action.CompareTrials, value: Action.CompareTrials },
+                ]}
+                selectedRowCount={selectedRowKeys.length}
+                onAction={(action) => submitBatchAction(action as Action)}
+                onClear={clearSelected}
+              />
+              <HpTrialTable
+                colorScale={colorScale}
+                experimentId={experiment.id}
+                filteredTrialIdMap={filteredTrialIdMap}
+                handleTableRowSelect={handleTableRowSelect}
+                hyperparameters={hyperparameters}
+                metric={selectedMetric}
+                selectedRowKeys={selectedRowKeys}
+                selection={true}
+                trialHps={trialHps}
+              />
+            </div>
+          )}
           <div className={css.tooltip} ref={tooltipRef}>
             <div className={css.box}>
               <div className={css.row}>
@@ -428,7 +436,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
       {showCompareTrials && (
         <TrialsComparisonModal
           experiment={experiment}
-          trials={selectedRowKeys}
+          trialIds={selectedRowKeys}
           visible={showCompareTrials}
           onCancel={() => setShowCompareTrials(false)}
           onUnselect={handleTrialUnselect}

@@ -29,7 +29,7 @@ def det_cmd_expect_error(cmd: List[str], expected: str) -> None:
     assert expected in res.stderr.decode()
 
 
-@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_rbac
 @pytest.mark.parametrize("add_users", [[], ["admin", "determined"]])
 def test_group_creation(add_users: List[str]) -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
@@ -73,7 +73,7 @@ def test_group_creation(add_users: List[str]) -> None:
         det_cmd_expect_error(["user-group", "describe", group_name], "not find")
 
 
-@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_rbac
 def test_group_updates() -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
         group_name = get_random_string()
@@ -104,7 +104,7 @@ def test_group_updates() -> None:
 
 @pytest.mark.parametrize("offset", [0, 2])
 @pytest.mark.parametrize("limit", [1, 3])
-@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_rbac
 def test_group_list_pagination(offset: int, limit: int) -> None:
     # Ensure we have at minimum n groups.
     n = 5
@@ -125,7 +125,7 @@ def test_group_list_pagination(offset: int, limit: int) -> None:
     assert expected == paged_group_list["groups"]
 
 
-@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_rbac
 def test_group_errors() -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
         fake_group = get_random_string()
@@ -146,7 +146,7 @@ def test_group_errors() -> None:
         det_cmd_expect_error(["user-group", "remove-user", group_name, fake_user], "not find")
 
         # Removing a user not in a group.
-        det_cmd_expect_error(["user-group", "remove-user", group_name, "admin"], "NotFound")
+        det_cmd_expect_error(["user-group", "remove-user", group_name, "admin"], "Not Found")
 
         # Describing a non existent group.
         det_cmd_expect_error(["user-group", "describe", get_random_string()], "not find")

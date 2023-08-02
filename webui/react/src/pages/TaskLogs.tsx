@@ -1,6 +1,5 @@
-import queryString from 'query-string';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 import LogViewer, {
   FetchConfig,
@@ -12,11 +11,13 @@ import { Settings, settingsConfigForTask } from 'components/kit/LogViewer/LogVie
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
 import { useSettings } from 'hooks/useSettings';
+import { serverAddress } from 'routes/utils';
 import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
-import { CommandType } from 'types';
+import { CommandTask, CommandType } from 'types';
+import handleError from 'utils/error';
 
 import css from './TaskLogs.module.scss';
 
@@ -39,10 +40,10 @@ export const TaskLogsWrapper: React.FC = () => {
 };
 const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerComponent }: Props) => {
   const [filterOptions, setFilterOptions] = useState<Filters>({});
+  const [searchParams] = useSearchParams();
 
-  const queries = queryString.parse(location.search);
   const taskTypeLabel = commandTypeToLabel[taskType as CommandType];
-  const title = `${queries.id ? `${queries.id} ` : ''}Logs`;
+  const title = `${searchParams.has('id') ? `${searchParams.get('id')} ` : ''}Logs`;
 
   const taskSettingsConfig = useMemo(() => settingsConfigForTask(taskId), [taskId]);
   const { resetSettings, settings, updateSettings } = useSettings<Settings>(taskSettingsConfig);
@@ -149,7 +150,13 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
       bodyNoPadding
       breadcrumb={[
         { breadcrumbName: 'Tasks', path: paths.taskList() },
-        { breadcrumbName: `${taskTypeLabel} ${taskId.substring(0, 8)}`, path: '#' },
+        {
+          breadcrumbName: `${taskTypeLabel} ${taskId.substring(0, 8)}`,
+          path: paths.taskLogs({
+            id: taskId,
+            type: taskType,
+          } as CommandTask),
+        },
       ]}
       headerComponent={headerComponent}
       id="task-logs"
@@ -157,7 +164,9 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
       <LogViewer
         decoder={mapV1LogsResponse}
         handleCloseLogs={onCloseLogs}
+        serverAddress={serverAddress}
         title={logFilters}
+        onError={handleError}
         onFetch={handleFetch}
       />
     </Page>

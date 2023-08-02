@@ -123,6 +123,7 @@ func newRunCmd() *cobra.Command {
 	)
 
 	// Debug flags.
+	cmd.Flags().BoolVar(&opts.Debug, "debug", false, "Enable verbose script output")
 	cmd.Flags().IntVar(&opts.ArtificialSlots, "artificial-slots", 0, "")
 	cmd.Flags().Lookup("artificial-slots").Hidden = true
 
@@ -160,6 +161,9 @@ func newRunCmd() *cobra.Command {
 		aproto.AgentReconnectAttempts, "Max attempts agent has to reconnect")
 	cmd.Flags().IntVar(&opts.AgentReconnectBackoff, "agent-reconnect-backoff",
 		int(aproto.AgentReconnectBackoff/time.Second), "Time between agent reconnect attempts")
+
+	cmd.Flags().StringVar(&opts.ContainerRuntime, "container-runtime",
+		options.DockerContainerRuntime, "The container runtime to use")
 
 	return cmd
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -19,15 +18,14 @@ import (
 )
 
 type tensorboardManager struct {
-	db         *db.PgDB
-	rm         rm.ResourceManager
-	taskLogger *task.Logger
+	db *db.PgDB
+	rm rm.ResourceManager
 }
 
 func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		tryRestoreCommandsByType(ctx, t.db, t.rm, t.taskLogger, model.TaskTypeTensorboard)
+		tryRestoreCommandsByType(ctx, t.db, t.rm, model.TaskTypeTensorboard)
 
 	case actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
@@ -58,8 +56,9 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
+		msg.CommandID = string(taskID)
 		if err := createGenericCommandActor(
-			ctx, t.db, t.rm, t.taskLogger, taskID, model.TaskTypeTensorboard, jobID,
+			ctx, t.db, t.rm, taskID, model.TaskTypeTensorboard, jobID,
 			model.JobTypeTensorboard, msg,
 		); err != nil {
 			ctx.Log().WithError(err).Error("failed to launch tensorboard")

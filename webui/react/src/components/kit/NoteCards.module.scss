@@ -1,0 +1,75 @@
+.base {
+  display: flex;
+
+  .pageSelectRow {
+    background-color: var(--theme-colors-monochrome-17);
+    display: none;
+  }
+  .sidebar {
+    flex-basis: 30%;
+    flex-shrink: 0;
+    max-width: 200px;
+    overflow-y: auto;
+    padding: 16px;
+
+    .listContainer {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+
+      .listItem {
+        align-items: center;
+        border: 2px solid transparent;
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex;
+        padding: 6px;
+        width: 100%;
+
+        & > span {
+          flex-grow: 1;
+        }
+        .action {
+          visibility: hidden;
+        }
+        &:hover {
+          background-color: var(--theme-surface-strong);
+
+          .action {
+            visibility: visible;
+          }
+        }
+      }
+    }
+  }
+  .notesContainer {
+    display: flex;
+    flex-grow: 1;
+
+    & > * {
+      flex-grow: 1;
+    }
+  }
+}
+.tabOptions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media only screen and (max-width: $breakpoint-tablet) {
+  .base {
+    flex-direction: column-reverse;
+
+    .pageSelectRow {
+      bottom: 0;
+      display: block;
+      position: sticky;
+    }
+    .sidebar {
+      display: none;
+    }
+  }
+}

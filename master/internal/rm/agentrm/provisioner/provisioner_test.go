@@ -1,17 +1,21 @@
 package provisioner
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"golang.org/x/time/rate"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"gotest.tools/assert"
 
 	. "github.com/determined-ai/determined/master/internal/config/provconfig"
+	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner/scaledecider"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	errInfo "github.com/determined-ai/determined/master/pkg/errors"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -41,21 +45,27 @@ type mockConfig struct {
 	maxDisconnectPeriod time.Duration
 	instanceType        model.InstanceType
 	initInstances       []*model.Instance
+	failProvisioning    bool
+	numPerProvision     int
 }
 
 type mockEnvironment struct {
 	cluster     *mockProvider
 	system      *actor.System
-	provisioner *actor.Ref
+	provisioner *Provisioner
 }
 
-func newMockEnvironment(t *testing.T, setup *mockConfig) *mockEnvironment {
+func newMockEnvironment(t *testing.T, setup *mockConfig) (*mockEnvironment, *Provisioner) {
 	system := actor.NewSystem(t.Name())
 	cluster, err := newMockProvider(setup)
 	assert.NilError(t, err)
+	var launchErrorTimeout time.Duration
+	if setup.LaunchErrorTimeout != nil {
+		launchErrorTimeout = time.Duration(*setup.LaunchErrorTimeout)
+	}
 	p := &Provisioner{
 		provider: cluster,
-		scaleDecider: newScaleDecider(
+		scaleDecider: scaledecider.New(
 			"default",
 			time.Duration(setup.MaxIdleAgentPeriod),
 			time.Duration(setup.MaxAgentStartingPeriod),
@@ -65,16 +75,18 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) *mockEnvironment {
 			nil,
 		),
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
+		launchErr:        errInfo.NewStickyError(launchErrorTimeout, setup.LaunchErrorRetries),
+		syslog:           logrus.WithField("test-provisioner", "default"),
+		system:           system,
 	}
-	provisioner, created := system.ActorOf(actor.Addr("provisioner"), p)
-	assert.Assert(t, created)
+	go p.Run()
 
 	environment := mockEnvironment{
 		cluster:     cluster,
 		system:      system,
-		provisioner: provisioner,
+		provisioner: p,
 	}
-	return &environment
+	return &environment, p
 }
 
 type mockFuncCall struct {
@@ -95,6 +107,8 @@ type mockProvider struct {
 	mockInstanceType model.InstanceType
 	maxInstances     int
 	instances        map[string]*model.Instance
+	failProvisioning bool
+	numPerProvision  int
 	history          []mockFuncCall
 }
 
@@ -107,19 +121,21 @@ func newMockProvider(config *mockConfig) (*mockProvider, error) {
 		mockInstanceType: config.instanceType,
 		maxInstances:     config.MaxInstances,
 		instances:        instMap,
+		failProvisioning: config.failProvisioning,
+		numPerProvision:  config.numPerProvision,
 	}
 	return cluster, nil
 }
 
-func (c *mockProvider) instanceType() model.InstanceType {
+func (c *mockProvider) InstanceType() model.InstanceType {
 	return c.mockInstanceType
 }
 
-func (c *mockProvider) slotsPerInstance() int {
+func (c *mockProvider) SlotsPerInstance() int {
 	return c.mockInstanceType.Slots()
 }
 
-func (c *mockProvider) list(ctx *actor.Context) ([]*model.Instance, error) {
+func (c *mockProvider) List() ([]*model.Instance, error) {
 	c.history = append(c.history, newMockFuncCall("list"))
 	instances := make([]*model.Instance, 0, len(c.instances))
 	for _, inst := range c.instances {
@@ -129,9 +145,18 @@ func (c *mockProvider) list(ctx *actor.Context) ([]*model.Instance, error) {
 	return instances, nil
 }
 
-func (c *mockProvider) prestart(ctx *actor.Context) {}
+func (c *mockProvider) Launch(instanceNum int) error {
+	switch {
+	case c.failProvisioning:
+		return c.launchFail()
+	case c.numPerProvision > 0:
+		return c.launchOne(c.numPerProvision)
+	default:
+		return c.launchSuccess(instanceNum)
+	}
+}
 
-func (c *mockProvider) launch(ctx *actor.Context, instanceNum int) {
+func (c *mockProvider) launchSuccess(instanceNum int) error {
 	c.history = append(c.history, newMockFuncCall("launch", c.mockInstanceType, instanceNum))
 	for i := 0; i < instanceNum; i++ {
 		name := uuid.New().String()
@@ -143,9 +168,30 @@ func (c *mockProvider) launch(ctx *actor.Context, instanceNum int) {
 		}
 		c.instances[inst.ID] = &inst
 	}
+	return nil
 }
 
-func (c *mockProvider) terminate(ctx *actor.Context, instanceIDs []string) {
+func (c *mockProvider) launchOne(instanceNum int) error {
+	c.history = append(c.history, newMockFuncCall("launch", c.mockInstanceType, instanceNum))
+	if c.failProvisioning && len(c.instances) == c.maxInstances-1 {
+		return fmt.Errorf("max instances reached")
+	}
+	name := uuid.New().String()
+	inst := model.Instance{
+		ID:         name,
+		AgentName:  name,
+		LaunchTime: time.Now(),
+		State:      model.Running,
+	}
+	c.instances[inst.ID] = &inst
+	return nil
+}
+
+func (c *mockProvider) launchFail() error {
+	return fmt.Errorf("failed to launch")
+}
+
+func (c *mockProvider) Terminate(instanceIDs []string) {
 	c.history = append(c.history, newMockFuncCall("terminate", newInstanceIDSet(instanceIDs)))
 	for _, id := range instanceIDs {
 		delete(c.instances, id)
@@ -164,9 +210,9 @@ func TestProvisionerScaleUp(t *testing.T) {
 		},
 		initInstances: []*model.Instance{},
 	}
-	mock := newMockEnvironment(t, setup)
-	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 4}).Get()
-	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+	mock, _ := newMockEnvironment(t, setup)
+	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
+	mock.provisioner.Provision()
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
@@ -189,9 +235,9 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 		},
 		initInstances: []*model.Instance{},
 	}
-	mock := newMockEnvironment(t, setup)
-	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 3}).Get()
-	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+	mock, _ := newMockEnvironment(t, setup)
+	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 3})
+	mock.provisioner.Provision()
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
@@ -228,18 +274,18 @@ func TestProvisionerScaleDown(t *testing.T) {
 			},
 		},
 	}
-	mock := newMockEnvironment(t, setup)
+	mock, _ := newMockEnvironment(t, setup)
 
-	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{
+	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{
 		DesiredNewInstances: 0,
 		Agents: map[string]sproto.AgentSummary{
 			"agent1": {Name: "agent1", IsIdle: true},
 			"agent2": {Name: "agent2", IsIdle: true},
 		},
-	}).Get()
-	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+	})
+	mock.provisioner.Provision()
 	time.Sleep(100 * time.Millisecond)
-	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+	mock.provisioner.Provision()
 
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
@@ -281,35 +327,35 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 			},
 		},
 	}
-	mock := newMockEnvironment(t, setup)
+	mock, _ := newMockEnvironment(t, setup)
 
 	// Start the master.
-	mock.system.Ask(mock.provisioner,
-		sproto.ScalingInfo{
+	mock.provisioner.UpdateScalingInfo(
+		&sproto.ScalingInfo{
 			DesiredNewInstances: 0,
 			Agents: map[string]sproto.AgentSummary{
 				"agent1": {Name: "agent1", IsIdle: true},
 				"agent2": {Name: "agent2", IsIdle: true},
 				"agent3": {Name: "agent3", IsIdle: true},
 			},
-		}).Get()
-	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+		})
+	mock.provisioner.Provision()
 
 	// Submit jobs.
-	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{
+	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{
 		DesiredNewInstances: 2,
 		Agents: map[string]sproto.AgentSummary{
 			"agent1": {Name: "agent1", IsIdle: true},
 			"agent2": {Name: "agent2", IsIdle: true},
 			"agent3": {Name: "agent3", IsIdle: true},
 		},
-	}).Get()
+	})
 
 	// Give the provisioner chances to launch too many instances.
-	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
-	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
-	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
-	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+	mock.provisioner.Provision()
+	mock.provisioner.Provision()
+	mock.provisioner.Provision()
+	mock.provisioner.Provision()
 
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 
@@ -351,12 +397,12 @@ func TestProvisionerTerminateDisconnectedInstances(t *testing.T) {
 			},
 		},
 	}
-	mock := newMockEnvironment(t, setup)
+	mock, _ := newMockEnvironment(t, setup)
 
-	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{}).Get()
-	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{})
+	mock.provisioner.Provision()
 	time.Sleep(100 * time.Millisecond)
-	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+	mock.provisioner.Provision()
 
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
@@ -366,4 +412,72 @@ func TestProvisionerTerminateDisconnectedInstances(t *testing.T) {
 			"disconnectedInstance",
 		})),
 	})
+}
+
+func TestProvisionerLaunchFailure(t *testing.T) {
+	timeout := model.Duration(5 * time.Second)
+	setup := &mockConfig{
+		instanceType: TestInstanceType{},
+		Config: &Config{
+			MaxInstances:       2,
+			LaunchErrorTimeout: &timeout,
+		},
+		failProvisioning: true,
+	}
+	mock, provisioner := newMockEnvironment(t, setup)
+
+	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
+	mock.provisioner.Provision()
+	assert.Error(t, provisioner.LaunchError(), "failed to launch", "expected error")
+}
+
+func TestProvisionerLaunchOneAtATime(t *testing.T) {
+	timeout := model.Duration(5 * time.Second)
+	setup := &mockConfig{
+		instanceType: TestInstanceType{},
+		Config: &Config{
+			MaxInstances:       4,
+			LaunchErrorTimeout: &timeout,
+			LaunchErrorRetries: 4,
+		},
+		maxDisconnectPeriod: 5 * time.Second,
+		numPerProvision:     1,
+	}
+	mock, provisioner := newMockEnvironment(t, setup)
+
+	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
+	mock.provisioner.Provision()
+	err := provisioner.LaunchError()
+	assert.NilError(t, err, "received error %t", err)
+
+	setup.Config.MaxInstances = 3
+	mock, provisioner = newMockEnvironment(t, setup)
+	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
+	mock.provisioner.Provision()
+	mock.provisioner.Provision()
+	mock.provisioner.Provision()
+	err = provisioner.LaunchError()
+	assert.NilError(t, err, "received error %t", err)
+}
+
+func TestProvisionerLaunchOneAtATimeFail(t *testing.T) {
+	timeout := model.Duration(5 * time.Second)
+	setup := &mockConfig{
+		instanceType: TestInstanceType{},
+		Config: &Config{
+			MaxInstances:       4,
+			LaunchErrorTimeout: &timeout,
+			LaunchErrorRetries: 4,
+		},
+		maxDisconnectPeriod: 5 * time.Second,
+		numPerProvision:     1,
+		failProvisioning:    true,
+	}
+	mock, provisioner := newMockEnvironment(t, setup)
+
+	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
+	for i := 0; i <= 4; i++ {
+		mock.provisioner.Provision()
+	}
+	assert.Error(t, provisioner.LaunchError(), "failed to launch", "expected error")
 }

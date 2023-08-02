@@ -1,8 +1,8 @@
-from setuptools import find_packages, setup
+import setuptools
 
-setup(
+setuptools.setup(
     name="determined",
-    version="0.21.2-dev0",
+    version="0.23.5-dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -10,11 +10,12 @@ setup(
     long_description="See https://docs.determined.ai/ for more information.",
     license="Apache License 2.0",
     classifiers=["License :: OSI Approved :: Apache Software License"],
-    packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
-    # Technically, we haven't supported 3.6 or tested against it since it went EOL.  But some users
+    # Use find_namespace_packages because it will include data-only packages (that is, directories
+    # containing only non-python files, like our gcp terraform directory).
+    packages=setuptools.find_namespace_packages(include=["determined*"]),
+    # Technically, we haven't supported 3.6 or tested against it since it went EOL. But some users
     # are still using it successfully so there's hardly a point in breaking them.
     python_requires=">=3.6",
-    package_data={"determined": ["py.typed"]},
     include_package_data=True,
     install_requires=[
         "matplotlib",
@@ -24,17 +25,17 @@ setup(
         "pyzmq>=18.1.0",
         "yogadl==0.1.4",
         # Common:
-        "backoff",
         "certifi",
         "filelock",
+        "requests",
         "google-cloud-storage",
-        "hdfs>=2.2.2",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",
         "azure-core",
         "azure-storage-blob",
         "termcolor>=1.1.0",
         "boto3",
+        "oschmod;platform_system=='Windows'",
         # CLI:
         "argcomplete>=1.9.4",
         "gitpython>=3.1.3",

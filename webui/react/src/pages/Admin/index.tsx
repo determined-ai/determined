@@ -4,12 +4,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
-import GroupManagement from 'pages/Settings/GroupManagement';
-import UserManagement from 'pages/Settings/UserManagement';
+import GroupManagement from 'pages/Admin/GroupManagement';
+import UserManagement from 'pages/Admin/UserManagement';
 import { paths } from 'routes/utils';
-import { ValueOf } from 'shared/types';
+import determinedStore from 'stores/determinedInfo';
+import { ValueOf } from 'types';
+import { useObservable } from 'utils/observable';
 
 export const TabType = {
   GroupManagement: 'Groups',
@@ -33,7 +34,7 @@ const SettingsContent: React.FC = () => {
   const { tab } = useParams<Params>();
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
 
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
   const { canAdministrateUsers } = usePermissions();
 
   const handleTabChange = useCallback(
@@ -78,7 +79,15 @@ const SettingsContent: React.FC = () => {
 };
 
 const Admin: React.FC = () => (
-  <Page id="admin" stickyHeader title="Admin Settings">
+  <Page
+    breadcrumb={[
+      {
+        breadcrumbName: 'Admin Settings',
+        path: paths.admin(),
+      },
+    ]}
+    id="admin"
+    stickyHeader>
     <SettingsContent />
   </Page>
 );

@@ -1,5 +1,6 @@
 import os
 import random
+import shutil
 import tempfile
 import time
 
@@ -7,17 +8,10 @@ import pytest
 
 from determined.common import yaml
 from determined.common.api import bindings, errors
+from determined.common.experimental import resource_pool
 from determined.common.experimental.trial import TrainingMetrics, ValidationMetrics
 from determined.experimental import client as _client
 from tests import config as conf
-
-
-@pytest.fixture(scope="session")
-def client() -> _client.Determined:
-    """
-    Reduce logins by having one session-level fixture do the login.
-    """
-    return _client.Determined(conf.make_master_url())
 
 
 @pytest.mark.e2e_cpu
@@ -165,18 +159,70 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
     deadline = start + 30
     while True:
         checkpoints = trial.get_checkpoints()
-        checkpoints = [
+        deleted_checkpoints = [
             checkpoint
             for checkpoint in checkpoints
             if checkpoint.state == _client.CheckpointState.DELETED
         ]
-        if checkpoints:
+        if deleted_checkpoints:
             break
         assert time.time() < deadline, "experiment took too long to start trials"
         time.sleep(0.1)
 
-    assert len(checkpoints) == 1
-    assert checkpoints[0].uuid == deleted_checkpoint.uuid
+    assert len(deleted_checkpoints) == 1
+    assert deleted_checkpoints[0].uuid == deleted_checkpoint.uuid
+
+    # Partially delete first checkpoint.
+    partially_deleted_checkpoint = checkpoints[1]
+    partially_deleted_checkpoint.remove_files(["*.pkl"])
+
+    # Wait for status to be PARTIALLY_DELETED
+    partially_deleted_checkpoints = []
+    start = time.time()
+    deadline = start + 30
+    while True:
+        checkpoints = trial.get_checkpoints()
+        partially_deleted_checkpoints = [
+            checkpoint
+            for checkpoint in checkpoints
+            if checkpoint.state == _client.CheckpointState.PARTIALLY_DELETED
+        ]
+        if partially_deleted_checkpoints:
+            break
+        assert time.time() < deadline, "checkpoint took too long to partially delete"
+        time.sleep(0.1)
+    assert len(partially_deleted_checkpoints) == 1
+    assert partially_deleted_checkpoints[0].uuid == partially_deleted_checkpoint.uuid
+    assert "workload_sequencer.pkl" not in partially_deleted_checkpoints[0].resources
+
+    # Ensure we can download the partially deleted checkpoint.
+    temp_dir = tempfile.mkdtemp()
+    try:
+        downloaded_path = partially_deleted_checkpoints[0].download(
+            path=os.path.join(temp_dir, "c")
+        )
+        files = os.listdir(downloaded_path)
+        assert "no_op_checkpoint" in files
+        assert "workload_sequencer.pkl" not in files
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=False)
+
+    # Ensure we can delete a partially deleted checkpoint.
+    partially_deleted_checkpoints[0].delete()
+    start = time.time()
+    deadline = start + 30
+    while True:
+        checkpoints = trial.get_checkpoints()
+        deleted_checkpoints = [
+            checkpoint
+            for checkpoint in checkpoints
+            if checkpoint.state == _client.CheckpointState.DELETED
+            and checkpoint.uuid == partially_deleted_checkpoint.uuid
+        ]
+        if deleted_checkpoints:
+            break
+        assert time.time() < deadline, "partially deleted checkpoint took too long to delete"
+        time.sleep(0.1)
 
 
 def _make_live_experiment(client: _client.Determined) -> _client.ExperimentReference:
@@ -373,3 +419,28 @@ def test_model_versions(client: _client.Determined) -> None:
 
     finally:
         model.delete()
+
+
+@pytest.mark.e2e_cpu
+def test_rp_workspace_mapping(client: _client.Determined) -> None:
+    workspace_names = ["Workspace A", "Workspace B"]
+    overwrite_workspace_names = ["Workspace C", "Workspace D"]
+    rp_names = ["default"]  # TODO: not sure how to add more rp
+    workspace_ids = []
+
+    for wn in workspace_names + overwrite_workspace_names:
+        req = bindings.v1PostWorkspaceRequest(name=wn)
+        workspace_ids.append(
+            bindings.post_PostWorkspace(session=client._session, body=req).workspace.id
+        )
+
+    try:
+        with pytest.raises(
+            errors.APIException,
+            match="default resource pool default cannot be bound to any workspace",
+        ):
+            rp = resource_pool.ResourcePool(client._session, rp_names[0])
+            rp.add_bindings(workspace_names)
+    finally:
+        for wid in workspace_ids:
+            bindings.delete_DeleteWorkspace(session=client._session, id=wid)

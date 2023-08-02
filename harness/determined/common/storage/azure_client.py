@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from determined.common import util
 
@@ -70,10 +70,13 @@ class AzureStorageClient(object):
     @util.preserve_random_state
     def list_files(
         self, container_name: str, file_prefix: Optional[Union[str, Path]] = None
-    ) -> List[str]:
+    ) -> Dict[str, int]:
         """Lists files within the specified container that have the specified file prefix.
         Lists all files if file_prefix is None.
         """
         container = self.client.get_container_client(container_name)
-        files = [blob["name"] for blob in container.list_blobs(name_starts_with=file_prefix)]
+        files = {
+            blob["name"]: blob["size"]
+            for blob in container.list_blobs(name_starts_with=file_prefix)
+        }
         return files

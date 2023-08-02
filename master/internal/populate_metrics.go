@@ -24,6 +24,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
+const trainingToValidationRatio = 10
+
 func makeMetrics() *structpb.Struct {
 	return &structpb.Struct{
 		Fields: map[string]*structpb.Value{
@@ -101,10 +103,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 			},
 		}
 
-		_, err := api.ReportTrialTrainingMetrics(ctx,
-			&apiv1.ReportTrialTrainingMetricsRequest{
-				TrainingMetrics: &trainingMetrics,
-			})
+		err := db.SingleDB().AddTrainingMetrics(ctx, &trainingMetrics)
 		if err != nil {
 			return err
 		}
@@ -136,10 +135,9 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 				AvgMetrics: validationAvgMetrics,
 			},
 		}
-		_, err = api.ReportTrialValidationMetrics(ctx,
-			&apiv1.ReportTrialValidationMetricsRequest{
-				ValidationMetrics: &validationMetrics,
-			})
+		if b%trainingToValidationRatio == 0 {
+			err = db.SingleDB().AddValidationMetrics(ctx, &validationMetrics)
+		}
 
 		if err != nil {
 			return err
@@ -163,10 +161,7 @@ func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32, ba
 		},
 	}
 
-	_, err := api.ReportTrialTrainingMetrics(ctx,
-		&apiv1.ReportTrialTrainingMetricsRequest{
-			TrainingMetrics: &trainingMetrics,
-		})
+	err := db.SingleDB().AddTrainingMetrics(ctx, &trainingMetrics)
 	if err != nil {
 		return err
 	}
@@ -179,10 +174,9 @@ func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32, ba
 		},
 	}
 
-	_, err = api.ReportTrialValidationMetrics(ctx,
-		&apiv1.ReportTrialValidationMetricsRequest{
-			ValidationMetrics: &validationMetrics,
-		})
+	if batches%trainingToValidationRatio == 0 {
+		err = db.SingleDB().AddValidationMetrics(ctx, &validationMetrics)
+	}
 
 	if err != nil {
 		return err
@@ -278,7 +272,6 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivia
 
 	tr := model.Trial{
 		TaskID:       tID,
-		JobID:        exp.JobID,
 		ExperimentID: exp.ID,
 		State:        model.CompletedState,
 		StartTime:    time.Now(),

@@ -15,6 +15,8 @@ import (
 	"google.golang.org/grpc/status"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -28,7 +30,6 @@ const determinedName = "determined"
 
 var (
 	errExternalSessions = status.Error(codes.PermissionDenied, "not enabled with external sessions")
-	errUserNotFound     = status.Error(codes.NotFound, "user not found")
 	latinText           = regexp.MustCompile("[^[:graph:]\\s]")
 )
 
@@ -87,7 +88,7 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 func getFullModelUserByUsername(username string) (*model.FullUser, error) {
 	userModel, err := user.UserByUsername(username)
 	if errors.Is(err, db.ErrNotFound) {
-		return nil, errUserNotFound
+		return nil, api.NotFoundErrs("user", "", true)
 	}
 	fullUser, err := user.UserByID(userModel.ID)
 	return fullUser, err
@@ -96,7 +97,7 @@ func getFullModelUserByUsername(username string) (*model.FullUser, error) {
 func getFullModelUser(userID model.UserID) (*model.FullUser, error) {
 	userModel, err := user.UserByID(userID)
 	if errors.Is(err, db.ErrNotFound) {
-		return nil, errUserNotFound
+		return nil, api.NotFoundErrs("user", "", true)
 	}
 	return userModel, err
 }
@@ -184,14 +185,11 @@ func (a *apiServer) GetUser(
 	if err != nil {
 		return nil, err
 	}
-	var ok bool
-	if ok, err = user.AuthZProvider.Get().CanGetUser(
+	if err = user.AuthZProvider.Get().CanGetUser(
 		ctx, *curUser, targetFullUser.ToUser()); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errUserNotFound
+		return nil, authz.SubIfUnauthorized(err, api.NotFoundErrs("user", "", true))
 	}
-	return &apiv1.GetUserResponse{User: toProtoUserFromFullUser(*targetFullUser)}, err
+	return &apiv1.GetUserResponse{User: toProtoUserFromFullUser(*targetFullUser)}, nil
 }
 
 func (a *apiServer) GetMe(
@@ -220,14 +218,10 @@ func (a *apiServer) GetUserByUsername(
 		return nil, err
 	}
 
-	ok, err := user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetFullUser.ToUser())
-	if err != nil {
-		return nil, err
+	if err = user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetFullUser.ToUser()); err != nil {
+		return nil, authz.SubIfUnauthorized(err, api.NotFoundErrs("user", "", true))
 	}
-	if !ok {
-		return nil, errUserNotFound
-	}
-	return &apiv1.GetUserByUsernameResponse{User: toProtoUserFromFullUser(*targetFullUser)}, err
+	return &apiv1.GetUserByUsernameResponse{User: toProtoUserFromFullUser(*targetFullUser)}, nil
 }
 
 func (a *apiServer) PostUser(
@@ -333,11 +327,9 @@ func (a *apiServer) SetUserPassword(
 	}
 	targetUser := targetFullUser.ToUser()
 	if err = user.AuthZProvider.Get().CanSetUsersPassword(ctx, *curUser, targetUser); err != nil {
-		if ok, canGetErr := user.AuthZProvider.
+		if canGetErr := user.AuthZProvider.
 			Get().CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
-			return nil, canGetErr
-		} else if !ok {
-			return nil, errUserNotFound
+			return nil, authz.SubIfUnauthorized(canGetErr, api.NotFoundErrs("user", "", true))
 		}
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
@@ -347,7 +339,7 @@ func (a *apiServer) SetUserPassword(
 	}
 	switch err = a.m.db.UpdateUser(&targetUser, []string{"password_hash"}, nil); {
 	case err == db.ErrNotFound:
-		return nil, errUserNotFound
+		return nil, api.NotFoundErrs("user", "", true)
 	case err != nil:
 		return nil, err
 	}
@@ -375,10 +367,8 @@ func (a *apiServer) PatchUser(
 		return nil, err
 	}
 	targetUser := targetFullUser.ToUser()
-	if ok, err := user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetUser); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errUserNotFound
+	if err = user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetUser); err != nil {
+		return nil, authz.SubIfUnauthorized(err, api.NotFoundErrs("user", "", true))
 	}
 
 	updatedUser := &model.User{ID: targetUser.ID}
@@ -524,26 +514,29 @@ func (a *apiServer) PostUserSetting(
 	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
 		return nil, errExternalSessions
 	}
-	if req.Setting == nil {
-		return nil, status.Error(codes.InvalidArgument, "must specify setting")
+	if req.Settings == nil {
+		req.Settings = make([]*userv1.UserWebSetting, 0)
 	}
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
-	settingModel := model.UserWebSetting{
-		UserID:      curUser.ID,
-		Key:         req.Setting.Key,
-		Value:       req.Setting.Value,
-		StoragePath: req.StoragePath,
+	settingsModel := make([]*model.UserWebSetting, 0, len(req.Settings))
+	for _, setting := range req.Settings {
+		settingsModel = append(settingsModel, &model.UserWebSetting{
+			UserID:      curUser.ID,
+			Key:         setting.Key,
+			Value:       setting.Value,
+			StoragePath: setting.StoragePath,
+		})
 	}
 	if err = user.AuthZProvider.Get().CanCreateUsersOwnSetting(
-		ctx, *curUser, settingModel); err != nil {
+		ctx, *curUser, settingsModel); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	err = db.UpdateUserSetting(&settingModel)
+	err = db.UpdateUserSetting(settingsModel)
 	return &apiv1.PostUserSettingResponse{}, err
 }
 

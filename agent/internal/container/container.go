@@ -33,9 +33,9 @@ type Container struct {
 	devices      []device.Device
 
 	// System dependencies. Also set in initialization and never modified after.
-	log    *logrus.Entry
-	docker *docker.Client
-	pub    events.Publisher[Event]
+	log      *logrus.Entry
+	cruntime ContainerRuntime
+	pub      events.Publisher[Event]
 
 	// Internal state. Access should be protected.
 	mu       sync.RWMutex
@@ -51,7 +51,7 @@ type Container struct {
 // Start a container asynchronously and receive a handle to interact with it.
 func Start(
 	req aproto.StartContainer,
-	cl *docker.Client,
+	cl ContainerRuntime,
 	pub events.Publisher[Event],
 ) *Container {
 	c := &Container{
@@ -63,11 +63,11 @@ func Start(
 			"component": "container",
 			"cproto-id": req.Container.ID,
 		}),
-		docker:  cl,
-		pub:     pub,
-		state:   req.Container.State,
-		signals: make(chan syscall.Signal),
-		done:    make(chan struct{}),
+		cruntime: cl,
+		pub:      pub,
+		state:    req.Container.State,
+		signals:  make(chan syscall.Signal),
+		done:     make(chan struct{}),
 
 		wg: waitgroupx.WithContext(context.Background()),
 	}
@@ -88,7 +88,7 @@ func Start(
 // Reattach an existing container and receive a handle to interact with it.
 func Reattach(
 	container cproto.Container,
-	cl *docker.Client,
+	cl ContainerRuntime,
 	pub events.Publisher[Event],
 ) *Container {
 	c := &Container{
@@ -101,11 +101,11 @@ func Reattach(
 			"cproto-id":  container.ID,
 			"reattached": true,
 		}),
-		docker:  cl,
-		pub:     pub,
-		state:   container.State,
-		signals: make(chan syscall.Signal, 16), // Not infinite, but large enough to not drop often.
-		done:    make(chan struct{}),
+		cruntime: cl,
+		pub:      pub,
+		state:    container.State,
+		signals:  make(chan syscall.Signal, 16), // Not infinite, but large enough to not drop often.
+		done:     make(chan struct{}),
 
 		wg: waitgroupx.WithContext(context.Background()),
 	}
@@ -196,7 +196,7 @@ func (c *Container) run(parent context.Context) (err error) {
 		if err = c.transition(ctx, cproto.Pulling, nil, nil); err != nil {
 			return err
 		}
-		if err = c.docker.PullImage(ctx, docker.PullImage{
+		if err = c.cruntime.PullImage(ctx, docker.PullImage{
 			Name:      c.spec.RunSpec.ContainerConfig.Image,
 			Registry:  c.spec.PullSpec.Registry,
 			ForcePull: c.spec.PullSpec.ForcePull,
@@ -208,7 +208,13 @@ func (c *Container) run(parent context.Context) (err error) {
 		if err = c.transition(ctx, cproto.Starting, nil, nil); err != nil {
 			return err
 		}
-		dockerID, err := c.docker.CreateContainer(ctx, c.spec.RunSpec, c.shimDockerEvents())
+
+		runtimeID, err := c.cruntime.CreateContainer(
+			ctx,
+			c.containerID,
+			c.spec.RunSpec,
+			c.shimDockerEvents(),
+		)
 		if err != nil {
 			return fmt.Errorf("creating container: %w", err)
 		}
@@ -218,7 +224,7 @@ func (c *Container) run(parent context.Context) (err error) {
 			if err != nil {
 				c.log.Trace("ensuring cleanup of container (canceled prior to the monitoring loop)")
 				if remove {
-					if rErr := c.docker.RemoveContainer(parent, dockerID, true); rErr != nil {
+					if rErr := c.cruntime.RemoveContainer(parent, runtimeID, true); rErr != nil {
 						c.log.WithError(rErr).Debug("couldn't cleanup container")
 					}
 				}
@@ -226,8 +232,8 @@ func (c *Container) run(parent context.Context) (err error) {
 			}
 		}()
 
-		c.log.WithField("docker-id", dockerID).Trace("starting container")
-		dc, err := c.docker.RunContainer(ctx, parent, dockerID)
+		c.log.WithField("docker-id", runtimeID).Trace("starting container")
+		dc, err := c.cruntime.RunContainer(ctx, parent, runtimeID, c.shimDockerEvents())
 		if err != nil {
 			return fmt.Errorf("starting container: %w", err)
 		}
@@ -265,9 +271,9 @@ func (c *Container) run(parent context.Context) (err error) {
 
 func (c *Container) reattach(ctx context.Context) error {
 	c.log.Trace("entering reattach")
-	switch dc, exitCode, err := c.docker.ReattachContainer(
+	switch dc, exitCode, err := c.cruntime.ReattachContainer(
 		ctx,
-		docker.LabelFilter(docker.ContainerIDLabel, c.containerID.String()),
+		c.containerID,
 	); {
 	case errors.Is(err, context.Canceled):
 		return err
@@ -299,10 +305,11 @@ func (c *Container) wait(ctx context.Context, dc *docker.Container) error {
 
 		case signal := <-c.signals:
 			c.log.Tracef("container signaled: %s", signal)
-			if err := c.docker.SignalContainer(ctx, dc.ContainerInfo.ID, signal); err != nil {
+			if err := c.cruntime.SignalContainer(ctx, dc.ContainerInfo.ID, signal); err != nil {
 				c.log.WithError(err).Errorf(
 					"failed to signal %v with %v", dc.ContainerInfo.ID, signal,
 				)
+				return aproto.NewContainerFailure(aproto.ContainerFailed, err)
 			}
 
 		case <-ctx.Done():
@@ -386,11 +393,13 @@ func (c *Container) shimDockerEvents() events.Publisher[docker.Event] {
 	return events.FuncPublisher[docker.Event](func(ctx context.Context, e docker.Event) error {
 		switch {
 		case e.Log != nil:
+			source := "agent" // enrich log
 			return c.pub.Publish(ctx, Event{Log: &aproto.ContainerLog{
 				ContainerID: c.containerID,
 				Timestamp:   e.Log.Timestamp,
 				Level:       &e.Log.Level,
 				AuxMessage:  &e.Log.Message,
+				Source:      &source,
 			}})
 
 		case e.Stats != nil:

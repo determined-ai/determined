@@ -32,6 +32,7 @@ from determined.pytorch._pytorch_trial import (
     TrainUnit,
     _TrainBoundary,
     _TrainBoundaryType,
+    _TrialState,
     Batch,
     Epoch,
 )

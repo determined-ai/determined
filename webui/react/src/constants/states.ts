@@ -1,4 +1,4 @@
-import { Trialv1State, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { StateOfUnion } from 'themes';
 import {
   CheckpointState,
@@ -133,6 +133,7 @@ export const checkpointStateToLabel: { [key in CheckpointState]: string } = {
   [CheckpointState.Completed]: 'Completed',
   [CheckpointState.Error]: 'Error',
   [CheckpointState.Deleted]: 'Deleted',
+  [CheckpointState.PartiallyDeleted]: 'Partially Deleted',
   [CheckpointState.Unspecified]: 'Unspecified',
 };
 
@@ -168,18 +169,6 @@ export const slotStateToLabel: { [key in SlotState]: string } = {
   [SlotState.Potential]: 'Potential',
 };
 
-export const trialStateTolabel: { [key in Trialv1State]: string } = {
-  [Trialv1State.ACTIVE]: 'Active',
-  [Trialv1State.PAUSED]: 'Paused',
-  [Trialv1State.STOPPINGCANCELED]: 'Stopping',
-  [Trialv1State.STOPPINGKILLED]: 'Stopping',
-  [Trialv1State.STOPPINGCOMPLETED]: 'Stopping',
-  [Trialv1State.STOPPINGERROR]: 'Error',
-  [Trialv1State.CANCELED]: 'Canceled',
-  [Trialv1State.COMPLETED]: 'Completed',
-  [Trialv1State.ERROR]: 'Error',
-  [Trialv1State.UNSPECIFIED]: 'Unspecified',
-};
 export function stateToLabel(state: StateOfUnion): string {
   return (
     runStateToLabel[state as RunState] ||
@@ -188,7 +177,6 @@ export function stateToLabel(state: StateOfUnion): string {
     checkpointStateToLabel[state as CheckpointState] ||
     jobStateToLabel[state as JobState] ||
     slotStateToLabel[state as SlotState] ||
-    trialStateTolabel[state as Trialv1State] ||
     (state as string)
   );
 }

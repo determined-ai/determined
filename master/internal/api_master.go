@@ -2,6 +2,8 @@ package internal
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
@@ -41,6 +43,7 @@ func (a *apiServer) GetMaster(
 		ExternalLogoutUri:     a.m.config.InternalConfig.ExternalSessions.LogoutURI,
 		Branding:              "determined",
 		RbacEnabled:           config.GetAuthZConfig().IsRBACUIEnabled(),
+		StrictJobQueueControl: config.GetAuthZConfig().StrictJobQueueControl,
 		Product:               product,
 		UserManagementEnabled: !a.m.config.InternalConfig.ExternalSessions.Enabled(),
 		FeatureSwitches:       a.m.config.FeatureSwitches,
@@ -64,13 +67,16 @@ func (a *apiServer) GetTelemetry(
 func (a *apiServer) GetMasterConfig(
 	ctx context.Context, _ *apiv1.GetMasterConfigRequest,
 ) (*apiv1.GetMasterConfigResponse, error) {
-	// TODO: migrate to RBAC.
 	u, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if !u.Admin {
-		return nil, grpcutil.ErrPermissionDenied
+
+	permErr, err := cluster.AuthZProvider.Get().CanGetMasterConfig(ctx, u)
+	if err != nil {
+		return nil, err
+	} else if permErr != nil {
+		return nil, permErr
 	}
 
 	config, err := a.m.config.Printable()
@@ -80,6 +86,57 @@ func (a *apiServer) GetMasterConfig(
 	configStruct := &structpb.Struct{}
 	err = protojson.Unmarshal(config, configStruct)
 	return &apiv1.GetMasterConfigResponse{
+		Config: configStruct,
+	}, err
+}
+
+func (a *apiServer) PatchMasterConfig(
+	ctx context.Context, req *apiv1.PatchMasterConfigRequest,
+) (*apiv1.PatchMasterConfigResponse, error) {
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	permErr, err := cluster.AuthZProvider.Get().CanUpdateMasterConfig(ctx, u)
+	if err != nil {
+		return nil, err
+	} else if permErr != nil {
+		return nil, permErr
+	}
+
+	paths := req.FieldMask.GetPaths()
+
+	for _, path := range paths {
+		switch path {
+		case "log":
+			if !isValidLogLevel(req.Config.Log.Level) {
+				panic(fmt.Sprintf("invalid log level: %s", req.Config.Log.Level))
+			}
+			a.m.config.Log.Level = req.Config.Log.Level
+			a.m.config.Log.Color = req.Config.Log.Color
+			logger.SetLogrus(a.m.config.Log)
+		case "log.level":
+			if !isValidLogLevel(req.Config.Log.Level) {
+				panic(fmt.Sprintf("invalid log level: %s", req.Config.Log.Level))
+			}
+			a.m.config.Log.Level = req.Config.Log.Level
+			logger.SetLogrus(a.m.config.Log)
+		case "log.color":
+			a.m.config.Log.Color = req.Config.Log.Color
+			logger.SetLogrus(a.m.config.Log)
+		default:
+			panic(fmt.Sprintf("unsupported or invalid field: %s", path))
+		}
+	}
+
+	config, err := a.m.config.Printable()
+	if err != nil {
+		return nil, errors.Wrap(err, "error parsing master config")
+	}
+	configStruct := &structpb.Struct{}
+	err = protojson.Unmarshal(config, configStruct)
+	return &apiv1.PatchMasterConfigResponse{
 		Config: configStruct,
 	}, err
 }
@@ -194,4 +251,13 @@ func (a *apiServer) ResourceAllocationAggregated(
 	}
 
 	return a.m.fetchAggregatedResourceAllocation(req)
+}
+
+func isValidLogLevel(lvl string) bool {
+	switch strings.ToLower(lvl) {
+	case "fatal", "error", "warn", "info", "debug", "trace":
+		return true
+	default:
+		return false
+	}
 }

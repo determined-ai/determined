@@ -132,7 +132,7 @@ def test_master_restart_error_missing_docker_container(
         containers = client.containers.list()
 
         label = "ai.determined.container.description"
-        containers = [c for c in containers if f"/experiments/{exp_id}" in c.labels.get(label, "")]
+        containers = [c for c in containers if f"exp-{exp_id}" in c.labels.get(label, "")]
         assert len(containers) == 1
 
         managed_cluster_restarts.kill_agent()

@@ -5,8 +5,8 @@ import React, { useState } from 'react';
 import Checkbox from 'components/kit/Checkbox';
 import { Modal } from 'components/kit/Modal';
 import { cancelExperiment, killExperiment } from 'services/api';
-import { ValueOf } from 'shared/types';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { ValueOf } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 
 export const ActionType = {
@@ -53,6 +53,7 @@ const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }
     <Modal
       size="small"
       submit={{
+        handleError,
         handler: handleSubmit,
         text: BUTTON_TEXT,
       }}

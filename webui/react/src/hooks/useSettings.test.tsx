@@ -4,9 +4,10 @@ import { array, boolean, number, string, undefined as undefinedType, union } fro
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
+import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import userStore from 'stores/users';
+import userSettings from 'stores/userSettings';
 
 import * as hook from './useSettings';
 import { SettingsProvider } from './useSettingsProvider';
@@ -15,6 +16,7 @@ const CURRENT_USER = { id: 1, isActive: true, isAdmin: false, username: 'bunny' 
 
 vi.mock('services/api', () => ({
   getUserSetting: () => Promise.resolve({ settings: [] }),
+  updateUserSetting: () => Promise.resolve(),
 }));
 
 interface Settings {
@@ -103,6 +105,7 @@ const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
     authStore.setAuth({ isAuthenticated: true });
     authStore.setAuthChecked();
     userStore.updateCurrentUser(CURRENT_USER);
+    return userSettings.startPolling();
   }, []);
 
   return (
@@ -179,6 +182,7 @@ describe('useSettings', () => {
 
   it('should update settings', async () => {
     const { result } = setup();
+
     act(() => result.container.current.updateSettings(newSettings));
 
     for (const configProp of Object.values(config.settings)) {
@@ -197,7 +201,7 @@ describe('useSettings', () => {
           'booleanArray=false&booleanArray=true',
           'number=3.14e-12',
           'numberArray=0&numberArray=100&numberArray=-5280',
-          'string=Hello%20World',
+          'string=Hello+World',
           'stringArray=abc&stringArray=def&stringArray=ghi',
         ].join('&'),
       );

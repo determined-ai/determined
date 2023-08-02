@@ -16,7 +16,7 @@ export interface FiltersInterface {
 interface Props {
   settings: Settings;
   systemSeries: AvailableSeriesType;
-  updateSettings?: UpdateSettings;
+  updateSettings?: UpdateSettings<Settings>;
 }
 
 const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSettings }) => {

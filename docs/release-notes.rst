@@ -6,9 +6,313 @@
  Release Notes
 ###############
 
+**Release Date:** July 31, 2023
+
+**Breaking Changes**
+
+-  API: Changed `/api/v1/users/setting` endpoint to no longer accept a `storagePath` param and to
+   accept an array of `settings` instead of a single `setting` param.
+
+**New Features**
+
+-  Allow non-intersecting dictionaries of metrics to be merged on the same total_batches. This
+   update used to be rejected before.
+
+-  API: A new patch API end point ``/api/v1/master/config`` has been added that allows the user to
+   make changes to the master config while the cluster is still running. Currently, only changing
+   the log config is supported.
+
+-  CLI: A new CLI command has been added ``det master config --log --level <log_level> --color
+   <on/off>`` that allows the user to change the log level and/or color of the master config while
+   the cluster is still running. ``det master config`` can still be used to get master config.
+
+-  Cluster: Add resource pool to workspace mapping feature, allowing resource pools to be bound to
+   specific workspaces. Bound resource pools can only be used by the workspaces they are bound to.
+   Additionally adds the ability to configure a default compute resource pool and a default
+   auxiliary resource pool for each workspace.
+
+-  K8s: We now allow users to populate all securityContext fields within the podspec of the
+   determined-container except for RunAsUser and RunAsGroup. Use ``det user link-with-agent-user``
+   instead.
+
+-  WebUI: In addition to improved performance and stability, we've added the following features to
+   the experiment list page: Metrics and hyperparameters can be selected as columns; The list can be
+   filtered on any available column; Users can specify complex filters; The list can be sorted on
+   any available column; Display total number of experiments matching the filter; Compare view
+   allows comparison metrics, hyperparameters, and trial details across experiments; Toggle between
+   pagination and infinite scroll; Select preferred table density
+
+**************
+ Version 0.23
+**************
+
+Version 0.23.3
+==============
+
+**Release Date:** July 18, 2023
+
+**Breaking Changes**
+
+-  API: Removed echo-backed `/config` endpoint, replaced by grpc-gateway `api/v1/master/config`
+
+**Improvements**
+
+-  Notebook: The connection between Determined Master and the notebook task on Determined Agents was
+   previously HTTP only. This change upgrades the connection to HTTPS for enhanced security.
+
+**Deprecated Features**
+
+-  API: The ``SummarizeTrial`` endpoint is removed in favor of ``CompareTrials``; ``CompareTrials``
+   sends a similar request with the `trial_id` parameter replaced by the `trial_ids` array.
+-  API: The ``scale`` parameter is removed from ``CompareTrialsRequest``; this was used only for
+   lttb downsampling which has since been replaced.
+
+Version 0.23.2
+==============
+
+**Release Date:** July 05, 2023
+
+**New Features**
+
+-  CLI: ``det deploy gcp up`` now uses a default Google Cloud Storage bucket
+   ``$PROJECT-ID-determined-deploy`` to store the Terraform state unless a local Terraform state
+   file is present or a different Cloud Storage bucket is specified.
+
+-  CLI: A new list function ``det deploy gcp list --project-id <project_id>`` was added that lists
+   all clusters under the default Cloud Storage bucket in the given project. Clusters from a
+   particular Cloud Storage bucket can also be listed using ``det deploy gcp list --project-id
+   <project_id> --tf-state-gcs-bucket-name <tf_state_gcs_bucket_name>``.
+
+-  CLI: A new delete subcommand ``det deploy gcp down --cluster-id <cluster_id> --project-id
+   <project_id>`` was added that deletes a particular cluster from the project. ``det deploy gcp
+   down`` can still be used to delete clusters with local Terraform state files.
+
+Version 0.23.1
+==============
+
+**Release Date:** June 21, 2023
+
+**Improvements**
+
+-  Errors: Errors that return 404 or 'Not Found' codes now have standardized messaging using the
+   format "<task/trial/workspace etc.> <ID> not found". In addition, if RBAC is enabled, the error
+   message includes a suffix to remind users to check their permissions. This is because with RBAC
+   enabled, permission denied errors and not found errors both return a 'Not Found' response.
+
+**Deprecated Features**
+
+-  ``LightningAdapter`` is deprecated and will be removed in a future version. We recommend that
+   PyTorch Lightning users migrate to the :ref:`Core API <core-getting-started>`.
+
+**Bug Fixes**
+
+-  Users: Resolved an issue that was causing an error when attempting to create a new user with a
+   username that was previously used by a renamed user.
+
+Version 0.23.0
+==============
+
+**Release Date:** June 05, 2023
+
+**Breaking Changes**
+
+-  Remove HDFS checkpoint storage support, which has been deprecated since 0.21.1 (April 2023).
+
+-  Kubernetes: When a pod spec is specified in both ``task_container_defaults`` and the
+   experiment/job configuration, the pod spec is merged according to `strategic merge patch
+   <https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/#use-a-strategic-merge-patch-to-update-a-deployment>`__.
+   The previous behavior was using only the experiment/job configuration if supplied.
+
+-  CLI: The ``det notebook|tensorboard start`` commands no longer block for the whole life cycle of
+   the notebook or TensorBoard process. They will also not stream related event logs. Users should
+   use the existing `det notebook|tensorboard|task logs` commands to stream logs from the process.
+
+-  Python SDK: Remove the packages ``determined-cli``, ``determined-common``, and
+   ``determined-deploy``, which were deprecated in 0.15.0 (April 2021). The submodules
+   ``determined.cli``, ``determined.common``, and ``determined.deploy`` of the ``determined``
+   package should be used instead.
+
+**New Features**
+
+-  Experiment: :ref:`Custom hyperparameter searchers <topic-guides_hp-tuning-det_custom>` can
+   include extra directories to pass into the ``client.create_experiment`` context.
+
+-  Checkpoints: Add support for deleting a subset of files from checkpoints.
+
+   The SDK method :meth:`determined.experimental.client.Checkpoint.remove_files` has been added to
+   delete files matching a list of globs provided. The CLI command ``det checkpoint rm uuid1,uuuid2
+   --glob 'deleteDir1/**' --glob deleteDir2`` provides access to this method.
+
+-  AWS and GCP: Add `launch_error_timeout` and `launch_error_retries` provider configuration
+   options.
+
+   -  `launch_error_timeout`: Duration for which a provisioning error is valid. Tasks that are
+      unschedulable in the existing cluster may be canceled. After the timeout period, the error
+      state is reset. Defaults to `0s`.
+
+   -  `launch_error_retries`: Number of retries to allow before registering a provider provisioning
+      error. Defaults to ``0``.
+
+-  DeepSpeed experiments can now be wrapped with the ``determined.pytorch.dsat`` module to
+   automatically tune their distributed training hyperparameters.
+
+-  API: ``GetExperiments(archived=False)`` no longer lists experiments from archived projects or
+   workspaces. This change affects both the WebUI and the CLI. Unarchived projects and workspaces
+   are not affected.
+
+**Improvements**
+
+-  CLI: ``det user list`` will not display the Admin column when RBAC is enabled.
+-  Checkpoints: In checkpoint-related views and APIs, the previously hidden file ``metadata.json``
+   is now visible.
+
+**************
+ Version 0.22
+**************
+
+Version 0.22.2
+==============
+
+**Release Date:** May 24, 2023
+
+**Improvements**
+
+-  Cluster: Slurm/PBS requires HPC Launcher 3.2.9.
+
+   -  The HPC Launcher includes new support to enable improved scalablity. When used with Slurm or
+      PBS, the launcher must be version 3.2.9 or greater.
+
+-  Bind mounts for notebooks (and other commands) can be configured with ``--config``. For example
+   usage, see the section for ``--config`` in ``det command run --help``.
+
+-  Trials: Reporting a training or validation metric with the epoch set to a non-numeric value will
+   now return an error.
+
+**Deprecated Features**
+
+-  CLI: ``det template set <name> <config>`` has been deprecated.
+
+**Removed Features**
+
+-  API: Legacy APIs for trial details and trial metrics, which were deprecated in 0.19.2, have now
+   been removed.
+-  API: Legacy APIs for experiment creation and updates, which were deprecated in 0.19.10, have now
+   been removed.
+
+**Bug Fixes**
+
+-  CLI: ``det e list`` and ``det e list -a`` behaviors were erroneously switched.
+
+   -  Earlier, ``det e list`` was showing both archived and unarchived experiments, and ``det e list
+      -a`` was showing only unarchived experiments. This has now been fixed --- ``det e list`` will
+      show only unarchived experiments and ``det e list -a`` will show both archived and unarchived
+      experiments.
+
+Version 0.22.1
+==============
+
+**Release Date:** May 17, 2023
+
+**Bug Fixes**
+
+-  Fix a critical regression in 0.22.0 that could lead to database deadlocks and incorrect
+   experiment progress info when restarting trials after failure. Specifically, this problem may
+   occur when the ``max_restarts`` experiment configuration option is set to a value greater than
+   zero (default: 5). We advise all users running 0.22.0 to upgrade as soon as possible.
+
+Version 0.22.0
+==============
+
+**Release Date:** May 05, 2023
+
+**Breaking Change**
+
+-  The previous template CRUD endpoints have been removed from the `/templates/*` location. Please
+   use the APIs found at `/api/v1/templates/*`.
+
+-  Experiment: Optimizer must be an instance of tensorflow.keras.optimizers.legacy.Optimizer
+   starting from Keras 2.11
+
+   -  Experiments now use images with TensorFlow 2.11 by default. TensorFlow users who are not
+      explicitly configuring their training image(s) will need to adapt their model code to reflect
+      these changes. Users will likely need to use Keras optimizers located in
+      ``tensorflow.keras.optimizers.legacy``. Depending on the sophistication of users' model code,
+      there may be other breaking changes. Determined is not responsible for these breakages. See
+      the `TensorFlow release notes
+      <https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0>`_ for more details.
+
+   -  PyTorch users and users who specify custom images should not be affected.
+
+**Deprecated Features**
+
+-  Legacy TensorFlow 1 + PyTorch 1.7 + CUDA 10.2 support is deprecated and will be removed in a
+   future version. The final TensorFlow 1.15.5 patch was released in January 2021, and no further
+   security patches are planned. Consequently, we recommend users migrate to modern versions of
+   TensorFlow 2 and PyTorch. Our default environment images currently ship with
+   ``tensorflow==2.11.1`` and ``torch==1.12.0``.
+
+-  ``EstimatorTrial`` is deprecated and will be removed in a future version. TensorFlow has advised
+   Estimator users to switch to Keras since TensorFlow 2.0 was released. Consequently, we recommend
+   users of EstimatorTrial switch to the :class:`~determined.keras.TFKerasTrial` class.
+
+-  Master config option ``logging.additional_fluent_outputs`` is deprecated and will be removed in a
+   future version. We do not plan to offer a replacement at this time. If you are interested in
+   additional logging integrations, please contact us.
+
+**Improvement**
+
+-  HP Search: Trials are persisted as soon as they are requested by the searcher, instead of after
+   they are first scheduled.
+
+-  Trials: Metric storage has been optimized for reading summaries of metrics reported during a
+   trial.
+
+   Extended downtime may result when upgrading from a previous version to this version or a later
+   version. This will occur when your cluster contains a large number of trials and training steps
+   reported. For example, a database with 10,000 trials with 125 million training metrics on a small
+   instance may experience 6 or more hours of downtime during the upgrade.
+
+   (Optional) To minimize downtime, users with large databases can choose to manually run `this SQL
+   file
+   <https://github.com/determined-ai/determined/blob/main/master/static/migrations/20230503144448_add-summary-metrics.tx.up.sql>`__
+   against their cluster's database while it is still running before upgrading to a new version.
+   This is an optional step and is only recommended for significantly large databases.
+
 **************
  Version 0.21
 **************
+
+Version 0.21.2
+==============
+
+**Release Date:** April 28, 2023
+
+**New Features**
+
+-  Add the ``launch_error`` configuration option to the master config, which specifies whether to
+   refuse experiments or tasks if they request more slots than the cluster has. See
+   :ref:`master-config-reference` for more information.
+
+**Improvements**
+
+-  CLI: Add ``det (experiment|trial|task) logs --json`` option, allowing users to get JSON-formatted
+   logs for experiments, trials, and tasks.
+
+-  Cluster: HPC Launcher 3.2.7 migrates the ``resource_manager.job_storage_root`` to a more
+   efficient format. This happens automatically, but once migrated you cannot downgrade to an older
+   version of the HPC launcher.
+
+-  Cluster: The ``manage-singularity-cache`` script has added the ``--docker-login`` option to
+   enable access to private Docker images.
+
+**Removed Features**
+
+-  The "hyperparameter importance" feature and associated API endpoints have been removed.
+
+**Bug Fixes**
+
+-  Tasks: Fix an issue where task proxies were not recovered when running on Slurm.
+-  Tasks: Fix an issue where ``det task list`` would sometimes return an incorrect 404 error.
 
 Version 0.21.1
 ==============
@@ -92,7 +396,7 @@ Version 0.21.0
 
 **Improvements**
 
--  CLI: Command-line deployments will now default to provisioning Nvidia T4 GPU instances instead of
+-  CLI: Command-line deployments will now default to provisioning NVIDIA T4 GPU instances instead of
    K80 instances. This change is intended to improve the performance/cost and driver support of the
    default deployment.
 
@@ -306,7 +610,7 @@ Version 0.19.10
 
 -  Cluster: Determined Enterprise Edition now supports the `NVIDIA Enroot
    <https://github.com/NVIDIA/enroot>`__ container platform as an alternative to
-   Apptainer/Singularity/PodMan.
+   Apptainer/Singularity/Podman.
 
 **Improvements**
 
@@ -359,7 +663,7 @@ Version 0.19.9
 
 -  Cluster: Determined Enterprise Edition now supports the `NVIDIA Enroot
    <https://github.com/NVIDIA/enroot>`__ container platform as an alternative to
-   Apptainer/Singularity/PodMan.
+   Apptainer/Singularity/Podman.
 
 Version 0.19.8
 ==============
@@ -417,7 +721,7 @@ Version 0.19.7
    experiment via the
    :meth:`~determined.experimental.client.ExperimentReference.await_first_trial()` method. Users who
    have been writing automation around the ``det e create --follow-first-trial`` CLI command may now
-   use the python SDK instead, by combining ``.await_first_trial()`` and ``.logs()``.
+   use the Python SDK instead, by combining ``.await_first_trial()`` and ``.logs()``.
 
 -  RBAC: the enterprise edition of Determined (`HPE Machine Learning Development Environment
    <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
@@ -548,7 +852,7 @@ Version 0.19.3
 **Improvements**
 
 -  Slurm: Singularity containers may now use AMD ROCm GPUs.
--  Slurm: PodMan V4.0+ is now supported in conjunction with the Slurm job scheduler.
+-  Slurm: Podman V4.0+ is now supported in conjunction with the Slurm job scheduler.
 -  Kubernetes: The UID and GID of Fluent Bit logging sidecars may now be configured on a
    cluster-wide basis.
 
@@ -877,8 +1181,10 @@ Version 0.18.1
    column in the `Trials` table.
 
    .. image:: https://user-images.githubusercontent.com/220971/169450333-c3dde9f4-abc0-4f8b-9e83-216e13ee2ca0.png
+      :alt: Trial restart counter
 
    .. image:: https://user-images.githubusercontent.com/220971/169450323-d169f4ee-2698-4ae8-9b1a-c04460751310.png
+      :alt: Restarts column in the Trials table
 
 **Improvements**
 
@@ -1045,7 +1351,7 @@ Version 0.17.13
 -  Model Hub: add support for panoptic segmentation.
 
    -  Model Hub mmdetection now supports panoptic segmentation task in addition to object detection.
-      Previously, the associated docker image lacked dependencies for panoptic segmentation. Users
+      Previously, the associated Docker image lacked dependencies for panoptic segmentation. Users
       can now use mmdetection configs under ``panoptic_fpn`` and also the ``coco_panoptic`` dataset
       base config.
 
@@ -1186,8 +1492,10 @@ Version 0.17.9
    to display.
 
    .. image:: https://user-images.githubusercontent.com/15078396/152874244-51e0d84a-3678-4427-b082-ccc0c865200f.png
+      :alt: Customize columns picker
 
    .. image:: https://user-images.githubusercontent.com/15078396/152874240-6365b276-3f3e-4fb6-aa2b-0cedc7451b12.png
+      :alt: Customize columns picker displaying columns matching search criteria
 
 -  Notebooks: Add a config field ``notebook_idle_type`` that changes how the idleness of a notebook
    is determined for the idle timeout feature. If the value is different from the default, users do
@@ -1346,10 +1654,13 @@ Version 0.17.5
    or on the Model Registry page.
 
    .. image:: https://user-images.githubusercontent.com/15078396/144926870-bb93d587-f7ad-4052-a338-6fc000bd2ed9.png
+      :alt: Model Registry page
 
    .. image:: https://user-images.githubusercontent.com/15078396/144926881-98aeb187-aa3f-4e40-b502-d7af624573db.png
+      :alt: Register Checkpoint page
 
    .. image:: https://user-images.githubusercontent.com/15078396/144926889-eec0216a-dacc-4fe5-ac28-858ea6587d04.png
+      :alt: Create Model page
 
 -  API: Add a method for listing trials within an experiment.
 
@@ -1464,6 +1775,7 @@ Version 0.17.1
    experiment.
 
    .. image:: https://user-images.githubusercontent.com/15078396/136809928-11c815cc-3751-4908-8c6e-34fef3b9858d.png
+      :alt: Notes tab in the WebUI
 
 **Improvements**
 
@@ -1553,13 +1865,16 @@ Version 0.17.0
 -  WebUI: Allow experiment owners to delete their own experiments, singly or in batches.
 
    .. image:: https://user-images.githubusercontent.com/220971/134048799-cd663a75-cb24-4f44-9a8a-c2ff23222cef.png
+      :alt: WebUI showing Delete action
 
    .. image:: https://user-images.githubusercontent.com/220971/133659677-aea0d1bc-95ce-4652-8218-92b97d114358.png
+      :alt: WebUI showing action dropdown selector
 
 -  WebUI: Display the latest log entry available for a trial at the bottom of the trial's page. This
    works for both single-trial experiments and trials within a multi-trial experiment.
 
    .. image:: https://user-images.githubusercontent.com/220971/131391658-4be1a1f4-1d46-4766-a737-7eb8efcb65b4.png
+      :alt: WebUI displaying the latest log entry
 
 -  WebUI: Add support for displaying NaN and Infinity metric values.
 
@@ -1924,9 +2239,9 @@ Version 0.15.2
 -  PyTorchTrial: Fix learning rate scheduler behavior when used with gradient aggregation.
 
 -  ``PyTorchTrial``'s :meth:`~determined.pytorch.PyTorchTrialContext.to_device` no longer throws
-   errors on non-numeric Numpy-like data. As PyTorch is still unable to move such data to the GPU,
+   errors on non-numeric NumPy-like data. As PyTorch is still unable to move such data to the GPU,
    non-numeric arrays will simply remain on the CPU. This is especially useful to NLP practitioners
-   who wish to make use of Numpy's string manipulations anywhere in their data pipelines.
+   who wish to make use of NumPy's string manipulations anywhere in their data pipelines.
 
 -  TFKerasTrial: Fix support for TensorFlow v2.2.x.
 
@@ -3033,9 +3348,9 @@ Version 0.12.13
 -  Remove ``determined.pytorch.reset_parameters()``. This should have no effect except when using
    highly customized ``nn.Module`` implementations.
 -  WebUI: Show total number of resources in the cluster resource charts.
--  Add support for Nvidia T4 GPUs.
+-  Add support for NVIDIA T4 GPUs.
 -  ``det-deploy``: Add support for ``g4`` instance types on AWS.
--  Upgrade Nvidia drivers on the default AWS and GCP images from ``410.104`` to ``450.51.05``.
+-  Upgrade NVIDIA drivers on the default AWS and GCP images from ``410.104`` to ``450.51.05``.
 
 **Bug Fixes**
 
@@ -3321,7 +3636,7 @@ Version 0.12.3
 
 -  Add REST API endpoints for trials.
 
--  Support the execution of a startup script inside the agent docker container
+-  Support the execution of a startup script inside the agent Docker container
 
 -  Master and agent Docker containers will have the 'unless-stopped' restart policy by default when
    using ``det-deploy local``.

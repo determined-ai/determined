@@ -26,7 +26,7 @@ the `question answering example`_ to get a better understanding of how to use **
 transformers.
 
 The `question answering example`_ includes two implementations of
-:doc:`/training/apis-howto/api-pytorch-ug`:
+:doc:`/model-dev-guide/apis-howto/api-pytorch-ug`:
 
 -  qa_trial.py_ uses the :py:class:`model_hub.huggingface.BaseTransformerTrial` parent ``__init__``
    function to build **transformers** config, tokenizer, and model objects; and optimizer and
@@ -36,8 +36,8 @@ The `question answering example`_ includes two implementations of
    parent ``__init__`` function to customize how the **transformers** config, tokenizer, and model
    objects are constructed.
 
-Let us walk through qa_trial.py_ to learn the basics. We won't cover the model definition line by
-line but will highlight the parts that make use of **model-hub**.
+To learn the basics, we'll walk through qa_trial.py_. We won't cover the model definition
+line-by-line but will highlight the parts that make use of **model-hub**.
 
 .. note::
 
@@ -67,7 +67,7 @@ Note that ``context.get_hparams()`` and ``context.get_data_config()`` returns th
 Build **transformers** config, tokenizer, and model
 ===================================================
 
-First, we build the **transformer** config, tokenizer, and model objects by calling
+First, we'll build the **transformer** config, tokenizer, and model objects by calling
 :py:meth:`model_Hub.huggingface.BaseTransformerTrial.__init__`:
 
 .. literalinclude:: ../../../model_hub/examples/huggingface/question-answering/qa_trial.py
@@ -157,7 +157,7 @@ no prescription for how you should process your data but all the provided exampl
 Define metrics
 ==============
 
-Next, we define the metrics that we wish to compute over the predictions generated for the
+Next, we'll define the metrics that we wish to compute over the predictions generated for the
 validation dataset.
 
 .. literalinclude:: ../../../model_hub/examples/huggingface/question-answering/qa_trial.py
@@ -229,16 +229,16 @@ function.
 *********************
 
 **model-hub** support for **transformers** is tied to specific versions of the source library to
-ensure compatibility. Be sure to use the latest docker image with all the necessary dependencies for
-**transformers** with **model-hub**. All provided examples already have this docker image specified:
+ensure compatibility. Be sure to use the latest Docker image with all the necessary dependencies for
+**transformers** with **model-hub**. All provided examples already have this Docker image specified:
 
 .. literalinclude:: ../../../model_hub/examples/huggingface/question-answering/squad.yaml
    :language: yaml
    :lines: 39-40
 
-We periodically bump these libraries up to more recent versions of `transformers` and `datasets` so
-you can access the latest upstream features. That said, once you create a trial definition using a
-particular docker image, you will not need to upgrade to a new docker image for your code to
+We periodically bump these libraries up to more recent versions of ``transformers`` and ``datasets``
+so you can access the latest upstream features. That said, once you create a trial definition using
+a particular Docker image, you will not need to upgrade to a new Docker image for your code to
 continue working with **model-hub**. Additionally, your code will continue to work with that image
 even if you use it with a more recent version of the Determined cluster.
 
@@ -248,4 +248,4 @@ even if you use it with a more recent version of the Determined cluster.
 
 -  Take a look at qa_beam_search_trial.py_ for an example of how you can further customize your
    trial.
--  Dive into :ref:`the api. <model-hub-transformers-api>`
+-  Dive into :ref:`the api <model-hub-transformers-api>`.

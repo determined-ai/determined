@@ -5,7 +5,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
-	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // ErrTimeoutExceeded is return, with a bit of detail, when a timeout is exceeded.
@@ -43,15 +42,6 @@ func (e ErrStaleResourcesReceived) Error() string {
 	return "allocation no longer needs these resources"
 }
 
-// ErrStaleAllocation is returned when an operation was attempted by a stale task.
-type ErrStaleAllocation struct {
-	Received, Actual model.AllocationID
-}
-
-func (e ErrStaleAllocation) Error() string {
-	return fmt.Sprintf("stale task %s != %s (received != actual)", e.Received, e.Actual)
-}
-
 // ErrStaleContainer is returned when an operation was attempted by a stale container.
 type ErrStaleContainer struct {
 	ID cproto.ID
@@ -69,12 +59,6 @@ type ErrStaleResources struct {
 func (e ErrStaleResources) Error() string {
 	return fmt.Sprintf("stale resources %s", e.ID)
 }
-
-// All behaviors for allocations.
-const (
-	preemption  = "preemption"
-	idleWatcher = "idle_watcher"
-)
 
 // ErrBehaviorDisabled is returned an operation is tried without the behavior being enabled.
 type ErrBehaviorDisabled struct {

@@ -39,7 +39,7 @@ For an introduction to using the training API, please visit the Training APIs se
       -  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
 
    -  -  PyTorch
-      -  Imagenet
+      -  ImageNet
       -  :download:`imagenet_pytorch.tgz </examples/imagenet_pytorch.tgz>`
 
    -  -  PyTorch
@@ -69,10 +69,6 @@ For an introduction to using the training API, please visit the Training APIs se
    -  -  PyTorch (Lightning Adapter)
       -  MNIST
       -  :download:`mnist_pl.tgz </examples/mnist_pl.tgz>`
-
-   -  -  TensorFlow (Estimator API)
-      -  MNIST
-      -  :download:`mnist_estimator.tgz </examples/mnist_estimator.tgz>`
 
    -  -  TensorFlow (tf.keras)
       -  Fashion MNIST
@@ -167,6 +163,29 @@ For an introduction to using the training API, please visit the Training APIs se
    -  -  DeepSpeed (PyTorch)
       -  CIFAR-10
       -  :download:`cifar10_cpu_offloading.tgz </examples/cifar10_cpu_offloading.tgz>`
+
+********************
+ DeepSpeed Autotune
+********************
+
+.. list-table::
+   :header-rows: 1
+
+   -  -  Framework
+      -  Dataset
+      -  Filename
+
+   -  -  DeepSpeed (PyTorch)
+      -  ImageNet (Generated)
+      -  :download:`torchvision.tgz </examples/torchvision.tgz>`
+
+   -  -  HuggingFace (DeepSpeed/PyTorch)
+      -  Beans (HuggingFace)
+      -  :download:`hf_image_classification.tgz </examples/hf_image_classification.tgz>`
+
+   -  -  HuggingFace (DeepSpeed/PyTorch)
+      -  WikiText (HuggingFace)
+      -  :download:`hf_language_modeling.tgz </examples/hf_language_modeling.tgz>`
 
 ************************
  HP Search Benchmarking
@@ -270,21 +289,6 @@ For an introduction to using the training API, please visit the Training APIs se
    -  -  PyTorch
       -  PROTEINS
       -  :download:`proteins_pytorch_geometric.tgz </examples/proteins_pytorch_geometric.tgz>`
-
-****************
- Decision Trees
-****************
-
-.. list-table::
-   :header-rows: 1
-
-   -  -  Framework
-      -  Dataset
-      -  Filename
-
-   -  -  TensorFlow (Estimator API)
-      -  Titanic
-      -  :download:`gbt_titanic_estimator.tgz </examples/gbt_titanic_estimator.tgz>`
 
 ***************************
  Features: Custom Reducers

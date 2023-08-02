@@ -4,10 +4,10 @@ Description: Determined Template
 Mappings:
   RegionMap:
     us-gov-east-1:
-      Master: ami-0cd066f69b98b61b2
+      Master: ami-01d71f6009765d511
       Agent: ami-0b71e56244b8ac1cb
     us-gov-west-1:
-      Master: ami-0cbd5dbd94f397bdd
+      Master: ami-0b64b04df085adbf1
       Agent: ami-0d26002529bfac823
 Parameters:
   Keypair:
@@ -67,7 +67,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master docker image
-    Default: 0.21.2-dev0
+    Default: 0.23.5-dev0
 
   DBPassword:
     Type: String
@@ -184,9 +184,17 @@ Parameters:
         password: "{{ .db.password }}"
         host: "{{ .db.host }}"
         port: 5432
-        name: determined
+        name: "{{ .db.name }}"
+        {{- if .db.ssl_mode }}
+        ssl_mode: "{{ .db.ssl_mode }}"
+        {{- else if .db.ssl_root_cert }}
         ssl_mode: verify-ca
-        ssl_root_cert: /etc/determined/db_ssl_root_cert.pem
+        {{- else }}
+        ssl_mode: disable
+        {{- end }}
+        {{- if .db.ssl_root_cert }}
+        ssl_root_cert: "{{ .db.ssl_root_cert }}"
+        {{- end }}
 
       enable_cors: {{ .enable_cors }}
 
@@ -629,6 +637,8 @@ Resources:
             db:
               password: "${DBPassword}"
               host: "${Database.Endpoint.Address}"
+              name: determined
+              ssl_root_cert: /etc/determined/db_ssl_root_cert.pem
 
             enable_cors: ${EnableCORS}
 

@@ -23,6 +23,7 @@ known_licenses = {
     "apache2": "Apache-2.0",
     "bsd2": "BSD 2-clause",
     "bsd3": "BSD 3-clause",
+    "isc": "ISC License",
     "mit": "MIT",
     "mozilla": "Mozilla Public License",
     "sil": "SIL Open Font License 1.1",

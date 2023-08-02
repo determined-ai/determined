@@ -1,0 +1,22 @@
+name: torchvision dsat deepspeed_trial
+max_restarts: 0
+environment:
+  image:
+    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
+resources:
+  slots_per_trial: 2
+  shm_size: 4294967296 # 4 GiB.
+searcher:
+  name: single
+  metric: val_loss
+  max_length: 100
+hyperparameters:
+  model_name: resnet152
+  # NOTE: dsat expects the yaml config to reference the DS json config path as in the below.
+  deepspeed_config: ds_config.json
+entrypoint:
+  - python3
+  - -m
+  - determined.launch.deepspeed
+  - --trial
+  - model_def:TorchvisionTrial

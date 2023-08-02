@@ -1,3 +1,7 @@
+.scrollContainer {
+  height: 100%;
+  overflow: auto;
+}
 .chartgridEmpty {
   align-items: center;
   display: flex;
@@ -8,31 +12,33 @@
   min-height: 530px;
 }
 .chartgridContainer {
+  --grid-spacing: 6px;
   background-color: var(--theme-background);
-  margin: 5px;
   min-height: 530px;
   overflow-y: hidden;
 }
 .chartgridCell {
   background-color: var(--theme-background);
   padding: 0;
-  padding-left: 6px;
-  padding-right: 6px;
+  padding-left: var(--grid-spacing);
+  padding-right: var(--grid-spacing);
 }
 .chartgridCellCard {
   background-color: var(--theme-stage);
   border: 1px solid var(--theme-stage-border);
   border-radius: 4px;
+  height: calc(100% - var(--grid-spacing));
   padding: 24px;
 }
 .chartTitle {
   background-color: var(--theme-stage);
+  display: flex;
   font-family: var(--theme-font-family);
   font-size: 14px;
+  justify-content: center;
   margin-bottom: -18px !important;
   padding-bottom: 15px;
   padding-top: 5px;
-  text-align: center;
 
   @supports (font-variation-settings: normal) {
     font-family: var(--theme-font-family-var);

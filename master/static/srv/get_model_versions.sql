@@ -24,11 +24,6 @@ m AS (
     ON mv.model_id = m.id
   WHERE m.id = $1
   GROUP BY m.id, u.id
-),
-c AS (
-  SELECT *
-  FROM proto_checkpoints_view c
-  WHERE c.uuid IN (SELECT checkpoint_uuid::text FROM mv)
 )
 SELECT
     to_json(c) AS checkpoint,
@@ -38,5 +33,5 @@ SELECT
     mv.creation_time, mv.notes,
     mv.username, mv.user_id,
     mv.name, mv.comment, mv.metadata, mv.last_updated_time
-    FROM c, mv, m
+    FROM proto_checkpoints_view c, mv, m
     WHERE c.uuid = mv.checkpoint_uuid::text;

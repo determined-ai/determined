@@ -1,8 +1,9 @@
 import uuid
-from typing import Optional
+from typing import Optional, Sequence
 
 from determined.common import api
-from determined.common.api import authentication, bindings, certs
+from determined.common.api import Session, authentication, bindings, certs
+from determined.common.api._util import AnyNTSC, NTSC_Kind
 from tests import config as conf
 from tests.cluster import test_users
 
@@ -52,3 +53,94 @@ def configure_token_store(credentials: authentication.Credentials) -> None:
     )
     token_store.set_token(credentials.username, token)
     token_store.set_active(credentials.username)
+
+
+def launch_ntsc(
+    session: Session,
+    workspace_id: int,
+    typ: NTSC_Kind,
+    exp_id: Optional[int] = None,
+    template: Optional[str] = None,
+) -> AnyNTSC:
+    if typ == NTSC_Kind.notebook:
+        return bindings.post_LaunchNotebook(
+            session,
+            body=bindings.v1LaunchNotebookRequest(workspaceId=workspace_id, templateName=template),
+        ).notebook
+    elif typ == NTSC_Kind.tensorboard:
+        experiment_ids = [exp_id] if exp_id else []
+        return bindings.post_LaunchTensorboard(
+            session,
+            body=bindings.v1LaunchTensorboardRequest(
+                workspaceId=workspace_id, experimentIds=experiment_ids, templateName=template
+            ),
+        ).tensorboard
+    elif typ == NTSC_Kind.shell:
+        return bindings.post_LaunchShell(
+            session,
+            body=bindings.v1LaunchShellRequest(workspaceId=workspace_id, templateName=template),
+        ).shell
+    elif typ == NTSC_Kind.command:
+        return bindings.post_LaunchCommand(
+            session,
+            body=bindings.v1LaunchCommandRequest(
+                workspaceId=workspace_id,
+                config={
+                    "entrypoint": ["sleep", "100"],
+                },
+                templateName=template,
+            ),
+        ).command
+    else:
+        raise ValueError("unknown type")
+
+
+def kill_ntsc(session: Session, typ: NTSC_Kind, ntsc_id: str) -> None:
+    if typ == NTSC_Kind.notebook:
+        bindings.post_KillNotebook(session, notebookId=ntsc_id)
+    elif typ == NTSC_Kind.tensorboard:
+        bindings.post_KillTensorboard(session, tensorboardId=ntsc_id)
+    elif typ == NTSC_Kind.shell:
+        bindings.post_KillShell(session, shellId=ntsc_id)
+    elif typ == NTSC_Kind.command:
+        bindings.post_KillCommand(session, commandId=ntsc_id)
+    else:
+        raise ValueError("unknown type")
+
+
+def set_prio_ntsc(session: Session, typ: NTSC_Kind, ntsc_id: str, prio: int) -> None:
+    if typ == NTSC_Kind.notebook:
+        bindings.post_SetNotebookPriority(
+            session, notebookId=ntsc_id, body=bindings.v1SetNotebookPriorityRequest(priority=prio)
+        )
+    elif typ == NTSC_Kind.tensorboard:
+        bindings.post_SetTensorboardPriority(
+            session,
+            tensorboardId=ntsc_id,
+            body=bindings.v1SetTensorboardPriorityRequest(priority=prio),
+        )
+    elif typ == NTSC_Kind.shell:
+        bindings.post_SetShellPriority(
+            session, shellId=ntsc_id, body=bindings.v1SetShellPriorityRequest(priority=prio)
+        )
+    elif typ == NTSC_Kind.command:
+        bindings.post_SetCommandPriority(
+            session, commandId=ntsc_id, body=bindings.v1SetCommandPriorityRequest(priority=prio)
+        )
+    else:
+        raise ValueError("unknown type")
+
+
+def list_ntsc(
+    session: Session, typ: NTSC_Kind, workspace_id: Optional[int] = None
+) -> Sequence[AnyNTSC]:
+    if typ == NTSC_Kind.notebook:
+        return bindings.get_GetNotebooks(session, workspaceId=workspace_id).notebooks
+    elif typ == NTSC_Kind.tensorboard:
+        return bindings.get_GetTensorboards(session, workspaceId=workspace_id).tensorboards
+    elif typ == NTSC_Kind.shell:
+        return bindings.get_GetShells(session, workspaceId=workspace_id).shells
+    elif typ == NTSC_Kind.command:
+        return bindings.get_GetCommands(session, workspaceId=workspace_id).commands
+    else:
+        raise ValueError("unknown type")

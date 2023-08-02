@@ -135,7 +135,7 @@ service Determined {
       tags: "Users"
     };
   }
-  // Patch a user's settings for website
+  // Post a user's settings for website
   rpc PostUserSetting(PostUserSettingRequest)
       returns (PostUserSettingResponse) {
     option (google.api.http) = {
@@ -233,6 +233,17 @@ service Determined {
       returns (GetMasterConfigResponse) {
     option (google.api.http) = {
       get: "/api/v1/master/config"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Cluster"
+    };
+  }
+  // Patch master config.
+  rpc PatchMasterConfig(PatchMasterConfigRequest)
+      returns (PatchMasterConfigResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/master/config"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Cluster"
@@ -614,72 +625,26 @@ service Determined {
     };
   }
 
-  // Return trials matching a set of TrialFilters.
-  rpc QueryTrials(QueryTrialsRequest) returns (QueryTrialsResponse) {
+  // Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+  rpc ReportTrialSourceInfo(ReportTrialSourceInfoRequest)
+      returns (ReportTrialSourceInfoResponse) {
     option (google.api.http) = {
-      post: "/api/v1/trial-comparison/query"
+      post: "/api/v1/trial-source-info"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Trial Comparison" ]
+      tags: [ "Internal" ]
     };
   }
 
-  // Update tags for trials by IDs or filters.
-  rpc UpdateTrialTags(UpdateTrialTagsRequest)
-      returns (UpdateTrialTagsResponse) {
+  // Create unmanaged trial.
+  rpc CreateTrial(CreateTrialRequest) returns (CreateTrialResponse) {
     option (google.api.http) = {
-      post: "/api/v1/trial-comparison/update-trial-tags"
+      post: "/api/v1/trials"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Trial Comparison" ]
-    };
-  }
-
-  // Return all collectiions for a specific project.
-  rpc GetTrialsCollections(GetTrialsCollectionsRequest)
-      returns (GetTrialsCollectionsResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/trial-comparison/collections"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Trial Comparison" ]
-    };
-  }
-
-  // Create a Trial Collection for a set of TrialFilters.
-  rpc CreateTrialsCollection(CreateTrialsCollectionRequest)
-      returns (CreateTrialsCollectionResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/trial-comparison/collections"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Trial Comparison" ]
-    };
-  }
-
-  // Modify collection attributes: name, filters, etc.
-  rpc PatchTrialsCollection(PatchTrialsCollectionRequest)
-      returns (PatchTrialsCollectionResponse) {
-    option (google.api.http) = {
-      patch: "/api/v1/trial-comparison/collections"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Trial Comparison" ]
-    };
-  }
-
-  // Removes a TrialCollection.
-  rpc DeleteTrialsCollection(DeleteTrialsCollectionRequest)
-      returns (DeleteTrialsCollectionResponse) {
-    option (google.api.http) = {
-      delete: "/api/v1/trial-comparison/collections"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Trial Comparison" ]
+      tags: [ "Internal" ]
     };
   }
 
@@ -723,15 +688,6 @@ service Determined {
       tags: [ "Experiments", "Trials" ]
     };
     option deprecated = true;
-  }
-  // Downsample metrics collected during a trial.
-  rpc SummarizeTrial(SummarizeTrialRequest) returns (SummarizeTrialResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/trials/{trial_id}/summarize"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Trials", "Experiments" ]
-    };
   }
   // Set allocation to ready state.
   rpc AllocationReady(AllocationReadyRequest)
@@ -803,6 +759,15 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Internal" ]
+    };
+  }
+  // Stream one or more trial's metrics.
+  rpc GetMetrics(GetMetricsRequest) returns (stream GetMetricsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/metrics/trial_metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials" ]
     };
   }
   // Stream one or more trial's training metrics.
@@ -1017,6 +982,17 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Record metrics for specified trial.
+  rpc ReportTrialMetrics(ReportTrialMetricsRequest)
+      returns (ReportTrialMetricsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{metrics.trial_id}/metrics"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Record training metrics for specified training.
   rpc ReportTrialTrainingMetrics(ReportTrialTrainingMetricsRequest)
       returns (ReportTrialTrainingMetricsResponse) {
@@ -1027,6 +1003,7 @@ service Determined {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
     };
+    option deprecated = true;
   }
   // Record validation metrics.
   rpc ReportTrialValidationMetrics(ReportTrialValidationMetricsRequest)
@@ -1038,6 +1015,7 @@ service Determined {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
     };
+    option deprecated = true;
   }
   // Record a checkpoint.
   rpc ReportCheckpoint(ReportCheckpointRequest)
@@ -1057,6 +1035,17 @@ service Determined {
   rpc GetJobs(GetJobsRequest) returns (GetJobsResponse) {
     option (google.api.http) = {
       get: "/api/v1/job-queues"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Get a list of jobs in queue.
+  rpc GetJobsV2(GetJobsV2Request) returns (GetJobsV2Response) {
+    option (google.api.http) = {
+      // candidate for moving to /api/v2 service.
+      get: "/api/v1/job-queues-v2"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
@@ -1103,7 +1092,7 @@ service Determined {
       tags: "Templates"
     };
   }
-  // Update or create (upsert) the requested template.
+  // DEPRECATED: Update or create (upsert) the requested template.
   rpc PutTemplate(PutTemplateRequest) returns (PutTemplateResponse) {
     option (google.api.http) = {
       put: "/api/v1/templates/{template.name}"
@@ -1112,7 +1101,31 @@ service Determined {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Templates"
     };
+    option deprecated = true;
   }
+
+  // Post a new template.
+  rpc PostTemplate(PostTemplateRequest) returns (PostTemplateResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/templates/{template.name}"
+      body: "template"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Templates"
+    };
+  }
+  // Patch template config.
+  rpc PatchTemplateConfig(PatchTemplateConfigRequest)
+      returns (PatchTemplateConfigResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/templates/{template_name}"
+      body: "config"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Templates"
+    };
+  }
+
   // Delete a template.
   rpc DeleteTemplate(DeleteTemplateRequest) returns (DeleteTemplateResponse) {
     option (google.api.http) = {
@@ -1502,6 +1515,18 @@ service Determined {
     };
   }
 
+  // Gets the metrics for all trials associated with this model version
+  rpc GetTrialSourceInfoMetricsByModelVersion(
+      GetTrialSourceInfoMetricsByModelVersionRequest)
+      returns (GetTrialSourceInfoMetricsByModelVersionResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/models/{model_name}/versions/{model_version_num}/trial-source-info-metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
+    };
+  }
+
   // Get the requested checkpoint.
   rpc GetCheckpoint(GetCheckpointRequest) returns (GetCheckpointResponse) {
     option (google.api.http) = {
@@ -1524,6 +1549,30 @@ service Determined {
     };
   }
 
+  // Remove files from checkpoints.
+  rpc CheckpointsRemoveFiles(CheckpointsRemoveFilesRequest)
+      returns (CheckpointsRemoveFilesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/checkpoints/rm"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Checkpoints"
+    };
+  }
+
+  // Update checkpoints. Won't modify checkpoint files.
+  rpc PatchCheckpoints(PatchCheckpointsRequest)
+      returns (PatchCheckpointsResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/checkpoints"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Delete Checkpoints.
   rpc DeleteCheckpoints(DeleteCheckpointsRequest)
       returns (DeleteCheckpointsResponse) {
@@ -1533,6 +1582,18 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Checkpoints"
+    };
+  }
+
+  // Gets the metrics for all trials associated with this checkpoint
+  rpc GetTrialMetricsBySourceInfoCheckpoint(
+      GetTrialMetricsBySourceInfoCheckpointRequest)
+      returns (GetTrialMetricsBySourceInfoCheckpointResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/checkpoints/{checkpoint_uuid}/trial-source-info-metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
     };
   }
 
@@ -1559,10 +1620,11 @@ service Determined {
     };
   }
 
-  // Get the set of metric names recorded for an experiment.
-  rpc MetricNames(MetricNamesRequest) returns (stream MetricNamesResponse) {
+  // Get the set of metric names recorded for a list of experiments.
+  rpc ExpMetricNames(ExpMetricNamesRequest)
+      returns (stream ExpMetricNamesResponse) {
     option (google.api.http) = {
-      get: "/api/v1/experiments/{experiment_id}/metrics-stream/metric-names"
+      get: "/api/v1/experiments/metrics-stream/metric-names"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
@@ -1750,9 +1812,20 @@ service Determined {
       get: "/api/v1/projects/{id}/columns"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
+      tags: [ "Projects", "Internal" ]
     };
   }
+  // Get metrics range for a project.
+  rpc GetProjectNumericMetricsRange(GetProjectNumericMetricsRangeRequest)
+      returns (GetProjectNumericMetricsRangeResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/projects/{id}/experiments/metric-ranges"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Projects", "Internal" ]
+    };
+  }
+
   // Create a project.
   rpc PostProject(PostProjectRequest) returns (PostProjectResponse) {
     option (google.api.http) = {
@@ -2086,6 +2159,64 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Experiments", "Internal" ]
+    };
+  }
+
+  // Bind resource pool to workspace
+  rpc BindRPToWorkspace(BindRPToWorkspaceRequest)
+      returns (BindRPToWorkspaceResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/resource-pools/{resource_pool_name}/workspace-bindings",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Unbind resource pool to workspace
+  rpc UnbindRPFromWorkspace(UnbindRPFromWorkspaceRequest)
+      returns (UnbindRPFromWorkspaceResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/resource-pools/{resource_pool_name}/workspace-bindings",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Overwrite resource pool - workspace bindings
+  rpc OverwriteRPWorkspaceBindings(OverwriteRPWorkspaceBindingsRequest)
+      returns (OverwriteRPWorkspaceBindingsResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/resource-pools/{resource_pool_name}/workspace-bindings",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // List all resource pools bound to a specific workspace
+  rpc ListRPsBoundToWorkspace(ListRPsBoundToWorkspaceRequest)
+      returns (ListRPsBoundToWorkspaceResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/workspaces/{workspace_id}/available-resource-pools"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Workspaces", "Internal" ]
+    };
+  }
+
+  // List all workspaces bound to a specific resource pool
+  rpc ListWorkspacesBoundToRP(ListWorkspacesBoundToRPRequest)
+      returns (ListWorkspacesBoundToRPResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resource-pools/{resource_pool_name}/workspace-bindings"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
     };
   }
 }

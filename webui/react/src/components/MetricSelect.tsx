@@ -1,15 +1,13 @@
-import { Select as AntdSelect } from 'antd';
-import { RefSelectProps, SelectValue } from 'antd/es/select';
+import { RefSelectProps } from 'antd/es/select';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import Select from 'components/kit/Select';
+import Select, { OptGroup, Option, SelectValue } from 'components/kit/Select';
 import { Metric, MetricType } from 'types';
 import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
 
 import BadgeTag from './BadgeTag';
 import MetricBadgeTag from './MetricBadgeTag';
 
-const { OptGroup, Option } = AntdSelect;
 const allOptionId = 'ALL_RESULTS';
 const resetOptionId = 'RESET_RESULTS';
 
@@ -131,13 +129,9 @@ const MetricSelect: React.FC<Props> = ({
   };
 
   const allOption = useMemo(() => {
-    let allOptionLabel;
     const numVisibleOptions = visibleMetrics.length;
-    if (numVisibleOptions === totalNumMetrics) {
-      allOptionLabel = 'All';
-    } else {
-      allOptionLabel = `All ${numVisibleOptions} results`;
-    }
+    const allOptionLabel =
+      numVisibleOptions === totalNumMetrics ? 'All' : `All ${numVisibleOptions} results`;
     return (
       <Option key={allOptionId} value={allOptionId}>
         <BadgeTag label={allOptionLabel} />

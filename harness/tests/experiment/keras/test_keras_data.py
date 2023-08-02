@@ -8,7 +8,7 @@ from tensorflow.keras.utils import Sequence
 import determined as det
 from determined import keras
 from determined.common import check
-from tests.experiment import utils  # noqa: I100
+from tests.experiment import tf_utils  # noqa: I100
 
 
 class IdentitySequence(Sequence):
@@ -49,7 +49,7 @@ def test_arraylike_data_adapter_with_unmatched_batch_size() -> None:
 
 
 def test_adapt_invalid_data_type() -> None:
-    seqs = utils.make_xor_data_sequences()
+    seqs = tf_utils.make_xor_data_sequences()
     test = keras._adapt_data_from_data_loader(seqs[1], batch_size=1)
     with pytest.raises(det.errors.InvalidDataTypeException) as err:
         keras._adapt_data_from_data_loader((None, test), batch_size=1)
@@ -157,14 +157,11 @@ def test_sampler(shuffle: bool, skip: int, rank_size: Tuple[int, int]) -> None:
     assert got_indices == expect_indices[: len(got_indices)]
 
 
-@pytest.mark.parametrize("use_multiprocessing", [False, True])
 @pytest.mark.parametrize("workers", [0, 1, 5])
 @pytest.mark.parametrize("rank_size", [(0, 1), (0, 3), (1, 3), (2, 3)])
 @pytest.mark.parametrize("skip", [0, 50, 350])
 @pytest.mark.parametrize("shuffle", [False, True])
-def test_enqueuer(
-    shuffle: bool, skip: int, rank_size: Tuple[int, int], workers: int, use_multiprocessing: bool
-) -> None:
+def test_enqueuer(shuffle: bool, skip: int, rank_size: Tuple[int, int], workers: int) -> None:
     epoch_len = 100
     rank, size = rank_size
 
@@ -174,7 +171,42 @@ def test_enqueuer(
     with keras._build_enqueuer(
         sequence=IdentitySequence(100),
         workers=workers,
-        use_multiprocessing=use_multiprocessing,
+        use_multiprocessing=False,
+        max_queue_size=10,
+        shard_rank=rank,
+        num_shards=size,
+        repeat=False,
+        shuffle=shuffle,
+        shuffle_seed=777,
+        prior_batches_trained=skip,
+    ) as enqueuer:
+        assert list(enqueuer.data()) == list(sampler.yield_epoch()), "first epoch was wrong"
+        assert list(enqueuer.data()) == list(sampler.yield_epoch()), "second epoch was wrong"
+        assert list(enqueuer.data()) == list(sampler.yield_epoch()), "third epoch was wrong"
+
+
+@pytest.mark.parametrize("workers", [1, 5])
+def test_enqueuer_multiprocessing(workers: int) -> None:
+    """Same enqueuer test as above, but with multiprocessing enabled.
+
+    An arbitrary set of (rank_size, skip, shuffle) parameters from the above test is chosen in
+    order to exercise the keras.enqueuer._MultiprocessingEnqueuer (with two choices for `workers`
+    for extra safety). In this test, multiprocessing is slow on macOS, so we're minimizing the
+    number of times we execute it assuming there's no interaction between the choice of
+    threading/multiprocessing and the examples loaded by the enqueuer.
+    """
+    epoch_len = 100
+    rank, size = (1, 3)
+    skip = 50
+    shuffle = True
+
+    # Ensure that the enqueuer reliably returns what the sampler is returning.
+    sampler = keras._Sampler(epoch_len, rank, size, shuffle, 777, skip)
+
+    with keras._build_enqueuer(
+        sequence=IdentitySequence(100),
+        workers=workers,
+        use_multiprocessing=True,
         max_queue_size=10,
         shard_rank=rank,
         num_shards=size,

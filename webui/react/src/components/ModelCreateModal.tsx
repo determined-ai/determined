@@ -8,14 +8,14 @@ import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Select from 'components/kit/Select';
 import Link from 'components/Link';
+import { ModalCloseReason } from 'hooks/useModal/useModal';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { postModel } from 'services/api';
-import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
-import { DetError, ErrorType } from 'shared/utils/error';
 import workspaceStore from 'stores/workspaces';
 import { Metadata } from 'types';
 import { notification } from 'utils/dialogApi';
+import { DetError, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -114,13 +114,14 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
 
   return (
     <Modal
-      okButtonProps={{
+      size="medium"
+      submit={{
         disabled: isWorkspace && disableWorkspaceModelCreation,
         form: FORM_ID,
-        htmlType: 'submit',
+        handleError,
+        handler: onCreateModel,
+        text: 'Create',
       }}
-      size="medium"
-      submit={{ handler: onCreateModel, text: 'Create' }}
       title="Create a new model"
       onClose={onCloseModal}>
       <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
@@ -153,11 +154,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
         <Form.Item label="Description (optional)" name="modelDescription">
           <Input.TextArea />
         </Form.Item>
-        {!isDetailExpanded && (
-          <Button type="link" onClick={onOpenDetails}>
-            Add More Details...
-          </Button>
-        )}
+        {!isDetailExpanded && <Link onClick={onOpenDetails}>Add More Details...</Link>}
         {isDetailExpanded && (
           <>
             <div>

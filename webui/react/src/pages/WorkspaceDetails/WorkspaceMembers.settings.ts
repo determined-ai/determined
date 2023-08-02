@@ -2,7 +2,7 @@ import { array, boolean, literal, number, string, undefined as undefinedType, un
 
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { SettingsConfig } from 'hooks/useSettings';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 
 export type MembersColumnName = 'name' | 'role' | 'action';
 

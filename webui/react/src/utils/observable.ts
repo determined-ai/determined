@@ -1,7 +1,6 @@
+import _ from 'lodash';
 import { Observable, observable, useObservable, WritableObservable } from 'micro-observables';
 import React from 'react';
-
-import { isEqual } from 'shared/utils/data';
 
 // type comparator<T> = (current: T, previous: T) => boolean;
 
@@ -26,7 +25,7 @@ const useValueMemoizedObservable = <T>(o: Observable<T>): T => {
       forceRender({});
     }
     return o.subscribe((value, prevValue) => {
-      if (!isEqual(value, prevValue)) {
+      if (!_.isEqual(value, prevValue)) {
         forceRender({});
       }
     });

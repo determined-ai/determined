@@ -11,7 +11,7 @@ import pytest
 
 from determined.common import api, yaml
 from determined.common.api import authentication, bindings, certs
-from determined.common.api.bindings import experimentv1State
+from determined.common.api.bindings import experimentv1State, trialv1State
 from tests import api_utils
 from tests import config as conf
 from tests.cluster import utils as cluster_utils
@@ -51,6 +51,58 @@ def create_experiment(
     m = re.search(r"Created experiment (\d+)\n", str(completed_process.stdout))
     assert m is not None
     return int(m.group(1))
+
+
+def maybe_run_autotuning_experiment(
+    config_file: str,
+    model_def_file: str,
+    create_args: Optional[List[str]] = None,
+    search_method_name: str = "_test",
+) -> subprocess.CompletedProcess:
+    command = [
+        "python3",
+        "-m",
+        "determined.pytorch.dsat",
+        search_method_name,
+        config_file,
+        model_def_file,
+    ]
+
+    if create_args is not None:
+        command += create_args
+
+    env = os.environ.copy()
+    env["DET_DEBUG"] = "true"
+    env["DET_MASTER"] = conf.make_master_url()
+
+    return subprocess.run(
+        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+    )
+
+
+def run_autotuning_experiment(
+    config_file: str,
+    model_def_file: str,
+    create_args: Optional[List[str]] = None,
+    search_method_name: str = "_test",
+) -> int:
+    completed_process = maybe_run_autotuning_experiment(
+        config_file, model_def_file, create_args, search_method_name
+    )
+    assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
+        completed_process.stdout, completed_process.stderr
+    )
+    m = re.search(r"Created experiment (\d+)\n", str(completed_process.stdout))
+    assert m is not None
+    return int(m.group(1))
+
+
+def archive_experiments(experiment_ids: List[int], name: Optional[str] = None) -> None:
+    body = bindings.v1ArchiveExperimentsRequest(experimentIds=experiment_ids)
+    if name is not None:
+        filters = bindings.v1BulkExperimentFilters(name=name)
+        body = bindings.v1ArchiveExperimentsRequest(experimentIds=[], filters=filters)
+    bindings.post_ArchiveExperiments(api_utils.determined_test_session(), body=body)
 
 
 def pause_experiment(experiment_id: int) -> None:
@@ -110,7 +162,7 @@ def kill_experiments(experiment_ids: List[int], name: Optional[str] = None) -> N
 
 def kill_trial(trial_id: int) -> None:
     bindings.post_KillTrial(api_utils.determined_test_session(), id=trial_id)
-    wait_for_trial_state(trial_id, experimentv1State.CANCELED)
+    wait_for_trial_state(trial_id, trialv1State.CANCELED)
 
 
 def wait_for_experiment_by_name_is_active(
@@ -148,7 +200,7 @@ def wait_for_experiment_by_name_is_active(
             time.sleep(0.25)
             continue
 
-        if is_terminal_state(experiment.state):
+        if is_terminal_experiment_state(experiment.state):
             report_failed_experiment(experiment_id)
 
             pytest.fail(
@@ -184,10 +236,11 @@ def wait_for_experiment_state(
     target_state: experimentv1State,
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
     log_every: int = 60,
+    credentials: Optional[authentication.Credentials] = None,
 ) -> None:
     for seconds_waited in range(max_wait_secs):
         try:
-            state = experiment_state(experiment_id)
+            state = experiment_state(experiment_id, credentials)
         except api.errors.NotFoundException:
             logging.warning(
                 "Experiment not yet available to check state: "
@@ -199,7 +252,7 @@ def wait_for_experiment_state(
         if state == target_state:
             return
 
-        if is_terminal_state(state):
+        if is_terminal_experiment_state(state):
             if state != target_state:
                 report_failed_experiment(experiment_id)
 
@@ -229,7 +282,7 @@ def wait_for_experiment_state(
 
 def wait_for_trial_state(
     trial_id: int,
-    target_state: experimentv1State,
+    target_state: trialv1State,
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
     log_every: int = 60,
 ) -> None:
@@ -263,7 +316,7 @@ def wait_for_trial_state(
 
     else:
         state = trial_state(trial_id)
-        if target_state == experimentv1State.COMPLETED:
+        if target_state == trialv1State.COMPLETED:
             kill_trial(trial_id)
         report_failed_trial(trial_id, target_state=target_state, state=state)
         pytest.fail(
@@ -360,12 +413,16 @@ def experiment_config_json(experiment_id: int) -> Dict[str, Any]:
     return r.experiment.config
 
 
-def experiment_state(experiment_id: int) -> experimentv1State:
-    r = bindings.get_GetExperiment(api_utils.determined_test_session(), experimentId=experiment_id)
+def experiment_state(
+    experiment_id: int, credentials: Optional[authentication.Credentials] = None
+) -> experimentv1State:
+    r = bindings.get_GetExperiment(
+        api_utils.determined_test_session(credentials), experimentId=experiment_id
+    )
     return r.experiment.state
 
 
-def trial_state(trial_id: int) -> experimentv1State:
+def trial_state(trial_id: int) -> trialv1State:
     r = bindings.get_GetTrial(api_utils.determined_test_session(), trialId=trial_id)
     return r.trial.state
 
@@ -398,7 +455,7 @@ def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
         assert len(trials) == 1, len(trials)
 
         trial = trials[0].trial
-        assert trial.state == experimentv1State.CANCELED
+        assert trial.state == trialv1State.CANCELED
 
 
 def kill_single(experiment_id: int, should_have_trial: bool = False) -> None:
@@ -409,10 +466,10 @@ def kill_single(experiment_id: int, should_have_trial: bool = False) -> None:
         assert len(trials) == 1, len(trials)
 
         trial = trials[0].trial
-        assert trial.state == experimentv1State.CANCELED
+        assert trial.state == trialv1State.CANCELED
 
 
-def is_terminal_state(state: experimentv1State) -> bool:
+def is_terminal_experiment_state(state: experimentv1State) -> bool:
     return state in (
         experimentv1State.CANCELED,
         experimentv1State.COMPLETED,
@@ -420,12 +477,12 @@ def is_terminal_state(state: experimentv1State) -> bool:
     )
 
 
-def trial_metrics(trial_id: int) -> Dict[str, Any]:
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
-    r = api.get(conf.make_master_url(), "trials/{}/metrics".format(trial_id))
-    json = r.json()  # type: Dict[str, Any]
-    return json
+def is_terminal_state(state: trialv1State) -> bool:
+    return state in (
+        trialv1State.CANCELED,
+        trialv1State.COMPLETED,
+        trialv1State.ERROR,
+    )
 
 
 def num_trials(experiment_id: int) -> int:
@@ -434,22 +491,23 @@ def num_trials(experiment_id: int) -> int:
 
 def num_active_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state == experimentv1State.RUNNING else 0
+        1
+        if t.trial.state in [trialv1State.RUNNING, trialv1State.STARTING, trialv1State.PULLING]
+        else 0
         for t in experiment_trials(experiment_id)
     )
 
 
 def num_completed_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state == experimentv1State.COMPLETED else 0
+        1 if t.trial.state == trialv1State.COMPLETED else 0
         for t in experiment_trials(experiment_id)
     )
 
 
 def num_error_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state == experimentv1State.ERROR else 0
-        for t in experiment_trials(experiment_id)
+        1 if t.trial.state == trialv1State.ERROR else 0 for t in experiment_trials(experiment_id)
     )
 
 
@@ -519,28 +577,6 @@ def assert_patterns_in_trial_logs(trial_id: int, patterns: List[str]) -> None:
     raise ValueError(
         f'the following patterns:\n  "{text}"\nwere not found in the trial logs:\n\n{"".join(logs)}'
     )
-
-
-def assert_equivalent_trials(A: int, B: int, validation_metrics: List[str]) -> None:
-    full_trial_metrics1 = trial_metrics(A)
-    full_trial_metrics2 = trial_metrics(B)
-
-    assert len(full_trial_metrics1["workloads"]) == len(full_trial_metrics2["workloads"])
-    for step1, step2 in zip(full_trial_metrics1["workloads"], full_trial_metrics2["workloads"]):
-        metric1 = step1["metrics"]["batch_metrics"]
-        metric2 = step2["metrics"]["batch_metrics"]
-        for batch1, batch2 in zip(metric1, metric2):
-            assert len(batch1) == len(batch2) == 2
-            assert batch1["loss"] == pytest.approx(batch2["loss"])
-
-        if step1["validation"] is not None or step2["validation"] is not None:
-            assert step1["validation"] is not None
-            assert step2["validation"] is not None
-
-            for metric in validation_metrics:
-                val1 = step1.get("validation").get("metrics").get("validation_metrics").get(metric)
-                val2 = step2.get("validation").get("metrics").get("validation_metrics").get(metric)
-                assert val1 == pytest.approx(val2)
 
 
 def assert_performed_initial_validation(exp_id: int) -> None:
@@ -658,19 +694,15 @@ def run_list_cli_tests(experiment_id: int) -> None:
 
 def report_failed_experiment(experiment_id: int) -> None:
     trials = experiment_trials(experiment_id)
-    active = sum(1 for t in trials if t.trial.state == experimentv1State.RUNNING)
-    paused = sum(1 for t in trials if t.trial.state == experimentv1State.PAUSED)
-    stopping_completed = sum(
-        1 for t in trials if t.trial.state == experimentv1State.STOPPING_COMPLETED
-    )
-    stopping_canceled = sum(
-        1 for t in trials if t.trial.state == experimentv1State.STOPPING_CANCELED
-    )
-    stopping_error = sum(1 for t in trials if t.trial.state == experimentv1State.STOPPING_ERROR)
-    completed = sum(1 for t in trials if t.trial.state == experimentv1State.COMPLETED)
-    canceled = sum(1 for t in trials if t.trial.state == experimentv1State.CANCELED)
-    errored = sum(1 for t in trials if t.trial.state == experimentv1State.ERROR)
-    stopping_killed = sum(1 for t in trials if t.trial.state == experimentv1State.STOPPING_KILLED)
+    active = sum(1 for t in trials if t.trial.state == trialv1State.RUNNING)
+    paused = sum(1 for t in trials if t.trial.state == trialv1State.PAUSED)
+    stopping_completed = sum(1 for t in trials if t.trial.state == trialv1State.STOPPING_COMPLETED)
+    stopping_canceled = sum(1 for t in trials if t.trial.state == trialv1State.STOPPING_CANCELED)
+    stopping_error = sum(1 for t in trials if t.trial.state == trialv1State.STOPPING_ERROR)
+    completed = sum(1 for t in trials if t.trial.state == trialv1State.COMPLETED)
+    canceled = sum(1 for t in trials if t.trial.state == trialv1State.CANCELED)
+    errored = sum(1 for t in trials if t.trial.state == trialv1State.ERROR)
+    stopping_killed = sum(1 for t in trials if t.trial.state == trialv1State.STOPPING_KILLED)
 
     print(
         f"Experiment {experiment_id}: {len(trials)} trials, {completed} completed, "
@@ -684,9 +716,7 @@ def report_failed_experiment(experiment_id: int) -> None:
         print_trial_logs(trial.trial.id)
 
 
-def report_failed_trial(
-    trial_id: int, target_state: experimentv1State, state: experimentv1State
-) -> None:
+def report_failed_trial(trial_id: int, target_state: trialv1State, state: trialv1State) -> None:
     print(f"Trial {trial_id} was not {target_state.value} but {state.value}", file=sys.stderr)
     print_trial_logs(trial_id)
 
@@ -722,6 +752,65 @@ def run_basic_test(
         experiment_id, expected_trials, expect_workloads, expect_checkpoints
     )
     return experiment_id
+
+
+def run_basic_autotuning_test(
+    config_file: str,
+    model_def_file: str,
+    expected_trials: Optional[int],
+    create_args: Optional[List[str]] = None,
+    max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
+    expect_workloads: bool = True,
+    expect_checkpoints: bool = True,
+    priority: int = -1,
+    expect_client_failed: bool = False,
+    search_method_name: str = "_test",
+) -> int:
+    assert os.path.isdir(model_def_file)
+    orchestrator_exp_id = run_autotuning_experiment(
+        config_file, model_def_file, create_args, search_method_name
+    )
+    if priority != -1:
+        set_priority(experiment_id=orchestrator_exp_id, priority=priority)
+
+    # Wait for the Autotuning Single Searcher ("Orchestrator") to finish
+    wait_for_experiment_state(
+        orchestrator_exp_id,
+        experimentv1State.COMPLETED,
+        max_wait_secs=max_wait_secs,
+    )
+    assert num_active_trials(orchestrator_exp_id) == 0
+    verify_completed_experiment_metadata(
+        orchestrator_exp_id, expected_trials, expect_workloads, expect_checkpoints
+    )
+    client_exp_id = fetch_autotuning_client_experiment(orchestrator_exp_id)
+
+    # Wait for the Autotuning Custom Searcher Experiment ("Client Experiment") to finish
+    wait_for_experiment_state(
+        client_exp_id,
+        experimentv1State.COMPLETED if not expect_client_failed else experimentv1State.ERROR,
+        max_wait_secs=max_wait_secs,
+    )
+    assert num_active_trials(orchestrator_exp_id) == 0
+    verify_completed_experiment_metadata(
+        orchestrator_exp_id, expected_trials, expect_workloads, expect_checkpoints
+    )
+    return client_exp_id
+
+
+def fetch_autotuning_client_experiment(exp_id: int) -> int:
+    command = ["det", "-m", conf.make_master_url(), "experiment", "logs", str(exp_id)]
+    env = os.environ.copy()
+    env["DET_DEBUG"] = "true"
+    completed_process = subprocess.run(
+        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+    )
+    assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
+        completed_process.stdout, completed_process.stderr
+    )
+    m = re.search(r"Created experiment (\d+)\n", str(completed_process.stdout))
+    assert m is not None
+    return int(m.group(1))
 
 
 def set_priority(experiment_id: int, priority: int) -> None:
@@ -763,10 +852,10 @@ def verify_completed_experiment_metadata(
 
     for t in trials:
         trial = t.trial
-        if trial.state != experimentv1State.COMPLETED:
+        if trial.state != trialv1State.COMPLETED:
             report_failed_trial(
                 trial.id,
-                target_state=experimentv1State.COMPLETED,
+                target_state=trialv1State.COMPLETED,
                 state=trial.state,
             )
             pytest.fail(f"Trial {trial.id} was not STATE_COMPLETED but {trial.state.value}")
@@ -840,7 +929,7 @@ def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[
     trials = experiment_trials(experiment_id)
     for t in trials:
         trial = t.trial
-        if trial.state != experimentv1State.ERROR:
+        if trial.state != trialv1State.ERROR:
             continue
 
         logs = trial_logs(trial.id)

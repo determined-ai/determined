@@ -20,16 +20,26 @@ If `make live` fails or is killed, the browser window will crash itself so that
 you don't continue making edits and wonder why your edits aren't appearing in
 your browser.
 
+## Using `rename.py`
+
+We care a lot about keeping our organic search links, so we are meticulous
+about maintaining links from old document paths to updated document paths.
+
+This is highly tedious when renaming e.g. a directory and configuring dozens of
+resulting redirects.  This is what `rename.py` automates.
+
 ## Algolia Search
 
 [Aloglia](https://www.algolia.com) search is a search-as-a-service provider.
-They index our site via their [crawler](https://crawler.algolia.com/admin),
-then we include their search bar component into our website, so that searches
-in the search bar obtain results based on Algolia's hosted search index for our
-site.
-
 We configure and inject the Algolia search bar into each page via
 [this JavaScript](assets/scripts/docsearch.sbt.js).
+
+### Uploading Records to Algolia
+
+We use a custom Python script to scrape an XML representation of our documentation.
+The script reads the version of the documentation and scrapes the documentation content.
+This allows us to customize the indexing logic, data extraction, and transformations.
+We manage execution of the script through our CI/CD pipeline.
 
 ### Relative Search Results
 
@@ -72,27 +82,27 @@ default Sphinx search. See the JavaScript for implementation.
 
 ### Dev Builds
 
-Because Algolia indexes after docs are published to docs.determined.ai,
-development builds of docs cannot rely on a versioned Algolia index. Instead,
-dev builds search the `latest` Algolia index, which is based on the most recent
-_published_ version of Determined.
+Determined keeps one dev index, based on the tip-of-main, which all dev builds
+of the docs will search against.
 
-That means dev builds of docs will never return quite the right results. Builds
-of unreleased docs will have out-of-date search results, while builds of old
-docs will have search results from the future. Even so, because the Sphinx
-search results are so bad, this is a tradeoff we are willing to accept.
+This means that the Algolia search bar in the dev docs is most accurate for
+building `main`, and less accurate as you build older versions.
 
 ### Canonical URLs
 
-Our site configures canonical links to point to `/latest` all the time. This
-is necessary for optimizing SEO, and is a common practice on other docs sites
-(python standard library docs, for instance). As a result, the Algolia crawler
-must be configured with `ignoreCanonicalTo: true` before it will index anything
-other than `/latest`.
+Our site configures canonical links to point to `/latest` all the time. This is
+necessary for optimizing SEO, and is a common practice on other docs sites
+(Python standard library documentation, for instance). As a result, the Algolia
+crawler must be configured with `ignoreCanonicalTo: true` before it will index
+anything other than `/latest`.
+
+## Version Switcher
+
+To provide a docs version dropdown for users to select the version of docs they want to use, we configured the bumpversion tool to read/update the version information stored in the `versions.json` file located at `docs/_static/version-switcher/‘ within the project directory.
 
 ## Theming
 
-Our sphinx theme is a customized version of the `sphinx-book-theme`.
+Our Sphinx theme is a customized version of the `sphinx-book-theme`.
 
 ### Resources
 
@@ -108,10 +118,10 @@ Our sphinx theme is a customized version of the `sphinx-book-theme`.
   - `html_sidebars` defines which template files should populate the sidebar on the left. `navbar-logo.html` and `sbt-sidebar-nav.html` come from `sphinx-book-theme` code. Additional template files (such as `sidebar-version.html` and `search-field.html`) are our custom additions, which live in the `_templates` folder.
   - `html_theme_options`: these are theme-specific options for configuring the logo, buttons, etc.
 - Templates in `_templates` folder
-  - `page.html` extends the default `page.html` that all sphinx sites have. You can overwrite a block using jinja syntax (`{% block block_name %}` `{% endblock %}`). The blocks available to overwrite can be seen in the Sphinx source ([sphinx/sphinx/themes/basic/layout.html](https://github.com/sphinx-doc/sphinx/blob/master/sphinx/themes/basic/layout.html), which `page.html` extends).
+  - `page.html` extends the default `page.html` that all Sphinx sites have. You can overwrite a block using jinja syntax (`{% block block_name %}` `{% endblock %}`). The blocks available to overwrite can be seen in the Sphinx source ([sphinx/sphinx/themes/basic/layout.html](https://github.com/sphinx-doc/sphinx/blob/master/sphinx/themes/basic/layout.html), which `page.html` extends).
     - `analytics.html` in the `_templates` folder is included in the page via the `extrahead` block.
   - `search-field.html` and `sidebar-version.html` are our custom templates added to the sidebar, included in the page by listing them in `conf.py`'s `html_sidebars`.
   - `article-header-buttons.html` and `toggle-primary-sidebar.html` are overwriting template files specific to `sphinx-book-theme`. We customized these by copying the default content that exists in these parts of the page and then adding our own elements (not using block tags to extend).
     - The links in the header can be customized by editing the `header-links-right` element in `article-header-buttons.html` and the `header-links-left` element in `toggle-primary-sidebar.html`
 - Styles in `assets/styles/determined.css`
-  - `sphinx-book-theme` uses the same css variable names as PyData Theme. Partial list of available variables [here](https://pydata-sphinx-theme.readthedocs.io/en/latest/user_guide/styling.html).
+  - `sphinx-book-theme` uses the same CSS variable names as PyData Theme. Partial list of available variables [here](https://pydata-sphinx-theme.readthedocs.io/en/latest/user_guide/styling.html).

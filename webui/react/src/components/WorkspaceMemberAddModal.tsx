@@ -2,15 +2,15 @@ import { Select } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Form from 'components/kit/Form';
+import Icon from 'components/kit/Icon';
 import { Modal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Role } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
-import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup } from 'types';
 import { message } from 'utils/dialogApi';
+import { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
@@ -88,7 +88,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
         form.resetFields();
         setSelectedOption(undefined);
         onClose?.();
-        message.success(`${getName(selectedOption)} added to workspace,`);
+        message.success(`${getName(selectedOption)} added to workspace.`);
       }
     } catch (e) {
       if (e instanceof DetError) {
@@ -116,6 +116,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
       cancel
       size="small"
       submit={{
+        handleError,
         handler: handleSubmit,
         text: 'Add Member',
       }}
@@ -131,7 +132,11 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
               label: isUser(option) ? (
                 <UserBadge compact user={option as User} />
               ) : (
-                <Nameplate compact icon={<Icon name="group" />} name={getName(option)} />
+                <Nameplate
+                  compact
+                  icon={<Icon name="group" title="Group" />}
+                  name={getName(option)}
+                />
               ),
               value: (isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option),
             }))}

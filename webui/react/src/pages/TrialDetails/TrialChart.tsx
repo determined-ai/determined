@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
-import Empty from 'components/kit/Empty';
 import MetricSelect from 'components/MetricSelect';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ScaleSelect from 'components/ScaleSelect';
@@ -9,12 +8,13 @@ import Section from 'components/Section';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
+import usePolling from 'hooks/usePolling';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { timeSeries } from 'services/api';
-import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import { glasbeyColor } from 'shared/utils/color';
 import { Metric, MetricContainer, Scale } from 'types';
+import { glasbeyColor } from 'utils/color';
+import handleError, { ErrorType } from 'utils/error';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 interface Props {
   defaultMetricNames: Metric[];
@@ -41,20 +41,28 @@ const TrialChart: React.FC<Props> = ({
   trialTerminated,
 }: Props) => {
   const [scale, setScale] = useState<Scale>(Scale.Linear);
-  const [trialSumm, setTrialSummary] = useState<MetricContainer[]>([]);
+  const [trialSummary, setTrialSummary] = useState<Loadable<MetricContainer[]>>(NotLoaded);
 
   const fetchTrialSummary = useCallback(async () => {
     if (trialId) {
-      const summ = await timeSeries({
-        maxDatapoints: screen.width > 1600 ? 1500 : 1000,
-        metricNames: metricNames,
-        scale: scale,
-        startBatches: 0,
-        trialIds: [trialId],
-      });
-      setTrialSummary(summ[0].metrics);
+      try {
+        const summary = await timeSeries({
+          maxDatapoints: screen.width > 1600 ? 1500 : 1000,
+          metricNames: metricNames,
+          startBatches: 0,
+          trialIds: [trialId],
+        });
+        setTrialSummary(Loaded(summary[0].metrics));
+      } catch (e) {
+        handleError(e, {
+          publicMessage: `Failed to load trial summary for trial ${trialId}.`,
+          publicSubject: 'Trial summary fail to load.',
+          type: ErrorType.Api,
+        });
+        setTrialSummary(Loaded([]));
+      }
     }
-  }, [metricNames, scale, trialId]);
+  }, [metricNames, trialId]);
 
   const { stopPolling } = usePolling(fetchTrialSummary, { interval: 2000, rerunOnNewFn: true });
 
@@ -75,18 +83,21 @@ const TrialChart: React.FC<Props> = ({
     metrics.forEach((metric, index) => {
       yValues[index] = {};
 
-      const mWrapper = trialSumm.find(
-        (mContainer) => mContainer.name === metric.name && mContainer.type === metric.type,
-      );
+      const summary = Loadable.getOrElse([], trialSummary);
+      const mWrapper = summary.find((mContainer) => mContainer.type === metric.type);
       if (!mWrapper?.data) {
         return;
       }
 
-      mWrapper.data.forEach((pt) => {
-        if (!xValues.includes(pt.batches)) {
-          xValues.push(pt.batches);
+      mWrapper.data.forEach((avgMetrics) => {
+        if (avgMetrics.values[metric.name] || avgMetrics.values[metric.name] === 0) {
+          if (!xValues.includes(avgMetrics.batches)) {
+            xValues.push(avgMetrics.batches);
+          }
+          yValues[index][avgMetrics.batches] = Number.isFinite(avgMetrics.values[metric.name])
+            ? avgMetrics.values[metric.name]
+            : null;
         }
-        yValues[index][pt.batches] = Number.isFinite(pt.value) ? pt.value : null;
       });
     });
 
@@ -97,7 +108,7 @@ const TrialChart: React.FC<Props> = ({
     });
 
     return [xValues, ...yValuesArray];
-  }, [metrics, trialSumm]);
+  }, [metrics, trialSummary]);
 
   const chartOptions: Options = useMemo(() => {
     return {
@@ -108,7 +119,10 @@ const TrialChart: React.FC<Props> = ({
       height: 400,
       key: trialId,
       legend: { show: false },
-      plugins: [tooltipsPlugin(), trackAxis()],
+      plugins: [
+        tooltipsPlugin({ closeOnMouseExit: true, isShownEmptyVal: true, seriesColors: [] }),
+        trackAxis(),
+      ],
       scales: { x: { time: false }, y: { distr: scale === Scale.Log ? 3 : 1 } },
       series: [
         { label: 'Batch' },
@@ -138,15 +152,11 @@ const TrialChart: React.FC<Props> = ({
   return (
     <Section bodyBorder options={options} title="Metrics">
       <div className={css.base}>
-        {
-          <Spinner className={css.spinner} conditionalRender spinning={!trialId}>
-            {chartData[0].length === 0 ? (
-              <Empty description="No data to plot." icon="error" />
-            ) : (
-              <UPlotChart data={chartData} options={chartOptions} />
-            )}
-          </Spinner>
-        }
+        <UPlotChart
+          data={chartData}
+          isLoading={!trialId || Loadable.isLoading(trialSummary)}
+          options={chartOptions}
+        />
       </div>
     </Section>
   );

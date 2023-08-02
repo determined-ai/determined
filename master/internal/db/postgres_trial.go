@@ -3,13 +3,17 @@ package db
 import (
 	"context"
 	"fmt"
+	"math"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -155,128 +159,365 @@ WHERE id = $1`, id, restartCount); err != nil {
 	return nil
 }
 
+// fullTrialSummaryMetricsRecompute recomputes all summary metrics for a given trial.
+func (db *PgDB) fullTrialSummaryMetricsRecompute(
+	ctx context.Context, tx *sqlx.Tx, trialID int,
+) error {
+	// TODO(DET-9566): we can probably limit this to recompute only a single metric type and it would
+	// fit the current usage better.
+	updatedSummaryMetrics := model.JSONObj{}
+	metricGroups := []model.MetricGroup{}
+	if err := tx.SelectContext(ctx, &metricGroups, `
+SELECT DISTINCT metric_group FROM metrics WHERE partition_type = 'GENERIC' AND trial_id = $1
+	`,
+		trialID); err != nil {
+		return err
+	}
+	metricGroups = append(metricGroups, model.TrainingMetricGroup)
+	metricGroups = append(metricGroups, model.ValidationMetricGroup)
+
+	for _, metricGroup := range metricGroups {
+		summary, err := db.calculateFullTrialSummaryMetrics(
+			ctx, tx, trialID, metricGroup)
+		if err != nil {
+			return fmt.Errorf("rollback computing %s summary metrics: %w", metricGroup, err)
+		}
+		if len(summary) > 0 {
+			key := model.TrialSummaryMetricsJSONPath(metricGroup)
+			updatedSummaryMetrics[key] = summary
+		}
+	}
+
+	if _, err := tx.ExecContext(ctx, `UPDATE trials SET summary_metrics = $1,
+	summary_metrics_timestamp = NOW() WHERE id = $2`, updatedSummaryMetrics, trialID); err != nil {
+		return fmt.Errorf("rollback updating trial summary metrics: %w", err)
+	}
+	return nil
+}
+
+func (db *PgDB) calculateFullTrialSummaryMetrics(
+	ctx context.Context, tx *sqlx.Tx, trialID int, metricGroup model.MetricGroup,
+) (model.JSONObj, error) {
+	partition := customMetricGroupToPartitionType(metricGroup)
+	jsonPath := model.TrialMetricsJSONPath(partition == ValidationMetric)
+	//nolint: execinquery
+	rows, err := tx.QueryContext(ctx, db.queries.getOrLoad("calculate-full-trial-summary-metrics"),
+		trialID, jsonPath, partition, metricGroup)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getting full compute trial %d summary metrics", trialID)
+	}
+
+	metrics := model.JSONObj{}
+	defer rows.Close()
+	for rows.Next() {
+		var metric model.JSONObj
+		var name string
+		if err = rows.Scan(&name, &metric); err != nil {
+			return nil, fmt.Errorf("scanning summary metric row: %w", err)
+		}
+		metrics[name] = metric
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows err summary metric full compute: %w", err)
+	}
+
+	return metrics, nil
+}
+
+// updateLatestValidationID updates latest validation based on validations table.
+func (db *PgDB) updateLatestValidationID(ctx context.Context, tx *sqlx.Tx, trialID int) error {
+	if _, err := tx.ExecContext(ctx, `
+		UPDATE trials SET latest_validation_id = (
+			SELECT validations.id
+			FROM validations
+			JOIN trials t ON validations.trial_id = t.id
+			JOIN experiments e on t.experiment_id = e.id
+			WHERE trial_id = $1 AND (
+				validations.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric')
+			) IS NOT NULL
+			ORDER BY validations.end_time DESC
+			LIMIT 1
+		) WHERE id = $1`, trialID); err != nil {
+		return fmt.Errorf("updating latest validation id for trial %d: %w", trialID, err)
+	}
+	return nil
+}
+
 // updateTotalBatches update precomputed total_batches based on existing steps and validations.
 func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int) error {
 	if _, err := tx.ExecContext(ctx, `
-		UPDATE trials SET total_batches = sub.new_max_total_batches_processed
+		UPDATE trials t
+		SET total_batches = COALESCE(latest.total_batches_processed, 0)
 		FROM (
-			SELECT max(q.total_batches) AS new_max_total_batches_processed
-			FROM (
-			SELECT coalesce(max(s.total_batches), 0) AS total_batches
-			FROM steps s
-			WHERE s.trial_id = $1
-			UNION ALL
-			SELECT coalesce(max(v.total_batches), 0) AS total_batches
-			FROM validations v
-			WHERE v.trial_id = $1
-		) q
-		) AS sub;
+				SELECT max(m.total_batches) AS total_batches_processed
+				FROM metrics m
+				WHERE m.trial_id = $1 AND m.archived = false
+			) AS latest
+		WHERE t.id = $1
 		`, trialID); err != nil {
 		return errors.Wrap(err, "error computing total_batches")
 	}
 	return nil
 }
 
-// AddTrialMetrics inserts a set of trial metrics to the database.
-func (db *PgDB) addTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, isValidation bool,
-) (err error) {
-	trialMetricTables := []string{"raw_steps", "raw_validations"}
-	targetTable := "raw_steps"
-	metricsBody := map[string]interface{}{
-		"avg_metrics":   m.Metrics.AvgMetrics,
-		"batch_metrics": m.Metrics.BatchMetrics,
+func (db *PgDB) _addTrialMetricsTx(
+	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mGroup model.MetricGroup,
+) (rollbacks int, err error) {
+	isValidation := mGroup == model.ValidationMetricGroup
+	mBody := newMetricsBody(m.Metrics.AvgMetrics, m.Metrics.BatchMetrics, isValidation)
+
+	if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
+		return rollbacks, err
 	}
-	if isValidation {
-		targetTable = "raw_validations"
-		metricsBody = map[string]interface{}{
-			"validation_metrics": m.Metrics.AvgMetrics,
-		}
+
+	if rollbacks, err = rollbackMetrics(ctx, tx, m.TrialRunId, m.TrialId, m.StepsCompleted,
+		mGroup); err != nil {
+		return rollbacks, err
 	}
-	return db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
-		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
-			return err
+	var summaryMetrics model.JSONObj
+	err = tx.QueryRowContext(ctx, `
+		SELECT summary_metrics FROM trials WHERE id = $1 FOR UPDATE;
+	`, m.TrialId).Scan(&summaryMetrics)
+	if err != nil {
+		return rollbacks, fmt.Errorf("error getting summary metrics from trials: %w", err)
+	}
+
+	metricRowID, addedMetrics, err := db.addMetricsWithMerge(ctx, tx,
+		mBody, m.TrialRunId, m.TrialId, m.StepsCompleted, mGroup)
+	if err != nil {
+		return rollbacks, err
+	}
+
+	switch {
+	case rollbacks != 0:
+		if err := db.updateTotalBatches(ctx, tx, int(m.TrialId)); err != nil {
+			return rollbacks, errors.Wrap(err, "rollback")
 		}
 
-		rollbackHappened := false
-		for _, table := range trialMetricTables {
-			comparator := ">"
-			if table == targetTable {
-				// we mark metrics reported in the same table with the same batch number
-				// as the metric being added as `archived`.
-				comparator = ">="
-			}
-			res, err := tx.ExecContext(ctx, fmt.Sprintf(`
-UPDATE %s SET archived = true
-WHERE trial_id = $1
-  AND trial_run_id < $2
-  AND total_batches %s $3;
-	`, table, comparator), m.TrialId, m.TrialRunId, m.StepsCompleted)
-			if err != nil {
-				return errors.Wrap(err, "archiving metrics")
-			}
-			affectedRows, err := res.RowsAffected()
-			if err != nil {
-				return errors.Wrap(err, "checking for metric rollbacks")
-			}
-			if affectedRows > 0 {
-				rollbackHappened = true
-			}
+		if err := db.updateLatestValidationID(ctx, tx, int(m.TrialId)); err != nil {
+			return rollbacks, fmt.Errorf(
+				"rollback updating latest validation ID for trial %d: %w", m.TrialId, err)
 		}
 
-		if _, err := tx.NamedExecContext(ctx, fmt.Sprintf(`
-INSERT INTO %s
-	(trial_id, trial_run_id, end_time, metrics, total_batches)
-VALUES
-	(:trial_id, :trial_run_id, now(), :metrics, :total_batches)
-`, targetTable), model.TrialMetrics{
-			TrialID:      int(m.TrialId),
-			TrialRunID:   int(m.TrialRunId),
-			Metrics:      metricsBody,
-			TotalBatches: int(m.StepsCompleted),
-		}); err != nil {
-			return errors.Wrap(err, fmt.Sprintf("inserting metrics into %s", targetTable))
+		if err := db.fullTrialSummaryMetricsRecompute(ctx, tx, int(m.TrialId)); err != nil {
+			return rollbacks, errors.Wrap(err, "error on rollback compute of summary metrics")
 		}
-
-		if rollbackHappened {
-			if err := db.updateTotalBatches(ctx, tx, int(m.TrialId)); err != nil {
-				return errors.Wrap(err, "rollback")
-			}
-		} else {
-			if _, err := tx.ExecContext(ctx, `
-UPDATE trials SET total_batches = GREATEST(total_batches, $2)
-WHERE id = $1;
-`, m.TrialId, m.StepsCompleted); err != nil {
-				return errors.Wrap(err, "updating trial total batches")
-			}
+	default: // no rollbacks happened.
+		summaryMetricsJSONPath := model.TrialSummaryMetricsJSONPath(mGroup)
+		if _, ok := summaryMetrics[summaryMetricsJSONPath]; !ok {
+			summaryMetrics[summaryMetricsJSONPath] = map[string]any{}
 		}
+		summaryMetrics[summaryMetricsJSONPath] = calculateNewSummaryMetrics(
+			summaryMetrics[summaryMetricsJSONPath].(map[string]any),
+			addedMetrics.AvgMetrics,
+		)
 
+		var latestValidationID *int
 		if isValidation {
-			if err := setTrialBestValidation(
-				tx, int(m.TrialId),
-				int(m.TrialRunId),
-				int(m.StepsCompleted)); err != nil {
-				return errors.Wrap(err, "updating trial best validation")
+			var searcherMetric *string
+			if err := tx.QueryRowContext(ctx, `
+		SELECT experiments.config->'searcher'->>'metric' AS metric_name
+		FROM experiments
+		JOIN trials t ON t.experiment_id = experiments.id
+		WHERE t.id = $1`, int(m.TrialId)).Scan(&searcherMetric); err != nil {
+				return rollbacks, fmt.Errorf("getting trial's searcher metric: %w", err)
+			}
+			if searcherMetric != nil &&
+				m.Metrics.AvgMetrics.Fields[*searcherMetric].AsInterface() != nil {
+				latestValidationID = &metricRowID
 			}
 		}
-		return nil
-	})
+
+		if _, err := tx.ExecContext(ctx, `
+UPDATE trials SET total_batches = GREATEST(total_batches, $2),
+summary_metrics = $3, summary_metrics_timestamp = NOW(),
+latest_validation_id = coalesce($4, latest_validation_id)
+WHERE id = $1;
+`, m.TrialId, m.StepsCompleted, summaryMetrics, latestValidationID); err != nil {
+			return rollbacks, errors.Wrap(err, "updating trial total batches")
+		}
+	}
+
+	if isValidation {
+		if err := setTrialBestValidation(
+			tx, int(m.TrialId),
+			int(m.TrialRunId),
+			int(m.StepsCompleted)); err != nil {
+			return rollbacks, errors.Wrap(err, "updating trial best validation")
+		}
+	}
+	return rollbacks, nil
 }
 
-// AddTrainingMetrics adds a completed step to the database with the given training metrics.
-// If these training metrics occur before any others, a rollback is assumed and later
-// training and validation metrics are cleaned up.
-func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
-	return db.addTrialMetrics(ctx, m, false)
+// addTrialMetrics inserts a set of trial metrics to the database.
+func (db *PgDB) addTrialMetrics(
+	ctx context.Context, m *trialv1.TrialMetrics, mGroup model.MetricGroup,
+) (rollbacks int, err error) {
+	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
+	case float64, nil:
+	default:
+		return 0, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
+	}
+	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", mGroup),
+		func(tx *sqlx.Tx) error {
+			rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, mGroup)
+			return err
+		})
 }
 
-// AddValidationMetrics adds a completed validation to the database with the given
-// validation metrics. If these validation metrics occur before any others, a rollback
-// is assumed and later metrics are cleaned up from the database.
-func (db *PgDB) AddValidationMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics,
-) error {
-	return db.addTrialMetrics(ctx, m, true)
+const (
+	// InfPostgresString how we store infinity in JSONB in postgres.
+	InfPostgresString = "Infinity"
+	// NegInfPostgresString how we store -infinity in JSONB in postgres.
+	NegInfPostgresString = "-Infinity"
+	// NaNPostgresString how we store NaN in JSONB in postgres.
+	NaNPostgresString = "NaN"
+
+	// MetricTypeString is the summary metric type for string or mixed types.
+	MetricTypeString = "string"
+	// MetricTypeNumber is the summary metric type for floats or ints.
+	MetricTypeNumber = "number"
+	// MetricTypeBool is the summary metric type for boolean.
+	MetricTypeBool = "boolean"
+	// MetricTypeDate is the summary metric type for date metrics.
+	MetricTypeDate = "date"
+	// MetricTypeObject is the summary metric type for object types.
+	MetricTypeObject = "object"
+	// MetricTypeArray is the summary metric type for array types.
+	MetricTypeArray = "array"
+	// MetricTypeNull is the summary metric type for array types.
+	MetricTypeNull = "null"
+)
+
+func jsonAnyToFloat(v any) float64 {
+	if s, ok := v.(string); ok {
+		if f, isSpecial := stringToSpecialFloats(s); isSpecial {
+			return f
+		}
+	}
+
+	if f, ok := v.(float64); ok {
+		return f
+	}
+
+	log.Errorf("summary metric value expected as float instead got %T %v", v, v)
+	return 0.0
+}
+
+func stringToSpecialFloats(s string) (float64, bool) {
+	switch s {
+	case NaNPostgresString:
+		return math.NaN(), true
+	case InfPostgresString:
+		return math.Inf(1), true
+	case NegInfPostgresString:
+		return math.Inf(-1), true
+	default:
+		return 0.0, false
+	}
+}
+
+func replaceSpecialFloatsWithString(v any) any {
+	if f, ok := v.(float64); ok {
+		switch {
+		case math.IsNaN(f):
+			return NaNPostgresString
+		case math.IsInf(f, 1.0):
+			return InfPostgresString
+		case math.IsInf(f, -1.0):
+			return NegInfPostgresString
+		}
+	}
+	return v
+}
+
+var pythonISOFormatRegex = regexp.MustCompile(
+	`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$`)
+
+// calculateNewSummaryMetrics calculates new summary metrics from the newly added
+// metrics and the existing summary metrics.
+func calculateNewSummaryMetrics(
+	summaryMetrics model.JSONObj, metrics *structpb.Struct,
+) model.JSONObj {
+	// Calculate numeric metrics.
+	for metricName, metric := range metrics.Fields {
+		// Get type of provided metric.
+		metricFloatValue := 0.0
+		metricType := ""
+		switch metricValue := metric.AsInterface().(type) {
+		case float64:
+			metricFloatValue = metricValue
+			metricType = MetricTypeNumber
+		case string:
+			switch f, ok := stringToSpecialFloats(metricValue); {
+			case ok:
+				metricFloatValue = f
+				metricType = MetricTypeNumber
+			case pythonISOFormatRegex.MatchString(metricValue):
+				metricType = MetricTypeDate
+			default:
+				metricType = MetricTypeString
+			}
+		case bool:
+			metricType = MetricTypeBool
+		case map[string]any:
+			metricType = MetricTypeObject
+		case []any:
+			metricType = MetricTypeArray
+		case nil:
+			metricType = MetricTypeNull
+		default:
+			metricType = MetricTypeString
+		}
+
+		// If we haven't seen this metric before just add the type we have.
+		var ok bool
+		var summaryMetric map[string]any
+		if summaryMetric, ok = summaryMetrics[metricName].(map[string]any); !ok {
+			summaryMetric = map[string]any{"type": metricType}
+		} else if summaryMetric["type"] != metricType {
+			// If we have seen this before check if we disagree on types and set to string if we do.
+			metricType = "string"
+			summaryMetric = map[string]any{"type": metricType}
+		}
+		summaryMetrics[metricName] = summaryMetric
+
+		if metricType != MetricTypeNumber {
+			continue
+		}
+
+		// Is this the first time seeing a number metric?
+		if _, ok = summaryMetric["count"]; !ok {
+			summaryMetric["max"] = replaceSpecialFloatsWithString(metricFloatValue)
+			summaryMetric["min"] = replaceSpecialFloatsWithString(metricFloatValue)
+			summaryMetric["sum"] = replaceSpecialFloatsWithString(metricFloatValue)
+			summaryMetric["count"] = 1
+		} else {
+			summaryMetric["min"] = replaceSpecialFloatsWithString(
+				math.Min(jsonAnyToFloat(summaryMetric["min"]), metricFloatValue))
+			summaryMetric["max"] = replaceSpecialFloatsWithString(
+				math.Max(jsonAnyToFloat(summaryMetric["max"]), metricFloatValue))
+			summaryMetric["sum"] = replaceSpecialFloatsWithString(
+				jsonAnyToFloat(summaryMetric["sum"]) + metricFloatValue)
+			// Go parsing odditity treats JSON whole numbers as floats.
+			summaryMetric["count"] = int(jsonAnyToFloat(summaryMetric["count"])) + 1
+		}
+	}
+
+	// Add last value for all metrics provided.
+	for metricName, sumMetric := range summaryMetrics {
+		metric, ok := sumMetric.(map[string]any)
+		if !ok {
+			// Should not happen.
+			log.Errorf("summary metric %T %+v is not a map", sumMetric, sumMetric)
+			continue
+		}
+
+		metric["last"] = replaceSpecialFloatsWithString(metrics.Fields[metricName])
+	}
+
+	return summaryMetrics
 }
 
 // AddCheckpointMetadata persists metadata for a completed checkpoint to the database.
@@ -305,6 +546,7 @@ func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
 	return nil
 }
 
+// checkTrialRunID checks that the trial is currently on the given run.
 func checkTrialRunID(ctx context.Context, tx *sqlx.Tx, trialID, runID int32) error {
 	var cRunID int
 	switch err := tx.QueryRowxContext(ctx, `
@@ -325,6 +567,7 @@ WHERE id = $1
 // returning nil if none exists.
 func (db *PgDB) ValidationByTotalBatches(trialID, totalBatches int) (*model.TrialMetrics, error) {
 	var validation model.TrialMetrics
+	// TODO: update to go through `metrics`.
 	if err := db.query(`
 SELECT id, trial_id, total_batches, end_time, metrics
 FROM validations
@@ -433,7 +676,7 @@ WITH const AS (
 UPDATE trials t
 SET best_validation_id = (SELECT bv.id FROM best_validation bv),
 searcher_metric_value = (SELECT bv.searcher_metric_value FROM best_validation bv),
-searcher_metric_value_signed = 
+searcher_metric_value_signed =
 (SELECT bv.searcher_metric_value * const.sign FROM best_validation bv, const)
 WHERE t.id = $1;
 `, trialID, trialRunID, stepsCompleted)

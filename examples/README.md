@@ -19,7 +19,6 @@
 | [mmdetection\_pytorch](computer_vision/mmdetection_pytorch)                  | COCO                         | PyTorch                                  |
 | [detr\_coco\_pytorch](computer_vision/detr_coco_pytorch)                     | COCO                         | PyTorch                                  |
 | [deformabledetr\_coco\_pytorch](computer_vision/deformabledetr_coco_pytorch) | COCO                         | PyTorch                                  |
-| [mnist\_estimator](computer_vision/mnist_estimator)                          | MNIST                        | TensorFlow (Estimator API)               |
 | [cifar10\_tf\_keras](computer_vision/cifar10_tf_keras)                       | CIFAR-10                     | TensorFlow (tf.keras)                    |
 | [iris\_tf\_keras](computer_vision/iris_tf_keras)                             | Iris Dataset                 | TensorFlow (tf.keras)                    |
 | [unets\_tf\_keras](computer_vision/unets_tf_keras)                           | Oxford-IIIT Pet Dataset      | TensorFlow (tf.keras)                    |
@@ -68,12 +67,6 @@
 | [gan\_mnist\_pytorch](gan/gan_mnist_pytorch)  | MNIST            | PyTorch               |
 | [deepspeed\_dcgan](deepspeed/deepspeed_dcgan) | MNIST / CIFAR-10 | PyTorch (DeepSpeed)   |
 | [pix2pix\_tf\_keras](gan/pix2pix_tf_keras)    | pix2pix          | TensorFlow (tf.keras) |
-
-## Decision Trees
-
-| Example                                                         | Dataset | Framework                  |
-|:---------------------------------------------------------------:|:-------:|:--------------------------:|
-| [gbt\_titanic\_estimator](decision_trees/gbt_titanic_estimator) | Titanic | TensorFlow (Estimator API) |
 
 ## Custom Reducers
 

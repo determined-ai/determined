@@ -1,0 +1,3 @@
+.. note::
+    
+    To learn more about distributed training with Determined, visit the :ref:`conceptual overview <multi-gpu-training-concept>` or the :ref:`intro to implementing distributed training <multi-gpu-training-implement>`. 

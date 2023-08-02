@@ -1,53 +1,44 @@
-import { LeftOutlined } from '@ant-design/icons';
-import { Dropdown, Modal, Space, Typography } from 'antd';
-import type { DropDownProps, MenuProps } from 'antd';
+import { Modal, Space, Typography } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
+import ClipboardButton from 'components/kit/ClipboardButton';
+import Dropdown, { MenuOption } from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
-import Link from 'components/Link';
 import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import ModelVersionEditModal from 'components/ModelVersionEditModal';
+import Spinner from 'components/Spinner';
 import TimeAgo from 'components/TimeAgo';
 import usePermissions from 'hooks/usePermissions';
-import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
-import { paths } from 'routes/utils';
-import CopyButton from 'shared/components/CopyButton';
-import Icon from 'shared/components/Icon/Icon';
-import Spinner from 'shared/components/Spinner';
-import { formatDatetime } from 'shared/utils/datetime';
-import { copyToClipboard } from 'shared/utils/dom';
 import userStore from 'stores/users';
-import { ModelVersion, Workspace } from 'types';
+import { ModelVersion } from 'types';
+import { formatDatetime } from 'utils/datetime';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelVersionHeader.module.scss';
 
-type Action = {
-  danger: boolean;
-  disabled: boolean;
-  key: string;
-  onClick: () => void;
-  text: string;
-};
-
 interface Props {
   modelVersion: ModelVersion;
   fetchModelVersion: () => Promise<void>;
   onUpdateTags: (newTags: string[]) => Promise<void>;
-  workspace: Workspace;
 }
+
+const MenuKey = {
+  DeregisterVersion: 'Deregister Version',
+  DownloadModel: 'Download',
+  EditModelVersionName: 'Edit',
+  UseInNotebook: 'Use in Notebook',
+} as const;
 
 const ModelVersionHeader: React.FC<Props> = ({
   modelVersion,
-  workspace,
   onUpdateTags,
   fetchModelVersion,
 }: Props) => {
@@ -112,49 +103,6 @@ const ModelVersionHeader: React.FC<Props> = ({
     ] as InfoRow[];
   }, [loadableUsers, modelVersion, onUpdateTags, users, canModifyModelVersion]);
 
-  const actions: Action[] = useMemo(() => {
-    const items: Action[] = [
-      {
-        danger: false,
-        disabled: false,
-        key: 'download-model',
-        onClick: () => modelDownloadModal.open(),
-        text: 'Download',
-      },
-      {
-        danger: false,
-        disabled: false,
-        key: 'use-in-notebook',
-        onClick: () => setShowUseInNotebook(true),
-        text: 'Use in Notebook',
-      },
-      {
-        danger: false,
-        disabled: modelVersion.model.archived || !canModifyModelVersion({ modelVersion }),
-        key: 'edit-model-version-name',
-        onClick: () => modelVersionEditModal.open(),
-        text: 'Edit',
-      },
-    ];
-    if (canDeleteModelVersion({ modelVersion })) {
-      items.push({
-        danger: true,
-        disabled: false,
-        key: 'deregister-version',
-        onClick: () => modelVersionDeleteModal.open(),
-        text: 'Deregister Version',
-      });
-    }
-    return items;
-  }, [
-    modelVersion,
-    canModifyModelVersion,
-    canDeleteModelVersion,
-    modelDownloadModal,
-    modelVersionEditModal,
-    modelVersionDeleteModal,
-  ]);
-
   const referenceText = useMemo(() => {
     const escapedModelName = modelVersion.model.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
     return `import determined as det
@@ -180,60 +128,56 @@ with det.import_from_path(path + "/code"):
 `;
   }, [modelVersion]);
 
-  const handleCopy = useCallback(async () => {
-    await copyToClipboard(referenceText);
-  }, [referenceText]);
+  const menu = useMemo(() => {
+    const items: MenuOption[] = [
+      {
+        key: MenuKey.DownloadModel,
+        label: MenuKey.DownloadModel,
+      },
+      {
+        key: MenuKey.UseInNotebook,
+        label: MenuKey.UseInNotebook,
+      },
+      {
+        disabled: modelVersion.model.archived || !canModifyModelVersion({ modelVersion }),
+        key: MenuKey.EditModelVersionName,
+        label: MenuKey.EditModelVersionName,
+      },
+    ];
+    if (canDeleteModelVersion({ modelVersion })) {
+      items.push({
+        danger: true,
+        key: MenuKey.DeregisterVersion,
+        label: MenuKey.DeregisterVersion,
+      });
+    }
+    return items;
+  }, [canDeleteModelVersion, canModifyModelVersion, modelVersion]);
 
-  const menu: DropDownProps['menu'] = useMemo(() => {
-    const onItemClick: MenuProps['onClick'] = (e) => {
-      const action = actions.find((ac) => ac.key === e.key) as Action;
-      action.onClick();
-    };
-
-    const menuItems: MenuProps['items'] = actions.map((action) => ({
-      className: css.overflowAction,
-      danger: action.danger,
-      disabled: action.disabled,
-      key: action.key,
-      label: action.text,
-    }));
-
-    return { className: css.overflow, items: menuItems, onClick: onItemClick };
-  }, [actions]);
+  const handleDropdown = useCallback(
+    (key: string | number) => {
+      switch (key) {
+        case MenuKey.DeregisterVersion:
+          modelVersionDeleteModal.open();
+          break;
+        case MenuKey.DownloadModel:
+          modelDownloadModal.open();
+          break;
+        case MenuKey.EditModelVersionName:
+          modelVersionEditModal.open();
+          break;
+        case MenuKey.UseInNotebook:
+          setShowUseInNotebook(true);
+          break;
+        default:
+          return;
+      }
+    },
+    [modelDownloadModal, modelVersionEditModal, modelVersionDeleteModal],
+  );
 
   return (
     <header className={css.base}>
-      <div className={css.breadcrumbs}>
-        <Breadcrumb separator="">
-          <Breadcrumb.Item>
-            <Link path={paths.modelDetails(String(modelVersion.model.id))}>
-              <LeftOutlined style={{ marginRight: 10 }} />
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link
-              path={
-                workspace.id === 1 ? paths.projectDetails(1) : paths.workspaceDetails(workspace.id)
-              }>
-              {workspace.name}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>
-            <Link path={paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)}>
-              Model Registry
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>
-            <Link path={paths.modelDetails(String(modelVersion.model.id))}>
-              {modelVersion.model.name} ({modelVersion.model.id})
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>Version {modelVersion.version}</Breadcrumb.Item>
-        </Breadcrumb>
-      </div>
       <div className={css.headerContent}>
         <div className={css.mainRow}>
           <div className={css.title}>
@@ -243,19 +187,20 @@ with det.import_from_path(path + "/code"):
             </h1>
           </div>
           <div className={css.buttons}>
-            {actions.slice(0, 2).map((action) => (
+            {menu.slice(0, 2).map((item) => (
               <Button
-                danger={action.danger}
-                disabled={action.disabled}
-                key={action.key}
-                onClick={action.onClick}>
-                {action.text}
+                danger={item.danger}
+                disabled={item.disabled}
+                key={item.key}
+                onClick={() => handleDropdown(item.key)}>
+                {item.label}
               </Button>
             ))}
-            <Dropdown menu={menu} trigger={['click']}>
-              <Button type="text">
-                <Icon name="overflow-horizontal" size="tiny" />
-              </Button>
+            <Dropdown menu={menu.slice(2)} onClick={handleDropdown}>
+              <Button
+                icon={<Icon name="overflow-horizontal" size="small" title="Action menu" />}
+                type="text"
+              />
             </Dropdown>
           </div>
         </div>
@@ -275,7 +220,7 @@ with det.import_from_path(path + "/code"):
         onCancel={() => setShowUseInNotebook(false)}>
         <div className={css.topLine}>
           <p>Reference this model in a notebook</p>
-          <CopyButton onCopy={handleCopy} />
+          <ClipboardButton getContent={() => referenceText} />
         </div>
         <pre className={css.codeSample}>
           <code>{referenceText}</code>

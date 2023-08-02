@@ -5,7 +5,6 @@ from types import TracebackType
 from typing import Any, Dict, Iterator, Optional, Tuple, Union
 from urllib import parse
 
-import lomond
 import requests
 import urllib3
 
@@ -29,8 +28,20 @@ def parse_master_address(master_address: str) -> parse.ParseResult:
 
 
 def make_url(master_address: str, suffix: str) -> str:
+    """@deprecated use make_url_new instead"""
     parsed = parse_master_address(master_address)
     return parse.urljoin(parsed.geturl(), suffix)
+
+
+def make_url_new(master_address: str, suffix: str) -> str:
+    parsed_suffix = parse.urlparse(suffix)
+    if parsed_suffix.scheme and parsed_suffix.netloc:
+        return make_url(master_address, suffix)
+    parsed = parse_master_address(master_address)
+    master_url = parsed.geturl().rstrip("/")
+    suffix = suffix.lstrip("/")
+    separator = "/" if suffix or master_address.endswith("/") else ""
+    return "{}{}{}".format(master_url, separator, suffix)
 
 
 def maybe_upgrade_ws_scheme(master_address: str) -> str:
@@ -52,8 +63,8 @@ def make_interactive_task_url(
     currentSlotsExceeded: bool,
 ) -> str:
     wait_path = (
-        "/notebooks/{}/events".format(task_id)
-        if task_type == "notebook"
+        "/jupyter-lab/{}/events".format(task_id)
+        if task_type == "jupyter-lab"
         else "/tensorboard/{}/events?tail=1".format(task_id)
     )
     wait_path_url = service_address + wait_path
@@ -164,7 +175,7 @@ def do_request(
     if r.status_code == 401:
         raise errors.UnauthenticatedException(username=username)
     elif r.status_code == 404:
-        raise errors.NotFoundException(r)
+        raise errors.NotFoundException(r.reason)
     elif r.status_code >= 300:
         raise errors.APIException(r)
 
@@ -309,27 +320,31 @@ def browser_open(host: str, path: str) -> str:
 
 
 class WebSocket:
-    def __init__(self, socket: lomond.WebSocket) -> None:
-        self.socket = socket
+    def __init__(self, socket: Any) -> None:
+        import lomond
+
+        self.socket = socket  # type: lomond.WebSocket
 
     def __enter__(self) -> "WebSocket":
         return self
 
     def __iter__(self) -> Iterator[Any]:
+        from lomond import events
+
         for event in self.socket.connect(ping_rate=0):
-            if isinstance(event, lomond.events.Connected):
+            if isinstance(event, events.Connected):
                 # Ignore the initial connection event.
                 pass
-            elif isinstance(event, (lomond.events.Closing, lomond.events.Disconnected)):
+            elif isinstance(event, (events.Closing, events.Disconnected)):
                 # The socket was successfully closed so we just return.
                 return
             elif isinstance(
                 event,
-                (lomond.events.ConnectFail, lomond.events.Rejected, lomond.events.ProtocolError),
+                (events.ConnectFail, events.Rejected, events.ProtocolError),
             ):
                 # Any unexpected failures raise the standard API exception.
                 raise errors.BadRequestException(message="WebSocket failure: {}".format(event))
-            elif isinstance(event, lomond.events.Text):
+            elif isinstance(event, events.Text):
                 # All web socket connections are expected to be in a JSON
                 # format.
                 yield _json.loads(event.text)
@@ -348,6 +363,8 @@ def ws(host: str, path: str) -> WebSocket:
     """
     Connect to a web socket at the remote API.
     """
+    import lomond
+
     websocket = lomond.WebSocket(maybe_upgrade_ws_scheme(make_url(host, path)))
     token = authentication.must_cli_auth().get_session_token()
     websocket.add_header("Authorization".encode(), "Bearer {}".format(token).encode())

@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.21.2-dev0
+    default: 0.23.5-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -34,6 +34,12 @@ parameters:
   gpu-machine-image:
     type: string
     default: ubuntu-2004-cuda-11.2:202103-01
+  # DEFAULT_PT_GPU_IMAGE: Pytorch training image reference used by the tests
+  # Inject here as a parameter so that it is updated by bumpversion, and can
+  # be referenced by --ee testing.
+  default-pt-gpu-image:
+    type: string
+    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-6eceaca
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -41,10 +47,10 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev20
+    default: v1dev23
   gke-version:
     type: string
-    default: "1.23.16"
+    default: "1.25.10"
   master-build-resource-class:
     type: string
     default: xlarge
@@ -86,6 +92,11 @@ any-upstream: &any-upstream
     ignore:
       - /pull\/.*/
 
+any-fork: &any-fork
+  branches:
+    only:
+      - /pull\/.*/
+
 commands:
   fix-circle-working-directory:
     description: "Fix CIRCLE_WORKING_DIRECTORY"
@@ -114,6 +125,23 @@ commands:
               circleci-agent step halt
             else
               echo "detected non-docs-only changes: $DIFF_DIRS"
+            fi
+
+  skip-if-not-docs:
+    steps:
+      - run: git remote add upstream https://github.com/determined-ai/determined
+      - run: git fetch upstream
+      - run:
+          name: check for any docs changes
+          command: |
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
+            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
+            # check "shared" is in the list of changed directories
+            if [[ "$DIFF_DIRS" == *"docs"* ]]; then
+              echo "docs change detected, running downstream steps"
+            else
+              echo "detected non-docs changes, halting job now"
+              circleci-agent step halt
             fi
 
   skip-if-webui-only:
@@ -146,6 +174,21 @@ commands:
             else
               echo "shared code not affected, halting job now"
               circleci-agent step halt
+            fi
+
+  skip-if-github-only:
+    steps:
+      - run: git fetch upstream
+      - run:
+          name: check for github-only changes
+          command: |
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
+            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
+            if [ "$DIFF_DIRS" = ".github" ] ; then
+              echo "github-only change detected, halting job now"
+              circleci-agent step halt
+            else
+              echo "detected changes outside of .github: $DIFF_DIRS"
             fi
 
   set-slack-user-id:
@@ -182,11 +225,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-9b5db1b
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6eceaca
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-9b5db1b
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca
 
   login-docker:
     parameters:
@@ -219,6 +262,7 @@ commands:
 
   install-codecov:
     steps:
+      - run: mkdir -p $HOME/.local/bin
       - run: curl --output $HOME/.local/bin/codecov https://uploader.codecov.io/latest/linux/codecov
       - run: chmod +x $HOME/.local/bin/codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
@@ -253,17 +297,22 @@ commands:
     steps:
       - attach_workspace:
           at: .
+      - run:
+          name: Write cache suffix
+          command: |
+            echo '<<pipeline.parameters.cache-buster>>' > /tmp/react-get-deps.cachekey
+            cat webui/react/package-lock.json >> /tmp/react-get-deps.cachekey
+            echo $HOME >> /tmp/react-get-deps.cachekey
+            cat /tmp/react-get-deps.cachekey
       - restore_cache:
           keys:
-            - det-react-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "webui/react/package-lock.json" }}
+            - det-react-deps-{{ checksum "/tmp/react-get-deps.cachekey" }}
       - run:
           name: Get React dependencies
           command: |
-            if [ ! -d "webui/react/node_modules" ]; then
-              make -C webui/react get-deps-npm
-            fi
+            make -C webui/react node_modules/done.stamp
       - save_cache:
-          key: det-react-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "webui/react/package-lock.json" }}
+          key: det-react-deps-{{ checksum "/tmp/react-get-deps.cachekey" }}
           paths:
             - "webui/react/node_modules"
 
@@ -322,8 +371,8 @@ commands:
                   PYTHON_VERSION="${1}"
 
                   CONDA_DIR="/opt/conda"
-                  CONDA_INSTALLER="Miniconda3-py39_4.10.3-Linux-x86_64.sh"
-                  CONDA_MD5="8c69f65a4ae27fb41df0fe552b4a8a3b"
+                  CONDA_INSTALLER="Miniconda3-py39_23.5.2-0-Linux-x86_64.sh"
+                  CONDA_SHA256="9829d95f639bd0053b2ed06d1204e60644617bf37dd5cc57523732e0e8d64516"
                   CONDA_URL="https://repo.anaconda.com/miniconda"
 
                   mkdir -p /etc/determined/conda.d
@@ -331,7 +380,7 @@ commands:
 
                   cd /tmp
                   curl --retry 3 -fsSL -O "${CONDA_URL}/${CONDA_INSTALLER}"
-                  echo "${CONDA_MD5}  ${CONDA_INSTALLER}" | md5sum -c -
+                  echo "${CONDA_SHA256}  ${CONDA_INSTALLER}" | sha256sum ${CONDA_INSTALLER}
                   bash "./${CONDA_INSTALLER}" -u -b -p "${CONDA_DIR}"
                   rm -f "./${CONDA_INSTALLER}"
 
@@ -351,6 +400,17 @@ commands:
                   python3 -m venv /tmp/venv
                   echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
                   /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
+
+      # Either of make -C {harness,model_hub} build require pypa's build module.
+      - when:
+          condition:
+            or:
+              - <<parameters.determined>>
+              - <<parameters.model-hub>>
+          steps:
+            - run:
+                name: Install pypa builder
+                command: python3 -m pip install build
 
       - run:
           name: Write cache key
@@ -409,6 +469,40 @@ commands:
       - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
+
+  setup-docker-env:
+    description: Set up and create docker env.
+    parameters:
+      image:
+        type: string
+      image-name:
+        type: string
+        default: "test_container"
+      bind-mount:
+        type: string
+        default: "$PWD"
+      extras-requires:
+        type: string
+        default: ""
+      gpus:
+        type: boolean
+        default: true
+    steps:
+      - when:
+          condition: <<parameters.gpus>>
+          steps:
+            - run: docker run -v <<parameters.bind-mount>>:/mnt/project --gpus=all -it -d --name <<parameters.image-name>> --workdir /mnt/project <<parameters.image>> /bin/bash
+      - when:
+          condition:
+            not: <<parameters.gpus>>
+          steps:
+            - run: docker run -v <<parameters.bind-mount>>:/mnt/project -it -d --name <<parameters.image-name>> --workdir /mnt/project <<parameters.image>> /bin/bash
+      - run:
+          name: Install <<parameters.extras-requires>>
+          command: |
+            if [ -n "<<parameters.extras-requires>>" ]; then
+              docker exec <<parameters.image-name>> tools/scripts/retry.sh pip install --progress-bar off <<parameters.extras-requires>>
+            fi
 
   run-e2e-tests:
     parameters:
@@ -552,7 +646,7 @@ commands:
         default: false
       deployment-type:
         type: string
-        default: simple
+        default: simple-rds
     steps:
       - run:
           name: Initialize extra arguments
@@ -596,6 +690,7 @@ commands:
                 command: echo --agent-reattach-enabled true --agent-reconnect-attempts 24 --no-update-terminate-agents --notebook-timeout 1800 >> /tmp/det-deploy-extra-args
       - run:
           name: Deploy AWS cluster
+          no_output_timeout: 20m
           command: |
             echo "-----BEGIN ARGS-----"
             cat /tmp/det-deploy-extra-args
@@ -650,7 +745,7 @@ commands:
         type: string
       deployment-type:
         type: string
-        default: simple
+        default: simple-rds
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
@@ -1058,14 +1153,29 @@ jobs:
           root: .
           paths:
             - examples/build
-            - cli/dist
-            - common/dist
             - harness/dist
             - model_hub/dist
-            - docs/site/html
+            - docs/build
+            - docs/site
       - run: tar czf docs.tgz docs/site/html
       - store_artifacts:
           path: docs.tgz
+
+  upload-docs-search-index:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
+          model-hub: true
+          extra-requirements-file: "docs/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - attach_workspace:
+          at: .
+      - run: make -C docs upload-search-index
 
   publish-docs:
     docker:
@@ -1078,6 +1188,33 @@ jobs:
       - run: pip3 install awscli
       - run: make -C docs publish
 
+  # TODO(danh): eventually replace 'publish-docs' with this new workflow after
+  # all dependent scripts are updated.
+  # Related work: https://hpe-aiatscale.atlassian.net/browse/INFENG-183
+  publish-docs-new:
+    parameters:
+      preview:
+        type: boolean
+        default: true
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - skip-if-not-docs
+      - attach_workspace:
+          at: .
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
+          model-hub: true
+          extra-requirements-file: "docs/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - when:
+          condition: <<parameters.preview>>
+          steps:
+            - run: make -C docs preview
+
   package-and-push-system-local:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -1087,6 +1224,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - reinstall-go
       - attach_workspace:
@@ -1119,6 +1257,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -1248,7 +1387,7 @@ jobs:
       - checkout
       - setup-python-venv:
           install-python: false
-          extras-requires: "twine"
+          extras-requires: "build twine"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C <<parameters.path>> build
       - run: make -C <<parameters.path>> publish
@@ -1259,6 +1398,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - setup-python-venv:
           install-python: false
           extra-requirements-file: "bindings/requirements.txt"
@@ -1274,6 +1414,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - setup-python-venv:
           install-python: false
@@ -1301,6 +1442,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -1321,10 +1463,11 @@ jobs:
 
   lint-react:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:18.16.0
     steps:
       - checkout-with-sm
       - skip-if-docs-only
+      - skip-if-github-only
       - react-get-deps
       - run: make -C webui/react check
 
@@ -1334,11 +1477,12 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:18.16.0
     resource_class: large
     steps:
       - checkout-with-sm
       - skip-if-docs-only
+      - skip-if-github-only
       - react-get-deps
       - run: |
           if <<parameters.dev-mode>>; then
@@ -1351,15 +1495,36 @@ jobs:
           paths:
             - webui/react/build
 
+  test-e2e-react:
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.33.0-focal
+    resource_class: large
+    steps:
+      - checkout-with-sm
+      - skip-if-docs-only
+      - skip-if-github-only
+      - run: apt-get update && apt-get -y install make
+      - react-get-deps
+      - run: npx playwright install --with-deps && npx playwright install chrome
+      - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
+      - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} npm run e2e --prefix webui/react
+      - store_artifacts:
+          path: webui/react/src/e2e/playwright-report
+      - store_artifacts:
+          path: webui/react/src/e2e/test-results
+      - store_test_results:
+          path: webui/react/src/e2e/junit-results.xml
+
   test-unit-react:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:18.16.0
         environment:
           CI: "true"
     resource_class: xlarge
     steps:
       - checkout-with-sm
       - skip-if-docs-only
+      - skip-if-github-only
       - react-get-deps
       - run: make -C webui/react test-ci
       - codecov/upload:
@@ -1370,9 +1535,59 @@ jobs:
       - store_artifacts:
           path: webui/react/coverage
 
+  test-unit-react-quarantined:
+    docker:
+      - image: cimg/node:18.16.0
+        environment:
+          CI: "true"
+    steps:
+      - checkout-with-sm
+      - skip-if-docs-only
+      - skip-if-github-only
+      - react-get-deps
+      - run: make -C webui/react test-ci-flaky
+
+  test-unit-react-screenshot:
+    docker:
+      - image: cimg/node:18.16.0
+        environment:
+          CI: "true"
+    resource_class: xlarge
+    steps:
+      - checkout-with-sm
+      - skip-if-docs-only
+      - skip-if-github-only
+      - run:
+          command: |
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
+            DIFF_PATHS="webui/react/src/components/kit webui/react/src/pages/DesignKit.tsx webui/react/design"
+            if git diff --quiet $MERGE_BASE -- $DIFF_PATHS; then
+              echo "DesignKit not changed, halting job now."
+              circleci-agent step halt
+            else
+              echo "DesignKit changed, running downstream check."
+            fi
+          name: check for designkit changes
+      - react-get-deps
+      - run:
+          command: make -C webui/react visual-test
+          name: generate screenshots
+      - store_artifacts:
+          path: webui/react/screenshot-summary.html
+      - run:
+          command: |
+            export ARTIFACT_URL="https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/0/webui/react/screenshot-summary.html"
+            if [ -f webui/react/.diff-detected ] ; then
+              export MESSAGE="Hello! DesignKit diffs for commit $CIRCLE_SHA1 are available for you to view [here]($ARTIFACT_URL)"
+            else
+              export MESSAGE="Hello! No changes detected to DesignKit for commit $CIRCLE_SHA1. Verify [here]($ARTIFACT_URL)"
+            fi
+            node webui/react/scripts/make-github-comment.mjs "$MESSAGE"
+          name: report results
+
   test-intg-downstream:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:18.16.0
     steps:
       - checkout-with-sm
       - skip-if-not-shared
@@ -1402,6 +1617,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - reinstall-go
       - go-get-deps
@@ -1419,6 +1635,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - reinstall-go
       - go-get-deps
@@ -1454,6 +1671,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - reinstall-go
       - go-get-deps
@@ -1475,6 +1693,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -1497,6 +1716,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -1518,6 +1738,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -1562,6 +1783,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - setup-python-venv:
           install-python: false
@@ -1570,10 +1792,7 @@ jobs:
           extras-requires: "torch==1.9.0"
           extra-requirements-file: "requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: make -C cli check
-      - run: make -C common check
       - run: make -C harness check
-      - run: make -C deploy check
       - run: make -C model_hub check
       - run: make -C e2e_tests check
       - run: make -C examples check
@@ -1586,6 +1805,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - install-codecov
       - setup-python-venv:
@@ -1602,21 +1822,46 @@ jobs:
           paths:
             - test-unit-harness-cpu-pycov
 
-  test-unit-harness-gpu:
-    machine:
-      resource_class: gpu.nvidia.small
-      image: <<pipeline.parameters.gpu-machine-image>>
+  test-unit-harness-cpu-tf1:
+    docker:
+      - image: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6eceaca
+    resource_class: determined-ai/container-runner-gpu
     steps:
+      - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
+      - run: pip install mypy pytest coverage
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - install-codecov
-      - setup-python-venv:
-          determined: true
-          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
-          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: <<pipeline.parameters.docker-image>>
-      - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
+      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-cpu-tf1-pycov make -C harness test-cpu-tf1
+      - run: coverage xml -i --data-file=./test-unit-harness-cpu-tf1-pycov
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-cpu-tf1-pycov
+
+  test-unit-harness-gpu:
+    docker:
+      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
+    resource_class: determined-ai/container-runner-gpu
+    steps:
+      - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - checkout
+      - skip-if-docs-only
+      - skip-if-github-only
+      - skip-if-webui-only
+      - run: pip install mypy pytest coverage
+      - install-codecov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
+      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-pycov make -C harness test-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
@@ -1624,12 +1869,81 @@ jobs:
           paths:
             - test-unit-harness-gpu-pycov
 
+  test-unit-harness-gpu-parallel:
+    docker:
+      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
+    resource_class: determined-ai/container-runner-multi-gpu
+    steps:
+      - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - checkout
+      - skip-if-docs-only
+      - skip-if-github-only
+      - skip-if-webui-only
+      - run: pip install mypy pytest coverage
+      - run: echo 'export PATH=${PATH}:/usr/local/nvidia/bin' >> $BASH_ENV
+      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - install-codecov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-parallel-pycov make -C harness test-gpu-parallel
+      - run: coverage xml -i --data-file=./test-unit-harness-gpu-parallel-pycov
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-gpu-parallel-pycov
+
+  test-unit-harness-gpu-lightning:
+    docker:
+      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
+    resource_class: determined-ai/container-runner-gpu
+    steps:
+      - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - checkout
+      - skip-if-docs-only
+      - skip-if-github-only
+      - skip-if-webui-only
+      - run: pip install pytorch_lightning==1.5.10 torchmetrics==0.5.1 torchvision==0.10.0 mypy pytest coverage
+      - install-codecov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
+      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-lightning-pycov make -C harness test-gpu-lightning
+      - run: coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-gpu-lightning-pycov
+
+  test-unit-harness-gpu-deepspeed:
+    docker:
+      - image: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
+    resource_class: determined-ai/container-runner-gpu
+    steps:
+      - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - checkout
+      - skip-if-docs-only
+      - skip-if-github-only
+      - skip-if-webui-only
+      - run: pip install mypy pytest coverage
+      - install-codecov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
+      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-deepspeed-pycov make -C harness test-gpu-deepspeed
+      - run: coverage xml -i --data-file=./test-unit-harness-gpu-deepspeed-pycov
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-gpu-deepspeed-pycov
+
   test-unit-harness-tf2:
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - install-codecov
       - setup-python-venv:
@@ -1652,6 +1966,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - install-codecov
       - setup-python-venv:
@@ -1671,9 +1986,11 @@ jobs:
   test-unit-model-hub:
     docker:
       - image: <<pipeline.parameters.docker-image>>
+    resource_class: medium+
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - install-codecov
       - setup-python-venv:
@@ -1697,6 +2014,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - setup-python-venv:
           install-python: false
@@ -1718,9 +2036,11 @@ jobs:
   test-examples:
     docker:
       - image: <<pipeline.parameters.docker-image>>
+    resource_class: medium+
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - setup-python-venv:
           install-python: false
@@ -1800,6 +2120,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -1889,6 +2210,7 @@ jobs:
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
           enable-cors: <<parameters.enable-cors>>
           reattach-enabled: <<parameters.reattach-enabled>>
+          deployment-type: simple
       - slack/status:
           fail_only: true
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
@@ -1932,6 +2254,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
@@ -2020,7 +2343,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.2
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
         type: string
       accel-node-taints:
         type: string
@@ -2033,6 +2356,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
@@ -2098,6 +2422,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -2132,6 +2457,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -2176,6 +2502,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
@@ -2242,6 +2569,20 @@ workflows:
       - lint-react
       - lint-secrets
 
+  previews:
+    jobs:
+      - build-proto
+      - build-helm
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - publish-docs-new:
+          requires:
+            - build-docs
+          context: aws
+          filters: *any-upstream
+
   test-cli:
     jobs:
       - test-cli:
@@ -2254,10 +2595,43 @@ workflows:
     jobs:
       - test-unit-go
       - test-unit-react
+      - test-unit-react-screenshot:
+          context: github-write
+          filters: *any-upstream
       - test-unit-harness-cpu
-      # Exclude gpu tests for now since we do not have access to those instance types on circleci.
-      #- test-unit-harness-gpu
       - test-unit-harness-tf2
+
+      - test-unit-harness-cpu-tf1:
+          filters: *any-upstream
+      - test-unit-harness-gpu:
+          filters: *any-upstream
+      - test-unit-harness-gpu-lightning:
+          filters: *any-upstream
+      - test-unit-harness-gpu-deepspeed:
+          filters: *any-upstream
+      - test-unit-harness-gpu-parallel:
+          filters: *any-upstream
+
+      # allows forks to request run approval instead of failing
+      - request-gpu-unit-tests:
+          type: approval
+          filters: *any-fork
+      - test-unit-harness-cpu-tf1:
+          name: f-test-unit-harness-cpu-tf1
+          filters: *any-fork
+      - test-unit-harness-gpu:
+          name: f-test-unit-harness-gpu
+          filters: *any-fork
+      - test-unit-harness-gpu-lightning:
+          name: f-test-unit-harness-gpu-lightning
+          filters: *any-fork
+      - test-unit-harness-gpu-deepspeed:
+          name: f-test-unit-harness-gpu-deepspeed
+          filters: *any-fork
+      - test-unit-harness-gpu-parallel:
+          name: f-test-unit-harness-gpu-parallel
+          filters: *any-fork
+
       - test-unit-model-hub
       - test-unit-storage:
           context: storage-unit-tests
@@ -2266,6 +2640,8 @@ workflows:
       - python-coverage:
           requires:
             - test-unit-harness-cpu
+            - test-unit-harness-gpu
+            - test-unit-harness-gpu-parallel
             - test-unit-harness-tf2
             - test-unit-model-hub
             - test-unit-storage
@@ -2288,6 +2664,9 @@ workflows:
       - build-helm
       - build-react:
           dev-mode: true
+      - test-e2e-react:
+          context: playwright
+          filters: *any-upstream
       - build-docs:
           requires:
             - build-helm
@@ -2304,25 +2683,18 @@ workflows:
             - build-docs
           filters: *any-upstream
 
+      - upload-docs-search-index:
+          requires:
+            - build-docs
+          context: determined-production
+          filters:
+            branches:
+              only:
+                - main
+
       - test-debian-packaging:
           requires:
             - package-and-push-system-local
-
-      - test-e2e:
-          name: test-e2e-tf2
-          requires:
-            - build-go
-          parallelism: 1
-          tf2: true
-          mark: "tensorflow2_cpu"
-
-      - test-e2e:
-          name: test-e2e-tf1
-          requires:
-            - build-go
-          parallelism: 1
-          tf1: true
-          mark: "tensorflow1_cpu"
 
       - test-e2e:
           name: test-e2e-cpu
@@ -2589,6 +2961,21 @@ workflows:
               slot-resource-requests-cpu: [7]
               accel-node-taints: ["accel=truth:NoSchedule"]
 
+  test-e2e-quarantined:
+    jobs:
+      - build-proto
+      - build-helm
+      - build-react:
+          dev-mode: true
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - package-and-push-system-local:
+          requires:
+            - build-react
+            - build-docs
+
       - test-stress:
           name: test-stress
           filters: *any-upstream
@@ -2610,30 +2997,7 @@ workflows:
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
 
-  test-e2e-quarantined:
-    jobs:
-      - build-proto
-      - build-helm
-      - build-react:
-          dev-mode: true
-      - build-docs:
-          requires:
-            - build-helm
-            - build-proto
-      - package-and-push-system-local:
-          requires:
-            - build-react
-            - build-docs
-
-      - test-det-deploy:
-          name: test-det-deploy-local-quarantine
-          requires:
-            - package-and-push-system-local
-          matrix:
-            parameters:
-              parallelism: [1]
-              mark: ["det_deploy_local_quarantine"]
-              det-version: [$CIRCLE_SHA1]
+      - test-unit-react-quarantined
 
   test-e2e-longrunning:
     jobs:
@@ -3026,7 +3390,7 @@ workflows:
           context: aws
           matrix:
             parameters:
-              cluster-id-prefix: ["mmdetection"]
+              cluster-id-prefix: ["mmdet"]
               mark: ["model_hub_mmdetection"]
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
@@ -3036,7 +3400,7 @@ workflows:
           context: aws
           matrix:
             parameters:
-              cluster-id-prefix: ["mmdetection-quarantine"]
+              cluster-id-prefix: ["mmdet-quarantine"]
               mark: ["model_hub_mmdetection_quarantine"]
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
@@ -3093,6 +3457,12 @@ workflows:
             - build-helm
             - build-proto
 
+      - upload-docs-search-index:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-and-rc-filters
+
       - package-and-push-system-rc:
           requires:
             - build-react
@@ -3104,7 +3474,7 @@ workflows:
           name: publish-python-package-rc
           matrix:
             parameters:
-              path: ["harness", "common", "cli", "deploy", "model_hub"]
+              path: ["harness", "model_hub"]
           context: determined-production
           filters: *rc-filters
           requires:
@@ -3121,7 +3491,7 @@ workflows:
           name: publish-python-package-release
           matrix:
             parameters:
-              path: ["harness", "common", "cli", "deploy", "model_hub"]
+              path: ["harness", "model_hub"]
           context: determined-production
           filters: *release-filters
           requires:

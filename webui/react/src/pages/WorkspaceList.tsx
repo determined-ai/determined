@@ -4,12 +4,15 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
+import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
+import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
+import Spinner from 'components/Spinner';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -23,24 +26,21 @@ import {
 } from 'components/Table/Table';
 import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import usePolling from 'hooks/usePolling';
+import usePrevious from 'hooks/usePrevious';
+import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import usePrevious from 'shared/hooks/usePrevious';
-import { isEqual } from 'shared/utils/data';
-import { validateDetApiEnum } from 'shared/utils/service';
 import userStore from 'stores/users';
 import { Workspace } from 'types';
+import { isEqual } from 'utils/data';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { validateDetApiEnum } from 'utils/service';
 
 import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
-import css from './WorkspaceList.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   WhoseWorkspaces,
@@ -100,10 +100,13 @@ const WorkspaceList: React.FC = () => {
     fetchWorkspaces();
   }, [fetchWorkspaces]);
 
-  const handleViewSelect = useCallback(
+  const handleWhoseSelect = useCallback(
     (value: unknown) => {
       setIsLoading(true);
-      updateSettings({ whose: value as WhoseWorkspaces | undefined });
+      updateSettings({
+        tableOffset: settingsConfig.settings.tableOffset.defaultValue,
+        whose: value as WhoseWorkspaces,
+      });
     },
     [updateSettings],
   );
@@ -135,11 +138,11 @@ const WorkspaceList: React.FC = () => {
         updateSettings({ user: undefined });
         break;
       case WhoseWorkspaces.Mine:
-        updateSettings({ user: currentUser ? [currentUser.id] : undefined });
+        updateSettings({ user: currentUser ? [currentUser.id.toString()] : undefined });
         break;
       case WhoseWorkspaces.Others:
         updateSettings({
-          user: users.filter((u) => u.id !== currentUser?.id).map((u) => u.id),
+          user: users.filter((u) => u.id !== currentUser?.id).map((u) => u.id.toString()),
         });
         break;
     }
@@ -249,17 +252,13 @@ const WorkspaceList: React.FC = () => {
   const actionDropdown = useCallback(
     ({
       record,
-      onVisibleChange,
       children,
     }: {
       children: React.ReactNode;
       onVisibleChange?: (visible: boolean) => void;
       record: Workspace;
     }) => (
-      <WorkspaceActionDropdown
-        workspace={record}
-        onComplete={fetchWorkspaces}
-        onVisibleChange={onVisibleChange}>
+      <WorkspaceActionDropdown isContextMenu workspace={record} onComplete={fetchWorkspaces}>
         {children}
       </WorkspaceActionDropdown>
     ),
@@ -284,7 +283,7 @@ const WorkspaceList: React.FC = () => {
         );
       case GridListView.List:
         return (
-          <InteractiveTable
+          <InteractiveTable<Workspace, WorkspaceListSettings>
             columns={columns}
             containerRef={pageRef}
             ContextMenu={actionDropdown}
@@ -300,7 +299,7 @@ const WorkspaceList: React.FC = () => {
             rowKey="id"
             settings={settings}
             size="small"
-            updateSettings={updateSettings as UpdateSettings}
+            updateSettings={updateSettings}
           />
         );
     }
@@ -332,7 +331,12 @@ const WorkspaceList: React.FC = () => {
 
   return (
     <Page
-      className={css.base}
+      breadcrumb={[
+        {
+          breadcrumbName: 'Workspaces',
+          path: paths.workspaceList(),
+        },
+      ]}
       containerRef={pageRef}
       id="workspaces"
       options={
@@ -341,21 +345,29 @@ const WorkspaceList: React.FC = () => {
         </Button>
       }
       title="Workspaces">
-      <div className={css.controls}>
-        <Select value={settings.whose} width={180} onSelect={handleViewSelect}>
-          <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
-          <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
-          <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
-        </Select>
-        <Space wrap>
-          <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
-          <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
-            <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
-            <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
+      <Columns page>
+        <Column>
+          <Select value={settings.whose} width={180} onSelect={handleWhoseSelect}>
+            <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
+            <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
+            <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
           </Select>
-          {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
-        </Space>
-      </div>
+        </Column>
+        <Column align="right">
+          <Space wrap>
+            <Toggle
+              checked={settings.archived}
+              label="Show Archived"
+              onChange={switchShowArchived}
+            />
+            <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
+              <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
+              <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
+            </Select>
+            {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
+          </Space>
+        </Column>
+      </Columns>
       <Spinner spinning={isLoading}>
         {workspaces.length !== 0 ? (
           workspacesList

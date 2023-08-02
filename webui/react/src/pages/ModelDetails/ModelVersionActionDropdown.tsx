@@ -1,90 +1,71 @@
-import { Dropdown } from 'antd';
-import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
+import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import Button from 'components/kit/Button';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
 import usePermissions from 'hooks/usePermissions';
-import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
-import Icon from 'shared/components/Icon';
-import { ValueOf } from 'shared/types';
 import { ModelVersion } from 'types';
 
 interface Props {
   children?: React.ReactNode;
   className?: string;
   direction?: 'vertical' | 'horizontal';
+  isContextMenu?: boolean;
   onDelete?: () => void;
   onDownload?: () => void;
-  onVisibleChange?: (visible: boolean) => void;
-  trigger?: ('click' | 'hover' | 'contextMenu')[];
   version: ModelVersion;
 }
 
-const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
+const MenuKey = {
+  DeleteVersion: 'delete-version',
+  Download: 'download',
+} as const;
 
 const ModelVersionActionDropdown: React.FC<Props> = ({
   children,
   className,
   direction = 'vertical',
+  isContextMenu,
   onDelete,
   onDownload,
-  onVisibleChange,
-  trigger,
   version,
 }: Props) => {
-  const handleDownloadClick = useCallback(() => onDownload?.(), [onDownload]);
-
-  const handleDeleteClick = useCallback(() => onDelete?.(), [onDelete]);
-
   const { canDeleteModelVersion } = usePermissions();
 
-  const ModelVersionActionMenu: DropDownProps['menu'] = useMemo(() => {
-    const MenuKey = {
-      DeleteVersion: 'delete-version',
-      Download: 'download',
-    } as const;
-
-    const funcs = {
-      [MenuKey.Download]: () => {
-        handleDownloadClick();
-      },
-      [MenuKey.DeleteVersion]: () => {
-        handleDeleteClick();
-      },
-    };
-
-    const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as ValueOf<typeof MenuKey>]();
-    };
-
-    const menuItems: MenuProps['items'] = [{ key: MenuKey.Download, label: 'Download' }];
+  const dropdownMenu = useMemo(() => {
+    const menuItems: MenuItem[] = [{ key: MenuKey.Download, label: 'Download' }];
     if (canDeleteModelVersion({ modelVersion: version })) {
       menuItems.push({ danger: true, key: MenuKey.DeleteVersion, label: 'Deregister Version' });
     }
+    return menuItems;
+  }, [canDeleteModelVersion, version]);
 
-    return { items: menuItems, onClick: onItemClick };
-  }, [handleDeleteClick, handleDownloadClick, canDeleteModelVersion, version]);
+  const handleDropdown = useCallback(
+    (key: string) => {
+      switch (key) {
+        case MenuKey.DeleteVersion:
+          onDelete?.();
+          break;
+        case MenuKey.Download:
+          onDownload?.();
+          break;
+      }
+    },
+    [onDelete, onDownload],
+  );
 
   return children ? (
-    <Dropdown
-      menu={ModelVersionActionMenu}
-      placement="bottomLeft"
-      trigger={trigger ?? ['contextMenu', 'click']}
-      onOpenChange={onVisibleChange}>
+    <Dropdown isContextMenu={isContextMenu} menu={dropdownMenu} onClick={handleDropdown}>
       {children}
     </Dropdown>
   ) : (
-    <div
-      className={[css.base, className].join(' ')}
-      title="Open actions menu"
-      onClick={stopPropagation}>
-      <Dropdown
-        menu={ModelVersionActionMenu}
-        placement="bottomRight"
-        trigger={trigger ?? ['click']}>
-        <Button type="text" onClick={stopPropagation}>
-          <Icon name={`overflow-${direction}`} />
-        </Button>
+    <div className={[css.base, className].join(' ')} title="Open actions menu">
+      <Dropdown menu={dropdownMenu} placement="bottomRight" onClick={handleDropdown}>
+        <Button
+          icon={<Icon name={`overflow-${direction}`} size="small" title="Action menu" />}
+          type="text"
+        />
       </Dropdown>
     </div>
   );

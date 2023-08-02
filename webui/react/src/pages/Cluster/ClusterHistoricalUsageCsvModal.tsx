@@ -2,9 +2,9 @@ import { DatePicker, Form, Modal, Select } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React from 'react';
 
+import Icon from 'components/kit/Icon';
 import { handlePath, serverAddress } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 
 const { Option } = Select;
 
@@ -81,7 +81,7 @@ const ClusterHistoricalUsageCsvModal: React.FC<Props> = ({
           <Select
             showSearch={false}
             style={{ maxWidth: '150px' }}
-            suffixIcon={<Icon name="arrow-down" size="tiny" />}>
+            suffixIcon={<Icon name="arrow-down" size="tiny" title="Open" />}>
             <Option value={CSVGroupBy.Workloads}>Workloads</Option>
             <Option value={CSVGroupBy.Allocations}>Allocations</Option>
           </Select>

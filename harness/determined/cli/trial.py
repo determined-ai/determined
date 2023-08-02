@@ -12,10 +12,10 @@ from termcolor import colored
 from determined import cli
 from determined.cli import render
 from determined.cli.master import format_log_entry
-from determined.common import api, constants
+from determined.common import api
 from determined.common.api import authentication, bindings
-from determined.common.declarative_argparse import Arg, Cmd, Group
-from determined.common.experimental import Determined
+from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
+from determined.experimental import Determined
 
 from .checkpoint import render_checkpoint
 
@@ -26,10 +26,6 @@ def _workload_container_unpack(
     result = container.training or container.validation or container.checkpoint
     assert result is not None
     return result
-
-
-def _format_state(state: Union[bindings.checkpointv1State, bindings.experimentv1State]) -> str:
-    return str(state.value).replace("STATE_", "")
 
 
 def _format_validation(validation: Optional[bindings.v1MetricsWorkload]) -> Optional[str]:
@@ -43,14 +39,16 @@ def _format_checkpoint(checkpoint: Optional[bindings.v1CheckpointWorkload]) -> L
     if not checkpoint:
         return [None, None, None]
 
-    state = _format_state(checkpoint.state)
-    if state in (constants.COMPLETED, constants.DELETED):
+    if checkpoint.state in (
+        bindings.checkpointv1State.COMPLETED,
+        bindings.checkpointv1State.DELETED,
+    ):
         return [
-            state,
+            checkpoint.state,
             checkpoint.uuid,
             json.dumps(checkpoint.metadata, indent=4),
         ]
-    elif state in (constants.ACTIVE, constants.ERROR):
+    elif checkpoint.state in (bindings.checkpointv1State.ACTIVE, bindings.checkpointv1State.ERROR):
         return [checkpoint.state, None, json.dumps(checkpoint.metadata, indent=4)]
     else:
         raise AssertionError("Invalid checkpoint state: {}".format(checkpoint.state))
@@ -115,7 +113,7 @@ def describe_trial(args: Namespace) -> None:
     if args.json:
         data = trial_response.to_json()
         data["workloads"] = [w.to_json() for w in workloads]
-        print(json.dumps(data, indent=4))
+        render.print_json(data)
         return
 
     # Print information about the trial itself.
@@ -144,10 +142,13 @@ def describe_trial(args: Namespace) -> None:
     print("Workloads:")
     render.tabulate_or_csv(headers, values, args.csv)
 
+    if args.metrics_summary:
+        render.print_json(trial_response.trial.summaryMetrics)
+
 
 def download(args: Namespace) -> None:
     checkpoint = (
-        Determined(args.master, None)
+        Determined(args.master, args.user)
         .get_trial(args.trial_id)
         .select_checkpoint(
             latest=args.latest,
@@ -191,7 +192,8 @@ def trial_logs(args: Namespace) -> None:
             timestamp_after=args.timestamp_after,
         )
         if args.json:
-            api.print_json_logs(logs)
+            for log in logs:
+                render.print_json(log.to_json())
         else:
             api.pprint_logs(logs)
     finally:
@@ -281,7 +283,7 @@ def create_json_file_in_dir(content: Any, file_path: str) -> None:
         json.dump(content, f)
 
 
-logs_args_description = [
+logs_args_description: ArgsDescription = [
     Arg(
         "-f",
         "--follow",
@@ -347,9 +349,9 @@ logs_args_description = [
         action="append",
         help="output stream to show logs from (repeat for multiple values)",
     ),
-]  # type: List[Any]
+]
 
-args_description = [
+args_description: ArgsDescription = [
     Cmd(
         "t|rial",
         None,
@@ -361,6 +363,11 @@ args_description = [
                 "describe trial",
                 [
                     Arg("trial_id", type=int, help="trial ID"),
+                    Arg(
+                        "--metrics-summary",
+                        action="store_true",
+                        help="display summary of metrics",
+                    ),
                     Arg(
                         "--metrics",
                         action="store_true",
@@ -451,12 +458,12 @@ args_description = [
                 [
                     Arg("trial_id", type=int, help="trial ID"),
                     cli.output_format_args["json"],
-                ]
-                + logs_args_description,
+                    *logs_args_description,
+                ],
             ),
             Cmd(
                 "kill", kill_trial, "forcibly terminate a trial", [Arg("trial_id", help="trial ID")]
             ),
         ],
     ),
-]  # type: List[Any]
+]

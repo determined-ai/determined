@@ -3,11 +3,14 @@ import { default as MarkdownViewer } from 'markdown-to-jsx';
 import React, { useMemo } from 'react';
 
 import Pivot from 'components/kit/Pivot';
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'components/Spinner/Spinner';
+import useResize from 'hooks/useResize';
+import handleError from 'utils/error';
+import { Loaded } from 'utils/loadable';
 
 import css from './Markdown.module.scss';
 
-const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
+const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 
 interface Props {
   disabled?: boolean;
@@ -48,6 +51,7 @@ const Markdown: React.FC<Props> = ({
   onChange,
   onClick,
 }: Props) => {
+  const resize = useResize();
   const tabItems: TabsProps['items'] = useMemo(() => {
     return [
       {
@@ -59,21 +63,11 @@ const Markdown: React.FC<Props> = ({
                   <Spinner tip="Loading text editor..." />
                 </div>
               }>
-              <MonacoEditor
-                defaultValue={markdown}
-                language="markdown"
-                options={{
-                  folding: false,
-                  hideCursorInOverviewRuler: true,
-                  lineDecorationsWidth: 8,
-                  lineNumbersMinChars: 4,
-                  occurrencesHighlight: false,
-                  quickSuggestions: false,
-                  renderLineHighlight: 'none',
-                  wordWrap: 'on',
-                }}
-                width="100%"
+              <CodeEditor
+                files={[{ content: Loaded(markdown), key: 'input.md' }]}
+                height={`${resize.height - 420}px`}
                 onChange={onChange}
+                onError={handleError}
               />
             </React.Suspense>
           </div>
@@ -87,7 +81,7 @@ const Markdown: React.FC<Props> = ({
         label: 'Preview',
       },
     ];
-  }, [markdown, onChange, onClick]);
+  }, [markdown, onChange, onClick, resize]);
 
   return (
     <div aria-label="markdown-editor" className={css.base} tabIndex={0}>
