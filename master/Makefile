@@ -114,6 +114,24 @@ check: check-gen
 	git diff --quiet go.mod go.sum
 	golangci-lint --build-tags integration run -v --timeout 10m
 
+.PHONY: check-all
+check-all: check check-sql
+
+.PHONY: fmt-sql
+fmt-sql:
+	# there are complaints from this tool that cannot be auto-fixed
+	# and we ignore them for now.
+	# exclude old migrations before 2023/08/01
+	find . -name "*.sql" | grep -Ev 'migrations\/202([0-2].*|30[0-7])' | xargs sqlfluff format -p 0 --dialect postgres > /dev/null || exit 0
+	# sqlfluff fix -p 0 --dialect postgres . || exit 0
+
+.PHONY: check-sql
+check-sql:
+	$(MAKE) fmt-sql
+	# Checking that automatically fixable formatting is applied to all sql files
+	# by running `make fmt-sql`.
+	test -z "$(shell git status --porcelain './static/*')"
+
 .PHONY: fmt
 fmt:
 	goimports -l -local github.com/determined-ai -w .
