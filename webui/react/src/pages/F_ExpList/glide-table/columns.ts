@@ -467,9 +467,9 @@ const getHeatmapPercentage = (min: number, max: number, value: number): number =
 
 const getHeatmapColor = (min: number, max: number, value: number): string => {
   const p = getHeatmapPercentage(min, max, value);
-  const red = [120, 227];
-  const green = [169, 139];
-  const blue = [203, 126];
+  const red = [44, 222];
+  const green = [119, 66];
+  const blue = [176, 91];
   return `rgb(${red[0] + (red[1] - red[0]) * p}, ${green[0] + (green[1] - green[0]) * p}, ${
     blue[0] + (blue[1] - blue[0]) * p
   })`;
