@@ -1,5 +1,5 @@
 WITH const AS (
-    SELECT tstzrange($1 :: timestamptz, $2 :: timestamptz) AS period
+    SELECT tstzrange($1::timestamptz, $2::timestamptz) AS period
 ),
 
 -- Workloads that had any overlap with the target interval, along with the length of the overlap of
@@ -90,8 +90,8 @@ workloads AS (
                                 task_stats.end_time
                             FROM
                                 task_stats, trials, allocations
-                            WHERE 
-                                task_stats.event_type = 'IMAGEPULL' 
+                            WHERE
+                                task_stats.event_type = 'IMAGEPULL'
                                 AND allocations.allocation_id
                                 = task_stats.allocation_id
                                 AND allocations.task_id = trials.task_id
@@ -115,7 +115,7 @@ SELECT
     experiments.owner_id AS user_id,
     (
         experiments.config -> 'resources' ->> 'slots_per_trial'
-    ) :: smallint AS slots,
+    )::smallint AS slots,
     experiments.config -> 'labels' AS labels,
     workloads.start_time,
     workloads.end_time,
@@ -129,7 +129,7 @@ WHERE
     workloads.trial_id = trials.id
     AND trials.experiment_id = experiments.id
     AND experiments.owner_id = users.id
-UNION 
+UNION
 SELECT
     NULL AS experiment_id,
     'agent' AS kind,
@@ -149,7 +149,7 @@ SELECT
 FROM
     agent_stats, const
 WHERE const.period && tstzrange(start_time, end_time)
-UNION 
+UNION
 SELECT
     NULL AS experiment_id,
     'instance' AS kind,

@@ -1,6 +1,6 @@
 WITH const AS (
-    SELECT 
-        $1 :: timestamptz
+    SELECT
+        $1::timestamptz
         AS target_date
 ),
 
@@ -12,13 +12,13 @@ day_agg AS (
             extract(
                 EPOCH
                 FROM task_stats.end_time - task_stats.start_time
-            ) 
+            )
         ) AS seconds
     FROM task_stats, const, allocations
-    WHERE 
+    WHERE
         allocations.allocation_id = task_stats.allocation_id
-        AND task_stats.end_time >= const.target_date 
-        AND task_stats.end_time < (const.target_date + interval '1 day') 
+        AND task_stats.end_time >= const.target_date
+        AND task_stats.end_time < (const.target_date + interval '1 day')
         AND event_type = 'QUEUED'
     GROUP BY allocations.resource_pool
 ),
@@ -31,12 +31,12 @@ total_agg AS (
             extract(
                 EPOCH
                 FROM end_time - start_time
-            ) 
+            )
         ), 0) AS seconds
     FROM task_stats, const
-    WHERE 
-        end_time >= const.target_date 
-        AND end_time < (const.target_date + interval '1 day') 
+    WHERE
+        end_time >= const.target_date
+        AND end_time < (const.target_date + interval '1 day')
         AND event_type = 'QUEUED'
 ),
 

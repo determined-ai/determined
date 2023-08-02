@@ -1,11 +1,11 @@
 WITH const AS (
-    SELECT daterange($1 :: date, $2 :: date, '[]') AS period
+    SELECT daterange($1::date, $2::date, '[]') AS period
 ),
 
 months AS (
     SELECT
         date_trunc(
-            'month', resource_aggregates.date :: date
+            'month', resource_aggregates.date::date
         ) AT TIME ZONE 'UTC' AS period_start,
         aggregation_type,
         resource_aggregates.aggregation_key,
@@ -18,7 +18,7 @@ months AS (
         const.period @> resource_aggregates.date
     GROUP BY
         date_trunc(
-            'month', resource_aggregates.date :: date
+            'month', resource_aggregates.date::date
         ) AT TIME ZONE 'UTC',
         resource_aggregates.aggregation_type,
         resource_aggregates.aggregation_key

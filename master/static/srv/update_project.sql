@@ -12,7 +12,7 @@ WITH pe AS (
 p AS (
     UPDATE projects SET name = $2, description = $3
     WHERE projects.id = $1
-    RETURNING projects.*
+    RETURNING projects . *
 ),
 
 u AS (

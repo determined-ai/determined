@@ -1,8 +1,8 @@
 WITH const AS (
     SELECT
         tstzrange(
-            $1 :: timestamptz,
-            ($1 :: timestamptz + interval '1 day')
+            $1::timestamptz,
+            ($1::timestamptz + interval '1 day')
         ) AS period
 ),
 
@@ -16,7 +16,7 @@ allocs_in_range AS (
             FROM
             -- `*` computes the intersection of the two ranges.
             upper(const.period * a.range) - lower(const.period * a.range)
-        ) * a.slots :: float AS seconds
+        ) * a.slots::float AS seconds
     FROM
         (
             SELECT
@@ -70,7 +70,7 @@ label_agg AS (
                 id,
                 jsonb_array_elements(
                     CASE
-                        WHEN config ->> 'labels' IS NULL THEN '[]' :: jsonb
+                        WHEN config ->> 'labels' IS NULL THEN '[]'::jsonb
                         ELSE config -> 'labels'
                     END
                 ) AS label

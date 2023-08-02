@@ -1,10 +1,10 @@
 WITH const AS (
-    SELECT daterange($1 :: date, $2 :: date, '[]') AS period
+    SELECT daterange($1::date, $2::date, '[]') AS period
 ),
 
 days AS (
     SELECT
-        resource_aggregates.date :: date AS period_start,
+        resource_aggregates.date::date AS period_start,
         aggregation_type,
         resource_aggregates.aggregation_key,
         seconds
