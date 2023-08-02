@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -42,6 +43,10 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
+)
+
+const (
+	maxConcurrentTrialOps = 16
 )
 
 // Experiment-specific actor messages.
@@ -102,6 +107,8 @@ type (
 
 	experiment struct {
 		experimentState
+
+		trials map[model.RequestID]*trial
 
 		*model.Experiment
 		activeConfig        expconf.ExperimentConfig
@@ -169,7 +176,6 @@ func newExperiment(
 		}
 	}
 	resources.SetResourcePool(poolName)
-
 	activeConfig.SetResources(resources)
 
 	method := searcher.NewSearchMethod(activeConfig.Searcher())
@@ -210,6 +216,8 @@ func newExperiment(
 		rm:                  m.rm,
 		searcher:            search,
 		warmStartCheckpoint: checkpoint,
+
+		trials: map[model.RequestID]*trial{},
 
 		taskSpec:      taskSpec,
 		generatedKeys: generatedKeys,
@@ -327,7 +335,20 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		state.Complete = true
 		e.TrialSearcherState[msg.op.RequestID] = state
-		ctx.Tell(ctx.Child(msg.op.RequestID), state)
+
+		t, ok := e.trials[msg.op.RequestID]
+		if !ok {
+			ctx.Log().Warnf("missing trial to propogate complete op: %s", msg.op.RequestID)
+			return nil
+		}
+
+		err := t.PatchSearcherState(state)
+		if err != nil {
+			ctx.Log().WithError(err).Error("patching trial search state")
+			ctx.Tell(ctx.Self(), trialClosed{requestID: msg.op.RequestID})
+			return nil
+		}
+
 		ops, err := e.searcher.ValidationCompleted(msg.requestID, msg.metric, msg.op)
 		e.processOperations(ctx, ops, err)
 	case trialReportEarlyExit:
@@ -336,11 +357,23 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(api.AsValidationError("trial has no state"))
 			return nil
 		}
-
 		state.Complete = true
 		state.Closed = true
 		e.TrialSearcherState[msg.requestID] = state
-		ctx.Tell(ctx.Child(msg.requestID), state)
+
+		t, ok := e.trials[msg.requestID]
+		if !ok {
+			ctx.Log().Warnf("missing trial to propogate complete op: %s", msg.requestID)
+			return nil
+		}
+
+		err := t.PatchSearcherState(state)
+		if err != nil {
+			ctx.Log().WithError(err).Error("patching trial search state")
+			ctx.Tell(ctx.Self(), trialClosed{requestID: msg.requestID})
+			return nil
+		}
+
 		ops, err := e.searcher.TrialExitedEarly(msg.requestID, msg.reason)
 		e.processOperations(ctx, ops, err)
 	case trialReportProgress:
@@ -356,13 +389,22 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return nil
 		}
 		ctx.Respond(state)
-	case actor.ChildFailed:
-		ctx.Log().WithError(msg.Error).Error("trial failed unexpectedly")
-		e.trialClosed(ctx, model.MustParseRequestID(msg.Child.Address().Local()))
-	case actor.ChildStopped:
-		e.trialClosed(ctx, model.MustParseRequestID(msg.Child.Address().Local()))
 	case trialClosed:
 		e.trialClosed(ctx, msg.requestID)
+	case userInitiatedEarlyExit:
+		ref, ok := e.trials[msg.requestID]
+		if !ok {
+			ctx.Respond(fmt.Errorf("no such trial: %s", msg.requestID))
+			return nil
+		}
+
+		err := ref.SetUserInitiatedEarlyExit(msg)
+		if err != nil {
+			ctx.Log().WithError(err).Error("setting user initiated early exit")
+			ctx.Tell(ctx.Self(), trialClosed{requestID: msg.requestID})
+			ctx.Respond(err)
+			return nil
+		}
 
 	// Patch experiment messages.
 	case model.StateWithReason:
@@ -694,10 +736,17 @@ func (e *experiment) processOperations(
 			config := schemas.Copy(e.activeConfig)
 			state := trialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
-			ctx.ActorOf(op.RequestID, newTrial(
+			t, err := newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
-			))
+				nil, false, ctx.Self().System(), ctx.Self(),
+			)
+			if err != nil {
+				ctx.Log().WithError(err).Error("failed to create trial")
+				ctx.Tell(ctx.Self(), trialClosed{requestID: op.RequestID})
+				continue
+			}
+			e.trials[op.RequestID] = t
 		case searcher.ValidateAfter:
 			state := e.TrialSearcherState[op.RequestID]
 			state.Op = op
@@ -738,12 +787,18 @@ func (e *experiment) processOperations(
 	}
 
 	for requestID := range updatedTrials {
-		ref := ctx.Child(requestID)
-		if ref == nil {
+		t, ok := e.trials[requestID]
+		if !ok {
 			ctx.Log().Errorf("invalid request ID: %v", requestID)
 			continue
 		}
-		ctx.Tell(ctx.Child(requestID), e.TrialSearcherState[requestID])
+
+		err := t.PatchSearcherState(e.TrialSearcherState[requestID])
+		if err != nil {
+			ctx.Log().WithError(err).Error("updating trial search state")
+			ctx.Tell(ctx.Self(), trialClosed{requestID: requestID})
+			continue
+		}
 	}
 }
 
@@ -803,7 +858,22 @@ func (e *experiment) updateState(ctx *actor.Context, state model.StateWithReason
 	}
 
 	ctx.Log().Infof("experiment state changed to %s", state.State)
-	ctx.TellAll(state, ctx.Children()...)
+
+	var g errgroup.Group
+	g.SetLimit(maxConcurrentTrialOps)
+	for rID, t := range e.trials {
+		rID, t := rID, t
+		g.Go(func() error {
+			err := t.PatchState(state)
+			if err != nil {
+				ctx.Log().WithError(err).Error("patching trial state")
+				ctx.Tell(ctx.Self(), trialClosed{requestID: rID})
+			}
+			return nil
+		})
+	}
+	_ = g.Wait() // Errors are handled in g.Go.
+
 	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
 		ctx.Log().Errorf("error saving experiment state: %s", err)
 	}
@@ -949,7 +1019,7 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	rp, err := e.rm.ResolveResourcePool(
-		ctx, msg.ResourcePool, workspaceID, e.activeConfig.Resources().SlotsPerTrial(),
+		ctx.Self().System(), msg.ResourcePool, workspaceID, e.activeConfig.Resources().SlotsPerTrial(),
 	)
 	switch {
 	case err != nil:
@@ -969,7 +1039,17 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 
 	// TODO revert the change like the other setters
 	// also change to ask all?
-	ctx.TellAll(sproto.ChangeRP{ResourcePool: rp}, ctx.Children()...)
+	// for rID, t := range e.trials
+	var g errgroup.Group
+	g.SetLimit(maxConcurrentTrialOps)
+	for _, t := range e.trials {
+		t := t
+		g.Go(func() error {
+			t.PatchRP(rp)
+			return nil
+		})
+	}
+	_ = g.Wait() // Errors handled in g.Go.
 
 	return nil
 }
