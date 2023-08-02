@@ -72,6 +72,9 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ] || [ "$DET_NO_FLUENT" == "true" ]; t
         fi
     fi
 
+    # Intercept stdout/stderr and send content to DET_MASTER via the log API.
+    # When completed, write a single character to the DET_LOG_WAIT_FIFO to signal
+    # completion of one procesor.
     exec 1> >(
         "$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stdout >&1
         printf x >$DET_LOG_WAIT_FIFO
@@ -105,6 +108,9 @@ fi
 # displays, here we simply replace them all with newlines to get a reasonable
 # effect in those cases. This must be after the multilog exec, since exec
 # redirections are applied in reverse order.
+#
+# When completed, write a single character to the DET_LOG_WAIT_FIFO to signal
+# completion of one procesor.
 exec > >(
     stdbuf -o0 tr '\r' '\n'
     printf x >$DET_LOG_WAIT_FIFO
@@ -115,4 +121,5 @@ exec > >(
 
 ((DET_LOG_WAIT_COUNT += 2))
 
+# As shell exits, wait for stdout/stderr processors to complete
 trap 'source /run/determined/task-logging-teardown.sh' EXIT
