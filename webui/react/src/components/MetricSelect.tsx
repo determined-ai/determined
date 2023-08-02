@@ -3,15 +3,10 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import Select, { OptGroup, Option, SelectValue } from 'components/kit/Select';
 import { Metric } from 'types';
-import {
-  getMetricName,
-  metricKeyToMetric,
-  metricSorter,
-  metricToKey,
-  metricWithTypeToKey,
-} from 'utils/metric';
+import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
 
 import BadgeTag from './BadgeTag';
+import MetricBadgeTag from './MetricBadgeTag';
 
 const allOptionId = 'ALL_RESULTS';
 const resetOptionId = 'RESET_RESULTS';
@@ -163,13 +158,12 @@ const MetricSelect: React.FC<Props> = ({
       {multiple && visibleMetrics.length > 1 && allOption}
       {metricsByType.map((group) => (
         <OptGroup key={group.type} label={group.type}>
-          {group.metrics.map((metric) => {
-            const value = metricWithTypeToKey(metric, group.type);
+          {group.metrics.map((metricName) => {
+            const metric = { name: metricName, type: group.type };
+            const value = metricToKey(metric);
             return (
               <Option key={value} value={value}>
-                <BadgeTag label={getMetricName(metric)} tooltip={group.type}>
-                  {group.type.substring(0, 1).toUpperCase()}
-                </BadgeTag>
+                <MetricBadgeTag metric={metric} />
               </Option>
             );
           })}

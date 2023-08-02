@@ -79,12 +79,9 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       return null;
     };
 
-    const metricRenderer = (metricName: OldMetric) => {
-      const metricCol = (_: string, record: Step) => {
-        const value = extractMetricValue(record, metricName);
-        return <HumanReadableNumber num={value} />;
-      };
-      return metricCol;
+    const metricRenderer = (metricName: OldMetric) => (_: string, record: Step) => {
+      const value = extractMetricValue(record, metricName);
+      return <HumanReadableNumber num={value} />;
     };
 
     const { metric, smallerIsBetter } = experiment?.config?.searcher || {};

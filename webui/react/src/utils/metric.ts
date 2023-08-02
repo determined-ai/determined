@@ -1,7 +1,6 @@
 import { OldMetric, RecordKey } from 'types';
 import { Metric, MetricType, WorkloadGroup } from 'types';
-
-import { alphaNumericSorter } from '../utils/sort';
+import { alphaNumericSorter } from 'utils/sort';
 
 export const METRIC_KEY_DELIMITER = '||||';
 export const METRIC_API_DELIMITER = '/';
@@ -60,7 +59,7 @@ export const extractMetricValue = (
   metric: OldMetric,
 ): number | undefined => {
   const source = workload[metric.type]?.metrics ?? {};
-  return source[metricToKey(metric)];
+  return source[metric.name];
 };
 
 export const getMetricValue = (
@@ -71,9 +70,16 @@ export const getMetricValue = (
   return workload?.metrics[metric];
 };
 
-export const getMetricName = (metric: string): string => {
-  const position = metric.indexOf(METRIC_API_DELIMITER);
-  return position !== -1 ? metric.substring(position + METRIC_API_DELIMITER.length) : metric;
+/**
+ * When a metric is of custom type, the group is part of the metric name.
+ * This is a utility to parse out the group type for displaying when we show
+ * metric type separately.
+ */
+export const getMetricName = (metricName: string): string => {
+  const position = metricName.indexOf(METRIC_API_DELIMITER);
+  return position !== -1
+    ? metricName.substring(position + METRIC_API_DELIMITER.length)
+    : metricName;
 };
 
 export const isMetric = (metric?: Metric): metric is Metric => metric !== undefined;
@@ -92,10 +98,6 @@ export const metricToKey = (metric: Metric): string => {
   } catch (e) {
     return `${metric.type}${METRIC_KEY_DELIMITER}${metric.name}`;
   }
-};
-
-export const metricWithTypeToKey = (metric: string, type: string): string => {
-  return metricToKey({ name: metric, type });
 };
 
 export const metricKeyToMetric = (value: string): Metric => {

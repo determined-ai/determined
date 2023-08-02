@@ -85,9 +85,7 @@ const TrialChart: React.FC<Props> = ({
 
       const summary = Loadable.getOrElse([], trialSummary);
       const mWrapper = summary.find((mContainer) => mContainer.type === metric.type);
-      if (!mWrapper?.data) {
-        return;
-      }
+      if (!mWrapper?.data) return;
 
       mWrapper.data.forEach((avgMetrics) => {
         if (avgMetrics.values[metric.name] || avgMetrics.values[metric.name] === 0) {
