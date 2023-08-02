@@ -9,9 +9,9 @@ import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName, IconSize } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import Spinner from 'components/kit/Spinner';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
-import Spinner from 'components/Spinner/Spinner';
 import UserSettings from 'components/UserSettings';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
@@ -351,7 +351,7 @@ const NavigationSideBar: React.FC = () => {
                     )}
                   </ul>
                 ),
-                NotLoaded: () => <Spinner center />,
+                NotLoaded: () => <Spinner center spinning />,
               })}
             </section>
             <section className={css.bottom}>

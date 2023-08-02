@@ -27,6 +27,7 @@ pre-commit~=2.20
 pyzmq>=23.2.1
 devcluster>=1,<2
 coverage
+sqlfluff==2.1.1
 # typeshed
 types-certifi
 types-chardet

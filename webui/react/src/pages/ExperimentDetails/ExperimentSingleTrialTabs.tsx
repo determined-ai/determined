@@ -6,8 +6,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Button from 'components/kit/Button';
 import Notes from 'components/kit/Notes';
 import Pivot from 'components/kit/Pivot';
+import Spinner from 'components/kit/Spinner';
 import Message, { MessageType } from 'components/Message';
-import Spinner from 'components/Spinner/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import useFeature from 'hooks/useFeature';
@@ -238,7 +238,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     const items: TabsProps['items'] = [
       {
         children: waitingForTrials ? (
-          <Spinner spinning={true} tip="Waiting for trials..." />
+          <Spinner spinning tip="Waiting for trials..." />
         ) : wontHaveTrials ? (
           <NeverTrials />
         ) : chartFlagOn ? (

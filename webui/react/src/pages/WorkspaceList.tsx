@@ -8,11 +8,11 @@ import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
+import Spinner from 'components/kit/Spinner';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
-import Spinner from 'components/Spinner';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,

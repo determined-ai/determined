@@ -3,9 +3,9 @@ import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Empty from 'components/kit/Empty';
+import Spinner from 'components/kit/Spinner';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner/Spinner';
 import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';
 import { openOrCreateTensorBoard } from 'services/api';
@@ -378,7 +378,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
           description="Please wait until the experiment is further along."
           message="Not enough data points to plot."
         />
-        <Spinner />
+        <Spinner spinning />
       </div>
     );
   }

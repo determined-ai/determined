@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 
+import Spinner from 'components/kit/Spinner';
 import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
-import Spinner from 'components/Spinner';
 import clusterStore from 'stores/cluster';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';

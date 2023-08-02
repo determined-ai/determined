@@ -2,7 +2,7 @@
 SHELL := bash
 GENERATED := packaging/LICENSE
 GENERATION_INPUTS = ../schemas/gen.py $(shell find ./pkg/schemas/ -name '*.go') $(shell find ../schemas/expconf -name '*.json')
-MOCK_GENERATION_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go ./go.mod ./go.sum
+MOCK_GENERATION_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go ./go.mod ./go.sum ./internal/rm/resource_manager_iface.go ./internal/task/allocation_service_iface.go
 GORELEASER = goreleaser
 
 export VERSION := $(shell cat ../VERSION)
@@ -66,9 +66,11 @@ build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	mockery --name=PodInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename pod_iface.go     
 	mockery --name=EventInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename event_iface.go 
 	mockery --name=NodeInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename node_iface.go 
+	mockery --name=ResourceManager --dir=internal/rm --output internal/mocks --filename rm.go
+	mockery --name=AllocationService --dir=internal/task --output internal/mocks/allocationmocks --filename allocation_service.go --outpkg allocationmocks
 
 	# fmt once since the mocks are not generated formatted.
-	goimports -l -local github.com/determined-ai -w ./internal/mocks
+	goimports -l -local github.com/determined-ai -w ./internal/mocks ./internal/mocks/allocationmocks
 	mkdir -p build
 	touch $@
 
@@ -111,6 +113,24 @@ check: check-gen
 	go mod tidy
 	git diff --quiet go.mod go.sum
 	golangci-lint --build-tags integration run -v --timeout 10m
+
+.PHONY: check-all
+check-all: check check-sql
+
+.PHONY: fmt-sql
+fmt-sql:
+	# there are complaints from this tool that cannot be auto-fixed
+	# and we ignore them for now.
+	# exclude old migrations before 2023/08/01
+	find . -name "*.sql" | grep -Ev 'migrations\/202([0-2].*|30[0-7])' | xargs sqlfluff format -p 0 --dialect postgres > /dev/null || exit 0
+	# sqlfluff fix -p 0 --dialect postgres . || exit 0
+
+.PHONY: check-sql
+check-sql:
+	$(MAKE) fmt-sql
+	# Checking that automatically fixable formatting is applied to all sql files
+	# by running `make fmt-sql`.
+	test -z "$(shell git status --porcelain './static/*')"
 
 .PHONY: fmt
 fmt:

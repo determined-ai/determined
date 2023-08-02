@@ -341,6 +341,8 @@ message GetTrialWorkloadsRequest {
   MetricType metric_type = 8 [deprecated = true];
   // Metric group (training, validation, etc).
   string group = 9;
+  // Remove deleted checkpoints.
+  bool remove_deleted_checkpoints = 10;
 }
 // Response to GetTrialWorkloadsRequest.
 message GetTrialWorkloadsResponse {

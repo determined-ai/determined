@@ -4,11 +4,16 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
+
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -16,7 +21,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/idle"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
@@ -24,116 +28,144 @@ import (
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-type (
-	// Allocation encapsulates all the state of a single allocation.
-	Allocation struct {
-		// System dependencies.
-		db db.DB
-		rm rm.ResourceManager
+const killCooldown = 15 * time.Second
 
-		// The request to create the allocation, essentially our configuration.
-		req sproto.AllocateRequest
-		// The persisted representation.
-		model model.Allocation
-		// The task spec to run.
-		specifier tasks.TaskSpecifier
-
-		// State of all our resources.
-		resources resourcesList
-		// Separates the existence of resources from us having started them.
-		resourcesStarted bool
-		// Tracks the initial container exit, unless we caused the failure by killed the trial.
-		exitErr error
-		// Marks that we intentionally killed the allocation so we can know to
-		// ignore any errors from containers dying. Not set when we kill an already
-		// terminating trial.
-		killedWhileRunning bool
-		// Marks that the trial exited successfully, but we killed some daemon containers.
-		killedDaemons bool
-		// Marks that we killed some daemon containers but after a zero exit.
-		killedDaemonsGracefully bool
-		// We send a kill when we terminate a task forcibly. we terminate forcibly when a container
-		// exits non zero. we don't need to send all these kills, so this exists.
-		killCooldown *time.Time
-		// tracks if we have finished termination.
-		exited bool
-
-		// State for specific sub-behaviors of an allocation.
-		// Encapsulates logic of rendezvousing containers of the currently
-		// allocated task. If there is no current task, or it is unallocated, it is nil.
-		rendezvous *rendezvous
-		// proxy state
-		proxies []string
-		// records whether the allocation has completed any all gathers.
-		allGatherFinished bool
-
-		logCtx          detLogger.Context
-		restored        bool
-		portsRegistered bool
-	}
-
-	// MarkResourcesDaemon marks the given reservation as a daemon. In the event of a normal exit,
-	// the allocation will not wait for it to exit on its own and instead will kill it and instead
-	// await it's hopefully quick termination.
-	MarkResourcesDaemon struct {
-		AllocationID model.AllocationID
-		ResourcesID  sproto.ResourcesID
-	}
-	// AllocationExited summarizes the exit status of an allocation.
-	AllocationExited struct {
-		// userRequestedStop is when a container unexpectedly exits with 0.
-		UserRequestedStop bool
-		Err               error
-		FinalState        AllocationState
-	}
-	// AllocationState requests allocation state. A copy is filled and returned.
-	AllocationState struct {
-		State     model.AllocationState
-		Resources map[sproto.ResourcesID]sproto.ResourcesSummary
-		Ready     bool
-
-		Addresses  map[sproto.ResourcesID][]cproto.Address
-		Containers map[sproto.ResourcesID][]cproto.Container
-	}
-	// AllocationReady marks an allocation as ready.
-	AllocationReady struct{}
-	// AllocationWaiting marks an allocation as waiting.
-	AllocationWaiting struct {
-		Message string
-	}
-	// SetAllocationProxyAddress manually sets the allocation proxy address.
-	SetAllocationProxyAddress struct {
-		ProxyAddress string
-	}
-	// IsAllocationRestoring asks the allocation if it is in the middle of a restore.
-	IsAllocationRestoring struct{}
-)
+// AllocationSignal is an interface for signals that can be sent to an allocation.
+type AllocationSignal string
 
 const (
-	killCooldown       = 15 * time.Second
-	okExitMessage      = "allocation exited successfully"
-	missingExitMessage = ""
+	// KillAllocation is the signal to kill an allocation; analogous to SIGKILL.
+	KillAllocation AllocationSignal = "kill"
+	// TerminateAllocation is the signal to kill an allocation; analogous to SIGTERM.
+	TerminateAllocation AllocationSignal = "terminate"
 )
 
-// NewAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
-func NewAllocation(
+// AllocationState requests allocation state. A copy is filled and returned.
+type AllocationState struct {
+	State     model.AllocationState
+	Resources map[sproto.ResourcesID]sproto.ResourcesSummary
+	Ready     bool
+
+	Addresses  map[sproto.ResourcesID][]cproto.Address
+	Containers map[sproto.ResourcesID][]cproto.Container
+}
+
+// SingleContainer returns a single random container from the allocation state.
+func (a AllocationState) SingleContainer() *cproto.Container {
+	for _, cs := range a.Containers {
+		for _, c := range cs {
+			return &c
+		}
+	}
+	return nil
+}
+
+// SingleContainerAddresses returns a single random container's addresses from the allocation state.
+func (a AllocationState) SingleContainerAddresses() []cproto.Address {
+	for _, ca := range a.Addresses {
+		return ca
+	}
+	return nil
+}
+
+// AllocationExited summarizes the exit status of an allocation.
+type AllocationExited struct {
+	// userRequestedStop is when a container unexpectedly exits with 0.
+	UserRequestedStop bool
+	Err               error
+	FinalState        AllocationState
+}
+
+func (a *AllocationExited) String() string {
+	switch {
+	case a == nil:
+		return ""
+	case a.Err != nil:
+		return a.Err.Error()
+	default:
+		return "allocation exited successfully"
+	}
+}
+
+// allocation encapsulates all the state of a single allocation.
+type allocation struct {
+	mu sync.Mutex
+
+	// System dependencies.
+	db db.DB
+	rm rm.ResourceManager
+
+	syslog *logrus.Entry
+	system *actor.System
+	wg     waitgroupx.Group
+
+	// The request to create the allocation, essentially our configuration.
+	req sproto.AllocateRequest
+	// The persisted representation.
+	model model.Allocation
+	// The task spec to run.
+	specifier tasks.TaskSpecifier
+
+	// State of all our resources.
+	resources resourcesList
+	// Separates the existence of resources from us having started them.
+	resourcesStarted bool
+	// Tracks the initial container exit, unless we caused the failure by killed the trial.
+	exitErr error
+	// Marks that we intentionally killed the allocation so we can know to
+	// ignore any errors from containers dying. Not set when we kill an already
+	// terminating trial.
+	killedWhileRunning bool
+	// Marks that the trial exited successfully, but we killed some daemon containers.
+	killedDaemons bool
+	// Marks that we killed some daemon containers but after a zero exit.
+	killedDaemonsGracefully bool
+	// We send a kill when we terminate a task forcibly. we terminate forcibly when a container
+	// exits non zero. we don't need to send all these kills, so this exists.
+	killCooldown *time.Time
+	// tracks if we have finished termination.
+	exited *AllocationExited
+
+	// State for specific sub-behaviors of an allocation.
+	// Encapsulates logic of rendezvousing containers of the currently
+	// allocated task. If there is no current task, or it is unallocated, it is nil.
+	rendezvous *rendezvous
+	// proxy state
+	proxies []string
+
+	logCtx          detLogger.Context
+	restored        bool
+	portsRegistered bool
+}
+
+// newAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
+func newAllocation(
 	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
-	specifier tasks.TaskSpecifier,
-) actor.Actor {
+	specifier tasks.TaskSpecifier, system *actor.System,
+) (*allocation, error) {
 	req.LogContext = detLogger.MergeContexts(logCtx, detLogger.Context{
 		"allocation-id": req.AllocationID,
 	})
-	return &Allocation{
+
+	if req.RequestTime.IsZero() {
+		req.RequestTime = time.Now().UTC()
+	}
+
+	a := &allocation{
 		db: db,
 		rm: rm,
+
+		system: system,
+		wg:     waitgroupx.WithContext(context.Background()),
+		syslog: logrus.WithFields(logCtx.Fields()),
 
 		req: req,
 		model: model.Allocation{
@@ -149,10 +181,17 @@ func NewAllocation(
 
 		logCtx: req.LogContext,
 	}
+
+	rmEvents, err := a.requestResources()
+	if err != nil {
+		return nil, fmt.Errorf("requesting resources: %w", err)
+	}
+	a.wg.Go(func(ctx context.Context) { a.run(ctx, rmEvents) })
+	return a, nil
 }
 
 // Receive implements actor.Actor for the allocation.
-// The normal flow of an Allocation is to:
+// The normal flow of an allocation is to:
 //
 //	(1) request resources,
 //	(2) receive resources,
@@ -171,224 +210,362 @@ func NewAllocation(
 // and move on. If an error occurs that should force a stop, it is imperative
 // the error is never returned by Receive, and that a.Error(ctx, err) is called,
 // that way the allocation can cleanup properly.
-func (a *Allocation) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	// These messages handle interaction with the resource manager. The generally
-	// handle the primary allocation lifecycle/functionality.
-	case actor.PreStart:
-		allocationmap.RegisterAllocation(a.model.AllocationID, ctx.Self())
-		ctx.AddLabels(a.logCtx)
-		if err := a.RequestResources(ctx); err != nil {
-			a.Error(ctx, err)
+func (a *allocation) run(ctx context.Context, sub *sproto.ResourcesSubscription) {
+	defer a.recover()
+	defer sub.Close()
+	defer a.wg.Cancel() // Important if we panic, so awaitTermination can unblock.
+	for {
+		event := sub.Get()
+		if event == (sproto.ResourcesReleasedEvent{}) {
+			return
+		}
+		a.HandleRMEvent(event)
+	}
+}
+
+// HandleRMEvent handles downstream events from the resource manager.
+func (a *allocation) HandleRMEvent(msg sproto.ResourcesEvent) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	switch msg := msg.(type) {
+	case *sproto.ResourcesAllocated:
+		if err := a.resourcesAllocated(msg); err != nil {
+			a.crash(err)
+		}
+	case *sproto.ResourcesStateChanged:
+		a.resourcesStateChanged(msg)
+	case *sproto.ResourcesFailure:
+		a.restoreResourceFailure(msg)
+	case *sproto.ReleaseResources:
+		a.releaseResources(msg)
+	case *sproto.ContainerLog:
+		a.sendTaskLog(msg.ToTaskLog())
+	case *sproto.InvalidResourcesRequestError:
+		a.crash(msg.Cause)
+	default:
+		panic(fmt.Errorf("unexpected RM event"))
+	}
+}
+
+// State returns a copy of the current State of the allocation.
+func (a *allocation) State() AllocationState {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.state()
+}
+
+// IsRestoring returns if the allocation has been restored by the resource manager.
+func (a *allocation) IsRestoring() bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.req.Restore && !a.restored
+}
+
+// waitForRestore waits until the allocation has been restored by the resource manager or a minute
+// has passed. If a minute passes, an error is returned. The allocation must exist otherwise this
+// will return a not found error.
+func (a *allocation) waitForRestore(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+
+	t := time.NewTicker(time.Second)
+	defer t.Stop()
+
+	for {
+		if !a.IsRestoring() {
+			return nil
 		}
 
-	case IsAllocationRestoring:
-		ctx.Respond(a.req.Restore && !a.restored)
+		select {
+		case <-t.C:
+		case <-ctx.Done():
+			return fmt.Errorf("allocation stuck restoring: %w", ctx.Err())
+		}
+	}
+}
 
-	case sproto.ResourcesAllocated:
-		if err := a.ResourcesAllocated(ctx, msg); err != nil {
-			a.Error(ctx, err)
-		}
-	case sproto.ResourcesStateChanged:
-		a.ResourcesStateChanged(ctx, msg)
-	case sproto.ResourcesFailure:
-		a.RestoreResourceFailure(ctx, msg)
-	case sproto.GetResourcesContainerState:
-		if v, ok := a.resources[msg.ResourcesID]; ok {
-			if v.Container == nil {
-				ctx.Respond(fmt.Errorf("no container associated with %s", msg.ResourcesID))
-			} else {
-				ctx.Respond(*v.Container)
+// Signal handles an external Signal to kill or terminate the allocation.
+func (a *allocation) Signal(sig AllocationSignal, reason string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	switch sig {
+	case KillAllocation:
+		a.tryExitOrKill(reason)
+	case TerminateAllocation:
+		a.tryExitOrTerminate(reason, false)
+	}
+}
+
+// SetProxyAddress sets the proxy address of the allocation and sets up proxies for any services
+// it provides.
+func (a *allocation) SetProxyAddress(_ context.Context, address string) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if len(a.req.ProxyPorts) == 0 {
+		a.syslog.Debug("No ports to proxy. Skipping proxy registration.")
+		return nil
+	}
+	a.model.ProxyAddress = &address
+	if err := a.db.UpdateAllocationProxyAddress(a.model); err != nil {
+		a.crash(err)
+		return err
+	}
+	a.registerProxies(a.containerProxyAddresses())
+	return nil
+}
+
+// SendContainerLog sends a container log, enriched with metadata from the allocation.
+func (a *allocation) SendContainerLog(log *sproto.ContainerLog) {
+	a.sendTaskLog(log.ToTaskLog())
+}
+
+// SetWaiting moves the allocation to the waiting state if it has not progressed past it yet.
+func (a *allocation) SetWaiting(_ context.Context) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	a.setMostProgressedModelState(model.AllocationStateWaiting)
+	if err := a.db.UpdateAllocationState(a.model); err != nil {
+		a.crash(err)
+		return err
+	}
+	return nil
+}
+
+// SetReady sets the ready bit and moves the allocation to the running state if it has not
+// progressed past it already.
+func (a *allocation) SetReady(_ context.Context) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	// AllocationReady only comes from the running container, so to
+	// avoid a race condition with the slower transition to running state
+	// which comes via polling for dispatcher RM, move the state to running now.
+	a.sendTaskLog(&model.TaskLog{Log: fmt.Sprintf("Service of %s is available", a.req.Name)})
+	a.setMostProgressedModelState(model.AllocationStateRunning)
+	a.model.IsReady = ptrs.Ptr(true)
+	if err := a.db.UpdateAllocationState(a.model); err != nil {
+		a.crash(err)
+		return err
+	}
+	return nil
+}
+
+// SetResourcesAsDaemon marks the resources as daemons. If all non-daemon resources exit, the
+// allocation will kill the remaining daemon resources.
+func (a *allocation) SetResourcesAsDaemon(_ context.Context, rID sproto.ResourcesID) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if _, ok := a.resources[rID]; !ok {
+		return ErrStaleResources{ID: rID}
+	} else if len(a.resources) <= 1 {
+		a.sendTaskLog(&model.TaskLog{
+			Log: `Ignoring request to daemonize resources within an allocation for an allocation
+			with only one manageable set of resources, because this would just kill it. This is
+			expected in when using the HPC launcher.`,
+			Level: ptrs.Ptr(model.LogLevelInfo),
+		})
+		return nil
+	}
+
+	a.syslog.Errorf("setting resources as daemon %s", rID)
+	a.resources[rID].Daemon = true
+	if err := a.resources[rID].Persist(); err != nil {
+		a.crash(err)
+		return err
+	}
+
+	if len(a.resources.daemons()) == len(a.resources) {
+		a.syslog.Warnf("all resources were marked as daemon, exiting")
+		a.tryExitOrKill("all resources were marked as daemon")
+	}
+	return nil
+}
+
+// WatchRendezvous returns a watcher for the caller to wait for rendezvous to complete. When a
+// process from each resource in the allocation connects and the resource manager sends each
+// resource's state, each watcher will receive a copy of the rendezvous info for communicating
+// with its peers.
+func (a *allocation) WatchRendezvous(rID sproto.ResourcesID) (RendezvousWatcher, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	err := a.validateRendezvous()
+	if err != nil {
+		return RendezvousWatcher{}, err
+	}
+
+	if a.rendezvous == nil {
+		a.rendezvous = newRendezvous(a.model.AllocationID, a.resources, rendezvousTimeoutDuration)
+		a.wg.Go(func(ctx context.Context) {
+			t := time.NewTimer(rendezvousTimeoutDuration)
+			defer t.Stop()
+
+			select {
+			case <-t.C:
+				a.RendezvousTimeout()
+			case <-ctx.Done():
 			}
-		} else {
-			ctx.Respond(fmt.Errorf("unknown resources %s", msg.ResourcesID))
+		})
+	}
+
+	return a.rendezvous.watch(rID)
+}
+
+// UnwatchRendezvous removes a rendezvous watcher.
+func (a *allocation) UnwatchRendezvous(rID sproto.ResourcesID) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.rendezvous.unwatch(rID)
+}
+
+func (a *allocation) RendezvousTimeout() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if err := a.rendezvous.checkTimeout(); err != nil {
+		a.sendTaskLog(&model.TaskLog{Log: err.Error()})
+	}
+}
+
+func (a *allocation) validateRendezvous() error {
+	if a.rendezvous != nil {
+		return nil
+	}
+
+	if len(a.resources) == 0 {
+		return ErrAllocationUnfulfilled{Action: "rendezvous"}
+	}
+
+	switch a.resources.first().Summary().ResourcesType {
+	case sproto.ResourcesTypeDockerContainer, sproto.ResourcesTypeK8sPod:
+		break
+	default:
+		return ErrBehaviorUnsupported{Behavior: "rendezvous"}
+	}
+
+	return nil
+}
+
+// awaitTermination waits for the allocation and any goroutines associated with to exit.
+func (a *allocation) awaitTermination() *AllocationExited {
+	a.wg.Wait()
+	return a.exited
+}
+
+// requestResources sets up the allocation.
+func (a *allocation) requestResources() (*sproto.ResourcesSubscription, error) {
+	if a.req.Restore {
+		// Load allocation.
+		a.syslog.Debug("requestResources load allocation")
+		err := db.Bun().NewSelect().Model(&a.model).
+			Where("allocation_id = ?", a.model.AllocationID).
+			Scan(context.TODO())
+		if err != nil {
+			return nil, errors.Wrap(err, "loading trial allocation")
 		}
-	case sproto.ReleaseResources:
-		a.Terminate(ctx, "allocation being preempted by the scheduler", msg.ForcePreemption)
-	case sproto.ChangeRP:
-		a.Terminate(ctx, "allocation resource pool changed", false)
-	case actor.PostStop:
-		a.Cleanup(ctx)
-		// a.portsRegistered  is set to true right after ports are registered.
-		// This variable ensures to release ports even if there's a failure after restoring ports.
-		if a.portsRegistered {
-			for _, port := range a.model.Ports {
-				portregistry.ReleasePort(port)
+	} else {
+		// Insert new allocation.
+		a.syslog.Debug("requestResources add allocation")
+
+		a.setModelState(model.AllocationStatePending)
+		if err := a.db.AddAllocation(&a.model); err != nil {
+			return nil, errors.Wrap(err, "saving trial allocation")
+		}
+	}
+
+	sub, err := a.rm.Allocate(a.system, a.req)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to request allocation")
+	}
+	a.sendTaskLog(&model.TaskLog{
+		Log: fmt.Sprintf("Scheduling %s (id: %s)", a.req.Name, a.req.AllocationID),
+	})
+	return sub, nil
+}
+
+// Cleanup ensures an allocation is properly closed. It tries to do everything before failing and
+// ensures we don't leave any resources running.
+func (a *allocation) Cleanup() error {
+	var err *multierror.Error
+
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	// a.portsRegistered  is set to true right after ports are registered.
+	// This variable ensures to release ports even if there's a failure after restoring ports.
+	if a.portsRegistered {
+		for _, port := range a.model.Ports {
+			portregistry.ReleasePort(port)
+		}
+	}
+
+	// TODO(DET-9697): This logic is gross, and it is unclear if all the proper cleanup logic for th
+	// "oops" case is running given the diff between this and `a.terminated()`. We should refactor
+	// them to reduce code duplication and ensure correctness. Consider `a.closers = []func(){}` to
+	// consolidate "deferred" closers in a state machine.
+	// Just in-case code.
+	if a.exited == nil {
+		if a.exitErr == nil {
+			a.exitErr = errors.New("unknown error occurred")
+		}
+		a.exited = &AllocationExited{Err: a.exitErr, FinalState: a.state()}
+
+		a.syslog.WithError(a.exitErr).Error("exit did not run properly")
+		a.sendTaskLog(&model.TaskLog{
+			Log: fmt.Sprintf("%s was terminated: %s", a.req.Name, a.exitErr.Error()),
+		})
+
+		for _, r := range a.resources {
+			if r.Exited == nil {
+				a.syslog.Infof("allocation exited with unterminated reservation: %v", r.Summary())
+				r.Kill(a.system, a.logCtx)
 			}
 		}
+
+		if a.resourcesStarted {
+			a.markResourcesReleased()
+		}
+
+		a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
+
 		if a.req.Preemptible {
 			preemptible.Unregister(a.req.AllocationID.String())
 		}
 		if cfg := a.req.IdleTimeout; cfg != nil {
 			idle.Unregister(cfg.ServiceID)
 		}
-		allocationmap.UnregisterAllocation(a.model.AllocationID)
-	case sproto.ContainerLog:
-		a.sendTaskLog(msg.ToTaskLog())
-
-	// These messages allow users (and sometimes an orchestrator, such as HP search)
-	// to interact with the allocation. The usually trace back to API calls.
-	case AllocationReady:
-		// AllocationReady only comes from the running container, so to
-		// avoid a race condition with the slower transition to running state
-		// which comes via polling for dispatcher RM, move the state to running now.
-		a.setMostProgressedModelState(model.AllocationStateRunning)
-		a.model.IsReady = ptrs.Ptr(true)
-		if err := a.db.UpdateAllocationState(a.model); err != nil {
-			a.Error(ctx, err)
+		if a.rendezvous != nil {
+			a.rendezvous.close()
 		}
-		a.sendTaskLog(&model.TaskLog{Log: fmt.Sprintf("Service of %s is available", a.req.Name)})
-	case AllocationWaiting:
-		a.setMostProgressedModelState(model.AllocationStateWaiting)
-		if err := a.db.UpdateAllocationState(a.model); err != nil {
-			a.Error(ctx, err)
+		if cfg := a.req.IdleTimeout; cfg != nil {
+			idle.Unregister(cfg.ServiceID)
 		}
-	case MarkResourcesDaemon:
-		if err := a.SetResourcesAsDaemon(ctx, msg.AllocationID, msg.ResourcesID); err != nil {
-			a.Error(ctx, err)
+		if pErr := a.purgeRestorableResources(); pErr != nil {
+			err = multierror.Append(err, fmt.Errorf("purging restorable resources: %w", pErr))
 		}
-	case sproto.AllocationSignal:
-		a.HandleSignal(ctx, sproto.AllocationSignalWithReason{AllocationSignal: msg})
-	case sproto.AllocationSignalWithReason:
-		a.HandleSignal(ctx, msg)
-	case AllocationState:
-		if ctx.ExpectingResponse() {
-			ctx.Respond(a.State())
-		}
-	case SetAllocationProxyAddress:
-		if len(a.req.ProxyPorts) == 0 {
-			if ctx.ExpectingResponse() {
-				ctx.Respond(ErrBehaviorUnsupported{Behavior: fmt.Sprintf("%T", msg)})
-			}
-			return nil
-		}
-		a.model.ProxyAddress = &msg.ProxyAddress
-		if err := a.db.UpdateAllocationProxyAddress(a.model); err != nil {
-			a.Error(ctx, err)
-			return nil
-		}
-		a.registerProxies(ctx, a.containerProxyAddresses())
-	case WatchRendezvousInfo, UnwatchRendezvousInfo, rendezvousTimeout:
-		if a.rendezvous == nil {
-			if len(a.resources) == 0 {
-				return ErrAllocationUnfulfilled{Action: fmt.Sprintf("%T", msg)}
-			}
-
-			switch a.resources.first().Summary().ResourcesType {
-			case sproto.ResourcesTypeDockerContainer, sproto.ResourcesTypeK8sPod:
-				break
-			default:
-				return ErrBehaviorUnsupported{Behavior: fmt.Sprintf("%T", msg)}
-			}
-
-			switch msg.(type) {
-			case WatchRendezvousInfo:
-				a.rendezvous = newRendezvous(ctx, a.model.AllocationID, a.resources)
-			case UnwatchRendezvousInfo, rendezvousTimeout:
-				// Ignore without active rendezvous.
-				return nil
-			}
-		}
-
-		switch msg := ctx.Message().(type) {
-		case WatchRendezvousInfo:
-			if w, err := a.rendezvous.watch(msg); err != nil {
-				ctx.Respond(err)
-			} else {
-				ctx.Respond(w)
-			}
-		case UnwatchRendezvousInfo:
-			a.rendezvous.unwatch(msg)
-		case rendezvousTimeout:
-			if err := a.rendezvous.checkTimeout(msg); err != nil {
-				a.sendTaskLog(&model.TaskLog{Log: err.Error()})
-			}
-		default:
-			a.Error(ctx, actor.ErrUnexpectedMessage(ctx))
-		}
-	case sproto.InvalidResourcesRequestError:
-		ctx.Tell(a.req.AllocationRef, msg)
-		a.Error(ctx, msg)
-
-	default:
-		a.Error(ctx, actor.ErrUnexpectedMessage(ctx))
 	}
-	return nil
+	return err.ErrorOrNil()
 }
 
-// RequestResources sets up the allocation.
-func (a *Allocation) RequestResources(ctx *actor.Context) error {
-	if a.req.Restore {
-		// Load allocation.
-		ctx.Log().Debug("RequestResources load allocation")
-		err := db.Bun().NewSelect().Model(&a.model).
-			Where("allocation_id = ?", a.model.AllocationID).
-			Scan(context.TODO())
-		if err != nil {
-			return errors.Wrap(err, "loading trial allocation")
-		}
-	} else {
-		// Insert new allocation.
-		ctx.Log().Debug("RequestResources add allocation")
-
-		a.setModelState(model.AllocationStatePending)
-		if err := a.db.AddAllocation(&a.model); err != nil {
-			return errors.Wrap(err, "saving trial allocation")
-		}
-	}
-
-	a.req.AllocationRef = ctx.Self()
-	if err := a.rm.Allocate(ctx, a.req); err != nil {
-		return errors.Wrap(err, "failed to request allocation")
-	}
-	a.sendTaskLog(&model.TaskLog{
-		Log: fmt.Sprintf("Scheduling %s (id: %s)", a.req.Name, ctx.Self().Parent().Address().Local()),
-	})
-	return nil
-}
-
-// Cleanup ensures an allocation is properly closed. It tries to do everything before failing and
-// ensures we don't leave any resources running.
-func (a *Allocation) Cleanup(ctx *actor.Context) {
-	// Just in-case code.
-	if !a.exited {
-		ctx.Log().Info("exit did not run properly")
-		for _, r := range a.resources {
-			if r.Exited == nil {
-				ctx.Log().Infof("allocation exited with unterminated reservation: %v", r.Summary())
-				r.Kill(ctx, a.logCtx)
-			}
-		}
-		if a.resourcesStarted {
-			a.markResourcesReleased(ctx)
-		}
-
-		if err := a.purgeRestorableResources(ctx); err != nil {
-			ctx.Log().WithError(err).Error("failed to purge restorable resources")
-		}
-
-		a.sendTaskLog(&model.TaskLog{
-			Log: fmt.Sprintf("%s was terminated: %s", a.req.Name, "allocation did not exit correctly"),
-		})
-		a.rm.Release(ctx, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
-	}
-}
-
-// ResourcesAllocated handles receiving resources from the resource manager. Note: it makes a single
+// resourcesAllocated handles receiving resources from the resource manager. Note: it makes a single
 // ask to the parent to build its task spec.. this is mostly a hack to defer lots of computationally
 // heavy stuff unless it is necessarily (which also works to spread occurrences of the same work
 // out). Eventually, Allocations should just be started with their TaskSpec.
-func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.ResourcesAllocated) error {
+func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
+	a.syslog.WithField("restore", a.req.Restore).Infof("%d resources allocated", len(msg.Resources))
 	if !a.req.Restore {
 		if a.getModelState() != model.AllocationStatePending {
 			// If we have moved on from the pending state, these must be stale (and we must have
 			// already released them, just the scheduler hasn't gotten word yet).
 			return ErrStaleResourcesReceived{}
 		}
-
 		a.setModelState(model.AllocationStateAssigned)
 	} else {
-		ctx.Log().Debugf("ResourcesAllocated restored state: %s", a.getModelState())
+		a.syslog.Debugf("resourcesAllocated restored state: %s", a.getModelState())
 	}
 
 	a.setMostProgressedModelState(model.AllocationStateAssigned)
@@ -416,12 +593,9 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	if cfg := a.req.IdleTimeout; cfg != nil {
-		idle.Register(*cfg, func(err error) {
-			ctx.Log().WithError(err).Infof("killing %s due to inactivity", a.req.Name)
-			ctx.Tell(ctx.Self(), sproto.AllocationSignalWithReason{
-				AllocationSignal:    sproto.TerminateAllocation,
-				InformationalReason: err.Error(),
-			})
+		idle.Register(*cfg, func(ctx context.Context, err error) {
+			a.syslog.WithError(err).Infof("killing %s due to inactivity", a.req.Name)
+			a.Signal(TerminateAllocation, err.Error())
 		})
 	}
 
@@ -436,9 +610,9 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 				for _, r := range a.resources {
 					switch {
 					case r.Rank == 0 && r.Started != nil && r.Started.Addresses != nil:
-						a.registerProxies(ctx, r.Started.Addresses)
+						a.registerProxies(r.Started.Addresses)
 					case a.model.ProxyAddress != nil:
-						a.registerProxies(ctx, a.containerProxyAddresses())
+						a.registerProxies(a.containerProxyAddresses())
 					}
 				}
 			}
@@ -451,7 +625,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 			return errors.Wrap(err, "starting a new allocation session")
 		}
 
-		a.model.Ports, err = a.getPorts(spec.UniqueExposedPortRequests, ctx)
+		a.model.Ports, err = a.getPorts(spec.UniqueExposedPortRequests)
 		if err != nil {
 			return errors.Wrap(err, "getting ports")
 		}
@@ -467,7 +641,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		}
 
 		for cID, r := range a.resources {
-			if err := r.Start(ctx, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
+			if err := r.Start(a.system, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
 				Token:        token,
 				AgentRank:    a.resources[cID].Rank,
 				IsMultiAgent: len(a.resources) > 1,
@@ -482,69 +656,23 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	return nil
 }
 
-// SetResourcesAsDaemon sets the reservation as a daemon reservation. This means we won't wait for
-// it to exit in errorless exits and instead will kill the forcibly.
-func (a *Allocation) SetResourcesAsDaemon(
-	ctx *actor.Context, aID model.AllocationID, rID sproto.ResourcesID,
-) error {
-	if aID != a.model.AllocationID {
-		ctx.Respond(ErrStaleAllocation{aID, a.model.AllocationID})
-		return nil
-	} else if _, ok := a.resources[rID]; !ok {
-		ctx.Respond(ErrStaleResources{ID: rID})
-		return nil
-	} else if len(a.resources) <= 1 {
-		a.sendTaskLog(&model.TaskLog{
-			Log: `Ignoring request to daemonize resources within an allocation for an allocation
-			with only one manageable set of resources, because this would just kill it. This is
-			expected in when using the HPC launcher.`,
-			Level: ptrs.Ptr(model.LogLevelInfo),
-		})
-		return nil
-	}
-
-	a.resources[rID].Daemon = true
-	if err := a.resources[rID].Persist(); err != nil {
-		return err
-	}
-
-	if len(a.resources.daemons()) == len(a.resources) {
-		ctx.Log().Warnf("all resources were marked as daemon, exiting")
-		a.Kill(ctx, "all resources were marked as daemon")
-	}
-
-	return nil
-}
-
-// HandleSignal handles an external signal to kill or terminate the allocation.
-func (a *Allocation) HandleSignal(ctx *actor.Context, msg sproto.AllocationSignalWithReason) {
-	switch msg.AllocationSignal {
-	case sproto.KillAllocation:
-		a.Kill(ctx, msg.InformationalReason)
-	case sproto.TerminateAllocation:
-		a.Terminate(ctx, msg.InformationalReason, false)
-	}
-}
-
-// ResourcesStateChanged handles changes in container states. It can move us to ready,
+// resourcesStateChanged handles changes in container states. It can move us to ready,
 // kill us or close us normally depending on the changes, among other things.
-func (a *Allocation) ResourcesStateChanged(
-	ctx *actor.Context, msg sproto.ResourcesStateChanged,
-) {
+func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 	if _, ok := a.resources[msg.ResourcesID]; !ok {
-		ctx.Log().
+		a.syslog.
 			WithField("container", msg.Container).
 			WithError(ErrStaleResources{ID: msg.ResourcesID}).Warnf("old state change")
 		return
 	}
 
 	a.resources[msg.ResourcesID].Container = msg.Container
-	ctx.Log().Debugf("resources state changed: %+v", msg)
+	a.syslog.Debugf("resources state changed: %+v", msg)
 	switch msg.ResourcesState {
 	case sproto.Pulling:
 		a.setMostProgressedModelState(model.AllocationStatePulling)
 		if a.model.StartTime == nil {
-			a.markResourcesStarted(ctx)
+			a.markResourcesStarted()
 		}
 	case sproto.Starting:
 		a.setMostProgressedModelState(model.AllocationStateStarting)
@@ -558,22 +686,22 @@ func (a *Allocation) ResourcesStateChanged(
 
 		a.setMostProgressedModelState(model.AllocationStateRunning)
 		if a.model.StartTime == nil {
-			a.markResourcesStarted(ctx)
+			a.markResourcesStarted()
 		}
 
 		a.resources[msg.ResourcesID].Started = msg.ResourcesStarted
 		if err := a.resources[msg.ResourcesID].Persist(); err != nil {
-			a.Error(ctx, err)
+			a.crash(err)
 			return
 		}
 
 		if a.rendezvous != nil && a.rendezvous.try() {
-			ctx.Log().
+			a.syslog.
 				Info("all containers are connected successfully (task container state changed)")
 		}
 		if len(a.req.ProxyPorts) > 0 && msg.ResourcesStarted.Addresses != nil &&
 			a.resources[msg.ResourcesID].Rank == 0 {
-			a.registerProxies(ctx, msg.ResourcesStarted.Addresses)
+			a.registerProxies(msg.ResourcesStarted.Addresses)
 		}
 
 		containerID := coalesceString(msg.ContainerIDStr(), "")
@@ -582,10 +710,7 @@ func (a *Allocation) ResourcesStateChanged(
 			Log:         fmt.Sprintf("Resources for %s have started", a.req.Name),
 		})
 
-		prom.AssociateAllocationTask(a.req.AllocationID,
-			a.req.TaskID,
-			a.req.AllocationRef.Address(),
-			a.req.JobID)
+		prom.AssociateAllocationTask(a.req.AllocationID, a.req.TaskID, a.req.Name, a.req.JobID)
 		prom.AddAllocationResources(a.resources[msg.ResourcesID].Summary(), msg.ResourcesStarted)
 
 	case sproto.Terminated:
@@ -597,17 +722,20 @@ func (a *Allocation) ResourcesStateChanged(
 			return
 		}
 
+		a.syslog.Infof("resources terminated %s: %s", msg.ResourcesID, msg.ResourcesStopped.String())
+
 		a.setMostProgressedModelState(model.AllocationStateTerminating)
 
 		a.resources[msg.ResourcesID].Exited = msg.ResourcesStopped
 
-		a.rm.Release(ctx, sproto.ResourcesReleased{
+		a.syslog.Infof("releasing resources %s", msg.ResourcesID)
+		a.rm.Release(a.system, sproto.ResourcesReleased{
 			AllocationID: a.req.AllocationID,
 			ResourcesID:  &msg.ResourcesID,
 		})
 
 		if err := a.resources[msg.ResourcesID].Persist(); err != nil {
-			a.Error(ctx, err)
+			a.crash(err)
 			return
 		}
 
@@ -615,21 +743,27 @@ func (a *Allocation) ResourcesStateChanged(
 		case a.killedWhileRunning:
 			a.sendTaskLog(&model.TaskLog{
 				ContainerID: msg.ContainerIDStr(),
-				Log: fmt.Sprintf(
-					"resources were killed: %s",
-					msg.ResourcesStopped.String(),
-				),
+				Log:         fmt.Sprintf("killed: %s", msg.ResourcesStopped.String()),
 			})
-			a.Exit(ctx, "resources were killed")
+			a.tryExit("resources were killed")
 		case msg.ResourcesStopped.Failure != nil:
 			// Avoid erroring out if we have killed our daemons gracefully.
 			// This occurs in the case of an early stop in dtrain. One resource
 			// will exit with a 0 exit code and kill the rest of the resources sending
 			// failed messages for these resources.
 			if a.killedDaemonsGracefully {
-				a.Exit(ctx, "remaining resources terminated")
+				a.sendTaskLog(&model.TaskLog{
+					ContainerID: msg.ContainerIDStr(),
+					Log:         fmt.Sprintf("daemon killed: %s", msg.ResourcesStopped.String()),
+				})
+				a.tryExit("remaining resources terminated")
 			} else {
-				a.Error(ctx, *msg.ResourcesStopped.Failure)
+				a.sendTaskLog(&model.TaskLog{
+					ContainerID: msg.ContainerIDStr(),
+					Log:         fmt.Sprintf("crashed: %s", msg.ResourcesStopped.String()),
+					Level:       ptrs.Ptr(model.LogLevelError),
+				})
+				a.crash(*msg.ResourcesStopped.Failure)
 			}
 		default:
 			a.sendTaskLog(&model.TaskLog{
@@ -637,32 +771,27 @@ func (a *Allocation) ResourcesStateChanged(
 				Log:         msg.ResourcesStopped.String(),
 				Level:       ptrs.Ptr(model.LogLevelInfo),
 			})
-			a.Exit(ctx, msg.ResourcesStopped.String())
+			a.tryExit(msg.ResourcesStopped.String())
 		}
 
 		for cID := range a.resources {
-			prom.DisassociateAllocationTask(a.req.AllocationID,
-				a.req.TaskID,
-				a.req.AllocationRef.Address(),
-				a.req.JobID)
+			prom.DisassociateAllocationTask(a.req.AllocationID, a.req.TaskID, a.req.Name, a.req.JobID)
 			prom.RemoveAllocationResources(a.resources[cID].Summary())
 		}
 	}
 
 	if err := a.db.UpdateAllocationState(a.model); err != nil {
-		ctx.Log().Error(err)
+		a.syslog.Error(err)
 	}
 }
 
-// RestoreResourceFailure handles the restored resource failures.
-func (a *Allocation) RestoreResourceFailure(
-	ctx *actor.Context, msg sproto.ResourcesFailure,
-) {
-	ctx.Log().Debugf("allocation resource failure")
+// restoreResourceFailure handles the restored resource failures.
+func (a *allocation) restoreResourceFailure(msg *sproto.ResourcesFailure) {
+	a.syslog.Debugf("allocation resource failure")
 	a.setMostProgressedModelState(model.AllocationStateTerminating)
 
 	if err := a.db.UpdateAllocationState(a.model); err != nil {
-		ctx.Log().Error(err)
+		a.syslog.Error(err)
 	}
 
 	if a.req.Restore {
@@ -680,65 +809,140 @@ func (a *Allocation) RestoreResourceFailure(
 	}
 
 	if err := a.db.CompleteAllocation(&a.model); err != nil {
-		ctx.Log().WithError(err).Error("failed to mark allocation completed")
+		a.syslog.WithError(err).Error("failed to mark allocation completed")
 	}
 
-	a.Error(ctx, msg)
+	a.crash(msg)
 }
 
-// Exit attempts to exit an allocation while not killing or preempting it.
-func (a *Allocation) Exit(ctx *actor.Context, reason string) (exited bool) {
+// releaseResources prompts the allocate to release resources.
+func (a *allocation) releaseResources(msg *sproto.ReleaseResources) {
+	if msg.ForceKill {
+		a.tryExitOrKill(msg.Reason)
+	} else {
+		a.tryExitOrTerminate(msg.Reason, msg.ForcePreemption)
+	}
+}
+
+// recover recovers a crash and stops the allocation.
+func (a *allocation) recover() {
+	if rec := recover(); rec != nil {
+		a.syslog.Error(rec)
+		a.syslog.Error(string(debug.Stack()))
+		if a.exitErr == nil {
+			a.exitErr = errors.Errorf("unexpected panic: %v", rec)
+		}
+	}
+}
+
+// crash closes the allocation due to an error, beginning the kill flow.
+func (a *allocation) crash(err error) {
+	a.syslog.WithError(err).Errorf("allocation encountered fatal error")
+	if a.exitErr == nil {
+		a.exitErr = err
+	}
+	a.tryExitOrKill(err.Error())
+}
+
+// tryExitOrKill attempts to close an allocation by killing it.
+func (a *allocation) tryExitOrKill(reason string) {
+	if exited := a.tryExit(reason); exited {
+		return
+	}
+	a.kill(reason)
+}
+
+// tryExitOrTerminate attempts to close an allocation by gracefully stopping it.
+func (a *allocation) tryExitOrTerminate(reason string, forcePreemption bool) {
+	if exited := a.tryExit(reason); exited {
+		return
+	}
+
+	switch {
+	case a.req.Preemptible && a.ready() || forcePreemption:
+		a.preempt(reason)
+	default:
+		a.kill(reason)
+	}
+}
+
+// tryExit attempts to exit an allocation while not killing or preempting it.
+func (a *allocation) tryExit(reason string) (exited bool) {
 	switch {
 	case !a.resourcesStarted:
-		a.terminated(ctx, reason)
+		a.terminated(fmt.Sprintf("exit before start: %s", reason))
 		return true
 	case len(a.resources.exited()) == len(a.resources):
-		a.terminated(ctx, reason)
+		a.terminated(fmt.Sprintf("all resources exited: %s", reason))
 		return true
 	case a.allNonDaemonsExited():
 		a.killedDaemons = true
 		if a.exitedWithoutErr() {
 			a.killedDaemonsGracefully = true
 		}
-		a.kill(ctx, reason)
+		a.kill(fmt.Sprintf("all non-daemons exited: %s", reason))
 	case len(a.resources.failed()) > 0:
-		a.kill(ctx, reason)
+		a.kill(fmt.Sprintf("some resources failed: %s", reason))
 	}
 	return false
 }
 
-// Terminate attempts to close an allocation by gracefully stopping it (though a kill are possible).
-func (a *Allocation) Terminate(ctx *actor.Context, reason string, forcePreemption bool) {
-	if exited := a.Exit(ctx, reason); exited {
+func (a *allocation) preempt(reason string) {
+	a.syslog.WithField("reason", reason).Info("decided to gracefully terminate allocation")
+	a.sendTaskLog(&model.TaskLog{
+		Level: ptrs.Ptr(model.LogLevelInfo),
+		Log: fmt.Sprintf(
+			"gracefully terminating allocation's remaining resources (reason: %s)",
+			reason,
+		),
+	})
+
+	preemptible.Preempt(a.req.AllocationID.String(), func(ctx context.Context, err error) {
+		a.Signal(KillAllocation, err.Error())
+	})
+}
+
+func (a *allocation) kill(reason string) {
+	if a.killCooldown != nil && time.Now().Before(*a.killCooldown) {
+		a.syslog.Debug("still inside of kill cooldown")
 		return
 	}
 
-	switch {
-	case a.req.Preemptible && a.ready() || forcePreemption:
-		a.preempt(ctx, reason)
-	default:
-		a.kill(ctx, reason)
+	a.syslog.WithField("reason", reason).Info("decided to kill allocation")
+	a.sendTaskLog(&model.TaskLog{
+		Level: ptrs.Ptr(model.LogLevelInfo),
+		Log: fmt.Sprintf(
+			"forcibly killing allocation's remaining resources (reason: %s)",
+			reason,
+		),
+	})
+
+	for _, r := range a.resources.active() {
+		r.Kill(a.system, a.logCtx)
 	}
+
+	if len(a.resources.exited()) == 0 {
+		a.syslog.Errorf("setting killed while running: %d", len(a.resources.exited()))
+		a.killedWhileRunning = true
+	}
+
+	// Once a job has been killed, resend the kill every 30s, in the event it is lost (has
+	// happened before due to network failures).
+	a.killCooldown = ptrs.Ptr(time.Now().Add(killCooldown))
+	a.wg.Go(func(ctx context.Context) {
+		t := time.NewTimer(killCooldown * 2)
+		defer t.Stop()
+
+		select {
+		case <-t.C:
+			a.Signal(KillAllocation, "killing again after 30s without all container exits")
+		case <-ctx.Done():
+			return
+		}
+	})
 }
 
-// Kill attempts to close an allocation by killing it.
-func (a *Allocation) Kill(ctx *actor.Context, reason string) {
-	if exited := a.Exit(ctx, reason); exited {
-		return
-	}
-	a.kill(ctx, reason)
-}
-
-// Error closes the allocation due to an error, beginning the kill flow.
-func (a *Allocation) Error(ctx *actor.Context, err error) {
-	ctx.Log().WithError(err).Errorf("allocation encountered fatal error")
-	if a.exitErr == nil {
-		a.exitErr = err
-	}
-	a.Kill(ctx, err.Error())
-}
-
-func (a *Allocation) allNonDaemonsExited() bool {
+func (a *allocation) allNonDaemonsExited() bool {
 	for id := range a.resources {
 		_, terminated := a.resources.exited()[id]
 		_, daemon := a.resources.daemons()[id]
@@ -749,7 +953,7 @@ func (a *Allocation) allNonDaemonsExited() bool {
 	return true
 }
 
-func (a *Allocation) exitedWithoutErr() bool {
+func (a *allocation) exitedWithoutErr() bool {
 	for _, r := range a.resources.failed() {
 		code := r.Exited.Failure.ExitCode
 		if code != nil && *code != 0 {
@@ -759,57 +963,7 @@ func (a *Allocation) exitedWithoutErr() bool {
 	return true
 }
 
-func (a *Allocation) preempt(ctx *actor.Context, reason string) {
-	ctx.Log().WithField("reason", reason).Info("decided to gracefully terminate allocation")
-	a.sendTaskLog(&model.TaskLog{
-		Level: ptrs.Ptr(model.LogLevelInfo),
-		Log: fmt.Sprintf(
-			"gracefully terminating allocation's remaining resources (reason: %s)",
-			reason,
-		),
-	})
-
-	preemptible.Preempt(a.req.AllocationID.String(), func(err error) {
-		ctx.Tell(ctx.Self(), sproto.AllocationSignalWithReason{
-			AllocationSignal:    sproto.KillAllocation,
-			InformationalReason: err.Error(),
-		})
-	})
-}
-
-func (a *Allocation) kill(ctx *actor.Context, reason string) {
-	if a.killCooldown != nil && time.Now().Before(*a.killCooldown) {
-		ctx.Log().Debug("still inside of kill cooldown")
-		return
-	}
-
-	ctx.Log().WithField("reason", reason).Info("decided to kill allocation")
-	a.sendTaskLog(&model.TaskLog{
-		Level: ptrs.Ptr(model.LogLevelInfo),
-		Log: fmt.Sprintf(
-			"forcibly killing allocation's remaining resources (reason: %s)",
-			reason,
-		),
-	})
-
-	for _, r := range a.resources.active() {
-		r.Kill(ctx, a.logCtx)
-	}
-
-	if len(a.resources.exited()) == 0 {
-		a.killedWhileRunning = true
-	}
-
-	// Once a job has been killed, resend the kill every 30s, in the event it is lost (has
-	// happened before due to network failures).
-	a.killCooldown = ptrs.Ptr(time.Now().Add(killCooldown))
-	actors.NotifyAfter(ctx, killCooldown*2, sproto.AllocationSignalWithReason{
-		AllocationSignal:    sproto.KillAllocation,
-		InformationalReason: "killing again after 30s without all container exits",
-	})
-}
-
-func (a *Allocation) registerProxies(ctx *actor.Context, addresses []cproto.Address) {
+func (a *allocation) registerProxies(addresses []cproto.Address) {
 	// For multi-reservation allocations, proxies are only setup for rank=0 (i.e. the chief).
 	if len(a.req.ProxyPorts) == 0 {
 		return
@@ -841,7 +995,7 @@ func (a *Allocation) registerProxies(ctx *actor.Context, addresses []cproto.Addr
 			Scheme: urlScheme,
 			Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
 		}, pcfg.ProxyTCP, pcfg.Unauthenticated)
-		ctx.Log().Debugf("registered proxy id: %s, tcp: %v\n", pcfg.ServiceID, pcfg.ProxyTCP)
+		a.syslog.Debugf("registered proxy id: %s, tcp: %v\n", pcfg.ServiceID, pcfg.ProxyTCP)
 		a.proxies = append(a.proxies, pcfg.ServiceID)
 	}
 
@@ -854,7 +1008,7 @@ func (a *Allocation) registerProxies(ctx *actor.Context, addresses []cproto.Addr
 	}
 }
 
-func (a *Allocation) unregisterProxies(ctx *actor.Context) {
+func (a *allocation) unregisterProxies() {
 	if len(a.req.ProxyPorts) == 0 {
 		return
 	}
@@ -870,7 +1024,7 @@ func (a *Allocation) unregisterProxies(ctx *actor.Context) {
 }
 
 // containerProxyAddresses forms the container address _only_ when proxyAddress is given.
-func (a *Allocation) containerProxyAddresses() []cproto.Address {
+func (a *allocation) containerProxyAddresses() []cproto.Address {
 	if a.model.ProxyAddress == nil || len(a.req.ProxyPorts) == 0 {
 		return []cproto.Address{}
 	}
@@ -889,10 +1043,8 @@ func (a *Allocation) containerProxyAddresses() []cproto.Address {
 	return result
 }
 
-func (a *Allocation) terminated(ctx *actor.Context, reason string) {
-	a.setMostProgressedModelState(model.AllocationStateTerminated)
-	exit := &AllocationExited{FinalState: a.State()}
-	if a.exited {
+func (a *allocation) terminated(reason string) {
+	if a.exited != nil {
 		// Never exit twice. If this were allowed, a trial could receive two task.AllocationExited
 		// messages. On receipt of the first message, the trial awaits our exit. Once we exit, it
 		// reschedules a new allocation, receives the second message and erroneously awaits the new
@@ -901,12 +1053,17 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 		// This occurred when an allocation completed and was preempted in quick succession.
 		return
 	}
-	a.exited = true
+
+	a.setMostProgressedModelState(model.AllocationStateTerminated)
+	if err := a.db.UpdateAllocationState(a.model); err != nil {
+		a.syslog.WithError(err).Error("failed to set allocation state to terminated")
+	}
+	exit := &AllocationExited{FinalState: a.state()}
+	a.exited = exit
 	exitReason := fmt.Sprintf("allocation terminated after %s", reason)
-	defer ctx.Tell(ctx.Self().Parent(), exit)
-	defer a.rm.Release(ctx, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
-	defer a.unregisterProxies(ctx)
-	defer ctx.Self().Stop()
+
+	defer a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
+	defer a.unregisterProxies()
 
 	level := ptrs.Ptr(model.LogLevelInfo)
 	if a.exitErr != nil {
@@ -919,11 +1076,11 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 		})
 	}()
 
-	if err := a.purgeRestorableResources(ctx); err != nil {
-		ctx.Log().WithError(err).Error("failed to purge restorable resources")
+	if err := a.purgeRestorableResources(); err != nil {
+		a.syslog.WithError(err).Error("failed to purge restorable resources")
 	}
 
-	defer a.markResourcesReleased(ctx)
+	defer a.markResourcesReleased()
 
 	if a.req.Preemptible {
 		defer preemptible.Unregister(a.req.AllocationID.String())
@@ -936,18 +1093,18 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 	}
 	switch {
 	case a.killedWhileRunning:
-		exitReason = fmt.Sprintf("allocation stopped after %s", reason)
-		ctx.Log().Info(exitReason)
+		exitReason = fmt.Sprintf("allocation killed after %s", reason)
+		a.syslog.Info(exitReason)
 		return
 	case a.req.Preemptible && preemptible.Acknowledged(a.req.AllocationID.String()):
-		exitReason = fmt.Sprintf("allocation stopped after %s", reason)
-		ctx.Log().Info(exitReason)
+		exitReason = fmt.Sprintf("allocation preempted after %s", reason)
+		a.syslog.Info(exitReason)
 		return
 	case a.exitErr == nil && len(a.resources.exited()) > 0:
 		// This is true because searcher and preemption exits both ack preemption.
 		exit.UserRequestedStop = true
 		exitReason = fmt.Sprintf("allocation stopped early after %s", reason)
-		ctx.Log().Info(exitReason)
+		a.syslog.Info(exitReason)
 		return
 	case a.exitErr != nil:
 		switch err := a.exitErr.(type) {
@@ -956,26 +1113,26 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 			case sproto.ResourcesFailed, sproto.TaskError:
 				if a.killedDaemonsGracefully {
 					exitReason = fmt.Sprint("allocation terminated daemon processes as part of normal exit")
-					ctx.Log().Info(exitReason)
+					a.syslog.Info(exitReason)
 					return
 				}
 				exitReason = fmt.Sprintf("allocation failed: %s", err)
-				ctx.Log().Info(exitReason)
+				a.syslog.Info(exitReason)
 				exit.Err = err
 				return
 			case sproto.AgentError, sproto.AgentFailed:
 				exitReason = fmt.Sprintf("allocation failed due to agent failure: %s", err)
-				ctx.Log().Warn(exitReason)
+				a.syslog.Warn(exitReason)
 				exit.Err = err
 				return
 			case sproto.TaskAborted, sproto.ResourcesAborted:
 				exitReason = fmt.Sprintf("allocation aborted: %s", err.FailureType)
-				ctx.Log().Debug(exitReason)
+				a.syslog.Debug(exitReason)
 				exit.Err = err
 				return
 			case sproto.RestoreError:
 				exitReason = fmt.Sprintf("allocation failed due to restore error: %s", err)
-				ctx.Log().Warn(exitReason)
+				a.syslog.Warn(exitReason)
 				exit.Err = err
 				return
 
@@ -984,11 +1141,13 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 			}
 		default:
 			exitReason = fmt.Sprintf("allocation handler crashed due to error: %s", err)
-			ctx.Log().Error(exitReason)
+			a.syslog.Error(exitReason)
 			exit.Err = err
 			return
 		}
 	case len(a.resources) == 0:
+		exitReason = fmt.Sprintf("allocation aborted after %s", reason)
+		a.syslog.Info(exitReason)
 		return
 	default:
 		// If we ever exit without a reason and we have no exited resources, something has gone
@@ -998,7 +1157,7 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 }
 
 // markResourcesStarted persists start information.
-func (a *Allocation) markResourcesStarted(ctx *actor.Context) {
+func (a *allocation) markResourcesStarted() {
 	a.model.StartTime = ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond))
 	if a.restored {
 		a.sendTaskLog(&model.TaskLog{Log: fmt.Sprintf("%s was recovered on an agent", a.req.Name)})
@@ -1006,30 +1165,30 @@ func (a *Allocation) markResourcesStarted(ctx *actor.Context) {
 		a.sendTaskLog(&model.TaskLog{Log: fmt.Sprintf("%s was assigned to an agent", a.req.Name)})
 	}
 	if err := a.db.UpdateAllocationStartTime(a.model); err != nil {
-		ctx.Log().
+		a.syslog.
 			WithError(err).
 			Errorf("allocation will not be properly accounted for")
 	}
 }
 
 // markResourcesReleased persists completion information.
-func (a *Allocation) markResourcesReleased(ctx *actor.Context) {
+func (a *allocation) markResourcesReleased() {
 	if err := a.db.DeleteAllocationSession(a.model.AllocationID); err != nil {
-		ctx.Log().WithError(err).Error("error deleting allocation session")
+		a.syslog.WithError(err).Error("error deleting allocation session")
 	}
 	if a.model.StartTime == nil {
 		return
 	}
 	a.model.EndTime = ptrs.Ptr(time.Now().UTC())
 	if err := a.db.CompleteAllocation(&a.model); err != nil {
-		ctx.Log().WithError(err).Error("failed to mark allocation completed")
+		a.syslog.WithError(err).Error("failed to mark allocation completed")
 	}
 
 	telemetry.ReportAllocationTerminal(
-		ctx.Self().System(), a.db, a.model, a.resources.firstDevice())
+		a.system, a.db, a.model, a.resources.firstDevice())
 }
 
-func (a *Allocation) purgeRestorableResources(ctx *actor.Context) error {
+func (a *allocation) purgeRestorableResources() error {
 	_, err := db.Bun().NewDelete().Model((*taskmodel.ResourcesWithState)(nil)).
 		Where("allocation_id = ?", a.model.AllocationID).
 		Exec(context.TODO())
@@ -1039,7 +1198,7 @@ func (a *Allocation) purgeRestorableResources(ctx *actor.Context) error {
 
 const killedLogSubstr = "exit code 137"
 
-func (a *Allocation) enrichLog(log *model.TaskLog) *model.TaskLog {
+func (a *allocation) enrichLog(log *model.TaskLog) *model.TaskLog {
 	log.TaskID = string(a.req.TaskID)
 
 	if log.Timestamp == nil || log.Timestamp.IsZero() {
@@ -1064,12 +1223,12 @@ func (a *Allocation) enrichLog(log *model.TaskLog) *model.TaskLog {
 	return log
 }
 
-func (a *Allocation) sendTaskLog(log *model.TaskLog) {
+// sendTaskLog is called without a lock.
+func (a *allocation) sendTaskLog(log *model.TaskLog) {
 	tasklogger.Insert(a.enrichLog(log))
 }
 
-// State returns a deepcopy of our state.
-func (a *Allocation) State() AllocationState {
+func (a *allocation) state() AllocationState {
 	addresses := map[sproto.ResourcesID][]cproto.Address{}
 	containers := map[sproto.ResourcesID][]cproto.Container{}
 	resources := map[sproto.ResourcesID]sproto.ResourcesSummary{}
@@ -1100,58 +1259,26 @@ func (a *Allocation) State() AllocationState {
 	}
 }
 
-func (a *Allocation) setModelState(v model.AllocationState) {
+func (a *allocation) setModelState(v model.AllocationState) {
 	a.model.State = &v
 }
 
-func (a *Allocation) setMostProgressedModelState(v model.AllocationState) {
+func (a *allocation) setMostProgressedModelState(v model.AllocationState) {
 	a.setModelState(model.MostProgressedAllocationState(a.getModelState(), v))
 }
 
-func (a *Allocation) getModelState() model.AllocationState {
+func (a *allocation) getModelState() model.AllocationState {
 	if a.model.State == nil {
 		return model.AllocationStatePending
 	}
 	return *a.model.State
 }
 
-func (a *Allocation) ready() bool {
+func (a *allocation) ready() bool {
 	// Most trials use `a.rendezvous` and the normal rendezvous APIs, and go through this path.
 	return (a.rendezvous != nil && a.rendezvous.ready()) ||
-		// But HPC trials don't, they don't use `a.rendezvous` at all but just do an allgather,
-		// so we check if we have done at least one, which also indicates all the workers are up.
-		a.allGatherFinished ||
 		// And finally, of course, if the task explicitly called `AllocationReady` it is ready.
 		coalesceBool(a.model.IsReady, false)
-}
-
-func (a *AllocationExited) String() string {
-	switch {
-	case a == nil:
-		return missingExitMessage
-	case a.Err != nil:
-		return a.Err.Error()
-	default:
-		return okExitMessage
-	}
-}
-
-// FirstContainer returns the first container in the allocation state.
-func (a AllocationState) FirstContainer() *cproto.Container {
-	for _, cs := range a.Containers {
-		for _, c := range cs {
-			return &c
-		}
-	}
-	return nil
-}
-
-// FirstContainerAddresses returns the first container's addresses in the allocation state.
-func (a AllocationState) FirstContainerAddresses() []cproto.Address {
-	for _, ca := range a.Addresses {
-		return ca
-	}
-	return nil
 }
 
 func coalesceBool(x *bool, fallback bool) bool {
@@ -1168,9 +1295,7 @@ func coalesceString(x *string, fallback string) string {
 	return *x
 }
 
-func (a *Allocation) getPorts(exposedPorts map[string]int,
-	ctx *actor.Context,
-) (map[string]int, error) {
+func (a *allocation) getPorts(exposedPorts map[string]int) (map[string]int, error) {
 	ports := make(map[string]int)
 	var err error
 	defer func() {
@@ -1186,7 +1311,7 @@ func (a *Allocation) getPorts(exposedPorts map[string]int,
 			return nil, fmt.Errorf("getting %v port from the registry for an allocation", portName)
 		}
 		ports[portName] = port
-		ctx.Log().Debugf("%v port : %v", portName, port)
+		a.syslog.Debugf("%v port : %v", portName, port)
 	}
 
 	return ports, nil

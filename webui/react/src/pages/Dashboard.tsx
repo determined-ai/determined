@@ -6,11 +6,11 @@ import Breadcrumb from 'components/kit/Breadcrumb';
 import Card from 'components/kit/Card';
 import Empty from 'components/kit/Empty';
 import Icon from 'components/kit/Icon';
+import Spinner from 'components/kit/Spinner';
 import Link from 'components/Link';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import {
   experimentNameRenderer,
@@ -179,7 +179,7 @@ const Dashboard: React.FC = () => {
         breadcrumb={pageBreadCrumb}
         options={<JupyterLabButton enabled={canCreateNSC} />}
         title="Home">
-        <Spinner center />
+        <Spinner center spinning />
       </Page>
     );
   }
@@ -191,7 +191,7 @@ const Dashboard: React.FC = () => {
       title="Home">
       {projectsLoading ? (
         <Section>
-          <Spinner center />
+          <Spinner center spinning />
         </Section>
       ) : projects.length > 0 ? (
         // hide Projects header when empty:
@@ -211,7 +211,7 @@ const Dashboard: React.FC = () => {
       {/* show Submissions header even when empty: */}
       <Section title="Your Recent Submissions">
         {submissionsLoading ? (
-          <Spinner center />
+          <Spinner center spinning />
         ) : submissions.length > 0 ? (
           <ResponsiveTable<Submission>
             className={css.table}

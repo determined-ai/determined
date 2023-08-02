@@ -29,7 +29,7 @@ func (t metricName) Validate() error {
 	return nil
 }
 
-// MetricGroup denotes what custom type the metric is.
+// MetricGroup denotes what custom group the metric is.
 type MetricGroup string
 
 // ToString returns the string representation of the metric group.
@@ -85,12 +85,12 @@ func DeserializeMetricIdentifier(s string) (*MetricIdentifier, error) {
 	if err := metricIDName.Validate(); err != nil {
 		return nil, err
 	}
-	metricIDType := MetricGroup(nameAndType[0])
-	if err := metricIDType.Validate(); err != nil {
+	metricIDGroup := MetricGroup(nameAndType[0])
+	if err := metricIDGroup.Validate(); err != nil {
 		return nil, err
 	}
 	return &MetricIdentifier{
-		Group: metricIDType,
+		Group: metricIDGroup,
 		Name:  metricIDName,
 	}, nil
 }

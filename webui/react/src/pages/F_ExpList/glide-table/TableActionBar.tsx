@@ -316,19 +316,27 @@ const TableActionBar: React.FC<Props> = ({
     [BatchActionConfirmModal, submitBatchAction, sendBatchActions],
   );
 
-  const editMenuItems: MenuItem[] = useMemo(() => {
-    return batchActions.map((action) => ({
-      danger: action === ExperimentAction.Delete,
-      disabled: !availableBatchActions.includes(action),
-      // The icon doesn't show up without being wrapped in a div.
-      icon: (
-        <div>
-          <Icon name={actionIcons[action]} title={action} />
-        </div>
-      ),
-      key: action,
-      label: action,
-    }));
+  const editMenuItems = useMemo(() => {
+    const groupedBatchActions = [
+      batchActions.slice(0, 1), // View in TensorBoard
+      batchActions.slice(1, 5), // Move, Archive, Unarchive, Delete
+      batchActions.slice(5), // Resume, Pause, Cancel, Kill
+    ];
+    const groupSize = groupedBatchActions.length;
+    return groupedBatchActions.reduce((acc, group, index) => {
+      const isLastGroup = index === groupSize - 1;
+      group.forEach((action) =>
+        acc.push({
+          danger: action === ExperimentAction.Delete,
+          disabled: !availableBatchActions.includes(action),
+          icon: <Icon name={actionIcons[action]} title={action} />,
+          key: action,
+          label: action,
+        }),
+      );
+      if (!isLastGroup) acc.push({ type: 'divider' });
+      return acc;
+    }, [] as MenuItem[]);
   }, [availableBatchActions]);
 
   const selectionLabel = useMemo(() => {
@@ -338,10 +346,11 @@ const TableActionBar: React.FC<Props> = ({
     )}`;
 
     if (selectAll) {
+      const all = !excludedExperimentIds?.size ? 'All ' : '';
       const totalSelected = Loadable.isLoaded(total)
         ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString() + ' '
         : '';
-      label = `All ${totalSelected}experiments selected`;
+      label = `${all}${totalSelected}experiments selected`;
     } else if (selectedExperimentIds.length > 0) {
       label = `${selectedExperimentIds.length} of ${label} selected`;
     }
@@ -377,15 +386,7 @@ const TableActionBar: React.FC<Props> = ({
           />
           {(selectAll || selectedExperimentIds.length > 0) && (
             <Dropdown menu={editMenuItems} onClick={handleAction}>
-              <Button hideChildren={isMobile} icon={<Icon decorative name="pencil" />}>
-                Edit (
-                {selectAll
-                  ? Loadable.isLoaded(total)
-                    ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString()
-                    : 'All'
-                  : selectedExperimentIds.length}
-                )
-              </Button>
+              <Button hideChildren={isMobile}>Actions</Button>
             </Dropdown>
           )}
           {!isMobile && <span className={css.expNum}>{selectionLabel}</span>}

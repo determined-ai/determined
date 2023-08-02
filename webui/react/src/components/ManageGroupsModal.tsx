@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 
 import Form from 'components/kit/Form';
 import { Modal } from 'components/kit/Modal';
-import Spinner from 'components/Spinner';
+import Spinner from 'components/kit/Spinner';
 import { updateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';

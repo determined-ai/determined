@@ -7,17 +7,9 @@
   }
 }
 
-@keyframes rotateCentered {
-  from {
-    transform: translate(-50%, -50%) rotate(0deg);
-  }
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
-}
-
 .base {
   height: 100%;
+  min-height: inherit;
   position: relative;
   width: 100%;
 
@@ -26,9 +18,9 @@
     color: var(--theme-brand);
     display: flex;
   }
-}
-.base.center {
-  align-items: center;
-  display: flex;
-  justify-content: center;
+  &.center {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+  }
 }

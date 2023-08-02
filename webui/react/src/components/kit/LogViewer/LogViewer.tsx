@@ -20,15 +20,14 @@ import {
   numericSorter,
 } from 'components/kit/internal/functions';
 import Link from 'components/kit/internal/Link';
-import Message, { MessageType } from 'components/kit/internal/Message';
 import Section from 'components/kit/internal/Section';
 import { readLogStream } from 'components/kit/internal/services';
-import Spinner from 'components/kit/internal/Spinner';
 import { FetchArgs, RecordKey, ValueOf } from 'components/kit/internal/types';
 import { ErrorHandler } from 'components/kit/internal/types';
 import { Log, LogLevel } from 'components/kit/internal/types';
 import useGetCharMeasureInContainer from 'components/kit/internal/useGetCharMeasureInContainer';
 import useResize from 'components/kit/internal/useResize';
+import Spinner from 'components/kit/Spinner';
 
 import ClipboardButton from '../ClipboardButton';
 
@@ -568,44 +567,43 @@ const LogViewer: React.FC<Props> = ({
       maxHeight
       options={logViewerOptions}
       title={props.title}>
-      <div className={css.base} ref={baseRef}>
-        <div className={css.container}>
-          <div className={css.logs} ref={logsRef}>
-            <VariableSizeList
-              height={pageSize.height - 250}
-              itemCount={logs.length}
-              itemData={logs}
-              itemSize={getItemHeight}
-              ref={listRef}
-              width="100%"
-              onItemsRendered={handleItemsRendered}
-              onScroll={handleScroll}>
-              {LogViewerRow}
-            </VariableSizeList>
+      <Spinner center spinning={isFetching} tip={logs.length === 0 ? 'No logs to show.' : ''}>
+        <div className={css.base} ref={baseRef}>
+          <div className={css.container}>
+            <div className={css.logs} ref={logsRef}>
+              <VariableSizeList
+                height={pageSize.height - 250}
+                itemCount={logs.length}
+                itemData={logs}
+                itemSize={getItemHeight}
+                ref={listRef}
+                width="100%"
+                onItemsRendered={handleItemsRendered}
+                onScroll={handleScroll}>
+                {LogViewerRow}
+              </VariableSizeList>
+            </div>
           </div>
-          <Spinner className={css.empty} conditionalRender spinning={isFetching}>
-            {logs.length === 0 && <Message title="No logs to show." type={MessageType.Empty} />}
-          </Spinner>
+          <div className={css.buttons} style={{ display: showButtons ? 'flex' : 'none' }}>
+            <Button
+              aria-label={ARIA_LABEL_SCROLL_TO_OLDEST}
+              icon={<Icon name="arrow-up" showTooltip title={ARIA_LABEL_SCROLL_TO_OLDEST} />}
+              onClick={handleScrollToOldest}
+            />
+            <Button
+              aria-label={ARIA_LABEL_ENABLE_TAILING}
+              icon={
+                <Icon
+                  name="arrow-down"
+                  showTooltip
+                  title={isTailing ? 'Tailing Enabled' : ARIA_LABEL_ENABLE_TAILING}
+                />
+              }
+              onClick={handleEnableTailing}
+            />
+          </div>
         </div>
-        <div className={css.buttons} style={{ display: showButtons ? 'flex' : 'none' }}>
-          <Button
-            aria-label={ARIA_LABEL_SCROLL_TO_OLDEST}
-            icon={<Icon name="arrow-up" showTooltip title={ARIA_LABEL_SCROLL_TO_OLDEST} />}
-            onClick={handleScrollToOldest}
-          />
-          <Button
-            aria-label={ARIA_LABEL_ENABLE_TAILING}
-            icon={
-              <Icon
-                name="arrow-down"
-                showTooltip
-                title={isTailing ? 'Tailing Enabled' : ARIA_LABEL_ENABLE_TAILING}
-              />
-            }
-            onClick={handleEnableTailing}
-          />
-        </div>
-      </div>
+      </Spinner>
     </Section>
   );
 };

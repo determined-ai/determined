@@ -3,7 +3,7 @@ import { default as MarkdownViewer } from 'markdown-to-jsx';
 import React, { useMemo } from 'react';
 
 import Pivot from 'components/kit/Pivot';
-import Spinner from 'components/Spinner/Spinner';
+import Spinner from 'components/kit/Spinner';
 import useResize from 'hooks/useResize';
 import handleError from 'utils/error';
 import { Loaded } from 'utils/loadable';
@@ -60,7 +60,7 @@ const Markdown: React.FC<Props> = ({
             <React.Suspense
               fallback={
                 <div>
-                  <Spinner tip="Loading text editor..." />
+                  <Spinner spinning tip="Loading text editor..." />
                 </div>
               }>
               <CodeEditor

@@ -85,7 +85,7 @@ const Card: Card = ({
       <>
         {children && <section className={css.content}>{children}</section>}
         {actionsAvailable && (
-          <div className={css.action}>
+          <div className={css.action} onClick={stopPropagation}>
             <Dropdown
               disabled={disabled}
               menu={actionMenu}

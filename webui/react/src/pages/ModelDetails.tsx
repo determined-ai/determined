@@ -6,6 +6,7 @@ import { useParams } from 'react-router-dom';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
 import Notes from 'components/kit/Notes';
+import Spinner from 'components/kit/Spinner';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
@@ -13,7 +14,6 @@ import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
-import Spinner from 'components/Spinner/Spinner';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
   defaultRowClassName,

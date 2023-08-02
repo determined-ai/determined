@@ -1,14 +1,15 @@
-import { Popover, Space } from 'antd';
+import { Space } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
+import Dropdown from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Pivot from 'components/kit/Pivot';
-import Spinner from 'components/Spinner';
+import Spinner from 'components/kit/Spinner';
 import { useSettings } from 'hooks/useSettings';
 import { V1LocationType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
@@ -185,7 +186,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
           )}
         </Space>
       ) : (
-        <Spinner />
+        <Spinner spinning />
       )}
       {!settings.compare && (
         <div className={css.actionRow}>
@@ -230,7 +231,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   }, [setVisibleColumns]);
 
   return (
-    <Popover
+    <Dropdown
       content={
         <div className={css.base}>
           <Pivot
@@ -262,13 +263,11 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
         </div>
       }
       open={open}
-      placement="bottom"
-      trigger="click"
       onOpenChange={handleOpenChange}>
       <Button hideChildren={isMobile} icon={<Icon name="columns" title="column picker" />}>
         Columns
       </Button>
-    </Popover>
+    </Dropdown>
   );
 };
 

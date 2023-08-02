@@ -2,6 +2,7 @@ package actors
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
@@ -21,6 +22,7 @@ type (
 	// MockActor is a convenience actor for testing hierarchies of actors without instantiating
 	// off of them.
 	MockActor struct {
+		mu        sync.Mutex
 		Messages  []actor.Message
 		Responses map[string]*MockResponse
 	}
@@ -28,6 +30,9 @@ type (
 
 // Receive implements actor.Actor.
 func (a *MockActor) Receive(ctx *actor.Context) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	a.Messages = append(a.Messages, ctx.Message())
 	switch msg := ctx.Message().(type) {
 	case error:
@@ -53,11 +58,17 @@ func (a *MockActor) Receive(ctx *actor.Context) error {
 
 // Expect sets up an expectation to send some response.
 func (a *MockActor) Expect(t string, r MockResponse) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	a.Responses[t] = &r
 }
 
 // AssertExpectations asserts mocked expectations were met.
 func (a *MockActor) AssertExpectations() error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	for t, r := range a.Responses {
 		if !r.Consumed {
 			return fmt.Errorf("expected to reply with %s", t)

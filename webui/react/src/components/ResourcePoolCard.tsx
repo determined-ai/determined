@@ -7,8 +7,8 @@ import k8sLogo from 'assets/images/k8s-logo.svg';
 import staticLogo from 'assets/images/on-prem-logo.svg';
 import Card from 'components/kit/Card';
 import Icon from 'components/kit/Icon';
+import Spinner from 'components/kit/Spinner';
 import SlotAllocationBar from 'components/SlotAllocationBar';
-import Spinner from 'components/Spinner';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -17,7 +17,6 @@ import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api
 import { maxPoolSlotCapacity } from 'stores/cluster';
 import clusterStore from 'stores/cluster';
 import useUI from 'stores/contexts/UI';
-import determinedStore from 'stores/determinedInfo';
 import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
 import { isDeviceType, JsonObject, ResourcePool } from 'types';
@@ -94,7 +93,6 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
   const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
 
   const descriptionClasses = [css.description];
-  const { rbacEnabled } = useObservable(determinedStore.info);
   const { canManageResourcePoolBindings } = usePermissions();
   const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
   const resourcePoolBindings: number[] = resourcePoolBindingMap.get(pool.name, []);
@@ -153,6 +151,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
           rpBindingFlagOn && canManageResourcePoolBindings
             ? [
                 {
+                  disabled: pool.defaultAuxPool || pool.defaultComputePool,
                   icon: <Icon name="four-squares" title="manage-bindings" />,
                   key: 'bindings',
                   label: 'Manage bindings',
@@ -175,10 +174,10 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
               {pool.description && <Icon name="info" showTooltip title={pool.description} />}
             </div>
           </div>
-          <Suspense fallback={<Spinner center />}>
+          <Suspense fallback={<Spinner center spinning />}>
             <div className={css.body}>
               <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
-              {rpBindingFlagOn && rbacEnabled && resourcePoolBindings.length > 0 && (
+              {rpBindingFlagOn && resourcePoolBindings.length > 0 && (
                 <section className={css.resoucePoolBoundContainer}>
                   <div>Bound to:</div>
                   <div className={css.resoucePoolBoundCount}>

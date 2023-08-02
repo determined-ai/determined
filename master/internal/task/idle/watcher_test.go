@@ -1,6 +1,7 @@
 package idle
 
 import (
+	"context"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -20,7 +21,7 @@ func TestIdleTimeoutWatcherUseRunnerState(t *testing.T) {
 		UseRunnerState:  true,
 	}
 
-	Register(cfg, func(error) {
+	Register(cfg, func(context.Context, error) {
 		actionDone.Store(true)
 	})
 	defer Unregister(cfg.ServiceID)

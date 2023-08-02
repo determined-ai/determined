@@ -140,10 +140,9 @@ func forceAddTask(
 	assert.Assert(t, created)
 
 	req := &sproto.AllocateRequest{
-		AllocationID:  model.AllocationID(taskID),
-		AllocationRef: ref,
-		Group:         ref,
-		SlotsNeeded:   slotsNeeded,
+		AllocationID: model.AllocationID(taskID),
+		Group:        ref,
+		SlotsNeeded:  slotsNeeded,
 	}
 	taskList.AddTask(req)
 	forceSetTaskAllocations(t, taskList, taskID, numAllocated)
@@ -203,19 +202,19 @@ func assertEqualToAllocateOrdered(
 func assertEqualToRelease(
 	t *testing.T,
 	taskList *tasklist.TaskList,
-	actual []*actor.Ref,
+	actual []model.AllocationID,
 	expected []*MockTask,
 ) {
 	expectedMap := map[model.AllocationID]bool{}
 	for _, task := range expected {
 		expectedMap[task.ID] = true
 	}
-	for _, taskActor := range actual {
+	for _, allocationID := range actual {
 		// HACK: Holdover until the scheduler interface doesn't have actors.
 		var task *sproto.AllocateRequest
 		for it := taskList.Iterator(); it.Next(); {
 			req := it.Value()
-			if req.AllocationRef == taskActor {
+			if req.AllocationID == allocationID {
 				task = req
 				break
 			}

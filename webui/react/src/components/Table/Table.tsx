@@ -7,11 +7,11 @@ import DynamicIcon from 'components/DynamicIcon';
 import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Icon from 'components/kit/Icon';
+import Spinner from 'components/kit/Spinner';
 import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
-import Spinner from 'components/Spinner';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import { OMITTED_STR } from 'constants/accessControl';
@@ -134,7 +134,7 @@ export const tooltipRenderer: Renderer = (text) => (
 export const userRenderer: React.FC<DetailedUser | undefined> = (user) => {
   return (
     <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
-      {user ? <UserAvatar user={user} /> : <Spinner />}
+      {user ? <UserAvatar user={user} /> : <Spinner spinning />}
     </div>
   );
 };

@@ -54,6 +54,7 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
+		msg.CommandID = string(taskID)
 		if err := createGenericCommandActor(
 			ctx, c.db, c.rm, taskID, model.TaskTypeCommand, jobID,
 			model.JobTypeCommand, msg,

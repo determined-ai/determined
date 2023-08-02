@@ -2,7 +2,7 @@ import yaml from 'js-yaml';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/kit/Icon';
-import Spinner from 'components/Spinner/Spinner';
+import Spinner from 'components/kit/Spinner';
 import { paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { V1FileNode } from 'services/api-ts-sdk';
@@ -99,7 +99,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
   ];
 
   return (
-    <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
+    <React.Suspense fallback={<Spinner spinning tip="Loading code viewer..." />}>
       <Spinner spinning={expFiles === NotLoaded} tip="Loading file tree...">
         <div className={cssClasses.join(' ')}>
           <CodeEditor

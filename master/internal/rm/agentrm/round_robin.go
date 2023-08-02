@@ -18,7 +18,10 @@ func NewRoundRobinScheduler() Scheduler {
 	return &roundRobinScheduler{}
 }
 
-func (p *roundRobinScheduler) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
+func (p *roundRobinScheduler) Schedule(rp *resourcePool) (
+	[]*sproto.AllocateRequest,
+	[]model.AllocationID,
+) {
 	return roundRobinSchedule(
 		rp.taskList,
 		rp.groups,
@@ -39,7 +42,7 @@ func roundRobinSchedule(
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
 	allowHeterogeneousFits bool,
-) ([]*sproto.AllocateRequest, []*actor.Ref) {
+) ([]*sproto.AllocateRequest, []model.AllocationID) {
 	var states []*groupState
 	groupMapping := make(map[*tasklist.Group]*groupState)
 	for it := taskList.Iterator(); it.Next(); {
@@ -89,5 +92,5 @@ func roundRobinSchedule(
 		states = filtered
 	}
 
-	return toAllocate, make([]*actor.Ref, 0)
+	return toAllocate, make([]model.AllocationID, 0)
 }
