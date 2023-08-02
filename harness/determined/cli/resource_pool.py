@@ -1,8 +1,8 @@
 from argparse import ONE_OR_MORE, Namespace
 from typing import Any, List
 
-from determined.cli import render, setup_session
-from determined.common.api import authentication, bindings
+from determined.cli import default_pagination_args, render, setup_session
+from determined.common.api import authentication, bindings, read_paginated
 from determined.common.declarative_argparse import Arg, Cmd
 
 
@@ -77,6 +77,26 @@ def list_workspaces(args: Namespace) -> None:
     return
 
 
+@authentication.required
+def list_resource_pools(args: Namespace) -> None:
+    session = setup_session(args)
+
+    def get_with_offset(offset: int) -> bindings.v1GetResourcePoolsResponse:
+        return bindings.get_GetResourcePools(
+            session=session,
+            offset=offset,
+            limit=args.limit,
+        )
+
+    resps = read_paginated(get_with_offset, offset=args.offset, pages=args.pages)
+
+    render.tabulate_or_csv(
+        headers=["resource pool"],
+        values=[[rp.name for r in resps for rp in r.resourcePools]],
+        as_csv=False,
+    )
+
+
 args_description = [
     Cmd(
         "resource-pool rp",
@@ -142,6 +162,13 @@ args_description = [
                         ],
                     ),
                 ],
+            ),
+            Cmd(
+                "list ls",
+                list_resource_pools,
+                "list resource pools",
+                [*default_pagination_args],
+                is_default=True,
             ),
         ],
     )
