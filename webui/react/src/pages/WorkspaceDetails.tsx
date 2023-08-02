@@ -25,6 +25,7 @@ import { useObservable } from 'utils/observable';
 
 import ModelRegistry from '../components/ModelRegistry';
 
+import ResourcePoolsBound from './WorkspaceDetails/ResourcePoolsBound';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
 import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
 import { useWorkspaceActionMenu } from './WorkspaceList/WorkspaceActionDropdown';
@@ -38,6 +39,7 @@ export const WorkspaceDetailsTab = {
   Members: 'members',
   ModelRegistry: 'models',
   Projects: 'projects',
+  ResourcePools: 'pools',
   Tasks: 'tasks',
 } as const;
 
@@ -196,10 +198,19 @@ const WorkspaceDetails: React.FC = () => {
       });
     }
 
+    if (canViewWorkspace({ workspace })) {
+      items.push({
+        children: <ResourcePoolsBound />,
+        key: WorkspaceDetailsTab.ResourcePools,
+        label: 'Resource Pools',
+      });
+    }
+
     return items;
   }, [
     addableUsersAndGroups,
     canViewModelRegistry,
+    canViewWorkspace,
     fetchGroupsAndUsersAssignedToWorkspace,
     groupsAssignedDirectly,
     id,

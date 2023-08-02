@@ -11,7 +11,6 @@ import Spinner from 'components/kit/Spinner';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
-import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import { maxPoolSlotCapacity } from 'stores/cluster';
@@ -27,11 +26,13 @@ import { useObservable } from 'utils/observable';
 import { DarkLight } from 'utils/themes';
 
 import Json from './Json';
+import { MenuItem } from './kit/Dropdown';
 import { useModal } from './kit/Modal';
 import ResourcePoolBindingModalComponent from './ResourcePoolBindingModal';
 import css from './ResourcePoolCard.module.scss';
 
 interface Props {
+  actionMenu?: MenuItem[];
   poolStats?: V1RPQueueStat | undefined;
   resourcePool: ResourcePool;
   size?: ShirtSize;
@@ -88,12 +89,12 @@ export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
   return <img className={css['rp-type-logo']} src={iconSrc} />;
 };
 
-const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
+const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool, actionMenu }: Props) => {
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
 
   const descriptionClasses = [css.description];
-  const { canManageResourcePoolBindings } = usePermissions();
+
   const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
   const resourcePoolBindings: number[] = resourcePoolBindingMap.get(pool.name, []);
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
@@ -147,18 +148,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
   return (
     <>
       <Card
-        actionMenu={
-          rpBindingFlagOn && canManageResourcePoolBindings
-            ? [
-                {
-                  disabled: pool.defaultAuxPool || pool.defaultComputePool,
-                  icon: <Icon name="four-squares" title="manage-bindings" />,
-                  key: 'bindings',
-                  label: 'Manage bindings',
-                },
-              ]
-            : []
-        }
+        actionMenu={actionMenu}
         href={paths.resourcePool(pool.name)}
         size="medium"
         onDropdown={onDropdown}>
