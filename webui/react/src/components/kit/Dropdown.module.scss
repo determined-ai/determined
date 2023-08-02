@@ -7,3 +7,6 @@
     margin-right: 4px;
   }
 }
+:global(.ant-popover) {
+  padding-top: 0;
+}

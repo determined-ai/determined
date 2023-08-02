@@ -1,8 +1,7 @@
-import { Popover } from 'antd';
 import * as io from 'io-ts';
 
 import Button from 'components/kit/Button';
-import { MenuItem } from 'components/kit/Dropdown';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Select from 'components/kit/Select';
 import { V1ColumnType } from 'services/api-ts-sdk';
@@ -267,16 +266,13 @@ const MultiSortMenu: React.FC<MultiSortProps> = ({
   };
 
   return (
-    <Popover
+    <Dropdown
       content={<MultiSort columns={columns} sorts={sorts} onChange={onChange} />}
-      placement="bottomLeft"
-      showArrow={false}
-      trigger="click"
       onOpenChange={onSortPopoverOpenChange}>
       <Button hideChildren={isMobile} icon={<SortButtonIcon />}>
         Sort {validSorts.length ? `(${validSorts.length})` : ''}
       </Button>
-    </Popover>
+    </Dropdown>
   );
 };
 

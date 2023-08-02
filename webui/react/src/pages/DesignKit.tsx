@@ -836,32 +836,37 @@ const DropdownSection: React.FC = () => {
     <ComponentSection id="Dropdown" title="Dropdown">
       <AntDCard>
         <p>
-          Dropdown (<code>{'<Dropdown>'}</code>) give people a way to select one item from a group
-          of choices. The item is typically an action to apply to a relevant entity. For example, an
-          experiment dropdown would show actions you can perform on the relevant experiment, such as
-          `Activate`, `Stop`, `Archive`, etc.
+          A (<code>{'<Dropdown>'}</code>) is used to display a component when triggered by a child
+          element (usually a button). This component can be a menu (a list of actions/options
+          defined via the <code>{'menu'}</code> prop), or can be any arbitrary component, defined
+          via the <code>{'content'}</code> prop, with default styling applied.
         </p>
       </AntDCard>
       <AntDCard title="Usage">
-        <strong>Basic Dropdowns</strong>
+        <strong>Dropdown variations</strong>
         <Space>
           <Dropdown menu={menu}>
-            <Button>Basic Dropdown</Button>
+            <Button>Dropdown with menu</Button>
           </Dropdown>
-          <Dropdown menu={menuWithDivider}>
-            <Button>Dropdown with a Divider</Button>
-          </Dropdown>
+          <Space>
+            <Dropdown content={<Input />}>
+              <Button>Dropdown with component content</Button>
+            </Dropdown>
+          </Space>
           <Dropdown disabled menu={menu}>
-            <Button>Disabled Dropdown</Button>
+            <Button>Disabled Dropdown menu</Button>
           </Dropdown>
         </Space>
-        <strong>Various Dropdown Options</strong>
+        <strong>Dropdown menu variations</strong>
         <Space>
+          <Dropdown menu={menuWithDivider}>
+            <Button>Dropdown menu with a Divider</Button>
+          </Dropdown>
           <Dropdown menu={menuWithDanger}>
-            <Button>Dangerous Options</Button>
+            <Button>Dropdown menu with Dangerous Option</Button>
           </Dropdown>
           <Dropdown menu={menuWithDisabled}>
-            <Button>Disabled Options</Button>
+            <Button>Dropdown menu with Disabled Option</Button>
           </Dropdown>
         </Space>
       </AntDCard>
@@ -2214,34 +2219,12 @@ const TooltipsSection: React.FC = () => {
     <ComponentSection id="Tooltips" title="Tooltips">
       <AntDCard>
         <p>
-          A good tooltip (<code>{'<Tooltip>'}</code>) briefly describes unlabeled controls or
-          provides a bit of additional information about labeled controls, when this is useful. It
-          can also help customers navigate the UI by offering additional—not redundant—information
-          about control labels, icons, and links. A tooltip should always add valuable information;
-          use sparingly.
+          A (<code>{'<Tooltip>'}</code>) is used to display a string value, and is triggered by
+          interaction (either by click or hover) with a child element (usually a Button).
         </p>
       </AntDCard>
-      <AntDCard title="Best practices">
-        <strong>Content</strong>
-        <ul>
-          <li>
-            Don&apos;t use a tooltip to restate a button name that&apos;s already shown in the UI.
-          </li>
-          <li>
-            When a control or UI element is unlabeled, use a simple, descriptive noun phrase. For
-            Only use periods for complete sentences.italize the first word (unless a subsequent word
-            is a proper noun), and don&apos;t use a period.
-          </li>
-          <li>
-            For a disabled control that could use an explanation, provide a brief description of the
-            state in which the control will be enabled. For example: “This feature is available for
-            line charts.”
-          </li>
-          <li>Only use periods for complete sentences.</li>
-        </ul>
-      </AntDCard>
       <AntDCard title="Usage">
-        <strong>Tooltips default</strong>
+        <strong>Tooltip triggers</strong>
         <Space>
           <Tooltip content={text}>
             <Button>Trigger on hover</Button>
@@ -2253,19 +2236,14 @@ const TooltipsSection: React.FC = () => {
             <Button>Trigger on right click</Button>
           </Tooltip>
         </Space>
+        <strong>Variations</strong>
+        <p>Without arrow</p>
         <Space>
           <Tooltip content={text} placement="bottom" showArrow={false}>
             <Button>Tooltip without arrow</Button>
           </Tooltip>
         </Space>
-        <strong>Considerations</strong>
-        <ul>
-          <li>
-            Nest the tooltip where the content in a cell/text is. Don’t let it levitate in the
-            nothingness.
-          </li>
-        </ul>
-        <strong>Variations</strong>
+        <p>Placement</p>
         <div>
           <div style={{ marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
             <Tooltip content={text} placement="topLeft">
@@ -2312,12 +2290,6 @@ const TooltipsSection: React.FC = () => {
             </Tooltip>
           </div>
         </div>
-        <strong>Tooltip with complex content</strong>
-        <p>
-          <Tooltip content={<UserAvatar />}>
-            <Button>{'Hover to see user avatars'}</Button>
-          </Tooltip>
-        </p>
       </AntDCard>
     </ComponentSection>
   );

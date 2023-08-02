@@ -1,9 +1,10 @@
-import { Popover, Space } from 'antd';
+import { Space } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
+import Dropdown from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
@@ -219,7 +220,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   }, [setVisibleColumns]);
 
   return (
-    <Popover
+    <Dropdown
       content={
         <div className={css.base}>
           <Pivot
@@ -251,13 +252,11 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
         </div>
       }
       open={open}
-      placement="bottom"
-      trigger="click"
       onOpenChange={handleOpenChange}>
       <Button hideChildren={isMobile} icon={<Icon name="columns" title="column picker" />}>
         Columns
       </Button>
-    </Popover>
+    </Dropdown>
   );
 };
 
