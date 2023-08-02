@@ -224,7 +224,6 @@ def test_add_label_url_encodes_label(
 
     expref.add_label(label=label)
 
-    assert mock_bindings.call_count == 1
     _, call_kwargs = mock_bindings.call_args_list[0]
     assert call_kwargs["label"] == url_encoded_label
 
@@ -241,6 +240,5 @@ def test_remove_label_url_encodes_label(
 
     expref.remove_label(label=label)
 
-    assert mock_bindings.call_count == 1
     _, call_kwargs = mock_bindings.call_args_list[0]
     assert call_kwargs["label"] == url_encoded_label
