@@ -15,6 +15,7 @@ import {
 import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
 import Pagination from 'components/kit/Pagination';
+import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
@@ -56,7 +57,6 @@ import { Error, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
 import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
-import { useGlasbey } from './useGlasbey';
 
 interface Props {
   project: Project;

@@ -7,6 +7,7 @@ import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Message, { MessageType } from 'components/Message';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
+import { useGlasbey } from 'hooks/useGlasbey';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
 import ExperimentVisualizationFilters, {
@@ -32,7 +33,6 @@ import {
   settingsConfigForExperimentHyperparameters,
 } from './CompareParallelCoordinates.settings';
 import css from './HpParallelCoordinates.module.scss';
-import { useGlasbey } from './useGlasbey';
 
 interface Props {
   projectId: number;

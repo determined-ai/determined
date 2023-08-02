@@ -35,6 +35,7 @@ import {
 } from 'components/FilterForm/components/type';
 import { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
+import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
@@ -50,7 +51,6 @@ import { getCssVar } from 'utils/themes';
 
 import { PAGE_SIZE } from '../F_ExperimentList';
 import { RowHeight } from '../F_ExperimentList.settings';
-import { MapOfIdsToColors } from '../useGlasbey';
 
 import {
   ColumnDef,
