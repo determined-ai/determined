@@ -2445,7 +2445,6 @@ func (a *apiServer) DeleteExperimentLabel(ctx context.Context,
 		Set("config = jsonb_set(config, '{labels}', ?, true)", exp.Labels).
 		Where("id = ?", exp.Id).
 		Exec(ctx)
-
 	if err != nil {
 		return nil, fmt.Errorf("error updating experiment %v in database: %w", exp.Id, err)
 	}

@@ -107,7 +107,6 @@ class Experiment:
         self.config: Optional[Dict[str, Any]] = None
         self.state: Optional[bindings.experimentv1State] = None
         self.labels: Optional[Set[str]] = None
-        self.labels: Optional[List[str]] = None
         self.archived: Optional[bool] = None
         self.name: Optional[str] = None
         self.progress: Optional[float] = None
@@ -126,7 +125,6 @@ class Experiment:
         self.progress = exp.progress
         self.description = exp.description
         self.notes = exp.notes
-        self.labels = exp.labels
         self.labels = set(exp.labels) if exp.labels else None
 
     def reload(self) -> None:
@@ -184,13 +182,13 @@ class Experiment:
         self.labels = set(resp.labels)
 
     def set_labels(self, labels: Set[str]) -> None:
-        """Sets experiment labels to the specified list.
+        """Sets experiment labels to the given set.
 
         This method will overwrite any existing labels on the experiment with the specified
         labels.
 
         Arguments:
-            labels: a list of string labels to set on the experiment. Duplicates will be ignored.
+            labels: a set of string labels to set on the experiment.
         """
         patch_exp = bindings.v1PatchExperiment(id=self.id, labels=list(labels))
         resp = bindings.patch_PatchExperiment(self._session, body=patch_exp, experiment_id=self.id)

@@ -212,7 +212,6 @@ def test_unarchive_doesnt_update_local_on_rest_failure(
         assert expref.archived is None
 
 
-@responses.activate
 @mock.patch("determined.common.api.bindings.put_PutExperimentLabel")
 def test_add_label_url_encodes_label(
     mock_bindings: mock.MagicMock,
