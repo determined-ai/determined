@@ -2,7 +2,7 @@
 pytest>=6.0.1
 mypy==0.910
 # responses 0.23.2 requires urllib3>=2, which breaks several other dependencies
-responses<=0.23.1
+responses!=0.23.2
 requests_mock
 coverage
 pytorch_lightning==1.5.9
