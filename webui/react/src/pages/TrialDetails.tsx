@@ -9,12 +9,11 @@ import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
-import useFeature from 'hooks/useFeature';
 import usePolling from 'hooks/usePolling';
-import F_TrialDetailsOverview from 'pages/TrialDetails/F_TrialDetailsOverview';
 import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
+import TrialDetailsMetrics from 'pages/TrialDetails/TrialDetailsMetrics';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import { paths } from 'routes/utils';
@@ -34,6 +33,7 @@ import MultiTrialDetailsHyperparameters from './TrialDetails/MultiTrialDetailsHy
 const TabType = {
   Hyperparameters: 'hyperparameters',
   Logs: 'logs',
+  Metrics: 'metrics',
   Overview: 'overview',
   Profiler: 'profiler',
   Workloads: 'workloads',
@@ -64,7 +64,6 @@ const TrialDetailsComp: React.FC = () => {
     error: undefined,
   });
   const pageRef = useRef<HTMLElement>(null);
-  const chartFlagOn = useFeature().isOn('chart');
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const basePath = paths.trialDetails(trialId, experimentId);
   const trial = trialDetails.data;
@@ -135,13 +134,14 @@ const TrialDetailsComp: React.FC = () => {
 
     return [
       {
-        children: chartFlagOn ? (
-          <F_TrialDetailsOverview experiment={experiment} trial={trial} />
-        ) : (
-          <TrialDetailsOverview experiment={experiment} trial={trial} />
-        ),
+        children: <TrialDetailsOverview experiment={experiment} trial={trial} />,
         key: TabType.Overview,
         label: 'Overview',
+      },
+      {
+        children: <TrialDetailsMetrics experiment={experiment} trial={trial} />,
+        key: TabType.Metrics,
+        label: 'Metrics',
       },
       {
         children: isSingleTrialExperiment(experiment) ? (
@@ -167,7 +167,7 @@ const TrialDetailsComp: React.FC = () => {
         label: 'Logs',
       },
     ];
-  }, [experiment, trial, chartFlagOn]);
+  }, [experiment, trial]);
 
   const { stopPolling } = usePolling(fetchTrialDetails);
 

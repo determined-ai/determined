@@ -1,17 +1,13 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { ChartGrid, ChartsProps, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
-import Spinner from 'components/kit/Spinner';
 import { UPlotPoint } from 'components/UPlot/types';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
-import useMetricNames from 'hooks/useMetricNames';
 import { useCheckpointFlow } from 'hooks/useModal/Checkpoint/useCheckpointFlow';
 import usePermissions from 'hooks/usePermissions';
-import { useSettings } from 'hooks/useSettings';
-import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import {
   CheckpointWorkloadExtended,
   ExperimentBase,
@@ -19,13 +15,9 @@ import {
   MetricType,
   TrialDetails,
 } from 'types';
-import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { metricSorter, metricToKey } from 'utils/metric';
 
-import { Settings, settingsConfigForExperiment } from './TrialDetailsOverview.settings';
-import TrialDetailsWorkloads from './TrialDetailsWorkloads';
 import { useTrialMetrics } from './useTrialMetrics';
 
 export interface Props {
@@ -44,15 +36,10 @@ const isMetricNameMatch = (t: Metric, v: Metric) => {
 type XAxisVal = number;
 export type CheckpointsDict = Record<XAxisVal, CheckpointWorkloadExtended>;
 
-const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => {
+const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
   const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
     workspace: { id: experiment.workspaceId },
   });
-  const { settings, updateSettings } = useSettings<Settings>(
-    Object.assign(settingsConfigForExperiment(experiment.id), {
-      storagePath: `trial-detail/experiment/${experiment.id}`,
-    }),
-  );
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
 
   const checkpoint: CheckpointWorkloadExtended | undefined = useMemo(
@@ -182,64 +169,17 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     return out;
   }, [pairedMetrics, data, xAxis, checkpointsDict, openCheckpoint]);
 
-  const handleMetricNamesError = useCallback(
-    (e: unknown) => {
-      handleError(e, {
-        publicMessage: `Failed to load metric names for experiment ${experiment.id}.`,
-        publicSubject: 'Experiment metric name stream failed.',
-        type: ErrorType.Api,
-      });
-    },
-    [experiment.id],
-  );
-
-  const loadableMetricNames = useMetricNames([experiment.id], handleMetricNamesError);
-  const metricNames = Loadable.getOrElse([], loadableMetricNames);
-
-  const { defaultMetrics, workloadMetrics } = useMemo(() => {
-    const validationMetric = experiment?.config?.searcher.metric;
-    const defaultValidationMetric = metricNames.find(
-      (metricName) =>
-        metricName.name === validationMetric && metricName.type === MetricType.Validation,
-    );
-    const fallbackMetric = metricNames[0];
-    const defaultMetric = defaultValidationMetric || fallbackMetric;
-    const defaultMetrics = defaultMetric ? [defaultMetric] : [];
-    const settingMetrics: Metric[] = (settings.metric || []).map((metric) => {
-      const splitMetric = metric.split('|');
-      return { name: splitMetric[1], type: splitMetric[0] as MetricType };
-    });
-    const metrics = settingMetrics.length !== 0 ? settingMetrics : defaultMetrics;
-    return { defaultMetrics, workloadMetrics: metrics };
-  }, [experiment?.config?.searcher, metricNames, settings.metric]);
-
   return (
     <>
-      <TrialInfoBox experiment={experiment} trial={trial} />
       {showExperimentArtifacts ? (
-        <>
-          <ChartGrid
-            chartsProps={chartsProps}
-            handleError={handleError}
-            scale={scale}
-            setScale={setScale}
-            xAxis={xAxis}
-            onXAxisChange={setXAxis}
-          />
-          {settings ? (
-            <TrialDetailsWorkloads
-              defaultMetrics={defaultMetrics}
-              experiment={experiment}
-              metricNames={metricNames}
-              metrics={workloadMetrics}
-              settings={settings}
-              trial={trial}
-              updateSettings={updateSettings}
-            />
-          ) : (
-            <Spinner spinning />
-          )}
-        </>
+        <ChartGrid
+          chartsProps={chartsProps}
+          handleError={handleError}
+          scale={scale}
+          setScale={setScale}
+          xAxis={xAxis}
+          onXAxisChange={setXAxis}
+        />
       ) : null}
       {contextHolders.map((contextHolder, i) => (
         <React.Fragment key={i}>{contextHolder}</React.Fragment>
@@ -250,4 +190,4 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   );
 };
 
-export default TrialDetailsOverview;
+export default TrialDetailsMetrics;
