@@ -91,8 +91,28 @@ def list_resource_pools(args: Namespace) -> None:
     resps = read_paginated(get_with_offset, offset=args.offset, pages=args.pages)
 
     render.tabulate_or_csv(
-        headers=["resource pool"],
-        values=[[rp.name] for r in resps for rp in r.resourcePools],
+        headers=[
+            "resource pool",
+            "Num of Agents",
+            "Slots per Agent",
+            "Slots Available",
+            "Slot Used",
+            "Default Compute Pool",
+            "Default Aux Pool",
+        ],
+        values=[
+            [
+                rp.name,
+                rp.numAgents,
+                rp.slotsPerAgent,
+                rp.slotsAvailable,
+                rp.slotsUsed,
+                rp.defaultComputePool,
+                rp.defaultAuxPool,
+            ]
+            for r in resps
+            for rp in r.resourcePools
+        ],
         as_csv=False,
     )
 
