@@ -467,14 +467,15 @@ func (m *launcherMonitor) obtainJobStateFromWlmQueueDetails(
 	hpcJobID, _ := m.rm.dispatchIDToHPCJobID.Load(dispatchID)
 	nativeState := qStats[hpcJobID]["state"]
 
-	ctx.Log().WithField("dispatch-id", dispatchID).
-		WithField("hpc-job-id", hpcJobID).
-		WithField("native-state", nativeState).
-		Debugf("job state from HPC queue stats")
-
 	// Provides information as to why a job is in a particular state.
 	reasonCode := qStats[hpcJobID]["reasonCode"]
 	reasonDesc := qStats[hpcJobID]["reasonDesc"]
+
+	ctx.Log().WithField("dispatch-id", dispatchID).
+		WithField("hpc-job-id", hpcJobID).
+		WithField("native-state", nativeState).
+		WithField("state-reason-code", reasonCode).
+		Debugf("job state from HPC queue stats")
 
 	switch {
 	case nativeState == "PD" || strings.ToLower(nativeState) == "pending":
