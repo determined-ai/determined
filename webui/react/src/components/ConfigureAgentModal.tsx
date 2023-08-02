@@ -4,7 +4,7 @@ import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import { Modal } from 'components/kit/Modal';
-import Spinner from 'components/Spinner';
+import Spinner from 'components/kit/Spinner';
 import { patchUser } from 'services/api';
 import { V1AgentUserGroup } from 'services/api-ts-sdk';
 import { DetailedUser } from 'types';

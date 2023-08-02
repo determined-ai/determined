@@ -35,6 +35,7 @@ import Notes, { Props as NotesProps } from 'components/kit/Notes';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
+import Spinner from 'components/kit/Spinner';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
@@ -68,7 +69,7 @@ import {
   Surface,
 } from 'utils/colors';
 import handleError from 'utils/error';
-import { Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum, { loremIpsumSentence } from 'utils/loremIpsum';
 import { noOp } from 'utils/service';
 import { KeyboardShortcut } from 'utils/shortcut';
@@ -107,6 +108,7 @@ const ComponentTitles = {
   Pagination: 'Pagination',
   Pivot: 'Pivot',
   Select: 'Select',
+  Spinner: 'Spinner',
   Tags: 'Tags',
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
@@ -2914,6 +2916,76 @@ const DrawerSection: React.FC = () => {
   );
 };
 
+const SpinnerSection = () => {
+  const [spinning, setSpinning] = useState(true);
+  const [loadableData, setLoadableData] = useState<Loadable<string>>(NotLoaded);
+
+  useEffect(() => {
+    if (Loadable.isLoaded(loadableData)) return;
+    let active = true;
+    setTimeout(() => {
+      if (active) setLoadableData(Loaded('This text has been loaded!'));
+    }, 1000);
+    return () => {
+      active = false;
+    };
+  }, [loadableData]);
+
+  return (
+    <ComponentSection id="Spinner" title="Spinner">
+      <AntDCard>
+        <Paragraph>
+          A <code>{'<Spinner>'}</code> indicates a loading state of a page or section.
+        </Paragraph>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Spinner default</strong>
+        <Spinner spinning />
+        <strong>Spinner with children</strong>
+        <div style={{ border: '1px solid var(--theme-surface-border)', padding: 8, width: '100%' }}>
+          <Spinner spinning>
+            <Card.Group size="medium">
+              <Card size="medium" />
+              <Card size="medium" />
+            </Card.Group>
+          </Spinner>
+        </div>
+        <strong>Spinner with conditional rendering</strong>
+        <Toggle checked={spinning} label="Loading" onChange={setSpinning} />
+        <div
+          style={{
+            border: '1px solid var(--theme-surface-border)',
+            height: 300,
+            padding: 8,
+            width: '100%',
+          }}>
+          <Spinner conditionalRender spinning={spinning}>
+            <Card size="medium" />
+          </Spinner>
+        </div>
+        <strong>Loadable spinner</strong>
+        <Button onClick={() => setLoadableData(NotLoaded)}>Unload</Button>
+        <Spinner data={loadableData}>{(data) => <Paragraph>{data}</Paragraph>}</Spinner>
+        <hr />
+        <Header>Variations</Header>
+        <strong>Centered Spinner</strong>
+        <div
+          style={{ border: '1px solid var(--theme-surface-border)', height: 200, width: '100%' }}>
+          <Spinner center spinning />
+        </div>
+        <strong>Spinner with tip</strong>
+        <Spinner spinning tip="Tip" />
+        <strong>Spinner sizes</strong>
+        <Space>
+          {IconSizeArray.map((size) => (
+            <Spinner key={size} size={size} spinning tip={size} />
+          ))}
+        </Space>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const Components = {
   Accordion: <AccordionSection />,
   Breadcrumbs: <BreadcrumbsSection />,
@@ -2944,6 +3016,7 @@ const Components = {
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
   Select: <SelectSection />,
+  Spinner: <SpinnerSection />,
   Tags: <TagsSection />,
   Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,

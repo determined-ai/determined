@@ -8,7 +8,7 @@ import Empty from 'components/kit/Empty';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Pivot from 'components/kit/Pivot';
-import Spinner from 'components/Spinner';
+import Spinner from 'components/kit/Spinner';
 import { useSettings } from 'hooks/useSettings';
 import { V1LocationType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
@@ -174,7 +174,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
           )}
         </Space>
       ) : (
-        <Spinner />
+        <Spinner spinning />
       )}
       {!settings.compare && (
         <div className={css.actionRow}>

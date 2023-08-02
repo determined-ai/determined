@@ -5,8 +5,8 @@ import ActionSheet, { ActionItem } from 'components/ActionSheet';
 import DynamicIcon from 'components/DynamicIcon';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import Spinner from 'components/kit/Spinner';
 import Link, { Props as LinkProps } from 'components/Link';
-import Spinner from 'components/Spinner/Spinner';
 import UserSettings from 'components/UserSettings';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
@@ -94,7 +94,7 @@ const NavigationTabbar: React.FC = () => {
 
   const workspaceActions = Loadable.quickMatch(
     loadablePinnedWorkspaces,
-    [{ icon: <Spinner />, label: 'Loading...' }],
+    [{ icon: <Spinner spinning />, label: 'Loading...' }],
     (workspaces) =>
       workspaces.map(
         (workspace) =>

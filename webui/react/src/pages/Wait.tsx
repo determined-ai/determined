@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
+import Spinner from 'components/kit/Spinner';
 import PageMessage from 'components/PageMessage';
-import Spinner from 'components/Spinner/Spinner';
 import { terminalCommandStates } from 'constants/states';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';

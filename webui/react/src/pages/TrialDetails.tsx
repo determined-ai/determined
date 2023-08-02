@@ -3,10 +3,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
+import Spinner from 'components/kit/Spinner';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';
-import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import useFeature from 'hooks/useFeature';
@@ -206,7 +206,7 @@ const TrialDetailsComp: React.FC = () => {
   }
 
   if (!trial || !experiment) {
-    return <Spinner tip={`Fetching ${trial ? 'experiment' : 'trial'} information...`} />;
+    return <Spinner spinning tip={`Fetching ${trial ? 'experiment' : 'trial'} information...`} />;
   }
 
   const workspaceName = workspaces.find((ws: Workspace) => ws.id === experiment?.workspaceId)?.name;

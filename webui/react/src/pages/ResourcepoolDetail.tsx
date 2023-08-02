@@ -6,11 +6,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Json from 'components/Json';
 import Empty from 'components/kit/Empty';
 import Pivot from 'components/kit/Pivot';
+import Spinner from 'components/kit/Spinner';
 import Page from 'components/Page';
 import ResourcePoolBindings from 'components/ResourcePoolBindings';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -235,7 +235,7 @@ const ResourcepoolDetailInner: React.FC = () => {
 };
 
 const ResourcepoolDetail: React.FC = () => (
-  <Suspense fallback={<Spinner />}>
+  <Suspense fallback={<Spinner spinning />}>
     <ResourcepoolDetailInner />
   </Suspense>
 );

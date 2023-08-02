@@ -8,13 +8,13 @@ import { Column, Columns } from 'components/kit/Columns';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
+import Spinner from 'components/kit/Spinner';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import ProjectCard from 'components/ProjectCard';
 import ProjectCreateModalComponent from 'components/ProjectCreateModal';
-import Spinner from 'components/Spinner';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,

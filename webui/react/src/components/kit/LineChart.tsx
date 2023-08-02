@@ -4,7 +4,6 @@ import uPlot, { AlignedData, Plugin } from 'uplot';
 
 import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/internal/functions';
 import ScaleSelect from 'components/kit/internal/ScaleSelect';
-import Spinner from 'components/kit/internal/Spinner/Spinner';
 import { ErrorHandler, MetricType, Scale } from 'components/kit/internal/types';
 import { SyncProvider } from 'components/kit/internal/UPlot/SyncProvider';
 import { UPlotPoint } from 'components/kit/internal/UPlot/types';
@@ -13,6 +12,7 @@ import { closestPointPlugin } from 'components/kit/internal/UPlot/UPlotChart/clo
 import { tooltipsPlugin } from 'components/kit/internal/UPlot/UPlotChart/tooltipsPlugin';
 import useResize from 'components/kit/internal/useResize';
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
+import Spinner from 'components/kit/Spinner';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
@@ -418,11 +418,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     return (
       <div className={css.scrollContainer}>
         <div className={css.chartgridContainer} ref={chartGridRef}>
-          <Spinner
-            center
-            className={css.chartgridLoading}
-            spinning={isLoading}
-            tip="Loading chart data...">
+          <Spinner center spinning={isLoading} tip="Loading chart data...">
             {chartsProps.length > 0 && (
               <>
                 <div className={css.filterContainer}>
