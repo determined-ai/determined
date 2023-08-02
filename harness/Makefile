@@ -19,7 +19,10 @@ fmt:
 check: check-gen
 	isort . --check-only
 	black . --exclude $(py_bindings_dest) --check
-	flake8
+	# Note: plain `flake8` command does not add current directory to sys.path, which causes the
+	# flake8-import-restrictions plugin to fail to import the code.
+	# https://github.com/atollk/flake8-import-restrictions/issues/13
+	python -m flake8
 	mypy .
 
 .PHONY: test-cpu

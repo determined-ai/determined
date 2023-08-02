@@ -5,8 +5,8 @@ from typing import Callable, Dict
 
 import determined
 from determined.common.declarative_argparse import Arg, BoolOptArg, Cmd, Group
+from determined.deploy.local import cluster_utils
 
-from . import cluster_utils
 from .preflight import check_docker_install
 
 

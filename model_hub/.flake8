@@ -27,6 +27,8 @@ per-file-ignores = __init__.py:F401 patch_saver_restore.py:E111,E114,
 # - W503 (no line breaks before binary operator): not PEP8-compliant; triggered by Black-formatted code
 # - C812-C816 (missing trailing comma): stylistic choice
 ignore = A003,D1,D200,D202,D203,D205,D212,D4,E203,W503,C812,C813,C814,C815,C816
+# Disable flake8-import-restrictions
+extend-ignore = I20
 
 show_source = true
 
