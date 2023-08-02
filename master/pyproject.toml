@@ -4,8 +4,8 @@
 templater = "jinja"
 sql_file_exts = ".sql,.sql.j2,.dml,.ddl"
 exclude_rules = ""
-max_line_length = 100
-output_line_length = 100
+max_line_length = 140
+output_line_length = 140
 
 # https://docs.sqlfluff.com/en/stable/layout.html#configuring-layout-and-spacing
 [tool.sqlfluff.layout.type.statement_terminator]
