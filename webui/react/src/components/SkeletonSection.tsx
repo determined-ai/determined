@@ -2,8 +2,8 @@ import { Skeleton } from 'antd';
 import { SkeletonTitleProps } from 'antd/lib/skeleton/Title';
 import React, { useMemo } from 'react';
 
-import iconChart from 'assets/images/icon-chart.svg';
-import iconLogs from 'assets/images/icon-logs.svg';
+import iconChart from 'assets/images/icon-chart.svg?url';
+import iconLogs from 'assets/images/icon-logs.svg?url';
 import { ValueOf } from 'types';
 import { isNumber } from 'utils/data';
 
