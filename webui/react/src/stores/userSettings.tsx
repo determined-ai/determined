@@ -139,7 +139,7 @@ export class UserSettingsStore extends PollingStore {
       // the user from interacting, just let them know that their settings
       // are not persisting. It's also important to update the value immediately
       // for good rendering performance.
-      setTimeout(() => this.updateUserSetting(key, encodedValue), 0);
+      this.updateUserSetting(key, encodedValue);
       this.#settings.update((settings) => {
         return Loadable.map(settings, (settings) => {
           return settings.set(key, encodedValue);
@@ -173,7 +173,7 @@ export class UserSettingsStore extends PollingStore {
           // the user from interacting, just let them know that their settings
           // are not persisting. It's also important to update the value immediately
           // for good rendering performance.
-          setTimeout(() => this.updateUserSetting(key, newValue), 0);
+          this.updateUserSetting(key, newValue);
           return type.encode(newValue);
         });
       });
