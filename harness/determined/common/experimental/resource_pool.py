@@ -1,4 +1,3 @@
-import itertools
 from typing import List, Optional
 
 from determined.common import api
