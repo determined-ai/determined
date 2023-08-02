@@ -16,6 +16,7 @@ import {
   TrialDetails,
 } from 'types';
 import handleError from 'utils/error';
+import { Loaded, NotLoaded } from 'utils/loadable';
 import { metricSorter, metricToKey } from 'utils/metric';
 
 import { useTrialMetrics } from './useTrialMetrics';
@@ -59,7 +60,13 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   const trials: (TrialDetails | undefined)[] = useMemo(() => [trial], [trial]);
 
-  const { metrics, data: allData, scale, setScale } = useTrialMetrics(trials);
+  const {
+    metrics,
+    isLoaded: metricsLoaded,
+    data: allData,
+    scale,
+    setScale,
+  } = useTrialMetrics(trials);
   const data = useMemo(() => allData?.[trial?.id || 0], [allData, trial?.id]);
 
   const checkpointsDict = useMemo<CheckpointsDict>(() => {
@@ -106,6 +113,9 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   const chartsProps = useMemo(() => {
     const out: ChartsProps = [];
+    if (!metricsLoaded) {
+      return NotLoaded;
+    }
 
     pairedMetrics?.forEach(([trainingMetric, valMetric]) => {
       // this code doesnt depend on their being training or validation metrics
@@ -166,8 +176,8 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
         xLabel: String(xAxis),
       });
     });
-    return out;
-  }, [pairedMetrics, data, xAxis, checkpointsDict, openCheckpoint]);
+    return Loaded(out);
+  }, [pairedMetrics, metricsLoaded, data, xAxis, checkpointsDict, openCheckpoint]);
 
   return (
     <>
