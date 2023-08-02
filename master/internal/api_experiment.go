@@ -2103,9 +2103,9 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 					"sort training metrics by statistic: last, max, min, or mean")
 			}
 			if metricQualifier == "mean" { //nolint: goconst
-				locator := bun.Safe(fmt.Sprintf("trials.summary_metrics->'avg_metrics'->'%s'", metricName))
-				experimentQuery.OrderExpr("(?0->>'sum')::float8 / (?0->>'count')::int ?1",
-					locator, bun.Safe(sortDirection))
+				locator := bun.Safe("trials.summary_metrics->'avg_metrics'")
+				experimentQuery.OrderExpr("(?0->?1->>'sum')::float8 / (?0->?1->>'count')::int ?2",
+					locator, metricName, bun.Safe(sortDirection))
 			} else {
 				experimentQuery.OrderExpr("trials.summary_metrics->'avg_metrics'->?->>? ?",
 					metricName, metricQualifier, bun.Safe(sortDirection))
@@ -2221,15 +2221,14 @@ func (a *apiServer) SearchExperiments(
 		Column("trials.experiment_id").
 		Column("trials.runner_state").
 		Column("trials.checkpoint_count").
-		ColumnExpr(`jsonb_build_object(
+		ColumnExpr(`trials.summary_metrics || jsonb_build_object(
 				'avg_metrics',
 					(SELECT jsonb_object_agg(m.key, CASE WHEN m.value -> 'type' = '"number"'::jsonb
 						THEN m.value - '{sum, count}'::text[] ||
 							jsonb_build_object(
 								'mean', (m.value ->> 'sum')::float8 / (m.value ->> 'count')::int)
 						ELSE m.value END)
-					FROM jsonb_each(summary_metrics -> 'avg_metrics') AS m(key, value)),
-				'validation_metrics', summary_metrics -> 'validation_metrics'
+					FROM jsonb_each(summary_metrics -> 'avg_metrics') AS m(key, value))
 				) AS summary_metrics`).
 		Column("trials.task_id").
 		ColumnExpr("proto_time(trials.start_time) AS start_time").
