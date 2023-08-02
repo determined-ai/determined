@@ -25,6 +25,7 @@ def single_item_workspaces() -> bindings.v1GetWorkspacesResponse:
 
 @pytest.fixture
 def single_item_rps_bound_to_workspace() -> bindings.v1ListRPsBoundToWorkspaceResponse:
+    """Create a dummy ListRPsBoundToWorkspaceResponse containing 1 resource pool."""
     single_item_pagination = bindings.v1Pagination(endIndex=1, startIndex=0, total=1)
     return bindings.v1ListRPsBoundToWorkspaceResponse(
         resourcePools=["foo"], pagination=single_item_pagination
@@ -33,6 +34,7 @@ def single_item_rps_bound_to_workspace() -> bindings.v1ListRPsBoundToWorkspaceRe
 
 @pytest.fixture
 def multi_item_rps_bound_to_workspace() -> bindings.v1ListRPsBoundToWorkspaceResponse:
+    """Create a dummy ListRPsBoundToWorkspaceResponse containing 2 resource pools."""
     multi_items_pagination = bindings.v1Pagination(endIndex=2, startIndex=0, total=2)
     return bindings.v1ListRPsBoundToWorkspaceResponse(
         resourcePools=["foo", "bar"], pagination=multi_items_pagination
@@ -90,7 +92,7 @@ def test_workspace_constructor_doesnt_populate_name_from_id(standard_session: ap
 
 
 @responses.activate
-def test_list_bounded_resource_pools(
+def test_get_available_resource_pools_single_response(
     standard_session: api.Session,
     single_item_workspaces: bindings.v1GetWorkspacesResponse,
     single_item_rps_bound_to_workspace: bindings.v1ListRPsBoundToWorkspaceResponse,

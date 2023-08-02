@@ -1,3 +1,4 @@
+import itertools
 from typing import List, Optional
 
 from determined.common import api
@@ -15,7 +16,7 @@ class ResourcePool:
     def __init__(
         self,
         session: api.Session,
-        name: str = "",
+        name: str,
     ):
         """Create a resource pool object.
 
@@ -80,12 +81,14 @@ class ResourcePool:
             )
 
         resps = api.read_paginated(get_with_offset)
-        workspace_names = [
-            workspace.Workspace(session=self._session, workspace_id=w).name
-            for r in resps
-            if r.workspaceIds is not None
-            for w in r.workspaceIds
-        ]
+
+        workspace_names = []
+        for r in resps:
+            if r.workspaceIds is not None:
+                for w in r.workspaceIds:
+                    workspace_names.append(
+                        workspace.Workspace(session=self._session, workspace_id=w).name
+                    )
 
         return workspace_names
 
