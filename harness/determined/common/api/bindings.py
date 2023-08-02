@@ -5256,6 +5256,40 @@ class v1GetTrialWorkloadsResponse(Printable):
         }
         return out
 
+class v1GetUnboundResourcePoolsResponse(Printable):
+    pagination: "typing.Optional[v1Pagination]" = None
+    resourcePools: "typing.Optional[typing.Sequence[str]]" = None
+
+    def __init__(
+        self,
+        *,
+        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
+        resourcePools: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+    ):
+        if not isinstance(pagination, Unset):
+            self.pagination = pagination
+        if not isinstance(resourcePools, Unset):
+            self.resourcePools = resourcePools
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetUnboundResourcePoolsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "pagination" in obj:
+            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
+        if "resourcePools" in obj:
+            kwargs["resourcePools"] = obj["resourcePools"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "pagination" in vars(self):
+            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
+        if not omit_unset or "resourcePools" in vars(self):
+            out["resourcePools"] = self.resourcePools
+        return out
+
 class v1GetUserByUsernameResponse(Printable):
 
     def __init__(
@@ -15795,6 +15829,30 @@ def get_GetTrialWorkloads(
         return v1GetTrialWorkloadsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTrialWorkloads", _resp)
 
+def get_GetUnboundResourcePools(
+    session: "api.Session",
+    *,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+) -> "v1GetUnboundResourcePoolsResponse":
+    _params = {
+        "limit": limit,
+        "offset": offset,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/resource-pools/unbound",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetUnboundResourcePoolsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetUnboundResourcePools", _resp)
+
 def get_GetUser(
     session: "api.Session",
     *,
@@ -18083,6 +18141,7 @@ Paginated = typing.Union[
     v1GetTensorboardsResponse,
     v1GetTrialCheckpointsResponse,
     v1GetTrialWorkloadsResponse,
+    v1GetUnboundResourcePoolsResponse,
     v1GetUsersResponse,
     v1GetWorkspaceProjectsResponse,
     v1GetWorkspacesResponse,

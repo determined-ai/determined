@@ -3605,6 +3605,7 @@ type DeterminedClient interface {
 	ListRPsBoundToWorkspace(ctx context.Context, in *ListRPsBoundToWorkspaceRequest, opts ...grpc.CallOption) (*ListRPsBoundToWorkspaceResponse, error)
 	// List all workspaces bound to a specific resource pool
 	ListWorkspacesBoundToRP(ctx context.Context, in *ListWorkspacesBoundToRPRequest, opts ...grpc.CallOption) (*ListWorkspacesBoundToRPResponse, error)
+	// Get a list of all unbound resource pools from the cluster
 	GetUnboundResourcePools(ctx context.Context, in *GetUnboundResourcePoolsRequest, opts ...grpc.CallOption) (*GetUnboundResourcePoolsResponse, error)
 }
 
@@ -6215,6 +6216,7 @@ type DeterminedServer interface {
 	ListRPsBoundToWorkspace(context.Context, *ListRPsBoundToWorkspaceRequest) (*ListRPsBoundToWorkspaceResponse, error)
 	// List all workspaces bound to a specific resource pool
 	ListWorkspacesBoundToRP(context.Context, *ListWorkspacesBoundToRPRequest) (*ListWorkspacesBoundToRPResponse, error)
+	// Get a list of all unbound resource pools from the cluster
 	GetUnboundResourcePools(context.Context, *GetUnboundResourcePoolsRequest) (*GetUnboundResourcePoolsResponse, error)
 }
 

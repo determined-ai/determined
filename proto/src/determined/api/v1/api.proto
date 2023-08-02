@@ -2220,6 +2220,7 @@ service Determined {
     };
   }
 
+  // Get a list of all unbound resource pools from the cluster
   rpc GetUnboundResourcePools(GetUnboundResourcePoolsRequest)
       returns (GetUnboundResourcePoolsResponse) {
     option (google.api.http) = {
