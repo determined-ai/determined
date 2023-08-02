@@ -15,11 +15,7 @@ WITH mv AS (
     )
     VALUES (
         $1,
-        (
-            SELECT COALESCE(MAX(version), 0) + 1
-            FROM model_versions
-            WHERE model_id = $1
-        ),
+        (SELECT COALESCE(MAX(version), 0) + 1 FROM model_versions WHERE model_id = $1),
         $2,
         $3,
         $4,

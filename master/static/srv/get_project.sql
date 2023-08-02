@@ -1,9 +1,7 @@
 WITH pe AS (
     SELECT
         COUNT(*) AS num_experiments,
-        SUM(
-            CASE WHEN state = 'ACTIVE' THEN 1 ELSE 0 END
-        ) AS num_active_experiments,
+        SUM(CASE WHEN state = 'ACTIVE' THEN 1 ELSE 0 END) AS num_active_experiments,
         MAX(start_time) AS last_experiment_started_at
     FROM experiments
     WHERE project_id = $1
@@ -22,9 +20,7 @@ SELECT
     (p.archived OR w.archived) AS archived,
     MAX(pe.num_experiments) AS num_experiments,
     MAX(pe.num_active_experiments) AS num_active_experiments,
-    COALESCE(
-        MAX(pe.last_experiment_started_at), NULL
-    ) AS last_experiment_started_at,
+    COALESCE(MAX(pe.last_experiment_started_at), NULL) AS last_experiment_started_at,
     u.username,
     p.user_id
 FROM pe, projects AS p

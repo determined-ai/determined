@@ -10,17 +10,7 @@ WITH m AS (
         creation_time,
         last_updated_time
     )
-    VALUES (
-        $1,
-        $2,
-        $3,
-        string_to_array($4, ','),
-        $5,
-        $6,
-        $7,
-        current_timestamp,
-        current_timestamp
-    )
+    VALUES ($1, $2, $3, string_to_array($4, ','), $5, $6, $7, current_timestamp, current_timestamp)
     RETURNING name,
     description,
     notes,

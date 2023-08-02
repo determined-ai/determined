@@ -1,11 +1,7 @@
 WITH mv AS (
     UPDATE model_versions
     SET
-        name = $3,
-        comment = $4,
-        notes = $5,
-        metadata = $6,
-        labels = string_to_array($7, ','),
+        name = $3, comment = $4, notes = $5, metadata = $6, labels = string_to_array($7, ','),
         last_updated_time = current_timestamp
     WHERE id = $1
     RETURNING id,

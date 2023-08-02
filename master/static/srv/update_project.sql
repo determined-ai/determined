@@ -2,9 +2,7 @@ WITH pe AS (
     SELECT
         MAX(start_time) AS last_experiment_started_at,
         COUNT(*) AS num_experiments,
-        SUM(
-            CASE WHEN state = 'ACTIVE' THEN 1 ELSE 0 END
-        ) AS num_active_experiments
+        SUM(CASE WHEN state = 'ACTIVE' THEN 1 ELSE 0 END) AS num_active_experiments
     FROM experiments
     WHERE project_id = $1
 ),

@@ -4,9 +4,7 @@ WITH const AS (
 
 months AS (
     SELECT
-        date_trunc(
-            'month', resource_aggregates.date::date
-        ) AT TIME ZONE 'UTC' AS period_start,
+        date_trunc('month', resource_aggregates.date::date) AT TIME ZONE 'UTC' AS period_start,
         aggregation_type,
         resource_aggregates.aggregation_key,
         sum(seconds) AS seconds
@@ -17,9 +15,7 @@ months AS (
         -- `@>` determines whether the range contains the time.
         const.period @> resource_aggregates.date
     GROUP BY
-        date_trunc(
-            'month', resource_aggregates.date::date
-        ) AT TIME ZONE 'UTC',
+        date_trunc('month', resource_aggregates.date::date) AT TIME ZONE 'UTC',
         resource_aggregates.aggregation_type,
         resource_aggregates.aggregation_key
 ),

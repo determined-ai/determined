@@ -81,8 +81,7 @@ workloads AS (
                             FROM
                                 checkpoints_v2
                             JOIN
-                                trials AS t
-                                ON checkpoints_v2.task_id = t.task_id
+                                trials AS t ON checkpoints_v2.task_id = t.task_id
                             UNION ALL
                             SELECT
                                 'imagepulling' AS kind,
@@ -92,8 +91,7 @@ workloads AS (
                                 task_stats, trials, allocations
                             WHERE
                                 task_stats.event_type = 'IMAGEPULL'
-                                AND allocations.allocation_id
-                                = task_stats.allocation_id
+                                AND allocations.allocation_id = task_stats.allocation_id
                                 AND allocations.task_id = trials.task_id
                         ) metric_reports
                 ) derived_workload_spans
@@ -113,9 +111,7 @@ SELECT
     workloads.kind,
     users.username,
     experiments.owner_id AS user_id,
-    (
-        experiments.config -> 'resources' ->> 'slots_per_trial'
-    )::smallint AS slots,
+    (experiments.config -> 'resources' ->> 'slots_per_trial')::smallint AS slots,
     experiments.config -> 'labels' AS labels,
     workloads.start_time,
     workloads.end_time,

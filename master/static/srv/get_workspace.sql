@@ -20,27 +20,14 @@ SELECT
     w.error_message,
     w.default_compute_pool,
     w.default_aux_pool,
-    (
-        CASE
-            WHEN
-                uid IS NOT NULL
-                OR gid IS NOT NULL
-                OR user_ IS NOT NULL
-                OR group_ IS NOT NULL
-                THEN
-                    JSONB_BUILD_OBJECT(
-                        'agent_uid',
-                        uid,
-                        'agent_user',
-                        user_,
-                        'agent_gid',
-                        gid,
-                        'agent_group',
-                        group_
-                    )
-            ELSE NULL
-        END
-    ) AS agent_user_group,
+    (CASE
+        WHEN uid IS NOT NULL OR gid IS NOT NULL OR user_ IS NOT NULL OR group_ IS NOT NULL
+            THEN
+                JSONB_BUILD_OBJECT(
+                    'agent_uid', uid, 'agent_user', user_, 'agent_gid', gid, 'agent_group', group_
+                )
+        ELSE NULL
+    END) AS agent_user_group,
     (SELECT COUNT(*) FROM p) AS num_projects,
     (SELECT count FROM exp_count) AS num_experiments,
     (

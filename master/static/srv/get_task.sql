@@ -21,9 +21,7 @@ SELECT
                 end_time,
                 (
                     CASE
-                        WHEN
-                            state IN ('PENDING', 'ASSIGNED')
-                            THEN 'STATE_QUEUED'
+                        WHEN state IN ('PENDING', 'ASSIGNED') THEN 'STATE_QUEUED'
                         ELSE 'STATE_' || state
                     END
                 ) AS state

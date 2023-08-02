@@ -1,9 +1,7 @@
 SELECT
     j.job_id AS job,
     BOOL_OR(CASE WHEN a.state = 'PULLING' THEN true ELSE false END) AS pulling,
-    BOOL_OR(
-        CASE WHEN a.state = 'STARTING' THEN true ELSE false END
-    ) AS starting,
+    BOOL_OR(CASE WHEN a.state = 'STARTING' THEN true ELSE false END) AS starting,
     BOOL_OR(CASE WHEN a.state = 'RUNNING' THEN true ELSE false END) AS running
 FROM jobs j
 JOIN tasks t ON t.job_id = j.job_id
