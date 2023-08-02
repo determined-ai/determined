@@ -9,3 +9,5 @@
 /master   @determined-ai/backend
 /agent    @determined-ai/backend
 /proto    @determined-ai/backend
+/harness  @determined-ai/ml-sys
+/cli      @determined-ai/ml-sys
