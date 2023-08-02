@@ -180,9 +180,6 @@ func getPagedBunQuery(
 func OverwriteRPWorkspaceBindings(ctx context.Context,
 	workspaceIds []int32, poolName string, resourcePools []config.ResourcePoolConfig,
 ) error {
-	if len(workspaceIds) == 0 {
-		return nil
-	}
 	// Check if pool exists
 	poolExists := false
 	for _, pool := range resourcePools {
