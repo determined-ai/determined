@@ -9,9 +9,11 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 import { configDefaults, defineConfig } from 'vitest/config';
 
 import { cspHtml } from './vite-plugin-csp';
+import { svgToReact } from './vite-plugin-svg-to-jsx';
 
 // want to fallback in case of empty string, hence no ??
-const webpackProxyUrl = process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080';
+const webpackProxyUrl =
+  process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080';
 
 const devServerRedirects = (redirects: Record<string, string>): Plugin => {
   let config: UserConfig;
@@ -64,7 +66,8 @@ const publicUrlBaseHref = (): Plugin => {
 
 // public_url as / breaks the link component -- assuming that CRA did something
 // to prevent that, idk
-const publicUrl = (process.env.PUBLIC_URL || '') === '/' ? undefined : process.env.PUBLIC_URL;
+const publicUrl =
+  (process.env.PUBLIC_URL || '') === '/' ? undefined : process.env.PUBLIC_URL;
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -84,6 +87,9 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('node_modules')) {
             return 'vendor';
           }
+          if (id.endsWith('.svg')) {
+            return 'icons';
+          }
         },
       },
     },
@@ -94,7 +100,11 @@ export default defineConfig(({ mode }) => ({
       generateScopedName: (name, filename) => {
         const basename = path.basename(filename).split('.')[0];
         const hashable = `${basename}_${name}`;
-        const hash = crypto.createHash('sha256').update(filename).digest('hex').substring(0, 5);
+        const hash = crypto
+          .createHash('sha256')
+          .update(filename)
+          .digest('hex')
+          .substring(0, 5);
 
         return `${hashable}_${hash}`;
       },
@@ -107,7 +117,9 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     'process.env.IS_DEV': JSON.stringify(mode === 'development'),
-    'process.env.PUBLIC_URL': JSON.stringify((mode !== 'test' && publicUrl) || ''),
+    'process.env.PUBLIC_URL': JSON.stringify(
+      (mode !== 'test' && publicUrl) || '',
+    ),
     'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
     'process.env.VERSION': '"0.23.5-dev0"',
   },
@@ -116,6 +128,21 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     tsconfigPaths(),
+    svgToReact({
+      plugins: [
+        {
+          name: 'preset-default',
+          params: {
+            overrides: {
+              convertColors: {
+                currentColor: '#000',
+              },
+              removeViewBox: false,
+            },
+          },
+        },
+      ],
+    }),
     react(),
     publicUrlBaseHref(),
     mode !== 'test' &&

@@ -1,10 +1,10 @@
 import React, { Suspense, useCallback, useEffect, useMemo } from 'react';
 
-import awsLogoOnDark from 'assets/images/aws-logo-on-dark.svg';
-import awsLogo from 'assets/images/aws-logo.svg';
-import gcpLogo from 'assets/images/gcp-logo.svg';
-import k8sLogo from 'assets/images/k8s-logo.svg';
-import staticLogo from 'assets/images/on-prem-logo.svg';
+import awsLogoOnDark from 'assets/images/aws-logo-on-dark.svg?url';
+import awsLogo from 'assets/images/aws-logo.svg?url';
+import gcpLogo from 'assets/images/gcp-logo.svg?url';
+import k8sLogo from 'assets/images/k8s-logo.svg?url';
+import staticLogo from 'assets/images/on-prem-logo.svg?url';
 import Card from 'components/kit/Card';
 import Icon from 'components/kit/Icon';
 import Spinner from 'components/kit/Spinner';
