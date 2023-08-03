@@ -4116,7 +4116,6 @@ workflows:
           #slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local
-          extra-pytest-flags: "-k 'not test_hpc_job_pending_reason'"
           master_config: |
             task_container_defaults:
               image:
