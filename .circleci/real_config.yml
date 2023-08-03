@@ -2347,9 +2347,6 @@ jobs:
         type: string
         default: |
           task_container_defaults:
-            image:
-              cpu: determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-55a3e1c
-              cuda: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-55a3e1c
             environment_variables:
               # Some ports are not working, disable them so distributed jobs work.
               - NCCL_IB_HCA=mlx6_0:0
@@ -3445,9 +3442,6 @@ workflows:
           mark: e2e_slurm_misconfigured
           master_config: |
             task_container_defaults:
-              image:
-                cpu: determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-55a3e1c
-                cuda: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-55a3e1c
               environment_variables:
                 # Some ports are not working, disable them so distributed jobs work.
                 - NCCL_IB_HCA=mlx6_0:0
@@ -4317,49 +4311,6 @@ workflows:
           requires:
             - package-and-push-system-local
           extra-pytest-flags: "--no-compare-stats -k 'not test_hpc_job_pending_reason'"
-      - test-e2e-slurm-disabled:
-          name: test-e2e-slurm-podman-znode
-          #slack-mentions: "${SLACK_USER_ID}"
-          requires:
-            - package-and-push-system-local
-          master_config: |
-            task_container_defaults:
-              image:
-                cpu: oci-archive:/lustre/hdd/foundation_engineering/images/podman/py-3.8-pytorch-1.10-tf-2.8-cpu-096d730
-                cuda: oci-archive:/lustre/hdd/foundation_engineering/images/podman/cuda-11.3-pytorch-1.10-tf-2.8-gpu
-              environment_variables:
-                  # Some ports are not working, disable them so distributed jobs work.
-                  - NCCL_IB_HCA=mlx6_0:0
-                  - XDG_RUNTIME_DIR=/tmp/launcher_podman
-            checkpoint_storage:
-              type: shared_fs
-              host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
-              storage_path: determined-checkpoint
-              save_experiment_best: 0
-              save_trial_best: 1
-              save_trial_latest: 1
-            db:
-              user: postgres
-              host: localhost
-              port: 5432
-              name: determined
-              password: launcher
-            resource_manager:
-              type: slurm
-              master_host: $HOSTNAME
-              master_port: 8080
-              host: localhost
-              port: 8181
-              protocol: http
-              slot_type: cuda
-              user_name: launcher
-              container_run_type: podman
-              group_name: hpcd
-              singularity_image_root: /lustre/hdd/foundation_engineering/images
-              job_storage_root: /scratch/launcher/.launcher.$HOSTNAME
-              auth_file: /home/launcher/.launcher.$HOSTNAME.token
-              path: /opt/singularity/bin:/usr/local/bin:${PATH}
-              ld_library_path:
       - test-e2e-slurm:
           name: test-e2e-slurm-enroot-znode
           slack-mentions: "${SLACK_USER_ID}"
@@ -4372,7 +4323,7 @@ workflows:
               # cd /lustre/ssd/foundation_engineering/
               # enroot import docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
               # enroot create /lustre/ssd/foundation_engineering/determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
-              image: determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
+              #image: determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
               environment_variables:
                   # Some ports are not working, disable them so distributed jobs work.
                   - NCCL_IB_HCA=mlx6_0:0
