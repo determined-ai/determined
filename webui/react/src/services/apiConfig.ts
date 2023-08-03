@@ -1578,6 +1578,16 @@ export const getProjectColumns: DetApi<
   request: (params) => detApi.Internal.getProjectColumns(params.id),
 };
 
+export const getProjectNumericMetricsRange: DetApi<
+  Service.GetProjectNumericMetricsRangeParams,
+  Api.V1GetProjectNumericMetricsRangeResponse,
+  Type.ProjectMetricsRange[]
+> = {
+  name: 'getProjectNumericMetricsRange',
+  postProcess: (response) => response.ranges || [],
+  request: (params) => detApi.Internal.getProjectNumericMetricsRange(params.id),
+};
+
 /* Tasks */
 
 const TASK_LIMIT = 1000;

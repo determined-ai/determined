@@ -10,6 +10,7 @@ import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import Tooltip from 'components/kit/Tooltip';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import {
@@ -101,9 +102,15 @@ interface Props {
   setExpListView: (view: ExpListView) => void;
   rowHeight: RowHeight;
   onRowHeightChange: (r: RowHeight) => void;
+  setHeatmapApplied: (selection: string[]) => void;
+  toggleHeatmap: (heatmapOn: boolean) => void;
+  heatmapOn: boolean;
+  heatmapBtnVisible: boolean;
 }
 
 const TableActionBar: React.FC<Props> = ({
+  heatmapOn,
+  toggleHeatmap,
   experiments,
   excludedExperimentIds,
   filters,
@@ -127,6 +134,7 @@ const TableActionBar: React.FC<Props> = ({
   rowHeight,
   onRowHeightChange,
   compareViewOn,
+  heatmapBtnVisible,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -386,6 +394,15 @@ const TableActionBar: React.FC<Props> = ({
       </Column>
       <Column align="right">
         <Columns>
+          {heatmapBtnVisible && (
+            <Tooltip content={'Toggle Metric Heatmap'}>
+              <Button
+                type={heatmapOn ? 'primary' : 'default'}
+                onClick={() => toggleHeatmap(heatmapOn)}>
+                <Icon name="heatmap" title="heatmap" />
+              </Button>
+            </Tooltip>
+          )}
           <OptionsMenu
             expListView={expListView}
             rowHeight={rowHeight}

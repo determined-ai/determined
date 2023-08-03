@@ -21,14 +21,15 @@ import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { useSettings } from 'hooks/useSettings';
-import { getProjectColumns, searchExperiments } from 'services/api';
-import { V1BulkExperimentFilters, V1LocationType } from 'services/api-ts-sdk';
+import { getProjectColumns, getProjectNumericMetricsRange, searchExperiments } from 'services/api';
+import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import {
   ExperimentAction,
   ExperimentItem,
   ExperimentWithTrial,
   Project,
   ProjectColumn,
+  ProjectMetricsRange,
   RunState,
 } from 'types';
 import handleError from 'utils/error';
@@ -114,6 +115,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
+  const [projectHeatmap, setProjectHeatmap] = useState<ProjectMetricsRange[]>([]);
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const filtersString = useObservable(formStore.asJsonString);
   const loadableFormset = useObservable(formStore.formset);
@@ -370,6 +372,23 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const onContextMenuComplete = useCallback(fetchExperiments, [fetchExperiments]);
 
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const heatMap = await getProjectNumericMetricsRange({ id: project.id });
+        if (mounted) {
+          setProjectHeatmap(heatMap);
+        }
+      } catch (e) {
+        handleError(e, { publicSubject: 'Unable to fetch project heatmap' });
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [project.id]);
+
   // TODO: poll?
   useEffect(() => {
     let mounted = true;
@@ -584,6 +603,35 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
+  const handleHeatmapChange = useCallback(
+    (selection: string[]) => {
+      updateSettings({ heatmapSkipped: selection });
+    },
+    [updateSettings],
+  );
+
+  const handleToggleHeatmap = useCallback(
+    (heatmapOn: boolean) => {
+      updateSettings({ heatmapOn: !heatmapOn });
+    },
+    [updateSettings],
+  );
+
+  const heatmapBtnVisible = useMemo(() => {
+    const visibleColumns = settings.columns.slice(
+      0,
+      settings.compare ? settings.pinnedColumnsCount : undefined,
+    );
+    return Loadable.getOrElse([], projectColumns).some(
+      (column) =>
+        visibleColumns.includes(column.column) &&
+        (column.column === 'searcherMetricsVal' ||
+          (column.type === V1ColumnType.NUMBER &&
+            (column.location === V1LocationType.VALIDATIONS ||
+              column.location === V1LocationType.TRAINING))),
+    );
+  }, [settings.columns, projectColumns, settings.pinnedColumnsCount, settings.compare]);
+
   const selectedExperiments: ExperimentWithTrial[] = useMemo(() => {
     if (selectedExperimentIds.length === 0) return [];
     const selectedIdSet = new Set(selectedExperimentIds);
@@ -620,6 +668,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         filters={experimentFilters}
         formStore={formStore}
         handleUpdateExperimentList={handleUpdateExperimentList}
+        heatmapBtnVisible={heatmapBtnVisible}
+        heatmapOn={settings.heatmapOn}
         initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}
         project={project}
@@ -628,10 +678,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         selectAll={selectAll}
         selectedExperimentIds={selectedExperimentIds}
         setExpListView={updateExpListView}
+        setHeatmapApplied={handleHeatmapChange}
         setIsOpenFilter={onIsOpenFilterChange}
         setVisibleColumns={setVisibleColumns}
         sorts={sorts}
         toggleComparisonView={handleToggleComparisonView}
+        toggleHeatmap={handleToggleHeatmap}
         total={total}
         onAction={handleOnAction}
         onRowHeightChange={onRowHeightChange}
@@ -664,17 +716,21 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 formStore={formStore}
                 handleScroll={isPagedView ? undefined : handleScroll}
                 handleUpdateExperimentList={handleUpdateExperimentList}
+                heatmapOn={settings.heatmapOn}
+                heatmapSkipped={settings.heatmapSkipped}
                 height={height}
                 page={page}
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
                 project={project}
                 projectColumns={projectColumns}
+                projectHeatmap={projectHeatmap}
                 rowHeight={globalSettings.rowHeight}
                 scrollPositionSetCount={scrollPositionSetCount}
                 selectAll={selectAll}
                 selection={selection}
                 setColumnWidths={handleColumnWidthChange}
                 setExcludedExperimentIds={setExcludedExperimentIds}
+                setHeatmapApplied={handleHeatmapChange}
                 setPinnedColumnsCount={setPinnedColumnsCount}
                 setSelectAll={setSelectAll}
                 setSelection={setSelection}

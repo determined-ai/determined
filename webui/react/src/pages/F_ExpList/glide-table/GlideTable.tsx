@@ -41,7 +41,7 @@ import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'stores/contexts/UI';
 import usersStore from 'stores/users';
-import { ExperimentWithTrial, Project, ProjectColumn } from 'types';
+import { ExperimentWithTrial, Project, ProjectColumn, ProjectMetricsRange } from 'types';
 import { Float, Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
@@ -61,6 +61,7 @@ import {
   getHeaderIcons,
   MIN_COLUMN_WIDTH,
   MULTISELECT,
+  searcherMetricsValColumn,
 } from './columns';
 import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
@@ -87,6 +88,9 @@ export interface GlideTableProps {
   page: number;
   project?: Project;
   projectColumns: Loadable<ProjectColumn[]>;
+  projectHeatmap: ProjectMetricsRange[];
+  heatmapSkipped: string[];
+  setHeatmapApplied: (selection: string[]) => void;
   rowHeight: RowHeight;
   selection: GridSelection;
   setSelection: Dispatch<SetStateAction<GridSelection>>;
@@ -103,6 +107,7 @@ export interface GlideTableProps {
   onContextMenuComplete?: () => void;
   pinnedColumnsCount: number;
   setPinnedColumnsCount: (count: number) => void;
+  heatmapOn: boolean;
 }
 
 /**
@@ -157,6 +162,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   staticColumns,
   pinnedColumnsCount,
   setPinnedColumnsCount,
+  projectHeatmap,
+  heatmapSkipped,
+  setHeatmapApplied,
+  heatmapOn,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
   const [hoveredRow, setHoveredRow] = useState<number>();
@@ -294,6 +303,17 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     setSelectAll(true);
   }, [setSelectAll, setSelection, data, setExcludedExperimentIds]);
 
+  const toggleHeatmap = useCallback(
+    (col: string) => {
+      setHeatmapApplied(
+        heatmapSkipped.includes(col)
+          ? heatmapSkipped.filter((p) => p !== col)
+          : [...heatmapSkipped, col],
+      );
+    },
+    [setHeatmapApplied, heatmapSkipped],
+  );
+
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, { bounds, preventDefault }: HeaderClickedEventArgs) => {
       preventDefault();
@@ -387,6 +407,20 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 },
               },
             ]),
+        heatmapOn &&
+        (column.column === 'searcherMetricsVal' ||
+          (column.type === V1ColumnType.NUMBER &&
+            (column.location === V1LocationType.VALIDATIONS ||
+              column.location === V1LocationType.TRAINING)))
+          ? {
+              icon: <Icon decorative name="heatmap" />,
+              key: 'heatmap',
+              label: !heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
+              onClick: () => {
+                toggleHeatmap(column.column);
+              },
+            }
+          : null,
         // Column is pinned if the index is inside of the frozen columns
         col < staticColumns.length || isMobile
           ? null
@@ -434,6 +468,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       sortableColumnIds,
       setSortableColumnIds,
       setPinnedColumnsCount,
+      heatmapSkipped,
+      toggleHeatmap,
+      heatmapOn,
       setSelection,
       setSelectAll,
     ],
@@ -687,13 +724,27 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             break;
         }
         switch (currentColumn.type) {
-          case V1ColumnType.NUMBER:
-            columnDefs[currentColumn.column] = defaultNumberColumn(
-              currentColumn,
-              columnWidths[currentColumn.column],
-              dataPath,
-            );
+          case V1ColumnType.NUMBER: {
+            const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
+            if (heatmap && heatmapOn && !heatmapSkipped.includes(currentColumn.column)) {
+              columnDefs[currentColumn.column] = defaultNumberColumn(
+                currentColumn,
+                columnWidths[currentColumn.column],
+                dataPath,
+                {
+                  max: heatmap.max,
+                  min: heatmap.min,
+                },
+              );
+            } else {
+              columnDefs[currentColumn.column] = defaultNumberColumn(
+                currentColumn,
+                columnWidths[currentColumn.column],
+                dataPath,
+              );
+            }
             break;
+          }
           case V1ColumnType.DATE:
             columnDefs[currentColumn.column] = defaultDateColumn(
               currentColumn,
@@ -710,11 +761,35 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               dataPath,
             );
         }
+        if (currentColumn.column === 'searcherMetricsVal') {
+          const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
+          if (heatmap && heatmapOn && !heatmapSkipped.includes(currentColumn.column)) {
+            columnDefs[currentColumn.column] = searcherMetricsValColumn(
+              columnWidths[currentColumn.column],
+              {
+                max: heatmap.max,
+                min: heatmap.min,
+              },
+            );
+          } else {
+            columnDefs[currentColumn.column] = searcherMetricsValColumn(
+              columnWidths[currentColumn.column],
+            );
+          }
+        }
         return columnDefs[currentColumn.column];
       })
       .flatMap((col) => (col ? [col] : []));
     return gridColumns;
-  }, [columnIds, columnDefs, projectColumnsMap, columnWidths]);
+  }, [
+    columnIds,
+    columnDefs,
+    projectColumnsMap,
+    columnWidths,
+    heatmapSkipped,
+    projectHeatmap,
+    heatmapOn,
+  ]);
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(
     (col: number) => !comparisonViewOpen && col === staticColumns.length + pinnedColumnsCount,
