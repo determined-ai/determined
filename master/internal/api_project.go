@@ -197,65 +197,54 @@ func (a *apiServer) getProjectColumnsByID(
 		}
 	}
 	summaryMetrics := []struct {
-		ID                    int
-		ValidationMetricsKey  string
-		ValidationMetricsType string
-		AvgMetricsKey         string
-		AvgMetricsType        string
+		MetricName string
+		JSONPath   string
+		MetricType string
 	}{}
 
 	if len(trialIDs) > 0 {
-		trialsQuery := db.Bun().NewSelect().
-			Column("id").
-			ColumnExpr("jsonb_object_keys(summary_metrics->'validation_metrics') AS validation_metrics_key").
-			ColumnExpr(`summary_metrics->'validation_metrics'->
-			jsonb_object_keys(summary_metrics->'validation_metrics')->>'type'
-			AS validation_metrics_type`).
-			ColumnExpr("jsonb_object_keys(summary_metrics->'avg_metrics') AS avg_metrics_key").
-			ColumnExpr(`summary_metrics->'avg_metrics'->
-			jsonb_object_keys(summary_metrics->'avg_metrics')->>'type'
-			AS avg_metrics_type`).
-			Table("trials").
+		trialsQuery := db.BunSelectMetricGroupNames().ColumnExpr(`summary_metrics->jsonb_object_keys(summary_metrics)->
+		jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))->>'type'
+		AS metric_type`).
 			Where("id IN (?)", bun.In(trialIDs)).
-			Distinct().
-			Order("id")
+			DistinctOn("json_path, metric_name")
 		err = trialsQuery.Scan(ctx, &summaryMetrics)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	summaryMetricsSet := make(map[string]struct{})
-	validationMetricsSet := make(map[string]struct{})
 	for _, stats := range summaryMetrics {
-		key := stats.ValidationMetricsKey
-		if _, seen := validationMetricsSet[key]; !seen {
-			validationMetricsSet[key] = struct{}{}
-			columnType := parseMetricsType(stats.ValidationMetricsType)
+		switch stats.JSONPath {
+		case "validation_metrics":
+			columnType := parseMetricsType(stats.MetricType)
 			columns = append(columns, &projectv1.ProjectColumn{
-				Column:   fmt.Sprintf("validation.%s", key),
+				Column:   fmt.Sprintf("validation.%s", stats.MetricName),
 				Location: projectv1.LocationType_LOCATION_TYPE_VALIDATIONS,
 				Type:     columnType,
 			})
-		}
-		key = stats.AvgMetricsKey
-		if _, seen := summaryMetricsSet[key]; !seen {
-			summaryMetricsSet[key] = struct{}{}
-			columnType := parseMetricsType(stats.ValidationMetricsType)
+		default:
+			columnType := parseMetricsType(stats.MetricType)
+			columnPrefix := stats.JSONPath
+			columnLocation := projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC
+			if stats.JSONPath == "avg_metrics" {
+				columnPrefix = "training"
+				columnLocation = projectv1.LocationType_LOCATION_TYPE_TRAINING
+			}
 			// don't surface aggregates that don't make sense for non-numbers
 			if columnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER {
 				aggregates := []string{"count", "last", "max", "min", "sum"}
 				for _, aggregate := range aggregates {
 					columns = append(columns, &projectv1.ProjectColumn{
-						Column:   fmt.Sprintf("training.%s.%s", key, aggregate),
-						Location: projectv1.LocationType_LOCATION_TYPE_TRAINING,
+						Column:   fmt.Sprintf("%s.%s.%s", columnPrefix, stats.MetricName, aggregate),
+						Location: columnLocation,
 						Type:     columnType,
 					})
 				}
 			} else {
 				columns = append(columns, &projectv1.ProjectColumn{
-					Column:   fmt.Sprintf("training.%s.last", key),
-					Location: projectv1.LocationType_LOCATION_TYPE_TRAINING,
+					Column:   fmt.Sprintf("%s.%s.last", columnPrefix, stats.MetricName),
+					Location: columnLocation,
 					Type:     columnType,
 				})
 			}

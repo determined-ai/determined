@@ -12,7 +12,7 @@ BEGIN
         result AS (
         SELECT metrics_key, CASE sign when true then min else max end AS metrics_value, type FROM metrics_values WHERE type = 'number'
         ) SELECT json_object_agg(metrics_key, metrics_value::float8) FROM result
-    )
+    ) FROM bt
     WHERE experiments.id = NEW.experiment_id;
     RETURN NEW;
 END;
