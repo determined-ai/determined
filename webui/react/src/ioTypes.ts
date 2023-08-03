@@ -156,7 +156,7 @@ const ioMetricSummary = io.type({
   count: optional(io.number),
   last: optional(io.any),
   max: optional(float),
-  median: optional(float),
+  mean: optional(float),
   min: optional(float),
   sum: optional(float),
   type: io.union([
