@@ -1058,19 +1058,19 @@ func (p *pods) getNodeResourcePoolMapping(nodeSummaries map[string]model.AgentSu
 			if len(p.resourcePoolConfigs) <= 1 &&
 				(tcd == nil || (tcd.CPUPodSpec == nil && tcd.GPUPodSpec == nil)) {
 				if slotType == device.CUDA {
-					//nolint:gocritic,appendAssign
+					//nolint:gocritic
 					poolTolerations = append(defaultTolerations, gpuTolerations...)
 				} else if slotType == device.CPU {
-					//nolint:gocritic,appendAssign
+					//nolint:gocritic
 					poolTolerations = append(defaultTolerations, cpuTolerations...)
 				}
 			} else if tcd != nil {
 				// Decide which poolTolerations to use based on slot device type
 				if slotType == device.CUDA && tcd.GPUPodSpec != nil {
-					//nolint:gocritic,appendAssign
+					//nolint:gocritic
 					poolTolerations = append(tcd.GPUPodSpec.Spec.Tolerations, gpuTolerations...)
 				} else if tcd.CPUPodSpec != nil {
-					//nolint:gocritic,appendAssign
+					//nolint:gocritic
 					poolTolerations = append(tcd.CPUPodSpec.Spec.Tolerations, cpuTolerations...)
 				}
 			}

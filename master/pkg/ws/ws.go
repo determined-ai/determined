@@ -32,9 +32,8 @@ const (
 // thread-safe API by specializing for JSON encoding/decoding and using channels for read/write. The
 // Close method must be called or resources will be leaked.
 type WebSocket[TIn, TOut any] struct {
-	log      *logrus.Entry
-	conn     *websocket.Conn
-	connLock sync.Mutex
+	log  *logrus.Entry
+	conn *websocket.Conn
 
 	cancel    context.CancelFunc
 	errLock   sync.Mutex

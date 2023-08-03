@@ -698,19 +698,15 @@ func (t *trial) maybeRestoreAllocation(ctx *actor.Context) (*model.Allocation, e
 		for _, alloc := range allocations[0:mathx.Min(len(allocations), maxAllocsToLog)] {
 			allocIDs = append(allocIDs, alloc.AllocationID.String())
 		}
-		return nil, errors.New(
-			fmt.Sprintf(
-				"discovered %d open allocations on restore: %s",
-				len(allocations),
-				strings.Join(allocIDs, " "),
-			),
+		return nil, fmt.Errorf(
+			"discovered %d open allocations on restore: %s",
+			len(allocations),
+			strings.Join(allocIDs, " "),
 		)
 	default:
-		return nil, errors.New(
-			fmt.Sprintf(
-				"discovered %d open allocations on restore",
-				len(allocations),
-			),
+		return nil, fmt.Errorf(
+			"discovered %d open allocations on restore",
+			len(allocations),
 		)
 	}
 }

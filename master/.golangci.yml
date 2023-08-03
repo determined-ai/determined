@@ -68,8 +68,8 @@ linters-settings:
     line-length: 100
   misspell:
     locale: US
-  exhaustivestruct:
-    struct-patterns:
+  exhaustruct:
+    include:
       - 'github.com/determined-ai/determined/master/pkg/schemas/expconf.*Config*'
   forbidigo:
     forbid:
@@ -81,7 +81,9 @@ linters-settings:
 linters:
   enable-all: true
   disable:
+    - deadcode
     - exhaustive
+    - exhaustivestruct
     - funlen
     - gochecknoglobals
     - gochecknoinits
@@ -90,6 +92,7 @@ linters:
     - godox
     - goerr113
     - gofumpt
+    - golint
     - gomnd
     - maligned
     - nestif
@@ -98,6 +101,7 @@ linters:
     - testpackage
     - unparam
     - wsl
+    - varcheck
 
     # Below here are new linters from upgrading to 1.43.0. Since we enable all and disable
     # selectively, when we upgrade we get a ton of new linters. For convenience next upgrade,
@@ -124,7 +128,6 @@ linters:
     - paralleltest
     - predeclared
     - promlinter
-    - revive
     - tagliatelle
     - tenv
     - thelper
@@ -150,7 +153,7 @@ linters:
     - prealloc
     - interfacer
     - structcheck
-    - unused
     - nolintlint
     - usestdlibvars
     - exhaustruct
+

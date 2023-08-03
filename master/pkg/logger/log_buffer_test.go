@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gotest.tools/assert"
 )
@@ -12,33 +11,25 @@ import (
 func checkIDRange(entries []*Entry, expectedStartID int, expectedEndID int) error {
 	startID := entries[0].ID
 	if startID != expectedStartID {
-		return errors.New(
-			fmt.Sprintf("unexpected startID: %v != %v",
-				startID, expectedStartID))
+		return fmt.Errorf("unexpected startID: %v != %v", startID, expectedStartID)
 	}
 
 	endID := entries[len(entries)-1].ID
 	if endID != expectedEndID {
-		return errors.New(
-			fmt.Sprintf("unexpected endID: %v != %v",
-				endID, expectedEndID))
+		return fmt.Errorf("unexpected endID: %v != %v", endID, expectedEndID)
 	}
 
 	actualLen := len(entries)
 	expectedLen := expectedEndID - expectedStartID + 1
 	if actualLen != expectedLen {
-		return errors.New(
-			fmt.Sprintf("unexpected length of entries: %v != %v",
-				actualLen, expectedLen))
+		return fmt.Errorf("unexpected length of entries: %v != %v", actualLen, expectedLen)
 	}
 
 	// Check the order of all IDs.
 	for index, entry := range entries {
 		expected := index + expectedStartID
 		if entry.ID != expected {
-			return errors.New(
-				fmt.Sprintf("unexpected entryID: %v != %v",
-					entry.ID, expected))
+			return fmt.Errorf("unexpected entryID: %v != %v", entry.ID, expected)
 		}
 	}
 

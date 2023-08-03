@@ -39,7 +39,7 @@ func setupNTSCAuthzTest(t *testing.T) (
 	*apiServer, *mocks.NSCAuthZ, model.User, context.Context,
 ) {
 	api, curUser, ctx := setupAPITest(t, nil)
-	var master *Master = api.m
+	master := api.m
 	command.RegisterAPIHandler(
 		master.system,
 		nil,

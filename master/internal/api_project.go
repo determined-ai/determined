@@ -623,11 +623,11 @@ func (a *apiServer) PatchProject(
 		return nil, err
 	}
 	if currProject.Archived {
-		return nil, errors.Errorf("project (%d) is archived and cannot have attributes updated.",
+		return nil, errors.Errorf("project (%d) is archived and cannot have attributes updated",
 			currProject.Id)
 	}
 	if currProject.Immutable {
-		return nil, errors.Errorf("project (%v) is immutable and cannot have attributes updated.",
+		return nil, errors.Errorf("project (%v) is immutable and cannot have attributes updated",
 			currProject.Id)
 	}
 
