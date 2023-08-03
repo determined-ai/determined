@@ -81,7 +81,9 @@ linters-settings:
 linters:
   enable-all: true
   disable:
+    - deadcode
     - exhaustive
+    - exhaustivestruct
     - funlen
     - gochecknoglobals
     - gochecknoinits
@@ -99,6 +101,7 @@ linters:
     - testpackage
     - unparam
     - wsl
+    - varcheck
 
     # Below here are new linters from upgrading to 1.43.0. Since we enable all and disable
     # selectively, when we upgrade we get a ton of new linters. For convenience next upgrade,
@@ -125,7 +128,6 @@ linters:
     - paralleltest
     - predeclared
     - promlinter
-    # - revive
     - tagliatelle
     - tenv
     - thelper
@@ -151,10 +153,7 @@ linters:
     - prealloc
     - interfacer
     - structcheck
-    # - unused
     - nolintlint
     - usestdlibvars
-    - exhaustivestruct
     - exhaustruct
-    - varcheck
-    - deadcode
+
