@@ -45,6 +45,8 @@ var nonRetryableErrors = []*regexp.Regexp{
 	regexp.MustCompile("sbatch: error: Batch job submission failed"),
 }
 
+type trialExitCallback func(model.RequestID)
+
 // A trial is a task actor which is responsible for handling:
 //   - messages from the resource manager,
 //   - messages from the experiment,
@@ -98,6 +100,8 @@ type trial struct {
 	userInitiatedExit *model.ExitedReason
 
 	logCtx logger.Context
+
+	exitCallback trialExitCallback
 }
 
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
@@ -120,6 +124,7 @@ func newTrial(
 	createSent bool,
 	system *actor.System,
 	parent *actor.Ref,
+	exitCallback trialExitCallback,
 ) (*trial, error) {
 	t := &trial{
 		wg: waitgroupx.WithContext(context.Background()),
@@ -146,6 +151,8 @@ func newTrial(
 			"task-type": model.TaskTypeTrial,
 		}),
 		restored: restored,
+
+		exitCallback: exitCallback,
 	}
 
 	if id != nil {
@@ -479,7 +486,8 @@ func (t *trial) AllocationExitedCallback(exit *task.AllocationExited) {
 	if err != nil {
 		// TODO(!!!): in some cases we need to set something to force us to 'close'
 		t.syslog.WithError(err).Error("handling allocation exit")
-		t.system.Tell(t.parent, trialClosed{requestID: t.searcher.Create.RequestID})
+		t.exitCallback(t.searcher.Create.RequestID)
+		// t.system.Tell(t.parent, trialClosed{requestID: t.searcher.Create.RequestID})
 	}
 }
 
@@ -554,19 +562,13 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 			})
 		}
 	case exit.UserRequestedStop:
-		t.system.Tell(t.parent, trialReportEarlyExit{
-			requestID: t.searcher.Create.RequestID,
-			reason:    model.UserRequestedStop,
-		})
+		t.exitCallback(t.searcher.Create.RequestID)
 		return t.transition(model.StateWithReason{
 			State:               model.CompletedState,
 			InformationalReason: "trial exited early due to a user requested stop",
 		})
 	case t.userInitiatedExit != nil:
-		t.system.Tell(t.parent, trialReportEarlyExit{
-			requestID: t.searcher.Create.RequestID,
-			reason:    *t.userInitiatedExit,
-		})
+		t.exitCallback(t.searcher.Create.RequestID)
 		return t.transition(model.StateWithReason{
 			State: model.CompletedState,
 			InformationalReason: fmt.Sprintf(
@@ -652,15 +654,9 @@ func (t *trial) transition(s model.StateWithReason) error {
 	case model.TerminalStates[t.state]:
 		switch t.state {
 		case model.ErrorState:
-			t.system.Tell(t.parent, trialReportEarlyExit{
-				requestID: t.searcher.Create.RequestID,
-				reason:    model.Errored,
-			})
+			t.exitCallback(t.searcher.Create.RequestID)
 		case model.CanceledState:
-			t.system.Tell(t.parent, trialReportEarlyExit{
-				requestID: t.searcher.Create.RequestID,
-				reason:    model.UserCanceled,
-			})
+			t.exitCallback(t.searcher.Create.RequestID)
 		}
 	default:
 		panic(fmt.Errorf("unmatched state in transition %s", t.state))

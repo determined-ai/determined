@@ -126,7 +126,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to restore experiment %d", expModel.ID)
 	}
-	e, _, err := newExperiment(m, expModel, activeConfig, &taskSpec)
+	e, _, err := newExperiment(m, expModel, activeConfig, &taskSpec, m.system)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create experiment %d from model", expModel.ID)
 	}
@@ -149,7 +149,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 func (e *experiment) restoreTrial(
 	ctx *actor.Context, ckpt *model.Checkpoint, searcher trialSearcherState,
 ) {
-	l := ctx.Log().WithField("request-id", searcher.Create.RequestID)
+	l := e.syslog.WithField("request-id", searcher.Create.RequestID)
 	l.Debug("restoring trial")
 
 	var trialID *int
@@ -179,7 +179,7 @@ func (e *experiment) restoreTrial(
 	// In the event a trial is terminal and is not recorded in the searcher, replay the close.
 	if terminal {
 		if !e.searcher.TrialsClosed[searcher.Create.RequestID] {
-			ctx.Tell(ctx.Self(), trialClosed{requestID: searcher.Create.RequestID})
+			e.trialClosed(searcher.Create.RequestID)
 		}
 		return
 	}
@@ -188,17 +188,17 @@ func (e *experiment) restoreTrial(
 	t, err := newTrial(
 		e.logCtx, trialTaskID(e.ID, searcher.Create.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 		searcher, e.rm, e.db, config, ckpt, e.taskSpec, e.generatedKeys, true, trialID,
-		e.searcher.TrialsCreated[searcher.Create.RequestID], ctx.Self().System(), ctx.Self(),
+		e.searcher.TrialsCreated[searcher.Create.RequestID], e.system, e.self, e.trialClosed,
 	)
 	if err != nil {
 		// TODO(!!!): kinda sloppy.
 		l.WithError(err).Error("failed to restore trial, aborting restore")
 		if !e.searcher.TrialsClosed[searcher.Create.RequestID] {
-			ctx.Tell(ctx.Self(), trialClosed{requestID: searcher.Create.RequestID})
+			e.trialClosed(searcher.Create.RequestID)
 		}
 		return
 	}
-	e.trials[searcher.Create.RequestID] = t // TODO(!!!): threadsafe, dupe check
+	e.trials[searcher.Create.RequestID] = t
 
 	l.Debug("restored trial")
 }
@@ -219,17 +219,17 @@ func (m *Master) retrieveExperimentSnapshot(expModel *model.Experiment) ([]byte,
 	}
 }
 
-func (e *experiment) snapshotAndSave(ctx *actor.Context) {
+func (e *experiment) snapshotAndSave() {
 	es, err := e.Snapshot()
 	if err != nil {
 		e.faultToleranceEnabled = false
-		ctx.Log().WithError(err).Errorf("failed to snapshot experiment, fault tolerance is lost")
+		e.syslog.WithError(err).Errorf("failed to snapshot experiment, fault tolerance is lost")
 		return
 	}
 	err = e.db.SaveSnapshot(e.ID, experimentSnapshotVersion, es)
 	if err != nil {
 		e.faultToleranceEnabled = false
-		ctx.Log().WithError(err).Errorf("failed to persist experiment snapshot, fault tolerance is lost")
+		e.syslog.WithError(err).Errorf("failed to persist experiment snapshot, fault tolerance is lost")
 		return
 	}
 }

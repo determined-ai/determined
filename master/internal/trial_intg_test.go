@@ -171,8 +171,8 @@ func setup(t *testing.T) (
 		},
 		ssh.PrivateAndPublicKeys{},
 		false,
-		nil, false, nil, nil,
+		nil, false, nil, nil, nil,
 	)
 	// self := system.MustActorOf(actor.Addr("trial"), tr)
-	return system, db, rID, tr, nil, &as
+	return system, a.m.db, rID, tr, nil, &as
 }
