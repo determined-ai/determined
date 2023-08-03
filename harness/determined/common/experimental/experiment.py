@@ -155,11 +155,13 @@ class Experiment:
     def add_label(self, label: str) -> None:
         """Add a label to the experiment.
 
+        Makes a PUT request to the master and sets ``self.labels`` to the server's updated
+            labels.
+
         Arguments:
             label: a string label to add to the experiment. If the label already exists,
                 the method call will be a no-op.
         """
-
         # URL-encode label for request.
         label = parse.quote(label)
         resp = bindings.put_PutExperimentLabel(
@@ -169,6 +171,9 @@ class Experiment:
 
     def remove_label(self, label: str) -> None:
         """Removes a label from the experiment.
+
+        Makes a DELETE request to the master and sets ``self.labels`` to the server's updated
+            labels.
 
         Arguments:
             label: a string label to remove from the experiment. If the specified label does not
@@ -184,8 +189,9 @@ class Experiment:
     def set_labels(self, labels: Set[str]) -> None:
         """Sets experiment labels to the given set.
 
-        This method will overwrite any existing labels on the experiment with the specified
-        labels.
+        This method makes a PATCH request to the master and sets ``self.labels`` to the server's
+            response. This will overwrite any existing labels on the experiment with the specified
+            labels.
 
         Arguments:
             labels: a set of string labels to set on the experiment.

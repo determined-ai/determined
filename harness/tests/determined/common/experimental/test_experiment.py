@@ -242,3 +242,55 @@ def test_remove_label_url_encodes_label(
 
     _, call_kwargs = mock_bindings.call_args_list[0]
     assert call_kwargs["label"] == url_encoded_label
+
+
+@mock.patch("determined.common.api.bindings.put_PutExperimentLabel")
+def test_add_label_updates_local_state(
+    mock_bindings: mock.MagicMock,
+    make_expref: Callable[[int], experiment.Experiment],
+) -> None:
+    expref = make_expref(1)
+    expref.labels = {"label 1", "label 2", "label 3"}
+    label_to_add = "label 4"
+    mock_bindings.return_value = bindings.v1PutExperimentLabelResponse(
+        labels=list(expref.labels) + [label_to_add]
+    )
+
+    expref.add_label(label=label_to_add)
+
+    assert expref.labels == set(mock_bindings.return_value.labels)
+
+
+@mock.patch("determined.common.api.bindings.delete_DeleteExperimentLabel")
+def test_remove_label_updates_local_state(
+    mock_bindings: mock.MagicMock,
+    make_expref: Callable[[int], experiment.Experiment],
+) -> None:
+    expref = make_expref(1)
+    expref.labels = {"label 1", "label 2", "label 3", "label 4"}
+    label_to_remove = "label 4"
+    mock_bindings.return_value = bindings.v1DeleteExperimentLabelResponse(
+        labels=["label 1", "label 2", "label 3"]
+    )
+
+    expref.remove_label(label=label_to_remove)
+
+    assert expref.labels == set(mock_bindings.return_value.labels)
+
+
+@mock.patch("determined.common.api.bindings.patch_PatchExperiment")
+def test_set_labels_updates_local_state(
+    mock_bindings: mock.MagicMock,
+    make_expref: Callable[[int], experiment.Experiment],
+) -> None:
+    expref = make_expref(1)
+    expref.labels = {"label 1", "label 2", "label 3"}
+    labels_to_set = {"label 4", "label 5"}
+
+    exp_resp = api_responses.sample_get_experiment(labels=list(labels_to_set))
+    mock_bindings.return_value = bindings.v1PatchExperimentResponse(experiment=exp_resp.experiment)
+
+    expref.set_labels(labels=labels_to_set)
+
+    assert mock_bindings.return_value.experiment and mock_bindings.return_value.experiment.labels
+    assert expref.labels == set(mock_bindings.return_value.experiment.labels)
