@@ -101,7 +101,7 @@ func runCheckpointGCTask(
 	// HACK: Just to get a valid group ID. Refactor groups to not be actors.
 	group, _ := system.ActorOf(actor.Addr("checkpoint_gc", allocationID), &actors.Nothing)
 
-	resultChan := make(chan error)
+	resultChan := make(chan error, 1)
 	onExit := func(ae *task.AllocationExited) {
 		err := db.CompleteTask(taskID, time.Now().UTC())
 		if err != nil {
