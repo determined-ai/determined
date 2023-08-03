@@ -161,7 +161,7 @@ Optional Arguments:
          <https://cloud.google.com/compute/docs/gpus>`__ page for specific GCP requirements. Can be
          set to 0 for CPU-based training.
 
-      -  8
+      -  4
 
    -  -  ``--max-dynamic-agents``
       -  Maximum number of dynamic agent instances at one time.
