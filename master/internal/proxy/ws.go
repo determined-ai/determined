@@ -68,7 +68,7 @@ func newSingleHostReverseWebSocketProxy(c echo.Context, t *url.URL) http.Handler
 			caCertPool := x509.NewCertPool()
 			caCertPool.AppendCertsFromPEM(masterCaBytes)
 
-			//nolint:gosec,G402
+			//nolint:gosec
 			tlsConfig := &tls.Config{
 				ServerName:         "127.0.0.1",
 				Certificates:       []tls.Certificate{cert},

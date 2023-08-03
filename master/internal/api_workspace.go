@@ -88,10 +88,10 @@ func (a *apiServer) GetWorkspaceByID(
 	}
 
 	if rejectImmutable && w.Immutable {
-		return nil, errors.Errorf("workspace (%v) is immutable and cannot add new projects.", w.Id)
+		return nil, errors.Errorf("workspace (%v) is immutable and cannot add new projects", w.Id)
 	}
 	if rejectImmutable && w.Archived {
-		return nil, errors.Errorf("workspace (%v) is archived and cannot add new projects.", w.Id)
+		return nil, errors.Errorf("workspace (%v) is archived and cannot add new projects", w.Id)
 	}
 	return w, nil
 }

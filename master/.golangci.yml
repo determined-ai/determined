@@ -68,8 +68,8 @@ linters-settings:
     line-length: 100
   misspell:
     locale: US
-  exhaustivestruct:
-    struct-patterns:
+  exhaustruct:
+    include:
       - 'github.com/determined-ai/determined/master/pkg/schemas/expconf.*Config*'
   forbidigo:
     forbid:
@@ -90,6 +90,7 @@ linters:
     - godox
     - goerr113
     - gofumpt
+    - golint
     - gomnd
     - maligned
     - nestif
@@ -124,7 +125,7 @@ linters:
     - paralleltest
     - predeclared
     - promlinter
-    - revive
+    # - revive
     - tagliatelle
     - tenv
     - thelper
@@ -150,7 +151,10 @@ linters:
     - prealloc
     - interfacer
     - structcheck
-    - unused
+    # - unused
     - nolintlint
     - usestdlibvars
+    - exhaustivestruct
     - exhaustruct
+    - varcheck
+    - deadcode

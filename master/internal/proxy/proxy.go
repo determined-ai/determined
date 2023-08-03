@@ -198,7 +198,7 @@ func setUpProxy(serviceURL *url.URL) (*httputil.ReverseProxy, error) {
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(masterCaBytes)
 
-	//nolint:gosec,G402
+	//nolint:gosec
 	proxy.Transport = &http.Transport{
 		TLSClientConfig: &tls.Config{
 			RootCAs:            caCertPool,

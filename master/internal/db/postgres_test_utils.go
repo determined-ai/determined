@@ -72,7 +72,7 @@ func ResolveNewPostgresDatabase() (*PgDB, func(), error) {
 	url, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, nil, errors.Wrapf(
-			err, "failed to parse DET_INTEGRATION_POSTGRES_URL (%q):", baseURL,
+			err, "failed to parse DET_INTEGRATION_POSTGRES_URL (%q)", baseURL,
 		)
 	}
 

@@ -19,7 +19,6 @@ type (
 	}
 
 	customSearch struct {
-		defaultSearchMethod
 		expconf.CustomConfig
 		customSearchState
 	}

@@ -814,10 +814,10 @@ func TestResourceCreationCancelled(t *testing.T) {
 			reflect.TypeOf(message))
 	}
 
-	var correctContainerStarted *sproto.ResourcesStarted = nil
+	var correctContainerStarted *sproto.ResourcesStarted
 	correctFailType := "task failed without an associated exit code"
 	correctErrMsg := "pod actor exited while pod was running"
-	var correctCode *sproto.ExitCode = nil
+	var correctCode *sproto.ExitCode
 
 	assert.Equal(t, containerMsg.ResourcesStarted, correctContainerStarted)
 	assert.Equal(t, containerMsg.ResourcesStopped.Failure.FailureType,
@@ -856,8 +856,8 @@ func TestResourceDeletionFailed(t *testing.T) {
 			reflect.TypeOf(message))
 	}
 
-	var correctContainerStarted *sproto.ResourcesStarted = nil
-	var correctCode *sproto.ExitCode = nil
+	var correctContainerStarted *sproto.ResourcesStarted
+	var correctCode *sproto.ExitCode
 
 	assert.Equal(t, containerMsg.ResourcesStarted, correctContainerStarted)
 	assert.Equal(t, containerMsg.ResourcesStopped.Failure.FailureType,

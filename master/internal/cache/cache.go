@@ -132,7 +132,7 @@ func (f *FileCache) genPathWithValidation(expID int, path string) (string, error
 		return "", err
 	}
 	if strings.HasPrefix(rp, "..") {
-		return "", errors.Errorf("%s is not a valid path.", path)
+		return "", errors.Errorf("%s is not a valid path", path)
 	}
 	return p, nil
 }

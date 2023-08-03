@@ -190,7 +190,7 @@ func (rp *resourcePool) restoreResources(
 	for _, cs := range containerSnapshots {
 		agentState, ok := agentStateMap[cs.AgentID]
 		if !ok {
-			return errors.New(fmt.Sprintf("can't find restorable agent %s", cs.AgentID))
+			return fmt.Errorf("can't find restorable agent %s", cs.AgentID)
 		}
 
 		cr := containerResources{
@@ -389,15 +389,6 @@ func (rp *resourcePool) getOrCreateGroup(
 		actors.NotifyOnStop(ctx, handler, tasklist.GroupActorStopped{Ref: handler})
 	}
 	return g
-}
-
-func (rp *resourcePool) notifyOnStop(
-	ctx *actor.Context, ref *actor.Ref, msg actor.Message,
-) {
-	done := actors.NotifyOnStop(ctx, ref, msg)
-	if rp.saveNotifications {
-		rp.notifications = append(rp.notifications, done)
-	}
 }
 
 func (rp *resourcePool) updateScalingInfo() bool {

@@ -305,7 +305,7 @@ func (a *apiServer) DeleteExperiment(
 
 	// report any error on the individual experiment
 	if len(results) == 0 {
-		return nil, errors.Errorf("DeleteExperiments returned neither pass nor fail on delete query.")
+		return nil, errors.Errorf("DeleteExperiments returned neither pass nor fail on delete query")
 	}
 	if results[0].Error != nil {
 		return nil, results[0].Error
@@ -900,7 +900,7 @@ func (a *apiServer) PauseExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("PauseExperiments returned neither pass nor fail on query.")
+			return nil, errors.Errorf("PauseExperiments returned neither pass nor fail on query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -923,7 +923,7 @@ func (a *apiServer) CancelExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("CancelExperiments returned neither pass nor fail on query.")
+			return nil, errors.Errorf("CancelExperiments returned neither pass nor fail on query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -946,7 +946,7 @@ func (a *apiServer) KillExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("KillExperiments returned neither pass nor fail on query.")
+			return nil, errors.Errorf("KillExperiments returned neither pass nor fail on query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -969,7 +969,7 @@ func (a *apiServer) ArchiveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("ArchiveExperiments returned neither pass nor fail on query.")
+			return nil, errors.Errorf("ArchiveExperiments returned neither pass nor fail on query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -992,7 +992,7 @@ func (a *apiServer) UnarchiveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("UnarchiveExperiments returned neither pass nor fail on query.")
+			return nil, errors.Errorf("UnarchiveExperiments returned neither pass nor fail on query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -1034,7 +1034,7 @@ func (a *apiServer) PatchExperiment(
 		madeChanges = true
 		if len(strings.TrimSpace(req.Experiment.Name.Value)) == 0 {
 			return nil, status.Errorf(codes.InvalidArgument,
-				"`name` must not be an empty or whitespace string.")
+				"`name` must not be an empty or whitespace string")
 		}
 		exp.Name = req.Experiment.Name.Value
 	}
@@ -1939,7 +1939,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, err
 	}
 	if exp.Archived {
-		return nil, errors.Errorf("experiment (%v) is archived and cannot be moved.", exp.ID)
+		return nil, errors.Errorf("experiment (%v) is archived and cannot be moved", exp.ID)
 	}
 
 	// check that user can view source project
@@ -1948,7 +1948,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, err
 	}
 	if srcProject.Archived {
-		return nil, errors.Errorf("project (%v) is archived and cannot have experiments moved from it.",
+		return nil, errors.Errorf("project (%v) is archived and cannot have experiments moved from it",
 			srcProject.Id)
 	}
 
@@ -1958,7 +1958,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, err
 	}
 	if destProject.Archived {
-		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments.",
+		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments",
 			req.DestinationProjectId)
 	}
 	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, curUser, destProject); err != nil {
@@ -1970,7 +1970,7 @@ func (a *apiServer) MoveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("MoveExperiments returned neither pass nor fail on query.")
+			return nil, errors.Errorf("MoveExperiments returned neither pass nor fail on query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -1993,7 +1993,7 @@ func (a *apiServer) MoveExperiments(
 		return nil, err
 	}
 	if destProject.Archived {
-		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments.",
+		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments",
 			req.DestinationProjectId)
 	}
 	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *curUser, destProject); err != nil {
