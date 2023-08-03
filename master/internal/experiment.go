@@ -682,6 +682,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	return nil
 }
 
+func (e *experiment) TrialClosed(requestID model.RequestID) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.trialClosed(requestID)
+}
+
 func (e *experiment) trialClosed(requestID model.RequestID) {
 	ops, err := e.searcher.TrialClosed(requestID)
 	e.processOperations(ops, err)
@@ -746,7 +752,7 @@ func (e *experiment) processOperations(
 			t, err := newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
-				nil, false, e.system, e.self, e.trialClosed,
+				nil, false, e.system, e.self, e.TrialClosed,
 			)
 			if err != nil {
 				e.syslog.WithError(err).Error("failed to create trial")

@@ -190,6 +190,13 @@ func isNonRetryableError(err error) bool {
 	return false
 }
 
+func (t *trial) Exit() {
+	if err := t.close(); err != nil {
+		t.syslog.WithError(err).Error("error closing trial")
+	}
+	t.exitCallback(t.searcher.Create.RequestID)
+}
+
 func (t *trial) close() error {
 	t.wg.Close()
 
@@ -486,7 +493,7 @@ func (t *trial) AllocationExitedCallback(exit *task.AllocationExited) {
 	if err != nil {
 		// TODO(!!!): in some cases we need to set something to force us to 'close'
 		t.syslog.WithError(err).Error("handling allocation exit")
-		t.exitCallback(t.searcher.Create.RequestID)
+		t.Exit()
 		// t.system.Tell(t.parent, trialClosed{requestID: t.searcher.Create.RequestID})
 	}
 }
@@ -562,13 +569,13 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 			})
 		}
 	case exit.UserRequestedStop:
-		t.exitCallback(t.searcher.Create.RequestID)
+		t.Exit()
 		return t.transition(model.StateWithReason{
 			State:               model.CompletedState,
 			InformationalReason: "trial exited early due to a user requested stop",
 		})
 	case t.userInitiatedExit != nil:
-		t.exitCallback(t.searcher.Create.RequestID)
+		t.Exit()
 		return t.transition(model.StateWithReason{
 			State: model.CompletedState,
 			InformationalReason: fmt.Sprintf(
@@ -654,9 +661,9 @@ func (t *trial) transition(s model.StateWithReason) error {
 	case model.TerminalStates[t.state]:
 		switch t.state {
 		case model.ErrorState:
-			t.exitCallback(t.searcher.Create.RequestID)
+			t.Exit()
 		case model.CanceledState:
-			t.exitCallback(t.searcher.Create.RequestID)
+			t.Exit()
 		}
 	default:
 		panic(fmt.Errorf("unmatched state in transition %s", t.state))
