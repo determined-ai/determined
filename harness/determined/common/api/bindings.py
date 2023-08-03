@@ -292,6 +292,7 @@ class jobv1Type(DetEnum):
     SHELL = "TYPE_SHELL"
     COMMAND = "TYPE_COMMAND"
     CHECKPOINT_GC = "TYPE_CHECKPOINT_GC"
+    EXTERNAL = "TYPE_EXTERNAL"
 
 class protobufAny(Printable):
     typeUrl: "typing.Optional[str]" = None

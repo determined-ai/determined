@@ -228,6 +228,14 @@ func (r *ResourceManager) DeleteJob(
 	return resp, r.Ask(ctx, msg, &resp)
 }
 
+// GetExternalJobs returns the details for External jobs.
+func (r *ResourceManager) GetExternalJobs(
+	ctx actor.Messenger,
+	msg sproto.GetExternalJobs,
+) (resp []*jobv1.Job, err error) {
+	return resp, r.Ask(ctx, msg, &resp)
+}
+
 // ExternalPreemptionPending requests we notify some allocation that it was preempted externally.
 func (r *ResourceManager) ExternalPreemptionPending(
 	ctx actor.Messenger,
