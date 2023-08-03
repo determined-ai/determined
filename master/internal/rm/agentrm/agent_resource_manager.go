@@ -382,7 +382,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case taskContainerDefaults:
 		ctx.Respond(a.getTaskContainerDefaults(msg))
 
-	case sproto.GetNonDaiJobs:
+	case sproto.GetExternalJobs:
 		ctx.Respond(rmerrors.ErrNotSupported)
 
 	default:

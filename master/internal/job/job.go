@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -102,20 +103,22 @@ func (j *Manager) GetJobs(
 		return nil, err
 	}
 
-	jobCount := len(jobQ)
-
-	// Try to fetch Non-DAI jobs if supported by the Resource Manager.
-	// If the Resource Manager returned Non-DAI jobs, increase the job count.
-	// Otherwise, we do not show any Non-DAI jobs.
-	nonDaiJobs, err := j.rm.GetNonDaiJobs(j.system, sproto.GetNonDaiJobs{
+	// Try to fetch External jobs, if supported by the Resource Manager (RM).
+	// If the GetExternalJobs call is supported, RM returns a list of external jobs or
+	// an error if there is any problem. Otherwise, RM returns rmerrors.ErrNotSupported
+	// error. In this case, continue without the External jobs.
+	externalJobs, err := j.rm.GetExternalJobs(j.system, sproto.GetExternalJobs{
 		ResourcePool: resourcePool,
 	})
-	if err == nil {
-		jobCount += len(nonDaiJobs)
+	if err != nil {
+		// If the error is not 'ErrNotSupported' error, propagate the error upwards.
+		if err != rmerrors.ErrNotSupported {
+			return nil, err
+		}
 	}
 
 	// Merge the results.
-	jobsInRM := make([]*jobv1.Job, 0, jobCount)
+	jobsInRM := make([]*jobv1.Job, 0, len(jobQ)+len(externalJobs))
 	for jID, jRMInfo := range jobQ {
 		v1Job, ok := jobs[jID]
 		if ok {
@@ -147,10 +150,8 @@ func (j *Manager) GetJobs(
 		return jobsInRM[i].JobId < jobsInRM[j].JobId
 	})
 
-	// Append any Non-DAI jobs at the bottom of the list.
-	if len(nonDaiJobs) > 0 {
-		jobsInRM = append(jobsInRM, nonDaiJobs...)
-	}
+	// Append any External jobs to the bottom of the list.
+	jobsInRM = append(jobsInRM, externalJobs...)
 
 	return jobsInRM, nil
 }

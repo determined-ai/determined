@@ -228,10 +228,10 @@ func (r *ResourceManager) DeleteJob(
 	return resp, r.Ask(ctx, msg, &resp)
 }
 
-// GetNonDaiJobs returns the details for Non DAI jobs.
-func (r *ResourceManager) GetNonDaiJobs(
+// GetExternalJobs returns the details for External jobs.
+func (r *ResourceManager) GetExternalJobs(
 	ctx actor.Messenger,
-	msg sproto.GetNonDaiJobs,
+	msg sproto.GetExternalJobs,
 ) (resp []*jobv1.Job, err error) {
 	return resp, r.Ask(ctx, msg, &resp)
 }

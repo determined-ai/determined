@@ -446,7 +446,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		resp := ctx.Ask(k.podsActor, msg)
 		ctx.Respond(resp.Get())
 
-	case sproto.GetNonDaiJobs:
+	case sproto.GetExternalJobs:
 		ctx.Respond(rmerrors.ErrNotSupported)
 
 	default:

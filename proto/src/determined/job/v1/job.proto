@@ -23,7 +23,7 @@ enum Type {
   // CheckpointGC Job.
   TYPE_CHECKPOINT_GC = 6;
   // Non-DAI Job.
-  TYPE_NON_DAI = 7;
+  TYPE_EXTERNAL = 7;
 }
 
 // Job state.

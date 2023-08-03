@@ -85,7 +85,7 @@ type ResourceManager interface {
 	) (*apiv1.GetJobQueueStatsResponse, error)
 	MoveJob(actor.Messenger, sproto.MoveJob) error
 	RecoverJobPosition(actor.Messenger, sproto.RecoverJobPosition)
-	GetNonDaiJobs(actor.Messenger, sproto.GetNonDaiJobs) ([]*jobv1.Job, error)
+	GetExternalJobs(actor.Messenger, sproto.GetExternalJobs) ([]*jobv1.Job, error)
 
 	EnableSlot(
 		actor.Messenger,
