@@ -169,6 +169,8 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
     }
   };
 
+  const currentGroupMembers = form.getFieldValue(USERS_NAME);
+
   return (
     <Modal
       cancel
@@ -192,11 +194,13 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
           </Form.Item>
           <Form.Item label={USERS_LABEL} name={USERS_NAME}>
             <Select mode="multiple" optionFilterProp="children" placeholder="Add Users" showSearch>
-              {users?.map((u) => (
-                <Select.Option disabled={!u.isActive} key={u.id} value={u.id}>
-                  {getDisplayName(u)}
-                </Select.Option>
-              ))}
+              {users
+                ?.filter((u) => u.isActive || currentGroupMembers?.includes(u.id))
+                ?.map((u) => (
+                  <Select.Option key={u.id} value={u.id}>
+                    {getDisplayName(u)}
+                  </Select.Option>
+                ))}
             </Select>
           </Form.Item>
           {rbacEnabled && canModifyPermissions && group && (
