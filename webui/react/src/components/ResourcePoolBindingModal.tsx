@@ -43,7 +43,7 @@ const ResourcePoolBindingModalComponent: React.FC<Props> = ({
         onChange={setVisibleBindings}
       />
       <Paragraph>
-        Note: Binding a resource pool to a workspace prevents other workspaces from using it.
+        Note: Binding a resource pool to a workspace(s) prevents other workspaces from using it.
         Existing running workloads will be unaffected.
       </Paragraph>
     </Modal>
