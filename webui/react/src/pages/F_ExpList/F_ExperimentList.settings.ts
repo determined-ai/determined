@@ -80,7 +80,7 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       type: number,
     },
     pinnedColumnsCount: {
-      defaultValue: 1,
+      defaultValue: 3,
       skipUrlEncoding: true,
       storageKey: 'pinnedColumnsCount',
       type: number,
@@ -98,7 +98,7 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       type: array(number),
     },
     sortString: {
-      defaultValue: '',
+      defaultValue: 'id=desc',
       skipUrlEncoding: true,
       storageKey: 'sortString',
       type: string,
