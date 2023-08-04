@@ -23,3 +23,5 @@
 /e2e_tests/tests/command          @determined-ai/ml-sys
 /e2e_tests/tests/experiment       @determined-ai/ml-sys
 /e2e_tests/tests/nightly          @determined-ai/ml-sys
+
+/webui @determined-ai/web
