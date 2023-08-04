@@ -8,9 +8,6 @@ import (
 
 	"golang.org/x/exp/slices"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
@@ -409,18 +406,9 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			if e.Type != nil {
 				queryColumnType = *e.Type
 			}
-			metricDetails := strings.Split(e.ColumnName, ".")
-			metricGroup := metricDetails[0]
-			if location == projectv1.LocationType_LOCATION_TYPE_TRAINING.String() {
-				metricGroup = "avg_metrics"
-			}
-			metricQualifier := metricDetails[len(metricDetails)-1]
-			metricName := strings.TrimSuffix(
-				strings.TrimPrefix(e.ColumnName, fmt.Sprintf("%s.", metricDetails[0])),
-				"."+metricQualifier)
-			if !slices.Contains(SummaryMetricStatistics, metricQualifier) {
-				return nil, status.Errorf(codes.InvalidArgument,
-					"sort training metrics by statistic: count, last, max, min, or sum")
+			metricGroup, metricName, metricQualifier, err := parseMetricsName(e.ColumnName)
+			if err != nil {
+				return nil, err
 			}
 			col := `trials.summary_metrics->?->?->>?`
 			var queryArgs []interface{}
@@ -484,4 +472,28 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 		}
 	}
 	return q, nil
+}
+
+func parseMetricsName(str string) (string, string, string, error) {
+	if !strings.Contains(str, ".") {
+		return "", "", "", fmt.Errorf("%s is not a valid metrics id", str)
+	}
+	slice := strings.Split(str, ".")
+	if len(slice) < 2 {
+		return "", "", "", fmt.Errorf("%s is not a valid metrics id", str)
+	}
+	metricGroup := slice[0]
+	metricQualifier := slice[len(slice)-1]
+	if !slices.Contains(SummaryMetricStatistics, metricQualifier) {
+		metricQualifier = ""
+	}
+	metricName := strings.Join(slice[1:len(slice)-1], ".")
+	if metricGroup == "training" {
+		metricGroup = "avg_metrics"
+	}
+	if metricGroup == "validation" {
+		metricGroup = "validation_metrics"
+	}
+
+	return metricGroup, metricName, metricQualifier, nil
 }

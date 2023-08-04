@@ -2092,25 +2092,13 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 			experimentQuery.OrderExpr(
 				fmt.Sprintf("e.validation_metrics->'%s' %s",
 					metricName, sortDirection))
-		case strings.HasPrefix(paramDetail[0], "training."):
-			metricDetails := strings.Split(paramDetail[0], ".")
-			metricQualifier := metricDetails[len(metricDetails)-1]
-			metricName := strings.TrimSuffix(
-				strings.TrimPrefix(paramDetail[0], "training."),
-				"."+metricQualifier)
-			if !slices.Contains(SummaryMetricStatistics, metricQualifier) {
-				return status.Errorf(codes.InvalidArgument,
-					"sort training metrics by statistic: count, last, max, min, or sum")
+		case strings.Contains(paramDetail[0], "."):
+			metricGroup, metricName, metricQualifier, err := parseMetricsName(paramDetail[0])
+			if err != nil {
+				return err
 			}
 			experimentQuery.OrderExpr(
-				fmt.Sprintf("trials.summary_metrics->'avg_metrics'->'%s'->>'%s' %s", metricName,
-					metricQualifier, sortDirection))
-		case strings.Contains(paramDetail[0], "."):
-			metricSearchQuery := strings.ReplaceAll(paramDetail[0], ".", "'->'")
-			i := strings.LastIndex(metricSearchQuery, "->")
-			metricSearchQuery = metricSearchQuery[:i] + strings.Replace(metricSearchQuery[i:], "->", "->>", 1)
-			experimentQuery.OrderExpr(
-				fmt.Sprintf("trials.summary_metrics->'%s' %s", metricSearchQuery,
+				fmt.Sprintf("trials.summary_metrics->'%s'->'%s'->>'%s' %s", metricGroup, metricName, metricQualifier,
 					sortDirection))
 		default:
 			if _, ok := orderColMap[paramDetail[0]]; !ok {

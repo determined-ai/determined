@@ -200,14 +200,15 @@ func (a *apiServer) getProjectColumnsByID(
 		MetricName string
 		JSONPath   string
 		MetricType string
+		Count      int32
 	}{}
 
 	if len(trialIDs) > 0 {
-		trialsQuery := db.BunSelectMetricGroupNames().ColumnExpr(`summary_metrics->jsonb_object_keys(summary_metrics)->
+		subQuery := db.BunSelectMetricGroupNames().ColumnExpr(`summary_metrics->jsonb_object_keys(summary_metrics)->
 		jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))->>'type'
 		AS metric_type`).
-			Where("id IN (?)", bun.In(trialIDs)).
-			DistinctOn("json_path, metric_name")
+			Where("id IN (?)", bun.In(trialIDs)).Distinct()
+		trialsQuery := db.Bun().NewSelect().TableExpr("(?) AS stats", subQuery).ColumnExpr("*").ColumnExpr("ROW_NUMBER() OVER(PARTITION BY json_path, metric_name order by metric_type) AS count").Order("json_path").Order("metric_name")
 		err = trialsQuery.Scan(ctx, &summaryMetrics)
 		if err != nil {
 			return nil, err
@@ -215,6 +216,10 @@ func (a *apiServer) getProjectColumnsByID(
 	}
 
 	for _, stats := range summaryMetrics {
+		// If there are multiple metrics with the same group and name, report the type as unspecified.
+		if stats.Count > 1 {
+			columns[len(columns)-1].Type = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+		}
 		switch stats.JSONPath {
 		case "validation_metrics":
 			columnType := parseMetricsType(stats.MetricType)
@@ -233,7 +238,7 @@ func (a *apiServer) getProjectColumnsByID(
 			}
 			// don't surface aggregates that don't make sense for non-numbers
 			if columnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER {
-				aggregates := []string{"count", "last", "max", "min", "sum"}
+				aggregates := []string{"last", "max", "mean", "min"}
 				for _, aggregate := range aggregates {
 					columns = append(columns, &projectv1.ProjectColumn{
 						Column:   fmt.Sprintf("%s.%s.%s", columnPrefix, stats.MetricName, aggregate),
