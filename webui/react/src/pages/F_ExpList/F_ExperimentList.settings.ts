@@ -108,8 +108,8 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
 });
 
 export interface F_ExperimentListGlobalSettings {
-  expListView?: ExpListView;
-  rowHeight?: RowHeight;
+  expListView: ExpListView;
+  rowHeight: RowHeight;
 }
 
 const ioExpListView = union([literal('scroll'), literal('paged')]);

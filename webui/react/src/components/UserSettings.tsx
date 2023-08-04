@@ -1,5 +1,5 @@
 import { Space } from 'antd';
-import { partial } from 'io-ts';
+import { partial, type } from 'io-ts';
 import React, { useCallback, useState } from 'react';
 
 import Drawer from 'components/kit/Drawer';
@@ -136,7 +136,10 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
   return Loadable.match(
     Loadable.all([
       useObservable(
-        userSettings.get(partial(experimentListGlobalSettingsConfig), experimentListGlobalSettingsPath),
+        userSettings.get(
+          partial(experimentListGlobalSettingsConfig),
+          experimentListGlobalSettingsPath,
+        ),
       ),
       useObservable(userSettings.get(shortcutSettingsConfig, shortcutsSettingsPath)),
       useObservable(userSettings.get(FeatureSettingsConfig, FEATURE_SETTINGS_PATH)),
@@ -242,7 +245,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   valueFormatter={(rh) => rowHeightLabels[rh]}
                   onSubmit={(rh) => {
                     userSettings.set(
-                      experimentListGlobalSettingsConfig,
+                      type(experimentListGlobalSettingsConfig),
                       experimentListGlobalSettingsPath,
                       {
                         ...experimentListGlobalSettings,
@@ -264,7 +267,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   valueFormatter={(v) => (v === 'scroll' ? 'On' : 'Off')}
                   onSubmit={(v) => {
                     userSettings.set(
-                      experimentListGlobalSettingsConfig,
+                      type(experimentListGlobalSettingsConfig),
                       experimentListGlobalSettingsPath,
                       {
                         ...experimentListGlobalSettings,
