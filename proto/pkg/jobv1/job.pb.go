@@ -38,7 +38,7 @@ const (
 	Type_TYPE_COMMAND Type = 5
 	// CheckpointGC Job.
 	Type_TYPE_CHECKPOINT_GC Type = 6
-	// Non-DAI Job.
+	// External Job.
 	Type_TYPE_EXTERNAL Type = 7
 )
 
