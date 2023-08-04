@@ -265,7 +265,6 @@ const CodeEditor: React.FC<Props> = ({
   }, [activeFile]);
 
   const classes = [
-    css.fileTree,
     css.codeEditorBase,
     pageError ? css.noEditor : '',
     viewMode === 'editor' ? css.editorMode : '',
