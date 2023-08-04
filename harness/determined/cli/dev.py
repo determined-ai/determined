@@ -86,28 +86,40 @@ def _bindings_sig_str(name: str, params: List[inspect.Parameter]) -> str:
     return f"{name} <= {params_str}" if params else name
 
 
+def unwrap_optional(annotation: Any) -> Any:
+    try:
+        from typing import get_args, get_origin  # type: ignore
+    except ImportError:
+        raise errors.CliError("python >= 3.8 is required to use this feature")
+    if isinstance(annotation, str):
+        try:
+            annotation = eval(annotation.strip())
+        except NameError:
+            pass
+    origin = get_origin(annotation)
+    args = get_args(annotation)
+
+    if origin is typing.Union:
+        if len(args) == 2 and type(None) in args:
+            return args[0]
+    return annotation
+
+
 def _is_primitive_annotation(a: Any) -> bool:
     try:
         from typing import get_args, get_origin  # type: ignore
     except ImportError:
         raise errors.CliError("python >= 3.8 is required to use this feature")
-    if isinstance(a, str):
-        try:
-            a = eval(a.strip())
-        except NameError:
-            pass
+
+    a = unwrap_optional(a)
     if a in [str, int, float, type(None), bool]:
         return True
 
     origin = get_origin(a)
     args = get_args(a)
 
-    if origin is typing.Union:
-        # handle Optional[X] as a special case.
-        if len(args) == 2 and type(None) in args:
-            return _is_primitive_annotation(args[0])
-    elif origin in [list, tuple, set, frozenset, abc_Sequence]:
-        return False  # TODO: we don't support the cli interface for these yet.
+    if origin in [list, tuple, set, frozenset, abc_Sequence]:
+        return False  # TODO(DET-9730): we don't support the cli interface for these yet.
         if args is not None:
             return all(_is_primitive_annotation(arg) for arg in args)
 
@@ -156,12 +168,25 @@ def list_bindings(args: Namespace) -> None:
         print(_bindings_sig_str(name, params))
 
 
+def parse_param_value(param: inspect.Parameter, value: str) -> Any:
+    annot = unwrap_optional(param.annotation)
+    if annot is float:
+        return float(value)
+    elif annot is int:
+        return int(value)
+    elif annot is bool:
+        assert value.lower() in ["true", "false"]
+        return value.lower() == "true"
+    return value
+
+
 def _parse_args_to_kwargs(args: Namespace, params: List[inspect.Parameter]) -> Dict[str, Any]:
     kwargs: Dict[str, Any] = {}
     params_d: Dict[str, inspect.Parameter] = {p.name: p for p in params}
 
     for idx, arg in enumerate(args.args):
-        key, value = "", ""
+        key: str = ""
+        value: Any = None
         if "=" in arg:
             key, value = arg.split("=", 1)
         else:
@@ -170,12 +195,7 @@ def _parse_args_to_kwargs(args: Namespace, params: List[inspect.Parameter]) -> D
         param = params_d.get(key)
         if not param:
             raise ValueError(f"Unknown argument {key}")
-        if param.annotation is float:
-            value = float(value)
-        elif param.annotation is int:
-            value = int(value)
-        elif param.annotation is bool:
-            value = bool(value)
+        value = parse_param_value(param, value)
         if key in kwargs:
             raise ValueError(f"Argument {key} specified twice")
         kwargs[key] = value
