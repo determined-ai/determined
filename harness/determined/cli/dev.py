@@ -238,8 +238,7 @@ def call_bindings(args: Namespace) -> None:
             )
             or "0"
         )
-        user_idx = int(user_idx.strip())
-        fn_name = matches[user_idx]
+        fn_name = matches[int(user_idx.strip())]
         fn = getattr(bindings, fn_name)
 
     params = fns[fn_name]
