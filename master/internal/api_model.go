@@ -83,7 +83,7 @@ func (a *apiServer) GetModel(
 	if err = modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, m,
 		m.WorkspaceId); err != nil {
 		return nil, authz.SubIfUnauthorized(err,
-			errors.Errorf("current user %q doesn't have permissions to get model %q.",
+			errors.Errorf("current user %q doesn't have permissions to get model %q",
 				curUser.Username, m.Name))
 	}
 	return &apiv1.GetModelResponse{Model: m}, err
@@ -158,7 +158,7 @@ func (a *apiServer) GetModels(
 		CanGetModels(ctx, *curUser, workspaceIdsGiven)
 	if err != nil {
 		return nil, authz.SubIfUnauthorized(err, errors.Errorf(
-			"current user doesn't have view permissions in related workspaces."))
+			"current user doesn't have view permissions in related workspaces"))
 	}
 	var workspaceIds []string
 	var workspaceIdsWithPermsAndFilter string
@@ -305,7 +305,7 @@ func (a *apiServer) PatchModel(
 	}
 
 	if currModel.Archived {
-		return nil, errors.Errorf("model %q is archived and cannot have attributes updated.",
+		return nil, errors.Errorf("model %q is archived and cannot have attributes updated",
 			currModel.Name)
 	}
 
@@ -567,7 +567,7 @@ func (a *apiServer) GetModelVersion(
 	if err = modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, currModel,
 		currModel.WorkspaceId); err != nil {
 		return nil, authz.SubIfUnauthorized(err,
-			errors.Errorf("current user %q doesn't have permissions to get model %q.",
+			errors.Errorf("current user %q doesn't have permissions to get model %q",
 				curUser.Username, currModel.Name))
 	}
 
@@ -592,7 +592,7 @@ func (a *apiServer) GetModelVersions(
 	if err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, parentModel,
 		parentModel.WorkspaceId); err != nil {
 		return nil, authz.SubIfUnauthorized(err,
-			errors.Errorf("current user %q doesn't have permissions to get model %q.",
+			errors.Errorf("current user %q doesn't have permissions to get model %q",
 				curUser.Username, parentModel.Name))
 	}
 
@@ -625,7 +625,7 @@ func (a *apiServer) PostModelVersion(
 	}
 
 	if modelResp.Archived {
-		return nil, errors.Errorf("model %q is archived and cannot register new versions.",
+		return nil, errors.Errorf("model %q is archived and cannot register new versions",
 			modelResp.Name)
 	}
 

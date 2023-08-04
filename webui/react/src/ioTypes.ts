@@ -153,9 +153,10 @@ const ioMetric = io.record(io.string, ioMetricValue);
 export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
 
 const ioMetricSummary = io.type({
-  count: optional(io.union([io.number, io.undefined])),
-  last: optional(io.union([io.number, io.string, io.boolean])),
+  count: optional(io.number),
+  last: optional(io.any),
   max: optional(float),
+  mean: optional(float),
   min: optional(float),
   sum: optional(float),
   type: io.union([

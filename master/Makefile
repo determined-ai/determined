@@ -112,7 +112,7 @@ build-race: gen
 check: check-gen
 	go mod tidy
 	git diff --quiet go.mod go.sum
-	golangci-lint --build-tags integration run -v --timeout 10m
+	golangci-lint --build-tags integration run --timeout 10m
 
 .PHONY: check-all
 check-all: check check-sql

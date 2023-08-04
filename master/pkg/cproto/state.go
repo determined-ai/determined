@@ -110,6 +110,6 @@ func ParseStateFromDocker(cont types.Container) (State, error) {
 	case "running":
 		return Running, nil
 	default:
-		return Unknown, errors.New(fmt.Sprintf("unknown container state: %s", cont.State))
+		return Unknown, fmt.Errorf("unknown container state: %s", cont.State)
 	}
 }

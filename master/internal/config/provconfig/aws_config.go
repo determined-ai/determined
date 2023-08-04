@@ -205,21 +205,20 @@ func validateMaxSpotPrice(spotMaxPriceInput string) error {
 	// Must have 1 or 0 decimalPoints. All other characters must be digits
 	numDecimalPoints := strings.Count(spotMaxPriceInput, ".")
 	if numDecimalPoints != 0 && numDecimalPoints != 1 {
-		return errors.New(
-			fmt.Sprintf("spot max price should have either 0 or 1 decimal points. "+
-				"Received %s, which has %d decimal points",
-				spotMaxPriceInput,
-				numDecimalPoints))
+		return fmt.Errorf("spot max price should have either 0 or 1 decimal points. "+
+			"Received %s, which has %d decimal points",
+			spotMaxPriceInput,
+			numDecimalPoints)
 	}
 
 	priceWithoutDecimalPoint := strings.ReplaceAll(spotMaxPriceInput, ".", "")
 	for _, char := range priceWithoutDecimalPoint {
 		if !unicode.IsDigit(char) {
-			return errors.New(
-				fmt.Sprintf("spot max price should only contain digits and, optionally, one decimal point. "+
+			return fmt.Errorf(
+				"spot max price should only contain digits and, optionally, one decimal point. "+
 					"Received %s, which has the non-digit character %s",
-					spotMaxPriceInput,
-					string(char)))
+				spotMaxPriceInput,
+				string(char))
 		}
 	}
 	return nil

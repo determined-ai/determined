@@ -410,27 +410,32 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			if err != nil {
 				return nil, err
 			}
-			col := `trials.summary_metrics->?->?->>?`
+			var col string
 			var queryArgs []interface{}
-			queryArgs = append(queryArgs, metricGroup)
 			var queryString string
-			switch queryColumnType {
-			case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
+			if metricQualifier == "mean" {
+				locator := bun.Safe("trials.summary_metrics->'?'", metricGroup)
+				col = fmt.Sprintf(`(?->?->>'sum')::float8 / (?->?->>'count')::int`)
+				queryArgs = append(queryArgs, locator, metricName, locator, metricName)
+			} else {
+				col = `trials.summary_metrics->?->?->>?`
+				queryArgs = append(queryArgs, metricGroup, metricName, metricQualifier)
+			}
+			if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
 				col = fmt.Sprintf(`(%v)::float8`, col)
 			}
 			switch *e.Operator {
 			case contains:
-				queryArgs = append(queryArgs, metricName, metricQualifier, fmt.Sprintf("%%%s%%", *e.Value))
+				queryArgs = append(queryArgs, fmt.Sprintf("%%%s%%", *e.Value))
 				queryString = fmt.Sprintf("%s LIKE ?", col)
 			case doesNotContain:
-				queryArgs = append(queryArgs, metricName, metricQualifier, fmt.Sprintf("%%%s%%", *e.Value))
+				queryArgs = append(queryArgs, fmt.Sprintf("%%%s%%", *e.Value))
 				queryString = fmt.Sprintf("%s NOT LIKE ?", col)
 			case empty, notEmpty:
-				queryArgs = append(queryArgs, metricName, metricQualifier, bun.Safe(oSQL))
+				queryArgs = append(queryArgs, bun.Safe(oSQL))
 				queryString = fmt.Sprintf("%s ?", col)
 			default:
-				queryArgs = append(queryArgs, metricName, metricQualifier,
-					bun.Safe(oSQL), *e.Value)
+				queryArgs = append(queryArgs, bun.Safe(oSQL), *e.Value)
 				queryString = fmt.Sprintf("%s ? ?", col)
 			}
 			if c != nil && *c == or {

@@ -448,12 +448,10 @@ func (a *agentState) patchSlotState(
 ) (model.SlotSummary, error) {
 	s, ok := a.slotStates[msg.id]
 	if !ok {
-		return model.SlotSummary{}, errors.New(
-			fmt.Sprintf(
-				"bad updateSlotDeviceView on device: %d (%s): not found",
-				msg.id,
-				a.string(),
-			),
+		return model.SlotSummary{}, fmt.Errorf(
+			"bad updateSlotDeviceView on device: %d (%s): not found",
+			msg.id,
+			a.string(),
 		)
 	}
 	return a.patchSlotStateInner(ctx, msg, s), nil
@@ -494,19 +492,6 @@ func (a *agentState) persist() error {
 		On("CONFLICT (agent_id) DO UPDATE").
 		Exec(context.TODO())
 	return err
-}
-
-func (a *agentState) restore() error {
-	snapshot := agentSnapshot{}
-	err := db.Bun().NewSelect().Model(&snapshot).
-		Where("agent_id = ?", a.Handler.Address().Local()).
-		Scan(context.TODO())
-	if err != nil {
-		return err
-	}
-	log.Debugf("restored agent state snapshot: %v", snapshot)
-
-	return nil
 }
 
 func (a *agentState) delete() error {

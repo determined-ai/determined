@@ -86,14 +86,13 @@ func ensureMigrationUpgrade(tx *pg.Tx) error {
 
 	// Unrecognized table state.
 	if len(rows) != 1 {
-		return errors.New(fmt.Sprintf("schema_migrations table has %d entries", len(rows)))
+		return fmt.Errorf("schema_migrations table has %d entries", len(rows))
 	}
 
 	goMigrateEntry := rows[0]
 
 	if goMigrateEntry.Dirty {
-		return errors.New(
-			fmt.Sprintf("schema_migrations entry dirty, version %s", goMigrateEntry.Version))
+		return fmt.Errorf("schema_migrations entry dirty, version %s", goMigrateEntry.Version)
 	}
 	goMigrateVersion, err := strconv.ParseInt(goMigrateEntry.Version, 10, 64)
 	if err != nil {
@@ -164,7 +163,7 @@ func (db *PgDB) Migrate(migrationURL string, actions []string) error {
 	re := regexp.MustCompile(`file://(.+)`)
 	match := re.FindStringSubmatch(migrationURL)
 	if len(match) != 2 {
-		return errors.New(fmt.Sprintf("failed to parse migrationsURL: %s", migrationURL))
+		return fmt.Errorf("failed to parse migrationsURL: %s", migrationURL)
 	}
 
 	collection := migrations.NewCollection()

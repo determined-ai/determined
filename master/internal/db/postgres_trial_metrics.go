@@ -79,7 +79,7 @@ func newMetricsBody(
 	batchMetrics []*structpb.Struct,
 	isValidation bool,
 ) *metricsBody {
-	var bMetrics any = nil
+	var bMetrics any
 	if len(batchMetrics) != 0 {
 		bMetrics = batchMetrics
 	}

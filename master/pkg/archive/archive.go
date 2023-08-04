@@ -26,7 +26,7 @@ type (
 	Archive []Item
 )
 
-var defaultModifiedTime UnixTime = func() UnixTime {
+var defaultModifiedTime = func() UnixTime {
 	t, err := time.Parse(time.RFC3339, pkg.DeterminedBirthday)
 	if err != nil {
 		panic(err)

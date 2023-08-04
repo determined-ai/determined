@@ -72,7 +72,7 @@ func ResolveNewPostgresDatabase() (*PgDB, func(), error) {
 	url, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, nil, errors.Wrapf(
-			err, "failed to parse DET_INTEGRATION_POSTGRES_URL (%q):", baseURL,
+			err, "failed to parse DET_INTEGRATION_POSTGRES_URL (%q)", baseURL,
 		)
 	}
 
@@ -157,9 +157,8 @@ func MustSetupTestPostgres(t *testing.T) *PgDB {
 	return pgDB
 }
 
-// RequireMockTask returns a mock task.
-func RequireMockTask(t *testing.T, db *PgDB, userID *model.UserID) *model.Task {
-	// Add a job.
+// RequireMockJob returns a stub job.
+func RequireMockJob(t *testing.T, db *PgDB, userID *model.UserID) model.JobID {
 	jID := model.NewJobID()
 	jIn := &model.Job{
 		JobID:   jID,
@@ -169,6 +168,12 @@ func RequireMockTask(t *testing.T, db *PgDB, userID *model.UserID) *model.Task {
 	}
 	err := db.AddJob(jIn)
 	require.NoError(t, err, "failed to add job")
+	return jID
+}
+
+// RequireMockTask returns a mock task.
+func RequireMockTask(t *testing.T, db *PgDB, userID *model.UserID) *model.Task {
+	jID := RequireMockJob(t, db, userID)
 
 	// Add a task.
 	tID := model.NewTaskID()
@@ -178,9 +183,8 @@ func RequireMockTask(t *testing.T, db *PgDB, userID *model.UserID) *model.Task {
 		TaskType:  model.TaskTypeTrial,
 		StartTime: time.Now().UTC().Truncate(time.Millisecond),
 	}
-	err = db.AddTask(tIn)
+	err := db.AddTask(tIn)
 	require.NoError(t, err, "failed to add task")
-
 	return tIn
 }
 

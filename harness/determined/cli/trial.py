@@ -187,7 +187,7 @@ def trial_logs(args: Namespace) -> None:
             rank_ids=args.rank_ids,
             sources=args.sources,
             stdtypes=args.stdtypes,
-            min_level=args.level,
+            min_level=None if args.level is None else bindings.v1LogLevel[args.level],
             timestamp_before=args.timestamp_before,
             timestamp_after=args.timestamp_after,
         )
@@ -333,9 +333,11 @@ logs_args_description: ArgsDescription = [
     Arg(
         "--level",
         dest="level",
-        help="show logs with this level or higher "
-        + "(TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL)",
-        choices=["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help=(
+            "show logs with this level or higher "
+            f"({', '.join([lvl.name for lvl in bindings.v1LogLevel])})"
+        ),
+        choices=[lvl.name for lvl in bindings.v1LogLevel],
     ),
     Arg(
         "--source",

@@ -27,7 +27,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
 
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/codes"
@@ -70,7 +69,7 @@ type experimentAllocation struct {
 }
 
 // SummaryMetricStatistics lists values possibly queryable within summary metrics.
-var SummaryMetricStatistics = []string{"count", "last", "max", "min", "sum"}
+var SummaryMetricStatistics = []string{"last", "max", "mean", "min"}
 
 const maxConcurrentDeletes = 10
 
@@ -305,7 +304,7 @@ func (a *apiServer) DeleteExperiment(
 
 	// report any error on the individual experiment
 	if len(results) == 0 {
-		return nil, errors.Errorf("DeleteExperiments returned neither pass nor fail on delete query.")
+		return nil, errors.Errorf("DeleteExperiments returned neither pass nor fail on delete query")
 	}
 	if results[0].Error != nil {
 		return nil, results[0].Error
@@ -399,18 +398,17 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			}
 
 			if len(checkpoints) > 0 {
-				addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
-				jobSubmissionTime := exp.StartTime
-				taskID := model.NewTaskID()
-				ckptGCTask := newCheckpointGCTask(
-					a.m.rm, a.m.db, taskID, exp.JobID, jobSubmissionTime, taskSpec,
-					exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
-					true, agentUserGroup, userModel, nil,
-				)
-				if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
-					logrus.WithError(gcErr).Errorf("failed to gc checkpoints for experiment")
-					return
-				}
+				go func() {
+					err := runCheckpointGCTask(
+						a.m.system, a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
+						taskSpec, exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
+						true, agentUserGroup, userModel, nil,
+					)
+					if err != nil {
+						logrus.WithError(err).Errorf("failed to gc checkpoints for experiment")
+						return
+					}
+				}()
 			}
 
 			// delete jobs per experiment
@@ -900,7 +898,7 @@ func (a *apiServer) PauseExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("PauseExperiments returned neither pass nor fail on query.")
+			return nil, errors.Errorf("PauseExperiments returned neither pass nor fail on query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -923,7 +921,7 @@ func (a *apiServer) CancelExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("CancelExperiments returned neither pass nor fail on query.")
+			return nil, errors.Errorf("CancelExperiments returned neither pass nor fail on query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -946,7 +944,7 @@ func (a *apiServer) KillExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("KillExperiments returned neither pass nor fail on query.")
+			return nil, errors.Errorf("KillExperiments returned neither pass nor fail on query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -969,7 +967,7 @@ func (a *apiServer) ArchiveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("ArchiveExperiments returned neither pass nor fail on query.")
+			return nil, errors.Errorf("ArchiveExperiments returned neither pass nor fail on query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -992,7 +990,7 @@ func (a *apiServer) UnarchiveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("UnarchiveExperiments returned neither pass nor fail on query.")
+			return nil, errors.Errorf("UnarchiveExperiments returned neither pass nor fail on query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -1034,7 +1032,7 @@ func (a *apiServer) PatchExperiment(
 		madeChanges = true
 		if len(strings.TrimSpace(req.Experiment.Name.Value)) == 0 {
 			return nil, status.Errorf(codes.InvalidArgument,
-				"`name` must not be an empty or whitespace string.")
+				"`name` must not be an empty or whitespace string")
 		}
 		exp.Name = req.Experiment.Name.Value
 	}
@@ -1202,13 +1200,16 @@ func (a *apiServer) PatchExperiment(
 			}
 
 			taskID := model.NewTaskID()
-			ckptGCTask := newCheckpointGCTask(
-				a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
-				taskSpec, modelExp.ID, modelExp.Config,
-				checkpoints, []string{fullDeleteGlob}, true, agentUserGroup, user, nil,
-			)
-			a.m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
-				ckptGCTask)
+			go func() {
+				err = runCheckpointGCTask(
+					a.m.system, a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
+					taskSpec, modelExp.ID, modelExp.Config, checkpoints, []string{fullDeleteGlob}, true,
+					agentUserGroup, user, nil,
+				)
+				if err != nil {
+					logrus.WithError(err).Error("failed to GC checkpoints in patch experiment")
+				}
+			}()
 		}
 	}
 
@@ -1939,7 +1940,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, err
 	}
 	if exp.Archived {
-		return nil, errors.Errorf("experiment (%v) is archived and cannot be moved.", exp.ID)
+		return nil, errors.Errorf("experiment (%v) is archived and cannot be moved", exp.ID)
 	}
 
 	// check that user can view source project
@@ -1948,7 +1949,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, err
 	}
 	if srcProject.Archived {
-		return nil, errors.Errorf("project (%v) is archived and cannot have experiments moved from it.",
+		return nil, errors.Errorf("project (%v) is archived and cannot have experiments moved from it",
 			srcProject.Id)
 	}
 
@@ -1958,7 +1959,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, err
 	}
 	if destProject.Archived {
-		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments.",
+		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments",
 			req.DestinationProjectId)
 	}
 	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, curUser, destProject); err != nil {
@@ -1970,7 +1971,7 @@ func (a *apiServer) MoveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("MoveExperiments returned neither pass nor fail on query.")
+			return nil, errors.Errorf("MoveExperiments returned neither pass nor fail on query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -1993,7 +1994,7 @@ func (a *apiServer) MoveExperiments(
 		return nil, err
 	}
 	if destProject.Archived {
-		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments.",
+		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments",
 			req.DestinationProjectId)
 	}
 	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *curUser, destProject); err != nil {
@@ -2097,9 +2098,14 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 			if err != nil {
 				return err
 			}
-			experimentQuery.OrderExpr(
-				fmt.Sprintf("trials.summary_metrics->'%s'->'%s'->>'%s' %s", metricGroup, metricName, metricQualifier,
-					sortDirection))
+			if metricQualifier == "mean" { //nolint: goconst
+				locator := bun.Safe("trials.summary_metrics->?", metricGroup)
+				experimentQuery.OrderExpr("(?0->?1->>'sum')::float8 / (?0->?1->>'count')::int ?2",
+					locator, metricName, bun.Safe(sortDirection))
+			} else {
+				experimentQuery.OrderExpr("trials.summary_metrics->?->?->>? ?",
+				metricGroup, metricName, metricQualifier, bun.Safe(sortDirection))
+			}
 		default:
 			if _, ok := orderColMap[paramDetail[0]]; !ok {
 				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
@@ -2211,7 +2217,15 @@ func (a *apiServer) SearchExperiments(
 		Column("trials.experiment_id").
 		Column("trials.runner_state").
 		Column("trials.checkpoint_count").
-		Column("trials.summary_metrics").
+		ColumnExpr(`trials.summary_metrics || jsonb_build_object(
+				'avg_metrics',
+					(SELECT jsonb_object_agg(m.key, CASE WHEN m.value -> 'type' = '"number"'::jsonb
+						THEN m.value - '{sum, count}'::text[] ||
+							jsonb_build_object(
+								'mean', (m.value ->> 'sum')::float8 / (m.value ->> 'count')::int)
+						ELSE m.value END)
+					FROM jsonb_each(summary_metrics -> 'avg_metrics') AS m(key, value))
+				) AS summary_metrics`).
 		Column("trials.task_id").
 		ColumnExpr("proto_time(trials.start_time) AS start_time").
 		ColumnExpr("proto_time(trials.end_time) AS end_time").

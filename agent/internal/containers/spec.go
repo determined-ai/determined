@@ -184,8 +184,8 @@ func (m *Manager) unmakeContainerDockerLabels(cont types.Container) (
 ) {
 	// TODO(ilia): Shim old versions whenever possible, when we'll have them.
 	if cont.Labels[docker.ContainerVersionLabel] != docker.ContainerVersionValue {
-		return nil, errors.New(fmt.Sprintf(
-			"can't parse container labels version %s", cont.Labels[docker.ContainerVersionLabel]))
+		return nil, fmt.Errorf(
+			"can't parse container labels version %s", cont.Labels[docker.ContainerVersionLabel])
 	}
 
 	devicesLabel := cont.Labels[docker.ContainerDevicesLabel]
