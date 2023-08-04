@@ -97,8 +97,7 @@ def _is_primitive_annotation(a: Any) -> bool:
             a = eval(a.strip())
         except NameError:
             pass
-    # TODO bool
-    if a in [str, int, float, type(None)]:
+    if a in [str, int, float, type(None), bool]:
         return True
 
     origin = get_origin(a)
@@ -176,6 +175,8 @@ def _parse_args_to_kwargs(args: Namespace, params: List[inspect.Parameter]) -> D
             value = float(value)
         elif param.annotation is int:
             value = int(value)
+        elif param.annotation is bool:
+            value = bool(value)
         if key in kwargs:
             raise ValueError(f"Argument {key} specified twice")
         kwargs[key] = value
