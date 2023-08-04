@@ -25,8 +25,8 @@ import argparse
 import collections
 import itertools
 import os
+import pathlib
 import sys
-from pathlib import Path
 from typing import Any, Dict
 
 import requests
@@ -217,7 +217,7 @@ def update_tag_for_image_type(subconf: Dict[str, str], new_tag: str) -> bool:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("path", type=Path, help="path/to/bumpenvs.yaml")
+    parser.add_argument("path", type=pathlib.Path, help="path/to/bumpenvs.yaml")
     parser.add_argument("commit", help="environments commit id")
     parser.add_argument(
         "--no-cloud-images",

@@ -14,10 +14,10 @@ import psutil
 import urllib3
 
 import determined as det
+import determined.util
 from determined import constants, gpu
 from determined.common import api, util
 from determined.common.api import bindings, certs
-from determined.util import force_create_symlink
 
 
 def trial_prep(sess: api.Session, info: det.ClusterInfo) -> None:
@@ -63,7 +63,7 @@ def trial_prep(sess: api.Session, info: det.ClusterInfo) -> None:
         model_def.extractall(path=".")
 
     # pre-0.18.3 code wrote tensorboard stuff under /tmp/tensorboard
-    force_create_symlink(f"/tmp/tensorboard-{info.allocation_id}-0", "/tmp/tensorboard")
+    det.util.force_create_symlink(f"/tmp/tensorboard-{info.allocation_id}-0", "/tmp/tensorboard")
 
 
 def do_rendezvous_rm_provided(

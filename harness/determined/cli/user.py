@@ -3,13 +3,11 @@ from argparse import Namespace
 from collections import namedtuple
 from typing import Any, List
 
-from determined.cli import errors, login_sdk_client, setup_session
+from determined.cli import errors, login_sdk_client, render, setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.experimental import client
-
-from . import render
 
 FullUser = namedtuple(
     "FullUser",

@@ -8,9 +8,9 @@ from botocore.exceptions import ClientError
 from termcolor import colored
 
 from determined.common import util, yaml
+from determined.deploy.aws import constants
 from determined.deploy.errors import PreflightFailure
 
-from . import constants
 from .deployment_types.base import DeterminedDeployment
 
 # There's no reliable way to map instance type to its quota category via an API.

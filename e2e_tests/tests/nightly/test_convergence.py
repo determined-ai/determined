@@ -161,8 +161,8 @@ def test_unets_tf_keras_accuracy(client: _client.Determined) -> None:
 
 @pytest.mark.nightly
 def test_gbt_titanic_estimator_accuracy(client: _client.Determined) -> None:
-    import tensorflow as tf
-    from packaging import version
+    import tensorflow as tf  # noqa: I2000
+    from packaging import version  # noqa: I2000
 
     if version.parse(tf.__version__) >= version.parse("2.11.0"):
         pytest.skip("# TODO [MLG-442], see comment in gbt_titanic_estimator model_def")

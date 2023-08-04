@@ -1,7 +1,7 @@
 import json as _json
 import os
+import types
 import webbrowser
-from types import TracebackType
 from typing import Any, Dict, Iterator, Optional, Tuple, Union
 from urllib import parse
 
@@ -353,7 +353,7 @@ class WebSocket:
         self,
         exc_type: Optional[type],
         exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_tb: Optional[types.TracebackType],
     ) -> None:
         if not self.socket.is_closed:
             self.socket.close()

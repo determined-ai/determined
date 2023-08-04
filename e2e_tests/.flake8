@@ -4,9 +4,57 @@ max-line-length = 100
 # We ignore F401 in __init__.py because it is expected for there to be
 # "unused imports" when defining a "regular" package. (This file is
 # implicitly executed when the package is imported, and the imports would
-# be used by the importer.) We ignore patch_saver_restore.py because it includes
-# a near-verbatim TensorFlow function with a small patch.
-per-file-ignores = __init__.py:F401 patch_saver_restore.py:E111,E114,
+# be used by the importer.)
+per-file-ignores =
+  __init__.py:F401,I2041
+  tests/api_utils.py:I2041
+  tests/cluster/abstract_cluster.py:I2041
+  tests/cluster/managed_cluster.py:I2041
+  tests/cluster/managed_cluster_k8s.py:I2041
+  tests/cluster/test_agent.py:I2041
+  tests/cluster/test_agent_disable.py:I2041
+  tests/cluster/test_agent_restart.py:I2041
+  tests/cluster/test_agent_user_group.py:I2041
+  tests/cluster/test_checkpoints.py:I2041
+  tests/cluster/test_groups.py:I2041
+  tests/cluster/test_job_queue.py:I2041
+  tests/cluster/test_master_restart.py:I2041
+  tests/cluster/test_model_registry.py:I2041
+  tests/cluster/test_oauth2_scim_client.py:I2041
+  tests/cluster/test_priority_scheduler.py:I2041
+  tests/cluster/test_proxy.py:I2041
+  tests/cluster/test_rbac.py:I2041
+  tests/cluster/test_resource_manager.py:I2041
+  tests/cluster/test_users.py:I2041
+  tests/cluster/test_webhooks.py:I2041
+  tests/cluster/test_workspace_org.py:I2041
+  tests/cluster/utils.py:I2041
+  tests/cluster_log_manager.py:I2041
+  tests/command/command.py:I2041
+  tests/command/test_notebook.py:I2041
+  tests/command/test_run.py:I2041
+  tests/command/test_shell.py:I2041
+  tests/command/test_tensorboard.py:I2041
+  tests/config.py:I2041
+  tests/conftest.py:I2041
+  tests/deploy/test_local.py:I2041
+  tests/experiment/experiment.py:I2041
+  tests/experiment/record_profiling.py:I2041
+  tests/experiment/test_allocation_csv.py:I2041
+  tests/experiment/test_api.py:I2041
+  tests/experiment/test_core.py:I2041
+  tests/experiment/test_noop.py:I2041
+  tests/experiment/test_port_registry.py:I2041
+  tests/experiment/test_profiling.py:I2041
+  tests/filetree.py:I2041
+  tests/fixtures/mnist_estimator/model_def.py:I2041
+  tests/fixtures/mnist_pytorch/layers.py:I2041
+  tests/fixtures/mnist_pytorch/model_def.py:I2041
+  tests/fixtures/mnist_pytorch/stop_requested_model_def.py:I2041
+  tests/fixtures/trial_error/model_def.py:I2041
+  tests/nightly/compute_stats.py:I2041
+  tests/template/test_template.py:I2041
+  tests/test_sdk.py:I2041
 
 # Explanations for ignored error codes:
 # - D1* (no missing docstrings): too much effort to start enforcing

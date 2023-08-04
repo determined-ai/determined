@@ -1,4 +1,5 @@
 import contextlib
+import datetime
 import enum
 import hashlib
 import json
@@ -6,7 +7,6 @@ import logging
 import os
 import pathlib
 import uuid
-from datetime import datetime, timezone
 from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Union
 
 from determined import core, tensorboard
@@ -698,7 +698,7 @@ class CheckpointContext:
             taskId=self._task_id,
             training=bindings.v1CheckpointTrainingMetadata(),
             uuid=storage_id,
-            reportTime=datetime.now(timezone.utc).isoformat(),
+            reportTime=datetime.datetime.now(datetime.timezone.utc).isoformat(),
             state=bindings.checkpointv1State.COMPLETED,
         )
         bindings.post_ReportCheckpoint(self._session, body=ckpt)
