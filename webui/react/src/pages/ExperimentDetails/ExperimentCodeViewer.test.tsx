@@ -1,7 +1,7 @@
-import { findAllByText, screen, waitFor } from '@testing-library/dom';
+import { findAllByText, screen } from '@testing-library/dom';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import { SettingsProvider } from 'hooks/useSettingsProvider';
@@ -113,10 +113,15 @@ const Container: React.FC<Props> = (props) => {
     authStore.setAuthChecked();
     userStore.updateCurrentUser(CURRENT_USER);
   }, []);
+  const [selectedFilePath, onSelectFile] = useState('single-in-records.yaml');
 
   return (
     <SettingsProvider>
-      <CodeViewer experiment={props.experiment} />
+      <CodeViewer
+        experiment={props.experiment}
+        selectedFilePath={selectedFilePath}
+        onSelectFile={onSelectFile}
+      />
     </SettingsProvider>
   );
 };
@@ -157,11 +162,9 @@ describe('CodeViewer', () => {
 
     await user.click(button);
 
-    await waitFor(() =>
-      expect(vi.mocked(paths.experimentFileFromTree)).toHaveBeenCalledWith(
-        123,
-        'single-in-records.yaml',
-      ),
+    expect(vi.mocked(paths.experimentFileFromTree)).toHaveBeenCalledWith(
+      123,
+      'single-in-records.yaml',
     );
   });
 });
