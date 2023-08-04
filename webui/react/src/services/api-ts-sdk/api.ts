@@ -4222,13 +4222,13 @@ export interface V1GetUnboundResourcePoolsResponse {
      * @type {Array<string>}
      * @memberof V1GetUnboundResourcePoolsResponse
      */
-    resourcePools?: Array<string>;
+    resourcePools: Array<string>;
     /**
      * Pagination information of the full dataset
      * @type {V1Pagination}
      * @memberof V1GetUnboundResourcePoolsResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 /**
  * Response to GetUserByUsernameRequest.

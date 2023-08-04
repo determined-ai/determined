@@ -5257,37 +5257,29 @@ class v1GetTrialWorkloadsResponse(Printable):
         return out
 
 class v1GetUnboundResourcePoolsResponse(Printable):
-    pagination: "typing.Optional[v1Pagination]" = None
-    resourcePools: "typing.Optional[typing.Sequence[str]]" = None
 
     def __init__(
         self,
         *,
-        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
-        resourcePools: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        pagination: "v1Pagination",
+        resourcePools: "typing.Sequence[str]",
     ):
-        if not isinstance(pagination, Unset):
-            self.pagination = pagination
-        if not isinstance(resourcePools, Unset):
-            self.resourcePools = resourcePools
+        self.pagination = pagination
+        self.resourcePools = resourcePools
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetUnboundResourcePoolsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "pagination": v1Pagination.from_json(obj["pagination"]),
+            "resourcePools": obj["resourcePools"],
         }
-        if "pagination" in obj:
-            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
-        if "resourcePools" in obj:
-            kwargs["resourcePools"] = obj["resourcePools"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "pagination": self.pagination.to_json(omit_unset),
+            "resourcePools": self.resourcePools,
         }
-        if not omit_unset or "pagination" in vars(self):
-            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
-        if not omit_unset or "resourcePools" in vars(self):
-            out["resourcePools"] = self.resourcePools
         return out
 
 class v1GetUserByUsernameResponse(Printable):

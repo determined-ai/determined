@@ -112,6 +112,9 @@ message GetUnboundResourcePoolsRequest {
 
 // Response to ListUnboundRPsRequest
 message GetUnboundResourcePoolsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "resource_pools", "pagination" ] }
+  };
   // The names of unbound resource pools.
   repeated string resource_pools = 1;
   // Pagination information of the full dataset
