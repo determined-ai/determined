@@ -175,17 +175,18 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   const latestMetrics = useMemo(
     () =>
       trialsDetails.reduce((metricValues, trial) => {
-        metricValues[trial.id] = Object.values(trial.summaryMetrics ?? {}).reduce(
-          (trialMetrics, curMetricType: Record<string, MetricSummary> | undefined) => {
-            for (const [metricName, metricSummary] of Object.entries(curMetricType ?? {})) {
-              trialMetrics[metricName] = metricSummary.last;
-            }
-            return trialMetrics;
-          },
-          {},
-        );
+        metricValues[trial.id] = Object.values<Record<string, MetricSummary> | null>(
+          trial.summaryMetrics ?? {},
+        ).reduce((trialMetrics, curMetricType) => {
+          for (const [metricName, metricSummary] of Object.entries<MetricSummary>(
+            curMetricType ?? {},
+          )) {
+            if (metricSummary.last != null) trialMetrics[metricName] = metricSummary.last;
+          }
+          return trialMetrics;
+        }, {} as Record<string, Primitive>);
         return metricValues;
-      }, {} as Record<number, Record<string, Primitive | undefined>>),
+      }, {} as Record<number, Record<string, Primitive>>),
     [trialsDetails],
   );
 

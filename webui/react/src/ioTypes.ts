@@ -170,10 +170,10 @@ const ioMetricSummary = io.type({
   ]),
 });
 
-export const ioSummaryMetrics = io.partial({
-  avg_metrics: io.record(io.string, ioMetricSummary),
-  validation_metrics: io.record(io.string, ioMetricSummary),
-});
+export const ioSummaryMetrics = io.record(
+  io.string,
+  io.union([io.record(io.string, ioMetricSummary), io.null]),
+);
 export type ioSummaryMetrics = io.TypeOf<typeof ioSummaryMetrics>;
 
 /* Experiments */
