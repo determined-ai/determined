@@ -104,7 +104,7 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       type: string,
     },
   },
-  storagePath: `f_project-details-${id}`,
+  storagePath: `experimentListingForProject${id}`,
 });
 
 export interface F_ExperimentListGlobalSettings {
@@ -124,7 +124,7 @@ export const experimentListGlobalSettingsDefaults = {
   rowHeight: RowHeight.MEDIUM,
 } as const;
 
-export const experimentListGlobalSettingsPath = 'f_project-details-global';
+export const experimentListGlobalSettingsPath = 'globalTableSettings';
 
 export const settingsConfigGlobal: SettingsConfig<F_ExperimentListGlobalSettings> = {
   settings: {
@@ -141,5 +141,5 @@ export const settingsConfigGlobal: SettingsConfig<F_ExperimentListGlobalSettings
       type: ioRowHeight,
     },
   },
-  storagePath: 'f_project-details-global',
+  storagePath: experimentListGlobalSettingsPath,
 };
