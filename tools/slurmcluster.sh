@@ -287,16 +287,16 @@ OPT_TRESSUPPORTED_horizon=false
 OPT_PROTOCOL_horizon=http
 
 # Configuration for casablanca-mgmt1 (uses suffix casablanca_mgmt1)
-OPT_name_casablanca_mgmt1=casablanca-mgmt1.us.cray.com
+OPT_name_casablanca_mgmt1=casablanca-mgmt1.hpc.amslabs.hpecorp.net
 OPT_LAUNCHERPORT_casablanca_mgmt1=8181
 OPT_LAUNCHERPROTOCOL_casablanca_mgmt1=http
 OPT_CHECKPOINTPATH_casablanca_mgmt1=/mnt/lustre/foundation_engineering/determined-cp
-OPT_MASTERHOST_casablanca_mgmt1=casablanca-mgmt1.us.cray.com
+OPT_MASTERHOST_casablanca_mgmt1=casablanca-mgmt1.hpc.amslabs.hpecorp.net
 OPT_MASTERPORT_casablanca_mgmt1=$USERPORT
 OPT_TRESSUPPORTED_casablanca_mgmt1=true
 
 # Configuration for casablanca-login (uses suffix casablanca_login)
-OPT_name_casablanca_login=casablanca-login.us.cray.com
+OPT_name_casablanca_login=casablanca-login.hpc.amslabs.hpecorp.net
 OPT_LAUNCHERPORT_casablanca_login=8443
 OPT_LAUNCHERPROTOCOL_casablanca_login=https
 OPT_CHECKPOINTPATH_casablanca_login=/mnt/lustre/foundation_engineering/determined-cp
@@ -329,7 +329,7 @@ EOF
 )
 
 # Configuration for casablanca-login2 (uses suffix casablanca_login2)
-OPT_name_casablanca_login2=casablanca-login2.us.cray.com
+OPT_name_casablanca_login2=casablanca-login2.hpc.amslabs.hpecorp.net
 OPT_LAUNCHERPORT_casablanca_login2=8443
 OPT_LAUNCHERPROTOCOL_casablanca_login2=http
 OPT_CHECKPOINTPATH_casablanca_login2=/mnt/lustre/foundation_engineering/determined-cp
