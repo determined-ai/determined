@@ -92,7 +92,7 @@ const UserSettingsModalComponent: React.FC<Props> = ({ onSave }: Props) => {
       <CodeEditor
         files={[
           {
-            content: editedSettingsString,
+            get: () => Promise.resolve(Loadable.getOrElse('', editedSettingsString)),
             key: 'settings.json',
             title: 'settings.json',
           },

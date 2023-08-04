@@ -72,8 +72,8 @@ const ExperimentCodeViewer: React.FC<Props> = ({
   const fileOpts = [
     submittedConfig
       ? {
-          content: Loaded(submittedConfig),
           download: `${experiment.id}_submitted_configuration.yaml`,
+          get: () => Promise.resolve(submittedConfig),
           icon: configIcon,
           isLeaf: true,
           key: 'Submitted Configuration',
@@ -82,8 +82,8 @@ const ExperimentCodeViewer: React.FC<Props> = ({
       : null,
     runtimeConfig
       ? {
-          content: Loaded(runtimeConfig),
           download: `${experiment.id}_runtime_configuration.yaml`,
+          get: () => Promise.resolve(runtimeConfig),
           icon: configIcon,
           isLeaf: true,
           key: 'Runtime Configuration',

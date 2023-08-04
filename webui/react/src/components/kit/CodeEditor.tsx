@@ -76,7 +76,6 @@ const sortTree = (a: TreeNode, b: TreeNode) => {
 };
 
 const PageError = {
-  Decode: 'Could not decode file.',
   Empty: 'File has no content.',
   Fetch: 'Unable to fetch file.',
   None: '',
@@ -133,10 +132,29 @@ const CodeEditor: React.FC<Props> = ({
 }) => {
   const [pageError, setPageError] = useState<PageError>(PageError.None);
   const sortedFiles = useMemo(() => [...files].sort(sortTree), [files]);
-  const [activeFile, setActiveFile] = useState<TreeNode | null>(sortedFiles[0] || null);
   const { ui } = useUI();
 
   const viewMode = useMemo(() => (files.length === 1 ? 'editor' : 'split'), [files.length]);
+  const activeFile = useMemo(() => {
+    if (viewMode === 'editor') {
+      return files[0];
+    }
+    if (!selectedFilePath) {
+      return null;
+    }
+    const splitFilePath = selectedFilePath.split('/');
+    let matchTopFileOrFolder = null;
+    let fileDir = files;
+    for (let dir = 0; dir < splitFilePath.length; dir++) {
+      matchTopFileOrFolder = fileDir.find(
+        (f) => f.key === splitFilePath[dir] || f.key === selectedFilePath,
+      );
+      if (matchTopFileOrFolder?.children) {
+        fileDir = matchTopFileOrFolder.children;
+      }
+    }
+    return matchTopFileOrFolder;
+  }, [files, selectedFilePath, viewMode]);
   const editorMode = useMemo(() => {
     const isIpybnFile = /\.ipynb$/i.test(String(activeFile?.key || ''));
     return isIpybnFile ? 'ipynb' : 'codemirror';
@@ -150,76 +168,35 @@ const CodeEditor: React.FC<Props> = ({
     return 'yaml';
   }, [activeFile?.key]);
 
-  const fetchFile = useCallback(
-    async (fileInfo: TreeNode) => {
-      if (!fileInfo) return;
-      setPageError(PageError.None);
-
-      if (isConfig(fileInfo.key) || fileInfo.content !== NotLoaded) {
-        setActiveFile(fileInfo);
-        return;
-      }
-
-      let file,
-        content: Loadable<string> = NotLoaded;
-      try {
-        file = await fileInfo.get?.(String(fileInfo.key));
-      } catch (error) {
-        onError(error, {
-          publicMessage: 'Failed to load selected file.',
-          publicSubject: 'Unable to fetch the selected file.',
-          silent: false,
-          type: ErrorType.Api,
-        });
-        setPageError(PageError.Fetch);
-      }
-      if (!file) {
-        setActiveFile({
-          ...fileInfo,
-          content: NotLoaded,
-        });
-        return;
-      }
-
-      try {
-        const text = decodeURIComponent(escape(window.atob(file)));
-
-        if (!text) setPageError(PageError.Empty); // Emmits a "Empty file" error message
-        content = Loaded(text);
-        setActiveFile({
-          ...fileInfo,
-          content,
-        });
-      } catch {
-        setPageError(PageError.Decode);
-      }
-    },
-    [onError],
-  );
+  const [content, setContent] = useState<Loadable<string>>(NotLoaded);
 
   useEffect(() => {
-    if (selectedFilePath && activeFile?.key !== selectedFilePath) {
-      const splitFilePath = selectedFilePath.split('/');
-      let matchTopFileOrFolder = null;
-      let fileDir = files;
-      for (let dir = 0; dir < splitFilePath.length; dir++) {
-        matchTopFileOrFolder = fileDir.find(
-          (f) => f.key === splitFilePath[dir] || f.key === selectedFilePath,
-        );
-        if (matchTopFileOrFolder?.children) {
-          fileDir = matchTopFileOrFolder.children;
+    if (activeFile) {
+      (async () => {
+        if (!activeFile) return;
+        setPageError(PageError.None);
+        setContent(NotLoaded);
+
+        let file;
+        try {
+          file = await activeFile.get?.(String(activeFile.key));
+        } catch (error) {
+          onError(error, {
+            publicMessage: 'Failed to load selected file.',
+            publicSubject: 'Unable to fetch the selected file.',
+            silent: false,
+            type: ErrorType.Api,
+          });
+          setPageError(PageError.Fetch);
         }
-      }
-      if (matchTopFileOrFolder) {
-        fetchFile(matchTopFileOrFolder);
-      }
+        if (file === undefined) {
+          return;
+        }
+        if (!file) setPageError(PageError.Empty); // Emits a "Empty file" error message
+        setContent(Loaded(file));
+      })();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (viewMode === 'editor') setActiveFile(files[0]); // if there's only one file, set it as the active file.
-  }, [viewMode, files]);
+  }, [activeFile, onError]);
 
   const handleSelectFile = useCallback(
     (_: React.Key[], info: { node: TreeNode }) => {
@@ -243,10 +220,9 @@ const CodeEditor: React.FC<Props> = ({
 
       if (targetNode.isLeaf) {
         onSelectFile?.(String(targetNode.key));
-        fetchFile(targetNode);
       }
     },
-    [activeFile?.key, fetchFile, files, onSelectFile],
+    [activeFile?.key, files, onSelectFile],
   );
 
   const handleDownloadClick = useCallback(() => {
@@ -257,12 +233,12 @@ const CodeEditor: React.FC<Props> = ({
     link.download = isConfig(activeFile?.key)
       ? activeFile.download || ''
       : String(activeFile.title);
-    link.href = URL.createObjectURL(new Blob([Loadable.getOrElse('', activeFile?.content)]));
+    link.href = URL.createObjectURL(new Blob([Loadable.getOrElse('', content)]));
     link.dispatchEvent(new MouseEvent('click'));
     setTimeout(() => {
       URL.revokeObjectURL(link.href);
     }, 2000);
-  }, [activeFile]);
+  }, [activeFile, content]);
 
   const classes = [
     css.fileTree,
@@ -296,12 +272,12 @@ const CodeEditor: React.FC<Props> = ({
           height={height}
           readOnly={readonly}
           theme={ui.darkLight === DarkLight.Dark ? 'dark' : 'light'}
-          value={Loadable.getOrElse('', activeFile.content)}
+          value={Loadable.getOrElse('', content)}
           onChange={onChange}
         />
       ) : (
         <Suspense fallback={<Spinner spinning tip="Loading ipynb viewer..." />}>
-          <JupyterRenderer file={Loadable.getOrElse('', activeFile.content)} onError={onError} />
+          <JupyterRenderer file={Loadable.getOrElse('', content)} onError={onError} />
         </Suspense>
       );
   }
@@ -340,9 +316,7 @@ const CodeEditor: React.FC<Props> = ({
                 <Tooltip content="Download File">
                   <DownloadOutlined
                     className={
-                      readonly && activeFile?.content !== NotLoaded
-                        ? css.noBorderButton
-                        : css.hideElement
+                      readonly && content !== NotLoaded ? css.noBorderButton : css.hideElement
                     }
                     onClick={handleDownloadClick}
                   />
@@ -357,7 +331,9 @@ const CodeEditor: React.FC<Props> = ({
         bodyScroll={height === '100%'}
         className={sectionClasses.join(' ')}
         maxHeight>
-        <Spinner spinning={activeFile?.content === NotLoaded}>{fileContent}</Spinner>
+        <Spinner spinning={!pageError && !!activeFile && content === NotLoaded}>
+          {fileContent}
+        </Spinner>
       </Section>
     </div>
   );

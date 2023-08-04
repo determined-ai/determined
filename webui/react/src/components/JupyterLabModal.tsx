@@ -317,7 +317,9 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
             },
           ]}>
           <CodeEditor
-            files={[{ content: config, key: 'config.yaml' }]}
+            files={[
+              { get: () => Promise.resolve(Loadable.getOrElse('', config)), key: 'config.yaml' },
+            ]}
             height="40vh"
             onError={handleError}
           />

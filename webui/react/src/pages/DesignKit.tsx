@@ -891,7 +891,7 @@ const CodeEditorSection: React.FC = () => {
         <CodeEditor
           files={[
             {
-              content: Loaded('import math\nprint(math.pi)\n\n'),
+              get: () => Promise.resolve('import math\nprint(math.pi)\n\n'),
               key: 'test.py',
               title: 'test.py',
             },
@@ -902,9 +902,10 @@ const CodeEditorSection: React.FC = () => {
         <CodeEditor
           files={[
             {
-              content: Loaded(
-                'name: Unicode Test 日本😃\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2',
-              ),
+              get: () =>
+                Promise.resolve(
+                  'name: Unicode Test 日本😃\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2',
+                ),
               key: 'test1.yaml',
               title: 'test1.yaml',
             },
@@ -916,20 +917,27 @@ const CodeEditorSection: React.FC = () => {
         <CodeEditor
           files={[
             {
-              content: Loaded(
-                'hyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 512\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5',
-              ),
+              get: () =>
+                Promise.resolve(
+                  'hyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 512\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5',
+                ),
               isLeaf: true,
               key: 'one.yaml',
               title: 'one.yaml',
             },
             {
-              content: Loaded('searcher:\n  name: single\n  metric: validation_loss\n'),
+              get: () => Promise.resolve('searcher:\n  name: single\n  metric: validation_loss\n'),
               isLeaf: true,
               key: 'two.yaml',
               title: 'two.yaml',
             },
-            { content: NotLoaded, isLeaf: true, key: 'unloaded.yaml', title: 'unloaded.yaml' },
+            {
+              // eslint-disable-next-line @typescript-eslint/no-empty-function
+              get: () => new Promise(() => {}),
+              isLeaf: true,
+              key: 'unloaded.yaml',
+              title: 'unloaded.yaml',
+            },
           ]}
           readonly={true}
           onError={handleError}

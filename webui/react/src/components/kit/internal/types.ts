@@ -3,7 +3,6 @@ import * as t from 'io-ts';
 
 import { isObject, isString } from 'components/kit/internal/functions';
 import rootLogger, { LoggerInterface } from 'components/kit/internal/Logger';
-import { Loadable } from 'utils/loadable';
 
 export type Primitive = boolean | number | string;
 export type RecordKey = string | number | symbol;
@@ -199,7 +198,6 @@ export interface TreeNode extends DataNode {
    * icon: custom Icon component
    */
   children?: TreeNode[];
-  content: Loadable<string>;
   download?: string;
   get?: (path: string) => Promise<string>;
   isConfig?: boolean;
