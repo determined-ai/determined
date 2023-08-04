@@ -31,6 +31,10 @@ export const optional = (x: io.Mixed): io.Mixed | io.NullC | io.UndefinedC => {
   return io.union([x, io.null, io.undefined]);
 };
 
+export const nullable = (x: io.Mixed): io.Mixed | io.NullC => {
+  return io.union([x, io.null]);
+};
+
 export class ValueofType<D extends { [key: string]: unknown }> extends io.Type<ValueOf<D>> {
   readonly _tag: 'ValueofType' = 'ValueofType' as const;
   constructor(
@@ -172,7 +176,7 @@ const ioMetricSummary = io.type({
 
 export const ioSummaryMetrics = io.record(
   io.string,
-  io.union([io.record(io.string, ioMetricSummary), io.null]),
+  nullable(io.record(io.string, ioMetricSummary)),
 );
 export type ioSummaryMetrics = io.TypeOf<typeof ioSummaryMetrics>;
 
