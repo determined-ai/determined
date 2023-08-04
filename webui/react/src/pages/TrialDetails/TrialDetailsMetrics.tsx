@@ -62,7 +62,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   const {
     metrics,
-    isLoaded: metricsLoaded,
+    isLoaded: isMetricsLoaded,
     data: allData,
     scale,
     setScale,
@@ -112,10 +112,11 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
   }, [metrics]);
 
   const chartsProps = useMemo(() => {
-    const out: ChartsProps = [];
-    if (!metricsLoaded) {
+    if (!isMetricsLoaded) {
       return NotLoaded;
     }
+
+    const out: ChartsProps = [];
 
     pairedMetrics?.forEach(([trainingMetric, valMetric]) => {
       // this code doesnt depend on their being training or validation metrics
@@ -177,7 +178,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
       });
     });
     return Loaded(out);
-  }, [pairedMetrics, metricsLoaded, data, xAxis, checkpointsDict, openCheckpoint]);
+  }, [pairedMetrics, isMetricsLoaded, data, xAxis, checkpointsDict, openCheckpoint]);
 
   return (
     <>
