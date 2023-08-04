@@ -461,11 +461,13 @@ func (a *apiServer) GetProjectNumericMetricsRange(
 		})
 	}
 
-	ranges = append(ranges, &projectv1.MetricsRange{
-		MetricsName: "searcherMetricsVal",
-		Min:         mathx.Min(searcherMetricsValue...),
-		Max:         mathx.Max(searcherMetricsValue...),
-	})
+	if len(searcherMetricsValue) > 0 {
+		ranges = append(ranges, &projectv1.MetricsRange{
+			MetricsName: "searcherMetricsVal",
+			Min:         mathx.Min(searcherMetricsValue...),
+			Max:         mathx.Max(searcherMetricsValue...),
+		})
+	}
 
 	return &apiv1.GetProjectNumericMetricsRangeResponse{Ranges: ranges}, nil
 }
