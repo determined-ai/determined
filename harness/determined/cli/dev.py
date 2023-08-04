@@ -87,7 +87,6 @@ def _bindings_sig_str(name: str, params: List[inspect.Parameter]) -> str:
 
 
 def _is_primitive_annotation(a: Any) -> bool:
-    # we don't need to support python < 3.8 try the import. if it fails raise
     try:
         from typing import get_args, get_origin  # type: ignore
     except ImportError:
@@ -104,7 +103,7 @@ def _is_primitive_annotation(a: Any) -> bool:
     args = get_args(a)
 
     if origin is typing.Union:
-        # Handle Optional[X] as a special case.
+        # handle Optional[X] as a special case.
         if len(args) == 2 and type(None) in args:
             return _is_primitive_annotation(args[0])
     elif origin in [list, tuple, set, frozenset, abc_Sequence]:
@@ -208,7 +207,6 @@ def call_bindings(args: Namespace) -> None:
     try:
         fn = getattr(bindings, fn_name)
     except AttributeError:
-        # try to fuzzy match case insensitive as well
         matches = [n for n in fns.keys() if re.match(f".*{fn_name}.*", n, re.IGNORECASE)]
         if not matches:
             raise errors.CliError(f"no such binding: {fn_name}")
@@ -228,7 +226,7 @@ def call_bindings(args: Namespace) -> None:
     try:
         kwargs = _parse_args_to_kwargs(args, params)
         rv = fn(sess, **kwargs)
-    except Exception as e:  # we could check TypeError but let's provide more hint
+    except Exception as e:  # we could explicitly check TypeError but let's provide more hints
         raise errors.CliError(
             "Usage: "
             + _bindings_sig_str(
