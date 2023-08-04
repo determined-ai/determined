@@ -416,28 +416,34 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 				"."+metricQualifier)
 			if !slices.Contains(SummaryMetricStatistics, metricQualifier) {
 				return nil, status.Errorf(codes.InvalidArgument,
-					"sort training metrics by statistic: count, last, max, min, or sum")
+					"sort training metrics by statistic: last, max, min, or mean")
 			}
-			col := `trials.summary_metrics->'avg_metrics'->?->>?`
+			var col string
 			var queryArgs []interface{}
 			var queryString string
-			switch queryColumnType {
-			case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
+			if metricQualifier == "mean" {
+				locator := bun.Safe("trials.summary_metrics->'avg_metrics'")
+				col = fmt.Sprintf(`(?->?->>'sum')::float8 / (?->?->>'count')::int`)
+				queryArgs = append(queryArgs, locator, metricName, locator, metricName)
+			} else {
+				col = `trials.summary_metrics->'avg_metrics'->?->>?`
+				queryArgs = append(queryArgs, metricName, metricQualifier)
+			}
+			if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
 				col = fmt.Sprintf(`(%v)::float8`, col)
 			}
 			switch *e.Operator {
 			case contains:
-				queryArgs = append(queryArgs, metricName, metricQualifier, fmt.Sprintf("%%%s%%", *e.Value))
+				queryArgs = append(queryArgs, fmt.Sprintf("%%%s%%", *e.Value))
 				queryString = fmt.Sprintf("%s LIKE ?", col)
 			case doesNotContain:
-				queryArgs = append(queryArgs, metricName, metricQualifier, fmt.Sprintf("%%%s%%", *e.Value))
+				queryArgs = append(queryArgs, fmt.Sprintf("%%%s%%", *e.Value))
 				queryString = fmt.Sprintf("%s NOT LIKE ?", col)
 			case empty, notEmpty:
-				queryArgs = append(queryArgs, metricName, metricQualifier, bun.Safe(oSQL))
+				queryArgs = append(queryArgs, bun.Safe(oSQL))
 				queryString = fmt.Sprintf("%s ?", col)
 			default:
-				queryArgs = append(queryArgs, metricName, metricQualifier,
-					bun.Safe(oSQL), *e.Value)
+				queryArgs = append(queryArgs, bun.Safe(oSQL), *e.Value)
 				queryString = fmt.Sprintf("%s ? ?", col)
 			}
 			if c != nil && *c == or {

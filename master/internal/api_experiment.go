@@ -69,7 +69,7 @@ type experimentAllocation struct {
 }
 
 // SummaryMetricStatistics lists values possibly queryable within summary metrics.
-var SummaryMetricStatistics = []string{"count", "last", "max", "min", "sum"}
+var SummaryMetricStatistics = []string{"last", "max", "mean", "min"}
 
 const maxConcurrentDeletes = 10
 
@@ -2101,11 +2101,16 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 				"."+metricQualifier)
 			if !slices.Contains(SummaryMetricStatistics, metricQualifier) {
 				return status.Errorf(codes.InvalidArgument,
-					"sort training metrics by statistic: count, last, max, min, or sum")
+					"sort training metrics by statistic: last, max, min, or mean")
 			}
-			experimentQuery.OrderExpr(
-				fmt.Sprintf("trials.summary_metrics->'avg_metrics'->'%s'->>'%s' %s", metricName,
-					metricQualifier, sortDirection))
+			if metricQualifier == "mean" { //nolint: goconst
+				locator := bun.Safe("trials.summary_metrics->'avg_metrics'")
+				experimentQuery.OrderExpr("(?0->?1->>'sum')::float8 / (?0->?1->>'count')::int ?2",
+					locator, metricName, bun.Safe(sortDirection))
+			} else {
+				experimentQuery.OrderExpr("trials.summary_metrics->'avg_metrics'->?->>? ?",
+					metricName, metricQualifier, bun.Safe(sortDirection))
+			}
 		default:
 			if _, ok := orderColMap[paramDetail[0]]; !ok {
 				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
@@ -2217,7 +2222,15 @@ func (a *apiServer) SearchExperiments(
 		Column("trials.experiment_id").
 		Column("trials.runner_state").
 		Column("trials.checkpoint_count").
-		Column("trials.summary_metrics").
+		ColumnExpr(`trials.summary_metrics || jsonb_build_object(
+				'avg_metrics',
+					(SELECT jsonb_object_agg(m.key, CASE WHEN m.value -> 'type' = '"number"'::jsonb
+						THEN m.value - '{sum, count}'::text[] ||
+							jsonb_build_object(
+								'mean', (m.value ->> 'sum')::float8 / (m.value ->> 'count')::int)
+						ELSE m.value END)
+					FROM jsonb_each(summary_metrics -> 'avg_metrics') AS m(key, value))
+				) AS summary_metrics`).
 		Column("trials.task_id").
 		ColumnExpr("proto_time(trials.start_time) AS start_time").
 		ColumnExpr("proto_time(trials.end_time) AS end_time").
