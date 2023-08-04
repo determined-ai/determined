@@ -494,7 +494,7 @@ export const defaultNumberColumn = (
     renderer: (record: ExperimentWithTrial) => {
       const data = isString(dataPath) ? getPath<number>(record, dataPath) : undefined;
       let theme: Partial<GTheme> = {};
-      if (heatmapProps && data) {
+      if (heatmapProps && data !== undefined) {
         const { min, max } = heatmapProps;
         theme = {
           accentLight: getHeatmapColor(min, max, data),
