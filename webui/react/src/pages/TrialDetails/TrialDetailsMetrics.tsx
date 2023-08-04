@@ -95,8 +95,8 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
   }, [data, checkpoint, xAxis]);
 
   const pairedMetrics: ([Metric] | [Metric, Metric])[] | undefined = useMemo(() => {
-    const val = metrics.filter((m) => m.type === MetricType.Validation).sort(metricSorter);
-    const train = metrics.filter((m) => m.type === MetricType.Training).sort(metricSorter);
+    const val = metrics.filter((m) => m.group === MetricType.Validation).sort(metricSorter);
+    const train = metrics.filter((m) => m.group === MetricType.Training).sort(metricSorter);
     let out: ([Metric] | [Metric, Metric])[] = [];
     while (val.length) {
       const v = val.shift();

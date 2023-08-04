@@ -74,9 +74,9 @@ const summarizedMetricToSeries = (
 
     const series: Serie = {
       color:
-        metric.type === MetricType.Validation ? VALIDATION_SERIES_COLOR : TRAINING_SERIES_COLOR,
+        metric.group === MetricType.Validation ? VALIDATION_SERIES_COLOR : TRAINING_SERIES_COLOR,
       data,
-      metricType: metric.type,
+      metricType: metric.group,
       name: metric.name,
     };
     trialData[metricToKey(metric)] = series;

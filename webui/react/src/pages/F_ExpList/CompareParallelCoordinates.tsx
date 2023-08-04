@@ -95,7 +95,8 @@ const CompareParallelCoordinates: React.FC<Props> = ({
 
   useEffect(() => {
     const activeMetricFound = metrics.find(
-      (metric) => metric.name === settings?.metric?.name && metric.type === settings?.metric?.type,
+      (metric) =>
+        metric.name === settings?.metric?.name && metric.group === settings?.metric?.group,
     );
     updateSettings({ metric: activeMetricFound ?? metrics.first() });
   }, [selectedExperiments, metrics, settings.metric, updateSettings]);
@@ -218,7 +219,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
 
     trials?.forEach((trial) => {
       const expId = trial.experimentId;
-      const key = `${selectedMetric.type}|${selectedMetric.name}`;
+      const key = `${selectedMetric.group}|${selectedMetric.name}`;
 
       // Choose the final metric value for each trial
       const metricValue = data?.[trial.id]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];

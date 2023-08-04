@@ -80,8 +80,8 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   const location = useLocation();
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
   const searcherMetric = useRef<Metric>({
+    group: MetricType.Validation,
     name: experiment.config.searcher.metric,
-    type: MetricType.Validation,
   });
 
   const { viz: type } = useParams<{ viz: ExperimentVisualizationType }>();
@@ -152,7 +152,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     if (!hasSearcherMetric) {
       const activeMetricFound = metrics.find(
         (metric) =>
-          metric.type === searcherMetric.current.type &&
+          metric.group === searcherMetric.current.group &&
           metric.name === searcherMetric.current.name,
       );
       if (activeMetricFound) {
@@ -302,7 +302,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
     const canceler = new AbortController();
     const metricTypeParam =
-      filters.metric.type === MetricType.Training
+      filters.metric.group === MetricType.Training
         ? 'METRIC_TYPE_TRAINING'
         : 'METRIC_TYPE_VALIDATION';
     const batchesMap: Record<number, number> = {};

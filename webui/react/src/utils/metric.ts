@@ -2,14 +2,13 @@ import { OldMetric, RecordKey } from 'types';
 import { Metric, MetricType, WorkloadGroup } from 'types';
 import { alphaNumericSorter } from 'utils/sort';
 
-export const METRIC_KEY_DELIMITER = '||||';
-export const METRIC_API_DELIMITER = '/';
+export const METRIC_KEY_DELIMITER = '.';
 
 /**
  * Metrics are sorted by their type first (alphabetically) followed by their name (alphabetically).
  */
 export const metricSorter = (a: Metric, b: Metric): number => {
-  if (a.type !== b.type) return alphaNumericSorter(a.type, b.type);
+  if (a.group !== b.group) return alphaNumericSorter(a.group, b.group);
   return alphaNumericSorter(a.name, b.name);
 };
 
@@ -24,7 +23,7 @@ export const extractMetrics = (workloads: WorkloadGroup[]): Metric[] => {
     }, new Set<string>());
 
   const trainingMetrics: Metric[] = Array.from(trainingNames).map((name) => {
-    return { name, type: MetricType.Training };
+    return { group: MetricType.Training, name };
   });
 
   const validationNames = workloads
@@ -37,7 +36,7 @@ export const extractMetrics = (workloads: WorkloadGroup[]): Metric[] => {
     }, new Set<string>()) as Set<string>;
 
   const validationMetrics: Metric[] = Array.from(validationNames).map((name) => {
-    return { name, type: MetricType.Validation };
+    return { group: MetricType.Validation, name };
   });
 
   return [...validationMetrics, ...trainingMetrics].sort(metricSorter);
@@ -70,33 +69,30 @@ export const getMetricValue = (
   return workload?.metrics[metric];
 };
 
-/**
- * When a metric is of custom type, the group is part of the metric name.
- * This is a utility to parse out the group type for displaying when we show
- * metric type separately.
- */
-export const getMetricName = (metricName: string): string => {
-  const position = metricName.indexOf(METRIC_API_DELIMITER);
-  return position !== -1
-    ? metricName.substring(position + METRIC_API_DELIMITER.length)
-    : metricName;
-};
-
 export const isMetric = (metric?: Metric): metric is Metric => metric !== undefined;
 export const metricToStr = (metric: Metric, truncateLimit = 30): string => {
-  const type = metric.type === MetricType.Training ? 'T' : 'V';
+  const group = metric.group.substring(0, 1).toUpperCase();
   const name =
     metric.name.length > truncateLimit
       ? metric.name.substring(0, truncateLimit) + '...'
       : metric.name;
-  return `[${type}] ${name}`;
+  return `[${group}] ${name}`;
+};
+
+export const metricToOldMetric = (metric: Metric): OldMetric => {
+  const type = metric.group === MetricType.Training ? MetricType.Training : MetricType.Validation;
+  return { name: metric.name, type };
+};
+
+export const oldMetricToMetric = (oldMetric: OldMetric): Metric => {
+  return { group: oldMetric.type, name: oldMetric.name };
 };
 
 export const metricToKey = (metric: Metric): string => {
   try {
     return JSON.stringify(metric);
   } catch (e) {
-    return `${metric.type}${METRIC_KEY_DELIMITER}${metric.name}`;
+    return [metric.group, metric.name].join(METRIC_KEY_DELIMITER);
   }
 };
 
@@ -106,8 +102,8 @@ export const metricKeyToMetric = (value: string): Metric => {
   } catch (e) {
     const parts = value.split(METRIC_KEY_DELIMITER);
     return parts.length < 2
-      ? { name: value, type: parts[0] ?? 'NO_TYPE' }
-      : { name: parts.slice(1).join(METRIC_KEY_DELIMITER), type: parts[0] };
+      ? { group: parts[0] ?? 'NO_GROUP', name: value }
+      : { group: parts[0], name: parts.slice(1).join(METRIC_KEY_DELIMITER) };
   }
 };
 

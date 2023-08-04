@@ -1,5 +1,6 @@
 import { MetricType, WorkloadGroup } from 'types';
 
+import { metricToOldMetric } from './metric';
 import * as utils from './metric';
 
 const workloads: WorkloadGroup[] = [
@@ -23,22 +24,26 @@ const workloads: WorkloadGroup[] = [
 
 const metrics = [
   {
-    metric: { name: 'accuracy', type: MetricType.Training },
+    metric: { group: MetricType.Training, name: 'accuracy' },
+    oldMetric: { name: 'accuracy', type: MetricType.Training },
     str: '[T] accuracy',
     value: `${MetricType.Training}|accuracy`,
   },
   {
-    metric: { name: 'loss', type: MetricType.Training },
+    metric: { group: MetricType.Training, name: 'loss' },
+    oldMetric: { name: 'loss', type: MetricType.Training },
     str: '[T] loss',
     value: `${MetricType.Training}|loss`,
   },
   {
-    metric: { name: 'accuracy', type: MetricType.Validation },
+    metric: { group: MetricType.Validation, name: 'accuracy' },
+    oldMetric: { name: 'accuracy', type: MetricType.Validation },
     str: '[V] accuracy',
     value: `${MetricType.Validation}|accuracy`,
   },
   {
-    metric: { name: 'loss', type: MetricType.Validation },
+    metric: { group: MetricType.Validation, name: 'loss' },
+    oldMetric: { name: 'loss', type: MetricType.Validation },
     str: '[V] loss',
     value: `${MetricType.Validation}|loss`,
   },
@@ -48,10 +53,10 @@ describe('Metric Utilities', () => {
   describe('extractMetrics', () => {
     it('should extract metric names from workloads', () => {
       const result = [
-        { name: 'accuracy', type: MetricType.Validation },
-        { name: 'loss', type: MetricType.Validation },
-        { name: 'accuracy', type: MetricType.Training },
-        { name: 'loss', type: MetricType.Training },
+        { group: MetricType.Validation, name: 'accuracy' },
+        { group: MetricType.Validation, name: 'loss' },
+        { group: MetricType.Training, name: 'accuracy' },
+        { group: MetricType.Training, name: 'loss' },
       ];
       expect(utils.extractMetrics(workloads)).toStrictEqual(result);
     });
@@ -62,15 +67,17 @@ describe('Metric Utilities', () => {
     const lossValidation = metrics[3].metric;
 
     it('should extract training metric', () => {
-      expect(utils.extractMetricValue(workloads[0], accuracyTraining)).toBe(0.9);
+      expect(utils.extractMetricValue(workloads[0], metricToOldMetric(accuracyTraining))).toBe(0.9);
     });
 
     it('should extract validation metric', () => {
-      expect(utils.extractMetricValue(workloads[1], lossValidation)).toBe(0.19);
+      expect(utils.extractMetricValue(workloads[1], metricToOldMetric(lossValidation))).toBe(0.19);
     });
 
     it('should handle non-existent metric extraction', () => {
-      expect(utils.extractMetricValue(workloads[0], lossValidation)).toBeUndefined();
+      expect(
+        utils.extractMetricValue(workloads[0], metricToOldMetric(lossValidation)),
+      ).toBeUndefined();
     });
   });
 
@@ -103,10 +110,26 @@ describe('Metric Utilities', () => {
 
     it('should truncate metric string to 30 characters', () => {
       const metric = {
+        group: MetricType.Training,
         name: 'very-very-very-very-very-very-long-metric-name',
-        type: MetricType.Training,
       };
       expect(utils.metricToStr(metric, 20)).toBe('[T] very-very-very-very-...');
+    });
+  });
+
+  describe('metricToOldMetric', () => {
+    it('should convert metric to old metric', () => {
+      metrics.forEach((metric) => {
+        expect(utils.metricToOldMetric(metric.metric)).toEqual(metric.oldMetric);
+      });
+    });
+  });
+
+  describe('oldMetricToMetric', () => {
+    it('should convert old metric to metric', () => {
+      metrics.forEach((metric) => {
+        expect(utils.oldMetricToMetric(metric.oldMetric)).toEqual(metric.metric);
+      });
     });
   });
 

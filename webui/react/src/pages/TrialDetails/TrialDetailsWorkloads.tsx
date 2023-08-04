@@ -27,6 +27,7 @@ import {
   extractMetricValue,
   metricKeyToOldMetric,
   metricToKey,
+  oldMetricToMetric,
 } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
@@ -84,26 +85,27 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       return <HumanReadableNumber num={value} />;
     };
 
-    const { metric, smallerIsBetter } = experiment?.config?.searcher || {};
+    const { metric: searcherMetric, smallerIsBetter } = experiment?.config?.searcher || {};
     const newColumns = [...defaultColumns].map((column) => {
       if (column.key === 'checkpoint') column.render = checkpointRenderer;
       return column;
     });
 
-    metrics.forEach((metricName) => {
+    metrics.forEach((oldMetric) => {
+      const metric = oldMetricToMetric(oldMetric);
       const stateIndex = newColumns.findIndex((column) => column.key === 'state');
       newColumns.splice(stateIndex, 0, {
         defaultSortOrder:
-          metric && metric === metricName.name
+          searcherMetric && searcherMetric === metric.name
             ? smallerIsBetter
               ? 'ascend'
               : 'descend'
             : undefined,
-        key: metricToKey(metricName),
-        render: metricRenderer(metricName),
+        key: metricToKey(metric),
+        render: metricRenderer(oldMetric),
         sorter: (a, b) => {
-          const aVal = extractMetricSortValue(a, metricName),
-            bVal = extractMetricSortValue(b, metricName);
+          const aVal = extractMetricSortValue(a, oldMetric),
+            bVal = extractMetricSortValue(b, oldMetric);
           if (aVal === undefined && bVal !== undefined) {
             return settings.sortDesc ? -1 : 1;
           } else if (aVal !== undefined && bVal === undefined) {
@@ -111,7 +113,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           }
           return numericSorter(aVal, bVal);
         },
-        title: <MetricBadgeTag metric={metricName} />,
+        title: <MetricBadgeTag metric={metric} />,
       });
     });
 

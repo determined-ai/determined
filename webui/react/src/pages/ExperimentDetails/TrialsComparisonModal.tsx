@@ -313,7 +313,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                 </th>
               </tr>
               {selectedMetrics.map((metric) => (
-                <tr key={`${metric.type}-${metric.name}`}>
+                <tr key={`${metric.group}-${metric.name}`}>
                   <th scope="row">
                     <MetricBadgeTag metric={metric} />
                   </th>

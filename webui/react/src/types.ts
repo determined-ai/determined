@@ -470,14 +470,19 @@ export const metricTypeParamMap: Record<string, MetricTypeParam> = {
   [MetricType.Validation]: 'METRIC_TYPE_VALIDATION',
 };
 
+/**
+ * `OldMetric` handles specifically training and validation metric types only.
+ * They are still supported due to how Workloads and its related types are defined.
+ * The current Metric supports generic types also know as `groups`.
+ */
 export interface OldMetric {
   name: string;
   type: MetricType;
 }
 
 export interface Metric {
+  group: string;
   name: string;
-  type: string;
 }
 
 export interface BaseWorkload extends EndTimes {

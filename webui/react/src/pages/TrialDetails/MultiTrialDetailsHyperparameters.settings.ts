@@ -47,7 +47,7 @@ export const settingsConfigForExperimentHyperparameters = (
       defaultValue: undefined,
       skipUrlEncoding: true,
       storageKey: 'metric',
-      type: union([undefinedType, type({ name: string, type: string })]),
+      type: union([undefinedType, type({ group: string, name: string })]),
     },
     scale: {
       defaultValue: Scale.Linear,

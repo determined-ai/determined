@@ -42,8 +42,8 @@ const MetricSelect: React.FC<Props> = ({
 
   const metricsByType = useMemo(() => {
     const groups = metrics.reduce((acc, metric) => {
-      acc[metric.type] = acc[metric.type] || [];
-      acc[metric.type].push(metric.name);
+      acc[metric.group] = acc[metric.group] || [];
+      acc[metric.group].push(metric.name);
       return acc;
     }, {} as Record<string, string[]>);
     return Object.keys(groups).map((key) => {
@@ -159,7 +159,7 @@ const MetricSelect: React.FC<Props> = ({
       {metricsByType.map((group) => (
         <OptGroup key={group.type} label={group.type}>
           {group.metrics.map((metricName) => {
-            const metric = { name: metricName, type: group.type };
+            const metric = { group: group.type, name: metricName };
             const value = metricToKey(metric);
             return (
               <Option key={value} value={value}>

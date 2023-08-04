@@ -108,14 +108,10 @@ export const LineChart: React.FC<LineChartProps> = ({
   );
 
   const seriesNames: string[] = useMemo(() => {
-    return series.map(
-      (s, idx) =>
-        (s.metricType === MetricType.Training
-          ? '[T] '
-          : s.metricType === MetricType.Validation
-          ? '[V] '
-          : '') + (s.name || `Series ${idx + 1}`),
-    );
+    return series.map((s, idx) => {
+      const badge = s.metricType?.substring(0, 1).toUpperCase();
+      return [badge ? `[${badge}]` : '', s.name || `Series ${idx + 1}`].join(' ');
+    });
   }, [series]);
 
   const chartData: AlignedData = useMemo(() => {
@@ -332,7 +328,7 @@ export const calculateChartProps = (
   });
   metrics.forEach((metric) => {
     const series: Serie[] = [];
-    const key = `${metric.type}|${metric.name}`;
+    const key = `${metric.group}|${metric.name}`;
     trials.forEach((t) => {
       const m = data[t?.id || 0];
       m?.[key] &&
@@ -362,7 +358,7 @@ export const calculateChartProps = (
   // then the charts have not been updated and we need to continue to show the
   // spinner.
   const chartDataIsLoaded = metrics.every((metric) => {
-    const metricKey = `${metric.type}|${metric.name}`;
+    const metricKey = `${metric.group}|${metric.name}`;
     return metricHasData?.[metricKey] ? !!chartedMetrics?.[metricKey] : true;
   });
   if (!isLoaded) {

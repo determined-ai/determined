@@ -16,6 +16,8 @@ import { glasbeyColor } from 'utils/color';
 import handleError, { ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
+import { metricToStr } from '../../utils/metric';
+
 interface Props {
   defaultMetricNames: Metric[];
   id?: string;
@@ -25,12 +27,6 @@ interface Props {
   trialId?: number;
   trialTerminated: boolean;
 }
-
-const getChartMetricLabel = (metric: Metric): string => {
-  if (metric.type === 'training') return `[T] ${metric.name}`;
-  if (metric.type === 'validation') return `[V] ${metric.name}`;
-  return metric.name;
-};
 
 const TrialChart: React.FC<Props> = ({
   defaultMetricNames,
@@ -84,7 +80,7 @@ const TrialChart: React.FC<Props> = ({
       yValues[index] = {};
 
       const summary = Loadable.getOrElse([], trialSummary);
-      const mWrapper = summary.find((mContainer) => mContainer.type === metric.type);
+      const mWrapper = summary.find((mContainer) => mContainer.type === metric.group);
       if (!mWrapper?.data) return;
 
       mWrapper.data.forEach((avgMetrics) => {
@@ -112,7 +108,7 @@ const TrialChart: React.FC<Props> = ({
     return {
       axes: [
         { label: 'Batches' },
-        { label: metrics.length === 1 ? getChartMetricLabel(metrics[0]) : 'Metric Value' },
+        { label: metrics.length === 1 ? metricToStr(metrics[0]) : 'Metric Value' },
       ],
       height: 400,
       key: trialId,
@@ -125,7 +121,7 @@ const TrialChart: React.FC<Props> = ({
       series: [
         { label: 'Batch' },
         ...metrics.map((metric, index) => ({
-          label: getChartMetricLabel(metric),
+          label: metricToStr(metric),
           spanGaps: true,
           stroke: glasbeyColor(index),
           width: 2,

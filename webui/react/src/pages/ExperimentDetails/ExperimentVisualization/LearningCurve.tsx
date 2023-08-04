@@ -36,6 +36,7 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'utils/routes';
 import { openCommandResponse } from 'utils/wait';
 
+import { metricToStr } from '../../../utils/metric';
 import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import HpTrialTable, { TrialHParams } from './HpTrialTable';
@@ -190,7 +191,7 @@ const LearningCurve: React.FC<Props> = ({
       detApi.StreamingInternal.trialsSample(
         experiment.id,
         selectedMetric.name,
-        metricTypeParamMap[selectedMetric.type],
+        metricTypeParamMap[selectedMetric.group],
         undefined,
         selectedMaxTrial,
         MAX_DATAPOINTS,
@@ -334,7 +335,7 @@ const LearningCurve: React.FC<Props> = ({
               scale={selectedScale}
               series={chartData}
               xLabel="Batches Processed"
-              yLabel={`[${selectedMetric.type[0].toUpperCase()}] ${selectedMetric.name}`}
+              yLabel={metricToStr(selectedMetric)}
               onPointClick={handlePointClick}
               onPointFocus={handlePointFocus}
             />

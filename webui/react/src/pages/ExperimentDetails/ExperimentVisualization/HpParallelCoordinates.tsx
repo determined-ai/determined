@@ -89,7 +89,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const smallerIsBetter = useMemo(() => {
     if (
       selectedMetric &&
-      selectedMetric.type === MetricType.Validation &&
+      selectedMetric.group === MetricType.Validation &&
       selectedMetric.name === experiment.config.searcher.metric
     ) {
       return experiment.config.searcher.smallerIsBetter;
@@ -237,7 +237,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         experiment.id,
         selectedMetric.name,
         selectedBatch,
-        metricTypeParamMap[selectedMetric.type],
+        metricTypeParamMap[selectedMetric.group],
         undefined, // custom metric group
         selectedBatchMargin,
         undefined,
