@@ -55,6 +55,17 @@ per-file-ignores =
   tests/nightly/compute_stats.py:I2041
   tests/template/test_template.py:I2041
   tests/test_sdk.py:I2041
+  # EE-only files.
+  tests/cluster/managed_slurm_cluster.py:I2041
+  tests/cluster/test_master_restart_slurm.py:I2041
+  tests/cluster/test_model_registry_rbac.py:I2041
+  tests/cluster/test_rbac_misc.py:I2041
+  tests/cluster/test_rbac_ntsc.py:I2041
+  tests/cluster/test_slurm.py:I2041
+  tests/experiment/test_hpc_launch.py:I2041
+  tests/experiment/test_launch.py:I2041
+  tests/experiment/test_pending_hpc.py:I2041
+  tests/job/test_rbac.py:I2041
 
 # Explanations for ignored error codes:
 # - D1* (no missing docstrings): too much effort to start enforcing

@@ -22,9 +22,7 @@ def test_noop_pause_hpc() -> None:
     # so we won't be able to activate (restart) it.
     config_file = conf.fixtures_path("no_op/single-hpc.yaml")
 
-    """
-    Walk through starting, pausing, and resuming a single no-op experiment.
-    """
+    # Walk through starting, pausing, and resuming a single no-op experiment.
     experiment_id = exp.create_experiment(config_file, conf.fixtures_path("no_op"), None)
     exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.RUNNING)
 
