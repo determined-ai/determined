@@ -160,6 +160,7 @@ def list_bindings(args: Namespace) -> None:
 
 def _parse_args_to_kwargs(args: Namespace, params: List[inspect.Parameter]) -> Dict[str, Any]:
     kwargs: Dict[str, Any] = {}
+    params_d: Dict[str, inspect.Parameter] = {p.name: p for p in params}
 
     for idx, arg in enumerate(args.args):
         key, value = "", ""
@@ -168,16 +169,18 @@ def _parse_args_to_kwargs(args: Namespace, params: List[inspect.Parameter]) -> D
         else:
             key = params[idx].name
             value = arg
+        param = params_d.get(key)
+        if not param:
+            raise ValueError(f"Unknown argument {key}")
+        if param.annotation is float:
+            value = float(value)
+        elif param.annotation is int:
+            value = int(value)
         if key in kwargs:
             raise ValueError(f"Argument {key} specified twice")
         kwargs[key] = value
 
     assert len(kwargs) <= len(params), "too many arguments"
-
-    # for idx, value in enumerate(values):
-    #     if params[idx].name in kwargs:
-    #         raise ValueError(f"Argument {params[idx].name} specified twice")
-    #     kwargs[params[idx].name] = value
     return kwargs
 
 
@@ -208,10 +211,16 @@ def call_bindings(args: Namespace) -> None:
         matches = [n for n in fns.keys() if re.match(f".*{fn_name}.*", n, re.IGNORECASE)]
         if not matches:
             raise errors.CliError(f"no such binding: {fn_name}")
-        # if len(matches) > 1:
-        #     raise errors.CliError(f"multiple bindings match for {fn_name}: {matches}")
-        input(f"did you mean '{matches[0]}'? (press enter to continue)")
-        fn_name = matches[0]
+        print(f"found {len(matches)} matches for '{fn_name}': {list(enumerate(matches))}")
+        user_idx = (
+            input(
+                "Which one do you want? enter the index to continue"
+                + f"(default: 0 {matches[0]}): "
+            )
+            or "0"
+        )
+        user_idx = int(user_idx.strip())
+        fn_name = matches[user_idx]
         fn = getattr(bindings, fn_name)
 
     params = fns[fn_name]

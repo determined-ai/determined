@@ -461,6 +461,7 @@ def test_dev_bindings() -> None:
     annots = [
         str,
         Optional[str],
+        # unsupported.
         # Sequence[str],
         # Optional[Sequence[str]],
     ]
