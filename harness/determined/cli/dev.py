@@ -159,22 +159,25 @@ def list_bindings(args: Namespace) -> None:
 
 
 def _parse_args_to_kwargs(args: Namespace, params: List[inspect.Parameter]) -> Dict[str, Any]:
-    values = []
     kwargs: Dict[str, Any] = {}
 
-    for arg in args.args:
+    for idx, arg in enumerate(args.args):
+        key, value = "", ""
         if "=" in arg:
             key, value = arg.split("=", 1)
-            kwargs[key] = value
         else:
-            values.append(arg)
+            key = params[idx].name
+            value = arg
+        if key in kwargs:
+            raise ValueError(f"Argument {key} specified twice")
+        kwargs[key] = value
 
-    assert len(values) + len(kwargs) <= len(params), "too many arguments"
+    assert len(kwargs) <= len(params), "too many arguments"
 
-    for idx, value in enumerate(values):
-        if params[idx].name in kwargs:
-            raise ValueError(f"Argument {params[idx].name} specified twice")
-        kwargs[params[idx].name] = value
+    # for idx, value in enumerate(values):
+    #     if params[idx].name in kwargs:
+    #         raise ValueError(f"Argument {params[idx].name} specified twice")
+    #     kwargs[params[idx].name] = value
     return kwargs
 
 
