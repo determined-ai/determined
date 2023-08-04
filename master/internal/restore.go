@@ -183,6 +183,11 @@ func (e *experiment) restoreTrial(
 		}
 		return
 	}
+	_, ok := e.trials[searcher.Create.RequestID]
+	if ok {
+		l.Errorf("trial %s was already restored", searcher.Create.RequestID)
+		return
+	}
 
 	config := schemas.Copy(e.activeConfig)
 	t, err := newTrial(

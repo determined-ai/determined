@@ -9,26 +9,24 @@ import (
 	"sync"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/prom"
-	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/internal/task"
-	"github.com/determined-ai/determined/master/internal/task/tasklogger"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/prom"
+	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/mathx"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
-
-	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
+	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -268,10 +266,13 @@ func (t *trial) SetUserInitiatedEarlyExit(req userInitiatedEarlyExit) error {
 
 			select {
 			case <-tmr.C:
-				t.PatchState(model.StateWithReason{
+				err := t.PatchState(model.StateWithReason{
 					State:               model.StoppingKilledState,
 					InformationalReason: "timeout after user initiated early exit",
 				})
+				if err != nil {
+					t.syslog.WithError(err).Error("error patching state")
+				}
 			case <-ctx.Done():
 			}
 		})
@@ -303,7 +304,7 @@ func (t *trial) SendTaskLog(req model.TaskLog) {
 	}
 }
 
-// TODO(!!!): propogate this via exit codes.
+// TODO(!!!): propagate this via exit codes.
 // case sproto.InvalidResourcesRequestError:
 // 	ctx.Tell(ctx.Self().Parent(), msg)
 
@@ -387,10 +388,13 @@ func (t *trial) maybeAllocateTask() error {
 		t.syslog.
 			WithField("allocation-id", ar.AllocationID).
 			Infof("starting restored trial allocation")
-		task.DefaultService.StartAllocation(
+		err = task.DefaultService.StartAllocation(
 			t.logCtx, ar, t.db, t.rm, specifier, t.system,
 			t.AllocationExitedCallback,
 		)
+		if err != nil {
+			return err
+		}
 		t.allocationID = &ar.AllocationID
 		return nil
 	}
@@ -429,10 +433,13 @@ func (t *trial) maybeAllocateTask() error {
 		Debugf("starting new trial allocation")
 
 	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
-	task.DefaultService.StartAllocation(
+	err = task.DefaultService.StartAllocation(
 		t.logCtx, ar, t.db, t.rm, specifier, t.system,
 		t.AllocationExitedCallback,
 	)
+	if err != nil {
+		return err
+	}
 	t.allocationID = &ar.AllocationID
 	return nil
 }

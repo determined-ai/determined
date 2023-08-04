@@ -7,29 +7,25 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/determined-ai/determined/master/internal/job/jobservice"
-	"golang.org/x/sync/errgroup"
-
-	"github.com/shopspring/decimal"
-	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
-	"github.com/uptrace/bun"
-
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
-	"github.com/determined-ai/determined/master/internal/user"
-
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -346,7 +342,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		t, ok := e.trials[msg.op.RequestID]
 		if !ok {
-			e.syslog.Warnf("missing trial to propogate complete op: %s", msg.op.RequestID)
+			e.syslog.Warnf("missing trial to propagate complete op: %s", msg.op.RequestID)
 			return nil
 		}
 
@@ -371,7 +367,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		t, ok := e.trials[msg.requestID]
 		if !ok {
-			e.syslog.Warnf("missing trial to propogate complete op: %s", msg.requestID)
+			e.syslog.Warnf("missing trial to propagate complete op: %s", msg.requestID)
 			return nil
 		}
 
@@ -487,7 +483,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if err := webhooks.ReportExperimentStateChanged(
 			context.TODO(), *e.Experiment, e.activeConfig,
 		); err != nil {
-			log.WithError(err).Error("failed to send experiment state change webhook")
+			e.syslog.WithError(err).Error("failed to send experiment state change webhook")
 		}
 
 		if err := e.db.SaveExperimentState(e.Experiment); err != nil {
@@ -746,6 +742,11 @@ func (e *experiment) processOperations(
 				e.syslog.Error(err)
 				return
 			}
+			_, ok := e.trials[op.RequestID]
+			if ok {
+				e.syslog.Errorf("trial %s already exists", op.RequestID)
+				continue
+			}
 			config := schemas.Copy(e.activeConfig)
 			state := trialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
@@ -868,7 +869,7 @@ func (e *experiment) updateState(state model.StateWithReason) bool {
 	if err := webhooks.ReportExperimentStateChanged(
 		context.TODO(), *e.Experiment, e.activeConfig,
 	); err != nil {
-		log.WithError(err).Error("failed to send experiment state change webhook")
+		e.syslog.WithError(err).Error("failed to send experiment state change webhook")
 	}
 
 	e.syslog.Infof("experiment state changed to %s", state.State)
@@ -899,7 +900,7 @@ func (e *experiment) updateState(state model.StateWithReason) bool {
 }
 
 func (e *experiment) canTerminate() bool {
-	return len(e.trials) == 0
+	return model.StoppingStates[e.State] && len(e.trials) == 0
 	// return model.StoppingStates[e.State] && len(ctx.Children()) == 0
 }
 
@@ -1052,9 +1053,6 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 		return errors.Wrapf(err, "setting experiment %d RP to %s", e.ID, rp)
 	}
 
-	// TODO revert the change like the other setters
-	// also change to ask all?
-	// for rID, t := range e.trials
 	var g errgroup.Group
 	g.SetLimit(maxConcurrentTrialOps)
 	for _, t := range e.trials {

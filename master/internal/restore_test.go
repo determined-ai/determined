@@ -45,6 +45,7 @@ func TestDeserExperimentSnapshotIntoCurrent(t *testing.T) {
 				}
 				sm := searcher.NewSearchMethod(single)
 				e.searcher = searcher.NewSearcher(0, sm, expconf.Hyperparameters{})
+				//nolint:govet
 				return e
 			},
 			//nolint:lll
@@ -70,6 +71,7 @@ func TestDeserExperimentSnapshotIntoCurrent(t *testing.T) {
 				}
 				sm := searcher.NewSearchMethod(asha)
 				e.searcher = searcher.NewSearcher(0, sm, expconf.Hyperparameters{})
+				//nolint:govet
 				return e
 			},
 			//nolint:lll
