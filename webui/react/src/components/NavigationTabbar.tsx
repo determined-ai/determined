@@ -148,11 +148,6 @@ const NavigationTabbar: React.FC = () => {
 
   const overflowActionsBottom: OverflowActionProps[] = [
     {
-      icon: 'logs',
-      label: 'Cluster Logs',
-      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.clusterLogs()),
-    },
-    {
       external: true,
       icon: 'docs',
       label: 'Docs',
