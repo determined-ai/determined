@@ -2099,12 +2099,12 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 				return err
 			}
 			if metricQualifier == "mean" { //nolint: goconst
-				locator := bun.Safe("trials.summary_metrics->?", metricGroup)
+				locator := bun.Safe(fmt.Sprintf("trials.summary_metrics->'%s'", metricGroup))
 				experimentQuery.OrderExpr("(?0->?1->>'sum')::float8 / (?0->?1->>'count')::int ?2",
 					locator, metricName, bun.Safe(sortDirection))
 			} else {
 				experimentQuery.OrderExpr("trials.summary_metrics->?->?->>? ?",
-				metricGroup, metricName, metricQualifier, bun.Safe(sortDirection))
+					metricGroup, metricName, metricQualifier, bun.Safe(sortDirection))
 			}
 		default:
 			if _, ok := orderColMap[paramDetail[0]]; !ok {
@@ -2211,21 +2211,16 @@ func (a *apiServer) SearchExperiments(
 		}
 	}
 
+	summaryMetricsQuery := db.BunUpdateMetricMean().Where("trials.id IN (?)", bun.In(trialIDs))
+
 	trialsInnerQuery := db.Bun().NewSelect().
 		Table("trials").
+		With("metrics_query", summaryMetricsQuery).
 		Column("trials.id").
 		Column("trials.experiment_id").
 		Column("trials.runner_state").
 		Column("trials.checkpoint_count").
-		ColumnExpr(`trials.summary_metrics || jsonb_build_object(
-				'avg_metrics',
-					(SELECT jsonb_object_agg(m.key, CASE WHEN m.value -> 'type' = '"number"'::jsonb
-						THEN m.value - '{sum, count}'::text[] ||
-							jsonb_build_object(
-								'mean', (m.value ->> 'sum')::float8 / (m.value ->> 'count')::int)
-						ELSE m.value END)
-					FROM jsonb_each(summary_metrics -> 'avg_metrics') AS m(key, value))
-				) AS summary_metrics`).
+		Column("metrics_query.summary_metrics").
 		Column("trials.task_id").
 		ColumnExpr("proto_time(trials.start_time) AS start_time").
 		ColumnExpr("proto_time(trials.end_time) AS end_time").
@@ -2254,6 +2249,7 @@ func (a *apiServer) SearchExperiments(
 		Join("LEFT JOIN validations bv ON trials.best_validation_id = bv.id").
 		Join("LEFT JOIN validations lv ON trials.latest_validation_id = lv.id").
 		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").
+		Join("LEFT JOIN metrics_query ON metrics_query.id = trials.id").
 		Where("trials.id IN (?)", bun.In(trialIDs))
 
 	err = db.Bun().NewSelect().

@@ -390,23 +390,16 @@ func (a *apiServer) GetProjectNumericMetricsRange(
 	if err != nil {
 		return nil, err
 	}
-	valMetricsRange, traMetricsRange, searcherMetricsValue, err := a.getProjectNumericMetricsRange(
+	metricsValues, searcherMetricsValue, err := a.getProjectNumericMetricsRange(
 		ctx, *curUser, p)
 	if err != nil {
 		return nil, err
 	}
 
 	var ranges []*projectv1.MetricsRange
-	for mn, mr := range valMetricsRange {
+	for mn, mr := range metricsValues {
 		ranges = append(ranges, &projectv1.MetricsRange{
-			MetricsName: fmt.Sprintf("validation.%s", mn),
-			Min:         mathx.Min(mr...),
-			Max:         mathx.Max(mr...),
-		})
-	}
-	for mn, mr := range traMetricsRange {
-		ranges = append(ranges, &projectv1.MetricsRange{
-			MetricsName: fmt.Sprintf("training.%s", mn),
+			MetricsName: mn,
 			Min:         mathx.Min(mr...),
 			Max:         mathx.Max(mr...),
 		})
@@ -425,88 +418,87 @@ func (a *apiServer) GetProjectNumericMetricsRange(
 
 func (a *apiServer) getProjectNumericMetricsRange(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
-) (map[string]([]float64), map[string]([]float64), []float64, error) {
-	query := db.Bun().NewSelect().Table("trials").Table("experiments").
-		ColumnExpr("summary_metrics -> 'validation_metrics' AS validation_metrics").
-		ColumnExpr("summary_metrics -> 'avg_metrics' AS avg_metrics").
+) (map[string]([]float64), []float64, error) {
+	query := db.BunUpdateMetricMean().Table("experiments").
 		ColumnExpr(`searcher_metric_value_signed = searcher_metric_value AS smaller_is_better`).
 		Column("searcher_metric_value").
 		Where("project_id = ?", project.Id).
 		Where("experiments.best_trial_id = trials.id")
 
 	type metrics struct {
-		Min   interface{}
-		Max   interface{}
-		Last  interface{}
-		Sum   interface{}
-		Count *int32
+		Min  interface{}
+		Max  interface{}
+		Last interface{}
+		Mean interface{}
+		Type interface{}
 	}
 
 	var res []struct {
+		ID                  int32
 		SmallerIsBetter     bool
 		SearcherMetricValue *float64
-		ValidationMetrics   *map[string]metrics
-		AvgMetrics          *map[string]metrics
+		SummaryMetrics      *map[string](*map[string]metrics)
 	}
 
 	if err := query.Scan(ctx, &res); err != nil {
-		return nil, nil, nil, errors.Wrapf(
+		return nil, nil, errors.Wrapf(
 			err, "error fetching metrics range for project (%d) from database", project.Id)
 	}
-	valMetricsValues := make(map[string]([]float64))
-	traMetricsValues := make(map[string]([]float64))
+	metricsValues := make(map[string]([]float64))
 	searcherMetricsValue := []float64{}
 	for _, r := range res {
 		if r.SearcherMetricValue != nil {
 			searcherMetricsValue = append(searcherMetricsValue, *r.SearcherMetricValue)
 		}
-		if r.ValidationMetrics != nil {
-			for metricsName, value := range *r.ValidationMetrics {
-				if value.Count == nil {
-					continue
-				}
-				metricsValue := value.Min
-				if !r.SmallerIsBetter {
-					metricsValue = value.Max
-				}
-				switch v := metricsValue.(type) {
-				case float64:
-					valMetricsValues[metricsName] = append(valMetricsValues[metricsName], v)
-				}
-			}
-		}
-		if r.AvgMetrics != nil {
-			for metricsName, value := range *r.AvgMetrics {
-				if value.Count == nil {
-					continue
-				}
-				aggregates := []string{"count", "last", "max", "min", "sum"}
-				for _, aggregate := range aggregates {
-					tMetricsName := fmt.Sprintf("%s.%s", metricsName, aggregate)
-					var tMetricsValue interface{}
-					switch aggregate {
-					case "count":
-						tMetricsValue = value.Count
-					case "last":
-						tMetricsValue = value.Last
-					case "max":
-						tMetricsValue = value.Max
-					case "min":
-						tMetricsValue = value.Min
-					case "sum":
-						tMetricsValue = value.Sum
+		if r.SummaryMetrics != nil {
+			for metricsGroup, metrics := range *r.SummaryMetrics {
+				for name, value := range *metrics {
+					if value.Type != "number" {
+						continue
 					}
-					switch v := tMetricsValue.(type) {
-					case float64:
-						traMetricsValues[tMetricsName] = append(traMetricsValues[tMetricsName], v)
-					case *int32:
-						traMetricsValues[tMetricsName] = append(traMetricsValues[tMetricsName], float64(*v))
+					if metricsGroup == "validation_metrics" {
+						metricsValue := value.Min
+						if !r.SmallerIsBetter {
+							metricsValue = value.Max
+						}
+
+						switch v := metricsValue.(type) {
+						case float64:
+							tMetricsName := fmt.Sprintf("%s.%s", "validation", name)
+							metricsValues[tMetricsName] = append(metricsValues[tMetricsName], v)
+						}
+					} else {
+						for _, aggregate := range SummaryMetricStatistics {
+							group := metricsGroup
+							if metricsGroup == "avg_metrics" {
+								group = "training"
+							}
+							tMetricsName := fmt.Sprintf("%s.%s.%s", group, name, aggregate)
+							var tMetricsValue interface{}
+							switch aggregate {
+							case "last":
+								tMetricsValue = value.Last
+							case "max":
+								tMetricsValue = value.Max
+							case "min":
+								tMetricsValue = value.Min
+							case "mean":
+								tMetricsValue = value.Mean
+							}
+							switch v := tMetricsValue.(type) {
+							case float64:
+								metricsValues[tMetricsName] = append(metricsValues[tMetricsName], v)
+							case *int32:
+								metricsValues[tMetricsName] = append(metricsValues[tMetricsName], float64(*v))
+							}
+						}
 					}
+
 				}
 			}
 		}
 	}
-	return valMetricsValues, traMetricsValues, searcherMetricsValue, nil
+	return metricsValues, searcherMetricsValue, nil
 }
 
 func (a *apiServer) PostProject(
