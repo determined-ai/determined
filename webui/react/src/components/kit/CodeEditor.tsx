@@ -295,6 +295,7 @@ const CodeEditor: React.FC<Props> = ({
           extensions={[langs[syntax]()]}
           height={height}
           readOnly={readonly}
+          style={{ height }}
           theme={ui.darkLight === DarkLight.Dark ? 'dark' : 'light'}
           value={Loadable.getOrElse('', activeFile.content)}
           onChange={onChange}

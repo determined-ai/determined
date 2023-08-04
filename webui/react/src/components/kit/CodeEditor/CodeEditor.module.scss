@@ -1,6 +1,7 @@
 .codeEditorBase {
   display: grid;
   grid-template-columns: minmax(15%, auto) minmax(52%, auto);
+  grid-template-rows: min-content auto;
   height: 100%;
   max-width: 100vw;
 
@@ -94,7 +95,7 @@
   }
 
   @media screen and (max-width: 1024px) {
-    grid-template-rows: auto;
+    grid-template-rows: auto min-content auto;
   }
 }
 .pageError {
