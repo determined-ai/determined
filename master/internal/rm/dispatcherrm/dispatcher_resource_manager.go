@@ -64,7 +64,7 @@ const maxJobLaunchGoRoutines = 8
 const numJobCancelWorkers = 8
 
 // Keeps track of how many times "schedulePendingTasks()" was called.
-var numTimesScheduledPendingTasksCalled uint64 = 0
+var numTimesScheduledPendingTasksCalled uint64
 
 var errNotSupportedOnHpcCluster = fmt.Errorf("%w on HPC clusters", rmerrors.ErrNotSupported)
 
@@ -461,6 +461,9 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 	case *apiv1.EnableAgentRequest:
 		response, err := m.enableAgent(msg.AgentId)
 		ctx.RespondCheckError(response, err)
+
+	case sproto.GetExternalJobs:
+		ctx.Respond(rmerrors.ErrNotSupported)
 
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
