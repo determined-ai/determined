@@ -720,6 +720,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               '',
             )}`;
             break;
+          case V1LocationType.CUSTOMMETRIC:
+            dataPath = `bestTrial.summaryMetrics.${currentColumn.column}`;
+            break;
           case V1LocationType.UNSPECIFIED:
             break;
         }

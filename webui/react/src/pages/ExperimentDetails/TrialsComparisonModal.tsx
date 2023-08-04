@@ -182,7 +182,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
             }
             return trialMetrics;
           },
-          {},
+          {} as Record<string, Primitive | undefined>,
         );
         return metricValues;
       }, {} as Record<number, Record<string, Primitive | undefined>>),

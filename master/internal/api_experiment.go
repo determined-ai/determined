@@ -2105,6 +2105,13 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 			experimentQuery.OrderExpr(
 				fmt.Sprintf("trials.summary_metrics->'avg_metrics'->'%s'->>'%s' %s", metricName,
 					metricQualifier, sortDirection))
+		case strings.Contains(paramDetail[0], "."):
+			metricSearchQuery := strings.ReplaceAll(paramDetail[0], ".", "'->'")
+			i := strings.LastIndex(metricSearchQuery, "->")
+			metricSearchQuery = metricSearchQuery[:i] + strings.Replace(metricSearchQuery[i:], "->", "->>", 1)
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("trials.summary_metrics->'%s' %s", metricSearchQuery,
+					sortDirection))
 		default:
 			if _, ok := orderColMap[paramDetail[0]]; !ok {
 				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])

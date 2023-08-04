@@ -169,10 +169,7 @@ const ioMetricSummary = io.type({
   ]),
 });
 
-export const ioSummaryMetrics = io.partial({
-  avg_metrics: io.record(io.string, ioMetricSummary),
-  validation_metrics: io.record(io.string, ioMetricSummary),
-});
+export const ioSummaryMetrics = io.record(io.string, io.record(io.string, ioMetricSummary));
 export type ioSummaryMetrics = io.TypeOf<typeof ioSummaryMetrics>;
 
 /* Experiments */
@@ -306,6 +303,7 @@ export const ioLocationType: io.Type<V1LocationType> = io.keyof({
   [V1LocationType.HYPERPARAMETERS]: null,
   [V1LocationType.TRAINING]: null,
   [V1LocationType.VALIDATIONS]: null,
+  [V1LocationType.CUSTOMMETRIC]: null,
   [V1LocationType.UNSPECIFIED]: null,
 });
 export const ioColumnType: io.Type<V1ColumnType> = io.keyof({

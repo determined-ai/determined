@@ -610,9 +610,11 @@ export const decodeCheckpoints = (
 
 const decodeSummaryMetrics = (data: unknown): types.SummaryMetrics => {
   const ioSummaryMetrics = ioTypes.decode<ioTypes.ioSummaryMetrics>(ioTypes.ioSummaryMetrics, data);
+  const { avg_metrics, validation_metrics, ...custom_metrics } = ioSummaryMetrics;
   return {
-    avgMetrics: ioSummaryMetrics.avg_metrics,
-    validationMetrics: ioSummaryMetrics.validation_metrics,
+    avgMetrics: avg_metrics,
+    validationMetrics: validation_metrics,
+    ...custom_metrics,
   };
 };
 

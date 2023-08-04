@@ -404,22 +404,27 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			} else {
 				q.Where(queryString, queryArgs...)
 			}
-		case projectv1.LocationType_LOCATION_TYPE_TRAINING.String():
+		case projectv1.LocationType_LOCATION_TYPE_TRAINING.String(), projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC.String():
 			queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
 			if e.Type != nil {
 				queryColumnType = *e.Type
 			}
 			metricDetails := strings.Split(e.ColumnName, ".")
+			metricGroup := metricDetails[0]
+			if location == projectv1.LocationType_LOCATION_TYPE_TRAINING.String() {
+				metricGroup = "avg_metrics"
+			}
 			metricQualifier := metricDetails[len(metricDetails)-1]
 			metricName := strings.TrimSuffix(
-				strings.TrimPrefix(e.ColumnName, "training."),
+				strings.TrimPrefix(e.ColumnName, fmt.Sprintf("%s.", metricDetails[0])),
 				"."+metricQualifier)
 			if !slices.Contains(SummaryMetricStatistics, metricQualifier) {
 				return nil, status.Errorf(codes.InvalidArgument,
 					"sort training metrics by statistic: count, last, max, min, or sum")
 			}
-			col := `trials.summary_metrics->'avg_metrics'->?->>?`
+			col := `trials.summary_metrics->?->?->>?`
 			var queryArgs []interface{}
+			queryArgs = append(queryArgs, metricGroup)
 			var queryString string
 			switch queryColumnType {
 			case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():

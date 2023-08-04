@@ -6665,6 +6665,7 @@ class v1LocationType(DetEnum):
     HYPERPARAMETERS = "LOCATION_TYPE_HYPERPARAMETERS"
     VALIDATIONS = "LOCATION_TYPE_VALIDATIONS"
     TRAINING = "LOCATION_TYPE_TRAINING"
+    CUSTOM_METRIC = "LOCATION_TYPE_CUSTOM_METRIC"
 
 class v1LogConfig(Printable):
     color: "typing.Optional[bool]" = None

@@ -575,9 +575,7 @@ export interface MetricSummary {
 }
 
 export interface SummaryMetrics {
-  avgMetrics?: Record<string, MetricSummary>;
-  validationMetrics?: Record<string, MetricSummary>;
-  //[customMetricType: string]?: Record<string, MetricSummary> Uncomment once generic metrics lands
+  [customMetricType: string]: Record<string, MetricSummary>;
 }
 
 export interface TrialItem extends StartEndTimes {

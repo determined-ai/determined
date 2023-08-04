@@ -5210,7 +5210,7 @@ export interface V1ListWorkspacesBoundToRPResponse {
     pagination?: V1Pagination;
 }
 /**
- * - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics  - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps
+ * - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics  - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps  - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric
  * @export
  * @enum {string}
  */
@@ -5220,6 +5220,7 @@ export const V1LocationType = {
     HYPERPARAMETERS: 'LOCATION_TYPE_HYPERPARAMETERS',
     VALIDATIONS: 'LOCATION_TYPE_VALIDATIONS',
     TRAINING: 'LOCATION_TYPE_TRAINING',
+    CUSTOMMETRIC: 'LOCATION_TYPE_CUSTOM_METRIC',
 } as const
 export type V1LocationType = ValueOf<typeof V1LocationType>
 /**
