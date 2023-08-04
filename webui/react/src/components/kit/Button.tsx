@@ -38,6 +38,7 @@ const Button: React.FC<ButtonProps> = forwardRef(
       className, // do not include className in {...props} below.
       hideChildren = false,
       children,
+      icon,
       ...props
     }: ButtonProps & CloneElementProps,
     ref,
@@ -46,8 +47,6 @@ const Button: React.FC<ButtonProps> = forwardRef(
     if (className) classes.push(className); // preserve className value set via cloneElement.
     if (props.selected) classes.push(css.selected);
     if (props.column) classes.push(css.column);
-    if (props.icon) classes.push(css.withIcon);
-    if (children && !hideChildren) classes.push(css.withChildren);
 
     return (
       <ConditionalWrapper
@@ -59,7 +58,14 @@ const Button: React.FC<ButtonProps> = forwardRef(
           size={size}
           tabIndex={props.disabled ? -1 : 0}
           {...props}>
-          {!hideChildren && children}
+          {props.loading ? (
+            !hideChildren && children // use antd spinner and styling
+          ) : (
+            <div className={css.content}>
+              {icon && <div className={css.icon}>{icon}</div>}
+              {!hideChildren && children && <div className={css.children}>{children}</div>}
+            </div>
+          )}
         </AntdButton>
       </ConditionalWrapper>
     );

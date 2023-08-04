@@ -219,6 +219,9 @@ const ButtonsSection: React.FC = () => {
           <Button loading type="primary">
             Loading
           </Button>
+          <Button selected type="primary">
+            Selected
+          </Button>
         </Space>
         <hr />
         <strong>Text Button variations</strong>
@@ -233,6 +236,9 @@ const ButtonsSection: React.FC = () => {
           </Button>
           <Button loading type="text">
             Loading
+          </Button>
+          <Button selected type="text">
+            Selected
           </Button>
         </Space>
         <hr />
@@ -254,6 +260,20 @@ const ButtonsSection: React.FC = () => {
           </Button>
         </Space>
         <hr />
+        <strong>Full-width buttons</strong>
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Button block>Default</Button>
+          <Button block type="primary">
+            Primary
+          </Button>
+          <Button block type="text">
+            Text
+          </Button>
+          <Button block type="dashed">
+            Dashed
+          </Button>
+        </Space>
+        <hr />
         <strong>Sizes</strong>
         <Space>
           <Button size="large">Large</Button>
@@ -261,36 +281,50 @@ const ButtonsSection: React.FC = () => {
           <Button size="small">Small</Button>
         </Space>
         <hr />
-        <strong>Default Button with icon</strong>
+        <strong>With icon</strong>
         With SVG Icon
         <Space>
+          <Button icon={<Icon name="panel" title="compare" />} />
+          <Button icon={<Icon name="panel" title="compare" />}>SVG icon</Button>
           <Button icon={<PoweroffOutlined />} />
-          <Button icon={<PoweroffOutlined />}>ButtonText</Button>
+          <Button icon={<PoweroffOutlined />}>SVG icon</Button>
         </Space>
-        With Font Icon
+        With font icon
         <Space>
           <Button icon={<Icon name="play" size="large" title="Play" />} />
           <Button icon={<Icon name="play" size="large" title="Play" />}>
-            ButtonWithLargeFontIcon
+            Large font icon
           </Button>
+          <Button icon={<Icon name="play" size="tiny" title="Play" />} />
           <Button icon={<Icon name="play" size="tiny" title="Play" />}>
-            ButtonWithTinyFontIcon
+            Tiny font icon
           </Button>
         </Space>
-        As Dropdown trigger
+        As Dropdown trigger with icon
         <Space>
           <Dropdown menu={menu}>
-            <Button icon={<Icon name="play" size="large" title="Play" />}>Font icon Button</Button>
+            <Button icon={<PoweroffOutlined />} />
           </Dropdown>
           <Dropdown menu={menu}>
-            <Button icon={<PoweroffOutlined />}>SVG icon Button</Button>
+            <Button icon={<PoweroffOutlined />}>SVG icon</Button>
+          </Dropdown>
+          <Dropdown menu={menu}>
+            <Button icon={<Icon name="play" size="large" title="Play" />} />
+          </Dropdown>
+          <Dropdown menu={menu}>
+            <Button icon={<Icon name="play" size="large" title="Play" />}>Font icon</Button>
           </Dropdown>
         </Space>
-        <hr />
-        <strong>Button with icon and text displayed in a column</strong>
+        With icon and text displayed in a column
         <Space>
-          <Button column icon={<PoweroffOutlined />}>
-            ColumnButtonWithIcon
+          <Button column icon={<PoweroffOutlined />} size="small">
+            Column Small
+          </Button>
+          <Button column icon={<PoweroffOutlined />} size="middle">
+            Column Middle
+          </Button>
+          <Button column icon={<PoweroffOutlined />} size="large">
+            Column Large
           </Button>
         </Space>
       </AntDCard>

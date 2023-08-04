@@ -34,28 +34,24 @@
   }
 }
 .column {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  height: 100%;
-  justify-content: center;
-
-  &:global(.ant-btn:not(.ant-btn-sm)) {
-    padding: 8px;
+  &:global(.ant-btn) {
+    height: 100%;
   }
-  &:global(.ant-btn > .anticon + span) {
-    margin-inline-start: 0;
+  > .content {
+    flex-direction: column;
+    margin: 8px 0;
   }
 }
-.withIcon {
+.content {
   align-items: center;
   display: flex;
+  gap: 8px;
+  height: 100%;
 
-  &.withChildren {
-    [class^='icon-']::before,
-    [class*=' icon-']::before {
-      margin-inline-end: 0.25em;
-    }
+  .icon,
+  .children {
+    align-items: center;
+    display: flex;
+    height: 100%;
   }
 }
