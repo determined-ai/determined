@@ -154,14 +154,6 @@ func (r *ResourceManager) GetDefaultAuxResourcePool(
 	return resp, r.Ask(ctx, msg, &resp)
 }
 
-// GetAgents gets the state of connected agents or reads similar information from the underlying RM.
-func (r *ResourceManager) GetAgents(
-	ctx actor.Messenger,
-	msg *apiv1.GetAgentsRequest,
-) (resp *apiv1.GetAgentsResponse, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
-}
-
 // GetJobQ gets the state of the job queue.
 func (r *ResourceManager) GetJobQ(
 	ctx actor.Messenger,
@@ -341,9 +333,60 @@ func (r ResourceManager) TaskContainerDefaults(
 	return fallbackConfig, nil
 }
 
-// SlotAddr calculates and returns a slot address.
-func SlotAddr(agentID, slotID string) actor.Address {
+func agentAddr(agentID string) actor.Address {
+	return sproto.AgentsAddr.Child(agentID)
+}
+
+func slotAddr(agentID, slotID string) actor.Address {
 	return sproto.AgentsAddr.Child(agentID).Child("slots").Child(slotID)
+}
+
+// GetAgents gets the state of connected agents or reads similar information from the underlying RM.
+func (r *ResourceManager) GetAgents(
+	ctx actor.Messenger,
+	msg *apiv1.GetAgentsRequest,
+) (resp *apiv1.GetAgentsResponse, err error) {
+	return resp, r.Ask(ctx, msg, &resp)
+}
+
+// GetAgent implements rm.ResourceManager.
+func (r *ResourceManager) GetAgent(
+	_ actor.Messenger,
+	req *apiv1.GetAgentRequest,
+) (resp *apiv1.GetAgentResponse, err error) {
+	return resp, AskAt(r.ref.System(), agentAddr(req.AgentId), req, &resp)
+}
+
+// EnableAgent implements rm.ResourceManager.
+func (r *ResourceManager) EnableAgent(
+	_ actor.Messenger,
+	req *apiv1.EnableAgentRequest,
+) (resp *apiv1.EnableAgentResponse, err error) {
+	return resp, AskAt(r.ref.System(), agentAddr(req.AgentId), req, &resp)
+}
+
+// DisableAgent implements rm.ResourceManager.
+func (r *ResourceManager) DisableAgent(
+	_ actor.Messenger,
+	req *apiv1.DisableAgentRequest,
+) (resp *apiv1.DisableAgentResponse, err error) {
+	return resp, AskAt(r.ref.System(), agentAddr(req.AgentId), req, &resp)
+}
+
+// GetSlots implements rm.ResourceManager.
+func (r *ResourceManager) GetSlots(
+	_ actor.Messenger,
+	req *apiv1.GetSlotsRequest,
+) (resp *apiv1.GetSlotsResponse, err error) {
+	return resp, AskAt(r.ref.System(), agentAddr(req.AgentId), req, &resp)
+}
+
+// GetSlot implements rm.ResourceManager.
+func (r *ResourceManager) GetSlot(
+	_ actor.Messenger,
+	req *apiv1.GetSlotRequest,
+) (resp *apiv1.GetSlotResponse, err error) {
+	return resp, AskAt(r.ref.System(), slotAddr(req.AgentId, req.SlotId), req, &resp)
 }
 
 // EnableSlot implements 'det slot enable...' functionality.
@@ -351,7 +394,7 @@ func (r ResourceManager) EnableSlot(
 	m actor.Messenger,
 	req *apiv1.EnableSlotRequest,
 ) (resp *apiv1.EnableSlotResponse, err error) {
-	return resp, AskAt(r.Ref().System(), SlotAddr(req.AgentId, req.SlotId), req, &resp)
+	return resp, AskAt(r.Ref().System(), slotAddr(req.AgentId, req.SlotId), req, &resp)
 }
 
 // DisableSlot implements 'det slot disable...' functionality.
@@ -359,5 +402,5 @@ func (r ResourceManager) DisableSlot(
 	m actor.Messenger,
 	req *apiv1.DisableSlotRequest,
 ) (resp *apiv1.DisableSlotResponse, err error) {
-	return resp, AskAt(r.Ref().System(), SlotAddr(req.AgentId, req.SlotId), req, &resp)
+	return resp, AskAt(r.Ref().System(), slotAddr(req.AgentId, req.SlotId), req, &resp)
 }
