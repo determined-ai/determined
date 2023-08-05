@@ -133,9 +133,14 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool, actionMenu }: P
     }, {} as JsonObject);
   }, [processedPool, isAux, pool]);
 
-  const onDropdown = useCallback(() => {
-    ResourcePoolBindingModal.open();
-  }, [ResourcePoolBindingModal]);
+  const onDropdown = useCallback(
+    (key: string) => {
+      if (key === 'bindings') {
+        ResourcePoolBindingModal.open();
+      }
+    },
+    [ResourcePoolBindingModal],
+  );
 
   const onSaveBindings = useCallback(
     (bindings: string[]) => {

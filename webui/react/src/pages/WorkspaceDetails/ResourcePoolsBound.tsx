@@ -6,6 +6,7 @@ import Icon from 'components/kit/Icon';
 import ResourcePoolCard from 'components/ResourcePoolCard';
 import Section from 'components/Section';
 import usePermissions from 'hooks/usePermissions';
+import { patchWorkspace } from 'services/api';
 import clusterStore from 'stores/cluster';
 import workspaceStore from 'stores/workspaces';
 import { ResourcePool } from 'types';
@@ -38,10 +39,17 @@ const ResourcePoolsBound: React.FC<Props> = ({ workspaceId }) => {
               icon: <Icon name="four-squares" title="set-default" />,
               key: 'set-default',
               label: 'Set as Default Resource Pool',
+              onClick: async () => {
+                await patchWorkspace({
+                  defaultAuxPool: pool.name,
+                  defaultComputePool: pool.name,
+                  id: workspaceId,
+                });
+              },
             },
           ]
         : [],
-    [canManageResourcePoolBindings],
+    [canManageResourcePoolBindings, workspaceId],
   );
 
   return (
