@@ -204,11 +204,15 @@ func (a *apiServer) getProjectColumnsByID(
 	}{}
 
 	if len(trialIDs) > 0 {
-		subQuery := db.BunSelectMetricGroupNames().ColumnExpr(`summary_metrics->jsonb_object_keys(summary_metrics)->
+		subQuery := db.BunSelectMetricGroupNames().ColumnExpr(
+			`summary_metrics->jsonb_object_keys(summary_metrics)->
 		jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))->>'type'
 		AS metric_type`).
 			Where("id IN (?)", bun.In(trialIDs)).Distinct()
-		trialsQuery := db.Bun().NewSelect().TableExpr("(?) AS stats", subQuery).ColumnExpr("*").ColumnExpr("ROW_NUMBER() OVER(PARTITION BY json_path, metric_name order by metric_type) AS count").Order("json_path").Order("metric_name")
+		trialsQuery := db.Bun().NewSelect().TableExpr("(?) AS stats", subQuery).
+			ColumnExpr("*").ColumnExpr(
+			"ROW_NUMBER() OVER(PARTITION BY json_path, metric_name order by metric_type) AS count").
+			Order("json_path").Order("metric_name")
 		err = trialsQuery.Scan(ctx, &summaryMetrics)
 		if err != nil {
 			return nil, err
@@ -221,7 +225,7 @@ func (a *apiServer) getProjectColumnsByID(
 			columns[len(columns)-1].Type = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
 		}
 		switch stats.JSONPath {
-		case "validation_metrics":
+		case metricGroupValidation:
 			columnType := parseMetricsType(stats.MetricType)
 			columns = append(columns, &projectv1.ProjectColumn{
 				Column:   fmt.Sprintf("validation.%s", stats.MetricName),
@@ -232,8 +236,8 @@ func (a *apiServer) getProjectColumnsByID(
 			columnType := parseMetricsType(stats.MetricType)
 			columnPrefix := stats.JSONPath
 			columnLocation := projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC
-			if stats.JSONPath == "avg_metrics" {
-				columnPrefix = "training"
+			if stats.JSONPath == metricGroupTraining {
+				columnPrefix = metricIdTraining
 				columnLocation = projectv1.LocationType_LOCATION_TYPE_TRAINING
 			}
 			// don't surface aggregates that don't make sense for non-numbers
@@ -456,7 +460,7 @@ func (a *apiServer) getProjectNumericMetricsRange(
 					if value.Type != "number" {
 						continue
 					}
-					if metricsGroup == "validation_metrics" {
+					if metricsGroup == metricGroupValidation {
 						metricsValue := value.Min
 						if !r.SmallerIsBetter {
 							metricsValue = value.Max
@@ -470,8 +474,8 @@ func (a *apiServer) getProjectNumericMetricsRange(
 					} else {
 						for _, aggregate := range SummaryMetricStatistics {
 							group := metricsGroup
-							if metricsGroup == "avg_metrics" {
-								group = "training"
+							if metricsGroup == metricGroupTraining {
+								group = metricIdTraining
 							}
 							tMetricsName := fmt.Sprintf("%s.%s.%s", group, name, aggregate)
 							var tMetricsValue interface{}
@@ -493,7 +497,6 @@ func (a *apiServer) getProjectNumericMetricsRange(
 							}
 						}
 					}
-
 				}
 			}
 		}

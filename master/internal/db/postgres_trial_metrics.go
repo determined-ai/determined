@@ -113,6 +113,10 @@ func BunSelectMetricGroupNames() *bun.SelectQuery {
 		Order("json_path").Order("metric_name")
 }
 
+// BunUpdateMetricMean calculates summary metrics mean, and return as.
+// id | summary_metrics
+//
+//	1 | { avg_metrics: { accuracy: { min: 1, max: 2, last: 2, mean: 1 } } }
 func BunUpdateMetricMean() *bun.SelectQuery {
 	return Bun().NewSelect().Table("trials").
 		TableExpr("jsonb_object_keys(summary_metrics) as metric_group").

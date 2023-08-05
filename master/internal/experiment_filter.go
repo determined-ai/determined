@@ -26,6 +26,11 @@ const (
 	doesNotContain     operator          = "notContains"
 	empty              operator          = "isEmpty"
 	notEmpty           operator          = "notEmpty"
+
+	metricGroupValidation string = "validation_metrics"
+	metricGroupTraining   string = "avg_metrics"
+	metricIdTraining      string = "training"
+	metricIdValidation    string = "validation"
 )
 
 type (
@@ -401,7 +406,8 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			} else {
 				q.Where(queryString, queryArgs...)
 			}
-		case projectv1.LocationType_LOCATION_TYPE_TRAINING.String(), projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC.String():
+		case projectv1.LocationType_LOCATION_TYPE_TRAINING.String(),
+			projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC.String():
 			queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
 			if e.Type != nil {
 				queryColumnType = *e.Type
@@ -479,6 +485,10 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 	return q, nil
 }
 
+// validation.loss -> validation_metrics, loss, ”
+// training.loss.min -> avg_metrics, loss, min
+// group_a.value.last -> group_a, value, last
+// group_b.value.a.last -> group_b, value.a, last .
 func parseMetricsName(str string) (string, string, string, error) {
 	if !strings.Contains(str, ".") {
 		return "", "", "", fmt.Errorf("%s is not a valid metrics id", str)
@@ -489,15 +499,17 @@ func parseMetricsName(str string) (string, string, string, error) {
 	}
 	metricGroup := slice[0]
 	metricQualifier := slice[len(slice)-1]
+	metricName := strings.Join(slice[1:len(slice)-1], ".")
 	if !slices.Contains(SummaryMetricStatistics, metricQualifier) {
 		metricQualifier = ""
+		metricName = strings.Join(slice[1:], ".")
 	}
-	metricName := strings.Join(slice[1:len(slice)-1], ".")
-	if metricGroup == "training" {
-		metricGroup = "avg_metrics"
+
+	if metricGroup == metricIdTraining {
+		metricGroup = metricGroupTraining
 	}
-	if metricGroup == "validation" {
-		metricGroup = "validation_metrics"
+	if metricGroup == metricIdValidation {
+		metricGroup = metricGroupValidation
 	}
 
 	return metricGroup, metricName, metricQualifier, nil
