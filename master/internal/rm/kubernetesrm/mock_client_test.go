@@ -19,6 +19,11 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+/* As of Aug. 7, 2023, the mock interfaces found
+here & used in pod_test.go cannot be replaced easily
+by mockery-generated mocks without overcomplicating the code
+& its readability. */
+
 type mockConfigMapInterface struct {
 	configMaps map[string]*k8sV1.ConfigMap
 	mux        sync.Mutex
