@@ -15196,10 +15196,12 @@ def get_GetResourcePools(
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
+    unbound: "typing.Optional[bool]" = None,
 ) -> "v1GetResourcePoolsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
+        "unbound": str(unbound).lower() if unbound is not None else None,
     }
     _resp = session._do_request(
         method="GET",
