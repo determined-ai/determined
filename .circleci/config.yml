@@ -1869,9 +1869,9 @@ jobs:
           paths:
             - test-unit-harness-gpu-pycov
 
-  test-unit-harness-pytorch2:
+  test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
+      - image: determinedai/environments:cuda-11.8-pytorch-2.0-gpu-8b7ced7
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -1884,13 +1884,37 @@ jobs:
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
       - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
       - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-pycov make -C harness test-pytorch
-      - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-pycov
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-gpu-pycov make -C harness test-pytorch2-gpu
+      - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
-            - test-unit-harness-pytorch2-pycov
+            - test-unit-harness-pytorch2-gpu-pycov
+
+  test-unit-harness-pytorch2-cpu:
+    docker:
+      - image: determinedai/environments:py-3.10-pytorch-2.0-cpu-8b7ced7
+    resource_class: determined-ai/container-runner-gpu
+    steps:
+      - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - checkout
+      - skip-if-docs-only
+      - skip-if-github-only
+      - skip-if-webui-only
+      - run: pip install mypy pytest coverage
+      - install-codecov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
+      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-cpu-pycov make -C harness test-pytorch2-cpu
+      - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-cpu-pycov
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-pytorch2-cpu-pycov
+
 
   test-unit-harness-gpu-parallel:
     docker:
@@ -2623,7 +2647,8 @@ workflows:
           filters: *any-upstream
       - test-unit-harness-cpu
       - test-unit-harness-tf2
-      - test-unit-harness-pytorch2
+      - test-unit-harness-pytorch2-cpu
+      - test-unit-harness-pytorch2-gpu
 
       - test-unit-harness-cpu-tf1:
           filters: *any-upstream
@@ -2667,7 +2692,8 @@ workflows:
             - test-unit-harness-gpu
             - test-unit-harness-gpu-parallel
             - test-unit-harness-tf2
-            - test-unit-harness-pytorch2
+            - test-unit-harness-pytorch2-cpu
+            - test-unit-harness-pytorch2-gpu
             - test-unit-model-hub
             - test-unit-storage
 
