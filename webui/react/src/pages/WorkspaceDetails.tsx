@@ -8,6 +8,7 @@ import Message from 'components/Message';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import TaskList from 'components/TaskList';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
@@ -47,7 +48,7 @@ export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 
 const WorkspaceDetails: React.FC = () => {
   const { rbacEnabled } = useObservable(determinedStore.info);
-
+  const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], loadableUsers);
   const { tab, workspaceId: workspaceID } = useParams<Params>();
@@ -198,7 +199,7 @@ const WorkspaceDetails: React.FC = () => {
       });
     }
 
-    if (canViewWorkspace({ workspace })) {
+    if (rpBindingFlagOn && canViewWorkspace({ workspace })) {
       items.push({
         children: <ResourcePoolsBound workspace={workspace} />,
         key: WorkspaceDetailsTab.ResourcePools,
@@ -219,6 +220,7 @@ const WorkspaceDetails: React.FC = () => {
     usersAssignedDirectly,
     workspace,
     workspaceAssignments,
+    rpBindingFlagOn,
   ]);
 
   const canViewWorkspaceFlag = canViewWorkspace({ workspace: { id } });
