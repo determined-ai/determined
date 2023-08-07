@@ -15,8 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/internal/task"
 
 	"github.com/stretchr/testify/mock"
@@ -36,12 +34,15 @@ import (
 )
 
 func TestTrial(t *testing.T) {
-	system, _, rID, tr, self, alloc := setup(t)
+	_, db, rID, tr, alloc := setup(t)
 
 	// Pre-scheduled stage.
-	require.NoError(t, system.Ask(self,
-		model.StateWithReason{State: model.ActiveState}).Error())
-	require.NoError(t, system.Ask(self, trialSearcherState{
+	db.On("UpdateTrialRunID", 0, 1).Return(nil)
+	db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
+	require.NoError(t, tr.PatchState(model.StateWithReason{State: model.ActiveState}))
+	// require.NoError(t, system.Ask(self,
+	// 	model.StateWithReason{State: model.ActiveState}).Error())
+	require.NoError(t, tr.PatchSearcherState(trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
@@ -49,12 +50,31 @@ func TestTrial(t *testing.T) {
 		},
 		Complete: false,
 		Closed:   true,
-	}).Error())
+	}))
+	// require.NoError(t, system.Ask(self, trialSearcherState{
+	// 	Create: searcher.Create{RequestID: rID},
+	// 	Op: searcher.ValidateAfter{
+	// 		RequestID: rID,
+	// 		Length:    10,
+	// 	},
+	// 	Complete: false,
+	// 	Closed:   true,
+	// }).Error())
 	require.True(t, alloc.AssertExpectations(t))
 	require.NotNil(t, tr.allocationID)
 
 	// Running stage.
-	require.NoError(t, system.Ask(self, trialSearcherState{
+	db.On("UpdateTrial", 0, model.StoppingCompletedState).Return(nil)
+	// require.NoError(t, system.Ask(self, trialSearcherState{
+	// 	Create: searcher.Create{RequestID: rID},
+	// 	Op: searcher.ValidateAfter{
+	// 		RequestID: rID,
+	// 		Length:    10,
+	// 	},
+	// 	Complete: true,
+	// 	Closed:   true,
+	// }).Error())
+	require.NoError(t, tr.PatchSearcherState(trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
@@ -62,15 +82,14 @@ func TestTrial(t *testing.T) {
 		},
 		Complete: true,
 		Closed:   true,
-	}).Error())
-
-	dbTrial, err := db.TrialByID(context.TODO(), tr.id)
-	require.NoError(t, err)
-	require.Equal(t, dbTrial.State, model.StoppingCompletedState)
+	}))
+	require.True(t, db.AssertExpectations(t))
 
 	// Terminating stage.
-	system.Tell(self, &task.AllocationExited{})
-	require.NoError(t, self.AwaitTermination())
+	db.On("UpdateTrial", 0, model.CompletedState).Return(nil)
+	tr.Exit()
+	// system.Tell(self, &task.AllocationExited{})
+	// require.NoError(t, self.AwaitTermination())
 	require.True(t, model.TerminalStates[tr.state])
 
 	dbTrial, err = db.TrialByID(context.TODO(), tr.id)
@@ -79,12 +98,24 @@ func TestTrial(t *testing.T) {
 }
 
 func TestTrialRestarts(t *testing.T) {
-	system, pgDB, rID, tr, self, _ := setup(t)
+	_, db, rID, tr, _ := setup(t)
 
 	// Pre-scheduled stage.
-	require.NoError(t, system.Ask(self,
-		model.StateWithReason{State: model.ActiveState}).Error())
-	require.NoError(t, system.Ask(self, trialSearcherState{
+	db.On("UpdateTrialRunID", 0, 1).Return(nil)
+	db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
+	// require.NoError(t, system.Ask(self,
+	// 	model.StateWithReason{State: model.ActiveState}).Error())
+	require.NoError(t, tr.PatchState(model.StateWithReason{State: model.ActiveState}))
+	// require.NoError(t, system.Ask(self, trialSearcherState{
+	// 	Create: searcher.Create{RequestID: rID},
+	// 	Op: searcher.ValidateAfter{
+	// 		RequestID: rID,
+	// 		Length:    10,
+	// 	},
+	// 	Complete: false,
+	// 	Closed:   true,
+	// }).Error())
+	require.NoError(t, tr.PatchSearcherState(trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
@@ -92,14 +123,24 @@ func TestTrialRestarts(t *testing.T) {
 		},
 		Complete: false,
 		Closed:   true,
-	}).Error())
+	}))
+	require.True(t, db.AssertExpectations(t))
 
 	for i := 0; i <= tr.config.MaxRestarts(); i++ {
 		require.NotNil(t, tr.allocationID)
 		require.Equal(t, i, tr.restarts)
 
-		system.Tell(self, &task.AllocationExited{Err: errors.New("bad stuff went down")})
-		system.Ask(self, actor.Ping{}).Get() // sync
+		db.On("UpdateTrialRestarts", 0, i+1).Return(nil)
+		if i == tr.config.MaxRestarts() {
+			db.On("UpdateTrial", 0, model.ErrorState).Return(nil)
+		} else {
+			// For the next go-around, when we update trial run ID.
+			db.On("UpdateTrialRunID", 0, i+2).Return(nil)
+		}
+
+		// system.Tell(self, &task.AllocationExited{Err: errors.New("bad stuff went down")})
+		// system.Ask(self, actor.Ping{}).Get() // sync
+		tr.Exit()
 
 		if i == tr.config.MaxRestarts() {
 			dbTrial, err := db.TrialByID(context.TODO(), tr.id)
@@ -112,7 +153,7 @@ func TestTrialRestarts(t *testing.T) {
 			require.Equal(t, i+2, runID)
 		}
 	}
-	require.NoError(t, self.AwaitTermination())
+	// require.NoError(t, self.AwaitTermination())
 	require.True(t, model.TerminalStates[tr.state])
 }
 
@@ -121,7 +162,6 @@ func setup(t *testing.T) (
 	*db.PgDB,
 	model.RequestID,
 	*trial,
-	*actor.Ref,
 	*allocationmocks.AllocationService,
 ) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
@@ -174,5 +214,5 @@ func setup(t *testing.T) (
 		nil, false, nil, nil, nil,
 	)
 	// self := system.MustActorOf(actor.Addr("trial"), tr)
-	return system, a.m.db, rID, tr, nil, &as
+	return system, a.m.db, rID, tr, &as
 }
