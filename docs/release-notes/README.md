@@ -87,6 +87,33 @@ classifying the release note according to one of the following categories:
        * internal project status or plans
        * Jira issue or PR identifiers
 
+
+   * Use double backticks not single backticks for inline code samples.
+
+     * Incorrect
+
+     ```markdown
+     The `foo(bar)` endpoint no longer accepts `waldo` and now accepts a `garply`.
+     ```
+
+     * Correct
+
+     ```markdown
+     The ``foo(bar)`` endpoint no longer accepts ``waldo`` and now accepts ``garply``.
+     ```
+       
+   * It is better to spell out acronyms or abbreviations. For example:
+
+     * Incorrect
+
+     k8s: Fix a crash affecting namespaces.
+
+     * Correct
+
+     Kubernetes: Fix a crash affecting namespaces.
+
+
+
 ### Release Note Example
 
 ```markdown
