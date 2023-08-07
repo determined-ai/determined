@@ -18,17 +18,24 @@ interface Props {
 
 const ResourcePoolsBound: React.FC<Props> = ({ workspace }) => {
   const resourcePools = useObservable(clusterStore.resourcePools);
+  const unBoundResourcePools = useObservable(clusterStore.unBoundResourcePools);
   const boundResourcePoolIds = useObservable(workspaceStore.boundResourcePools(workspace.id));
   const { canManageResourcePoolBindings } = usePermissions();
 
   useEffect(() => {
     workspaceStore.fetchAvailableResourcePools(workspace.id);
+    clusterStore.fetchUnboundResourcePools();
   }, [workspace.id]);
 
-  const boundResourcePools = useMemo(() => {
+  const boundResourcePools: ResourcePool[] = useMemo(() => {
     if (!Loadable.isLoaded(resourcePools) || !boundResourcePoolIds) return [];
-    return resourcePools.data.filter((rp) => boundResourcePoolIds.includes(rp.name));
-  }, [resourcePools, boundResourcePoolIds]);
+    const unBoundResourcePoolIds = Loadable.isLoaded(unBoundResourcePools)
+      ? unBoundResourcePools.data.map((p) => p.name)
+      : [];
+    return resourcePools.data.filter(
+      (rp) => boundResourcePoolIds.includes(rp.name) && !unBoundResourcePoolIds.includes(rp.name),
+    );
+  }, [resourcePools, boundResourcePoolIds, unBoundResourcePools]);
 
   const renderDefaultLabel = useCallback(
     (pool: ResourcePool) => {
@@ -83,25 +90,29 @@ const ResourcePoolsBound: React.FC<Props> = ({ workspace }) => {
 
   return (
     <>
-      <Section title="Bound Resource Pools">
-        <Card.Group size="medium">
-          {boundResourcePools.map((rp, idx) => (
-            <ResourcePoolCard
-              actionMenu={actionMenu(rp)}
-              defaultLabel={renderDefaultLabel(rp)}
-              key={idx}
-              resourcePool={rp}
-            />
-          ))}
-        </Card.Group>
-      </Section>
-      <Section title="Shared Resource Pools">
-        <Card.Group size="medium">
-          {boundResourcePools.map((rp, idx) => (
-            <ResourcePoolCard defaultLabel={' '} key={idx} resourcePool={rp} />
-          ))}
-        </Card.Group>
-      </Section>
+      {boundResourcePools.length > 0 && (
+        <Section title="Bound Resource Pools">
+          <Card.Group size="medium">
+            {boundResourcePools.map((rp, idx) => (
+              <ResourcePoolCard
+                actionMenu={actionMenu(rp)}
+                defaultLabel={renderDefaultLabel(rp)}
+                key={idx}
+                resourcePool={rp}
+              />
+            ))}
+          </Card.Group>
+        </Section>
+      )}
+      {Loadable.isLoaded(unBoundResourcePools) && (
+        <Section title="Shared Resource Pools">
+          <Card.Group size="medium">
+            {unBoundResourcePools.data.map((rp: ResourcePool, idx: number) => (
+              <ResourcePoolCard defaultLabel={' '} key={idx} resourcePool={rp} />
+            ))}
+          </Card.Group>
+        </Section>
+      )}
     </>
   );
 };

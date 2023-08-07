@@ -282,6 +282,10 @@ export interface LaunchJupyterLabParams {
   workspaceId?: number;
 }
 
+export interface GetResourcePoolsParams extends PaginationParams {
+  unBound?: boolean;
+}
+
 export interface GetCommandsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
   users?: string[];

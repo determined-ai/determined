@@ -98,6 +98,7 @@ const updateIfChanged = <T, V extends WritableObservable<T>>(o: V, next: T) =>
 class ClusterStore extends PollingStore {
   #agents: WritableObservable<Loadable<Agent[]>> = observable(NotLoaded);
   #resourcePools: WritableObservable<Loadable<ResourcePool[]>> = observable(NotLoaded);
+  #unBoundResourcePools: WritableObservable<Loadable<ResourcePool[]>> = observable(NotLoaded);
   #resourcePoolBindings: WritableObservable<Map<string, number[]>> = observable(Map());
 
   public readonly agents = this.#agents.readOnly();
@@ -108,6 +109,8 @@ class ClusterStore extends PollingStore {
       return pools.sort((a, b) => a.name.localeCompare(b.name));
     });
   });
+
+  public readonly unBoundResourcePools = this.#unBoundResourcePools.readOnly();
 
   public readonly clusterOverview = this.#agents.select((agents) =>
     Loadable.map(agents, (agents) => {
@@ -166,6 +169,18 @@ class ClusterStore extends PollingStore {
     getResourcePools({}, { signal: signal ?? canceler.signal })
       .then((response) => {
         updateIfChanged(this.#resourcePools, Loaded(response));
+      })
+      .catch(handleError);
+
+    return () => canceler.abort();
+  }
+
+  public fetchUnboundResourcePools(signal?: AbortSignal): () => void {
+    const canceler = new AbortController();
+
+    getResourcePools({ unBound: true }, { signal: signal ?? canceler.signal })
+      .then((response) => {
+        updateIfChanged(this.#unBoundResourcePools, Loaded(response));
       })
       .catch(handleError);
 
