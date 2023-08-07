@@ -625,8 +625,8 @@ export interface MetricDatapointEpoch {
 export interface MetricContainer {
   data: MetricDatapoint[];
   epochs?: MetricDatapointEpoch[];
+  group: string;
   time?: MetricDatapointTime[];
-  type: MetricType;
 }
 
 export interface TrialSummary extends TrialItem {

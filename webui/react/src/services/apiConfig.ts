@@ -949,11 +949,12 @@ export const timeSeries: DetApi<
     return detApi.Experiments.compareTrials(
       params.trialIds,
       params.maxDatapoints,
-      params.metricNames.map((metric) => metric.name),
+      undefined,
       params.startBatches,
       params.endBatches,
       params.metricType ? Type.metricTypeParamMap[params.metricType] : 'METRIC_TYPE_UNSPECIFIED',
       undefined,
+      params.metrics.map((metric) => [metric.group, metric.name].join('.')),
     );
   },
 };
@@ -1024,9 +1025,9 @@ export const getTrialWorkloads: DetApi<
       WorkloadFilterParamMap[params.filter || 'FILTER_OPTION_UNSPECIFIED'] ||
         'FILTER_OPTION_UNSPECIFIED',
       undefined,
-      undefined,          // Specifically set to `undefined` to return custom group metrics.
+      undefined, // Specifically set to `undefined` to return custom group metrics.
       undefined,
-      true,   // remove deleted checkpoints
+      true, // remove deleted checkpoints
     ),
 };
 

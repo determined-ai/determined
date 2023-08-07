@@ -134,7 +134,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           filter: settings.filter,
           id: trial.id,
           limit: settings.tableLimit,
-          // metricType: metricKeyToMetric(settings.sortKey)?.group || undefined,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortKey: metricKeyToMetric(settings.sortKey)?.name || undefined,

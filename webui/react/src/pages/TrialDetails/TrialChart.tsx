@@ -44,7 +44,7 @@ const TrialChart: React.FC<Props> = ({
       try {
         const summary = await timeSeries({
           maxDatapoints: screen.width > 1600 ? 1500 : 1000,
-          metricNames: metricNames,
+          metrics: metricNames,
           startBatches: 0,
           trialIds: [trialId],
         });
@@ -80,7 +80,7 @@ const TrialChart: React.FC<Props> = ({
       yValues[index] = {};
 
       const summary = Loadable.getOrElse([], trialSummary);
-      const mWrapper = summary.find((mContainer) => mContainer.type === metric.group);
+      const mWrapper = summary.find((mContainer) => mContainer.group === metric.group);
       if (!mWrapper?.data) return;
 
       mWrapper.data.forEach((avgMetrics) => {

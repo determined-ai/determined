@@ -632,6 +632,19 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
   };
 };
 
+/**
+ * Group metrics get returned as a string version of float values.
+ * This is needed to bridge the gap in the mean time.
+ */
+const decodeMetricValues = (data: unknown): Record<string, number> => {
+  if (!isObject(data)) return {};
+  const dataObj = data as Record<string, unknown>;
+  return Object.keys(dataObj).reduce((acc, key) => {
+    acc[key] = isNumber(dataObj[key]) ? (dataObj[key] as number) : parseFloat(`${dataObj[key]}`);
+    return acc;
+  }, {} as Record<string, number>);
+};
+
 const decodeDownsampledMetrics = (data: Sdk.V1DownsampledMetrics[]): types.MetricContainer[] => {
   return data.map((m) => {
     const metrics: types.MetricContainer = {
@@ -639,12 +652,9 @@ const decodeDownsampledMetrics = (data: Sdk.V1DownsampledMetrics[]): types.Metri
         batches: pt.batches,
         epoch: pt.epoch,
         time: pt.time,
-        values: pt.values,
+        values: decodeMetricValues(pt.values),
       })),
-      type:
-        m.type === Sdk.V1MetricType.TRAINING
-          ? types.MetricType.Training
-          : types.MetricType.Validation,
+      group: m.group,
     };
     return metrics;
   });
