@@ -40,7 +40,7 @@ JOB_SUFFIXES = [
     "tf2-cpu",
     "tf28-cpu",
     "pt-cpu",
-    "pt2-cpu"
+    "pt2-cpu",
     "tf2-gpu",
     "tf28-gpu",
     "pt-gpu",
