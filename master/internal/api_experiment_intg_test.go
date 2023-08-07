@@ -613,7 +613,9 @@ func TestSearchExperiments(t *testing.T) {
 	require.Equal(t, int32(noValidationsExp.ID), resp.Experiments[1].Experiment.Id)
 
 	// Validations returned properly.
-	metricTrial, _, valMetrics := createTestTrialWithMetrics(ctx, t, api, curUser, true)
+	metricTrial, metrics := createTestTrialWithMetrics(ctx, t, api, curUser, true)
+	valMetrics := metrics[model.ValidationMetricGroup]
+
 	// Move experiment to our project.
 	_, err = db.Bun().NewUpdate().Table("experiments").
 		Set("project_id = ?", projectID).
