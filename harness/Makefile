@@ -51,6 +51,10 @@ test-gpu-deepspeed:
 test-gpu-parallel:
 	coverage run -m pytest -v --runslow --durations=0 -m tests/experiment -m "gpu_parallel" tests/experiment --ignore=tests/experiment/integrations
 
+.PHONY: test-pytorch
+test-pytorch:
+	coverage run -m pytest -v --runslow --durations=0 -m tests/experiment -m "not gpu_parallel" tests/experiment/pytorch
+
 .PHONY: test
 test:
 	coverage run -m pytest -v --runslow --durations=0 tests

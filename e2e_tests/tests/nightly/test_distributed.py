@@ -11,7 +11,7 @@ from tests import experiment as exp
 
 
 @pytest.mark.distributed
-@pytest.mark.parametrize("image_type", ["PT", "TF2"])
+@pytest.mark.parametrize("image_type", ["PT", "TF2", "PT2"])
 def test_mnist_pytorch_distributed(image_type: str) -> None:
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
