@@ -964,22 +964,23 @@ class TestPyTorchTrial:
         checkpoint_batches = 5
         validation_batches = 10
 
-        mock_set_enable_tensorboard_logging = mock.MagicMock()
+        with mock.patch.object(
+            pytorch.PyTorchTrialContext, "set_enable_tensorboard_logging", return_value=None
+        ) as mock_method:
+            with pytorch.init(
+                hparams=self.hparams, enable_tensorboard_logging=enable_tensorboard_logging
+            ) as train_context:
+                trial = pytorch_onevar_model.OneVarTrialCallbacks(train_context)
+                trainer = pytorch.Trainer(trial, train_context)
+                trainer.fit(
+                    max_length=pytorch.Epoch(2),
+                    checkpoint_period=pytorch.Batch(checkpoint_batches),
+                    validation_period=pytorch.Batch(validation_batches),
+                )
 
-        with pytorch.init(hparams=self.hparams) as train_context:
-            trial = pytorch_onevar_model.OneVarTrialCallbacks(train_context)
-            train_context.set_enable_tensorboard_logging = mock_set_enable_tensorboard_logging
-            trainer = pytorch.Trainer(trial, train_context)
-            trainer.fit(
-                max_length=pytorch.Epoch(2),
-                checkpoint_period=pytorch.Batch(checkpoint_batches),
-                validation_period=pytorch.Batch(validation_batches),
-                enable_tensorboard_logging=enable_tensorboard_logging,
-            )
-
-        assert mock_set_enable_tensorboard_logging.call_count == expected_call
-        if expected_call == 1:
-            mock_set_enable_tensorboard_logging.assert_called_once_with(enable_tensorboard_logging)
+            assert mock_method.call_count == expected_call
+            if expected_call == 1:
+                mock_method.assert_called_once_with(enable_tensorboard_logging)
 
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel

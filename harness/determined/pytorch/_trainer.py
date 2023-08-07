@@ -72,7 +72,6 @@ class Trainer:
         latest_checkpoint: Optional[str] = None,
         step_zero_validation: bool = False,
         test_mode: bool = False,
-        enable_tensorboard_logging: bool = True,
     ) -> None:
         """
         ``fit()`` trains a ``PyTorchTrial`` configured from the ``Trainer`` and handles
@@ -169,12 +168,6 @@ class Trainer:
             if global_batch_size:
                 global_batch_size = int(global_batch_size)
 
-        # Tensorboard logging is enabled by default
-        # We only need to call set_enable_tensorboard_logging on the trial object of user pass in
-        # enable_tensorboard_logging = False
-        if not enable_tensorboard_logging:
-            self._context.set_enable_tensorboard_logging(enable_tensorboard_logging)
-
         trial_controller = pytorch._PyTorchTrialController(
             trial_inst=self._trial,
             context=self._context,
@@ -237,6 +230,7 @@ def init(
     exp_conf: Optional[Dict[str, Any]] = None,
     distributed: Optional[core.DistributedContext] = None,
     aggregation_frequency: int = 1,
+    enable_tensorboard_logging: bool = True,
 ) -> Iterator[pytorch.PyTorchTrialContext]:
     """
     Creates a PyTorchTrialContext for use with a PyTorchTrial. All trainer.* calls must be within
@@ -296,5 +290,11 @@ def init(
             managed_training=managed_training,
             debug_enabled=debug_enabled,
         )
+
+        # Tensorboard logging is enabled by default
+        # We only need to call set_enable_tensorboard_logging on the trial object of user pass in
+        # enable_tensorboard_logging = False
+        if not enable_tensorboard_logging:
+            context.set_enable_tensorboard_logging(enable_tensorboard_logging)
 
         yield context
