@@ -316,7 +316,7 @@ func (s *SingularityClient) RunContainer(
 		if s.isApptainer {
 			// Using --userns to avoid this error when using --nvccli:
 			// FATAL:   nvidia-container-cli not allowed in setuid mode
-			// (casablanca, apptainer version 1.2.2-1)
+			// (e.g.: casablanca, apptainer version 1.2.2-1)
 			args = append(args, "--userns")
 		}
 	}
