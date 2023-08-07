@@ -56,13 +56,14 @@ type SingularityContainer struct {
 
 // SingularityClient implements ContainerRuntime.
 type SingularityClient struct {
-	log        *logrus.Entry
-	opts       options.SingularityOptions
-	mu         sync.Mutex
-	wg         waitgroupx.Group
-	containers map[cproto.ID]*SingularityContainer
-	agentTmp   string
-	debug      bool
+	log         *logrus.Entry
+	opts        options.SingularityOptions
+	mu          sync.Mutex
+	wg          waitgroupx.Group
+	containers  map[cproto.ID]*SingularityContainer
+	agentTmp    string
+	debug       bool
+	isApptainer bool
 }
 
 // New returns a new singularity client, which launches and tracks containers.
@@ -81,12 +82,13 @@ func New(opts options.Options) (*SingularityClient, error) {
 	}
 
 	return &SingularityClient{
-		log:        logrus.WithField("compotent", "singularity"),
-		opts:       opts.SingularityOptions,
-		wg:         waitgroupx.WithContext(context.Background()),
-		containers: make(map[cproto.ID]*SingularityContainer),
-		agentTmp:   agentTmp,
-		debug:      opts.Debug,
+		log:         logrus.WithField("compotent", "singularity"),
+		opts:        opts.SingularityOptions,
+		wg:          waitgroupx.WithContext(context.Background()),
+		containers:  make(map[cproto.ID]*SingularityContainer),
+		agentTmp:    agentTmp,
+		debug:       opts.Debug,
+		isApptainer: opts.ContainerRuntime == options.ApptainerContainerRuntime,
 	}, nil
 }
 
@@ -310,9 +312,13 @@ func (s *SingularityClient) RunContainer(
 		}
 	}
 	if len(cudaVisibleDevices) > 0 {
-		// Using --userns to avoid this error when using --nvccli:
-		// FATAL:   nvidia-container-cli not allowed in setuid mode
-		args = append(args, "--nv", "--nvccli", "--userns", "--contain")
+		args = append(args, "--nv", "--nvccli", "--contain")
+		if s.isApptainer {
+			// Using --userns to avoid this error when using --nvccli:
+			// FATAL:   nvidia-container-cli not allowed in setuid mode
+			// (casablanca, apptainer version 1.2.2-1)
+			args = append(args, "--userns")
+		}
 	}
 
 	args = capabilitiesToSingularityArgs(req, args)
