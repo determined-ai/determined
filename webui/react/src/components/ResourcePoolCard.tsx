@@ -36,6 +36,7 @@ interface Props {
   poolStats?: V1RPQueueStat | undefined;
   resourcePool: ResourcePool;
   size?: ShirtSize;
+  defaultLabel?: string;
 }
 
 const poolAttributes = [
@@ -89,7 +90,11 @@ export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
   return <img className={css['rp-type-logo']} src={iconSrc} />;
 };
 
-const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool, actionMenu }: Props) => {
+const ResourcePoolCard: React.FC<Props> = ({
+  resourcePool: pool,
+  actionMenu,
+  defaultLabel,
+}: Props) => {
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
 
@@ -163,9 +168,12 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool, actionMenu }: P
               <div className={css.name}>{pool.name}</div>
             </div>
             <div className={css.default}>
-              {(pool.defaultAuxPool && pool.defaultComputePool && <span>Default</span>) ||
-                (pool.defaultComputePool && <span>Default Compute</span>) ||
-                (pool.defaultAuxPool && <span>Default Aux</span>)}
+              <span>
+                {defaultLabel ||
+                  (pool.defaultAuxPool && pool.defaultComputePool && 'Default') ||
+                  (pool.defaultComputePool && 'Default Compute') ||
+                  (pool.defaultAuxPool && 'Default Aux')}
+              </span>
               {pool.description && <Icon name="info" showTooltip title={pool.description} />}
             </div>
           </div>

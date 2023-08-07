@@ -200,7 +200,7 @@ const WorkspaceDetails: React.FC = () => {
 
     if (canViewWorkspace({ workspace })) {
       items.push({
-        children: <ResourcePoolsBound workspaceId={workspace.id} />,
+        children: <ResourcePoolsBound workspace={workspace} />,
         key: WorkspaceDetailsTab.ResourcePools,
         label: 'Resource Pools',
       });
