@@ -1,4 +1,3 @@
-import inspect
 import io
 import os
 import sys
@@ -6,7 +5,7 @@ import tempfile
 import uuid
 from collections import namedtuple
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Sequence
 from unittest import mock
 
 import pytest
@@ -451,7 +450,7 @@ def test_colored_str_output(case: Case) -> None:
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="requires Python3.8 or higher")
 def test_dev_bindings() -> None:
-    from determined.cli.dev import _bindings_sig, _can_be_called_via_cli, _is_primitive_parameter
+    from determined.cli.dev import _bindings_sig, _can_be_called_via_cli, _is_supported_annotation
 
     _, params = _bindings_sig(bindings.get_GetExperiment)
     assert _can_be_called_via_cli(params) is True, params
@@ -461,18 +460,12 @@ def test_dev_bindings() -> None:
     annots = [
         str,
         Optional[str],
-        # unsupported.
-        # Sequence[str],
-        # Optional[Sequence[str]],
+        Sequence[str],
+        Optional[Sequence[str]],
     ]
     for a in annots:
-        assert (
-            _is_primitive_parameter(
-                inspect.Parameter("x", inspect.Parameter.POSITIONAL_ONLY, annotation=a)
-            )
-            is True
-        ), a
+        assert _is_supported_annotation(a) is True, a
 
-    # _, params = _bindings_sig(bindings.get_ExpMetricNames)
-    # for p in params:
-    #     assert _is_primitive_parameter(p) is True, p
+    _, params = _bindings_sig(bindings.get_ExpMetricNames)
+    for p in params:
+        assert _is_supported_annotation(p.annotation) is True, p

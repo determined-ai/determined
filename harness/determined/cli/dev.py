@@ -1,6 +1,7 @@
 import argparse
 import collections
 import inspect
+import json
 import re
 import shlex
 import shutil
@@ -105,7 +106,7 @@ def unwrap_optional(annotation: Any) -> Any:
     return annotation
 
 
-def _is_primitive_annotation(a: Any) -> bool:
+def _is_supported_annotation(a: Any) -> bool:
     try:
         from typing import get_args, get_origin  # type: ignore
     except ImportError:
@@ -118,16 +119,11 @@ def _is_primitive_annotation(a: Any) -> bool:
     origin = get_origin(a)
     args = get_args(a)
 
-    if origin in [list, tuple, set, frozenset, abc_Sequence]:
-        return False  # TODO(DET-9730): we don't support the cli interface for these yet.
+    if origin in [list, abc_Sequence]:
         if args is not None:
-            return all(_is_primitive_annotation(arg) for arg in args)
+            return all(_is_supported_annotation(arg) for arg in args)
 
     return False
-
-
-def _is_primitive_parameter(p: inspect.Parameter) -> bool:
-    return _is_primitive_annotation(p.annotation)
 
 
 def _can_be_called_via_cli(params: List[inspect.Parameter]) -> bool:
@@ -137,7 +133,7 @@ def _can_be_called_via_cli(params: List[inspect.Parameter]) -> bool:
     for p in params:
         if p.default is not inspect.Parameter.empty:
             continue
-        if not _is_primitive_parameter(p):
+        if not _is_supported_annotation(p.annotation):
             return False
     return True
 
@@ -153,7 +149,7 @@ def _get_available_bindings(
         if not show_unusable:
             if not _can_be_called_via_cli(params):
                 continue
-            params = [p for p in params if _is_primitive_parameter(p)]
+            params = [p for p in params if _is_supported_annotation(p.annotation)]
         rv.append((name, params))
 
     rv.sort(key=lambda x: x[0])
@@ -170,13 +166,21 @@ def list_bindings(args: Namespace) -> None:
 
 def parse_param_value(param: inspect.Parameter, value: str) -> Any:
     annot = unwrap_optional(param.annotation)
-    if annot is float:
+
+    if annot is str:
+        return value
+    elif annot is float:
         return float(value)
     elif annot is int:
         return int(value)
     elif annot is bool:
         assert value.lower() in ["true", "false"]
         return value.lower() == "true"
+    try:
+        value = json.loads(value)
+    except json.JSONDecodeError:
+        raise ValueError(f"Invalid JSON for {param.name}")
+
     return value
 
 
