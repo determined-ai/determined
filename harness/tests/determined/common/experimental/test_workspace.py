@@ -92,7 +92,7 @@ def test_workspace_constructor_doesnt_populate_name_from_id(standard_session: ap
 
 
 @responses.activate
-def test_get_available_resource_pools_single_response(
+def test_workspace_get_available_resource_pools_reads_single_binding_no_pagination(
     standard_session: api.Session,
     single_item_workspaces: bindings.v1GetWorkspacesResponse,
     single_item_rps_bound_to_workspace: bindings.v1ListRPsBoundToWorkspaceResponse,
