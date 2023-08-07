@@ -108,6 +108,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_sitemap",
     "sphinx_reredirects",
+    "sphinx_tabs.tabs",
     "myst_parser",
 ]
 
