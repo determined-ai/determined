@@ -1,4 +1,4 @@
-import { array, boolean, literal, number, record, string, type, TypeOf, union } from 'io-ts';
+import { array, boolean, literal, number, partial, record, string, TypeOf, union } from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { SettingsConfig } from 'hooks/useSettings';
@@ -114,7 +114,7 @@ export interface F_ExperimentListGlobalSettings {
 
 const ioExpListView = union([literal('scroll'), literal('paged')]);
 
-export const experimentListGlobalSettingsConfig = type({
+export const experimentListGlobalSettingsConfig = partial({
   expListView: ioExpListView,
   rowHeight: ioRowHeight,
 });
