@@ -2,12 +2,12 @@ import React, { useMemo, useState } from 'react';
 
 import { ChartGrid, ChartsProps, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
+import Spinner from 'components/kit/Spinner';
 import { UPlotPoint } from 'components/UPlot/types';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { useCheckpointFlow } from 'hooks/useModal/Checkpoint/useCheckpointFlow';
-import usePermissions from 'hooks/usePermissions';
 import {
   CheckpointWorkloadExtended,
   ExperimentBase,
@@ -38,9 +38,6 @@ type XAxisVal = number;
 export type CheckpointsDict = Record<XAxisVal, CheckpointWorkloadExtended>;
 
 const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
-  const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
-    workspace: { id: experiment.workspaceId },
-  });
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
 
   const checkpoint: CheckpointWorkloadExtended | undefined = useMemo(
@@ -182,7 +179,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   return (
     <>
-      {showExperimentArtifacts ? (
+      {isMetricsLoaded ? (
         <ChartGrid
           chartsProps={chartsProps}
           handleError={handleError}
@@ -191,7 +188,9 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
           xAxis={xAxis}
           onXAxisChange={setXAxis}
         />
-      ) : null}
+      ) : (
+        <Spinner spinning />
+      )}
       {contextHolders.map((contextHolder, i) => (
         <React.Fragment key={i}>{contextHolder}</React.Fragment>
       ))}

@@ -1,5 +1,5 @@
 import type { TabsProps } from 'antd';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
@@ -9,6 +9,7 @@ import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
+import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
@@ -67,6 +68,10 @@ const TrialDetailsComp: React.FC = () => {
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const basePath = paths.trialDetails(trialId, experimentId);
   const trial = trialDetails.data;
+
+  const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
+    workspace: { id: experiment?.workspaceId ?? 0 },
+  });
 
   const fetchExperimentDetails = useCallback(async () => {
     if (!trial) return;
@@ -132,16 +137,11 @@ const TrialDetailsComp: React.FC = () => {
       return [];
     }
 
-    return [
+    const tabs: Array<{ children: ReactNode; key: TabType; label: string }> = [
       {
         children: <TrialDetailsOverview experiment={experiment} trial={trial} />,
         key: TabType.Overview,
         label: 'Overview',
-      },
-      {
-        children: <TrialDetailsMetrics experiment={experiment} trial={trial} />,
-        key: TabType.Metrics,
-        label: 'Metrics',
       },
       {
         children: isSingleTrialExperiment(experiment) ? (
@@ -167,7 +167,17 @@ const TrialDetailsComp: React.FC = () => {
         label: 'Logs',
       },
     ];
-  }, [experiment, trial]);
+
+    if (showExperimentArtifacts) {
+      tabs.splice(1, 0, {
+        children: <TrialDetailsMetrics experiment={experiment} trial={trial} />,
+        key: TabType.Metrics,
+        label: 'Metrics',
+      });
+    }
+
+    return tabs;
+  }, [experiment, trial, showExperimentArtifacts]);
 
   const { stopPolling } = usePolling(fetchTrialDetails);
 
