@@ -136,7 +136,7 @@ task_container_defaults:
   cpu_pod_spec:
     metadata:
       labels:
-        "app.kubernetes.io/nameToLowerCase2": "cpu-label"
+        "app.kubernetes.io/nameToLowerCase": "cpu-label"
 `
 
 	expected := config.DefaultConfig()
@@ -182,8 +182,7 @@ task_container_defaults:
 		},
 		ObjectMeta: metaV1.ObjectMeta{
 			Labels: map[string]string{
-				"app.kubernetes.io/nametolowercase":  "cpu-label",
-				"app.kubernetes.io/nametolowercase2": "cpu-label",
+				"app.kubernetes.io/nametolowercase": "cpu-label",
 			},
 		},
 	}

@@ -144,10 +144,10 @@ data:
       dtrain_network_interface: {{ .Values.taskContainerDefaults.dtrainNetworkInterface }}
       {{- end }}
       {{- if .Values.taskContainerDefaults.cpuPodSpec }}
-      cpu_pod_spec: {{ .Values.taskContainerDefaults.cpuPodSpec }}
+      cpu_pod_spec: {{ .Values.taskContainerDefaults.cpuPodSpec | toJson }}
       {{- end }}
       {{- if .Values.taskContainerDefaults.gpuPodSpec }}
-      gpu_pod_spec: {{ .Values.taskContainerDefaults.gpuPodSpec }}
+      gpu_pod_spec: {{ .Values.taskContainerDefaults.gpuPodSpec | toJson }}
       {{- end }}
       {{- if and .Values.taskContainerDefaults.cpuImage .Values.taskContainerDefaults.gpuImage }}
       image:

@@ -79,12 +79,15 @@ func initializeConfig() error {
 	if err != nil {
 		return err
 	}
+	// THIS LOWERCASES. If the master config has 1 pod-spec set, this is where its lowercased
 	if err = mergeConfigBytesIntoViper(bs); err != nil {
 		return err
 	}
 
 	// Now call viper.AllSettings() again to get the full config, containing all values from CLI flags,
 	// environment variables, and the configuration file.
+	// TODO CAROLINA: NOW, if pod-spec is set the same as master but case-different than lowercase,
+	// its read as a diff value
 	conf, err := getConfig(v.AllSettings())
 	if err != nil {
 		return err
@@ -125,13 +128,25 @@ func readConfigFile(configPath string) ([]byte, error) {
 }
 
 func mergeConfigBytesIntoViper(bs []byte) error {
+	// TODO CAROLINA
 	var configMap map[string]interface{}
 	if err := yaml.Unmarshal(bs, &configMap); err != nil {
 		return errors.Wrap(err, "error unmarshal yaml configuration file")
 	}
-	if err := v.MergeConfigMap(configMap); err != nil {
-		return errors.Wrap(err, "error merge configuration to viper")
+	for key, val := range configMap {
+		// Viper will check for the key in the following order:
+		// override, flag, env, config file, key/value store, default
+		check := v.Get(key)
+		if check == nil {
+			// If this key is not already set, set it with the master config value
+			v.Set(key, val)
+		}
 	}
+	/*
+		if err := v.MergeConfigMap(configMap); err != nil {
+			return errors.Wrap(err, "error merge configuration to viper")
+		}
+	*/
 	return nil
 }
 
