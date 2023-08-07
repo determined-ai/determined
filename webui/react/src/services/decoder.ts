@@ -662,11 +662,20 @@ export const decodeTrialSummary = (data: Sdk.V1ComparableTrial): types.TrialSumm
 export const decodeTrialWorkloads = (
   data: Sdk.V1GetTrialWorkloadsResponse,
 ): types.TrialWorkloads => {
-  const workloads = data.workloads.map((ww) => ({
-    checkpoint: ww.checkpoint && decodeCheckpointWorkload(ww.checkpoint),
-    training: ww.training && decodeMetricsWorkload(ww.training),
-    validation: ww.validation && decodeMetricsWorkload(ww.validation),
-  }));
+  const workloads = data.workloads.map((ww) => {
+    return Object.keys(ww).reduce(
+      (acc, key) => {
+        const value = ww[key as keyof Sdk.V1WorkloadContainer];
+        if (value) {
+          if (key === 'checkpoint')
+            acc[key] = decodeCheckpointWorkload(value as Sdk.V1CheckpointWorkload);
+          else acc.metrics[key] = decodeMetricsWorkload(value as Sdk.V1MetricsWorkload);
+        }
+        return acc;
+      },
+      { metrics: {} } as types.WorkloadGroup,
+    );
+  });
   return {
     pagination: data.pagination,
     workloads: workloads,

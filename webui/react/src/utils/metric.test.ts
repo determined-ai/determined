@@ -5,19 +5,23 @@ import * as utils from './metric';
 
 const workloads: WorkloadGroup[] = [
   {
-    training: {
-      metrics: { accuracy: 0.9, loss: 0.1 },
-      totalBatches: 100,
+    metrics: {
+      training: {
+        metrics: { accuracy: 0.9, loss: 0.1 },
+        totalBatches: 100,
+      },
     },
   },
   {
-    training: {
-      metrics: { accuracy: 0.91, loss: 0.09 },
-      totalBatches: 200,
-    },
-    validation: {
-      metrics: { accuracy: 0.81, loss: 0.19 },
-      totalBatches: 200,
+    metrics: {
+      training: {
+        metrics: { accuracy: 0.91, loss: 0.09 },
+        totalBatches: 200,
+      },
+      validation: {
+        metrics: { accuracy: 0.81, loss: 0.19 },
+        totalBatches: 200,
+      },
     },
   },
 ];

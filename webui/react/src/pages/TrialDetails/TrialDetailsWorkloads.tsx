@@ -174,9 +174,9 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           if (settings.filter === TrialWorkloadFilter.Checkpoint) {
             return hasCheckpoint(wlStep);
           } else if (settings.filter === TrialWorkloadFilter.Validation) {
-            return !!wlStep.validation;
+            return !!wlStep.metrics.validation;
           } else if (settings.filter === TrialWorkloadFilter.CheckpointOrValidation) {
-            return !!wlStep.checkpoint || !!wlStep.validation;
+            return !!wlStep.checkpoint || !!wlStep.metrics.validation;
           }
           return false;
         });

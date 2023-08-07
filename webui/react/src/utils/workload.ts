@@ -1,4 +1,4 @@
-import { RecordKey } from 'types';
+import { MetricsWorkload, RecordKey } from 'types';
 import * as Type from 'types';
 
 // Checkpoint size in bytes.
@@ -32,13 +32,15 @@ export const workloadsToSteps = (workloads: Type.WorkloadGroup[]): Type.Step[] =
     if (stepsDict[batchNum] === undefined) stepsDict[batchNum] = {};
     stepsDict[batchNum].batchNum = batchNum;
 
-    if (workload.checkpoint) {
-      stepsDict[batchNum].checkpoint = workload.checkpoint;
-    } else if (workload.validation) {
-      stepsDict[batchNum].validation = workload.validation;
-    } else if (workload.training) {
-      stepsDict[batchNum].training = workload.training;
-    }
+    Object.keys(workload).forEach((key) => {
+      if (key === 'checkpoint') {
+        stepsDict[batchNum].checkpoint = workload.checkpoint;
+      } else {
+        stepsDict[batchNum].metrics = stepsDict[batchNum].metrics ?? {};
+        (stepsDict[batchNum].metrics as Record<string, MetricsWorkload>)[key] =
+          workload.metrics[key];
+      }
+    });
   });
 
   return Object.values(stepsDict) as Type.Step[];

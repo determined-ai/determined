@@ -505,8 +505,7 @@ export interface MetricsWorkload extends BaseWorkload {
 }
 export interface WorkloadGroup {
   checkpoint?: CheckpointWorkload;
-  training?: MetricsWorkload;
-  validation?: MetricsWorkload;
+  metrics: Record<string, MetricsWorkload>;
 }
 
 export const TrialWorkloadFilter = {
@@ -523,7 +522,7 @@ export type TrialWorkloadFilter = ValueOf<typeof TrialWorkloadFilter>;
 export interface Step extends WorkloadGroup, StartEndTimes {
   batchNum: number;
   key: string;
-  training: MetricsWorkload;
+  // training: MetricsWorkload;
 }
 
 type MetricStruct = Record<string, number>;

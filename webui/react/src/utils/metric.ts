@@ -14,9 +14,9 @@ export const metricSorter = (a: Metric, b: Metric): number => {
 
 export const extractMetrics = (workloads: WorkloadGroup[]): Metric[] => {
   const trainingNames = workloads
-    .filter((workload) => workload.training?.metrics)
+    .filter((workload) => workload.metrics.training?.metrics)
     .reduce((acc, workload) => {
-      Object.keys(workload.training?.metrics as Record<string, number>).forEach((name) => {
+      Object.keys(workload.metrics.training?.metrics as Record<string, number>).forEach((name) => {
         acc.add(name);
       });
       return acc;
@@ -27,11 +27,13 @@ export const extractMetrics = (workloads: WorkloadGroup[]): Metric[] => {
   });
 
   const validationNames = workloads
-    .filter((workload) => workload.validation?.metrics)
+    .filter((workload) => workload.metrics.validation?.metrics)
     .reduce((acc, workload) => {
-      Object.keys(workload.validation?.metrics as Record<string, number>).forEach((name) => {
-        acc.add(name);
-      });
+      Object.keys(workload.metrics.validation?.metrics as Record<string, number>).forEach(
+        (name) => {
+          acc.add(name);
+        },
+      );
       return acc;
     }, new Set<string>()) as Set<string>;
 
@@ -57,7 +59,7 @@ export const extractMetricValue = (
   workload: WorkloadGroup,
   metric: OldMetric,
 ): number | undefined => {
-  const source = workload[metric.type]?.metrics ?? {};
+  const source = workload.metrics[metric.type]?.metrics ?? {};
   return source[metric.name];
 };
 
