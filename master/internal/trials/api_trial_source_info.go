@@ -35,7 +35,8 @@ func (a *TrialSourceInfoAPIServer) ReportTrialSourceInfo(
 // trial_source_infos table, and fetches the metrics for each of the connected trials.
 func GetMetricsForTrialSourceInfoQuery(
 	ctx context.Context, q *bun.SelectQuery,
-) ([]*trialv1.TrialSourceInfoMetric, error) {
+	// ) ([]*trialv1.TrialSourceInfoMetric, error) {
+) ([]*trialv1.MetricsReport, error) {
 	trialIds := []struct {
 		TrialID             int
 		TrialSourceInfoType string
@@ -49,7 +50,7 @@ func GetMetricsForTrialSourceInfoQuery(
 	// TODO (Taylor): If we reach a point where this becomes a performance bottleneck
 	// we should join on trial_source_infos -> trials -> experiments to get the
 	// workspace_id and get permissions on those without checking each trial individually
-	ret := []*trialv1.TrialSourceInfoMetric{}
+	ret := []*trialv1.MetricsReport{}
 	numMetricsLimit := 1000
 	for _, val := range trialIds {
 		if err := CanGetTrialsExperimentAndCheckCanDoAction(ctx, val.TrialID,
@@ -59,17 +60,18 @@ func GetMetricsForTrialSourceInfoQuery(
 			// particular trials.
 			continue
 		}
-		sourceType := trialv1.TrialSourceInfoType_value[val.TrialSourceInfoType]
+		// sourceType := trialv1.TrialSourceInfoType_value[val.TrialSourceInfoType]
 		res, err := db.GetMetrics(ctx, val.TrialID, -1, numMetricsLimit, model.InferenceMetricGroup)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get metrics %w", err)
 		}
-		trialSourceInfoMetric := &trialv1.TrialSourceInfoMetric{
-			TrialId:             int32(val.TrialID),
-			TrialSourceInfoType: trialv1.TrialSourceInfoType(sourceType),
-			MetricReports:       res,
-		}
-		ret = append(ret, trialSourceInfoMetric)
+		// trialSourceInfoMetric := &trialv1.TrialSourceInfoMetric{
+		// 	TrialId:             int32(val.TrialID),
+		// 	TrialSourceInfoType: trialv1.TrialSourceInfoType(sourceType),
+		// 	MetricReports:       res,
+		// }
+		// ret = append(ret, trialSourceInfoMetric)
+		ret = append(ret, res...)
 	}
 	return ret, nil
 }

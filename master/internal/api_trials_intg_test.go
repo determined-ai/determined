@@ -707,6 +707,7 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 	infTrial := createTestTrial(t, api, curUser)
 	infTrial2 := createTestTrial(t, api, curUser)
 	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial.ID))
+	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial2.ID))
 
 	// Create a checkpoint to index with
 	checkpointUUID := createVersionTwoCheckpoint(ctx, t, api, curUser, map[string]int64{"a": 1})
@@ -744,17 +745,7 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 		ctx, &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID},
 	)
 	require.NoError(t, getErr)
-	require.Equal(t, len(getCkptResp.Data), 2)
-
-	// Only infTrial should have generic metrics attached.
-	for _, tsim := range getCkptResp.Data {
-		if tsim.TrialId == int32(infTrial.ID) {
-			// One aggregated MetricsReport
-			require.Equal(t, len(tsim.MetricReports), 1)
-		} else {
-			require.Empty(t, tsim.MetricReports)
-		}
-	}
+	require.Equal(t, len(getCkptResp.Metrics), 2)
 
 	infTrialExp, err := db.ExperimentByID(ctx, infTrial.ExperimentID)
 	require.NoError(t, err)
@@ -777,9 +768,9 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 		ctx, &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID},
 	)
 	require.NoError(t, getErr)
-	// Only infTrial2 should be visible
-	require.Equal(t, len(getCkptResp.Data), 1)
-	require.Equal(t, getCkptResp.Data[0].TrialId, int32(infTrial2.ID))
+	// Only infTrial2 should be visible, but it doesn't have metrics
+	require.Equal(t, 1, len(getCkptResp.Metrics))
+	require.Equal(t, int32(infTrial2.ID), getCkptResp.Metrics[0].TrialId)
 }
 
 func TestTrialSourceInfoModelVersion(t *testing.T) {
@@ -828,6 +819,6 @@ func TestTrialSourceInfoModelVersion(t *testing.T) {
 	)
 	require.NoError(t, getMVErr)
 	// One trial is valid and it has one aggregated MetricsReport
-	require.Equal(t, len(getMVResp.Data), 1)
-	require.Equal(t, len(getMVResp.Data[0].MetricReports), 1)
+	require.Equal(t, 1, len(getMVResp.Metrics))
+	require.Equal(t, int32(infTrial.ID), getMVResp.Metrics[0].TrialId)
 }

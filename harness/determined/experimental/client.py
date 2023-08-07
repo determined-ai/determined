@@ -66,11 +66,11 @@ from determined.common.experimental.trial import (  # noqa: F401
     CheckpointOrderBy,
     CheckpointSortBy,
     TrainingMetrics,
+    TrialMetrics,
     TrialOrderBy,
     TrialReference,
     TrialSortBy,
     ValidationMetrics,
-    _TrialMetrics,
 )
 from determined.common.experimental.user import User
 
@@ -419,7 +419,7 @@ def remove_oauth_client(client_id: str) -> None:
 
 
 @_require_singleton
-def _stream_trials_metrics(trial_ids: List[int], group: str) -> Iterable[_TrialMetrics]:
+def _stream_trials_metrics(trial_ids: List[int], group: str) -> Iterable[TrialMetrics]:
     """
     Streams trial metrics for one or more trials sorted by
     trial_id, trial_run_id and steps_completed.

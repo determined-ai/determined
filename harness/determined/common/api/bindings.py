@@ -5125,20 +5125,20 @@ class v1GetTrialMetricsBySourceInfoCheckpointResponse(Printable):
     def __init__(
         self,
         *,
-        data: "typing.Sequence[v1TrialSourceInfoMetric]",
+        metrics: "typing.Sequence[v1MetricsReport]",
     ):
-        self.data = data
+        self.metrics = metrics
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTrialMetricsBySourceInfoCheckpointResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "data": [v1TrialSourceInfoMetric.from_json(x) for x in obj["data"]],
+            "metrics": [v1MetricsReport.from_json(x) for x in obj["metrics"]],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "data": [x.to_json(omit_unset) for x in self.data],
+            "metrics": [x.to_json(omit_unset) for x in self.metrics],
         }
         return out
 
@@ -5213,20 +5213,20 @@ class v1GetTrialSourceInfoMetricsByModelVersionResponse(Printable):
     def __init__(
         self,
         *,
-        data: "typing.Sequence[v1TrialSourceInfoMetric]",
+        metrics: "typing.Sequence[v1MetricsReport]",
     ):
-        self.data = data
+        self.metrics = metrics
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTrialSourceInfoMetricsByModelVersionResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "data": [v1TrialSourceInfoMetric.from_json(x) for x in obj["data"]],
+            "metrics": [v1MetricsReport.from_json(x) for x in obj["metrics"]],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "data": [x.to_json(omit_unset) for x in self.data],
+            "metrics": [x.to_json(omit_unset) for x in self.metrics],
         }
         return out
 
@@ -12526,40 +12526,6 @@ class v1TrialSourceInfo(Printable):
             out["modelId"] = self.modelId
         if not omit_unset or "modelVersion" in vars(self):
             out["modelVersion"] = self.modelVersion
-        return out
-
-class v1TrialSourceInfoMetric(Printable):
-    metricReports: "typing.Optional[typing.Sequence[v1MetricsReport]]" = None
-
-    def __init__(
-        self,
-        *,
-        trialId: int,
-        trialSourceInfoType: "v1TrialSourceInfoType",
-        metricReports: "typing.Union[typing.Sequence[v1MetricsReport], None, Unset]" = _unset,
-    ):
-        self.trialId = trialId
-        self.trialSourceInfoType = trialSourceInfoType
-        if not isinstance(metricReports, Unset):
-            self.metricReports = metricReports
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1TrialSourceInfoMetric":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "trialId": obj["trialId"],
-            "trialSourceInfoType": v1TrialSourceInfoType(obj["trialSourceInfoType"]),
-        }
-        if "metricReports" in obj:
-            kwargs["metricReports"] = [v1MetricsReport.from_json(x) for x in obj["metricReports"]] if obj["metricReports"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "trialId": self.trialId,
-            "trialSourceInfoType": self.trialSourceInfoType.value,
-        }
-        if not omit_unset or "metricReports" in vars(self):
-            out["metricReports"] = None if self.metricReports is None else [x.to_json(omit_unset) for x in self.metricReports]
         return out
 
 class v1TrialSourceInfoType(DetEnum):

@@ -13,6 +13,8 @@ with warnings.catch_warnings(record=True):
         TrialReference,
         TrialOrderBy,
         TrialSortBy,
+        # TrialSourceInfoMetrics,
+        metrics,
     )
 
 from determined.experimental._native import test_one_batch

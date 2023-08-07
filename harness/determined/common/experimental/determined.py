@@ -383,7 +383,7 @@ class Determined:
 
     def _stream_trials_metrics(
         self, trial_ids: List[int], group: str
-    ) -> Iterable[trial._TrialMetrics]:
+    ) -> Iterable[trial.TrialMetrics]:
         """
         Streams metrics for one or more trials sorted by
         trial_id, trial_run_id and total_batches.

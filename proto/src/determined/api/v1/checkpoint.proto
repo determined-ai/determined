@@ -89,8 +89,8 @@ message GetTrialMetricsBySourceInfoCheckpointRequest {
 // Response for all metrics related to a given checkpoint
 message GetTrialMetricsBySourceInfoCheckpointResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "data" ] }
+    json_schema: { required: [ "metrics" ] }
   };
   // All the related trials and their metrics
-  repeated determined.trial.v1.TrialSourceInfoMetric data = 1;
+  repeated determined.trial.v1.MetricsReport metrics = 1;
 }

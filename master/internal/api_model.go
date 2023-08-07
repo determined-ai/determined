@@ -842,11 +842,11 @@ func (a *apiServer) GetTrialSourceInfoMetricsByModelVersion(
 		trialIDsQuery.Where("trial_source_info_type = ?", req.TrialSourceInfoType.String())
 	}
 
-	trialSourceMetrics, err := trials.GetMetricsForTrialSourceInfoQuery(ctx, trialIDsQuery)
+	metrics, err := trials.GetMetricsForTrialSourceInfoQuery(ctx, trialIDsQuery)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get trial source info %w", err)
 	}
 
-	resp.Data = append(resp.Data, trialSourceMetrics...)
+	resp.Metrics = append(resp.Metrics, metrics...)
 	return resp, nil
 }

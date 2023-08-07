@@ -121,6 +121,30 @@ class TrainContext:
 
         self._report_trial_metrics(util._LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
 
+    def report_validation_metrics(
+        self,
+        steps_completed: int,
+        metrics: Dict[str, Any],
+    ) -> None:
+        """
+        Report validation metrics to the master.
+
+        Note that for hyperparameter search, this is independent of the need to report the searcher
+        metric using ``SearcherOperation.report_completed()`` in the Searcher API.
+        """
+
+        self._report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
+
+    def report_inference_metrics(
+        self,
+        steps_completed: int,
+        metrics: Dict[str, Any],
+    ) -> None:
+        """
+        Report batch inference metrics to the master.
+        """
+        self._report_trial_metrics(util._INFERENCE, steps_completed, metrics)
+
     def get_tensorboard_path(self) -> pathlib.Path:
         """
         Get TensorBoard log directory path.
@@ -169,20 +193,6 @@ class TrainContext:
             )
 
         return serializable_metrics
-
-    def report_validation_metrics(
-        self,
-        steps_completed: int,
-        metrics: Dict[str, Any],
-    ) -> None:
-        """
-        Report validation metrics to the master.
-
-        Note that for hyperparameter search, this is independent of the need to report the searcher
-        metric using ``SearcherOperation.report_completed()`` in the Searcher API.
-        """
-
-        self._report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         """

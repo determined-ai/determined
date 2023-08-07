@@ -4135,10 +4135,10 @@ export interface V1GetTrialCheckpointsResponse {
 export interface V1GetTrialMetricsBySourceInfoCheckpointResponse {
     /**
      * All the related trials and their metrics
-     * @type {Array<V1TrialSourceInfoMetric>}
+     * @type {Array<V1MetricsReport>}
      * @memberof V1GetTrialMetricsBySourceInfoCheckpointResponse
      */
-    data: Array<V1TrialSourceInfoMetric>;
+    metrics: Array<V1MetricsReport>;
 }
 /**
  * Response to TrialProfilerAvailableSeriesRequest.
@@ -4186,11 +4186,11 @@ export interface V1GetTrialResponse {
  */
 export interface V1GetTrialSourceInfoMetricsByModelVersionResponse {
     /**
-     * All the related trials and their metrics
-     * @type {Array<V1TrialSourceInfoMetric>}
+     * All the related trials and their metrics repeated determined.trial.v1.TrialSourceInfoMetric data = 1;
+     * @type {Array<V1MetricsReport>}
      * @memberof V1GetTrialSourceInfoMetricsByModelVersionResponse
      */
-    data: Array<V1TrialSourceInfoMetric>;
+    metrics: Array<V1MetricsReport>;
 }
 /**
  * Response to GetTrialWorkloadsRequest.
@@ -9726,31 +9726,6 @@ export interface V1TrialSourceInfo {
      * @memberof V1TrialSourceInfo
      */
     trialSourceInfoType: V1TrialSourceInfoType;
-}
-/**
- * 
- * @export
- * @interface V1TrialSourceInfoMetric
- */
-export interface V1TrialSourceInfoMetric {
-    /**
-     * Trial ID for the inference or fine-tuning run
-     * @type {number}
-     * @memberof V1TrialSourceInfoMetric
-     */
-    trialId: number;
-    /**
-     * Type of the TrialSourceInfo
-     * @type {V1TrialSourceInfoType}
-     * @memberof V1TrialSourceInfoMetric
-     */
-    trialSourceInfoType: V1TrialSourceInfoType;
-    /**
-     * All metrics for the trial
-     * @type {Array<V1MetricsReport>}
-     * @memberof V1TrialSourceInfoMetric
-     */
-    metricReports?: Array<V1MetricsReport>;
 }
 /**
  * - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
