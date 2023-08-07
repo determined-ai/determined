@@ -18,6 +18,8 @@ def test_mnist_pytorch_distributed(image_type: str) -> None:
 
     if image_type == "PT":
         config = conf.set_pt_image(config)
+    elif image_type == "PT2":
+        config = conf.set_pt2_image(config)
     elif image_type == "TF2":
         config = conf.set_tf2_image(config)
     else:
