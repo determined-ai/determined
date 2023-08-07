@@ -1,4 +1,4 @@
-import { OldMetric, RecordKey } from 'types';
+import { RecordKey } from 'types';
 import { Metric, MetricType, WorkloadGroup } from 'types';
 import { alphaNumericSorter } from 'utils/sort';
 
@@ -78,11 +78,6 @@ export const metricToStr = (metric: Metric, truncateLimit = 30): string => {
   return `[${group}] ${name}`;
 };
 
-export const metricToOldMetric = (metric: Metric): OldMetric => {
-  const type = metric.group === MetricType.Training ? MetricType.Training : MetricType.Validation;
-  return { name: metric.name, type };
-};
-
 export const metricToKey = (metric: Metric): string => {
   try {
     return JSON.stringify(metric);
@@ -102,17 +97,7 @@ export const metricKeyToMetric = (value: string): Metric => {
   }
 };
 
-export const metricKeyToOldMetric = (value: string): OldMetric | undefined => {
-  const parts = value.split('|');
-  if (parts.length !== 2) return;
-  if (![MetricType.Training, MetricType.Validation].includes(parts[0] as MetricType)) return;
-  return { name: parts[1], type: parts[0] as MetricType };
-};
-
 export const metricKeyToName = (key: string): string => metricKeyToMetric(key).name;
-
-export const metricKeyToType = (key: string): MetricType | undefined =>
-  metricKeyToOldMetric(key)?.type;
 
 export const metricKeyToStr = (key: string): string => {
   const metric = metricKeyToMetric(key);
