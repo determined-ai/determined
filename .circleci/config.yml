@@ -1884,7 +1884,7 @@ jobs:
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
       - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
       - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-gpu-pycov make -C harness test-pytorch2-gpu
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-gpu-pycov make -C harness test-pytorch-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
@@ -1907,7 +1907,7 @@ jobs:
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
       - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
       - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-cpu-pycov make -C harness test-pytorch2-cpu
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-cpu-pycov make -C harness test-pytorch-cpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-cpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
