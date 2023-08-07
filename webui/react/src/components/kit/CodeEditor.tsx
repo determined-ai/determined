@@ -34,7 +34,7 @@ const MARKDOWN_CONFIG = {
 export type Props = {
   files: TreeNode[];
   onError: ErrorHandler;
-  height?: string; // height of the editable area, if a title is provided that will add an additional ~38px
+  height?: string; // height of the container.
   onChange?: (arg0: string) => void; // only use in single-file editing
   onSelectFile?: (arg0: string) => void;
   readonly?: boolean;
@@ -292,9 +292,9 @@ const CodeEditor: React.FC<Props> = ({
         <ReactCodeMirror
           basicSetup={syntax === 'markdown' ? MARKDOWN_CONFIG : undefined}
           extensions={[langs[syntax]()]}
-          height={height}
+          height="100%"
           readOnly={readonly}
-          style={{ height }}
+          style={{ height: '100%' }}
           theme={ui.darkLight === DarkLight.Dark ? 'dark' : 'light'}
           value={Loadable.getOrElse('', activeFile.content)}
           onChange={onChange}
@@ -307,7 +307,7 @@ const CodeEditor: React.FC<Props> = ({
   }
 
   return (
-    <div className={classes.join(' ')}>
+    <div className={classes.join(' ')} style={{ height }}>
       <DirectoryTree
         className={treeClasses.join(' ')}
         data-testid="fileTree"
