@@ -59,7 +59,7 @@ By default, each devbox invoked by `make slurmcluster` will automatically delete
 
 1. `make -C agent build package`
 2. `make slurmcluster FLAGS="-A"`
-3. `gcloud compute scp agent/dist/determined-agent_linux_amd64_v1/determined-agent $USER-dev-box:/home/\$USER --zone us-west1-b`
+3. `gcloud compute scp agent/dist/determined-agent_linux_amd64_v1/determined-agent $USER-dev-box:/home/$USER --zone us-west1-b`
 
 The `FLAGS="-A"` in `make slurmcluster` removes the resource_manager section in the slurmcluster.yaml that would otherwise be used. This then defaults to the agent rm and the master waits for agents to connect and provide resources. The scp command brings the determined-agent to the dev-box. `$USER` will be replaced with your username when initiating GCP.
 
