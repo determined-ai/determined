@@ -110,6 +110,7 @@ extensions = [
     "sphinx_reredirects",
     "sphinx_tabs.tabs",
     "myst_parser",
+    "sphinx_tabs.tabs"
 ]
 
 myst_extensions = [

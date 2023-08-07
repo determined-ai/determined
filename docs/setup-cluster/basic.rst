@@ -29,6 +29,38 @@ address can be specified in three different formats:
 -  ``http://example.org:port`` (if ``port`` is omitted, it defaults to ``80``)
 -  ``https://example.org:port`` (if ``port`` is omitted, it defaults to ``443``)
 
+NESTED TABS USING SPHINX_TABS
+
+.. tabs::
+
+   .. tab:: On Prem
+
+      .. tabs::
+
+         .. tab:: Agent-Based
+
+            Content
+
+         .. tab:: Kubernetes
+
+            Content.
+
+         .. tab:: Slurm
+
+            Content.
+
+   .. tab:: On Cloud
+
+      .. tabs::
+
+         .. tab:: Agent-Based
+
+            Content
+
+         .. tab:: Kubernetes
+
+            Content
+
 Examples:
 
 .. code:: bash
