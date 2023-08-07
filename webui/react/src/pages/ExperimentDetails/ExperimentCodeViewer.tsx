@@ -59,7 +59,6 @@ const ExperimentCodeViewer: React.FC<Props> = ({
     const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
       children: node.files?.map((n) => convertV1FileNodeToTreeNode(n)) ?? [],
       download: paths.experimentFileFromTree(experiment.id, String(node.path)),
-      get: (path: string) => getExperimentFileFromTree({ experimentId: experiment.id, path }),
       isLeaf: !node.isDir,
       key: node.path ?? '',
       title: node.name,
@@ -112,7 +111,6 @@ const ExperimentCodeViewer: React.FC<Props> = ({
     submittedConfig
       ? {
           download: `${experiment.id}_submitted_configuration.yaml`,
-          get: () => Promise.resolve(submittedConfig),
           icon: configIcon,
           isLeaf: true,
           key: 'Submitted Configuration',
@@ -123,7 +121,6 @@ const ExperimentCodeViewer: React.FC<Props> = ({
     runtimeConfig
       ? {
           download: `${experiment.id}_runtime_configuration.yaml`,
-          get: () => Promise.resolve(runtimeConfig),
           icon: configIcon,
           isLeaf: true,
           key: 'Runtime Configuration',
