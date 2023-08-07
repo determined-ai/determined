@@ -20,7 +20,7 @@ import pytorch_lightning as pl
 import torch
 import torchmetrics
 from torch import nn
-from torch.nn import functional as F
+from torch.nn import functional as F  # noqa: I2001
 from torchvision import transforms
 
 

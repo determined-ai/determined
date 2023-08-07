@@ -1,20 +1,17 @@
 import argparse
+import collections
+import operator
 import os
 import sys
 import typing
-from collections import OrderedDict
-from operator import attrgetter
 from typing import Any, Callable, Dict, List
 
 import determined.cli.render
 from determined import cli
-from determined.cli import render
+from determined.cli import errors, render
 from determined.cli import task as cli_task
-from determined.cli.errors import CliError
-from determined.common import api
+from determined.common import api, check
 from determined.common.api import authentication, bindings
-from determined.common.api.bindings import devicev1Type, v1Device, v1Slot
-from determined.common.check import check_false
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
@@ -27,7 +24,7 @@ def list_agents(args: argparse.Namespace) -> None:
     resp = bindings.get_GetAgents(cli.setup_session(args))
 
     agents = [
-        OrderedDict(
+        collections.OrderedDict(
             [
                 ("id", local_id(a.id)),
                 ("version", a.version),
@@ -43,7 +40,7 @@ def list_agents(args: argparse.Namespace) -> None:
                 ("addresses", ", ".join(a.addresses) if a.addresses is not None else ""),
             ]
         )
-        for a in sorted(resp.agents or [], key=attrgetter("id"))
+        for a in sorted(resp.agents or [], key=operator.attrgetter("id"))
     ]
 
     if args.json:
@@ -79,16 +76,16 @@ def list_slots(args: argparse.Namespace) -> None:
         if r["container_id"]
     }
 
-    def device_type_string(deviceType: typing.Optional[devicev1Type]) -> str:
-        if deviceType == devicev1Type.CUDA:
+    def device_type_string(deviceType: typing.Optional[bindings.devicev1Type]) -> str:
+        if deviceType == bindings.devicev1Type.CUDA:
             return "cuda"
-        if deviceType == devicev1Type.ROCM:
+        if deviceType == bindings.devicev1Type.ROCM:
             return "rocm"
-        if deviceType == devicev1Type.CPU:
+        if deviceType == bindings.devicev1Type.CPU:
             return "cpu"
         return "unknown"
 
-    def get_task_name(containers: Dict[str, Any], slot: v1Slot) -> str:
+    def get_task_name(containers: Dict[str, Any], slot: bindings.v1Slot) -> str:
         if not slot.container:
             return "FREE"
 
@@ -109,7 +106,7 @@ def list_slots(args: argparse.Namespace) -> None:
         return f"Non-Determined Task: {container_id}"
 
     slots = [
-        OrderedDict(
+        collections.OrderedDict(
             [
                 ("agent_id", local_id(agent.id)),
                 (
@@ -126,11 +123,11 @@ def list_slots(args: argparse.Namespace) -> None:
                     else ("OCCUPIED" if slot.container else "FREE"),
                 ),
                 ("task_name", get_task_name(c_names, slot)),
-                ("type", device_type_string((slot.device or v1Device()).type)),
-                ("device", (slot.device or v1Device()).brand),
+                ("type", device_type_string((slot.device or bindings.v1Device()).type)),
+                ("device", (slot.device or bindings.v1Device()).brand),
             ]
         )
-        for agent in sorted(resp.agents or [], key=attrgetter("id"))
+        for agent in sorted(resp.agents or [], key=operator.attrgetter("id"))
         for _key, slot in (agent.slots or {}).items()
     ]
 
@@ -158,10 +155,10 @@ def list_slots(args: argparse.Namespace) -> None:
 def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
     @authentication.required
     def patch(args: argparse.Namespace) -> None:
-        check_false(args.all and args.agent_id)
+        check.check_false(args.all and args.agent_id)
 
         if not (args.all or args.agent_id):
-            raise CliError("Must specify exactly on of --all or --agent-id")
+            raise errors.CliError("Must specify exactly on of --all or --agent-id")
 
         if args.agent_id:
             agent_ids = [args.agent_id]

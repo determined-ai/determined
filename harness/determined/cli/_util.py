@@ -10,8 +10,6 @@ from determined.common import api, declarative_argparse, util
 from determined.common.api import authentication, bindings, certs
 from determined.experimental import client
 
-from .errors import FeatureFlagDisabled
-
 output_format_args: Dict[str, declarative_argparse.Arg] = {
     "json": declarative_argparse.Arg(
         "--json",
@@ -109,7 +107,7 @@ def require_feature_flag(feature_flag: str, error_message: str) -> Callable[...,
         def wrapper(args: argparse.Namespace) -> None:
             resp = bindings.get_GetMaster(setup_session(args))
             if not resp.to_json().get("rbacEnabled"):
-                raise FeatureFlagDisabled(error_message)
+                raise errors.FeatureFlagDisabled(error_message)
             function(args)
 
         return wrapper

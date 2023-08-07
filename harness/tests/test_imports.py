@@ -93,10 +93,10 @@ def test_import_from_path() -> None:
 
         # Execute from the a/ directory like we were in a normal interactive interpreter.
         with chdir(fixture / "a"), prepend_sys_path(""):
-            import model_def as a
+            import model_def as a  # noqa: I2001
 
             with det.import_from_path(fixture / "b"):
-                import model_def as b
+                import model_def as b  # noqa: I2001
 
                 # Nesting is not supported.
                 with pytest.raises(RuntimeError, match="does not support nesting"):
@@ -104,7 +104,7 @@ def test_import_from_path() -> None:
                         pass
 
             with det.import_from_path(fixture / "c"):
-                import model_def as c
+                import model_def as c  # noqa: I2001
 
         # Import lib2 after the checkpoints do.
         import lib2

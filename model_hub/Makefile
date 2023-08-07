@@ -76,7 +76,7 @@ fmt:
 check:
 	isort . --check-only
 	black . --check
-	flake8
+	python -m flake8
 	mypy .
 
 .PHONY: test

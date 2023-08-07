@@ -2,9 +2,9 @@ from typing import Optional, Tuple
 
 import pytest
 
-import tests.api_utils as api_utils
 from determined.common import yaml
 from determined.common.api import Session, bindings, errors
+from tests import api_utils
 from tests import command as cmd
 from tests import config as conf
 from tests import template as tpl

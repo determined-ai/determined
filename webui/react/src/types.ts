@@ -575,7 +575,7 @@ export interface MetricSummary {
 }
 
 export interface SummaryMetrics {
-  [customMetricType: string]: Record<string, MetricSummary>;
+  [customMetricType: string]: Record<string, MetricSummary> | null;
 }
 
 export interface TrialItem extends StartEndTimes {

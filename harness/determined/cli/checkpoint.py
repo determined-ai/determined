@@ -3,11 +3,10 @@ from argparse import Namespace
 from typing import Any, List, Optional
 
 from determined import cli, errors, experimental
+from determined.cli import render
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.experimental.client import DownloadMode
-
-from . import render
 
 
 def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] = None) -> None:

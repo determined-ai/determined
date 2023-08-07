@@ -777,19 +777,3 @@ func (a ResourceManager) TaskContainerDefaults(
 	req := taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}
 	return result, a.Ask(ctx, req, &result)
 }
-
-// EnableSlot implements 'det slot enable...' functionality.
-func (a ResourceManager) EnableSlot(
-	m actor.Messenger,
-	req *apiv1.EnableSlotRequest,
-) (resp *apiv1.EnableSlotResponse, err error) {
-	return resp, actorrm.AskAt(a.Ref().System(), actorrm.SlotAddr(req.AgentId, req.SlotId), req, &resp)
-}
-
-// DisableSlot implements 'det slot disable...' functionality.
-func (a ResourceManager) DisableSlot(
-	m actor.Messenger,
-	req *apiv1.DisableSlotRequest,
-) (resp *apiv1.DisableSlotResponse, err error) {
-	return resp, actorrm.AskAt(a.Ref().System(), actorrm.SlotAddr(req.AgentId, req.SlotId), req, &resp)
-}
