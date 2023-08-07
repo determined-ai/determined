@@ -237,7 +237,7 @@ func (a *apiServer) getProjectColumnsByID(
 			columnPrefix := stats.JSONPath
 			columnLocation := projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC
 			if stats.JSONPath == metricGroupTraining {
-				columnPrefix = metricIdTraining
+				columnPrefix = metricIDTraining
 				columnLocation = projectv1.LocationType_LOCATION_TYPE_TRAINING
 			}
 			// don't surface aggregates that don't make sense for non-numbers
@@ -475,7 +475,7 @@ func (a *apiServer) getProjectNumericMetricsRange(
 						for _, aggregate := range SummaryMetricStatistics {
 							group := metricsGroup
 							if metricsGroup == metricGroupTraining {
-								group = metricIdTraining
+								group = metricIDTraining
 							}
 							tMetricsName := fmt.Sprintf("%s.%s.%s", group, name, aggregate)
 							var tMetricsValue interface{}

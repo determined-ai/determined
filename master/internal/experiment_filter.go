@@ -29,8 +29,8 @@ const (
 
 	metricGroupValidation string = "validation_metrics"
 	metricGroupTraining   string = "avg_metrics"
-	metricIdTraining      string = "training"
-	metricIdValidation    string = "validation"
+	metricIDTraining      string = "training"
+	metricIDValidation    string = "validation"
 )
 
 type (
@@ -505,10 +505,10 @@ func parseMetricsName(str string) (string, string, string, error) {
 		metricName = strings.Join(slice[1:], ".")
 	}
 
-	if metricGroup == metricIdTraining {
+	if metricGroup == metricIDTraining {
 		metricGroup = metricGroupTraining
 	}
-	if metricGroup == metricIdValidation {
+	if metricGroup == metricIDValidation {
 		metricGroup = metricGroupValidation
 	}
 
