@@ -2265,17 +2265,12 @@ jobs:
                 host: <<parameters.master-host>>
                 port: <<parameters.master-port>>
             - run:
-                name: Transfer agent resources 
-                command: |
-                  ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
-                  INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
-                  gcloud compute scp agent/dist/determined-agent_linux_amd64_v1/determined-agent "$INSTANCE_NAME":~ --zone $ZONE
-            - run:
-                name: Allocate Resources on VM
+                name: Transfer and Allocate agent resources on VM
                 command: |
                   ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
                   INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
                   PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
+                  gcloud compute scp agent/dist/determined-agent_linux_amd64_v1/determined-agent "$INSTANCE_NAME":~ --zone $ZONE
                   gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- \
                   srun determined-agent --master-host=<<parameters.master-host>> --master-port=<<parameters.master-port>> --resource-pool=default --container-runtime=<<parameters.container-run-type>>
                 background: true
@@ -3560,7 +3555,7 @@ workflows:
               agent-use: ["-A"]
               container-run-type: ["podman"]
               mark: ["e2e_slurm and not parallel"]
-              extra-pytest-flags: ["-k 'not unsupported_option and not bad_slurm_option and not test_slurm_verify_home and not test_hpc_job_pending_reason'"]
+              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
             - build-go
 
@@ -4364,7 +4359,7 @@ workflows:
             requires:
               - package-and-push-system-local
             agent-use: "-A"
-            extra-pytest-flags: "-k 'not unsupported_option and not bad_slurm_option and not node_not_available and not test_hpc_job_pending_reason'"
+            extra-pytest-flags: "-k 'not node_not_available and not test_hpc_job_pending_reason'"
             # For now we must skip node_not_available. There is a inconsistency with the agent where 
             # the error is "failed to create experiment: slots requested exceeds cluster capacity" instead of the expected message.
             master_config: |
