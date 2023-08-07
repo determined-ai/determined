@@ -25,7 +25,7 @@ by mockery-generated mocks without overcomplicating the code
 & its readability. In pod_test.go, the tests send messages
 to the Actor system, which are dealt with by a mock
 receiver struct. The mockery-generated interfaces do not
-run the necessary receiver-related code, unlike the mocks here. */
+execute the necessary receiver-related code, unlike the mocks here. */
 
 type mockConfigMapInterface struct {
 	configMaps map[string]*k8sV1.ConfigMap
