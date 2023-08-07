@@ -8,6 +8,8 @@ from determined.common.api.bindings import experimentv1State
 from tests import config as conf
 from tests import experiment as exp
 
+from ..cluster import test_slurm
+
 
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
@@ -16,6 +18,10 @@ def test_hpc_job_pending_reason() -> None:
     # HPC Resource details: [{TotalAvailableNodes:1 PartitionName:debug IsDefault:true ...
     # TotalAvailableGpuSlots:0 TotalNodes:1 TotalGpuSlots:0
     # TotalAvailableCPUSlots:8 TotalCPUSlots:8 Accelerator:}]
+
+    # Currently, this test fails while using the determined agent.
+    # The output is PBS or SLURM launcher specific
+    test_slurm.skip_if_not_hpc_scheduler()
 
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})

@@ -4,9 +4,31 @@ from typing import List
 import pytest
 import torch
 
+from determined.common.api import bindings
 from determined.common.api.bindings import experimentv1State, trialv1State
+from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
+
+
+# Queries the determined master for resource pool information to determine if agent is used
+# Currently we are assuming that all resource pools are of the same scheduler type
+# which is why only the first resource pool's type is checked.
+def skip_if_not_hpc_scheduler() -> None:
+    sess = api_utils.determined_test_session()
+    resourcePool = bindings.get_GetResourcePools(sess).resourcePools
+    if resourcePool:
+        schedulerType = resourcePool[0].schedulerType
+    else:
+        pytest.fail("ERROR: Resource Pool returned no value. Make sure the resource pool is set.")
+    if (
+        schedulerType != bindings.v1SchedulerType.SLURM
+        and schedulerType != bindings.v1SchedulerType.PBS
+    ):
+        errorMessage = "Agent is not compatible with the test. Scheduler type: " + str(
+            schedulerType
+        )
+        pytest.skip(errorMessage)
 
 
 def run_failure_test_multiple(config_file: str, model_def_file: str, errors: List[str]) -> int:
@@ -49,6 +71,11 @@ def test_unsupported_option() -> None:
     # run_failure_test expects the experiment to fail and will assert the log with the string
     # Queries the logs for the error call
     # Waits for experiment to reach a ERROR_STATE. Errors if it does not error
+
+    # This test is skipped when the determined agent is used.
+    # The determined agent does not fail properly and ignores the bad option
+    skip_if_not_hpc_scheduler()
+
     exp.run_failure_test(
         conf.fixtures_path("failures/unsupported-slurm-option.yaml"),
         conf.fixtures_path("failures/"),
@@ -113,6 +140,10 @@ def test_bad_slurm_option() -> None:
     # Creates an experiment that uses an invalid slurm option.
     # Only casablanca displays the SBATCH options. Horizon does not upon failure
     # The line: "SBATCH options:" is not present on horizon's output
+
+    # This test is skipped when the determined agent is used.
+    # The determined agent does not fail properly and ignores the bad option
+    skip_if_not_hpc_scheduler()
     bad_option_helper("failures/bad-slurm-option.yaml", "failures/", "sbatch: unrecognized option")
 
 
