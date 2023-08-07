@@ -304,7 +304,7 @@ const CodeEditor: React.FC<Props> = ({
         className={sectionClasses.join(' ')}
         maxHeight>
         {/* directly checking tag because loadable.isLoaded only takes loadables */}
-        <Spinner spinning={file._tag !== 'Loaded'}>{fileContent}</Spinner>
+        <Spinner spinning={file === NotLoaded}>{fileContent}</Spinner>
       </Section>
     </div>
   );
