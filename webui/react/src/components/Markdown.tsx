@@ -6,6 +6,7 @@ import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import useResize from 'hooks/useResize';
 import handleError from 'utils/error';
+import { Loaded } from 'utils/loadable';
 
 import css from './Markdown.module.scss';
 
@@ -63,7 +64,8 @@ const Markdown: React.FC<Props> = ({
                 </div>
               }>
               <CodeEditor
-                files={[{ get: () => Promise.resolve(markdown), key: 'input.md' }]}
+                file={Loaded(markdown)}
+                files={[{ key: 'input.md' }]}
                 height={`${resize.height - 420}px`}
                 onChange={onChange}
                 onError={handleError}

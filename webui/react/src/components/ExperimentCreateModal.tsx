@@ -17,6 +17,7 @@ import { DetError, ErrorLevel, ErrorType, isDetError, isError } from 'utils/erro
 import handleError, { handleWarning } from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
+import { Loaded } from 'utils/loadable';
 import { routeToReactUrl } from 'utils/routes';
 
 export const FULL_CONFIG_BUTTON_TEXT = 'Show Full Config';
@@ -367,7 +368,8 @@ const ExperimentCreateModalComponent = ({
         {modalState.isAdvancedMode && (
           <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>
             <CodeEditor
-              files={[{ get: () => Promise.resolve(modalState.configString), key: 'config.yaml' }]}
+              file={Loaded(modalState.configString)}
+              files={[{ key: 'config.yaml' }]}
               height="40vh"
               onChange={handleEditorChange}
               onError={handleError}

@@ -1,9 +1,7 @@
-import { DataNode } from 'antd/lib/tree';
 import { RouteProps } from 'react-router-dom';
 
 import * as Api from 'services/api-ts-sdk';
 import { V1AgentUserGroup, V1Group, V1LaunchWarning, V1Trigger } from 'services/api-ts-sdk';
-import { Loadable } from 'utils/loadable';
 
 export type Primitive = boolean | number | string;
 export type RecordKey = string | number | symbol;
@@ -1059,22 +1057,6 @@ export type UserWithRoleInfo = {
 };
 
 export type UserOrGroupWithRoleInfo = UserWithRoleInfo | GroupWithRoleInfo;
-
-export interface TreeNode extends DataNode {
-  /**
-   * DataNode is the interface antd works with. DateNode properties we are interested in:
-   *
-   * key: we use V1FileNode.path
-   * title: name of node
-   * icon: custom Icon component
-   */
-  children?: TreeNode[];
-  content: Loadable<string>;
-  download?: string;
-  get?: (path: string) => Promise<string>;
-  isConfig?: boolean;
-  isLeaf?: boolean;
-}
 
 export interface HpTrialData {
   data: Record<string, Primitive[]>;

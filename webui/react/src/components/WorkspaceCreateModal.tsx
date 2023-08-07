@@ -15,7 +15,7 @@ import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
 import { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
-import { Loadable, NotLoaded } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
 
@@ -181,7 +181,8 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
                     },
                   ]}>
                   <CodeEditor
-                    files={[{ get: () => Promise.resolve(''), key: 'config.yaml' }]}
+                    file={Loaded('')}
+                    files={[{ key: 'config.yaml' }]}
                     height="16vh"
                     readonly={!canModifyCPS}
                     onError={handleError}

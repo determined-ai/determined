@@ -6,16 +6,16 @@ import { json } from '@codemirror/legacy-modes/mode/javascript';
 import { yaml } from '@codemirror/legacy-modes/mode/yaml';
 import ReactCodeMirror from '@uiw/react-codemirror';
 import { Tree } from 'antd';
-import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useMemo } from 'react';
 
 import Message, { MessageType } from 'components/kit/internal/Message';
 import Section from 'components/kit/internal/Section';
 import { ErrorHandler } from 'components/kit/internal/types';
-import { DarkLight, ErrorType, TreeNode, ValueOf } from 'components/kit/internal/types';
+import { DarkLight, TreeNode, ValueOf } from 'components/kit/internal/types';
 import Spinner from 'components/kit/Spinner';
 import Tooltip from 'components/kit/Tooltip';
 import useUI from 'stores/contexts/UI';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable, NotLoaded } from 'utils/loadable';
 
 const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
 
@@ -31,12 +31,28 @@ const MARKDOWN_CONFIG = {
   highlightActiveLineGutter: false,
 };
 
+type ErrorMessage = {
+  _tag: 'Error';
+  message: string;
+};
+// extension to loadable
+export type LoadableOrError<T> = Loadable<T> | ErrorMessage;
+
+export const ErrorMessage = (message: string): ErrorMessage => ({
+  _tag: 'Error' as const,
+  message,
+});
+
+const isErrorMessage = (f: unknown): f is ErrorMessage =>
+  !!f && typeof f === 'object' && '_tag' in f && f._tag === 'Error';
+
 export type Props = {
   files: TreeNode[];
-  onError: ErrorHandler;
+  file: LoadableOrError<string>;
+  onError: ErrorHandler; // only used to raise ipynb errors
   height?: string; // height of the editable area, if a title is provided that will add an additional ~38px
-  onChange?: (arg0: string) => void; // only use in single-file editing
-  onSelectFile?: (arg0: string) => void;
+  onChange?: (fileContent: string) => void; // only use in single-file editing
+  onSelectFile?: (filePath: string) => void;
   readonly?: boolean;
   selectedFilePath?: string;
 };
@@ -75,25 +91,12 @@ const sortTree = (a: TreeNode, b: TreeNode) => {
   return extensionA.localeCompare(extensionB) - extensionB.localeCompare(extensionB);
 };
 
-const PageError = {
-  Empty: 'File has no content.',
-  Fetch: 'Unable to fetch file.',
-  None: '',
-} as const;
-
-type PageError = ValueOf<typeof PageError>;
-
 const Config = {
   Runtime: 'Runtime Configuration',
   Submitted: 'Submitted Configuration',
 } as const;
 
 type Config = ValueOf<typeof Config>;
-
-const descForConfig = {
-  [Config.Submitted]: 'original submitted config',
-  [Config.Runtime]: 'after merge with defaults and templates',
-};
 
 const isConfig = (key: unknown): key is Config =>
   key === Config.Submitted || key === Config.Runtime;
@@ -123,14 +126,14 @@ const langs = {
 
 const CodeEditor: React.FC<Props> = ({
   files,
-  onError,
   height = '100%',
+  file,
   onChange,
+  onError,
   onSelectFile,
   readonly,
-  selectedFilePath,
+  selectedFilePath = String(files[0]?.key),
 }) => {
-  const [pageError, setPageError] = useState<PageError>(PageError.None);
   const sortedFiles = useMemo(() => [...files].sort(sortTree), [files]);
   const { ui } = useUI();
 
@@ -168,36 +171,6 @@ const CodeEditor: React.FC<Props> = ({
     return 'yaml';
   }, [activeFile?.key]);
 
-  const [content, setContent] = useState<Loadable<string>>(NotLoaded);
-
-  useEffect(() => {
-    if (activeFile) {
-      (async () => {
-        if (!activeFile) return;
-        setPageError(PageError.None);
-        setContent(NotLoaded);
-
-        let file;
-        try {
-          file = await activeFile.get?.(String(activeFile.key));
-        } catch (error) {
-          onError(error, {
-            publicMessage: 'Failed to load selected file.',
-            publicSubject: 'Unable to fetch the selected file.',
-            silent: false,
-            type: ErrorType.Api,
-          });
-          setPageError(PageError.Fetch);
-        }
-        if (file === undefined) {
-          return;
-        }
-        if (!file) setPageError(PageError.Empty); // Emits a "Empty file" error message
-        setContent(Loaded(file));
-      })();
-    }
-  }, [activeFile, onError]);
-
   const handleSelectFile = useCallback(
     (_: React.Key[], info: { node: TreeNode }) => {
       const selectedKey = String(info.node.key);
@@ -214,7 +187,6 @@ const CodeEditor: React.FC<Props> = ({
         targetNode = targetNode?.children?.find((file) => file.title === dir);
 
       if (!targetNode) {
-        setPageError(PageError.Fetch);
         return;
       }
 
@@ -226,40 +198,40 @@ const CodeEditor: React.FC<Props> = ({
   );
 
   const handleDownloadClick = useCallback(() => {
-    if (!activeFile) return;
+    if (!Loadable.isLoadable(file) || !Loadable.isLoaded(file) || !activeFile) return;
 
     const link = document.createElement('a');
 
     link.download = isConfig(activeFile?.key)
       ? activeFile.download || ''
       : String(activeFile.title);
-    link.href = URL.createObjectURL(new Blob([Loadable.getOrElse('', content)]));
+    link.href = URL.createObjectURL(new Blob([Loadable.getOrElse('', file)]));
     link.dispatchEvent(new MouseEvent('click'));
     setTimeout(() => {
       URL.revokeObjectURL(link.href);
     }, 2000);
-  }, [activeFile, content]);
+  }, [activeFile, file]);
 
   const classes = [
     css.fileTree,
     css.codeEditorBase,
-    pageError ? css.noEditor : '',
+    isErrorMessage(file) ? css.noEditor : '',
     viewMode === 'editor' ? css.editorMode : '',
   ];
 
-  const sectionClasses = [pageError ? css.pageError : css.editor];
+  const sectionClasses = [isErrorMessage(file) ? css.pageError : css.editor];
 
   const treeClasses = [css.fileTree, viewMode === 'editor' ? css.hideElement : ''];
 
   let fileContent = <h5>Please, choose a file to preview.</h5>;
-  if (pageError) {
+  if (isErrorMessage(file)) {
     fileContent = (
       <Message
         style={{
           justifyContent: 'center',
           padding: '120px',
         }}
-        title={pageError}
+        title={file.message}
         type={MessageType.Alert}
       />
     );
@@ -272,12 +244,12 @@ const CodeEditor: React.FC<Props> = ({
           height={height}
           readOnly={readonly}
           theme={ui.darkLight === DarkLight.Dark ? 'dark' : 'light'}
-          value={Loadable.getOrElse('', content)}
+          value={Loadable.getOrElse('', file)}
           onChange={onChange}
         />
       ) : (
         <Suspense fallback={<Spinner spinning tip="Loading ipynb viewer..." />}>
-          <JupyterRenderer file={Loadable.getOrElse('', content)} onError={onError} />
+          <JupyterRenderer file={Loadable.getOrElse('', file)} onError={onError} />
         </Suspense>
       );
   }
@@ -301,8 +273,8 @@ const CodeEditor: React.FC<Props> = ({
                 <span className={css.filePath}>
                   <>{activeFile.title}</>
                 </span>
-                {isConfig(activeFile.key) && (
-                  <span className={css.fileDesc}> {descForConfig[activeFile.key]}</span>
+                {activeFile?.subtitle && (
+                  <span className={css.fileDesc}> {activeFile?.subtitle}</span>
                 )}
                 {readonly && <span className={css.readOnly}>read-only</span>}
               </>
@@ -316,7 +288,7 @@ const CodeEditor: React.FC<Props> = ({
                 <Tooltip content="Download File">
                   <DownloadOutlined
                     className={
-                      readonly && content !== NotLoaded ? css.noBorderButton : css.hideElement
+                      readonly && file !== NotLoaded ? css.noBorderButton : css.hideElement
                     }
                     onClick={handleDownloadClick}
                   />
@@ -331,9 +303,8 @@ const CodeEditor: React.FC<Props> = ({
         bodyScroll={height === '100%'}
         className={sectionClasses.join(' ')}
         maxHeight>
-        <Spinner spinning={!pageError && !!activeFile && content === NotLoaded}>
-          {fileContent}
-        </Spinner>
+        {/* directly checking tag because loadable.isLoaded only takes loadables */}
+        <Spinner spinning={file._tag !== 'Loaded'}>{fileContent}</Spinner>
       </Section>
     </div>
   );

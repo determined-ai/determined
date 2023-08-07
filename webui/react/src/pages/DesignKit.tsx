@@ -874,6 +874,47 @@ const DropdownSection: React.FC = () => {
   );
 };
 
+const UncontrolledCodeEditor = () => {
+  const [path, setPath] = useState<string>();
+  const file = useMemo(() => {
+    if (!path) {
+      return NotLoaded;
+    }
+    return (
+      {
+        'one.yaml': Loaded(
+          'hyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 512\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5',
+        ),
+        'two.yaml': Loaded('searcher:\n  name: single\n  metric: validation_loss\n'),
+      }[path] || NotLoaded
+    );
+  }, [path]);
+  return (
+    <CodeEditor
+      file={file}
+      files={[
+        {
+          isLeaf: true,
+          key: 'one.yaml',
+          title: 'one.yaml',
+        },
+        {
+          isLeaf: true,
+          key: 'two.yaml',
+          title: 'two.yaml',
+        },
+        {
+          isLeaf: true,
+          key: 'unloaded.yaml',
+          title: 'unloaded.yaml',
+        },
+      ]}
+      readonly={true}
+      onError={handleError}
+      onSelectFile={setPath}
+    />
+  );
+};
 const CodeEditorSection: React.FC = () => {
   return (
     <ComponentSection id="CodeEditor" title="CodeEditor">
@@ -889,9 +930,9 @@ const CodeEditorSection: React.FC = () => {
       <AntDCard title="Usage">
         <strong>Editable Python file</strong>
         <CodeEditor
+          file={Loaded('import math\nprint(math.pi)\n\n')}
           files={[
             {
-              get: () => Promise.resolve('import math\nprint(math.pi)\n\n'),
               key: 'test.py',
               title: 'test.py',
             },
@@ -900,12 +941,11 @@ const CodeEditorSection: React.FC = () => {
         />
         <strong>Read-only YAML file</strong>
         <CodeEditor
+          file={Loaded(
+            'name: Unicode Test 日本😃\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2',
+          )}
           files={[
             {
-              get: () =>
-                Promise.resolve(
-                  'name: Unicode Test 日本😃\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2',
-                ),
               key: 'test1.yaml',
               title: 'test1.yaml',
             },
@@ -914,34 +954,7 @@ const CodeEditorSection: React.FC = () => {
           onError={handleError}
         />
         <strong>Multiple files, one not finished loading.</strong>
-        <CodeEditor
-          files={[
-            {
-              get: () =>
-                Promise.resolve(
-                  'hyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 512\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5',
-                ),
-              isLeaf: true,
-              key: 'one.yaml',
-              title: 'one.yaml',
-            },
-            {
-              get: () => Promise.resolve('searcher:\n  name: single\n  metric: validation_loss\n'),
-              isLeaf: true,
-              key: 'two.yaml',
-              title: 'two.yaml',
-            },
-            {
-              // eslint-disable-next-line @typescript-eslint/no-empty-function
-              get: () => new Promise(() => {}),
-              isLeaf: true,
-              key: 'unloaded.yaml',
-              title: 'unloaded.yaml',
-            },
-          ]}
-          readonly={true}
-          onError={handleError}
-        />
+        <UncontrolledCodeEditor />
       </AntDCard>
     </ComponentSection>
   );

@@ -200,8 +200,8 @@ export interface TreeNode extends DataNode {
   children?: TreeNode[];
   download?: string;
   get?: (path: string) => Promise<string>;
-  isConfig?: boolean;
   isLeaf?: boolean;
+  subtitle?: string;
 }
 
 export const MetricType = {

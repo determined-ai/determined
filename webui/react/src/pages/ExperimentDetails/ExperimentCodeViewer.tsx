@@ -1,14 +1,16 @@
 import yaml from 'js-yaml';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { ErrorMessage, LoadableOrError } from 'components/kit/CodeEditor';
 import Icon from 'components/kit/Icon';
+import { TreeNode } from 'components/kit/internal/types';
 import Spinner from 'components/kit/Spinner';
 import { paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { V1FileNode } from 'services/api-ts-sdk';
 import { RawJson } from 'types';
-import { ExperimentBase, TreeNode } from 'types';
-import handleError from 'utils/error';
+import { ExperimentBase } from 'types';
+import handleError, { ErrorType } from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
@@ -30,6 +32,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
   selectedFilePath,
 }: Props) => {
   const [expFiles, setExpFiles] = useState<Loadable<TreeNode[]>>(NotLoaded);
+  const [fileContent, setFileContent] = useState<LoadableOrError<string>>(NotLoaded);
 
   const submittedConfig = useMemo(() => {
     if (!experiment.originalConfig) return;
@@ -55,7 +58,6 @@ const ExperimentCodeViewer: React.FC<Props> = ({
   useEffect(() => {
     const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
       children: node.files?.map((n) => convertV1FileNodeToTreeNode(n)) ?? [],
-      content: NotLoaded,
       download: paths.experimentFileFromTree(experiment.id, String(node.path)),
       get: (path: string) => getExperimentFileFromTree({ experimentId: experiment.id, path }),
       isLeaf: !node.isDir,
@@ -69,6 +71,43 @@ const ExperimentCodeViewer: React.FC<Props> = ({
     })();
   }, [experiment.id]);
 
+  useEffect(() => {
+    if (!selectedFilePath) {
+      return;
+    }
+    if (selectedFilePath === 'Submitted Configuration' && submittedConfig !== undefined) {
+      setFileContent(Loaded(submittedConfig));
+      return;
+    }
+    if (selectedFilePath === 'Runtime Configuration' && runtimeConfig !== undefined) {
+      setFileContent(Loaded(runtimeConfig));
+      return;
+    }
+    setFileContent(NotLoaded);
+    (async () => {
+      try {
+        const file = await getExperimentFileFromTree({
+          experimentId: experiment.id,
+          path: selectedFilePath,
+        });
+        if (!file) {
+          setFileContent(ErrorMessage('File has no content.'));
+        } else {
+          setFileContent(Loaded(file));
+        }
+      } catch (error) {
+        handleError(error, {
+          publicMessage: 'Failed to load selected file.',
+          publicSubject: 'Unable to fetch the selected file.',
+          silent: false,
+          type: ErrorType.Api,
+        });
+        setFileContent(ErrorMessage('Unable to fetch file.'));
+        return;
+      }
+    })();
+  }, [experiment.id, runtimeConfig, selectedFilePath, submittedConfig]);
+
   const fileOpts = [
     submittedConfig
       ? {
@@ -77,6 +116,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
           icon: configIcon,
           isLeaf: true,
           key: 'Submitted Configuration',
+          subtitle: 'original submitted config',
           title: 'Submitted Configuration',
         }
       : null,
@@ -87,6 +127,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
           icon: configIcon,
           isLeaf: true,
           key: 'Runtime Configuration',
+          subtitle: 'after merge with defaults and templates',
           title: 'Runtime Configuration',
         }
       : null,
@@ -103,6 +144,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
       <Spinner spinning={expFiles === NotLoaded} tip="Loading file tree...">
         <div className={cssClasses.join(' ')}>
           <CodeEditor
+            file={fileContent}
             files={fileOpts}
             readonly={true}
             selectedFilePath={selectedFilePath}
