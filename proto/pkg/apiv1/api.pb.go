@@ -3586,7 +3586,7 @@ type DeterminedClient interface {
 	UnbindRPFromWorkspace(ctx context.Context, in *UnbindRPFromWorkspaceRequest, opts ...grpc.CallOption) (*UnbindRPFromWorkspaceResponse, error)
 	// Overwrite resource pool - workspace bindings
 	OverwriteRPWorkspaceBindings(ctx context.Context, in *OverwriteRPWorkspaceBindingsRequest, opts ...grpc.CallOption) (*OverwriteRPWorkspaceBindingsResponse, error)
-	// List all resource pools bound to a specific workspace
+	// List all resource pools, bound and unbound, available to a specific workspace
 	ListRPsBoundToWorkspace(ctx context.Context, in *ListRPsBoundToWorkspaceRequest, opts ...grpc.CallOption) (*ListRPsBoundToWorkspaceResponse, error)
 	// List all workspaces bound to a specific resource pool
 	ListWorkspacesBoundToRP(ctx context.Context, in *ListWorkspacesBoundToRPRequest, opts ...grpc.CallOption) (*ListWorkspacesBoundToRPResponse, error)
@@ -6186,7 +6186,7 @@ type DeterminedServer interface {
 	UnbindRPFromWorkspace(context.Context, *UnbindRPFromWorkspaceRequest) (*UnbindRPFromWorkspaceResponse, error)
 	// Overwrite resource pool - workspace bindings
 	OverwriteRPWorkspaceBindings(context.Context, *OverwriteRPWorkspaceBindingsRequest) (*OverwriteRPWorkspaceBindingsResponse, error)
-	// List all resource pools bound to a specific workspace
+	// List all resource pools, bound and unbound, available to a specific workspace
 	ListRPsBoundToWorkspace(context.Context, *ListRPsBoundToWorkspaceRequest) (*ListRPsBoundToWorkspaceResponse, error)
 	// List all workspaces bound to a specific resource pool
 	ListWorkspacesBoundToRP(context.Context, *ListWorkspacesBoundToRPRequest) (*ListWorkspacesBoundToRPResponse, error)
