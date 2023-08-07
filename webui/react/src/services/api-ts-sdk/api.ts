@@ -4212,25 +4212,6 @@ export interface V1GetTrialWorkloadsResponse {
     pagination: V1Pagination;
 }
 /**
- * 
- * @export
- * @interface V1GetUnboundResourcePoolsResponse
- */
-export interface V1GetUnboundResourcePoolsResponse {
-    /**
-     * The names of unbound resource pools.
-     * @type {Array<string>}
-     * @memberof V1GetUnboundResourcePoolsResponse
-     */
-    resourcePools: Array<string>;
-    /**
-     * Pagination information of the full dataset
-     * @type {V1Pagination}
-     * @memberof V1GetUnboundResourcePoolsResponse
-     */
-    pagination: V1Pagination;
-}
-/**
  * Response to GetUserByUsernameRequest.
  * @export
  * @interface V1GetUserByUsernameResponse
@@ -17138,10 +17119,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
+         * @param {boolean} [unbound] Indicate whether or not to return unbound pools only.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getResourcePools(offset?: number, limit?: number, options: any = {}): FetchArgs {
+        getResourcePools(offset?: number, limit?: number, unbound?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/resource-pools`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -17162,6 +17144,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit
+            }
+            
+            if (unbound !== undefined) {
+                localVarQueryParameter['unbound'] = unbound
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -17353,46 +17339,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             if (removeDeletedCheckpoints !== undefined) {
                 localVarQueryParameter['removeDeletedCheckpoints'] = removeDeletedCheckpoints
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get a list of all unbound resource pools from the cluster
-         * @param {number} [offset] The offset to use with pagination.
-         * @param {number} [limit] The maximum number of results to return.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getUnboundResourcePools(offset?: number, limit?: number, options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/resource-pools/unbound`;
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (offset !== undefined) {
-                localVarQueryParameter['offset'] = offset
-            }
-            
-            if (limit !== undefined) {
-                localVarQueryParameter['limit'] = limit
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -19002,11 +18948,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
+         * @param {boolean} [unbound] Indicate whether or not to return unbound pools only.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getResourcePools(offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetResourcePoolsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getResourcePools(offset, limit, options);
+        getResourcePools(offset?: number, limit?: number, unbound?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetResourcePoolsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getResourcePools(offset, limit, unbound, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19094,26 +19041,6 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, removeDeletedCheckpoints?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, group, removeDeletedCheckpoints, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get a list of all unbound resource pools from the cluster
-         * @param {number} [offset] The offset to use with pagination.
-         * @param {number} [limit] The maximum number of results to return.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getUnboundResourcePools(offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUnboundResourcePoolsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getUnboundResourcePools(offset, limit, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19882,11 +19809,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
+         * @param {boolean} [unbound] Indicate whether or not to return unbound pools only.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getResourcePools(offset?: number, limit?: number, options?: any) {
-            return InternalApiFp(configuration).getResourcePools(offset, limit, options)(fetch, basePath);
+        getResourcePools(offset?: number, limit?: number, unbound?: boolean, options?: any) {
+            return InternalApiFp(configuration).getResourcePools(offset, limit, unbound, options)(fetch, basePath);
         },
         /**
          * 
@@ -19938,17 +19866,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, removeDeletedCheckpoints?: boolean, options?: any) {
             return InternalApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, group, removeDeletedCheckpoints, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get a list of all unbound resource pools from the cluster
-         * @param {number} [offset] The offset to use with pagination.
-         * @param {number} [limit] The maximum number of results to return.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getUnboundResourcePools(offset?: number, limit?: number, options?: any) {
-            return InternalApiFp(configuration).getUnboundResourcePools(offset, limit, options)(fetch, basePath);
         },
         /**
          * 
@@ -20539,12 +20456,13 @@ export class InternalApi extends BaseAPI {
      * @summary Get a list of all resource pools from the cluster.
      * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
      * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
+     * @param {boolean} [unbound] Indicate whether or not to return unbound pools only.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getResourcePools(offset?: number, limit?: number, options?: any) {
-        return InternalApiFp(this.configuration).getResourcePools(offset, limit, options)(this.fetch, this.basePath)
+    public getResourcePools(offset?: number, limit?: number, unbound?: boolean, options?: any) {
+        return InternalApiFp(this.configuration).getResourcePools(offset, limit, unbound, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20604,19 +20522,6 @@ export class InternalApi extends BaseAPI {
      */
     public getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, removeDeletedCheckpoints?: boolean, options?: any) {
         return InternalApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, group, removeDeletedCheckpoints, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Get a list of all unbound resource pools from the cluster
-     * @param {number} [offset] The offset to use with pagination.
-     * @param {number} [limit] The maximum number of results to return.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public getUnboundResourcePools(offset?: number, limit?: number, options?: any) {
-        return InternalApiFp(this.configuration).getUnboundResourcePools(offset, limit, options)(this.fetch, this.basePath)
     }
     
     /**

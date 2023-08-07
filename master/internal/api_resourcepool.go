@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/determined-ai/determined/master/pkg/set"
-
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -13,8 +11,35 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	workspaceauth "github.com/determined-ai/determined/master/internal/workspace"
+	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
+
+func (a *apiServer) getUnboundResourcePools(ctx context.Context,
+	resourcePools []*resourcepoolv1.ResourcePool,
+) ([]*resourcepoolv1.ResourcePool, error) {
+	var poolNames []string
+	for _, pool := range resourcePools {
+		poolNames = append(poolNames, pool.Name)
+	}
+
+	unboundPoolNames, err := db.GetUnboundRPs(ctx, poolNames)
+	if err != nil {
+		return nil, err
+	}
+	unboundPoolNameSet := set.FromSlice[string](unboundPoolNames)
+
+	var unboundPools []*resourcepoolv1.ResourcePool
+
+	for _, pool := range resourcePools {
+		if unboundPoolNameSet.Contains(pool.Name) {
+			unboundPools = append(unboundPools, pool)
+		}
+	}
+
+	return unboundPools, nil
+}
 
 func (a *apiServer) GetResourcePools(
 	ctx context.Context, req *apiv1.GetResourcePoolsRequest,
@@ -47,6 +72,15 @@ func (a *apiServer) GetResourcePools(
 		return nil, err
 	}
 	resp.ResourcePools = filteredPools
+
+	if req.Unbound {
+		unboundPools, err := a.getUnboundResourcePools(ctx, filteredPools)
+		if err != nil {
+			return nil, err
+		}
+		resp.ResourcePools = unboundPools
+	}
+
 	return resp, a.paginate(&resp.Pagination, &resp.ResourcePools, req.Offset, req.Limit)
 }
 
@@ -167,29 +201,6 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 	return &apiv1.ListWorkspacesBoundToRPResponse{
 		WorkspaceIds: workspaceIDs, Pagination: pagination,
 	}, nil
-}
-
-func (a *apiServer) GetUnboundResourcePools(ctx context.Context,
-	req *apiv1.GetUnboundResourcePoolsRequest,
-) (*apiv1.GetUnboundResourcePoolsResponse, error) {
-	getPoolsResp, err := a.m.rm.GetResourcePools(a.m.system, &apiv1.GetResourcePoolsRequest{})
-	if err != nil {
-		return nil, err
-	}
-
-	var poolNames []string
-	for _, pool := range getPoolsResp.ResourcePools {
-		poolNames = append(poolNames, pool.Name)
-	}
-
-	unboundPools, err := db.GetUnboundRPs(ctx, poolNames)
-	if err != nil {
-		return nil, err
-	}
-
-	resp := apiv1.GetUnboundResourcePoolsResponse{ResourcePools: unboundPools}
-
-	return &resp, a.paginate(&resp.Pagination, &resp.ResourcePools, req.Offset, req.Limit)
 }
 
 func (a *apiServer) checkIfPoolIsDefault(poolName string) error {

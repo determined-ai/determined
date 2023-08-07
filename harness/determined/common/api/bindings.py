@@ -5256,32 +5256,6 @@ class v1GetTrialWorkloadsResponse(Printable):
         }
         return out
 
-class v1GetUnboundResourcePoolsResponse(Printable):
-
-    def __init__(
-        self,
-        *,
-        pagination: "v1Pagination",
-        resourcePools: "typing.Sequence[str]",
-    ):
-        self.pagination = pagination
-        self.resourcePools = resourcePools
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetUnboundResourcePoolsResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "pagination": v1Pagination.from_json(obj["pagination"]),
-            "resourcePools": obj["resourcePools"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "pagination": self.pagination.to_json(omit_unset),
-            "resourcePools": self.resourcePools,
-        }
-        return out
-
 class v1GetUserByUsernameResponse(Printable):
 
     def __init__(
@@ -15221,10 +15195,12 @@ def get_GetResourcePools(
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
+    unbound: "typing.Optional[bool]" = None,
 ) -> "v1GetResourcePoolsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
+        "unbound": str(unbound).lower() if unbound is not None else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -15820,30 +15796,6 @@ def get_GetTrialWorkloads(
     if _resp.status_code == 200:
         return v1GetTrialWorkloadsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTrialWorkloads", _resp)
-
-def get_GetUnboundResourcePools(
-    session: "api.Session",
-    *,
-    limit: "typing.Optional[int]" = None,
-    offset: "typing.Optional[int]" = None,
-) -> "v1GetUnboundResourcePoolsResponse":
-    _params = {
-        "limit": limit,
-        "offset": offset,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/resource-pools/unbound",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1GetUnboundResourcePoolsResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetUnboundResourcePools", _resp)
 
 def get_GetUser(
     session: "api.Session",
@@ -18133,7 +18085,6 @@ Paginated = typing.Union[
     v1GetTensorboardsResponse,
     v1GetTrialCheckpointsResponse,
     v1GetTrialWorkloadsResponse,
-    v1GetUnboundResourcePoolsResponse,
     v1GetUsersResponse,
     v1GetWorkspaceProjectsResponse,
     v1GetWorkspacesResponse,

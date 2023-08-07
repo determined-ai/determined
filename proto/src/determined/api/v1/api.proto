@@ -2219,15 +2219,4 @@ service Determined {
       tags: "Internal"
     };
   }
-
-  // Get a list of all unbound resource pools from the cluster
-  rpc GetUnboundResourcePools(GetUnboundResourcePoolsRequest)
-      returns (GetUnboundResourcePoolsResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/resource-pools/unbound"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
 }

@@ -16,6 +16,8 @@ message GetResourcePoolsRequest {
   int32 offset = 1;
   // Limit the number of resource pools. A value of 0 denotes no limit.
   int32 limit = 2;
+  // Indicate whether or not to return unbound pools only.
+  bool unbound = 3;
 }
 
 // Response to GetResourcePoolsRequest.
@@ -99,24 +101,5 @@ message ListWorkspacesBoundToRPResponse {
   // List of workspace IDs.
   repeated int32 workspace_ids = 1;
   // Pagination information of the full dataset.
-  Pagination pagination = 2;
-}
-
-// List all unbound resource pools
-message GetUnboundResourcePoolsRequest {
-  // The offset to use with pagination
-  int32 offset = 1;
-  // The maximum number of results to return
-  int32 limit = 2;
-}
-
-// Response to ListUnboundRPsRequest
-message GetUnboundResourcePoolsResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "resource_pools", "pagination" ] }
-  };
-  // The names of unbound resource pools.
-  repeated string resource_pools = 1;
-  // Pagination information of the full dataset
   Pagination pagination = 2;
 }
