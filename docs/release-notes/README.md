@@ -88,29 +88,29 @@ classifying the release note according to one of the following categories:
        * Jira issue or PR identifiers
 
 
-   * Use double backticks not single backticks for inline code samples.
+   * Use double backticks, not single backticks, for inline code samples.
 
      * Incorrect
 
-     ```markdown
-     The `foo(bar)` endpoint no longer accepts `waldo` and now accepts a `garply`.
-     ```
+       ```markdown
+       The `foo(bar)` endpoint no longer accepts `waldo` and now accepts a `garply`.
+       ```
 
      * Correct
 
-     ```markdown
-     The ``foo(bar)`` endpoint no longer accepts ``waldo`` and now accepts ``garply``.
-     ```
-       
+       ```markdown
+       The ``foo(bar)`` endpoint no longer accepts ``waldo`` and now accepts ``garply``.
+       ```
+
    * It is better to spell out acronyms or abbreviations. For example:
 
      * Incorrect
 
-     k8s: Fix a crash affecting namespaces.
+       k8s: Fix a crash affecting namespaces.
 
      * Correct
 
-     Kubernetes: Fix a crash affecting namespaces.
+       Kubernetes: Fix a crash affecting namespaces.
 
 
 
