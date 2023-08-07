@@ -504,6 +504,12 @@ commands:
               docker exec <<parameters.image-name>> tools/scripts/retry.sh pip install --progress-bar off <<parameters.extras-requires>>
             fi
 
+  setup-library-paths:
+    steps:
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
+      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+
   run-e2e-tests:
     parameters:
       mark:
@@ -1834,9 +1840,7 @@ jobs:
       - skip-if-github-only
       - skip-if-webui-only
       - install-codecov
-      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
-      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
-      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - setup-library-paths
       - run: COVERAGE_FILE=/root/project/test-unit-harness-cpu-tf1-pycov make -C harness test-cpu-tf1
       - run: coverage xml -i --data-file=./test-unit-harness-cpu-tf1-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -1858,9 +1862,7 @@ jobs:
       - skip-if-webui-only
       - run: pip install mypy pytest coverage
       - install-codecov
-      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
-      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
-      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - setup-library-paths
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-pycov make -C harness test-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -1881,9 +1883,7 @@ jobs:
       - skip-if-webui-only
       - run: pip install mypy pytest coverage
       - install-codecov
-      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
-      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
-      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - setup-library-paths
       - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-gpu-pycov make -C harness test-pytorch-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -1904,8 +1904,6 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
-      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
-      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
       - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-cpu-pycov make -C harness test-pytorch-cpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-cpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -1926,10 +1924,8 @@ jobs:
       - skip-if-github-only
       - skip-if-webui-only
       - run: pip install mypy pytest coverage
-      - run: echo 'export PATH=${PATH}:/usr/local/nvidia/bin' >> $BASH_ENV
-      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
       - install-codecov
-      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - setup-library-paths
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-parallel-pycov make -C harness test-gpu-parallel
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-parallel-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -1950,9 +1946,7 @@ jobs:
       - skip-if-webui-only
       - run: pip install pytorch_lightning==1.5.10 torchmetrics==0.5.1 torchvision==0.10.0 mypy pytest coverage
       - install-codecov
-      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
-      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
-      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - setup-library-paths
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-lightning-pycov make -C harness test-gpu-lightning
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -1973,9 +1967,7 @@ jobs:
       - skip-if-webui-only
       - run: pip install mypy pytest coverage
       - install-codecov
-      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
-      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
-      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - setup-library-paths
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-deepspeed-pycov make -C harness test-gpu-deepspeed
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-deepspeed-pycov
       - persist_to_workspace:
