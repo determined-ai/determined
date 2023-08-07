@@ -250,15 +250,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         children: wontHaveTrials ? (
           <NeverTrials />
         ) : (
-          <TrialDetailsMetrics experiment={experiment} trial={trialDetails} />
-        ),
-        key: TabType.Metrics,
-        label: 'Metrics',
-      },
-      {
-        children: wontHaveTrials ? (
-          <NeverTrials />
-        ) : (
           <TrialDetailsHyperparameters pageRef={pageRef} trial={trialDetails as TrialDetails} />
         ),
         key: TabType.Hyperparameters,
@@ -267,6 +258,15 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     ];
 
     if (showExperimentArtifacts) {
+      items.splice(1, 0, {
+        children: wontHaveTrials ? (
+          <NeverTrials />
+        ) : (
+          <TrialDetailsMetrics experiment={experiment} trial={trialDetails} />
+        ),
+        key: TabType.Metrics,
+        label: 'Metrics',
+      });
       items.push({
         children: <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />,
         key: TabType.Checkpoints,
