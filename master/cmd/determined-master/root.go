@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -129,19 +130,25 @@ func readConfigFile(configPath string) ([]byte, error) {
 
 func mergeConfigBytesIntoViper(bs []byte) error {
 	// TODO CAROLINA
-	var configMap map[string]interface{}
-	if err := yaml.Unmarshal(bs, &configMap); err != nil {
-		return errors.Wrap(err, "error unmarshal yaml configuration file")
+	// var configMap map[string]interface{}
+	// if err := yaml.Unmarshal(bs, &configMap); err != nil {
+	// 	return errors.Wrap(err, "error unmarshal yaml configuration file")
+	// }
+	if err := v.MergeConfig(bytes.NewReader(bs)); err != nil {
+		return errors.Wrap(err, "error merge configuration to viper")
 	}
-	for key, val := range configMap {
-		// Viper will check for the key in the following order:
-		// override, flag, env, config file, key/value store, default
-		check := v.Get(key)
-		if check == nil {
-			// If this key is not already set, set it with the master config value
-			v.Set(key, val)
+	/*
+		for key, val := range configMap {
+			log.Warnf("CONFIG KEY: %s", key)
+			// Viper will check for the key in the following order:
+			// override, flag, env, config file, key/value store, default
+			check := v.Get(key)
+			if check == nil {
+				// If this key is not already set, set it with the master config value
+				v.Set(key, val)
+			}
 		}
-	}
+	*/
 	/*
 		if err := v.MergeConfigMap(configMap); err != nil {
 			return errors.Wrap(err, "error merge configuration to viper")
