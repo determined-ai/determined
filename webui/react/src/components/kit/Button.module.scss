@@ -33,15 +33,6 @@
     color: #177ddc;
   }
 }
-.column {
-  &:global(.ant-btn) {
-    height: 100%;
-  }
-  > .content {
-    flex-direction: column;
-    margin: 8px 0;
-  }
-}
 .content {
   align-items: center;
   display: flex;
@@ -53,5 +44,14 @@
     align-items: center;
     display: flex;
     height: 100%;
+  }
+}
+.column {
+  &:global(.ant-btn) {
+    height: 100%; // override antd px values
+  }
+  > .content {
+    flex-direction: column;
+    margin: 8px 0;
   }
 }

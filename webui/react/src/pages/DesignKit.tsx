@@ -292,13 +292,9 @@ const ButtonsSection: React.FC = () => {
         With font icon
         <Space>
           <Button icon={<Icon name="play" size="large" title="Play" />} />
-          <Button icon={<Icon name="play" size="large" title="Play" />}>
-            Large font icon
-          </Button>
+          <Button icon={<Icon name="play" size="large" title="Play" />}>Large font icon</Button>
           <Button icon={<Icon name="play" size="tiny" title="Play" />} />
-          <Button icon={<Icon name="play" size="tiny" title="Play" />}>
-            Tiny font icon
-          </Button>
+          <Button icon={<Icon name="play" size="tiny" title="Play" />}>Tiny font icon</Button>
         </Space>
         As Dropdown trigger with icon
         <Space>
