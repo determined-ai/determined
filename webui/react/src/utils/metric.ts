@@ -46,20 +46,17 @@ export const extractMetrics = (workloads: WorkloadGroup[]): Metric[] => {
 
 export const extractMetricSortValue = (
   workload: WorkloadGroup,
-  metric: OldMetric,
+  metric: Metric,
 ): number | undefined => {
   return (
     extractMetricValue(workload, metric) ??
-    extractMetricValue(workload, { ...metric, type: MetricType.Validation }) ??
-    extractMetricValue(workload, { ...metric, type: MetricType.Training })
+    extractMetricValue(workload, { ...metric, group: MetricType.Validation }) ??
+    extractMetricValue(workload, { ...metric, group: MetricType.Training })
   );
 };
 
-export const extractMetricValue = (
-  workload: WorkloadGroup,
-  metric: OldMetric,
-): number | undefined => {
-  const source = workload.metrics[metric.type]?.metrics ?? {};
+export const extractMetricValue = (workload: WorkloadGroup, metric: Metric): number | undefined => {
+  const source = workload.metrics[metric.group]?.metrics ?? {};
   return source[metric.name];
 };
 
@@ -84,10 +81,6 @@ export const metricToStr = (metric: Metric, truncateLimit = 30): string => {
 export const metricToOldMetric = (metric: Metric): OldMetric => {
   const type = metric.group === MetricType.Training ? MetricType.Training : MetricType.Validation;
   return { name: metric.name, type };
-};
-
-export const oldMetricToMetric = (oldMetric: OldMetric): Metric => {
-  return { group: oldMetric.type, name: oldMetric.name };
 };
 
 export const metricToKey = (metric: Metric): string => {

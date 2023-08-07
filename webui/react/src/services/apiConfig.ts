@@ -1024,13 +1024,9 @@ export const getTrialWorkloads: DetApi<
       WorkloadFilterParamMap[params.filter || 'FILTER_OPTION_UNSPECIFIED'] ||
         'FILTER_OPTION_UNSPECIFIED',
       undefined,
-      params.metricType
-        ? params.metricType === Type.MetricType.Training
-          ? 'METRIC_TYPE_TRAINING'
-          : 'METRIC_TYPE_VALIDATION'
-        : undefined,
+      undefined,          // Specifically set to `undefined` to return custom group metrics.
       undefined,
-      true, // remove deleted checkpoints
+      true,   // remove deleted checkpoints
     ),
 };
 

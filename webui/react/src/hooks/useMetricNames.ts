@@ -5,24 +5,12 @@ import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { V1ExpMetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import { Metric, MetricType, OldMetric } from 'types';
+import { Metric } from 'types';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { metricKeyToMetric, metricToKey, metricToOldMetric } from 'utils/metric';
+import { metricKeyToMetric, metricToKey } from 'utils/metric';
 import { metricSorter } from 'utils/metric';
 
 import usePrevious from './usePrevious';
-
-export const asOldMetrics = (metrics: Metric[]): OldMetric[] => {
-  return metrics
-    .filter((metric) => {
-      return ([MetricType.Training, MetricType.Validation] as string[]).includes(metric.group);
-    })
-    .map(metricToOldMetric);
-};
-
-export const asLoadableOldMetrics = (loadable: Loadable<Metric[]>): Loadable<OldMetric[]> => {
-  return Loadable.map(loadable, (metrics) => asOldMetrics(metrics));
-};
 
 const useMetricNames = (
   experimentIds: number[],

@@ -70,20 +70,6 @@ describe('Workload Utilities', () => {
     });
   });
 
-  describe('getWorkload', () => {
-    it('should extract first available training workload', () => {
-      expect(utils.getWorkload(WORKLOADS[0])).toStrictEqual(WORKLOADS[0].metrics.training);
-    });
-
-    it('should extract first available validation workload', () => {
-      expect(utils.getWorkload(WORKLOADS[2])).toStrictEqual(WORKLOADS[2].metrics.validation);
-    });
-
-    it('should extract first available checkpoint workload', () => {
-      expect(utils.getWorkload(WORKLOADS[3])).toStrictEqual(WORKLOADS[3].checkpoint);
-    });
-  });
-
   describe('hasCheckpoint', () => {
     it('should detect checkpoint from workload', () => {
       const workload = {

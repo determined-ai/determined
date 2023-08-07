@@ -14,7 +14,7 @@ import usePolling from 'hooks/usePolling';
 import { getTrialWorkloads } from 'services/api';
 import {
   ExperimentBase,
-  OldMetric,
+  Metric,
   Step,
   TrialDetails,
   TrialWorkloadFilter,
@@ -25,9 +25,8 @@ import handleError from 'utils/error';
 import {
   extractMetricSortValue,
   extractMetricValue,
-  metricKeyToOldMetric,
+  metricKeyToMetric,
   metricToKey,
-  oldMetricToMetric,
 } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
@@ -38,10 +37,10 @@ import { Settings } from './TrialDetailsOverview.settings';
 import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
 
 export interface Props {
-  defaultMetrics: OldMetric[];
+  defaultMetrics: Metric[];
   experiment: ExperimentBase;
-  metricNames: OldMetric[];
-  metrics: OldMetric[];
+  metricNames: Metric[];
+  metrics: Metric[];
   settings: Settings;
   trial?: TrialDetails;
   updateSettings: (newSettings: Partial<Settings>) => void;
@@ -80,8 +79,8 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       return null;
     };
 
-    const metricRenderer = (metricName: OldMetric) => (_: string, record: Step) => {
-      const value = extractMetricValue(record, metricName);
+    const metricRenderer = (metric: Metric) => (_: string, record: Step) => {
+      const value = extractMetricValue(record, metric);
       return <HumanReadableNumber num={value} />;
     };
 
@@ -91,8 +90,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       return column;
     });
 
-    metrics.forEach((oldMetric) => {
-      const metric = oldMetricToMetric(oldMetric);
+    metrics.forEach((metric) => {
       const stateIndex = newColumns.findIndex((column) => column.key === 'state');
       newColumns.splice(stateIndex, 0, {
         defaultSortOrder:
@@ -102,10 +100,10 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
               : 'descend'
             : undefined,
         key: metricToKey(metric),
-        render: metricRenderer(oldMetric),
+        render: metricRenderer(metric),
         sorter: (a, b) => {
-          const aVal = extractMetricSortValue(a, oldMetric),
-            bVal = extractMetricSortValue(b, oldMetric);
+          const aVal = extractMetricSortValue(a, metric),
+            bVal = extractMetricSortValue(b, metric);
           if (aVal === undefined && bVal !== undefined) {
             return settings.sortDesc ? -1 : 1;
           } else if (aVal !== undefined && bVal === undefined) {
@@ -136,10 +134,10 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           filter: settings.filter,
           id: trial.id,
           limit: settings.tableLimit,
-          metricType: metricKeyToOldMetric(settings.sortKey)?.type || undefined,
+          // metricType: metricKeyToMetric(settings.sortKey)?.group || undefined,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortKey: metricKeyToOldMetric(settings.sortKey)?.name || undefined,
+          sortKey: metricKeyToMetric(settings.sortKey)?.name || undefined,
         });
         setWorkloads(Loaded(wl.workloads));
         setWorkloadCount(wl.pagination.total || 0);

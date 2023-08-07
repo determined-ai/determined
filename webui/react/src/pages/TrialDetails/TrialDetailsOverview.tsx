@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import Spinner from 'components/kit/Spinner';
 import { terminalRunStates } from 'constants/states';
-import useMetricNames, { asOldMetrics } from 'hooks/useMetricNames';
+import useMetricNames from 'hooks/useMetricNames';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
@@ -63,14 +63,6 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     return { defaultMetrics, metrics };
   }, [experiment?.config?.searcher, metricNames, settings.metric]);
 
-  const { oldDefaultMetrics, oldMetricNames, oldMetrics } = useMemo(() => {
-    return {
-      oldDefaultMetrics: asOldMetrics(defaultMetrics),
-      oldMetricNames: asOldMetrics(metricNames),
-      oldMetrics: asOldMetrics(metrics),
-    };
-  }, [defaultMetrics, metricNames, metrics]);
-
   const handleMetricChange = useCallback(
     (value: Metric[]) => {
       const newMetrics = value.map((metric) => metricToKey(metric));
@@ -94,10 +86,10 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           />
           {settings ? (
             <TrialDetailsWorkloads
-              defaultMetrics={oldDefaultMetrics}
+              defaultMetrics={defaultMetrics}
               experiment={experiment}
-              metricNames={oldMetricNames}
-              metrics={oldMetrics}
+              metricNames={metricNames}
+              metrics={metrics}
               settings={settings}
               trial={trial}
               updateSettings={updateSettings}
