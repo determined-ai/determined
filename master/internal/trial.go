@@ -201,12 +201,12 @@ func (t *trial) close() error {
 	if !t.idSet {
 		return nil
 	}
-	if !model.TerminalStates[t.state] {
-		return t.transition(model.StateWithReason{
-			State:               model.ErrorState,
-			InformationalReason: "trial did not finish properly",
-		})
-	}
+	// if !model.TerminalStates[t.state] {
+	// 	return t.transition(model.StateWithReason{
+	// 		State:               model.ErrorState,
+	// 		InformationalReason: "trial did not finish properly",
+	// 	})
+	// }
 	return nil
 }
 
