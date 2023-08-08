@@ -59,21 +59,16 @@ func ReportMasterTick(system *actor.System, db db.DB, rm telemetryRPFetcher) {
 		return
 	}
 
-	system.TellAt(
-		actor.Addr("telemetry"),
+	DefaultTelemetry.Track(
 		analytics.Track{
 			Event:      "master_tick",
 			Properties: props,
-		},
-	)
+		})
 }
 
 // ReportProvisionerTick reports the state of all provision requests by a provisioner.
-func ReportProvisionerTick(
-	system *actor.System, instances []*model.Instance, instanceType string,
-) {
-	system.TellAt(
-		actor.Addr("telemetry"),
+func ReportProvisionerTick(instances []*model.Instance, instanceType string) {
+	DefaultTelemetry.Track(
 		analytics.Track{
 			Event: "provisioner_tick",
 			Properties: map[string]interface{}{
@@ -84,9 +79,8 @@ func ReportProvisionerTick(
 }
 
 // ReportExperimentCreated reports that an experiment has been created.
-func ReportExperimentCreated(system *actor.System, id int, config expconf.ExperimentConfig) {
-	system.TellAt(
-		actor.Addr("telemetry"),
+func ReportExperimentCreated(id int, config expconf.ExperimentConfig) {
+	DefaultTelemetry.Track(
 		analytics.Track{
 			Event: "experiment_created",
 			Properties: map[string]interface{}{
@@ -102,8 +96,7 @@ func ReportExperimentCreated(system *actor.System, id int, config expconf.Experi
 }
 
 // ReportAllocationTerminal reports that an allocation ends.
-func ReportAllocationTerminal(
-	system *actor.System, db db.DB, a model.Allocation, d *device.Device,
+func ReportAllocationTerminal(db db.DB, a model.Allocation, d *device.Device,
 ) {
 	res, err := db.CompleteAllocationTelemetry(a.AllocationID)
 	if err != nil {
@@ -128,8 +121,7 @@ func ReportAllocationTerminal(
 		return
 	}
 
-	system.TellAt(
-		actor.Addr("telemetry"),
+	DefaultTelemetry.Track(
 		analytics.Track{
 			Event:      "allocation_terminal",
 			Properties: props,
@@ -165,7 +157,7 @@ func fetchTotalStepTime(db *db.PgDB, experimentID int) *float64 {
 }
 
 // ReportExperimentStateChanged reports that the state of an experiment has changed.
-func ReportExperimentStateChanged(system *actor.System, db *db.PgDB, e model.Experiment) {
+func ReportExperimentStateChanged(db *db.PgDB, e model.Experiment) {
 	var numTrials *int64
 	var numSteps *int64
 	var totalStepTime *float64
@@ -178,8 +170,7 @@ func ReportExperimentStateChanged(system *actor.System, db *db.PgDB, e model.Exp
 		totalStepTime = fetchTotalStepTime(db, e.ID)
 	}
 
-	system.TellAt(
-		actor.Addr("telemetry"),
+	DefaultTelemetry.Track(
 		analytics.Track{
 			Event: "experiment_state_changed",
 			Properties: map[string]interface{}{
@@ -196,9 +187,8 @@ func ReportExperimentStateChanged(system *actor.System, db *db.PgDB, e model.Exp
 }
 
 // ReportUserCreated reports that a user has been created.
-func ReportUserCreated(system *actor.System, admin, active bool) {
-	system.TellAt(
-		actor.Addr("telemetry"),
+func ReportUserCreated(admin, active bool) {
+	DefaultTelemetry.Track(
 		analytics.Track{
 			Event: "user_created",
 			Properties: map[string]interface{}{
