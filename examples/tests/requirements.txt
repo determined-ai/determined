@@ -6,7 +6,7 @@ tensorflow-macos==2.11.0; sys_platform == 'darwin' and platform_machine == 'arm6
 torch==1.11.0
 # torchvision is pinned because this is the most recent version compatible with the version of torch
 # currently required by determined in its requirements.txt (torch==1.11.0).
-torchvision==0.10.0
+torchvision==0.12.0
 pandas
 tensorflow_datasets
 scipy
