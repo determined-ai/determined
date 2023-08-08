@@ -127,6 +127,7 @@ func (a *Agent) run(ctx context.Context) error {
 	var cruntime container.ContainerRuntime
 	var logShipper *fluent.Fluent
 	var logShipperDone chan struct{}
+
 	switch a.opts.ContainerRuntime {
 	case options.PodmanContainerRuntime:
 		acl, sErr := podman.New(a.opts)
@@ -139,6 +140,8 @@ func (a *Agent) run(ctx context.Context) error {
 			}
 		}()
 		cruntime = acl
+	case options.ApptainerContainerRuntime:
+		fallthrough
 	case options.SingularityContainerRuntime:
 		acl, sErr := singularity.New(a.opts)
 		if sErr != nil {
@@ -177,8 +180,9 @@ func (a *Agent) run(ctx context.Context) error {
 		}()
 		logShipper = fl
 		logShipperDone = fl.Done
+	default:
+		return fmt.Errorf("not a valid value for container runtime: '%s'", a.opts.ContainerRuntime)
 	}
-
 	a.log.Trace("setting up container manager")
 	outbox := make(chan *aproto.MasterMessage, eventChanSize) // covers many from socket lifetimes
 	manager, err := containers.New(a.opts, mopts, devices, cruntime, a.sender(outbox))
