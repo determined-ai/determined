@@ -64,6 +64,7 @@ type SingularityClient struct {
 	agentTmp    string
 	debug       bool
 	isApptainer bool
+	imageRoot   string
 }
 
 // New returns a new singularity client, which launches and tracks containers.
@@ -81,14 +82,22 @@ func New(opts options.Options) (*SingularityClient, error) {
 		return nil, fmt.Errorf("preparing agent tmp: %w", err)
 	}
 
+	// Validate image root (if provided)
+	if opts.ImageRoot != "" {
+		if _, err := os.ReadDir(opts.ImageRoot); err != nil {
+			return nil, fmt.Errorf("reading image root directory: %w", err)
+		}
+	}
+
 	return &SingularityClient{
-		log:         logrus.WithField("compotent", "singularity"),
+		log:         logrus.WithField("component", "singularity"),
 		opts:        opts.SingularityOptions,
 		wg:          waitgroupx.WithContext(context.Background()),
 		containers:  make(map[cproto.ID]*SingularityContainer),
 		agentTmp:    agentTmp,
 		debug:       opts.Debug,
 		isApptainer: opts.ContainerRuntime == options.ApptainerContainerRuntime,
+		imageRoot:   opts.ImageRoot,
 	}, nil
 }
 
@@ -323,7 +332,20 @@ func (s *SingularityClient) RunContainer(
 
 	args = capabilitiesToSingularityArgs(req, args)
 
-	image := cruntimes.CanonicalizeImage(req.ContainerConfig.Image)
+	requestedImage := req.ContainerConfig.Image
+	var image string
+	s.log.Tracef("Requested image: %s", requestedImage)
+	if s.imageRoot != "" {
+		cachePathName := s.imageRoot + "/" + requestedImage
+		if _, err = os.Stat(cachePathName); err != nil {
+			s.log.Tracef("Failed to Stat() %s: %s", cachePathName, err)
+		} else {
+			image = cachePathName
+		}
+	}
+	if image == "" {
+		image = cruntimes.CanonicalizeImage(requestedImage)
+	}
 	args = append(args, image)
 	args = append(args, singularityWrapperEntrypoint)
 	args = append(args, req.ContainerConfig.Cmd...)
