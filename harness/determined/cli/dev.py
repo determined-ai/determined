@@ -159,11 +159,6 @@ def get_available_bindings(
     return odict
 
 
-def list_bindings(args: Namespace) -> None:
-    for name, params in get_available_bindings(show_unusable=args.show_unusable).items():
-        print(bindings_sig_str(name, params))
-
-
 def parse_param_value(param: inspect.Parameter, value: str) -> Any:
     annot = unwrap_optional(param.annotation)
 
@@ -184,11 +179,11 @@ def parse_param_value(param: inspect.Parameter, value: str) -> Any:
     return value
 
 
-def parse_args_to_kwargs(args: Namespace, params: List[inspect.Parameter]) -> Dict[str, Any]:
+def parse_args_to_kwargs(args: List[str], params: List[inspect.Parameter]) -> Dict[str, Any]:
     kwargs: Dict[str, Any] = {}
     params_d: Dict[str, inspect.Parameter] = {p.name: p for p in params}
 
-    for idx, arg in enumerate(args.args):
+    for idx, arg in enumerate(args):
         key: str = ""
         value: Any = None
         if "=" in arg:
@@ -220,6 +215,11 @@ def print_resposne(d: Any) -> None:
         print(d)
 
 
+def list_bindings(args: Namespace) -> None:
+    for name, params in get_available_bindings(show_unusable=args.show_unusable).items():
+        print(bindings_sig_str(name, params))
+
+
 @authentication.required
 def call_bindings(args: Namespace) -> None:
     """
@@ -247,7 +247,7 @@ def call_bindings(args: Namespace) -> None:
 
     params = fns[fn_name]
     try:
-        kwargs = parse_args_to_kwargs(args, params)
+        kwargs = parse_args_to_kwargs(args.args, params)
         rv = fn(sess, **kwargs)
     except Exception as e:  # we could explicitly check TypeError but let's provide more hints
         raise errors.CliError(
