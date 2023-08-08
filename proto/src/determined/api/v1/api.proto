@@ -1516,8 +1516,7 @@ service Determined {
   }
 
   // Gets the metrics for all trials associated with this model version
-  rpc GetTrialMetricsByModelVersion(
-      GetTrialMetricsByModelVersionRequest)
+  rpc GetTrialMetricsByModelVersion(GetTrialMetricsByModelVersionRequest)
       returns (GetTrialMetricsByModelVersionResponse) {
     option (google.api.http) = {
       get: "/api/v1/models/{model_name}/versions/{model_version_num}/metrics"
@@ -1586,8 +1585,7 @@ service Determined {
   }
 
   // Gets the metrics for all trials associated with this checkpoint
-  rpc GetTrialMetricsByCheckpoint(
-      GetTrialMetricsByCheckpointRequest)
+  rpc GetTrialMetricsByCheckpoint(GetTrialMetricsByCheckpointRequest)
       returns (GetTrialMetricsByCheckpointResponse) {
     option (google.api.http) = {
       get: "/api/v1/checkpoints/{checkpoint_uuid}/metrics"
