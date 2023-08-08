@@ -68,7 +68,7 @@ def curl(args: Namespace) -> None:
     sys.exit(output.returncode)
 
 
-def _bindings_sig(fn: Any) -> Tuple[str, List[inspect.Parameter]]:
+def bindings_sig(fn: Any) -> Tuple[str, List[inspect.Parameter]]:
     sig = inspect.signature(fn)
     # throw out session
     params = list(sig.parameters.values())[1:]
@@ -79,7 +79,7 @@ def _bindings_sig(fn: Any) -> Tuple[str, List[inspect.Parameter]]:
     return fn.__name__, params
 
 
-def _bindings_sig_str(name: str, params: List[inspect.Parameter]) -> str:
+def bindings_sig_str(name: str, params: List[inspect.Parameter]) -> str:
     def serialize_param(p: inspect.Parameter) -> str:
         return str(p).replace("typing.", "")
 
@@ -106,7 +106,7 @@ def unwrap_optional(annotation: Any) -> Any:
     return annotation
 
 
-def _is_supported_annotation(a: Any) -> bool:
+def is_supported_annotation(a: Any) -> bool:
     try:
         from typing import get_args, get_origin  # type: ignore
     except ImportError:
@@ -121,35 +121,35 @@ def _is_supported_annotation(a: Any) -> bool:
 
     if origin in [list, abc_Sequence]:
         if args is not None:
-            return all(_is_supported_annotation(arg) for arg in args)
+            return all(is_supported_annotation(arg) for arg in args)
 
     return False
 
 
-def _can_be_called_via_cli(params: List[inspect.Parameter]) -> bool:
+def can_be_called_via_cli(params: List[inspect.Parameter]) -> bool:
     """
     if all the non-optionals are primitives, then we can call it via the cli
     """
     for p in params:
         if p.default is not inspect.Parameter.empty:
             continue
-        if not _is_supported_annotation(p.annotation):
+        if not is_supported_annotation(p.annotation):
             return False
     return True
 
 
-def _get_available_bindings(
+def get_available_bindings(
     show_unusable: bool = False,
 ) -> OrderedDict[str, List[inspect.Parameter]]:
     rv: List[Tuple[str, List[inspect.Parameter]]] = []
     for name, obj in inspect.getmembers(bindings):
         if not inspect.isfunction(obj):
             continue
-        name, params = _bindings_sig(obj)
+        name, params = bindings_sig(obj)
         if not show_unusable:
-            if not _can_be_called_via_cli(params):
+            if not can_be_called_via_cli(params):
                 continue
-            params = [p for p in params if _is_supported_annotation(p.annotation)]
+            params = [p for p in params if is_supported_annotation(p.annotation)]
         rv.append((name, params))
 
     rv.sort(key=lambda x: x[0])
@@ -160,8 +160,8 @@ def _get_available_bindings(
 
 
 def list_bindings(args: Namespace) -> None:
-    for name, params in _get_available_bindings(show_unusable=args.show_unusable).items():
-        print(_bindings_sig_str(name, params))
+    for name, params in get_available_bindings(show_unusable=args.show_unusable).items():
+        print(bindings_sig_str(name, params))
 
 
 def parse_param_value(param: inspect.Parameter, value: str) -> Any:
@@ -184,7 +184,7 @@ def parse_param_value(param: inspect.Parameter, value: str) -> Any:
     return value
 
 
-def _parse_args_to_kwargs(args: Namespace, params: List[inspect.Parameter]) -> Dict[str, Any]:
+def parse_args_to_kwargs(args: Namespace, params: List[inspect.Parameter]) -> Dict[str, Any]:
     kwargs: Dict[str, Any] = {}
     params_d: Dict[str, inspect.Parameter] = {p.name: p for p in params}
 
@@ -208,14 +208,14 @@ def _parse_args_to_kwargs(args: Namespace, params: List[inspect.Parameter]) -> D
     return kwargs
 
 
-def _print_resposne(d: Any) -> None:
+def print_resposne(d: Any) -> None:
     if d is None:
         return
     if hasattr(d, "to_json"):
         cli.render.print_json(d.to_json())
     elif inspect.isgenerator(d):
         for v in d:
-            _print_resposne(v)
+            print_resposne(v)
     else:
         print(d)
 
@@ -227,7 +227,7 @@ def call_bindings(args: Namespace) -> None:
     """
     sess = cli.setup_session(args)
     fn_name: str = args.name
-    fns = _get_available_bindings(show_unusable=False)
+    fns = get_available_bindings(show_unusable=False)
     try:
         fn = getattr(bindings, fn_name)
     except AttributeError:
@@ -247,12 +247,12 @@ def call_bindings(args: Namespace) -> None:
 
     params = fns[fn_name]
     try:
-        kwargs = _parse_args_to_kwargs(args, params)
+        kwargs = parse_args_to_kwargs(args, params)
         rv = fn(sess, **kwargs)
     except Exception as e:  # we could explicitly check TypeError but let's provide more hints
         raise errors.CliError(
             "Usage: "
-            + _bindings_sig_str(
+            + bindings_sig_str(
                 fn_name,
                 params,
             )
@@ -260,7 +260,7 @@ def call_bindings(args: Namespace) -> None:
             e,
         )
 
-    _print_resposne(rv)
+    print_resposne(rv)
 
 
 args_description = [

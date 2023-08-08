@@ -450,13 +450,13 @@ def test_colored_str_output(case: Case) -> None:
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="requires Python3.8 or higher")
 def test_dev_bindings() -> None:
-    from determined.cli.dev import _bindings_sig, _can_be_called_via_cli, _is_supported_annotation
+    from determined.cli.dev import bindings_sig, can_be_called_via_cli, is_supported_annotation
 
-    _, params = _bindings_sig(bindings.get_GetExperiment)
-    assert _can_be_called_via_cli(params) is True, params
+    _, params = bindings_sig(bindings.get_GetExperiment)
+    assert can_be_called_via_cli(params) is True, params
 
-    _, params = _bindings_sig(bindings.post_UpdateJobQueue)
-    assert _can_be_called_via_cli(params) is False, params
+    _, params = bindings_sig(bindings.post_UpdateJobQueue)
+    assert can_be_called_via_cli(params) is False, params
     annots = [
         str,
         Optional[str],
@@ -464,8 +464,8 @@ def test_dev_bindings() -> None:
         Optional[Sequence[str]],
     ]
     for a in annots:
-        assert _is_supported_annotation(a) is True, a
+        assert is_supported_annotation(a) is True, a
 
-    _, params = _bindings_sig(bindings.get_ExpMetricNames)
+    _, params = bindings_sig(bindings.get_ExpMetricNames)
     for p in params:
-        assert _is_supported_annotation(p.annotation) is True, p
+        assert is_supported_annotation(p.annotation) is True, p
