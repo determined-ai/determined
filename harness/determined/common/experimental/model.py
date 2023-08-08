@@ -74,6 +74,18 @@ class ModelVersion:
             self._session, modelName=self.model_name, modelVersionNum=self.model_version
         )
 
+    def get_inference_metrics(self):  # -> Iterable["metrics.InferenceMetrics"]:
+        from determined.experimental import metrics
+
+        resp = bindings.get_GetTrialMetricsByModelVersion(
+            session=self._session,
+            modelName=self.model_name,
+            modelVersionNum=self.model_version,
+            trialSourceInfoType=bindings.v1TrialSourceInfoType.INFERENCE,
+        )
+        for d in resp.metrics:
+            yield metrics.InferenceMetrics._from_bindings(d)
+
     @classmethod
     def _from_bindings(cls, m: bindings.v1ModelVersion, session: api.Session) -> "ModelVersion":
         return cls(

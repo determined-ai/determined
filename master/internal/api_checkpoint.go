@@ -423,9 +423,9 @@ func (a *apiServer) PostCheckpointMetadata(
 }
 
 // Query for all trials that use a given checkpoint and return their metrics.
-func (a *apiServer) GetTrialMetricsBySourceInfoCheckpoint(
-	ctx context.Context, req *apiv1.GetTrialMetricsBySourceInfoCheckpointRequest,
-) (*apiv1.GetTrialMetricsBySourceInfoCheckpointResponse, error) {
+func (a *apiServer) GetTrialMetricsByCheckpoint(
+	ctx context.Context, req *apiv1.GetTrialMetricsByCheckpointRequest,
+) (*apiv1.GetTrialMetricsByCheckpointResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -436,7 +436,7 @@ func (a *apiServer) GetTrialMetricsBySourceInfoCheckpoint(
 		return nil, err
 	}
 
-	resp := &apiv1.GetTrialMetricsBySourceInfoCheckpointResponse{}
+	resp := &apiv1.GetTrialMetricsByCheckpointResponse{}
 	trialIDsQuery := db.Bun().NewSelect().Table("trial_source_infos").
 		Where("checkpoint_uuid = ?", req.CheckpointUuid)
 

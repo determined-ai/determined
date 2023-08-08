@@ -362,10 +362,10 @@ class Checkpoint:
         else:
             logging.info(f"Partial deletion of checkpoint {self.uuid} is in progress.")
 
-    def get_inference_metrics(self):  # -> Iterable[metrics.InferenceMetrics]:
+    def get_inference_metrics(self):  # -> Iterable["metrics.InferenceMetrics"]:
         from determined.experimental import metrics
 
-        resp = bindings.get_GetTrialMetricsBySourceInfoCheckpoint(
+        resp = bindings.get_GetTrialMetricsByCheckpoint(
             session=self._session,
             checkpointUuid=self.uuid,
             trialSourceInfoType=bindings.v1TrialSourceInfoType.INFERENCE,

@@ -76,7 +76,7 @@ message DeleteCheckpointsRequest {
 message DeleteCheckpointsResponse {}
 
 // Request for all metrics related to a given checkpoint
-message GetTrialMetricsBySourceInfoCheckpointRequest {
+message GetTrialMetricsByCheckpointRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "checkpoint_uuid" ] }
   };
@@ -87,7 +87,7 @@ message GetTrialMetricsBySourceInfoCheckpointRequest {
 }
 
 // Response for all metrics related to a given checkpoint
-message GetTrialMetricsBySourceInfoCheckpointResponse {
+message GetTrialMetricsByCheckpointResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "metrics" ] }
   };

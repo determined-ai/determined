@@ -3,11 +3,13 @@ package db
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -300,6 +302,12 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 		Order("trial_id", "trial_run_id", "total_batches").
 		Limit(limit).
 		Scan(ctx, &res)
+
+	for i := 0; i < len(res); i++ {
+		// Truncate the timestamp to milliseconds to play nice with the harness's
+		// parse_protobuf_timestamp function
+		res[i].EndTime = timestamppb.New(res[i].EndTime.AsTime().Truncate(time.Millisecond))
+	}
 
 	return res, err
 }

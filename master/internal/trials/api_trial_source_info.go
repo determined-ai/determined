@@ -65,6 +65,12 @@ func GetMetricsForTrialSourceInfoQuery(
 		if err != nil {
 			return nil, fmt.Errorf("failed to get metrics %w", err)
 		}
+		// if len(res) > 0 {
+		// 	for i := 0; i < len(res); i++ {
+		// 		// TODO we are giving too precise timestamps for our Python parsing code somehow.
+		// 		res[i].EndTime = timestamppb.New(res[i].EndTime.AsTime().Truncate(time.Millisecond))
+		// 	}
+		// }
 		// trialSourceInfoMetric := &trialv1.TrialSourceInfoMetric{
 		// 	TrialId:             int32(val.TrialID),
 		// 	TrialSourceInfoType: trialv1.TrialSourceInfoType(sourceType),

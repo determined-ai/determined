@@ -5120,7 +5120,7 @@ class v1GetTrialCheckpointsResponse(Printable):
         }
         return out
 
-class v1GetTrialMetricsBySourceInfoCheckpointResponse(Printable):
+class v1GetTrialMetricsByCheckpointResponse(Printable):
 
     def __init__(
         self,
@@ -5130,7 +5130,29 @@ class v1GetTrialMetricsBySourceInfoCheckpointResponse(Printable):
         self.metrics = metrics
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1GetTrialMetricsBySourceInfoCheckpointResponse":
+    def from_json(cls, obj: Json) -> "v1GetTrialMetricsByCheckpointResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "metrics": [v1MetricsReport.from_json(x) for x in obj["metrics"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "metrics": [x.to_json(omit_unset) for x in self.metrics],
+        }
+        return out
+
+class v1GetTrialMetricsByModelVersionResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        metrics: "typing.Sequence[v1MetricsReport]",
+    ):
+        self.metrics = metrics
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTrialMetricsByModelVersionResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "metrics": [v1MetricsReport.from_json(x) for x in obj["metrics"]],
         }
@@ -5205,28 +5227,6 @@ class v1GetTrialResponse(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "trial": self.trial.to_json(omit_unset),
-        }
-        return out
-
-class v1GetTrialSourceInfoMetricsByModelVersionResponse(Printable):
-
-    def __init__(
-        self,
-        *,
-        metrics: "typing.Sequence[v1MetricsReport]",
-    ):
-        self.metrics = metrics
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetTrialSourceInfoMetricsByModelVersionResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "metrics": [v1MetricsReport.from_json(x) for x in obj["metrics"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "metrics": [x.to_json(omit_unset) for x in self.metrics],
         }
         return out
 
@@ -15599,18 +15599,18 @@ def get_GetTrialCheckpoints(
         return v1GetTrialCheckpointsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTrialCheckpoints", _resp)
 
-def get_GetTrialMetricsBySourceInfoCheckpoint(
+def get_GetTrialMetricsByCheckpoint(
     session: "api.Session",
     *,
     checkpointUuid: str,
     trialSourceInfoType: "typing.Optional[v1TrialSourceInfoType]" = None,
-) -> "v1GetTrialMetricsBySourceInfoCheckpointResponse":
+) -> "v1GetTrialMetricsByCheckpointResponse":
     _params = {
         "trialSourceInfoType": trialSourceInfoType.value if trialSourceInfoType is not None else None,
     }
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/checkpoints/{checkpointUuid}/trial-source-info-metrics",
+        path=f"/api/v1/checkpoints/{checkpointUuid}/metrics",
         params=_params,
         json=None,
         data=None,
@@ -15619,8 +15619,32 @@ def get_GetTrialMetricsBySourceInfoCheckpoint(
         stream=False,
     )
     if _resp.status_code == 200:
-        return v1GetTrialMetricsBySourceInfoCheckpointResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetTrialMetricsBySourceInfoCheckpoint", _resp)
+        return v1GetTrialMetricsByCheckpointResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTrialMetricsByCheckpoint", _resp)
+
+def get_GetTrialMetricsByModelVersion(
+    session: "api.Session",
+    *,
+    modelName: str,
+    modelVersionNum: int,
+    trialSourceInfoType: "typing.Optional[v1TrialSourceInfoType]" = None,
+) -> "v1GetTrialMetricsByModelVersionResponse":
+    _params = {
+        "trialSourceInfoType": trialSourceInfoType.value if trialSourceInfoType is not None else None,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/models/{modelName}/versions/{modelVersionNum}/metrics",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetTrialMetricsByModelVersionResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTrialMetricsByModelVersion", _resp)
 
 def get_GetTrialProfilerAvailableSeries(
     session: "api.Session",
@@ -15697,30 +15721,6 @@ def get_GetTrialProfilerMetrics(
             raise APIHttpStreamError("get_GetTrialProfilerMetrics", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_GetTrialProfilerMetrics", _resp)
-
-def get_GetTrialSourceInfoMetricsByModelVersion(
-    session: "api.Session",
-    *,
-    modelName: str,
-    modelVersionNum: int,
-    trialSourceInfoType: "typing.Optional[v1TrialSourceInfoType]" = None,
-) -> "v1GetTrialSourceInfoMetricsByModelVersionResponse":
-    _params = {
-        "trialSourceInfoType": trialSourceInfoType.value if trialSourceInfoType is not None else None,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/models/{modelName}/versions/{modelVersionNum}/trial-source-info-metrics",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1GetTrialSourceInfoMetricsByModelVersionResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetTrialSourceInfoMetricsByModelVersion", _resp)
 
 def get_GetTrialWorkloads(
     session: "api.Session",

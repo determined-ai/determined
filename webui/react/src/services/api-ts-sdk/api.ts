@@ -4130,13 +4130,26 @@ export interface V1GetTrialCheckpointsResponse {
 /**
  * 
  * @export
- * @interface V1GetTrialMetricsBySourceInfoCheckpointResponse
+ * @interface V1GetTrialMetricsByCheckpointResponse
  */
-export interface V1GetTrialMetricsBySourceInfoCheckpointResponse {
+export interface V1GetTrialMetricsByCheckpointResponse {
     /**
      * All the related trials and their metrics
      * @type {Array<V1MetricsReport>}
-     * @memberof V1GetTrialMetricsBySourceInfoCheckpointResponse
+     * @memberof V1GetTrialMetricsByCheckpointResponse
+     */
+    metrics: Array<V1MetricsReport>;
+}
+/**
+ * 
+ * @export
+ * @interface V1GetTrialMetricsByModelVersionResponse
+ */
+export interface V1GetTrialMetricsByModelVersionResponse {
+    /**
+     * All the related trials and their metrics
+     * @type {Array<V1MetricsReport>}
+     * @memberof V1GetTrialMetricsByModelVersionResponse
      */
     metrics: Array<V1MetricsReport>;
 }
@@ -4178,19 +4191,6 @@ export interface V1GetTrialResponse {
      * @memberof V1GetTrialResponse
      */
     trial: Trialv1Trial;
-}
-/**
- * 
- * @export
- * @interface V1GetTrialSourceInfoMetricsByModelVersionResponse
- */
-export interface V1GetTrialSourceInfoMetricsByModelVersionResponse {
-    /**
-     * All the related trials and their metrics repeated determined.trial.v1.TrialSourceInfoMetric data = 1;
-     * @type {Array<V1MetricsReport>}
-     * @memberof V1GetTrialSourceInfoMetricsByModelVersionResponse
-     */
-    metrics: Array<V1MetricsReport>;
 }
 /**
  * Response to GetTrialWorkloadsRequest.
@@ -17159,12 +17159,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialMetricsBySourceInfoCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options: any = {}): FetchArgs {
+        getTrialMetricsByCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options: any = {}): FetchArgs {
             // verify required parameter 'checkpointUuid' is not null or undefined
             if (checkpointUuid === null || checkpointUuid === undefined) {
-                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling getTrialMetricsBySourceInfoCheckpoint.');
+                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling getTrialMetricsByCheckpoint.');
             }
-            const localVarPath = `/api/v1/checkpoints/{checkpointUuid}/trial-source-info-metrics`
+            const localVarPath = `/api/v1/checkpoints/{checkpointUuid}/metrics`
                 .replace(`{${"checkpointUuid"}}`, encodeURIComponent(String(checkpointUuid)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -17201,16 +17201,16 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialSourceInfoMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options: any = {}): FetchArgs {
+        getTrialMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling getTrialSourceInfoMetricsByModelVersion.');
+                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling getTrialMetricsByModelVersion.');
             }
             // verify required parameter 'modelVersionNum' is not null or undefined
             if (modelVersionNum === null || modelVersionNum === undefined) {
-                throw new RequiredError('modelVersionNum','Required parameter modelVersionNum was null or undefined when calling getTrialSourceInfoMetricsByModelVersion.');
+                throw new RequiredError('modelVersionNum','Required parameter modelVersionNum was null or undefined when calling getTrialMetricsByModelVersion.');
             }
-            const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionNum}/trial-source-info-metrics`
+            const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionNum}/metrics`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)))
                 .replace(`{${"modelVersionNum"}}`, encodeURIComponent(String(modelVersionNum)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
@@ -18954,8 +18954,8 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialMetricsBySourceInfoCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialMetricsBySourceInfoCheckpointResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialMetricsBySourceInfoCheckpoint(checkpointUuid, trialSourceInfoType, options);
+        getTrialMetricsByCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialMetricsByCheckpointResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialMetricsByCheckpoint(checkpointUuid, trialSourceInfoType, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18975,8 +18975,8 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialSourceInfoMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialSourceInfoMetricsByModelVersionResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialSourceInfoMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, options);
+        getTrialMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialMetricsByModelVersionResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19795,8 +19795,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialMetricsBySourceInfoCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
-            return InternalApiFp(configuration).getTrialMetricsBySourceInfoCheckpoint(checkpointUuid, trialSourceInfoType, options)(fetch, basePath);
+        getTrialMetricsByCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
+            return InternalApiFp(configuration).getTrialMetricsByCheckpoint(checkpointUuid, trialSourceInfoType, options)(fetch, basePath);
         },
         /**
          * 
@@ -19807,8 +19807,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialSourceInfoMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
-            return InternalApiFp(configuration).getTrialSourceInfoMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, options)(fetch, basePath);
+        getTrialMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
+            return InternalApiFp(configuration).getTrialMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, options)(fetch, basePath);
         },
         /**
          * 
@@ -20445,8 +20445,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getTrialMetricsBySourceInfoCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
-        return InternalApiFp(this.configuration).getTrialMetricsBySourceInfoCheckpoint(checkpointUuid, trialSourceInfoType, options)(this.fetch, this.basePath)
+    public getTrialMetricsByCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
+        return InternalApiFp(this.configuration).getTrialMetricsByCheckpoint(checkpointUuid, trialSourceInfoType, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20459,8 +20459,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getTrialSourceInfoMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
-        return InternalApiFp(this.configuration).getTrialSourceInfoMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, options)(this.fetch, this.basePath)
+    public getTrialMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
+        return InternalApiFp(this.configuration).getTrialMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, options)(this.fetch, this.basePath)
     }
     
     /**

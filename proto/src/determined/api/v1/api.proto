@@ -1516,11 +1516,11 @@ service Determined {
   }
 
   // Gets the metrics for all trials associated with this model version
-  rpc GetTrialSourceInfoMetricsByModelVersion(
-      GetTrialSourceInfoMetricsByModelVersionRequest)
-      returns (GetTrialSourceInfoMetricsByModelVersionResponse) {
+  rpc GetTrialMetricsByModelVersion(
+      GetTrialMetricsByModelVersionRequest)
+      returns (GetTrialMetricsByModelVersionResponse) {
     option (google.api.http) = {
-      get: "/api/v1/models/{model_name}/versions/{model_version_num}/trial-source-info-metrics"
+      get: "/api/v1/models/{model_name}/versions/{model_version_num}/metrics"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Internal" ]
@@ -1586,11 +1586,11 @@ service Determined {
   }
 
   // Gets the metrics for all trials associated with this checkpoint
-  rpc GetTrialMetricsBySourceInfoCheckpoint(
-      GetTrialMetricsBySourceInfoCheckpointRequest)
-      returns (GetTrialMetricsBySourceInfoCheckpointResponse) {
+  rpc GetTrialMetricsByCheckpoint(
+      GetTrialMetricsByCheckpointRequest)
+      returns (GetTrialMetricsByCheckpointResponse) {
     option (google.api.http) = {
-      get: "/api/v1/checkpoints/{checkpoint_uuid}/trial-source-info-metrics"
+      get: "/api/v1/checkpoints/{checkpoint_uuid}/metrics"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Internal" ]
