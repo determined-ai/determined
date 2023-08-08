@@ -38,7 +38,6 @@ import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import useExperimentTags from 'hooks/useExperimentTags';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
@@ -133,8 +132,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const permissions = usePermissions();
-
-  const isNewXPListActive = useFeature().isOn('explist_v2'); // TODO: remove it once we leave the "old" experiment list removed;
 
   const id = project?.id;
 
@@ -870,9 +867,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, []);
 
   const tabBarContent = useMemo(() => {
-    // TODO: remove it once we leave the "old" experiment list removed;
-    if (isNewXPListActive) return;
-
     const menuItems: MenuItem[] = [
       {
         key: MenuKey.SwitchArchived,
@@ -913,14 +907,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         </div>
       </div>
     );
-  }, [
-    filterCount,
-    ColumnsCustomizeModal,
-    resetFilters,
-    settings.archived,
-    switchShowArchived,
-    isNewXPListActive,
-  ]);
+  }, [filterCount, ColumnsCustomizeModal, resetFilters, settings.archived, switchShowArchived]);
 
   useSetDynamicTabBar(tabBarContent);
   return (
