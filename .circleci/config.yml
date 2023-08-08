@@ -2015,7 +2015,7 @@ jobs:
           install-python: false
           determined: true
           model-hub: true
-          extras-requires: "torch==1.11.0 torchvision==0.12.0"
+          extras-requires: "torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "model_hub/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-model-hub-pycov make -C model_hub test
