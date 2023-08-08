@@ -9,20 +9,37 @@ number.
 
 ### Sequence Number
 
-A monotonically increasing sequence of records in a single table.  Each table
-will have its own sequence, and the sequence number of records in one table
-are not related to the sequence numbers of other tables.
+A postgres sequence, applied to each record in a single table.  The sequence
+number for a record is set when it is first created, and set again on each
+update.  That means the sequence number for a record corresponds to how new
+that record is within its table.
+
+The sequence number of records in one table are not related to the sequence
+numbers of other tables.
 
 ### Event
 
-A message sent to the streaming client.  Various event types exist:
+Something happens server-side.  Various kinds of events exist:
 
 - Insertion
 - Update
 - Deletion
 - Appearance
 - Disappearance
+- Fallin
 - Fallout
+
+### Message
+
+Something sent to a streaming client.  There are only two kinds of messages:
+
+- Record: works like an upsert
+- Deletion: just the primary key of the record deleted
+
+The server/client protocol is intentionally simple and declarative.
+Additionally, a client shouldn't be able to tell the difference between a
+deletion and a disappearance, in the same way that it can't tell the difference
+between 404 due to nonexistence vs 404 due to RBAC.
 
 ### Streaming Client
 
@@ -36,9 +53,9 @@ disconnecting, and expect to be able to pick up streaming where it left off.
 
 ### Online vs Offline
 
-"Online" and "offline" are adjectives which apply to an event, if the event
-occurs while a streaming client is connected ("online") or while the streaming
-client is disconnected ("offline").
+"Online" and "offline" are descriptions of events.  "Online" means the event
+occured while the streaming client was connected.  "Offline" means the client
+wasn't connected at the time.
 
 The words "online" and "offline" only make sense when considering a single
 streaming client at a time; an event may be "online" from one client's
@@ -69,9 +86,9 @@ disappearances).  Immediately after an appearance or disappearance, there is
 _no guarantee_ that the new record has a sequence number which is higher than
 any other records in its table, as the record itself wasn't modified.
 
-## Fallin/Fallout
+### Fallin/Fallout
 
-A Fallin is when a record changes in a way that it no longer meets the
+A Fallin is when a record changes in a way that it begins to meet the
 requirements of the subscription; it "falls in" to the subscribed set.
 
 A Fallout is when it changes to no longer be in the subscription set.
@@ -155,6 +172,9 @@ are:
 We prefer to just boot'em, as it's the simplest strategy, and the problem
 shouldn't arise very often.
 
+TBD: does just boot'em also invalidate the client cache?  Need to think more
+about the pros and cons.
+
 ### Appearance Problem
 
 Online appearances can be solved by combining just boot'em with the declarative
@@ -202,8 +222,11 @@ fallin/fallout:
   Otherwise, you do as with the cache, where you use the old and new data to
   calculate subscriptions.
 
-Offline fallin/fallout is effectively solved by the declarative strategy with
-the implementation dicated by the Appearance problem.
+In either case, so long as you can filter against new and old filterable info
+for a fallout/fallin event, these problems aren't too hard to solve.
+
+Unlike Appearance/Disappearance problems, it should never be possible for
+fallin/fallout happen without a sequence number bump on the record in question.
 
 ## Extensibility
 
@@ -236,7 +259,8 @@ that context switching was a major bottleneck in delivering wakeups.
 
 The bottleneck observed in benchmarking is unlikely to be observed in current
 or near-future customer scales, and other effects may dominate (like network
-throughput), so further investigation should be
+throughput), so further investigation should be done before engaging in this
+work.
 
 But [here is a good blog post](
 https://www.freecodecamp.org/news/million-websockets-and-go-cc58418460bb/
