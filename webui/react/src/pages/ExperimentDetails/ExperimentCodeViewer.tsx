@@ -70,15 +70,17 @@ const ExperimentCodeViewer: React.FC<Props> = ({
     })();
   }, [experiment.id]);
 
+  // handle blank selected file path
+  const filePath =
+    selectedFilePath ||
+    (submittedConfig && 'Submitted Configuration') ||
+    (runtimeConfig && 'Runtime Configuration');
   useEffect(() => {
-    if (!selectedFilePath) {
-      return;
-    }
-    if (selectedFilePath === 'Submitted Configuration' && submittedConfig !== undefined) {
+    if (filePath === 'Submitted Configuration' && submittedConfig !== undefined) {
       setFileContent(Loaded(submittedConfig));
       return;
     }
-    if (selectedFilePath === 'Runtime Configuration' && runtimeConfig !== undefined) {
+    if (filePath === 'Runtime Configuration' && runtimeConfig !== undefined) {
       setFileContent(Loaded(runtimeConfig));
       return;
     }
@@ -87,7 +89,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
       try {
         const file = await getExperimentFileFromTree({
           experimentId: experiment.id,
-          path: selectedFilePath,
+          path: filePath,
         });
         if (!file) {
           setFileContent(ErrorMessage('File has no content.'));
@@ -105,7 +107,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
         return;
       }
     })();
-  }, [experiment.id, runtimeConfig, selectedFilePath, submittedConfig]);
+  }, [experiment.id, filePath, runtimeConfig, submittedConfig]);
 
   const fileOpts = [
     submittedConfig
@@ -144,7 +146,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
             file={fileContent}
             files={fileOpts}
             readonly={true}
-            selectedFilePath={selectedFilePath}
+            selectedFilePath={filePath}
             onError={handleError}
             onSelectFile={onSelectFile}
           />
