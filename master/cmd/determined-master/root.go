@@ -1,13 +1,13 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/ghodss/yaml"
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -72,6 +72,7 @@ func runRoot() error {
 func initializeConfig() error {
 	// Fetch an initial config to get the config file path and read its settings into Viper.
 	initialConfig, err := getConfig(v.AllSettings())
+	// initialConfig, err := getConfig(c.Data())
 	if err != nil {
 		return err
 	}
@@ -130,13 +131,28 @@ func readConfigFile(configPath string) ([]byte, error) {
 
 func mergeConfigBytesIntoViper(bs []byte) error {
 	// TODO CAROLINA
-	// var configMap map[string]interface{}
-	// if err := yaml.Unmarshal(bs, &configMap); err != nil {
-	// 	return errors.Wrap(err, "error unmarshal yaml configuration file")
-	// }
-	if err := v.MergeConfig(bytes.NewReader(bs)); err != nil {
-		return errors.Wrap(err, "error merge configuration to viper")
+
+	var configMap map[string]interface{}
+	if err := yaml.Unmarshal(bs, &configMap); err != nil {
+		return errors.Wrap(err, "error unmarshal yaml configuration file")
 	}
+	viperCopy := v.AllSettings()
+	// This preserves camel case -- case-sensitive merge
+	if err := mergo.Merge(&configMap, viperCopy); err != nil {
+		return errors.Wrap(err, "error merge yaml configuration file into viper")
+	}
+	log.Infof("MERGED CONFIG SETTINGS: %s", configMap)
+	for key, val := range configMap {
+		// Case insensitive 'set'
+		v.Set(key, val)
+	}
+	log.Infof("MERGED VIPER SETTINGS: %s", v.AllSettings())
+	/*
+		if err := v.MergeConfig(bytes.NewReader(bs)); err != nil {
+			return errors.Wrap(err, "error merge configuration to viper")
+		}
+	*/
+
 	/*
 		for key, val := range configMap {
 			log.Warnf("CONFIG KEY: %s", key)
@@ -154,6 +170,7 @@ func mergeConfigBytesIntoViper(bs []byte) error {
 			return errors.Wrap(err, "error merge configuration to viper")
 		}
 	*/
+
 	return nil
 }
 

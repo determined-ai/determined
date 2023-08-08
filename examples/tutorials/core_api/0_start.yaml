@@ -10,3 +10,11 @@ searcher:
    max_length: 1
 
 max_restarts: 0
+environment:
+   pod_spec:
+      apiVersion: v1
+      kind: Pod
+      metadata:
+         annotations:
+            io.kubernetes.cri-o.TrySkipVolumeSELinuxLabel: 'true'
+            io.kubernetes.cri-o.TrySkipVolumeSELinuxLabel2: 'true'
