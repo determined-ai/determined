@@ -24,7 +24,6 @@ import (
 	modelauth "github.com/determined-ai/determined/master/internal/model"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -334,8 +333,6 @@ func (a *apiServer) CheckpointsRemoveFiles(
 			registeredCheckpointUUIDs)
 	}
 
-	addr := actor.Addr(fmt.Sprintf("checkpoints-gc-%s", uuid.New().String()))
-
 	taskSpec := *a.m.taskSpec
 
 	jobID := model.NewJobID()
@@ -349,6 +346,7 @@ func (a *apiServer) CheckpointsRemoveFiles(
 
 	// Submit checkpoint GC tasks for all checkpoints.
 	for i, expIDcUUIDs := range groupCUUIDsByEIDs {
+		i := i
 		agentUserGroup, err := user.GetAgentUserGroup(curUser.ID, exps[i])
 		if err != nil {
 			return nil, err
@@ -359,11 +357,16 @@ func (a *apiServer) CheckpointsRemoveFiles(
 		conv := &protoconverter.ProtoConverter{}
 		checkpointUUIDs := conv.ToUUIDList(strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ","))
 
-		ckptGCTask := newCheckpointGCTask(
-			a.m.rm, a.m.db, taskID, jobID, jobSubmissionTime, taskSpec, exps[i].ID,
-			exps[i].Config, checkpointUUIDs, req.CheckpointGlobs, false, agentUserGroup, curUser, nil,
-		)
-		a.m.system.MustActorOf(addr, ckptGCTask)
+		go func() {
+			err = runCheckpointGCTask(
+				a.m.system, a.m.rm, a.m.db, taskID, jobID, jobSubmissionTime, taskSpec, exps[i].ID,
+				exps[i].Config, checkpointUUIDs, req.CheckpointGlobs, false, agentUserGroup, curUser,
+				nil,
+			)
+			if err != nil {
+				log.WithError(err).Error("failed to start checkpoint GC task")
+			}
+		}()
 	}
 
 	return &apiv1.CheckpointsRemoveFilesResponse{}, nil

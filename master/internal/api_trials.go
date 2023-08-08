@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
@@ -23,10 +22,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
-	"github.com/determined-ai/determined/master/internal/task/preemptible"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -922,6 +919,7 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 		req.IncludeBatchMetrics,
 		//nolint:staticcheck // SA1019: backward compatibility
 		req.MetricType.String(),
+		req.RemoveDeletedCheckpoints,
 	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d workloads not found:", req.TrialId)
@@ -1069,53 +1067,22 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, errs.ErrorOrNil()
 }
 
-func (a *apiServer) waitForAllocationToBeRestored(ctx context.Context, handler *actor.Ref) error {
-	for i := 0; i < 60; i++ {
-		var restoring bool
-		if err := a.ask(handler.Address(), task.IsAllocationRestoring{}, &restoring); err != nil {
-			return errors.Wrap(err, "failed to ask allocation actor about restoring status")
-		}
-		if !restoring {
-			return nil
-		}
-
-		time.Sleep(time.Second)
-	}
-	return fmt.Errorf("allocation stuck restoring after one minute of retrying")
-}
-
 func (a *apiServer) AllocationPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPreemptionSignalRequest,
 ) (*apiv1.AllocationPreemptionSignalResponse, error) {
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("checking if allocation is editable: %w", err)
 	}
-
-	allocationID := model.AllocationID(req.AllocationId)
-	ref := allocationmap.GetAllocation(allocationID)
-	if ref == nil {
-		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
-		return nil, err
-	}
-
-	id := uuid.New()
-	w, err := preemptible.Watch(allocationID.String(), id)
-	if err != nil {
-		return nil, err
-	}
-	defer preemptible.Unwatch(allocationID.String(), id)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(req.TimeoutSeconds)*time.Second)
 	defer cancel()
-	select {
-	case <-w.C:
-		return &apiv1.AllocationPreemptionSignalResponse{Preempt: true}, nil
-	case <-ctx.Done():
-		return &apiv1.AllocationPreemptionSignalResponse{Preempt: false}, nil
+
+	preempt, err := task.DefaultService.WatchPreemption(ctx, model.AllocationID(req.AllocationId))
+	if err != nil {
+		return nil, fmt.Errorf("watching preemption status: %w", err)
 	}
+	return &apiv1.AllocationPreemptionSignalResponse{Preempt: preempt}, nil
 }
 
 func (a *apiServer) AckAllocationPreemptionSignal(
@@ -1125,17 +1092,10 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 		return nil, err
 	}
 
-	allocationID := model.AllocationID(req.AllocationId)
-
-	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
-	if ref == nil {
-		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
+	err := task.DefaultService.AckPreemption(ctx, model.AllocationID(req.AllocationId))
+	if err != nil {
 		return nil, err
 	}
-
-	preemptible.Acknowledge(allocationID.String())
 	return &apiv1.AckAllocationPreemptionSignalResponse{}, nil
 }
 
@@ -1186,20 +1146,13 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
 	}
-	allocationID := model.AllocationID(req.AllocationId)
 
-	ref := allocationmap.GetAllocation(model.AllocationID(req.AllocationId))
-	if ref == nil {
-		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
-		return nil, err
-	}
-
-	if err := a.ask(ref.Address(), task.MarkResourcesDaemon{
-		AllocationID: allocationID,
-		ResourcesID:  sproto.ResourcesID(req.ResourcesId),
-	}, nil); err != nil {
+	err := task.DefaultService.SetResourcesAsDaemon(
+		ctx,
+		model.AllocationID(req.AllocationId),
+		sproto.ResourcesID(req.ResourcesId),
+	)
+	if err != nil {
 		return nil, err
 	}
 	return &apiv1.MarkAllocationResourcesDaemonResponse{}, nil
@@ -1407,35 +1360,15 @@ func (a *apiServer) AllocationRendezvousInfo(
 		return nil, err
 	}
 
-	allocationID := model.AllocationID(req.AllocationId)
-	resourcesID := sproto.ResourcesID(req.ResourcesId)
-	ref := allocationmap.GetAllocation(allocationID)
-	if ref == nil {
-		return nil, api.NotFoundErrs("allocation", req.AllocationId, true)
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, ref); err != nil {
+	info, err := task.DefaultService.WatchRendezvous(
+		ctx,
+		model.AllocationID(req.AllocationId),
+		sproto.ResourcesID(req.ResourcesId),
+	)
+	if err != nil {
 		return nil, err
 	}
-
-	var w task.RendezvousWatcher
-	if err := a.ask(ref.Address(), task.WatchRendezvousInfo{
-		ResourcesID: resourcesID,
-	}, &w); err != nil {
-		return nil, err
-	}
-	defer a.m.system.TellAt(ref.Address(), task.UnwatchRendezvousInfo{
-		ResourcesID: resourcesID,
-	})
-
-	select {
-	case rsp := <-w.C:
-		if rsp.Err != nil {
-			return nil, rsp.Err
-		}
-		return &apiv1.AllocationRendezvousInfoResponse{RendezvousInfo: rsp.Info}, nil
-	case <-ctx.Done():
-		return nil, nil
-	}
+	return &apiv1.AllocationRendezvousInfoResponse{RendezvousInfo: info}, nil
 }
 
 func (a *apiServer) PostTrialRunnerMetadata(

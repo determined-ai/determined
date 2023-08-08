@@ -29,7 +29,7 @@ get-deps: node_modules/done.stamp
 .PHONY: build
 build: build/done.stamp
 
-build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json vite.config.ts
+build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json vite.config.mts
 	npm run build
 	touch $@
 

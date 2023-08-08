@@ -6,8 +6,8 @@ import pytest
 import torch
 
 import determined.errors
-import determined.pytorch as pytorch
 import determined.pytorch._metric_utils as metric_utils
+from determined import pytorch
 
 logger = logging.getLogger(__name__)
 

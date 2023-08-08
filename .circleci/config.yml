@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.23.4-dev0
+    default: 0.23.5-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -39,7 +39,7 @@ parameters:
   # be referenced by --ee testing.
   default-pt-gpu-image:
     type: string
-    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-14cb565
+    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-6eceaca
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -225,11 +225,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-14cb565
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6eceaca
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-14cb565
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca
 
   login-docker:
     parameters:
@@ -503,6 +503,12 @@ commands:
             if [ -n "<<parameters.extras-requires>>" ]; then
               docker exec <<parameters.image-name>> tools/scripts/retry.sh pip install --progress-bar off <<parameters.extras-requires>>
             fi
+
+  setup-paths:
+    steps:
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
+      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
 
   run-e2e-tests:
     parameters:
@@ -1595,6 +1601,19 @@ jobs:
           executor: <<pipeline.parameters.machine-image>>
       - run: make -C webui/react test-shared
 
+  lint-sql:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-webui-only
+      - setup-python-venv:
+          install-python: false
+          extras-requires: "sqlfluff"
+          executor: <<pipeline.parameters.docker-image>>
+      - run: make -C master check-sql
+
   lint-go:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -1811,7 +1830,7 @@ jobs:
 
   test-unit-harness-cpu-tf1:
     docker:
-      - image: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-14cb565
+      - image: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6eceaca
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -1821,9 +1840,7 @@ jobs:
       - skip-if-github-only
       - skip-if-webui-only
       - install-codecov
-      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
-      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
-      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - setup-paths
       - run: COVERAGE_FILE=/root/project/test-unit-harness-cpu-tf1-pycov make -C harness test-cpu-tf1
       - run: coverage xml -i --data-file=./test-unit-harness-cpu-tf1-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -1835,7 +1852,7 @@ jobs:
 
   test-unit-harness-gpu:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.23.3
+      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -1845,9 +1862,7 @@ jobs:
       - skip-if-webui-only
       - run: pip install mypy pytest coverage
       - install-codecov
-      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
-      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
-      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - setup-paths
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-pycov make -C harness test-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -1856,9 +1871,51 @@ jobs:
           paths:
             - test-unit-harness-gpu-pycov
 
+  test-unit-harness-pytorch2-gpu:
+    docker:
+      - image: determinedai/environments:cuda-11.8-pytorch-2.0-gpu-8b7ced7
+    resource_class: determined-ai/container-runner-gpu
+    steps:
+      - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - checkout
+      - skip-if-docs-only
+      - skip-if-github-only
+      - skip-if-webui-only
+      - run: pip install mypy pytest coverage
+      - install-codecov
+      - setup-paths
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-gpu-pycov make -C harness test-pytorch-gpu
+      - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-gpu-pycov
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-pytorch2-gpu-pycov
+
+  test-unit-harness-pytorch2-cpu:
+    docker:
+      - image: determinedai/environments:py-3.10-pytorch-2.0-cpu-8b7ced7
+    steps:
+      - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - checkout
+      - skip-if-docs-only
+      - skip-if-github-only
+      - skip-if-webui-only
+      - run: pip install mypy pytest coverage
+      - install-codecov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-cpu-pycov make -C harness test-pytorch-cpu
+      - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-cpu-pycov
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-pytorch2-cpu-pycov
+
+
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.23.3
+      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -1867,10 +1924,8 @@ jobs:
       - skip-if-github-only
       - skip-if-webui-only
       - run: pip install mypy pytest coverage
-      - run: echo 'export PATH=${PATH}:/usr/local/nvidia/bin' >> $BASH_ENV
-      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
       - install-codecov
-      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - setup-paths
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-parallel-pycov make -C harness test-gpu-parallel
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-parallel-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -1879,32 +1934,9 @@ jobs:
           paths:
             - test-unit-harness-gpu-parallel-pycov
 
-  test-unit-harness-gpu-lightning:
-    docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.23.3
-    resource_class: determined-ai/container-runner-gpu
-    steps:
-      - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
-      - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
-      - run: pip install pytorch_lightning==1.5.10 torchmetrics==0.5.1 torchvision==0.10.0 mypy pytest coverage
-      - install-codecov
-      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
-      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
-      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-lightning-pycov make -C harness test-gpu-lightning
-      - run: coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
-      - run: codecov -v -t $CODECOV_TOKEN -F harness
-      - persist_to_workspace:
-          root: .
-          paths:
-            - test-unit-harness-gpu-lightning-pycov
-
   test-unit-harness-gpu-deepspeed:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.23.3
+      - image: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -1914,11 +1946,10 @@ jobs:
       - skip-if-webui-only
       - run: pip install mypy pytest coverage
       - install-codecov
-      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
-      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
-      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - setup-paths
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-deepspeed-pycov make -C harness test-gpu-deepspeed
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-deepspeed-pycov
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -2330,7 +2361,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.23.3
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
         type: string
       accel-node-taints:
         type: string
@@ -2552,6 +2583,7 @@ workflows:
       - lint-docs
       - lint-python
       - lint-go
+      - lint-sql
       - lint-react
       - lint-secrets
 
@@ -2586,12 +2618,12 @@ workflows:
           filters: *any-upstream
       - test-unit-harness-cpu
       - test-unit-harness-tf2
+      - test-unit-harness-pytorch2-cpu
+      - test-unit-harness-pytorch2-gpu
 
       - test-unit-harness-cpu-tf1:
           filters: *any-upstream
       - test-unit-harness-gpu:
-          filters: *any-upstream
-      - test-unit-harness-gpu-lightning:
           filters: *any-upstream
       - test-unit-harness-gpu-deepspeed:
           filters: *any-upstream
@@ -2607,9 +2639,6 @@ workflows:
           filters: *any-fork
       - test-unit-harness-gpu:
           name: f-test-unit-harness-gpu
-          filters: *any-fork
-      - test-unit-harness-gpu-lightning:
-          name: f-test-unit-harness-gpu-lightning
           filters: *any-fork
       - test-unit-harness-gpu-deepspeed:
           name: f-test-unit-harness-gpu-deepspeed
@@ -2629,6 +2658,8 @@ workflows:
             - test-unit-harness-gpu
             - test-unit-harness-gpu-parallel
             - test-unit-harness-tf2
+            - test-unit-harness-pytorch2-cpu
+            - test-unit-harness-pytorch2-gpu
             - test-unit-model-hub
             - test-unit-storage
 

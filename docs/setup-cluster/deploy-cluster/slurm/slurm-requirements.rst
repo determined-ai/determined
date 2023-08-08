@@ -202,6 +202,15 @@ interacts with Slurm, we recommend the following steps:
 Determined should function with your existing PBS configuration. To optimize how Determined
 interacts with PBS, we recommend the following steps:
 
+-  Enable PBS to store job history.
+
+   Job completion detection requires that the job history feature be enabled. PBS administrators can
+   employ the following command to set the value of ``job_history_enable``:
+
+   .. code:: bash
+
+      sudo qmgr -c "set server job_history_enable = True"
+
 -  Configure PBS to manage GPU resources.
 
    Determined works best when allocating GPUs. By default, Determined selects compute nodes with
@@ -222,7 +231,7 @@ interacts with PBS, we recommend the following steps:
 -  Configure PBS to report GPU Accelerator type.
 
    It is recommended that PBS administrators set the value for ``resources_available.accel_type`` on
-   each node that contains an accelerator. Otherwise, the Cluster tab on the Determined Web UI will
+   each node that contains an accelerator. Otherwise, the Cluster tab on the Determined WebUI will
    show ``unconfigured`` for the ``Accelerator`` field in the Resource Pool information.
 
    PBS administrators can use the following set of commands to set the value of
@@ -254,7 +263,7 @@ interacts with PBS, we recommend the following steps:
 
    Repeat the above steps to set the ``resources_available.accel_type`` value for every node
    containing GPU. Once the ``resources_available.accel_type`` value is set for all the necessary
-   nodes, admins can verify the Accelerator field on the Cluster tab of the Web UI.
+   nodes, admins can verify the Accelerator field on the Cluster pane of the WebUI.
 
 -  Ensure homogeneous PBS queues.
 
@@ -425,7 +434,7 @@ platform. There may be additional per-user configuration that is required.
 
    .. code:: bash
 
-      image=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-14cb565
+      image=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca
       cd /shared/enroot/images
       enroot import docker://$image
       enroot create /shared/enroot/images/${image//[\/:]/\+}.sqsh

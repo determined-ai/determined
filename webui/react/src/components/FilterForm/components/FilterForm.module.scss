@@ -11,8 +11,9 @@
 }
 .filter {
   max-height: 300px;
-  overflow: scroll;
+  overflow: auto;
   padding-right: 16px;
+  scrollbar-gutter: stable;
 }
 .buttonContainer {
   align-items: center;

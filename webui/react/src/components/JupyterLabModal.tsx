@@ -8,7 +8,7 @@ import Form, { FormInstance } from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import { Modal } from 'components/kit/Modal';
-import Spinner from 'components/Spinner/Spinner';
+import Spinner from 'components/kit/Spinner';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { getTaskTemplates } from 'services/api';
@@ -278,7 +278,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
 
   return (
     <Form fields={field} form={form} onFieldsChange={handleConfigChange}>
-      <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
+      <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>
         <Form.Item
           initialValue={currentWorkspace?.id}
           label="Workspace"

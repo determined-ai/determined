@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 
@@ -51,11 +50,7 @@ func (c *command) summary(ctx *actor.Context) summary {
 		exitStatus = ptrs.Ptr(c.exitStatus.Err.Error())
 	}
 
-	resp, _ := ctx.Ask(c.allocation, task.AllocationState{}).GetOrElseTimeout(
-		task.AllocationState{},
-		5*time.Second,
-	)
-	state := resp.(task.AllocationState)
+	state := c.refreshAllocationState(ctx)
 
 	var addresses []cproto.Address
 	for _, cAddrs := range state.Addresses {

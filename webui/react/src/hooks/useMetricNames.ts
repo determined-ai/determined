@@ -10,13 +10,15 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { metricKeyToMetric, metricToKey } from 'utils/metric';
 import { metricSorter } from 'utils/metric';
 import { alphaNumericSorter } from 'utils/sort';
+
+import usePrevious from './usePrevious';
 const useMetricNames = (
   experimentIds: number[],
   errorHandler?: (e: unknown) => void,
 ): Loadable<Metric[]> => {
   const [metrics, setMetrics] = useState<Loadable<Metric[]>>(NotLoaded);
   const [actualExpIds, setActualExpIds] = useState<number[]>([]);
-
+  const previousExpIds = usePrevious(actualExpIds, []);
   useEffect(
     () => setActualExpIds((prev) => (isEqual(prev, experimentIds) ? prev : experimentIds)),
     [experimentIds],
@@ -24,9 +26,10 @@ const useMetricNames = (
 
   useEffect(() => {
     if (actualExpIds.length === 0) {
-      setMetrics(NotLoaded);
+      setMetrics(Loaded([]));
       return;
     }
+    if (!isEqual(actualExpIds, previousExpIds)) setMetrics(NotLoaded);
     const canceler = new AbortController();
 
     // We do not want to plot any x-axis metric values as y-axis data
@@ -88,7 +91,7 @@ const useMetricNames = (
       errorHandler,
     );
     return () => canceler.abort();
-  }, [actualExpIds, errorHandler]);
+  }, [actualExpIds, previousExpIds, errorHandler]);
   return metrics;
 };
 

@@ -4,7 +4,7 @@ from typing import Callable, Iterator, Optional, Set, Tuple, TypeVar, Union
 import urllib3
 
 from determined.common import api, util
-from determined.common.api import Session, bindings
+from determined.common.api import bindings
 
 # from determined.cli.render import Animator
 
@@ -79,7 +79,7 @@ all_ntsc: Set[NTSC_Kind] = {
 proxied_ntsc: Set[NTSC_Kind] = {NTSC_Kind.notebook, NTSC_Kind.tensorboard}
 
 
-def get_ntsc_details(session: Session, typ: NTSC_Kind, ntsc_id: str) -> AnyNTSC:
+def get_ntsc_details(session: api.Session, typ: NTSC_Kind, ntsc_id: str) -> AnyNTSC:
     if typ == NTSC_Kind.notebook:
         return bindings.get_GetNotebook(session, notebookId=ntsc_id).notebook
     elif typ == NTSC_Kind.tensorboard:
@@ -93,7 +93,7 @@ def get_ntsc_details(session: Session, typ: NTSC_Kind, ntsc_id: str) -> AnyNTSC:
 
 
 def wait_for_ntsc_state(
-    session: Session,
+    session: api.Session,
     typ: NTSC_Kind,
     ntsc_id: str,
     predicate: Callable[[bindings.taskv1State], bool],

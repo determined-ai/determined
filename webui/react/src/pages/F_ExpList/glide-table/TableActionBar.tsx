@@ -10,6 +10,7 @@ import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import Tooltip from 'components/kit/Tooltip';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import {
@@ -43,6 +44,7 @@ import {
 import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
+import { pluralizer } from '../../../utils/string';
 import { ExpListView, RowHeight } from '../F_ExperimentList.settings';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
@@ -100,9 +102,15 @@ interface Props {
   setExpListView: (view: ExpListView) => void;
   rowHeight: RowHeight;
   onRowHeightChange: (r: RowHeight) => void;
+  setHeatmapApplied: (selection: string[]) => void;
+  toggleHeatmap: (heatmapOn: boolean) => void;
+  heatmapOn: boolean;
+  heatmapBtnVisible: boolean;
 }
 
 const TableActionBar: React.FC<Props> = ({
+  heatmapOn,
+  toggleHeatmap,
   experiments,
   excludedExperimentIds,
   filters,
@@ -126,6 +134,7 @@ const TableActionBar: React.FC<Props> = ({
   rowHeight,
   onRowHeightChange,
   compareViewOn,
+  heatmapBtnVisible,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -307,20 +316,47 @@ const TableActionBar: React.FC<Props> = ({
     [BatchActionConfirmModal, submitBatchAction, sendBatchActions],
   );
 
-  const editMenuItems: MenuItem[] = useMemo(() => {
-    return batchActions.map((action) => ({
-      danger: action === ExperimentAction.Delete,
-      disabled: !availableBatchActions.includes(action),
-      // The icon doesn't show up without being wrapped in a div.
-      icon: (
-        <div>
-          <Icon name={actionIcons[action]} title={action} />
-        </div>
-      ),
-      key: action,
-      label: action,
-    }));
+  const editMenuItems = useMemo(() => {
+    const groupedBatchActions = [
+      batchActions.slice(0, 1), // View in TensorBoard
+      batchActions.slice(1, 5), // Move, Archive, Unarchive, Delete
+      batchActions.slice(5), // Resume, Pause, Cancel, Kill
+    ];
+    const groupSize = groupedBatchActions.length;
+    return groupedBatchActions.reduce((acc, group, index) => {
+      const isLastGroup = index === groupSize - 1;
+      group.forEach((action) =>
+        acc.push({
+          danger: action === ExperimentAction.Delete,
+          disabled: !availableBatchActions.includes(action),
+          icon: <Icon name={actionIcons[action]} title={action} />,
+          key: action,
+          label: action,
+        }),
+      );
+      if (!isLastGroup) acc.push({ type: 'divider' });
+      return acc;
+    }, [] as MenuItem[]);
   }, [availableBatchActions]);
+
+  const selectionLabel = useMemo(() => {
+    let label = `${totalExperiments.toLocaleString()} ${pluralizer(
+      totalExperiments,
+      'experiment',
+    )}`;
+
+    if (selectAll) {
+      const all = !excludedExperimentIds?.size ? 'All ' : '';
+      const totalSelected = Loadable.isLoaded(total)
+        ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString() + ' '
+        : '';
+      label = `${all}${totalSelected}experiments selected`;
+    } else if (selectedExperimentIds.length > 0) {
+      label = `${selectedExperimentIds.length} of ${label} selected`;
+    }
+
+    return label;
+  }, [excludedExperimentIds, selectAll, selectedExperimentIds, total, totalExperiments]);
 
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
@@ -350,26 +386,23 @@ const TableActionBar: React.FC<Props> = ({
           />
           {(selectAll || selectedExperimentIds.length > 0) && (
             <Dropdown menu={editMenuItems} onClick={handleAction}>
-              <Button hideChildren={isMobile} icon={<Icon decorative name="pencil" />}>
-                Edit (
-                {selectAll
-                  ? Loadable.isLoaded(total)
-                    ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString()
-                    : 'All'
-                  : selectedExperimentIds.length}
-                )
-              </Button>
+              <Button hideChildren={isMobile}>Actions</Button>
             </Dropdown>
           )}
-          {!isMobile && (
-            <span className={css.expNum}>
-              {totalExperiments.toLocaleString()} experiment{totalExperiments > 1 && 's'}
-            </span>
-          )}
+          {!isMobile && <span className={css.expNum}>{selectionLabel}</span>}
         </Space>
       </Column>
       <Column align="right">
         <Columns>
+          {heatmapBtnVisible && (
+            <Tooltip content={'Toggle Metric Heatmap'}>
+              <Button
+                icon={<Icon name="heatmap" title="heatmap" />}
+                type={heatmapOn ? 'primary' : 'default'}
+                onClick={() => toggleHeatmap(heatmapOn)}
+              />
+            </Tooltip>
+          )}
           <OptionsMenu
             expListView={expListView}
             rowHeight={rowHeight}

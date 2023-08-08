@@ -31,7 +31,7 @@ class ManagedCluster(Cluster):
 
     def __init__(self, config: Union[str, Dict[str, Any]]) -> None:
         # Strategically only import devcluster on demand to avoid having it as a hard dependency.
-        from devcluster import Devcluster
+        from devcluster import Devcluster  # noqa: I2000
 
         self.dc = Devcluster(config=config)
 

@@ -8,9 +8,11 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -58,15 +60,15 @@ func (m *mockReceiver) Pop() (actor.Message, error) {
 }
 
 func createPod(
-	taskHandler *actor.Ref,
+	allocationID model.AllocationID,
 	clusterHandler *actor.Ref,
 	resourceHandler *requestQueue,
 	task tasks.TaskSpec,
 ) *pod {
 	msg := StartTaskPod{
-		TaskActor: taskHandler,
-		Spec:      task,
-		Slots:     1,
+		AllocationID: allocationID,
+		Spec:         task,
+		Slots:        1,
 	}
 	clusterID := "test"
 	clientSet := k8sClient.Clientset{}
@@ -157,6 +159,17 @@ func createPodWithMockQueue(k8sRequestQueue *requestQueue) (
 	system := actor.NewSystem("test-sys")
 	podMap, actorMap := createReceivers(system)
 
+	go func() {
+		// HACK: Come back and fix this test to use rmevents directly and not rely on this shim.
+		task := actorMap["task"]
+		sub := rmevents.Subscribe(model.AllocationID(task.Address().String()))
+		for {
+			ev := sub.Get()
+			logrus.Error("ACTUALLY GOT AN EVENT")
+			system.Tell(actorMap["task"], ev)
+		}
+	}()
+
 	if k8sRequestQueue == nil {
 		podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 		configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
@@ -167,7 +180,7 @@ func createPodWithMockQueue(k8sRequestQueue *requestQueue) (
 	}
 
 	newPod := createPod(
-		actorMap["task"],
+		model.AllocationID(actorMap["task"].Address().String()),
 		actorMap["cluster"],
 		k8sRequestQueue,
 		commandSpec.ToTaskSpec(),
@@ -231,15 +244,15 @@ func checkReceiveTermination(
 	if err != nil {
 		t.Errorf("Unable to pop message from task receiver queue")
 	}
-	containerMsg, ok := message.(sproto.ResourcesStateChanged)
+	containerMsg, ok := message.(*sproto.ResourcesStateChanged)
 	if !ok {
 		t.Errorf(
-			"expected sproto.TaskContainerStateChanged but received %s",
+			"expected sproto.ResourcesStateChanged but received %s",
 			reflect.TypeOf(message),
 		)
 	}
 	if containerMsg.ResourcesStopped == nil {
-		t.Errorf("container started message not present")
+		t.Errorf("container stopped message not present (state=%s)", containerMsg.ResourcesState)
 	}
 
 	assert.Equal(t, newPod.container.State, cproto.Terminated)
@@ -266,7 +279,7 @@ func TestResourceCreationFailed(t *testing.T) {
 		t.Errorf("Unable to pop message from task receiver queue")
 	}
 
-	containerMsg, ok := message.(sproto.ContainerLog)
+	containerMsg, ok := message.(*sproto.ContainerLog)
 	if !ok {
 		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
 	}
@@ -605,9 +618,9 @@ func TestMultipleContainersRunning(t *testing.T) {
 		t.Errorf("Unable to pop message from task receiver queue")
 	}
 
-	containerMsg, ok := message.(sproto.ResourcesStateChanged)
+	containerMsg, ok := message.(*sproto.ResourcesStateChanged)
 	if !ok {
-		t.Errorf("expected sproto.ResourcesStateChanged but received %s", reflect.TypeOf(message))
+		t.Errorf("expected *sproto.ResourcesStateChanged but received %s", reflect.TypeOf(message))
 	}
 	if containerMsg.ResourcesStarted == nil {
 		t.Errorf("container started message not present")
@@ -641,7 +654,7 @@ func TestReceivePodEventUpdate(t *testing.T) {
 	correctMsg := fmt.Sprintf("Pod %s: %s", object.Name,
 		"Waiting for resources. 0 GPUs are available, 99 GPUs required")
 
-	containerMsg, ok := message.(sproto.ContainerLog)
+	containerMsg, ok := message.(*sproto.ContainerLog)
 	if !ok {
 		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
 	}
@@ -681,7 +694,7 @@ func TestReceiveContainerLog(t *testing.T) {
 		t.Errorf("Unable to pop message from task receiver queue")
 	}
 
-	containerMsg, ok := message.(sproto.ContainerLog)
+	containerMsg, ok := message.(*sproto.ContainerLog)
 	if !ok {
 		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
 	}
@@ -724,7 +737,7 @@ func TestReceiveContainerLog(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unable to pop message from task receiver queue")
 	}
-	resourceMsg, ok := message.(sproto.ResourcesStateChanged)
+	resourceMsg, ok := message.(*sproto.ResourcesStateChanged)
 	if !ok {
 		t.Errorf("expected sproto.ResourcesStateChanged but received %s", reflect.TypeOf(message))
 	}
@@ -734,7 +747,7 @@ func TestReceiveContainerLog(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unable to pop message from task receiver queue")
 	}
-	containerMsg, ok = message.(sproto.ContainerLog)
+	containerMsg, ok = message.(*sproto.ContainerLog)
 	if !ok {
 		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
 	}
@@ -795,16 +808,16 @@ func TestResourceCreationCancelled(t *testing.T) {
 		t.Errorf("Unable to pop message from task receiver queue")
 	}
 
-	containerMsg, ok := message.(sproto.ResourcesStateChanged)
+	containerMsg, ok := message.(*sproto.ResourcesStateChanged)
 	if !ok {
-		t.Errorf("expected sproto.TaskContainerStateChanged but received %s",
+		t.Errorf("expected *sproto.ResourcesStateChanged but received %s",
 			reflect.TypeOf(message))
 	}
 
-	var correctContainerStarted *sproto.ResourcesStarted = nil
+	var correctContainerStarted *sproto.ResourcesStarted
 	correctFailType := "task failed without an associated exit code"
 	correctErrMsg := "pod actor exited while pod was running"
-	var correctCode *sproto.ExitCode = nil
+	var correctCode *sproto.ExitCode
 
 	assert.Equal(t, containerMsg.ResourcesStarted, correctContainerStarted)
 	assert.Equal(t, containerMsg.ResourcesStopped.Failure.FailureType,
@@ -837,14 +850,14 @@ func TestResourceDeletionFailed(t *testing.T) {
 		t.Errorf("Unable to pop message from task receiver queue")
 	}
 
-	containerMsg, ok := message.(sproto.ResourcesStateChanged)
+	containerMsg, ok := message.(*sproto.ResourcesStateChanged)
 	if !ok {
-		t.Errorf("expected sproto.TaskContainerStateChanged but received %s",
+		t.Errorf("expected *sproto.ResourcesStateChanged but received %s",
 			reflect.TypeOf(message))
 	}
 
-	var correctContainerStarted *sproto.ResourcesStarted = nil
-	var correctCode *sproto.ExitCode = nil
+	var correctContainerStarted *sproto.ResourcesStarted
+	var correctCode *sproto.ExitCode
 
 	assert.Equal(t, containerMsg.ResourcesStarted, correctContainerStarted)
 	assert.Equal(t, containerMsg.ResourcesStopped.Failure.FailureType,

@@ -4,10 +4,9 @@ import pathlib
 from typing import Any, Callable, Dict, List, Optional, Set
 
 import determined as det
-from determined import tensorboard
+from determined import core, tensorboard
 from determined.common import api, util
 from determined.common.api import bindings, errors
-from determined.core import DistributedContext, TensorboardMode
 
 logger = logging.getLogger("determined.core")
 
@@ -30,8 +29,8 @@ class TrainContext:
         trial_id: int,
         run_id: int,
         exp_id: int,
-        distributed: DistributedContext,
-        tensorboard_mode: TensorboardMode,
+        distributed: core.DistributedContext,
+        tensorboard_mode: core.TensorboardMode,
         tensorboard_manager: tensorboard.TensorboardManager,
         tbd_writer: Optional[tensorboard.BatchMetricWriter],
     ) -> None:
@@ -98,7 +97,7 @@ class TrainContext:
         bindings.post_ReportTrialMetrics(self._session, body=body, metrics_trialId=self._trial_id)
 
         # Also sync tensorboard (all metrics, not just json-serializable ones).
-        if self._tensorboard_mode == TensorboardMode.AUTO:
+        if self._tensorboard_mode == core.TensorboardMode.AUTO:
             if self._tbd_writer:
                 if group == util._LEGACY_VALIDATION:
                     self._tbd_writer.on_validation_step_end(total_batches, metrics)
@@ -164,7 +163,7 @@ class TrainContext:
                 If not provided, all files are uploaded.
             mangler: optional function modifying the destination file names based on rank.
         """
-        if self._tensorboard_mode == TensorboardMode.AUTO:
+        if self._tensorboard_mode == core.TensorboardMode.AUTO:
             raise RuntimeError("upload_tensorboard_files can only be used in MANUAL mode")
 
         self._tensorboard_manager.sync(selector, mangler, self._distributed.rank)

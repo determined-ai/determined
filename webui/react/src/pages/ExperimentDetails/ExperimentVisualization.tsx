@@ -4,9 +4,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
+import Spinner from 'components/kit/Spinner';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
-import Spinner from 'components/Spinner/Spinner';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import useStorage from 'hooks/useStorage';
@@ -372,6 +372,8 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
         />
       </div>
     );
+  } else if (experiment.state === RunState.Error) {
+    return <Message title="No data to plot." type={MessageType.Empty} />;
   } else if (pageError !== undefined) {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
   } else if (!hasLoaded && experiment.state !== RunState.Paused) {
@@ -385,7 +387,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
           description="Please wait until the experiment is further along."
           message="Not enough data points to plot."
         />
-        <Spinner center className={css.alertSpinner} />
+        <Spinner center spinning />
       </div>
     );
   }

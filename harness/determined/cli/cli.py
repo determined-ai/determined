@@ -193,7 +193,7 @@ def die(message: str, always_print_traceback: bool = False, exit_code: int = 1) 
 
         traceback.print_exc(file=sys.stderr)
 
-    print(colored(message + "\n", "red"), file=sys.stderr)
+    print(colored(message, "red"), file=sys.stderr, end="\n")
     exit(exit_code)
 
 

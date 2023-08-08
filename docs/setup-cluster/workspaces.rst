@@ -35,7 +35,7 @@ workspace create`` and ``det project create``. This is recommended for larger te
 WebUI
 =====
 
-After logging in, the dashboard displays. This is the default landing page for the WebUI. The
+After signing in, the dashboard displays. This is the default landing page for the WebUI. The
 dashboard is where you'll find the most recently submitted jobs and your recently viewed projects.
 
 Selecting the navigation sidebar **Workspaces** button opens the **Workspaces List** page. This page
@@ -43,14 +43,14 @@ displays all workspaces that currently exist on a cluster.
 
 Selecting the icon in the upper right corner of a workspace card displays the action menu. The
 action menu always contains the option to pin a workspace, which creates an easy access link to the
-workspace on the sidebar. If the workspace was created by the currently logged-in user, or if the
+workspace on the sidebar. If the workspace was created by the currently signed-in user, or if the
 current user is an administrator, the action menu also provides the options to edit the workspace
 name, archive the workspace, or delete the workspace. Deleting a workspace is permanent and also
 deletes all projects contained within it. A workspace cannot be deleted if its projects contain
 experiments.
 
 Selecting a workspace card opens the **Workspace Details** page. This page shows all currently
-selected workspace projects. If a project was created by the currently logged-in user, or if the
+selected workspace projects. If a project was created by the currently signed-in user, or if the
 current user is an administrator, click the icon in the upper right corner of the project card to
 bring up another action menu. This action menu contains the options to edit the project name and
 description, move the project to a different workspace, archive the project, or delete the project
@@ -70,3 +70,9 @@ projects. Use the ``-h`` flag to get a list of all possible commands.
 
    det workspace -h
    det project -h
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   Binding Resource Pools to Workspaces <workspaces-rpools>

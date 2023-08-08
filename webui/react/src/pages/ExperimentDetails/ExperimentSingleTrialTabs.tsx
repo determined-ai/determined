@@ -6,17 +6,16 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Button from 'components/kit/Button';
 import Notes from 'components/kit/Notes';
 import Pivot from 'components/kit/Pivot';
+import Spinner from 'components/kit/Spinner';
 import Message, { MessageType } from 'components/Message';
-import Spinner from 'components/Spinner/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
-import useFeature from 'hooks/useFeature';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
-import F_TrialDetailsOverview from 'pages/TrialDetails/F_TrialDetailsOverview';
+import TrialDetailsMetrics from 'pages/TrialDetails/TrialDetailsMetrics';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import { ValueOf } from 'types';
@@ -37,6 +36,7 @@ const TabType = {
   Code: 'code',
   Hyperparameters: 'hyperparameters',
   Logs: 'logs',
+  Metrics: 'metrics',
   Notes: 'notes',
   Overview: 'overview',
   Profiler: 'profiler',
@@ -80,7 +80,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openHyperparameterSearchModal,
   } = useModalHyperparameterSearch({ experiment });
-  const chartFlagOn = useFeature().isOn('chart');
 
   const waitingForTrials = !trialId && !wontHaveTrials;
 
@@ -238,11 +237,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     const items: TabsProps['items'] = [
       {
         children: waitingForTrials ? (
-          <Spinner spinning={true} tip="Waiting for trials..." />
+          <Spinner spinning tip="Waiting for trials..." />
         ) : wontHaveTrials ? (
           <NeverTrials />
-        ) : chartFlagOn ? (
-          <F_TrialDetailsOverview experiment={experiment} trial={trialDetails} />
         ) : (
           <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
         ),
@@ -261,6 +258,15 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     ];
 
     if (showExperimentArtifacts) {
+      items.splice(1, 0, {
+        children: wontHaveTrials ? (
+          <NeverTrials />
+        ) : (
+          <TrialDetailsMetrics experiment={experiment} trial={trialDetails} />
+        ),
+        key: TabType.Metrics,
+        label: 'Metrics',
+      });
       items.push({
         children: <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />,
         key: TabType.Checkpoints,
@@ -325,7 +331,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     trialDetails,
     waitingForTrials,
     wontHaveTrials,
-    chartFlagOn,
   ]);
 
   return (

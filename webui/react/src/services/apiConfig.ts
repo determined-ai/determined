@@ -1021,6 +1021,8 @@ export const getTrialWorkloads: DetApi<
           ? 'METRIC_TYPE_TRAINING'
           : 'METRIC_TYPE_VALIDATION'
         : undefined,
+      undefined,
+      true, // remove deleted checkpoints
     ),
 };
 
@@ -1574,6 +1576,16 @@ export const getProjectColumns: DetApi<
   name: 'getProjectColumns',
   postProcess: (response) => decoder.decodeProjectColumnsResponse(response).columns,
   request: (params) => detApi.Internal.getProjectColumns(params.id),
+};
+
+export const getProjectNumericMetricsRange: DetApi<
+  Service.GetProjectNumericMetricsRangeParams,
+  Api.V1GetProjectNumericMetricsRangeResponse,
+  Type.ProjectMetricsRange[]
+> = {
+  name: 'getProjectNumericMetricsRange',
+  postProcess: (response) => response.ranges || [],
+  request: (params) => detApi.Internal.getProjectNumericMetricsRange(params.id),
 };
 
 /* Tasks */

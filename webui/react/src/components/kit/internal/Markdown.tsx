@@ -2,9 +2,9 @@ import type { TabsProps } from 'antd';
 import { default as MarkdownViewer } from 'markdown-to-jsx';
 import React, { useMemo } from 'react';
 
-import Spinner from 'components/kit/internal/Spinner/Spinner';
 import useResize from 'components/kit/internal/useResize';
 import Pivot from 'components/kit/Pivot';
+import Spinner from 'components/kit/Spinner';
 
 import css from './Markdown.module.scss';
 
@@ -58,7 +58,7 @@ const Markdown: React.FC<Props> = ({
             <React.Suspense
               fallback={
                 <div>
-                  <Spinner tip="Loading text editor..." />
+                  <Spinner spinning tip="Loading text editor..." />
                 </div>
               }>
               <CodeMirrorEditor

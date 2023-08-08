@@ -206,7 +206,7 @@ export const Jobv1State = {
 } as const
 export type Jobv1State = ValueOf<typeof Jobv1State>
 /**
- * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.  - TYPE_CHECKPOINT_GC: CheckpointGC Job.
+ * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.  - TYPE_CHECKPOINT_GC: CheckpointGC Job.  - TYPE_EXTERNAL: External Job.
  * @export
  * @enum {string}
  */
@@ -218,6 +218,7 @@ export const Jobv1Type = {
     SHELL: 'TYPE_SHELL',
     COMMAND: 'TYPE_COMMAND',
     CHECKPOINTGC: 'TYPE_CHECKPOINT_GC',
+    EXTERNAL: 'TYPE_EXTERNAL',
 } as const
 export type Jobv1Type = ValueOf<typeof Jobv1Type>
 /**
@@ -17094,10 +17095,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
+         * @param {boolean} [unbound] Indicate whether or not to return unbound pools only.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getResourcePools(offset?: number, limit?: number, options: any = {}): FetchArgs {
+        getResourcePools(offset?: number, limit?: number, unbound?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/resource-pools`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -17118,6 +17120,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit
+            }
+            
+            if (unbound !== undefined) {
+                localVarQueryParameter['unbound'] = unbound
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -17251,10 +17257,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
          * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {string} [group] Metric group (training, validation, etc).
+         * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, options: any = {}): FetchArgs {
+        getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, removeDeletedCheckpoints?: boolean, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrialWorkloads.');
@@ -17304,6 +17311,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             if (group !== undefined) {
                 localVarQueryParameter['group'] = group
+            }
+            
+            if (removeDeletedCheckpoints !== undefined) {
+                localVarQueryParameter['removeDeletedCheckpoints'] = removeDeletedCheckpoints
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -18913,11 +18924,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
+         * @param {boolean} [unbound] Indicate whether or not to return unbound pools only.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getResourcePools(offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetResourcePoolsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getResourcePools(offset, limit, options);
+        getResourcePools(offset?: number, limit?: number, unbound?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetResourcePoolsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getResourcePools(offset, limit, unbound, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18999,11 +19011,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
          * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {string} [group] Metric group (training, validation, etc).
+         * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, group, options);
+        getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, removeDeletedCheckpoints?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, group, removeDeletedCheckpoints, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19772,11 +19785,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
+         * @param {boolean} [unbound] Indicate whether or not to return unbound pools only.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getResourcePools(offset?: number, limit?: number, options?: any) {
-            return InternalApiFp(configuration).getResourcePools(offset, limit, options)(fetch, basePath);
+        getResourcePools(offset?: number, limit?: number, unbound?: boolean, options?: any) {
+            return InternalApiFp(configuration).getResourcePools(offset, limit, unbound, options)(fetch, basePath);
         },
         /**
          * 
@@ -19822,11 +19836,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
          * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {string} [group] Metric group (training, validation, etc).
+         * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, options?: any) {
-            return InternalApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, group, options)(fetch, basePath);
+        getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, removeDeletedCheckpoints?: boolean, options?: any) {
+            return InternalApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, group, removeDeletedCheckpoints, options)(fetch, basePath);
         },
         /**
          * 
@@ -20417,12 +20432,13 @@ export class InternalApi extends BaseAPI {
      * @summary Get a list of all resource pools from the cluster.
      * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
      * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
+     * @param {boolean} [unbound] Indicate whether or not to return unbound pools only.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getResourcePools(offset?: number, limit?: number, options?: any) {
-        return InternalApiFp(this.configuration).getResourcePools(offset, limit, options)(this.fetch, this.basePath)
+    public getResourcePools(offset?: number, limit?: number, unbound?: boolean, options?: any) {
+        return InternalApiFp(this.configuration).getResourcePools(offset, limit, unbound, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20475,12 +20491,13 @@ export class InternalApi extends BaseAPI {
      * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
      * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {string} [group] Metric group (training, validation, etc).
+     * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, options?: any) {
-        return InternalApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, group, options)(this.fetch, this.basePath)
+    public getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, removeDeletedCheckpoints?: boolean, options?: any) {
+        return InternalApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, group, removeDeletedCheckpoints, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -27136,10 +27153,11 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
          * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {string} [group] Metric group (training, validation, etc).
+         * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, options: any = {}): FetchArgs {
+        getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, removeDeletedCheckpoints?: boolean, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrialWorkloads.');
@@ -27189,6 +27207,10 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             
             if (group !== undefined) {
                 localVarQueryParameter['group'] = group
+            }
+            
+            if (removeDeletedCheckpoints !== undefined) {
+                localVarQueryParameter['removeDeletedCheckpoints'] = removeDeletedCheckpoints
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -27511,11 +27533,12 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
          * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {string} [group] Metric group (training, validation, etc).
+         * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, group, options);
+        getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, removeDeletedCheckpoints?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, group, removeDeletedCheckpoints, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27682,11 +27705,12 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
          * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {string} [group] Metric group (training, validation, etc).
+         * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, options?: any) {
-            return TrialsApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, group, options)(fetch, basePath);
+        getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, removeDeletedCheckpoints?: boolean, options?: any) {
+            return TrialsApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, group, removeDeletedCheckpoints, options)(fetch, basePath);
         },
         /**
          * 
@@ -27817,12 +27841,13 @@ export class TrialsApi extends BaseAPI {
      * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
      * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {string} [group] Metric group (training, validation, etc).
+     * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, options?: any) {
-        return TrialsApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, group, options)(this.fetch, this.basePath)
+    public getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, group?: string, removeDeletedCheckpoints?: boolean, options?: any) {
+        return TrialsApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, group, removeDeletedCheckpoints, options)(this.fetch, this.basePath)
     }
     
     /**

@@ -3,10 +3,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
+import Spinner from 'components/kit/Spinner';
 import Message from 'components/Message';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
-import Spinner from 'components/Spinner';
 import TaskList from 'components/TaskList';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';

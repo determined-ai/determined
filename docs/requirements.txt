@@ -1,13 +1,12 @@
-# pin docutils at 0.15.2 to avoid transitive dependency conflict with botocore (requires < 0.16)
-docutils==0.15.2
 pillow
 rstfmt==0.0.12
+sphinx==4.2.0
 
 # Plugins
 sphinx-reredirects>=0.0.1
 sphinx-copybutton>=0.4.0
 sphinx-sitemap>=2.2.0
-sphinx==4.2.0
+sphinx-tabs>=3.0
 myst_parser
 
 # Theme

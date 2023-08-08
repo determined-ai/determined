@@ -67,7 +67,6 @@ func trialDetailAPITests(
 ) {
 	type testCase struct {
 		name    string
-		req     *apiv1.GetTrialRequest
 		metrics map[string]interface{}
 	}
 

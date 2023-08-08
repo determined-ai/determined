@@ -8,10 +8,56 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	k8sV1 "k8s.io/api/core/v1"
 )
+
+func TestGetDetContainerSecurityContext(t *testing.T) {
+	// Agent user group specified.
+	aug := &model.AgentUserGroup{
+		UID: 1001,
+		GID: 1002,
+	}
+	secContext := getDetContainerSecurityContext(aug, nil)
+	require.NotNil(t, secContext.RunAsUser)
+	require.Equal(t, int64(aug.UID), *secContext.RunAsUser)
+	require.NotNil(t, secContext.RunAsGroup)
+	require.Equal(t, int64(aug.GID), *secContext.RunAsGroup)
+
+	// Trying to specify RunAsUser in pod spec gets overwritten.
+	expectedCaps := []k8sV1.Capability{"TEST"}
+	spec := &expconf.PodSpec{
+		Spec: k8sV1.PodSpec{
+			Containers: []k8sV1.Container{
+				{
+					Name: model.DeterminedK8ContainerName,
+					SecurityContext: &k8sV1.SecurityContext{
+						Capabilities: &k8sV1.Capabilities{
+							Add: expectedCaps,
+						},
+						RunAsUser:  ptrs.Ptr(int64(32)),
+						RunAsGroup: ptrs.Ptr(int64(33)),
+					},
+				},
+			},
+		},
+	}
+	secContext = getDetContainerSecurityContext(aug, spec)
+	require.NotNil(t, secContext.RunAsUser)
+	require.Equal(t, int64(aug.UID), *secContext.RunAsUser)
+	require.NotNil(t, secContext.RunAsGroup)
+	require.Equal(t, int64(aug.GID), *secContext.RunAsGroup)
+	require.Equal(t, expectedCaps, secContext.Capabilities.Add)
+
+	// No agent user group still gets overwritten.
+	secContext = getDetContainerSecurityContext(nil, spec)
+	require.Nil(t, secContext.RunAsUser)
+	require.Nil(t, secContext.RunAsGroup)
+	require.Equal(t, expectedCaps, secContext.Capabilities.Add)
+}
 
 func TestLaterEnvironmentVariablesGetSet(t *testing.T) {
 	dontBe := k8sV1.EnvVar{Name: "var", Value: "dontbe"}

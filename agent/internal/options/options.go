@@ -153,6 +153,7 @@ type ContainerRuntime string
 
 // Available container runtimes.
 const (
+	ApptainerContainerRuntime   = "apptainer"
 	SingularityContainerRuntime = "singularity"
 	DockerContainerRuntime      = "docker"
 	PodmanContainerRuntime      = "podman"

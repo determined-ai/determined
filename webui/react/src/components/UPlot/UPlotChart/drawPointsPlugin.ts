@@ -1,6 +1,6 @@
 import uPlot, { Plugin } from 'uplot';
 
-import { CheckpointsDict } from 'pages/TrialDetails/F_TrialDetailsOverview';
+import { CheckpointsDict } from 'pages/TrialDetails/TrialDetailsMetrics';
 import { isNumber } from 'utils/data';
 
 const NUM_POINTS = 4;

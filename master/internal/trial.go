@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
+
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -80,7 +82,7 @@ type trial struct {
 	runID int
 
 	// a ref to the current allocation
-	allocation *actor.Ref
+	allocationID *model.AllocationID
 	// a note of the user initated exit reason, if any.
 	userInitiatedExit *model.ExitedReason
 
@@ -169,18 +171,6 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			})
 		}
 		return nil
-	case actor.ChildStopped:
-		if t.allocation != nil && t.runID == mustParseTrialRunID(msg.Child) {
-			return t.allocationExited(ctx, &task.AllocationExited{
-				Err: errors.New("trial allocation exited without reporting"),
-			})
-		}
-	case actor.ChildFailed:
-		if t.allocation != nil && t.runID == mustParseTrialRunID(msg.Child) {
-			return t.allocationExited(ctx, &task.AllocationExited{
-				Err: errors.Wrapf(msg.Error, "trial allocation failed"),
-			})
-		}
 
 	case model.State:
 		return t.patchState(ctx, model.StateWithReason{State: msg})
@@ -202,15 +192,22 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		resources := t.config.Resources()
 		resources.SetResourcePool(msg.ResourcePool)
 		t.config.SetResources(resources)
-		if t.allocation != nil {
-			ctx.Tell(t.allocation, msg)
+		if t.allocationID != nil {
+			err := task.DefaultService.Signal(
+				*t.allocationID,
+				task.TerminateAllocation,
+				"allocation resource pool changed",
+			)
+			if err != nil {
+				ctx.Log().WithError(err).Warn("could not preempt allocation to change rp")
+			}
 		}
 	case userInitiatedEarlyExit:
 		if err := t.handleUserInitiatedStops(ctx, msg); err != nil {
 			ctx.Respond(err)
 		}
 	case *task.AllocationExited:
-		if t.allocation != nil && t.runID == mustParseTrialRunID(ctx.Sender()) {
+		if t.allocationID != nil {
 			return t.allocationExited(ctx, msg)
 		}
 	case sproto.ContainerLog:
@@ -277,12 +274,9 @@ func (t *trial) recover() error {
 	return nil
 }
 
-// To change in testing.
-var taskAllocator = task.NewAllocation
-
 // maybeAllocateTask checks if the trial should allocate state and allocates it if so.
 func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
-	if !(t.allocation == nil &&
+	if !(t.allocationID == nil &&
 		!t.searcher.Complete &&
 		t.state == model.ActiveState) {
 		return nil
@@ -307,7 +301,6 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 			JobSubmissionTime: t.jobSubmissionTime,
 			IsUserVisible:     true,
 			Name:              name,
-			AllocationRef:     ctx.Self(),
 			Group:             ctx.Self().Parent(),
 			SlotsNeeded:       t.config.Resources().SlotsPerTrial(),
 			ResourcePool:      t.config.Resources().ResourcePool(),
@@ -323,7 +316,20 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		ctx.Log().
 			WithField("allocation-id", ar.AllocationID).
 			Infof("starting restored trial allocation")
-		t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, ar, t.db, t.rm, specifier))
+
+		// HACK: Start used to only return errors async, now that it doesn't we need retries else
+		// temporary failures fail the entire trial too easily.
+		err = backoff.Retry(func() error {
+			return task.DefaultService.StartAllocation(
+				t.logCtx, ar, t.db, t.rm, specifier, ctx.Self().System(), func(ae *task.AllocationExited) {
+					ctx.Tell(ctx.Self(), ae)
+				},
+			)
+		}, launchRetries())
+		if err != nil {
+			return err
+		}
+		t.allocationID = &ar.AllocationID
 		return nil
 	}
 
@@ -343,7 +349,6 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		JobSubmissionTime: t.jobSubmissionTime,
 		IsUserVisible:     true,
 		Name:              name,
-		AllocationRef:     ctx.Self(),
 		Group:             ctx.Self().Parent(),
 
 		SlotsNeeded:  t.config.Resources().SlotsPerTrial(),
@@ -361,9 +366,20 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		Debugf("starting new trial allocation")
 
 	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
-	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, ar, t.db, t.rm, specifier))
-	ctx.Ask(t.allocation, actor.Ping{}).Get()
+	// HACK: Start used to only return errors async, now that it doesn't we need retries else
+	// temporary failures fail the entire trial too easily.
+	err = backoff.Retry(func() error {
+		return task.DefaultService.StartAllocation(
+			t.logCtx, ar, t.db, t.rm, specifier, ctx.Self().System(), func(ae *task.AllocationExited) {
+				ctx.Tell(ctx.Self(), ae)
+			},
+		)
+	}, launchRetries())
+	if err != nil {
+		return err
+	}
 
+	t.allocationID = &ar.AllocationID
 	return nil
 }
 
@@ -435,10 +451,10 @@ func (t *trial) buildTaskSpecifier(ctx *actor.Context) (*tasks.TrialSpec, error)
 
 // allocationExited cleans up after an allocation exit and exits permanently or reallocates.
 func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited) error {
-	if err := t.allocation.AwaitTermination(); err != nil {
-		ctx.Log().WithError(err).Error("trial allocation failed")
+	if exit.Err != nil {
+		ctx.Log().WithError(exit.Err).Error("trial allocation failed")
 	}
-	t.allocation = nil
+	t.allocationID = nil
 
 	prom.DisassociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
 
@@ -568,32 +584,36 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 	case t.state == model.ActiveState:
 		return t.maybeAllocateTask(ctx)
 	case t.state == model.PausedState:
-		if t.allocation != nil {
-			ctx.Log().Infof("decided to %s trial due to pause", sproto.TerminateAllocation)
-			ctx.Tell(t.allocation, sproto.AllocationSignalWithReason{
-				AllocationSignal:    sproto.TerminateAllocation,
-				InformationalReason: s.InformationalReason,
-			})
+		if t.allocationID != nil {
+			ctx.Log().Info("decided to terminate trial due to pause")
+			err := task.DefaultService.Signal(
+				*t.allocationID,
+				task.TerminateAllocation,
+				s.InformationalReason,
+			)
+			if err != nil {
+				ctx.Log().WithError(err).Warn("could not terminate allocation after pause")
+			}
 		}
 	case model.StoppingStates[t.state]:
 		switch {
-		case t.allocation == nil:
+		case t.allocationID == nil:
 			ctx.Log().Info("stopping trial before resources are requested")
 			return t.transition(ctx, model.StateWithReason{
 				State:               model.StoppingToTerminalStates[t.state],
 				InformationalReason: s.InformationalReason,
 			})
 		default:
-			if action, ok := map[model.State]sproto.AllocationSignal{
-				model.StoppingCanceledState: sproto.TerminateAllocation,
-				model.StoppingKilledState:   sproto.KillAllocation,
-				model.StoppingErrorState:    sproto.KillAllocation,
+			if action, ok := map[model.State]task.AllocationSignal{
+				model.StoppingCanceledState: task.TerminateAllocation,
+				model.StoppingKilledState:   task.KillAllocation,
+				model.StoppingErrorState:    task.KillAllocation,
 			}[t.state]; ok {
 				ctx.Log().Infof("decided to %s trial", action)
-				ctx.Tell(t.allocation, sproto.AllocationSignalWithReason{
-					AllocationSignal:    action,
-					InformationalReason: s.InformationalReason,
-				})
+				err := task.DefaultService.Signal(*t.allocationID, action, s.InformationalReason)
+				if err != nil {
+					ctx.Log().WithError(err).Warnf("could not %s allocation during stop", action)
+				}
 			}
 		}
 	case model.TerminalStates[t.state]:
@@ -640,15 +660,6 @@ func (t *trial) enrichTaskLog(log *model.TaskLog) (*model.TaskLog, error) {
 	return log, nil
 }
 
-func mustParseTrialRunID(child *actor.Ref) int {
-	idStr := child.Address().Local()
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		panic(errors.Wrapf(err, "could not parse run id %s", idStr))
-	}
-	return id
-}
-
 func (t *trial) maybeRestoreAllocation(ctx *actor.Context) (*model.Allocation, error) {
 	if !t.restored || !t.rm.IsReattachEnabled(ctx) {
 		return nil, nil
@@ -687,19 +698,22 @@ func (t *trial) maybeRestoreAllocation(ctx *actor.Context) (*model.Allocation, e
 		for _, alloc := range allocations[0:mathx.Min(len(allocations), maxAllocsToLog)] {
 			allocIDs = append(allocIDs, alloc.AllocationID.String())
 		}
-		return nil, errors.New(
-			fmt.Sprintf(
-				"discovered %d open allocations on restore: %s",
-				len(allocations),
-				strings.Join(allocIDs, " "),
-			),
+		return nil, fmt.Errorf(
+			"discovered %d open allocations on restore: %s",
+			len(allocations),
+			strings.Join(allocIDs, " "),
 		)
 	default:
-		return nil, errors.New(
-			fmt.Sprintf(
-				"discovered %d open allocations on restore",
-				len(allocations),
-			),
+		return nil, fmt.Errorf(
+			"discovered %d open allocations on restore",
+			len(allocations),
 		)
 	}
+}
+
+func launchRetries() backoff.BackOff {
+	bf := backoff.NewExponentialBackOff()
+	bf.InitialInterval = time.Second
+	bf.MaxInterval = time.Minute
+	return backoff.WithMaxRetries(bf, 4)
 }

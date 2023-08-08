@@ -5,9 +5,8 @@ import pathlib
 import tarfile
 from typing import Any, Dict, Iterable, List, Optional
 
-from determined.common import constants
+from determined.common import constants, util
 from determined.common.api import bindings
-from determined.common.util import sizeof_fmt
 
 LegacyContext = List[Dict[str, Any]]
 
@@ -69,7 +68,7 @@ class _Builder:
         self.limit = limit
         self.size = 0
         self.items = []  # type: List[bindings.v1File]
-        self.msg = f"Preparing files to send to master... {sizeof_fmt(0)} and 0 files"
+        self.msg = f"Preparing files to send to master... {util.sizeof_fmt(0)} and 0 files"
         print(self.msg, end="\r", flush=True)
 
     def add_v1File(self, f: bindings.v1File) -> None:
@@ -78,7 +77,7 @@ class _Builder:
         if self.size > self.limit:
             raise ValueError(
                 "The total size of context directory and included files and directories exceeds "
-                f" the maximum allowed size {sizeof_fmt(self.limit)}.\n"
+                f" the maximum allowed size {util.sizeof_fmt(self.limit)}.\n"
                 "Consider using either .detignore files inside directories to specify that certain "
                 "files or subdirectories should be omitted."
             )
@@ -87,7 +86,7 @@ class _Builder:
         print(" " * len(self.msg), end="\r")
         self.msg = (
             "Preparing files to send to master... "
-            f"{sizeof_fmt(self.size)} and {len(self.items)} files"
+            f"{util.sizeof_fmt(self.size)} and {len(self.items)} files"
         )
         print(self.msg, end="\r", flush=True)
 

@@ -108,6 +108,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_sitemap",
     "sphinx_reredirects",
+    "sphinx_tabs.tabs",
     "myst_parser",
 ]
 
@@ -127,7 +128,6 @@ autodoc_mock_imports = [
     "mmcv",
     "mmdet",
     "transformers",
-    "pytorch_lightning",
     "deepspeed",
     "datasets",
     "analytics",

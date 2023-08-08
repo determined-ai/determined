@@ -7,9 +7,9 @@ import Input from 'components/kit/Input';
 import InputShortcut from 'components/kit/InputShortcut';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
+import Spinner from 'components/kit/Spinner';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
 import { ThemeOptions } from 'components/ThemeToggle';
 import {
   shortcutSettingsConfig,

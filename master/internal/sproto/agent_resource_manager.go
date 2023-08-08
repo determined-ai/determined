@@ -8,6 +8,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // Message protocol from an agent actor to the default resource manager.
@@ -31,7 +32,7 @@ type (
 type (
 	// StartTaskContainer notifies the agent to start the task with the provided task spec.
 	StartTaskContainer struct {
-		TaskActor *actor.Ref
+		AllocationID model.AllocationID
 		aproto.StartContainer
 
 		LogContext logger.Context

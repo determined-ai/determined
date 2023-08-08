@@ -292,6 +292,7 @@ class jobv1Type(DetEnum):
     SHELL = "TYPE_SHELL"
     COMMAND = "TYPE_COMMAND"
     CHECKPOINT_GC = "TYPE_CHECKPOINT_GC"
+    EXTERNAL = "TYPE_EXTERNAL"
 
 class protobufAny(Printable):
     typeUrl: "typing.Optional[str]" = None
@@ -15161,10 +15162,12 @@ def get_GetResourcePools(
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
+    unbound: "typing.Optional[bool]" = None,
 ) -> "v1GetResourcePoolsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
+        "unbound": str(unbound).lower() if unbound is not None else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -15733,6 +15736,7 @@ def get_GetTrialWorkloads(
     metricType: "typing.Optional[v1MetricType]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
+    removeDeletedCheckpoints: "typing.Optional[bool]" = None,
     sortKey: "typing.Optional[str]" = None,
 ) -> "v1GetTrialWorkloadsResponse":
     _params = {
@@ -15743,6 +15747,7 @@ def get_GetTrialWorkloads(
         "metricType": metricType.value if metricType is not None else None,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
+        "removeDeletedCheckpoints": str(removeDeletedCheckpoints).lower() if removeDeletedCheckpoints is not None else None,
         "sortKey": sortKey,
     }
     _resp = session._do_request(

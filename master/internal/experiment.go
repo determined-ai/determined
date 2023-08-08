@@ -446,7 +446,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return err
 		}
 		ctx.Log().Infof("experiment state changed to %s", e.State)
-		addr := actor.Addr(fmt.Sprintf("experiment-%d-checkpoint-gc", e.ID))
 
 		checkpoints, err := e.db.ExperimentCheckpointsToGCRaw(
 			e.Experiment.ID,
@@ -463,12 +462,16 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		// May be no checkpoints to gc, if so skip
 		if len(checkpoints) > 0 {
 			taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
-			ckptGCTask := newCheckpointGCTask(
-				e.rm, e.db, taskID, e.JobID, e.StartTime, taskSpec, e.Experiment.ID,
-				e.activeConfig.AsLegacy(), checkpoints, []string{fullDeleteGlob},
-				false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
-			)
-			ctx.Self().System().ActorOf(addr, ckptGCTask)
+			go func() {
+				err := runCheckpointGCTask(
+					ctx.Self().System(), e.rm, e.db, taskID, e.JobID, e.StartTime, taskSpec,
+					e.Experiment.ID, e.activeConfig.AsLegacy(), checkpoints, []string{fullDeleteGlob},
+					false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
+				)
+				if err != nil {
+					ctx.Log().WithError(err).Error("failed to GC experiment checkpoints")
+				}
+			}()
 		}
 
 		if err := e.db.DeleteSnapshotsForExperiment(e.Experiment.ID); err != nil {

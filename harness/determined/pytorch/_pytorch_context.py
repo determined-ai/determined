@@ -4,7 +4,7 @@ import pathlib
 from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type, Union
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 import determined as det
 from determined import profiler, pytorch, util
@@ -20,7 +20,7 @@ except ImportError:  # pragma: no cover
 
 # AMP is only available in PyTorch 1.6+
 try:
-    import torch.cuda.amp as amp
+    from torch.cuda import amp
 
     HAVE_AMP = True
 except ImportError:  # pragma: no cover

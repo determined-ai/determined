@@ -31,19 +31,23 @@ func FromKeys[M ~map[K]V, K comparable, V any](m M) Set[K] {
 	return set
 }
 
+// Contains checks whether the passed-in value is present in the Set.
 func (s *Set[T]) Contains(val T) bool {
 	_, ok := (map[T]unit)(*s)[val]
 	return ok
 }
 
+// Insert adds the passed-in value to the Set.
 func (s *Set[T]) Insert(val T) {
 	(map[T]unit)(*s)[val] = unit{}
 }
 
+// Remove removes the passed-in value from the Set.
 func (s *Set[T]) Remove(val T) {
 	delete((map[T]unit)(*s), val)
 }
 
+// ToSlice builds a new slice, populates it with the contents of the Set, and returns it.
 func (s Set[T]) ToSlice() []T {
 	res := make([]T, 0, len(s))
 	for val := range s {

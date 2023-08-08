@@ -11,9 +11,9 @@ from termcolor import colored
 
 from determined.cli.errors import CliError
 from determined.common.declarative_argparse import Arg, ArgGroup, BoolOptArg, Cmd
+from determined.deploy.aws import aws, constants
 from determined.deploy.errors import MasterTimeoutExpired
 
-from . import aws, constants
 from .deployment_types import base, govcloud, secure, simple, vpc
 from .preflight import check_quotas, get_default_cf_parameter
 

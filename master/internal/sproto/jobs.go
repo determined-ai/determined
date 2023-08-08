@@ -116,6 +116,11 @@ type RecoverJobPosition struct {
 // SchedulingState denotes the scheduling state of a job and in order of its progression value.
 type SchedulingState uint8 // CHECK perhaps could be defined in resource manager. cyclic import
 
+// GetExternalJobs requests details for External jobs.
+type GetExternalJobs struct {
+	ResourcePool string
+}
+
 const (
 	// SchedulingStateQueued denotes a queued job waiting to be scheduled.
 	SchedulingStateQueued SchedulingState = 0

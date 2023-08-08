@@ -21,7 +21,7 @@ export type JsonArray = Array<Json>;
 export interface JsonObject {
   [key: string]: Json;
 }
-export type Json = string | number | null | JsonArray | JsonObject;
+export type Json = string | number | boolean | null | JsonArray | JsonObject;
 
 export interface Pagination {
   limit: number;
@@ -382,7 +382,7 @@ export interface ExperimentConfig {
 /* Experiment */
 
 export const ExperimentAction = {
-  Activate: 'Activate',
+  Activate: 'Resume',
   Archive: 'Archive',
   Cancel: 'Cancel',
   CompareTrials: 'Compare Trials',
@@ -575,9 +575,7 @@ export interface MetricSummary {
 }
 
 export interface SummaryMetrics {
-  avgMetrics?: Record<string, MetricSummary>;
-  validationMetrics?: Record<string, MetricSummary>;
-  //[customMetricType: string]?: Record<string, MetricSummary> Uncomment once generic metrics lands
+  [customMetricType: string]: Record<string, MetricSummary> | null;
 }
 
 export interface TrialItem extends StartEndTimes {
@@ -640,7 +638,7 @@ export interface TrialSummary extends TrialItem {
 
 export interface ExperimentItem {
   archived: boolean;
-  checkpointCount?: number;
+  checkpoints?: number;
   checkpointSize?: number;
   config: ExperimentConfig;
   configRaw: RawJson; // Readonly unparsed config object.
@@ -984,6 +982,12 @@ export interface ProjectColumn {
   location: Api.V1LocationType;
   type: Api.V1ColumnType;
   displayName?: string;
+}
+
+export interface ProjectMetricsRange {
+  metricsName: string;
+  min: number;
+  max: number;
 }
 
 export interface Permission {
