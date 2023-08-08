@@ -1934,27 +1934,6 @@ jobs:
           paths:
             - test-unit-harness-gpu-parallel-pycov
 
-  test-unit-harness-gpu-lightning:
-    docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
-    resource_class: determined-ai/container-runner-gpu
-    steps:
-      - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
-      - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
-      - run: pip install pytorch_lightning==1.5.10 torchmetrics==0.5.1 torchvision==0.10.0 mypy pytest coverage
-      - install-codecov
-      - setup-paths
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-lightning-pycov make -C harness test-gpu-lightning
-      - run: coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
-      - run: codecov -v -t $CODECOV_TOKEN -F harness
-      - persist_to_workspace:
-          root: .
-          paths:
-            - test-unit-harness-gpu-lightning-pycov
-
   test-unit-harness-gpu-deepspeed:
     docker:
       - image: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
@@ -2646,8 +2625,6 @@ workflows:
           filters: *any-upstream
       - test-unit-harness-gpu:
           filters: *any-upstream
-      - test-unit-harness-gpu-lightning:
-          filters: *any-upstream
       - test-unit-harness-gpu-deepspeed:
           filters: *any-upstream
       - test-unit-harness-gpu-parallel:
@@ -2662,9 +2639,6 @@ workflows:
           filters: *any-fork
       - test-unit-harness-gpu:
           name: f-test-unit-harness-gpu
-          filters: *any-fork
-      - test-unit-harness-gpu-lightning:
-          name: f-test-unit-harness-gpu-lightning
           filters: *any-fork
       - test-unit-harness-gpu-deepspeed:
           name: f-test-unit-harness-gpu-deepspeed
