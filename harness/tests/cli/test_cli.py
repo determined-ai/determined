@@ -5,7 +5,7 @@ import tempfile
 import uuid
 from collections import namedtuple
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 from unittest import mock
 
 import pytest
@@ -449,7 +449,7 @@ def test_colored_str_output(case: Case) -> None:
 
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="requires Python3.8 or higher")
-def test_dev_bindings() -> None:
+def test_dev_bindings_parameter_inspect() -> None:
     from determined.cli.dev import bindings_sig, can_be_called_via_cli, is_supported_annotation
 
     _, params = bindings_sig(bindings.get_GetExperiment)
@@ -469,3 +469,48 @@ def test_dev_bindings() -> None:
     _, params = bindings_sig(bindings.get_ExpMetricNames)
     for p in params:
         assert is_supported_annotation(p.annotation) is True, p
+
+
+args_sets = [
+    (
+        ["[1, 2]", "3"],
+        {
+            "ids": [1, 2],
+            "periodSeconds": 3,
+        },
+    ),
+    (
+        ["ids=[1, 2]", "3"],
+        {
+            "ids": [1, 2],
+            "periodSeconds": 3,
+        },
+    ),
+    (
+        ["ids=[1, 2]", "periodSeconds=3"],
+        {
+            "ids": [1, 2],
+            "periodSeconds": 3,
+        },
+    ),
+    (
+        ["periodSeconds=3"],
+        {
+            "periodSeconds": 3,
+        },
+    ),
+]
+
+
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="requires Python3.8 or higher")
+@pytest.mark.parametrize("case", args_sets)
+def test_dev_bindings_call_arg_unmarshal(case: Tuple[List[str], Dict[str, Any]]) -> None:
+    from determined.cli.dev import bindings_sig, parse_args_to_kwargs
+
+    args, expected = case
+    for a in args:
+        assert isinstance(a, str), a
+
+    _, params = bindings_sig(bindings.get_ExpMetricNames)
+    kwargs = parse_args_to_kwargs(args, params)
+    assert kwargs == expected, kwargs
