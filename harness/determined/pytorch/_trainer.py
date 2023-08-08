@@ -114,6 +114,7 @@ class Trainer:
                 before training.
             test_mode: Runs a minimal loop of training for testing and debugging purposes. Will
                 train and validate one batch. Defaults to false.
+            enable_tensorboard_logging: Configures if upload to tensorboard is enabled
         """
         # Set defaults.
         if checkpoint_period is None:
@@ -229,6 +230,7 @@ def init(
     exp_conf: Optional[Dict[str, Any]] = None,
     distributed: Optional[core.DistributedContext] = None,
     aggregation_frequency: int = 1,
+    enable_tensorboard_logging: bool = True,
 ) -> Iterator[pytorch.PyTorchTrialContext]:
     """
     Creates a PyTorchTrialContext for use with a PyTorchTrial. All trainer.* calls must be within
@@ -287,6 +289,7 @@ def init(
             steps_completed=steps_completed,
             managed_training=managed_training,
             debug_enabled=debug_enabled,
+            enable_tensorboard_logging=enable_tensorboard_logging,
         )
 
         yield context
