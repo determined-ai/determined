@@ -74,6 +74,8 @@ func TestPostWorkspace(t *testing.T) {
 			"bucket":     "bucketofrain",
 			"secret_key": "thisisasecret",
 		}),
+		DefaultComputePool: "testRP",
+		DefaultAuxPool:     "testRP",
 	})
 	require.NoError(t, err)
 
@@ -102,6 +104,8 @@ func TestPostWorkspace(t *testing.T) {
 			"save_trial_best":      nil,
 			"save_trial_latest":    nil,
 		}),
+		DefaultComputePool: "testRP",
+		DefaultAuxPool:     "testRP",
 	}
 	proto.Equal(expected, resp.Workspace)
 	require.Equal(t, expected, resp.Workspace)
@@ -155,6 +159,7 @@ func TestPatchWorkspace(t *testing.T) {
 				"save_experiment_best": 4,
 				"save_trial_best":      2,
 			}),
+			DefaultComputePool: "testRP",
 		},
 	})
 	require.NoError(t, err)
@@ -173,12 +178,14 @@ func TestPatchWorkspace(t *testing.T) {
 	})
 	proto.Equal(expected, patchResp.Workspace.CheckpointStorageConfig)
 	require.Equal(t, expected, patchResp.Workspace.CheckpointStorageConfig)
+	require.Equal(t, "testRP", patchResp.Workspace.DefaultComputePool)
 
 	// Change persisted?
 	getWorkResp, err = api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: workspaceID})
 	require.NoError(t, err)
 	proto.Equal(expected, getWorkResp.Workspace.CheckpointStorageConfig)
 	require.Equal(t, expected, getWorkResp.Workspace.CheckpointStorageConfig)
+	require.Equal(t, "testRP", getWorkResp.Workspace.DefaultComputePool)
 }
 
 var wAuthZ *mocks.WorkspaceAuthZ

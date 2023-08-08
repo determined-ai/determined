@@ -166,7 +166,7 @@ func TestPostBindingSucceeds(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// test no workspaces
+	// test no workspaces specified
 	mockRM.On("GetDefaultAuxResourcePool", mock.Anything, mock.Anything).
 		Return(sproto.GetDefaultAuxResourcePoolResponse{PoolName: "testRP"}, nil).Once()
 
