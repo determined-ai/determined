@@ -219,8 +219,6 @@ following benefits:
 | Profiling                                      | Out-of-the-box system metrics (measurements of hardware   |
 |                                                | usage) and timings (durations of actions taken during     |
 |                                                | training, such as data loading).                          |
-|                                                |                                                           |
-|                                                |                                                           |
 +------------------------------------------------+-----------------------------------------------------------+
 | Visualization                                  | Visualize your model and training procedure by using The  |
 |                                                | built-in WebUI and by launching managed                   |
