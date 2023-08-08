@@ -1,7 +1,9 @@
-from typing import List, Optional
+import itertools
+from typing import Iterable, List, Optional
 
 from determined.common import api
 from determined.common.api import bindings
+from determined.common.experimental import project
 
 
 class Workspace:
@@ -76,6 +78,23 @@ class Workspace:
         ]
 
         return resource_pools
+
+    def list_projects(self) -> List[project.Project]:
+        """Lists the projects that are a part of this workspace."""
+
+        def get_with_offset(offset: int) -> bindings.v1GetWorkspaceProjectsResponse:
+            return bindings.get_GetWorkspaceProjects(
+                session=self._session,
+                offset=offset,
+                id=self.id,
+            )
+
+        resps = api.read_paginated(get_with_offset)
+        v1projects: Iterable[bindings.v1Project] = itertools.chain.from_iterable(
+            r.projects for r in resps
+        )
+
+        return [project.Project._from_bindings(p, self._session) for p in v1projects]
 
 
 def _get_workspace_id_from_name(session: api.Session, name: str) -> int:
