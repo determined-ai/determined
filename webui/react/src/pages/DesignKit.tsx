@@ -875,7 +875,7 @@ const DropdownSection: React.FC = () => {
 };
 
 const UncontrolledCodeEditor = () => {
-  const [path, setPath] = useState<string>();
+  const [path, setPath] = useState<string>('one.yaml');
   const file = useMemo(() => {
     if (!path) {
       return NotLoaded;
@@ -910,6 +910,7 @@ const UncontrolledCodeEditor = () => {
         },
       ]}
       readonly={true}
+      selectedFilePath={path}
       onError={handleError}
       onSelectFile={setPath}
     />
