@@ -1,8 +1,9 @@
 package telemetry
 
 import (
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"sync"
 	"time"
 
@@ -39,7 +40,7 @@ type TelemetryActor struct {
 	syslog    *logrus.Entry
 }
 
-// DefaultTelemetry is the global proxy singleton.
+// DefaultTelemetry is the global telemetry singleton.
 var DefaultTelemetry *TelemetryActor
 
 // New creates an actor to handle collecting and sending telemetry information.
@@ -119,7 +120,7 @@ func InitTelemetry(
 func (s *TelemetryActor) Track(t analytics.Track) {
 	// Panic if telemetry isn't initialized or has crashed.
 	if s == nil {
-		panic("telemetry actor should not be nil")
+		panic("telemetry actor should not be nil: can't track.")
 	}
 
 	s.lock.Lock()
@@ -134,18 +135,29 @@ func (s *TelemetryActor) Track(t analytics.Track) {
 func (s *TelemetryActor) telemetryTick(system *actor.System, t int) {
 	// Panic if telemetry isn't initialized or has crashed.
 	if s == nil {
-		panic("telemetry actor should not be nil")
+		panic("telemetry actor should not be nil: can't tick.")
 	}
 
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	time.AfterFunc(time.Duration(t)*time.Minute, func() {
+		resp, err := s.rm.GetResourcePools(system, &apiv1.GetResourcePoolsRequest{})
+		if err != nil {
+			// TODO(Brad): Make this routine more accepting of failures.
+			s.syslog.WithError(err).Error("failed to receive resource pool telemetry information")
+			return
+		}
 		// After waiting t minutes, report the first tick.
-		ReportMasterTick(system, DefaultTelemetry.db, DefaultTelemetry.rm)
+		ReportMasterTick(resp, s.db)
 
 		// Now call the next tick.
-		randNum := rand.Intn(maxTickIntervalMins-minTickIntervalMins) + minTickIntervalMins
-		s.telemetryTick(system, randNum)
+		bg := big.NewInt(maxTickIntervalMins - minTickIntervalMins)
+		randNum, err := rand.Int(rand.Reader, bg)
+		if err != nil {
+			panic(err)
+		}
+		randInt := int(randNum.Int64()) + minTickIntervalMins
+		s.telemetryTick(system, randInt)
 	})
 }

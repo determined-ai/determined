@@ -9,7 +9,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -19,16 +18,8 @@ import (
 )
 
 // ReportMasterTick reports the master snapshot on a periodic tick.
-func ReportMasterTick(system *actor.System, db db.DB, rm telemetryRPFetcher) {
+func ReportMasterTick(resp *apiv1.GetResourcePoolsResponse, db db.DB) {
 	resourceManagerType := ""
-
-	req := &apiv1.GetResourcePoolsRequest{}
-	resp, err := rm.GetResourcePools(system, req)
-	if err != nil {
-		// TODO(Brad): Make this routine more accepting of failures.
-		logrus.WithError(err).Error("failed to receive resource pool telemetry information")
-		return
-	}
 
 	gpuTotalNum, gpuUsedNum := 0, 0
 	poolTypes := make(map[string]int, len(resp.ResourcePools))
