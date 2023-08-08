@@ -102,6 +102,22 @@ func TestPostBindingFailures(t *testing.T) {
 
 	require.ErrorContains(t, err, "default resource pool testRP cannot be bound to any workspace")
 
+	// test no resource pool specified
+	mockRM.On("GetDefaultComputeResourcePool", mock.Anything, mock.Anything).
+		Return(sproto.GetDefaultComputeResourcePoolResponse{PoolName: "testRP"}, nil).Once()
+	mockRM.On("GetDefaultAuxResourcePool", mock.Anything, mock.Anything).
+		Return(sproto.GetDefaultAuxResourcePoolResponse{PoolName: "testRP"}, nil).Once()
+	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).
+		Return(&apiv1.GetResourcePoolsResponse{
+			ResourcePools: []*resourcepoolv1.ResourcePool{{Name: "testRP"}},
+		}, nil).Once()
+	_, err = api.BindRPToWorkspace(ctx, &apiv1.BindRPToWorkspaceRequest{
+		ResourcePoolName: "",
+		WorkspaceNames:   []string{"bindings_test_workspace_1", "bindings_test_workspace_2"},
+	})
+
+	require.ErrorContains(t, err, "doesn't exist in config")
+
 	if err != nil {
 		return
 	}
