@@ -940,10 +940,8 @@ class TestPyTorchTrial:
         assert trial.legacy_counter.__dict__ == {"legacy_on_training_epochs_start_calls": 2}
 
     @pytest.mark.parametrize(
-        "enable_tensorboard_logging, expected_call",
-        # tensorboard logging is enabled by default, thus we only need to call
-        # set_enable_tensorboard_logging if user would like to disable tensorboard logging
-        [[True, 0], [False, 1]],
+        "enable_tensorboard_logging",
+        [True, False],
         ids=["tensorboard logging enabled", "tensorboard logging disabled"],
     )
     def test_trainer_disable_tb_logging(
@@ -951,7 +949,6 @@ class TestPyTorchTrial:
         monkeypatch: monkeypatch.MonkeyPatch,
         tmp_path: pathlib.Path,
         enable_tensorboard_logging: bool,
-        expected_call: int,
     ):
         # there is no direct way to set tensorboard path in Trainer API
         def mock_get_tensorboard_path(dummy: typing.Dict[str, typing.Any]) -> pathlib.Path:
@@ -962,25 +959,23 @@ class TestPyTorchTrial:
         )
 
         checkpoint_batches = 5
-        validation_batches = 10
+        validation_batches = 5
 
-        with mock.patch.object(
-            pytorch.PyTorchTrialContext, "set_enable_tensorboard_logging", return_value=None
-        ) as mock_method:
+        with mock.patch.object(det.pytorch, "_log_tb_metrics", return_value=None) as mock_method:
             with pytorch.init(
                 hparams=self.hparams, enable_tensorboard_logging=enable_tensorboard_logging
             ) as train_context:
                 trial = pytorch_onevar_model.OneVarTrialCallbacks(train_context)
                 trainer = pytorch.Trainer(trial, train_context)
                 trainer.fit(
-                    max_length=pytorch.Epoch(2),
+                    max_length=pytorch.Epoch(1),
                     checkpoint_period=pytorch.Batch(checkpoint_batches),
                     validation_period=pytorch.Batch(validation_batches),
                 )
-
-            assert mock_method.call_count == expected_call
-            if expected_call == 1:
-                mock_method.assert_called_once_with(enable_tensorboard_logging)
+            if enable_tensorboard_logging:
+                assert mock_method.call_count > 0
+            else:
+                assert mock_method.call_count == 0
 
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel

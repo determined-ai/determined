@@ -289,12 +289,7 @@ def init(
             steps_completed=steps_completed,
             managed_training=managed_training,
             debug_enabled=debug_enabled,
+            enable_tensorboard_logging=enable_tensorboard_logging,
         )
-
-        # Tensorboard logging is enabled by default
-        # We only need to call set_enable_tensorboard_logging on the trial object of user pass in
-        # enable_tensorboard_logging = False
-        if not enable_tensorboard_logging:
-            context.set_enable_tensorboard_logging(enable_tensorboard_logging)
 
         yield context

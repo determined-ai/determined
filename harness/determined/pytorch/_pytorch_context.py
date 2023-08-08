@@ -59,6 +59,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         steps_completed: int,
         managed_training: bool,
         debug_enabled: bool,
+        enable_tensorboard_logging: bool = True,
     ) -> None:
         self._core = core_context
         self.distributed = self._core.distributed
@@ -128,7 +129,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         self._stop_requested = False
 
         self._tbd_writer = None  # type: Optional[Any]
-        self._enable_tensorboard_logging = True
+        self._enable_tensorboard_logging = enable_tensorboard_logging
 
     def get_global_batch_size(self) -> int:
         """
