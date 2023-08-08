@@ -15,7 +15,7 @@ get-deps-%:
 # updated, find/replace all other pinned versions.
 .PHONY: get-deps-pip
 get-deps-pip:
-	pip install torch==1.9.0
+	pip install torch==1.11.0
 	pip install -r requirements.txt
 
 .PHONY: get-deps-go

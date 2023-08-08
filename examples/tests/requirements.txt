@@ -3,9 +3,9 @@ pytest>=6.0.1
 tensorflow==2.11.0; sys_platform != 'darwin' or platform_machine != 'arm64'
 tensorflow-macos==2.11.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 # torch is pinned here to maintain consistency with that specified in the root Makefile
-torch==1.9.0
+torch==1.11.0
 # torchvision is pinned because this is the most recent version compatible with the version of torch
-# currently required by determined in its requirements.txt (torch==1.9.0).
+# currently required by determined in its requirements.txt (torch==1.11.0).
 torchvision==0.10.0
 pandas
 tensorflow_datasets
