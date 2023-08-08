@@ -35,7 +35,7 @@ type ErrorMessage = {
   _tag: 'Error';
   message: string;
 };
-// extension to loadable
+// TODO: consider lifting this to loadable proper as in WEB-1333
 export type LoadableOrError<T> = Loadable<T> | ErrorMessage;
 
 export const ErrorMessage = (message: string): ErrorMessage => ({
@@ -46,15 +46,24 @@ export const ErrorMessage = (message: string): ErrorMessage => ({
 const isErrorMessage = (f: unknown): f is ErrorMessage =>
   !!f && typeof f === 'object' && '_tag' in f && f._tag === 'Error';
 
-export type Props = {
+export type SingleFileProps = {
+  files: [TreeNode];
+  onSelectFile?: never;
+  selectedFilePath?: never;
+};
+
+export type MultiFileProps = {
   files: TreeNode[];
+  onSelectFile: (filePath: string) => void;
+  selectedFilePath: string;
+};
+
+export type Props = (SingleFileProps | MultiFileProps) & {
   file: LoadableOrError<string>;
   onError: ErrorHandler; // only used to raise ipynb errors
   height?: string; // height of the editable area, if a title is provided that will add an additional ~38px
   onChange?: (fileContent: string) => void; // only use in single-file editing
-  onSelectFile?: (filePath: string) => void;
   readonly?: boolean;
-  selectedFilePath?: string;
 };
 
 const sortTree = (a: TreeNode, b: TreeNode) => {

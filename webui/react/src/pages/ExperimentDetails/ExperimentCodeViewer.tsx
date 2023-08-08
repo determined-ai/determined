@@ -22,8 +22,8 @@ const configIcon = <Icon name="settings" title="settings" />;
 
 export interface Props {
   experiment: ExperimentBase;
-  onSelectFile?: (arg0: string) => void;
-  selectedFilePath?: string;
+  onSelectFile: (arg0: string) => void;
+  selectedFilePath: string;
 }
 
 const ExperimentCodeViewer: React.FC<Props> = ({
@@ -74,7 +74,8 @@ const ExperimentCodeViewer: React.FC<Props> = ({
   const filePath =
     selectedFilePath ||
     (submittedConfig && 'Submitted Configuration') ||
-    (runtimeConfig && 'Runtime Configuration');
+    (runtimeConfig && 'Runtime Configuration') ||
+    '';
   useEffect(() => {
     if (filePath === 'Submitted Configuration' && submittedConfig !== undefined) {
       setFileContent(Loaded(submittedConfig));

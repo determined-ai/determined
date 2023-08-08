@@ -107,7 +107,7 @@ const experimentMock = {
 };
 const user = userEvent.setup();
 
-const Container: React.FC<Props> = (props) => {
+const Container: React.FC<Pick<Props, 'experiment'>> = (props) => {
   useEffect(() => {
     authStore.setAuth({ isAuthenticated: true });
     authStore.setAuthChecked();
@@ -126,7 +126,7 @@ const Container: React.FC<Props> = (props) => {
   );
 };
 
-const setup = (props: Props = { experiment: experimentMock }) => {
+const setup = (props: Pick<Props, 'experiment'> = { experiment: experimentMock }) => {
   render(
     <BrowserRouter>
       <UIProvider>
