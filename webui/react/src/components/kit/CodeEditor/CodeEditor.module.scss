@@ -75,11 +75,10 @@
     min-height: 200px;
   }
   &.editorMode {
-    grid-template-areas:
-      '.'
-      'title'
-      'editor';
-    grid-template-columns: 100%;
+    grid-template:
+      '.' min-content
+      'title' min-content
+      'editor' auto / 100%;
   }
 
   @media screen and (max-width: 1024px) {
