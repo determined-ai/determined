@@ -191,7 +191,7 @@ The :func:`~determined.pytorch.PyTorchTrial.train_batch` method is passed a sing
 from the training data set; it should run the forward passes on the models, the backward passes on
 the losses, and step the optimizers. This method should return a dictionary with user-defined
 training metrics; Determined will automatically average all the metrics across batches. If an
-optimizer is set to automatically handle zeroing out the gradients, ``step_optimizer`` will zero out
+optimizer is set to :mod:`automatically handle zeroing out the gradients<determined.pytorch.PyTorchTrialContext.step_optimizer>`, ``step_optimizer`` will zero out
 the gradients and there will be no need to call ``optim.zero_grad()``.
 
 .. code:: python

@@ -829,7 +829,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             optimizer(``torch.optim.Optimizer``): Which optimizer should be stepped.
             clip_grads(a function, optional): This function should have one argument for
                 parameters in order to clip the gradients.
-            auto_zero_grads(bool, optional): Automatically zero out gradients automatically after
+            auto_zero_grads(bool, optional): Automatically zero out gradients after
                 stepping the optimizer. If false, you need to call ``optimizer.zero_grad()``
                 manually. Note that if :ref:`optimizations.aggregation_frequency
                 <config-aggregation-frequency>` is greater than 1, ``auto_zero_grads`` must be true.
