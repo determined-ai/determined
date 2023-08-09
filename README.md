@@ -41,7 +41,7 @@ with det.core.init() as core_context:
 
 ## Command Line Interface (CLI)
 
-Use the CLI to set up the Determined cluster locally, or with your favorite cloud service: 
+Use the CLI to set up the Determined cluster locally, or on your favorite cloud service: 
 
 ```bash
 det deploy aws up
@@ -69,8 +69,9 @@ searcher:
 
 ## Web UI
 
-Use the Web UI to view loss curves, hyperparameter plots, code and configuration snapshots, model registries, cluster utilization, debugging logs, performance profiling, and more.
+Use the Web UI to view loss curves, hyperparameter plots, code and configuration snapshots, model registries, cluster utilization, debugging logs, performance profiling reports, and more.
 
+![alt text](docs/assets/readme_images/webui.png)
 
 
 * **Train models faster** using state-of-the-art distributed training, without
