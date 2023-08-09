@@ -6,6 +6,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -33,17 +34,24 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 	exp := RequireMockExperiment(t, db, user)
 	tr := RequireMockTrial(t, db, exp)
 	a := RequireMockAllocation(t, db, tr.TaskID)
-	var expectedCheckpoints []uuid.UUID
-	for i := 1; i <= 3; i++ {
+	var expectedCheckpoints1 []uuid.UUID
+	var expectedCheckpoints2 []uuid.UUID
+	for i := 1; i <= 4; i++ {
 		ckptUUID := uuid.New()
-		ckpt := MockModelCheckpoint(ckptUUID, tr, a)
+		ckpt := MockModelCheckpointSteps(ckptUUID, tr, a, i)
 		err := AddCheckpointMetadata(ctx, &ckpt)
+		require.NoError(t, err)
+		err = MockTrialMetrics(ctx, ckptUUID, tr, int32(i), int32(i+5), db)
 		require.NoError(t, err)
 		if i == 2 { // add this checkpoint to the model registry
 			err = addCheckpointToModelRegistry(db, ckptUUID, user)
 			require.NoError(t, err)
 		} else {
-			expectedCheckpoints = append(expectedCheckpoints, ckptUUID)
+			expectedCheckpoints1 = append(expectedCheckpoints1, ckptUUID)
+		}
+
+		if i == 3 {
+			expectedCheckpoints2 = append(expectedCheckpoints2, ckptUUID)
 		}
 	}
 
@@ -54,7 +62,29 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 		0,
 	)
 	require.NoError(t, err)
-	require.Equal(t, expectedCheckpoints, checkpoints)
+	sort.Slice(expectedCheckpoints1, func(i, j int) bool {
+		return expectedCheckpoints1[i].String() < expectedCheckpoints1[j].String()
+	})
+	sort.Slice(checkpoints, func(i, j int) bool {
+		return checkpoints[i].String() < checkpoints[j].String()
+	})
+	require.Equal(t, expectedCheckpoints1, checkpoints)
+
+	checkpoints, err = db.ExperimentCheckpointsToGCRaw(
+		exp.ID,
+		1,
+		1,
+		1,
+	)
+
+	require.NoError(t, err)
+	sort.Slice(expectedCheckpoints2, func(i, j int) bool {
+		return expectedCheckpoints2[i].String() < expectedCheckpoints2[j].String()
+	})
+	sort.Slice(checkpoints, func(i, j int) bool {
+		return checkpoints[i].String() < checkpoints[j].String()
+	})
+	require.Equal(t, expectedCheckpoints2, checkpoints)
 }
 
 func addCheckpointToModelRegistry(db *PgDB, checkpointUUID uuid.UUID, user model.User) error {
