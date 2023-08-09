@@ -131,7 +131,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
   useEffect(() => {
     fetchAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [settings.tableOffset, settings.tableLimit]);
 
   const rpTotalJobCount = useCallback(
     (rpName: string) => {
