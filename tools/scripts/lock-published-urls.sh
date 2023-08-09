@@ -8,7 +8,7 @@ fi
 
 # redirects.py inspects files to detect missing redirects, so generated files
 # must be generated before the publish step
-make -C docs attributes.rst
+make -C docs attributions.rst
 
 # lock in current published urls
 python3 docs/redirects.py publish
