@@ -58,22 +58,22 @@ class SyncService {
     const dataMin = xValues[0];
     const dataMax = xValues[lastIdx];
 
+    if (dataMin === undefined || dataMax === undefined) return;
+
     this.bounds.update((b) => {
       let max = Math.max(b.dataBounds?.max ?? dataMax, dataMax);
       let min = Math.min(b.dataBounds?.min ?? dataMin, dataMin);
-      const width = max - min;
-      if (width <= 0) {
-        // default handling of min = max is not great
-        min = Math.min(max, 0);
-        max = 2 * max;
-      } else {
-        const margin = 0.02 * width;
-        max = max + margin;
-        min = min - margin;
+      if (min === max) {
+        if (max < 0) {
+          min = max;
+          max = 0;
+        } else {
+          min = 0;
+        }
       }
       return {
         ...b,
-        dataBounds: { max: dataMax, min: dataMin },
+        dataBounds: { max, min },
         unzoomedBounds: { max, min },
       };
     });
