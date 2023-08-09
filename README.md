@@ -12,6 +12,19 @@ It takes care of:
 
 # Why use Determined?
 
+Here's how Determined compares with other platforms.
+
+
+Feature | PyTorch Lightning | Weights & Biases | MLFlow | Determined |
+| - | - | - | - | - |
+Distributed Training | | | | :white_check_mark:
+Hyperparameter tuning | | | | :white_check_mark:
+Web UI | | | | :white_check_mark:
+PyTorch | | | | :white_check_mark:
+Tensorflow | | | | :white_check_mark:
+
+
+
 
 # How Determined Works
 
@@ -71,7 +84,7 @@ searcher:
 
 Use the Web UI to view loss curves, hyperparameter plots, code and configuration snapshots, model registries, cluster utilization, debugging logs, performance profiling reports, and more.
 
-![alt text](docs/assets/readme_images/webui.png)
+![Web UI](docs/assets/readme_images/webui.png)
 
 
 * **Train models faster** using state-of-the-art distributed training, without
