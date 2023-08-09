@@ -28,12 +28,12 @@ import (
 func createVersionTwoCheckpoint(
 	ctx context.Context, t *testing.T, api *apiServer, curUser model.User, resources map[string]int64,
 ) string {
-	trial := createTestTrial(t, api, curUser)
+	_, task := createTestTrial(t, api, curUser)
 
-	aID := model.AllocationID(string(trial.TaskID) + "-1")
+	aID := model.AllocationID(string(task.TaskID) + "-1")
 	aIn := &model.Allocation{
 		AllocationID: aID,
-		TaskID:       trial.TaskID,
+		TaskID:       task.TaskID,
 		Slots:        1,
 		ResourcePool: "somethingelse",
 		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
@@ -43,7 +43,7 @@ func createVersionTwoCheckpoint(
 	checkpoint := &model.CheckpointV2{
 		ID:           0,
 		UUID:         uuid.New(),
-		TaskID:       trial.TaskID,
+		TaskID:       task.TaskID,
 		AllocationID: &aID,
 		ReportTime:   time.Now(),
 		State:        model.ActiveState,

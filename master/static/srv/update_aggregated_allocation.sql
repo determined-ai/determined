@@ -63,6 +63,7 @@ label_agg AS (
     FROM
         allocs_in_range,
         trials,
+        trial_id_task_id,
         -- An exploded view of experiment labels (one row for each label for each experiment).
         -- If we want this to work for generic jobs, we will likely need to rethink labels.
         (
@@ -78,7 +79,8 @@ label_agg AS (
                 experiments
         ) AS labels
     WHERE
-        allocs_in_range.task_id = trials.task_id
+        allocs_in_range.task_id = trial_id_task_id.task_id
+        AND trial_id_task_id.trial_id = trials.id
         AND trials.experiment_id = labels.id
     GROUP BY
         labels.label

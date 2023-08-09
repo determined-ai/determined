@@ -50,15 +50,15 @@ workloads AS (
                             -- Or more accurately of late, start of the allocation.
                             SELECT
                                 NULL AS kind,
-                                tr.id AS trial_id,
+                                tt.trial_id AS trial_id,
                                 a.start_time AS end_time
                             FROM
                                 allocations a,
                                 tasks t,
-                                trials tr
+                                trial_id_task_id tt
                             WHERE
                                 a.task_id = t.task_id
-                                AND t.task_id = tr.task_id
+                                AND t.task_id = tt.task_id
                             UNION ALL
                             SELECT
                                 'training' AS kind,
@@ -76,23 +76,23 @@ workloads AS (
                             UNION ALL
                             SELECT
                                 'checkpointing' AS kind,
-                                t.id AS trial_id,
+                                trial_id_task_id.trial_id AS trial_id,
                                 checkpoints_v2.report_time AS end_time
                             FROM
                                 checkpoints_v2
                             JOIN
-                                trials AS t ON checkpoints_v2.task_id = t.task_id
+                                trial_id_task_id on checkpoints_v2.task_id = trial_id_task_id.task_id
                             UNION ALL
                             SELECT
                                 'imagepulling' AS kind,
-                                trials.id,
+                                trial_id_task_id.trial_id,
                                 task_stats.end_time
                             FROM
-                                task_stats, trials, allocations
+                                task_stats, trial_id_task_id, allocations
                             WHERE
                                 task_stats.event_type = 'IMAGEPULL'
                                 AND allocations.allocation_id = task_stats.allocation_id
-                                AND allocations.task_id = trials.task_id
+                                AND allocations.task_id = trial_id_task_id.task_id
                         ) metric_reports
                 ) derived_workload_spans
             WHERE

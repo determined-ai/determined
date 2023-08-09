@@ -47,8 +47,8 @@ func TestModels(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			user := RequireMockUser(t, db)
 			exp := RequireMockExperiment(t, db, user)
-			tr := RequireMockTrial(t, db, exp)
-			a := RequireMockAllocation(t, db, tr.TaskID)
+			tr, task := RequireMockTrial(t, db, exp)
+			a := RequireMockAllocation(t, db, task.TaskID)
 
 			// Insert a model.
 			now := time.Now()
@@ -73,7 +73,7 @@ func TestModels(t *testing.T) {
 			const stepsCompleted = 10
 			ckpt := &model.CheckpointV2{
 				UUID:         uuid.New(),
-				TaskID:       tr.TaskID,
+				TaskID:       task.TaskID,
 				AllocationID: &a.AllocationID,
 				ReportTime:   time.Now().UTC(),
 				State:        model.CompletedState,

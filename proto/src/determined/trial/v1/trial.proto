@@ -127,14 +127,21 @@ message Trial {
   double wall_clock_time = 12;
   // UUID of checkpoint that this trial started from.
   string warm_start_checkpoint_uuid = 13;
-  // Id of task associated with this trial.
-  string task_id = 14;
+  // Id of the first task associated with this trial.
+  // This field is deprecated since trials can have multiple tasks.
+  string task_id = 14 [deprecated = true];
   // The sum of sizes of all resources in all checkpoints for the trial.
   uint64 total_checkpoint_size = 15;
   // The count of checkpoints.
   int32 checkpoint_count = 18;
   // summary metrics
   google.protobuf.Struct summary_metrics = 19;
+  // Task IDs of tasks associated with this trial.
+  // Length of task_ids will always be greater or equal to one when TaskID is
+  // sent. For example CompareTrial we will send a reduced Trial object, without
+  // TaskID or TaskIDs fileld in. The first element of task_ids will be the same
+  // as task_id. task_ids is sorted ascending by task_run_id.
+  repeated string task_ids = 20;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series
