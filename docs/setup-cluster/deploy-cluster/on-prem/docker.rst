@@ -6,35 +6,11 @@
 
 This user guide provides step-by-step instructions for installing Determined using Docker.
 
-.. _install-postgres-docker:
+***************
+ Prerequisites
+***************
 
-*******************
- Preliminary Setup
-*******************
-
-#. :ref:`Install Docker <install-docker>` on all machines in the cluster. If the agent machines have
-   GPUs, ensure that the :ref:`NVIDIA Container Toolkit <validate-nvidia-container-toolkit>` on each
-   one is working as expected.
-
-#. Pull the official Docker image for PostgreSQL. We recommend using the version listed below.
-
-   .. code::
-
-      docker pull postgres:10
-
-   This image is not provided by Determined AI; please see `its Docker Hub page
-   <https://hub.docker.com/_/postgres>`_ for more information.
-
-#. Pull the Docker image for the master or agent on each machine where these services will run.
-   There is a single master container running in a Determined cluster, and typically there is one
-   agent container running on a given machine. A single machine can host both the master container
-   and an agent container. Run the commands below, replacing ``VERSION`` with a valid Determined
-   version, such as the current version, |version|:
-
-   .. code::
-
-      docker pull determinedai/determined-master:VERSION
-      docker pull determinedai/determined-agent:VERSION
+-  :ref:`PostgreSQL <install-postgres-docker>`
 
 *********************************
  Configure and Start the Cluster
