@@ -103,10 +103,10 @@ func mergeConfigIntoViper(bs []byte) (*config.Config, error) {
 	// deepcopy values needed to override viper's merge auto-lowercasing.
 	var configMap, cpMap map[string]interface{}
 	if err := yaml.Unmarshal(bs, &configMap); err != nil {
-		return nil, fmt.Errorf("can't unmarshal yaml configuration file: %w", err)
+		return nil, fmt.Errorf("unmarshalling yaml configuration file: %w", err)
 	}
 	if err := yaml.Unmarshal(bs, &cpMap); err != nil {
-		return nil, fmt.Errorf("can't unmarshal yaml configuration file: %w", err)
+		return nil, fmt.Errorf("unmarshalgling yaml configuration file: %w", err)
 	}
 
 	// Now merge the config file values into viper.
