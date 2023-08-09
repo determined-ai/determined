@@ -22,4 +22,4 @@ min_validation_period:
 entrypoint: model_def:UNetsTrial
 scheduling_unit: 57
 environment:
-    image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca
+    image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-2b7e2a1

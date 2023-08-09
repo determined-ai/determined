@@ -64,7 +64,8 @@ const Markdown: React.FC<Props> = ({
                 </div>
               }>
               <CodeEditor
-                files={[{ content: Loaded(markdown), key: 'input.md' }]}
+                file={Loaded(markdown)}
+                files={[{ key: 'input.md' }]}
                 height={`${resize.height - 420}px`}
                 onChange={onChange}
                 onError={handleError}

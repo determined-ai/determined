@@ -303,6 +303,7 @@
     "setup-cluster/upgrade",
     "setup-cluster/users",
     "setup-cluster/workspaces",
+    "setup-cluster/workspaces-rpools",
     "sysadmin-basics/cluster-config",
     "sysadmin-basics/elasticsearch-logging-backend",
     "sysadmin-basics/historical-cluster-usage-data",
