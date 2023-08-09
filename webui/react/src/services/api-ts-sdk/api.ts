@@ -6469,7 +6469,7 @@ export interface V1PatchWorkspace {
      * @type {string}
      * @memberof V1PatchWorkspace
      */
-    defaultCompute?: string;
+    defaultComputeResourcePool?: string;
     /**
      * Name of the default aux pool.
      * @type {string}
@@ -6481,7 +6481,7 @@ export interface V1PatchWorkspace {
      * @type {string}
      * @memberof V1PatchWorkspace
      */
-    defaultAux?: string;
+    defaultAuxResourcePool?: string;
 }
 /**
  * Response to PatchWorkspaceRequest.

@@ -90,9 +90,9 @@ message PatchWorkspace {
   // Name of the default compute pool.
   string default_compute_pool = 14 [deprecated = true];
   // Name of the default compute pool can be optional.
-  optional string default_compute = 16;
+  optional string default_compute_resource_pool = 16;
   // Name of the default aux pool.
   string default_aux_pool = 15 [deprecated = true];
   // Name of the default aux pool can be optional.
-  optional string default_aux = 17;
+  optional string default_aux_resource_pool = 17;
 }

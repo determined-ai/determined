@@ -8240,10 +8240,10 @@ class v1PatchUserResponse(Printable):
 class v1PatchWorkspace(Printable):
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
-    defaultAux: "typing.Optional[str]" = None
     defaultAuxPool: "typing.Optional[str]" = None
-    defaultCompute: "typing.Optional[str]" = None
+    defaultAuxResourcePool: "typing.Optional[str]" = None
     defaultComputePool: "typing.Optional[str]" = None
+    defaultComputeResourcePool: "typing.Optional[str]" = None
     name: "typing.Optional[str]" = None
 
     def __init__(
@@ -8251,24 +8251,24 @@ class v1PatchWorkspace(Printable):
         *,
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         checkpointStorageConfig: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
-        defaultAux: "typing.Union[str, None, Unset]" = _unset,
         defaultAuxPool: "typing.Union[str, None, Unset]" = _unset,
-        defaultCompute: "typing.Union[str, None, Unset]" = _unset,
+        defaultAuxResourcePool: "typing.Union[str, None, Unset]" = _unset,
         defaultComputePool: "typing.Union[str, None, Unset]" = _unset,
+        defaultComputeResourcePool: "typing.Union[str, None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(agentUserGroup, Unset):
             self.agentUserGroup = agentUserGroup
         if not isinstance(checkpointStorageConfig, Unset):
             self.checkpointStorageConfig = checkpointStorageConfig
-        if not isinstance(defaultAux, Unset):
-            self.defaultAux = defaultAux
         if not isinstance(defaultAuxPool, Unset):
             self.defaultAuxPool = defaultAuxPool
-        if not isinstance(defaultCompute, Unset):
-            self.defaultCompute = defaultCompute
+        if not isinstance(defaultAuxResourcePool, Unset):
+            self.defaultAuxResourcePool = defaultAuxResourcePool
         if not isinstance(defaultComputePool, Unset):
             self.defaultComputePool = defaultComputePool
+        if not isinstance(defaultComputeResourcePool, Unset):
+            self.defaultComputeResourcePool = defaultComputeResourcePool
         if not isinstance(name, Unset):
             self.name = name
 
@@ -8280,14 +8280,14 @@ class v1PatchWorkspace(Printable):
             kwargs["agentUserGroup"] = v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj["agentUserGroup"] is not None else None
         if "checkpointStorageConfig" in obj:
             kwargs["checkpointStorageConfig"] = obj["checkpointStorageConfig"]
-        if "defaultAux" in obj:
-            kwargs["defaultAux"] = obj["defaultAux"]
         if "defaultAuxPool" in obj:
             kwargs["defaultAuxPool"] = obj["defaultAuxPool"]
-        if "defaultCompute" in obj:
-            kwargs["defaultCompute"] = obj["defaultCompute"]
+        if "defaultAuxResourcePool" in obj:
+            kwargs["defaultAuxResourcePool"] = obj["defaultAuxResourcePool"]
         if "defaultComputePool" in obj:
             kwargs["defaultComputePool"] = obj["defaultComputePool"]
+        if "defaultComputeResourcePool" in obj:
+            kwargs["defaultComputeResourcePool"] = obj["defaultComputeResourcePool"]
         if "name" in obj:
             kwargs["name"] = obj["name"]
         return cls(**kwargs)
@@ -8299,14 +8299,14 @@ class v1PatchWorkspace(Printable):
             out["agentUserGroup"] = None if self.agentUserGroup is None else self.agentUserGroup.to_json(omit_unset)
         if not omit_unset or "checkpointStorageConfig" in vars(self):
             out["checkpointStorageConfig"] = self.checkpointStorageConfig
-        if not omit_unset or "defaultAux" in vars(self):
-            out["defaultAux"] = self.defaultAux
         if not omit_unset or "defaultAuxPool" in vars(self):
             out["defaultAuxPool"] = self.defaultAuxPool
-        if not omit_unset or "defaultCompute" in vars(self):
-            out["defaultCompute"] = self.defaultCompute
+        if not omit_unset or "defaultAuxResourcePool" in vars(self):
+            out["defaultAuxResourcePool"] = self.defaultAuxResourcePool
         if not omit_unset or "defaultComputePool" in vars(self):
             out["defaultComputePool"] = self.defaultComputePool
+        if not omit_unset or "defaultComputeResourcePool" in vars(self):
+            out["defaultComputeResourcePool"] = self.defaultComputeResourcePool
         if not omit_unset or "name" in vars(self):
             out["name"] = self.name
         return out
