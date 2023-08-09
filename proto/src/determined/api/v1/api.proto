@@ -2198,7 +2198,8 @@ service Determined {
     };
   }
 
-  // List all resource pools bound to a specific workspace
+  // List all resource pools, bound and unbound, available to a specific
+  // workspace
   rpc ListRPsBoundToWorkspace(ListRPsBoundToWorkspaceRequest)
       returns (ListRPsBoundToWorkspaceResponse) {
     option (google.api.http) = {

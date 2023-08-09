@@ -17397,7 +17397,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -19074,7 +19074,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -19881,7 +19881,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -20540,7 +20540,7 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
-     * @summary List all resource pools bound to a specific workspace
+     * @summary List all resource pools, bound and unbound, available to a specific workspace
      * @param {number} workspaceId Workspace ID.
      * @param {number} [offset] The offset to use with pagination.
      * @param {number} [limit] The maximum number of results to return.
@@ -29458,7 +29458,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -29814,7 +29814,7 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -30006,7 +30006,7 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -30155,7 +30155,7 @@ export class WorkspacesApi extends BaseAPI {
     
     /**
      * 
-     * @summary List all resource pools bound to a specific workspace
+     * @summary List all resource pools, bound and unbound, available to a specific workspace
      * @param {number} workspaceId Workspace ID.
      * @param {number} [offset] The offset to use with pagination.
      * @param {number} [limit] The maximum number of results to return.
