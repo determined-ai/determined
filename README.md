@@ -17,10 +17,10 @@ It takes care of:
 
 The main components of Determined are the Python library, the command line interface (CLI), and the Web UI.
 
-## Python library
+## Python Library
 Use the Python library to make your existing PyTorch or Tensorflow code compatible with Determined. 
 
-This can be done by organizing your existing code to follow one of the class-based APIs:
+This can be done by organizing your code into one of the class-based APIs:
 
 ```python
 from determined.pytorch import PyTorchTrial
@@ -30,7 +30,7 @@ class YourExperiment(PyTorchTrial):
     ...
 ```
 
-Or by integrating just the functions you want, via the Core API:
+Or by using just the functions you want, via the Core API:
 
 ```python
 import determined as det
@@ -39,27 +39,37 @@ with det.core.init() as core_context:
     ...
 ```
 
-## CLI
+## Command Line Interface (CLI)
 
-Use the CLI to set up Determined locally, or with your favorite cloud service: 
+Use the CLI to set up the Determined cluster locally, or with your favorite cloud service: 
 
-```
+```bash
 det deploy aws up
 ```
 
-Then train your models, using yaml files for configuration:
-```
+Then train your models:
+```bash
 det experiment create gpt.yaml .
 ```
 
+And use yaml files to configure everything from distributed training to hyperparameter tuning:
+
+```yaml
+resources:
+  slots_per_trial: 8
+  priority: 1
+hyperparameters:
+  learning_rate: 1.0
+  dropout: 0.25
+searcher:
+  metric: validation_loss
+  smaller_is_better: true
+```
+
+
 ## Web UI
 
-Use the Web UI to view everything about your experiments:
-
-
-
-
-
+Use the Web UI to view loss curves, hyperparameter plots, code and configuration snapshots, model registries, cluster utilization, debugging logs, performance profiling, and more.
 
 
 
