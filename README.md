@@ -1,6 +1,34 @@
-# Determined: Deep Learning Training Platform
-
 <p align="center"><img src="determined-logo.png" alt="Determined AI Logo"></p>
+
+Determined is an all-in-one deep learning platform, compatible with both PyTorch and Tensorflow.
+
+It simplifies:
+
+- **Distributed training**, for faster results.
+- **Hyperparameter tuning**, for obtaining the best models.
+- **Resource management**, for cutting cloud GPU costs.
+- **Experiment tracking**, for analysis and reproducibility.
+
+# Overview
+
+The two main components of Determined are the command line interface (CLI) and the Web UI.
+
+### CLI
+
+
+### Web UI
+
+
+
+* **Train models faster** using state-of-the-art distributed training, without
+  changing your model code
+* **Automatically find high-quality models** with advanced hyperparameter tuning
+  from the creators of Hyperband
+* **Get more from your GPUs** with smart scheduling and cut cloud GPU costs by
+  seamlessly using preemptible instances
+* **Track and reproduce your work** with experiment tracking that works
+  out-of-the-box, covering code versions, metrics, checkpoints, and
+  hyperparameters
 
 Determined is an open-source deep learning training platform that makes building
 models fast and easy. Determined enables you to:
