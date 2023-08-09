@@ -6,7 +6,9 @@ import gcpLogo from 'assets/images/gcp-logo.svg?url';
 import k8sLogo from 'assets/images/k8s-logo.svg?url';
 import staticLogo from 'assets/images/on-prem-logo.svg?url';
 import Card from 'components/kit/Card';
+import { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
+import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
@@ -26,8 +28,6 @@ import { useObservable } from 'utils/observable';
 import { DarkLight } from 'utils/themes';
 
 import Json from './Json';
-import { MenuItem } from './kit/Dropdown';
-import { useModal } from './kit/Modal';
 import ResourcePoolBindingModalComponent from './ResourcePoolBindingModal';
 import css from './ResourcePoolCard.module.scss';
 
@@ -36,7 +36,7 @@ interface Props {
   poolStats?: V1RPQueueStat | undefined;
   resourcePool: ResourcePool;
   size?: ShirtSize;
-  defaultLabel?: string;
+  descriptiveLabel?: string;
 }
 
 const poolAttributes = [
@@ -93,7 +93,7 @@ export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
 const ResourcePoolCard: React.FC<Props> = ({
   resourcePool: pool,
   actionMenu,
-  defaultLabel,
+  descriptiveLabel,
 }: Props) => {
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
@@ -156,54 +156,47 @@ const ResourcePoolCard: React.FC<Props> = ({
   );
 
   return (
-    <>
-      <Card
-        actionMenu={actionMenu}
-        href={paths.resourcePool(pool.name)}
-        size="medium"
-        onDropdown={onDropdown}>
-        <div className={css.base}>
-          <div className={css.header}>
-            <div className={css.info}>
-              <div className={css.name}>{pool.name}</div>
-            </div>
-            <div className={css.default}>
-              <span>
-                {defaultLabel ||
-                  (pool.defaultAuxPool && pool.defaultComputePool && 'Default') ||
-                  (pool.defaultComputePool && 'Default Compute') ||
-                  (pool.defaultAuxPool && 'Default Aux')}
-              </span>
-              {pool.description && <Icon name="info" showTooltip title={pool.description} />}
-            </div>
+    <Card
+      actionMenu={actionMenu}
+      href={paths.resourcePool(pool.name)}
+      size="medium"
+      onDropdown={onDropdown}>
+      <div className={css.base}>
+        <div className={css.header}>
+          <div className={css.info}>
+            <div className={css.name}>{pool.name}</div>
           </div>
-          <Suspense fallback={<Spinner center spinning />}>
-            <div className={css.body}>
-              <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
-              {rpBindingFlagOn && resourcePoolBindings.length > 0 && (
-                <section className={css.resoucePoolBoundContainer}>
-                  <div>Bound to:</div>
-                  <div className={css.resoucePoolBoundCount}>
-                    <Icon name="lock" title="Bound Workspaces" />
-                    {resourcePoolBindings.length} workspace
-                  </div>
-                </section>
-              )}
-              <section className={css.details}>
-                <Json hideDivider json={shortDetails} />
-              </section>
-              <div />
-            </div>
-          </Suspense>
+          <div className={css.default}>
+            <span>{descriptiveLabel}</span>
+            {pool.description && <Icon name="info" showTooltip title={pool.description} />}
+          </div>
         </div>
-      </Card>
+        <Suspense fallback={<Spinner center spinning />}>
+          <div className={css.body}>
+            <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
+            {rpBindingFlagOn && resourcePoolBindings.length > 0 && (
+              <section className={css.resoucePoolBoundContainer}>
+                <div>Bound to:</div>
+                <div className={css.resoucePoolBoundCount}>
+                  <Icon name="lock" title="Bound Workspaces" />
+                  {resourcePoolBindings.length} workspace
+                </div>
+              </section>
+            )}
+            <section className={css.details}>
+              <Json hideDivider json={shortDetails} />
+            </section>
+            <div />
+          </div>
+        </Suspense>
+      </div>
       <ResourcePoolBindingModal.Component
         bindings={workspaces.filter((w) => resourcePoolBindings.includes(w.id)).map((w) => w.name)}
         pool={pool.name}
         workspaces={workspaces.map((w) => w.name)}
         onSave={onSaveBindings}
       />
-    </>
+    </Card>
   );
 };
 

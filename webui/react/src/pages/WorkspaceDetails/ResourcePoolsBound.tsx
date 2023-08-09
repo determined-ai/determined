@@ -19,7 +19,7 @@ interface Props {
 const ResourcePoolsBound: React.FC<Props> = ({ workspace }) => {
   const resourcePools = useObservable(clusterStore.resourcePools);
   const unBoundResourcePools = useObservable(clusterStore.unBoundResourcePools);
-  const boundResourcePoolIds = useObservable(workspaceStore.boundResourcePools(workspace.id));
+  const boundResourcePoolNames = useObservable(workspaceStore.boundResourcePools(workspace.id));
   const { canManageResourcePoolBindings } = usePermissions();
 
   useEffect(() => {
@@ -28,14 +28,15 @@ const ResourcePoolsBound: React.FC<Props> = ({ workspace }) => {
   }, [workspace.id]);
 
   const boundResourcePools: ResourcePool[] = useMemo(() => {
-    if (!Loadable.isLoaded(resourcePools) || !boundResourcePoolIds) return [];
-    const unBoundResourcePoolIds = Loadable.isLoaded(unBoundResourcePools)
+    if (!Loadable.isLoaded(resourcePools) || !boundResourcePoolNames) return [];
+    const unBoundResourcePoolNames = Loadable.isLoaded(unBoundResourcePools)
       ? unBoundResourcePools.data.map((p) => p.name)
       : [];
     return resourcePools.data.filter(
-      (rp) => boundResourcePoolIds.includes(rp.name) && !unBoundResourcePoolIds.includes(rp.name),
+      (rp) =>
+        boundResourcePoolNames.includes(rp.name) && !unBoundResourcePoolNames.includes(rp.name),
     );
-  }, [resourcePools, boundResourcePoolIds, unBoundResourcePools]);
+  }, [resourcePools, boundResourcePoolNames, unBoundResourcePools]);
 
   const renderDefaultLabel = useCallback(
     (pool: ResourcePool) => {
@@ -43,7 +44,6 @@ const ResourcePoolsBound: React.FC<Props> = ({ workspace }) => {
         return 'Default';
       if (pool.name === workspace.defaultAuxPool) return 'Default Aux';
       if (pool.name === workspace.defaultComputePool) return 'Default Compute';
-      return ' ';
     },
     [workspace.defaultComputePool, workspace.defaultAuxPool],
   );
@@ -53,26 +53,28 @@ const ResourcePoolsBound: React.FC<Props> = ({ workspace }) => {
       canManageResourcePoolBindings
         ? [
             {
-              disabled: workspace.defaultAuxPool === pool.name,
-              icon: <Icon name="four-squares" title="set-default" />,
+              icon: <Icon decorative name="four-squares" />,
               key: 'set-default-aux',
-              label: 'Set as Default Aux Resource Pool',
+              label: `${
+                workspace.defaultAuxPool === pool.name ? 'Unset' : 'Set'
+              } as Default Aux Resource Pool`,
               onClick: async () => {
                 await patchWorkspace({
-                  defaultAuxPool: pool.name,
+                  defaultAuxPool: workspace.defaultAuxPool === pool.name ? '' : pool.name,
                   id: workspace.id,
                 });
                 workspaceStore.fetch(undefined, true);
               },
             },
             {
-              disabled: workspace.defaultComputePool === pool.name,
-              icon: <Icon name="four-squares" title="set-default" />,
+              icon: <Icon decorative name="four-squares" />,
               key: 'set-default-compute',
-              label: 'Set as Default Compute Resource Pool',
+              label: `${
+                workspace.defaultComputePool === pool.name ? 'Unset' : 'Set'
+              } as Default Compute Resource Pool`,
               onClick: async () => {
                 await patchWorkspace({
-                  defaultComputePool: pool.name,
+                  defaultComputePool: workspace.defaultComputePool === pool.name ? '' : pool.name,
                   id: workspace.id,
                 });
                 workspaceStore.fetch(undefined, true);
@@ -93,22 +95,22 @@ const ResourcePoolsBound: React.FC<Props> = ({ workspace }) => {
       {boundResourcePools.length > 0 && (
         <Section title="Bound Resource Pools">
           <Card.Group size="medium">
-            {boundResourcePools.map((rp, idx) => (
+            {boundResourcePools.map((rp) => (
               <ResourcePoolCard
                 actionMenu={actionMenu(rp)}
-                defaultLabel={renderDefaultLabel(rp)}
-                key={idx}
+                descriptiveLabel={renderDefaultLabel(rp)}
+                key={rp.name}
                 resourcePool={rp}
               />
             ))}
           </Card.Group>
         </Section>
       )}
-      {Loadable.isLoaded(unBoundResourcePools) && (
+      {Loadable.isLoaded(unBoundResourcePools) && unBoundResourcePools.data.length > 0 && (
         <Section title="Shared Resource Pools">
           <Card.Group size="medium">
-            {unBoundResourcePools.data.map((rp: ResourcePool, idx: number) => (
-              <ResourcePoolCard defaultLabel={' '} key={idx} resourcePool={rp} />
+            {unBoundResourcePools.data.map((rp: ResourcePool) => (
+              <ResourcePoolCard key={rp.name} resourcePool={rp} />
             ))}
           </Card.Group>
         </Section>

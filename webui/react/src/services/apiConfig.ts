@@ -459,8 +459,8 @@ export const getResourcePools: DetApi<
   postProcess: (response) => {
     return response.resourcePools?.map(decoder.mapV1ResourcePool) || [];
   },
-  request: (params: Service.GetResourcePoolsParams) =>
-    detApi.Internal.getResourcePools(params?.offset, params?.limit, params?.unBound),
+  request: (params: Service.GetResourcePoolsParams, options) =>
+    detApi.Internal.getResourcePools(params?.offset, params?.limit, params?.unBound, options),
 };
 
 export const getResourceAllocationAggregated: DetApi<

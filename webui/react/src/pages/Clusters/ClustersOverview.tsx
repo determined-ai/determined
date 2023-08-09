@@ -35,9 +35,15 @@ const ClusterOverview: React.FC = () => {
               label: 'Manage bindings',
             },
           ]
-        : [],
+        : undefined,
     [canManageResourcePoolBindings, rpBindingFlagOn],
   );
+
+  const renderDefaultLabel = useCallback((pool: ResourcePool) => {
+    if (pool.defaultAuxPool && pool.defaultComputePool) return 'Default';
+    if (pool.defaultComputePool) return 'Default Aux';
+    if (pool.defaultAuxPool) return 'Default Compute';
+  }, []);
 
   return (
     <>
@@ -46,8 +52,13 @@ const ClusterOverview: React.FC = () => {
       <Section title="Resource Pools">
         <Card.Group size="medium">
           {Loadable.isLoaded(resourcePools) &&
-            resourcePools.data.map((rp, idx) => (
-              <ResourcePoolCard actionMenu={actionMenu(rp)} key={idx} resourcePool={rp} />
+            resourcePools.data.map((rp) => (
+              <ResourcePoolCard
+                actionMenu={actionMenu(rp)}
+                descriptiveLabel={renderDefaultLabel(rp)}
+                key={rp.name}
+                resourcePool={rp}
+              />
             ))}
         </Card.Group>
       </Section>
