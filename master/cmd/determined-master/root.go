@@ -94,6 +94,9 @@ func initializeConfig() error {
 		return errors.Wrap(err, "error merge configuration to viper")
 	}
 
+	// Now call viper.AllSettings() again to get the full config, containing all values from CLI flags,
+	// environment variables, and the configuration file. Override the task_container_defaults value
+	// using the map you copied.
 	viperConfig := v.AllSettings()
 	viperConfig["task_container_defaults"] = cpMap["task_container_defaults"]
 	conf, err := getConfig(viperConfig)

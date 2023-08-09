@@ -9,12 +9,13 @@ import (
 	"google.golang.org/api/compute/v1"
 	"gotest.tools/assert"
 
+	"github.com/ghodss/yaml"
+
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/ghodss/yaml"
 )
 
 func TestUnmarshalMasterConfigurationViaViper(t *testing.T) {
