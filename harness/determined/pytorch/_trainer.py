@@ -229,6 +229,7 @@ def init(
     exp_conf: Optional[Dict[str, Any]] = None,
     distributed: Optional[core.DistributedContext] = None,
     aggregation_frequency: int = 1,
+    enable_tensorboard_logging: bool = True,
 ) -> Iterator[pytorch.PyTorchTrialContext]:
     """
     Creates a PyTorchTrialContext for use with a PyTorchTrial. All trainer.* calls must be within
@@ -242,6 +243,7 @@ def init(
         distributed: (Optional) custom distributed training configuration
         aggregation_frequency: number of batches before gradients are exchanged in distributed
             training. This value is configured here because it is used in context.wrap_optimizer.
+        enable_tensorboard_logging: Configures if upload to tensorboard is enabled
     """
     cluster_info = det.get_cluster_info()
     local_training = cluster_info is None or cluster_info.task_type != "TRIAL"
@@ -287,6 +289,7 @@ def init(
             steps_completed=steps_completed,
             managed_training=managed_training,
             debug_enabled=debug_enabled,
+            enable_tensorboard_logging=enable_tensorboard_logging,
         )
 
         yield context

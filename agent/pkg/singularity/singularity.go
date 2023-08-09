@@ -56,13 +56,14 @@ type SingularityContainer struct {
 
 // SingularityClient implements ContainerRuntime.
 type SingularityClient struct {
-	log        *logrus.Entry
-	opts       options.SingularityOptions
-	mu         sync.Mutex
-	wg         waitgroupx.Group
-	containers map[cproto.ID]*SingularityContainer
-	agentTmp   string
-	debug      bool
+	log         *logrus.Entry
+	opts        options.SingularityOptions
+	mu          sync.Mutex
+	wg          waitgroupx.Group
+	containers  map[cproto.ID]*SingularityContainer
+	agentTmp    string
+	debug       bool
+	isApptainer bool
 }
 
 // New returns a new singularity client, which launches and tracks containers.
@@ -81,12 +82,13 @@ func New(opts options.Options) (*SingularityClient, error) {
 	}
 
 	return &SingularityClient{
-		log:        logrus.WithField("compotent", "singularity"),
-		opts:       opts.SingularityOptions,
-		wg:         waitgroupx.WithContext(context.Background()),
-		containers: make(map[cproto.ID]*SingularityContainer),
-		agentTmp:   agentTmp,
-		debug:      opts.Debug,
+		log:         logrus.WithField("compotent", "singularity"),
+		opts:        opts.SingularityOptions,
+		wg:          waitgroupx.WithContext(context.Background()),
+		containers:  make(map[cproto.ID]*SingularityContainer),
+		agentTmp:    agentTmp,
+		debug:       opts.Debug,
+		isApptainer: opts.ContainerRuntime == options.ApptainerContainerRuntime,
 	}, nil
 }
 
@@ -310,9 +312,13 @@ func (s *SingularityClient) RunContainer(
 		}
 	}
 	if len(cudaVisibleDevices) > 0 {
-		// TODO(DET-9081): We need to move to --nvccli --nv, because --nv does not provide
-		// sufficient isolation (e.g., nvidia-smi see all GPUs on the machine, not just ours).
-		args = append(args, "--nv")
+		args = append(args, "--nv", "--nvccli", "--contain")
+		if s.isApptainer {
+			// Using --userns to avoid this error when using --nvccli:
+			// FATAL:   nvidia-container-cli not allowed in setuid mode
+			// (e.g.: casablanca, apptainer version 1.2.2-1)
+			args = append(args, "--userns")
+		}
 	}
 
 	args = capabilitiesToSingularityArgs(req, args)
@@ -383,15 +389,17 @@ func (s *SingularityClient) setCommandEnvironment(
 	req cproto.RunSpec, cudaVisibleDevices []string, cmd *exec.Cmd,
 ) {
 	// Per https://pkg.go.dev/os/exec#Cmd.Env, if cmd.Env is nil, the new process uses the current
-	// process's environment. If this in not the case, for example because we specify something to
+	// process's environment. If this is not the case, for example because we specify something to
 	// control Singularity operation, then we need to explicitly specify any value needed from the
 	// current environment.
 	if req.DeviceType == device.CUDA {
 		cudaVisibleDevicesVar := strings.Join(cudaVisibleDevices, ",")
-		cmd.Env = append(cmd.Env,
-			fmt.Sprintf("SINGULARITYENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
-			fmt.Sprintf("APPTAINERENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
-		)
+
+		// NVIDIA_VISIBLE_DEVICES together with options on the singularity/apptainer run
+		// command control the visibility of the GPUs in the container.
+		visibleDevices := fmt.Sprintf("NVIDIA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar)
+		s.log.Trace(visibleDevices)
+		cmd.Env = append(cmd.Env, visibleDevices)
 	}
 	if req.DeviceType == device.ROCM {
 		// Avoid this problem: https://github.com/determined-ai/determined-ee/pull/922

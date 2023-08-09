@@ -11,10 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
-	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -32,11 +29,10 @@ func (a *apiServer) GetAgents(
 	}
 
 	permErr, err := cluster.AuthZProvider.Get().CanGetSensitiveAgentInfo(ctx, user)
-	if err != nil {
+	switch {
+	case err != nil:
 		return nil, err
-	}
-
-	if permErr != nil {
+	case permErr != nil:
 		for _, agent := range resp.Agents {
 			if err := authz.ObfuscateAgent(agent); err != nil {
 				return nil, err
@@ -48,58 +44,49 @@ func (a *apiServer) GetAgents(
 	return resp, a.paginate(&resp.Pagination, &resp.Agents, req.Offset, req.Limit)
 }
 
-func agentAddr(agentID string) actor.Address {
-	return sproto.AgentsAddr.Child(agentID)
-}
-
-func slotAddr(agentID, slotID string) actor.Address {
-	return actorrm.SlotAddr(agentID, slotID)
-}
-
 func (a *apiServer) GetAgent(
 	ctx context.Context, req *apiv1.GetAgentRequest,
-) (resp *apiv1.GetAgentResponse, err error) {
+) (*apiv1.GetAgentResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := a.ask(agentAddr(req.AgentId), req, &resp); err != nil {
-		return nil, err
-	}
-
-	permErr, err := cluster.AuthZProvider.Get().CanGetSensitiveAgentInfo(ctx, user)
+	resp, err := a.m.rm.GetAgent(a.m.system, req)
 	if err != nil {
 		return nil, err
 	}
 
-	if permErr != nil {
+	permErr, err := cluster.AuthZProvider.Get().CanGetSensitiveAgentInfo(ctx, user)
+	switch {
+	case err != nil:
+		return nil, err
+	case permErr != nil:
 		if err := authz.ObfuscateAgent(resp.Agent); err != nil {
 			return nil, err
 		}
 	}
-
 	return resp, nil
 }
 
 func (a *apiServer) GetSlots(
 	ctx context.Context, req *apiv1.GetSlotsRequest,
-) (resp *apiv1.GetSlotsResponse, err error) {
+) (*apiv1.GetSlotsResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := a.ask(agentAddr(req.AgentId), req, &resp); err != nil {
-		return nil, err
-	}
-
-	permErr, err := cluster.AuthZProvider.Get().CanGetSensitiveAgentInfo(ctx, user)
+	resp, err := a.m.rm.GetSlots(a.m.system, req)
 	if err != nil {
 		return nil, err
 	}
 
-	if permErr != nil {
+	permErr, err := cluster.AuthZProvider.Get().CanGetSensitiveAgentInfo(ctx, user)
+	switch {
+	case err != nil:
+		return nil, err
+	case permErr != nil:
 		for _, slot := range resp.Slots {
 			if err := authz.ObfuscateSlot(slot); err != nil {
 				return nil, err
@@ -112,21 +99,22 @@ func (a *apiServer) GetSlots(
 
 func (a *apiServer) GetSlot(
 	ctx context.Context, req *apiv1.GetSlotRequest,
-) (resp *apiv1.GetSlotResponse, err error) {
+) (*apiv1.GetSlotResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := a.ask(slotAddr(req.AgentId, req.SlotId), req, &resp); err != nil {
+	resp, err := a.m.rm.GetSlot(a.m.system, req)
+	if err != nil {
 		return nil, err
 	}
 
 	permErr, err := cluster.AuthZProvider.Get().CanGetSensitiveAgentInfo(ctx, user)
-	if err != nil {
+	switch {
+	case err != nil:
 		return nil, err
-	}
-	if permErr != nil {
+	case permErr != nil:
 		if err := authz.ObfuscateSlot(resp.Slot); err != nil {
 			return resp, err
 		}
@@ -140,10 +128,10 @@ func (a *apiServer) canUpdateAgents(ctx context.Context) error {
 		return err
 	}
 	permErr, err := cluster.AuthZProvider.Get().CanUpdateAgents(ctx, user)
-	if err != nil {
+	switch {
+	case err != nil:
 		return err
-	}
-	if permErr != nil {
+	case permErr != nil:
 		return status.Error(codes.PermissionDenied, permErr.Error())
 	}
 	return nil
@@ -155,8 +143,7 @@ func (a *apiServer) EnableAgent(
 	if err := a.canUpdateAgents(ctx); err != nil {
 		return nil, err
 	}
-
-	return resp, a.ask(agentAddr(req.AgentId), req, &resp)
+	return a.m.rm.EnableAgent(a.m.system, req)
 }
 
 func (a *apiServer) DisableAgent(
@@ -165,7 +152,7 @@ func (a *apiServer) DisableAgent(
 	if err := a.canUpdateAgents(ctx); err != nil {
 		return nil, err
 	}
-	return resp, a.ask(agentAddr(req.AgentId), req, &resp)
+	return a.m.rm.DisableAgent(a.m.system, req)
 }
 
 func (a *apiServer) EnableSlot(
@@ -174,6 +161,7 @@ func (a *apiServer) EnableSlot(
 	if err := a.canUpdateAgents(ctx); err != nil {
 		return nil, err
 	}
+
 	resp, err = a.m.rm.EnableSlot(a.m.system, req)
 	switch {
 	case errors.Is(err, rmerrors.ErrNotSupported):
@@ -191,6 +179,7 @@ func (a *apiServer) DisableSlot(
 	if err := a.canUpdateAgents(ctx); err != nil {
 		return nil, err
 	}
+
 	resp, err = a.m.rm.DisableSlot(a.m.system, req)
 	switch {
 	case errors.Is(err, rmerrors.ErrNotSupported):

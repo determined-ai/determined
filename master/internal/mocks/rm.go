@@ -72,6 +72,32 @@ func (_m *ResourceManager) DeleteJob(_a0 actor.Messenger, _a1 sproto.DeleteJob) 
 	return r0, r1
 }
 
+// DisableAgent provides a mock function with given fields: _a0, _a1
+func (_m *ResourceManager) DisableAgent(_a0 actor.Messenger, _a1 *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *apiv1.DisableAgentResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(actor.Messenger, *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(actor.Messenger, *apiv1.DisableAgentRequest) *apiv1.DisableAgentResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*apiv1.DisableAgentResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(actor.Messenger, *apiv1.DisableAgentRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DisableSlot provides a mock function with given fields: _a0, _a1
 func (_m *ResourceManager) DisableSlot(_a0 actor.Messenger, _a1 *apiv1.DisableSlotRequest) (*apiv1.DisableSlotResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -90,6 +116,32 @@ func (_m *ResourceManager) DisableSlot(_a0 actor.Messenger, _a1 *apiv1.DisableSl
 	}
 
 	if rf, ok := ret.Get(1).(func(actor.Messenger, *apiv1.DisableSlotRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// EnableAgent provides a mock function with given fields: _a0, _a1
+func (_m *ResourceManager) EnableAgent(_a0 actor.Messenger, _a1 *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *apiv1.EnableAgentResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(actor.Messenger, *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(actor.Messenger, *apiv1.EnableAgentRequest) *apiv1.EnableAgentResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*apiv1.EnableAgentResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(actor.Messenger, *apiv1.EnableAgentRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -136,6 +188,32 @@ func (_m *ResourceManager) ExternalPreemptionPending(_a0 actor.Messenger, _a1 sp
 	}
 
 	return r0
+}
+
+// GetAgent provides a mock function with given fields: _a0, _a1
+func (_m *ResourceManager) GetAgent(_a0 actor.Messenger, _a1 *apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *apiv1.GetAgentResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(actor.Messenger, *apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(actor.Messenger, *apiv1.GetAgentRequest) *apiv1.GetAgentResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*apiv1.GetAgentResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(actor.Messenger, *apiv1.GetAgentRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetAgents provides a mock function with given fields: _a0, _a1
@@ -256,6 +334,32 @@ func (_m *ResourceManager) GetDefaultComputeResourcePool(_a0 actor.Messenger, _a
 	}
 
 	if rf, ok := ret.Get(1).(func(actor.Messenger, sproto.GetDefaultComputeResourcePoolRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetExternalJobs provides a mock function with given fields: _a0, _a1
+func (_m *ResourceManager) GetExternalJobs(_a0 actor.Messenger, _a1 sproto.GetExternalJobs) ([]*jobv1.Job, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 []*jobv1.Job
+	var r1 error
+	if rf, ok := ret.Get(0).(func(actor.Messenger, sproto.GetExternalJobs) ([]*jobv1.Job, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(actor.Messenger, sproto.GetExternalJobs) []*jobv1.Job); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*jobv1.Job)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(actor.Messenger, sproto.GetExternalJobs) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -386,6 +490,58 @@ func (_m *ResourceManager) GetResourcePools(_a0 actor.Messenger, _a1 *apiv1.GetR
 	}
 
 	if rf, ok := ret.Get(1).(func(actor.Messenger, *apiv1.GetResourcePoolsRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetSlot provides a mock function with given fields: _a0, _a1
+func (_m *ResourceManager) GetSlot(_a0 actor.Messenger, _a1 *apiv1.GetSlotRequest) (*apiv1.GetSlotResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *apiv1.GetSlotResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(actor.Messenger, *apiv1.GetSlotRequest) (*apiv1.GetSlotResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(actor.Messenger, *apiv1.GetSlotRequest) *apiv1.GetSlotResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*apiv1.GetSlotResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(actor.Messenger, *apiv1.GetSlotRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetSlots provides a mock function with given fields: _a0, _a1
+func (_m *ResourceManager) GetSlots(_a0 actor.Messenger, _a1 *apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *apiv1.GetSlotsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(actor.Messenger, *apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(actor.Messenger, *apiv1.GetSlotsRequest) *apiv1.GetSlotsResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*apiv1.GetSlotsResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(actor.Messenger, *apiv1.GetSlotsRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

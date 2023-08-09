@@ -245,7 +245,7 @@ func (a *apiServer) getProjectColumnsByID(
 						}
 						// don't surface aggregates that don't make sense for non-numbers
 						if columnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER {
-							aggregates := []string{"count", "last", "max", "min", "sum"}
+							aggregates := []string{"last", "max", "mean", "min"}
 							for _, aggregate := range aggregates {
 								columns = append(columns, &projectv1.ProjectColumn{
 									Column:   fmt.Sprintf("training.%s.%s", key, aggregate),
@@ -461,11 +461,13 @@ func (a *apiServer) GetProjectNumericMetricsRange(
 		})
 	}
 
-	ranges = append(ranges, &projectv1.MetricsRange{
-		MetricsName: "searcherMetricsVal",
-		Min:         mathx.Min(searcherMetricsValue...),
-		Max:         mathx.Max(searcherMetricsValue...),
-	})
+	if len(searcherMetricsValue) > 0 {
+		ranges = append(ranges, &projectv1.MetricsRange{
+			MetricsName: "searcherMetricsVal",
+			Min:         mathx.Min(searcherMetricsValue...),
+			Max:         mathx.Max(searcherMetricsValue...),
+		})
+	}
 
 	return &apiv1.GetProjectNumericMetricsRangeResponse{Ranges: ranges}, nil
 }
@@ -623,11 +625,11 @@ func (a *apiServer) PatchProject(
 		return nil, err
 	}
 	if currProject.Archived {
-		return nil, errors.Errorf("project (%d) is archived and cannot have attributes updated.",
+		return nil, errors.Errorf("project (%d) is archived and cannot have attributes updated",
 			currProject.Id)
 	}
 	if currProject.Immutable {
-		return nil, errors.Errorf("project (%v) is immutable and cannot have attributes updated.",
+		return nil, errors.Errorf("project (%v) is immutable and cannot have attributes updated",
 			currProject.Id)
 	}
 

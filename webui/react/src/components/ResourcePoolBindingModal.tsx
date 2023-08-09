@@ -4,6 +4,8 @@ import { Modal } from 'components/kit/Modal';
 import Transfer from 'components/Transfer';
 import handleError from 'utils/error';
 
+import Paragraph from './kit/Typography/Paragraph';
+
 interface Props {
   pool: string;
   bindings: string[];
@@ -40,6 +42,10 @@ const ResourcePoolBindingModalComponent: React.FC<Props> = ({
         targetListTitle={`Bound to ${pool}`}
         onChange={setVisibleBindings}
       />
+      <Paragraph>
+        Note: Binding a resource pool to a workspace(s) prevents other workspaces from using it.
+        Existing running workloads will be unaffected.
+      </Paragraph>
     </Modal>
   );
 };

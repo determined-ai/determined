@@ -6,45 +6,55 @@
  Release Notes
 ###############
 
+**************
+ Version 0.23
+**************
+
+Version 0.23.4
+==============
+
 **Release Date:** July 31, 2023
 
 **Breaking Changes**
 
--  API: Changed `/api/v1/users/setting` endpoint to no longer accept a `storagePath` param and to
-   accept an array of `settings` instead of a single `setting` param.
+-  API: The ``/api/v1/users/setting`` endpoint no longer accepts ``storagePath`` and now accepts a
+   ``settings`` array instead of a single ``setting``.
 
 **New Features**
 
--  Allow non-intersecting dictionaries of metrics to be merged on the same total_batches. This
-   update used to be rejected before.
+-  Allow non-intersecting dictionaries of metrics to be merged on the same ``total_batches``. This
+   update was rejected before.
 
--  API: A new patch API end point ``/api/v1/master/config`` has been added that allows the user to
-   make changes to the master config while the cluster is still running. Currently, only changing
-   the log config is supported.
+-  API: Add a new patch API endpoint ``/api/v1/master/config`` that allows the user to make changes
+   to the master config while the cluster is running. Currently, only changing the log config is
+   supported.
 
--  CLI: A new CLI command has been added ``det master config --log --level <log_level> --color
-   <on/off>`` that allows the user to change the log level and/or color of the master config while
-   the cluster is still running. ``det master config`` can still be used to get master config.
+-  CLI: Add a new CLI command ``det master config --log --level <log_level> --color <on/off>`` that
+   allows the user to change the log level and color settings of the master config while the cluster
+   is still running. ``det master config`` can still be used to get the master config.
 
--  Cluster: Add resource pool to workspace mapping feature, allowing resource pools to be bound to
-   specific workspaces. Bound resource pools can only be used by the workspaces they are bound to.
-   Additionally adds the ability to configure a default compute resource pool and a default
-   auxiliary resource pool for each workspace.
+-  Cluster: Allow binding resource pools to specific workspaces. Bound resource pools can only be
+   used by the workspaces they are bound to. Each workspace can also now have a default compute
+   resource pool and a default auxiliary resource pool configured.
 
--  K8s: We now allow users to populate all securityContext fields within the podspec of the
-   determined-container except for RunAsUser and RunAsGroup. Use ``det user link-with-agent-user``
-   instead.
+-  Kubernetes: Users may now populate all ``securityContext`` fields within the pod spec of the
+   ``determined-container`` container except for ``RunAsUser`` and ``RunAsGroup``. For those fields,
+   use ``det user link-with-agent-user`` instead.
 
--  WebUI: In addition to improved performance and stability, we've added the following features to
-   the experiment list page: Metrics and hyperparameters can be selected as columns; The list can be
-   filtered on any available column; Users can specify complex filters; The list can be sorted on
-   any available column; Display total number of experiments matching the filter; Compare view
-   allows comparison metrics, hyperparameters, and trial details across experiments; Toggle between
-   pagination and infinite scroll; Select preferred table density
+-  WebUI: The experiment list page now has the following new capabilities:
 
-**************
- Version 0.23
-**************
+   -  Select metrics and hyperparameters as columns.
+   -  Filter the list on any available column.
+   -  Specify complex filters.
+   -  Sort the list on any available column.
+   -  Display total number of experiments matching the filter.
+   -  Compare metrics, hyperparameters, and trial details across experiments.
+   -  Toggle between pagination and infinite scroll.
+   -  Select preferred table density.
+
+**Improvements**
+
+-  WebUI: Improve performance and stability.
 
 Version 0.23.3
 ==============
@@ -53,19 +63,19 @@ Version 0.23.3
 
 **Breaking Changes**
 
--  API: Removed echo-backed `/config` endpoint, replaced by grpc-gateway `api/v1/master/config`
+-  API: Remove the ``/config`` endpoint, replaced by ``/api/v1/master/config``.
 
 **Improvements**
 
--  Notebook: The connection between Determined Master and the notebook task on Determined Agents was
-   previously HTTP only. This change upgrades the connection to HTTPS for enhanced security.
+-  Notebooks: Upgrade the connection between the master and notebook tasks to use HTTPS for enhanced
+   security.
 
 **Deprecated Features**
 
--  API: The ``SummarizeTrial`` endpoint is removed in favor of ``CompareTrials``; ``CompareTrials``
-   sends a similar request with the `trial_id` parameter replaced by the `trial_ids` array.
--  API: The ``scale`` parameter is removed from ``CompareTrialsRequest``; this was used only for
-   lttb downsampling which has since been replaced.
+-  API: Remove the ``SummarizeTrial`` endpoint favor of ``CompareTrials``; ``CompareTrials`` sends a
+   similar request with the ``trial_id`` parameter replaced by the ``trial_ids`` array.
+-  API: Remove the ``scale`` from the ``CompareTrialsRequest`` endpoint; this was used only for LTTB
+   downsampling, which has since been replaced.
 
 Version 0.23.2
 ==============
@@ -125,7 +135,7 @@ Version 0.23.0
 
 -  CLI: The ``det notebook|tensorboard start`` commands no longer block for the whole life cycle of
    the notebook or TensorBoard process. They will also not stream related event logs. Users should
-   use the existing `det notebook|tensorboard|task logs` commands to stream logs from the process.
+   use the existing ``det notebook|tensorboard|task logs`` commands to stream logs from the process.
 
 -  Python SDK: Remove the packages ``determined-cli``, ``determined-common``, and
    ``determined-deploy``, which were deprecated in 0.15.0 (April 2021). The submodules
@@ -143,15 +153,15 @@ Version 0.23.0
    delete files matching a list of globs provided. The CLI command ``det checkpoint rm uuid1,uuuid2
    --glob 'deleteDir1/**' --glob deleteDir2`` provides access to this method.
 
--  AWS and GCP: Add `launch_error_timeout` and `launch_error_retries` provider configuration
+-  AWS and GCP: Add ``launch_error_timeout`` and ``launch_error_retries`` provider configuration
    options.
 
-   -  `launch_error_timeout`: Duration for which a provisioning error is valid. Tasks that are
+   -  ``launch_error_timeout``: Duration for which a provisioning error is valid. Tasks that are
       unschedulable in the existing cluster may be canceled. After the timeout period, the error
-      state is reset. Defaults to `0s`.
+      state is reset. Defaults to ``0s``.
 
-   -  `launch_error_retries`: Number of retries to allow before registering a provider provisioning
-      error. Defaults to ``0``.
+   -  ``launch_error_retries``: Number of retries to allow before registering a provider
+      provisioning error. Defaults to ``0``.
 
 -  DeepSpeed experiments can now be wrapped with the ``determined.pytorch.dsat`` module to
    automatically tune their distributed training hyperparameters.
@@ -227,14 +237,14 @@ Version 0.22.0
 
 **Breaking Change**
 
--  The previous template CRUD endpoints have been removed from the `/templates/*` location. Please
-   use the APIs found at `/api/v1/templates/*`.
+-  The previous template CRUD endpoints have been removed from the ``/templates/*`` location. Please
+   use the APIs found at ``/api/v1/templates/*``.
 
--  Experiment: Optimizer must be an instance of tensorflow.keras.optimizers.legacy.Optimizer
-   starting from Keras 2.11
+-  Experiment: Optimizer must be an instance of ``tensorflow.keras.optimizers.legacy.Optimizer``
+   starting from Keras 2.11.
 
    -  Experiments now use images with TensorFlow 2.11 by default. TensorFlow users who are not
-      explicitly configuring their training image(s) will need to adapt their model code to reflect
+      explicitly configuring their training images will need to adapt their model code to reflect
       these changes. Users will likely need to use Keras optimizers located in
       ``tensorflow.keras.optimizers.legacy``. Depending on the sophistication of users' model code,
       there may be other breaking changes. Determined is not responsible for these breakages. See

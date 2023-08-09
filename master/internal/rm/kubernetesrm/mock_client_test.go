@@ -19,6 +19,14 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+/* As of Aug. 7, 2023, the mock interfaces found
+here & used in pod_test.go cannot be replaced easily
+by mockery-generated mocks without overcomplicating the code
+& its readability. In pod_test.go, the tests send messages
+to the Actor system, which are dealt with by a mock
+receiver struct. The mockery-generated interfaces do not
+execute the necessary receiver-related code, unlike the mocks here. */
+
 type mockConfigMapInterface struct {
 	configMaps map[string]*k8sV1.ConfigMap
 	mux        sync.Mutex

@@ -1,1 +1,1 @@
-from . import cli, aws, gcp, gke, local
+from determined.deploy import cli, aws, gcp, gke, local

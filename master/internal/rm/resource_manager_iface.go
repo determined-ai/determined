@@ -73,9 +73,6 @@ type ResourceManager interface {
 		fallbackConfig model.TaskContainerDefaultsConfig,
 	) (model.TaskContainerDefaultsConfig, error)
 
-	// Agents
-	GetAgents(actor.Messenger, *apiv1.GetAgentsRequest) (*apiv1.GetAgentsResponse, error)
-
 	// Job queue
 	GetJobQ(actor.Messenger, sproto.GetJobQ) (map[model.JobID]*sproto.RMJobInfo, error)
 	GetJobQStats(actor.Messenger, sproto.GetJobQStats) (*jobv1.QueueStats, error)
@@ -85,7 +82,30 @@ type ResourceManager interface {
 	) (*apiv1.GetJobQueueStatsResponse, error)
 	MoveJob(actor.Messenger, sproto.MoveJob) error
 	RecoverJobPosition(actor.Messenger, sproto.RecoverJobPosition)
+	GetExternalJobs(actor.Messenger, sproto.GetExternalJobs) ([]*jobv1.Job, error)
 
+	// Cluster Management APIs
+	GetAgents(actor.Messenger, *apiv1.GetAgentsRequest) (*apiv1.GetAgentsResponse, error)
+	GetAgent(
+		actor.Messenger,
+		*apiv1.GetAgentRequest,
+	) (*apiv1.GetAgentResponse, error)
+	EnableAgent(
+		actor.Messenger,
+		*apiv1.EnableAgentRequest,
+	) (*apiv1.EnableAgentResponse, error)
+	DisableAgent(
+		actor.Messenger,
+		*apiv1.DisableAgentRequest,
+	) (*apiv1.DisableAgentResponse, error)
+	GetSlots(
+		actor.Messenger,
+		*apiv1.GetSlotsRequest,
+	) (*apiv1.GetSlotsResponse, error)
+	GetSlot(
+		actor.Messenger,
+		*apiv1.GetSlotRequest,
+	) (*apiv1.GetSlotResponse, error)
 	EnableSlot(
 		actor.Messenger,
 		*apiv1.EnableSlotRequest,

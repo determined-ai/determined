@@ -1,7 +1,7 @@
 import { throttle } from 'throttle-debounce';
 import uPlot, { Plugin } from 'uplot';
 
-import { CheckpointsDict } from 'pages/TrialDetails/F_TrialDetailsOverview';
+import { CheckpointsDict } from 'pages/TrialDetails/TrialDetailsMetrics';
 import { findInsertionIndex } from 'utils/array';
 import { distance } from 'utils/chart';
 import { isEqual } from 'utils/data';

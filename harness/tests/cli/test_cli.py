@@ -11,9 +11,7 @@ import pytest
 import requests
 import requests_mock
 
-import determined.cli.cli as cli
-import determined.cli.command as command
-from determined.cli import render
+from determined.cli import cli, command, render
 from determined.common import constants, context
 from tests.filetree import FileTree
 

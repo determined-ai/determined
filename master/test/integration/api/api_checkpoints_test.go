@@ -105,7 +105,7 @@ func testGetCheckpoint(
 			checkpointUUID := uuid.NewString()
 			checkpointMeta := model.CheckpointV2{
 				UUID:         conv.ToUUID(checkpointUUID),
-				TaskID:       trial.TaskID,
+				TaskID:       allocation.TaskID,
 				AllocationID: &allocation.AllocationID,
 				ReportTime:   timestamppb.Now().AsTime(),
 				State:        conv.ToCheckpointState(checkpointv1.State_STATE_COMPLETED),
@@ -167,7 +167,7 @@ func testGetExperimentCheckpoints(
 		stepsCompleted := 10 * i
 		checkpointMeta := model.CheckpointV2{
 			UUID:         conv.ToUUID(checkpointUUID),
-			TaskID:       trial.TaskID,
+			TaskID:       allocation.TaskID,
 			AllocationID: &allocation.AllocationID,
 			ReportTime:   timestamppb.Now().AsTime(),
 			State:        conv.ToCheckpointState(checkpointv1.State_STATE_COMPLETED),
@@ -282,7 +282,7 @@ func testGetTrialCheckpoints(
 		stepsCompleted := 10 * i
 		checkpointMeta := model.CheckpointV2{
 			UUID:         conv.ToUUID(checkpointUUID),
-			TaskID:       trial.TaskID,
+			TaskID:       allocation.TaskID,
 			AllocationID: &allocation.AllocationID,
 			ReportTime:   timestamppb.Now().AsTime(),
 			State:        conv.ToCheckpointState(checkpointv1.State_STATE_COMPLETED),
@@ -358,20 +358,19 @@ func createPrereqs(t *testing.T, pgDB *db.PgDB) (
 
 	task := db.RequireMockTask(t, pgDB, experiment.OwnerID)
 	trial := &model.Trial{
-		TaskID:       task.TaskID,
 		ExperimentID: experiment.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
 	}
 
-	err = pgDB.AddTrial(trial)
+	err = db.AddTrial(context.TODO(), trial, task.TaskID)
 	assert.NilError(t, err, "failed to insert trial")
 	t.Logf("Created trial=%v", trial)
 
 	startTime := time.Now().UTC()
 	a := &model.Allocation{
-		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", trial.TaskID, 1)),
-		TaskID:       trial.TaskID,
+		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", task.TaskID, 1)),
+		TaskID:       task.TaskID,
 		StartTime:    ptrs.Ptr(startTime),
 		EndTime:      ptrs.Ptr(startTime.Add(time.Duration(1) * time.Second)),
 	}
