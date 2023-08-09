@@ -114,7 +114,6 @@ class Trainer:
                 before training.
             test_mode: Runs a minimal loop of training for testing and debugging purposes. Will
                 train and validate one batch. Defaults to false.
-            enable_tensorboard_logging: Configures if upload to tensorboard is enabled
         """
         # Set defaults.
         if checkpoint_period is None:
@@ -244,6 +243,7 @@ def init(
         distributed: (Optional) custom distributed training configuration
         aggregation_frequency: number of batches before gradients are exchanged in distributed
             training. This value is configured here because it is used in context.wrap_optimizer.
+        enable_tensorboard_logging: Configures if upload to tensorboard is enabled
     """
     cluster_info = det.get_cluster_info()
     local_training = cluster_info is None or cluster_info.task_type != "TRIAL"
