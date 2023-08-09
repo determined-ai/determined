@@ -2,7 +2,7 @@
 
 Determined is an all-in-one deep learning platform, compatible with both PyTorch and Tensorflow.
 
-It simplifies:
+It takes care of:
 
 - **Distributed training**, for faster results.
 - **Hyperparameter tuning**, for obtaining the best models.
@@ -13,11 +13,22 @@ It simplifies:
 
 The two main components of Determined are the command line interface (CLI) and the Web UI.
 
-### CLI
+## CLI
 
+Use the CLI to set up Determined locally, or with your favorite cloud service: 
 
-### Web UI
+```
+det deploy aws up
+```
 
+Then train your models, using yaml files for configuration:
+```
+det experiment create gpt.yaml .
+```
+
+## Web UI
+
+The Web UI
 
 
 * **Train models faster** using state-of-the-art distributed training, without
