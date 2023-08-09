@@ -435,7 +435,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		} else if !wasPatched {
 			return errors.New("experiment is already in a terminal state")
 		}
-		telemetry.ReportExperimentStateChanged(e.db, *e.Experiment)
+		go telemetry.ReportExperimentStateChanged(e.db, *e.Experiment)
 		if err := webhooks.ReportExperimentStateChanged(
 			context.TODO(), *e.Experiment, e.activeConfig,
 		); err != nil {
@@ -794,7 +794,7 @@ func (e *experiment) updateState(ctx *actor.Context, state model.StateWithReason
 	} else if !wasPatched {
 		return true
 	}
-	telemetry.ReportExperimentStateChanged(e.db, *e.Experiment)
+	go telemetry.ReportExperimentStateChanged(e.db, *e.Experiment)
 	if err := webhooks.ReportExperimentStateChanged(
 		context.TODO(), *e.Experiment, e.activeConfig,
 	); err != nil {
