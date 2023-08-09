@@ -37,7 +37,7 @@ CREATE OR REPLACE VIEW checkpoints_view AS
         CAST(c.metadata->>'steps_completed' AS int) as steps_completed,
         c.size
     FROM checkpoints_v2 AS c
-    JOIN trial_id_task_id AS task ON c.task_id = task.task_id
+    LEFT JOIN trial_id_task_id AS task ON c.task_id = task.task_id
     LEFT JOIN trials AS t on t.id = task.trial_id
     LEFT JOIN experiments AS e on t.experiment_id = e.id
     LEFT JOIN raw_validations AS v on CAST(c.metadata->>'steps_completed' AS int) = v.total_batches and t.id = v.trial_id
