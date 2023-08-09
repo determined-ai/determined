@@ -82,8 +82,7 @@ func initializeConfig() error {
 
 	// Write a configMap from the config file, and create a copy (cpMap) to
 	// deepcopyq values needed to override viper's merge auto-lowercasing.
-	var configMap map[string]interface{}
-	var cpMap map[string]interface{}
+	var configMap, cpMap map[string]interface{}
 	configErr := yaml.Unmarshal(bs, &configMap)
 	cpErr := yaml.Unmarshal(bs, &cpMap)
 	if configErr != nil || cpErr != nil {
