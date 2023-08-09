@@ -273,20 +273,25 @@ func ReadTestModelDefiniton(t *testing.T, folderPath string) []byte {
 }
 
 // RequireMockTrial returns a mock trial.
-func RequireMockTrial(t *testing.T, db *PgDB, exp *model.Experiment) *model.Trial {
+func RequireMockTrial(t *testing.T, db *PgDB, exp *model.Experiment) (*model.Trial, *model.Task) {
 	task := RequireMockTask(t, db, exp.OwnerID)
 	rqID := model.NewRequestID(rand.Reader)
 	tr := model.Trial{
-		TaskID:       task.TaskID,
 		RequestID:    &rqID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
 		HParams:      model.JSONObj{"global_batch_size": 1},
 	}
-	err := db.AddTrial(&tr)
+	err := AddTrial(context.TODO(), &tr, task.TaskID)
 	require.NoError(t, err, "failed to add trial")
-	return &tr
+	return &tr, task
+}
+
+// RequireMockTrialID returns a mock trial ID.
+func RequireMockTrialID(t *testing.T, db *PgDB, exp *model.Experiment) int {
+	trial, _ := RequireMockTrial(t, db, exp)
+	return trial.ID
 }
 
 // RequireMockAllocation returns a mock allocation.
@@ -304,12 +309,12 @@ func RequireMockAllocation(t *testing.T, db *PgDB, tID model.TaskID) *model.Allo
 
 // MockModelCheckpoint returns a mock model checkpoint.
 func MockModelCheckpoint(
-	ckptUUID uuid.UUID, tr *model.Trial, a *model.Allocation,
+	ckptUUID uuid.UUID, a *model.Allocation,
 ) model.CheckpointV2 {
 	stepsCompleted := int32(10)
 	ckpt := model.CheckpointV2{
 		UUID:         ckptUUID,
-		TaskID:       tr.TaskID,
+		TaskID:       a.TaskID,
 		AllocationID: &a.AllocationID,
 		ReportTime:   time.Now().UTC(),
 		State:        model.CompletedState,
@@ -332,7 +337,7 @@ func MockModelCheckpointSteps(
 ) model.CheckpointV2 {
 	ckpt := model.CheckpointV2{
 		UUID:         ckptUUID,
-		TaskID:       tr.TaskID,
+		TaskID:       a.TaskID,
 		AllocationID: &a.AllocationID,
 		ReportTime:   time.Now().UTC(),
 		State:        model.CompletedState,

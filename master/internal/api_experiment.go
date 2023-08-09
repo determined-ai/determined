@@ -435,7 +435,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 	}
 
 	ctx := context.Background()
-	trialIDs, taskIDs, err := a.m.db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), processExpIDs)
+	trialIDs, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), processExpIDs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to gather trial IDs for experiment")
 	}
@@ -1727,7 +1727,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGro
 
 	if _, current := currentTrials[trialID]; !current {
 		var trialConfig *model.Trial
-		trialConfig, err = a.m.db.TrialByID(int(trialID))
+		trialConfig, err = db.TrialByID(context.TODO(), int(trialID))
 		if err != nil {
 			return nil, errors.Wrapf(err, "error fetching trial metadata")
 		}
@@ -2231,7 +2231,20 @@ func (a *apiServer) SearchExperiments(
 						ELSE m.value END)
 					FROM jsonb_each(summary_metrics -> 'avg_metrics') AS m(key, value))
 				) AS summary_metrics`).
-		Column("trials.task_id").
+		ColumnExpr(`(
+				SELECT tt.task_id FROM trial_id_task_id tt
+				JOIN tasks ta ON tt.task_id = ta.task_id
+				WHERE tt.trial_id = trials.id
+				ORDER BY ta.start_time
+				LIMIT 1
+			) AS task_id`).
+		ColumnExpr(`(
+				(SELECT json_agg(task_id) FROM (
+					SELECT tt.task_id FROM trial_id_task_id tt
+					JOIN tasks ta ON tt.task_id = ta.task_id
+					WHERE tt.trial_id = trials.id
+					ORDER BY ta.start_time
+				) sub_tasks)) AS task_ids`).
 		ColumnExpr("proto_time(trials.start_time) AS start_time").
 		ColumnExpr("proto_time(trials.end_time) AS end_time").
 		Column("trials.restarts").
@@ -2315,7 +2328,6 @@ func (a *apiServer) CreateTrial(
 
 	trialModel := model.NewTrial(
 		model.CompletedState,
-		taskID,
 		model.RequestID{},
 		exp.ID,
 		req.Hparams.AsMap(),
@@ -2323,7 +2335,7 @@ func (a *apiServer) CreateTrial(
 		0)
 
 	if err := a.m.db.AddTask(&model.Task{
-		TaskID:     trialModel.TaskID,
+		TaskID:     taskID,
 		TaskType:   model.TaskTypeTrial,
 		StartTime:  time.Now(),
 		JobID:      nil,
@@ -2332,7 +2344,7 @@ func (a *apiServer) CreateTrial(
 		return nil, err
 	}
 
-	if err := a.m.db.AddTrial(trialModel); err != nil {
+	if err := db.AddTrial(ctx, trialModel, taskID); err != nil {
 		return nil, err
 	}
 
