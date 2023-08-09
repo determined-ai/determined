@@ -740,7 +740,7 @@ func (m *Master) tryRestoreExperiment(sema chan struct{}, wg *sync.WaitGroup, e 
 		if err := m.db.TerminateExperimentInRestart(e.ID, e.State); err != nil {
 			log.WithError(err).Error("failed to mark experiment as errored")
 		}
-		telemetry.ReportExperimentStateChanged(m.db, *e)
+		go telemetry.ReportExperimentStateChanged(m.db, *e)
 	}
 }
 

@@ -189,7 +189,7 @@ func newExperiment(
 		if err = m.db.AddExperiment(expModel, activeConfig); err != nil {
 			return nil, launchWarnings, err
 		}
-		telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
+		go telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
 	}
 
 	agentUserGroup, err := user.GetAgentUserGroup(*expModel.OwnerID, expModel)
@@ -241,7 +241,7 @@ func newUnmanagedExperiment(
 	if err := m.db.AddExperiment(expModel, activeConfig); err != nil {
 		return nil, nil, err
 	}
-	telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
+	go telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
 
 	// Will only have the model, nothing required for the experiment actor.
 	return &experiment{

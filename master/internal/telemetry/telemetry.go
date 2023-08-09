@@ -149,7 +149,7 @@ func (s *TelemetryActor) telemetryTick(system *actor.System, t int) {
 			return
 		}
 		// After waiting t minutes, report the first tick.
-		ReportMasterTick(resp, s.db)
+		go ReportMasterTick(resp, s.db)
 
 		// Now call the next tick.
 		bg := big.NewInt(maxTickIntervalMins - minTickIntervalMins)

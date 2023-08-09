@@ -572,7 +572,7 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	telemetry.ReportUserCreated(params.Admin, params.Active)
+	go telemetry.ReportUserCreated(params.Admin, params.Active)
 
 	return response{
 		message: fmt.Sprintf("successfully created user: %s", params.Username),
