@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/ghodss/yaml"
-	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -72,7 +71,6 @@ func runRoot() error {
 func initializeConfig() error {
 	// Fetch an initial config to get the config file path and read its settings into Viper.
 	initialConfig, err := getConfig(v.AllSettings())
-	// initialConfig, err := getConfig(c.Data())
 	if err != nil {
 		return err
 	}
@@ -81,16 +79,24 @@ func initializeConfig() error {
 	if err != nil {
 		return err
 	}
-	// THIS LOWERCASES. If the master config has 1 pod-spec set, this is where its lowercased
-	if err = mergeConfigBytesIntoViper(bs); err != nil {
-		return err
+
+	// Write a configMap from the config file, and create a copy (cpMap) to
+	// deepcopyq values needed to override viper's merge auto-lowercasing.
+	var configMap map[string]interface{}
+	var cpMap map[string]interface{}
+	configErr := yaml.Unmarshal(bs, &configMap)
+	cpErr := yaml.Unmarshal(bs, &cpMap)
+	if configErr != nil || cpErr != nil {
+		return errors.Wrap(err, "error unmarshal yaml configuration file")
 	}
 
-	// Now call viper.AllSettings() again to get the full config, containing all values from CLI flags,
-	// environment variables, and the configuration file.
-	// TODO CAROLINA: NOW, if pod-spec is set the same as master but case-different than lowercase,
-	// its read as a diff value
-	conf, err := getConfig(v.AllSettings())
+	if err := v.MergeConfigMap(configMap); err != nil {
+		return errors.Wrap(err, "error merge configuration to viper")
+	}
+
+	viperConfig := v.AllSettings()
+	viperConfig["task_container_defaults"] = cpMap["task_container_defaults"]
+	conf, err := getConfig(viperConfig)
 	if err != nil {
 		return err
 	}
@@ -127,51 +133,6 @@ func readConfigFile(configPath string) ([]byte, error) {
 		return nil, errors.Wrap(err, "error reading configuration file")
 	}
 	return bs, nil
-}
-
-func mergeConfigBytesIntoViper(bs []byte) error {
-	// TODO CAROLINA
-
-	var configMap map[string]interface{}
-	if err := yaml.Unmarshal(bs, &configMap); err != nil {
-		return errors.Wrap(err, "error unmarshal yaml configuration file")
-	}
-	viperCopy := v.AllSettings()
-	// This preserves camel case -- case-sensitive merge
-	if err := mergo.Merge(&configMap, viperCopy); err != nil {
-		return errors.Wrap(err, "error merge yaml configuration file into viper")
-	}
-	log.Infof("MERGED CONFIG SETTINGS: %s", configMap)
-	for key, val := range configMap {
-		// Case insensitive 'set'
-		v.Set(key, val)
-	}
-	log.Infof("MERGED VIPER SETTINGS: %s", v.AllSettings())
-	/*
-		if err := v.MergeConfig(bytes.NewReader(bs)); err != nil {
-			return errors.Wrap(err, "error merge configuration to viper")
-		}
-	*/
-
-	/*
-		for key, val := range configMap {
-			log.Warnf("CONFIG KEY: %s", key)
-			// Viper will check for the key in the following order:
-			// override, flag, env, config file, key/value store, default
-			check := v.Get(key)
-			if check == nil {
-				// If this key is not already set, set it with the master config value
-				v.Set(key, val)
-			}
-		}
-	*/
-	/*
-		if err := v.MergeConfigMap(configMap); err != nil {
-			return errors.Wrap(err, "error merge configuration to viper")
-		}
-	*/
-
-	return nil
 }
 
 func getConfig(configMap map[string]interface{}) (*config.Config, error) {

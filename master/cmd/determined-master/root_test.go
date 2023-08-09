@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/ghodss/yaml"
 )
 
 func TestUnmarshalMasterConfigurationViaViper(t *testing.T) {
@@ -92,9 +93,14 @@ webhooks:
 			},
 		},
 	}
+
+	var configMap map[string]interface{}
+	configErr := yaml.Unmarshal([]byte(raw), &configMap)
+	assert.NilError(t, configErr)
+
 	err := expected.Resolve()
 	assert.NilError(t, err)
-	err = mergeConfigBytesIntoViper([]byte(raw))
+	err = v.MergeConfigMap(configMap)
 	assert.NilError(t, err)
 	config, err := getConfig(v.AllSettings())
 	assert.NilError(t, err)
