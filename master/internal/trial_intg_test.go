@@ -19,11 +19,11 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/task"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks/allocationmocks"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
@@ -36,7 +36,7 @@ import (
 )
 
 func TestTrial(t *testing.T) {
-	system, _, rID, tr, self := setup(t)
+	system, _, rID, tr, self, alloc := setup(t)
 
 	// Pre-scheduled stage.
 	require.NoError(t, system.Ask(self,
@@ -50,7 +50,8 @@ func TestTrial(t *testing.T) {
 		Complete: false,
 		Closed:   true,
 	}).Error())
-	require.NotNil(t, tr.allocation)
+	require.True(t, alloc.AssertExpectations(t))
+	require.NotNil(t, tr.allocationID)
 
 	// Running stage.
 	require.NoError(t, system.Ask(self, trialSearcherState{
@@ -68,11 +69,7 @@ func TestTrial(t *testing.T) {
 	require.Equal(t, dbTrial.State, model.StoppingCompletedState)
 
 	// Terminating stage.
-	system.Tell(tr.allocation, actors.ForwardThroughMock{
-		To:  self,
-		Msg: &task.AllocationExited{},
-	})
-	require.NoError(t, tr.allocation.StopAndAwaitTermination())
+	system.Tell(self, &task.AllocationExited{})
 	require.NoError(t, self.AwaitTermination())
 	require.True(t, model.TerminalStates[tr.state])
 
@@ -82,7 +79,7 @@ func TestTrial(t *testing.T) {
 }
 
 func TestTrialRestarts(t *testing.T) {
-	system, pgDB, rID, tr, self := setup(t)
+	system, pgDB, rID, tr, self, _ := setup(t)
 
 	// Pre-scheduled stage.
 	require.NoError(t, system.Ask(self,
@@ -102,7 +99,6 @@ func TestTrialRestarts(t *testing.T) {
 		require.Equal(t, i, tr.restarts)
 
 		system.Tell(self, &task.AllocationExited{Err: errors.New("bad stuff went down")})
-		require.NoError(t, tr.allocation.StopAndAwaitTermination())
 		system.Ask(self, actor.Ping{}).Get() // sync
 
 		if i == tr.config.MaxRestarts() {
@@ -120,7 +116,14 @@ func TestTrialRestarts(t *testing.T) {
 	require.True(t, model.TerminalStates[tr.state])
 }
 
-func setup(t *testing.T) (*actor.System, *db.PgDB, model.RequestID, *trial, *actor.Ref) {
+func setup(t *testing.T) (
+	*actor.System,
+	*db.PgDB,
+	model.RequestID,
+	*trial,
+	*actor.Ref,
+	*allocationmocks.AllocationService,
+) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
 
@@ -170,5 +173,5 @@ func setup(t *testing.T) (*actor.System, *db.PgDB, model.RequestID, *trial, *act
 		false,
 	)
 	self := system.MustActorOf(actor.Addr("trial"), tr)
-	return system, a.m.db, rID, tr, self
+	return system, a.m.db, rID, tr, self, &as
 }

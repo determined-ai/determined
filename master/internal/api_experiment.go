@@ -2231,7 +2231,6 @@ func (a *apiServer) SearchExperiments(
 						ELSE m.value END)
 					FROM jsonb_each(summary_metrics -> 'avg_metrics') AS m(key, value))
 				) AS summary_metrics`).
-		Column("trials.task_id").
 		ColumnExpr(`(
 				SELECT tt.task_id FROM trial_id_task_id tt
 				JOIN tasks ta ON tt.task_id = ta.task_id

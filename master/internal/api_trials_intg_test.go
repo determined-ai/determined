@@ -20,6 +20,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
+
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -485,7 +487,7 @@ func TestUnusualMetricNames(t *testing.T) {
 	expectedMetrics, err := structpb.NewStruct(expectedMetricsMap)
 	require.NoError(t, err)
 
-	trial := createTestTrial(t, api, curUser)
+	trial, _ := createTestTrial(t, api, curUser)
 	_, err = api.ReportTrialValidationMetrics(ctx, &apiv1.ReportTrialValidationMetricsRequest{
 		ValidationMetrics: &trialv1.TrialMetrics{
 			TrialId:        int32(trial.ID),
@@ -1030,8 +1032,8 @@ func createTestTrialInferenceMetrics(ctx context.Context, t *testing.T, api *api
 
 func TestTrialSourceInfoCheckpoint(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
-	infTrial := createTestTrial(t, api, curUser)
-	infTrial2 := createTestTrial(t, api, curUser)
+	infTrial, _ := createTestTrial(t, api, curUser)
+	infTrial2, _ := createTestTrial(t, api, curUser)
 	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial.ID))
 
 	// Create a checkpoint to index with
@@ -1110,8 +1112,8 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 
 func TestTrialSourceInfoModelVersion(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
-	infTrial := createTestTrial(t, api, curUser)
-	infTrial2 := createTestTrial(t, api, curUser)
+	infTrial, _ := createTestTrial(t, api, curUser)
+	infTrial2, _ := createTestTrial(t, api, curUser)
 	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial.ID))
 
 	// Create a checkpoint to index with
