@@ -7,15 +7,8 @@ import { UPlotPoint } from 'components/UPlot/types';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
-import useMetricNames from 'hooks/useMetricNames';
 import { useCheckpointFlow } from 'hooks/useModal/Checkpoint/useCheckpointFlow';
-import {
-  CheckpointWorkloadExtended,
-  ExperimentBase,
-  Metric,
-  MetricType,
-  TrialDetails,
-} from 'types';
+import { CheckpointWorkloadExtended, ExperimentBase, Metric, TrialDetails } from 'types';
 import handleError from 'utils/error';
 import { Loaded, NotLoaded } from 'utils/loadable';
 import { metricSorter, metricToKey } from 'utils/metric';
@@ -27,14 +20,6 @@ export interface Props {
   trial?: TrialDetails;
 }
 
-const TRAIN_PREFIX = /^(t_|train_|training_)/;
-const VAL_PREFIX = /^(v_|val_|validation_)/;
-
-const isMetricNameMatch = (t: Metric, v: Metric) => {
-  const t_stripped = t.name.replace(TRAIN_PREFIX, '');
-  const v_stripped = v.name.replace(VAL_PREFIX, '');
-  return t_stripped === v_stripped;
-};
 type XAxisVal = number;
 export type CheckpointsDict = Record<XAxisVal, CheckpointWorkloadExtended>;
 
@@ -93,50 +78,31 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
     return checkpoint?.totalBatches ? checkpointXHelpers : {};
   }, [data, checkpoint, xAxis]);
 
-  const pairedMetrics: ([Metric] | [Metric, Metric])[] | undefined = useMemo(() => {
-    const val = metrics.filter((m) => m.group === MetricType.Validation).sort(metricSorter);
-    const train = metrics.filter((m) => m.group === MetricType.Training).sort(metricSorter);
-    let out: ([Metric] | [Metric, Metric])[] = [];
-    while (val.length) {
-      const v = val.shift();
-      if (!v) return;
-      let pair: [Metric] | [Metric, Metric] = [v];
-      const t_match = train.findIndex((t) => isMetricNameMatch(t, v));
-      if (t_match !== -1) pair = train.splice(t_match, 1).concat(pair) as [Metric, Metric];
-      out.push(pair);
-    }
-    out = out.concat(train.map((t) => [t]));
-    return out;
+  const groupedMetrics: Metric[][] = useMemo(() => {
+    const map = metrics.reduce((acc, metric) => {
+      acc[metric.name] = acc[metric.name] ?? [];
+      acc[metric.name].push(metric);
+      return acc;
+    }, {} as Record<string, Metric[]>);
+    return Object.keys(map)
+      .sort()
+      .map((metricName) => map[metricName].sortAll(metricSorter));
   }, [metrics]);
 
   const chartsProps = useMemo(() => {
-    if (!isMetricsLoaded) {
-      return NotLoaded;
-    }
+    if (!isMetricsLoaded) return NotLoaded;
 
     const out: ChartsProps = [];
 
-    pairedMetrics?.forEach(([trainingMetric, valMetric]) => {
-      // this code doesnt depend on their being training or validation metrics
-      // naming just makes it easier to read
-      const trainingMetricKey = metricToKey(trainingMetric);
-      const trainingMetricSeries = data?.[trainingMetricKey];
-      if (!trainingMetricSeries) return;
+    groupedMetrics.forEach((groupMetrics) => {
+      const series: Serie[] = groupMetrics
+        .map((metric) => data?.[metricToKey(metric)])
+        .filter((metricData) => !!metricData);
 
-      const series: Serie[] = [trainingMetricSeries];
-
-      if (valMetric) {
-        const valMetricKey = metricToKey(valMetric);
-        const valMetricSeries = data?.[valMetricKey];
-        if (valMetricSeries) series.push(valMetricSeries);
-      }
-
-      const xValSet = new Set<number>();
-      series.forEach((serie) => {
-        serie.data[xAxis]?.forEach((pt) => {
-          xValSet.add(pt[0]);
-        });
-      });
+      const xValSet = series.reduce((set, serie) => {
+        serie.data[xAxis]?.forEach((point) => set.add(point[0]));
+        return set;
+      }, new Set<number>());
       const xVals = Array.from(xValSet).sort((a, b) => a - b);
 
       const onPointClick = (event: MouseEvent, point: UPlotPoint) => {
@@ -170,13 +136,13 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
           }),
         ],
         series,
-        title: trainingMetric.name.replace(TRAIN_PREFIX, '').replace(VAL_PREFIX, ''),
+        title: groupMetrics.length !== 0 ? groupMetrics[0].name : 'No Metric Name',
         xAxis,
         xLabel: String(xAxis),
       });
     });
     return Loaded(out);
-  }, [pairedMetrics, isMetricsLoaded, data, xAxis, checkpointsDict, openCheckpoint]);
+  }, [groupedMetrics, isMetricsLoaded, data, xAxis, checkpointsDict, openCheckpoint]);
 
   return (
     <>
