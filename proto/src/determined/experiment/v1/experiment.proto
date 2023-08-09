@@ -108,6 +108,7 @@ message Experiment {
   string resource_pool = 11;
   // The type of searcher for the experiment
   string searcher_type = 12;
+  // The searcher metric name for the experiment
   string searcher_metric = 42;
   // The experiment name.
   string name = 13;
