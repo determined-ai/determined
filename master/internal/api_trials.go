@@ -142,7 +142,7 @@ func (a *apiServer) TrialLogs(
 		return fmt.Errorf("retreiving task IDs for trial log: %w", err)
 	}
 	if len(trialTaskIDs) == 0 {
-		return fmt.Errorf("no task IDs associated with trial ID %d: %w", req.TrialId, err)
+		return fmt.Errorf("no task IDs associated with trial ID %d", req.TrialId)
 	}
 	var tasks []*model.Task
 	for _, t := range trialTaskIDs {
