@@ -88,7 +88,11 @@ message PatchWorkspace {
   // Expects same format as experiment config's checkpoint storage.
   optional google.protobuf.Struct checkpoint_storage_config = 13;
   // Name of the default compute pool.
-  optional string default_compute_pool = 14;
+  string default_compute_pool = 14 [deprecated = true];
+  // Name of the default compute pool can be optional.
+  optional string default_compute = 16;
   // Name of the default aux pool.
-  optional string default_aux_pool = 15;
+  string default_aux_pool = 15 [deprecated = true];
+  // Name of the default aux pool can be optional.
+  optional string default_aux = 17;
 }

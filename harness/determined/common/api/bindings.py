@@ -8240,7 +8240,9 @@ class v1PatchUserResponse(Printable):
 class v1PatchWorkspace(Printable):
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    defaultAux: "typing.Optional[str]" = None
     defaultAuxPool: "typing.Optional[str]" = None
+    defaultCompute: "typing.Optional[str]" = None
     defaultComputePool: "typing.Optional[str]" = None
     name: "typing.Optional[str]" = None
 
@@ -8249,7 +8251,9 @@ class v1PatchWorkspace(Printable):
         *,
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         checkpointStorageConfig: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        defaultAux: "typing.Union[str, None, Unset]" = _unset,
         defaultAuxPool: "typing.Union[str, None, Unset]" = _unset,
+        defaultCompute: "typing.Union[str, None, Unset]" = _unset,
         defaultComputePool: "typing.Union[str, None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
     ):
@@ -8257,8 +8261,12 @@ class v1PatchWorkspace(Printable):
             self.agentUserGroup = agentUserGroup
         if not isinstance(checkpointStorageConfig, Unset):
             self.checkpointStorageConfig = checkpointStorageConfig
+        if not isinstance(defaultAux, Unset):
+            self.defaultAux = defaultAux
         if not isinstance(defaultAuxPool, Unset):
             self.defaultAuxPool = defaultAuxPool
+        if not isinstance(defaultCompute, Unset):
+            self.defaultCompute = defaultCompute
         if not isinstance(defaultComputePool, Unset):
             self.defaultComputePool = defaultComputePool
         if not isinstance(name, Unset):
@@ -8272,8 +8280,12 @@ class v1PatchWorkspace(Printable):
             kwargs["agentUserGroup"] = v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj["agentUserGroup"] is not None else None
         if "checkpointStorageConfig" in obj:
             kwargs["checkpointStorageConfig"] = obj["checkpointStorageConfig"]
+        if "defaultAux" in obj:
+            kwargs["defaultAux"] = obj["defaultAux"]
         if "defaultAuxPool" in obj:
             kwargs["defaultAuxPool"] = obj["defaultAuxPool"]
+        if "defaultCompute" in obj:
+            kwargs["defaultCompute"] = obj["defaultCompute"]
         if "defaultComputePool" in obj:
             kwargs["defaultComputePool"] = obj["defaultComputePool"]
         if "name" in obj:
@@ -8287,8 +8299,12 @@ class v1PatchWorkspace(Printable):
             out["agentUserGroup"] = None if self.agentUserGroup is None else self.agentUserGroup.to_json(omit_unset)
         if not omit_unset or "checkpointStorageConfig" in vars(self):
             out["checkpointStorageConfig"] = self.checkpointStorageConfig
+        if not omit_unset or "defaultAux" in vars(self):
+            out["defaultAux"] = self.defaultAux
         if not omit_unset or "defaultAuxPool" in vars(self):
             out["defaultAuxPool"] = self.defaultAuxPool
+        if not omit_unset or "defaultCompute" in vars(self):
+            out["defaultCompute"] = self.defaultCompute
         if not omit_unset or "defaultComputePool" in vars(self):
             out["defaultComputePool"] = self.defaultComputePool
         if not omit_unset or "name" in vars(self):

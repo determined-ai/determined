@@ -1386,7 +1386,12 @@ export const patchWorkspace: DetApi<
   request: (params, options) => {
     return detApi.Workspaces.patchWorkspace(
       params.id,
-      { name: params.name?.trim(), ...params },
+      {
+        defaultAux: params.defaultAuxPool,
+        defaultCompute: params.defaultComputePool,
+        name: params.name?.trim(),
+        ...params,
+      },
       options,
     );
   },
