@@ -21,8 +21,8 @@ import (
 func TestTaskAuthZ(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 
-	trial := createTestTrial(t, api, curUser)
-	taskID := string(trial.TaskID)
+	_, task := createTestTrial(t, api, curUser)
+	taskID := string(task.TaskID)
 
 	cases := []struct {
 		DenyFuncName string

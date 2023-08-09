@@ -813,7 +813,7 @@ export interface Trialv1Trial {
      */
     warmStartCheckpointUuid?: string;
     /**
-     * Id of task associated with this trial.
+     * Id of the first task associated with this trial. This field is deprecated since trials can have multiple tasks.
      * @type {string}
      * @memberof Trialv1Trial
      */
@@ -836,6 +836,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     summaryMetrics?: any;
+    /**
+     * Task IDs of tasks associated with this trial. Length of task_ids will always be greater or equal to one when TaskID is sent. For example CompareTrial we will send a reduced Trial object, without TaskID or TaskIDs fileld in. The first element of task_ids will be the same as task_id. task_ids is sorted ascending by task_run_id.
+     * @type {Array<string>}
+     * @memberof Trialv1Trial
+     */
+    taskIds?: Array<string>;
 }
 /**
  * Acknowledge the receipt of some stop signal.

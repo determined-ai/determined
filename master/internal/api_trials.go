@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"math"
 	"sort"
@@ -76,11 +75,19 @@ type trialAllocation struct {
 	Task     model.TaskID
 }
 
+func getLatestTaskIDFromTrialProto(t *trialv1.Trial) model.TaskID {
+	if len(t.TaskIds) == 0 {
+		panic(fmt.Sprintf("trial proto object %+v was without associated task", t))
+	}
+
+	return model.TaskID(t.TaskIds[len(t.TaskIds)-1])
+}
+
 func (a *apiServer) enrichTrialState(trials ...*trialv1.Trial) error {
 	// filter allocations by TaskIDs on this page of trials
 	taskFilter := make([]string, 0, len(trials))
 	for _, trial := range trials {
-		taskFilter = append(taskFilter, trial.TaskId)
+		taskFilter = append(taskFilter, string(getLatestTaskIDFromTrialProto(trial)))
 	}
 
 	// get active trials by TaskId
@@ -112,7 +119,7 @@ func (a *apiServer) enrichTrialState(trials ...*trialv1.Trial) error {
 	// Active trials converted to Queued, Pulling, Starting, or Running
 	for _, trial := range trials {
 		if trial.State == trialv1.State_STATE_ACTIVE {
-			if setState, ok := byTaskID[model.TaskID(trial.TaskId)]; ok {
+			if setState, ok := byTaskID[getLatestTaskIDFromTrialProto(trial)]; ok {
 				trial.State = setState
 			} else {
 				trial.State = trialv1.State_STATE_QUEUED
@@ -130,23 +137,26 @@ func (a *apiServer) TrialLogs(
 		return err
 	}
 
-	var taskID model.TaskID
-	switch t, err := a.m.db.TrialByID(int(req.TrialId)); {
-	case err != nil:
-		return err
-	default:
-		taskID = t.TaskID
+	trialTaskIDs, err := db.TrialTaskIDsByTrialID(resp.Context(), int(req.TrialId))
+	if err != nil {
+		return fmt.Errorf("retreiving task IDs for trial log: %w", err)
+	}
+	if len(trialTaskIDs) == 0 {
+		return fmt.Errorf("no task IDs associated with trial ID %d: %w", req.TrialId, err)
+	}
+	var tasks []*model.Task
+	for _, t := range trialTaskIDs {
+		task, err := a.m.db.TaskByID(t.TaskID)
+		if err != nil {
+			return fmt.Errorf("getting task version for trial logs for task ID %s: %w", t.TaskID, err)
+		}
+		tasks = append(tasks, task)
 	}
 
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
-
-	switch t, err := a.m.db.TaskByID(taskID); {
-	case errors.Is(err, sql.ErrNoRows):
-		// This indicates the trial is existed before the task logs table, and has version 0.
-		fallthrough
-	case t.LogVersion == model.TaskLogVersion0:
-		// First stream the legacy logs.
+	// First stream legacy logs.
+	if tasks[0].LogVersion == model.TaskLogVersion0 {
 		res := make(chan api.BatchResult, taskLogsChanBuffer)
 		go a.legacyTrialLogs(ctx, req, res)
 		if err := processBatches(res, func(b api.Batch) error {
@@ -160,52 +170,65 @@ func (a *apiServer) TrialLogs(
 		}); err != nil {
 			return err
 		}
-		// Then fallthrough and stream the remaining logs, in the event the trial spanned an
-		// upgrade. In the event it did not, this should return quickly anyway.
-		fallthrough
-	case t.LogVersion == model.TaskLogVersion1:
-		// Translate the request.
-		res := make(chan api.BatchResult, taskLogsChanBuffer)
-		go a.taskLogs(ctx, &apiv1.TaskLogsRequest{
-			TaskId:          string(taskID),
-			Limit:           req.Limit,
-			Follow:          req.Follow,
-			AllocationIds:   nil,
-			AgentIds:        req.AgentIds,
-			ContainerIds:    req.ContainerIds,
-			RankIds:         req.RankIds,
-			Levels:          req.Levels,
-			Stdtypes:        req.Stdtypes,
-			Sources:         req.Sources,
-			TimestampBefore: req.TimestampBefore,
-			TimestampAfter:  req.TimestampAfter,
-			OrderBy:         req.OrderBy,
-			SearchText:      req.SearchText,
-		}, res)
-		return processBatches(res, func(b api.Batch) error {
-			return b.ForEach(func(i interface{}) error {
-				l, err := i.(*model.TaskLog).Proto()
-				if err != nil {
-					return err
-				}
-				return resp.Send(&apiv1.TrialLogsResponse{
-					Id:          l.Id,
-					TrialId:     req.TrialId,
-					Timestamp:   l.Timestamp,
-					Message:     l.Message, //nolint: staticcheck // l.Message is deprecated.
-					Level:       l.Level,
-					AgentId:     l.AgentId,
-					ContainerId: l.ContainerId,
-					RankId:      l.RankId,
-					Log:         &l.Log,
-					Source:      l.Source,
-					Stdtype:     l.Stdtype,
+		// Don't return here. Continue in case this task spanned the upgrade. If it did not,
+		// it will return quickly anyway.
+	}
+
+	for i, task := range tasks {
+		switch task.LogVersion {
+		case model.TaskLogVersion0, model.TaskLogVersion1:
+			// Translate the request.
+			res := make(chan api.BatchResult, taskLogsChanBuffer)
+			go a.taskLogs(ctx, &apiv1.TaskLogsRequest{
+				TaskId: string(task.TaskID),
+				Limit:  req.Limit,
+				// Only follow on the final task log. We should at most only have
+				// one non terminal task per trial. But if this assumption is violated
+				// users will be prevented from seeing future logs on running tasks without this
+				// hack here.
+				Follow:          req.Follow && i == len(trialTaskIDs)-1,
+				AllocationIds:   nil,
+				AgentIds:        req.AgentIds,
+				ContainerIds:    req.ContainerIds,
+				RankIds:         req.RankIds,
+				Levels:          req.Levels,
+				Stdtypes:        req.Stdtypes,
+				Sources:         req.Sources,
+				TimestampBefore: req.TimestampBefore,
+				TimestampAfter:  req.TimestampAfter,
+				OrderBy:         req.OrderBy,
+				SearchText:      req.SearchText,
+			}, res)
+			err := processBatches(res, func(b api.Batch) error {
+				return b.ForEach(func(i interface{}) error {
+					l, err := i.(*model.TaskLog).Proto()
+					if err != nil {
+						return err
+					}
+					return resp.Send(&apiv1.TrialLogsResponse{
+						Id:          l.Id,
+						TrialId:     req.TrialId,
+						Timestamp:   l.Timestamp,
+						Message:     l.Message, //nolint: staticcheck // l.Message is deprecated.
+						Level:       l.Level,
+						AgentId:     l.AgentId,
+						ContainerId: l.ContainerId,
+						RankId:      l.RankId,
+						Log:         &l.Log,
+						Source:      l.Source,
+						Stdtype:     l.Stdtype,
+					})
 				})
 			})
-		})
-	default:
-		panic(fmt.Errorf("unknown task log version: %d, please report this bug", t.LogVersion))
+			if err != nil {
+				return fmt.Errorf("getting trial logs for task ID %s: %w", task.TaskID, err)
+			}
+		default:
+			panic(fmt.Errorf("unknown task log version: %d, please report this bug", task.LogVersion))
+		}
 	}
+
+	return nil
 }
 
 func (a *apiServer) legacyTrialLogs(
@@ -328,9 +351,9 @@ func (a *apiServer) TrialLogsFields(
 		return err
 	}
 
-	trial, err := a.m.db.TrialByID(int(req.TrialId))
+	trialTaskIDs, err := db.TrialTaskIDsByTrialID(resp.Context(), int(req.TrialId))
 	if err != nil {
-		return errors.Wrap(err, "retreiving trial")
+		return fmt.Errorf("retreiving task IDs for trial log fields: %w", err)
 	}
 
 	ctx, cancel := context.WithCancel(resp.Context())
@@ -360,48 +383,68 @@ func (a *apiServer) TrialLogsFields(
 		&distinctFieldBatchWaitTime,
 	).Run(ctx, resOld)
 
-	// Also stream fields from task logs table, for ordinary logs (as they are written now).
-	taskLogsTimeSinceLastAuth := time.Now() // time.Now() to avoid recheck from above.
-	resNew := make(chan api.BatchResult)
-	go api.NewBatchStreamProcessor(
-		api.BatchRequest{Follow: req.Follow},
-		func(lr api.BatchRequest) (api.Batch, error) {
-			if time.Now().Sub(taskLogsTimeSinceLastAuth) >= recheckAuthPeriod {
-				if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(),
-					int(req.TrialId),
-					expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-					return nil, err
+	for i, trialTaskID := range trialTaskIDs {
+		// Also stream fields from task logs table, for ordinary logs (as they are written now).
+		taskLogsTimeSinceLastAuth := time.Now() // time.Now() to avoid recheck from above.
+		resNew := make(chan api.BatchResult)
+		go api.NewBatchStreamProcessor(
+			api.BatchRequest{Follow: req.Follow && i == len(trialTaskIDs)-1},
+			func(lr api.BatchRequest) (api.Batch, error) {
+				if time.Now().Sub(taskLogsTimeSinceLastAuth) >= recheckAuthPeriod {
+					if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(),
+						int(req.TrialId),
+						expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+						return nil, err
+					}
+					taskLogsTimeSinceLastAuth = time.Now()
 				}
-				taskLogsTimeSinceLastAuth = time.Now()
+
+				fields, err := a.m.taskLogBackend.TaskLogsFields(trialTaskID.TaskID)
+				return api.ToBatchOfOne(&apiv1.TrialLogsFieldsResponse{
+					AgentIds:     fields.AgentIds,
+					ContainerIds: fields.ContainerIds,
+					RankIds:      fields.RankIds,
+					Stdtypes:     fields.Stdtypes,
+					Sources:      fields.Sources,
+				}), err
+			},
+			a.isTaskTerminalFunc(trialTaskID.TaskID, a.m.taskLogBackend.MaxTerminationDelay()),
+			true,
+			&distinctFieldBatchWaitTime,
+			&distinctFieldBatchWaitTime,
+		).Run(ctx, resNew)
+
+		// First iterate merge with legacy trial logs fields.
+		if i == 0 {
+			if err := zipBatches(resOld, resNew, func(b1, b2 api.Batch) error {
+				r1 := b1.(api.BatchOfOne).Inner.(*apiv1.TrialLogsFieldsResponse)
+				r2 := b2.(api.BatchOfOne).Inner.(*apiv1.TrialLogsFieldsResponse)
+				return resp.Send(&apiv1.TrialLogsFieldsResponse{
+					AgentIds:     setString(append(r1.AgentIds, r2.AgentIds...)...),
+					ContainerIds: setString(append(r1.ContainerIds, r2.ContainerIds...)...),
+					RankIds:      setInt32(append(r1.RankIds, r2.RankIds...)...),
+					Stdtypes:     setString(append(r1.Stdtypes, r2.Stdtypes...)...),
+					Sources:      setString(append(r1.Sources, r2.Sources...)...),
+				})
+			}); err != nil {
+				return fmt.Errorf("merging and sending trial log field batches for task id %s: %w",
+					trialTaskID.TaskID, err)
 			}
+		} else {
+			// Any past the first is always version 2 and above.
+			err := processBatches(resNew, func(b api.Batch) error {
+				return b.ForEach(func(i interface{}) error {
+					return resp.Send(i.(*apiv1.TrialLogsFieldsResponse))
+				})
+			})
+			if err != nil {
+				return fmt.Errorf("sending trial log field batches for task id %s: %w",
+					trialTaskID.TaskID, err)
+			}
+		}
+	}
 
-			fields, err := a.m.taskLogBackend.TaskLogsFields(trial.TaskID)
-			return api.ToBatchOfOne(&apiv1.TrialLogsFieldsResponse{
-				AgentIds:     fields.AgentIds,
-				ContainerIds: fields.ContainerIds,
-				RankIds:      fields.RankIds,
-				Stdtypes:     fields.Stdtypes,
-				Sources:      fields.Sources,
-			}), err
-		},
-		a.isTaskTerminalFunc(trial.TaskID, a.m.taskLogBackend.MaxTerminationDelay()),
-		true,
-		&distinctFieldBatchWaitTime,
-		&distinctFieldBatchWaitTime,
-	).Run(ctx, resNew)
-
-	// And merge the available filters.
-	return zipBatches(resOld, resNew, func(b1, b2 api.Batch) error {
-		r1 := b1.(api.BatchOfOne).Inner.(*apiv1.TrialLogsFieldsResponse)
-		r2 := b2.(api.BatchOfOne).Inner.(*apiv1.TrialLogsFieldsResponse)
-		return resp.Send(&apiv1.TrialLogsFieldsResponse{
-			AgentIds:     setString(append(r1.AgentIds, r2.AgentIds...)...),
-			ContainerIds: setString(append(r1.ContainerIds, r2.ContainerIds...)...),
-			RankIds:      setInt32(append(r1.RankIds, r2.RankIds...)...),
-			Stdtypes:     setString(append(r1.Stdtypes, r2.Stdtypes...)...),
-			Sources:      setString(append(r1.Sources, r2.Sources...)...),
-		})
-	})
+	return nil
 }
 
 func (a *apiServer) GetTrialCheckpoints(
@@ -474,7 +517,7 @@ func (a *apiServer) KillTrial(
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
-	t, err := a.m.db.TrialByID(int(req.Id))
+	t, err := db.TrialByID(ctx, int(req.Id))
 	if err != nil {
 		return nil, err
 	}
