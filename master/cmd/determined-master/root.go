@@ -80,25 +80,7 @@ func initializeConfig() error {
 		return err
 	}
 
-	// Write a configMap from the config file, and create a copy (cpMap) to
-	// deepcopyq values needed to override viper's merge auto-lowercasing.
-	var configMap, cpMap map[string]interface{}
-	configErr := yaml.Unmarshal(bs, &configMap)
-	cpErr := yaml.Unmarshal(bs, &cpMap)
-	if configErr != nil || cpErr != nil {
-		return errors.Wrap(err, "error unmarshal yaml configuration file")
-	}
-
-	if err := v.MergeConfigMap(configMap); err != nil {
-		return errors.Wrap(err, "error merge configuration to viper")
-	}
-
-	// Now call viper.AllSettings() again to get the full config, containing all values from CLI flags,
-	// environment variables, and the configuration file. Override the task_container_defaults value
-	// using the map you copied.
-	viperConfig := v.AllSettings()
-	viperConfig["task_container_defaults"] = cpMap["task_container_defaults"]
-	conf, err := getConfig(viperConfig)
+	conf, err := mergeConfigIntoViper(bs)
 	if err != nil {
 		return err
 	}
@@ -114,6 +96,32 @@ func initializeConfig() error {
 	}
 
 	return nil
+}
+
+func mergeConfigIntoViper(bs []byte) (*config.Config, error) {
+	// Write a configMap from the config file, and create a copy (cpMap) to
+	// deepcopy values needed to override viper's merge auto-lowercasing.
+	var configMap, cpMap map[string]interface{}
+	if err := yaml.Unmarshal(bs, &configMap); err != nil {
+		return nil, fmt.Errorf("can't unmarshal yaml configuration file: %w", err)
+	}
+	if err := yaml.Unmarshal(bs, &cpMap); err != nil {
+		return nil, fmt.Errorf("can't unmarshal yaml configuration file: %w", err)
+	}
+
+	// Now merge the config file values into viper.
+	if err := v.MergeConfigMap(configMap); err != nil {
+		return nil, fmt.Errorf("can't merge configuration to viper: %w", err)
+	}
+
+	// Now call viper.AllSettings() again to get the full config, containing all values from CLI flags,
+	// environment variables, and the configuration file. Override the task_container_defaults value
+	// using the map you copied.
+	viperConfig := v.AllSettings()
+	viperConfig["task_container_defaults"] = cpMap["task_container_defaults"]
+	viperConfig["resource_pools"] = cpMap["resource_pools"]
+
+	return getConfig(viperConfig)
 }
 
 func readConfigFile(configPath string) ([]byte, error) {

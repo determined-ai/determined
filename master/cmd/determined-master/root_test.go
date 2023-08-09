@@ -9,8 +9,6 @@ import (
 	"google.golang.org/api/compute/v1"
 	"gotest.tools/assert"
 
-	"github.com/ghodss/yaml"
-
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -39,7 +37,7 @@ task_container_defaults:
     kind: Pod
     metadata:
       labels:
-        "app.kubernetes.io/name": "cpu-label"
+        "app.kubernetes.io/camelCase": "cpu-label"
     spec:
       containers:
         - name: determined-container
@@ -90,20 +88,14 @@ webhooks:
 		},
 		ObjectMeta: metaV1.ObjectMeta{
 			Labels: map[string]string{
-				"app.kubernetes.io/name": "cpu-label",
+				"app.kubernetes.io/camelCase": "cpu-label",
 			},
 		},
 	}
 
-	var configMap map[string]interface{}
-	configErr := yaml.Unmarshal([]byte(raw), &configMap)
-	assert.NilError(t, configErr)
-
 	err := expected.Resolve()
 	assert.NilError(t, err)
-	err = v.MergeConfigMap(configMap)
-	assert.NilError(t, err)
-	config, err := getConfig(v.AllSettings())
+	config, err := mergeConfigIntoViper([]byte(raw))
 	assert.NilError(t, err)
 	assert.DeepEqual(t, config, expected)
 }
