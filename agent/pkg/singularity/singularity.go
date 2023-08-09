@@ -331,7 +331,7 @@ func (s *SingularityClient) RunContainer(
 	}
 
 	args = capabilitiesToSingularityArgs(req, args)
-	image := s.computeImageReference(req)
+	image := s.computeImageReference(req.ContainerConfig.Image)
 	args = append(args, image)
 	args = append(args, singularityWrapperEntrypoint)
 	args = append(args, req.ContainerConfig.Cmd...)
@@ -395,22 +395,17 @@ func (s *SingularityClient) RunContainer(
 // computeImageReference computes a reference to the requested image. If an image cache
 // directory is defined and it contains the required image, a path name to the cached image
 // will be returned, else a docker reference so that the image can be downloaded.
-func (s *SingularityClient) computeImageReference(req cproto.RunSpec) string {
-	requestedImage := req.ContainerConfig.Image
-	var image string
-	s.log.Tracef("Requested image: %s", requestedImage)
+func (s *SingularityClient) computeImageReference(requestedImage string) string {
+	s.log.Tracef("requested image: %s", requestedImage)
 	if s.imageRoot != "" {
 		cachePathName := s.imageRoot + "/" + requestedImage
 		if _, err := os.Stat(cachePathName); err != nil {
-			s.log.Tracef("Failed to locate image in cache: %s", err.Error())
+			s.log.Tracef("image is not in cache: %s", err.Error())
 		} else {
-			image = cachePathName
+			return cachePathName
 		}
 	}
-	if image == "" {
-		image = cruntimes.CanonicalizeImage(requestedImage)
-	}
-	return image
+	return cruntimes.CanonicalizeImage(requestedImage)
 }
 
 // Sets the environment of the process that will run the Singularity/apptainer command.
