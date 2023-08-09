@@ -439,10 +439,6 @@ func TestReceivePodStatusUpdateStarting(t *testing.T) {
 				Name:  "determined-container",
 				State: k8sV1.ContainerState{Waiting: &k8sV1.ContainerStateWaiting{}},
 			},
-			{
-				Name:  "determined-fluent-container",
-				State: k8sV1.ContainerState{Waiting: &k8sV1.ContainerStateWaiting{}},
-			},
 		}
 		status := k8sV1.PodStatus{
 			Phase:             k8sV1.PodRunning,
@@ -463,33 +459,26 @@ func TestReceivePodStatusUpdateStarting(t *testing.T) {
 		assert.Equal(t, ref.container.State, cproto.Starting)
 	})
 
-	t.Run("pod status running, but no container State inside", func(t *testing.T) {
-		t.Logf("Testing pod running with no status")
-
-		ref, aID, sub := createPodWithMockQueue(t, nil)
-		purge(aID, sub)
-		assert.Equal(t, sub.Len(), 0)
-
-		status := k8sV1.PodStatus{
-			Phase: k8sV1.PodRunning,
-			ContainerStatuses: []k8sV1.ContainerStatus{
-				{Name: "determined-container"},
-				{Name: "determined-fluent-container"},
-			},
-		}
-		pod := k8sV1.Pod{
-			TypeMeta:   typeMeta,
-			ObjectMeta: objectMeta,
-			Status:     status,
-		}
-		statusUpdate := podStatusUpdate{updatedPod: &pod}
-		_, err := ref.podStatusUpdate(statusUpdate.updatedPod)
-		require.NoError(t, err)
-		time.Sleep(time.Second)
-
-		assert.Equal(t, sub.Len(), 2)
-		assert.Equal(t, ref.container.State, cproto.Starting)
-	})
+	// Pod status running, but no Container State inside.
+	t.Logf("Testing pod running with no status")
+	system, newPod, ref, podMap, _ = createPodWithMockQueue(nil)
+	podMap["task"].Purge()
+	status = k8sV1.PodStatus{
+		Phase: k8sV1.PodRunning,
+		ContainerStatuses: []k8sV1.ContainerStatus{
+			{Name: "determined-container"},
+		},
+	}
+	pod = k8sV1.Pod{
+		TypeMeta:   typeMeta,
+		ObjectMeta: objectMeta,
+		Status:     status,
+	}
+	statusUpdate = podStatusUpdate{updatedPod: &pod}
+	system.Ask(ref, statusUpdate)
+	time.Sleep(time.Second)
+	assert.Equal(t, podMap["task"].GetLength(), 2)
+	assert.Equal(t, newPod.container.State, cproto.Starting)
 }
 
 func TestMultipleContainersRunning(t *testing.T) {
@@ -504,10 +493,6 @@ func TestMultipleContainersRunning(t *testing.T) {
 	containerStatuses := []k8sV1.ContainerStatus{
 		{
 			Name:  "determined-container",
-			State: k8sV1.ContainerState{Running: &k8sV1.ContainerStateRunning{}},
-		},
-		{
-			Name:  "determined-fluent-container",
 			State: k8sV1.ContainerState{Running: &k8sV1.ContainerStateRunning{}},
 		},
 		{
@@ -537,7 +522,6 @@ func TestMultipleContainersRunning(t *testing.T) {
 		}
 		ref.containerNames = set.FromSlice([]string{
 			"determined-container",
-			"determined-fluent-container",
 			"test-pod",
 		})
 		statusUpdate := podStatusUpdate{updatedPod: &pod}

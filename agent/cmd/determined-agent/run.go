@@ -73,6 +73,9 @@ func newRunCmd() *cobra.Command {
 		}
 
 		opts.Resolve()
+		for _, deprecation := range opts.Deprecations() {
+			log.Warn(deprecation.Error())
+		}
 
 		if err := internal.Run(context.Background(), version, opts); err != nil {
 			log.Fatal(err)
@@ -149,13 +152,13 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&opts.NoProxy, "no-proxy", "",
 		"Addresses that the agent's containers should not proxy")
 
-	// Logging flags.
+	// Deprecated Fluent Logging flags.
 	cmd.Flags().StringVar(&opts.Fluent.Image, "fluent-image", aproto.FluentImage,
-		"Docker image to use for the managed Fluent Bit daemon")
+		"Deprecated: Docker image to use for the managed Fluent Bit daemon")
 	cmd.Flags().IntVar(&opts.Fluent.Port, "fluent-port", 24224,
-		"TCP port for the Fluent Bit daemon to listen on")
+		"Deprecated: TCP port for the Fluent Bit daemon to listen on")
 	cmd.Flags().StringVar(&opts.Fluent.ContainerName, "fluent-container-name", "determined-fluent",
-		"Name for the Fluent Bit container")
+		"Deprecated : Name for the Fluent Bit container")
 
 	// Fault-tolerance flags.
 	cmd.Flags().IntVar(&opts.AgentReconnectAttempts, "agent-reconnect-attempts",

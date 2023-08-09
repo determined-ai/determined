@@ -14,8 +14,6 @@ import (
 
 const (
 	defaultMasterPort = 5152
-	defaultFluentName = "determined-fluent-test"
-	defaultFluentPort = 24225
 )
 
 // DefaultAgentConfig returns a default agent config, for tests.
@@ -30,11 +28,6 @@ func DefaultAgentConfig(offset int) options.Options {
 		SlotType:            "auto",
 		BindIP:              "0.0.0.0",
 		BindPort:            9090 + offset,
-		Fluent: options.FluentOptions{
-			Image:         aproto.FluentImage,
-			Port:          defaultFluentPort + offset,
-			ContainerName: defaultFluentName + strconv.Itoa(offset),
-		},
 	}
 }
 

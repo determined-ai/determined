@@ -106,7 +106,7 @@ func (e *Elastic) TaskLogs(
 						},
 					},
 					// Only look at logs posted more than 10 seconds ago. In the event
-					// a fluentbit shipper is backed up, it may post logs with a timestamp
+					// a fluentbit shipper (deprecated) was backed up, it may post logs with a timestamp
 					// that falls before the current time. If we do a search_after based on
 					// the latest logs, we may miss these backed up unless we do this.
 					// This probably should be using PIT instead.

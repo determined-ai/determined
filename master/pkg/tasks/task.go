@@ -58,7 +58,7 @@ type TaskSpecifier interface {
 type TaskSpec struct {
 	// Fields that are only for task logics.
 	Description string
-	// LoggingFields are fields to include in each record of structured (i.e., Fluent Bit) logging.
+	// LoggingFields are fields to include in each record of structured logging.
 	LoggingFields map[string]string
 
 	// Fields that are set on the cluster level.

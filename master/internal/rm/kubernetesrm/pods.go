@@ -72,10 +72,11 @@ type pods struct {
 	scheduler                string
 	slotType                 device.Type
 	slotResourceRequests     config.PodSlotResourceRequests
-	fluentConfig             config.FluentConfig
-	resourcePoolConfigs      []config.ResourcePoolConfig
-	baseContainerDefaults    *model.TaskContainerDefaultsConfig
-	credsDir                 string
+	// deprecated, no longer in use.
+	fluentConfig          config.FluentConfig
+	resourcePoolConfigs   []config.ResourcePoolConfig
+	baseContainerDefaults *model.TaskContainerDefaultsConfig
+	credsDir              string
 
 	clientSet        *k8sClient.Clientset
 	masterIP         string
@@ -151,6 +152,7 @@ func Initialize(
 	scheduler string,
 	slotType device.Type,
 	slotResourceRequests config.PodSlotResourceRequests,
+	// deprecated, no longer in use.
 	fluentConfig config.FluentConfig,
 	resourcePoolConfigs []config.ResourcePoolConfig,
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
@@ -182,6 +184,7 @@ func Initialize(
 		leaveKubernetesResources:     leaveKubernetesResources,
 		slotType:                     slotType,
 		slotResourceRequests:         slotResourceRequests,
+		// deprecated, no longer in use.
 		fluentConfig:                 fluentConfig,
 		resourcePoolConfigs:          resourcePoolConfigs,
 		baseContainerDefaults:        taskContainerDefaults,
@@ -512,6 +515,7 @@ func (p *pods) reattachPod(
 		p.slotType,
 		p.slotResourceRequests,
 		p.scheduler,
+		// deprecated, no longer in use.
 		p.fluentConfig,
 	)
 
@@ -811,6 +815,7 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 		p.slotType,
 		p.slotResourceRequests,
 		p.scheduler,
+		// deprecated, no longer in use.
 		p.fluentConfig,
 	)
 

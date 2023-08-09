@@ -19,7 +19,6 @@ import (
 
 	"github.com/determined-ai/determined/agent/internal/container"
 	"github.com/determined-ai/determined/agent/internal/containers"
-	"github.com/determined-ai/determined/agent/internal/fluent"
 	"github.com/determined-ai/determined/agent/pkg/docker"
 	"github.com/determined-ai/determined/agent/pkg/events"
 	"github.com/determined-ai/determined/agent/test/testutils"
@@ -49,13 +48,6 @@ func TestManager(t *testing.T) {
 	}()
 	cl := docker.NewClient(rawCl)
 
-	t.Log("starting fluent")
-	fl, err := fluent.Start(ctx, opts, mopts, cl)
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, fl.Close())
-	}()
-
 	t.Log("setting up event handler")
 	evs := make(chan container.Event, 5024)
 	f := events.ChannelPublisher(evs)
@@ -80,7 +72,7 @@ func TestManager(t *testing.T) {
 				TaskType: string(model.TaskTypeCommand),
 				RunSpec: cproto.RunSpec{
 					ContainerConfig: dcontainer.Config{
-						Image:      "ubuntu",
+						Image:      "python",
 						Entrypoint: []string{"echo", "hello"},
 					},
 				},
@@ -105,7 +97,7 @@ func TestManager(t *testing.T) {
 				TaskType: string(model.TaskTypeCommand),
 				RunSpec: cproto.RunSpec{
 					ContainerConfig: dcontainer.Config{
-						Image:      "ubuntu",
+						Image:      "python",
 						Entrypoint: []string{"ghci"}, // Ha..
 					},
 				},
@@ -130,7 +122,7 @@ func TestManager(t *testing.T) {
 				TaskType: string(model.TaskTypeCommand),
 				RunSpec: cproto.RunSpec{
 					ContainerConfig: dcontainer.Config{
-						Image:      "ubuntu",
+						Image:      "python",
 						Entrypoint: []string{"sleep", "99"},
 					},
 				},
@@ -295,13 +287,6 @@ func TestManagerReattach(t *testing.T) {
 	}()
 	cl := docker.NewClient(rawCl)
 
-	t.Log("starting fluent")
-	fl, err := fluent.Start(ctx, opts, mopts, cl)
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, fl.Close())
-	}()
-
 	t.Log("setting up event handler")
 	evs := make(chan container.Event, 5024)
 	f := events.ChannelPublisher(evs)
@@ -338,7 +323,7 @@ func TestManagerReattach(t *testing.T) {
 				TaskType: string(model.TaskTypeCommand),
 				RunSpec: cproto.RunSpec{
 					ContainerConfig: dcontainer.Config{
-						Image:      "ubuntu",
+						Image:      "python",
 						Entrypoint: []string{"sleep", "5"},
 					},
 					HostConfig: dcontainer.HostConfig{AutoRemove: true},

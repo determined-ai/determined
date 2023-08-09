@@ -6,6 +6,7 @@ import (
 
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 )
@@ -26,13 +27,14 @@ func TestAgentSetupScript(t *testing.T) {
 		MasterCertBase64:             encodedMasterCert,
 		SlotType:                     device.CUDA,
 		AgentDockerImage:             "test_docker_image",
-		AgentFluentImage:             "fluent-test",
-		AgentDockerRuntime:           "runc",
-		AgentNetwork:                 "default",
-		AgentID:                      "test.id",
-		ResourcePool:                 "test-pool",
-		AgentReconnectAttempts:       5,
-		AgentReconnectBackoff:        5,
+		// deprecated, no longer in use.
+		AgentFluentImage:       aproto.FluentImage,
+		AgentDockerRuntime:     "runc",
+		AgentNetwork:           "default",
+		AgentID:                "test.id",
+		ResourcePool:           "test-pool",
+		AgentReconnectAttempts: 5,
+		AgentReconnectBackoff:  5,
 	}
 
 	//nolint
@@ -99,7 +101,7 @@ docker run --init --name determined-agent  \
     -e DET_MASTER_PORT="8080" \
     -e DET_SECURITY_TLS_MASTER_CERT_NAME="certname" \
     -e DET_RESOURCE_POOL="test-pool" \
-    -e DET_FLUENT_IMAGE="fluent-test" \
+    -e DET_FLUENT_IMAGE="" \
     -e DET_AGENT_RECONNECT_ATTEMPTS="5" \
     -e DET_AGENT_RECONNECT_BACKOFF="5" \
     -v /usr/sbin/shutdown:/usr/sbin/shutdown \

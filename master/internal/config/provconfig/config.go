@@ -20,13 +20,14 @@ const defaultMasterPort = "8080"
 
 // Config describes config for provisioner.
 type Config struct {
-	MasterURL               string            `json:"master_url"`
-	MasterCertName          string            `json:"master_cert_name"`
-	StartupScript           string            `json:"startup_script"`
-	ContainerStartupScript  string            `json:"container_startup_script"`
-	AgentDockerNetwork      string            `json:"agent_docker_network"`
-	AgentDockerRuntime      string            `json:"agent_docker_runtime"`
-	AgentDockerImage        string            `json:"agent_docker_image"`
+	MasterURL              string `json:"master_url"`
+	MasterCertName         string `json:"master_cert_name"`
+	StartupScript          string `json:"startup_script"`
+	ContainerStartupScript string `json:"container_startup_script"`
+	AgentDockerNetwork     string `json:"agent_docker_network"`
+	AgentDockerRuntime     string `json:"agent_docker_runtime"`
+	AgentDockerImage       string `json:"agent_docker_image"`
+	// deprecated, no longer in use.
 	AgentFluentImage        string            `json:"agent_fluent_image"`
 	AgentReconnectAttempts  int               `json:"agent_reconnect_attempts"`
 	AgentReconnectBackoff   int               `json:"agent_reconnect_backoff"`
@@ -50,9 +51,10 @@ type HpcClusterConfig struct {
 // DefaultConfig returns the default configuration of the provisioner.
 func DefaultConfig() *Config {
 	return &Config{
-		AgentDockerRuntime:     "runc",
-		AgentDockerNetwork:     "default",
-		AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
+		AgentDockerRuntime: "runc",
+		AgentDockerNetwork: "default",
+		AgentDockerImage:   fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
+		// deprecated, no longer in use.
 		AgentFluentImage:       aproto.FluentImage,
 		MaxIdleAgentPeriod:     model.Duration(20 * time.Minute),
 		MaxAgentStartingPeriod: model.Duration(20 * time.Minute),

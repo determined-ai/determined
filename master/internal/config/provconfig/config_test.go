@@ -29,6 +29,7 @@ func TestProvisionerConfigMissingFields(t *testing.T) {
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
 		AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
+		// deprecated, no longer in use.
 		AgentFluentImage:       aproto.FluentImage,
 		AgentReconnectAttempts: aproto.AgentReconnectAttempts,
 		AgentReconnectBackoff:  aproto.AgentReconnectBackoffValue,
@@ -60,8 +61,9 @@ func TestUnmarshalProvisionerConfigMasterURL(t *testing.T) {
 	awsConfig.ImageID = "test.image3"
 	awsConfig.SSHKeyName = "test-key3"
 	unmarshaled := Config{
-		MasterURL:              "http://test.master:8080",
-		AgentDockerImage:       "test_image",
+		MasterURL:        "http://test.master:8080",
+		AgentDockerImage: "test_image",
+		// deprecated, no longer in use.
 		AgentFluentImage:       "fluent_image",
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
@@ -113,9 +115,10 @@ func TestUnmarshalProvisionerConfigWithAWS(t *testing.T) {
 	awsConfig.ImageID = "test.image2"
 	awsConfig.SSHKeyName = "test-key2"
 	unmarshaled := Config{
-		MasterURL:              "http://test.master:8080",
-		AWS:                    &awsConfig,
-		AgentDockerImage:       "test_image",
+		MasterURL:        "http://test.master:8080",
+		AWS:              &awsConfig,
+		AgentDockerImage: "test_image",
+		// deprecated, no longer in use.
 		AgentFluentImage:       aproto.FluentImage,
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
@@ -149,9 +152,10 @@ func TestUnmarshalProvisionerConfigWithGCP(t *testing.T) {
 	expected.Zone = "test-zone2"
 	expected.BootDiskSourceImage = "test-source_image2"
 	unmarshaled := Config{
-		MasterURL:              "http://test.master:8080",
-		GCP:                    &expected,
-		AgentDockerImage:       "test_image",
+		MasterURL:        "http://test.master:8080",
+		GCP:              &expected,
+		AgentDockerImage: "test_image",
+		// deprecated, no longer in use.
 		AgentFluentImage:       aproto.FluentImage,
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
@@ -211,9 +215,10 @@ boot_disk_source_image: test-source_image3
 	expectedGCP.BootDiskSourceImage = "test-source_image3"
 
 	expected := Config{
-		MasterURL:              "http://test.master:8080",
-		GCP:                    &expectedGCP,
-		AgentDockerImage:       "test_image",
+		MasterURL:        "http://test.master:8080",
+		GCP:              &expectedGCP,
+		AgentDockerImage: "test_image",
+		// deprecated, no longer in use.
 		AgentFluentImage:       aproto.FluentImage,
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",

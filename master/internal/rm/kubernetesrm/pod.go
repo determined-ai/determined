@@ -75,7 +75,8 @@ type pod struct {
 	scheduler                string
 	slotType                 device.Type
 	slotResourceRequests     config.PodSlotResourceRequests
-	fluentConfig             config.FluentConfig
+	// deprecated, no longer in use.
+	fluentConfig config.FluentConfig
 
 	pod           *k8sV1.Pod
 	podName       string
@@ -154,7 +155,8 @@ func newPod(
 		scheduler:                scheduler,
 		slotType:                 slotType,
 		slotResourceRequests:     slotResourceRequests,
-		fluentConfig:             fluentConfig,
+		// deprecated, no longer in use.
+		fluentConfig: fluentConfig,
 		syslog: logrus.New().WithField("component", "pod").WithFields(
 			logger.MergeContexts(msg.LogContext, logger.Context{
 				"pod": uniqueName,

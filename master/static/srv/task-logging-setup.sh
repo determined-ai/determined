@@ -51,41 +51,40 @@ if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
     ((DET_LOG_WAIT_COUNT += 2))
 fi
 
-if [ "$DET_RESOURCES_TYPE" == "slurm-job" ] || [ "$DET_NO_FLUENT" == "true" ]; then
-    export PATH="/run/determined/pythonuserbase/bin:$PATH"
-    if [ -z "$DET_PYTHON_EXECUTABLE" ]; then
-        export DET_PYTHON_EXECUTABLE="python3"
-    fi
+export PATH="/run/determined/pythonuserbase/bin:$PATH"
+if [ -z "$DET_PYTHON_EXECUTABLE" ]; then
+    export DET_PYTHON_EXECUTABLE="python3"
+fi
 
-    if ! /bin/which "$DET_PYTHON_EXECUTABLE" >/dev/null 2>&1; then
-        echo "{\"log\": \"error: unable to find python3 as '$DET_PYTHON_EXECUTABLE'\n\", \"timestamp\": \"$(date --rfc-3339=seconds)\"}" >&2
-        echo "{\"log\": \"please install python3 or set the environment variable DET_PYTHON_EXECUTABLE=/path/to/python3\n\", \"timestamp\": "$(date --rfc-3339=seconds)"}" >&2
+if ! "$DET_PYTHON_EXECUTABLE" --version >/dev/null 2>&1; then
+    echo "{\"log\": \"error: unable to find python3 as '$DET_PYTHON_EXECUTABLE'\n\", \"timestamp\": \"$(date --rfc-3339=seconds)\"}" >&2
+    echo "{\"log\": \"please install python3 or set the environment variable DET_PYTHON_EXECUTABLE=/path/to/python3\n\", \"timestamp\": "$(date --rfc-3339=seconds)"}" >&2
+    export PYTHON_MISSING_EXIT_CODE=8
+    exit $PYTHON_MISSING_EXIT_CODE
+fi
+
+if [ -z "$DET_SKIP_PIP_INSTALL" ]; then
+    "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
+else
+    if ! "$DET_PYTHON_EXECUTABLE" -c "import determined" >/dev/null 2>&1; then
+        echo "{\"log\": \"error: unable run without determined package\n\", \"timestamp\": \"$(date --rfc-3339=seconds)\"}" >&2
         exit 1
     fi
-
-    if [ -z "$DET_SKIP_PIP_INSTALL" ]; then
-        "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
-    else
-        if ! "$DET_PYTHON_EXECUTABLE" -c "import determined" >/dev/null 2>&1; then
-            echo "{\"log\": \"error: unable run without determined package\n\", \"timestamp\": \"$(date --rfc-3339=seconds)\"}" >&2
-            exit 1
-        fi
-    fi
-
-    # Intercept stdout/stderr and send content to DET_MASTER via the log API.
-    # When completed, write a single character to the DET_LOG_WAIT_FIFO to signal
-    # completion of one procesor.
-    exec 1> >(
-        "$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stdout >&1
-        printf x >$DET_LOG_WAIT_FIFO
-    ) \
-    2> >(
-        "$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stderr >&2
-        printf x >$DET_LOG_WAIT_FIFO
-    )
-
-    ((DET_LOG_WAIT_COUNT += 2))
 fi
+
+# Intercept stdout/stderr and send content to DET_MASTER via the log API.
+# When completed, write a single character to the DET_LOG_WAIT_FIFO to signal
+# completion of one procesor.
+exec 1> >(
+    "$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stdout >&1
+    printf x >$DET_LOG_WAIT_FIFO
+) \
+2> >(
+    "$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stderr >&2
+    printf x >$DET_LOG_WAIT_FIFO
+)
+
+((DET_LOG_WAIT_COUNT += 2))
 
 if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
     # Each container sends the Determined Master a notification that it's

@@ -3,6 +3,7 @@ package options
 import (
 	"crypto/tls"
 	"encoding/json"
+	"reflect"
 
 	"github.com/determined-ai/determined/master/pkg/check"
 
@@ -42,6 +43,7 @@ type Options struct {
 
 	Security SecurityOptions `json:"security"`
 
+	// The Fluent docker image to use, deprecated.
 	Fluent FluentOptions `json:"fluent"`
 
 	ContainerAutoRemoveDisabled bool `json:"container_auto_remove_disabled"`
@@ -59,6 +61,24 @@ type Options struct {
 	PodmanOptions      PodmanOptions      `json:"podman_options"`
 
 	Debug bool `json:"debug"`
+}
+
+// DefaultFluentOptions stores defaults for Agent FluentBit options, deprecated.
+var DefaultFluentOptions = FluentOptions{
+	ContainerName: "",
+	Port:          0,
+	Image:         "",
+}
+
+// Deprecations describe fields which were recently or will soon be removed.
+func (o Options) Deprecations() (errs []error) {
+	if !reflect.DeepEqual(o.Fluent, DefaultFluentOptions) {
+		errs = append(errs, errors.Errorf("fluent options have been set for the following agent: %s; "+
+			"support for fluent has been removed as of 0.24.1",
+			o.AgentID,
+		))
+	}
+	return errs
 }
 
 // Validate validates the state of the Options struct.
@@ -137,7 +157,7 @@ func (t TLSOptions) ReadClientCertificate() (*tls.Certificate, error) {
 	return &cert, err
 }
 
-// FluentOptions stores configurable Fluent Bit-related options.
+// FluentOptions stores configurable Fluent Bit-related options, deprecated no longer in use.
 type FluentOptions struct {
 	Image         string `json:"image"`
 	Port          int    `json:"port"`

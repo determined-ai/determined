@@ -616,6 +616,12 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		resp.AgentDockerNetwork = pool.Provider.AgentDockerNetwork
 		resp.AgentDockerRuntime = pool.Provider.AgentDockerRuntime
 		resp.AgentDockerImage = pool.Provider.AgentDockerImage
+		if pool.Provider.AgentFluentImage != aproto.FluentImage {
+			ctx.Log().Warnf(
+				"agent_fluent_image is deprecated an no longer in use, currently set to: %s",
+				pool.Provider.AgentFluentImage,
+			)
+		}
 		resp.AgentFluentImage = pool.Provider.AgentFluentImage
 		resp.MaxIdleAgentPeriod = float32(time.Duration(pool.Provider.MaxIdleAgentPeriod).Seconds())
 		startingPeriodSecs := time.Duration(pool.Provider.MaxAgentStartingPeriod).Seconds()

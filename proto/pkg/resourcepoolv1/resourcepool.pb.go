@@ -299,7 +299,7 @@ type ResourcePool struct {
 	AgentDockerRuntime string `protobuf:"bytes,26,opt,name=agent_docker_runtime,json=agentDockerRuntime,proto3" json:"agent_docker_runtime,omitempty"`
 	// The docker image to use for the agent when using dynamic agents
 	AgentDockerImage string `protobuf:"bytes,27,opt,name=agent_docker_image,json=agentDockerImage,proto3" json:"agent_docker_image,omitempty"`
-	// The Fluent docker image to use
+	// Deprecated, the Fluent docker image to use
 	AgentFluentImage string `protobuf:"bytes,28,opt,name=agent_fluent_image,json=agentFluentImage,proto3" json:"agent_fluent_image,omitempty"`
 	// The maximum idle period of agents in seconds. The master waits for this
 	// period of time before shutting down idle agents.

@@ -336,7 +336,7 @@ func (d *Client) ListRunningContainers(ctx context.Context, fs filters.Args) (
 	map[cproto.ID]types.Container, error,
 ) {
 	// List "our" running containers, based on `dockerAgentLabel`.
-	// This doesn't include Fluent Bit or containers spawned by other agents.
+	// This doesn't include containers spawned by other agents.
 	containers, err := d.cl.ContainerList(ctx, types.ContainerListOptions{All: false, Filters: fs})
 	if err != nil {
 		return nil, err
