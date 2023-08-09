@@ -33,7 +33,7 @@ searcher:
   smaller_is_better: false
 environment:
   image: 
-   gpu: determinedai/model-hub-transformers:0.24.0-rc1
+   gpu: determinedai/model-hub-transformers:0.24.0-rc2
 resources:
   slots_per_trial: 2
 # We add a bind_mount here so that cached data, tokenized data, and models will be saved to the
