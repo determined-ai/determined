@@ -30,7 +30,7 @@ Follow [these instructions](https://docs.determined.ai/latest/how-to/installatio
  ```bash
 
 # Start a Determined cluster locally.
-python3.8 -m venv ~/.virtualenvs/test
+python3 -m venv ~/.virtualenvs/test
 . ~/.virtualenvs/test/bin/activate
 pip install determined
 # To start a cluster with GPUs, remove `no-gpu` flag.
