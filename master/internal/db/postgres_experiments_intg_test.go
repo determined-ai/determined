@@ -32,7 +32,7 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)
-	_, task := RequireMockTrial(t, db, exp)
+	tr, task := RequireMockTrial(t, db, exp)
 	a := RequireMockAllocation(t, db, task.TaskID)
 	var expectedCheckpoints1 []uuid.UUID
 	var expectedCheckpoints2 []uuid.UUID

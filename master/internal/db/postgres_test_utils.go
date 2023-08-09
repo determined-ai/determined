@@ -337,7 +337,7 @@ func MockModelCheckpointSteps(
 ) model.CheckpointV2 {
 	ckpt := model.CheckpointV2{
 		UUID:         ckptUUID,
-		TaskID:       tr.TaskID,
+		TaskID:       a.TaskID,
 		AllocationID: &a.AllocationID,
 		ReportTime:   time.Now().UTC(),
 		State:        model.CompletedState,

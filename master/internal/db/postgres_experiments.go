@@ -1128,17 +1128,18 @@ WITH const AS (
 			ASC NULLS LAST, v.id ASC
 		) AS experiment_rank,
 		rank() OVER (
-			PARTITION BY trial_id
+			PARTITION BY v.trial_id
 			ORDER BY const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8 
 			ASC NULLS LAST, v.id ASC
 		) AS trial_rank,
 		rank() OVER (
-			PARTITION BY trial_id
+			PARTITION BY v.trial_id
 			ORDER BY (c.metadata->>'steps_completed')::int DESC
 		) AS trial_order_rank
 	FROM checkpoints_v2 c
 	NATURAL JOIN const
-	JOIN trials t ON c.task_id = t.task_id
+	JOIN trial_id_task_id ON c.task_id = trial_id_task_id.task_id
+    JOIN trials t ON trial_id_task_id.trial_id = t.id
 	LEFT JOIN validations v ON v.total_batches = (c.metadata->>'steps_completed')::int AND 
 		v.trial_id = t.id
 	WHERE c.report_time IS NOT NULL
