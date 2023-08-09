@@ -9,9 +9,35 @@ It takes care of:
 - **Resource management**, for cutting cloud GPU costs.
 - **Experiment tracking**, for analysis and reproducibility.
 
-# Overview
 
-The two main components of Determined are the command line interface (CLI) and the Web UI.
+# Why use Determined?
+
+
+# How Determined Works
+
+The main components of Determined are the Python library, the command line interface (CLI), and the Web UI.
+
+## Python library
+Use the Python library to make your existing PyTorch or Tensorflow code compatible with Determined. 
+
+This can be done by organizing your existing code to follow one of the class-based APIs:
+
+```python
+from determined.pytorch import PyTorchTrial
+
+class YourExperiment(PyTorchTrial):
+  def __init__(self, context):
+    ...
+```
+
+Or by integrating just the functions you want, via the Core API:
+
+```python
+import determined as det
+
+with det.core.init() as core_context:
+    ...
+```
 
 ## CLI
 
@@ -28,7 +54,13 @@ det experiment create gpt.yaml .
 
 ## Web UI
 
-The Web UI
+Use the Web UI to view everything about your experiments:
+
+
+
+
+
+
 
 
 * **Train models faster** using state-of-the-art distributed training, without
