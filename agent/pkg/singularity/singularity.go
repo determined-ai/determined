@@ -64,7 +64,7 @@ type SingularityClient struct {
 	agentTmp    string
 	debug       bool
 	isApptainer bool
-	imageRoot   string
+	imageRoot   string // optional path name to root of image cache
 }
 
 // New returns a new singularity client, which launches and tracks containers.
@@ -331,21 +331,7 @@ func (s *SingularityClient) RunContainer(
 	}
 
 	args = capabilitiesToSingularityArgs(req, args)
-
-	requestedImage := req.ContainerConfig.Image
-	var image string
-	s.log.Tracef("Requested image: %s", requestedImage)
-	if s.imageRoot != "" {
-		cachePathName := s.imageRoot + "/" + requestedImage
-		if _, err = os.Stat(cachePathName); err != nil {
-			s.log.Tracef("Failed to Stat() %s: %s", cachePathName, err)
-		} else {
-			image = cachePathName
-		}
-	}
-	if image == "" {
-		image = cruntimes.CanonicalizeImage(requestedImage)
-	}
+	image := s.computeImageReference(req)
 	args = append(args, image)
 	args = append(args, singularityWrapperEntrypoint)
 	args = append(args, req.ContainerConfig.Cmd...)
@@ -404,6 +390,27 @@ func (s *SingularityClient) RunContainer(
 		},
 		ContainerWaiter: s.waitOnContainer(cproto.ID(id), cont, p),
 	}, nil
+}
+
+// computeImageReference computes a reference to the requested image. If an image cache
+// directory is defined and it contains the required image, a path name to the cached image
+// will be returned, else a docker reference so that the image can be downloaded.
+func (s *SingularityClient) computeImageReference(req cproto.RunSpec) string {
+	requestedImage := req.ContainerConfig.Image
+	var image string
+	s.log.Tracef("Requested image: %s", requestedImage)
+	if s.imageRoot != "" {
+		cachePathName := s.imageRoot + "/" + requestedImage
+		if _, err := os.Stat(cachePathName); err != nil {
+			s.log.Tracef("Failed to locate image in cache: %s", err.Error())
+		} else {
+			image = cachePathName
+		}
+	}
+	if image == "" {
+		image = cruntimes.CanonicalizeImage(requestedImage)
+	}
+	return image
 }
 
 // Sets the environment of the process that will run the Singularity/apptainer command.
