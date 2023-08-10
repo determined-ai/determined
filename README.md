@@ -1,6 +1,6 @@
 <p align="center"><img src="determined-logo.png" alt="Determined AI Logo"></p>
 
-Determined is an all-in-one deep learning platform, compatible with both PyTorch and Tensorflow.
+Determined is an all-in-one deep learning platform, compatible with PyTorch and Tensorflow.
 
 It takes care of:
 
@@ -10,22 +10,6 @@ It takes care of:
 - **Experiment tracking**, for analysis and reproducibility.
 
 
-# Why use Determined?
-
-Here's how Determined compares with other platforms.
-
-
-Feature | PyTorch Lightning | Weights & Biases | MLFlow | Determined |
-| - | - | - | - | - |
-Distributed Training | | | | :white_check_mark:
-Hyperparameter tuning | | | | :white_check_mark:
-Web UI | | | | :white_check_mark:
-PyTorch | | | | :white_check_mark:
-Tensorflow | | | | :white_check_mark:
-
-
-
-
 # How Determined Works
 
 The main components of Determined are the Python library, the command line interface (CLI), and the Web UI.
@@ -33,7 +17,7 @@ The main components of Determined are the Python library, the command line inter
 ## Python Library
 Use the Python library to make your existing PyTorch or Tensorflow code compatible with Determined. 
 
-This can be done by organizing your code into one of the class-based APIs:
+You can do this by organizing your code into one of the class-based APIs:
 
 ```python
 from determined.pytorch import PyTorchTrial
@@ -87,36 +71,27 @@ Use the Web UI to view loss curves, hyperparameter plots, code and configuration
 ![Web UI](docs/assets/readme_images/webui.png)
 
 
-* **Train models faster** using state-of-the-art distributed training, without
-  changing your model code
-* **Automatically find high-quality models** with advanced hyperparameter tuning
-  from the creators of Hyperband
-* **Get more from your GPUs** with smart scheduling and cut cloud GPU costs by
-  seamlessly using preemptible instances
-* **Track and reproduce your work** with experiment tracking that works
-  out-of-the-box, covering code versions, metrics, checkpoints, and
-  hyperparameters
+# Installation
 
-Determined is an open-source deep learning training platform that makes building
-models fast and easy. Determined enables you to:
+Install the CLI:
+```bash
+pip install determined
+```
 
-* **Train models faster** using state-of-the-art distributed training, without
-  changing your model code
-* **Automatically find high-quality models** with advanced hyperparameter tuning
-  from the creators of Hyperband
-* **Get more from your GPUs** with smart scheduling and cut cloud GPU costs by
-  seamlessly using preemptible instances
-* **Track and reproduce your work** with experiment tracking that works
-  out-of-the-box, covering code versions, metrics, checkpoints, and
-  hyperparameters
+Then use `det deploy` to install the Determined cluster on-prem (local), AWS, or GCP.
 
-Determined integrates these features into an easy-to-use, high-performance deep
-learning environment — which means you can spend your time building models
-instead of managing infrastructure.
+See the following guides for all installation options:
 
-To use Determined, you can continue using popular DL frameworks such as
-TensorFlow and PyTorch; you just need to update your model code to integrate
-with the Determined API.
+- [On-prem (local)](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/on-prem/overview.html)
+- [AWS](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/aws/overview.html)
+- [GCP](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/gcp/overview.html)
+- [Kubernetes](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/k8s/overview.html)
+- [Slurm/PBS](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/slurm/overview.html)
+
+# Documentation
+
+The documentation for the latest version of Determined can always be found
+[here](https://docs.determined.ai).
 
 ## Try out Determined Locally
 
@@ -140,9 +115,6 @@ cd determined/examples/computer_vision/cifar10_pytorch
 det experiment create const.yaml .
  ```
 
-## Detailed Installation Guide
-
-See [our installation guide](https://docs.determined.ai/latest/how-to/install-main.html) for details on how to install Determined, including on AWS and GCP.
 
 ### Try Now on AWS
 
