@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -82,6 +83,7 @@ func detectCudaGPUs(visibleGPUs string) ([]device.Device, error) {
 	devices = make([]device.Device, 0)
 
 	r := csv.NewReader(strings.NewReader(string(out)))
+	cudaVisibleDevices := parseVisibleDevices()
 	for {
 		record, err := r.Read()
 		switch {
@@ -93,7 +95,9 @@ func detectCudaGPUs(visibleGPUs string) ([]device.Device, error) {
 			return nil, errors.New(
 				"error parsing output of nvidia-smi; GPU record should have exactly 3 fields")
 		}
-
+		if deviceNotAllocated(cudaVisibleDevices, record) {
+			continue // skip device outside of our allocation
+		}
 		index, err := strconv.Atoi(strings.TrimSpace(record[0]))
 		if err != nil {
 			return nil, errors.Wrap(
@@ -110,6 +114,27 @@ func detectCudaGPUs(visibleGPUs string) ([]device.Device, error) {
 			Type:  device.CUDA,
 		})
 	}
+}
+
+func parseVisibleDevices() []string {
+	devices, found := os.LookupEnv("CUDA_VISIBLE_DEVICES")
+	if !found {
+		return nil
+	}
+	log.Tracef("CUDA_VISIBLE_DEVICES: %s", devices)
+	return strings.Split(devices, ",")
+}
+
+func deviceNotAllocated(devices []string, device []string) bool {
+	if devices == nil {
+		return false
+	}
+	for _, d := range devices {
+		if d == device[0] {
+			return false
+		}
+	}
+	return true
 }
 
 // detect if MIG is enabled and if there are instances configured.
