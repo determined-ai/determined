@@ -13,6 +13,7 @@ import (
 type requestProcessingWorker struct {
 	podInterfaces       map[string]typedV1.PodInterface
 	configMapInterfaces map[string]typedV1.ConfigMapInterface
+	failures            chan<- resourcesRequestFailure
 	syslog              *logrus.Entry
 }
 
@@ -61,7 +62,7 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 		context.TODO(), msg.configMapSpec, metaV1.CreateOptions{})
 	if err != nil {
 		r.syslog.WithError(err).Errorf("error creating configMap %s", msg.configMapSpec.Name)
-		go msg.errorHandler(resourceCreationFailed{err})
+		r.failures <- resourceCreationFailed{podName: msg.podSpec.Name, err: err}
 		return
 	}
 	r.syslog.Infof("created configMap %s", configMap.Name)
@@ -72,7 +73,7 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 	)
 	if err != nil {
 		r.syslog.WithError(err).Errorf("error creating pod %s", msg.podSpec.Name)
-		go msg.errorHandler(resourceCreationFailed{err})
+		r.failures <- resourceCreationFailed{podName: msg.podSpec.Name, err: err}
 		return
 	}
 	r.syslog.Infof("created pod %s", pod.Name)
@@ -111,6 +112,6 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 	// It is possible that the creator of the message is no longer around.
 	// However this should have no impact on correctness.
 	if err != nil {
-		go msg.errorHandler(resourceDeletionFailed{err})
+		r.failures <- resourceDeletionFailed{podName: msg.podName, err: err}
 	}
 }
