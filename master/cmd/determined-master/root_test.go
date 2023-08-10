@@ -31,6 +31,16 @@ resource_pools:
               diskSizeGb: "200"
               diskType: projects/determined-ai/zones/us-central1-a/diskTypes/pd-ssd
             autoDelete: true
+    task_container_defaults:
+      cpu_pod_spec:
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          labels:
+            "app.kubernetes.io/camelCase": "cpu-label"
+        spec:
+          containers:
+            - name: determined-container
 task_container_defaults:
   cpu_pod_spec:
     apiVersion: v1
@@ -66,14 +76,6 @@ webhooks:
 		ShmSizeBytes: 4294967296,
 		NetworkMode:  "bridge",
 	}
-	expected.ResourcePools = []config.ResourcePoolConfig{
-		{
-			PoolName:                 "default",
-			Provider:                 providerConf,
-			MaxAuxContainersPerAgent: 100,
-			AgentReconnectWait:       model.Duration(aproto.AgentReconnectWait),
-		},
-	}
 	expected.TaskContainerDefaults.CPUPodSpec = &k8sV1.Pod{
 		TypeMeta: metaV1.TypeMeta{
 			Kind:       "Pod",
@@ -90,6 +92,16 @@ webhooks:
 			Labels: map[string]string{
 				"app.kubernetes.io/camelCase": "cpu-label",
 			},
+		},
+	}
+
+	expected.ResourcePools = []config.ResourcePoolConfig{
+		{
+			PoolName:                 "default",
+			Provider:                 providerConf,
+			MaxAuxContainersPerAgent: 100,
+			AgentReconnectWait:       model.Duration(aproto.AgentReconnectWait),
+			TaskContainerDefaults:    &expected.TaskContainerDefaults,
 		},
 	}
 
