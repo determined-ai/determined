@@ -198,3 +198,11 @@ Deprecated. This field has been deprecated and will be ignored. Use ``resource_p
 
 If ``true``, enables a more verbose form of logging that may be helpful in diagnosing issues.
 Defaults to ``false``.
+
+****************
+ ``image_root``
+****************
+
+If set then specifies the path to a shared directory of previously downloaded Determined environment
+images. If not defined, then Determined environments will be downloaded automatically. For more
+information on setting up an image cache see :ref:`singularity-image-cache`. Defaults to undefined.
