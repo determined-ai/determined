@@ -29,9 +29,9 @@ const ResourcePoolsBound: React.FC<Props> = ({ workspace }) => {
 
   const boundResourcePools: ResourcePool[] = useMemo(() => {
     if (!Loadable.isLoaded(resourcePools) || !boundResourcePoolNames) return [];
-    const unboundResourcePoolNames = Loadable.isLoaded(unboundResourcePools)
-      ? unboundResourcePools.data.map((p) => p.name)
-      : [];
+    const unboundResourcePoolNames = Loadable.getOrElse([], unboundResourcePools).map(
+      (p) => p.name,
+    );
     return resourcePools.data.filter(
       (rp) =>
         boundResourcePoolNames.includes(rp.name) && !unboundResourcePoolNames.includes(rp.name),
@@ -106,10 +106,10 @@ const ResourcePoolsBound: React.FC<Props> = ({ workspace }) => {
           </Card.Group>
         </Section>
       )}
-      {Loadable.isLoaded(unboundResourcePools) && unboundResourcePools.data.length > 0 && (
+      {Loadable.getOrElse([], unboundResourcePools).length > 0 && (
         <Section title="Shared Resource Pools">
           <Card.Group size="medium">
-            {unboundResourcePools.data.map((rp: ResourcePool) => (
+            {Loadable.getOrElse([], unboundResourcePools).map((rp: ResourcePool) => (
               <ResourcePoolCard key={rp.name} resourcePool={rp} />
             ))}
           </Card.Group>
