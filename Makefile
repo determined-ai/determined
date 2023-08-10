@@ -107,6 +107,9 @@ TF_LOCK ?= true
 slurmcluster:
 	$(MAKE) -C tools/slurm slurmcluster FLAGS="$(FLAGS)" TF_LOCK=$(TF_LOCK)
 
+slurmcluster/usage:
+	$(MAKE) -C tools/slurm usage
+
 .PHONY: unslurmcluster
 unslurmcluster:
 	$(MAKE) -C tools/slurm unslurmcluster TF_LOCK=$(TF_LOCK)

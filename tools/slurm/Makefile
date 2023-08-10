@@ -27,6 +27,8 @@ usage:
 	@echo "        -t  Sets a time limit in seconds for the slurmcluster devbox to run"
 	@echo "            before automatically deleting the VM. If unspecified, the default time is two"
 	@echo "            hours or 7200 seconds. One must run 'make unslurmcluster' before changing the time."
+	@echo "	       -d  Connect to a dev launcher manually deployed to the GCP VM using 'loadDevlauncher.sh -g'."
+	@echo " "
 	@echo "        You can also combine the flags."
 	@echo "        Example: make slurmcluster FLAGS=\"-A input1 -c input2\""
 	@echo " "

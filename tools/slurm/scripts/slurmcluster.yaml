@@ -74,7 +74,7 @@ stages:
           master_host: localhost
           master_port: 8080
           host: localhost
-          port: 8081
+          port: $OPT_LAUNCHER_PORT
           protocol: http
           container_run_type: $OPT_CONTAINER_RUN_TYPE
           security:
