@@ -89,7 +89,6 @@ per-file-ignores =
   determined/pytorch/dsat/_dsat_search_method.py:I2041
   determined/pytorch/dsat/_run_dsat.py:I2041
   determined/pytorch/dsat/_utils.py:I2041
-  determined/pytorch/lightning/_adapter.py:I2041
   determined/searcher/_remote_search_runner.py:I2041
   determined/searcher/_search_method.py:I2041
   determined/searcher/_search_runner.py:I2041
@@ -121,19 +120,13 @@ per-file-ignores =
   tests/experiment/fixtures/estimator_xor_model.py:I2041
   tests/experiment/fixtures/keras_no_op/model_def.py:I2041
   tests/experiment/fixtures/keras_tf2_disabled_no_op/model_def.py:I2041
-  tests/experiment/fixtures/lightning_adapter_onevar_model.py:I2041
   tests/experiment/fixtures/pytorch_amp/apex_amp_model_def.py:I2041
   tests/experiment/fixtures/pytorch_amp/auto_amp_model_def.py:I2041
   tests/experiment/fixtures/pytorch_amp/layers.py:I2041
   tests/experiment/fixtures/pytorch_amp/manual_amp_model_def.py:I2041
   tests/experiment/fixtures/pytorch_amp/model_def.py:I2041
-  tests/experiment/fixtures/pytorch_lightning_amp/apex_amp_model_def.py:I2041
-  tests/experiment/fixtures/pytorch_lightning_amp/auto_amp_model_def.py:I2041
-  tests/experiment/fixtures/pytorch_lightning_amp/data.py:I2041
-  tests/experiment/fixtures/pytorch_lightning_amp/model_def.py:I2041
   tests/experiment/fixtures/tf_keras_one_var_model.py:I2041
   tests/experiment/fixtures/tf_keras_xor_model.py:I2041
-  tests/experiment/integrations/test_pytorch_lightning.py:I2041
   tests/experiment/keras/test_keras_data.py:I2041
   tests/experiment/keras/test_tf_keras_trial.py:I2041
   tests/experiment/pytorch/test_deepspeed_autotuning.py:I2041

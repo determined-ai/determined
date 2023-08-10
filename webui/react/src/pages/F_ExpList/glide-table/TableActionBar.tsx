@@ -397,10 +397,10 @@ const TableActionBar: React.FC<Props> = ({
           {heatmapBtnVisible && (
             <Tooltip content={'Toggle Metric Heatmap'}>
               <Button
+                icon={<Icon name="heatmap" title="heatmap" />}
                 type={heatmapOn ? 'primary' : 'default'}
-                onClick={() => toggleHeatmap(heatmapOn)}>
-                <Icon name="heatmap" title="heatmap" />
-              </Button>
+                onClick={() => toggleHeatmap(heatmapOn)}
+              />
             </Tooltip>
           )}
           <OptionsMenu

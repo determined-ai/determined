@@ -5,10 +5,11 @@ mypy==0.910
 responses!=0.23.2
 requests_mock
 coverage
-pytorch_lightning==1.5.9
 deepspeed==0.8.3
 transformers>=4.8.2,<4.29.0
 attrdict3
 moto
 # Pydantic V2 has changes that break existing tests
 pydantic<2
+# setuptools needs to be pinned until we bump to torch>=1.11 and remove references to distutils.version
+setuptools==59.5.0

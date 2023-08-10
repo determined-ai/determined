@@ -20,12 +20,14 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
+
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -33,12 +35,14 @@ import (
 
 func createTestTrial(
 	t *testing.T, api *apiServer, curUser model.User,
-) *model.Trial {
+) (*model.Trial, *model.Task) {
 	exp := createTestExpWithProjectID(t, api, curUser, 1)
 
 	task := &model.Task{
-		TaskType: model.TaskTypeTrial,
-		TaskID:   trialTaskID(exp.ID, model.NewRequestID(rand.Reader)),
+		TaskType:   model.TaskTypeTrial,
+		LogVersion: model.TaskLogVersion1,
+		StartTime:  time.Now(),
+		TaskID:     trialTaskID(exp.ID, model.NewRequestID(rand.Reader)),
 	}
 	require.NoError(t, api.m.db.AddTask(task))
 
@@ -46,21 +50,20 @@ func createTestTrial(
 		StartTime:    time.Now(),
 		State:        model.PausedState,
 		ExperimentID: exp.ID,
-		TaskID:       task.TaskID,
 	}
-	require.NoError(t, api.m.db.AddTrial(trial))
+	require.NoError(t, db.AddTrial(context.TODO(), trial, task.TaskID))
 
 	// Return trial exactly the way the API will generally get it.
-	outTrial, err := api.m.db.TrialByID(trial.ID)
+	outTrial, err := db.TrialByID(context.TODO(), trial.ID)
 	require.NoError(t, err)
-	return outTrial
+	return outTrial, task
 }
 
 func createTestTrialWithMetrics(
 	ctx context.Context, t *testing.T, api *apiServer, curUser model.User, includeBatchMetrics bool,
 ) (*model.Trial, []*commonv1.Metrics, []*commonv1.Metrics) {
 	var trainingMetrics, validationMetrics []*commonv1.Metrics
-	trial := createTestTrial(t, api, curUser)
+	trial, _ := createTestTrial(t, api, curUser)
 
 	for i := 0; i < 10; i++ {
 		trainMetrics := &commonv1.Metrics{
@@ -378,7 +381,7 @@ func TestNonNumericEpochMetric(t *testing.T) {
 	expectedMetrics, err := structpb.NewStruct(expectedMetricsMap)
 	require.NoError(t, err)
 
-	trial := createTestTrial(t, api, curUser)
+	trial, _ := createTestTrial(t, api, curUser)
 	_, err = api.ReportTrialValidationMetrics(ctx, &apiv1.ReportTrialValidationMetricsRequest{
 		ValidationMetrics: &trialv1.TrialMetrics{
 			TrialId:        int32(trial.ID),
@@ -405,7 +408,7 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 	expectedMetrics, err := structpb.NewStruct(expectedMetricsMap)
 	require.NoError(t, err)
 
-	trial := createTestTrial(t, api, curUser)
+	trial, _ := createTestTrial(t, api, curUser)
 	_, err = api.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
 		Metrics: &trialv1.TrialMetrics{
 			TrialId:        int32(trial.ID),
@@ -484,7 +487,7 @@ func TestUnusualMetricNames(t *testing.T) {
 	expectedMetrics, err := structpb.NewStruct(expectedMetricsMap)
 	require.NoError(t, err)
 
-	trial := createTestTrial(t, api, curUser)
+	trial, _ := createTestTrial(t, api, curUser)
 	_, err = api.ReportTrialValidationMetrics(ctx, &apiv1.ReportTrialValidationMetricsRequest{
 		ValidationMetrics: &trialv1.TrialMetrics{
 			TrialId:        int32(trial.ID),
@@ -512,7 +515,7 @@ func TestUnusualMetricNames(t *testing.T) {
 func TestTrialAuthZ(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 	authZNSC := setupNSCAuthZ()
-	trial := createTestTrial(t, api, curUser)
+	trial, _ := createTestTrial(t, api, curUser)
 
 	cases := []struct {
 		DenyFuncName   string
@@ -672,6 +675,292 @@ func TestTrialAuthZ(t *testing.T) {
 	}
 }
 
+func TestTrialProtoTaskIDs(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	trial, task0 := createTestTrial(t, api, curUser)
+
+	_, err := db.Bun().NewUpdate().Table("experiments").
+		Set("best_trial_id = ?", trial.ID).
+		Where("id = ?", trial.ExperimentID).Exec(ctx)
+	require.NoError(t, err)
+
+	task1 := &model.Task{
+		TaskType:   model.TaskTypeTrial,
+		LogVersion: model.TaskLogVersion1,
+		StartTime:  task0.StartTime.Add(time.Second),
+		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
+	}
+	require.NoError(t, api.m.db.AddTask(task1))
+
+	task2 := &model.Task{
+		TaskType:   model.TaskTypeTrial,
+		LogVersion: model.TaskLogVersion1,
+		StartTime:  task1.StartTime.Add(time.Second),
+		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
+	}
+	require.NoError(t, api.m.db.AddTask(task2))
+
+	_, err = db.Bun().NewInsert().Model(&[]model.TrialTaskID{
+		{TrialID: trial.ID, TaskID: task1.TaskID},
+		{TrialID: trial.ID, TaskID: task2.TaskID},
+	}).Exec(ctx)
+	require.NoError(t, err)
+
+	taskIDs := []string{string(task0.TaskID), string(task1.TaskID), string(task2.TaskID)}
+
+	cases := []struct {
+		name string
+		f    func(t *testing.T) *trialv1.Trial
+	}{
+		{"GetTrial", func(t *testing.T) *trialv1.Trial {
+			resp, err := api.GetTrial(ctx, &apiv1.GetTrialRequest{
+				TrialId: int32(trial.ID),
+			})
+			require.NoError(t, err)
+			return resp.Trial
+		}},
+		{"GetExperimentTrials", func(t *testing.T) *trialv1.Trial {
+			resp, err := api.GetExperimentTrials(ctx, &apiv1.GetExperimentTrialsRequest{
+				ExperimentId: int32(trial.ExperimentID),
+			})
+			require.NoError(t, err)
+			require.Len(t, resp.Trials, 1)
+			return resp.Trials[0]
+		}},
+		/* CompareTrials previously and now sends TaskID="". We also will send TaskIDs=[].
+		{"CompareTrials", func(t *testing.T) *trialv1.Trial {
+			resp, err := api.CompareTrials(ctx, &apiv1.CompareTrialsRequest{
+				TrialIds: []int32{int32(trial.ID)},
+			})
+			require.NoError(t, err)
+			require.Len(t, resp.Trials, 1)
+			return resp.Trials[0].Trial
+		}}, */
+		{"SearchExperiments", func(t *testing.T) *trialv1.Trial {
+			resp, err := api.SearchExperiments(ctx, &apiv1.SearchExperimentsRequest{
+				Filter: ptrs.Ptr(
+					fmt.Sprintf(
+						`{"filterGroup":
+	{"children":[{"columnName":"id","kind":"field","operator":"=","value":%d}],
+		"conjunction":"and","kind":"group"},"showArchived":false}`, trial.ExperimentID)),
+			})
+			require.NoError(t, err)
+			require.Len(t, resp.Experiments, 1)
+			return resp.Experiments[0].BestTrial
+		}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			resp := c.f(t)
+			// Still test deprecated field for TaskID.
+			require.Equal(t, string(task0.TaskID), resp.TaskId) // nolint: staticcheck
+			require.Equal(t, taskIDs, resp.TaskIds)
+		})
+	}
+}
+
+func TestTrialLogs(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	trial, task0 := createTestTrial(t, api, curUser)
+
+	task1 := &model.Task{
+		TaskType:   model.TaskTypeTrial,
+		LogVersion: model.TaskLogVersion1,
+		StartTime:  task0.StartTime.Add(time.Second),
+		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
+	}
+	require.NoError(t, api.m.db.AddTask(task1))
+
+	task2 := &model.Task{
+		TaskType:   model.TaskTypeTrial,
+		LogVersion: model.TaskLogVersion1,
+		StartTime:  task1.StartTime.Add(time.Second),
+		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
+	}
+	require.NoError(t, api.m.db.AddTask(task2))
+
+	_, err := db.Bun().NewInsert().Model(&[]model.TrialTaskID{
+		{TrialID: trial.ID, TaskID: task1.TaskID},
+		{TrialID: trial.ID, TaskID: task2.TaskID},
+	}).Exec(ctx)
+	require.NoError(t, err)
+
+	var expected []string
+	tasks := []model.TaskID{task0.TaskID, task1.TaskID, task2.TaskID}
+	var taskLogs []*model.TaskLog
+	for i, taskID := range tasks {
+		for j := 0; j < 9; j++ {
+			log := fmt.Sprintf("%d-%d\n", i, j)
+			taskLogs = append(taskLogs, &model.TaskLog{TaskID: string(taskID), Log: log})
+			expected = append(expected, log)
+		}
+	}
+	require.NoError(t, api.m.db.AddTaskLogs(taskLogs))
+
+	stream := &mockStream[*apiv1.TrialLogsResponse]{ctx: ctx}
+
+	err = api.TrialLogs(&apiv1.TrialLogsRequest{
+		TrialId: int32(trial.ID),
+	}, stream)
+	require.NoError(t, err)
+
+	require.Equal(t, len(expected), len(stream.data))
+	for i, expected := range expected {
+		require.Equal(t, expected, *stream.data[i].Log)
+	}
+
+	// Retry with follow.
+	newStream := &mockStream[*apiv1.TrialLogsResponse]{ctx: ctx}
+	done := make(chan error, 1)
+	go func() {
+		done <- api.TrialLogs(&apiv1.TrialLogsRequest{
+			TrialId: int32(trial.ID),
+			Follow:  true,
+		}, newStream)
+	}()
+
+	// Send a new log.
+	log := "new log\n"
+	require.NoError(t, api.m.db.AddTaskLogs(
+		[]*model.TaskLog{{TaskID: string(task2.TaskID), Log: log}}))
+	expected = append(expected, log)
+
+	// Ensure we are still following.
+	select {
+	case <-done:
+		require.NoError(t, err)
+		t.Fatal("follow isn't following task logs")
+	case <-time.After(10 * time.Second):
+		break
+	}
+
+	// Note we only update the latest task. We only care about the latest task in following.
+	_, err = db.Bun().NewUpdate().Table("tasks").
+		Set("end_time = ?", time.Now().Add(-time.Hour)). // An hour ago to avoid termination delay.
+		Where("task_id = ?", task2.TaskID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	select {
+	case <-done:
+		break
+	case <-time.After(30 * time.Second):
+		t.Fatal("follow is following too long task logs")
+	}
+
+	require.Equal(t, len(expected), len(newStream.data))
+	for i, expected := range expected {
+		require.Equal(t, expected, *newStream.data[i].Log)
+	}
+}
+
+func TestTrialLogFields(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	trial, task0 := createTestTrial(t, api, curUser)
+
+	task1 := &model.Task{
+		TaskType:   model.TaskTypeTrial,
+		LogVersion: model.TaskLogVersion1,
+		StartTime:  task0.StartTime.Add(time.Second),
+		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
+	}
+	require.NoError(t, api.m.db.AddTask(task1))
+
+	task2 := &model.Task{
+		TaskType:   model.TaskTypeTrial,
+		LogVersion: model.TaskLogVersion1,
+		StartTime:  task1.StartTime.Add(time.Second),
+		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
+	}
+	require.NoError(t, api.m.db.AddTask(task2))
+
+	_, err := db.Bun().NewInsert().Model(&[]model.TrialTaskID{
+		{TrialID: trial.ID, TaskID: task1.TaskID},
+		{TrialID: trial.ID, TaskID: task2.TaskID},
+	}).Exec(ctx)
+	require.NoError(t, err)
+
+	expectedContainerIDs := make(map[string]bool)
+	tasks := []model.TaskID{task0.TaskID, task1.TaskID, task2.TaskID}
+	var taskLogs []*model.TaskLog
+	for i, taskID := range tasks {
+		containerID := fmt.Sprintf("id-%d", i)
+		taskLogs = append(taskLogs, &model.TaskLog{
+			TaskID:      string(taskID),
+			Log:         "test log",
+			ContainerID: ptrs.Ptr(containerID),
+		})
+		expectedContainerIDs[containerID] = true
+	}
+	require.NoError(t, api.m.db.AddTaskLogs(taskLogs))
+
+	stream := &mockStream[*apiv1.TrialLogsFieldsResponse]{ctx: ctx}
+
+	err = api.TrialLogsFields(&apiv1.TrialLogsFieldsRequest{
+		TrialId: int32(trial.ID),
+	}, stream)
+	require.NoError(t, err)
+
+	actualContainerIDs := make(map[string]bool)
+	for _, s := range stream.data {
+		for _, containerID := range s.ContainerIds {
+			actualContainerIDs[containerID] = true
+		}
+	}
+	require.Equal(t, expectedContainerIDs, actualContainerIDs)
+
+	// Retry with follow.
+	newStream := &mockStream[*apiv1.TrialLogsFieldsResponse]{ctx: ctx}
+	done := make(chan error, 1)
+	go func() {
+		done <- api.TrialLogsFields(&apiv1.TrialLogsFieldsRequest{
+			TrialId: int32(trial.ID),
+			Follow:  true,
+		}, newStream)
+	}()
+
+	// Send a new log.
+	containerID := "newContainerID"
+	require.NoError(t, api.m.db.AddTaskLogs(
+		[]*model.TaskLog{{
+			TaskID:      string(task2.TaskID),
+			Log:         "test log",
+			ContainerID: ptrs.Ptr(containerID),
+		}}))
+	expectedContainerIDs[containerID] = true
+
+	// Ensure we are still following.
+	select {
+	case <-done:
+		require.NoError(t, err)
+		t.Fatal("follow isn't following task logs")
+	case <-time.After(10 * time.Second):
+		break
+	}
+
+	// Note we only update the latest task. We only care about the latest task in following.
+	_, err = db.Bun().NewUpdate().Table("tasks").
+		Set("end_time = ?", time.Now().Add(-time.Hour)). // An hour ago to avoid termination delay.
+		Where("task_id = ?", task2.TaskID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	select {
+	case <-done:
+		break
+	case <-time.After(30 * time.Second):
+		t.Fatal("follow is following too long task logs")
+	}
+
+	actualContainerIDs = make(map[string]bool)
+	for _, s := range newStream.data {
+		for _, containerID := range s.ContainerIds {
+			actualContainerIDs[containerID] = true
+		}
+	}
+	require.Equal(t, expectedContainerIDs, actualContainerIDs)
+}
+
 func compareTrialsResponseToBatches(resp *apiv1.CompareTrialsResponse) []int32 {
 	compTrial := resp.Trials[0]
 	compMetrics := compTrial.Metrics[0]
@@ -743,8 +1032,8 @@ func createTestTrialInferenceMetrics(ctx context.Context, t *testing.T, api *api
 
 func TestTrialSourceInfoCheckpoint(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
-	infTrial := createTestTrial(t, api, curUser)
-	infTrial2 := createTestTrial(t, api, curUser)
+	infTrial, _ := createTestTrial(t, api, curUser)
+	infTrial2, _ := createTestTrial(t, api, curUser)
 	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial.ID))
 
 	// Create a checkpoint to index with
@@ -823,8 +1112,8 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 
 func TestTrialSourceInfoModelVersion(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
-	infTrial := createTestTrial(t, api, curUser)
-	infTrial2 := createTestTrial(t, api, curUser)
+	infTrial, _ := createTestTrial(t, api, curUser)
+	infTrial2, _ := createTestTrial(t, api, curUser)
 	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial.ID))
 
 	// Create a checkpoint to index with

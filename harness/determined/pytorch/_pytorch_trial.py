@@ -335,13 +335,14 @@ class _PyTorchTrialController:
         batch_metrics = metrics.get("batch_metrics", [])
 
         assert self.state
-        det.pytorch._log_tb_metrics(
-            self.context.get_tensorboard_writer(),
-            "train",
-            self.state.batches_trained,
-            avg_metrics,
-            batch_metrics,
-        )
+        if self.context.get_enable_tensorboard_logging():
+            det.pytorch._log_tb_metrics(
+                self.context.get_tensorboard_writer(),
+                "train",
+                self.state.batches_trained,
+                avg_metrics,
+                batch_metrics,
+            )
 
         self.core_context.train.report_training_metrics(
             steps_completed=self.state.batches_trained,
@@ -773,7 +774,8 @@ class _PyTorchTrialController:
                 train_boundary.limit_reached = False
 
                 # After checkpoint/validation steps, check preemption and upload to tensorboard
-                self._upload_tb_files()
+                if self.context.get_enable_tensorboard_logging():
+                    self._upload_tb_files()
                 self._stop_requested()
 
         # Finished training for op. Perform final checkpoint/validation if necessary.
@@ -1030,9 +1032,13 @@ class _PyTorchTrialController:
                 logging.info(
                     det.util.make_timing_log("validated", step_duration, num_inputs, num_batches)
                 )
-            det.pytorch._log_tb_metrics(
-                self.context.get_tensorboard_writer(), "val", self.state.batches_trained, metrics
-            )
+            if self.context.get_enable_tensorboard_logging():
+                det.pytorch._log_tb_metrics(
+                    self.context.get_tensorboard_writer(),
+                    "val",
+                    self.state.batches_trained,
+                    metrics,
+                )
 
             # Get best validation before reporting metrics.
             best_validation_before = self.core_context.train.get_experiment_best_validation()

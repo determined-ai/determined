@@ -54,6 +54,7 @@ type Options struct {
 	Hooks HooksOptions `json:"hooks"`
 
 	ContainerRuntime   string             `json:"container_runtime"`
+	ImageRoot          string             `json:"image_root"`
 	SingularityOptions SingularityOptions `json:"singularity_options"`
 	PodmanOptions      PodmanOptions      `json:"podman_options"`
 
@@ -153,6 +154,7 @@ type ContainerRuntime string
 
 // Available container runtimes.
 const (
+	ApptainerContainerRuntime   = "apptainer"
 	SingularityContainerRuntime = "singularity"
 	DockerContainerRuntime      = "docker"
 	PodmanContainerRuntime      = "podman"

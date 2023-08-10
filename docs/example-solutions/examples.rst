@@ -66,10 +66,6 @@ For an introduction to using the training API, please visit the Training APIs se
       -  COCO
       -  :download:`detectron2_coco_pytorch.tgz </examples/detectron2_coco_pytorch.tgz>`
 
-   -  -  PyTorch (Lightning Adapter)
-      -  MNIST
-      -  :download:`mnist_pl.tgz </examples/mnist_pl.tgz>`
-
    -  -  TensorFlow (tf.keras)
       -  Fashion MNIST
       -  :download:`fashion_mnist_tf_keras.tgz </examples/fashion_mnist_tf_keras.tgz>`

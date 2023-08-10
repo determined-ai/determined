@@ -500,6 +500,7 @@ class trialv1Trial(Printable):
     runnerState: "typing.Optional[str]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     taskId: "typing.Optional[str]" = None
+    taskIds: "typing.Optional[typing.Sequence[str]]" = None
     totalCheckpointSize: "typing.Optional[str]" = None
     wallClockTime: "typing.Optional[float]" = None
     warmStartCheckpointUuid: "typing.Optional[str]" = None
@@ -522,6 +523,7 @@ class trialv1Trial(Printable):
         runnerState: "typing.Union[str, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         taskId: "typing.Union[str, None, Unset]" = _unset,
+        taskIds: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         totalCheckpointSize: "typing.Union[str, None, Unset]" = _unset,
         wallClockTime: "typing.Union[float, None, Unset]" = _unset,
         warmStartCheckpointUuid: "typing.Union[str, None, Unset]" = _unset,
@@ -549,6 +551,8 @@ class trialv1Trial(Printable):
             self.summaryMetrics = summaryMetrics
         if not isinstance(taskId, Unset):
             self.taskId = taskId
+        if not isinstance(taskIds, Unset):
+            self.taskIds = taskIds
         if not isinstance(totalCheckpointSize, Unset):
             self.totalCheckpointSize = totalCheckpointSize
         if not isinstance(wallClockTime, Unset):
@@ -583,6 +587,8 @@ class trialv1Trial(Printable):
             kwargs["summaryMetrics"] = obj["summaryMetrics"]
         if "taskId" in obj:
             kwargs["taskId"] = obj["taskId"]
+        if "taskIds" in obj:
+            kwargs["taskIds"] = obj["taskIds"]
         if "totalCheckpointSize" in obj:
             kwargs["totalCheckpointSize"] = obj["totalCheckpointSize"]
         if "wallClockTime" in obj:
@@ -617,6 +623,8 @@ class trialv1Trial(Printable):
             out["summaryMetrics"] = self.summaryMetrics
         if not omit_unset or "taskId" in vars(self):
             out["taskId"] = self.taskId
+        if not omit_unset or "taskIds" in vars(self):
+            out["taskIds"] = self.taskIds
         if not omit_unset or "totalCheckpointSize" in vars(self):
             out["totalCheckpointSize"] = self.totalCheckpointSize
         if not omit_unset or "wallClockTime" in vars(self):

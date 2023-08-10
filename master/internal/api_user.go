@@ -79,6 +79,7 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 		Username:       user.Username,
 		Admin:          user.Admin,
 		Active:         user.Active,
+		Remote:         user.Remote,
 		AgentUserGroup: agentUserGroup,
 		DisplayName:    displayNameString,
 		ModifiedAt:     timestamppb.New(user.ModifiedAt),
