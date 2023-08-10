@@ -119,6 +119,9 @@ func mergeConfigIntoViper(bs []byte) (*config.Config, error) {
 	// using the map you copied.
 	viperConfig := v.AllSettings()
 	viperConfig["task_container_defaults"] = cpMap["task_container_defaults"]
+	if conf, ok := cpMap["resource_pools"]; ok {
+		viperConfig["resource_pools"] = conf
+	}
 
 	return getConfig(viperConfig)
 }
