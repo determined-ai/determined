@@ -107,7 +107,7 @@ webhooks:
 
 	err := expected.Resolve()
 	assert.NilError(t, err)
-	config, err := mergeConfigBytesIntoViper([]byte(raw))
+	config, err := mergeConfigIntoViper([]byte(raw))
 	assert.NilError(t, err)
 	assert.DeepEqual(t, config, expected)
 }

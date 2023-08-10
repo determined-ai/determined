@@ -80,7 +80,7 @@ func initializeConfig() error {
 		return err
 	}
 
-	conf, err := mergeConfigBytesIntoViper(bs)
+	conf, err := mergeConfigIntoViper(bs)
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func initializeConfig() error {
 	return nil
 }
 
-func mergeConfigBytesIntoViper(bs []byte) (*config.Config, error) {
+func mergeConfigIntoViper(bs []byte) (*config.Config, error) {
 	// Write a configMap from the config file, and create a copy (cpMap) to
 	// deepcopy values needed to override viper's merge auto-lowercasing.
 	var configMap, cpMap map[string]interface{}
