@@ -80,43 +80,13 @@ pip install determined
 
 Then use `det deploy` to start the Determined cluster on AWS, GCP, or locally.
 
-See the following guides for all the installation details:
+See the following guides for all installation details:
 
 - [Local (on-prem)](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/on-prem/overview.html)
 - [AWS](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/aws/overview.html)
 - [GCP](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/gcp/overview.html)
 - [Kubernetes](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/k8s/overview.html)
 - [Slurm/PBS](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/slurm/overview.html)
-
-
-## Try out Determined Locally
-
-Follow [these instructions](https://docs.determined.ai/latest/how-to/installation/requirements.html#install-docker) to install and set up docker.
-
-Then run the following script:
-
- ```bash
-# Start a Determined cluster locally.
-python3.7 -m venv ~/.virtualenvs/test
-. ~/.virtualenvs/test/bin/activate
-pip install determined
-# To start a cluster with GPUs, remove `no-gpu` flag.
-det deploy local cluster-up --no-gpu
-# Access web UI at localhost:8080. By default, "determined" user accepts a blank password.
-
-# Navigate to a Determined example.
-git clone --recurse-submodules https://github.com/determined-ai/determined
-cd determined/examples/computer_vision/cifar10_pytorch
-
-# Submit job to train a single model on a single node.
-det experiment create const.yaml .
- ```
-
-
-## Try Now on AWS
-
-[![Try Now](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://determined-ai-public.s3-us-west-2.amazonaws.com/simple.yaml)
-
 
 # Documentation
 
