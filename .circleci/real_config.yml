@@ -4305,13 +4305,12 @@ workflows:
           slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local
-          extra-pytest-flags: "--no-compare-stats -k 'not test_hpc_job_pending_reason'"
+          extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-enroot-znode
           slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local
-          extra-pytest-flags: "-k 'not test_hpc_job_pending_reason'"
           master_config: |
             task_container_defaults:
               # The current image must be created in the launcher account before running this test
@@ -4359,7 +4358,7 @@ workflows:
             requires:
               - package-and-push-system-local
             agent-use: "-A"
-            extra-pytest-flags: "-k 'not node_not_available and not test_hpc_job_pending_reason'"
+            extra-pytest-flags: "-k 'not node_not_available'"
             # For now we must skip node_not_available. There is a inconsistency with the agent where 
             # the error is "failed to create experiment: slots requested exceeds cluster capacity" instead of the expected message.
             master_config: |
