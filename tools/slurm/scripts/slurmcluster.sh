@@ -1,27 +1,33 @@
 #!/usr/bin/env bash
+
 set -e
 
 # This script is invoked by `make slurmcluster`. It should never be necessary to run it directly.
 
+# Valid values
+VALID_CONTAINER_TYPES="enroot podman singularity"
+VALID_WORKLOAD_MANAGERS="slurm pbs"
+
 # Default values
 export OPT_CONTAINER_RUN_TYPE="singularity"
 export OPT_WORKLOAD_MANAGER="slurm"
+export OPT_LAUNCHER_PORT=8081
 DETERMINED_AGENT=
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         -c | --container-run-type)
             export OPT_CONTAINER_RUN_TYPE=$2
-            if [[ -z $OPT_CONTAINER_RUN_TYPE ]]; then
-                echo >&2 "usage $0:  Missing -c {container_type}"
+            if [[ ! " $VALID_CONTAINER_TYPES " =~ " $OPT_CONTAINER_RUN_TYPE " ]]; then
+                echo >&2 "usage $0: Missing or invalid container type specified for the '-c' option.  Valid values are: ${VALID_CONTAINER_TYPES}"
                 exit 1
             fi
             shift 2
             ;;
         -w | --workload-manager)
             export OPT_WORKLOAD_MANAGER=$2
-            if [[ -z $OPT_WORKLOAD_MANAGER ]]; then
-                echo >&2 "usage $0:  Missing -r {workload_manager}"
+            if [[ ! " $VALID_WORKLOAD_MANAGERS " =~ " $OPT_WORKLOAD_MANAGER " ]]; then
+                echo >&2 "usage $0: Missing or invalid workload manager specified for the '-r' option.  Valid values are: ${VALID_WORKLOAD_MANAGERS}"
                 exit 1
             fi
             shift 2
@@ -29,6 +35,11 @@ while [[ $# -gt 0 ]]; do
         -A)
             DETERMINED_AGENT=1
             shift
+            ;;
+        -d)
+            # Fixed, default Launcher port
+            export OPT_LAUNCHER_PORT=18080
+            shift 1
             ;;
         # The Makefile that calls this script may pass in additional flags used for other scritps
         # which can be ignored.
@@ -58,6 +69,9 @@ while [[ $# -gt 0 ]]; do
             echo "           Description: Invokes a slurmcluster using the specified workload manager."
             echo "           Options are 'slurm' or 'pbs'. Default is 'slurm'."
             echo "           Example: $0 -w pbs"
+            echo '  -d: '
+            echo "           Description: Connect to a dev launcher manually deployed to the GCP VM using"
+            echo "           'loadDevlauncher.sh -g'."
             echo ""
             echo "You can also combine the flags."
             echo "Example: $0 -A -c enroot"
@@ -102,7 +116,7 @@ SOCKS5_PROXY_TUNNEL_OPTS="-D ${SOCKS5_PROXY_PORT} -nNT"
 
 # Launch SSH tunnels.
 echo "Launching SSH tunnels"
-gcloud compute ssh --quiet --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- -NL 8081:localhost:8081 -NR 8080:localhost:8080 ${SOCKS5_PROXY_TUNNEL_OPTS} &
+gcloud compute ssh --quiet --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- -NL ${OPT_LAUNCHER_PORT}:localhost:${OPT_LAUNCHER_PORT} -NR 8080:localhost:8080 ${SOCKS5_PROXY_TUNNEL_OPTS} &
 TUNNEL_PID=$!
 trap 'kill $TUNNEL_PID' EXIT
 echo "Started bidirectional tunnels to $INSTANCE_NAME"

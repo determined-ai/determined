@@ -53,6 +53,26 @@ with `devcluster` works from here as always.
 
 By default, each devbox invoked by `make slurmcluster` will automatically delete the VM after two hours of runtime. If you want to override this time limit, one can run `FLAGS="-t {time_seconds}"`. Where `seconds` is a value between 0 to 10,281,600 seconds inclusive. The two hour time limit ensures that devboxes are being deleted if they are not used to prevent excess costs.
 
+## Running a Slurmcluster on a Developer Launcher
+
+Despite each VM being intended for a single user, per-user deployment of the Launcher is still useful for quickly testing changes to Launcher (instead of building a new image with the updated Launcher which can take up to 40 minutes). 
+
+One can load a developer launcher on their dev box created by `make slurmcluster` with this workflow:
+1. From the root of this repository, run `make slurmcluster` to create a VM. **Note**: this will also start a devcluster pointing at port 8081 on the VM *automatically* (which is not the desired Launcher port in this case). **After the VM is created, terminate the `make slurmcluster` process.**
+2. Obtain the external IP address of the created VM by running  
+
+    ```
+    gcloud compute ssh --zone [ZONE_ID] [VM_NAME] --project [PROJECT_ID] -- "curl https://ifconfig.me/"
+    ```
+
+    For example:
+
+    ```
+    gcloud compute ssh --zone "us-west1-b" quilici-dev-box --project "determined-ai" -- "curl https://ifconfig.me/"
+    ```
+3. In the [hpc-ard-capsules-core repository]([d.com](https://github.hpe.com/hpe/hpc-ard-capsules-core)), run `./loadDevLauncher.sh -g [$USER]@[EXTERNAL_IP]` which will spin up a developer launcher on port 18080 on the specified VM.
+4. From the root of this repository, run `make slurmcluster FLAGS="-d"` which will start a devcluster pointing at port 18080 on the instance.
+
 ## Using Slurmcluster with Determined Agents
 
 `make slurmcluster` supports using Determined agents to run jobs. To do this with `make slurmcluster` do the following steps from the `determined-ee/` directory:
