@@ -38,7 +38,7 @@ with det.core.init() as core_context:
 
 ## Command Line Interface (CLI)
 
-Use the CLI to set up the Determined cluster locally, or on your favorite cloud service: 
+Use the CLI to start the Determined cluster locally, or on your favorite cloud service: 
 
 ```bash
 det deploy aws up
@@ -78,27 +78,24 @@ Install the CLI:
 pip install determined
 ```
 
-Then use `det deploy` to install the Determined cluster on-prem (local), AWS, or GCP.
+Then use `det deploy` to start the Determined cluster on AWS, GCP, or locally.
 
-See the following guides for all installation options:
+See the following guides for all the installation details:
 
-- [On-prem (local)](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/on-prem/overview.html)
+- [Local (on-prem)](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/on-prem/overview.html)
 - [AWS](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/aws/overview.html)
 - [GCP](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/gcp/overview.html)
 - [Kubernetes](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/k8s/overview.html)
 - [Slurm/PBS](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/slurm/overview.html)
 
-# Documentation
-
-The documentation for the latest version of Determined can always be found
-[here](https://docs.determined.ai).
 
 ## Try out Determined Locally
 
 Follow [these instructions](https://docs.determined.ai/latest/how-to/installation/requirements.html#install-docker) to install and set up docker.
 
- ```bash
+Then run the following script:
 
+ ```bash
 # Start a Determined cluster locally.
 python3.7 -m venv ~/.virtualenvs/test
 . ~/.virtualenvs/test/bin/activate
@@ -116,27 +113,21 @@ det experiment create const.yaml .
  ```
 
 
-### Try Now on AWS
+## Try Now on AWS
 
 [![Try Now](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://determined-ai-public.s3-us-west-2.amazonaws.com/simple.yaml)
 
-## Next Steps
 
-For a brief introduction to using Determined, check out our
-[Quick Start Guide](https://docs.determined.ai/latest/getting-started.html).
+# Documentation
 
-To use an existing deep learning model with Determined, follow the
-tutorial for your preferred deep learning framework:
+* [Documentation](https://docs.determined.ai)
+* [Quick Start Guide](https://docs.determined.ai/latest/getting-started.html)
+* Tutorials:
+  * [PyTorch MNIST Tutorial](https://docs.determined.ai/latest/tutorials/pytorch-mnist-tutorial.html)
+  * [TensorFlow Keras MNIST Tutorial](https://docs.determined.ai/latest/tutorials/tf-mnist-tutorial.html)
 
-* [PyTorch MNIST Tutorial](https://docs.determined.ai/latest/tutorials/pytorch-mnist-tutorial.html)
-* [TensorFlow Keras MNIST Tutorial](https://docs.determined.ai/latest/tutorials/tf-mnist-tutorial.html)
 
-## Documentation
-
-The documentation for the latest version of Determined can always be found
-[here](https://docs.determined.ai).
-
-## Community
+# Community
 
 If you need help, want to file a bug report, or just want to keep up-to-date
 with the latest news about Determined, please join the Determined community!
@@ -149,10 +140,10 @@ with the latest news about Determined, please join the Determined community!
 * To report a bug, [file an issue](https://github.com/determined-ai/determined/issues) on GitHub.
 * To report a security issue, email [`security@determined.ai`](mailto:security@determined.ai).
 
-## Contributing
+# Contributing
 
 [Contributor's Guide](CONTRIBUTING.md)
 
-## License
+# License
 
 [Apache V2](LICENSE)
