@@ -18,7 +18,7 @@ interface Props {
 
 const ResourcePoolsBound: React.FC<Props> = ({ workspace }) => {
   const resourcePools = useObservable(clusterStore.resourcePools);
-  const unBoundResourcePools = useObservable(clusterStore.unBoundResourcePools);
+  const unboundResourcePools = useObservable(clusterStore.unboundResourcePools);
   const boundResourcePoolNames = useObservable(workspaceStore.boundResourcePools(workspace.id));
   const { canManageResourcePoolBindings } = usePermissions();
 
@@ -29,14 +29,14 @@ const ResourcePoolsBound: React.FC<Props> = ({ workspace }) => {
 
   const boundResourcePools: ResourcePool[] = useMemo(() => {
     if (!Loadable.isLoaded(resourcePools) || !boundResourcePoolNames) return [];
-    const unBoundResourcePoolNames = Loadable.isLoaded(unBoundResourcePools)
-      ? unBoundResourcePools.data.map((p) => p.name)
+    const unboundResourcePoolNames = Loadable.isLoaded(unboundResourcePools)
+      ? unboundResourcePools.data.map((p) => p.name)
       : [];
     return resourcePools.data.filter(
       (rp) =>
-        boundResourcePoolNames.includes(rp.name) && !unBoundResourcePoolNames.includes(rp.name),
+        boundResourcePoolNames.includes(rp.name) && !unboundResourcePoolNames.includes(rp.name),
     );
-  }, [resourcePools, boundResourcePoolNames, unBoundResourcePools]);
+  }, [resourcePools, boundResourcePoolNames, unboundResourcePools]);
 
   const renderDefaultLabel = useCallback(
     (pool: ResourcePool) => {
@@ -106,10 +106,10 @@ const ResourcePoolsBound: React.FC<Props> = ({ workspace }) => {
           </Card.Group>
         </Section>
       )}
-      {Loadable.isLoaded(unBoundResourcePools) && unBoundResourcePools.data.length > 0 && (
+      {Loadable.isLoaded(unboundResourcePools) && unboundResourcePools.data.length > 0 && (
         <Section title="Shared Resource Pools">
           <Card.Group size="medium">
-            {unBoundResourcePools.data.map((rp: ResourcePool) => (
+            {unboundResourcePools.data.map((rp: ResourcePool) => (
               <ResourcePoolCard key={rp.name} resourcePool={rp} />
             ))}
           </Card.Group>

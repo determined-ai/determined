@@ -283,7 +283,7 @@ export interface LaunchJupyterLabParams {
 }
 
 export interface GetResourcePoolsParams extends PaginationParams {
-  unBound?: boolean;
+  unbound?: boolean;
 }
 
 export interface GetCommandsParams extends FetchOptions, PaginationParams {

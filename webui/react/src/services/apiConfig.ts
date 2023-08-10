@@ -460,7 +460,7 @@ export const getResourcePools: DetApi<
     return response.resourcePools?.map(decoder.mapV1ResourcePool) || [];
   },
   request: (params: Service.GetResourcePoolsParams, options) =>
-    detApi.Internal.getResourcePools(params?.offset, params?.limit, params?.unBound, options),
+    detApi.Internal.getResourcePools(params?.offset, params?.limit, params?.unbound, options),
 };
 
 export const getResourceAllocationAggregated: DetApi<
