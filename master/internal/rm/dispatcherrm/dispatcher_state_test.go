@@ -16,7 +16,8 @@ import (
 
 func TestDispatcherStatePersistence(t *testing.T) {
 	assert.NilError(t, etc.SetRootPath(db.RootFromDB))
-	_ = db.MustResolveTestPostgres(t)
+	pgDB := db.MustResolveTestPostgres(t)
+	db.MustMigrateTestPostgres(t, pgDB, "file://../../../static/migrations")
 
 	// clear any existing state
 	_, _ = db.Bun().NewDelete().Model(&dispatcherState{}).Where("id=0").Exec(context.TODO())

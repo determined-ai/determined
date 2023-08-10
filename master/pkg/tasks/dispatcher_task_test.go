@@ -10,10 +10,10 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/mount"
+	"github.com/sirupsen/logrus"
 	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -129,7 +129,7 @@ func Test_getPortMappings(t *testing.T) {
 }
 
 func TestTaskSpec_computeLaunchConfig(t *testing.T) {
-	ctx := getMockActorCtx()
+	ctx := logrus.WithField("component", "dispatcher_task_test")
 
 	allocationID := "123456790"
 
@@ -307,7 +307,7 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 }
 
 func Test_dispatcherArchive(t *testing.T) {
-	ctx := getMockActorCtx()
+	ctx := logrus.WithField("component", "dispatcher_task_test")
 
 	allocationID := "123456790"
 
@@ -487,7 +487,7 @@ func Test_getAllArchives(t *testing.T) {
 }
 
 func Test_encodeArchiveParameters(t *testing.T) {
-	ctx := getMockActorCtx()
+	ctx := logrus.WithField("component", "dispatcher_task_test")
 
 	allocationID := "123456790"
 
@@ -503,7 +503,7 @@ func Test_encodeArchiveParameters(t *testing.T) {
 }
 
 func Test_ToDispatcherManifest(t *testing.T) {
-	ctx := getMockActorCtx()
+	ctx := logrus.WithField("component", "dispatcher_task_test")
 
 	allocationID := "123456790"
 
@@ -984,7 +984,7 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 }
 
 func Test_getEnvVarsForLauncherManifest(t *testing.T) {
-	ctx := getMockActorCtx()
+	ctx := logrus.WithField("component", "dispatcher_task_test")
 
 	allocationID := "123456790"
 
@@ -1312,7 +1312,7 @@ func TestTaskSpec_slotsPerNode(t *testing.T) {
 }
 
 func TestTaskSpec_computeResources(t *testing.T) {
-	ctx := getMockActorCtx()
+	ctx := logrus.WithField("component", "dispatcher_task_test")
 
 	allocationID := "123456790"
 
@@ -1843,19 +1843,4 @@ func TestTaskSpec_addQuotes(t *testing.T) {
 
 	// If the string is empty, add double quotes.
 	assert.Equal(t, addQuotes(""), "\"\"")
-}
-
-func getMockActorCtx() *actor.Context {
-	var ctx *actor.Context
-	sys := actor.NewSystem("")
-	child, _ := sys.ActorOf(actor.Addr("child"), actor.ActorFunc(func(context *actor.Context) error {
-		ctx = context
-		return nil
-	}))
-	parent, _ := sys.ActorOf(actor.Addr("parent"), actor.ActorFunc(func(context *actor.Context) error {
-		context.Ask(child, "").Get()
-		return nil
-	}))
-	sys.Ask(parent, "").Get()
-	return ctx
 }

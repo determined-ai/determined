@@ -6,6 +6,8 @@ import (
 
 	"gotest.tools/assert"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -13,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"
 	"github.com/determined-ai/determined/proto/pkg/devicev1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
@@ -89,7 +92,7 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 		{"Partition 1", "Partition 3"},
 	}
 
-	m := &dispatcherResourceManager{
+	m := &DispatcherResourceManager{
 		rmConfig:        config,
 		hpcDetailsCache: makeTestHpcDetailsCache(hpcResource),
 		poolProviderMap: poolProviderMap,
@@ -180,7 +183,8 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 	m.dbState.DisabledAgents = []string{"Node 2"}
 
 	ctx := &actor.Context{}
-	resp := m.generateGetAgentsResponse(ctx)
+	resp, err := m.GetAgents(ctx, &apiv1.GetAgentsRequest{})
+	require.NoError(t, err)
 	assert.Equal(t, len(resp.Agents), len(nodes))
 
 	for i, agent := range resp.Agents {
@@ -407,17 +411,17 @@ func Test_summarizeResourcePool(t *testing.T) {
 				dpPools = []config.ResourcePoolConfig{dpPool1}
 			}
 
-			m := &dispatcherResourceManager{
+			m := &DispatcherResourceManager{
 				wlmType:         tt.args.wlmType,
 				rmConfig:        rmConfig,
 				hpcDetailsCache: makeTestHpcDetailsCache(hpcResource),
 				poolConfig:      dpPools,
 			}
 
-			res, _ := m.summarizeResourcePool(tt.args.ctx)
+			res, _ := m.GetResourcePools(tt.args.ctx, &apiv1.GetResourcePoolsRequest{})
 
-			assert.Equal(t, len(tt.want.pools), len(res))
-			for i, pool := range res {
+			assert.Equal(t, len(tt.want.pools), len(res.ResourcePools))
+			for i, pool := range res.ResourcePools {
 				assert.Equal(t, pool.Name, tt.want.pools[i].Name)
 				assert.Equal(t, pool.SlotType, tt.want.pools[i].SlotType)
 				assert.Equal(t, pool.SlotsAvailable, tt.want.pools[i].SlotsAvailable)
@@ -602,11 +606,10 @@ func Test_dispatcherResourceManager_getPartitionValidationResponse(t *testing.T)
 			if len(tt.fields.poolConfig) > 0 && tt.fields.containerDefaults != nil {
 				tt.fields.poolConfig[0].TaskContainerDefaults = tt.fields.containerDefaults
 			}
-			m := &dispatcherResourceManager{
+			m := &DispatcherResourceManager{
 				poolConfig: tt.fields.poolConfig,
 			}
-			resp := m.getPartitionValidationResponse(
-				&tt.args.hpcDetails, tt.args.targetPartitionName)
+			resp := m.hasSlurmPartition(&tt.args.hpcDetails, tt.args.targetPartitionName)
 
 			if resp.HasResourcePool != tt.want.wantResp.HasResourcePool {
 				t.Errorf("dispatcherResourceManager.getPartitionValidationResponse() = %v, want %v",
@@ -709,11 +712,15 @@ func Test_dispatcherResourceManager_getTaskContainerDefaults(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &dispatcherResourceManager{
+			m := &DispatcherResourceManager{
 				rmConfig:   tt.fields.rmConfig,
 				poolConfig: tt.fields.poolConfig,
 			}
-			got, err := m.getTaskContainerDefaults(tt.args.msg)
+			got, err := m.TaskContainerDefaults(
+				&actor.Context{},
+				tt.args.msg.resourcePool,
+				tt.args.msg.fallbackDefault,
+			)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("getTaskContainerDefaults() error = %v, wantErr %v", err, tt.wantErr)
 				return

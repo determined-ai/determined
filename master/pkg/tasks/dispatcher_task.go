@@ -11,10 +11,10 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types/mount"
+	"github.com/sirupsen/logrus"
 	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -74,7 +74,7 @@ var payloadNameCompiledRegEx = regexp.MustCompile(`[^a-zA-Z0-9\-_]+`)
 // import of "github.com/determined-ai/determined/master/internal/sproto", which
 // results in an "import cycle not allowed" error.
 func (t *TaskSpec) ToDispatcherManifest(
-	ctx *actor.Context,
+	syslog *logrus.Entry,
 	allocationID string,
 	masterHost string,
 	masterPort int,
@@ -197,7 +197,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 		workDir = varTmp
 	}
 
-	launchConfig := t.computeLaunchConfig(ctx,
+	launchConfig := t.computeLaunchConfig(syslog,
 		allocationID, slotType, workDir, slurmPartition,
 		containerRunType, impersonatedUser)
 	launchParameters.SetConfiguration(*launchConfig)
@@ -209,9 +209,9 @@ func (t *TaskSpec) ToDispatcherManifest(
 	// into a format that can be set as custom launch arguments.
 	allArchives := *getAllArchives(t)
 	customParams, err := encodeArchiveParameters(
-		ctx,
+		syslog,
 		allocationID,
-		dispatcherArchive(ctx, allocationID, t.AgentUserGroup,
+		dispatcherArchive(syslog, allocationID, t.AgentUserGroup,
 			generateRunDeterminedLinkNames(allArchives), localTmp+"/"), allArchives)
 	if err != nil {
 		return nil, "", "", err
@@ -219,7 +219,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 
 	pbsProj, slurmProj := t.jobAndProjectLabels(labelMode)
 
-	resources := t.computeResources(ctx, allocationID, tresSupported, numSlots,
+	resources := t.computeResources(syslog, allocationID, tresSupported, numSlots,
 		slotType, gresSupported, isPbsLauncher)
 
 	var slurmArgs []string
@@ -229,11 +229,11 @@ func (t *TaskSpec) ToDispatcherManifest(
 
 	slurmArgs = append(slurmArgs, t.SlurmConfig.SbatchArgs()...)
 
-	ctx.Log().WithField("allocation-id", allocationID).Debugf("Custom slurm arguments: %s", slurmArgs)
+	syslog.WithField("allocation-id", allocationID).Debugf("Custom slurm arguments: %s", slurmArgs)
 
 	errList := ValidateSlurm(slurmArgs)
 	if len(errList) > 0 {
-		ctx.Log().WithField("allocation-id", allocationID).
+		syslog.WithField("allocation-id", allocationID).
 			WithError(errList[0]).Error("Forbidden slurm option specified")
 		return nil, "", "", errList[0]
 	}
@@ -243,10 +243,10 @@ func (t *TaskSpec) ToDispatcherManifest(
 	var pbsArgs []string
 
 	pbsArgs = append(pbsArgs, t.PbsConfig.SbatchArgs()...)
-	ctx.Log().WithField("allocation-id", allocationID).Debugf("Custom pbs arguments: %s", pbsArgs)
+	syslog.WithField("allocation-id", allocationID).Debugf("Custom pbs arguments: %s", pbsArgs)
 	errList = ValidatePbs(pbsArgs)
 	if len(errList) > 0 {
-		ctx.Log().WithField("allocation-id", allocationID).
+		syslog.WithField("allocation-id", allocationID).
 			WithError(errList[0]).Error("Forbidden PBS option specified")
 		return nil, "", "", errList[0]
 	}
@@ -284,7 +284,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	launchParameters.SetData(mounts)
 
 	envVars, err := getEnvVarsForLauncherManifest(
-		ctx, allocationID,
+		syslog, allocationID,
 		t, masterHost, masterPort, certificateName, userWantsDirMountedOnTmp,
 		slotType, containerRunType, localTmp, t.slotsPerNode(isPbsLauncher))
 	if err != nil {
@@ -452,7 +452,8 @@ func addQuotes(label string) string {
 // computeResources calculates the job resource requirements. It also returns any
 // additional qualifiers required for the desired scheduling behavior (required
 // for Slurm only at the time of writing).
-func (t *TaskSpec) computeResources(ctx *actor.Context,
+func (t *TaskSpec) computeResources(
+	syslog *logrus.Entry,
 	allocationID string,
 	tresSupported bool,
 	numSlots int,
@@ -470,7 +471,7 @@ func (t *TaskSpec) computeResources(ctx *actor.Context,
 		effectiveSlotsPerNode = slotsPerNode
 	}
 
-	ctx.Log().WithField("allocation-id", allocationID).
+	syslog.WithField("allocation-id", allocationID).
 		Debugf("slotsPerNode: %d, numNodes: %d, eSlotsPerNode: %d",
 			slotsPerNode, numNodes, effectiveSlotsPerNode)
 
@@ -561,7 +562,7 @@ func getAllArchives(t *TaskSpec) *[]cproto.RunArchive {
 
 // computeLaunchConfig computes the launch configuration for the Slurm job manifest.
 func (t *TaskSpec) computeLaunchConfig(
-	ctx *actor.Context,
+	syslog *logrus.Entry,
 	allocationID string,
 	slotType device.Type, workDir string,
 	slurmPartition string, containerRunType string,
@@ -602,7 +603,7 @@ func (t *TaskSpec) computeLaunchConfig(
 		launchConfig["dropCapabilities"] = strings.Join(t.Environment.DropCapabilities(), ",")
 	}
 	if containerRunType == podman && t.Environment.RegistryAuth() != nil {
-		ctx.Log().WithField("allocation-id", allocationID).
+		syslog.WithField("allocation-id", allocationID).
 			Warningf("NOT SUPPORTED: podman && environment.registry_auth -- use podman login")
 	}
 	// Launcher 3.0.17 added support for devices. This is specific to docker/podman carriers.
@@ -657,7 +658,7 @@ func makeLocalVolume(archiveItem cproto.RunArchive) bool {
 // Return the archives in an argument format for launcher custom Archive args.
 // Encoding the files to Base64 string arguments.
 func encodeArchiveParameters(
-	ctx *actor.Context,
+	syslog *logrus.Entry,
 	allocationID string,
 	dispatcherArchive cproto.RunArchive,
 	archives []cproto.RunArchive,
@@ -678,7 +679,7 @@ func encodeArchiveParameters(
 			runDirPrefix+archiveItem.Path+"/",
 			archiveItem.Archive)
 		if err != nil {
-			ctx.Log().WithField("allocation-id", allocationID).Error("Failure to create TarGz Archive", err)
+			syslog.WithField("allocation-id", allocationID).Error("Failure to create TarGz Archive", err)
 			return nil, err
 		}
 		archiveStrings[idx] = base64.StdEncoding.EncodeToString(bytesString)
@@ -691,7 +692,7 @@ func encodeArchiveParameters(
 
 // Gets the environment variables that are to be added to the Launcher's manifest.
 func getEnvVarsForLauncherManifest(
-	ctx *actor.Context,
+	syslog *logrus.Entry,
 	allocationID string,
 	taskSpec *TaskSpec,
 	masterHost string,
@@ -796,12 +797,12 @@ func getEnvVarsForLauncherManifest(
 		m["APPTAINER_DOCKER_USERNAME"] = taskSpec.Environment.RegistryAuth().Username
 		m["APPTAINER_DOCKER_PASSWORD"] = taskSpec.Environment.RegistryAuth().Password
 		if len(taskSpec.Environment.RegistryAuth().ServerAddress) > 0 {
-			ctx.Log().WithField("allocation-id", allocationID).Warningf(
+			syslog.WithField("allocation-id", allocationID).Warningf(
 				"NOT SUPPORTED: environment.registry_auth.serveraddress: %s ",
 				taskSpec.Environment.RegistryAuth().ServerAddress)
 		}
 		if len(taskSpec.Environment.RegistryAuth().Email) > 0 {
-			ctx.Log().WithField("allocation-id", allocationID).Warningf(
+			syslog.WithField("allocation-id", allocationID).Warningf(
 				"NOT SUPPORTED: environment.registry_auth.email: %s ",
 				taskSpec.Environment.RegistryAuth().Email)
 		}
@@ -948,7 +949,7 @@ func generateRunDeterminedLinkNames(
 // The links point at the {localTmp}/run/determined container-private directory
 // so each rank can have a different link.
 func dispatcherArchive(
-	ctx *actor.Context,
+	syslog *logrus.Entry,
 	allocationID string,
 	aug *model.AgentUserGroup,
 	linksNeeded []string,
@@ -968,7 +969,7 @@ func dispatcherArchive(
 	// Create and add each link
 	for _, linkName := range linksNeeded {
 		dispatherArchive = append(dispatherArchive, getRunSubdirLink(aug, linkName, localTmp))
-		ctx.Log().WithField("allocation-id", allocationID).Tracef("Created link for %s", linkName)
+		syslog.WithField("allocation-id", allocationID).Tracef("Created link for %s", linkName)
 	}
 
 	return wrapArchive(dispatherArchive, "/")
