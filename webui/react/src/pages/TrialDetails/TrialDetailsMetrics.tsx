@@ -23,6 +23,13 @@ export interface Props {
 type XAxisVal = number;
 export type CheckpointsDict = Record<XAxisVal, CheckpointWorkloadExtended>;
 
+const TRAIN_PREFIX = /^(t_|train_|training_)/;
+const VAL_PREFIX = /^(v_|val_|validation_)/;
+
+const stripPrefix = (metricName: string): string => {
+  return metricName.replace(TRAIN_PREFIX, '').replace(VAL_PREFIX, '');
+};
+
 const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
 
@@ -80,8 +87,9 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   const groupedMetrics: Metric[][] = useMemo(() => {
     const map = metrics.reduce((acc, metric) => {
-      acc[metric.name] = acc[metric.name] ?? [];
-      acc[metric.name].push(metric);
+      const metricName = stripPrefix(metric.name);
+      acc[metricName] = acc[metricName] ?? [];
+      acc[metricName].push(metric);
       return acc;
     }, {} as Record<string, Metric[]>);
     return Object.keys(map)

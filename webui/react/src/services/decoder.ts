@@ -640,6 +640,11 @@ const decodeMetricValues = (data: unknown): Record<string, number> => {
   if (!isObject(data)) return {};
   const dataObj = data as Record<string, unknown>;
   return Object.keys(dataObj).reduce((acc, key) => {
+    /**
+     * parseFloat is temporary until the issue of some metrics getting
+     * returned as a string is fixed:
+     * https://hpe-aiatscale.atlassian.net/browse/DET-9736
+     */
     acc[key] = isNumber(dataObj[key]) ? (dataObj[key] as number) : parseFloat(`${dataObj[key]}`);
     return acc;
   }, {} as Record<string, number>);
