@@ -64,6 +64,7 @@ type hpcNodeDetails struct {
 }
 
 // hpcResourceDetailsCache stores details of the HPC resource information cache.
+// Use `load` to get an immutable copy of the cache.
 type hpcResourceDetailsCache struct {
 	rmConfig *config.DispatcherResourceManagerConfig // TODO: Refactor to not use entire rm conf.
 	log      *logrus.Entry
