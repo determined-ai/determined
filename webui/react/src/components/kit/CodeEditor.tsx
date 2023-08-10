@@ -61,7 +61,7 @@ export type MultiFileProps = {
 export type Props = (SingleFileProps | MultiFileProps) & {
   file: LoadableOrError<string>;
   onError: ErrorHandler; // only used to raise ipynb errors
-  height?: string; // height of the editable area, if a title is provided that will add an additional ~38px
+  height?: string; // height of the container.
   onChange?: (fileContent: string) => void; // only use in single-file editing
   readonly?: boolean;
 };
@@ -222,7 +222,6 @@ const CodeEditor: React.FC<Props> = ({
   }, [activeFile, file]);
 
   const classes = [
-    css.fileTree,
     css.codeEditorBase,
     isErrorMessage(file) ? css.noEditor : '',
     viewMode === 'editor' ? css.editorMode : '',
@@ -250,8 +249,9 @@ const CodeEditor: React.FC<Props> = ({
         <ReactCodeMirror
           basicSetup={syntax === 'markdown' ? MARKDOWN_CONFIG : undefined}
           extensions={[langs[syntax]()]}
-          height={height}
+          height="100%"
           readOnly={readonly}
+          style={{ height: '100%' }}
           theme={ui.darkLight === DarkLight.Dark ? 'dark' : 'light'}
           value={Loadable.getOrElse('', file)}
           onChange={onChange}
@@ -264,7 +264,7 @@ const CodeEditor: React.FC<Props> = ({
   }
 
   return (
-    <div className={classes.join(' ')}>
+    <div className={classes.join(' ')} style={{ height }}>
       <DirectoryTree
         className={treeClasses.join(' ')}
         data-testid="fileTree"
