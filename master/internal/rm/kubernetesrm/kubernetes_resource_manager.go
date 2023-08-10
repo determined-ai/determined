@@ -346,6 +346,16 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		k.forwardToAllPools(ctx, msg)
 
 	case sproto.GetDefaultComputeResourcePoolRequest:
+		unboundRP, err := db.GetUnboundRPs(context.TODO(), []string{k.config.DefaultComputeResourcePool})
+		if err != nil {
+			return err
+		}
+		if len(unboundRP) == 0 {
+			return fmt.Errorf(
+				"resource pool %s cannot be cluster default, because it is bound to workspace(s)",
+				k.config.DefaultComputeResourcePool,
+			)
+		}
 		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
 			PoolName: k.config.DefaultComputeResourcePool,
 		})
