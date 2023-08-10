@@ -45,8 +45,6 @@ type DB interface {
 	ExperimentTotalStepTime(id int) (float64, error)
 	ExperimentNumTrials(id int) (int64, error)
 	ExperimentTrialIDs(expID int) ([]int, error)
-	ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int,
-		[]model.TaskID, error)
 	ExperimentNumSteps(id int) (int64, error)
 	ExperimentModelDefinitionRaw(id int) ([]byte, error)
 	ExperimentCheckpointsToGCRaw(
@@ -54,11 +52,6 @@ type DB interface {
 		experimentBest, trialBest, trialLatest int,
 	) ([]uuid.UUID, error)
 	AddTask(t *model.Task) error
-	AddTrial(trial *model.Trial) error
-	TrialByID(id int) (*model.Trial, error)
-	TrialByExperimentAndRequestID(
-		experimentID int, requestID model.RequestID,
-	) (*model.Trial, error)
 	UpdateTrial(id int, newState model.State) error
 	UpdateTrialRunnerState(id int, state string) error
 	UpdateTrialRunnerMetadata(id int, md *trialv1.TrialRunnerMetadata) error

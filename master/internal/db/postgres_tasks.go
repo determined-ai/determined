@@ -92,6 +92,19 @@ WHERE task_id = $1
 	return nil
 }
 
+func completeTrialsTasks(ex sqlx.Execer, trialID int, endTime time.Time) error {
+	if _, err := ex.Exec(`
+UPDATE tasks
+SET end_time = $2
+FROM trial_id_task_id
+WHERE trial_id_task_id.task_id = tasks.task_id
+  AND trial_id_task_id.trial_id = $1
+  AND end_time IS NULL`, trialID, endTime); err != nil {
+		return fmt.Errorf("completing task: %w", err)
+	}
+	return nil
+}
+
 // AddAllocation upserts the existence of an allocation. Allocation IDs may conflict in the event
 // the master restarts and the trial run ID increment is not persisted, but it is the same
 // allocation so this is OK.
