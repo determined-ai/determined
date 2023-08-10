@@ -8,9 +8,6 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-CREATE TRIGGER autoupdate_exp_best_trial_metrics
-AFTER UPDATE OF best_validation_id ON trials
-FOR EACH ROW EXECUTE PROCEDURE autoupdate_exp_best_trial_metrics();
 
 CREATE TABLE public.exp_metrics_name (
     id SERIAL PRIMARY KEY,
