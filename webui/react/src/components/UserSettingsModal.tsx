@@ -97,7 +97,7 @@ const UserSettingsModalComponent: React.FC<Props> = ({ onSave }: Props) => {
             title: 'settings.json',
           },
         ]}
-        height="400px"
+        height="438px"
         onChange={handleChange}
         onError={handleError}
       />
