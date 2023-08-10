@@ -126,12 +126,16 @@ func mergeCustomSpecs(
 	config map[string]interface{},
 	cp map[string]interface{},
 ) map[string]interface{} {
-	if conf, ok := cp["task_container_defaults"].(map[string]interface{})["cpu_pod_spec"]; ok {
-		config["task_container_defaults"].(map[string]interface{})["cpu_pod_spec"] = conf
+	if conf, ok := cp["task_container_defaults"]; ok {
+		if cpu, ok := conf.(map[string]interface{})["cpu_pod_spec"]; ok {
+			config["task_container_defaults"].(map[string]interface{})["cpu_pod_spec"] = cpu
+		}
 	}
 
-	if conf, ok := cp["task_container_defaults"].(map[string]interface{})["gpu_pod_spec"]; ok {
-		config["task_container_defaults"].(map[string]interface{})["gpu_pod_spec"] = conf
+	if conf, ok := cp["task_container_defaults"]; ok {
+		if cpu, ok := conf.(map[string]interface{})["gpu_pod_spec"]; ok {
+			config["task_container_defaults"].(map[string]interface{})["gpu_pod_spec"] = cpu
+		}
 	}
 
 	return config
