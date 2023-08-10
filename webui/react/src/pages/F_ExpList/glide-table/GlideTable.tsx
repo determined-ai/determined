@@ -632,6 +632,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
           // Update the context menu based on the cell context.
           setContextMenuProps({
+            cell,
             experiment: getProjectExperimentForExperimentItem(rowData.experiment, project),
             handleClose: (e?: Event) => {
               // Prevent the context menu closing click from triggering something else.
