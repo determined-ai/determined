@@ -55,25 +55,30 @@ class SyncService {
   updateDataBounds(data: AlignedData) {
     const xValues = data[0];
     const lastIdx = xValues.length - 1;
-    const dataMin = xValues[0];
-    const dataMax = xValues[lastIdx];
+    let dataMin = xValues[0];
+    let dataMax = xValues[lastIdx];
 
     if (dataMin === undefined || dataMax === undefined) return;
 
     this.bounds.update((b) => {
-      let max = Math.max(b.dataBounds?.max ?? dataMax, dataMax);
-      let min = Math.min(b.dataBounds?.min ?? dataMin, dataMin);
+      dataMax = Math.max(b.dataBounds?.max ?? dataMax, dataMax);
+      dataMin = Math.min(b.dataBounds?.min ?? dataMin, dataMin);
+      let max = dataMax;
+      let min = dataMin;
       if (min === max) {
+        // for one point; start min at 0; unless all x-vals are negative (then set max to 0)
         if (max < 0) {
-          min = max;
           max = 0;
         } else {
           min = 0;
         }
       }
+      const margin = 0.02 * (max - min);
+      max += margin;
+      min -= margin;
       return {
         ...b,
-        dataBounds: { max, min },
+        dataBounds: { max: dataMax, min: dataMin },
         unzoomedBounds: { max, min },
       };
     });
