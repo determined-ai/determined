@@ -122,20 +122,6 @@ func (_m *DB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) e
 	return r0
 }
 
-// AddTrial provides a mock function with given fields: trial
-func (_m *DB) AddTrial(trial *model.Trial) error {
-	ret := _m.Called(trial)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.Trial) error); ok {
-		r0 = rf(trial)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // AddUser provides a mock function with given fields: user, ug
 func (_m *DB) AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserID, error) {
 	ret := _m.Called(user, ug)
@@ -821,41 +807,6 @@ func (_m *DB) ExperimentTrialIDs(expID int) ([]int, error) {
 	return r0, r1
 }
 
-// ExperimentsTrialAndTaskIDs provides a mock function with given fields: ctx, idb, expIDs
-func (_m *DB) ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int, []model.TaskID, error) {
-	ret := _m.Called(ctx, idb, expIDs)
-
-	var r0 []int
-	var r1 []model.TaskID
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, bun.IDB, []int) ([]int, []model.TaskID, error)); ok {
-		return rf(ctx, idb, expIDs)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, bun.IDB, []int) []int); ok {
-		r0 = rf(ctx, idb, expIDs)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]int)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, bun.IDB, []int) []model.TaskID); ok {
-		r1 = rf(ctx, idb, expIDs)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]model.TaskID)
-		}
-	}
-
-	if rf, ok := ret.Get(2).(func(context.Context, bun.IDB, []int) error); ok {
-		r2 = rf(ctx, idb, expIDs)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
-}
-
 // GetExperimentStatus provides a mock function with given fields: experimentID
 func (_m *DB) GetExperimentStatus(experimentID int) (model.State, float64, error) {
 	ret := _m.Called(experimentID)
@@ -1492,58 +1443,6 @@ func (_m *DB) TrainingTrialsSnapshot(experimentID int, minBatches int, maxBatche
 	}
 
 	return r0, r1, r2
-}
-
-// TrialByExperimentAndRequestID provides a mock function with given fields: experimentID, requestID
-func (_m *DB) TrialByExperimentAndRequestID(experimentID int, requestID model.RequestID) (*model.Trial, error) {
-	ret := _m.Called(experimentID, requestID)
-
-	var r0 *model.Trial
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int, model.RequestID) (*model.Trial, error)); ok {
-		return rf(experimentID, requestID)
-	}
-	if rf, ok := ret.Get(0).(func(int, model.RequestID) *model.Trial); ok {
-		r0 = rf(experimentID, requestID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.Trial)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int, model.RequestID) error); ok {
-		r1 = rf(experimentID, requestID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// TrialByID provides a mock function with given fields: id
-func (_m *DB) TrialByID(id int) (*model.Trial, error) {
-	ret := _m.Called(id)
-
-	var r0 *model.Trial
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int) (*model.Trial, error)); ok {
-		return rf(id)
-	}
-	if rf, ok := ret.Get(0).(func(int) *model.Trial); ok {
-		r0 = rf(id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.Trial)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int) error); ok {
-		r1 = rf(id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // TrialExperimentAndRequestID provides a mock function with given fields: id

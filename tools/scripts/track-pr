@@ -38,7 +38,7 @@ TEST = os.environ.get("RELEASE_TEST") == "1"
 
 
 ORG = "determined-ai"
-CLONED_REMOTE = "0"
+CLONED_REMOTE = "origin"
 ISSUES_REPO = "release-party-issues-test" if TEST else "release-party-issues"
 
 CHERRY_PICK_LABEL = "to-cherry-pick"

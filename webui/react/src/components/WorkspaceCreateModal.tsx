@@ -181,7 +181,8 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
                     },
                   ]}>
                   <CodeEditor
-                    files={[{ content: Loaded(''), key: 'config.yaml' }]}
+                    file={Loaded('')}
+                    files={[{ key: 'config.yaml' }]}
                     height="16vh"
                     readonly={!canModifyCPS}
                     onError={handleError}

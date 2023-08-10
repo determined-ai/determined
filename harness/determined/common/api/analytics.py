@@ -19,7 +19,6 @@ def get_library_version_analytics() -> Dict[str, Any]:
         "determined",
         "model_hub",
         "torch",
-        "pytorch_lightning",
         "tensorflow",
         "transformers",
         "mmcv",

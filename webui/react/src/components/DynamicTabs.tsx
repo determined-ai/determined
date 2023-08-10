@@ -74,5 +74,9 @@ export const useSetDynamicTabBar = (content: JSX.Element | undefined): void => {
   const updateTabBarContent = useContext(TabBarContext);
   useEffect(() => {
     if (content !== undefined) updateTabBarContent?.(content);
+
+    return () => {
+      updateTabBarContent?.(undefined);
+    };
   }, [updateTabBarContent, content]);
 };

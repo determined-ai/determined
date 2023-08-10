@@ -11,13 +11,15 @@ from tests import experiment as exp
 
 
 @pytest.mark.distributed
-@pytest.mark.parametrize("image_type", ["PT", "TF2"])
+@pytest.mark.parametrize("image_type", ["PT", "TF2", "PT2"])
 def test_mnist_pytorch_distributed(image_type: str) -> None:
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
 
     if image_type == "PT":
         config = conf.set_pt_image(config)
+    elif image_type == "PT2":
+        config = conf.set_pt2_image(config)
     elif image_type == "TF2":
         config = conf.set_tf2_image(config)
     else:

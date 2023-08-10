@@ -841,6 +841,21 @@ class TestPyTorchTrial:
 
         amp_metrics_test(trial_class, training_metrics, agg_freq=aggregation_frequency)
 
+    def test_disable_tb_logging(self, tmp_path: pathlib.Path) -> None:
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
+        trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
+            trial_class=pytorch_onevar_model.OneVarTrial,
+            hparams=self.hparams,
+            trial_seed=self.trial_seed,
+            tensorboard_path=tensorboard_path,
+        )
+        trial.context.set_enable_tensorboard_logging(False)
+        trial_controller._upload_tb_files = mock.MagicMock()
+        trial_controller.run()
+
+        assert trial_controller._upload_tb_files.call_count == 0
+
     def test_trainer(self, monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Path) -> None:
         # there is no direct way to set tensorboard path in Trainer API
         def mock_get_tensorboard_path(dummy: typing.Dict[str, typing.Any]) -> pathlib.Path:
@@ -923,6 +938,44 @@ class TestPyTorchTrial:
         }
 
         assert trial.legacy_counter.__dict__ == {"legacy_on_training_epochs_start_calls": 2}
+
+    @pytest.mark.parametrize(
+        "enable_tensorboard_logging",
+        [True, False],
+        ids=["tensorboard logging enabled", "tensorboard logging disabled"],
+    )
+    def test_trainer_disable_tb_logging(
+        self,
+        monkeypatch: monkeypatch.MonkeyPatch,
+        tmp_path: pathlib.Path,
+        enable_tensorboard_logging: bool,
+    ):
+        # there is no direct way to set tensorboard path in Trainer API
+        def mock_get_tensorboard_path(dummy: typing.Dict[str, typing.Any]) -> pathlib.Path:
+            return tmp_path.joinpath("tensorboard")
+
+        monkeypatch.setattr(
+            pytorch.PyTorchTrialContext, "get_tensorboard_path", mock_get_tensorboard_path
+        )
+
+        checkpoint_batches = 5
+        validation_batches = 5
+
+        with mock.patch.object(det.pytorch, "_log_tb_metrics", return_value=None) as mock_method:
+            with pytorch.init(
+                hparams=self.hparams, enable_tensorboard_logging=enable_tensorboard_logging
+            ) as train_context:
+                trial = pytorch_onevar_model.OneVarTrialCallbacks(train_context)
+                trainer = pytorch.Trainer(trial, train_context)
+                trainer.fit(
+                    max_length=pytorch.Epoch(1),
+                    checkpoint_period=pytorch.Batch(checkpoint_batches),
+                    validation_period=pytorch.Batch(validation_batches),
+                )
+            if enable_tensorboard_logging:
+                assert mock_method.call_count > 0
+            else:
+                assert mock_method.call_count == 0
 
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
