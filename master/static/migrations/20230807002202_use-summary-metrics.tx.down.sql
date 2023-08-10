@@ -8,6 +8,9 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+CREATE TRIGGER autoupdate_exp_best_trial_metrics
+AFTER UPDATE OF best_validation_id ON trials
+FOR EACH ROW EXECUTE PROCEDURE autoupdate_exp_best_trial_metrics();
 
 CREATE TABLE public.exp_metrics_name (
     id SERIAL PRIMARY KEY,
@@ -54,3 +57,9 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER autoupdate_exp_validation_metrics_name
 AFTER INSERT ON raw_validations
 FOR EACH ROW EXECUTE PROCEDURE autoupdate_exp_validation_metrics_name();
+
+ALTER TABLE experiments ADD COLUMN validation_metrics JSONB NULL;
+
+WITH vm AS (
+    SELECT e.id, metrics -> 'validation_metrics' AS validations_metrics FROM experiments e, trials t, validations v WHERE e.best_trial_id = t.id AND t.best_validation_id = v.id
+) UPDATE experiments SET validation_metrics = vm.validations_metrics FROM vm WHERE experiments.id = vm.id;

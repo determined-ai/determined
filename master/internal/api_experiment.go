@@ -2088,11 +2088,6 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 			hps := strings.ReplaceAll(strings.TrimPrefix(paramDetail[0], "hp."), ".", "'->'")
 			experimentQuery.OrderExpr(
 				fmt.Sprintf("e.config->'hyperparameters'->'%s' %s", hps, sortDirection))
-		case strings.HasPrefix(paramDetail[0], "validation."):
-			metricName := strings.TrimPrefix(paramDetail[0], "validation.")
-			experimentQuery.OrderExpr(
-				fmt.Sprintf("e.validation_metrics->'%s' %s",
-					metricName, sortDirection))
 		case strings.Contains(paramDetail[0], "."):
 			metricGroup, metricName, metricQualifier, err := parseMetricsName(paramDetail[0])
 			if err != nil {

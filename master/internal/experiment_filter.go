@@ -373,40 +373,8 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			if err != nil {
 				return nil, err
 			}
-		case projectv1.LocationType_LOCATION_TYPE_VALIDATIONS.String():
-			metricName := strings.TrimPrefix(e.ColumnName, "validation.")
-			queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
-			if e.Type != nil {
-				queryColumnType = *e.Type
-			}
-			col := `e.validation_metrics->>?`
-			var queryArgs []interface{}
-			var queryString string
-			switch queryColumnType {
-			case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
-				col = fmt.Sprintf(`(%v)::float8`, col)
-			}
-			switch *e.Operator {
-			case contains:
-				queryArgs = append(queryArgs, metricName, fmt.Sprintf("%%%s%%", *e.Value))
-				queryString = fmt.Sprintf("%s LIKE ?", col)
-			case doesNotContain:
-				queryArgs = append(queryArgs, metricName, fmt.Sprintf("%%%s%%", *e.Value))
-				queryString = fmt.Sprintf("%s NOT LIKE ?", col)
-			case empty, notEmpty:
-				queryArgs = append(queryArgs, metricName, bun.Safe(oSQL))
-				queryString = fmt.Sprintf("%s ?", col)
-			default:
-				queryArgs = append(queryArgs, metricName,
-					bun.Safe(oSQL), *e.Value)
-				queryString = fmt.Sprintf("%s ? ?", col)
-			}
-			if c != nil && *c == or {
-				q.WhereOr(queryString, queryArgs...)
-			} else {
-				q.Where(queryString, queryArgs...)
-			}
-		case projectv1.LocationType_LOCATION_TYPE_TRAINING.String(),
+		case projectv1.LocationType_LOCATION_TYPE_VALIDATIONS.String(),
+			projectv1.LocationType_LOCATION_TYPE_TRAINING.String(),
 			projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC.String():
 			queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
 			if e.Type != nil {

@@ -224,40 +224,36 @@ func (a *apiServer) getProjectColumnsByID(
 		if stats.Count > 1 {
 			columns[len(columns)-1].Type = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
 		}
-		switch stats.JSONPath {
-		case metricGroupValidation:
-			columnType := parseMetricsType(stats.MetricType)
-			columns = append(columns, &projectv1.ProjectColumn{
-				Column:   fmt.Sprintf("validation.%s", stats.MetricName),
-				Location: projectv1.LocationType_LOCATION_TYPE_VALIDATIONS,
-				Type:     columnType,
-			})
-		default:
-			columnType := parseMetricsType(stats.MetricType)
-			columnPrefix := stats.JSONPath
-			columnLocation := projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC
-			if stats.JSONPath == metricGroupTraining {
-				columnPrefix = metricIDTraining
-				columnLocation = projectv1.LocationType_LOCATION_TYPE_TRAINING
-			}
-			// don't surface aggregates that don't make sense for non-numbers
-			if columnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER {
-				aggregates := []string{"last", "max", "mean", "min"}
-				for _, aggregate := range aggregates {
-					columns = append(columns, &projectv1.ProjectColumn{
-						Column:   fmt.Sprintf("%s.%s.%s", columnPrefix, stats.MetricName, aggregate),
-						Location: columnLocation,
-						Type:     columnType,
-					})
-				}
-			} else {
+
+		columnType := parseMetricsType(stats.MetricType)
+		columnPrefix := stats.JSONPath
+		columnLocation := projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC
+		if stats.JSONPath == metricGroupTraining {
+			columnPrefix = metricIDTraining
+			columnLocation = projectv1.LocationType_LOCATION_TYPE_TRAINING
+		}
+		if stats.JSONPath == metricGroupValidation {
+			columnPrefix = metricIDValidation
+			columnLocation = projectv1.LocationType_LOCATION_TYPE_VALIDATIONS
+		}
+		// don't surface aggregates that don't make sense for non-numbers
+		if columnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER {
+			aggregates := []string{"last", "max", "mean", "min"}
+			for _, aggregate := range aggregates {
 				columns = append(columns, &projectv1.ProjectColumn{
-					Column:   fmt.Sprintf("%s.%s.last", columnPrefix, stats.MetricName),
+					Column:   fmt.Sprintf("%s.%s.%s", columnPrefix, stats.MetricName, aggregate),
 					Location: columnLocation,
 					Type:     columnType,
 				})
 			}
+		} else {
+			columns = append(columns, &projectv1.ProjectColumn{
+				Column:   fmt.Sprintf("%s.%s.last", columnPrefix, stats.MetricName),
+				Location: columnLocation,
+				Type:     columnType,
+			})
 		}
+
 	}
 	hparamSet := make(map[string]struct{})
 	for _, hparam := range hyperparameters {
