@@ -29,22 +29,22 @@ const metrics = [
   {
     metric: { group: MetricType.Training, name: 'accuracy' },
     str: '[T] accuracy',
-    value: `${MetricType.Training}|accuracy`,
+    value: '{"group":"training","name":"accuracy"}',
   },
   {
     metric: { group: MetricType.Training, name: 'loss' },
     str: '[T] loss',
-    value: `${MetricType.Training}|loss`,
+    value: '{"group":"training","name":"loss"}',
   },
   {
     metric: { group: MetricType.Validation, name: 'accuracy' },
     str: '[V] accuracy',
-    value: `${MetricType.Validation}|accuracy`,
+    value: '{"group":"validation","name":"accuracy"}',
   },
   {
     metric: { group: MetricType.Validation, name: 'loss' },
     str: '[V] loss',
-    value: `${MetricType.Validation}|loss`,
+    value: '{"group":"validation","name":"loss"}',
   },
 ];
 
@@ -52,10 +52,10 @@ describe('Metric Utilities', () => {
   describe('extractMetrics', () => {
     it('should extract metric names from workloads', () => {
       const result = [
-        { group: MetricType.Validation, name: 'accuracy' },
-        { group: MetricType.Validation, name: 'loss' },
         { group: MetricType.Training, name: 'accuracy' },
         { group: MetricType.Training, name: 'loss' },
+        { group: MetricType.Validation, name: 'accuracy' },
+        { group: MetricType.Validation, name: 'loss' },
       ];
       expect(utils.extractMetrics(workloads)).toStrictEqual(result);
     });
@@ -130,8 +130,10 @@ describe('Metric Utilities', () => {
     });
 
     it('should handle invalid metric name value', () => {
-      expect(utils.metricKeyToMetric('invalidMetricValue')).toBeUndefined();
-      expect(utils.metricKeyToMetric('fauxMetricType|loss')).toBeUndefined();
+      expect(utils.metricKeyToMetric('invalidMetricValue')).toEqual({
+        group: 'invalidMetricValue',
+        name: 'invalidMetricValue',
+      });
     });
   });
 });

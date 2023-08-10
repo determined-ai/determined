@@ -124,32 +124,38 @@ describe('Workload Utilities', () => {
       const expected = [
         {
           batchNum: 100,
-          training: {
-            metrics: { accuracy: 0.9, loss: 0.1 },
-            totalBatches: 100,
+          metrics: {
+            training: {
+              metrics: { accuracy: 0.9, loss: 0.1 },
+              totalBatches: 100,
+            },
           },
         },
         {
           batchNum: 200,
-          training: {
-            metrics: { accuracy: 0.91, loss: 0.09 },
-            totalBatches: 200,
-          },
-          validation: {
-            metrics: { accuracy: 0.81, loss: 0.19 },
-            totalBatches: 200,
+          metrics: {
+            training: {
+              metrics: { accuracy: 0.91, loss: 0.09 },
+              totalBatches: 200,
+            },
+            validation: {
+              metrics: { accuracy: 0.81, loss: 0.19 },
+              totalBatches: 200,
+            },
           },
         },
         {
           batchNum: 300,
           checkpoint: { state: 'ACTIVE', totalBatches: 300 },
-          training: {
-            metrics: { accuracy: 0.91, loss: 0.09 },
-            totalBatches: 300,
-          },
-          validation: {
-            metrics: { accuracy: 0.81, loss: 0.19 },
-            totalBatches: 300,
+          metrics: {
+            training: {
+              metrics: { accuracy: 0.91, loss: 0.09 },
+              totalBatches: 300,
+            },
+            validation: {
+              metrics: { accuracy: 0.81, loss: 0.19 },
+              totalBatches: 300,
+            },
           },
         },
       ];
