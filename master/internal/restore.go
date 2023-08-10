@@ -154,7 +154,8 @@ func (e *experiment) restoreTrial(
 
 	var trialID *int
 	var terminal bool
-	switch trial, err := e.db.TrialByExperimentAndRequestID(e.ID, searcher.Create.RequestID); {
+	switch trial, err := db.TrialByExperimentAndRequestID(context.TODO(),
+		e.ID, searcher.Create.RequestID); {
 	case errors.Cause(err) == db.ErrNotFound:
 		l.Debug("trial was not previously persisted")
 	case err != nil:

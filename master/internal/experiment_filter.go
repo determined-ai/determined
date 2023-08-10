@@ -105,7 +105,7 @@ func expColumnNameToSQL(columnName string) (string, error) {
 		"forkedFrom":      "e.parent_id",
 		"resourcePool":    "e.config->'resources'->>'resource_pool'",
 		"projectId":       "project_id",
-		"checkpointSize":  "checkpoint_size",
+		"checkpointSize":  "e.checkpoint_size",
 		"checkpointCount": "e.checkpoint_count",
 		"searcherMetricsVal": `(
 			SELECT

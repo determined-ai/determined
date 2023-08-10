@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -664,8 +665,9 @@ SELECT e.id, e.state, e.config, e.model_definition, e.start_time,
        e.owner_id, e.notes, e.job_id, u.username as username, e.project_id, e.unmanaged
 FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
+JOIN trial_id_task_id ON t.id = trial_id_task_id.trial_id
 JOIN users u ON e.owner_id = u.id
-WHERE t.task_id = ?`, taskID).Scan(ctx, &experiment); err != nil {
+WHERE trial_id_task_id.task_id = ?`, taskID).Scan(ctx, &experiment); err != nil {
 		return nil, MatchSentinelError(err)
 	}
 
@@ -919,10 +921,9 @@ func (db *PgDB) DeleteExperiments(ctx context.Context, ids []int) error {
 
 	if _, err = tx.NewDelete().Model(&delIDs).Table("checkpoints_v2").
 		Where(`task_id IN (
-	SELECT tk.task_id
-	FROM tasks tk
-	JOIN trials t ON t.task_id = tk.task_id
-	JOIN experiments e ON t.experiment_id = e.id
+	SELECT tt.task_id
+	FROM trial_id_task_id tt
+	JOIN trials t ON t.id = tt.trial_id
 	WHERE experiment_id IN (?)
 )`, bun.In(ids)).
 		Returning("id").
@@ -1006,8 +1007,10 @@ func (db *PgDB) ExperimentTotalStepTime(id int) (float64, error) {
 	var seconds float64
 	if err := db.sql.Get(&seconds, `
 SELECT COALESCE(extract(epoch from sum(a.end_time - a.start_time)), 0)
-FROM allocations a, trials t
-WHERE t.experiment_id = $1 AND a.task_id = t.task_id
+FROM allocations a
+JOIN trial_id_task_id tasks ON a.task_id = tasks.task_id
+JOIN trials t ON tasks.trial_id = t.id
+WHERE t.experiment_id = $1
 `, id); err != nil {
 		return 0, errors.Wrapf(err, "querying for total step time of experiment %v", id)
 	}
@@ -1047,32 +1050,29 @@ WHERE trials.experiment_id = $1
 }
 
 // ExperimentsTrialAndTaskIDs returns the trial and task IDs for one or more experiments.
-func (db *PgDB) ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int,
+func ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int,
 	[]model.TaskID, error,
 ) {
 	if len(expIDs) == 0 {
 		return nil, nil, nil
 	}
-	var trialIDRows []struct {
-		ID     int          `db:"id"`
-		TaskID model.TaskID `db:"task_id"`
+
+	var res []model.TrialTaskID
+	if err := idb.NewSelect().Model(&res).
+		Join("JOIN trials ON trials.id = trial_task_id.trial_id").
+		Where("trials.experiment_id IN (?)", bun.In(expIDs)).
+		Scan(ctx); err != nil {
+		return nil, nil, fmt.Errorf("querying for trial / task IDs of experiments %v: %w", expIDs, err)
 	}
-	query := idb.NewSelect().
-		ColumnExpr("id").
-		ColumnExpr("task_id").
-		Table("trials").
-		Model(&trialIDRows).
-		Where("trials.experiment_id IN (?)", bun.In(expIDs))
-	if err := query.Scan(ctx); err != nil {
-		return nil, nil, errors.Wrapf(err, "querying for trial IDs of experiments %v", expIDs)
-	}
-	var trialIDs []int
+
 	var taskIDs []model.TaskID
-	for _, r := range trialIDRows {
-		trialIDs = append(trialIDs, r.ID)
+	trialIDsMap := make(map[int]bool)
+	for _, r := range res {
+		trialIDsMap[r.TrialID] = true
 		taskIDs = append(taskIDs, r.TaskID)
 	}
-	return trialIDs, taskIDs, nil
+
+	return maps.Keys(trialIDsMap), taskIDs, nil
 }
 
 // ExperimentNumSteps returns the total number of steps for all trials of the experiment.
@@ -1117,65 +1117,39 @@ WITH const AS (
             END) AS sign
     FROM experiments WHERE id = $1
 ), selected_checkpoints AS (
-    SELECT *
-    FROM (
-        SELECT *,
-               -- The order includes the id to prevent different rows from having the same
-               -- rank, which could cause more than the desired number of checkpoints to be
-               -- left out of the result set. Also, any rows with null validation values
-               -- will sort to the end, thereby not affecting the ranks of rows with
-               -- non-null validations, and will be filtered out later.
-               rank() OVER (
-                   ORDER BY
-                       const.sign * (step->'validation'->'metrics'->'validation_metrics'
-                                     ->>const.metric_name)::float8 ASC NULLS LAST, id ASC
-               ) AS experiment_rank,
-               rank() OVER (
-                   PARTITION BY trial_id
-                   ORDER BY
-                       const.sign * (step->'validation'->'metrics'->'validation_metrics'
-                                     ->>const.metric_name)::float8 ASC NULLS LAST, id ASC
-               ) AS trial_rank,
-               rank() OVER (
-                   PARTITION BY trial_id
-                   ORDER BY total_batches DESC
-               ) AS trial_order_rank
-        FROM (
-            SELECT c.id, c.trial_id, c.steps_completed as total_batches, c.state,
-                   c.report_time as end_time, c.uuid, c.resources, c.metadata,
-                   (SELECT row_to_json(s)
-                    FROM (
-                        SELECT s.end_time, s.id, s.trial_id,
-                            s.total_batches,
-                            (SELECT row_to_json(v)
-                            FROM (
-                                SELECT v.end_time, v.id, v.metrics,
-                                    v.total_batches, v.trial_id
-                                    FROM validations v
-                                    WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
-                                ) v
-                               ) AS validation
-                        FROM steps s
-                        WHERE s.total_batches = c.steps_completed AND s.trial_id = c.trial_id
-                    ) s
-                   ) AS step,
-                   -- We later filter out any checkpoints with any corresponding warm start
-                   -- trials, so we can just put an empty list here. (TODO(dzhu): This is
-                   -- here for backwards compatibility with Python, but could maybe be
-                   -- removed.)
-                   '[]'::jsonb AS warm_start_trials
-            FROM checkpoints_view c, trials t, const
-            WHERE c.state = 'COMPLETED' AND c.trial_id = t.id AND t.experiment_id = $1
-        ) _, const
-    ) c, const
-    WHERE (SELECT COUNT(*) FROM trials t WHERE t.warm_start_checkpoint_id = c.id) = 0
-          AND c.trial_order_rank > $4
-          AND ((c.experiment_rank > $2
-                AND c.trial_rank > $3)
-               OR (c.step->'validation'->'metrics'->'validation_metrics'->>const.metric_name
-                   IS NULL))
+	SELECT c.uuid,
+		-- The order includes the id to prevent different rows from having the same
+		-- rank, which could cause more than the desired number of checkpoints to be
+		-- left out of the result set. Also, any rows with null validation values
+		-- will sort to the end, thereby not affecting the ranks of rows with
+		-- non-null validations, and will be filtered out later.
+		rank() OVER (
+			ORDER BY const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8
+			ASC NULLS LAST, v.id ASC
+		) AS experiment_rank,
+		rank() OVER (
+			PARTITION BY v.trial_id
+			ORDER BY const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8 
+			ASC NULLS LAST, v.id ASC
+		) AS trial_rank,
+		rank() OVER (
+			PARTITION BY v.trial_id
+			ORDER BY (c.metadata->>'steps_completed')::int DESC
+		) AS trial_order_rank
+	FROM checkpoints_v2 c
+	NATURAL JOIN const
+	JOIN trial_id_task_id ON c.task_id = trial_id_task_id.task_id
+    JOIN trials t ON trial_id_task_id.trial_id = t.id
+	LEFT JOIN validations v ON v.total_batches = (c.metadata->>'steps_completed')::int AND 
+		v.trial_id = t.id
+	WHERE c.report_time IS NOT NULL
+		AND v.metrics->'validation_metrics'->>const.metric_name IS NOT NULL
+		AND (SELECT COUNT(*) FROM trials t WHERE t.warm_start_checkpoint_id = c.id) = 0
+		AND t.experiment_id = $1
 )
-SELECT selected_checkpoints.uuid AS ID from selected_checkpoints;`
+SELECT sc.uuid AS ID
+FROM selected_checkpoints sc
+WHERE trial_order_rank > $4 AND experiment_rank > $2 AND trial_rank > $3;`
 
 	var checkpointIDRows []struct {
 		ID uuid.UUID

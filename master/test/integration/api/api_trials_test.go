@@ -391,13 +391,12 @@ func setupTrial(t *testing.T, pgDB *db.PgDB) (
 
 	task := db.RequireMockTask(t, pgDB, experiment.OwnerID)
 	trial := &model.Trial{
-		TaskID:       task.TaskID,
 		ExperimentID: experiment.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
 	}
 
-	err = pgDB.AddTrial(trial)
+	err = db.AddTrial(context.TODO(), trial, task.TaskID)
 	assert.NilError(t, err, "failed to insert trial")
 	return experiment, activeConfig, trial
 }

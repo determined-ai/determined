@@ -248,7 +248,7 @@ type RP struct {
 	Name string
 }
 
-// ReadRPsAvailableToWorkspace returns the names of resource pool bound to a
+// ReadRPsAvailableToWorkspace returns the names of resource pools available to a
 // workspace.
 func ReadRPsAvailableToWorkspace(
 	ctx context.Context,

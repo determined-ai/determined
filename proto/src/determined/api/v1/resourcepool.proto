@@ -16,6 +16,8 @@ message GetResourcePoolsRequest {
   int32 offset = 1;
   // Limit the number of resource pools. A value of 0 denotes no limit.
   int32 limit = 2;
+  // Indicate whether or not to return unbound pools only.
+  bool unbound = 3;
 }
 
 // Response to GetResourcePoolsRequest.
