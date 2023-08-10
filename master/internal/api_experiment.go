@@ -2254,6 +2254,7 @@ func (a *apiServer) SearchExperiments(
 				'num_inputs', bv.metrics->'num_inputs') AS best_validation`).
 		ColumnExpr("null::jsonb AS best_checkpoint").
 		ColumnExpr("null::jsonb AS wall_clock_time").
+		ColumnExpr("searcher_metric_value_signed AS searcher_metric_value").
 		Join("LEFT JOIN validations bv ON trials.best_validation_id = bv.id").
 		Join("LEFT JOIN validations lv ON trials.latest_validation_id = lv.id").
 		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").

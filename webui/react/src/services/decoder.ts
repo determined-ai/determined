@@ -454,12 +454,9 @@ export const mapV1GetExperimentDetailsResponse = ({
 export const mapSearchExperiment = (
   data: Sdk.V1SearchExperimentExperiment,
 ): types.ExperimentWithTrial => {
-  const experiment = data.experiment && mapV1Experiment(data.experiment);
   return {
-    bestTrial:
-      data.bestTrial &&
-      decodeV1TrialToTrialItem(data.bestTrial, experiment.config.searcher.smallerIsBetter),
-    experiment,
+    bestTrial: data.bestTrial && decodeV1TrialToTrialItem(data.bestTrial),
+    experiment: data.experiment && mapV1Experiment(data.experiment),
   };
 };
 
@@ -618,28 +615,7 @@ const decodeSummaryMetrics = (data: unknown): types.SummaryMetrics => {
   };
 };
 
-const decodeSummaryValidationMetrics = (
-  data: types.SummaryMetrics,
-  smallerIsBetter?: boolean,
-): types.MetricsWorkload | undefined => {
-  if (!data.validationMetrics) return;
-  const metrics: Record<string, number> = {};
-  for (const key in data.validationMetrics) {
-    if (smallerIsBetter) {
-      metrics[key] = data.validationMetrics?.[key].min || 0;
-    } else {
-      metrics[key] = data.validationMetrics?.[key].max || 0;
-    }
-  }
-
-  return { metrics, totalBatches: 0 };
-};
-
-export const decodeV1TrialToTrialItem = (
-  data: Sdk.Trialv1Trial,
-  smallerIsBetter?: boolean,
-): types.TrialItem => {
-  const summaryMetrics = data.summaryMetrics && decodeSummaryMetrics(data.summaryMetrics);
+export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem => {
   return {
     autoRestarts: data.restarts,
     bestAvailableCheckpoint: data.bestCheckpoint && decodeCheckpointWorkload(data.bestCheckpoint),
@@ -650,11 +626,10 @@ export const decodeV1TrialToTrialItem = (
     hyperparameters: flattenObject(data.hparams || {}),
     id: data.id,
     latestValidationMetric: data.latestValidation && decodeMetricsWorkload(data.latestValidation),
+    searcherMetricsVal: data.searcherMetricValue,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
-    summaryMetrics,
-    summaryValidationMetrics:
-      summaryMetrics && decodeSummaryValidationMetrics(summaryMetrics, smallerIsBetter),
+    summaryMetrics: data.summaryMetrics && decodeSummaryMetrics(data.summaryMetrics),
     totalBatchesProcessed: data.totalBatchesProcessed,
     totalCheckpointSize: parseInt(data?.totalCheckpointSize || '0'),
   };

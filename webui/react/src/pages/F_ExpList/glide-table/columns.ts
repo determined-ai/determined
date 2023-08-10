@@ -415,8 +415,7 @@ export const searcherMetricsValColumn = (
     id: 'searcherMetricsVal',
     isNumerical: true,
     renderer: (record: ExperimentWithTrial) => {
-      const sMetric = record.experiment.config.searcher.metric;
-      const sMetricValue = record.bestTrial?.summaryValidationMetrics?.metrics?.[sMetric];
+      const sMetricValue = record.bestTrial?.searcherMetricsVal;
 
       let theme: Partial<GTheme> = {};
       if (heatmapProps && sMetricValue) {

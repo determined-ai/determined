@@ -813,7 +813,7 @@ export interface Trialv1Trial {
      */
     warmStartCheckpointUuid?: string;
     /**
-     * Id of task associated with this trial.
+     * Id of the first task associated with this trial. This field is deprecated since trials can have multiple tasks.
      * @type {string}
      * @memberof Trialv1Trial
      */
@@ -836,6 +836,18 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     summaryMetrics?: any;
+    /**
+     * Task IDs of tasks associated with this trial. Length of task_ids will always be greater or equal to one when TaskID is sent. For example CompareTrial we will send a reduced Trial object, without TaskID or TaskIDs fileld in. The first element of task_ids will be the same as task_id. task_ids is sorted ascending by task_run_id.
+     * @type {Array<string>}
+     * @memberof Trialv1Trial
+     */
+    taskIds?: Array<string>;
+    /**
+     * Signed searcher metrics value.
+     * @type {number}
+     * @memberof Trialv1Trial
+     */
+    searcherMetricValue?: number;
 }
 /**
  * Acknowledge the receipt of some stop signal.
@@ -17121,10 +17133,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
+         * @param {boolean} [unbound] Indicate whether or not to return unbound pools only.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getResourcePools(offset?: number, limit?: number, options: any = {}): FetchArgs {
+        getResourcePools(offset?: number, limit?: number, unbound?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/resource-pools`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -17145,6 +17158,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit
+            }
+            
+            if (unbound !== undefined) {
+                localVarQueryParameter['unbound'] = unbound
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -17393,7 +17410,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -18945,11 +18962,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
+         * @param {boolean} [unbound] Indicate whether or not to return unbound pools only.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getResourcePools(offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetResourcePoolsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getResourcePools(offset, limit, options);
+        getResourcePools(offset?: number, limit?: number, unbound?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetResourcePoolsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getResourcePools(offset, limit, unbound, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19069,7 +19087,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -19805,11 +19823,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
+         * @param {boolean} [unbound] Indicate whether or not to return unbound pools only.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getResourcePools(offset?: number, limit?: number, options?: any) {
-            return InternalApiFp(configuration).getResourcePools(offset, limit, options)(fetch, basePath);
+        getResourcePools(offset?: number, limit?: number, unbound?: boolean, options?: any) {
+            return InternalApiFp(configuration).getResourcePools(offset, limit, unbound, options)(fetch, basePath);
         },
         /**
          * 
@@ -19875,7 +19894,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -20451,12 +20470,13 @@ export class InternalApi extends BaseAPI {
      * @summary Get a list of all resource pools from the cluster.
      * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
      * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
+     * @param {boolean} [unbound] Indicate whether or not to return unbound pools only.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getResourcePools(offset?: number, limit?: number, options?: any) {
-        return InternalApiFp(this.configuration).getResourcePools(offset, limit, options)(this.fetch, this.basePath)
+    public getResourcePools(offset?: number, limit?: number, unbound?: boolean, options?: any) {
+        return InternalApiFp(this.configuration).getResourcePools(offset, limit, unbound, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20533,7 +20553,7 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
-     * @summary List all resource pools bound to a specific workspace
+     * @summary List all resource pools, bound and unbound, available to a specific workspace
      * @param {number} workspaceId Workspace ID.
      * @param {number} [offset] The offset to use with pagination.
      * @param {number} [limit] The maximum number of results to return.
@@ -29451,7 +29471,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -29807,7 +29827,7 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -29999,7 +30019,7 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -30148,7 +30168,7 @@ export class WorkspacesApi extends BaseAPI {
     
     /**
      * 
-     * @summary List all resource pools bound to a specific workspace
+     * @summary List all resource pools, bound and unbound, available to a specific workspace
      * @param {number} workspaceId Workspace ID.
      * @param {number} [offset] The offset to use with pagination.
      * @param {number} [limit] The maximum number of results to return.

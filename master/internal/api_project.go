@@ -456,43 +456,35 @@ func (a *apiServer) getProjectNumericMetricsRange(
 					if value.Type != "number" {
 						continue
 					}
-					if metricsGroup == metricGroupValidation {
-						metricsValue := value.Min
-						if !r.SmallerIsBetter {
-							metricsValue = value.Max
-						}
 
-						switch v := metricsValue.(type) {
-						case float64:
-							tMetricsName := fmt.Sprintf("%s.%s", "validation", name)
-							metricsValues[tMetricsName] = append(metricsValues[tMetricsName], v)
+					for _, aggregate := range SummaryMetricStatistics {
+						group := metricsGroup
+						if metricsGroup == metricGroupTraining {
+							group = metricIDTraining
 						}
-					} else {
-						for _, aggregate := range SummaryMetricStatistics {
-							group := metricsGroup
-							if metricsGroup == metricGroupTraining {
-								group = metricIDTraining
-							}
-							tMetricsName := fmt.Sprintf("%s.%s.%s", group, name, aggregate)
-							var tMetricsValue interface{}
-							switch aggregate {
-							case "last":
-								tMetricsValue = value.Last
-							case "max":
-								tMetricsValue = value.Max
-							case "min":
-								tMetricsValue = value.Min
-							case "mean":
-								tMetricsValue = value.Mean
-							}
-							switch v := tMetricsValue.(type) {
-							case float64:
-								metricsValues[tMetricsName] = append(metricsValues[tMetricsName], v)
-							case *int32:
-								metricsValues[tMetricsName] = append(metricsValues[tMetricsName], float64(*v))
-							}
+						if metricsGroup == metricGroupValidation {
+							group = metricIDValidation
+						}
+						tMetricsName := fmt.Sprintf("%s.%s.%s", group, name, aggregate)
+						var tMetricsValue interface{}
+						switch aggregate {
+						case "last":
+							tMetricsValue = value.Last
+						case "max":
+							tMetricsValue = value.Max
+						case "min":
+							tMetricsValue = value.Min
+						case "mean":
+							tMetricsValue = value.Mean
+						}
+						switch v := tMetricsValue.(type) {
+						case float64:
+							metricsValues[tMetricsName] = append(metricsValues[tMetricsName], v)
+						case *int32:
+							metricsValues[tMetricsName] = append(metricsValues[tMetricsName], float64(*v))
 						}
 					}
+
 				}
 			}
 		}

@@ -142,6 +142,8 @@ message Trial {
   // TaskID or TaskIDs fileld in. The first element of task_ids will be the same
   // as task_id. task_ids is sorted ascending by task_run_id.
   repeated string task_ids = 20;
+  // Signed searcher metrics value.
+  double searcher_metric_value = 21;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series
