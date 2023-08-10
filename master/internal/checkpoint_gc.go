@@ -98,8 +98,18 @@ func runCheckpointGCTask(
 	}
 
 	allocationID := model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1))
+	groupAddr := fmt.Sprintf("checkpoint_gc-%s", allocationID)
 	// HACK: Just to get a valid group ID. Refactor groups to not be actors.
-	group, _ := system.ActorOf(actor.Addr("checkpoint_gc", allocationID), &actors.Nothing)
+	group, ok := system.ActorOf(actor.Addr(groupAddr), &actors.Nothing)
+	if !ok {
+		return fmt.Errorf("creating unique fake group actor %s", groupAddr)
+	}
+	defer func() {
+		// Without this, we leak these fake group actors.
+		if err := group.StopAndAwaitTermination(); err != nil {
+			syslog.WithError(err).Error("cleaning up fake group actor")
+		}
+	}()
 
 	resultChan := make(chan error, 1)
 	onExit := func(ae *task.AllocationExited) {

@@ -138,3 +138,6 @@ CREATE OR REPLACE VIEW public.proto_checkpoints_view AS
             'searcher_metric', c.searcher_metric
         ) AS training
     FROM checkpoints_view AS c;
+
+CREATE OR REPLACE VIEW checkpoints AS
+    SELECT * FROM raw_checkpoints WHERE NOT archived;
