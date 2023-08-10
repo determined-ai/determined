@@ -286,7 +286,6 @@ func TestMultiTrialSampleSpecialMetrics(t *testing.T) {
 	require.NoError(t, err)
 	mygroup := actualAllMetrics[0]
 	require.Equal(t, maxDataPoints, len(mygroup.Data))
-	fmt.Println(mygroup.Data[0].Values.AsMap())
 	require.Equal(t, 3, len(mygroup.Data[0].Values.AsMap()))
 }
 

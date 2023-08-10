@@ -783,7 +783,6 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 			return nil, err
 		}
 		if metric != nil {
-			fmt.Println("metric", metric)
 			metrics = append(metrics, metric)
 		}
 	}

@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
+	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -67,23 +67,27 @@ func (a *apiServer) GetTelemetry(
 func (a *apiServer) GetMasterConfig(
 	ctx context.Context, _ *apiv1.GetMasterConfigRequest,
 ) (*apiv1.GetMasterConfigResponse, error) {
-	// create go map
-	myMap := map[string]any{
-		"a":                               0.0,
-		"mygroup.zgroup_b/me.t r%i]\\c_1": 3.0,
-	}
-
-	// turn it into proto structb
-	myStruct, err := structpb.NewStruct(myMap)
+	u, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	resp := &apiv1.GetMasterConfigResponse{
-		Config: myStruct,
+	permErr, err := cluster.AuthZProvider.Get().CanGetMasterConfig(ctx, u)
+	if err != nil {
+		return nil, err
+	} else if permErr != nil {
+		return nil, permErr
 	}
 
-	return resp, nil
+	config, err := a.m.config.Printable()
+	if err != nil {
+		return nil, errors.Wrap(err, "error parsing master config")
+	}
+	configStruct := &structpb.Struct{}
+	err = protojson.Unmarshal(config, configStruct)
+	return &apiv1.GetMasterConfigResponse{
+		Config: configStruct,
+	}, err
 }
 
 func (a *apiServer) PatchMasterConfig(
