@@ -156,47 +156,49 @@ const ResourcePoolCard: React.FC<Props> = ({
   );
 
   return (
-    <Card
-      actionMenu={actionMenu}
-      href={paths.resourcePool(pool.name)}
-      size="medium"
-      onDropdown={onDropdown}>
-      <div className={css.base}>
-        <div className={css.header}>
-          <div className={css.info}>
-            <div className={css.name}>{pool.name}</div>
+    <>
+      <Card
+        actionMenu={actionMenu}
+        href={paths.resourcePool(pool.name)}
+        size="medium"
+        onDropdown={onDropdown}>
+        <div className={css.base}>
+          <div className={css.header}>
+            <div className={css.info}>
+              <div className={css.name}>{pool.name}</div>
+            </div>
+            <div className={css.default}>
+              <span>{descriptiveLabel}</span>
+              {pool.description && <Icon name="info" showTooltip title={pool.description} />}
+            </div>
           </div>
-          <div className={css.default}>
-            <span>{descriptiveLabel}</span>
-            {pool.description && <Icon name="info" showTooltip title={pool.description} />}
-          </div>
-        </div>
-        <Suspense fallback={<Spinner center spinning />}>
-          <div className={css.body}>
-            <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
-            {rpBindingFlagOn && resourcePoolBindings.length > 0 && (
-              <section className={css.resoucePoolBoundContainer}>
-                <div>Bound to:</div>
-                <div className={css.resoucePoolBoundCount}>
-                  <Icon name="lock" title="Bound Workspaces" />
-                  {resourcePoolBindings.length} workspace
-                </div>
+          <Suspense fallback={<Spinner center spinning />}>
+            <div className={css.body}>
+              <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
+              {rpBindingFlagOn && resourcePoolBindings.length > 0 && (
+                <section className={css.resoucePoolBoundContainer}>
+                  <div>Bound to:</div>
+                  <div className={css.resoucePoolBoundCount}>
+                    <Icon name="lock" title="Bound Workspaces" />
+                    {resourcePoolBindings.length} workspace
+                  </div>
+                </section>
+              )}
+              <section className={css.details}>
+                <Json hideDivider json={shortDetails} />
               </section>
-            )}
-            <section className={css.details}>
-              <Json hideDivider json={shortDetails} />
-            </section>
-            <div />
-          </div>
-        </Suspense>
-      </div>
+              <div />
+            </div>
+          </Suspense>
+        </div>
+      </Card>
       <ResourcePoolBindingModal.Component
         bindings={workspaces.filter((w) => resourcePoolBindings.includes(w.id)).map((w) => w.name)}
         pool={pool.name}
         workspaces={workspaces.map((w) => w.name)}
         onSave={onSaveBindings}
       />
-    </Card>
+    </>
   );
 };
 
