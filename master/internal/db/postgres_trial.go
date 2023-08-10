@@ -507,15 +507,16 @@ func calculateNewSummaryMetrics(
 		if _, ok = summaryMetric["count"]; !ok {
 			summaryMetric["max"] = replaceSpecialFloatsWithString(metricFloatValue)
 			summaryMetric["min"] = replaceSpecialFloatsWithString(metricFloatValue)
-			summaryMetric["sum"] = replaceSpecialFloatsWithString(metricFloatValue)
+			summaryMetric["mean"] = replaceSpecialFloatsWithString(metricFloatValue)
 			summaryMetric["count"] = 1
 		} else {
 			summaryMetric["min"] = replaceSpecialFloatsWithString(
 				math.Min(jsonAnyToFloat(summaryMetric["min"]), metricFloatValue))
 			summaryMetric["max"] = replaceSpecialFloatsWithString(
 				math.Max(jsonAnyToFloat(summaryMetric["max"]), metricFloatValue))
-			summaryMetric["sum"] = replaceSpecialFloatsWithString(
-				jsonAnyToFloat(summaryMetric["sum"]) + metricFloatValue)
+			summaryMetric["mean"] = replaceSpecialFloatsWithString(
+				(jsonAnyToFloat(summaryMetric["mean"])*jsonAnyToFloat(summaryMetric["count"]) +
+					metricFloatValue) / (jsonAnyToFloat(summaryMetric["count"]) + 1))
 			// Go parsing odditity treats JSON whole numbers as floats.
 			summaryMetric["count"] = int(jsonAnyToFloat(summaryMetric["count"])) + 1
 		}

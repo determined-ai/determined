@@ -387,14 +387,8 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			var col string
 			var queryArgs []interface{}
 			var queryString string
-			if metricQualifier == "mean" {
-				locator := bun.Safe(fmt.Sprintf("trials.summary_metrics->'%s'", metricGroup))
-				col = fmt.Sprintf(`(?->?->>'sum')::float8 / (?->?->>'count')::int`)
-				queryArgs = append(queryArgs, locator, metricName, locator, metricName)
-			} else {
-				col = `trials.summary_metrics->?->?->>?`
-				queryArgs = append(queryArgs, metricGroup, metricName, metricQualifier)
-			}
+			col = `trials.summary_metrics->?->?->>?`
+			queryArgs = append(queryArgs, metricGroup, metricName, metricQualifier)
 			if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
 				col = fmt.Sprintf(`(%v)::float8`, col)
 			}

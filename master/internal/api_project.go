@@ -253,7 +253,6 @@ func (a *apiServer) getProjectColumnsByID(
 				Type:     columnType,
 			})
 		}
-
 	}
 	hparamSet := make(map[string]struct{})
 	for _, hparam := range hyperparameters {
@@ -419,9 +418,11 @@ func (a *apiServer) GetProjectNumericMetricsRange(
 func (a *apiServer) getProjectNumericMetricsRange(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
 ) (map[string]([]float64), []float64, error) {
-	query := db.BunUpdateMetricMean().Table("experiments").
+	query := db.Bun().NewSelect().Table("trials").Table("experiments").
 		ColumnExpr(`searcher_metric_value_signed = searcher_metric_value AS smaller_is_better`).
 		Column("searcher_metric_value").
+		Column("summary_metrics").
+		Where("summary_metrics IS NOT NULL").
 		Where("project_id = ?", project.Id).
 		Where("experiments.best_trial_id = trials.id")
 
@@ -484,7 +485,6 @@ func (a *apiServer) getProjectNumericMetricsRange(
 							metricsValues[tMetricsName] = append(metricsValues[tMetricsName], float64(*v))
 						}
 					}
-
 				}
 			}
 		}

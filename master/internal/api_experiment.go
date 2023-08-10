@@ -2093,14 +2093,8 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 			if err != nil {
 				return err
 			}
-			if metricQualifier == "mean" { //nolint: goconst
-				locator := bun.Safe(fmt.Sprintf("trials.summary_metrics->'%s'", metricGroup))
-				experimentQuery.OrderExpr("(?0->?1->>'sum')::float8 / (?0->?1->>'count')::int ?2",
-					locator, metricName, bun.Safe(sortDirection))
-			} else {
-				experimentQuery.OrderExpr("trials.summary_metrics->?->?->>? ?",
-					metricGroup, metricName, metricQualifier, bun.Safe(sortDirection))
-			}
+			experimentQuery.OrderExpr("trials.summary_metrics->?->?->>? ?",
+				metricGroup, metricName, metricQualifier, bun.Safe(sortDirection))
 		default:
 			if _, ok := orderColMap[paramDetail[0]]; !ok {
 				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
@@ -2206,16 +2200,13 @@ func (a *apiServer) SearchExperiments(
 		}
 	}
 
-	summaryMetricsQuery := db.BunUpdateMetricMean().Where("trials.id IN (?)", bun.In(trialIDs))
-
 	trialsInnerQuery := db.Bun().NewSelect().
 		Table("trials").
-		With("metrics_query", summaryMetricsQuery).
 		Column("trials.id").
 		Column("trials.experiment_id").
 		Column("trials.runner_state").
 		Column("trials.checkpoint_count").
-		Column("metrics_query.summary_metrics").
+		Column("trials.summary_metrics").
 		ColumnExpr(`(
 				SELECT tt.task_id FROM trial_id_task_id tt
 				JOIN tasks ta ON tt.task_id = ta.task_id
@@ -2258,7 +2249,6 @@ func (a *apiServer) SearchExperiments(
 		Join("LEFT JOIN validations bv ON trials.best_validation_id = bv.id").
 		Join("LEFT JOIN validations lv ON trials.latest_validation_id = lv.id").
 		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").
-		Join("LEFT JOIN metrics_query ON metrics_query.id = trials.id").
 		Where("trials.id IN (?)", bun.In(trialIDs))
 
 	err = db.Bun().NewSelect().

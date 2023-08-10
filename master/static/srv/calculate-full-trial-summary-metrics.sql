@@ -110,7 +110,7 @@ FROM latest_metrics lt FULL OUTER JOIN trial_metric_aggs tma ON
 	lt.trial_id = tma.trial_id AND lt.name = tma.name
 ) SELECT name, jsonb_build_object(
     'count', count_agg,
-    'sum', sum_agg,
+	'mean', sum_agg::float/count_agg,
     'min', CASE WHEN max_agg = 'NaN'::double precision
         THEN 'NaN'::double precision ELSE min_agg END,
     'max', max_agg,

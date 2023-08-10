@@ -113,25 +113,6 @@ func BunSelectMetricGroupNames() *bun.SelectQuery {
 		Order("json_path").Order("metric_name")
 }
 
-// BunUpdateMetricMean calculates summary metrics mean, and return as.
-// id | summary_metrics
-//
-//	1 | { avg_metrics: { accuracy: { min: 1, max: 2, last: 2, mean: 1 } } }
-func BunUpdateMetricMean() *bun.SelectQuery {
-	return Bun().NewSelect().Table("trials").
-		TableExpr("jsonb_object_keys(summary_metrics) as metric_group").
-		Column("trials.id").
-		ColumnExpr(`jsonb_object_agg(
-	metric_group,
-		(SELECT jsonb_object_agg(m.key, CASE WHEN m.value -> 'type' = '"number"'::jsonb
-			THEN m.value - '{sum, count}'::text[] ||
-				jsonb_build_object(
-					'mean', (m.value ->> 'sum')::float8 / (m.value ->> 'count')::int)
-			ELSE m.value END)
-		FROM jsonb_each(summary_metrics -> metric_group) AS m(key, value))
-	) AS summary_metrics`).Where("summary_metrics IS NOT NULL").Group("trials.id")
-}
-
 /*
 rollbackMetrics ensures old training and validation metrics from a previous run id are archived.
 */
