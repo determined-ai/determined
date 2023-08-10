@@ -116,14 +116,25 @@ func mergeConfigIntoViper(bs []byte) (*config.Config, error) {
 
 	// Now call viper.AllSettings() again to get the full config, containing all values from CLI flags,
 	// environment variables, and the configuration file. Override the task_container_defaults value
-	// using the map you copied.
-	viperConfig := v.AllSettings()
-	viperConfig["task_container_defaults"] = cpMap["task_container_defaults"]
-	if conf, ok := cpMap["resource_pools"]; ok {
-		viperConfig["resource_pools"] = conf
+	// using the map you copied.q
+	customConfig := mergeCustomSpecs(v.AllSettings(), cpMap)
+
+	return getConfig(customConfig)
+}
+
+func mergeCustomSpecs(
+	config map[string]interface{},
+	cp map[string]interface{},
+) map[string]interface{} {
+	if conf, ok := cp["task_container_defaults"].(map[string]interface{})["cpu_pod_spec"]; ok {
+		config["task_container_defaults"].(map[string]interface{})["cpu_pod_spec"] = conf
 	}
 
-	return getConfig(viperConfig)
+	if conf, ok := cp["task_container_defaults"].(map[string]interface{})["gpu_pod_spec"]; ok {
+		config["task_container_defaults"].(map[string]interface{})["gpu_pod_spec"] = conf
+	}
+
+	return config
 }
 
 func readConfigFile(configPath string) ([]byte, error) {
