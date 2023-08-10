@@ -4,21 +4,35 @@ import time
 import pytest
 
 from determined.common import yaml
+from determined.common.api import bindings
 from determined.common.api.bindings import experimentv1State
+from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
 from ..cluster import test_slurm
 
 
+# Test only works on resource pool with 1 node 8 CPU slots.
+# Queries the determined master for resource pool information to determine if
+# resource pool is suitable for this test.
+def skip_if_not_suitable_resource_pool() -> None:
+    session = api_utils.determined_test_session()
+    rps = bindings.get_GetResourcePools(session)
+    assert rps.resourcePools and len(rps.resourcePools) > 0, "missing resource pool"
+    if (
+        len(rps.resourcePools) != 1
+        or rps.resourcePools[0].slotType != bindings.devicev1Type.CPU
+        or rps.resourcePools[0].slotsAvailable != 8
+    ):
+        errorMessage = "required config: 1 resource pool with 1 node, with only 8 slots."
+        pytest.skip(errorMessage)
+
+
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
 def test_hpc_job_pending_reason() -> None:
-    # This test only works on slurm/pbs GCP VM with 1 node 8 CPU slots.
-    # HPC Resource details: [{TotalAvailableNodes:1 PartitionName:debug IsDefault:true ...
-    # TotalAvailableGpuSlots:0 TotalNodes:1 TotalGpuSlots:0
-    # TotalAvailableCPUSlots:8 TotalCPUSlots:8 Accelerator:}]
-
+    skip_if_not_suitable_resource_pool()
     # Currently, this test fails while using the determined agent.
     # The output is PBS or SLURM launcher specific
     test_slurm.skip_if_not_hpc_scheduler()
