@@ -93,13 +93,22 @@ requirements of the subscription; it "falls in" to the subscribed set.
 
 A Fallout is when it changes to no longer be in the subscription set.
 
-An example of Fallout this would be a streaming client subscribed to all
-experiments matching workspace\_id==1, and one such experiment is moved to a
-different workspace.
+An example of Fallin this would be a streaming client subscribed to all
+experiments matching workspace\_id==1, and one experiment is moved into that
+workspace from another.  Fallout would be if that same experiment were then
+moved back to its original workspace.
 
 Fallin/Fallout are only possible when server-side filtering is allowed on
 mutable fields.  Streaming all trials with experiment\_id==1 can't have fallout
 for instance, because trials cannot be moved from one experiment to another.
+
+Also, since fallin/fallout involve modifying the record, the record's sequence
+number should be modified.  Therefore, fallin cases are most likely handled by
+the same logic that handles updates: a record gets updated and broadcast to all
+relevant subscribers, which might include some new ones.
+
+So it turns out that only fallout presents a problem; fallin is most likley
+solved by normal Update handling.
 
 ## Problems
 
@@ -172,8 +181,19 @@ are:
 We prefer to just boot'em, as it's the simplest strategy, and the problem
 shouldn't arise very often.
 
-TBD: does just boot'em also invalidate the client cache?  Need to think more
-about the pros and cons.
+#### Just Boot'em Variations
+
+Should just boot'em also invalidate the client cache?
+
+Pros:
+  - if just boot'em invalidates client cache, then even the offline appearence
+    and disappearance problems go away.  Removes one requirement for the
+    declarative strategy.
+
+Cons:
+  - It requires restreaming a lot more state at rbac transitions.  If the
+    offline appearance and disappearence problem is solved passively (due to
+    declarative strategy) it would seem like a pointless performance hit.
 
 ### Appearance Problem
 
@@ -202,31 +222,42 @@ declarative strategy for deletions, but is otherwise easy to solve.
 Note that the second way can be accelerated with a cache of known entities and
 their filterable data.
 
-### Fallin/Fallout Problem
-
-The first and best strategy to fallin/fallout is the **avoidance** strategy:
-just don't allow filtering on mutable columns.
-
-For times when avoidance is not possible, I have some ideas for online
-fallin/fallout:
-
-- keep a cache: the same cache that can accelerate the appearance/disappearance
-  problem can be used to solve the fallout problem.  When you see an update,
-  to a record, you can look at your cache to see what the old record was, and
-  you can use the old info as a way to decide which clients will want to see a
-  deletion message (or one last update message showing the entity doesn't fit
-  the subscription anymore, if you care to distinguish those situations).
-
-- I suppose since it's online, you could just use the TRIGGER to pass the extra
-  information instead of storing the cache, same as online deletions.
-  Otherwise, you do as with the cache, where you use the old and new data to
-  calculate subscriptions.
-
-In either case, so long as you can filter against new and old filterable info
-for a fallout/fallin event, these problems aren't too hard to solve.
+### Fallout Problem
 
 Unlike Appearance/Disappearance problems, it should never be possible for
 fallin/fallout happen without a sequence number bump on the record in question.
+
+As mentioned before, that means that fallin is probably not a problem at all;
+most likely the subscription matching logic for handling updates will passively
+solve both the offline and online fallin cases.
+
+Fallout is still interesting.  Generally speaking, it can be solved by pushing
+updates to subscriptions which match either the old or new record when a record
+is updated.
+
+The first and best strategy to fallout is the **avoidance** strategy: just
+don't allow filtering on mutable columns.
+
+For times when avoidance is not possible, I have some ideas for online fallout:
+
+- the **NOTIFY-queue** strategy: use the TRIGGER to pass filterable information
+  about the OLD row via NOTIFY.  Broadcast events to subscriptions matching
+  either the NEW or the OLD information.  Note that this makes NOTIFY
+  queue-like rather than a flag-like.  In postgres, NOTIFY channels can fill up
+  to 8GB of memory before they start to block, so it's likely that the
+  queue-like behavior doesn't slow down the system until we hit a much larger
+  scale.
+
+- the **cache** strategy: the same cache that can accelerate the
+  appearance/disappearance problem can be used to solve the fallout problem,
+  without making NOTIFY queue-like, because you can grab the OLD information
+  from the in-memory cache.  The cost is the cache, though it has secondary
+  benefits.  The benefit is you can restore the flag-like NOTIFY behavior.
+
+For offline fallout, you'd either need to have an event log of transitions
+(:puke:) or you'd have to use the declarative strategy.  The declarative
+strategy effectively lets you leverage the client's cache to calculate offline
+fallout without having to store historical states in the streaming server.
 
 ## Extensibility
 
