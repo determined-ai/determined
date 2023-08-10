@@ -368,7 +368,8 @@ const ExperimentCreateModalComponent = ({
         {modalState.isAdvancedMode && (
           <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>
             <CodeEditor
-              files={[{ content: Loaded(modalState.configString), key: 'config.yaml' }]}
+              file={Loaded(modalState.configString)}
+              files={[{ key: 'config.yaml' }]}
               height="40vh"
               onChange={handleEditorChange}
               onError={handleError}

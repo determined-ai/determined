@@ -3,11 +3,14 @@
 # check for dirty changes
 if [[ -n "$(git status --porcelain)" ]]; then
     echo "untracked or dirty files are not allowed, cleanup before running lock-published-urls.sh"
-    # exit 1
+    exit 1
 fi
 
-## lock in current published urls
+# redirects.py inspects files to detect missing redirects, so generated files
+# must be generated before the publish step
+make -C docs attributions.rst
 
+# lock in current published urls
 python3 docs/redirects.py publish
 
 # check to see if redirects.py published resulted in any file changes or not

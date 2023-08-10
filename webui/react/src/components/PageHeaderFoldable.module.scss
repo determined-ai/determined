@@ -82,7 +82,7 @@
     flex: 1 0 45%;
   }
   .optionsButtons :nth-child(1) {
-    display: inline-block !important;
+    display: inherit !important;
   }
   .optionsDropdownItem:nth-child(1) {
     display: none !important;
@@ -94,7 +94,7 @@
 
 @media only screen and (min-width: $breakpoint-desktop-medium) {
   .optionsButtons :nth-child(2) {
-    display: inline-block !important;
+    display: inherit !important;
   }
   .optionsDropdownItem:nth-child(2) {
     display: none !important;
@@ -106,7 +106,7 @@
 
 @media only screen and (min-width: $breakpoint-desktop-large) {
   .optionsButtons :nth-child(3) {
-    display: inline-block !important;
+    display: inherit !important;
   }
   .optionsDropdownItem:nth-child(3) {
     display: none !important;

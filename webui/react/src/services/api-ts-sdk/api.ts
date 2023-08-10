@@ -813,7 +813,7 @@ export interface Trialv1Trial {
      */
     warmStartCheckpointUuid?: string;
     /**
-     * Id of task associated with this trial.
+     * Id of the first task associated with this trial. This field is deprecated since trials can have multiple tasks.
      * @type {string}
      * @memberof Trialv1Trial
      */
@@ -836,6 +836,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     summaryMetrics?: any;
+    /**
+     * Task IDs of tasks associated with this trial. Length of task_ids will always be greater or equal to one when TaskID is sent. For example CompareTrial we will send a reduced Trial object, without TaskID or TaskIDs fileld in. The first element of task_ids will be the same as task_id. task_ids is sorted ascending by task_run_id.
+     * @type {Array<string>}
+     * @memberof Trialv1Trial
+     */
+    taskIds?: Array<string>;
 }
 /**
  * Acknowledge the receipt of some stop signal.
@@ -17409,7 +17415,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -19086,7 +19092,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -19893,7 +19899,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -20552,7 +20558,7 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
-     * @summary List all resource pools bound to a specific workspace
+     * @summary List all resource pools, bound and unbound, available to a specific workspace
      * @param {number} workspaceId Workspace ID.
      * @param {number} [offset] The offset to use with pagination.
      * @param {number} [limit] The maximum number of results to return.
@@ -29470,7 +29476,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -29826,7 +29832,7 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -30018,7 +30024,7 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
         },
         /**
          * 
-         * @summary List all resource pools bound to a specific workspace
+         * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
@@ -30167,7 +30173,7 @@ export class WorkspacesApi extends BaseAPI {
     
     /**
      * 
-     * @summary List all resource pools bound to a specific workspace
+     * @summary List all resource pools, bound and unbound, available to a specific workspace
      * @param {number} workspaceId Workspace ID.
      * @param {number} [offset] The offset to use with pagination.
      * @param {number} [limit] The maximum number of results to return.

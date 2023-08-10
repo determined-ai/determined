@@ -773,7 +773,7 @@ func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint,
 	checkpoint := e.warmStartCheckpoint
 	// If the Create specifies a checkpoint, ignore the experiment-wide one.
 	if op.Checkpoint != nil {
-		trial, err := e.db.TrialByExperimentAndRequestID(e.ID, op.Checkpoint.RequestID)
+		trial, err := db.TrialByExperimentAndRequestID(context.TODO(), e.ID, op.Checkpoint.RequestID)
 		if err != nil {
 			return nil, errors.Wrapf(err,
 				"invalid request ID in Create operation: %d", op.Checkpoint.RequestID)

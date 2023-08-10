@@ -38,11 +38,6 @@ test-gpu:
 	# Since integration tests are image-specific, they must be excluded and run separately
 	coverage run -m pytest -v --runslow --durations=0 -m "gpu" tests/experiment --ignore=tests/experiment/integrations
 
-.PHONY: test-gpu-lightning
-test-gpu-lightning:
-	# Lightning tests require their own docker image in circleci
-	coverage run -m pytest -v --runslow --durations=0 -m "pytorch_lightning" tests/experiment/integrations/test_pytorch_lightning.py
-
 .PHONY: test-gpu-deepspeed
 test-gpu-deepspeed:
 	coverage run -m pytest -v --runslow --durations=0 -m "deepspeed and gpu" tests/experiment/integrations/test_deepspeed_trial.py
@@ -50,6 +45,14 @@ test-gpu-deepspeed:
 .PHONY: test-gpu-parallel
 test-gpu-parallel:
 	coverage run -m pytest -v --runslow --durations=0 -m tests/experiment -m "gpu_parallel" tests/experiment --ignore=tests/experiment/integrations
+
+.PHONY: test-pytorch-cpu
+test-pytorch-cpu:
+	coverage run -m pytest -v --runslow --durations=0 -m tests/experiment -m "not gpu or cpu" tests/experiment/pytorch
+
+.PHONY: test-pytorch-gpu
+test-pytorch-gpu:
+	coverage run -m pytest -v --runslow --durations=0 -m tests/experiment -m "gpu" tests/experiment/pytorch
 
 .PHONY: test
 test:

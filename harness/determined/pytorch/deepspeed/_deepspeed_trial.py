@@ -494,13 +494,14 @@ class DeepSpeedTrialController(det.TrialController):
             )
             self.prof.set_training(False)
 
-            det.pytorch._log_tb_metrics(
-                self.context.get_tensorboard_writer(),
-                "train",
-                self.steps_completed,
-                metrics["avg_metrics"],
-                metrics["batch_metrics"],
-            )
+            if self.context.get_enable_tensorboard_logging():
+                det.pytorch._log_tb_metrics(
+                    self.context.get_tensorboard_writer(),
+                    "train",
+                    self.steps_completed,
+                    metrics["avg_metrics"],
+                    metrics["batch_metrics"],
+                )
 
         if not self.is_chief:
             return {}
@@ -598,9 +599,10 @@ class DeepSpeedTrialController(det.TrialController):
                 )
             )
 
-            det.pytorch._log_tb_metrics(
-                self.context.get_tensorboard_writer(), "val", self.steps_completed, metrics
-            )
+            if self.context.get_enable_tensorboard_logging():
+                det.pytorch._log_tb_metrics(
+                    self.context.get_tensorboard_writer(), "val", self.steps_completed, metrics
+                )
 
         if not self.is_chief:
             return {}
@@ -608,9 +610,10 @@ class DeepSpeedTrialController(det.TrialController):
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
     def on_validation_step_end(self, metrics: Dict[str, Any]) -> None:
-        det.pytorch._log_tb_metrics(
-            self.context.get_tensorboard_writer(), "val", self.steps_completed, metrics
-        )
+        if self.context.get_enable_tensorboard_logging():
+            det.pytorch._log_tb_metrics(
+                self.context.get_tensorboard_writer(), "val", self.steps_completed, metrics
+            )
 
     def _load(self, load_path: pathlib.Path) -> None:
         # Right now we will load all checkpoint shards on each node regardless of which

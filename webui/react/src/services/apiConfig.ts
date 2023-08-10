@@ -975,7 +975,13 @@ export const getExperimentFileFromTree: DetApi<
   string
 > = {
   name: 'getModelDefFile',
-  postProcess: (response) => response.file || '',
+  // file is base64 encoded
+  postProcess: ({ file = '' }) => {
+    // ts es2015 defs are wrong -- there's a pr from _2019_ that fixes this but only for the es5 defs
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const byteArray = Uint8Array.from(window.atob(file) as any, (x) => (x as any).codePointAt(0));
+    return new TextDecoder().decode(byteArray);
+  },
   request: (params) => {
     return detApi.Experiments.getModelDefFile(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

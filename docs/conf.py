@@ -128,7 +128,6 @@ autodoc_mock_imports = [
     "mmcv",
     "mmdet",
     "transformers",
-    "pytorch_lightning",
     "deepspeed",
     "datasets",
     "analytics",
