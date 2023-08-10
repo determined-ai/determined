@@ -154,6 +154,7 @@ export const LineChart: React.FC<LineChartProps> = ({
   const chartOptions: Options = useMemo(() => {
     const plugins: Plugin[] = propPlugins ?? [
       tooltipsPlugin({
+        closeOnMouseExit: true,
         isShownEmptyVal: false,
         // use specified color on Serie, or glasbeyColor
         seriesColors,
