@@ -148,6 +148,7 @@ training_trial_metrics_final as (
             name, jsonb_build_object(
                 'count', count_agg,
                 'sum', sum_agg,
+                'mean', sum_agg::float/count_agg,
                 'min', CASE WHEN max_agg = 'NaN'::double precision THEN 'NaN'::double precision ELSE min_agg END,
                 'max', max_agg,
                 'last', latest_value,
@@ -268,6 +269,7 @@ validation_trial_metrics_final as (
             name, jsonb_build_object(
                 'count', count_agg,
                 'sum', sum_agg,
+                'mean', sum_agg::float/count_agg,
                 'min', CASE WHEN max_agg = 'NaN'::double precision THEN 'NaN'::double precision ELSE min_agg END,
                 'max', max_agg,
                 'last', latest_value,
