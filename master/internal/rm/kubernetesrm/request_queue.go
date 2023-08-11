@@ -152,6 +152,7 @@ func (r *requestQueue) startWorkers() {
 			strconv.Itoa(i),
 			r.workerChan,
 			r.workerReady,
+			r.failures,
 		)
 	}
 }

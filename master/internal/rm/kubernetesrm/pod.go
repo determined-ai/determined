@@ -362,7 +362,7 @@ func (p *pod) createPodSpecAndSubmit() error {
 }
 
 func (p *pod) receiveResourceCreationFailed(msg resourceCreationFailed) {
-	p.syslog.WithError(msg.err).Error("pod actor notified that resource creation failed")
+	p.syslog.WithError(msg.err).Error("pod notified that resource creation failed")
 	p.insertLog(time.Now().UTC(), msg.err.Error())
 }
 
@@ -372,7 +372,7 @@ func (p *pod) receiveResourceCreationCancelled() {
 }
 
 func (p *pod) receiveResourceDeletionFailed(err resourceDeletionFailed) {
-	p.syslog.WithError(err.err).Error("pod actor notified that resource deletion failed")
+	p.syslog.WithError(err.err).Error("pod notified that resource deletion failed")
 }
 
 func (p *pod) finalizeTaskState() {
@@ -382,12 +382,12 @@ func (p *pod) finalizeTaskState() {
 	// If an error occurred during the lifecycle of the pods, we need to update the scheduler
 	// and the task handler with new state.
 	if p.container.State != cproto.Terminated {
-		p.syslog.Warnf("updating container state after pod actor exited unexpectedly")
+		p.syslog.Warnf("updating container state after pod exited unexpectedly")
 		p.container = p.container.Transition(cproto.Terminated)
 
 		p.informTaskResourcesStopped(sproto.ResourcesError(
 			sproto.TaskError,
-			errors.New("pod actor exited while pod was running"),
+			errors.New("pod exited while pod was running"),
 		))
 	}
 }

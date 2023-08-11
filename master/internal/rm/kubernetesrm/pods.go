@@ -749,7 +749,7 @@ func (p *pods) handleResourceRequestFailure(msg resourcesRequestFailure) {
 	podName := msg.getPodName()
 	podHandler, ok := p.podNameToPodHandler[podName]
 	if !ok {
-		p.syslog.Warn("received resource request error for unregistered pod %s", podName)
+		p.syslog.Warnf("received resource request error for unregistered pod %s", podName)
 		return
 	}
 

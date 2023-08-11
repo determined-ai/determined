@@ -25,11 +25,13 @@ func startRequestProcessingWorker(
 	id string,
 	in <-chan interface{},
 	ready readyCallbackFunc,
+	failures chan<- resourcesRequestFailure,
 ) *requestProcessingWorker {
 	syslog := logrus.New().WithField("component", "kubernetesrm-worker").WithField("id", id)
 	r := &requestProcessingWorker{
 		podInterfaces:       podInterfaces,
 		configMapInterfaces: configMapInterfaces,
+		failures:            failures,
 		syslog:              syslog,
 	}
 	go r.receive(in, ready)
