@@ -325,5 +325,5 @@ def test_trial_describe_metrics() -> None:
     assert summaryMetrics["avg_metrics"]["loss"]["count"] == 100
     assert summaryMetrics["avg_metrics"]["loss"]["max"] is not None
     assert summaryMetrics["avg_metrics"]["loss"]["min"] is not None
-    assert summaryMetrics["avg_metrics"]["loss"]["sum"] is not None
+    assert summaryMetrics["avg_metrics"]["loss"]["mean"] is not None
     assert summaryMetrics["avg_metrics"]["loss"]["type"] == "number"
