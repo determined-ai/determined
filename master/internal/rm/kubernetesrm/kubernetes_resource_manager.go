@@ -129,13 +129,9 @@ func (k ResourceManager) ResolveResourcePool(
 	if err != nil {
 		return "", err
 	}
-	rpConfig, err := rmutils.ResourcePoolsToConfig(resp.ResourcePools)
-	if err != nil {
-		return "", err
-	}
 
 	poolNames, _, err := db.ReadRPsAvailableToWorkspace(
-		ctx, int32(workspaceID), 0, -1, rpConfig)
+		ctx, int32(workspaceID), 0, -1, rmutils.ResourcePoolsToConfig(resp.ResourcePools))
 	if err != nil {
 		return "", err
 	}

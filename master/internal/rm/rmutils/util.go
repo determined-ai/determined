@@ -7,7 +7,7 @@ import (
 
 // ResourcePoolsToConfig converts proto objects to an internal resource pool config object.
 func ResourcePoolsToConfig(pools []*resourcepoolv1.ResourcePool,
-) ([]config.ResourcePoolConfig, error) {
+) []config.ResourcePoolConfig {
 	rpConfigs := make([]config.ResourcePoolConfig, len(pools))
 	for i, rp := range pools {
 		rpConfigs[i] = config.ResourcePoolConfig{
@@ -15,5 +15,5 @@ func ResourcePoolsToConfig(pools []*resourcepoolv1.ResourcePool,
 		}
 	}
 
-	return rpConfigs, nil
+	return rpConfigs
 }
