@@ -113,8 +113,8 @@ export const LineChart: React.FC<LineChartProps> = ({
         (s.metricType === MetricType.Training
           ? '[T] '
           : s.metricType === MetricType.Validation
-            ? '[V] '
-            : '') + (s.name || `Series ${idx + 1}`),
+          ? '[V] '
+          : '') + (s.name || `Series ${idx + 1}`),
     );
   }, [series]);
 
@@ -143,9 +143,9 @@ export const LineChart: React.FC<LineChartProps> = ({
   const xTickValues: uPlot.Axis.Values | undefined = useMemo(
     () =>
       xAxis === XAxisDomain.Time &&
-        chartData.length > 0 &&
-        chartData[0].length > 0 &&
-        chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
+      chartData.length > 0 &&
+      chartData[0].length > 0 &&
+      chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
         ? getTimeTickValues
         : undefined,
     [chartData, xAxis],
