@@ -1,7 +1,8 @@
+import _ from 'lodash';
 import { throttle } from 'throttle-debounce';
 import uPlot, { Plugin } from 'uplot';
 
-import { distance, findInsertionIndex, isEqual } from 'components/kit/internal/functions';
+import { distance, findInsertionIndex } from 'components/kit/internal/functions';
 import { CheckpointsDict } from 'components/kit/internal/types';
 
 import css from './closestPointPlugin.module.scss';
@@ -154,7 +155,7 @@ export const closestPointPlugin = ({
       return;
     }
 
-    if (!isEqual(point, focusedPoint)) {
+    if (!_.isEqual(point, focusedPoint)) {
       focusPoint(uPlot, point);
     }
   });

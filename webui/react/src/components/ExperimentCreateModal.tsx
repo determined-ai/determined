@@ -1,5 +1,6 @@
 import { Alert } from 'antd';
 import yaml from 'js-yaml';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from 'components/kit/Button';
@@ -12,7 +13,7 @@ import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
 import { RawJson, ValueOf } from 'types';
 import { ExperimentBase, TrialHyperparameters, TrialItem } from 'types';
-import { clone, isEqual } from 'utils/data';
+import { clone } from 'utils/data';
 import { DetError, ErrorLevel, ErrorType, isDetError, isError } from 'utils/error';
 import handleError, { handleWarning } from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
@@ -340,7 +341,7 @@ const ExperimentCreateModalComponent = ({
         trial,
         type,
       };
-      return isEqual(prev, newModalState) ? prev : newModalState;
+      return _.isEqual(prev, newModalState) ? prev : newModalState;
     });
     setDisabled(!experiment.name); // initial disabled state set here, gets updated later in handleFieldsChange
   }, [experiment, trial, type, isFork, form]);

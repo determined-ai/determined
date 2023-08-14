@@ -1,4 +1,5 @@
 import { Space } from 'antd';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
@@ -34,7 +35,6 @@ import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import { Workspace } from 'types';
-import { isEqual } from 'utils/data';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
@@ -84,7 +84,7 @@ const WorkspaceList: React.FC = () => {
       setTotal((response.pagination.total ?? 1) - 1); // -1 because we do not display immutable ws
       setWorkspaces((prev) => {
         const withoutDefault = response.workspaces.filter((w) => !w.immutable);
-        if (isEqual(prev, withoutDefault)) return prev;
+        if (_.isEqual(prev, withoutDefault)) return prev;
         return withoutDefault;
       });
     } catch (e) {
