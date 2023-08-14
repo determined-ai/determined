@@ -4,7 +4,6 @@ import { FixedSizeList as List } from 'react-window';
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import { isEqual } from 'utils/data';
-import { camelCaseToSentence } from 'utils/string';
 
 import DraggableListItem from './DraggableListItem';
 import css from './Transfer.module.scss';
@@ -46,12 +45,12 @@ const Transfer: React.FC<Props> = ({
 
   const filteredHiddenEntries = useMemo(() => {
     const regex = RegExp(searchTerm, 'i');
-    return hiddenEntries.filter((entry) => regex.test(camelCaseToSentence(entry)));
+    return hiddenEntries.filter((entry) => regex.test(entry));
   }, [hiddenEntries, searchTerm]);
 
   const filteredVisibleEntries = useMemo(() => {
     const regex = RegExp(searchTerm, 'i');
-    return targetEntries.filter((entry) => regex.test(camelCaseToSentence(entry)));
+    return targetEntries.filter((entry) => regex.test(entry));
   }, [targetEntries, searchTerm]);
 
   const moveToLeft = useCallback((transfer: string | string[]) => {
@@ -94,7 +93,7 @@ const Transfer: React.FC<Props> = ({
           case 'numTrials':
             return 'Trials';
           default:
-            return camelCaseToSentence(entryName);
+            return entryName;
         }
       };
       const sentenceEntryName = renameEntry();
