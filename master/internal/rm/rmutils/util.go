@@ -8,11 +8,11 @@ import (
 // ResourcePoolsToConfig converts proto objects to an internal resource pool config object.
 func ResourcePoolsToConfig(pools []*resourcepoolv1.ResourcePool,
 ) ([]config.ResourcePoolConfig, error) {
-	var rpConfigs []config.ResourcePoolConfig
-	for _, rp := range pools {
-		rpConfigs = append(rpConfigs, config.ResourcePoolConfig{
+	rpConfigs := make([]config.ResourcePoolConfig, len(pools))
+	for i, rp := range pools {
+		rpConfigs[i] = config.ResourcePoolConfig{
 			PoolName: rp.Name,
-		})
+		}
 	}
 
 	return rpConfigs, nil
