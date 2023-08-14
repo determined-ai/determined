@@ -5,101 +5,21 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
-	// log "github.com/sirupsen/logrus"
 )
 
-// func decodeKnown(known string) ([]int64, error) {
-// 	vals := strings.Split(known, ",")
-// 	var out []int64
-// 	for _, v := range vals {
-// 		if strings.Contains(v, "-") {
-// 			// a range
-// 			subs := strings.Split(v, "-")
-// 			if len(subs) != 2 {
-// 				return nil, errors.Errorf("invalid range (%v)", v)
-// 			}
-// 			start, err := strconv.ParseInt(subs[0], 10, 64)
-// 			if err != nil {
-// 				return nil, errors.Wrapf(err, "invalid range (%v)", v)
-// 			}
-// 			end, err := strconv.ParseInt(subs[1], 10, 64)
-// 			if err != nil {
-// 				return nil, errors.Wrapf(err, "invalid range (%v)", v)
-// 			}
-// 			if start > end {
-// 				start, end = end, start
-// 			}
-// 			// emit every value in the range (including endpoints)
-// 			for i := start; i <= end; i++ {
-// 				out = append(out, i)
-// 			}
-// 		} else {
-// 			// a single number
-// 			n, err := strconv.ParseInt(v, 10, 64)
-// 			if err != nil {
-// 				return nil, errors.Wrapf(err, "invalid number (%v)", v)
-// 			}
-// 			out = append(out, n)
-// 		}
-// 	}
-// 	return out, nil
-// }
-//
-// func encodeDeleted(known []int64) string {
-// 	if len(known) == 0 {
-// 		return ""
-// 	}
-// 	var out strings.Builder
-// 	start := known[0]
-// 	last := known[0]
-// 	comma := false
-//
-// 	emit := func() {
-// 		// do we need a separator?
-// 		if !comma {
-// 			comma = true
-// 		} else {
-// 			_, _ = out.WriteString(",")
-// 		}
-// 		// always emit "$START"
-// 		_, _ = out.WriteString(strconv.FormatInt(start, 10))
-// 		if last != start {
-// 			// for ranges, emit "-$PREV"
-// 			_, _ = out.WriteString("-")
-// 			_, _ = out.WriteString(strconv.FormatInt(last, 10))
-// 		}
-// 	}
-//
-// 	for _, k := range known[1:] {
-// 		if k == last + 1 {
-// 			// extend the current range
-// 			last++
-// 		} else {
-// 			// emit previous number or range
-// 			emit()
-// 			// start new range
-// 			start = k
-// 			last = k
-// 		}
-// 	}
-// 	// emit final value
-// 	emit()
-// 	return out.String()
-// }
-
-type KeySetIter struct {
+type keySetIter struct {
 	vals []string
 	idx int
 	start int64
 	end int64
 }
 
-func NewKeySetIter(keyset string) *KeySetIter {
-	return &KeySetIter{vals: strings.Split(keyset, ",")}
+func newKeySetIter(keyset string) *keySetIter {
+	return &keySetIter{vals: strings.Split(keyset, ",")}
 }
 
 // Next returns a tuple of (ok, value, err).
-func (ksi *KeySetIter) Next() (bool, int64, error) {
+func (ksi *keySetIter) Next() (bool, int64, error) {
 	// are we emitting from a range?
 	if ksi.start < ksi.end {
 		out := ksi.start
@@ -142,7 +62,7 @@ func (ksi *KeySetIter) Next() (bool, int64, error) {
 	return false, 0, errors.Errorf("invalid value (%v)", val)
 }
 
-type KeySetBuilder struct {
+type keySetBuilder struct {
 	out strings.Builder
 	started bool
 	comma bool
@@ -150,7 +70,7 @@ type KeySetBuilder struct {
 	last int64
 }
 
-func (ksb *KeySetBuilder) emit() {
+func (ksb *keySetBuilder) emit() {
 	// do we need a separator?
 	if !ksb.comma {
 		ksb.comma = true
@@ -166,7 +86,7 @@ func (ksb *KeySetBuilder) emit() {
 	}
 }
 
-func (ksb *KeySetBuilder) Add(n int64) {
+func (ksb *keySetBuilder) Add(n int64) {
 	if !ksb.started {
 		// first call to Add()
 		ksb.started = true
@@ -186,13 +106,13 @@ func (ksb *KeySetBuilder) Add(n int64) {
 	ksb.last = n
 }
 
-func (ksb *KeySetBuilder) Finish() string {
+func (ksb *keySetBuilder) Finish() string {
 	// emit final value
 	ksb.emit()
 	return ksb.out.String()
 }
 
-// processKnown takes what the client reports as known keys, combined with which keys the server
+// ProcessKnown takes what the client reports as known keys, combined with which keys the server
 // knows exist, and returns what the client should be told is deleted and which keys the client is
 // not yet aware of, which should be hydrated by querying the database.
 //
@@ -203,8 +123,8 @@ func (ksb *KeySetBuilder) Finish() string {
 // Return Values:
 // - `gone` is a range-encoded string, suitable for returning over the REST API.
 // - `new` is a list of ints, which are PKs that will need hydrating from the database.
-func processKnown(known string, exist []int64) (string, []int64, error) {
-	ksi := NewKeySetIter(known)
+func ProcessKnown(known string, exist []int64) (string, []int64, error) {
+	ksi := newKeySetIter(known)
 
 	xIdx := -1
 	existNext := func() (bool, int64) {
@@ -215,7 +135,7 @@ func processKnown(known string, exist []int64) (string, []int64, error) {
 		return true, exist[xIdx]
 	}
 
-	var removed KeySetBuilder
+	var removed keySetBuilder
 	var added []int64
 
 	kok, k, err := ksi.Next()
