@@ -144,7 +144,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
           }),
         ],
         series,
-        title: groupMetrics.length !== 0 ? groupMetrics[0].name : 'No Metric Name',
+        title: groupMetrics.length !== 0 ? stripPrefix(groupMetrics[0].name) : 'No Metric Name',
         xAxis,
         xLabel: String(xAxis),
       });
