@@ -60,7 +60,7 @@ const useMetricNames = (
         ];
         setMetrics((prevMetrics) => {
           if (newMetrics.length === 0) {
-            return Loadable.isLoaded(prevMetrics) ? prevMetrics :  Loaded([]); 
+            return Loadable.isLoaded(prevMetrics) ? prevMetrics : Loaded([]);
           }
 
           /*
