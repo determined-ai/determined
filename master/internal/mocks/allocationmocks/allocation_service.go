@@ -73,6 +73,11 @@ func (_m *AllocationService) AllGather(ctx context.Context, allocationID model.A
 	return r0, r1
 }
 
+// AwaitTermination provides a mock function with given fields: id
+func (_m *AllocationService) AwaitTermination(id model.AllocationID) {
+	_m.Called(id)
+}
+
 // GetAllAllocationIDs provides a mock function with given fields:
 func (_m *AllocationService) GetAllAllocationIDs() []model.AllocationID {
 	ret := _m.Called()

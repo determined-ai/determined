@@ -2564,6 +2564,12 @@ export interface V1Experiment {
      */
     searcherType: string;
     /**
+     * The searcher metric name for the experiment
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    searcherMetric?: string;
+    /**
      * The experiment name.
      * @type {string}
      * @memberof V1Experiment
@@ -6471,11 +6477,23 @@ export interface V1PatchWorkspace {
      */
     defaultComputePool?: string;
     /**
+     * Name of the default compute pool can be optional.
+     * @type {string}
+     * @memberof V1PatchWorkspace
+     */
+    defaultComputeResourcePool?: string;
+    /**
      * Name of the default aux pool.
      * @type {string}
      * @memberof V1PatchWorkspace
      */
     defaultAuxPool?: string;
+    /**
+     * Name of the default aux pool can be optional.
+     * @type {string}
+     * @memberof V1PatchWorkspace
+     */
+    defaultAuxResourcePool?: string;
 }
 /**
  * Response to PatchWorkspaceRequest.
