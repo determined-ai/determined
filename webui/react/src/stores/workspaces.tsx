@@ -1,4 +1,5 @@
 import { Map } from 'immutable';
+import _ from 'lodash';
 import { Observable, observable, WritableObservable } from 'micro-observables';
 
 import {
@@ -14,7 +15,6 @@ import {
 import { V1PostWorkspaceRequest } from 'services/api-ts-sdk';
 import { GetWorkspacesParams } from 'services/types';
 import { Workspace } from 'types';
-import { isEqual } from 'utils/data';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';
@@ -152,7 +152,7 @@ class WorkspaceStore extends PollingStore {
           let workspacesChanged = currentWorkspaces.length === response.workspaces.length;
           if (!workspacesChanged) {
             response.workspaces.forEach((wspace, idx) => {
-              if (!isEqual(wspace, currentWorkspaces[idx])) {
+              if (!_.isEqual(wspace, currentWorkspaces[idx])) {
                 workspacesChanged = true;
               }
             });

@@ -1,4 +1,5 @@
 import type { TabsProps } from 'antd';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -16,7 +17,6 @@ import { getProject, postUserActivity } from 'services/api';
 import { V1ActivityType, V1EntityType } from 'services/api-ts-sdk';
 import workspaceStore from 'stores/workspaces';
 import { Project } from 'types';
-import { isEqual } from 'utils/data';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
@@ -48,7 +48,7 @@ const ProjectDetails: React.FC = () => {
     try {
       const response = await getProject({ id }, { signal: canceler.signal });
       setProject((prev) => {
-        if (isEqual(prev, response)) return prev;
+        if (_.isEqual(prev, response)) return prev;
         return response;
       });
       setPageError(undefined);

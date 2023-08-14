@@ -1,4 +1,5 @@
 import type { TabsProps } from 'antd';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -19,7 +20,6 @@ import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { ValueOf } from 'types';
 import { User } from 'types';
-import { isEqual } from 'utils/data';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -83,7 +83,7 @@ const WorkspaceDetails: React.FC = () => {
       const response = await getGroups({ limit: 100 }, { signal: canceler.signal });
 
       setGroups((prev) => {
-        if (isEqual(prev, response.groups)) return prev;
+        if (_.isEqual(prev, response.groups)) return prev;
         return response.groups || [];
       });
     } catch (e) {
@@ -118,7 +118,7 @@ const WorkspaceDetails: React.FC = () => {
       );
 
       setRolesAssignableToScope((prev) => {
-        if (isEqual(prev, response.roles)) return prev;
+        if (_.isEqual(prev, response.roles)) return prev;
         return response.roles || [];
       });
     } catch (e) {

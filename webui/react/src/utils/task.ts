@@ -1,8 +1,9 @@
+import _ from 'lodash';
+
 import { killableCommandStates, killableRunStates, terminalCommandStates } from 'constants/states';
 import { LaunchTensorBoardParams } from 'services/types';
 import * as Type from 'types';
 import { CommandState, RunState, State } from 'types';
-import { isEqual } from 'utils/data';
 
 import { runStateSortValues } from './experiment';
 
@@ -205,7 +206,7 @@ export const tensorBoardMatchesSource = (
     source.experimentIds?.sort();
     tensorBoard.misc?.experimentIds?.sort();
 
-    if (isEqual(tensorBoard.misc?.experimentIds, source.experimentIds)) {
+    if (_.isEqual(tensorBoard.misc?.experimentIds, source.experimentIds)) {
       return true;
     }
   }
@@ -214,7 +215,7 @@ export const tensorBoardMatchesSource = (
     source.trialIds?.sort();
     tensorBoard.misc?.trialIds?.sort();
 
-    if (isEqual(tensorBoard.misc?.trialIds, source.trialIds)) {
+    if (_.isEqual(tensorBoard.misc?.trialIds, source.trialIds)) {
       return true;
     }
   }
