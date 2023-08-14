@@ -282,6 +282,10 @@ export interface LaunchJupyterLabParams {
   workspaceId?: number;
 }
 
+export interface GetResourcePoolsParams extends PaginationParams {
+  unbound?: boolean;
+}
+
 export interface GetCommandsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
   users?: string[];
@@ -478,6 +482,10 @@ export interface ArchiveProjectParams {
 export type UnarchiveProjectParams = ArchiveProjectParams;
 
 export interface GetProjectColumnsParams {
+  id: number;
+}
+
+export interface GetProjectNumericMetricsRangeParams {
   id: number;
 }
 

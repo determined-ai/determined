@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import HpSelect from 'components/HpSelect';
@@ -9,7 +10,6 @@ import RadioGroup from 'components/RadioGroup';
 import ScaleSelect from 'components/ScaleSelect';
 import { ValueOf } from 'types';
 import { Metric, Scale } from 'types';
-import { isEqual } from 'utils/data';
 
 import { ExperimentVisualizationType } from '../ExperimentVisualization';
 
@@ -157,7 +157,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   useEffect(() => {
     if (
       metrics.length === 0 ||
-      (!!filters.metric && metrics.some((metric) => isEqual(metric, filters.metric)))
+      (!!filters.metric && metrics.some((metric) => _.isEqual(metric, filters.metric)))
     )
       return;
     onChange?.({ metric: metrics.first() });

@@ -1,5 +1,6 @@
 import { Space } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -21,7 +22,6 @@ import { paths } from 'routes/utils';
 import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
 import { Webhook } from 'types';
-import { isEqual } from 'utils/data';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
@@ -58,7 +58,7 @@ const WebhooksView: React.FC = () => {
     try {
       const webhooks = await getWebhooks({}, { signal: canceler.signal });
       setWebhooks((prev) => {
-        if (isEqual(prev, webhooks)) return prev;
+        if (_.isEqual(prev, webhooks)) return prev;
         return webhooks;
       });
     } catch (e) {

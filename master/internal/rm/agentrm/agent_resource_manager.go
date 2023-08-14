@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -381,6 +382,9 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case taskContainerDefaults:
 		ctx.Respond(a.getTaskContainerDefaults(msg))
 
+	case sproto.GetExternalJobs:
+		ctx.Respond(rmerrors.ErrNotSupported)
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -479,17 +483,6 @@ func (a *agentResourceManager) getPoolJobStats(
 		return nil, fmt.Errorf("unexpected response type from jobStats")
 	}
 	return jobStats, nil
-}
-
-func (a *agentResourceManager) aggregateTaskHandler(
-	resps map[*actor.Ref]actor.Message,
-) (*actor.Ref, error) {
-	for _, resp := range resps {
-		if typed, ok := resp.(*actor.Ref); ok && typed != nil {
-			return typed, nil
-		}
-	}
-	return nil, errors.New("task handler not found on any resource pool")
 }
 
 func (a *agentResourceManager) aggregateTaskSummary(
@@ -783,20 +776,4 @@ func (a ResourceManager) TaskContainerDefaults(
 ) (result model.TaskContainerDefaultsConfig, err error) {
 	req := taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}
 	return result, a.Ask(ctx, req, &result)
-}
-
-// EnableSlot implements 'det slot enable...' functionality.
-func (a ResourceManager) EnableSlot(
-	m actor.Messenger,
-	req *apiv1.EnableSlotRequest,
-) (resp *apiv1.EnableSlotResponse, err error) {
-	return resp, actorrm.AskAt(a.Ref().System(), actorrm.SlotAddr(req.AgentId, req.SlotId), req, &resp)
-}
-
-// DisableSlot implements 'det slot disable...' functionality.
-func (a ResourceManager) DisableSlot(
-	m actor.Messenger,
-	req *apiv1.DisableSlotRequest,
-) (resp *apiv1.DisableSlotResponse, err error) {
-	return resp, actorrm.AskAt(a.Ref().System(), actorrm.SlotAddr(req.AgentId, req.SlotId), req, &resp)
 }

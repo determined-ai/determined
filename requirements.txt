@@ -16,6 +16,7 @@ flake8-colors>=0.1.6
 flake8-commas==2.0.0
 flake8-comprehensions>=2.2.0
 flake8-docstrings>=1.4.0
+flake8-import-restrictions==1.1.1
 flake8-quotes>=2.1.0
 flake8-tuple>=0.4.0
 isort==5.11.5 # Note: this should be kept in sync with the version in `.pre-commit-config.yaml`.
@@ -27,6 +28,7 @@ pre-commit~=2.20
 pyzmq>=23.2.1
 devcluster>=1,<2
 coverage
+sqlfluff==2.1.4
 # typeshed
 types-certifi
 types-chardet

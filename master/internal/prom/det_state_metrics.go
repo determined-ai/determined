@@ -7,7 +7,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -96,11 +95,10 @@ func AssociateAllocationContainer(aID model.AllocationID, cID cproto.ID) {
 // AssociateAllocationTask associates an allocation ID with its task/job info.
 func AssociateAllocationTask(aID model.AllocationID,
 	tID model.TaskID,
-	taskActor actor.Address,
+	name string,
 	jID model.JobID,
 ) {
-	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String(),
-		jID.String()).Inc()
+	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), name, jID.String()).Inc()
 }
 
 // AssociateJobExperiment associates a job ID with experiment info.
@@ -128,11 +126,10 @@ func DisassociateJobExperiment(jID model.JobID, eID string, labels expconf.Label
 }
 
 // DisassociateAllocationTask disassociates an allocation ID with its task info.
-func DisassociateAllocationTask(aID model.AllocationID, tID model.TaskID, taskActor actor.Address,
+func DisassociateAllocationTask(aID model.AllocationID, tID model.TaskID, name string,
 	jID model.JobID,
 ) {
-	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String(),
-		jID.String()).Dec()
+	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), name, jID.String()).Dec()
 }
 
 // AssociateContainerRuntimeID associates a Determined container ID with the runtime container ID.

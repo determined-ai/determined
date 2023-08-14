@@ -35,6 +35,7 @@ import Notes, { Props as NotesProps } from 'components/kit/Notes';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
+import Spinner from 'components/kit/Spinner';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
@@ -48,7 +49,7 @@ import ResponsiveTable from 'components/Table/ResponsiveTable';
 import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
-import { CheckpointsDict } from 'pages/TrialDetails/F_TrialDetailsOverview';
+import { CheckpointsDict } from 'pages/TrialDetails/TrialDetailsMetrics';
 import { serverAddress } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
@@ -68,7 +69,7 @@ import {
   Surface,
 } from 'utils/colors';
 import handleError from 'utils/error';
-import { Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum, { loremIpsumSentence } from 'utils/loremIpsum';
 import { noOp } from 'utils/service';
 import { KeyboardShortcut } from 'utils/shortcut';
@@ -107,6 +108,7 @@ const ComponentTitles = {
   Pagination: 'Pagination',
   Pivot: 'Pivot',
   Select: 'Select',
+  Spinner: 'Spinner',
   Tags: 'Tags',
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
@@ -217,6 +219,9 @@ const ButtonsSection: React.FC = () => {
           <Button loading type="primary">
             Loading
           </Button>
+          <Button selected type="primary">
+            Selected
+          </Button>
         </Space>
         <hr />
         <strong>Text Button variations</strong>
@@ -231,6 +236,9 @@ const ButtonsSection: React.FC = () => {
           </Button>
           <Button loading type="text">
             Loading
+          </Button>
+          <Button selected type="text">
+            Selected
           </Button>
         </Space>
         <hr />
@@ -252,6 +260,20 @@ const ButtonsSection: React.FC = () => {
           </Button>
         </Space>
         <hr />
+        <strong>Full-width buttons</strong>
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Button block>Default</Button>
+          <Button block type="primary">
+            Primary
+          </Button>
+          <Button block type="text">
+            Text
+          </Button>
+          <Button block type="dashed">
+            Dashed
+          </Button>
+        </Space>
+        <hr />
         <strong>Sizes</strong>
         <Space>
           <Button size="large">Large</Button>
@@ -259,36 +281,46 @@ const ButtonsSection: React.FC = () => {
           <Button size="small">Small</Button>
         </Space>
         <hr />
-        <strong>Default Button with icon</strong>
+        <strong>With icon</strong>
         With SVG Icon
         <Space>
+          <Button icon={<Icon name="panel" title="compare" />} />
+          <Button icon={<Icon name="panel" title="compare" />}>SVG icon</Button>
           <Button icon={<PoweroffOutlined />} />
-          <Button icon={<PoweroffOutlined />}>ButtonText</Button>
+          <Button icon={<PoweroffOutlined />}>SVG icon</Button>
         </Space>
-        With Font Icon
+        With font icon
         <Space>
           <Button icon={<Icon name="play" size="large" title="Play" />} />
-          <Button icon={<Icon name="play" size="large" title="Play" />}>
-            ButtonWithLargeFontIcon
-          </Button>
-          <Button icon={<Icon name="play" size="tiny" title="Play" />}>
-            ButtonWithTinyFontIcon
-          </Button>
+          <Button icon={<Icon name="play" size="large" title="Play" />}>Large font icon</Button>
+          <Button icon={<Icon name="play" size="tiny" title="Play" />} />
+          <Button icon={<Icon name="play" size="tiny" title="Play" />}>Tiny font icon</Button>
         </Space>
-        As Dropdown trigger
+        As Dropdown trigger with icon
         <Space>
           <Dropdown menu={menu}>
-            <Button icon={<Icon name="play" size="large" title="Play" />}>Font icon Button</Button>
+            <Button icon={<PoweroffOutlined />} />
           </Dropdown>
           <Dropdown menu={menu}>
-            <Button icon={<PoweroffOutlined />}>SVG icon Button</Button>
+            <Button icon={<PoweroffOutlined />}>SVG icon</Button>
+          </Dropdown>
+          <Dropdown menu={menu}>
+            <Button icon={<Icon name="play" size="large" title="Play" />} />
+          </Dropdown>
+          <Dropdown menu={menu}>
+            <Button icon={<Icon name="play" size="large" title="Play" />}>Font icon</Button>
           </Dropdown>
         </Space>
-        <hr />
-        <strong>Button with icon and text displayed in a column</strong>
+        With icon and text displayed in a column
         <Space>
-          <Button column icon={<PoweroffOutlined />}>
-            ColumnButtonWithIcon
+          <Button column icon={<PoweroffOutlined />} size="small">
+            Column Small
+          </Button>
+          <Button column icon={<PoweroffOutlined />} size="middle">
+            Column Middle
+          </Button>
+          <Button column icon={<PoweroffOutlined />} size="large">
+            Column Large
           </Button>
         </Space>
       </AntDCard>
@@ -834,32 +866,37 @@ const DropdownSection: React.FC = () => {
     <ComponentSection id="Dropdown" title="Dropdown">
       <AntDCard>
         <p>
-          Dropdown (<code>{'<Dropdown>'}</code>) give people a way to select one item from a group
-          of choices. The item is typically an action to apply to a relevant entity. For example, an
-          experiment dropdown would show actions you can perform on the relevant experiment, such as
-          `Activate`, `Stop`, `Archive`, etc.
+          A (<code>{'<Dropdown>'}</code>) is used to display a component when triggered by a child
+          element (usually a button). This component can be a menu (a list of actions/options
+          defined via the <code>{'menu'}</code> prop), or can be any arbitrary component, defined
+          via the <code>{'content'}</code> prop, with default styling applied.
         </p>
       </AntDCard>
       <AntDCard title="Usage">
-        <strong>Basic Dropdowns</strong>
+        <strong>Dropdown variations</strong>
         <Space>
           <Dropdown menu={menu}>
-            <Button>Basic Dropdown</Button>
+            <Button>Dropdown with menu</Button>
           </Dropdown>
-          <Dropdown menu={menuWithDivider}>
-            <Button>Dropdown with a Divider</Button>
-          </Dropdown>
+          <Space>
+            <Dropdown content={<Input />}>
+              <Button>Dropdown with component content</Button>
+            </Dropdown>
+          </Space>
           <Dropdown disabled menu={menu}>
-            <Button>Disabled Dropdown</Button>
+            <Button>Disabled Dropdown menu</Button>
           </Dropdown>
         </Space>
-        <strong>Various Dropdown Options</strong>
+        <strong>Dropdown menu variations</strong>
         <Space>
+          <Dropdown menu={menuWithDivider}>
+            <Button>Dropdown menu with a Divider</Button>
+          </Dropdown>
           <Dropdown menu={menuWithDanger}>
-            <Button>Dangerous Options</Button>
+            <Button>Dropdown menu with Dangerous Option</Button>
           </Dropdown>
           <Dropdown menu={menuWithDisabled}>
-            <Button>Disabled Options</Button>
+            <Button>Dropdown menu with Disabled Option</Button>
           </Dropdown>
         </Space>
       </AntDCard>
@@ -867,6 +904,48 @@ const DropdownSection: React.FC = () => {
   );
 };
 
+const UncontrolledCodeEditor = () => {
+  const [path, setPath] = useState<string>('one.yaml');
+  const file = useMemo(() => {
+    if (!path) {
+      return NotLoaded;
+    }
+    return (
+      {
+        'one.yaml': Loaded(
+          'hyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 512\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5',
+        ),
+        'two.yaml': Loaded('searcher:\n  name: single\n  metric: validation_loss\n'),
+      }[path] || NotLoaded
+    );
+  }, [path]);
+  return (
+    <CodeEditor
+      file={file}
+      files={[
+        {
+          isLeaf: true,
+          key: 'one.yaml',
+          title: 'one.yaml',
+        },
+        {
+          isLeaf: true,
+          key: 'two.yaml',
+          title: 'two.yaml',
+        },
+        {
+          isLeaf: true,
+          key: 'unloaded.yaml',
+          title: 'unloaded.yaml',
+        },
+      ]}
+      readonly={true}
+      selectedFilePath={path}
+      onError={handleError}
+      onSelectFile={setPath}
+    />
+  );
+};
 const CodeEditorSection: React.FC = () => {
   return (
     <ComponentSection id="CodeEditor" title="CodeEditor">
@@ -882,9 +961,9 @@ const CodeEditorSection: React.FC = () => {
       <AntDCard title="Usage">
         <strong>Editable Python file</strong>
         <CodeEditor
+          file={Loaded('import math\nprint(math.pi)\n\n')}
           files={[
             {
-              content: Loaded('import math\nprint(math.pi)\n\n'),
               key: 'test.py',
               title: 'test.py',
             },
@@ -893,11 +972,11 @@ const CodeEditorSection: React.FC = () => {
         />
         <strong>Read-only YAML file</strong>
         <CodeEditor
+          file={Loaded(
+            'name: Unicode Test 日本😃\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2',
+          )}
           files={[
             {
-              content: Loaded(
-                'name: Unicode Test 日本😃\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2',
-              ),
               key: 'test1.yaml',
               title: 'test1.yaml',
             },
@@ -906,27 +985,7 @@ const CodeEditorSection: React.FC = () => {
           onError={handleError}
         />
         <strong>Multiple files, one not finished loading.</strong>
-        <CodeEditor
-          files={[
-            {
-              content: Loaded(
-                'hyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 512\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5',
-              ),
-              isLeaf: true,
-              key: 'one.yaml',
-              title: 'one.yaml',
-            },
-            {
-              content: Loaded('searcher:\n  name: single\n  metric: validation_loss\n'),
-              isLeaf: true,
-              key: 'two.yaml',
-              title: 'two.yaml',
-            },
-            { content: NotLoaded, isLeaf: true, key: 'unloaded.yaml', title: 'unloaded.yaml' },
-          ]}
-          readonly={true}
-          onError={handleError}
-        />
+        <UncontrolledCodeEditor />
       </AntDCard>
     </ComponentSection>
   );
@@ -2212,34 +2271,12 @@ const TooltipsSection: React.FC = () => {
     <ComponentSection id="Tooltips" title="Tooltips">
       <AntDCard>
         <p>
-          A good tooltip (<code>{'<Tooltip>'}</code>) briefly describes unlabeled controls or
-          provides a bit of additional information about labeled controls, when this is useful. It
-          can also help customers navigate the UI by offering additional—not redundant—information
-          about control labels, icons, and links. A tooltip should always add valuable information;
-          use sparingly.
+          A (<code>{'<Tooltip>'}</code>) is used to display a string value, and is triggered by
+          interaction (either by click or hover) with a child element (usually a Button).
         </p>
       </AntDCard>
-      <AntDCard title="Best practices">
-        <strong>Content</strong>
-        <ul>
-          <li>
-            Don&apos;t use a tooltip to restate a button name that&apos;s already shown in the UI.
-          </li>
-          <li>
-            When a control or UI element is unlabeled, use a simple, descriptive noun phrase. For
-            Only use periods for complete sentences.italize the first word (unless a subsequent word
-            is a proper noun), and don&apos;t use a period.
-          </li>
-          <li>
-            For a disabled control that could use an explanation, provide a brief description of the
-            state in which the control will be enabled. For example: “This feature is available for
-            line charts.”
-          </li>
-          <li>Only use periods for complete sentences.</li>
-        </ul>
-      </AntDCard>
       <AntDCard title="Usage">
-        <strong>Tooltips default</strong>
+        <strong>Tooltip triggers</strong>
         <Space>
           <Tooltip content={text}>
             <Button>Trigger on hover</Button>
@@ -2251,19 +2288,14 @@ const TooltipsSection: React.FC = () => {
             <Button>Trigger on right click</Button>
           </Tooltip>
         </Space>
+        <strong>Variations</strong>
+        <p>Without arrow</p>
         <Space>
           <Tooltip content={text} placement="bottom" showArrow={false}>
             <Button>Tooltip without arrow</Button>
           </Tooltip>
         </Space>
-        <strong>Considerations</strong>
-        <ul>
-          <li>
-            Nest the tooltip where the content in a cell/text is. Don’t let it levitate in the
-            nothingness.
-          </li>
-        </ul>
-        <strong>Variations</strong>
+        <p>Placement</p>
         <div>
           <div style={{ marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
             <Tooltip content={text} placement="topLeft">
@@ -2310,12 +2342,6 @@ const TooltipsSection: React.FC = () => {
             </Tooltip>
           </div>
         </div>
-        <strong>Tooltip with complex content</strong>
-        <p>
-          <Tooltip content={<UserAvatar />}>
-            <Button>{'Hover to see user avatars'}</Button>
-          </Tooltip>
-        </p>
       </AntDCard>
     </ComponentSection>
   );
@@ -2914,6 +2940,76 @@ const DrawerSection: React.FC = () => {
   );
 };
 
+const SpinnerSection = () => {
+  const [spinning, setSpinning] = useState(true);
+  const [loadableData, setLoadableData] = useState<Loadable<string>>(NotLoaded);
+
+  useEffect(() => {
+    if (Loadable.isLoaded(loadableData)) return;
+    let active = true;
+    setTimeout(() => {
+      if (active) setLoadableData(Loaded('This text has been loaded!'));
+    }, 1000);
+    return () => {
+      active = false;
+    };
+  }, [loadableData]);
+
+  return (
+    <ComponentSection id="Spinner" title="Spinner">
+      <AntDCard>
+        <Paragraph>
+          A <code>{'<Spinner>'}</code> indicates a loading state of a page or section.
+        </Paragraph>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Spinner default</strong>
+        <Spinner spinning />
+        <strong>Spinner with children</strong>
+        <div style={{ border: '1px solid var(--theme-surface-border)', padding: 8, width: '100%' }}>
+          <Spinner spinning>
+            <Card.Group size="medium">
+              <Card size="medium" />
+              <Card size="medium" />
+            </Card.Group>
+          </Spinner>
+        </div>
+        <strong>Spinner with conditional rendering</strong>
+        <Toggle checked={spinning} label="Loading" onChange={setSpinning} />
+        <div
+          style={{
+            border: '1px solid var(--theme-surface-border)',
+            height: 300,
+            padding: 8,
+            width: '100%',
+          }}>
+          <Spinner conditionalRender spinning={spinning}>
+            <Card size="medium" />
+          </Spinner>
+        </div>
+        <strong>Loadable spinner</strong>
+        <Button onClick={() => setLoadableData(NotLoaded)}>Unload</Button>
+        <Spinner data={loadableData}>{(data) => <Paragraph>{data}</Paragraph>}</Spinner>
+        <hr />
+        <Header>Variations</Header>
+        <strong>Centered Spinner</strong>
+        <div
+          style={{ border: '1px solid var(--theme-surface-border)', height: 200, width: '100%' }}>
+          <Spinner center spinning />
+        </div>
+        <strong>Spinner with tip</strong>
+        <Spinner spinning tip="Tip" />
+        <strong>Spinner sizes</strong>
+        <Space>
+          {IconSizeArray.map((size) => (
+            <Spinner key={size} size={size} spinning tip={size} />
+          ))}
+        </Space>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const Components = {
   Accordion: <AccordionSection />,
   Breadcrumbs: <BreadcrumbsSection />,
@@ -2944,6 +3040,7 @@ const Components = {
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
   Select: <SelectSection />,
+  Spinner: <SpinnerSection />,
   Tags: <TagsSection />,
   Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,

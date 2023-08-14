@@ -625,6 +625,18 @@ service Determined {
     };
   }
 
+  // Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs
+  rpc ReportTrialSourceInfo(ReportTrialSourceInfoRequest)
+      returns (ReportTrialSourceInfoResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trial-source-info"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
+    };
+  }
+
   // Create unmanaged trial.
   rpc CreateTrial(CreateTrialRequest) returns (CreateTrialResponse) {
     option (google.api.http) = {
@@ -1503,6 +1515,18 @@ service Determined {
     };
   }
 
+  // Gets the metrics for all trials associated with this model version
+  rpc GetTrialSourceInfoMetricsByModelVersion(
+      GetTrialSourceInfoMetricsByModelVersionRequest)
+      returns (GetTrialSourceInfoMetricsByModelVersionResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/models/{model_name}/versions/{model_version_num}/trial-source-info-metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
+    };
+  }
+
   // Get the requested checkpoint.
   rpc GetCheckpoint(GetCheckpointRequest) returns (GetCheckpointResponse) {
     option (google.api.http) = {
@@ -1558,6 +1582,18 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Checkpoints"
+    };
+  }
+
+  // Gets the metrics for all trials associated with this checkpoint
+  rpc GetTrialMetricsBySourceInfoCheckpoint(
+      GetTrialMetricsBySourceInfoCheckpointRequest)
+      returns (GetTrialMetricsBySourceInfoCheckpointResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/checkpoints/{checkpoint_uuid}/trial-source-info-metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
     };
   }
 
@@ -2162,7 +2198,8 @@ service Determined {
     };
   }
 
-  // List all resource pools bound to a specific workspace
+  // List all resource pools, bound and unbound, available to a specific
+  // workspace
   rpc ListRPsBoundToWorkspace(ListRPsBoundToWorkspaceRequest)
       returns (ListRPsBoundToWorkspaceResponse) {
     option (google.api.http) = {

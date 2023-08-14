@@ -9,6 +9,7 @@ import (
 	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner"
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -110,18 +111,12 @@ func (rp *resourcePool) setupProvisioner(ctx *actor.Context) error {
 }
 
 func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateRequest) {
-	rp.notifyOnStop(ctx, msg.AllocationRef, sproto.ResourcesReleased{
-		AllocationID: msg.AllocationID,
-	})
 	log := ctx.Log().
 		WithField("allocation-id", msg.AllocationID).
 		WithField("restoring", msg.Restore)
 
 	if len(msg.AllocationID) == 0 {
 		msg.AllocationID = model.AllocationID(uuid.New().String())
-	}
-	if msg.Group == nil {
-		msg.Group = msg.AllocationRef
 	}
 	rp.getOrCreateGroup(ctx, msg.Group)
 	if len(msg.Name) == 0 {
@@ -130,7 +125,7 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 
 	log.Infof(
 		"resources are requested by %s (Allocation ID: %s)",
-		msg.AllocationRef.Address(), msg.AllocationID,
+		msg.Name, msg.AllocationID,
 	)
 	if msg.IsUserVisible {
 		if _, ok := rp.queuePositions[msg.JobID]; !ok {
@@ -149,13 +144,11 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 			log.WithError(err).Error("error restoring resources")
 
 			// Clear out the state / close and terminate the allocation.
-			rf := sproto.ResourcesFailure{
+			rmevents.Publish(msg.AllocationID, &sproto.ResourcesFailure{
 				FailureType: sproto.RestoreError,
 				ErrMsg:      err.Error(),
 				ExitCode:    nil,
-			}
-			ctx.Tell(msg.AllocationRef, rf)
-
+			})
 			return
 		}
 	}
@@ -197,7 +190,7 @@ func (rp *resourcePool) restoreResources(
 	for _, cs := range containerSnapshots {
 		agentState, ok := agentStateMap[cs.AgentID]
 		if !ok {
-			return errors.New(fmt.Sprintf("can't find restorable agent %s", cs.AgentID))
+			return fmt.Errorf("can't find restorable agent %s", cs.AgentID)
 		}
 
 		cr := containerResources{
@@ -220,7 +213,7 @@ func (rp *resourcePool) restoreResources(
 
 	rp.taskList.AddTask(req)
 	rp.taskList.AddAllocation(req.AllocationID, &allocated)
-	ctx.Tell(req.AllocationRef, allocated.Clone())
+	rmevents.Publish(req.AllocationID, allocated.Clone())
 
 	return nil
 }
@@ -320,7 +313,7 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		JobSubmissionTime: req.JobSubmissionTime,
 	}
 	rp.taskList.AddAllocation(req.AllocationID, &allocated)
-	ctx.Tell(req.AllocationRef, allocated)
+	rmevents.Publish(req.AllocationID, allocated.Clone())
 
 	// Refresh state for the updated agents.
 	allocatedAgents := make([]*actor.Ref, 0, len(resources))
@@ -330,22 +323,29 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 
 	rp.refreshAgentStateCacheFor(ctx, allocatedAgents)
 
-	ctx.Log().Infof("allocated resources to %s", req.AllocationRef.Address())
+	ctx.Log().Infof("allocated resources to %s", req.Name)
 
 	return true
 }
 
-func (rp *resourcePool) releaseResource(ctx *actor.Context, handler *actor.Ref) {
-	ctx.Log().Infof("releasing resources taken by %s", handler.Address())
-	handler.System().Tell(handler, sproto.ReleaseResources{ResourcePool: rp.config.PoolName})
+func (rp *resourcePool) releaseResource(ctx *actor.Context, aID model.AllocationID) {
+	ctx.Log().Infof("releasing resources taken by %s (preempted by the scheduler)", aID)
+	rmevents.Publish(aID, &sproto.ReleaseResources{Reason: "preempted by the scheduler"})
 }
 
 func (rp *resourcePool) resourcesReleased(
 	ctx *actor.Context,
 	msg sproto.ResourcesReleased,
 ) {
+	_, ok := rp.taskList.TaskByID(msg.AllocationID)
+	if !ok {
+		ctx.Log().Debugf("ignoring release for task not allocated to pool %s", msg.AllocationID)
+		return
+	}
+
 	switch allocated := rp.taskList.Allocation(msg.AllocationID); {
 	case allocated == nil:
+		ctx.Log().Infof("released before allocated for %s", msg.AllocationID)
 		rp.taskList.RemoveTaskByID(msg.AllocationID)
 	case msg.ResourcesID != nil:
 		ctx.Log().Infof("resources %v are released for %s", *msg.ResourcesID, msg.AllocationID)
@@ -389,15 +389,6 @@ func (rp *resourcePool) getOrCreateGroup(
 		actors.NotifyOnStop(ctx, handler, tasklist.GroupActorStopped{Ref: handler})
 	}
 	return g
-}
-
-func (rp *resourcePool) notifyOnStop(
-	ctx *actor.Context, ref *actor.Ref, msg actor.Message,
-) {
-	done := actors.NotifyOnStop(ctx, ref, msg)
-	if rp.saveNotifications {
-		rp.notifications = append(rp.notifications, done)
-	}
 }
 
 func (rp *resourcePool) updateScalingInfo() bool {
@@ -545,8 +536,8 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 			for _, req := range toAllocate {
 				rp.allocateResources(ctx, req)
 			}
-			for _, taskActor := range toRelease {
-				rp.releaseResource(ctx, taskActor)
+			for _, aID := range toRelease {
+				rp.releaseResource(ctx, aID)
 			}
 			rp.sendScalingInfo(ctx)
 		}
@@ -855,10 +846,9 @@ func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
 		WithField("slotCount", slotCount).
 		Error("provisioner in error state")
 
-	var refsToRemove []*actor.Ref
+	var allocationsToRemove []model.AllocationID
 	for it := rp.taskList.Iterator(); it.Next(); {
 		task := it.Value()
-		ref := task.AllocationRef
 		if rp.taskList.IsScheduled(task.AllocationID) {
 			ctx.Log().Debugf("task %s already in progress", task.AllocationID)
 			continue
@@ -868,10 +858,10 @@ func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
 			continue
 		}
 		ctx.Log().WithError(rp.provisionerError).Warnf("removing task %s from list", task.AllocationID)
-		refsToRemove = append(refsToRemove, ref)
+		allocationsToRemove = append(allocationsToRemove, task.AllocationID)
 	}
-	for _, ref := range refsToRemove {
-		ctx.Tell(ref, sproto.InvalidResourcesRequestError{Cause: rp.provisionerError})
+	for _, aID := range allocationsToRemove {
+		rmevents.Publish(aID, &sproto.InvalidResourcesRequestError{Cause: rp.provisionerError})
 	}
 	after := rp.taskList.Len()
 	ctx.Log().WithField("before", before).WithField("after", after).Warn("pruned task list")

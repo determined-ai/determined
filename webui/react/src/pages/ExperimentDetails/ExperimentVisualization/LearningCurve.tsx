@@ -1,11 +1,12 @@
 import { Alert } from 'antd';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { LineChart, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
+import Spinner from 'components/kit/Spinner';
 import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner/Spinner';
 import TableBatch from 'components/Table/TableBatch';
 import { UPlotPoint } from 'components/UPlot/types';
 import { terminalRunStates } from 'constants/states';
@@ -28,7 +29,7 @@ import {
   Scale,
 } from 'types';
 import { glasbeyColor } from 'utils/color';
-import { flattenObject, isEqual, isPrimitive } from 'utils/data';
+import { flattenObject, isPrimitive } from 'utils/data';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -86,7 +87,7 @@ export const getCustomSearchVaryingHPs = (
       }
       if (!(key in check_dict)) {
         check_dict[key] = value;
-      } else if (!isEqual(check_dict[key], value)) {
+      } else if (!_.isEqual(check_dict[key], value)) {
         uniq.add(key);
       }
     });

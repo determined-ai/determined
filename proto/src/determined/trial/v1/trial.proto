@@ -127,14 +127,21 @@ message Trial {
   double wall_clock_time = 12;
   // UUID of checkpoint that this trial started from.
   string warm_start_checkpoint_uuid = 13;
-  // Id of task associated with this trial.
-  string task_id = 14;
+  // Id of the first task associated with this trial.
+  // This field is deprecated since trials can have multiple tasks.
+  string task_id = 14 [deprecated = true];
   // The sum of sizes of all resources in all checkpoints for the trial.
   uint64 total_checkpoint_size = 15;
   // The count of checkpoints.
   int32 checkpoint_count = 18;
   // summary metrics
   google.protobuf.Struct summary_metrics = 19;
+  // Task IDs of tasks associated with this trial.
+  // Length of task_ids will always be greater or equal to one when TaskID is
+  // sent. For example CompareTrial we will send a reduced Trial object, without
+  // TaskID or TaskIDs fileld in. The first element of task_ids will be the same
+  // as task_id. task_ids is sorted ascending by task_run_id.
+  repeated string task_ids = 20;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series
@@ -275,4 +282,51 @@ message MetricsReport {
   int32 id = 6;
   // Run ID of trial when metric was reported.
   int32 trial_run_id = 7;
+}
+
+// TrialSourceInfoType is the type of the TrialSourceInfo, which serves as a
+// link between a trial and a checkpoint or model version
+enum TrialSourceInfoType {
+  // The type is unspecified
+  TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED = 0;
+  // "Inference" Trial Source Info Type, used for batch inference
+  TRIAL_SOURCE_INFO_TYPE_INFERENCE = 1;
+  // "Fine Tuning" Trial Source Info Type, used in model hub
+  TRIAL_SOURCE_INFO_TYPE_FINE_TUNING = 2;
+}
+
+// Denotes a connection between a given trial and a
+// checkpoint or model_version
+message TrialSourceInfo {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "trial_id", "checkpoint_uuid", "trial_source_info_type" ]
+    }
+  };
+  // ID of the trial.
+  int32 trial_id = 1;
+  // UUID of the checkpoint.
+  string checkpoint_uuid = 2;
+  // Source `id`` for the model which generated the checkpoint (if applicable)
+  optional int32 model_id = 3;
+  // Source `version` in the model_version version field which generated the
+  // checkpoint (if applicable)
+  optional int32 model_version = 4;
+  // Type for this trial_source_info
+  TrialSourceInfoType trial_source_info_type = 5;
+}
+
+// Denotes a trial with a specific trial source info type and its metrics
+message TrialSourceInfoMetric {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "trial_id", "metric_report", "trial_source_info_type" ]
+    }
+  };
+  // Trial ID for the inference or fine-tuning run
+  int32 trial_id = 1;
+  // Type of the TrialSourceInfo
+  determined.trial.v1.TrialSourceInfoType trial_source_info_type = 2;
+  // All metrics for the trial
+  repeated determined.trial.v1.MetricsReport metric_reports = 3;
 }

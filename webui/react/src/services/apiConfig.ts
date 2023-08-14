@@ -451,7 +451,7 @@ export const getAgents: DetApi<EmptyParams, Api.V1GetAgentsResponse, Type.Agent[
 };
 
 export const getResourcePools: DetApi<
-  EmptyParams,
+  Service.GetResourcePoolsParams,
   Api.V1GetResourcePoolsResponse,
   Type.ResourcePool[]
 > = {
@@ -459,7 +459,8 @@ export const getResourcePools: DetApi<
   postProcess: (response) => {
     return response.resourcePools?.map(decoder.mapV1ResourcePool) || [];
   },
-  request: () => detApi.Internal.getResourcePools(),
+  request: (params: Service.GetResourcePoolsParams, options) =>
+    detApi.Internal.getResourcePools(params?.offset, params?.limit, params?.unbound, options),
 };
 
 export const getResourceAllocationAggregated: DetApi<
@@ -974,7 +975,13 @@ export const getExperimentFileFromTree: DetApi<
   string
 > = {
   name: 'getModelDefFile',
-  postProcess: (response) => response.file || '',
+  // file is base64 encoded
+  postProcess: ({ file = '' }) => {
+    // ts es2015 defs are wrong -- there's a pr from _2019_ that fixes this but only for the es5 defs
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const byteArray = Uint8Array.from(window.atob(file) as any, (x) => (x as any).codePointAt(0));
+    return new TextDecoder().decode(byteArray);
+  },
   request: (params) => {
     return detApi.Experiments.getModelDefFile(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1021,6 +1028,8 @@ export const getTrialWorkloads: DetApi<
           ? 'METRIC_TYPE_TRAINING'
           : 'METRIC_TYPE_VALIDATION'
         : undefined,
+      undefined,
+      true, // remove deleted checkpoints
     ),
 };
 
@@ -1383,7 +1392,12 @@ export const patchWorkspace: DetApi<
   request: (params, options) => {
     return detApi.Workspaces.patchWorkspace(
       params.id,
-      { name: params.name?.trim(), ...params },
+      {
+        defaultAuxResourcePool: params.defaultAuxPool,
+        defaultComputeResourcePool: params.defaultComputePool,
+        name: params.name?.trim(),
+        ...params,
+      },
       options,
     );
   },
@@ -1574,6 +1588,16 @@ export const getProjectColumns: DetApi<
   name: 'getProjectColumns',
   postProcess: (response) => decoder.decodeProjectColumnsResponse(response).columns,
   request: (params) => detApi.Internal.getProjectColumns(params.id),
+};
+
+export const getProjectNumericMetricsRange: DetApi<
+  Service.GetProjectNumericMetricsRangeParams,
+  Api.V1GetProjectNumericMetricsRangeResponse,
+  Type.ProjectMetricsRange[]
+> = {
+  name: 'getProjectNumericMetricsRange',
+  postProcess: (response) => response.ranges || [],
+  request: (params) => detApi.Internal.getProjectNumericMetricsRange(params.id),
 };
 
 /* Tasks */

@@ -22,6 +22,8 @@ enum Type {
   TYPE_COMMAND = 5;
   // CheckpointGC Job.
   TYPE_CHECKPOINT_GC = 6;
+  // External Job.
+  TYPE_EXTERNAL = 7;
 }
 
 // Job state.

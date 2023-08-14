@@ -1,9 +1,10 @@
+import _ from 'lodash';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import Spinner from 'components/kit/Spinner';
 import Message, { MessageType } from 'components/Message';
 import Page, { BreadCrumbRoute } from 'components/Page';
-import Spinner from 'components/Spinner/Spinner';
 import { terminalRunStates } from 'constants/states';
 import usePolling from 'hooks/usePolling';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
@@ -14,7 +15,6 @@ import { paths } from 'routes/utils';
 import { getExperimentDetails } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { ExperimentBase, TrialItem, Workspace } from 'types';
-import { isEqual } from 'utils/data';
 import { isSingleTrialExperiment } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -46,7 +46,7 @@ const ExperimentDetails: React.FC = () => {
         { signal: canceler.current?.signal },
       );
       setExperiment((prevExperiment) =>
-        isEqual(prevExperiment, newExperiment) ? prevExperiment : newExperiment,
+        _.isEqual(prevExperiment, newExperiment) ? prevExperiment : newExperiment,
       );
       setIsSingleTrial(isSingleTrialExperiment(newExperiment));
     } catch (e) {
@@ -84,7 +84,7 @@ const ExperimentDetails: React.FC = () => {
     const message = `${ERROR_MESSAGE} ${experimentId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!pageError && (!experiment || isSingleTrial === undefined)) {
-    return <Spinner tip={`Loading experiment ${experimentId} details...`} />;
+    return <Spinner spinning tip={`Loading experiment ${experimentId} details...`} />;
   }
 
   const workspaceName = workspaces.find((ws: Workspace) => ws.id === experiment?.workspaceId)?.name;

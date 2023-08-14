@@ -1,7 +1,7 @@
 WITH const AS (
-    SELECT
-        tstzrange($1 :: timestamptz, $2 :: timestamptz) AS period
+    SELECT tstzrange($1::timestamptz, $2::timestamptz) AS period
 ),
+
 -- Workloads that had any overlap with the target interval, along with the length of the overlap of
 -- their time with the requested period.
 workloads AS (
@@ -11,10 +11,10 @@ workloads AS (
         lower(all_workloads.range) AS start_time,
         upper(all_workloads.range) AS end_time,
         extract(
-            epoch
+            EPOCH
             FROM
-                -- `*` computes the intersection of the two ranges.
-                upper(const.period * range) - lower(const.period * range)
+            -- `*` computes the intersection of the two ranges.
+            upper(const.period * range) - lower(const.period * range)
         ) AS seconds
     FROM
         (
@@ -31,7 +31,7 @@ workloads AS (
                         kind,
                         trial_id,
                         -- Here lies an implicit assumption that one workload started when the previous ended.
-                        LAG(end_time, 1) OVER (
+                        lag(end_time, 1) OVER (
                             PARTITION BY trial_id
                             ORDER BY
                                 end_time
@@ -50,15 +50,15 @@ workloads AS (
                             -- Or more accurately of late, start of the allocation.
                             SELECT
                                 NULL AS kind,
-                                tr.id AS trial_id,
+                                tt.trial_id AS trial_id,
                                 a.start_time AS end_time
                             FROM
                                 allocations a,
                                 tasks t,
-                                trials tr
+                                trial_id_task_id tt
                             WHERE
                                 a.task_id = t.task_id
-                                AND t.task_id = tr.task_id
+                                AND t.task_id = tt.task_id
                             UNION ALL
                             SELECT
                                 'training' AS kind,
@@ -76,23 +76,23 @@ workloads AS (
                             UNION ALL
                             SELECT
                                 'checkpointing' AS kind,
-                                t.id AS trial_id,
+                                trial_id_task_id.trial_id AS trial_id,
                                 checkpoints_v2.report_time AS end_time
                             FROM
                                 checkpoints_v2
                             JOIN
-                                trials AS t on checkpoints_v2.task_id = t.task_id
+                                trial_id_task_id on checkpoints_v2.task_id = trial_id_task_id.task_id
                             UNION ALL
                             SELECT
                                 'imagepulling' AS kind,
-                                trials.id,
+                                trial_id_task_id.trial_id,
                                 task_stats.end_time
                             FROM
-                                task_stats, trials, allocations
-                            WHERE 
-                                task_stats.event_type = 'IMAGEPULL' 
+                                task_stats, trial_id_task_id, allocations
+                            WHERE
+                                task_stats.event_type = 'IMAGEPULL'
                                 AND allocations.allocation_id = task_stats.allocation_id
-                                AND allocations.task_id = trials.task_id
+                                AND allocations.task_id = trial_id_task_id.task_id
                         ) metric_reports
                 ) derived_workload_spans
             WHERE
@@ -105,12 +105,13 @@ workloads AS (
         -- `&&` determines whether the ranges overlap.
         const.period && all_workloads.range
 )
+
 SELECT
     trials.experiment_id,
     workloads.kind,
     users.username,
     experiments.owner_id AS user_id,
-    (experiments.config -> 'resources' ->> 'slots_per_trial') :: smallint AS slots,
+    (experiments.config -> 'resources' ->> 'slots_per_trial')::smallint AS slots,
     experiments.config -> 'labels' AS labels,
     workloads.start_time,
     workloads.end_time,
@@ -124,7 +125,7 @@ WHERE
     workloads.trial_id = trials.id
     AND trials.experiment_id = experiments.id
     AND experiments.owner_id = users.id
-UNION 
+UNION
 SELECT
     NULL AS experiment_id,
     'agent' AS kind,
@@ -135,15 +136,16 @@ SELECT
     start_time,
     end_time,
     extract(
-            epoch
-            FROM
-                -- `*` computes the intersection of the two ranges.
-                upper(const.period * tstzrange(start_time, end_time)) - lower(const.period * tstzrange(start_time, end_time))
-        ) AS seconds
+        EPOCH
+        FROM
+        -- `*` computes the intersection of the two ranges.
+        upper(const.period * tstzrange(start_time, end_time))
+        - lower(const.period * tstzrange(start_time, end_time))
+    ) AS seconds
 FROM
     agent_stats, const
 WHERE const.period && tstzrange(start_time, end_time)
-UNION 
+UNION
 SELECT
     NULL AS experiment_id,
     'instance' AS kind,
@@ -154,11 +156,12 @@ SELECT
     start_time,
     end_time,
     extract(
-            epoch
-            FROM
-                -- `*` computes the intersection of the two ranges.
-                upper(const.period * tstzrange(start_time, end_time)) - lower(const.period * tstzrange(start_time, end_time))
-        ) AS seconds
+        EPOCH
+        FROM
+        -- `*` computes the intersection of the two ranges.
+        upper(const.period * tstzrange(start_time, end_time))
+        - lower(const.period * tstzrange(start_time, end_time))
+    ) AS seconds
 FROM
     provisioner_instance_stats, const
 WHERE const.period && tstzrange(start_time, end_time)

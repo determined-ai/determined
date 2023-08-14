@@ -3,6 +3,7 @@ package tasks
 import (
 	"archive/tar"
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -42,6 +43,8 @@ func (metadata *genericCommandSpecMetadata) MarshalToMap() (map[string]interface
 // GenericCommandSpec is a description of a task for running a command.
 type GenericCommandSpec struct {
 	Base TaskSpec
+
+	CommandID string
 
 	Config          model.CommandConfig
 	UserFiles       archive.Archive
@@ -101,7 +104,7 @@ func (s GenericCommandSpec) ToTaskSpec() TaskSpec {
 		wrapArchive(s.AdditionalFiles, rootDir),
 	}
 
-	res.Description = "cmd"
+	res.Description = fmt.Sprintf("cmd-%s", s.CommandID)
 
 	res.Entrypoint = s.Config.Entrypoint
 

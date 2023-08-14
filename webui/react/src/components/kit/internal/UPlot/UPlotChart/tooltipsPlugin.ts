@@ -115,7 +115,7 @@ export const tooltipsPlugin = (
   };
 
   const _getTooltipLeftPx = (uPlot: uPlot, idx: number): number => {
-    const margin = 40;
+    const margin = 32;
     const idxLeft = uPlot.valToPos(uPlot.data[0][idx], 'x');
     if (!tooltipEl) return idxLeft;
 
@@ -124,7 +124,7 @@ export const tooltipsPlugin = (
 
     // right
     if (chartWidth && idxLeft + tooltipWidth >= chartWidth * 0.9) {
-      return idxLeft - tooltipWidth - margin;
+      return Math.max(0, idxLeft - tooltipWidth - margin);
     }
 
     // left
@@ -192,7 +192,7 @@ export const tooltipsPlugin = (
         const { left, idx, top } = uPlot.cursor;
 
         if (!left || left < 0 || !top || top < 0 || idx == null) {
-          if (displayedIdx) hide();
+          hide();
           return;
         }
 

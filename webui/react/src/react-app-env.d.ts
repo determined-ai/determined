@@ -1,7 +1,8 @@
 /* eslint-disable */
-/// <reference types="vite/client" />
 /// <reference path="types.ts" />
 /// <reference types="vitest/globals" />
+/// <reference types="./react-svg.d.ts" />
+/// <reference types="vite/client" />
 import type { TestingLibraryMatchers } from '@testing-library/jest-dom/matchers';
 
 declare global {
@@ -33,4 +34,9 @@ declare global {
     interface Matchers<R = void>
       extends TestingLibraryMatchers<typeof expect.stringContaining, R> {}
   }
+}
+
+declare module '*.svg' {
+  const ReactComponent = React.FC<React.SVGProps>;
+  export default ReactComponent;
 }

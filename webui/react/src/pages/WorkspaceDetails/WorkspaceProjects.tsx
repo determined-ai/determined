@@ -1,4 +1,5 @@
 import { Space } from 'antd';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
@@ -8,13 +9,13 @@ import { Column, Columns } from 'components/kit/Columns';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
+import Spinner from 'components/kit/Spinner';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import ProjectCard from 'components/ProjectCard';
 import ProjectCreateModalComponent from 'components/ProjectCreateModal';
-import Spinner from 'components/Spinner';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -35,7 +36,6 @@ import { getWorkspaceProjects, patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import { Project, Workspace } from 'types';
-import { isEqual } from 'utils/data';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -89,7 +89,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       );
       setTotal(response.pagination.total ?? 0);
       setProjects((prev) => {
-        if (isEqual(prev, response.projects)) return prev;
+        if (_.isEqual(prev, response.projects)) return prev;
         return response.projects;
       });
     } catch (e) {

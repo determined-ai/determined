@@ -1,13 +1,14 @@
 import { Select, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
+import _ from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
+import Spinner from 'components/kit/Spinner';
 import Link from 'components/Link';
-import Spinner from 'components/Spinner';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
@@ -22,7 +23,6 @@ import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import { DetailedUser, UserRole } from 'types';
-import { isEqual } from 'utils/data';
 import { message } from 'utils/dialogApi';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
@@ -106,12 +106,12 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
       const formData = await form.validateFields();
 
       if (group) {
-        const nameUpdated = !isEqual(formData.name, groupDetail?.name);
-        const usersUpdated = !isEqual(
+        const nameUpdated = !_.isEqual(formData.name, groupDetail?.name);
+        const usersUpdated = !_.isEqual(
           formData.users,
           groupDetail?.users?.map((u) => u.id),
         );
-        const rolesUpdated = !isEqual(
+        const rolesUpdated = !_.isEqual(
           formData.roles,
           groupRoles.map((r) => r.id),
         );
@@ -169,6 +169,8 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
     }
   };
 
+  const currentGroupMembers = form.getFieldValue(USERS_NAME);
+
   return (
     <Modal
       cancel
@@ -192,11 +194,13 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
           </Form.Item>
           <Form.Item label={USERS_LABEL} name={USERS_NAME}>
             <Select mode="multiple" optionFilterProp="children" placeholder="Add Users" showSearch>
-              {users?.map((u) => (
-                <Select.Option key={u.id} value={u.id}>
-                  {getDisplayName(u)}
-                </Select.Option>
-              ))}
+              {users
+                ?.filter((u) => u.isActive || currentGroupMembers?.includes(u.id))
+                ?.map((u) => (
+                  <Select.Option key={u.id} value={u.id}>
+                    {getDisplayName(u)}
+                  </Select.Option>
+                ))}
             </Select>
           </Form.Item>
           {rbacEnabled && canModifyPermissions && group && (

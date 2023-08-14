@@ -5,12 +5,11 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import determined.cli.render
 from determined import cli
+from determined.cli import render
 from determined.cli.user import AGENT_USER_GROUP_ARGS
 from determined.common import api, util
 from determined.common.api import authentication, bindings, errors
 from determined.common.declarative_argparse import Arg, Cmd
-
-from . import render
 
 PROJECT_HEADERS = ["ID", "Name", "Description", "# Experiments", "# Active Experiments"]
 WORKSPACE_HEADERS = [

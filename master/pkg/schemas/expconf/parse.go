@@ -57,7 +57,7 @@ func ParseAnyExperimentConfigJSON(byts []byte) (ExperimentConfig, error) {
 	// 	}
 
 	default:
-		return out, errors.New(fmt.Sprintf("invalid version: %d", version))
+		return out, fmt.Errorf("invalid version: %d", version)
 	}
 
 	// Call shim on each old versions, walking our way to the latest version.

@@ -16,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/workspace"
@@ -89,10 +88,10 @@ func (a *apiServer) GetWorkspaceByID(
 	}
 
 	if rejectImmutable && w.Immutable {
-		return nil, errors.Errorf("workspace (%v) is immutable and cannot add new projects.", w.Id)
+		return nil, errors.Errorf("workspace (%v) is immutable and cannot add new projects", w.Id)
 	}
 	if rejectImmutable && w.Archived {
-		return nil, errors.Errorf("workspace (%v) is archived and cannot add new projects.", w.Id)
+		return nil, errors.Errorf("workspace (%v) is archived and cannot add new projects", w.Id)
 	}
 	return w, nil
 }
@@ -424,13 +423,13 @@ func (a *apiServer) PatchWorkspace(
 		insertColumns = append(insertColumns, "uid", "user_", "gid", "group_")
 	}
 
-	if req.Workspace.DefaultComputePool != "" || req.Workspace.DefaultAuxPool != "" {
-		if req.Workspace.DefaultComputePool != "" {
-			updatedWorkspace.DefaultComputePool = req.Workspace.DefaultComputePool
-		}
-		if req.Workspace.DefaultAuxPool != "" {
-			updatedWorkspace.DefaultAuxPool = req.Workspace.DefaultAuxPool
-		}
+	if req.Workspace.DefaultComputeResourcePool != nil {
+		updatedWorkspace.DefaultComputePool = *req.Workspace.DefaultComputeResourcePool
+		insertColumns = append(insertColumns, "default_compute_pool")
+	}
+	if req.Workspace.DefaultAuxResourcePool != nil {
+		updatedWorkspace.DefaultAuxPool = *req.Workspace.DefaultAuxResourcePool
+		insertColumns = append(insertColumns, "default_aux_pool")
 	}
 
 	if req.Workspace.CheckpointStorageConfig != nil {
@@ -510,9 +509,9 @@ func (a *apiServer) deleteWorkspace(
 }
 
 func (a *apiServer) DeleteWorkspace(
-	ctx context.Context, req *apiv1.DeleteWorkspaceRequest) (*apiv1.DeleteWorkspaceResponse,
-	error,
-) {
+	ctx context.Context,
+	req *apiv1.DeleteWorkspaceRequest,
+) (*apiv1.DeleteWorkspaceResponse, error) {
 	_, _, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
 		workspace.AuthZProvider.Get().CanDeleteWorkspace)
 	if err != nil {
@@ -649,9 +648,12 @@ func (a *apiServer) ListRPsBoundToWorkspace(
 		return nil, err
 	}
 
-	masterConfig := config.GetMasterConfig()
+	rpConfigs, err := a.resourcePoolsAsConfigs()
+	if err != nil {
+		return nil, err
+	}
 	rpNames, pagination, err := db.ReadRPsAvailableToWorkspace(
-		ctx, req.WorkspaceId, req.Offset, req.Limit, masterConfig.ResourceConfig.ResourcePools,
+		ctx, req.WorkspaceId, req.Offset, req.Limit, rpConfigs,
 	)
 	if err != nil {
 		return nil, err

@@ -51,15 +51,15 @@ func TestUpdateCheckpointSize(t *testing.T) {
 		experimentIDs = append(experimentIDs, exp.ID)
 
 		for j := 0; j < 2; j++ {
-			tr := RequireMockTrial(t, db, exp)
-			allocation := RequireMockAllocation(t, db, tr.TaskID)
+			tr, task := RequireMockTrial(t, db, exp)
+			allocation := RequireMockAllocation(t, db, task.TaskID)
 			trialIDs = append(trialIDs, tr.ID)
 
 			for k := 0; k < 2; k++ {
 				ckpt := uuid.New()
 				checkpointIDs = append(checkpointIDs, ckpt)
 
-				checkpoint := MockModelCheckpoint(ckpt, tr, allocation)
+				checkpoint := MockModelCheckpoint(ckpt, allocation)
 				checkpoint.Resources = resources[resourcesIndex]
 				err := AddCheckpointMetadata(ctx, &checkpoint)
 				require.NoError(t, err)
@@ -164,20 +164,20 @@ func TestDeleteCheckpoints(t *testing.T) {
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)
-	tr := RequireMockTrial(t, db, exp)
-	allocation := RequireMockAllocation(t, db, tr.TaskID)
+	_, task := RequireMockTrial(t, db, exp)
+	allocation := RequireMockAllocation(t, db, task.TaskID)
 
 	// Create checkpoints
 	ckpt1 := uuid.New()
-	checkpoint1 := MockModelCheckpoint(ckpt1, tr, allocation)
+	checkpoint1 := MockModelCheckpoint(ckpt1, allocation)
 	err := AddCheckpointMetadata(ctx, &checkpoint1)
 	require.NoError(t, err)
 	ckpt2 := uuid.New()
-	checkpoint2 := MockModelCheckpoint(ckpt2, tr, allocation)
+	checkpoint2 := MockModelCheckpoint(ckpt2, allocation)
 	err = AddCheckpointMetadata(ctx, &checkpoint2)
 	require.NoError(t, err)
 	ckpt3 := uuid.New()
-	checkpoint3 := MockModelCheckpoint(ckpt3, tr, allocation)
+	checkpoint3 := MockModelCheckpoint(ckpt3, allocation)
 	err = AddCheckpointMetadata(ctx, &checkpoint3)
 	require.NoError(t, err)
 
@@ -285,8 +285,8 @@ func BenchmarkUpdateCheckpointSize(b *testing.B) {
 	exp := RequireMockExperiment(t, db, user)
 	for j := 0; j < 10; j++ {
 		t.Logf("Adding trial #%d", j)
-		tr := RequireMockTrial(t, db, exp)
-		allocation := RequireMockAllocation(t, db, tr.TaskID)
+		_, task := RequireMockTrial(t, db, exp)
+		allocation := RequireMockAllocation(t, db, task.TaskID)
 		for k := 0; k < 10; k++ {
 			ckpt := uuid.New()
 			checkpoints = append(checkpoints, ckpt)
@@ -296,7 +296,7 @@ func BenchmarkUpdateCheckpointSize(b *testing.B) {
 				resources[uuid.New().String()] = rand.Int63n(2500) //nolint: gosec
 			}
 
-			checkpoint := MockModelCheckpoint(ckpt, tr, allocation)
+			checkpoint := MockModelCheckpoint(ckpt, allocation)
 			checkpoint.Resources = resources
 
 			err := AddCheckpointMetadata(ctx, &checkpoint)

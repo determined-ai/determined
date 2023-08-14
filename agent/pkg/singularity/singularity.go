@@ -56,13 +56,15 @@ type SingularityContainer struct {
 
 // SingularityClient implements ContainerRuntime.
 type SingularityClient struct {
-	log        *logrus.Entry
-	opts       options.SingularityOptions
-	mu         sync.Mutex
-	wg         waitgroupx.Group
-	containers map[cproto.ID]*SingularityContainer
-	agentTmp   string
-	debug      bool
+	log         *logrus.Entry
+	opts        options.SingularityOptions
+	mu          sync.Mutex
+	wg          waitgroupx.Group
+	containers  map[cproto.ID]*SingularityContainer
+	agentTmp    string
+	debug       bool
+	isApptainer bool
+	imageRoot   string // optional path name to root of image cache
 }
 
 // New returns a new singularity client, which launches and tracks containers.
@@ -80,13 +82,22 @@ func New(opts options.Options) (*SingularityClient, error) {
 		return nil, fmt.Errorf("preparing agent tmp: %w", err)
 	}
 
+	// Validate image root (if provided)
+	if opts.ImageRoot != "" {
+		if _, err := os.ReadDir(opts.ImageRoot); err != nil {
+			return nil, fmt.Errorf("reading image root directory: %w", err)
+		}
+	}
+
 	return &SingularityClient{
-		log:        logrus.WithField("compotent", "singularity"),
-		opts:       opts.SingularityOptions,
-		wg:         waitgroupx.WithContext(context.Background()),
-		containers: make(map[cproto.ID]*SingularityContainer),
-		agentTmp:   agentTmp,
-		debug:      opts.Debug,
+		log:         logrus.WithField("component", "singularity"),
+		opts:        opts.SingularityOptions,
+		wg:          waitgroupx.WithContext(context.Background()),
+		containers:  make(map[cproto.ID]*SingularityContainer),
+		agentTmp:    agentTmp,
+		debug:       opts.Debug,
+		isApptainer: opts.ContainerRuntime == options.ApptainerContainerRuntime,
+		imageRoot:   opts.ImageRoot,
 	}, nil
 }
 
@@ -310,14 +321,17 @@ func (s *SingularityClient) RunContainer(
 		}
 	}
 	if len(cudaVisibleDevices) > 0 {
-		// Using --userns to avoid this error when using --nvccli:
-		// FATAL:   nvidia-container-cli not allowed in setuid mode
-		args = append(args, "--nv", "--nvccli", "--userns", "--contain")
+		args = append(args, "--nv", "--nvccli", "--contain")
+		if s.isApptainer {
+			// Using --userns to avoid this error when using --nvccli:
+			// FATAL:   nvidia-container-cli not allowed in setuid mode
+			// (e.g.: casablanca, apptainer version 1.2.2-1)
+			args = append(args, "--userns")
+		}
 	}
 
 	args = capabilitiesToSingularityArgs(req, args)
-
-	image := cruntimes.CanonicalizeImage(req.ContainerConfig.Image)
+	image := s.computeImageReference(req.ContainerConfig.Image)
 	args = append(args, image)
 	args = append(args, singularityWrapperEntrypoint)
 	args = append(args, req.ContainerConfig.Cmd...)
@@ -376,6 +390,22 @@ func (s *SingularityClient) RunContainer(
 		},
 		ContainerWaiter: s.waitOnContainer(cproto.ID(id), cont, p),
 	}, nil
+}
+
+// computeImageReference computes a reference to the requested image. If an image cache
+// directory is defined and it contains the required image, a path name to the cached image
+// will be returned, else a docker reference so that the image can be downloaded.
+func (s *SingularityClient) computeImageReference(requestedImage string) string {
+	s.log.Tracef("requested image: %s", requestedImage)
+	if s.imageRoot != "" {
+		cachePathName := s.imageRoot + "/" + requestedImage
+		if _, err := os.Stat(cachePathName); err != nil {
+			s.log.Tracef("image is not in cache: %s", err.Error())
+		} else {
+			return cachePathName
+		}
+	}
+	return cruntimes.CanonicalizeImage(requestedImage)
 }
 
 // Sets the environment of the process that will run the Singularity/apptainer command.

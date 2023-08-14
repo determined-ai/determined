@@ -4,11 +4,11 @@ from typing import Any, Dict, List, Sequence, Tuple
 
 import determined.cli.render
 from determined import cli
+from determined.cli import render
 from determined.common import api
 from determined.common.api import authentication, bindings, errors
 from determined.common.declarative_argparse import Arg, Cmd
 
-from . import render
 from .workspace import list_workspace_projects, pagination_args, workspace_by_name
 
 

@@ -6,19 +6,19 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Json from 'components/Json';
 import Empty from 'components/kit/Empty';
 import Pivot from 'components/kit/Pivot';
+import Spinner from 'components/kit/Spinner';
 import Page from 'components/Page';
 import ResourcePoolBindings from 'components/ResourcePoolBindings';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
 import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
 import { maxPoolSlotCapacity } from 'stores/cluster';
-import determinedStore from 'stores/determinedInfo';
 import { ShirtSize } from 'themes';
 import { ValueOf } from 'types';
 import { JobState, ResourceState } from 'types';
@@ -41,7 +41,7 @@ type Params = {
 
 const TabType = {
   Active: 'active',
-  Bindings: 'Bindings',
+  Bindings: 'bindings',
   Configuration: 'configuration',
   Queued: 'queued',
   Stats: 'stats',
@@ -54,7 +54,7 @@ export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 const ResourcepoolDetailInner: React.FC = () => {
   const { poolname, tab } = useParams<Params>();
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
-  const { rbacEnabled } = useObservable(determinedStore.info);
+  const { canManageResourcePoolBindings } = usePermissions();
   const agents = Loadable.getOrElse([], useObservable(clusterStore.agents));
   const resourcePools = useObservable(clusterStore.resourcePools);
 
@@ -178,16 +178,16 @@ const ResourcepoolDetailInner: React.FC = () => {
       },
     ];
 
-    if (rpBindingFlagOn && rbacEnabled) {
+    if (rpBindingFlagOn && canManageResourcePoolBindings) {
       tabItems.push({
-        children: <ResourcePoolBindings poolName={pool.name} />,
+        children: <ResourcePoolBindings pool={pool} />,
         key: TabType.Bindings,
         label: 'Bindings',
       });
     }
 
     return tabItems;
-  }, [pool, poolStats, rbacEnabled, renderPoolConfig, rpBindingFlagOn]);
+  }, [canManageResourcePoolBindings, pool, poolStats, renderPoolConfig, rpBindingFlagOn]);
 
   if (!pool || Loadable.isLoading(resourcePools)) return <Spinner center spinning />;
 
@@ -235,7 +235,7 @@ const ResourcepoolDetailInner: React.FC = () => {
 };
 
 const ResourcepoolDetail: React.FC = () => (
-  <Suspense fallback={<Spinner />}>
+  <Suspense fallback={<Spinner spinning />}>
     <ResourcepoolDetailInner />
   </Suspense>
 );

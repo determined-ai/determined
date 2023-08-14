@@ -184,6 +184,7 @@ func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 			return
 		}
 		require.NotEqual(t, experimentv1.State_STATE_DELETE_FAILED, e.Experiment.State)
+		time.Sleep(1 * time.Second)
 	}
 	t.Error("expected experiment to delete after 1 minute and it did not")
 }
@@ -344,13 +345,12 @@ func TestGetExperiments(t *testing.T) {
 	}
 	require.NoError(t, api.m.db.AddExperiment(exp0, activeConfig0))
 	for i := 0; i < 3; i++ {
-		task := &model.Task{TaskType: model.TaskTypeTrial}
+		task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 		require.NoError(t, api.m.db.AddTask(task))
-		require.NoError(t, api.m.db.AddTrial(&model.Trial{
+		require.NoError(t, db.AddTrial(ctx, &model.Trial{
 			State:        model.PausedState,
 			ExperimentID: exp0.ID,
-			TaskID:       task.TaskID,
-		}))
+		}, task.TaskID))
 	}
 	exp0Expected := &experimentv1.Experiment{
 		Id:             int32(exp0.ID),
@@ -366,6 +366,7 @@ func TestGetExperiments(t *testing.T) {
 		UserId:         1,
 		Username:       "admin",
 		SearcherType:   "single",
+		SearcherMetric: "loss",
 		Name:           "name",
 		Notes:          "omitted", // Notes get omitted when non null.
 		JobId:          job0ID,
@@ -412,6 +413,7 @@ func TestGetExperiments(t *testing.T) {
 		UserId:         userResp.User.Id,
 		Username:       userResp.User.Username,
 		SearcherType:   "single",
+		SearcherMetric: "loss",
 		Name:           "longername",
 		JobId:          job1ID,
 		ProjectId:      pid,
@@ -595,13 +597,12 @@ func TestSearchExperiments(t *testing.T) {
 
 	// Trial without validations doesn't cause issues.
 	noValidationsExp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
-	task := &model.Task{TaskType: model.TaskTypeTrial}
+	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, api.m.db.AddTask(task))
-	require.NoError(t, api.m.db.AddTrial(&model.Trial{
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
 		State:        model.PausedState,
 		ExperimentID: noValidationsExp.ID,
-		TaskID:       task.TaskID,
-	}))
+	}, task.TaskID))
 
 	resp, err = api.SearchExperiments(ctx, req)
 	require.NoError(t, err)

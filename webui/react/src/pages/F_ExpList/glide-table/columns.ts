@@ -3,6 +3,7 @@ import {
   DataEditorProps,
   GridCell,
   GridCellKind,
+  Theme as GTheme,
   SizedGridColumn,
 } from '@hpe.com/glide-data-grid';
 
@@ -28,37 +29,45 @@ export const MULTISELECT = 'selected';
 // order used in ColumnPickerMenu
 export const experimentColumns = [
   MULTISELECT,
-  'archived',
-  'name',
   'id',
-  'forkedFrom',
+  'name',
+  'state',
   'startTime',
   'user',
-  'description',
-  'tags',
-  'state',
-  'duration',
-  'resourcePool',
-  'searcherType',
-  'progress',
   'numTrials',
-  'checkpointCount',
-  'checkpointSize',
+  'searcherType',
   'searcherMetric',
   'searcherMetricsVal',
+  'description',
+  'tags',
+  'forkedFrom',
+  'progress',
+  'duration',
+  'resourcePool',
+  'checkpointCount',
+  'checkpointSize',
+  'archived',
 ] as const;
 
 export type ExperimentColumn = (typeof experimentColumns)[number];
 
 export const defaultExperimentColumns: ExperimentColumn[] = [
+  'id',
   'name',
+  'state',
   'startTime',
   'user',
+  'numTrials',
+  'searcherType',
+  'searcherMetric',
+  'searcherMetricsVal',
   'description',
   'tags',
-  'state',
+  'progress',
   'duration',
-  'searcherType',
+  'resourcePool',
+  'checkpointCount',
+  'checkpointSize',
 ];
 
 export type ColumnDef = SizedGridColumn & {
@@ -69,6 +78,12 @@ export type ColumnDef = SizedGridColumn & {
 };
 
 export type ColumnDefs = Record<string, ColumnDef>;
+
+interface HeatmapProps {
+  min: number;
+  max: number;
+}
+
 interface Params {
   appTheme: Theme;
   columnWidths: Record<string, number>;
@@ -102,8 +117,8 @@ export const getColumnDefs = ({
     isNumerical: true,
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: Number(record.experiment.checkpointCount),
-      displayData: String(record.experiment.checkpointCount),
+      data: Number(record.experiment.checkpoints),
+      displayData: String(record.experiment.checkpoints),
       kind: GridCellKind.Number,
     }),
     title: 'Checkpoints',
@@ -284,27 +299,6 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.searcherMetric,
   },
-  searcherMetricsVal: {
-    id: 'searcherMetricsVal',
-    isNumerical: true,
-    renderer: (record: ExperimentWithTrial) => {
-      const sMetric = record.experiment.config.searcher.metric;
-      const sMetricValue = record.bestTrial?.bestValidationMetric?.metrics?.[sMetric];
-      return {
-        allowOverlay: false,
-        data: sMetricValue?.toString() || '',
-        displayData: sMetricValue
-          ? typeof sMetricValue === 'number'
-            ? humanReadableNumber(sMetricValue)
-            : sMetricValue
-          : '',
-        kind: GridCellKind.Text,
-      };
-    },
-    title: 'Searcher Metric Value',
-    tooltip: () => undefined,
-    width: columnWidths.searcherMetricsVal,
-  },
   searcherType: {
     id: 'searcherType',
     renderer: (record: ExperimentWithTrial) => ({
@@ -413,6 +407,44 @@ export const getColumnDefs = ({
   },
 });
 
+export const searcherMetricsValColumn = (
+  columnWidth?: number,
+  heatmapProps?: HeatmapProps,
+): ColumnDef => {
+  return {
+    id: 'searcherMetricsVal',
+    isNumerical: true,
+    renderer: (record: ExperimentWithTrial) => {
+      const sMetric = record.experiment.config.searcher.metric;
+      const sMetricValue = record.bestTrial?.bestValidationMetric?.metrics?.[sMetric];
+
+      let theme: Partial<GTheme> = {};
+      if (heatmapProps && sMetricValue) {
+        const { min, max } = heatmapProps;
+        theme = {
+          accentLight: getHeatmapColor(min, max, sMetricValue),
+          bgCell: getHeatmapColor(min, max, sMetricValue),
+          textDark: 'white',
+        };
+      }
+      return {
+        allowOverlay: false,
+        data: sMetricValue?.toString() || '',
+        displayData: sMetricValue
+          ? typeof sMetricValue === 'number'
+            ? humanReadableNumber(sMetricValue)
+            : sMetricValue
+          : '',
+        kind: GridCellKind.Text,
+        themeOverride: theme,
+      };
+    },
+    title: 'Searcher Metric Value',
+    tooltip: () => undefined,
+    width: columnWidth ?? columnWidthsFallback,
+  };
+};
+
 export const defaultTextColumn = (
   column: ProjectColumn,
   columnWidth?: number,
@@ -435,20 +467,47 @@ export const defaultTextColumn = (
   };
 };
 
+const getHeatmapPercentage = (min: number, max: number, value: number): number => {
+  if (min >= max || value >= max) return 1;
+  if (value <= min) return 0;
+  return (value - min) / (max - min);
+};
+
+const getHeatmapColor = (min: number, max: number, value: number): string => {
+  const p = getHeatmapPercentage(min, max, value);
+  const red = [44, 222];
+  const green = [119, 66];
+  const blue = [176, 91];
+  return `rgb(${red[0] + (red[1] - red[0]) * p}, ${green[0] + (green[1] - green[0]) * p}, ${
+    blue[0] + (blue[1] - blue[0]) * p
+  })`;
+};
+
 export const defaultNumberColumn = (
   column: ProjectColumn,
   columnWidth?: number,
   dataPath?: string,
+  heatmapProps?: HeatmapProps,
 ): ColumnDef => {
   return {
     id: column.column,
     renderer: (record: ExperimentWithTrial) => {
       const data = isString(dataPath) ? getPath<number>(record, dataPath) : undefined;
+      let theme: Partial<GTheme> = {};
+      if (heatmapProps && data) {
+        const { min, max } = heatmapProps;
+        theme = {
+          accentLight: getHeatmapColor(min, max, data),
+          bgCell: getHeatmapColor(min, max, data),
+          textDark: 'white',
+        };
+      }
       return {
         allowOverlay: false,
         data: Number(data),
         displayData: data !== undefined ? String(data) : '',
         kind: GridCellKind.Number,
+        themeOverride: theme,
       };
     },
     title: column.displayName || column.column,

@@ -13,7 +13,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -53,7 +53,7 @@ type agentState struct {
 	maxZeroSlotContainers int
 
 	slotStates          map[device.ID]*slot
-	containerAllocation map[cproto.ID]*actor.Ref
+	containerAllocation map[cproto.ID]model.AllocationID
 	containerState      map[cproto.ID]*cproto.Container
 }
 
@@ -65,7 +65,7 @@ func newAgentState(msg sproto.AddAgent, maxZeroSlotContainers int) *agentState {
 		maxZeroSlotContainers: maxZeroSlotContainers,
 		enabled:               true,
 		slotStates:            make(map[device.ID]*slot),
-		containerAllocation:   make(map[cproto.ID]*actor.Ref),
+		containerAllocation:   make(map[cproto.ID]model.AllocationID),
 		containerState:        make(map[cproto.ID]*cproto.Container),
 		uuid:                  uuid.New(),
 	}
@@ -341,7 +341,7 @@ func (a *agentState) startContainer(ctx *actor.Context, msg sproto.StartTaskCont
 		}
 	}
 
-	a.containerAllocation[msg.Container.ID] = msg.TaskActor
+	a.containerAllocation[msg.Container.ID] = msg.AllocationID
 
 	if err := a.persist(); err != nil {
 		ctx.Log().WithError(err).Warnf("startContainer persist failure")
@@ -404,9 +404,9 @@ func (a *agentState) updateSlotDeviceView(ctx *actor.Context, deviceID device.ID
 		// On `PostStop`, draining will be already set to false, and we'll kill the container
 		// whether we have the device or not.
 		if !s.enabled.draining && s.containerID != nil {
-			ctx.Tell(a.containerAllocation[*s.containerID], sproto.AllocationSignalWithReason{
-				AllocationSignal:    sproto.KillAllocation,
-				InformationalReason: "slot disabled",
+			rmevents.Publish(a.containerAllocation[*s.containerID], &sproto.ReleaseResources{
+				Reason:    "slot disabled",
+				ForceKill: true,
 			})
 		}
 	}
@@ -448,12 +448,10 @@ func (a *agentState) patchSlotState(
 ) (model.SlotSummary, error) {
 	s, ok := a.slotStates[msg.id]
 	if !ok {
-		return model.SlotSummary{}, errors.New(
-			fmt.Sprintf(
-				"bad updateSlotDeviceView on device: %d (%s): not found",
-				msg.id,
-				a.string(),
-			),
+		return model.SlotSummary{}, fmt.Errorf(
+			"bad updateSlotDeviceView on device: %d (%s): not found",
+			msg.id,
+			a.string(),
 		)
 	}
 	return a.patchSlotStateInner(ctx, msg, s), nil
@@ -494,19 +492,6 @@ func (a *agentState) persist() error {
 		On("CONFLICT (agent_id) DO UPDATE").
 		Exec(context.TODO())
 	return err
-}
-
-func (a *agentState) restore() error {
-	snapshot := agentSnapshot{}
-	err := db.Bun().NewSelect().Model(&snapshot).
-		Where("agent_id = ?", a.Handler.Address().Local()).
-		Scan(context.TODO())
-	if err != nil {
-		return err
-	}
-	log.Debugf("restored agent state snapshot: %v", snapshot)
-
-	return nil
 }
 
 func (a *agentState) delete() error {
@@ -656,7 +641,7 @@ func newAgentStateFromSnapshot(as agentSnapshot) (*agentState, error) {
 		draining:              as.UserDraining,
 		slotStates:            slotStates,
 		Devices:               devices,
-		containerAllocation:   make(map[cproto.ID]*actor.Ref),
+		containerAllocation:   make(map[cproto.ID]model.AllocationID),
 		containerState:        containerState,
 	}
 
@@ -666,21 +651,12 @@ func newAgentStateFromSnapshot(as agentSnapshot) (*agentState, error) {
 func (a *agentState) restoreContainersField() error {
 	containerIDs := maps.Keys(a.containerState)
 
-	c2a, err := loadContainersToAllocationIds(containerIDs)
+	res, err := loadContainersToAllocationIds(containerIDs)
 	if err != nil {
 		return err
 	}
-
-	containers := make(map[cproto.ID]*actor.Ref)
-	for contID, alloc := range c2a {
-		ref := allocationmap.GetAllocation(alloc)
-		if ref != nil {
-			containers[contID] = ref
-		}
-	}
-	log.WithField("agent-id", a.string()).Debugf("restored containers: %d", len(containers))
-
-	maps.Copy(a.containerAllocation, containers)
+	log.WithField("agent-id", a.string()).Debugf("restored containers: %d", len(res))
+	a.containerAllocation = res
 
 	return nil
 }

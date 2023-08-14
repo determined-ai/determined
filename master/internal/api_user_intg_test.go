@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+	"github.com/determined-ai/determined/master/internal/sproto"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -25,7 +26,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -97,6 +97,32 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB) (*apiServer, model.User, context.
 		metadata.Pairs("x-user-token", fmt.Sprintf("Bearer %s", resp.Token)))
 
 	return api, *userModel, ctx
+}
+
+func TestGetUsersRemote(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+
+	remoteUser, err := api.m.db.AddUser(&model.User{
+		Username: uuid.New().String(),
+		Remote:   true,
+	}, nil)
+	require.NoError(t, err)
+
+	nonRemoteUser, err := api.m.db.AddUser(&model.User{
+		Username: uuid.New().String(),
+		Remote:   false,
+	}, nil)
+	require.NoError(t, err)
+
+	resp, err := api.GetUsers(ctx, &apiv1.GetUsersRequest{})
+	require.NoError(t, err)
+	for _, u := range resp.Users {
+		if model.UserID(u.Id) == remoteUser {
+			require.True(t, u.Remote)
+		} else if model.UserID(u.Id) == nonRemoteUser {
+			require.False(t, u.Remote)
+		}
+	}
 }
 
 func TestPatchUser(t *testing.T) {

@@ -40,6 +40,7 @@ checkpoints_vt AS (
       FROM checkpoints_view c
       WHERE c.trial_id = $1
       AND $4 != 'FILTER_OPTION_VALIDATION'
+      AND ((NOT $7) OR (c.state != 'DELETED'))
     ) AS r1
 ),
 workloads AS (

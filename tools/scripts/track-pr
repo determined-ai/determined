@@ -61,7 +61,9 @@ def run(*args, check=True, quiet=False, **kwargs):
 
 
 def run_capture(*args, **kwargs):
-    return run(*args, stdout=subprocess.PIPE, universal_newlines=True, **kwargs).stdout
+    return run(
+        *args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, **kwargs
+    )
 
 
 def make_issue_for_pr(issue_repo_id: str, pr_id: str) -> str:
@@ -148,8 +150,21 @@ def project_item_id_for_pr(project_id: str, pr_id: str):
     return None
 
 
+def cherry_pick_skipping_empty(commit):
+    out = run_capture("git", "cherry-pick", "-x", commit, check=False)
+    try:
+        out.check_returncode()
+    except subprocess.CalledProcessError:
+        if "The previous cherry-pick is now empty" in out.stderr:
+            run("git", "cherry-pick", "--skip")
+        else:
+            print(out.stdout)
+            print(out.stderr)
+            raise
+
+
 def cherry_pick_pr(pr_id: str) -> None:
-    is_ee_pr = "determined-ee" in run_capture("git", "remote", "get-url", CLONED_REMOTE)
+    is_ee_pr = "determined-ee" in run_capture("git", "remote", "get-url", CLONED_REMOTE).stdout
 
     pr = gql.get_pr_merge_commit_and_url(id=pr_id)["node"]
     pr_commit = pr["mergeCommit"]["oid"]
@@ -162,7 +177,7 @@ def cherry_pick_pr(pr_id: str) -> None:
                 line.split()[1]
                 for line in run_capture(
                     "git", "ls-remote", CLONED_REMOTE, "refs/heads/release-*"
-                ).splitlines()
+                ).stdout.splitlines()
             ),
             key=lambda branch: [
                 int(part) for part in re.search(r"/release-(\d+)\.(\d+)\.(\d+)$", branch).groups()
@@ -193,7 +208,7 @@ def cherry_pick_pr(pr_id: str) -> None:
         run("git", "config", "user.email", "automation@determined.ai")
         run("git", "config", "user.name", "Determined CI")
         run("git", "checkout", release_branch)
-        run("git", "cherry-pick", "-x", pr_commit)
+        cherry_pick_skipping_empty(pr_commit)
         if not is_ee_pr:
             ee_remote = "ee"
             ee_release_branch = f"{release_branch}-ee"
@@ -206,7 +221,7 @@ def cherry_pick_pr(pr_id: str) -> None:
             )
             run("git", "fetch", "--depth=2", ee_remote, f"{ee_release_branch}:{ee_release_branch}")
             run("git", "checkout", ee_release_branch)
-            run("git", "cherry-pick", "-x", pr_commit)
+            cherry_pick_skipping_empty(pr_commit)
 
         # Perform both pushes only if both cherry-picks succeeded, so we don't
         # end up with the two branches in different states.

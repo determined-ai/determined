@@ -134,10 +134,10 @@ func addMockCheckpointDB(t *testing.T, pgDB *db.PgDB, id uuid.UUID) {
 	user := db.RequireMockUser(t, pgDB)
 	// Using a different path than DefaultTestSrcPath since we are one level up than most db tests
 	exp := mockExperimentS3(t, pgDB, user, "../../examples/tutorials/mnist_pytorch")
-	tr := db.RequireMockTrial(t, pgDB, exp)
-	allocation := db.RequireMockAllocation(t, pgDB, tr.TaskID)
+	_, task := db.RequireMockTrial(t, pgDB, exp)
+	allocation := db.RequireMockAllocation(t, pgDB, task.TaskID)
 	// Create checkpoints
-	checkpoint := db.MockModelCheckpoint(id, tr, allocation)
+	checkpoint := db.MockModelCheckpoint(id, allocation)
 	err := db.AddCheckpointMetadata(context.TODO(), &checkpoint)
 	require.NoError(t, err)
 }
@@ -252,8 +252,8 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 	}
 }
 
-// TODO: nikita make this a utility and use it everywhere in intg tests etc.
-func registerCheckpointAsModelVersion(t *testing.T, pgDB *db.PgDB, ckptID uuid.UUID) {
+func RegisterCheckpointAsModelVersion(t *testing.T, pgDB *db.PgDB, ckptID uuid.UUID,
+) *modelv1.ModelVersion {
 	require.NoError(t, etc.SetRootPath("../../master/static/srv"))
 	var retCkpt checkpointv1.Checkpoint
 	err := pgDB.QueryProto("get_checkpoint", &retCkpt, ckptID.String())
@@ -295,6 +295,7 @@ func registerCheckpointAsModelVersion(t *testing.T, pgDB *db.PgDB, ckptID uuid.U
 		emptyMetadata, strings.Join(expected.Labels, ","), expected.Notes, user.ID,
 	)
 	require.NoError(t, err)
+	return &mv
 }
 
 func TestAuthZCheckpointsEcho(t *testing.T) {
@@ -315,7 +316,7 @@ func TestAuthZCheckpointsEcho(t *testing.T) {
 		api.m.getCheckpoint(ctx))
 
 	addMockCheckpointDB(t, api.m.db, checkpointUUID)
-	registerCheckpointAsModelVersion(t, api.m.db, checkpointUUID)
+	RegisterCheckpointAsModelVersion(t, api.m.db, checkpointUUID)
 
 	authZExp.On("CanGetExperiment", mock.Anything, curUser,
 		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()

@@ -317,7 +317,12 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 
 	defaulted := schemas.WithDefaults(config)
 	resources := defaulted.Resources()
-	workspaceModel, err := workspace.WorkspaceByProjectID(ctx, int(req.ProjectId))
+
+	p, err := getCreateExperimentsProject(m, req, user, defaulted)
+	if err != nil {
+		return nil, config, nil, nil, err
+	}
+	workspaceModel, err := workspace.WorkspaceByProjectID(ctx, int(p.Id))
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		return nil, config, nil, nil, err
 	}
@@ -345,15 +350,10 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 		return nil, config, nil, nil, errors.New("managed experiments require entrypoint")
 	}
 
-	project, err := getCreateExperimentsProject(m, req, user, defaulted)
-	if err != nil {
-		return nil, config, nil, nil, err
-	}
-
 	// Merge in workspace's checkpoint storage into the conifg.
 	w := &model.Workspace{}
 	if err = db.Bun().NewSelect().Model(w).
-		Where("id = ?", project.WorkspaceId).
+		Where("id = ?", p.WorkspaceId).
 		Column("checkpoint_storage_config").
 		Scan(ctx); err != nil {
 		return nil, config, nil, nil, err
@@ -415,7 +415,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 	dbExp, err := model.NewExperiment(
 		config, req.Config, modelBytes, parentID, false,
 		req.GitRemote, req.GitCommit, req.GitCommitter, commitDate,
-		int(project.Id),
+		int(p.Id),
 	)
 	if user != nil {
 		dbExp.OwnerID = &user.ID
@@ -428,5 +428,5 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 		taskSpec.Labels = append(taskSpec.Labels, label)
 	}
 
-	return dbExp, config, project, &taskSpec, err
+	return dbExp, config, p, &taskSpec, err
 }

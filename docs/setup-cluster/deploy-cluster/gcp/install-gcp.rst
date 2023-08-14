@@ -49,7 +49,7 @@ to provide these credentials:
 
       gcloud auth application-default login
 
-   This command will open a login page in your browser where you can sign in to the Google account
+   This command will open a sign-in page in your browser where you can sign in to the Google account
    that has access to your project. Ensure your user account has ``Owner`` access to the project you
    want to deploy your cluster in.
 
@@ -161,7 +161,7 @@ Optional Arguments:
          <https://cloud.google.com/compute/docs/gpus>`__ page for specific GCP requirements. Can be
          set to 0 for CPU-based training.
 
-      -  8
+      -  4
 
    -  -  ``--max-dynamic-agents``
       -  Maximum number of dynamic agent instances at one time.
@@ -404,5 +404,5 @@ This command line will spin up a cluster of up to 2 A100s in the ``us-central1-c
       --compute-agent-instance-type a2-highgpu-1g --gpu-num 1 \
       --gpu-type nvidia-tesla-a100 \
       --region us-central1 --zone us-central1-c \
-      --gpu-env-image determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.23.3 \
-      --cpu-env-image determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.23.3
+      --gpu-env-image determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.24.0 \
+      --cpu-env-image determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.24.0

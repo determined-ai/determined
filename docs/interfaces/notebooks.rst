@@ -111,23 +111,26 @@ To kill a notebook, you need its ID, which can be found using the ``list`` comma
  WebUI
 *******
 
-Notebooks can also be started from the WebUI. Selecting the "Tasks" tab takes you to a list of tasks
-currently running on the cluster.
+You can also start a Notebook from the WebUI. To do this, navigate to the **Tasks** pane and then
+select **Launch JupyterLab**.
 
-.. image:: /assets/images/task-list@2x.jpg
-   :width: 100%
-   :alt: Determined AI model training interactive WebUI where you can visualize your cluster tasks.
+.. note::
 
-|
-
-From here, you can find running notebooks. You can reopen, kill, or view logs for each notebook.
-
-To create a new notebook, click "Launch Notebook". If you would like to use a CPU-only notebook,
-click the dropdown arrow and select "Launch CPU-only Notebook".
+   Depending on your particular setup, you can select the appropriate resource pool when creating a
+   new notebook.
 
 .. image:: /assets/images/launch-cpu-notebook@2x.jpg
    :width: 100%
    :alt: Determined AI model training interactive WebUI where you can launch a new Jupyter Notebook.
+
+|
+
+The WebUI displays a list of tasks running on the cluster including running notebooks. You can
+reopen, kill, or view logs for each notebook.
+
+You can customize the keyboard shortcut you use to launch a JupyterLab Notebook. To do this, visit
+the Shorcuts settings by selecting your profile name in the upper left corner and choosing
+**Settings**.
 
 .. _notebook-configuration:
 

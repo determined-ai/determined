@@ -101,6 +101,7 @@ func addMetrics(ctx context.Context,
 	}
 }
 
+// Test helper function to add trial metrics.
 func addTestTrialMetrics(ctx context.Context,
 	t *testing.T, db *PgDB, trialID int, trialMetricsJSON string,
 ) {
@@ -134,7 +135,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 		TotalBatches  int
 		EndTime       time.Time
 		PartitionType MetricPartitionType
-		CustomType    model.MetricGroup
+		MetricGroup   model.MetricGroup
 	}
 
 	baseMetric := metric{
@@ -145,7 +146,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 	}
 
 	baseMetric.PartitionType = TrainingMetric
-	baseMetric.CustomType = model.TrainingMetricGroup
+	baseMetric.MetricGroup = model.TrainingMetricGroup
 	baseMetric.Metrics = map[string]any{
 		"avg_metrics": map[string]any{
 			"b": -1.0,
@@ -155,7 +156,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 	require.NoError(t, err)
 
 	baseMetric.PartitionType = ValidationMetric
-	baseMetric.CustomType = model.ValidationMetricGroup
+	baseMetric.MetricGroup = model.ValidationMetricGroup
 	baseMetric.Metrics = map[string]any{
 		"validation_metrics": map[string]any{
 			"val_loss": 3.0,
@@ -231,12 +232,12 @@ func generateSummaryMetricsTestCases(
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)
 
-	noMetrics := RequireMockTrial(t, db, exp).ID
+	noMetrics := RequireMockTrialID(t, db, exp)
 	addMetrics(ctx, t, db, noMetrics, `[]`, `[]`, archive)
 	expectedNoMetrics := make(map[string]summaryMetrics)
 	expectedNoValMetrics := make(map[string]summaryMetrics)
 
-	numericMetrics := RequireMockTrial(t, db, exp).ID
+	numericMetrics := RequireMockTrialID(t, db, exp)
 	addMetrics(ctx, t, db, numericMetrics,
 		`[{"a":1.0, "b":-0.5}, {"a":1.5,"b":0.0}, {"a":2.0}]`,
 		`[{"val_loss": 1.5}]`, archive,
@@ -249,21 +250,21 @@ func generateSummaryMetricsTestCases(
 		"val_loss": {Min: 1.5, Max: 1.5, Sum: 1.5, Count: 1, Last: "1.5", Type: "number"},
 	}
 
-	onlyTrain := RequireMockTrial(t, db, exp).ID
+	onlyTrain := RequireMockTrialID(t, db, exp)
 	addMetrics(ctx, t, db, onlyTrain, `[{"a": "a"}]`, `[]`, archive)
 	expectedOnlyTrainMetrics := map[string]summaryMetrics{
 		"a": {Last: "a", Type: "string"},
 	}
 	expectedOnlyTrainValMetrics := make(map[string]summaryMetrics)
 
-	onlyVal := RequireMockTrial(t, db, exp).ID
+	onlyVal := RequireMockTrialID(t, db, exp)
 	addMetrics(ctx, t, db, onlyVal, `[]`, `[{"a": "a"}]`, archive)
 	expectedOnlyValMetrics := make(map[string]summaryMetrics)
 	expectedOnlyValValMetrics := map[string]summaryMetrics{
 		"a": {Last: "a", Type: "string"},
 	}
 
-	nonNumericMetrics := RequireMockTrial(t, db, exp).ID
+	nonNumericMetrics := RequireMockTrialID(t, db, exp)
 	addMetrics(ctx, t, db, nonNumericMetrics,
 		`[{"a":"a", "b":-0.5}, {"a":1.67, "b":0.3, "c":"test"}, {"a":"c", "b":[{"loss":5.0}]}]`,
 		`[{"val_loss": "c"}, {"val_gain": "d"}]`, archive,
@@ -278,7 +279,7 @@ func generateSummaryMetricsTestCases(
 		"val_gain": {Last: "d", Type: "string"},
 	}
 
-	infNaNMetrics := RequireMockTrial(t, db, exp).ID
+	infNaNMetrics := RequireMockTrialID(t, db, exp)
 	addMetrics(ctx, t, db, infNaNMetrics,
 		`[{"a":"NaN", "b":"-Infinity"}, {"a":1.0, "b":"Infinity"}]`,
 		`[{"a":1.0, "b":"Infinity"}, {"a":"NaN", "b":"-Infinity"}]`, archive,
@@ -304,7 +305,7 @@ func generateSummaryMetricsTestCases(
 		},
 	}
 
-	types := RequireMockTrial(t, db, exp).ID
+	types := RequireMockTrialID(t, db, exp)
 	addMetrics(ctx, t, db, types,
 		`[
 	{"a":1.0, "b":"1.5", "c":"2023-04-19T18:37:29.091626",
@@ -340,7 +341,7 @@ func generateSummaryMetricsTestCases(
 		"g": {Type: "null"}, // null has a null last.
 	}
 
-	mixedTypes := RequireMockTrial(t, db, exp).ID
+	mixedTypes := RequireMockTrialID(t, db, exp)
 	addMetrics(ctx, t, db, mixedTypes,
 		`[
 	{"a":1.0,   "b":true,   "c":"01999218",
@@ -504,7 +505,7 @@ func TestEpochMetricGroups(t *testing.T) {
 	}
 	for _, c := range cases {
 		for _, reportTraining := range []bool{true, false} {
-			trial := RequireMockTrial(t, db, exp).ID
+			trial := RequireMockTrialID(t, db, exp)
 			metrics, err := structpb.NewStruct(map[string]any{
 				"epoch": c.epochValue,
 			})
@@ -628,7 +629,7 @@ func TestMetricMerge(t *testing.T) {
 
 	for _, c := range cases {
 		t.Log(c)
-		trialID := RequireMockTrial(t, db, exp).ID
+		trialID := RequireMockTrialID(t, db, exp)
 		for _, metricReport := range c.reports {
 			err := addMetricAt(1, metricReport, trialID)
 			require.NoError(t, err)
@@ -655,13 +656,13 @@ func TestLatestMetricID(t *testing.T) {
 	exp := RequireMockExperiment(t, db, user)
 
 	// No metrics have a null latest_validation_id.
-	noMetrics := RequireMockTrial(t, db, exp).ID
+	noMetrics := RequireMockTrialID(t, db, exp)
 	id, metric := getLatestValidation(ctx, t, noMetrics)
 	require.Nil(t, id)
 	require.Nil(t, metric)
 
 	// If no validations are reported we should have a null latest_validation_id.
-	onlyTraining := RequireMockTrial(t, db, exp).ID
+	onlyTraining := RequireMockTrialID(t, db, exp)
 	addMetrics(ctx, t, db, onlyTraining, `[{"a":1.0}]`, `[]`, false)
 	id, metric = getLatestValidation(ctx, t, onlyTraining)
 	require.Nil(t, id)
@@ -670,7 +671,7 @@ func TestLatestMetricID(t *testing.T) {
 	// Test both archived and unarchived paths.
 	for _, shouldArchive := range []bool{false, true} {
 		// We ignore non searcher metric validation.
-		nonSearcherMetric := RequireMockTrial(t, db, exp).ID
+		nonSearcherMetric := RequireMockTrialID(t, db, exp)
 		addMetrics(ctx, t, db, nonSearcherMetric,
 			`[{"a":1.0}, {"b":1.3}]`,
 			`[{"loss":1.0}, {"gain":1.5}, {"latest":2.0}]`, shouldArchive)
@@ -679,7 +680,7 @@ func TestLatestMetricID(t *testing.T) {
 		require.Nil(t, metric)
 
 		// Searcher metric gets set.
-		searcherMetric := RequireMockTrial(t, db, exp).ID
+		searcherMetric := RequireMockTrialID(t, db, exp)
 		addMetrics(ctx, t, db, searcherMetric,
 			`[{"a":1.0}, {"b":1.3}]`,
 			fmt.Sprintf(`[{"loss":1.0}, {"%s":1.5, "b":"test"}, {"latest":2.0}]`,
@@ -695,6 +696,7 @@ func TestLatestMetricID(t *testing.T) {
 }
 
 func TestProtoGetTrial(t *testing.T) {
+	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
@@ -705,19 +707,18 @@ func TestProtoGetTrial(t *testing.T) {
 
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
-		TaskID:       task.TaskID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
 	}
-	err = db.AddTrial(&tr)
+	err = AddTrial(ctx, &tr, task.TaskID)
 	require.NoError(t, err, "failed to add trial")
 
 	startTime := time.Now().UTC()
 	for i := 0; i < 3; i++ {
 		a := &model.Allocation{
-			AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, i)),
-			TaskID:       tr.TaskID,
+			AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", task.TaskID, i)),
+			TaskID:       task.TaskID,
 			StartTime:    ptrs.Ptr(startTime.Add(time.Duration(i) * time.Second)),
 			EndTime:      ptrs.Ptr(startTime.Add(time.Duration(i+1) * time.Second)),
 		}
@@ -754,12 +755,11 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	require.NoError(t, db.AddExperiment(exp, activeConfig))
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
-		TaskID:       task.TaskID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
 	}
-	require.NoError(t, db.AddTrial(&tr))
+	require.NoError(t, AddTrial(ctx, &tr, task.TaskID))
 
 	trainMetrics, err := structpb.NewStruct(map[string]any{"loss": 10})
 	require.NoError(t, err)
@@ -768,8 +768,8 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 
 	// First trial run.
 	a := &model.Allocation{
-		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, 0)),
-		TaskID:       tr.TaskID,
+		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", task.TaskID, 0)),
+		TaskID:       task.TaskID,
 		StartTime:    ptrs.Ptr(time.Now()),
 	}
 	require.NoError(t, db.AddAllocation(a))
@@ -793,8 +793,8 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 
 	// Trial gets interrupted and starts in the future with a new trial run ID.
 	a = &model.Allocation{
-		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, 1)),
-		TaskID:       tr.TaskID,
+		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", task.TaskID, 1)),
+		TaskID:       task.TaskID,
 		StartTime:    ptrs.Ptr(time.Now()),
 	}
 	require.NoError(t, db.AddAllocation(a))
@@ -856,20 +856,19 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 	require.NoError(t, db.AddExperiment(exp, activeConfig))
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
-		TaskID:       task.TaskID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
 	}
-	require.NoError(t, db.AddTrial(&tr))
+	require.NoError(t, AddTrial(ctx, &tr, task.TaskID))
 
-	dbTr, err := db.TrialByID(tr.ID)
+	dbTr, err := TrialByID(ctx, tr.ID)
 	require.NoError(t, err)
 	require.Equal(t, 0, dbTr.TotalBatches)
 
 	a := &model.Allocation{
-		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, 0)),
-		TaskID:       tr.TaskID,
+		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", task.TaskID, 0)),
+		TaskID:       task.TaskID,
 		StartTime:    ptrs.Ptr(time.Now()),
 	}
 	err = db.AddAllocation(a)
@@ -917,7 +916,7 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
 		}
 
-		dbTr, err = db.TrialByID(tr.ID)
+		dbTr, err = TrialByID(ctx, tr.ID)
 		require.NoError(t, err)
 		require.Equal(t, expectedTotalBatches, dbTr.TotalBatches)
 		return nil
@@ -979,20 +978,19 @@ func TestGenericMetricsIO(t *testing.T) {
 	require.NoError(t, db.AddExperiment(exp, activeConfig))
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
-		TaskID:       task.TaskID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
 	}
-	require.NoError(t, db.AddTrial(&tr))
+	require.NoError(t, AddTrial(ctx, &tr, task.TaskID))
 
-	dbTr, err := db.TrialByID(tr.ID)
+	dbTr, err := TrialByID(ctx, tr.ID)
 	require.NoError(t, err)
 	require.Equal(t, 0, dbTr.TotalBatches)
 
 	a := &model.Allocation{
-		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, 0)),
-		TaskID:       tr.TaskID,
+		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", task.TaskID, 0)),
+		TaskID:       task.TaskID,
 		StartTime:    ptrs.Ptr(time.Now()),
 	}
 	err = db.AddAllocation(a)
@@ -1079,21 +1077,20 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 		require.NoError(t, db.AddExperiment(exp, activeConfig))
 		task := RequireMockTask(t, db, exp.OwnerID)
 		tr := model.Trial{
-			TaskID:       task.TaskID,
 			ExperimentID: exp.ID,
 			State:        model.ActiveState,
 			StartTime:    time.Now(),
 		}
-		require.NoError(t, db.AddTrial(&tr))
+		require.NoError(t, AddTrial(ctx, &tr, task.TaskID))
 		a := &model.Allocation{
-			AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, 0)),
-			TaskID:       tr.TaskID,
+			AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", task.TaskID, 0)),
+			TaskID:       task.TaskID,
 			StartTime:    ptrs.Ptr(time.Now()),
 		}
 		err := db.AddAllocation(a)
 		require.NoError(t, err, "failed to add allocation")
 
-		dbTr, err := db.TrialByID(tr.ID)
+		dbTr, err := TrialByID(ctx, tr.ID)
 		require.NoError(t, err)
 		require.Equal(t, 0, dbTr.TotalBatches)
 		return &tr

@@ -22,7 +22,7 @@ environment:
   #    - NCCL_BLOCKING_WAIT=1
   #    - NCCL_IB_DISABLE=1
   image:
-    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.23.3
+    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
 bind_mounts:
   - host_path: /tmp
     container_path: /data

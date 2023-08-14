@@ -1,5 +1,6 @@
 import { Card } from 'antd';
 import type { TabsProps } from 'antd';
+import _ from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -8,12 +9,12 @@ import InfoBox from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Notes from 'components/kit/Notes';
 import Pivot from 'components/kit/Pivot';
+import Spinner from 'components/kit/Spinner';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
-import Spinner from 'components/Spinner/Spinner';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
@@ -21,7 +22,6 @@ import { getModelVersion, patchModelVersion } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { ValueOf } from 'types';
 import { Metadata, ModelVersion, Note } from 'types';
-import { isEqual } from 'utils/data';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -81,7 +81,7 @@ const ModelVersionDetails: React.FC = () => {
        * modelVersion can be remove from deps? would need to get modelVersion
        * out of deps in order to repoll on change fn
        */
-      setModelVersion((prev) => (!isEqual(versionData, modelVersion) ? versionData : prev));
+      setModelVersion((prev) => (!_.isEqual(versionData, modelVersion) ? versionData : prev));
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }

@@ -133,6 +133,8 @@ To create or update a template, use ``det tpl set template_name template_file``.
    $ det tpl set template-s3-keras-gpu template-s3-keras-gpu.yaml
    Set template template-s3-keras-gpu
 
+.. _config-templates-merge-behavior:
+
 ****************
  Merge Behavior
 ****************

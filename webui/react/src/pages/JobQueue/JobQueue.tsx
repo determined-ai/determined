@@ -1,7 +1,9 @@
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ActionDropdown, { Triggers } from 'components/ActionDropdown/ActionDropdown';
 import Icon from 'components/kit/Icon';
+import { DetError } from 'components/kit/internal/types';
 import Section from 'components/Section';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
@@ -21,7 +23,6 @@ import * as Api from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
 import { FullJob, Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
-import { isEqual } from 'utils/data';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import {
@@ -105,13 +106,17 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
       const firstJob = firstJobResp.jobs[0];
 
       // Process jobs response.
-      if (firstJob && !isEqual(firstJob, topJob)) setTopJob(firstJob);
+      if (firstJob && !_.isEqual(firstJob, topJob)) setTopJob(firstJob);
       setJobs(jobState ? jobs.jobs.filter((j) => j.summary.state === jobState) : jobs.jobs);
       if (jobs.pagination.total) setTotal(jobs.pagination.total);
 
       // Process job stats response.
       setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));
     } catch (e) {
+      if ((e as DetError)?.publicMessage === 'offset out of bounds' && settings.tableOffset !== 0) {
+        updateSettings({ tableOffset: 0 });
+        return;
+      }
       handleError(e, {
         level: ErrorLevel.Error,
         publicSubject: 'Unable to fetch job queue and stats.',
@@ -121,7 +126,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
     } finally {
       setPageState((cur) => ({ ...cur, isLoading: false }));
     }
-  }, [canceler.signal, selectedRp.name, settings, jobState, topJob]);
+  }, [canceler.signal, selectedRp.name, settings, jobState, topJob, updateSettings]);
 
   useEffect(() => {
     fetchAll();
@@ -200,7 +205,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
     const job = jobs.find((j) => j.jobId === managingJob.jobId);
     if (!job) {
       setManagingJob(undefined);
-    } else if (!isEqual(job, managingJob)) {
+    } else if (!_.isEqual(job, managingJob)) {
       setManagingJob(job);
     }
   }, [jobs, managingJob]);
@@ -213,7 +218,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
       );
       const newColumns = [...settingsColumns];
       if (replaceIndex !== -1) newColumns[replaceIndex] = col.dataIndex;
-      if (!isEqual(newColumns, settings.columns)) updateSettings({ columns: newColumns });
+      if (!_.isEqual(newColumns, settings.columns)) updateSettings({ columns: newColumns });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.columns, settingsColumns]);

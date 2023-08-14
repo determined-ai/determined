@@ -93,6 +93,7 @@ def create_pid_server_cmd(allocation_id: str, num_workers: int) -> List[str]:
         "SIGTERM",
         "--grace-period",
         "5",
+        "--signal-children",
         f"/tmp/pid_server-{allocation_id}",
         str(num_workers),
         "--",

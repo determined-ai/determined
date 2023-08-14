@@ -122,7 +122,6 @@ type SummarizeResources struct {
 type reattachAllocationPods struct {
 	numPods      int
 	allocationID model.AllocationID
-	taskActor    *actor.Ref
 	slots        int
 	logContext   logger.Context
 }
@@ -466,7 +465,7 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 
 	var restoreResponses []reattachPodResponse
 	for i, containerID := range containerIDs {
-		resp, err := p.reattachPod(ctx, msg.taskActor, resourcePool, containerID,
+		resp, err := p.reattachPod(ctx, msg.allocationID, resourcePool, containerID,
 			k8sPods[i], ports[i], msg.slots, msg.logContext)
 		if err != nil {
 			p.deleteKubernetesResources(ctx, pods, configMaps)
@@ -483,7 +482,7 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 
 func (p *pods) reattachPod(
 	ctx *actor.Context,
-	taskActor *actor.Ref,
+	allocationID model.AllocationID,
 	resourcePool string,
 	containerID string,
 	pod *k8sV1.Pod,
@@ -492,7 +491,7 @@ func (p *pods) reattachPod(
 	logContext logger.Context,
 ) (reattachPodResponse, error) {
 	startMsg := StartTaskPod{
-		TaskActor: taskActor,
+		AllocationID: allocationID,
 		Spec: tasks.TaskSpec{
 			ContainerID: containerID,
 		},
@@ -566,7 +565,7 @@ func (p *pods) reattachPod(
 	if err != nil {
 		return reattachPodResponse{}, errors.Wrap(err, "error getting pod status update in restore")
 	}
-	p.podStatusCallback(ctx.Self().System(), updated)
+	p.podStatusCallback(ctx.Self().System(), watch.Event{Object: updated})
 
 	return reattachPodResponse{containerID: containerID, started: started}, nil
 }
@@ -669,47 +668,51 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 
 func (p *pods) startPodInformer(s *actor.System) error {
 	for namespace := range p.namespaceToPoolName {
-		i, err := newInformer(
+		i, err := newPodInformer(
 			context.TODO(),
+			determinedLabel,
+			"pod",
 			namespace,
 			p.podInterfaces[namespace],
-			func(pod *k8sV1.Pod) {
+			func(event watch.Event) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
-				p.podStatusCallback(s, pod)
-			})
+				p.podStatusCallback(s, event)
+			},
+		)
 		if err != nil {
 			return err
 		}
 
-		go i.run()
+		go i.run(context.TODO())
 	}
 	return nil
 }
 
 func (p *pods) startNodeInformer() error {
-	i, err := newNodeInformer(context.TODO(),
+	i, err := newNodeInformer(
+		context.TODO(),
 		p.clientSet.CoreV1().Nodes(),
-		func(node *k8sV1.Node, event watch.EventType) {
+		func(event watch.Event) {
 			p.mu.Lock()
 			defer p.mu.Unlock()
-			p.nodeStatusCallback(node, event)
+			p.nodeStatusCallback(event)
 		})
 	if err != nil {
 		return err
 	}
 
-	go i.run()
+	go i.run(context.TODO())
 	return nil
 }
 
 func (p *pods) startEventListeners(s *actor.System) error {
 	for namespace := range p.namespaceToPoolName {
-		l, err := newEventListener(
+		l, err := newEventInformer(
 			context.TODO(),
 			p.clientSet.CoreV1().Events(namespace),
 			namespace,
-			func(event *k8sV1.Event) {
+			func(event watch.Event) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
 				p.eventStatusCallback(s, event)
@@ -717,24 +720,28 @@ func (p *pods) startEventListeners(s *actor.System) error {
 		if err != nil {
 			return err
 		}
-		go l.run()
+		go l.run(context.TODO())
 	}
 	return nil
 }
 
 func (p *pods) startPreemptionListeners(s *actor.System) error {
 	for namespace := range p.namespaceToPoolName {
-		l, err := newPreemptionListener(context.TODO(), namespace,
+		l, err := newPodInformer(
+			context.TODO(),
+			determinedPreemptionLabel,
+			"preemption",
+			namespace,
 			p.clientSet.CoreV1().Pods(namespace),
-			func(name string) {
+			func(event watch.Event) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
-				p.preemptionCallback(s, name)
+				p.preemptionCallback(s, event)
 			})
 		if err != nil {
 			return err
 		}
-		go l.run()
+		go l.run(context.TODO())
 	}
 	return nil
 }
@@ -789,7 +796,14 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 	return nil
 }
 
-func (p *pods) podStatusCallback(s *actor.System, pod *k8sV1.Pod) {
+func (p *pods) podStatusCallback(s *actor.System, event watch.Event) {
+	pod, ok := event.Object.(*k8sV1.Pod)
+	if !ok {
+		p.syslog.Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
+		return
+	}
+	p.syslog.Debugf("informer got new pod event for pod %s: %s ", pod.Name, event.Type)
+
 	ref, ok := p.podNameToPodHandler[pod.Name]
 	if !ok {
 		p.syslog.Warn("received pod status update for un-registered pod")
@@ -815,15 +829,17 @@ func (p *pods) podStatusCallback(s *actor.System, pod *k8sV1.Pod) {
 	}
 }
 
-func (p *pods) nodeStatusCallback(
-	node *k8sV1.Node,
-	action watch.EventType,
-) {
-	if node == nil {
+func (p *pods) nodeStatusCallback(event watch.Event) {
+	node, ok := event.Object.(*k8sV1.Node)
+	if !ok {
+		p.syslog.Warnf("error converting event of type %T to *k8sV1.Node: %+v", event, event)
 		return
 	}
 
-	switch action {
+	p.syslog.Debugf(`informer got new node event for node '%s': %s %s`,
+		node.Name, event.Type, node.Status.Phase)
+
+	switch event.Type {
 	case watch.Added:
 		p.currentNodes[node.Name] = node
 	case watch.Modified:
@@ -834,8 +850,15 @@ func (p *pods) nodeStatusCallback(
 	}
 }
 
-func (p *pods) eventStatusCallback(s *actor.System, event *k8sV1.Event) {
-	ref, ok := p.podNameToPodHandler[event.InvolvedObject.Name]
+func (p *pods) eventStatusCallback(s *actor.System, event watch.Event) {
+	newEvent, ok := event.Object.(*k8sV1.Event)
+	if !ok {
+		p.syslog.Warnf("error converting object type %T to *k8sV1.Event: %+v", event, event)
+		return
+	}
+
+	p.syslog.Debugf("listener got new event: %s", newEvent.Message)
+	ref, ok := p.podNameToPodHandler[newEvent.InvolvedObject.Name]
 	if !ok {
 		// We log at the debug level because we are unable to filter
 		// pods based on their labels the way we do with pod status updates.
@@ -843,7 +866,7 @@ func (p *pods) eventStatusCallback(s *actor.System, event *k8sV1.Event) {
 		return
 	}
 
-	s.Tell(ref, podEventUpdate{event})
+	s.Tell(ref, podEventUpdate{newEvent})
 }
 
 func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResources) {
@@ -864,13 +887,20 @@ func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResourc
 	ctx.Respond(&PodsInfo{NumAgents: len(summary), SlotsAvailable: slots})
 }
 
-func (p *pods) preemptionCallback(s *actor.System, name string) {
-	ref, ok := p.podNameToPodHandler[name]
+func (p *pods) preemptionCallback(s *actor.System, event watch.Event) {
+	pod, ok := event.Object.(*k8sV1.Pod)
+	if !ok {
+		p.syslog.Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
+		return
+	}
+	p.syslog.Debugf("informer got new preemption event for pod %s ", pod.Name)
+
+	ref, ok := p.podNameToPodHandler[pod.Name]
 	if !ok {
 		p.syslog.Debug("received preemption command for unregistered pod")
 		return
 	}
-	s.Tell(ref, PreemptTaskPod{PodName: name})
+	s.Tell(ref, PreemptTaskPod{PodName: pod.Name})
 }
 
 func (p *pods) verifyPodAndGetRef(ctx *actor.Context, podID string) *actor.Ref {
@@ -1028,19 +1058,19 @@ func (p *pods) getNodeResourcePoolMapping(nodeSummaries map[string]model.AgentSu
 			if len(p.resourcePoolConfigs) <= 1 &&
 				(tcd == nil || (tcd.CPUPodSpec == nil && tcd.GPUPodSpec == nil)) {
 				if slotType == device.CUDA {
-					//nolint:gocritic,appendAssign
+					//nolint:gocritic
 					poolTolerations = append(defaultTolerations, gpuTolerations...)
 				} else if slotType == device.CPU {
-					//nolint:gocritic,appendAssign
+					//nolint:gocritic
 					poolTolerations = append(defaultTolerations, cpuTolerations...)
 				}
 			} else if tcd != nil {
 				// Decide which poolTolerations to use based on slot device type
 				if slotType == device.CUDA && tcd.GPUPodSpec != nil {
-					//nolint:gocritic,appendAssign
+					//nolint:gocritic
 					poolTolerations = append(tcd.GPUPodSpec.Spec.Tolerations, gpuTolerations...)
 				} else if tcd.CPUPodSpec != nil {
-					//nolint:gocritic,appendAssign
+					//nolint:gocritic
 					poolTolerations = append(tcd.CPUPodSpec.Spec.Tolerations, cpuTolerations...)
 				}
 			}

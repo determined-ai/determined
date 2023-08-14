@@ -5,7 +5,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -39,9 +38,13 @@ type MockTask struct {
 func (t *MockTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		allocationmap.RegisterAllocation(t.ID, ctx.Self())
 	case actor.PostStop:
-		allocationmap.UnregisterAllocation(t.ID)
+		task := sproto.ResourcesReleased{AllocationID: t.ID}
+		if ctx.ExpectingResponse() {
+			ctx.Respond(ctx.Ask(t.RMRef, task).Get())
+		} else {
+			ctx.Tell(t.RMRef, task)
+		}
 	case SendRequestResourcesToResourceManager:
 		task := sproto.AllocateRequest{
 			AllocationID:      t.ID,
@@ -51,7 +54,6 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 			SlotsNeeded:       t.SlotsNeeded,
 			Preemptible:       !t.NonPreemptible,
 			ResourcePool:      t.ResourcePool,
-			AllocationRef:     ctx.Self(),
 		}
 		if t.Group == nil {
 			task.Group = ctx.Self()
@@ -78,11 +80,16 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 	case sproto.ResourcesAllocated:
 		rank := 0
 		for _, allocation := range msg.Resources {
-			if err := allocation.Start(ctx, nil, tasks.TaskSpec{}, sproto.ResourcesRuntimeInfo{
-				Token:        "",
-				AgentRank:    rank,
-				IsMultiAgent: len(msg.Resources) > 1,
-			}); err != nil {
+			if err := allocation.Start(
+				ctx.Self().System(),
+				nil,
+				tasks.TaskSpec{},
+				sproto.ResourcesRuntimeInfo{
+					Token:        "",
+					AgentRank:    rank,
+					IsMultiAgent: len(msg.Resources) > 1,
+				},
+			); err != nil {
 				ctx.Respond(err)
 				return nil
 			}
@@ -135,7 +142,6 @@ func MockTaskToAllocateRequest(
 		JobID:             model.JobID(jobID),
 		SlotsNeeded:       mockTask.SlotsNeeded,
 		IsUserVisible:     true,
-		AllocationRef:     allocationRef,
 		Preemptible:       !mockTask.NonPreemptible,
 		JobSubmissionTime: jobSubmissionTime,
 	}

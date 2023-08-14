@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import Spinner from 'components/Spinner';
+import Spinner from 'components/kit/Spinner';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName } from 'components/Table/Table';

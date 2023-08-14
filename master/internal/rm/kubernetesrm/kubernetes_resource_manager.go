@@ -446,6 +446,9 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		resp := ctx.Ask(k.podsActor, msg)
 		ctx.Respond(resp.Get())
 
+	case sproto.GetExternalJobs:
+		ctx.Respond(rmerrors.ErrNotSupported)
+
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
@@ -609,17 +612,6 @@ func (k *kubernetesResourceManager) fetchAvgQueuedTime(pool string) (
 		Seconds:     today,
 	})
 	return res, nil
-}
-
-func (k *kubernetesResourceManager) aggregateTaskHandler(
-	resps map[*actor.Ref]actor.Message,
-) (*actor.Ref, error) {
-	for _, resp := range resps {
-		if typed, ok := resp.(*actor.Ref); ok && typed != nil {
-			return typed, nil
-		}
-	}
-	return nil, errors.New("task handler not found on any resource pool")
 }
 
 func (k *kubernetesResourceManager) aggregateTaskSummary(

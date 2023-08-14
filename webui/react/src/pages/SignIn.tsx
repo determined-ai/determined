@@ -3,8 +3,8 @@ import { useObservable } from 'micro-observables';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import LogoGoogle from 'assets/images/logo-sso-google-white.svg';
-import LogoOkta from 'assets/images/logo-sso-okta-white.svg';
+import LogoGoogle from 'assets/images/logo-sso-google-white.svg?url';
+import LogoOkta from 'assets/images/logo-sso-okta-white.svg?url';
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Button from 'components/kit/Button';
@@ -68,7 +68,11 @@ const SignIn: React.FC = () => {
 
       // Show auth token via notification if requested via query parameters.
       if (queries.get('cli') === 'true')
-        notification.open({ description: <AuthToken />, duration: 0, message: '' });
+        notification.open({
+          description: <AuthToken />,
+          duration: 0,
+          message: '',
+        });
 
       // Reroute the authenticated user to the app.
       if (!queries.has('redirect')) {

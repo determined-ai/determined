@@ -6,7 +6,7 @@ import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import { Modal } from 'components/kit/Modal';
-import Spinner from 'components/Spinner';
+import Spinner from 'components/kit/Spinner';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { patchWorkspace } from 'services/api';
@@ -89,7 +89,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
   }, [canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage, workspaceId]);
 
   const modalContent = useMemo(() => {
-    if (workspaceId && loadableWorkspace === NotLoaded) return <Spinner />;
+    if (workspaceId && loadableWorkspace === NotLoaded) return <Spinner spinning />;
     return (
       <Form autoComplete="off" form={form} id={FORM_ID} labelCol={{ span: 10 }} layout="vertical">
         <Form.Item
@@ -157,7 +157,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
               <Switch />
             </Form.Item>
             {useCheckpointStorage && (
-              <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
+              <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>
                 <Form.Item
                   label="Checkpoint Storage"
                   name="checkpointStorageConfig"
@@ -181,7 +181,8 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
                     },
                   ]}>
                   <CodeEditor
-                    files={[{ content: Loaded(''), key: 'config.yaml' }]}
+                    file={Loaded('')}
+                    files={[{ key: 'config.yaml' }]}
                     height="16vh"
                     readonly={!canModifyCPS}
                     onError={handleError}

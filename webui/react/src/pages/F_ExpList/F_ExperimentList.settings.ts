@@ -1,4 +1,4 @@
-import { array, boolean, literal, number, record, string, type, TypeOf, union } from 'io-ts';
+import { array, boolean, literal, number, partial, record, string, TypeOf, union } from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { SettingsConfig } from 'hooks/useSettings';
@@ -20,10 +20,15 @@ export interface F_ExperimentListSettings {
   columns: string[];
   columnWidths: Record<string, number>;
   compare: boolean;
+  excludedExperiments: number[];
   filterset: string; // save FilterFormSet as string
   sortString: string;
   pageLimit: number;
   pinnedColumnsCount: number;
+  heatmapSkipped: string[];
+  heatmapOn: boolean;
+  selectAll: boolean;
+  selectedExperiments: Array<number>;
 }
 export const settingsConfigForProject = (id: number): SettingsConfig<F_ExperimentListSettings> => ({
   settings: {
@@ -44,11 +49,29 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       storageKey: 'compare',
       type: boolean,
     },
+    excludedExperiments: {
+      defaultValue: [],
+      skipUrlEncoding: true,
+      storageKey: 'excludedExperiments',
+      type: array(number),
+    },
     filterset: {
       defaultValue: JSON.stringify(INIT_FORMSET),
       skipUrlEncoding: true,
       storageKey: 'filterset',
       type: string,
+    },
+    heatmapOn: {
+      defaultValue: false,
+      skipUrlEncoding: true,
+      storageKey: 'heatmapOn',
+      type: boolean,
+    },
+    heatmapSkipped: {
+      defaultValue: [],
+      skipUrlEncoding: true,
+      storageKey: 'heatmapSkipped',
+      type: array(string),
     },
     pageLimit: {
       defaultValue: 20,
@@ -57,19 +80,31 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       type: number,
     },
     pinnedColumnsCount: {
-      defaultValue: 1,
+      defaultValue: 3,
       skipUrlEncoding: true,
       storageKey: 'pinnedColumnsCount',
       type: number,
     },
+    selectAll: {
+      defaultValue: false,
+      skipUrlEncoding: true,
+      storageKey: 'selectAll',
+      type: boolean,
+    },
+    selectedExperiments: {
+      defaultValue: [],
+      skipUrlEncoding: true,
+      storageKey: 'selectedExperiments',
+      type: array(number),
+    },
     sortString: {
-      defaultValue: '',
+      defaultValue: 'id=desc',
       skipUrlEncoding: true,
       storageKey: 'sortString',
       type: string,
     },
   },
-  storagePath: `f_project-details-${id}`,
+  storagePath: `experimentListingForProject${id}`,
 });
 
 export interface F_ExperimentListGlobalSettings {
@@ -79,7 +114,7 @@ export interface F_ExperimentListGlobalSettings {
 
 const ioExpListView = union([literal('scroll'), literal('paged')]);
 
-export const experimentListGlobalSettingsConfig = type({
+export const experimentListGlobalSettingsConfig = partial({
   expListView: ioExpListView,
   rowHeight: ioRowHeight,
 });
@@ -89,7 +124,7 @@ export const experimentListGlobalSettingsDefaults = {
   rowHeight: RowHeight.MEDIUM,
 } as const;
 
-export const experimentListGlobalSettingsPath = 'f_project-details-global';
+export const experimentListGlobalSettingsPath = 'globalTableSettings';
 
 export const settingsConfigGlobal: SettingsConfig<F_ExperimentListGlobalSettings> = {
   settings: {
@@ -106,5 +141,5 @@ export const settingsConfigGlobal: SettingsConfig<F_ExperimentListGlobalSettings
       type: ioRowHeight,
     },
   },
-  storagePath: 'f_project-details-global',
+  storagePath: experimentListGlobalSettingsPath,
 };
