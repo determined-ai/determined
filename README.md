@@ -1,6 +1,6 @@
 <p align="center"><img src="determined-logo.png" alt="Determined AI Logo"></p>
 
-Determined is an all-in-one deep learning platform, compatible with PyTorch and Tensorflow.
+Determined is an all-in-one deep learning platform, compatible with PyTorch and TensorFlow.
 
 It takes care of:
 
@@ -41,7 +41,7 @@ with det.core.init() as core_context:
 Use the CLI to start the Determined cluster locally, or on your favorite cloud service: 
 
 ```bash
-det deploy aws up
+det deploy local cluster-up
 ```
 
 Then train your models:
