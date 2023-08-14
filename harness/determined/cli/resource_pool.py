@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, List
 
 from determined import cli
-from determined.cli import default_pagination_args, render, setup_session
+from determined.cli import render, setup_session
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import resource_pool
@@ -83,30 +83,36 @@ def list_workspaces(args: Namespace) -> None:
 @authentication.required
 def list_resource_pools(args: Namespace) -> None:
     session = setup_session(args)
-    resource_pools = resource_pool._list(session, args.offset, args.limit, args.pages)
+    resource_pools = resource_pool.list_resource_pools(session)
 
     if args.json:
         cli.render.print_json([r.to_json() for r in resource_pools])
         return
 
     headers = [
-        "resource pool",
+        "Name",
         "Num of Agents",
         "Slots per Agent",
         "Slots Available",
         "Slot Used",
+        "Slot Type",
+        "Accelerator",
         "Default Compute Pool",
         "Default Aux Pool",
+        "Bound Workspaces",
     ]
     values = [
         [
             r.name,
-            r.numAgents,
-            r.slotsPerAgent,
-            r.slotsAvailable,
-            r.slotsUsed,
-            r.defaultComputePool,
-            r.defaultAuxPool,
+            r.num_agents,
+            r.slots_per_agent,
+            r.slots_available,
+            r.slots_used,
+            r.slot_type,
+            r.accelerator,
+            r.default_compute_pool,
+            r.default_aux_pool,
+            r.bound_workspaces,
         ]
         for r in resource_pools
     ]
@@ -188,7 +194,6 @@ args_description = [
                 list_resource_pools,
                 "list resource pools",
                 [
-                    *default_pagination_args,
                     Group(
                         cli.output_format_args["csv"],
                         cli.output_format_args["json"],

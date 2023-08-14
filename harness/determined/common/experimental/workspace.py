@@ -24,7 +24,8 @@ class Workspace:
             session: The session to use for API calls.
             workspace_id: (Optional) ID of the workspace. If None or not passed, the workspace ID
                 will be looked up here at initialization.
-            workspace_name: (Optional) Name of the workspace.
+            workspace_name: (Optional) Name of the workspace. If None or not passed, the workspace
+                name will be looked up here at initialization.
 
         Note: Only one of workspace_id or workspace_name should be passed.
         """
@@ -36,7 +37,12 @@ class Workspace:
             self.id = _get_workspace_id_from_name(session, workspace_name)
         else:
             self.id = workspace_id
-        self.name = workspace_name
+
+        if workspace_name is None:
+            assert workspace_id is not None
+            self.name = _get_workspace_name_from_id(session, workspace_id)
+        else:
+            self.name = workspace_name
         self._session = session
 
     @classmethod
@@ -86,3 +92,10 @@ def _get_workspace_id_from_name(session: api.Session, name: str) -> int:
     assert len(resp.workspaces) < 2, f"Multiple workspaces found with name {name}"
 
     return resp.workspaces[0].id
+
+
+def _get_workspace_name_from_id(session: api.Session, workspace_id: int) -> str:
+    """Workspace lookup from master that relies on a workspace ID."""
+    resp = bindings.get_GetWorkspace(session=session, id=workspace_id)
+
+    return resp.workspace.name

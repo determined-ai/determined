@@ -39,12 +39,20 @@ def multi_item_rps_bound_to_workspace() -> bindings.v1ListRPsBoundToWorkspaceRes
     )
 
 
+@pytest.fixture
+def single_workspace() -> bindings.v1GetWorkspaceResponse:
+    sample_workspace = api_responses.sample_get_workspace().workspace
+    return bindings.v1GetWorkspaceResponse(workspace=sample_workspace)
+
+
 @responses.activate
 def test_workspace_constructor_requires_exactly_one_of_id_or_name(
     standard_session: api.Session,
     single_item_workspaces: bindings.v1GetWorkspacesResponse,
+    single_workspace: bindings.v1GetWorkspaceResponse,
 ) -> None:
     responses.get(f"{_MASTER}/api/v1/workspaces", json=single_item_workspaces.to_json())
+    responses.get(f"{_MASTER}/api/v1/workspaces/1", json=single_workspace.to_json())
 
     with pytest.raises(ValueError):
         workspace.Workspace(session=standard_session, workspace_id=1, workspace_name="foo")
