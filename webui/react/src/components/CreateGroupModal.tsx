@@ -1,5 +1,6 @@
 import { Select, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
+import _ from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -22,7 +23,6 @@ import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import { DetailedUser, UserRole } from 'types';
-import { isEqual } from 'utils/data';
 import { message } from 'utils/dialogApi';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
@@ -106,12 +106,12 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
       const formData = await form.validateFields();
 
       if (group) {
-        const nameUpdated = !isEqual(formData.name, groupDetail?.name);
-        const usersUpdated = !isEqual(
+        const nameUpdated = !_.isEqual(formData.name, groupDetail?.name);
+        const usersUpdated = !_.isEqual(
           formData.users,
           groupDetail?.users?.map((u) => u.id),
         );
-        const rolesUpdated = !isEqual(
+        const rolesUpdated = !_.isEqual(
           formData.roles,
           groupRoles.map((r) => r.id),
         );

@@ -2564,6 +2564,12 @@ export interface V1Experiment {
      */
     searcherType: string;
     /**
+     * The searcher metric name for the experiment
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    searcherMetric?: string;
+    /**
      * The experiment name.
      * @type {string}
      * @memberof V1Experiment

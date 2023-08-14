@@ -1,5 +1,6 @@
 // import { SelectValue } from 'antd/es/select';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/es/table/interface';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
@@ -20,7 +21,6 @@ import {
   TrialWorkloadFilter,
   WorkloadGroup,
 } from 'types';
-import { isEqual } from 'utils/data';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import {
@@ -56,7 +56,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   updateSettings,
 }: Props) => {
   const hasFiltersApplied = useMemo(() => {
-    const metricsApplied = !isEqual(metrics, defaultMetrics);
+    const metricsApplied = !_.isEqual(metrics, defaultMetrics);
     const checkpointValidationFilterApplied = settings.filter !== TrialWorkloadFilter.All;
     return metricsApplied || checkpointValidationFilterApplied;
   }, [defaultMetrics, metrics, settings.filter]);

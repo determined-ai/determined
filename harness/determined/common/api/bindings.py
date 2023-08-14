@@ -2915,6 +2915,7 @@ class v1Experiment(Printable):
     progress: "typing.Optional[float]" = None
     projectName: "typing.Optional[str]" = None
     resourcePool: "typing.Optional[str]" = None
+    searcherMetric: "typing.Optional[str]" = None
     trialIds: "typing.Optional[typing.Sequence[int]]" = None
     unmanaged: "typing.Optional[bool]" = None
     userId: "typing.Optional[int]" = None
@@ -2952,6 +2953,7 @@ class v1Experiment(Printable):
         progress: "typing.Union[float, None, Unset]" = _unset,
         projectName: "typing.Union[str, None, Unset]" = _unset,
         resourcePool: "typing.Union[str, None, Unset]" = _unset,
+        searcherMetric: "typing.Union[str, None, Unset]" = _unset,
         trialIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         unmanaged: "typing.Union[bool, None, Unset]" = _unset,
         userId: "typing.Union[int, None, Unset]" = _unset,
@@ -3001,6 +3003,8 @@ class v1Experiment(Printable):
             self.projectName = projectName
         if not isinstance(resourcePool, Unset):
             self.resourcePool = resourcePool
+        if not isinstance(searcherMetric, Unset):
+            self.searcherMetric = searcherMetric
         if not isinstance(trialIds, Unset):
             self.trialIds = trialIds
         if not isinstance(unmanaged, Unset):
@@ -3059,6 +3063,8 @@ class v1Experiment(Printable):
             kwargs["projectName"] = obj["projectName"]
         if "resourcePool" in obj:
             kwargs["resourcePool"] = obj["resourcePool"]
+        if "searcherMetric" in obj:
+            kwargs["searcherMetric"] = obj["searcherMetric"]
         if "trialIds" in obj:
             kwargs["trialIds"] = obj["trialIds"]
         if "unmanaged" in obj:
@@ -3117,6 +3123,8 @@ class v1Experiment(Printable):
             out["projectName"] = self.projectName
         if not omit_unset or "resourcePool" in vars(self):
             out["resourcePool"] = self.resourcePool
+        if not omit_unset or "searcherMetric" in vars(self):
+            out["searcherMetric"] = self.searcherMetric
         if not omit_unset or "trialIds" in vars(self):
             out["trialIds"] = self.trialIds
         if not omit_unset or "unmanaged" in vars(self):
