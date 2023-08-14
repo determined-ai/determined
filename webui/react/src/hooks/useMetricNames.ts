@@ -58,35 +58,37 @@ const useMetricNames = (
           ...newValidationMetrics.map((name) => ({ name, type: MetricType.Validation })),
           ...newTrainingMetrics.map((name) => ({ name, type: MetricType.Training })),
         ];
-        if (newMetrics.length > 0) {
-          setMetrics((prevMetrics) => {
-            /*
-             * Since we may intermittently receive a subset of all available
-             * metrics or an empty list of metrics we must merge the new and
-             * previous metrics to accurately determine if any new metrics have
-             * not been seen before.
-             */
-            const previousMetrics = Loadable.getOrElse([], prevMetrics);
+        setMetrics((prevMetrics) => {
+          if (newMetrics.length === 0) {
+            return Loadable.isLoaded(prevMetrics) ? prevMetrics : Loaded([]);
+          }
 
-            const previousMetricsSet = Loadable.getOrElse([], prevMetrics).reduce(
-              (acc, cur) => acc.add(metricToKey(cur)),
-              new Set<string>(),
-            );
-            const updatedMetricsSet = [...newMetrics, ...previousMetrics].reduce(
-              (acc, cur) => acc.add(metricToKey(cur)),
-              new Set<string>(),
-            );
+          /*
+           * Since we may intermittently receive a subset of all available
+           * metrics or an empty list of metrics we must merge the new and
+           * previous metrics to accurately determine if any new metrics have
+           * not been seen before.
+           */
+          const previousMetrics = Loadable.getOrElse([], prevMetrics);
 
-            if (isEqual(previousMetricsSet, updatedMetricsSet)) return prevMetrics;
+          const previousMetricsSet = Loadable.getOrElse([], prevMetrics).reduce(
+            (acc, cur) => acc.add(metricToKey(cur)),
+            new Set<string>(),
+          );
+          const updatedMetricsSet = [...newMetrics, ...previousMetrics].reduce(
+            (acc, cur) => acc.add(metricToKey(cur)),
+            new Set<string>(),
+          );
 
-            return Loaded(
-              Array.from(updatedMetricsSet)
-                .map((metricKey) => metricKeyToMetric(metricKey))
-                .filter((metric): metric is Metric => !!metric)
-                .sort(metricSorter),
-            );
-          });
-        }
+          if (_.isEqual(previousMetricsSet, updatedMetricsSet)) return prevMetrics;
+
+          return Loaded(
+            Array.from(updatedMetricsSet)
+              .map((metricKey) => metricKeyToMetric(metricKey))
+              .filter((metric): metric is Metric => !!metric)
+              .sort(metricSorter),
+          );
+        });
       },
       errorHandler,
     );
