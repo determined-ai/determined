@@ -12,9 +12,12 @@ import (
 	"gotest.tools/assert"
 
 	. "github.com/determined-ai/determined/master/internal/config/provconfig"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner/scaledecider"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/config"
 	errInfo "github.com/determined-ai/determined/master/pkg/errors"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -210,7 +213,14 @@ func TestProvisionerScaleUp(t *testing.T) {
 		},
 		initInstances: []*model.Instance{},
 	}
+
 	mock, _ := newMockEnvironment(t, setup)
+	telemetry.InitTelemetry(
+		mock.system, &db.PgDB{},
+		telemetry.MockRM{}, "1",
+		config.TelemetryConfig{Enabled: true, SegmentMasterKey: "Test"},
+	)
+
 	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
 	mock.provisioner.Provision()
 	assert.NilError(t, mock.system.StopAndAwaitTermination())

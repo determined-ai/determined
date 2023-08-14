@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
-	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -15,12 +14,24 @@ import (
 	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
 const (
 	minTickIntervalMins = 10
 	maxTickIntervalMins = 60
 )
+
+// MockRM is exported for tests, tbd on final placement.
+type MockRM struct{}
+
+// GetResourcePools tbd.
+func (m MockRM) GetResourcePools(
+	actor.Messenger,
+	*apiv1.GetResourcePoolsRequest,
+) (*apiv1.GetResourcePoolsResponse, error) {
+	return &apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{}}, nil
+}
 
 // telemetryRPFetcher exists mainly to avoid an annoying import cycle.
 type telemetryRPFetcher interface {
@@ -32,7 +43,6 @@ type telemetryRPFetcher interface {
 
 // TelemetryActor manages gathering and sending telemetry data.
 type TelemetryActor struct {
-	lock      sync.RWMutex
 	db        db.DB
 	rm        telemetryRPFetcher
 	client    analytics.Client
@@ -123,9 +133,6 @@ func (s *TelemetryActor) Track(t analytics.Track) {
 		panic("telemetry actor should not be nil: can't track.")
 	}
 
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
 	t.UserId = s.clusterID
 	if err := s.client.Enqueue(t); err != nil {
 		s.syslog.WithError(err).Warnf("failed to enqueue track %s", t.Event)
@@ -137,9 +144,6 @@ func (s *TelemetryActor) telemetryTick(system *actor.System, t int) {
 	if s == nil {
 		panic("telemetry actor should not be nil: can't tick.")
 	}
-
-	s.lock.Lock()
-	defer s.lock.Unlock()
 
 	time.AfterFunc(time.Duration(t)*time.Minute, func() {
 		resp, err := s.rm.GetResourcePools(system, &apiv1.GetResourcePoolsRequest{})
