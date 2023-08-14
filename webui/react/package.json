@@ -97,7 +97,7 @@
     "@types/express": "^4.17.17",
     "@types/humanize-duration": "^3.27.1",
     "@types/js-yaml": "^4.0.5",
-    "@types/lodash": "^4.14.195",
+    "@types/lodash": "^4.14.197",
     "@types/morgan": "^1.9.4",
     "@types/node": "^18.11.9",
     "@types/react": "^18.0.21",
