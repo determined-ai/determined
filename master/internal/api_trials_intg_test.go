@@ -278,15 +278,15 @@ func TestMultiTrialSampleSpecialMetrics(t *testing.T) {
 
 	maxDataPoints := 7
 
-	actualAllMetrics, err := api.multiTrialSample(int32(trial.ID), []string{},
+	actualMetrics, err := api.multiTrialSample(int32(trial.ID), []string{},
 		"", maxDataPoints, 0, 10, nil, []string{
 			"mygroup.zgroup_b/me.t r%i]\\c_1",
 		})
-	require.Equal(t, 1, len(actualAllMetrics))
+	require.Equal(t, 1, len(actualMetrics))
 	require.NoError(t, err)
-	mygroup := actualAllMetrics[0]
+	mygroup := actualMetrics[0]
 	require.Equal(t, maxDataPoints, len(mygroup.Data))
-	require.Equal(t, 3, len(mygroup.Data[0].Values.AsMap()))
+	require.Equal(t, 1, len(mygroup.Data[0].Values.AsMap()))
 }
 
 func TestMultiTrialSampleMetrics(t *testing.T) {

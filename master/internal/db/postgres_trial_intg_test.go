@@ -983,6 +983,7 @@ func TestGenericMetricsIO(t *testing.T) {
 		StartTime:    time.Now(),
 	}
 	require.NoError(t, AddTrial(ctx, &tr, task.TaskID))
+	testMetricName := "zgroup_b/me.t r%i]\\c_1"
 
 	dbTr, err := TrialByID(ctx, tr.ID)
 	require.NoError(t, err)
@@ -997,9 +998,9 @@ func TestGenericMetricsIO(t *testing.T) {
 	require.NoError(t, err, "failed to add allocation")
 
 	metrics, err := structpb.NewStruct(map[string]any{
-		"aloss":                   10,
-		"zgroup_b/me.t r%i]\\c_1": 20,
-		"closs":                   30,
+		"aloss":        10,
+		testMetricName: 20,
+		"closs":        30,
 	})
 	require.NoError(t, err)
 
@@ -1077,7 +1078,7 @@ ORDER BY name ASC`, "inference")
 		Type:  "number",
 	}, *summaryRows[2])
 	require.Equal(t, summaryMetrics{
-		Name:  "zgroup_b/me.t r%i]\\c_1",
+		Name:  testMetricName,
 		Max:   20,
 		Min:   20,
 		Sum:   20,
