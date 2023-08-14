@@ -473,6 +473,7 @@ func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("u.username").
 		ColumnExpr("e.config->'resources'->>'resource_pool' AS resource_pool").
 		ColumnExpr("e.config->'searcher'->>'name' AS searcher_type").
+		ColumnExpr("e.config->'searcher'->>'metric' AS searcher_metric").
 		ColumnExpr("e.config->>'name' as NAME").
 		ColumnExpr(
 			"CASE WHEN NULLIF(e.notes, '') IS NULL THEN NULL ELSE 'omitted' END AS notes").
@@ -2047,6 +2048,7 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 		"description":     "description",
 		"name":            "name",
 		"searcherType":    "searcher_type",
+		"searcherMetric":  "searcher_metric",
 		"startTime":       "e.start_time",
 		"endTime":         "e.end_time",
 		"state":           "e.state",

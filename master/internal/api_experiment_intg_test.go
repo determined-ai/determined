@@ -366,6 +366,7 @@ func TestGetExperiments(t *testing.T) {
 		UserId:         1,
 		Username:       "admin",
 		SearcherType:   "single",
+		SearcherMetric: "loss",
 		Name:           "name",
 		Notes:          "omitted", // Notes get omitted when non null.
 		JobId:          job0ID,
@@ -412,6 +413,7 @@ func TestGetExperiments(t *testing.T) {
 		UserId:         userResp.User.Id,
 		Username:       userResp.User.Username,
 		SearcherType:   "single",
+		SearcherMetric: "loss",
 		Name:           "longername",
 		JobId:          job1ID,
 		ProjectId:      pid,
