@@ -38,6 +38,7 @@ const ResourcePoolBindingModalComponent: React.FC<Props> = ({
         defaultTargetEntries={bindingList}
         entries={workspaces}
         initialTargetEntries={visibleBindings}
+        placeholder="Search workspaces"
         sourceListTitle="Available workspaces"
         targetListTitle={`Bound to ${pool}`}
         onChange={setVisibleBindings}
