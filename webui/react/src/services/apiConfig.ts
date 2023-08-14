@@ -451,7 +451,7 @@ export const getAgents: DetApi<EmptyParams, Api.V1GetAgentsResponse, Type.Agent[
 };
 
 export const getResourcePools: DetApi<
-  EmptyParams,
+  Service.GetResourcePoolsParams,
   Api.V1GetResourcePoolsResponse,
   Type.ResourcePool[]
 > = {
@@ -459,7 +459,8 @@ export const getResourcePools: DetApi<
   postProcess: (response) => {
     return response.resourcePools?.map(decoder.mapV1ResourcePool) || [];
   },
-  request: () => detApi.Internal.getResourcePools(),
+  request: (params: Service.GetResourcePoolsParams, options) =>
+    detApi.Internal.getResourcePools(params?.offset, params?.limit, params?.unbound, options),
 };
 
 export const getResourceAllocationAggregated: DetApi<
@@ -1391,7 +1392,12 @@ export const patchWorkspace: DetApi<
   request: (params, options) => {
     return detApi.Workspaces.patchWorkspace(
       params.id,
-      { name: params.name?.trim(), ...params },
+      {
+        defaultAuxResourcePool: params.defaultAuxPool,
+        defaultComputeResourcePool: params.defaultComputePool,
+        name: params.name?.trim(),
+        ...params,
+      },
       options,
     );
   },
