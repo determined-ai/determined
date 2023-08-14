@@ -192,7 +192,7 @@ export const tooltipsPlugin = (
         const { left, idx, top } = uPlot.cursor;
 
         if (!left || left < 0 || !top || top < 0 || idx == null) {
-          if (displayedIdx) hide();
+          hide();
           return;
         }
 

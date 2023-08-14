@@ -76,6 +76,15 @@ func (as *allocationService) StartAllocation(
 	return nil
 }
 
+// AwaitTermination waits unilt the given allocation has stopped.
+func (as *allocationService) AwaitTermination(id model.AllocationID) {
+	ref, err := as.getAllocation(id)
+	if err != nil {
+		return
+	}
+	ref.awaitTermination()
+}
+
 // GetAllAllocationIDs returns all registered allocation ids.
 func (as *allocationService) GetAllAllocationIDs() []model.AllocationID {
 	as.mu.RLock()

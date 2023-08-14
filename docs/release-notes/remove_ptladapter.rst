@@ -2,7 +2,4 @@
 
 **Breaking Changes**
 
--  Remove PyTorchLightningAdapter
-
-   -  PyTorchLightningAdapter was deprecated in determined Version 0.23.1. It is now being removed
-      entirely.
+-  Remove PyTorchLightningAdapter, which was deprecated in Determined version 0.23.1 (June 2023).
