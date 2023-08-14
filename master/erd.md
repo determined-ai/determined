@@ -125,15 +125,35 @@ solutions unhelpful.
 
 ### Deletion problem
 
-Broadcasting online deletions is fairly easy.  As long as the TRIGGER emits the
-primary key and filterable attributes of the deleted entity, all connected
-clients whose subscriptions match the deleted entity can simply be sent a
-deletion message.  An alternate solution would be to keep an in-memory cache of
-filterable attributes, and use the in-memory cache to do the subscription
-matching.
+Online deletions are straightforward in concept.  A row that is deleted needs
+to be passed to streaming clients who have subscribed to and permission to view
+that deletion.  There are two basic strategies for accomplishing this:
 
-Broadcasting offline deletions is more challenging.  There are generally three
-strategies:
+- the **NOTIFY-queue** strategy: use the TRIGGER to pass filterable information
+  about the OLD row via NOTIFY.  Broadcast events to subscriptions matching
+  either the NEW or the OLD information.  Note that this makes NOTIFY
+  queue-like rather than a flag-like.  In postgres, NOTIFY channels can fill up
+  to 8GB of memory before they start to block, so it's likely that the
+  queue-like behavior doesn't slow down the system until we hit a much larger
+  scale.
+
+  Note that when the TRIGGER runs, we must be able to gather the rbac ownership
+  information for the OLD row (which is being deleted).  So long as then
+  ownership info is either a field in the deleted record, or there is a foreign
+  key relationship between this table and the table with the ownership info,
+  that should not present any issue.
+
+- the **cache** strategy: if you keep a cache containing the primary key, the
+  filterable attributes, and the rbac ownership information, then you can emit
+  just the primary key of the OLD record via NOTIFY, and no additional lookups
+  need to run in the TRIGGER.  Note that this still makes NOTIFY queue-like,
+  but the size of the messages in the queue would be tiny.  There is obviously
+  a memory cost to this cache.
+
+Without considering any other problems, the NOTIFY-queue strategy is a clear
+winner here.
+
+Offline deletions are more challenging.  There are generally three strategies:
 
 - The **soft deletion** strategy: don't delete rows from the database, just set
   a deleted=1 column.  This has space, performance, and privacy penalties.
@@ -231,28 +251,25 @@ As mentioned before, that means that fallin is probably not a problem at all;
 most likely the subscription matching logic for handling updates will passively
 solve both the offline and online fallin cases.
 
-Fallout is still interesting.  Generally speaking, it can be solved by pushing
-updates to subscriptions which match either the old or new record when a record
-is updated.
+Fallout is still interesting.  The first and best strategy to fallout is the
+**avoidance** strategy: just don't allow filtering on mutable columns.
+Unfortunately, it's unlikely we can avoid fallout entirely.
 
-The first and best strategy to fallout is the **avoidance** strategy: just
-don't allow filtering on mutable columns.
+Generally speaking, online fallout can be solved by pushing updates to
+subscriptions which match either the old or new record when a record is
+updated.  The strategies for accomplishing this are nearly identical to the
+online deletion strategies:
 
-For times when avoidance is not possible, I have some ideas for online fallout:
+- the **NOTIFY-queue** strategy: as with online deletions, use the TRIGGER to
+  pass filterable information about the OLD row via NOTIFY.
 
-- the **NOTIFY-queue** strategy: use the TRIGGER to pass filterable information
-  about the OLD row via NOTIFY.  Broadcast events to subscriptions matching
-  either the NEW or the OLD information.  Note that this makes NOTIFY
-  queue-like rather than a flag-like.  In postgres, NOTIFY channels can fill up
-  to 8GB of memory before they start to block, so it's likely that the
-  queue-like behavior doesn't slow down the system until we hit a much larger
-  scale.
+- the **cache** strategy: as with online deletions, rely on an in-memory cache
+  of primary keys, filterable info, and rbac ownership info.  Stream fallout
+  events wherever a subscription matches the old record in the cache.
 
-- the **cache** strategy: the same cache that can accelerate the
-  appearance/disappearance problem can be used to solve the fallout problem,
-  without making NOTIFY queue-like, because you can grab the OLD information
-  from the in-memory cache.  The cost is the cache, though it has secondary
-  benefits.  The benefit is you can restore the flag-like NOTIFY behavior.
+  There is a slight difference here from the online deletions case, which is
+  that you can fully restore the flag-like NOTIFY behavior, since you don't
+  need NOTIFY to pass information that is being deleted from the database.
 
 For offline fallout, you'd either need to have an event log of transitions
 (:puke:) or you'd have to use the declarative strategy.  The declarative
