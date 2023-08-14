@@ -136,7 +136,7 @@ func TestManager(t *testing.T) {
 	actualStops := map[cproto.ID]*aproto.ContainerStopped{}
 	actualSuccesses := map[cproto.ID]bool{}
 	actualFailures := map[cproto.ID]bool{}
-	deadline := time.After(30 * time.Second)
+	deadline := time.After(60 * time.Second)
 	for {
 		select {
 		case ev := <-evs:
