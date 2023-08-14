@@ -126,6 +126,7 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.Debug, "debug", false, "Enable verbose script output")
 	cmd.Flags().IntVar(&opts.ArtificialSlots, "artificial-slots", 0, "")
 	cmd.Flags().Lookup("artificial-slots").Hidden = true
+	cmd.Flags().StringVar(&opts.ImageRoot, "image-root", "", "Path to local container image cache")
 
 	// Endpoint TLS flags.
 	cmd.Flags().BoolVar(&opts.TLS, "tls", false, "Use TLS for the API server")

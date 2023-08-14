@@ -1,5 +1,6 @@
 import { Card } from 'antd';
 import type { TabsProps } from 'antd';
+import _ from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -21,7 +22,6 @@ import { getModelVersion, patchModelVersion } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { ValueOf } from 'types';
 import { Metadata, ModelVersion, Note } from 'types';
-import { isEqual } from 'utils/data';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -81,7 +81,7 @@ const ModelVersionDetails: React.FC = () => {
        * modelVersion can be remove from deps? would need to get modelVersion
        * out of deps in order to repoll on change fn
        */
-      setModelVersion((prev) => (!isEqual(versionData, modelVersion) ? versionData : prev));
+      setModelVersion((prev) => (!_.isEqual(versionData, modelVersion) ? versionData : prev));
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }

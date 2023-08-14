@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import React, { ReactNode, useMemo, useRef } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
@@ -17,7 +18,6 @@ import MetricBadgeTag from 'components/MetricBadgeTag';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
-import { isEqual } from 'utils/data';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import css from './LineChart.module.scss';
@@ -154,6 +154,7 @@ export const LineChart: React.FC<LineChartProps> = ({
   const chartOptions: Options = useMemo(() => {
     const plugins: Plugin[] = propPlugins ?? [
       tooltipsPlugin({
+        closeOnMouseExit: true,
         isShownEmptyVal: false,
         // use specified color on Serie, or glasbeyColor
         seriesColors,
@@ -367,7 +368,7 @@ export const calculateChartProps = (
   if (!isLoaded) {
     // When trial metrics hasn't loaded metric names or individual trial metrics.
     return NotLoaded;
-  } else if (!chartDataIsLoaded || !isEqual(selectedMetrics, metrics)) {
+  } else if (!chartDataIsLoaded || !_.isEqual(selectedMetrics, metrics)) {
     // In some cases the selectedMetrics returned may not be up to date
     // with the metrics selected by the user. In this case we want to
     // show a loading state until the metrics match.

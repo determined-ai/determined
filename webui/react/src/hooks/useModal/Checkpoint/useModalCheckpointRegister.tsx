@@ -1,4 +1,5 @@
 import { ModalFuncProps, Select } from 'antd';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Input from 'components/kit/Input';
@@ -12,7 +13,6 @@ import { paths } from 'routes/utils';
 import { getModels, postModelVersion } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { Metadata, ModelItem } from 'types';
-import { isEqual } from 'utils/data';
 import { notification } from 'utils/dialogApi';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
@@ -212,7 +212,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
         { signal: canceler.signal },
       );
       setModalState((prev) => {
-        if (isEqual(prev.models, response.models)) return prev;
+        if (_.isEqual(prev.models, response.models)) return prev;
         return { ...prev, models: response.models };
       });
     } catch (e) {
@@ -371,7 +371,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (isEqual(modalState, prevModalState) || !modalState.visible) return;
+    if (_.isEqual(modalState, prevModalState) || !modalState.visible) return;
     openOrUpdate(getModalProps(modalState));
   }, [getModalProps, modalState, openOrUpdate, prevModalState]);
 

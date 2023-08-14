@@ -1,10 +1,10 @@
 import { Modal, Tag, Typography } from 'antd';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Empty from 'components/kit/Empty';
-import { isEqual } from 'components/kit/internal/functions';
 import { XOR } from 'components/kit/internal/types';
 import usePrevious from 'components/kit/internal/usePrevious';
 import Select, { Option, SelectValue } from 'components/kit/Select';
@@ -164,7 +164,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
 
   useEffect(() => {
     setSelectedMetrics((prevSelectedMetrics) =>
-      isEqual(prevSelectedMetrics, prevMetrics) ? metrics : prevSelectedMetrics,
+      _.isEqual(prevSelectedMetrics, prevMetrics) ? metrics : prevSelectedMetrics,
     );
   }, [metrics, prevMetrics]);
 
@@ -203,7 +203,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
 
   useEffect(() => {
     setSelectedHyperparameters((prevSelectedHps) =>
-      isEqual(prevSelectedHps, prevHps) ? hyperparameterNames : prevSelectedHps,
+      _.isEqual(prevSelectedHps, prevHps) ? hyperparameterNames : prevSelectedHps,
     );
   }, [hyperparameterNames, prevHps]);
 

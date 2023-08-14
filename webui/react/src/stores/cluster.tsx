@@ -1,4 +1,5 @@
 import { Map } from 'immutable';
+import _ from 'lodash';
 
 import {
   addResourcePoolBindings,
@@ -10,7 +11,7 @@ import {
 } from 'services/api';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { Agent, ClusterOverview, ClusterOverviewResource, ResourcePool, ResourceType } from 'types';
-import { clone, isEqual } from 'utils/data';
+import { clone } from 'utils/data';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { percent } from 'utils/number';
@@ -93,11 +94,12 @@ const clusterStatusText = (
 };
 
 const updateIfChanged = <T, V extends WritableObservable<T>>(o: V, next: T) =>
-  o.update((prev) => (isEqual(prev, next) ? prev : next));
+  o.update((prev) => (_.isEqual(prev, next) ? prev : next));
 
 class ClusterStore extends PollingStore {
   #agents: WritableObservable<Loadable<Agent[]>> = observable(NotLoaded);
   #resourcePools: WritableObservable<Loadable<ResourcePool[]>> = observable(NotLoaded);
+  #unboundResourcePools: WritableObservable<Loadable<ResourcePool[]>> = observable(NotLoaded);
   #resourcePoolBindings: WritableObservable<Map<string, number[]>> = observable(Map());
 
   public readonly agents = this.#agents.readOnly();
@@ -108,6 +110,8 @@ class ClusterStore extends PollingStore {
       return pools.sort((a, b) => a.name.localeCompare(b.name));
     });
   });
+
+  public readonly unboundResourcePools = this.#unboundResourcePools.readOnly();
 
   public readonly clusterOverview = this.#agents.select((agents) =>
     Loadable.map(agents, (agents) => {
@@ -166,6 +170,18 @@ class ClusterStore extends PollingStore {
     getResourcePools({}, { signal: signal ?? canceler.signal })
       .then((response) => {
         updateIfChanged(this.#resourcePools, Loaded(response));
+      })
+      .catch(handleError);
+
+    return () => canceler.abort();
+  }
+
+  public fetchUnboundResourcePools(signal?: AbortSignal): () => void {
+    const canceler = new AbortController();
+
+    getResourcePools({ unbound: true }, { signal: signal ?? canceler.signal })
+      .then((response) => {
+        updateIfChanged(this.#unboundResourcePools, Loaded(response));
       })
       .catch(handleError);
 

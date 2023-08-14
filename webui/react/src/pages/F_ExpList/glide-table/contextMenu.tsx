@@ -1,3 +1,4 @@
+import { GridCell } from '@hpe.com/glide-data-grid';
 import { MenuProps } from 'antd';
 import React, { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 
@@ -33,6 +34,7 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: (event: Eve
 }
 
 export interface TableContextMenuProps extends MenuProps {
+  cell?: GridCell;
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   open: boolean;
   experiment: ProjectExperiment;
@@ -52,6 +54,7 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
   x,
   y,
   onComplete,
+  cell,
 }) => {
   const containerRef = useRef(null);
   useOutsideClickHandler(containerRef, handleClose);
@@ -71,6 +74,7 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
         zIndex: 10,
       }}>
       <ExperimentActionDropdown
+        cell={cell}
         experiment={experiment}
         handleUpdateExperimentList={handleUpdateExperimentList}
         link={link}

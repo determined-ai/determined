@@ -1,4 +1,5 @@
 import { Space, Table } from 'antd';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import dropdownCss from 'components/ActionDropdown/ActionDropdown.module.scss';
@@ -20,7 +21,7 @@ import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import { DetailedUser } from 'types';
-import { clone, isEqual } from 'utils/data';
+import { clone } from 'utils/data';
 import { message } from 'utils/dialogApi';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
@@ -114,7 +115,7 @@ const GroupManagement: React.FC = () => {
 
       setTotal(response.pagination?.total ?? 0);
       setGroups((prev) => {
-        if (isEqual(prev, response.groups)) return prev;
+        if (_.isEqual(prev, response.groups)) return prev;
         return response.groups || [];
       });
     } catch (e) {
@@ -138,7 +139,7 @@ const GroupManagement: React.FC = () => {
     try {
       const response = await getUsers({}, { signal: canceler.current.signal });
       setUsers((prev) => {
-        if (isEqual(prev, response.users)) return prev;
+        if (_.isEqual(prev, response.users)) return prev;
         return response.users;
       });
     } catch (e) {

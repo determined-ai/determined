@@ -7,6 +7,7 @@ import {
   SorterResult,
   TablePaginationConfig,
 } from 'antd/es/table/interface';
+import _ from 'lodash';
 import React, {
   createContext,
   CSSProperties,
@@ -31,7 +32,6 @@ import SkeletonTable from 'components/Table/SkeletonTable';
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
 import { Primitive } from 'types';
-import { isEqual } from 'utils/data';
 
 import css from './InteractiveTable.module.scss';
 
@@ -444,7 +444,7 @@ const InteractiveTable = <
         newSettings.sortKey = columnKey;
       }
 
-      if (isEqual(newSettings, settings)) return;
+      if (_.isEqual(newSettings, settings)) return;
 
       updateSettings(newSettings);
     },
