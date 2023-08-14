@@ -319,7 +319,7 @@ def test_trial_time_series(group: str) -> None:
     print(trial_resp.metrics[0].data[0].values)
     for name in metric_names:
         val = trial_resp.metrics[0].data[0].values[name]
-        assert val == 3.3, f"unexpected value for metric {name}"
+        assert val == 3.3, f"unexpected value for metric {name}, type: {type(val)}"
 
 
 @pytest.mark.e2e_cpu
