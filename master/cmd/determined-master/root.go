@@ -106,7 +106,7 @@ func mergeConfigIntoViper(bs []byte) (*config.Config, error) {
 		return nil, fmt.Errorf("unmarshalling yaml configuration file: %w", err)
 	}
 	if err := yaml.Unmarshal(bs, &cpMap); err != nil {
-		return nil, fmt.Errorf("unmarshalgling yaml configuration file: %w", err)
+		return nil, fmt.Errorf("unmarshalling yaml configuration file: %w", err)
 	}
 
 	// Now merge the config file values into viper.
@@ -116,7 +116,7 @@ func mergeConfigIntoViper(bs []byte) (*config.Config, error) {
 
 	// Now call viper.AllSettings() again to get the full config, containing all values from CLI flags,
 	// environment variables, and the configuration file. Override the task_container_defaults value
-	// using the map you copied.q
+	// using the map you copied.
 	customConfig := mergeCustomSpecs(v.AllSettings(), cpMap)
 
 	return getConfig(customConfig)
