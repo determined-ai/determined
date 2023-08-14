@@ -290,11 +290,19 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		a.forwardToAllPools(ctx, msg)
 
 	case sproto.GetDefaultComputeResourcePoolRequest:
+		err := validateDefaultResourcePool(a.config.DefaultComputeResourcePool)
+		if err != nil {
+			return err
+		}
 		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
 			PoolName: a.config.DefaultComputeResourcePool,
 		})
 
 	case sproto.GetDefaultAuxResourcePoolRequest:
+		err := validateDefaultResourcePool(a.config.DefaultComputeResourcePool)
+		if err != nil {
+			return err
+		}
 		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: a.config.DefaultAuxResourcePool})
 
 	case sproto.ValidateCommandResourcesRequest:
@@ -776,4 +784,18 @@ func (a ResourceManager) TaskContainerDefaults(
 ) (result model.TaskContainerDefaultsConfig, err error) {
 	req := taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}
 	return result, a.Ask(ctx, req, &result)
+}
+
+func validateDefaultResourcePool(drp string) error {
+	unboundRP, err := db.GetUnboundRPs(context.TODO(), []string{drp})
+	if err != nil {
+		return err
+	}
+	if len(unboundRP) == 0 {
+		return fmt.Errorf(
+			"resource pool %s cannot be cluster default, because it is bound to workspace(s)",
+			drp,
+		)
+	}
+	return nil
 }

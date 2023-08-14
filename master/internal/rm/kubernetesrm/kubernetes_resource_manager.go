@@ -346,21 +346,19 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		k.forwardToAllPools(ctx, msg)
 
 	case sproto.GetDefaultComputeResourcePoolRequest:
-		unboundRP, err := db.GetUnboundRPs(context.TODO(), []string{k.config.DefaultComputeResourcePool})
+		err := validateDefaultResourcePool(k.config.DefaultComputeResourcePool)
 		if err != nil {
 			return err
-		}
-		if len(unboundRP) == 0 {
-			return fmt.Errorf(
-				"resource pool %s cannot be cluster default, because it is bound to workspace(s)",
-				k.config.DefaultComputeResourcePool,
-			)
 		}
 		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
 			PoolName: k.config.DefaultComputeResourcePool,
 		})
 
 	case sproto.GetDefaultAuxResourcePoolRequest:
+		err := validateDefaultResourcePool(k.config.DefaultAuxResourcePool)
+		if err != nil {
+			return err
+		}
 		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: k.config.DefaultAuxResourcePool})
 
 	case sproto.ValidateCommandResourcesRequest:
@@ -691,4 +689,18 @@ func (k ResourceManager) DisableSlot(
 	req *apiv1.DisableSlotRequest,
 ) (resp *apiv1.DisableSlotResponse, err error) {
 	return nil, rmerrors.ErrNotSupported
+}
+
+func validateDefaultResourcePool(drp string) error {
+	unboundRP, err := db.GetUnboundRPs(context.TODO(), []string{drp})
+	if err != nil {
+		return err
+	}
+	if len(unboundRP) == 0 {
+		return fmt.Errorf(
+			"resource pool %s cannot be cluster default, because it is bound to workspace(s)",
+			drp,
+		)
+	}
+	return nil
 }
