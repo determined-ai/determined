@@ -38,11 +38,18 @@ with det.core.init() as core_context:
 
 ## Command Line Interface (CLI)
 
-Use the CLI to start the Determined cluster locally, or on your favorite cloud service: 
+Use the CLI to start the Determined cluster locally:
 
-```bash
+```
 det deploy local cluster-up
 ```
+
+Or on your favorite cloud service: 
+
+```
+det deploy aws up
+```
+
 
 Then train your models:
 ```bash
@@ -56,9 +63,12 @@ resources:
   slots_per_trial: 8
   priority: 1
 hyperparameters:
-  learning_rate: 1.0
-  dropout: 0.25
+  learning_rate:
+    type: double
+    minval: .0001
+    maxval: 1.0
 searcher:
+  name: adaptive_asha
   metric: validation_loss
   smaller_is_better: true
 ```
@@ -78,7 +88,7 @@ Install the CLI:
 pip install determined
 ```
 
-Then use `det deploy` to start the Determined cluster on AWS, GCP, or locally.
+Then use `det deploy` to start the Determined cluster locally, or on cloud services like AWS and GCP.
 
 See the following guides for all installation details:
 
