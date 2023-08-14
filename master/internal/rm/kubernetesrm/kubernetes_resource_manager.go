@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
+	"github.com/determined-ai/determined/master/internal/rm/rmutils"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -124,8 +125,17 @@ func (k ResourceManager) ResolveResourcePool(
 		return defaultComputePool, nil
 	}
 
+	resp, err := k.GetResourcePools(ctx, &apiv1.GetResourcePoolsRequest{})
+	if err != nil {
+		return "", err
+	}
+	rpConfig, err := rmutils.GetResourcePoolsResponseToConfig(resp)
+	if err != nil {
+		return "", err
+	}
+
 	poolNames, _, err := db.ReadRPsAvailableToWorkspace(
-		context.TODO(), int32(workspaceID), 0, -1, config.GetMasterConfig().ResourcePools)
+		context.TODO(), int32(workspaceID), 0, -1, rpConfig)
 	if err != nil {
 		return "", err
 	}
