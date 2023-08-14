@@ -1,9 +1,9 @@
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
-import { isEqual } from 'utils/data';
 
 import DraggableListItem from './DraggableListItem';
 import css from './Transfer.module.scss';
@@ -201,7 +201,7 @@ const Transfer: React.FC<Props> = ({
         <div className={css.column}>
           <div className={css.targetTitleRow}>
             <h2>{targetListTitle}</h2>
-            {!isEqual(defaultTargetEntries, targetEntries) && (
+            {!_.isEqual(defaultTargetEntries, targetEntries) && (
               <Link onClick={resetEntries}>Reset</Link>
             )}
           </div>

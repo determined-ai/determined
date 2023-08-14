@@ -1,9 +1,9 @@
 import { Map } from 'immutable';
+import _ from 'lodash';
 
 import { getCurrentUser, getUsers } from 'services/api';
 import type { GetUsersParams } from 'services/types';
 import { DetailedUser, DetailedUserList } from 'types';
-import { isEqual } from 'utils/data';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { observable, WritableObservable } from 'utils/observable';
@@ -103,7 +103,7 @@ class UserStore extends PollingStore {
       prev.withMutations((map) => {
         response.users.forEach((newUser) => {
           const oldUser = map.get(newUser.id);
-          if (!isEqual(oldUser, newUser)) {
+          if (!_.isEqual(oldUser, newUser)) {
             map.set(newUser.id, newUser);
             hasUserChanges = true;
           }

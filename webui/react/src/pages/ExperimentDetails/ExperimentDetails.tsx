@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -14,7 +15,6 @@ import { paths } from 'routes/utils';
 import { getExperimentDetails } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { ExperimentBase, TrialItem, Workspace } from 'types';
-import { isEqual } from 'utils/data';
 import { isSingleTrialExperiment } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -46,7 +46,7 @@ const ExperimentDetails: React.FC = () => {
         { signal: canceler.current?.signal },
       );
       setExperiment((prevExperiment) =>
-        isEqual(prevExperiment, newExperiment) ? prevExperiment : newExperiment,
+        _.isEqual(prevExperiment, newExperiment) ? prevExperiment : newExperiment,
       );
       setIsSingleTrial(isSingleTrialExperiment(newExperiment));
     } catch (e) {
