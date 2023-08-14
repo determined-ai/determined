@@ -33,11 +33,9 @@ import (
 )
 
 func TestTrial(t *testing.T) {
-	_, db, rID, tr, alloc := setup(t)
+	_, _, rID, tr, alloc := setup(t)
 
 	// Pre-scheduled stage.
-	db.On("UpdateTrialRunID", 0, 1).Return(nil)
-	db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
 	require.NoError(t, tr.PatchState(
 		model.StateWithReason{State: model.ActiveState}))
 	require.NoError(t, tr.PatchSearcherState(trialSearcherState{
@@ -53,7 +51,6 @@ func TestTrial(t *testing.T) {
 	require.NotNil(t, tr.allocationID)
 
 	// Running stage.
-	db.On("UpdateTrial", 0, model.StoppingCompletedState).Return(nil)
 	require.NoError(t, tr.PatchSearcherState(trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
@@ -63,10 +60,12 @@ func TestTrial(t *testing.T) {
 		Complete: true,
 		Closed:   true,
 	}))
-	require.True(t, db.AssertExpectations(t))
+
+	dbTrial, err := db.TrialByID(context.TODO(), tr.id)
+	require.NoError(t, err)
+	require.Equal(t, dbTrial.State, model.StoppingCompletedState)
 
 	// Terminating stage.
-	db.On("UpdateTrial", 0, model.CompletedState).Return(nil)
 	tr.AllocationExitedCallback(&task.AllocationExited{})
 	require.True(t, model.TerminalStates[tr.state])
 
@@ -76,11 +75,9 @@ func TestTrial(t *testing.T) {
 }
 
 func TestTrialRestarts(t *testing.T) {
-	_, db, rID, tr, _ := setup(t)
+	_, pgDB, rID, tr, _ := setup(t)
 
 	// Pre-scheduled stage.
-	db.On("UpdateTrialRunID", 0, 1).Return(nil)
-	db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
 	require.NoError(t, tr.PatchState(
 		model.StateWithReason{State: model.ActiveState}))
 	require.NoError(t, tr.PatchSearcherState(trialSearcherState{
@@ -92,19 +89,10 @@ func TestTrialRestarts(t *testing.T) {
 		Complete: false,
 		Closed:   true,
 	}))
-	require.True(t, db.AssertExpectations(t))
 
 	for i := 0; i <= tr.config.MaxRestarts(); i++ {
 		require.NotNil(t, tr.allocationID)
 		require.Equal(t, i, tr.restarts)
-
-		db.On("UpdateTrialRestarts", 0, i+1).Return(nil)
-		if i == tr.config.MaxRestarts() {
-			db.On("UpdateTrial", 0, model.ErrorState).Return(nil)
-		} else {
-			// For the next go-around, when we update trial run ID.
-			db.On("UpdateTrialRunID", 0, i+2).Return(nil)
-		}
 
 		tr.AllocationExitedCallback(&task.AllocationExited{Err: errors.New("bad stuff went down")})
 
@@ -184,6 +172,6 @@ func setup(t *testing.T) (
 			require.Equal(t, rID, ri)
 		},
 	)
-	// self := system.MustActorOf(actor.Addr("trial"), tr)
+	require.NoError(t, err)
 	return system, a.m.db, rID, tr, &as
 }
