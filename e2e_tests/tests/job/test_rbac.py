@@ -29,13 +29,17 @@ def seed_workspace(ws: bindings.v1Workspace) -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
         print("creating experiment")
         experiment_id = exp.create_experiment(
-            conf.fixtures_path("no_op/single.yaml"),
+            conf.fixtures_path("no_op/single-very-many-long-steps.yaml"),
             conf.fixtures_path("no_op"),
             ["--project_id", str(pid)],
         )
-    for ntsc in all_ntsc:
-        print(f"creating {ntsc}")
-        api_utils.launch_ntsc(admin_session, workspace_id=ws.id, typ=ntsc, exp_id=experiment_id)
+        print(f"created experiment {experiment_id}")
+    for kind in all_ntsc:
+        print(f"creating {kind}")
+        ntsc = api_utils.launch_ntsc(
+            admin_session, workspace_id=ws.id, typ=kind, exp_id=experiment_id
+        )
+        print(f"created {kind} {ntsc.id}")
 
 
 @pytest.mark.e2e_cpu_rbac
@@ -124,7 +128,9 @@ def test_job_filtering() -> None:
             v1_jobs = bindings.get_GetJobs(api_utils.determined_test_session(cred)).jobs
             # filterout jobs from other workspaces as the cluster is shared between tests
             v1_jobs = [j for j in v1_jobs if j.workspaceId in workspace_ids]
-            assert len(v1_jobs) == visible_count, f"expected {visible_count} jobs for {cred}"
+            assert (
+                len(v1_jobs) == visible_count
+            ), f"expected {visible_count} jobs for {cred}. {v1_jobs}"
 
             jobs = bindings.get_GetJobsV2(api_utils.determined_test_session(cred)).jobs
             full_jobs = [
