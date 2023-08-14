@@ -14,6 +14,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/stream"
 )
 
 
@@ -115,7 +116,7 @@ func (tfm TrialFilterMod) Startup(known string, ctx context.Context) (
 	q := db.Bun().NewSelect().Table("trials").Column("id")
 
 	// Ignore tmf.Since, because we want appearances, which might not be have seq > tfm.Since.
-	ws := WhereSince{Since: 0}
+	ws := stream.WhereSince{Since: 0}
 	if len(tfm.TrialIds) > 0 {
 		ws.Include("id in (?)", bun.In(tfm.TrialIds))
 	}
@@ -132,7 +133,7 @@ func (tfm TrialFilterMod) Startup(known string, ctx context.Context) (
 	}
 
 	// step 2: figure out what was missing and what has appeared
-	missing, appeared, err := processKnown(known, exist)
+	missing, appeared, err := stream.ProcessKnown(known, exist)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +167,7 @@ func (tfm TrialFilterMod) Modify(ctx context.Context) (
 	q := db.Bun().NewSelect().Model(&trialMsgs)
 
 	// Use WhereSince to build a complex WHERE clause.
-	ws := WhereSince{Since: tfm.Since}
+	ws := stream.WhereSince{Since: tfm.Since}
 	if len(tfm.TrialIds) > 0 {
 		ws.Include("id in (?)", bun.In(tfm.TrialIds))
 	}
