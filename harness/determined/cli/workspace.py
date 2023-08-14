@@ -280,8 +280,8 @@ def edit_workspace(args: Namespace) -> None:
         name=args.name,
         agentUserGroup=agent_user_group,
         checkpointStorageConfig=checkpoint_storage,
-        defaultComputePool=args.default_compute_pool,
-        defaultAuxPool=args.default_aux_pool,
+        defaultComputeResourcePool=args.default_compute_pool,
+        defaultAuxResourcePool=args.default_aux_pool,
     )
     w = bindings.patch_PatchWorkspace(sess, body=updated, id=current.id).workspace
 
