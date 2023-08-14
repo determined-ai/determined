@@ -14,24 +14,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
 const (
 	minTickIntervalMins = 10
 	maxTickIntervalMins = 60
 )
-
-// MockRM is exported for tests, tbd on final placement.
-type MockRM struct{}
-
-// GetResourcePools tbd.
-func (m MockRM) GetResourcePools(
-	actor.Messenger,
-	*apiv1.GetResourcePoolsRequest,
-) (*apiv1.GetResourcePoolsResponse, error) {
-	return &apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{}}, nil
-}
 
 // telemetryRPFetcher exists mainly to avoid an annoying import cycle.
 type telemetryRPFetcher interface {

@@ -1184,7 +1184,7 @@ func (a *allocation) markResourcesReleased() {
 		a.syslog.WithError(err).Error("failed to mark allocation completed")
 	}
 
-	go telemetry.ReportAllocationTerminal(a.db, a.model, a.resources.firstDevice())
+	telemetry.ReportAllocationTerminal(a.db, a.model, a.resources.firstDevice())
 }
 
 func (a *allocation) purgeRestorableResources() error {

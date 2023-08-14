@@ -189,7 +189,7 @@ func newExperiment(
 		if err = m.db.AddExperiment(expModel, activeConfig); err != nil {
 			return nil, launchWarnings, err
 		}
-		go telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
+		telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
 	}
 
 	agentUserGroup, err := user.GetAgentUserGroup(*expModel.OwnerID, expModel)
@@ -241,7 +241,7 @@ func newUnmanagedExperiment(
 	if err := m.db.AddExperiment(expModel, activeConfig); err != nil {
 		return nil, nil, err
 	}
-	go telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
+	telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
 
 	// Will only have the model, nothing required for the experiment actor.
 	return &experiment{
@@ -435,7 +435,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		} else if !wasPatched {
 			return errors.New("experiment is already in a terminal state")
 		}
-		go telemetry.ReportExperimentStateChanged(e.db, *e.Experiment)
+		telemetry.ReportExperimentStateChanged(e.db, *e.Experiment)
 		if err := webhooks.ReportExperimentStateChanged(
 			context.TODO(), *e.Experiment, e.activeConfig,
 		); err != nil {
@@ -794,7 +794,7 @@ func (e *experiment) updateState(ctx *actor.Context, state model.StateWithReason
 	} else if !wasPatched {
 		return true
 	}
-	go telemetry.ReportExperimentStateChanged(e.db, *e.Experiment)
+	telemetry.ReportExperimentStateChanged(e.db, *e.Experiment)
 	if err := webhooks.ReportExperimentStateChanged(
 		context.TODO(), *e.Experiment, e.activeConfig,
 	); err != nil {

@@ -192,7 +192,7 @@ func (p *Provisioner) Provision() {
 	}
 
 	if p.telemetryLimiter.Allow() {
-		go telemetry.ReportProvisionerTick(instances, p.provider.InstanceType().Name())
+		telemetry.ReportProvisionerTick(instances, p.provider.InstanceType().Name())
 	}
 }
 
