@@ -5,6 +5,10 @@ import { Mode } from 'utils/themes';
 
 import css from './ThemeToggle.module.scss';
 
+interface Props {
+  iconOnly?: boolean;
+}
+
 interface ThemeOption {
   className: Mode;
   displayName: string;
@@ -29,15 +33,18 @@ export const ThemeOptions: Record<Mode, ThemeOption> = {
   },
 };
 
-const ThemeToggle: React.FC = () => {
+const ThemeToggle: React.FC<Props> = ({ iconOnly = false }) => {
   const {
     ui: { mode: uiMode },
     actions: { setMode },
   } = useUI();
 
-  const classes = [css.toggler];
+  const classes = [css.base];
+  if (iconOnly) classes.push(css.iconOnly);
+
+  const togglerClasses = [css.toggler];
   const currentThemeOption = ThemeOptions[uiMode];
-  classes.push(css[currentThemeOption.className]);
+  togglerClasses.push(css[currentThemeOption.className]);
 
   const newThemeMode = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -46,9 +53,9 @@ const ThemeToggle: React.FC = () => {
   };
 
   return (
-    <div className={css.base} onClick={newThemeMode}>
+    <div className={classes.join(' ')} onClick={newThemeMode}>
       <div className={css.container}>
-        <div className={classes.join(' ')} />
+        <div className={togglerClasses.join(' ')} />
         <div className={css.mode}>{currentThemeOption.displayName}</div>
       </div>
     </div>
