@@ -7,9 +7,8 @@ import shlex
 import shutil
 import subprocess
 import sys
-import typing
 from argparse import Namespace
-from collections.abc import Sequence as abc_Sequence
+from collections.abc import Sequence
 from typing import Any, Dict, List, OrderedDict, Tuple
 from urllib import parse
 
@@ -69,12 +68,13 @@ def curl(args: Namespace) -> None:
 
 
 def bindings_sig(fn: Any) -> Tuple[str, List[inspect.Parameter]]:
+    """
+    return name and sorted API parameters of a bindings function with
+    required parameters first.
+    """
     sig = inspect.signature(fn)
-    # throw out session
     params = list(sig.parameters.values())[1:]
-    # stable order of arguments
     params.sort(key=lambda x: x.name)
-    # put non optionals first
     params.sort(key=lambda x: x.default is inspect.Parameter.empty, reverse=True)
     return fn.__name__, params
 
@@ -88,6 +88,8 @@ def bindings_sig_str(name: str, params: List[inspect.Parameter]) -> str:
 
 
 def unwrap_optional(annotation: Any) -> Any:
+    import typing
+
     try:
         from typing import get_args, get_origin  # type: ignore
     except ImportError:
@@ -106,20 +108,26 @@ def unwrap_optional(annotation: Any) -> Any:
     return annotation
 
 
-def is_supported_annotation(a: Any) -> bool:
+def is_supported_annotation(annot: Any) -> bool:
+    """
+    determines if a our CLI deserializer supports a given type annotation
+    and subsequently a binding's parameter.
+    """
     try:
         from typing import get_args, get_origin  # type: ignore
     except ImportError:
         raise errors.CliError("python >= 3.8 is required to use this feature")
 
-    a = unwrap_optional(a)
-    if a in [str, int, float, type(None), bool]:
+    annot = unwrap_optional(annot)
+
+    supported_types = [str, int, float, type(None), bool]
+    if annot in supported_types:
         return True
 
-    origin = get_origin(a)
-    args = get_args(a)
+    origin = get_origin(annot)
+    args = get_args(annot)
 
-    if origin in [list, abc_Sequence]:
+    if origin in [list, Sequence]:
         if args is not None:
             return all(is_supported_annotation(arg) for arg in args)
 
@@ -128,14 +136,14 @@ def is_supported_annotation(a: Any) -> bool:
 
 def can_be_called_via_cli(params: List[inspect.Parameter]) -> bool:
     """
-    if all the non-optionals are primitives, then we can call it via the cli
+    determines if a binding can be called with our current CLI argument
+    deserialization support.
     """
-    for p in params:
-        if p.default is not inspect.Parameter.empty:
-            continue
-        if not is_supported_annotation(p.annotation):
-            return False
-    return True
+    return all(
+        is_supported_annotation(p.annotation)
+        for p in params
+        if p.default is not inspect.Parameter.empty
+    )
 
 
 def get_available_bindings(
@@ -180,6 +188,15 @@ def parse_param_value(param: inspect.Parameter, value: str) -> Any:
 
 
 def parse_args_to_kwargs(args: List[str], params: List[inspect.Parameter]) -> Dict[str, Any]:
+    """
+    deserialize a list of CLI arguments destined for a bindings function into
+    a dictionary of keyword arguments.
+    various formats are supported:
+    - positional arguments
+    - keyword arguments
+    - json values
+    - positional values coming afetr keyword arguments
+    """
     kwargs: Dict[str, Any] = {}
     params_d: Dict[str, inspect.Parameter] = {p.name: p for p in params}
 
@@ -203,16 +220,16 @@ def parse_args_to_kwargs(args: List[str], params: List[inspect.Parameter]) -> Di
     return kwargs
 
 
-def print_resposne(d: Any) -> None:
-    if d is None:
+def print_response(data: Any) -> None:
+    if data is None:
         return
-    if hasattr(d, "to_json"):
-        cli.render.print_json(d.to_json())
-    elif inspect.isgenerator(d):
-        for v in d:
-            print_resposne(v)
+    if hasattr(data, "to_json"):
+        cli.render.print_json(data.to_json())
+    elif inspect.isgenerator(data):
+        for v in data:
+            print_response(v)
     else:
-        print(d)
+        print(data)
 
 
 def list_bindings(args: Namespace) -> None:
@@ -256,11 +273,11 @@ def call_bindings(args: Namespace) -> None:
                 fn_name,
                 params,
             )
-            + f"\n{str(e)}",
+            + f"\n\n{str(e)}",
             e,
         )
 
-    print_resposne(rv)
+    print_response(rv)
 
 
 args_description = [
