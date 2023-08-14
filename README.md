@@ -44,7 +44,7 @@ Use the CLI to start the Determined cluster locally:
 det deploy local cluster-up
 ```
 
-Or on your favorite cloud service: 
+Or on cloud services like AWS and GCP:
 
 ```
 det deploy aws up
