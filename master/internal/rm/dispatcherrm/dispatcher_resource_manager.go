@@ -813,7 +813,7 @@ func (m *DispatcherResourceManager) handleDispatchExited(msg DispatchExited) {
 	// the handler to avoid any synchronization issues.
 	log := m.syslog.WithField("dispatch-id", msg.DispatchID)
 
-	allocationID := model.AllocationID(msg.DispatchID)
+	allocationID := m.getAllocationID(msg.DispatchID)
 
 	// Job completed while it was sitting in the cancelation queue, so
 	// remove it so that we don't send a request to the launcher to
@@ -1144,6 +1144,24 @@ func (m *DispatcherResourceManager) DispatchStateChange(msg DispatchStateChange)
 	})
 }
 
+// Utility method to convert a dispatchID to an allocationID
+// Prior to 0.22.2 they were distinct values, so need to handle
+// active dispatchIDs that started prior to 0.22.2 by looking up
+// in the DB instead of just using the dispatchID as the allocationID.
+func (m *DispatcherResourceManager) getAllocationID(
+	dispatchID string,
+) model.AllocationID {
+	// For dispatches created before 0.22.2 the DispatchID may not
+	// be the AllocationID, so look it up instead.
+	allocationTask := m.getAssociatedTask(m.syslog, dispatchID)
+	if allocationTask != nil {
+		// We found the task so use the allocationID from it
+		// in case it came from the DB.
+		return allocationTask.AllocationID
+	}
+	return model.AllocationID(dispatchID)
+}
+
 func (m *DispatcherResourceManager) getAssociatedTask(
 	log *logrus.Entry,
 	dispatchID string,
@@ -1152,6 +1170,20 @@ func (m *DispatcherResourceManager) getAssociatedTask(
 
 	task, ok := m.reqList.TaskByID(allocationID)
 	if !ok {
+		// This is a corner-case due to the change to convert from using generated
+		//  dispatchIDs, to re-using the AllocationID for that purpose.
+		//  If there is an active dispatch across the upgrade we cannot look
+		//  it up using the AllocationID.  Instead we have to use the DB
+		//  table to map the dispatchID to AllocationID.   This code can
+		//  be dropped when we no longer need to support upgrades from versions
+		//  prior to 0.22.2-ee.
+		dispatch, err := db.DispatchByID(context.TODO(), dispatchID)
+		if err == nil {
+			task, ok = m.reqList.TaskByID(dispatch.AllocationID)
+			if ok {
+				return task
+			}
+		}
 		log.Warnf("received message for dispatch unknown to task list: %s", allocationID)
 		return nil
 	}
@@ -1201,7 +1233,7 @@ func (m *DispatcherResourceManager) dispatchExited(
 		ResourcesStopped: &stopped,
 	})
 
-	allocationID := model.AllocationID(msg.DispatchID)
+	allocationID := m.getAllocationID(msg.DispatchID)
 
 	// Find the Dispatch IDs associated with the allocation ID. We'll need the
 	// Dispatch ID to clean up the dispatcher environments for the job.
