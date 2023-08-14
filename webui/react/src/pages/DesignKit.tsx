@@ -3053,6 +3053,11 @@ const DesignKit: React.FC = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const isExclusiveMode = searchParams.get('exclusive') === 'true';
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const closeDrawer = useCallback(() => {
+    setIsDrawerOpen(false);
+  }, []);
 
   useEffect(() => {
     actions.hideChrome();
@@ -3068,20 +3073,29 @@ const DesignKit: React.FC = () => {
   }, []);
 
   return (
-    <Page bodyNoPadding breadcrumb={[]} docTitle="Design Kit">
+    <Page bodyNoPadding breadcrumb={[]} docTitle="Design Kit" stickyHeader>
       <div className={css.base}>
-        <nav>
+        <nav className={css.default}>
           <Link reloadDocument to={'/'}>
             <Logo branding={BrandingType.Determined} orientation="horizontal" />
           </Link>
           <ThemeToggle />
-          <ul>
+          <ul className={css.sections}>
             {componentOrder.map((componentId) => (
               <li key={componentId}>
                 <a href={`#${componentId}`}>{ComponentTitles[componentId]}</a>
               </li>
             ))}
           </ul>
+        </nav>
+        <nav className={css.mobile}>
+          <Link reloadDocument to={'/'}>
+            <Logo branding={BrandingType.Determined} orientation="horizontal" />
+          </Link>
+          <div className={css.controls}>
+            <ThemeToggle iconOnly />
+            <Button onClick={() => setIsDrawerOpen(true)}>Sections</Button>
+          </div>
         </nav>
         <article>
           {componentOrder
@@ -3090,6 +3104,15 @@ const DesignKit: React.FC = () => {
               <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
             ))}
         </article>
+        <Drawer open={isDrawerOpen} placement="right" title="Sections" onClose={closeDrawer}>
+          <ul className={css.sections}>
+            {componentOrder.map((componentId) => (
+              <li key={componentId} onClick={closeDrawer}>
+                <a href={`#${componentId}`}>{ComponentTitles[componentId]}</a>
+              </li>
+            ))}
+          </ul>
+        </Drawer>
       </div>
     </Page>
   );
