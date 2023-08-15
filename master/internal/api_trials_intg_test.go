@@ -61,9 +61,10 @@ func createTestTrial(
 
 func createTestTrialWithMetrics(
 	ctx context.Context, t *testing.T, api *apiServer, curUser model.User, includeBatchMetrics bool,
-) (*model.Trial, []*commonv1.Metrics, []*commonv1.Metrics) {
+) (*model.Trial, map[model.MetricGroup][]*commonv1.Metrics) {
 	var trainingMetrics, validationMetrics []*commonv1.Metrics
 	trial, _ := createTestTrial(t, api, curUser)
+	metrics := make(map[model.MetricGroup][]*commonv1.Metrics)
 
 	for i := 0; i < 10; i++ {
 		trainMetrics := &commonv1.Metrics{
@@ -80,7 +81,7 @@ func createTestTrialWithMetrics(
 						},
 					},
 
-					"loss2": {
+					"zgroup_b/me.t r%i]\\c_1": {
 						Kind: &structpb.Value_NumberValue{
 							NumberValue: float64(i),
 						},
@@ -93,6 +94,21 @@ func createTestTrialWithMetrics(
 				},
 			},
 		}
+
+		group := model.MetricGroup("mygroup")
+		_, err := api.ReportTrialMetrics(ctx,
+			&apiv1.ReportTrialMetricsRequest{
+				Metrics: &trialv1.TrialMetrics{
+					TrialId:        int32(trial.ID),
+					TrialRunId:     0,
+					StepsCompleted: int32(i),
+					Metrics:        trainMetrics,
+				},
+				Group: group.ToString(),
+			})
+		require.NoError(t, err)
+		metrics[group] = append(metrics[group], trainMetrics)
+
 		if includeBatchMetrics {
 			trainMetrics.BatchMetrics = []*structpb.Struct{
 				{
@@ -107,7 +123,7 @@ func createTestTrialWithMetrics(
 			}
 		}
 
-		_, err := api.ReportTrialTrainingMetrics(ctx,
+		_, err = api.ReportTrialTrainingMetrics(ctx,
 			&apiv1.ReportTrialTrainingMetricsRequest{
 				TrainingMetrics: &trialv1.TrialMetrics{
 					TrialId:        int32(trial.ID),
@@ -159,7 +175,10 @@ func createTestTrialWithMetrics(
 		validationMetrics = append(validationMetrics, valMetrics)
 	}
 
-	return trial, trainingMetrics, validationMetrics
+	metrics[model.TrainingMetricGroup] = trainingMetrics
+	metrics[model.ValidationMetricGroup] = validationMetrics
+
+	return trial, metrics
 }
 
 func compareMetrics(
@@ -251,11 +270,34 @@ func isMultiTrialSampleCorrect(expectedMetrics []*commonv1.Metrics,
 	return true
 }
 
+func TestMultiTrialSampleSpecialMetrics(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	trial, _ := createTestTrialWithMetrics(
+		ctx, t, api, curUser, false)
+
+	maxDataPoints := 7
+
+	actualMetrics, err := api.multiTrialSample(int32(trial.ID), []string{},
+		"", maxDataPoints, 0, 10, nil, []string{
+			"mygroup.zgroup_b/me.t r%i]\\c_1",
+		})
+	require.Equal(t, 1, len(actualMetrics))
+	require.NoError(t, err)
+	mygroup := actualMetrics[0]
+	require.Equal(t, maxDataPoints, len(mygroup.Data))
+	require.Equal(t, 1, len(mygroup.Data[0].Values.AsMap()))
+}
+
 func TestMultiTrialSampleMetrics(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
-	trial, expectedTrainMetrics, expectedValMetrics := createTestTrialWithMetrics(
+	trial, expectedMetrics := createTestTrialWithMetrics(
 		ctx, t, api, curUser, false)
+
+	expectedTrainMetrics := expectedMetrics[model.TrainingMetricGroup]
+	expectedValMetrics := expectedMetrics[model.ValidationMetricGroup]
+	maxDataPoints := 7
 
 	var trainMetricNames []string
 	var metricIds []string
@@ -263,34 +305,44 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 		trainMetricNames = append(trainMetricNames, metricName)
 		metricIds = append(metricIds, "training."+metricName)
 	}
-
-	maxDataPoints := 7
 	actualTrainingMetrics, err := api.multiTrialSample(int32(trial.ID), trainMetricNames,
 		model.TrainingMetricGroup, maxDataPoints, 0, 10, nil, []string{})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(actualTrainingMetrics))
+
 	var validationMetricNames []string
 	for metricName := range expectedValMetrics[0].AvgMetrics.AsMap() {
 		validationMetricNames = append(validationMetricNames, metricName)
 		metricIds = append(metricIds, "validation."+metricName)
 	}
-
 	actualValidationTrainingMetrics, err := api.multiTrialSample(int32(trial.ID),
 		validationMetricNames, model.ValidationMetricGroup, maxDataPoints,
 		0, 10, nil, []string{})
 	require.Equal(t, 1, len(actualValidationTrainingMetrics))
 	require.NoError(t, err)
+
+	var genericMetricNames []string
+	for metricName := range expectedValMetrics[0].AvgMetrics.AsMap() {
+		genericMetricNames = append(genericMetricNames, metricName)
+		metricIds = append(metricIds, "mygroup."+metricName)
+	}
+	actualGenericTrainingMetrics, err := api.multiTrialSample(int32(trial.ID),
+		genericMetricNames, model.MetricGroup("mygroup"), maxDataPoints,
+		0, 10, nil, []string{})
+	require.Equal(t, 1, len(actualGenericTrainingMetrics))
+	require.NoError(t, err)
+
 	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualTrainingMetrics[0]))
 	require.True(t, isMultiTrialSampleCorrect(expectedValMetrics, actualValidationTrainingMetrics[0]))
 
 	actualAllMetrics, err := api.multiTrialSample(int32(trial.ID), []string{},
 		"", maxDataPoints, 0, 10, nil, metricIds)
-	require.Equal(t, 2, len(actualAllMetrics))
+	require.Equal(t, 3, len(actualAllMetrics))
 	require.NoError(t, err)
-	require.Equal(t, maxDataPoints, len(actualAllMetrics[0].Data)) // max datapoints check
 	require.Equal(t, maxDataPoints, len(actualAllMetrics[1].Data)) // max datapoints check
-	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualAllMetrics[0]))
-	require.True(t, isMultiTrialSampleCorrect(expectedValMetrics, actualAllMetrics[1]))
+	require.Equal(t, maxDataPoints, len(actualAllMetrics[2].Data)) // max datapoints check
+	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualAllMetrics[1]))
+	require.True(t, isMultiTrialSampleCorrect(expectedValMetrics, actualAllMetrics[2]))
 }
 
 func TestStreamTrainingMetrics(t *testing.T) {
@@ -299,9 +351,11 @@ func TestStreamTrainingMetrics(t *testing.T) {
 	var trials []*model.Trial
 	var trainingMetrics, validationMetrics [][]*commonv1.Metrics
 	for _, haveBatchMetrics := range []bool{false, true} {
-		trial, trainMetrics, valMetrics := createTestTrialWithMetrics(
+		trial, metrics := createTestTrialWithMetrics(
 			ctx, t, api, curUser, haveBatchMetrics)
 		trials = append(trials, trial)
+		trainMetrics := metrics[model.TrainingMetricGroup]
+		valMetrics := metrics[model.ValidationMetricGroup]
 		trainingMetrics = append(trainingMetrics, trainMetrics)
 		validationMetrics = append(validationMetrics, valMetrics)
 	}
@@ -977,7 +1031,7 @@ func compareTrialsResponseToBatches(resp *apiv1.CompareTrialsResponse) []int32 {
 func TestCompareTrialsSampling(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
-	trial, _, _ := createTestTrialWithMetrics(
+	trial, _ := createTestTrialWithMetrics(
 		ctx, t, api, curUser, false)
 
 	const DATAPOINTS = 3

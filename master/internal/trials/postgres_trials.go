@@ -30,8 +30,6 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	metricMeasurements []db.MetricMeasurements, err error,
 ) {
 	var queryColumn, orderColumn string
-	metricsObjectName := model.TrialMetricsJSONPath(
-		metricGroup == model.ValidationMetricGroup)
 	// The data for batches and column are stored under different column names
 	switch timeSeriesColumn {
 	case "batches":
@@ -52,28 +50,29 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	}
 	var summaryMetrics summary
 	if err := db.Bun().NewSelect().Table("trials").
-		ColumnExpr("summary_metrics->? AS metrics", metricsObjectName).
+		ColumnExpr("summary_metrics->? AS metrics", model.TrialSummaryMetricsJSONPath(metricGroup)).
 		Where("id = ?", trialID).
 		Scan(context.TODO(), &summaryMetrics); err != nil {
 		return nil, fmt.Errorf("getting summary metrics for trial %d: %w", trialID, err)
 	}
 
 	for _, metricName := range append(metricNames, "epoch") {
-		metricGroup := db.MetricTypeString
+		metricType := db.MetricTypeString
 		if curSummary, ok := summaryMetrics.Metrics[metricName].(map[string]any); ok {
 			if m, ok := curSummary["type"].(string); ok {
-				metricGroup = m
+				metricType = m
 			}
 		}
 
 		cast := "text"
-		switch metricGroup {
+		switch metricType {
 		case db.MetricTypeNumber:
 			cast = "float8"
 		case db.MetricTypeBool:
 			cast = "boolean"
 		}
-		subq = subq.ColumnExpr("(metrics->?->>?)::? as ?", metricsObjectName,
+		subq = subq.ColumnExpr("(metrics->?->>?)::? as ?",
+			model.TrialMetricsJSONPath(metricGroup == model.ValidationMetricGroup),
 			metricName, bun.Safe(cast), bun.Ident(strings.ReplaceAll(metricName, ".", "·")))
 	}
 
