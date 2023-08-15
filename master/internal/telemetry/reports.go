@@ -99,7 +99,7 @@ func ReportAllocationTerminal(db db.DB, a model.Allocation, d *device.Device,
 		"allocation_id": a.AllocationID,
 		"task_id":       a.TaskID,
 		"start_time":    a.StartTime,
-		"end_time":      *a.EndTime,
+		"end_time":      a.EndTime,
 		"slots":         a.Slots,
 	}
 	if d != nil {

@@ -24,7 +24,7 @@ const (
 	maxTickIntervalMins = 60
 )
 
-// MockTelemetry: TBD, but putting this here for now to export to other tests.
+// MockTelemetry TBD, but putting this here for now to export to other tests.
 func MockTelemetry() {
 	mockRM := &mocks.ResourceManager{}
 	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).Return(
@@ -32,7 +32,8 @@ func MockTelemetry() {
 		nil,
 	)
 	mockDB := &mocks.DB{}
-	mockDB.On("PeriodicTelemetryInfo").Return([]byte{}, nil)
+	mockDB.On("PeriodicTelemetryInfo").Return([]byte(`{"master_version": 1}`), nil)
+	mockDB.On("CompleteAllocationTelemetry", mock.Anything).Return([]byte(`{"allocation_id": 1}`), nil)
 	InitTelemetry(actor.NewSystem("Testing"), mockDB, mockRM, "1",
 		config.TelemetryConfig{Enabled: true, SegmentMasterKey: "Test"},
 	)
@@ -137,6 +138,7 @@ func (s *TelemetryActor) Track(t analytics.Track) {
 	if s == nil {
 		panic("telemetry actor should not be nil: can't track.")
 	}
+	s.syslog.Infof("Tracking %s", t.Event)
 
 	t.UserId = s.clusterID
 	if err := s.client.Enqueue(t); err != nil {
