@@ -7,37 +7,19 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/mock"
 	"gopkg.in/segmentio/analytics-go.v3"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
 const (
 	minTickIntervalMins = 10
 	maxTickIntervalMins = 60
 )
-
-// MockTelemetry TBD, but putting this here for now to export to other tests.
-func MockTelemetry() {
-	mockRM := &mocks.ResourceManager{}
-	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).Return(
-		&apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{}},
-		nil,
-	)
-	mockDB := &mocks.DB{}
-	mockDB.On("PeriodicTelemetryInfo").Return([]byte(`{"master_version": 1}`), nil)
-	mockDB.On("CompleteAllocationTelemetry", mock.Anything).Return([]byte(`{"allocation_id": 1}`), nil)
-	InitTelemetry(actor.NewSystem("Testing"), mockDB, mockRM, "1",
-		config.TelemetryConfig{Enabled: true, SegmentMasterKey: "Test"},
-	)
-}
 
 // telemetryRPFetcher exists mainly to avoid an annoying import cycle.
 type telemetryRPFetcher interface {
@@ -80,6 +62,7 @@ func New(
 			"master_version": version.Version,
 		},
 	}); err != nil {
+		// TODO CAROLINA: should this panic/return nil ?
 		logrus.WithError(err).Warnf("failed to enqueue identity %s", clusterID)
 	}
 
@@ -107,9 +90,8 @@ func InitTelemetry(
 	conf config.TelemetryConfig,
 ) {
 	if DefaultTelemetry != nil {
-		logrus.Warn(
-			"detected re-initialization of Telemetry actor that should never occur outside of tests",
-		)
+		logrus.Warn(`detected re-initialization of Telemetry actor `,
+			`that should never occur outside of tests`)
 	}
 
 	if conf.Enabled && conf.SegmentMasterKey != "" {
@@ -122,9 +104,8 @@ func InitTelemetry(
 			logrus.WithError(tErr).Errorf("failed to initialize telemetry")
 		} else {
 			DefaultTelemetry = actorDef
-			DefaultTelemetry.syslog.Info(
-				"telemetry reporting is enabled; run with `--telemetry-enabled=false` to disable",
-			)
+			DefaultTelemetry.syslog.Info(`telemetry reporting is enabled; `,
+				`run with --telemetry-enabled=false to disable`)
 			DefaultTelemetry.telemetryTick(system, 0)
 		}
 	} else {
@@ -138,7 +119,6 @@ func (s *TelemetryActor) Track(t analytics.Track) {
 	if s == nil {
 		panic("telemetry actor should not be nil: can't track.")
 	}
-	s.syslog.Infof("Tracking %s", t.Event)
 
 	t.UserId = s.clusterID
 	if err := s.client.Enqueue(t); err != nil {
@@ -160,7 +140,7 @@ func (s *TelemetryActor) telemetryTick(system *actor.System, t int) {
 			return
 		}
 		// After waiting t minutes, report the first tick.
-		go ReportMasterTick(resp, s.db)
+		ReportMasterTick(resp, s.db)
 
 		// Now call the next tick.
 		bg := big.NewInt(maxTickIntervalMins - minTickIntervalMins)

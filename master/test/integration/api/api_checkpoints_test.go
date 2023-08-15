@@ -13,27 +13,30 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
-	"github.com/determined-ai/determined/proto/pkg/commonv1"
-
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/telemetry"
-	"github.com/determined-ai/determined/master/test/testutils"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
-
-	"github.com/google/uuid"
-
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
+	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
+
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/internal/telemetry"
+	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/test/testutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 func TestGetCheckpoint(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	telemetry.MockTelemetry()
+	InitMockTelemetry()
 	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
@@ -382,4 +385,20 @@ func createPrereqs(t *testing.T, pgDB *db.PgDB) (
 	assert.NilError(t, err, "failed to complete allocation")
 
 	return experiment, trial, a
+}
+
+// InitMockTelemetry
+// TODO CAROLINA: temporarily placing here until I figure out how to export it between tests.
+func InitMockTelemetry() {
+	mockRM := &mocks.ResourceManager{}
+	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).Return(
+		&apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{}},
+		nil,
+	)
+	mockDB := &mocks.DB{}
+	mockDB.On("PeriodicTelemetryInfo").Return([]byte(`{"master_version": 1}`), nil)
+	mockDB.On("CompleteAllocationTelemetry", mock.Anything).Return([]byte(`{"allocation_id": 1}`), nil)
+	telemetry.InitTelemetry(actor.NewSystem("Testing"), mockDB, mockRM, "1",
+		config.TelemetryConfig{Enabled: true, SegmentMasterKey: "Test"},
+	)
 }

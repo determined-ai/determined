@@ -35,6 +35,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks"
 	modelauth "github.com/determined-ai/determined/master/internal/model"
 	"github.com/determined-ai/determined/master/internal/telemetry"
+	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -44,6 +46,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
+	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
@@ -214,7 +217,7 @@ resources:
 		ProjectId:       1,
 	}
 
-	telemetry.MockTelemetry()
+	InitMockTelemetry()
 
 	// No checkpoint specified anywhere.
 	_, err := api.CreateExperiment(ctx, createReq)
@@ -1486,4 +1489,20 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, fmt.Sprintf(`SELECT * WHERE %v`, c[1]), q.String())
 	}
+}
+
+// InitMockTelemetry
+// TODO CAROLINA: temporarily placing here until I figure out how to export it between tests.
+func InitMockTelemetry() {
+	mockRM := &mocks.ResourceManager{}
+	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).Return(
+		&apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{}},
+		nil,
+	)
+	mockDB := &mocks.DB{}
+	mockDB.On("PeriodicTelemetryInfo").Return([]byte(`{"master_version": 1}`), nil)
+	mockDB.On("CompleteAllocationTelemetry", mock.Anything).Return([]byte(`{"allocation_id": 1}`), nil)
+	telemetry.InitTelemetry(actor.NewSystem("Testing"), mockDB, mockRM, "1",
+		config.TelemetryConfig{Enabled: true, SegmentMasterKey: "Test"},
+	)
 }

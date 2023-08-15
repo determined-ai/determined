@@ -11,6 +11,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -25,6 +27,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
@@ -69,8 +72,7 @@ func TestAllocation(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			rm, _, a := setup(t)
-
-			telemetry.MockTelemetry()
+			InitMockTelemetry()
 
 			// Pre-allocated stage.
 			mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
@@ -234,4 +236,20 @@ type nullWriter struct{}
 // AddTaskLogs implements tasklogger.Writer.
 func (*nullWriter) AddTaskLogs([]*model.TaskLog) error {
 	return nil
+}
+
+// InitMockTelemetry
+// TODO CAROLINA: temporarily placing here until I figure out how to export it between tests.
+func InitMockTelemetry() {
+	mockRM := &mocks.ResourceManager{}
+	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).Return(
+		&apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{}},
+		nil,
+	)
+	mockDB := &mocks.DB{}
+	mockDB.On("PeriodicTelemetryInfo").Return([]byte(`{"master_version": 1}`), nil)
+	mockDB.On("CompleteAllocationTelemetry", mock.Anything).Return([]byte(`{"allocation_id": 1}`), nil)
+	telemetry.InitTelemetry(actor.NewSystem("Testing"), mockDB, mockRM, "1",
+		config.TelemetryConfig{Enabled: true, SegmentMasterKey: "Test"},
+	)
 }
