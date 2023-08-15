@@ -218,6 +218,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         return Loadable.map(s, (s) => {
           return s.update(config.storagePath, (old) => {
             const news = { ...old };
+
             array.forEach((setting) => {
               let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined =
                 undefined;
@@ -235,6 +236,9 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
               news[setting] = defaultSetting.defaultValue;
             });
+
+            userSettings.remove(config.storagePath);
+
             return news;
           });
         });
