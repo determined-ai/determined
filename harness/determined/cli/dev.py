@@ -139,11 +139,8 @@ def can_be_called_via_cli(params: List[inspect.Parameter]) -> bool:
     determines if a binding can be called with our current CLI argument
     deserialization support.
     """
-    return all(
-        is_supported_annotation(p.annotation)
-        for p in params
-        if p.default is not inspect.Parameter.empty
-    )
+    required_params = [p for p in params if p.default is inspect.Parameter.empty]
+    return all(is_supported_annotation(p.annotation) for p in required_params)
 
 
 def get_available_bindings(
