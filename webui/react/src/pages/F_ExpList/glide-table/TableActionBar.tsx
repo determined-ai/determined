@@ -384,6 +384,12 @@ const TableActionBar: React.FC<Props> = ({
             projectId={project.id}
             setVisibleColumns={setVisibleColumns}
           />
+          <OptionsMenu
+            expListView={expListView}
+            rowHeight={rowHeight}
+            setExpListView={setExpListView}
+            onRowHeightChange={onRowHeightChange}
+          />
           {(selectAll || selectedExperimentIds.length > 0) && (
             <Dropdown menu={editMenuItems} onClick={handleAction}>
               <Button hideChildren={isMobile}>Actions</Button>
@@ -403,12 +409,6 @@ const TableActionBar: React.FC<Props> = ({
               />
             </Tooltip>
           )}
-          <OptionsMenu
-            expListView={expListView}
-            rowHeight={rowHeight}
-            setExpListView={setExpListView}
-            onRowHeightChange={onRowHeightChange}
-          />
           {!!toggleComparisonView && (
             <Button
               hideChildren={isMobile}
