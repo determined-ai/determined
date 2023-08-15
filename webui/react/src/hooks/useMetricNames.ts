@@ -80,7 +80,7 @@ const useMetricNames = (
             new Set<string>(),
           );
 
-            if (isEqual(previousMetricsSet, updatedMetricsSet)) return prevMetrics;
+          if (isEqual(previousMetricsSet, updatedMetricsSet)) return prevMetrics;
 
           return Loaded(
             Array.from(updatedMetricsSet)
