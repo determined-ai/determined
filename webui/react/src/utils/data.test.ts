@@ -137,8 +137,6 @@ describe('Data Utilities', () => {
       expect(utils.clone('Jalapeño')).toBe('Jalapeño');
       expect(utils.clone(false)).toBe(false);
       expect(utils.clone(false)).toBe(false);
-      expect(utils.clone(null)).toBeNull();
-      expect(utils.clone(undefined)).toBeUndefined();
     });
 
     it('should clone maps', () => {
