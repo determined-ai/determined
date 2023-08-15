@@ -202,6 +202,10 @@ func (t *trial) close() error {
 		return nil
 	}
 	if !model.TerminalStates[t.state] {
+		err := task.DefaultService.Signal(*t.allocationID, task.KillAllocation, "trial crashed")
+		if err == nil {
+			task.DefaultService.AwaitTermination(*t.allocationID)
+		}
 		return t.transition(model.StateWithReason{
 			State:               model.ErrorState,
 			InformationalReason: "trial did not finish properly",
