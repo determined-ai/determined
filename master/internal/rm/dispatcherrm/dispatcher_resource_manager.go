@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
+	"github.com/determined-ai/determined/master/internal/rm/rmutils"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -720,20 +721,57 @@ func (m *DispatcherResourceManager) GetResourcePoolRef(
 // Note to developers: this function doesn't acquire a lock and, ideally, we won't make it, since
 // it is called a lot.
 func (m *DispatcherResourceManager) ResolveResourcePool(
-	ctx actor.Messenger, name string, workspaceID, slots int,
+	actorCtx actor.Messenger, name string, workspaceID, slots int,
 ) (string, error) {
 	hpcDetails, err := m.hpcDetailsCache.load()
 	if err != nil {
 		return "", err
 	}
 
+	ctx := context.TODO()
+	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctx, workspaceID)
+	if err != nil {
+		return "", err
+	}
+
 	// If the resource pool isn't set, fill in the default at creation time.
 	if name == "" && slots == 0 {
-		name = hpcDetails.DefaultAuxPoolPartition
+		if defaultAuxPool == "" {
+			name = hpcDetails.DefaultAuxPoolPartition
+		} else {
+			name = defaultAuxPool
+		}
 	}
 
 	if name == "" && slots >= 0 {
-		name = hpcDetails.DefaultComputePoolPartition
+		if defaultComputePool == "" {
+			name = hpcDetails.DefaultComputePoolPartition
+		} else {
+			name = defaultComputePool
+		}
+	}
+
+	resp, err := m.GetResourcePools(actorCtx, &apiv1.GetResourcePoolsRequest{})
+	if err != nil {
+		return "", err
+	}
+
+	poolNames, _, err := db.ReadRPsAvailableToWorkspace(
+		ctx, int32(workspaceID), 0, -1, rmutils.ResourcePoolsToConfig(resp.ResourcePools))
+	if err != nil {
+		return "", err
+	}
+	found := false
+	for _, poolName := range poolNames {
+		if name == poolName {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return "", fmt.Errorf(
+			"resource pool %s does not exist or is not available to workspace id %d",
+			name, workspaceID)
 	}
 
 	_, err = m.validateResourcePool(hpcDetails, name)
