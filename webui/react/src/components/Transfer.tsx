@@ -13,6 +13,7 @@ interface Props {
   entries: string[];
   initialTargetEntries?: string[];
   onChange?: (targetList: string[]) => void;
+  placeholder?: string;
   reorder?: boolean;
   sourceListTitle?: string;
   targetListTitle?: string;
@@ -25,6 +26,7 @@ const Transfer: React.FC<Props> = ({
   initialTargetEntries,
   sourceListTitle = 'Source',
   targetListTitle = 'Target',
+  placeholder = 'Search entries...',
   reorder = true,
   persistentEntries,
   onChange,
@@ -183,7 +185,7 @@ const Transfer: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <Input placeholder="Search entries..." onChange={handleSearch} />
+      <Input placeholder={placeholder} onChange={handleSearch} />
       <div className={css.entries}>
         <div className={css.column}>
           <h2>{sourceListTitle}</h2>

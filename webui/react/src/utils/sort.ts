@@ -1,4 +1,4 @@
-import { NullOrUndefined, Primitive, SemanticVersion } from 'types';
+import { NullOrUndefined, Primitive, SemanticVersion, Workspace } from 'types';
 
 /*
  * Sort numbers and strings with the following properties.
@@ -73,6 +73,15 @@ export const primitiveSorter = (
   if (typeof a === 'number' && typeof b === 'number') return numericSorter(a, b);
   if (typeof a === 'string' && typeof b === 'string') return alphaNumericSorter(a, b);
   return 0;
+};
+
+export const workspaceSorter = (a: Workspace, b: Workspace): number => {
+  // Keep `Uncategorized` at the very top.
+  if (a.id === 1) return -1;
+  if (b.id === 1) return 1;
+
+  // Sort the remainder by workspace name.
+  return alphaNumericSorter(a.name, b.name);
 };
 
 /** return true if a semantic version a is older than b */
