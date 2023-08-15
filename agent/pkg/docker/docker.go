@@ -101,6 +101,8 @@ func NewClient(cl *client.Client) *Client {
 	}
 	d.credentialStores, d.authConfigs = stores, auths
 
+	// hack: docker client library is not thread-safe when negotiating API Version
+	d.cl.NegotiateAPIVersion(context.TODO())
 	return d
 }
 
@@ -167,7 +169,6 @@ func (d *Client) PullImage(ctx context.Context, req PullImage, p events.Publishe
 		return fmt.Errorf("error parsing image name %s: %w", req.Name, err)
 	}
 	ref = reference.TagNameOnly(ref)
-
 	switch _, _, err = d.cl.ImageInspectWithRaw(ctx, ref.String()); {
 	case req.ForcePull:
 		if err != nil {
