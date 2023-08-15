@@ -428,8 +428,20 @@ func (m *DispatcherResourceManager) GetResourcePools(
 			slotsUsed = int32(v.TotalCPUSlots - v.TotalAvailableCPUSlots)
 		}
 		slotsPerAgent := 0
-		if v.TotalNodes != 0 {
-			slotsPerAgent = int(slotsAvailable) / v.TotalNodes
+
+		// "TotalAvailableNodes" represents the nodes that are in service,
+		// which may be equal or lesser than "TotalNodes". For example, with
+		// the Slurm Workload Manager, nodes that are in service will have
+		// a state of "idle", "mix", or "alloc". Any other state means that
+		// no jobs will be scheduled on those nodes.  Therefore, since
+		// "slotsAvailable" represents the combined number of slots for the
+		// nodes that are in service, we need to divide by the number of
+		// nodes that are in service to get an accurate number of slots per
+		// agent.
+		totalNodesInService := v.TotalAllocatedNodes + v.TotalAvailableNodes
+
+		if totalNodesInService != 0 {
+			slotsPerAgent = int(slotsAvailable) / totalNodesInService
 		}
 
 		description := wlmName + "-managed pool of resources"
@@ -444,7 +456,7 @@ func (m *DispatcherResourceManager) GetResourcePools(
 			Name:                         v.PartitionName,
 			Description:                  description,
 			Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC,
-			NumAgents:                    int32(v.TotalNodes),
+			NumAgents:                    int32(totalNodesInService),
 			SlotType:                     slotType.Proto(),
 			SlotsAvailable:               slotsAvailable,
 			SlotsUsed:                    slotsUsed,

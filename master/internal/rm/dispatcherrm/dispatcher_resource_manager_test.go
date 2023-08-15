@@ -224,7 +224,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 	}
 
 	p1 := hpcPartitionDetails{
-		TotalAvailableNodes:    0,
+		TotalAvailableNodes:    10,
 		PartitionName:          "partition 1",
 		IsDefault:              true,
 		TotalAllocatedNodes:    0,
@@ -234,7 +234,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 		Accelerator:            "tesla",
 	}
 	p2 := hpcPartitionDetails{
-		TotalAvailableNodes:    0,
+		TotalAvailableNodes:    12,
 		PartitionName:          "partition 2",
 		IsDefault:              false,
 		TotalAllocatedNodes:    0,
@@ -245,13 +245,40 @@ func Test_summarizeResourcePool(t *testing.T) {
 		TotalAvailableCPUSlots: 8,
 	}
 	p3 := hpcPartitionDetails{
-		TotalAvailableNodes:    0,
+		TotalAvailableNodes:    15,
 		PartitionName:          "partition 3",
 		IsDefault:              false,
 		TotalAllocatedNodes:    0,
 		TotalAvailableGpuSlots: 0,
 		TotalNodes:             15,
 		TotalGpuSlots:          7,
+	}
+	p4 := hpcPartitionDetails{
+		TotalAvailableNodes:    10,
+		PartitionName:          "partition 4",
+		IsDefault:              false,
+		TotalAllocatedNodes:    0,
+		TotalAvailableGpuSlots: 25,
+		TotalNodes:             50,
+		TotalGpuSlots:          40,
+	}
+	p5 := hpcPartitionDetails{
+		TotalAvailableNodes:    0,
+		PartitionName:          "partition 5",
+		IsDefault:              false,
+		TotalAllocatedNodes:    10,
+		TotalAvailableGpuSlots: 25,
+		TotalNodes:             50,
+		TotalGpuSlots:          40,
+	}
+	p6 := hpcPartitionDetails{
+		TotalAvailableNodes:    0,
+		PartitionName:          "partition 6",
+		IsDefault:              false,
+		TotalAllocatedNodes:    0,
+		TotalAvailableGpuSlots: 0,
+		TotalNodes:             50,
+		TotalGpuSlots:          0,
 	}
 
 	tests := []struct {
@@ -374,6 +401,75 @@ func Test_summarizeResourcePool(t *testing.T) {
 						SlotsAvailable: 7,
 						SlotsUsed:      7,
 						NumAgents:      15,
+					},
+				},
+				wlmName:       "Unknown",
+				schedulerType: resourcepoolv1.SchedulerType_SCHEDULER_TYPE_UNSPECIFIED,
+				fittingPolicy: resourcepoolv1.FittingPolicy_FITTING_POLICY_UNSPECIFIED,
+			},
+		},
+		{
+			name:       "Available nodes with no allocated nodes",
+			partitions: []hpcPartitionDetails{p4},
+			args: args{
+				ctx:     &actor.Context{},
+				wlmType: "mystery",
+			},
+			want: want{
+				pools: []resourcepoolv1.ResourcePool{
+					{
+						Name:           "partition 4",
+						SlotType:       devicev1.Type_TYPE_CUDA,
+						SlotsAvailable: 40,
+						SlotsUsed:      15,
+						NumAgents:      10,
+						SlotsPerAgent:  4,
+					},
+				},
+				wlmName:       "Unknown",
+				schedulerType: resourcepoolv1.SchedulerType_SCHEDULER_TYPE_UNSPECIFIED,
+				fittingPolicy: resourcepoolv1.FittingPolicy_FITTING_POLICY_UNSPECIFIED,
+			},
+		},
+		{
+			name:       "Allocated nodes with no available nodes",
+			partitions: []hpcPartitionDetails{p5},
+			args: args{
+				ctx:     &actor.Context{},
+				wlmType: "mystery",
+			},
+			want: want{
+				pools: []resourcepoolv1.ResourcePool{
+					{
+						Name:           "partition 5",
+						SlotType:       devicev1.Type_TYPE_CUDA,
+						SlotsAvailable: 40,
+						SlotsUsed:      15,
+						NumAgents:      10,
+						SlotsPerAgent:  4,
+					},
+				},
+				wlmName:       "Unknown",
+				schedulerType: resourcepoolv1.SchedulerType_SCHEDULER_TYPE_UNSPECIFIED,
+				fittingPolicy: resourcepoolv1.FittingPolicy_FITTING_POLICY_UNSPECIFIED,
+			},
+		},
+		{
+			name:       "No allocated nodes and no available nodes",
+			partitions: []hpcPartitionDetails{p6},
+			args: args{
+				ctx:     &actor.Context{},
+				wlmType: "mystery",
+			},
+			want: want{
+				pools: []resourcepoolv1.ResourcePool{
+					{
+						Name:           "partition 6",
+						SlotType:       devicev1.Type_TYPE_CPU,
+						SlotsAvailable: 0,
+						SlotsUsed:      0,
+						NumAgents:      0,
+						SlotsPerAgent:  0,
 					},
 				},
 				wlmName:       "Unknown",
