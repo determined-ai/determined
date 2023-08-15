@@ -51,9 +51,7 @@ export const isSyncFunction = (fn: unknown): boolean => {
   return isFunction(fn) && !isAsyncFunction(fn);
 };
 
-export const clone = <T extends CloneableStructure>(data: T): T => {
-  return structuredClone(data);
-};
+export const clone = <T extends CloneableStructure>(data: T): any => structuredClone(data);
 
 export const hasObjectKeys = (data: unknown): boolean => {
   return isObject(data) && Object.keys(data as Record<RecordKey, unknown>).length !== 0;
