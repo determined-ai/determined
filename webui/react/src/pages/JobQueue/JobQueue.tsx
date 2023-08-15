@@ -15,6 +15,7 @@ import {
   userRenderer,
 } from 'components/Table/Table';
 import { V1SchedulerTypeToLabel } from 'constants/states';
+import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
 import { paths } from 'routes/utils';
@@ -128,10 +129,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
     }
   }, [canceler.signal, selectedRp.name, settings, jobState, topJob, updateSettings]);
 
-  useEffect(() => {
-    fetchAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  usePolling(fetchAll, { rerunOnNewFn: true });
 
   const rpTotalJobCount = useCallback(
     (rpName: string) => {
