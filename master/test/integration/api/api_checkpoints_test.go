@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/test/testutils"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
@@ -32,6 +33,7 @@ import (
 
 func TestGetCheckpoint(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
+	telemetry.MockTelemetry()
 	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
