@@ -4,7 +4,7 @@ import {
   CustomRenderer,
 } from '@hpe.com/glide-data-grid/dist/ts/data-grid/cells/cell-types';
 
-import { roundedRect } from '../utils';
+import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 
 function drawCheckbox(
   ctx: CanvasRenderingContext2D,

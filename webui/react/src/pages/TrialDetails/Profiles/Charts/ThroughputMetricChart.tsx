@@ -3,12 +3,14 @@ import React from 'react';
 import { LineChart } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
+import { ChartProps } from 'pages/TrialDetails/Profiles/types';
+import { MetricType } from 'pages/TrialDetails/Profiles/types';
+import { useFetchProfilerMetrics } from 'pages/TrialDetails/Profiles/useFetchProfilerMetrics';
+import {
+  getScientificNotationTickValues,
+  getUnitForMetricName,
+} from 'pages/TrialDetails/Profiles/utils';
 import handleError from 'utils/error';
-
-import { ChartProps } from '../types';
-import { MetricType } from '../types';
-import { useFetchProfilerMetrics } from '../useFetchProfilerMetrics';
-import { getScientificNotationTickValues, getUnitForMetricName } from '../utils';
 
 const ThroughputMetricChart: React.FC<ChartProps> = ({ trial }) => {
   const throughputMetrics = useFetchProfilerMetrics(

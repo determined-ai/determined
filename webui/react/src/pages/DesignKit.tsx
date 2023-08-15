@@ -40,6 +40,7 @@ import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
 import Paragraph from 'components/kit/Typography/Paragraph';
+import useConfirm, { voidPromiseFn } from 'components/kit/useConfirm';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
@@ -73,8 +74,6 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum, { loremIpsumSentence } from 'utils/loremIpsum';
 import { noOp } from 'utils/service';
 import { KeyboardShortcut } from 'utils/shortcut';
-
-import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 
 import css from './DesignKit.module.scss';
 

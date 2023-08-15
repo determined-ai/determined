@@ -1,10 +1,9 @@
 import uPlot from 'uplot';
 
+import { UPlotAxisSplits, UPlotData } from 'components/UPlot/types';
 import { Range } from 'types';
+import { Scale } from 'types';
 import { rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
-
-import { Scale } from '../../../types';
-import { UPlotAxisSplits, UPlotData } from '../types';
 
 export const X_INDEX = 0;
 export const Y_INDEX = 1;

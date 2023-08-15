@@ -4,11 +4,10 @@ import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import useConfirm, { ConfirmModalProps } from 'components/kit/useConfirm';
+import { Eventually } from 'types';
 import { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'utils/error';
 import handleError from 'utils/error';
 import { capitalize } from 'utils/string';
-
-import { Eventually } from '../../types';
 
 import css from './ActionDropdown.module.scss';
 

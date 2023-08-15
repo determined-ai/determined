@@ -4,8 +4,7 @@ import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Toggle from 'components/kit/Toggle';
-
-import { ExpListView, RowHeight } from '../F_ExperimentList.settings';
+import { ExpListView, RowHeight } from 'pages/F_ExpList/F_ExperimentList.settings';
 
 import css from './OptionsMenu.module.scss';
 

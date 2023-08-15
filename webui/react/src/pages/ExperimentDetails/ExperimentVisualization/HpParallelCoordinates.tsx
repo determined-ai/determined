@@ -8,6 +8,7 @@ import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';
+import TrialsComparisonModal from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -35,8 +36,6 @@ import handleError from 'utils/error';
 import { metricToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { openCommandResponse } from 'utils/wait';
-
-import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import css from './HpParallelCoordinates.module.scss';
 import HpTrialTable, { TrialHParams } from './HpTrialTable';

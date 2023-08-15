@@ -3,10 +3,9 @@ import React, { useMemo } from 'react';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import { MenuItem } from 'components/kit/Dropdown';
 import Tooltip from 'components/kit/Tooltip';
+import Link from 'components/Link';
 import { BreadCrumbRoute } from 'components/Page';
 import { CommonProps } from 'types';
-
-import Link from '../Link';
 
 import css from './PageHeader.module.scss';
 

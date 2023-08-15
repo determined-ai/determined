@@ -15,18 +15,17 @@ import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
+import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
+import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
 import TrialDetailsMetrics from 'pages/TrialDetails/TrialDetailsMetrics';
+import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
+import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import { ValueOf } from 'types';
 import { ExperimentBase, Note, TrialDetails, TrialItem } from 'types';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
-
-import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparameters';
-import TrialDetailsLogs from '../TrialDetails/TrialDetailsLogs';
-import TrialDetailsOverview from '../TrialDetails/TrialDetailsOverview';
-import TrialDetailsProfiles from '../TrialDetails/TrialDetailsProfiles';
 
 import ExperimentCheckpoints from './ExperimentCheckpoints';
 import ExperimentCodeViewer from './ExperimentCodeViewer';
