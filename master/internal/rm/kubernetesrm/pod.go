@@ -49,11 +49,6 @@ type podStatusUpdate struct {
 	updatedPod *k8sV1.Pod
 }
 
-// podEventUpdate are messages that are sent by the event listener.
-type podEventUpdate struct {
-	event *k8sV1.Event
-}
-
 // pod manages the lifecycle of a Kubernetes pod that executes a
 // Determined task. The lifecycle of the pod is managed based on
 // the status of the specified set of containers.
@@ -185,7 +180,6 @@ func (p *pod) start() error {
 	return nil
 }
 
-// TODO(!!!): look at everywhere pod returned errors, vet it
 func (p *pod) finalize() {
 	if !p.leaveKubernetesResources {
 		p.kill()

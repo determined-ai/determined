@@ -764,7 +764,10 @@ func (p *pods) handleResourceRequestFailure(msg resourcesRequestFailure) {
 		panic(fmt.Sprintf("unexpected message %T", msg))
 	}
 
-	p.cleanUpPodHandler(podHandler)
+	err := p.cleanUpPodHandler(podHandler)
+	if err != nil {
+		p.syslog.WithError(err).Error("cleaning up pod handler after resource request failure")
+	}
 }
 
 func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
@@ -829,10 +832,16 @@ func (p *pods) podStatusCallback(s *actor.System, event watch.Event) {
 	switch {
 	case err != nil:
 		p.syslog.WithError(err).Error("processing pod status update")
-		p.cleanUpPodHandler(podHandler)
+		err := p.cleanUpPodHandler(podHandler)
+		if err != nil {
+			p.syslog.WithError(err).Error("cleaning up pod handler after update error")
+		}
 		return
 	case state == cproto.Terminated:
-		p.cleanUpPodHandler(podHandler)
+		err := p.cleanUpPodHandler(podHandler)
+		if err != nil {
+			p.syslog.WithError(err).Error("cleaning up pod handler after termination")
+		}
 	}
 
 	if containerID, ok := p.podNameToContainerID[pod.Name]; ok {
@@ -1172,8 +1181,6 @@ func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary
 
 	return summaries, nil
 }
-
-const askBatchSize = 16
 
 func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.AgentSummary {
 	var results []podNodeInfo
