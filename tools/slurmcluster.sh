@@ -41,6 +41,7 @@ SKIP_DEVCLUSTER_STAGE=0
 # Variables that can be set before invoking the script (to change the default)
 DEFAULTIMAGE=${DEFAULTIMAGE-}
 SLOTTYPE=
+DEFAULTCOMPUTERESOURCEPOOL=
 # If empty use resource_manager: slurm|pbs, otherwise agent
 DETERMINED_AGENT=
 
@@ -94,8 +95,16 @@ while [[ $# -gt 0 ]]; do
             DEFAULTIMAGE=$2
             shift 2
             ;;
+        -r)
+            DEFAULTCOMPUTERESOURCEPOOL=$2
+            shift 2
+            ;;
         --cpu)
             SLOTTYPE=cpu
+            shift
+            ;;
+        --rocm)
+            SLOTTYPE=rocm
             shift
             ;;
         -s)
@@ -103,7 +112,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         -h | --help)
-            echo "Usage: $0 [-anxtpedi] [-c {image}] [-u {username}]  {cluster}"
+            echo "Usage: $0 [-Aanxtpedcuis] [-c {image}] [-u {username}] [-r {rp}] {cluster}"
             echo "  -h                 This help message & documentation."
             echo "  -n                 Disable start of the inbound tunnel (when using Cisco AnyConnect)."
             echo "  -x                 Disable start of personal tunnel back to master (if you have done so manually)."
@@ -118,6 +127,8 @@ while [[ $# -gt 0 ]]; do
             echo "  -u                 Use provided {username} to lookup the per-user port number."
             echo "  -a                 Attempt to retrieve the .launcher.token - you must have sudo root on the cluster."
             echo "  -A                 Use agents instead of launcher to access HPC resources."
+            echo "  -r                 Force a specified default compute resource pool."
+            echo "  --rocm             Force slot_type to rocm instead of the default (cuda)."
             echo "  -s                 Do not launch the devcluster. The devcluster will need to be launched and managed separately. "
             echo "                     For example, e2e_slurm_restart tests manage their own instance of devcluster."
             echo
@@ -610,6 +621,10 @@ fi
 
 if [[ -n $SLOTTYPE ]]; then
     OPT_SLOTTYPE=$SLOTTYPE
+fi
+
+if [[ -n $DEFAULTCOMPUTERESOURCEPOOL ]]; then
+    OPT_DEFAULTCOMPUTERESOURCEPOOL=$DEFAULTCOMPUTERESOURCEPOOL
 fi
 
 if [[ -n $DEVLAUNCHER ]]; then
