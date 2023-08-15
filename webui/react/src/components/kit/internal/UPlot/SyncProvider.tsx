@@ -55,26 +55,35 @@ class SyncService {
   updateDataBounds(data: AlignedData) {
     const xValues = data[0];
     const lastIdx = xValues.length - 1;
-    const dataMin = xValues[0];
-    const dataMax = xValues[lastIdx];
+    const chartMin = xValues[0];
+    const chartMax = xValues[lastIdx];
+
+    if (chartMin === undefined || chartMax === undefined) return;
 
     this.bounds.update((b) => {
-      let max = Math.max(b.dataBounds?.max ?? dataMax, dataMax);
-      let min = Math.min(b.dataBounds?.min ?? dataMin, dataMin);
-      const width = max - min;
-      if (width <= 0) {
-        // default handling of min = max is not great
-        min = Math.min(max, 0);
-        max = 2 * max;
-      } else {
-        const margin = 0.02 * width;
-        max = max + margin;
-        min = min - margin;
-      }
+      const previousMin =
+        b.dataBounds?.min !== undefined && isFinite(b.dataBounds?.min)
+          ? b.dataBounds?.min
+          : chartMin;
+
+      const previousMax =
+        b.dataBounds?.max !== undefined && isFinite(b.dataBounds?.max)
+          ? b.dataBounds?.max
+          : chartMax;
+
+      const dataMin = Math.min(previousMin, chartMin);
+      const dataMax = Math.max(previousMax, chartMax);
+
+      const width = dataMax - dataMin;
+      const margin = 0.02 * width;
+
+      const unzoomedMin = width > 0 ? dataMin - margin : Math.min(dataMin, 0);
+      const unzoomedMax = width > 0 ? dataMax + margin : 2 * dataMax;
+
       return {
         ...b,
         dataBounds: { max: dataMax, min: dataMin },
-        unzoomedBounds: { max, min },
+        unzoomedBounds: { max: unzoomedMax, min: unzoomedMin },
       };
     });
   }

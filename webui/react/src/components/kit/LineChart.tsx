@@ -393,9 +393,19 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     const chartGridRef = useRef<HTMLDivElement | null>(null);
     const { width, height } = useResize(chartGridRef);
     const columnCount = Math.max(1, Math.floor(width / 540));
-    const chartsProps = Loadable.isLoadable(propChartsProps)
-      ? Loadable.getOrElse([], propChartsProps)
-      : propChartsProps;
+    const chartsProps = (
+      Loadable.isLoadable(propChartsProps)
+        ? Loadable.getOrElse([], propChartsProps)
+        : propChartsProps
+    ).filter(
+      (c) =>
+        // filter out Loadable series which are Loaded yet have no serie with more than 0 points.
+        !Loadable.isLoadable(c.series) ||
+        !Loadable.isLoaded(c.series) ||
+        Loadable.getOrElse([], c.series).find((serie) =>
+          Object.entries(serie.data).find(([, points]) => points.length > 0),
+        ),
+    );
     const isLoading = Loadable.isLoadable(propChartsProps) && Loadable.isLoading(propChartsProps);
     // X-Axis control
 
