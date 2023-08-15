@@ -13,6 +13,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -35,6 +38,27 @@ func (m mockClient) Enqueue(msg analytics.Message) error {
 		return err
 	}
 	return nil
+}
+
+// Helper function for ReportExperimentCreated.
+func createExpConfig() expconf.ExperimentConfig {
+	maxLength := expconf.NewLengthInBatches(100)
+	activeConfig := expconf.ExperimentConfig{
+		RawSearcher: &expconf.SearcherConfig{
+			RawMetric: ptrs.Ptr("loss"),
+			RawSingleConfig: &expconf.SingleConfig{
+				RawMaxLength: &maxLength,
+			},
+		},
+		RawEntrypoint:      &expconf.Entrypoint{RawEntrypoint: "model_def:SomeTrialClass"},
+		RawHyperparameters: expconf.Hyperparameters{},
+		RawCheckpointStorage: &expconf.CheckpointStorageConfig{
+			RawSharedFSConfig: &expconf.SharedFSConfig{
+				RawHostPath: ptrs.Ptr("/"),
+			},
+		},
+	}
+	return activeConfig
 }
 
 func TestTelemetry(t *testing.T) {
@@ -67,8 +91,7 @@ func TestTelemetry(t *testing.T) {
 	// Test out all Reports.
 	ReportMasterTick(&apiv1.GetResourcePoolsResponse{}, DefaultTelemetry.db)
 	ReportProvisionerTick([]*model.Instance{}, "test-instance")
-	// TODO CAROLINA: below line doesn't work
-	// ReportExperimentCreated(1, schemas.WithDefaults(expconf.ExperimentConfigV0{}))
+	ReportExperimentCreated(1, schemas.WithDefaults(createExpConfig()))
 	ReportAllocationTerminal(DefaultTelemetry.db, model.Allocation{}, &device.Device{})
 	ReportExperimentStateChanged(&db.PgDB{}, model.Experiment{})
 	ReportUserCreated(true, true)
@@ -77,6 +100,7 @@ func TestTelemetry(t *testing.T) {
 	expected := []string{
 		"master_tick",
 		"provisioner_tick",
+		"experiment_created",
 		"allocation_terminal",
 		"experiment_state_changed",
 		"user_created",
