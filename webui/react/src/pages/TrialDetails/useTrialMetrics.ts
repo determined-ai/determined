@@ -74,9 +74,9 @@ const summarizedMetricToSeries = (
 
     const series: Serie = {
       color:
-        metric.type === MetricType.Validation ? VALIDATION_SERIES_COLOR : TRAINING_SERIES_COLOR,
+        metric.group === MetricType.Validation ? VALIDATION_SERIES_COLOR : TRAINING_SERIES_COLOR,
       data,
-      metricType: metric.type,
+      metricType: metric.group,
       name: metric.name,
     };
     trialData[metricToKey(metric)] = series;
@@ -143,7 +143,7 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
         const metricsHaveData: Record<string, boolean> = {};
         const response = await timeSeries({
           maxDatapoints: screen.width > 1600 ? 1500 : 1000,
-          metricNames: metrics,
+          metrics,
           startBatches: 0,
           trialIds: trials?.map((t) => t?.id || 0).filter((i) => i > 0),
         });

@@ -5,7 +5,7 @@ import uPlot, { AlignedData, Plugin } from 'uplot';
 
 import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/internal/functions';
 import ScaleSelect from 'components/kit/internal/ScaleSelect';
-import { ErrorHandler, MetricType, Scale } from 'components/kit/internal/types';
+import { ErrorHandler, Scale } from 'components/kit/internal/types';
 import { SyncProvider } from 'components/kit/internal/UPlot/SyncProvider';
 import { UPlotPoint } from 'components/kit/internal/UPlot/types';
 import UPlotChart, { Options } from 'components/kit/internal/UPlot/UPlotChart';
@@ -38,7 +38,7 @@ export interface Serie {
   color?: string;
   data: Partial<Record<XAxisDomain, [x: number, y: number][]>>;
   key?: number;
-  metricType?: MetricType;
+  metricType?: string;
   name?: string;
 }
 
@@ -108,14 +108,10 @@ export const LineChart: React.FC<LineChartProps> = ({
   );
 
   const seriesNames: string[] = useMemo(() => {
-    return series.map(
-      (s, idx) =>
-        (s.metricType === MetricType.Training
-          ? '[T] '
-          : s.metricType === MetricType.Validation
-          ? '[V] '
-          : '') + (s.name || `Series ${idx + 1}`),
-    );
+    return series.map((s, idx) => {
+      const badge = s.metricType?.substring(0, 1).toUpperCase();
+      return [badge ? `[${badge}]` : '', s.name || `Series ${idx + 1}`].join(' ');
+    });
   }, [series]);
 
   const chartData: AlignedData = useMemo(() => {
@@ -332,7 +328,7 @@ export const calculateChartProps = (
   });
   metrics.forEach((metric) => {
     const series: Serie[] = [];
-    const key = `${metric.type}|${metric.name}`;
+    const key = `${metric.group}|${metric.name}`;
     trials.forEach((t) => {
       const m = data[t?.id || 0];
       m?.[key] &&
@@ -362,7 +358,7 @@ export const calculateChartProps = (
   // then the charts have not been updated and we need to continue to show the
   // spinner.
   const chartDataIsLoaded = metrics.every((metric) => {
-    const metricKey = `${metric.type}|${metric.name}`;
+    const metricKey = `${metric.group}|${metric.name}`;
     return metricHasData?.[metricKey] ? !!chartedMetrics?.[metricKey] : true;
   });
   if (!isLoaded) {

@@ -149,7 +149,7 @@ const ScatterPlots: React.FC<Props> = ({
         experiment.id,
         selectedMetric.name,
         selectedBatch,
-        metricTypeParamMap[selectedMetric.type],
+        metricTypeParamMap[selectedMetric.group],
         undefined, // custom metric group
         selectedBatchMargin,
         undefined,

@@ -18,10 +18,7 @@ const setup = (metric: Metric) => {
 };
 
 describe('MetricBadgeTag', () => {
-  const sampleMetric: Metric = {
-    name: 'accuracy',
-    type: 'validation',
-  };
+  const sampleMetric: Metric = { group: 'validation', name: 'accuracy' };
 
   it('displays metric name and first letter of type', () => {
     setup(sampleMetric);

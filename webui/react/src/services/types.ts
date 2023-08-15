@@ -29,7 +29,7 @@ export type TrialDetailsParams = SingleEntityParams;
 export interface TrialSummaryBaseParams {
   endBatches?: number;
   maxDatapoints: number;
-  metricNames: Metric[];
+  metrics: Metric[];
   metricType?: MetricType;
   startBatches?: number;
 }

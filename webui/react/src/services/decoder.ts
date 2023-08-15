@@ -632,6 +632,24 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
   };
 };
 
+/**
+ * Group metrics get returned as a string version of float values.
+ * This is needed to bridge the gap in the mean time.
+ */
+const decodeMetricValues = (data: unknown): Record<string, number> => {
+  if (!isObject(data)) return {};
+  const dataObj = data as Record<string, unknown>;
+  return Object.keys(dataObj).reduce((acc, key) => {
+    /**
+     * parseFloat is temporary until the issue of some metrics getting
+     * returned as a string is fixed:
+     * https://hpe-aiatscale.atlassian.net/browse/DET-9736
+     */
+    acc[key] = isNumber(dataObj[key]) ? (dataObj[key] as number) : parseFloat(`${dataObj[key]}`);
+    return acc;
+  }, {} as Record<string, number>);
+};
+
 const decodeDownsampledMetrics = (data: Sdk.V1DownsampledMetrics[]): types.MetricContainer[] => {
   return data.map((m) => {
     const metrics: types.MetricContainer = {
@@ -639,12 +657,9 @@ const decodeDownsampledMetrics = (data: Sdk.V1DownsampledMetrics[]): types.Metri
         batches: pt.batches,
         epoch: pt.epoch,
         time: pt.time,
-        values: pt.values,
+        values: decodeMetricValues(pt.values),
       })),
-      type:
-        m.type === Sdk.V1MetricType.TRAINING
-          ? types.MetricType.Training
-          : types.MetricType.Validation,
+      group: m.group,
     };
     return metrics;
   });
@@ -662,11 +677,20 @@ export const decodeTrialSummary = (data: Sdk.V1ComparableTrial): types.TrialSumm
 export const decodeTrialWorkloads = (
   data: Sdk.V1GetTrialWorkloadsResponse,
 ): types.TrialWorkloads => {
-  const workloads = data.workloads.map((ww) => ({
-    checkpoint: ww.checkpoint && decodeCheckpointWorkload(ww.checkpoint),
-    training: ww.training && decodeMetricsWorkload(ww.training),
-    validation: ww.validation && decodeMetricsWorkload(ww.validation),
-  }));
+  const workloads = data.workloads.map((ww) => {
+    return Object.keys(ww).reduce(
+      (acc, key) => {
+        const value = ww[key as keyof Sdk.V1WorkloadContainer];
+        if (value) {
+          if (key === 'checkpoint')
+            acc[key] = decodeCheckpointWorkload(value as Sdk.V1CheckpointWorkload);
+          else acc.metrics[key] = decodeMetricsWorkload(value as Sdk.V1MetricsWorkload);
+        }
+        return acc;
+      },
+      { metrics: {} } as types.WorkloadGroup,
+    );
+  });
   return {
     pagination: data.pagination,
     workloads: workloads,

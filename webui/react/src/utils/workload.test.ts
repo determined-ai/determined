@@ -4,21 +4,27 @@ import * as utils from './workload';
 
 const WORKLOADS: WorkloadGroup[] = [
   {
-    training: {
-      metrics: { accuracy: 0.9, loss: 0.1 },
-      totalBatches: 100,
+    metrics: {
+      training: {
+        metrics: { accuracy: 0.9, loss: 0.1 },
+        totalBatches: 100,
+      },
     },
   },
   {
-    training: {
-      metrics: { accuracy: 0.91, loss: 0.09 },
-      totalBatches: 200,
+    metrics: {
+      training: {
+        metrics: { accuracy: 0.91, loss: 0.09 },
+        totalBatches: 200,
+      },
     },
   },
   {
-    validation: {
-      metrics: { accuracy: 0.81, loss: 0.19 },
-      totalBatches: 200,
+    metrics: {
+      validation: {
+        metrics: { accuracy: 0.81, loss: 0.19 },
+        totalBatches: 200,
+      },
     },
   },
   {
@@ -26,17 +32,22 @@ const WORKLOADS: WorkloadGroup[] = [
       state: CheckpointState.Active,
       totalBatches: 300,
     },
+    metrics: {},
   },
   {
-    training: {
-      metrics: { accuracy: 0.91, loss: 0.09 },
-      totalBatches: 300,
+    metrics: {
+      training: {
+        metrics: { accuracy: 0.91, loss: 0.09 },
+        totalBatches: 300,
+      },
     },
   },
   {
-    validation: {
-      metrics: { accuracy: 0.81, loss: 0.19 },
-      totalBatches: 300,
+    metrics: {
+      validation: {
+        metrics: { accuracy: 0.81, loss: 0.19 },
+        totalBatches: 300,
+      },
     },
   },
 ];
@@ -59,20 +70,6 @@ describe('Workload Utilities', () => {
     });
   });
 
-  describe('getWorkload', () => {
-    it('should extract first available training workload', () => {
-      expect(utils.getWorkload(WORKLOADS[0])).toStrictEqual(WORKLOADS[0].training);
-    });
-
-    it('should extract first available validation workload', () => {
-      expect(utils.getWorkload(WORKLOADS[2])).toStrictEqual(WORKLOADS[2].validation);
-    });
-
-    it('should extract first available checkpoint workload', () => {
-      expect(utils.getWorkload(WORKLOADS[3])).toStrictEqual(WORKLOADS[3].checkpoint);
-    });
-  });
-
   describe('hasCheckpoint', () => {
     it('should detect checkpoint from workload', () => {
       const workload = {
@@ -80,6 +77,7 @@ describe('Workload Utilities', () => {
           state: CheckpointState.Active,
           totalBatches: 100,
         },
+        metrics: {},
       };
       expect(utils.hasCheckpoint(workload)).toBe(true);
     });
@@ -90,6 +88,7 @@ describe('Workload Utilities', () => {
           state: CheckpointState.Deleted,
           totalBatches: 100,
         },
+        metrics: {},
       };
       expect(utils.hasCheckpoint(workload)).toBe(false);
     });
@@ -101,8 +100,8 @@ describe('Workload Utilities', () => {
         batchNum: 100,
         checkpoint: { state: CheckpointState.Active, totalBatches: 100 },
         key: 'step',
+        metrics: { training: { totalBatches: 100 } },
         startTime: '2021-11-29T00:00:00Z',
-        training: { totalBatches: 100 },
       };
       expect(utils.hasCheckpointStep(step)).toBe(true);
     });
@@ -112,8 +111,8 @@ describe('Workload Utilities', () => {
         batchNum: 100,
         checkpoint: { state: CheckpointState.Deleted, totalBatches: 100 },
         key: 'step',
+        metrics: { training: { totalBatches: 100 } },
         startTime: '2021-11-29T00:00:00Z',
-        training: { totalBatches: 100 },
       };
       expect(utils.hasCheckpointStep(step)).toBe(false);
     });
@@ -125,32 +124,38 @@ describe('Workload Utilities', () => {
       const expected = [
         {
           batchNum: 100,
-          training: {
-            metrics: { accuracy: 0.9, loss: 0.1 },
-            totalBatches: 100,
+          metrics: {
+            training: {
+              metrics: { accuracy: 0.9, loss: 0.1 },
+              totalBatches: 100,
+            },
           },
         },
         {
           batchNum: 200,
-          training: {
-            metrics: { accuracy: 0.91, loss: 0.09 },
-            totalBatches: 200,
-          },
-          validation: {
-            metrics: { accuracy: 0.81, loss: 0.19 },
-            totalBatches: 200,
+          metrics: {
+            training: {
+              metrics: { accuracy: 0.91, loss: 0.09 },
+              totalBatches: 200,
+            },
+            validation: {
+              metrics: { accuracy: 0.81, loss: 0.19 },
+              totalBatches: 200,
+            },
           },
         },
         {
           batchNum: 300,
           checkpoint: { state: 'ACTIVE', totalBatches: 300 },
-          training: {
-            metrics: { accuracy: 0.91, loss: 0.09 },
-            totalBatches: 300,
-          },
-          validation: {
-            metrics: { accuracy: 0.81, loss: 0.19 },
-            totalBatches: 300,
+          metrics: {
+            training: {
+              metrics: { accuracy: 0.91, loss: 0.09 },
+              totalBatches: 300,
+            },
+            validation: {
+              metrics: { accuracy: 0.81, loss: 0.19 },
+              totalBatches: 300,
+            },
           },
         },
       ];

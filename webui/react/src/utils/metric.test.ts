@@ -4,43 +4,47 @@ import * as utils from './metric';
 
 const workloads: WorkloadGroup[] = [
   {
-    training: {
-      metrics: { accuracy: 0.9, loss: 0.1 },
-      totalBatches: 100,
+    metrics: {
+      training: {
+        metrics: { accuracy: 0.9, loss: 0.1 },
+        totalBatches: 100,
+      },
     },
   },
   {
-    training: {
-      metrics: { accuracy: 0.91, loss: 0.09 },
-      totalBatches: 200,
-    },
-    validation: {
-      metrics: { accuracy: 0.81, loss: 0.19 },
-      totalBatches: 200,
+    metrics: {
+      training: {
+        metrics: { accuracy: 0.91, loss: 0.09 },
+        totalBatches: 200,
+      },
+      validation: {
+        metrics: { accuracy: 0.81, loss: 0.19 },
+        totalBatches: 200,
+      },
     },
   },
 ];
 
 const metrics = [
   {
-    metric: { name: 'accuracy', type: MetricType.Training },
+    metric: { group: MetricType.Training, name: 'accuracy' },
     str: '[T] accuracy',
-    value: `${MetricType.Training}|accuracy`,
+    value: '{"group":"training","name":"accuracy"}',
   },
   {
-    metric: { name: 'loss', type: MetricType.Training },
+    metric: { group: MetricType.Training, name: 'loss' },
     str: '[T] loss',
-    value: `${MetricType.Training}|loss`,
+    value: '{"group":"training","name":"loss"}',
   },
   {
-    metric: { name: 'accuracy', type: MetricType.Validation },
+    metric: { group: MetricType.Validation, name: 'accuracy' },
     str: '[V] accuracy',
-    value: `${MetricType.Validation}|accuracy`,
+    value: '{"group":"validation","name":"accuracy"}',
   },
   {
-    metric: { name: 'loss', type: MetricType.Validation },
+    metric: { group: MetricType.Validation, name: 'loss' },
     str: '[V] loss',
-    value: `${MetricType.Validation}|loss`,
+    value: '{"group":"validation","name":"loss"}',
   },
 ];
 
@@ -48,10 +52,10 @@ describe('Metric Utilities', () => {
   describe('extractMetrics', () => {
     it('should extract metric names from workloads', () => {
       const result = [
-        { name: 'accuracy', type: MetricType.Validation },
-        { name: 'loss', type: MetricType.Validation },
-        { name: 'accuracy', type: MetricType.Training },
-        { name: 'loss', type: MetricType.Training },
+        { group: MetricType.Training, name: 'accuracy' },
+        { group: MetricType.Training, name: 'loss' },
+        { group: MetricType.Validation, name: 'accuracy' },
+        { group: MetricType.Validation, name: 'loss' },
       ];
       expect(utils.extractMetrics(workloads)).toStrictEqual(result);
     });
@@ -103,8 +107,8 @@ describe('Metric Utilities', () => {
 
     it('should truncate metric string to 30 characters', () => {
       const metric = {
+        group: MetricType.Training,
         name: 'very-very-very-very-very-very-long-metric-name',
-        type: MetricType.Training,
       };
       expect(utils.metricToStr(metric, 20)).toBe('[T] very-very-very-very-...');
     });
@@ -126,8 +130,10 @@ describe('Metric Utilities', () => {
     });
 
     it('should handle invalid metric name value', () => {
-      expect(utils.metricKeyToMetric('invalidMetricValue')).toBeUndefined();
-      expect(utils.metricKeyToMetric('fauxMetricType|loss')).toBeUndefined();
+      expect(utils.metricKeyToMetric('invalidMetricValue')).toEqual({
+        group: 'invalidMetricValue',
+        name: 'invalidMetricValue',
+      });
     });
   });
 });
