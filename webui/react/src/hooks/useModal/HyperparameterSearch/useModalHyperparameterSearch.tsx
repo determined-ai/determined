@@ -134,7 +134,7 @@ const useModalHyperparameterSearch = ({
     const fields: Record<string, Primitive | HyperparameterRowValues> = form.getFieldsValue(true);
 
     // Deep cloning parent experiment's config
-    const baseConfig = clone(experiment.configRaw, true);
+    const baseConfig = clone(experiment.configRaw);
 
     // Replacing fields from orginial config with user-selected values
     baseConfig.name = (fields.name as string).trim();

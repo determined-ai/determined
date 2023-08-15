@@ -157,7 +157,7 @@ describe('Data Utilities', () => {
     });
 
     it('should clone shallow objects', () => {
-      const shallowClone = utils.clone(object, false);
+      const shallowClone = utils.clone(object);
       expect(shallowClone).not.toBe(object);
       expect(shallowClone.c).toBe(object.c);
       expect(shallowClone.c.x).toBe(object.c.x);

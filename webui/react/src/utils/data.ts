@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Json, JsonArray, JsonObject, Primitive, RawJson, RecordKey, UnknownRecord } from 'types';
+import 'core-js/actual/structured-clone';
 
 // `bigint` is not support yet for
 
@@ -40,11 +41,8 @@ export const isSyncFunction = (fn: unknown): boolean => {
   return isFunction(fn) && !isAsyncFunction(fn);
 };
 
-export const clone = (data: any, deep = true): any => {
-  if (isPrimitive(data)) return data;
-  if (isMap(data)) return new Map(data);
-  if (isSet(data)) return new Set(data);
-  return deep ? JSON.parse(JSON.stringify(data)) : { ...data };
+export const clone = (data: any): any => {
+  return structuredClone(data);
 };
 
 export const hasObjectKeys = (data: unknown): boolean => {
