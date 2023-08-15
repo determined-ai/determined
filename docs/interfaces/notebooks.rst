@@ -111,8 +111,8 @@ To kill a notebook, you need its ID, which can be found using the ``list`` comma
  WebUI
 *******
 
-You can also start a Notebook from the WebUI. To do this, navigate to the **Tasks** pane and then
-select **Launch JupyterLab**.
+You can also start a Notebook from the WebUI. To do this, go to the **Tasks** pane and then select
+**Launch JupyterLab**.
 
 .. note::
 

@@ -38,8 +38,8 @@ In the next window you will input an "App Name" and select the Workspace for the
 *************************************
 
 Next, we need to configure incoming webhooks for our Slack application. In your Slack application's
-management page navigate to the **Incoming Webhooks** section. Enable the toggle for **Activate
-Incoming Webhooks** as shown below.
+management page go to the **Incoming Webhooks** section. Enable the toggle for **Activate Incoming
+Webhooks** as shown below.
 
 .. image:: /assets/images/slack-incoming-webhooks-page.jpeg
    :width: 100%
@@ -116,8 +116,8 @@ for. Finally, select **Create Webhook** and your webhook will be created.
  Testing the Webhook
 *********************
 
-To test a Slack webhook in Determined navigate to the Webhooks page and click on the three vertical
-dots on the right side of any of the listed webhooks.
+To test a Slack webhook in Determined go to the Webhooks page and click on the three vertical dots
+on the right side of any of the listed webhooks.
 
 .. image:: /assets/images/test-webhook.png
    :width: 100%

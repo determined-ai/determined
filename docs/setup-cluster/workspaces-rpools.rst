@@ -48,7 +48,7 @@ An administrator who is an Admin in Determined or a user with the Cluster Admin 
 Determined Enterprise Edition) can change resource pool bindings in the WebUI by following these
 steps:
 
--  Navigate to the Cluster option in the left menu pane.
+-  Go to the Cluster option in the left menu pane.
 -  Click the options "..." menu of the resource pool you want to bind.
 -  Select **Manage bindings** from the menu.
 -  On the right side, choose the workspace you want to bind by clicking on it in the available
