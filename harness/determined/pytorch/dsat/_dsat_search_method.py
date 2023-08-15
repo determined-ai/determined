@@ -824,7 +824,9 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             elif isinstance(v, list) and isinstance(v[0], bool):
                 zero_optim_dict[k] = random.choice(v)
             elif isinstance(v, list) and isinstance(v[0], int):
-                zero_optim_dict[k] = random.randint(*v)
+                # Force the random number to be even, as odd allgather_bucket_size vals error out.
+                rand_even_val = 2 * (random.randint(*v) // 2)
+                zero_optim_dict[k] = rand_even_val
             else:
                 raise ValueError(f"Unexpected key, value: {k}, {v}")
         # Other search ranges are dynamically determined based on heuristics.
