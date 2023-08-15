@@ -20,64 +20,65 @@ ON trials
 FOR EACH ROW EXECUTE PROCEDURE stream_trial_seq_modify();
 
 -- helper function to create trial jsonb object for streaming
-CREATE OR REPLACE FUNCTION stream_trial_body(name text, trial jsonb, project_id integer) RETURNS jsonb AS $$
+CREATE OR REPLACE FUNCTION stream_trial_notify(
+    old jsonb, oldproj integer, new jsonb, newproj integer
+) RETURNS integer AS $$
 DECLARE
-    temp jsonb;
+    output jsonb = NULL;
+    temp jsonb = NULL;
 BEGIN
-    temp := trial || jsonb_object_agg('project_id', project_id);
-    return jsonb_object_agg(name, temp);
+    IF old IS NOT NULL THEN
+        temp = old || jsonb_object_agg('project_id', oldproj);
+        output = jsonb_object_agg('old', temp);
+    END IF;
+    IF new IS NOT NULL THEN
+        temp = new || jsonb_object_agg('project_id', newproj);
+        IF output IS NULL THEN
+            output = jsonb_object_agg('new', temp);
+        ELSE
+            output = output || jsonb_object_agg('new', temp);
+        END IF;
+    END IF;
+    PERFORM pg_notify('stream_trial_chan', output::text);
+    -- seems necessary I guess
+    return 0;
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger function to NOTIFY the master of changes, for INSERT and UPDATE.
--- This should fire AFTER so that it is guaranteed to emit the final row value.
-CREATE OR REPLACE FUNCTION stream_trial_iu() RETURNS TRIGGER AS $$
+-- Trigger function to NOTIFY the master of changes, for INSERT/UPDATE/DETELE.
+CREATE OR REPLACE FUNCTION stream_trial_change() RETURNS TRIGGER AS $$
 DECLARE
     proj integer;
 BEGIN
-    proj := project_id from experiments where experiments.id = NEW.experiment_id;
-    PERFORM pg_notify(
-        'stream_trial_chan',
-        (
-            stream_trial_body('old', to_jsonb(OLD), proj)
-            || stream_trial_body('new', to_jsonb(NEW), proj)
-        )::text
-    );
-    -- return value for AFTER triggers is ignored
+    IF (TG_OP = 'INSERT') THEN
+        proj = project_id from experiments where experiments.id = NEW.experiment_id;
+        PERFORM stream_trial_notify(NULL, NULL, to_jsonb(NEW), proj);
+    ELSEIF (TG_OP = 'UPDATE') THEN
+        proj = project_id from experiments where experiments.id = NEW.experiment_id;
+        PERFORM stream_trial_notify(to_jsonb(OLD), proj, to_jsonb(NEW), proj);
+    ELSEIF (TG_OP = 'DELETE') THEN
+        proj = project_id from experiments where experiments.id = OLD.experiment_id;
+        PERFORM stream_trial_notify(to_jsonb(OLD), proj, NULL, NULL);
+        -- DELETEs trigger BEFORE, and must return a non-NULL value.
+        return OLD;
+    END IF;
     return NULL;
 END;
 $$ LANGUAGE plpgsql;
---
+-- INSERT and UPDATE should fire AFTER to guarantee to emit the final row value.
 DROP TRIGGER IF EXISTS stream_trial_trigger_iu ON trials;
 CREATE TRIGGER stream_trial_trigger_iu
 AFTER INSERT OR UPDATE OF
     state, start_time, end_time, runner_state, restarts, tags
 ON trials
-FOR EACH ROW EXECUTE PROCEDURE stream_trial_iu();
-
--- Trigger function to NOTIFY the master of changes, for DELETE.
--- This should fire BEFORE so that it is guaranteed we still have access to the
--- relevant experiment to look up the project_id.
-CREATE OR REPLACE FUNCTION stream_trial_d() RETURNS TRIGGER AS $$
-DECLARE
-    project_id integer;
-BEGIN
-    project_id = project_id from experiments where experiment_id = OLD.id;
-    PERFORM pg_notify(
-        'stream_trial_chan',
-        stream_trial_body('old', to_jsonb(OLD), project_id)::text
-    );
-    -- return any non-NULL value, because NULL would stop the DELETE from happening.
-    return OLD;
-END;
-$$ LANGUAGE plpgsql;
---
+FOR EACH ROW EXECUTE PROCEDURE stream_trial_change();
+-- DELETE should fire BEFORE to guarantee the experiment still exists to grab the project_id.
 DROP TRIGGER IF EXISTS stream_trial_trigger_d ON trials;
 CREATE TRIGGER stream_trial_trigger_d
 BEFORE DELETE ON trials
-FOR EACH ROW EXECUTE PROCEDURE stream_trial_d();
+FOR EACH ROW EXECUTE PROCEDURE stream_trial_change();
 
--- Trigger for detecting trial ownership changes based derived from experiments.project_id.
+-- Trigger for detecting trial ownership changes derived from experiments.project_id.
 CREATE OR REPLACE FUNCTION stream_trial_ownership() RETURNS TRIGGER AS $$
 DECLARE
     trial RECORD;
@@ -89,13 +90,7 @@ BEGIN
         trial.seq = nextval('stream_trial_seq');
         UPDATE trials SET seq = trial.seq where id = trial.id;
         jtrial = to_jsonb(trial);
-        PERFORM pg_notify(
-            'stream_trial_chan',
-            (
-                stream_trial_body('old', jtrial, OLD.project_id)
-                || stream_trial_body('new', jtrial, NEW.project_id)
-            )::text
-        );
+        PERFORM stream_trial_notify(jtrial, OLD.project_id, jtrial, NEW.project_id);
     END LOOP;
     -- return value for AFTER triggers is ignored
     return NULL;
