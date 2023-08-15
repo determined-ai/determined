@@ -66,8 +66,8 @@ This will start a master and an agent on that machine. To verify that the master
 navigate to ``http://<master-hostname>:8080`` in a browser, which should bring up the Determined
 WebUI. If you're using your local machine, for example, navigate to ``http://localhost:8080``.
 
-In the WebUI, navigate to the ``Cluster`` page. You should now see slots available (either CPU or
-GPU, depending on what hardware is available on the machine).
+In the WebUI, go to the ``Cluster`` page. You should now see slots available (either CPU or GPU,
+depending on what hardware is available on the machine).
 
 For single-agent clusters launched with:
 
