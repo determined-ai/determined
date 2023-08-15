@@ -1,5 +1,5 @@
 pillow
-rstfmt==0.0.12
+rstfmt==0.0.14
 sphinx==4.2.0
 
 # Plugins
