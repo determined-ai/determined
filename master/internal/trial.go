@@ -273,6 +273,7 @@ func (t *trial) SetUserInitiatedEarlyExit(req userInitiatedEarlyExit) error {
 				if err != nil {
 					t.syslog.WithError(err).Error("error patching state")
 				}
+				t.Exit()
 			case <-ctx.Done():
 			}
 		})
