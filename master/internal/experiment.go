@@ -732,6 +732,11 @@ func (e *experiment) processOperations(
 		e.syslog.Debugf("handling searcher op: %v", operation)
 		switch op := operation.(type) {
 		case searcher.Create:
+			_, ok := e.trials[op.RequestID]
+			if ok {
+				e.syslog.Errorf("trial %s already exists", op.RequestID)
+				continue
+			}
 			checkpoint, err := e.checkpointForCreate(op)
 			if err != nil {
 				e.updateState(model.StateWithReason{
@@ -740,11 +745,6 @@ func (e *experiment) processOperations(
 						"hp search unable to get checkpoint for new trial with error %v", err),
 				})
 				e.syslog.Error(err)
-				continue
-			}
-			_, ok := e.trials[op.RequestID]
-			if ok {
-				e.syslog.Errorf("trial %s already exists", op.RequestID)
 				continue
 			}
 			config := schemas.Copy(e.activeConfig)
