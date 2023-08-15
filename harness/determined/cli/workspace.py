@@ -280,8 +280,8 @@ def edit_workspace(args: Namespace) -> None:
         name=args.name,
         agentUserGroup=agent_user_group,
         checkpointStorageConfig=checkpoint_storage,
-        defaultComputeResourcePool=args.default_compute_pool,
-        defaultAuxResourcePool=args.default_aux_pool,
+        defaultComputePool=args.default_compute_pool,
+        defaultAuxPool=args.default_aux_pool,
     )
     w = bindings.patch_PatchWorkspace(sess, body=updated, id=current.id).workspace
 
@@ -321,7 +321,6 @@ DEFAULT_POOL_ARGS = [
         help="name of the pool to set as the default auxiliary pool",
     ),
 ]
-
 
 # do not use util.py's pagination_args because behavior here is
 # to hide pagination and unify all pages of experiments into one output
