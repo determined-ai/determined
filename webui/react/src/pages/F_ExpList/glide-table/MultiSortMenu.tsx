@@ -151,6 +151,7 @@ const DirectionOptions: React.FC<DirectionOptionsProps> = ({ onChange, type, val
 const ColumnOptions: React.FC<ColumnOptionsProps> = ({ onChange, columns, value }) => (
   <Select
     autoFocus
+    dropdownMatchSelectWidth={300}
     loading={Loadable.isLoading(columns)}
     options={Loadable.getOrElse([], columns)
       .filter((c) => !BANNED_SORT_COLUMNS.has(c.column))

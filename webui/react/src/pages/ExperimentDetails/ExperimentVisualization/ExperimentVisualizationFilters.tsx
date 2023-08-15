@@ -185,7 +185,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
             label="Batches Processed"
             searchable={false}
             value={filters.batch}
-            width={70}
+            width={100}
             onChange={handleBatchChange}>
             {batches.map((batch) => (
               <Option key={batch} value={batch}>
