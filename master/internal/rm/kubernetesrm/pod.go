@@ -170,7 +170,6 @@ func newPod(
 }
 
 func (p *pod) start() error {
-	// TOOD(!!!): handle what the restore
 	if p.restore {
 		if p.container.State == cproto.Running {
 			err := p.startPodLogStreamer()
@@ -362,7 +361,7 @@ func (p *pod) createPodSpecAndSubmit() error {
 }
 
 func (p *pod) receiveResourceCreationFailed(msg resourceCreationFailed) {
-	p.syslog.WithError(msg.err).Error("pod notified that resource creation failed")
+	p.syslog.WithError(msg.err).Error("pod handler notified that resource creation failed")
 	p.insertLog(time.Now().UTC(), msg.err.Error())
 }
 
@@ -372,7 +371,7 @@ func (p *pod) receiveResourceCreationCancelled() {
 }
 
 func (p *pod) receiveResourceDeletionFailed(err resourceDeletionFailed) {
-	p.syslog.WithError(err.err).Error("pod notified that resource deletion failed")
+	p.syslog.WithError(err.err).Error("pod handler notified that resource deletion failed")
 }
 
 func (p *pod) finalizeTaskState() {
@@ -387,7 +386,7 @@ func (p *pod) finalizeTaskState() {
 
 		p.informTaskResourcesStopped(sproto.ResourcesError(
 			sproto.TaskError,
-			errors.New("pod exited while pod was running"),
+			errors.New("pod handler exited while pod was running"),
 		))
 	}
 }

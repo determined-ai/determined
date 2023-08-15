@@ -32,24 +32,50 @@ func startMockPod(requestQueue *requestQueue) *mockPod {
 	return m
 }
 
-func defaultErrorHandler(e resourcesRequestFailure) {
-	switch e := e.(type) {
-	case resourceCreationFailed:
-		logrus.Errorf("defaultErrorHandler resource creation failed: %v", e)
-	case resourceDeletionFailed:
-		logrus.Errorf("defaultErrorHandler resource deletion failed: %v", e)
-	case resourceCreationCancelled:
-		logrus.Infof("defaultErrorHandler resource deletion failed: %v", e)
-	default:
-		panic(fmt.Sprintf("unexpected error %T", e))
-	}
-}
-
 func runDefaultErrorHandler(ctx context.Context, failures <-chan resourcesRequestFailure) {
 	for {
 		select {
 		case failure := <-failures:
-			defaultErrorHandler(failure)
+			switch e := failure.(type) {
+			case resourceCreationFailed:
+				logrus.Errorf("defaultErrorHandler resource creation failed: %v", e)
+			case resourceDeletionFailed:
+				logrus.Errorf("defaultErrorHandler resource deletion failed: %v", e)
+			case resourceCreationCancelled:
+				logrus.Infof("defaultErrorHandler resource deletion failed: %v", e)
+			default:
+				panic(fmt.Sprintf("unexpected error %T", e))
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func consumeResourceRequestFailures(
+	ctx context.Context,
+	failures <-chan resourcesRequestFailure,
+	ref *pod,
+) {
+	for {
+		select {
+		case failure := <-failures:
+			switch e := failure.(type) {
+			case resourceCreationFailed:
+				logrus.Errorf("defaultErrorHandler resource creation failed: %v", e)
+				ref.receiveResourceCreationFailed(e)
+				ref.finalize()
+			case resourceDeletionFailed:
+				logrus.Errorf("defaultErrorHandler resource deletion failed: %v", e)
+				ref.receiveResourceDeletionFailed(e)
+				ref.finalize()
+			case resourceCreationCancelled:
+				logrus.Infof("defaultErrorHandler resource deletion failed: %v", e)
+				ref.receiveResourceCreationCancelled()
+				ref.finalize()
+			default:
+				panic(fmt.Sprintf("unexpected error %T", e))
+			}
 		case <-ctx.Done():
 			return
 		}
