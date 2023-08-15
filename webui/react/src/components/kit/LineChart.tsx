@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import React, { ReactNode, useMemo, useRef } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
@@ -17,7 +18,6 @@ import MetricBadgeTag from 'components/MetricBadgeTag';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
-import { isEqual } from 'utils/data';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import css from './LineChart.module.scss';
@@ -368,7 +368,7 @@ export const calculateChartProps = (
   if (!isLoaded) {
     // When trial metrics hasn't loaded metric names or individual trial metrics.
     return NotLoaded;
-  } else if (!chartDataIsLoaded || !isEqual(selectedMetrics, metrics)) {
+  } else if (!chartDataIsLoaded || !_.isEqual(selectedMetrics, metrics)) {
     // In some cases the selectedMetrics returned may not be up to date
     // with the metrics selected by the user. In this case we want to
     // show a loading state until the metrics match.
@@ -393,9 +393,19 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     const chartGridRef = useRef<HTMLDivElement | null>(null);
     const { width, height } = useResize(chartGridRef);
     const columnCount = Math.max(1, Math.floor(width / 540));
-    const chartsProps = Loadable.isLoadable(propChartsProps)
-      ? Loadable.getOrElse([], propChartsProps)
-      : propChartsProps;
+    const chartsProps = (
+      Loadable.isLoadable(propChartsProps)
+        ? Loadable.getOrElse([], propChartsProps)
+        : propChartsProps
+    ).filter(
+      (c) =>
+        // filter out Loadable series which are Loaded yet have no serie with more than 0 points.
+        !Loadable.isLoadable(c.series) ||
+        !Loadable.isLoaded(c.series) ||
+        Loadable.getOrElse([], c.series).find((serie) =>
+          Object.entries(serie.data).find(([, points]) => points.length > 0),
+        ),
+    );
     const isLoading = Loadable.isLoadable(propChartsProps) && Loadable.isLoading(propChartsProps);
     // X-Axis control
 

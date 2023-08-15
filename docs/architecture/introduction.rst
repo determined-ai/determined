@@ -94,8 +94,8 @@ scheduler. Queue Management, described in detail in the following sections, show
 and their states and lets you modify some configuration options, such as priority, position in the
 queue, and resource pool.
 
-To begin managing job queues, navigate to the WebUI ``Job Queue`` section or use the ``det job`` set
-of CLI commands.
+To begin managing job queues, go to the WebUI ``Job Queue`` section or use the ``det job`` set of
+CLI commands.
 
 Model Registry
 ==============

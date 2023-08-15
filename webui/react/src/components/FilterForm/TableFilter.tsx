@@ -69,7 +69,7 @@ const TableFilter = ({
         open={isOpenFilter}
         onOpenChange={onIsOpenFilterChange}>
         <Button hideChildren={isMobile} icon={<Icon decorative name="filter" />}>
-          Filter{fieldCount > 0 && <span>({fieldCount})</span>}
+          Filter {fieldCount > 0 && `(${fieldCount})`}
         </Button>
       </Dropdown>
     </div>
