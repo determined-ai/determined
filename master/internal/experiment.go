@@ -740,7 +740,7 @@ func (e *experiment) processOperations(
 						"hp search unable to get checkpoint for new trial with error %v", err),
 				})
 				e.syslog.Error(err)
-				return
+				continue
 			}
 			_, ok := e.trials[op.RequestID]
 			if ok {
