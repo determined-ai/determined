@@ -1155,6 +1155,10 @@ func (m *DispatcherResourceManager) DispatchStateChange(msg DispatchStateChange)
 
 	log := m.syslog.WithField("dispatch-id", msg.DispatchID)
 	task := m.getAssociatedTask(log, msg.DispatchID)
+	if task == nil {
+		return
+	}
+
 	alloc := m.reqList.Allocation(task.AllocationID)
 	if len(alloc.Resources) != 1 {
 		log.Warnf("allocation has malformed resources: %v", alloc)
