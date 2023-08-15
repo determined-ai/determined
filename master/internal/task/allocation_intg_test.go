@@ -11,8 +11,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -27,7 +25,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
@@ -73,16 +70,7 @@ func TestAllocation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			rm, _, a := setup(t)
 
-			mockRM := &mocks.ResourceManager{}
-			mockRM.On("GetResourcePools", mock.Anything, mock.Anything).Return(
-				&apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{}},
-				nil,
-			)
-			telemetry.InitTelemetry(
-				actor.NewSystem(t.Name()), &db.PgDB{},
-				mockRM, "1",
-				config.TelemetryConfig{Enabled: true, SegmentMasterKey: "Test"},
-			)
+			telemetry.MockTelemetry()
 
 			// Pre-allocated stage.
 			mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {

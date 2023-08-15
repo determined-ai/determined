@@ -9,21 +9,15 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	m "github.com/stretchr/testify/mock"
 	"gotest.tools/assert"
 
 	. "github.com/determined-ai/determined/master/internal/config/provconfig"
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner/scaledecider"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/config"
 	errInfo "github.com/determined-ai/determined/master/pkg/errors"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
 type TestInstanceType struct {
@@ -219,16 +213,7 @@ func TestProvisionerScaleUp(t *testing.T) {
 	}
 
 	mock, _ := newMockEnvironment(t, setup)
-	mockRM := &mocks.ResourceManager{}
-	mockRM.On("GetResourcePools", m.Anything, m.Anything).Return(
-		&apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{}},
-		nil,
-	)
-	telemetry.InitTelemetry(
-		mock.system, &db.PgDB{},
-		mockRM, "1",
-		config.TelemetryConfig{Enabled: true, SegmentMasterKey: "Test"},
-	)
+	telemetry.MockTelemetry()
 
 	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
 	mock.provisioner.Provision()

@@ -7,19 +7,36 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/mock"
 	"gopkg.in/segmentio/analytics-go.v3"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
 const (
 	minTickIntervalMins = 10
 	maxTickIntervalMins = 60
 )
+
+// MockTelemetry: TBD, but putting this here for now to export to other tests.
+func MockTelemetry() {
+	mockRM := &mocks.ResourceManager{}
+	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).Return(
+		&apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{}},
+		nil,
+	)
+	mockDB := &mocks.DB{}
+	mockDB.On("PeriodicTelemetryInfo").Return([]byte{}, nil)
+	InitTelemetry(actor.NewSystem("Testing"), mockDB, mockRM, "1",
+		config.TelemetryConfig{Enabled: true, SegmentMasterKey: "Test"},
+	)
+}
 
 // telemetryRPFetcher exists mainly to avoid an annoying import cycle.
 type telemetryRPFetcher interface {

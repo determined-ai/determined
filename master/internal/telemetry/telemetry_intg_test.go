@@ -5,27 +5,26 @@ package telemetry
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-/*
-	func setup(t *testing.T) {
-		InitTelemetry(
-			actor.NewSystem(t.Name()),
-			*db.PgDB{},
-			&mockRM{}, "1",
-			config.TelemetryConfig{Enabled: true},
-		)
-	}
-*/
-func TestTelemetry(t *testing.T) {
-	// TODO CAROLINA.
-	// Test w/out InitTelemetry.
-	// setup(t)
-	// assert.NotNil(DefaultTelemetry)
+func setup(t *testing.T) {
+	MockTelemetry()
+}
 
-	// Test w InitTelemetry.
+func TestTelemetry(t *testing.T) {
+	setup(t)
+	assert.NotNil(t, DefaultTelemetry)
 
 	// Test out all Reports.
+	// ReportMasterTick(&apiv1.GetResourcePoolsResponse{}, &db.PgDB{})
+
+	// ReportProvisionerTick([]*model.Instance{}, "test-instance")
+
+	// ReportExperimentCreated(1, expconf.ExperimentConfig{})
+
+	// gReportAllocationTerminal(&db.PgDB{}, a model.Allocation, d *device.Device,)
 
 	// Check that client enqueue is correct.
 }

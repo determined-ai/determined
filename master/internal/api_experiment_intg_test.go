@@ -35,8 +35,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks"
 	modelauth "github.com/determined-ai/determined/master/internal/model"
 	"github.com/determined-ai/determined/master/internal/telemetry"
-	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -46,7 +44,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
-	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
@@ -217,16 +214,7 @@ resources:
 		ProjectId:       1,
 	}
 
-	mockRM := &mocks.ResourceManager{}
-	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).Return(
-		&apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{}},
-		nil,
-	)
-	telemetry.InitTelemetry(
-		actor.NewSystem(t.Name()), &db.PgDB{},
-		mockRM, "1",
-		config.TelemetryConfig{Enabled: true, SegmentMasterKey: "Test"},
-	)
+	telemetry.MockTelemetry()
 
 	// No checkpoint specified anywhere.
 	_, err := api.CreateExperiment(ctx, createReq)
