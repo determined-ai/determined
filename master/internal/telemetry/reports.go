@@ -50,7 +50,7 @@ func ReportMasterTick(resp *apiv1.GetResourcePoolsResponse, db db.DB) {
 		return
 	}
 
-	TelemetryActor.track(
+	DefaultTelemeter.track(
 		analytics.Track{
 			Event:      "master_tick",
 			Properties: props,
@@ -59,7 +59,7 @@ func ReportMasterTick(resp *apiv1.GetResourcePoolsResponse, db db.DB) {
 
 // ReportProvisionerTick reports the state of all provision requests by a provisioner.
 func ReportProvisionerTick(instances []*model.Instance, instanceType string) {
-	TelemetryActor.track(
+	DefaultTelemeter.track(
 		analytics.Track{
 			Event: "provisioner_tick",
 			Properties: map[string]interface{}{
@@ -71,7 +71,7 @@ func ReportProvisionerTick(instances []*model.Instance, instanceType string) {
 
 // ReportExperimentCreated reports that an experiment has been created.
 func ReportExperimentCreated(id int, config expconf.ExperimentConfig) {
-	TelemetryActor.track(
+	DefaultTelemeter.track(
 		analytics.Track{
 			Event: "experiment_created",
 			Properties: map[string]interface{}{
@@ -112,7 +112,7 @@ func ReportAllocationTerminal(db db.DB, a model.Allocation, d *device.Device,
 		return
 	}
 
-	TelemetryActor.track(
+	DefaultTelemeter.track(
 		analytics.Track{
 			Event:      "allocation_terminal",
 			Properties: props,
@@ -161,7 +161,7 @@ func ReportExperimentStateChanged(db *db.PgDB, e *model.Experiment) {
 		totalStepTime = fetchTotalStepTime(db, e.ID)
 	}
 
-	TelemetryActor.track(
+	DefaultTelemeter.track(
 		analytics.Track{
 			Event: "experiment_state_changed",
 			Properties: map[string]interface{}{
@@ -179,7 +179,7 @@ func ReportExperimentStateChanged(db *db.PgDB, e *model.Experiment) {
 
 // ReportUserCreated reports that a user has been created.
 func ReportUserCreated(admin, active bool) {
-	TelemetryActor.track(
+	DefaultTelemeter.track(
 		analytics.Track{
 			Event: "user_created",
 			Properties: map[string]interface{}{

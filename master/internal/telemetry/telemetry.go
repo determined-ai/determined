@@ -29,8 +29,8 @@ type telemetryRPFetcher interface {
 	) (*apiv1.GetResourcePoolsResponse, error)
 }
 
-// Telemetry manages gathering and sending telemetry data.
-type Telemetry struct {
+// Telemeter manages gathering and sending telemetry data.
+type Telemeter struct {
 	db        db.DB
 	rm        telemetryRPFetcher
 	client    analytics.Client
@@ -38,16 +38,16 @@ type Telemetry struct {
 	syslog    *logrus.Entry
 }
 
-// TelemetryActor is the global telemetry singleton.
-var TelemetryActor *Telemetry
+// DefaultTelemeter is the global telemetry singleton.
+var DefaultTelemeter *Telemeter
 
-// New creates an actor to handle collecting and sending telemetry information.
+// New initializes a Telemetry struct and returns it. Can error on Segment client init.
 func New(
 	db db.DB,
 	rm telemetryRPFetcher,
 	clusterID string,
 	segmentKey string,
-) (*Telemetry, error) {
+) (*Telemeter, error) {
 	client, err := analytics.NewWithConfig(
 		segmentKey,
 		analytics.Config{Logger: debugLogger{}},
@@ -66,12 +66,12 @@ func New(
 	}
 
 	syslog := logrus.WithFields(logrus.Fields{
-		"component":  fmt.Sprintf("telemetry-actor"),
+		"component":  fmt.Sprintf("telemetry"),
 		"clusterID":  clusterID,
 		"segmentKey": segmentKey,
 	})
 
-	return &Telemetry{
+	return &Telemeter{
 		db:        db,
 		rm:        rm,
 		client:    client,
@@ -80,7 +80,7 @@ func New(
 	}, nil
 }
 
-// Init sets up the actor for the telemetry.
+// Init sets up the Telemetry singleton.
 func Init(
 	system *actor.System,
 	db db.DB,
@@ -88,8 +88,8 @@ func Init(
 	clusterID string,
 	conf config.TelemetryConfig,
 ) {
-	if TelemetryActor != nil {
-		logrus.Warn(`detected re-initialization of Telemetry actor `,
+	if DefaultTelemeter != nil {
+		logrus.Warn(`detected re-initialization of Telemetry singleton `,
 			`that should never occur outside of tests`)
 		return
 	}
@@ -99,7 +99,7 @@ func Init(
 		return
 	}
 
-	actorDef, err := New(
+	telemetryDef, err := New(
 		db,
 		rm,
 		clusterID,
@@ -110,14 +110,14 @@ func Init(
 		return
 	}
 
-	TelemetryActor = actorDef
-	TelemetryActor.syslog.Info(`telemetry reporting is enabled; `,
+	DefaultTelemeter = telemetryDef
+	DefaultTelemeter.syslog.Info(`telemetry reporting is enabled; `,
 		`run with --telemetry-enabled=false to disable`)
-	go TelemetryActor.tick(system)
+	go DefaultTelemeter.tick(system)
 }
 
 // track adds track call objects to the analytics.Client interface.
-func (s *Telemetry) track(t analytics.Track) {
+func (s *Telemeter) track(t analytics.Track) {
 	if s == nil {
 		return
 	}
@@ -128,7 +128,7 @@ func (s *Telemetry) track(t analytics.Track) {
 	}
 }
 
-func (s *Telemetry) tick(system *actor.System) {
+func (s *Telemeter) tick(system *actor.System) {
 	if s == nil {
 		return
 	}
@@ -145,7 +145,7 @@ func (s *Telemetry) tick(system *actor.System) {
 	}
 }
 
-func (s *Telemetry) sleepInterval() time.Duration {
+func (s *Telemeter) sleepInterval() time.Duration {
 	bg := big.NewInt(maxTickIntervalMins - minTickIntervalMins)
 	randNum, err := rand.Int(rand.Reader, bg)
 	if err != nil {

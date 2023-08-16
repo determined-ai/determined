@@ -27,8 +27,8 @@ var queue []string
 func TestTelemetry(t *testing.T) {
 	// Mock out the telemetry actor & client interface.
 	InitTelemetryWithMocks()
-	assert.NotNil(t, TelemetryActor)
-	TelemetryActor.client = mockClient{}
+	assert.NotNil(t, DefaultTelemeter)
+	DefaultTelemeter.client = mockClient{}
 
 	// Should receive one master_tick event during Init(), reset queue after check.
 	time.Sleep(time.Second)
@@ -37,24 +37,24 @@ func TestTelemetry(t *testing.T) {
 	queue = []string{}
 
 	// Test out Tick & reset the queue.
-	go TelemetryActor.tick(actor.NewSystem("Testing"))
+	go DefaultTelemeter.tick(actor.NewSystem("Testing"))
 	time.Sleep(time.Second)
 	assert.Equal(t, []string{"master_tick"}, queue,
 		"queue didn't receive test tick")
 	queue = []string{}
 
 	// Test out Track & reset the queue.
-	TelemetryActor.track(analytics.Track{Event: "manual_call"})
+	DefaultTelemeter.track(analytics.Track{Event: "manual_call"})
 	time.Sleep(time.Second)
 	assert.Equal(t, []string{"manual_call"}, queue,
 		"queue didn't receive correct track call")
 	queue = []string{}
 
 	// Test out all Reports.
-	ReportMasterTick(&apiv1.GetResourcePoolsResponse{}, TelemetryActor.db)
+	ReportMasterTick(&apiv1.GetResourcePoolsResponse{}, DefaultTelemeter.db)
 	ReportProvisionerTick([]*model.Instance{}, "test-instance")
 	ReportExperimentCreated(1, schemas.WithDefaults(createExpConfig()))
-	ReportAllocationTerminal(TelemetryActor.db, model.Allocation{}, &device.Device{})
+	ReportAllocationTerminal(DefaultTelemeter.db, model.Allocation{}, &device.Device{})
 	ReportExperimentStateChanged(&db.PgDB{}, &model.Experiment{})
 	ReportUserCreated(true, true)
 	ReportUserCreated(false, false)
