@@ -1,4 +1,7 @@
+import base64
 import math
+import os
+import pathlib
 from typing import Callable
 from unittest import mock
 
@@ -209,3 +212,23 @@ def test_unarchive_doesnt_update_local_on_rest_failure(
         raise AssertionError("bindings API call should raise an exception")
     except bindings.APIHttpError:
         assert expref.archived is None
+
+
+@mock.patch("determined.common.api.bindings.get_GetModelDef")
+def test_download_code_writes_output_to_file(
+    mock_bindings: mock.MagicMock,
+    make_expref: Callable[[int], experiment.Experiment],
+    tmp_path: os.PathLike,
+) -> None:
+    expref = make_expref(1)
+    sample_tgz_content = base64.b64encode(b"b64TgzResponse").decode()
+    mock_bindings.return_value = bindings.v1GetModelDefResponse(b64Tgz=sample_tgz_content)
+    output_file = str(pathlib.Path(tmp_path) / "exp-1_model_def.tar.gz")
+
+    expref.download_code(output_dir=str(tmp_path))
+
+    assert pathlib.Path(output_file).exists()
+
+    with open(output_file, "rb") as f:
+        file_content = f.read()
+        assert file_content == b"b64TgzResponse"
