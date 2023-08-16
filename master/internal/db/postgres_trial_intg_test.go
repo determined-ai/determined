@@ -192,6 +192,7 @@ func validateSummaryMetrics(ctx context.Context, t *testing.T, trialID int,
 	query := `SELECT name,
 summary_metrics->'avg_metrics'->name->>'max' AS max,
 summary_metrics->'avg_metrics'->name->>'min' AS min,
+summary_metrics->'avg_metrics'->name->>'sum' AS sum,
 summary_metrics->'avg_metrics'->name->>'mean' AS mean,
 summary_metrics->'avg_metrics'->name->>'last' AS last,
 summary_metrics->'avg_metrics'->name->>'count' AS count,
@@ -243,11 +244,17 @@ func generateSummaryMetricsTestCases(
 		`[{"val_loss": 1.5}]`, archive,
 	)
 	expectedNumericMetrics := map[string]summaryMetrics{
-		"a": {Min: 1.0, Max: 2.0, Mean: (1.0 + 1.5 + 2.0) / 3, Count: 3, Last: "2", Type: "number"},
-		"b": {Min: -0.5, Max: 0.0, Mean: (-0.5 + 0.0) / 2, Count: 2, Type: "number"}, // empty last.
+		"a": {
+			Min: 1.0, Max: 2.0, Sum: 1.0 + 1.5 + 2.0, Mean: (1.0 + 1.5 + 2.0) / 3,
+			Count: 3, Last: "2", Type: "number",
+		},
+		"b": {
+			Min: -0.5, Max: 0.0, Sum: -0.5 + 0.0, Mean: (-0.5 + 0.0) / 2,
+			Count: 2, Type: "number",
+		}, // empty last.
 	}
 	expectedNumericValMetrics := map[string]summaryMetrics{
-		"val_loss": {Min: 1.5, Max: 1.5, Mean: 1.5, Count: 1, Last: "1.5", Type: "number"},
+		"val_loss": {Min: 1.5, Max: 1.5, Sum: 1.5, Mean: 1.5, Count: 1, Last: "1.5", Type: "number"},
 	}
 
 	onlyTrain := RequireMockTrialID(t, db, exp)
@@ -286,21 +293,21 @@ func generateSummaryMetricsTestCases(
 	)
 	expectedInfNaNMetrics := map[string]summaryMetrics{
 		"a": {
-			Min: math.NaN(), Max: math.NaN(), Mean: math.NaN(), Count: 2,
+			Min: math.NaN(), Max: math.NaN(), Sum: math.NaN(), Mean: math.NaN(), Count: 2,
 			Last: "1", Type: "number",
 		},
 		"b": {
-			Min: math.Inf(-1), Max: math.Inf(+1), Mean: math.NaN(), Count: 2,
+			Min: math.Inf(-1), Max: math.Inf(+1), Sum: math.NaN(), Mean: math.NaN(), Count: 2,
 			Last: "Infinity", Type: "number",
 		},
 	}
 	expectedInfNaNValMetrics := map[string]summaryMetrics{
 		"a": {
-			Min: math.NaN(), Max: math.NaN(), Mean: math.NaN(), Count: 2,
+			Min: math.NaN(), Max: math.NaN(), Sum: math.NaN(), Mean: math.NaN(), Count: 2,
 			Last: "NaN", Type: "number",
 		},
 		"b": {
-			Min: math.Inf(-1), Max: math.Inf(+1), Mean: math.NaN(), Count: 2,
+			Min: math.Inf(-1), Max: math.Inf(+1), Sum: math.NaN(), Mean: math.NaN(), Count: 2,
 			Last: "-Infinity", Type: "number",
 		},
 	}
@@ -320,7 +327,7 @@ func generateSummaryMetricsTestCases(
 		 "d":{"a":{}}, "e":true, "f":[1]}
 ]`, archive)
 	expectedTypesMetrics := map[string]summaryMetrics{
-		"a": {Min: 1.0, Max: 1.0, Mean: 1.0, Count: 2, Last: "1", Type: "number"},
+		"a": {Min: 1.0, Max: 1.0, Sum: 2.0, Mean: 1.0, Count: 2, Last: "1", Type: "number"},
 		"b": {Last: "1", Type: "string"}, // In last we can't tell apart 1 and "1".
 		"c": {Last: "2021-03-15T13:32:18.91626111111Z", Type: "date"},
 		"d": {Last: "{}", Type: "object"},
@@ -330,7 +337,7 @@ func generateSummaryMetricsTestCases(
 	}
 	expectedTypesValMetrics := map[string]summaryMetrics{
 		"a": {
-			Min: math.NaN(), Max: math.NaN(), Mean: math.NaN(), Count: 2,
+			Min: math.NaN(), Max: math.NaN(), Sum: math.NaN(), Mean: math.NaN(), Count: 2,
 			Last: "1.5", Type: "number",
 		},
 		"b": {Last: "true", Type: "string"},
@@ -401,6 +408,7 @@ type summaryMetrics struct {
 	Name  string
 	Min   float64
 	Max   float64
+	Sum   float64
 	Mean  float64
 	Count int
 	Last  any
@@ -457,11 +465,20 @@ func TestSummaryMetricsMigration(t *testing.T) {
 	// Verify metric is recomputed with new metrics added.
 	addMetricCustomTime(ctx, t, trialIDs[1], time.Now())
 	expectedTrain[1] = map[string]summaryMetrics{
-		"a": {Min: 1.0, Max: 2.0, Mean: (1.0 + 1.5 + 2.0) / 3, Count: 3, Type: "number"},
-		"b": {Min: -1.0, Max: 0.0, Mean: (-1.0 + -0.5 + 0.0) / 3, Count: 3, Last: "-1", Type: "number"},
+		"a": {
+			Min: 1.0, Max: 2.0, Sum: 1.0 + 1.5 + 2.0, Mean: (1.0 + 1.5 + 2.0) / 3,
+			Count: 3, Type: "number",
+		},
+		"b": {
+			Min: -1.0, Max: 0.0, Sum: -1.0 + -0.5 + 0.0, Mean: (-1.0 + -0.5 + 0.0) / 3,
+			Count: 3, Last: "-1", Type: "number",
+		},
 	}
 	expectedVal[1] = map[string]summaryMetrics{
-		"val_loss": {Min: 1.5, Max: 3.0, Mean: (1.5 + 3.0) / 2, Count: 2, Last: "3", Type: "number"},
+		"val_loss": {
+			Min: 1.5, Max: 3.0, Sum: 1.5 + 3.0, Mean: (1.5 + 3.0) / 2,
+			Count: 2, Last: "3", Type: "number",
+		},
 	}
 
 	runSummaryMigration(t)
@@ -1033,6 +1050,7 @@ func TestGenericMetricsIO(t *testing.T) {
 summary_metrics->'%[1]s'->name->>'max' AS max,
 summary_metrics->'%[1]s'->name->>'min' AS min,
 summary_metrics->'%[1]s'->name->>'mean' AS mean,
+summary_metrics->'%[1]s'->name->>'sum' AS sum,
 summary_metrics->'%[1]s'->name->>'last' AS last,
 summary_metrics->'%[1]s'->name->>'count' AS count,
 summary_metrics->'%[1]s'->name->>'type' AS type
@@ -1049,6 +1067,7 @@ ORDER BY name ASC`, "inference")
 		Name:  "aloss",
 		Max:   20,
 		Min:   10,
+		Sum:   30,
 		Mean:  15,
 		Last:  "20",
 		Count: 2,
@@ -1058,6 +1077,7 @@ ORDER BY name ASC`, "inference")
 		Name:  "bloss",
 		Max:   30,
 		Min:   30,
+		Sum:   30,
 		Mean:  30,
 		Last:  "30",
 		Count: 1,
