@@ -59,10 +59,7 @@ export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPro
             <ProjectDeleteModal.Component
               project={project}
               onClose={onComplete}
-              onDelete={() => {
-                onDelete?.();
-                onComplete?.();
-              }}
+              onDelete={onDelete}
             />
             <ProjectEditModal.Component project={project} onClose={onComplete} />
           </>
