@@ -5,8 +5,7 @@ import { LineChart } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
-import { ChartProps } from 'pages/TrialDetails/Profiles/types';
-import { MetricType } from 'pages/TrialDetails/Profiles/types';
+import { ChartProps, MetricType } from 'pages/TrialDetails/Profiles/types';
 import { useFetchProfilerMetrics } from 'pages/TrialDetails/Profiles/useFetchProfilerMetrics';
 import { useFetchProfilerSeries } from 'pages/TrialDetails/Profiles/useFetchProfilerSeries';
 import {

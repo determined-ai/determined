@@ -11,8 +11,7 @@ import { moveProject } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { Project, Workspace } from 'types';
 import { notification } from 'utils/dialogApi';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 

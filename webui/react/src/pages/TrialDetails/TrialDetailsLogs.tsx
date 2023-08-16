@@ -21,8 +21,7 @@ import { readStream } from 'services/utils';
 import useUI from 'stores/contexts/UI';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 
 import css from './TrialDetailsLogs.module.scss';
 

@@ -24,11 +24,9 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import { ValueOf } from 'types';
-import { ExperimentAction, ProjectExperiment } from 'types';
+import { ExperimentAction, ProjectExperiment, ValueOf } from 'types';
 import { message, notification } from 'utils/dialogApi';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { capitalize } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';

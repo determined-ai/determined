@@ -16,13 +16,14 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useUI from 'stores/contexts/UI';
-import { Primitive, Range } from 'types';
 import {
   ExperimentBase,
   HyperparameterType,
   Metric,
   MetricType,
   metricTypeParamMap,
+  Primitive,
+  Range,
   Scale,
 } from 'types';
 import { getColorScale } from 'utils/chart';

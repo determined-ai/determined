@@ -25,7 +25,6 @@ import {
   unarchiveExperiments,
 } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import { RecordKey } from 'types';
 import {
   BulkActionResult,
   ExperimentAction,
@@ -33,10 +32,10 @@ import {
   Project,
   ProjectColumn,
   ProjectExperiment,
+  RecordKey,
 } from 'types';
 import { notification } from 'utils/dialogApi';
-import { ErrorLevel } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel } from 'utils/error';
 import {
   canActionExperiment,
   getActionsForExperimentsUnion,

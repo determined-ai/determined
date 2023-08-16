@@ -13,8 +13,7 @@ import roleStore from 'stores/roles';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import workspaceStore from 'stores/workspaces';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { isAuthFailure } from 'utils/service';
 
 const SignOut: React.FC = () => {

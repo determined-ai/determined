@@ -1,6 +1,5 @@
 import { HolderOutlined, PlusOutlined } from '@ant-design/icons';
-import { Dropdown, DropDownProps } from 'antd';
-import type { MenuProps } from 'antd';
+import { Dropdown, DropDownProps, type MenuProps } from 'antd';
 import { useMemo, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 

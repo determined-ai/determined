@@ -10,8 +10,7 @@ import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Role } from 'services/api-ts-sdk';
 import { User, UserOrGroup } from 'types';
 import { message } from 'utils/dialogApi';
-import { DetError, ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
 interface Props {

@@ -10,8 +10,7 @@ import usePrevious from 'hooks/usePrevious';
 import { timeSeries } from 'services/api';
 import { Metric, MetricContainer, MetricType, RunState, Scale, TrialDetails } from 'types';
 import { message } from 'utils/dialogApi';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { metricToKey } from 'utils/metric';
 

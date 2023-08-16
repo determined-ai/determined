@@ -31,8 +31,7 @@ import {
 } from 'types';
 import { glasbeyColor } from 'utils/color';
 import { flattenObject, isPrimitive } from 'utils/data';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { metricToStr } from 'utils/metric';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'utils/routes';

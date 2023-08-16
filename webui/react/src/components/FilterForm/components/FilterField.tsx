@@ -1,6 +1,5 @@
 import { HolderOutlined } from '@ant-design/icons';
-import { DatePicker } from 'antd';
-import type { SelectProps as AntdSelectProps } from 'antd';
+import { type SelectProps as AntdSelectProps, DatePicker } from 'antd';
 import type { DatePickerProps } from 'antd/es/date-picker';
 import dayjs from 'dayjs';
 import { useObservable } from 'micro-observables';

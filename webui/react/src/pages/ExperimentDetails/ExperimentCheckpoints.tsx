@@ -24,17 +24,16 @@ import { useSettings } from 'hooks/useSettings';
 import { getExperimentCheckpoints } from 'services/api';
 import { Checkpointv1State, V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeCheckpointState } from 'services/decoder';
-import { RecordKey } from 'types';
 import {
   checkpointAction,
   CheckpointAction,
   CheckpointState,
   CoreApiGenericCheckpoint,
   ExperimentBase,
+  RecordKey,
 } from 'types';
 import { canActionCheckpoint, getActionsForCheckpointsUnion } from 'utils/checkpoint';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
 
 import { configForExperiment, Settings } from './ExperimentCheckpoints.settings';
