@@ -14,6 +14,7 @@ import Tooltip from 'components/kit/Tooltip';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import { maxPoolSlotCapacity } from 'stores/cluster';
@@ -97,10 +98,11 @@ const ResourcePoolCard: React.FC<Props> = ({
   descriptiveLabel,
 }: Props) => {
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
+  const { canManageResourcePoolBindings } = usePermissions();
   const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
   const isDefaultPool = pool.defaultAuxPool || pool.defaultComputePool;
   const descriptionClasses = [css.description];
-
+  const showDescriptiveLabel = !(canManageResourcePoolBindings && rpBindingFlagOn) ?? isDefaultPool;
   const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
   const resourcePoolBindings: number[] = resourcePoolBindingMap.get(pool.name, []);
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
@@ -169,10 +171,10 @@ const ResourcePoolCard: React.FC<Props> = ({
               <div className={css.name}>{pool.name}</div>
             </div>
             <div className={css.default}>
-              {!isDefaultPool && <span>{descriptiveLabel}</span>}
+              {showDescriptiveLabel && <span>{descriptiveLabel}</span>}
               {pool.description && <Icon name="info" showTooltip title={pool.description} />}
             </div>
-            {rpBindingFlagOn && isDefaultPool && (
+            {!showDescriptiveLabel && (
               <div className={css.defaultPoolTooltip}>
                 <Tooltip content="You cannot bind your default resource pool to a workspace.">
                   <span>Default</span>
