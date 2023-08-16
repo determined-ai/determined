@@ -13,6 +13,7 @@ import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
+import { ExpListView, RowHeight } from 'pages/F_ExpList/F_ExperimentList.settings';
 import {
   activateExperiments,
   archiveExperiments,
@@ -42,10 +43,8 @@ import {
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
+import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
-
-import { pluralizer } from '../../../utils/string';
-import { ExpListView, RowHeight } from '../F_ExperimentList.settings';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
 import MultiSortMenu, { Sort } from './MultiSortMenu';

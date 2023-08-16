@@ -3,6 +3,7 @@ import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
@@ -84,8 +85,6 @@ import { alphaNumericSorter } from 'utils/sort';
 import { humanReadableBytes } from 'utils/string';
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
-
-import BatchActionConfirmModalComponent from '../components/BatchActionConfirmModal';
 
 import {
   DEFAULT_COLUMN_WIDTHS,

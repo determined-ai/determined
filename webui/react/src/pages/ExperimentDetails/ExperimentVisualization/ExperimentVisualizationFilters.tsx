@@ -8,10 +8,8 @@ import Select, { Option, SelectValue } from 'components/kit/Select';
 import MetricSelect from 'components/MetricSelect';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelect from 'components/ScaleSelect';
-import { ValueOf } from 'types';
-import { Metric, Scale } from 'types';
-
-import { ExperimentVisualizationType } from '../ExperimentVisualization';
+import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
+import { Metric, Scale, ValueOf } from 'types';
 
 import css from './ExperimentVisualizationFilters.module.scss';
 

@@ -5,13 +5,15 @@ import { LineChart } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
+import { ChartProps } from 'pages/TrialDetails/Profiles/types';
+import { MetricType } from 'pages/TrialDetails/Profiles/types';
+import { useFetchProfilerMetrics } from 'pages/TrialDetails/Profiles/useFetchProfilerMetrics';
+import { useFetchProfilerSeries } from 'pages/TrialDetails/Profiles/useFetchProfilerSeries';
+import {
+  getScientificNotationTickValues,
+  getUnitForMetricName,
+} from 'pages/TrialDetails/Profiles/utils';
 import handleError from 'utils/error';
-
-import { ChartProps } from '../types';
-import { MetricType } from '../types';
-import { useFetchProfilerMetrics } from '../useFetchProfilerMetrics';
-import { useFetchProfilerSeries } from '../useFetchProfilerSeries';
-import { getScientificNotationTickValues, getUnitForMetricName } from '../utils';
 
 import SystemMetricFilter from './SystemMetricChartFilters';
 
