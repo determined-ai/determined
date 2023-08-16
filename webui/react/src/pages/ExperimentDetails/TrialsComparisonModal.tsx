@@ -1,10 +1,10 @@
 import { Modal, Tag, Typography } from 'antd';
+import { Alert } from 'antd';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Empty from 'components/kit/Empty';
 import { XOR } from 'components/kit/internal/types';
 import usePrevious from 'components/kit/internal/usePrevious';
 import Select, { Option, SelectValue } from 'components/kit/Select';
@@ -379,10 +379,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
           </table>
         </Spinner>
       ) : (
-        <Empty
-          icon="document"
-          title={`No ${Array.isArray(experiment) ? 'experiments with ' : ''}trials selected`}
-        />
+        <Alert message="No data available." />
       )}
     </div>
   );

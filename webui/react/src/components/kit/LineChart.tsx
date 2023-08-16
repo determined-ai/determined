@@ -1,3 +1,4 @@
+import { Alert } from 'antd';
 import _ from 'lodash';
 import React, { ReactNode, useMemo, useRef } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
@@ -422,6 +423,8 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
       return Array.from(xOpts).sort();
     }, [chartsProps]);
 
+    if (chartsProps.length === 0 && !isLoading) return <Alert message="No data available." />;
+
     return (
       <div className={css.scrollContainer}>
         <div className={css.chartgridContainer} ref={chartGridRef}>
@@ -439,7 +442,13 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
                     columnCount={columnCount}
                     columnWidth={Math.floor(width / columnCount)}
                     height={height - 40}
-                    itemData={{ chartsProps: chartsProps, columnCount, handleError, scale, xAxis }}
+                    itemData={{
+                      chartsProps: chartsProps,
+                      columnCount,
+                      handleError,
+                      scale,
+                      xAxis,
+                    }}
                     rowCount={Math.ceil(chartsProps.length / columnCount)}
                     rowHeight={465}
                     style={{ height: '100%' }}
@@ -448,11 +457,6 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
                   </FixedSizeGrid>
                 </SyncProvider>
               </>
-            )}
-            {chartsProps.length === 0 && !isLoading && (
-              <div className={css.chartgridEmpty}>
-                <span>No data to plot.</span>
-              </div>
             )}
           </Spinner>
         </div>
