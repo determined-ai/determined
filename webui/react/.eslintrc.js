@@ -106,7 +106,7 @@ module.exports = {
     'no-empty': ['error', { allowEmptyCatch: false }],
     'no-multi-spaces': ['error', { ignoreEOLComments: true }],
     'no-multiple-empty-lines': ['error', { max: 1, maxBOF: 0, maxEOF: 0 }],
-    'no-relative-import-paths/no-relative-import-paths': ['error', { 'allowSameFolder': true, 'rootDir': 'src' }],
+    'no-restricted-imports': ['error', {'patterns': ['..*']}],
     'no-throw-literal': 'error',
     'no-trailing-spaces': ['error', {}],
     'no-unused-vars': 'off',
