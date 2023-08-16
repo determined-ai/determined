@@ -2,11 +2,10 @@ package internal
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/uptrace/bun"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
@@ -447,25 +446,18 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 	return q, nil
 }
 
-// validation.loss -> validation_metrics, loss, ”
 // training.loss.min -> avg_metrics, loss, min
 // group_a.value.last -> group_a, value, last
 // group_b.value.a.last -> group_b, value.a, last .
 func parseMetricsName(str string) (string, string, string, error) {
-	if !strings.Contains(str, ".") {
+	template := regexp.MustCompile("[[:print:]]+\\.[[:print:]]+\\.min|max|mean|last")
+	if !template.MatchString(str) {
 		return "", "", "", fmt.Errorf("%s is not a valid metrics id", str)
 	}
 	slice := strings.Split(str, ".")
-	if len(slice) < 2 {
-		return "", "", "", fmt.Errorf("%s is not a valid metrics id", str)
-	}
 	metricGroup := slice[0]
 	metricQualifier := slice[len(slice)-1]
 	metricName := strings.Join(slice[1:len(slice)-1], ".")
-	if !slices.Contains(SummaryMetricStatistics, metricQualifier) {
-		metricQualifier = ""
-		metricName = strings.Join(slice[1:], ".")
-	}
 
 	if metricGroup == metricIDTraining {
 		metricGroup = metricGroupTraining

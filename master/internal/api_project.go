@@ -302,8 +302,8 @@ func (a *apiServer) getProjectColumnsByID(
 	}, nil
 }
 
-func parseMetricsType(metricType interface{}) projectv1.ColumnType {
-	switch metricType.(string) {
+func parseMetricsType(metricType string) projectv1.ColumnType {
+	switch metricType {
 	case db.MetricTypeString:
 		return projectv1.ColumnType_COLUMN_TYPE_TEXT
 	case db.MetricTypeNumber:
