@@ -22,7 +22,6 @@ import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
 import { isDeviceType, JsonObject, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
-import { clone } from 'utils/data';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { DarkLight } from 'utils/themes';
@@ -115,7 +114,9 @@ const ResourcePoolCard: React.FC<Props> = ({
   }, [pool]);
 
   const processedPool = useMemo(() => {
-    const newPool = clone(pool);
+    // had to add this in order to avoid adding ts-ignore at lines 121 and 122 due to incompatibility of types
+    // since this is sort of a translation of the API response object into UI, this should be fine.
+    const newPool = JSON.parse(JSON.stringify(structuredClone(pool)));
     Object.keys(newPool).forEach((key) => {
       const value = pool[key as keyof ResourcePool];
       if (key === 'slotsPerAgent' && value === -1) newPool[key] = 'Unknown';

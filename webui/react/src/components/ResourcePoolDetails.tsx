@@ -2,8 +2,8 @@ import { Divider, Modal } from 'antd';
 import React, { Fragment } from 'react';
 
 import Json from 'components/Json';
-import { ResourcePool } from 'types';
-import { clone } from 'utils/data';
+import { V1ResourcePoolDetail } from 'services/api-ts-sdk';
+import { JsonObject, ResourcePool } from 'types';
 import { camelCaseToSentence } from 'utils/string';
 
 import { PoolLogo } from './ResourcePoolCard';
@@ -16,15 +16,14 @@ interface Props {
 }
 
 const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: Props) => {
-  const details = clone(pool.details);
+  const details = structuredClone(pool.details);
   for (const key in details) {
-    if (details[key] === null) {
-      delete details[key];
+    if (details[key as keyof V1ResourcePoolDetail] === null) {
+      delete details[key as keyof V1ResourcePoolDetail];
     }
   }
 
-  const mainSection = clone(pool);
-  delete mainSection.details;
+  const mainSection = structuredClone(pool);
 
   const title = (
     <div>
@@ -43,12 +42,15 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: 
       title={title}
       onCancel={props.finally}
       onOk={props.finally}>
-      <Json json={mainSection} translateLabel={camelCaseToSentence} />
+      <Json json={mainSection as unknown as JsonObject} translateLabel={camelCaseToSentence} />
       {Object.keys(details).map((key) => (
         <Fragment key={key}>
           <Divider />
           <div className={css.subTitle}>{camelCaseToSentence(key)}</div>
-          <Json json={details[key]} translateLabel={camelCaseToSentence} />
+          <Json
+            json={details[key as keyof V1ResourcePoolDetail] as unknown as JsonObject}
+            translateLabel={camelCaseToSentence}
+          />
         </Fragment>
       ))}
     </Modal>

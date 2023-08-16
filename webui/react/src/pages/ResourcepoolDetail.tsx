@@ -16,14 +16,18 @@ import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
-import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
+import {
+  V1GetJobQueueStatsResponse,
+  V1ResourcePoolDetail,
+  V1RPQueueStat,
+  V1SchedulerType,
+} from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
 import { maxPoolSlotCapacity } from 'stores/cluster';
 import { ShirtSize } from 'themes';
-import { ValueOf } from 'types';
+import { JsonObject, ValueOf } from 'types';
 import { JobState, ResourceState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
-import { clone } from 'utils/data';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -126,24 +130,31 @@ const ResourcepoolDetailInner: React.FC = () => {
 
   const renderPoolConfig = useCallback(() => {
     if (!pool) return;
-    const details = clone(pool.details);
+    const details = structuredClone(pool.details);
     for (const key in details) {
-      if (details[key] === null) {
-        delete details[key];
+      if (details[key as keyof V1ResourcePoolDetail] === null) {
+        delete details[key as keyof V1ResourcePoolDetail];
       }
     }
 
-    const mainSection = clone(pool);
-    delete mainSection.details;
+    const mainSection = structuredClone(pool);
     delete mainSection.stats;
     return (
       <>
-        <Json alternateBackground json={mainSection} translateLabel={camelCaseToSentence} />
+        <Json
+          alternateBackground
+          json={mainSection as unknown as JsonObject}
+          translateLabel={camelCaseToSentence}
+        />
         {Object.keys(details).map((key) => (
           <Fragment key={key}>
             <Divider />
             <div className={css.subTitle}>{camelCaseToSentence(key)}</div>
-            <Json alternateBackground json={details[key]} translateLabel={camelCaseToSentence} />
+            <Json
+              alternateBackground
+              json={details[key as keyof V1ResourcePoolDetail] as unknown as JsonObject}
+              translateLabel={camelCaseToSentence}
+            />
           </Fragment>
         ))}
       </>

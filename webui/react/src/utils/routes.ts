@@ -2,7 +2,6 @@ import React from 'react';
 
 import router from 'router';
 
-import { clone } from './data';
 import rootLogger from './Logger';
 
 const logger = rootLogger.extend('utils', 'routes');
@@ -48,7 +47,7 @@ export const ensureAbsolutePath = (url: string): string => (isAbsolutePath(url) 
 export const filterOutLoginLocation = (location: {
   pathname: string;
 }): { pathname: string } | undefined => {
-  return location.pathname.includes('login') ? undefined : clone(location);
+  return location.pathname.includes('login') ? undefined : structuredClone(location);
 };
 
 export const parseUrl = (url: string): URL => {

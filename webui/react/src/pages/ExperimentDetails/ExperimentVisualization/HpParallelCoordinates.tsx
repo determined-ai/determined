@@ -29,7 +29,7 @@ import {
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import { rgba2str, str2rgba } from 'utils/color';
-import { clone, flattenObject, isPrimitive } from 'utils/data';
+import { flattenObject, isPrimitive } from 'utils/data';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { metricToStr } from 'utils/metric';
@@ -265,7 +265,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
           });
 
           trialHpTableMap[id] = {
-            hparams: clone(flatHParams),
+            hparams: structuredClone(flatHParams),
             id,
             metric: trial.metric,
           };

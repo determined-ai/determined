@@ -3,17 +3,6 @@ import { Json, JsonArray, JsonObject, Primitive, RawJson, RecordKey, UnknownReco
 
 // `bigint` is not support yet for
 
-// for reference around structuredClone supported types: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#supported_types
-export type CloneableStructure =
-  | Array<any>
-  | boolean
-  | DataView
-  | Date
-  | typeof Map
-  | object
-  | Primitive
-  | typeof Set;
-
 export const isBigInt = (data: unknown): data is bigint => typeof data === 'bigint';
 export const isBoolean = (data: unknown): data is boolean => typeof data === 'boolean';
 export const isDate = (data: unknown): data is Date => data instanceof Date;
@@ -50,8 +39,6 @@ export const isAsyncFunction = (fn: unknown): boolean => {
 export const isSyncFunction = (fn: unknown): boolean => {
   return isFunction(fn) && !isAsyncFunction(fn);
 };
-
-export const clone = <T extends CloneableStructure>(data: T): any => structuredClone(data);
 
 export const hasObjectKeys = (data: unknown): boolean => {
   return isObject(data) && Object.keys(data as Record<RecordKey, unknown>).length !== 0;
@@ -143,11 +130,8 @@ export const deletePathList = (obj: RawJson, path: string[]): void => {
 // We avoid exporting this type to discourage/disallow usage of any.
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Mapper = (x: any) => any;
-export const applyMappers = <T extends CloneableStructure>(
-  data: T,
-  mappers: Mapper | Mapper[],
-): T => {
-  let currentData = clone(data);
+export const applyMappers = <T>(data: T, mappers: Mapper | Mapper[]): T => {
+  let currentData = structuredClone(data);
 
   if (Array.isArray(mappers)) {
     currentData = mappers.reduce((acc, mapper) => mapper(acc), currentData);

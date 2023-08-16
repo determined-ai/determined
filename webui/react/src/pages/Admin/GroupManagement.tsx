@@ -21,7 +21,6 @@ import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import { DetailedUser } from 'types';
-import { clone } from 'utils/data';
 import { message } from 'utils/dialogApi';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
@@ -130,7 +129,7 @@ const GroupManagement: React.FC = () => {
       const response = await getGroup({ groupId });
       const i = groupUsers.findIndex((gr) => gr.groupId === groupId);
       i >= 0 ? (groupUsers[i] = response.group) : groupUsers.push(response.group);
-      setGroupUsers(clone(groupUsers));
+      setGroupUsers(structuredClone(groupUsers));
     },
     [groupUsers],
   );

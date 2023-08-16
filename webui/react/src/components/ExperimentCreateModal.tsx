@@ -13,7 +13,6 @@ import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
 import { RawJson, ValueOf } from 'types';
 import { ExperimentBase, TrialHyperparameters, TrialItem } from 'types';
-import { clone } from 'utils/data';
 import { DetError, ErrorLevel, ErrorType, isDetError, isError } from 'utils/error';
 import handleError, { handleWarning } from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
@@ -76,7 +75,7 @@ const trialContinueConfig = (
   workspaceName: string,
   projectName: string,
 ): RawJson => {
-  const newConfig = clone(experimentConfig);
+  const newConfig = structuredClone(experimentConfig);
   return {
     ...newConfig,
     hyperparameters: trialHParamsToExperimentHParams(trialHparams),
@@ -207,7 +206,7 @@ const ExperimentCreateModalComponent = ({
       if (!form) return yaml.dump(config);
 
       const formValues = form.getFieldsValue();
-      const newConfig = clone(config);
+      const newConfig = structuredClone(config);
 
       if (formValues[EXPERIMENT_NAME]) {
         newConfig.name = formValues[EXPERIMENT_NAME];

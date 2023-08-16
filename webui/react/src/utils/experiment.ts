@@ -22,14 +22,7 @@ import {
   TrialHyperparameters,
   WorkspacePermissionsArgs,
 } from 'types';
-import {
-  clone,
-  deletePathList,
-  getPathList,
-  isNumber,
-  setPathList,
-  unflattenObject,
-} from 'utils/data';
+import { deletePathList, getPathList, isNumber, setPathList, unflattenObject } from 'utils/data';
 
 type ExperimentChecker = (experiment: ProjectExperiment, trial?: TrialDetails) => boolean;
 
@@ -89,7 +82,7 @@ const getLengthFromStepCount = (config: RawJson, stepCount: number): [string, nu
 
 // Add opportunistic backward compatibility to old configs.
 export const upgradeConfig = (config: RawJson): RawJson => {
-  const newConfig = clone(config);
+  const newConfig = structuredClone(config);
 
   stepRemovalTranslations.forEach((translation) => {
     const oldPath = translation.oldName.split('.');
