@@ -38,7 +38,7 @@ module.exports = {
     ecmaVersion: 2018,
     sourceType: 'module',
   },
-  plugins: ['import', 'jsdoc', 'no-relative-import-paths', 'react', 'react-hooks', 'sort-keys-fix'],
+  plugins: ['import', 'jsdoc', 'react', 'react-hooks', 'sort-keys-fix'],
   root: true,
   rules: {
     // Can disagree with @typescript-eslint/member-ordering.
