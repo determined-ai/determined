@@ -123,8 +123,8 @@ func newTrial(
 	system *actor.System,
 	parent *actor.Ref,
 	exitCallback trialExitCallback,
-) (*trial, error) {
-	t := &trial{
+) (t *trial, err error) {
+	t = &trial{
 		wg: waitgroupx.WithContext(context.Background()),
 
 		taskID:            taskID,
@@ -152,18 +152,21 @@ func newTrial(
 
 		exitCallback: exitCallback,
 	}
+	defer func() {
+		if err != nil {
+			t.Exit()
+		}
+	}()
 
 	if id != nil {
 		t.id = *id
 		t.idSet = true
 		t.trialCreationSent = createSent
 		if err := t.recover(); err != nil {
-			t.Exit()
 			return nil, fmt.Errorf("recovering trial in prestart: %w", err)
 		}
 	} else {
 		if err := t.create(); err != nil {
-			t.Exit()
 			return nil, fmt.Errorf("persisting trial in prestart: %w", err)
 		}
 	}
@@ -173,9 +176,8 @@ func newTrial(
 		"trial-run-id": t.runID,
 	})
 
-	err := t.maybeAllocateTask()
+	err = t.maybeAllocateTask()
 	if err != nil {
-		t.Exit()
 		return nil, fmt.Errorf("initial allocation: %w", err)
 	}
 	return t, nil
@@ -586,13 +588,11 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 			})
 		}
 	case exit.UserRequestedStop:
-		t.Exit()
 		return t.transition(model.StateWithReason{
 			State:               model.CompletedState,
 			InformationalReason: "trial exited early due to a user requested stop",
 		})
 	case t.userInitiatedExit != nil:
-		t.Exit()
 		return t.transition(model.StateWithReason{
 			State: model.CompletedState,
 			InformationalReason: fmt.Sprintf(
@@ -676,12 +676,7 @@ func (t *trial) transition(s model.StateWithReason) error {
 			}
 		}
 	case model.TerminalStates[t.state]:
-		switch t.state {
-		case model.ErrorState:
-			t.Exit()
-		case model.CanceledState:
-			t.Exit()
-		}
+		t.Exit()
 	default:
 		panic(fmt.Errorf("unmatched state in transition %s", t.state))
 	}

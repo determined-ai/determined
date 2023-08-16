@@ -680,6 +680,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 }
 
 func (e *experiment) TrialClosed(requestID model.RequestID) {
+	e.syslog.WithField("request_id", requestID).Info("TrialClosed")
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.trialClosed(requestID)
@@ -689,6 +690,7 @@ func (e *experiment) trialClosed(requestID model.RequestID) {
 	ops, err := e.searcher.TrialClosed(requestID)
 	e.processOperations(ops, err)
 	delete(e.trials, requestID)
+	e.syslog.WithField("request_id", requestID).Info("trialClosed")
 	if e.canTerminate() {
 		e.self.Stop()
 	}
@@ -901,6 +903,10 @@ func (e *experiment) updateState(state model.StateWithReason) bool {
 }
 
 func (e *experiment) canTerminate() bool {
+	e.syslog.
+		WithField("state", e.State).
+		WithField("numTrials", len(e.trials)).
+		Debug("checking if experiment can terminate")
 	return model.StoppingStates[e.State] && len(e.trials) == 0
 	// return model.StoppingStates[e.State] && len(ctx.Children()) == 0
 }
