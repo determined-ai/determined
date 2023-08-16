@@ -174,7 +174,7 @@ const ResourcePoolCard: React.FC<Props> = ({
             </div>
             {rpBindingFlagOn && isDefaultPool && (
               <div className={css.defaultPoolTooltip}>
-                <Tooltip content="You cannot bind your default resource pool to a workspace">
+                <Tooltip content="You cannot bind your default resource pool to a workspace.">
                   <span>Default</span>
                 </Tooltip>
               </div>
