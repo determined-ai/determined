@@ -56,6 +56,12 @@ $font-size-content: 12px;
         font-weight: bold;
       }
     }
+    .defaultPoolTooltip {
+      color: var(--theme-surface-on);
+      font-size: $font-size-content;
+      position: absolute;
+      right: var(--outside-padding);
+    }
   }
   .empty {
     color: var(--theme-surface-on-weak);

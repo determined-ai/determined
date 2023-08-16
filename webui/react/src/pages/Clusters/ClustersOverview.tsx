@@ -25,10 +25,11 @@ const ClusterOverview: React.FC = () => {
 
   const actionMenu = useCallback(
     (pool: ResourcePool) =>
-      rpBindingFlagOn && canManageResourcePoolBindings
+      rpBindingFlagOn &&
+      canManageResourcePoolBindings &&
+      !(pool.defaultAuxPool || pool.defaultComputePool)
         ? [
             {
-              disabled: pool.defaultAuxPool || pool.defaultComputePool,
               icon: <Icon name="four-squares" title="manage-bindings" />,
               key: 'bindings',
               label: 'Manage bindings',
