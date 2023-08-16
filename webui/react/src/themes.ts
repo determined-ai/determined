@@ -1,6 +1,5 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
 import { BrandingType } from 'stores/determinedInfo';
-import { ValueOf } from 'types';
 import {
   CheckpointState,
   CommandState,
@@ -8,6 +7,7 @@ import {
   ResourceState,
   RunState,
   SlotState,
+  ValueOf,
   WorkspaceState,
 } from 'types';
 import {
