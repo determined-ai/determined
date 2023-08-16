@@ -7,8 +7,8 @@
 .. meta::
    :description: Discover how to associate resource pools to specific workspaces in the same way you associate certain artifacts, like experiments, to workspaces.
 
-You can associate resource pools to specific workspaces in the same way you associate certain
-artifacts, like experiments, to workspaces.
+You can associate :ref:`resource pools <resource-pools>` to specific workspaces similar to how you
+associate certain artifacts, like experiments, to workspaces.
 
 .. attention::
 
@@ -22,7 +22,7 @@ Binding and unbinding resource pools allows administrators to control resource p
 within the cluster.
 
 Resource pools can be either unbound, meaning they are shared across the entire cluster, or bound to
-specific workspaces. Experiments, notebooks, Tensorboards, shells, or commands associated with a
+specific workspaces. Experiments, notebooks, TensorBoards, shells, or commands associated with a
 particular workspace can only use resource pools that are either unbound or bound to a particular
 workspace.
 
@@ -38,8 +38,12 @@ related artifacts.
  Binding or Unbinding a Resource Pool
 **************************************
 
-You can bind or unbind a resource pool. By default, all resource pools are unbound, making them
-globally available to all workspaces in the cluster.
+You can bind or unbind a resource pool to a workspace. By default, all resource pools are unbound,
+making them globally available to all workspaces in the cluster.
+
+.. note::
+
+   Default resource pools cannot be bound to a workspace.
 
 WebUI
 =====
