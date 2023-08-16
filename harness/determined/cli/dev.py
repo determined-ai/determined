@@ -88,15 +88,28 @@ def bindings_sig_str(name: str, params: List[inspect.Parameter]) -> str:
 
 
 def unwrap_optional(annotation: Any) -> Any:
+    """
+    evaluates and unwraps a typing.Optional annotation to its inner type.
+    """
     import typing
 
     try:
         from typing import get_args, get_origin  # type: ignore
     except ImportError:
         raise errors.CliError("python >= 3.8 is required to use this feature")
+
+    local_context = {
+        "typing": typing,
+        "Optional": typing.Optional,
+        "Union": typing.Union,
+        "List": typing.List,
+        "Sequence": typing.Sequence,
+        "Dict": typing.Dict,
+        "NoneType": type(None),
+    }
     if isinstance(annotation, str):
         try:
-            annotation = eval(annotation.strip())
+            annotation = eval(annotation.strip(), {}, local_context)
         except NameError:
             pass
     origin = get_origin(annotation)
@@ -105,6 +118,8 @@ def unwrap_optional(annotation: Any) -> Any:
     if origin is typing.Union:
         if len(args) == 2 and type(None) in args:
             return args[0]
+    elif origin is typing.Optional:
+        return args[0]
     return annotation
 
 
@@ -119,7 +134,6 @@ def is_supported_annotation(annot: Any) -> bool:
         raise errors.CliError("python >= 3.8 is required to use this feature")
 
     annot = unwrap_optional(annot)
-
     supported_types = [str, int, float, type(None), bool]
     if annot in supported_types:
         return True
@@ -136,8 +150,8 @@ def is_supported_annotation(annot: Any) -> bool:
 
 def can_be_called_via_cli(params: List[inspect.Parameter]) -> bool:
     """
-    determines if a binding can be called with our current CLI argument
-    deserialization support.
+    determines if a fn with `params` list of parameters can be called with
+    our current CLI argument deserialization support.
     """
     required_params = [p for p in params if p.default is inspect.Parameter.empty]
     return all(is_supported_annotation(p.annotation) for p in required_params)
@@ -247,12 +261,13 @@ def call_bindings(args: Namespace) -> None:
     except AttributeError:
         matches = [n for n in fns.keys() if re.match(f".*{fn_name}.*", n, re.IGNORECASE)]
         if not matches:
-            raise errors.CliError(f"no such binding: {fn_name}")
-        print(f"found {len(matches)} matches for '{fn_name}': {list(enumerate(matches))}")
+            raise errors.CliError(f"no such binding found: {fn_name}")
+        indexed_matches = [f"{idx}: {match}" for idx, match in list(enumerate(matches))]
         user_idx = (
             input(
-                "Which one do you want? enter the index to continue"
-                + f"(default: 0 {matches[0]}): "
+                f"{len(matches)} calls matched '{fn_name}'."
+                + " Pick one by index.\n"
+                + "\n".join(indexed_matches)
             )
             or "0"
         )
@@ -262,8 +277,8 @@ def call_bindings(args: Namespace) -> None:
     params = fns[fn_name]
     try:
         kwargs = parse_args_to_kwargs(args.args, params)
-        rv = fn(sess, **kwargs)
-    except Exception as e:  # we could explicitly check TypeError but let's provide more hints
+        output = fn(sess, **kwargs)
+    except TypeError as e:
         raise errors.CliError(
             "Usage: "
             + bindings_sig_str(
@@ -274,7 +289,7 @@ def call_bindings(args: Namespace) -> None:
             e,
         )
 
-    print_response(rv)
+    print_response(output)
 
 
 args_description = [
