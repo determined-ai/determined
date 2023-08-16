@@ -20,6 +20,7 @@ export const DEFAULT_COLUMNS: ProjectColumnName[] = [
   'name',
   'description',
   'numExperiments',
+  'state',
   'lastUpdated',
   'userId',
 ];

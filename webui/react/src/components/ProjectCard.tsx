@@ -4,9 +4,10 @@ import React from 'react';
 import Card from 'components/kit/Card';
 import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
+import { stateRenderer } from 'components/Table/Table';
 import TimeAgo from 'components/TimeAgo';
 import { paths } from 'routes/utils';
-import { Project } from 'types';
+import { Project, WorkspaceState } from 'types';
 import { nearestCardinalNumber } from 'utils/number';
 
 import DynamicIcon from './DynamicIcon';
@@ -57,6 +58,9 @@ const ProjectCard: React.FC<Props> = ({
               </Tooltip>
             )}
           </div>
+          {project.state !== WorkspaceState.Unspecified && (
+            <div>{stateRenderer(project.state, project, 1)}</div>
+          )}
           <div className={css.footerContainer}>
             <div className={css.experiments}>
               <Tooltip
