@@ -64,8 +64,8 @@ dependencies:
    DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:deadsnakes/ppa
    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git-all python3.8-dev python3.8-venv default-jre curl build-essential libkrb5-dev unzip jq
 
-   # Download and install Go 1.20.
-   curl -L https://go.dev/dl/go1.20.linux-amd64.tar.gz | tar -xz
+   # Download and install Go 1.21.
+   curl -L https://go.dev/dl/go1.21.0.linux-amd64.tar.gz | tar -xz
    chown -R root:root go
    mv go /usr/local/
 
