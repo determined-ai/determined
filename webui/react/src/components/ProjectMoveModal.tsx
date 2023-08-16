@@ -52,6 +52,7 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onClose, project }: Props)
         ),
         message: 'Move Success',
       });
+      onClose?.();
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -61,7 +62,7 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onClose, project }: Props)
         type: ErrorType.Server,
       });
     }
-  }, [destinationWorkspaceId, project.id, project.name, workspaces]);
+  }, [destinationWorkspaceId, onClose, project.id, project.name, workspaces]);
 
   const handleWorkspaceSelect = useCallback(
     (selectedWorkspaceId: SelectValue) => {
