@@ -188,7 +188,7 @@ const FilterField = ({
       <div className={css.fieldCard} ref={preview}>
         <Select
           autoFocus
-          dropdownMatchSelectWidth={250}
+          dropdownMatchSelectWidth={300}
           options={columns.map((col) => ({
             label: col.displayName || col.column,
             value: col.column,
