@@ -17,6 +17,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
+const (
+	deviceIndex = 0
+	deviceUUID  = 2
+)
+
 var (
 	detectMIGEnabled = []string{
 		"nvidia-smi", "--query-gpu=mig.mode.current", "--format=csv,noheader",
@@ -95,7 +100,8 @@ func detectCudaGPUs(visibleGPUs string) ([]device.Device, error) {
 			return nil, errors.New(
 				"error parsing output of nvidia-smi; GPU record should have exactly 3 fields")
 		}
-		if deviceNotAllocated(cudaVisibleDevices, record) {
+		if !deviceAllocated(cudaVisibleDevices, record) {
+			log.Tracef("Device not allocated: %s (%s)", record[0], record[2])
 			continue // skip device outside of our allocation
 		}
 		index, err := strconv.Atoi(strings.TrimSpace(record[0]))
@@ -116,25 +122,32 @@ func detectCudaGPUs(visibleGPUs string) ([]device.Device, error) {
 	}
 }
 
+// parseVisibleDevices returns as a slice the content of CUDA_VISIBLE_DEVICES if defined, else nil.
 func parseVisibleDevices() []string {
 	devices, found := os.LookupEnv("CUDA_VISIBLE_DEVICES")
 	if !found {
 		return nil
 	}
-	log.Tracef("CUDA_VISIBLE_DEVICES: %s", devices)
+	log.Tracef("CUDA_VISIBLE_DEVICES: '%s'", devices)
 	return strings.Split(devices, ",")
 }
 
-func deviceNotAllocated(devices []string, device []string) bool {
-	if devices == nil {
-		return false
+// deviceAllocated returns true if the specified device is within the set of resources
+// allocated to the process.
+func deviceAllocated(allocatedDevices []string, device []string) bool {
+	if allocatedDevices == nil {
+		log.Trace("No allocated devices")
+		return true
 	}
-	for _, d := range devices {
-		if d == device[0] {
-			return false
+	// Slurm identifies GPUs in the allocation by index.
+	// PBS may identify GPUs in the pattern GPU-<UUID>.
+	// Accept a match on either quantity.
+	for _, d := range allocatedDevices {
+		if d == strings.TrimSpace(device[deviceIndex]) || d == strings.TrimSpace(device[deviceUUID]) {
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 // detect if MIG is enabled and if there are instances configured.
