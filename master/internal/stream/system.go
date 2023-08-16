@@ -15,15 +15,16 @@ import (
 	"github.com/determined-ai/determined/master/pkg/stream"
 )
 
-type JsonB []byte
+// JsonB is the golang equivalent of the postgres jsonb column type.
+type JsonB interface{}
 
 // PubSubSystem contains all publishers, and handles all websockets.  It will connect each websocket
 // with the appropriate set of publishers, based on that websocket's subscriptions.
 //
 // There is one PubSubSystem for the whole process.  It has one Publisher per streamable type.
 type PubSubSystem struct {
-	Trials *stream.Publisher[*TrialMsg, FilterModSet]
-	// Experiments *stream.Publisher[*ExperimentMsg, FilterModSet]
+	Trials *stream.Publisher[*TrialMsg]
+	// Experiments *stream.Publisher[*ExperimentMsg]
 }
 
 // SubscriptionSet is a set of all subscribers for this PubSubSystem.
@@ -60,8 +61,8 @@ type KeySet struct {
 	// Experiments string `json:"experiments"`
 }
 
-// AddOrDropSet is both the type for .Add and .Drop of the FilterModSet type that a user can
-// write to the websocket to change their message type.
+// AddOrDropSet is both the type for .Add and .Drop of the FilterModSet type that a streaming
+// client can write to the websocket to change their message type.
 type AddOrDropSet struct {
 	Trials *TrialFilterMod `json:"trials"`
 	// Experiments *ExperimentFilterMod `json:"experiments"`
@@ -69,41 +70,42 @@ type AddOrDropSet struct {
 
 // FilterMaker is a stateful object for building efficient filters.
 //
-// For example, if users can subscribe to a type Thing by it's primary key, the ThingFilterMaker
-// should probably generate a filter function that check if a given ThingMsg.ID appears in a map,
-// for O(1) lookups during filtering.
-type FilterMaker[T stream.Event] interface {
+// For example, if streaming clients can subscribe to a type Thing by it's primary key, the
+// ThingFilterMaker should probably generate a filter function that check if a given ThingMsg.ID
+// appears in a map, for O(1) lookups during filtering.
+type FilterMaker[T stream.Msg] interface {
 	AddSpec(spec FilterMod)
 	DropSpec(spec FilterMod)
 	// MakeFilter should return a nil function if it would always return false.
 	MakeFilter() func(T) bool
 }
 
-// FilterMod is what a user specifies through the REST API.  There should be one FilterMod
-// implementation per streamable type.
+// FilterMod is what a streaming client specifies through the REST API.  There should be one
+// FilterMod implementation per streamable type.
 type FilterMod interface {
-	// Startup emits deletion and update messages for known ids and subscription.  Startup is
-	// expected to be called only for the startup message from the streaming clientww.
+	// Startup emits deletion and upsert messages for known ids and subscription.  Startup is
+	// expected to be called only for the startup message from the streaming client.
 	Startup(known string, ctx context.Context) ([]*websocket.PreparedMessage, error)
-	// Modify emits events matching newly-added subcscriptions.  Modify is meant to be called once
+	// Modify emits messages matching newly-added subcscriptions.  Modify is meant to be called once
 	// per FilterModSet message from the streaming client.
 	Modify(ctx context.Context) ([]*websocket.PreparedMessage, error)
 }
 
 func NewPubSubSystem() PubSubSystem {
 	return PubSubSystem {
-		Trials: stream.NewPublisher[*TrialMsg, FilterModSet](),
+		Trials: stream.NewPublisher[*TrialMsg](),
 	}
 }
 
 func (pss PubSubSystem) Start(ctx context.Context) {
 	// start each publisher
-	go publishLoop(ctx, "stream_trial_chan", newTrialMsgs, pss.Trials)
+	go publishLoop(ctx, "stream_trial_chan", pss.Trials)
+	// go publishLoop(ctx, "stream_experiment_chan", pss.Experiments)
 }
 
-func writeAll(socket *websocket.Conn, events []*websocket.PreparedMessage) error {
-	for _, ev := range events {
-		err := socket.WritePreparedMessage(ev)
+func writeAll(socket *websocket.Conn, msgs []*websocket.PreparedMessage) error {
+	for _, msg := range msgs {
+		err := socket.WritePreparedMessage(msg)
 		if err != nil {
 			return err
 		}
@@ -114,11 +116,9 @@ func writeAll(socket *websocket.Conn, events []*websocket.PreparedMessage) error
 // Websocket is an Echo websocket endpoint.
 func (pss PubSubSystem) Websocket(socket *websocket.Conn, c echo.Context) error {
 	ctx := c.Request().Context()
-	streamer := stream.NewStreamer[FilterModSet]()
+	streamer := stream.NewStreamer()
 
-	user := 1
-
-	ss := NewSubscriptionSet(streamer, pss, user)
+	ss := NewSubscriptionSet(streamer, pss)
 	defer ss.UnsubscribeAll()
 
 	// First read the startup message.
@@ -128,15 +128,32 @@ func (pss PubSubSystem) Websocket(socket *websocket.Conn, c echo.Context) error 
 	if err != nil {
 		return errors.Wrap(err, "reading startup message")
 	}
-	// Process deletions, disappearances, and appearances.
-	events, err := ss.Startup(startupMsg, ctx)
+	// Use the declarative strategy to process all offline events:
+	//   - insertions
+	//   - updates
+	//   - deletions
+	//   - appearances
+	//   - disappearances
+	//   - fallin
+	//   - fallout
+	msgs, err := ss.Startup(startupMsg, ctx)
 	if err != nil {
 		return errors.Wrapf(err, "gathering startup messages")
 	}
-	err = writeAll(socket, events)
+	err = writeAll(socket, msgs)
 	if err != nil {
 		return errors.Wrapf(err, "writing startup messages")
 	}
+
+	// startup done, begin streaming of supported online events:
+	//   - insertions
+	//   - updates
+	//   - deletions
+	//   - fallin
+	//   - fallout
+	//
+	// (note that online appearences and disappearances are not supported; we'll detect those
+	// situations and just break the connection to the relevant streaming clients).
 
 	// detect context cancelation, and bring it into the websocket thread
 	go func() {
@@ -144,9 +161,13 @@ func (pss PubSubSystem) Websocket(socket *websocket.Conn, c echo.Context) error 
 		streamer.Close()
 	}()
 
+	// reads is where we collect FilterModSet messages we read from the websocket until
+	// waitForSomething() delivers those messages to the websocket goroutine.
+	var reads []FilterModSet
+
 	// always be reading for new subscriptions
 	go func() {
-		// TODO: close streamer if reader goroutine dies?
+		defer streamer.Close()
 		for {
 			var mods FilterModSet
 			err := socket.ReadJSON(&mods)
@@ -159,14 +180,30 @@ func (pss PubSubSystem) Websocket(socket *websocket.Conn, c echo.Context) error 
 				break
 			}
 			// wake up streamer goroutine with the newly-read FilterModSet
-			streamer.AddReadEvent(mods)
+			func(){
+				streamer.Cond.L.Lock()
+				defer streamer.Cond.L.Unlock()
+				streamer.Cond.Signal()
+				reads = append(reads, mods)
+			}()
 		}
 	}()
 
-	// stream events until the cows come home
+	// waitForSomething returns a tuple of (mods, msgs, closed)
+	waitForSomething := func() ([]FilterModSet, []*websocket.PreparedMessage, bool) {
+		streamer.Cond.L.Lock()
+		defer streamer.Cond.L.Unlock()
+		streamer.Cond.Wait()
+		// steal outputs
+		mods := reads
+		reads = nil
+		msgs := streamer.Msgs
+		streamer.Msgs = nil
+		return mods, msgs, streamer.Closed
+	}
 
 	for {
-		mods, events, closed := streamer.WaitForSomething()
+		mods, msgs, closed := waitForSomething()
 		// were we closed?
 		if closed {
 			return nil
@@ -177,11 +214,11 @@ func (pss PubSubSystem) Websocket(socket *websocket.Conn, c echo.Context) error 
 			if err != nil {
 				return errors.Wrapf(err, "error modifying subscriptions")
 			}
-			events = append(events, temp...)
+			msgs = append(msgs, temp...)
 			// TODO: also append a sync message (or one sync per FilterModSet)
 		}
-		// write events to the websocket
-		err = writeAll(socket, events)
+		// write msgs to the websocket
+		err = writeAll(socket, msgs)
 		if err != nil {
 			// TODO: don't log broken pipe errors.
 			if err != nil {
@@ -193,11 +230,28 @@ func (pss PubSubSystem) Websocket(socket *websocket.Conn, c echo.Context) error 
 	return nil
 }
 
-func publishLoop[T stream.Event](
+func publishLoop[T stream.Msg](
 	ctx context.Context,
 	channelName string,
-	rescanFn func(int64, context.Context) (int64, []T, error),
-	publisher *stream.Publisher[T, FilterModSet],
+	publisher *stream.Publisher[T],
+) {
+	// TODO: is there a better recovery technique than this?
+	// XXX: at least boot all the connected streamers, they'll all be invalid now
+	for {
+		err := doPublishLoop(ctx, channelName, publisher)
+		if err != nil{
+			log.Errorf("publishLoop failed (will restart): %v", err.Error())
+			continue
+		}
+		// exited without error
+		break
+	}
+}
+
+func doPublishLoop[T stream.Msg](
+	ctx context.Context,
+	channelName string,
+	publisher *stream.Publisher[T],
 ) error {
 	minReconn := 1 * time.Second
 	maxReconn := 10 * time.Second
@@ -221,61 +275,57 @@ func publishLoop[T stream.Event](
 		return errors.Wrapf(err, "failed to listen: %v", channelName)
 	}
 
-	// scan for initial since
-	// TODO: actually just ask for the maximum seq directly.
-	since, _, err := rescanFn(0, ctx)
-	if err != nil {
-		return errors.Wrap(err, "failed initial scan")
-	}
-
 	for {
+		var events []stream.Event[T]
 		select {
 		// Are we canceled?
 		case <-ctx.Done():
-			fmt.Printf("publishTrials canceled\n")
+			// fmt.Printf("publishTrials canceled\n")
 			return nil
-
-		// Is there work to do?
-		case <-listener.Notify:
-			break
 
 		// The pq listener example includes a timeout case, so we do too.
 		// (https://pkg.go.dev/github.com/lib/pq/example/listen)
 		case <-time.After(30 * time.Second):
 			go listener.Ping()
-		}
 
-		var evs []T
-		since, evs, err = rescanFn(since, ctx)
-		if err != nil {
-			return errors.Wrap(err, "failed wakeup scan")
-		}
-		// noop?
-		if len(evs) == 0 {
-			continue
-		}
-		// generate updates
-		var updates []stream.Update[T]
-		for _, ev := range evs {
-			update := stream.Update[T]{
-				Event: ev,
-				// TODO: get valid uids from database instead.
-				Users: []int{1, 2},
+		// Did we get a notification?
+		case notification := <-listener.Notify:
+			// fmt.Printf("Notify: %v\n", notification.Extra)
+			var event stream.Event[T]
+			err = json.Unmarshal([]byte(notification.Extra), &event)
+			if err != nil {
+				return err
 			}
-			updates = append(updates, update)
+			events = append(events, event)
+			// Collect all available notifications before proceeding.
+			keepGoing := true
+			for keepGoing {
+				select {
+				case notification = <- listener.Notify:
+					// fmt.Printf("More Notify: %v\n", notification.Extra)
+					var event stream.Event[T]
+					err = json.Unmarshal([]byte(notification.Extra), &event)
+					if err != nil {
+						return err
+					}
+					events = append(events, event)
+				default:
+					keepGoing = false
+				}
+			}
+			// Broadcast all the events.
+			stream.Broadcast(publisher, events)
+			break
 		}
-		stream.Broadcast(publisher, updates)
 	}
 
 	return nil
 }
 
-func NewSubscriptionSet(
-	streamer *stream.Streamer[FilterModSet], pss PubSubSystem, user int,
-) SubscriptionSet {
+func NewSubscriptionSet(streamer *stream.Streamer, pss PubSubSystem) SubscriptionSet {
 	return SubscriptionSet{
 		Trials: NewSubscriptionManager[*TrialMsg, TrialFilterMod](
-			streamer, pss.Trials, user, NewTrialFilterMaker(),
+			streamer, pss.Trials, NewTrialFilterMaker(),
 		),
 	}
 }
@@ -295,10 +345,10 @@ func (ss *SubscriptionSet) Startup(startupMsg StartupMsg, ctx context.Context) (
 	ss.Trials.Apply(sub.Trials, nil)
 	// ss.Experiments.Apply(sub.Experiments, nil)
 
-	// Sync subscription updates with publishers.  Do this before initial scan so that we don't
-	// miss any updates.
+	// Sync subscription changes with publishers.  Do this before initial scan so that we don't
+	// miss any events.
 	ss.Trials.Flush()
-	// ss.Expermients.Flush()
+	// ss.Experiments.Flush()
 
 	// Do initial startup message scans, which includes detecting removed and added messages.
 	var msgs []*websocket.PreparedMessage
@@ -317,8 +367,8 @@ func (ss *SubscriptionSet) Apply(mods []FilterModSet, ctx context.Context) (
 		// ss.Experiments.Apply(m.Add.Experiments, m.Drop.Experiments)
 	}
 
-	// Sync subscription updates with publishers.  Do this before initial scan so that we don't
-	// miss any updates.
+	// Sync subscription changes with publishers.  Do this before initial scan so that we don't
+	// miss any events.
 	ss.Trials.Flush()
 	// ss.Expermients.Flush()
 
@@ -332,26 +382,25 @@ func (ss *SubscriptionSet) Apply(mods []FilterModSet, ctx context.Context) (
 	return msgs, err
 }
 
-// SubscriptionManager is a helper function to automate logic around:
+// SubscriptionManager is a helper type to automate logic around:
 // - Running initial db scans after the StartupMsg.
 // - Running additional db scans when new subscriptions are added in a FilterModSet message.
 // - Passing FilterMod objects to update
 // - Updating the filter function for the stream.Subscription.
-type SubscriptionManager[T stream.Event, C FilterMod] struct {
+type SubscriptionManager[T stream.Msg, C FilterMod] struct {
 	FilterMaker FilterMaker[T]
-	StreamSubscription stream.Subscription[T, FilterModSet]
+	StreamSubscription stream.Subscription[T]
 	dirty bool
 }
 
-func NewSubscriptionManager[T stream.Event, C FilterMod](
-	streamer *stream.Streamer[FilterModSet],
-	publisher *stream.Publisher[T, FilterModSet],
-	user int,
+func NewSubscriptionManager[T stream.Msg, C FilterMod](
+	streamer *stream.Streamer,
+	publisher *stream.Publisher[T],
 	filterMaker FilterMaker[T],
 ) SubscriptionManager[T, C] {
 	return SubscriptionManager[T, C]{
 		FilterMaker: filterMaker,
-		StreamSubscription: stream.NewSubscription(streamer, publisher, user),
+		StreamSubscription: stream.NewSubscription(streamer, publisher),
 	}
 }
 
@@ -422,5 +471,25 @@ func prepareMessageWithCache(
 		log.Errorf("error preparing message for streaming: %v", err.Error())
 		return nil
 	}
+	return *cache
+}
+
+func newDeletedMsg(key string, deleted string) *websocket.PreparedMessage {
+	strMsg := fmt.Sprintf("{\"%v\": \"%v\"}", key, deleted)
+	msg, err := websocket.NewPreparedMessage(websocket.BinaryMessage, []byte(strMsg))
+	if err != nil {
+		log.Errorf("error marshaling deletion message for streaming: %v", err.Error())
+		return nil
+	}
+	return msg
+}
+
+func newDeletedMsgWithCache(
+	key string, deleted string, cache **websocket.PreparedMessage,
+) *websocket.PreparedMessage {
+	if *cache != nil {
+		return *cache
+	}
+	*cache = newDeletedMsg(key, deleted)
 	return *cache
 }
