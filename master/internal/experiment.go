@@ -474,6 +474,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 		jobservice.Default.UnregisterJob(e.JobID)
 		state := model.StoppingToTerminalStates[e.State]
+		e.syslog.Infof("experiment desired state %s", state)
 		if wasPatched, err := e.Transition(state); err != nil {
 			return err
 		} else if !wasPatched {
