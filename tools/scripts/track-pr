@@ -241,7 +241,7 @@ def cherry_pick_pr(pr_id: str) -> None:
         requests.post(
             "https://casper.internal.infra.determined.ai/hubot/conflict",
             headers={"X-Casper-Token": CASPER_TOKEN},
-            json={"url": pr["url"]},
+            json={"url": pr["url"], "logs_url": os.environ.get("LOGS_URL")},
         )
 
 
