@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/set"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -433,21 +434,17 @@ func (a *apiServer) PatchWorkspace(
 		if err != nil {
 			return nil, err
 		}
-		rpNames, _, err := db.ReadRPsAvailableToWorkspace(
+		rpNamesSlice, _, err := db.ReadRPsAvailableToWorkspace(
 			ctx, currWorkspace.Id, 0, -1, rpConfigs,
 		)
 		if err != nil {
 			return nil, err
 		}
 
+		rpNames := set.FromSlice(rpNamesSlice)
+
 		if req.Workspace.DefaultComputePool != "" {
-			found := false
-			for _, rpName := range rpNames {
-				if rpName == req.Workspace.DefaultComputePool {
-					found = true
-				}
-			}
-			if !found {
+			if !rpNames.Contains(req.Workspace.DefaultComputePool) {
 				return nil, status.Error(codes.FailedPrecondition, "unable to bind a resource "+
 					"pool that does not exist or is not available to the workspace")
 			}
@@ -455,13 +452,7 @@ func (a *apiServer) PatchWorkspace(
 			insertColumns = append(insertColumns, "default_compute_pool")
 		}
 		if req.Workspace.DefaultAuxPool != "" {
-			found := false
-			for _, rpName := range rpNames {
-				if rpName == req.Workspace.DefaultAuxPool {
-					found = true
-				}
-			}
-			if !found {
+			if !rpNames.Contains(req.Workspace.DefaultAuxPool) {
 				return nil, status.Error(codes.FailedPrecondition, "unable to bind a resource "+
 					"pool that does not exist or is not available to the workspace")
 			}
