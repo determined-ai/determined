@@ -490,7 +490,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if err := e.db.SaveExperimentState(e.Experiment); err != nil {
 			return err
 		}
-		e.syslog.Infof("experiment state changed to %s", e.State)
+		e.syslog.Infof("PostStop state changed to %s", e.State)
 
 		checkpoints, err := e.db.ExperimentCheckpointsToGCRaw(
 			e.Experiment.ID,
@@ -687,10 +687,10 @@ func (e *experiment) TrialClosed(requestID model.RequestID) {
 }
 
 func (e *experiment) trialClosed(requestID model.RequestID) {
+	e.syslog.WithField("request_id", requestID).Info("trialClosed")
+	delete(e.trials, requestID)
 	ops, err := e.searcher.TrialClosed(requestID)
 	e.processOperations(ops, err)
-	delete(e.trials, requestID)
-	e.syslog.WithField("request_id", requestID).Info("trialClosed")
 	if e.canTerminate() {
 		e.self.Stop()
 	}
@@ -875,7 +875,7 @@ func (e *experiment) updateState(state model.StateWithReason) bool {
 		e.syslog.WithError(err).Error("failed to send experiment state change webhook")
 	}
 
-	e.syslog.Infof("experiment state changed to %s", state.State)
+	e.syslog.Infof("updateState changed to %s", state.State)
 
 	var g errgroup.Group
 	g.SetLimit(maxConcurrentTrialOps)
@@ -890,8 +890,9 @@ func (e *experiment) updateState(state model.StateWithReason) bool {
 			return nil
 		})
 	}
+	e.syslog.WithField("num_trials", len(e.trials)).Info("waiting for group patch state to finish")
 	_ = g.Wait() // Errors are handled in g.Go.
-
+	e.syslog.WithField("num_trials", len(e.trials)).Info("group patch state to finished")
 	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
 		e.syslog.Errorf("error saving experiment state: %s", err)
 	}
