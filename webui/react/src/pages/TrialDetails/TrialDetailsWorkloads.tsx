@@ -89,6 +89,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     });
 
     metrics.forEach((metric) => {
+      if (!['validation', 'training'].includes(metric.group)) return;
       const stateIndex = newColumns.findIndex((column) => column.key === 'state');
       newColumns.splice(stateIndex, 0, {
         defaultSortOrder:
