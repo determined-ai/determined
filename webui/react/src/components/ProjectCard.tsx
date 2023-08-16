@@ -57,10 +57,10 @@ const ProjectCard: React.FC<Props> = ({
                 </div>
               </Tooltip>
             )}
+            {project.state !== WorkspaceState.Unspecified && (
+              <div>{stateRenderer(project.state, project, 1)}</div>
+            )}
           </div>
-          {project.state !== WorkspaceState.Unspecified && (
-            <div>{stateRenderer(project.state, project, 1)}</div>
-          )}
           <div className={css.footerContainer}>
             <div className={css.experiments}>
               <Tooltip

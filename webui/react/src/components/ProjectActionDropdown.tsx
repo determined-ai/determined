@@ -117,8 +117,7 @@ export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPro
     }
     if (
       canDeleteProjects({ project, workspace: { id: project.workspaceId } }) &&
-      !project.archived &&
-      project.numExperiments === 0
+      !project.archived
     ) {
       items.push({ danger: true, key: MenuKey.Delete, label: 'Delete...' });
     }

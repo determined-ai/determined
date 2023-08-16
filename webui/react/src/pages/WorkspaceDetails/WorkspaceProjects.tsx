@@ -2,7 +2,6 @@ import { Space } from 'antd';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import ExperimentIcons from 'components/ExperimentIcons';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
@@ -36,7 +35,7 @@ import { paths } from 'routes/utils';
 import { getWorkspaceProjects, patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
-import { Project, RunState, Workspace, WorkspaceState } from 'types';
+import { Project, Workspace, WorkspaceState } from 'types';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -254,7 +253,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         key: 'state',
-        render: (value: WorkspaceState, ...args) => value !== WorkspaceState.Unspecified && stateRenderer(value, ...args),
+        render: (value: WorkspaceState, ...args) =>
+          value !== WorkspaceState.Unspecified && stateRenderer(value, ...args),
         title: 'State',
       },
       {
