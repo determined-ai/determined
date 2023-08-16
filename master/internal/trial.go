@@ -158,10 +158,12 @@ func newTrial(
 		t.idSet = true
 		t.trialCreationSent = createSent
 		if err := t.recover(); err != nil {
+			t.Exit()
 			return nil, fmt.Errorf("recovering trial in prestart: %w", err)
 		}
 	} else {
 		if err := t.create(); err != nil {
+			t.Exit()
 			return nil, fmt.Errorf("persisting trial in prestart: %w", err)
 		}
 	}
@@ -173,6 +175,7 @@ func newTrial(
 
 	err := t.maybeAllocateTask()
 	if err != nil {
+		t.Exit()
 		return nil, fmt.Errorf("initial allocation: %w", err)
 	}
 	return t, nil
@@ -261,6 +264,7 @@ func (t *trial) PatchRP(rp string) {
 func (t *trial) SetUserInitiatedEarlyExit(req userInitiatedEarlyExit) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	defer t.Exit()
 
 	switch req.reason {
 	case model.InvalidHP, model.InitInvalidHP:
@@ -279,7 +283,6 @@ func (t *trial) SetUserInitiatedEarlyExit(req userInitiatedEarlyExit) error {
 				if err != nil {
 					t.syslog.WithError(err).Error("error patching state")
 				}
-				t.Exit()
 			case <-ctx.Done():
 			}
 		})
