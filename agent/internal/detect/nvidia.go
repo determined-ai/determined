@@ -88,7 +88,7 @@ func detectCudaGPUs(visibleGPUs string) ([]device.Device, error) {
 	devices = make([]device.Device, 0)
 
 	r := csv.NewReader(strings.NewReader(string(out)))
-	cudaVisibleDevices := parseVisibleDevices()
+	cudaVisibleDevices := parseCudaVisibleDevices()
 	for {
 		record, err := r.Read()
 		switch {
@@ -101,7 +101,7 @@ func detectCudaGPUs(visibleGPUs string) ([]device.Device, error) {
 				"error parsing output of nvidia-smi; GPU record should have exactly 3 fields")
 		}
 		if !deviceAllocated(cudaVisibleDevices, record) {
-			log.Tracef("Device not allocated: %s (%s)", record[0], record[2])
+			log.Tracef("Device not allocated: %s (%s)", record[deviceIndex], record[deviceUUID])
 			continue // skip device outside of our allocation
 		}
 		index, err := strconv.Atoi(strings.TrimSpace(record[0]))
@@ -122,8 +122,9 @@ func detectCudaGPUs(visibleGPUs string) ([]device.Device, error) {
 	}
 }
 
-// parseVisibleDevices returns as a slice the content of CUDA_VISIBLE_DEVICES if defined, else nil.
-func parseVisibleDevices() []string {
+// parseCudaVisibleDevices returns as a slice the content of CUDA_VISIBLE_DEVICES
+// if defined, else nil.
+func parseCudaVisibleDevices() []string {
 	devices, found := os.LookupEnv("CUDA_VISIBLE_DEVICES")
 	if !found {
 		return nil
@@ -139,8 +140,8 @@ func deviceAllocated(allocatedDevices []string, device []string) bool {
 		log.Trace("No allocated devices")
 		return true
 	}
-	// Slurm identifies GPUs in the allocation by index.
-	// PBS may identify GPUs in the pattern GPU-<UUID>.
+	// Slurm identifies GPUs in CUDA_VISIBLE_DEVICES by index: "0", "1", etc.
+	// PBS may identify GPUs using the pattern "GPU-<UUID>".
 	// Accept a match on either quantity.
 	for _, d := range allocatedDevices {
 		if d == strings.TrimSpace(device[deviceIndex]) || d == strings.TrimSpace(device[deviceUUID]) {
