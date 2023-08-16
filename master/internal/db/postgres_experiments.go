@@ -1137,7 +1137,7 @@ WITH const AS (
 			ORDER BY (c.metadata->>'steps_completed')::int DESC
 		) AS trial_order_rank
 	FROM checkpoints_v2 c
-	NATURAL JOIN const
+	JOIN const ON true
 	JOIN trial_id_task_id ON c.task_id = trial_id_task_id.task_id
     JOIN trials t ON trial_id_task_id.trial_id = t.id
 	LEFT JOIN validations v ON v.total_batches = (c.metadata->>'steps_completed')::int AND 
