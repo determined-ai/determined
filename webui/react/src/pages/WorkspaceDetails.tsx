@@ -19,8 +19,7 @@ import { V1Group, V1GroupSearchResult, V1Role, V1RoleWithAssignments } from 'ser
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
-import { ValueOf } from 'types';
-import { User } from 'types';
+import { User, ValueOf } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';

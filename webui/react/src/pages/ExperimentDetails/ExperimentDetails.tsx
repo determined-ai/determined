@@ -18,8 +18,7 @@ import { ExperimentBase, TrialItem, Workspace } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-import { isAborted } from 'utils/service';
-import { isNotFound } from 'utils/service';
+import { isAborted, isNotFound } from 'utils/service';
 
 type Params = {
   experimentId: string;

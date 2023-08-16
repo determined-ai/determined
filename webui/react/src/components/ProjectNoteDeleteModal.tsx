@@ -3,8 +3,7 @@ import React, { useCallback } from 'react';
 import { Modal } from 'components/kit/Modal';
 import { setProjectNotes } from 'services/api';
 import { Project } from 'types';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 interface Props {
   onClose?: () => void;

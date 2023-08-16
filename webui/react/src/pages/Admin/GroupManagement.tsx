@@ -23,8 +23,7 @@ import roleStore from 'stores/roles';
 import { DetailedUser } from 'types';
 import { clone } from 'utils/data';
 import { message } from 'utils/dialogApi';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 
 import css from './GroupManagement.module.scss';

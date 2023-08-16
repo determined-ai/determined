@@ -1,4 +1,7 @@
-import { launchJupyterLab as apiLaunchJupyterLab, previewJupyterLab as apiPreviewJupyterLab } from 'services/api';
+import {
+  launchJupyterLab as apiLaunchJupyterLab,
+  previewJupyterLab as apiPreviewJupyterLab,
+} from 'services/api';
 import { RawJson } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { openCommandResponse } from 'utils/wait';

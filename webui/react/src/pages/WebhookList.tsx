@@ -22,8 +22,7 @@ import { paths } from 'routes/utils';
 import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
 import { Webhook } from 'types';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
 
 import css from './WebhookList.module.scss';

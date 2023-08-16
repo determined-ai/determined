@@ -7,8 +7,7 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import { Metric } from 'types';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { metricKeyToMetric, metricToKey } from 'utils/metric';
-import { metricSorter } from 'utils/metric';
+import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
 
 import usePrevious from './usePrevious';
 

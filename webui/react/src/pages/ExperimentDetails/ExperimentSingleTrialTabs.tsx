@@ -22,10 +22,8 @@ import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
-import { ValueOf } from 'types';
-import { ExperimentBase, Note, TrialDetails, TrialItem } from 'types';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import { ExperimentBase, Note, TrialDetails, TrialItem, ValueOf } from 'types';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 import ExperimentCheckpoints from './ExperimentCheckpoints';
 import ExperimentCodeViewer from './ExperimentCodeViewer';

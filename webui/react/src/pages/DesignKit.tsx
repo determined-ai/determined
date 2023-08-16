@@ -56,9 +56,7 @@ import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'stores/contexts/UI';
 import { BrandingType } from 'stores/determinedInfo';
-import { ValueOf } from 'types';
-import { Note } from 'types';
-import { MetricType, User } from 'types';
+import { MetricType, Note, User, ValueOf } from 'types';
 import {
   Background,
   Brand,

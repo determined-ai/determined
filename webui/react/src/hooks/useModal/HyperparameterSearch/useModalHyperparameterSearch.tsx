@@ -17,22 +17,20 @@ import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
-import { maxPoolSlotCapacity } from 'stores/cluster';
-import clusterStore from 'stores/cluster';
-import { Primitive } from 'types';
+import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
 import {
   ExperimentItem,
   ExperimentSearcherName,
   Hyperparameter,
   HyperparameterType,
+  Primitive,
   ResourcePool,
   TrialDetails,
   TrialHyperparameters,
   TrialItem,
 } from 'types';
 import { clone, flattenObject, isBoolean, unflattenObject } from 'utils/data';
-import { DetError, ErrorLevel, ErrorType, isDetError } from 'utils/error';
-import { handleWarning } from 'utils/error';
+import { DetError, ErrorLevel, ErrorType, handleWarning, isDetError } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { roundToPrecision } from 'utils/number';
 import { useObservable } from 'utils/observable';

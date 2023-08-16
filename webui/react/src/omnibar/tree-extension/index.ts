@@ -4,8 +4,7 @@ import root from 'omnibar/tree-extension/trees/index';
 import { Children, LeafNode, NonLeafNode, TreeNode, TreePath } from 'omnibar/tree-extension/types';
 import { getNodeChildren, isLeafNode, isNLNode, traverseTree } from 'omnibar/tree-extension/utils';
 import { message } from 'utils/dialogApi';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { noOp } from 'utils/service';
 
 const SEPARATOR = ' ';

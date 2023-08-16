@@ -20,8 +20,7 @@ import {
   TrialWorkloadFilter,
   WorkloadGroup,
 } from 'types';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import {
   extractMetricSortValue,

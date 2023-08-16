@@ -6,8 +6,7 @@ import { Modal } from 'components/kit/Modal';
 import { paths } from 'routes/utils';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { routeToReactUrl } from 'utils/routes';
 
 import css from './WorkspaceDeleteModal.module.scss';

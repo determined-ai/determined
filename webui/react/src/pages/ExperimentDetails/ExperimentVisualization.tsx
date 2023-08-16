@@ -1,5 +1,4 @@
-import { Alert } from 'antd';
-import type { TabsProps } from 'antd';
+import { Alert, type TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
@@ -15,7 +14,6 @@ import { V1MetricBatchesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useUI from 'stores/contexts/UI';
-import { ValueOf } from 'types';
 import {
   ExperimentBase,
   ExperimentSearcherName,
@@ -24,6 +22,7 @@ import {
   MetricType,
   RunState,
   Scale,
+  ValueOf,
 } from 'types';
 import { Loadable } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';

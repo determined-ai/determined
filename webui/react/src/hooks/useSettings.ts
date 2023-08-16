@@ -8,8 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { Primitive } from 'types';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useValueMemoizedObservable } from 'utils/observable';
 

@@ -24,8 +24,7 @@ import * as Api from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
 import { FullJob, Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import {
   canManageJob,
   jobTypeToCommandType,

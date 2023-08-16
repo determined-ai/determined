@@ -8,8 +8,7 @@ import Spinner from 'components/kit/Spinner';
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import useUI from 'stores/contexts/UI';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { DarkLight } from 'utils/themes';
 
 import { useChartSync } from './SyncProvider';
