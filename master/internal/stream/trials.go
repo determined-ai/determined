@@ -5,74 +5,64 @@ import (
 	"database/sql"
 	"time"
 	"fmt"
-	"encoding/json"
+	"strconv"
 
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/stream"
 )
 
+const TrialsDeleteKey = "trials_deleted"
 
-// TrialMsg is a stream.Event.
+// TrialMsg is a stream.Msg.
 type TrialMsg struct {
 	bun.BaseModel `bun:"table:trials"`
 
 	// immutable attributes
-	ID int                      `bun:"id,pk"`
-	TaskID model.TaskID         `bun:"task_id"`
-	ExperimentID int            `bun:"experiment_id"`
-	RequestID *model.RequestID  `bun:"request_id"`
-	Seed int64                  `bun:"seed"`
-	HParams JsonB               `bun:"hparams"`
+	ID int                      `bun:"id,pk" json:"id"`
+	TaskID model.TaskID         `bun:"task_id" json:"task_id"`
+	ExperimentID int            `bun:"experiment_id" json:"experiment_id"`
+	RequestID *model.RequestID  `bun:"request_id" json:"request_id"`
+	Seed int64                  `bun:"seed" json:"seed"`
+	HParams JsonB               `bun:"hparams" json:"hparams"`
 
 	// warmstart checkpoint id?
 
 	// mutable attributes
-	State model.State           `bun:"state"`
-	StartTime time.Time         `bun:"start_time"`
-	EndTime *time.Time          `bun:"end_time"`
-	RunnerState string          `bun:"runner_state"`
-	Restarts int                `bun:"restarts"`
-	Tags JsonB                  `bun:"tags"`
+	State model.State           `bun:"state" bun:"state"`
+	StartTime time.Time         `bun:"start_time" json:"start_time"`
+	EndTime *time.Time          `bun:"end_time" json:"end_time"`
+	RunnerState string          `bun:"runner_state" json:"runner_state"`
+	Restarts int                `bun:"restarts" json:"restarts"`
+	Tags JsonB                  `bun:"tags" json:"tags"`
 
 	// metadata
-	Seq int64                   `bun:"seq"`
+	Seq int64                   `bun:"seq" json:"seq"`
 
 	// total batches?
 
-	cache *websocket.PreparedMessage
+	upsertCache *websocket.PreparedMessage
+	deleteCache *websocket.PreparedMessage
 }
 
 func (tm *TrialMsg) SeqNum() int64 {
 	return tm.Seq
 }
 
-func (tm *TrialMsg) PreparedMessage() *websocket.PreparedMessage {
-	return prepareMessageWithCache(tm, &tm.cache)
+func (tm *TrialMsg) UpsertMsg() *websocket.PreparedMessage {
+	wrapper := struct {
+		Trial *TrialMsg `json:"trial"`
+	}{tm}
+	return prepareMessageWithCache(wrapper, &tm.upsertCache)
 }
 
-// scan for updates to the trials table
-func newTrialMsgs(since int64, ctx context.Context) (int64, []*TrialMsg, error) {
-	var trialMsgs []*TrialMsg
-	err := db.Bun().NewSelect().Model(&trialMsgs).Where("seq > ?", since).Scan(ctx)
-	if err != nil && errors.Cause(err) != sql.ErrNoRows {
-		fmt.Printf("error: %v\n", err)
-		return since, nil, err
-	}
-
-	newSince := since
-	for _, tm := range trialMsgs {
-		if tm.Seq > newSince {
-			newSince = tm.Seq
-		}
-	}
-
-	return newSince, trialMsgs, nil
+func (tm *TrialMsg) DeleteMsg() *websocket.PreparedMessage {
+	deleted := strconv.FormatInt(int64(tm.ID), 10)
+	return newDeletedMsgWithCache(TrialsDeleteKey, deleted, &tm.deleteCache)
 }
 
 // TrialFilterMod is what a user submits to define a trial subscription.
@@ -82,24 +72,6 @@ type TrialFilterMod struct {
 	Since         int64  `json:"since"`
 }
 
-type TrialsDeletedMsg struct {
-	TrialsDeleted string `json:"trials_deleted"`
-}
-
-func (tdm TrialsDeletedMsg) PreparedMessage() *websocket.PreparedMessage {
-	jbytes, err := json.Marshal(tdm)
-	if err != nil {
-		log.Errorf("error marshaling message for streaming: %v", err.Error())
-		return nil
-	}
-	msg, err := websocket.NewPreparedMessage(websocket.BinaryMessage, jbytes)
-	if err != nil {
-		log.Errorf("error marshaling message for streaming: %v", err.Error())
-		return nil
-	}
-	return msg
-}
-
 func (tfm TrialFilterMod) Startup(known string, ctx context.Context) (
 	[]*websocket.PreparedMessage, error,
 ) {
@@ -107,8 +79,7 @@ func (tfm TrialFilterMod) Startup(known string, ctx context.Context) (
 
 	if len(tfm.TrialIds) == 0 && len(tfm.ExperimentIds) == 0 {
 		// empty subscription: everything known should be returned as deleted
-		tdm := TrialsDeletedMsg{known}
-		out = append(out, tdm.PreparedMessage())
+		out = append(out, newDeletedMsg(TrialsDeleteKey, known))
 		return out, nil
 	}
 
@@ -149,9 +120,9 @@ func (tfm TrialFilterMod) Startup(known string, ctx context.Context) (
 	}
 
 	// step 4: emit deletions and udpates to the client
-	out = append(out, TrialsDeletedMsg{missing}.PreparedMessage())
+	out = append(out, newDeletedMsg(TrialsDeleteKey, missing))
 	for _, msg := range trialMsgs {
-		out = append(out, msg.PreparedMessage())
+		out = append(out, msg.UpsertMsg())
 	}
 	return out, nil
 }
@@ -184,7 +155,7 @@ func (tfm TrialFilterMod) Modify(ctx context.Context) (
 
 	var out []*websocket.PreparedMessage
 	for _, msg := range trialMsgs {
-		out = append(out, msg.PreparedMessage())
+		out = append(out, msg.UpsertMsg())
 	}
 	return out, nil
 }
