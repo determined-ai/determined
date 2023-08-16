@@ -57,7 +57,6 @@ type mockEnvironment struct {
 
 func newMockEnvironment(t *testing.T, setup *mockConfig) (*mockEnvironment, *Provisioner) {
 	system := actor.NewSystem(t.Name())
-
 	cluster, err := newMockProvider(setup)
 	assert.NilError(t, err)
 	var launchErrorTimeout time.Duration
@@ -212,7 +211,6 @@ func TestProvisionerScaleUp(t *testing.T) {
 		initInstances: []*model.Instance{},
 	}
 	mock, _ := newMockEnvironment(t, setup)
-
 	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
 	mock.provisioner.Provision()
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
