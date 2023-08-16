@@ -10,6 +10,7 @@ import { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
+import Tooltip from 'components/kit/Tooltip';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
@@ -97,7 +98,7 @@ const ResourcePoolCard: React.FC<Props> = ({
 }: Props) => {
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
-
+  const isDefaultPool = pool.defaultAuxPool || pool.defaultComputePool;
   const descriptionClasses = [css.description];
 
   const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
@@ -168,9 +169,16 @@ const ResourcePoolCard: React.FC<Props> = ({
               <div className={css.name}>{pool.name}</div>
             </div>
             <div className={css.default}>
-              <span>{descriptiveLabel}</span>
+              {!isDefaultPool && <span>{descriptiveLabel}</span>}
               {pool.description && <Icon name="info" showTooltip title={pool.description} />}
             </div>
+            {rpBindingFlagOn && isDefaultPool && (
+              <div className={css.defaultPoolTooltip}>
+                <Tooltip content="You cannot bind your default resource pool to a workspace">
+                  <span>Default</span>
+                </Tooltip>
+              </div>
+            )}
           </div>
           <Suspense fallback={<Spinner center spinning />}>
             <div className={css.body}>
