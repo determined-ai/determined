@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-
 	"gopkg.in/segmentio/analytics-go.v3"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -27,37 +26,36 @@ var queue []string
 
 func TestTelemetry(t *testing.T) {
 	// Mock out the telemetry actor & client interface.
-	// InitMockTelemetry() calls InitTelemetry(), which calls New().
-	InitMockTelemetry()
-	assert.NotNil(t, DefaultTelemetry)
-	DefaultTelemetry.client = mockClient{}
+	InitTelemetryWithMocks()
+	assert.NotNil(t, TelemetryActor)
+	TelemetryActor.client = mockClient{}
 
-	// Should receive one master_tick event during InitTelemetry(), reset queue after check.
+	// Should receive one master_tick event during Init(), reset queue after check.
 	time.Sleep(time.Second)
-	assert.Equal(t, 1, len(queue))
-	assert.Equal(t, []string{"master_tick"}, queue)
+	assert.Equal(t, []string{"master_tick"},
+		queue, "queue didn't receive initial master tick")
 	queue = []string{}
 
 	// Test out Tick & reset the queue.
-	DefaultTelemetry.telemetryTick(actor.NewSystem("Testing"), 0)
+	go TelemetryActor.tick(actor.NewSystem("Testing"))
 	time.Sleep(time.Second)
-	assert.Equal(t, 1, len(queue))
-	assert.Equal(t, []string{"master_tick"}, queue)
+	assert.Equal(t, []string{"master_tick"}, queue,
+		"queue didn't receive test tick")
 	queue = []string{}
 
 	// Test out Track & reset the queue.
-	DefaultTelemetry.Track(analytics.Track{Event: "manual_call"})
+	TelemetryActor.track(analytics.Track{Event: "manual_call"})
 	time.Sleep(time.Second)
-	assert.Equal(t, 1, len(queue))
-	assert.Equal(t, []string{"manual_call"}, queue)
+	assert.Equal(t, []string{"manual_call"}, queue,
+		"queue didn't receive correct track call")
 	queue = []string{}
 
 	// Test out all Reports.
-	ReportMasterTick(&apiv1.GetResourcePoolsResponse{}, DefaultTelemetry.db)
+	ReportMasterTick(&apiv1.GetResourcePoolsResponse{}, TelemetryActor.db)
 	ReportProvisionerTick([]*model.Instance{}, "test-instance")
 	ReportExperimentCreated(1, schemas.WithDefaults(createExpConfig()))
-	ReportAllocationTerminal(DefaultTelemetry.db, model.Allocation{}, &device.Device{})
-	ReportExperimentStateChanged(&db.PgDB{}, model.Experiment{})
+	ReportAllocationTerminal(TelemetryActor.db, model.Allocation{}, &device.Device{})
+	ReportExperimentStateChanged(&db.PgDB{}, &model.Experiment{})
 	ReportUserCreated(true, true)
 	ReportUserCreated(false, false)
 
@@ -70,8 +68,7 @@ func TestTelemetry(t *testing.T) {
 		"user_created",
 		"user_created",
 	}
-	assert.Equal(t, len(expected), len(queue))
-	assert.Equal(t, expected, queue)
+	assert.Equal(t, expected, queue, "queue didn't receive track calls in the right order")
 }
 
 type mockClient struct{}
@@ -93,9 +90,8 @@ func (m mockClient) Enqueue(msg analytics.Message) error {
 	return nil
 }
 
-// InitMockTelemetry TBD, but putting this here for now.
-// Have to move it somewhere else to export it to the other tests.
-func InitMockTelemetry() {
+// InitTelemetryWithMocks() calls Init(), which calls New().
+func InitTelemetryWithMocks() {
 	mockRM := &mocks.ResourceManager{}
 	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).Return(
 		&apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{}},
@@ -104,7 +100,7 @@ func InitMockTelemetry() {
 	mockDB := &mocks.DB{}
 	mockDB.On("PeriodicTelemetryInfo").Return([]byte(`{"master_version": 1}`), nil)
 	mockDB.On("CompleteAllocationTelemetry", mock.Anything).Return([]byte(`{"allocation_id": 1}`), nil)
-	InitTelemetry(actor.NewSystem("Testing"), mockDB, mockRM, "1",
+	Init(actor.NewSystem("Testing"), mockDB, mockRM, "1",
 		config.TelemetryConfig{Enabled: true, SegmentMasterKey: "Test"},
 	)
 }

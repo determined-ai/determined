@@ -29,8 +29,8 @@ type telemetryRPFetcher interface {
 	) (*apiv1.GetResourcePoolsResponse, error)
 }
 
-// TelemetryActor manages gathering and sending telemetry data.
-type TelemetryActor struct {
+// Telemetry manages gathering and sending telemetry data.
+type Telemetry struct {
 	db        db.DB
 	rm        telemetryRPFetcher
 	client    analytics.Client
@@ -38,8 +38,8 @@ type TelemetryActor struct {
 	syslog    *logrus.Entry
 }
 
-// DefaultTelemetry is the global telemetry singleton.
-var DefaultTelemetry *TelemetryActor
+// TelemetryActor is the global telemetry singleton.
+var TelemetryActor *Telemetry
 
 // New creates an actor to handle collecting and sending telemetry information.
 func New(
@@ -47,7 +47,7 @@ func New(
 	rm telemetryRPFetcher,
 	clusterID string,
 	segmentKey string,
-) (*TelemetryActor, error) {
+) (*Telemetry, error) {
 	client, err := analytics.NewWithConfig(
 		segmentKey,
 		analytics.Config{Logger: debugLogger{}},
@@ -62,7 +62,6 @@ func New(
 			"master_version": version.Version,
 		},
 	}); err != nil {
-		// TODO CAROLINA: should this panic/return nil ?
 		logrus.WithError(err).Warnf("failed to enqueue identity %s", clusterID)
 	}
 
@@ -72,7 +71,7 @@ func New(
 		"segmentKey": segmentKey,
 	})
 
-	return &TelemetryActor{
+	return &Telemetry{
 		db:        db,
 		rm:        rm,
 		client:    client,
@@ -81,74 +80,79 @@ func New(
 	}, nil
 }
 
-// InitTelemetry sets up the actor for the telemetry.
-func InitTelemetry(
+// Init sets up the actor for the telemetry.
+func Init(
 	system *actor.System,
 	db db.DB,
 	rm telemetryRPFetcher,
 	clusterID string,
 	conf config.TelemetryConfig,
 ) {
-	if DefaultTelemetry != nil {
+	if TelemetryActor != nil {
 		logrus.Warn(`detected re-initialization of Telemetry actor `,
 			`that should never occur outside of tests`)
+		return
 	}
 
-	if conf.Enabled && conf.SegmentMasterKey != "" {
-		if actorDef, tErr := New(
-			db,
-			rm,
-			clusterID,
-			conf.SegmentMasterKey,
-		); tErr != nil {
-			logrus.WithError(tErr).Errorf("failed to initialize telemetry")
-		} else {
-			DefaultTelemetry = actorDef
-			DefaultTelemetry.syslog.Info(`telemetry reporting is enabled; `,
-				`run with --telemetry-enabled=false to disable`)
-			DefaultTelemetry.telemetryTick(system, 0)
-		}
-	} else {
+	if !conf.Enabled || conf.SegmentMasterKey == "" {
 		logrus.Info("telemetry reporting is disabled")
+		return
 	}
+
+	actorDef, err := New(
+		db,
+		rm,
+		clusterID,
+		conf.SegmentMasterKey,
+	)
+	if err != nil {
+		logrus.WithError(err).Errorf("failed to initialize telemetry")
+		return
+	}
+
+	TelemetryActor = actorDef
+	TelemetryActor.syslog.Info(`telemetry reporting is enabled; `,
+		`run with --telemetry-enabled=false to disable`)
+	go TelemetryActor.tick(system)
 }
 
-// Track adds track call objects to the analytics.Client interface.
-func (s *TelemetryActor) Track(t analytics.Track) {
-	// Panic if telemetry isn't initialized or has crashed.
+// track adds track call objects to the analytics.Client interface.
+func (s *Telemetry) track(t analytics.Track) {
 	if s == nil {
-		panic("telemetry actor should not be nil: can't track.")
+		return
 	}
 
 	t.UserId = s.clusterID
 	if err := s.client.Enqueue(t); err != nil {
-		s.syslog.WithError(err).Warnf("failed to enqueue track %s", t.Event)
+		s.syslog.WithError(err).WithField("event", t.Event).Warn("failed to enqueue track")
 	}
 }
 
-func (s *TelemetryActor) telemetryTick(system *actor.System, t int) {
-	// Panic if telemetry isn't initialized or has crashed.
+func (s *Telemetry) tick(system *actor.System) {
 	if s == nil {
-		panic("telemetry actor should not be nil: can't tick.")
+		return
 	}
 
-	time.AfterFunc(time.Duration(t)*time.Minute, func() {
+	for {
 		resp, err := s.rm.GetResourcePools(system, &apiv1.GetResourcePoolsRequest{})
 		if err != nil {
 			// TODO(Brad): Make this routine more accepting of failures.
 			s.syslog.WithError(err).Error("failed to receive resource pool telemetry information")
 			return
 		}
-		// After waiting t minutes, report the first tick.
 		ReportMasterTick(resp, s.db)
+		time.Sleep(s.sleepInterval())
+	}
+}
 
-		// Now call the next tick.
-		bg := big.NewInt(maxTickIntervalMins - minTickIntervalMins)
-		randNum, err := rand.Int(rand.Reader, bg)
-		if err != nil {
-			panic(err)
-		}
-		randInt := int(randNum.Int64()) + minTickIntervalMins
-		s.telemetryTick(system, randInt)
-	})
+func (s *Telemetry) sleepInterval() time.Duration {
+	bg := big.NewInt(maxTickIntervalMins - minTickIntervalMins)
+	randNum, err := rand.Int(rand.Reader, bg)
+	if err != nil {
+		s.syslog.Error(err)
+		// Error handling: if random int can't be generated, return maxInterval
+		return time.Duration(maxTickIntervalMins) * time.Minute
+	}
+	randInt := int(randNum.Int64()) + minTickIntervalMins
+	return time.Duration(randInt) * time.Minute
 }

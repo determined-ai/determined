@@ -67,7 +67,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 			return errors.Wrapf(err, "terminating experiment %d", expModel.ID)
 		}
 		expModel.State = terminal
-		telemetry.ReportExperimentStateChanged(m.db, *expModel)
+		telemetry.ReportExperimentStateChanged(m.db, expModel)
 		if err := webhooks.ReportExperimentStateChanged(
 			context.TODO(), *expModel, activeConfig,
 		); err != nil {

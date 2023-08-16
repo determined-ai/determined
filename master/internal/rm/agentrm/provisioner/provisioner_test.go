@@ -9,20 +9,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/mock"
 	"gotest.tools/assert"
 
 	. "github.com/determined-ai/determined/master/internal/config/provconfig"
-	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner/scaledecider"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/config"
 	errInfo "github.com/determined-ai/determined/master/pkg/errors"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
 type TestInstanceType struct {
@@ -63,6 +57,7 @@ type mockEnvironment struct {
 
 func newMockEnvironment(t *testing.T, setup *mockConfig) (*mockEnvironment, *Provisioner) {
 	system := actor.NewSystem(t.Name())
+
 	cluster, err := newMockProvider(setup)
 	assert.NilError(t, err)
 	var launchErrorTimeout time.Duration
@@ -217,7 +212,6 @@ func TestProvisionerScaleUp(t *testing.T) {
 		initInstances: []*model.Instance{},
 	}
 	mock, _ := newMockEnvironment(t, setup)
-	InitMockTelemetry()
 
 	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
 	mock.provisioner.Provision()
@@ -488,20 +482,4 @@ func TestProvisionerLaunchOneAtATimeFail(t *testing.T) {
 		mock.provisioner.Provision()
 	}
 	assert.Error(t, provisioner.LaunchError(), "failed to launch", "expected error")
-}
-
-// InitMockTelemetry
-// TODO CAROLINA: temporarily placing here until I figure out how to export it between tests.
-func InitMockTelemetry() {
-	mockRM := &mocks.ResourceManager{}
-	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).Return(
-		&apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{}},
-		nil,
-	)
-	mockDB := &mocks.DB{}
-	mockDB.On("PeriodicTelemetryInfo").Return([]byte(`{"master_version": 1}`), nil)
-	mockDB.On("CompleteAllocationTelemetry", mock.Anything).Return([]byte(`{"allocation_id": 1}`), nil)
-	telemetry.InitTelemetry(actor.NewSystem("Testing"), mockDB, mockRM, "1",
-		config.TelemetryConfig{Enabled: true, SegmentMasterKey: "Test"},
-	)
 }
