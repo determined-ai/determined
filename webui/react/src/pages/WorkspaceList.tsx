@@ -34,7 +34,7 @@ import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
-import { Workspace } from 'types';
+import { Workspace, WorkspaceState } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
@@ -196,7 +196,8 @@ const WorkspaceList: React.FC = () => {
         dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         key: 'state',
-        render: stateRenderer,
+        render: (value: WorkspaceState, ...args) =>
+          value !== WorkspaceState.Unspecified && stateRenderer(value, ...args),
         title: 'State',
       },
       {

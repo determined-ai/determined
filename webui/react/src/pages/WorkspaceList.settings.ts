@@ -14,7 +14,7 @@ export type WorkspaceColumnName =
   | 'state'
   | 'userId';
 
-export const DEFAULT_COLUMNS: WorkspaceColumnName[] = ['name', 'numProjects', 'userId'];
+export const DEFAULT_COLUMNS: WorkspaceColumnName[] = ['name', 'numProjects', 'state', 'userId'];
 
 export const WhoseWorkspaces = {
   All: 'ALL_WORKSPACES',

@@ -7,9 +7,10 @@ import Card from 'components/kit/Card';
 import { Columns } from 'components/kit/Columns';
 import Spinner from 'components/kit/Spinner';
 import Avatar from 'components/kit/UserAvatar';
+import { stateRenderer } from 'components/Table/Table';
 import { paths } from 'routes/utils';
 import userStore from 'stores/users';
-import { Workspace } from 'types';
+import { Workspace, WorkspaceState } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { pluralizer } from 'utils/string';
@@ -55,6 +56,9 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
               <p className={css.projects}>
                 {workspace.numProjects} {pluralizer(workspace.numProjects, 'project')}
               </p>
+              {workspace.state !== WorkspaceState.Unspecified && (
+                <div>{stateRenderer(workspace.state, workspace, 1)}</div>
+              )}
               <div className={css.avatarRow}>
                 <div className={css.avatar}>
                   <Spinner conditionalRender spinning={Loadable.isLoading(loadableUser)}>

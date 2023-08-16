@@ -133,7 +133,7 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
         label: workspace.archived ? 'Unarchive' : 'Archive',
       });
     }
-    if (canDeleteWorkspace({ workspace }) && workspace.numExperiments === 0) {
+    if (canDeleteWorkspace({ workspace })) {
       menuItems.push({ type: 'divider' });
       menuItems.push({ danger: true, key: MenuKey.Delete, label: 'Delete...' });
     }
