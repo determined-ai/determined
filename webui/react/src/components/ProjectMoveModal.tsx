@@ -9,7 +9,7 @@ import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { moveProject } from 'services/api';
 import workspaceStore from 'stores/workspaces';
-import { Project, Workspace } from 'types';
+import { Project, Workspace, WorkspaceState } from 'types';
 import { notification } from 'utils/dialogApi';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
@@ -30,7 +30,12 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onClose, project }: Props)
   const { canMoveProjectsTo } = usePermissions();
   const workspaces = Loadable.match(useObservable(workspaceStore.unarchived), {
     Loaded: (workspaces: Workspace[]) =>
-      workspaces.filter((w) => !w.immutable && canMoveProjectsTo({ destination: { id: w.id } })),
+      workspaces.filter(
+        (w) =>
+          !w.immutable &&
+          canMoveProjectsTo({ destination: { id: w.id } }) &&
+          (w.state === WorkspaceState.Unspecified || w.state === WorkspaceState.DeleteFailed),
+      ),
     NotLoaded: () => [],
   });
 

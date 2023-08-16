@@ -14,7 +14,7 @@ import { moveExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import projectStore from 'stores/projects';
 import workspaceStore from 'stores/workspaces';
-import { Project } from 'types';
+import { Project, WorkspaceState } from 'types';
 import { message, notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -52,8 +52,10 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   }, [workspaceId, projectId, sourceProjectId, sourceWorkspaceId]);
 
   const { canMoveExperimentsTo } = usePermissions();
-  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.unarchived)).filter((w) =>
-    canMoveExperimentsTo({ destination: { id: w.id } }),
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.unarchived)).filter(
+    (w) =>
+      canMoveExperimentsTo({ destination: { id: w.id } }) &&
+      (w.state === WorkspaceState.Unspecified || w.state === WorkspaceState.DeleteFailed),
   );
   const loadableProjects: Loadable<Project[]> = useObservable(
     projectStore.getProjectsByWorkspace(workspaceId),
@@ -199,18 +201,24 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
                     (option?.title?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
                   }
                   placeholder="Select a destination project.">
-                  {loadableProjects.map((project) => (
-                    <Option
-                      disabled={project.archived}
-                      key={project.id}
-                      title={project.name}
-                      value={project.id}>
-                      <div>
-                        <Typography.Text ellipsis={true}>{project.name}</Typography.Text>
-                        {project.archived && <Icon name="archive" title="Archived" />}
-                      </div>
-                    </Option>
-                  ))}
+                  {loadableProjects
+                    .filter(
+                      (p) =>
+                        p.state === WorkspaceState.Unspecified ||
+                        p.state === WorkspaceState.DeleteFailed,
+                    )
+                    .map((project) => (
+                      <Option
+                        disabled={project.archived}
+                        key={project.id}
+                        title={project.name}
+                        value={project.id}>
+                        <div>
+                          <Typography.Text ellipsis={true}>{project.name}</Typography.Text>
+                          {project.archived && <Icon name="archive" title="Archived" />}
+                        </div>
+                      </Option>
+                    ))}
                 </Select>
               ),
               NotLoaded: () => <Spinner center spinning />,
