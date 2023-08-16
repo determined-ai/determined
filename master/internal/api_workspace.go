@@ -428,11 +428,43 @@ func (a *apiServer) PatchWorkspace(
 			CanSetWorkspacesDefaultPools(ctx, currUser, currWorkspace); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
+
+		rpConfigs, err := a.resourcePoolsAsConfigs()
+		if err != nil {
+			return nil, err
+		}
+		rpNames, _, err := db.ReadRPsAvailableToWorkspace(
+			ctx, currWorkspace.Id, 0, -1, rpConfigs,
+		)
+		if err != nil {
+			return nil, err
+		}
+
 		if req.Workspace.DefaultComputePool != "" {
+			found := false
+			for _, rpName := range rpNames {
+				if rpName == req.Workspace.DefaultComputePool {
+					found = true
+				}
+			}
+			if !found {
+				return nil, status.Error(codes.FailedPrecondition, "unable to bind a resource "+
+					"pool that does not exist or is not available to the workspace")
+			}
 			updatedWorkspace.DefaultComputePool = req.Workspace.DefaultComputePool
 			insertColumns = append(insertColumns, "default_compute_pool")
 		}
 		if req.Workspace.DefaultAuxPool != "" {
+			found := false
+			for _, rpName := range rpNames {
+				if rpName == req.Workspace.DefaultAuxPool {
+					found = true
+				}
+			}
+			if !found {
+				return nil, status.Error(codes.FailedPrecondition, "unable to bind a resource "+
+					"pool that does not exist or is not available to the workspace")
+			}
 			updatedWorkspace.DefaultAuxPool = req.Workspace.DefaultAuxPool
 			insertColumns = append(insertColumns, "default_aux_pool")
 		}
