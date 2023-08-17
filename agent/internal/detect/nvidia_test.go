@@ -82,24 +82,24 @@ func Test_deviceAllocated(t *testing.T) {
 		{
 			name: "PBS case, GPUs in CUDA_VISIBLE_DEVICES listed by UUID, device 1, is allocated",
 			args: args{
-				allocatedDevices: []string{"GPU-0-UUID", "GPU-1-UUID", "GPU-0-UUID"},
+				allocatedDevices: []string{"GPU-0-UUID", "GPU-1-UUID", "GPU-2-UUID"},
 				device:           []string{"1", "", "GPU-1-UUID"},
 			},
 			want: true,
 		},
 		{
-			name: "PBS case, GPUs in CUDA_VISIBLE_DEVICES listed by UUID, device 2, is not allocated",
+			name: "PBS case, GPUs in CUDA_VISIBLE_DEVICES listed by UUID, device 3, is not allocated",
 			args: args{
-				allocatedDevices: []string{"GPU-0-UUID", "GPU-1-UUID", "GPU-0-UUID"},
-				device:           []string{"2", "", "GPU-2-UUID"},
+				allocatedDevices: []string{"GPU-0-UUID", "GPU-1-UUID", "GPU-2-UUID"},
+				device:           []string{"3", "", "GPU-3-UUID"},
 			},
 			want: false,
 		},
 		{
 			name: "Like the previous test, with spaces in the device data",
 			args: args{
-				allocatedDevices: []string{"GPU-0-UUID", "GPU-1-UUID", "GPU-0-UUID"},
-				device:           []string{" 2 ", "", " GPU-2-UUID "},
+				allocatedDevices: []string{"GPU-0-UUID", "GPU-1-UUID", "GPU-2-UUID"},
+				device:           []string{" 3 ", "", " GPU-3-UUID "},
 			},
 			want: false,
 		},

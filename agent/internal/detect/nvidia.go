@@ -19,6 +19,7 @@ import (
 
 const (
 	deviceIndex = 0
+	deviceName  = 1
 	deviceUUID  = 2
 )
 
@@ -104,14 +105,14 @@ func detectCudaGPUs(visibleGPUs string) ([]device.Device, error) {
 			log.Tracef("Device not allocated: %s (%s)", record[deviceIndex], record[deviceUUID])
 			continue // skip device outside of our allocation
 		}
-		index, err := strconv.Atoi(strings.TrimSpace(record[0]))
+		index, err := strconv.Atoi(strings.TrimSpace(record[deviceIndex]))
 		if err != nil {
 			return nil, errors.Wrap(
 				err, "error parsing output of nvidia-smi; index of GPU cannot be converted to int")
 		}
 
-		brand := strings.TrimSpace(record[1])
-		uuid := strings.TrimSpace(record[2])
+		brand := strings.TrimSpace(record[deviceName])
+		uuid := strings.TrimSpace(record[deviceUUID])
 
 		devices = append(devices, device.Device{
 			ID:    device.ID(index),
