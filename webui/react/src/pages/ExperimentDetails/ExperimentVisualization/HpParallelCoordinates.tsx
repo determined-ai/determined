@@ -31,7 +31,7 @@ import {
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import { rgba2str, str2rgba } from 'utils/color';
-import { clone, flattenObject, isPrimitive } from 'utils/data';
+import { flattenObject, isPrimitive } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { metricToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';

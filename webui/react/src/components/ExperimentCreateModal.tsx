@@ -12,7 +12,6 @@ import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
 import { ExperimentBase, RawJson, TrialHyperparameters, TrialItem, ValueOf } from 'types';
-import { clone } from 'utils/data';
 import handleError, {
   DetError,
   ErrorLevel,

@@ -29,7 +29,7 @@ import {
   TrialHyperparameters,
   TrialItem,
 } from 'types';
-import { clone, flattenObject, isBoolean, unflattenObject } from 'utils/data';
+import { flattenObject, isBoolean, unflattenObject } from 'utils/data';
 import { DetError, ErrorLevel, ErrorType, handleWarning, isDetError } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { roundToPrecision } from 'utils/number';

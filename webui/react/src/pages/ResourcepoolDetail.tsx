@@ -15,12 +15,16 @@ import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
-import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
+import {
+  V1GetJobQueueStatsResponse,
+  V1ResourcePoolDetail,
+  V1RPQueueStat,
+  V1SchedulerType,
+} from 'services/api-ts-sdk';
 import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
 import { ShirtSize } from 'themes';
-import { JobState, ResourceState, ValueOf } from 'types';
+import { JobState, JsonObject, ResourceState, ValueOf } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
-import { clone } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
