@@ -231,8 +231,8 @@ type kubernetesResourceManager struct {
 	poolsConfig           []config.ResourcePoolConfig
 	taskContainerDefaults *model.TaskContainerDefaultsConfig
 
-	podsActor *actor.Ref
-	pools     map[string]*actor.Ref
+	pods  *pods
+	pools map[string]*actor.Ref
 
 	echoRef         *echo.Echo
 	masterTLSConfig model.TLSClientConfig
@@ -272,10 +272,8 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			poolNamespaces[k.poolsConfig[i].KubernetesNamespace] = k.poolsConfig[i].PoolName
 		}
 
-		k.podsActor = Initialize(
-			ctx.Self().System(),
-			k.echoRef,
-			ctx.Self(),
+		podStatusUpdates := make(chan sproto.UpdatePodStatus)
+		pods, err := Initialize(
 			k.config.Namespace,
 			poolNamespaces,
 			k.config.MasterServiceName,
@@ -291,12 +289,22 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			k.config.CredsDir,
 			k.config.MasterIP,
 			k.config.MasterPort,
+			podStatusUpdates,
 		)
+		if err != nil {
+			return fmt.Errorf("initializing pod service: %w", err)
+		}
+		k.pods = pods
+		go func() {
+			for update := range podStatusUpdates {
+				ctx.Tell(ctx.Self(), update)
+			}
+		}()
 
 		for _, poolConfig := range k.poolsConfig {
 			poolConfig := poolConfig
 			k.pools[poolConfig.PoolName] = ctx.MustActorOf(
-				poolConfig.PoolName, newResourcePool(k.config, &poolConfig, k.podsActor),
+				poolConfig.PoolName, newResourcePool(k.config, &poolConfig, k.pods),
 			)
 		}
 
@@ -443,8 +451,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		k.forwardToAllPools(ctx, msg)
 
 	case *apiv1.GetAgentsRequest:
-		resp := ctx.Ask(k.podsActor, msg)
-		ctx.Respond(resp.Get())
+		ctx.Respond(k.pods.GetAgents())
 
 	case sproto.GetExternalJobs:
 		ctx.Respond(rmerrors.ErrNotSupported)
