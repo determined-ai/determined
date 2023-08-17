@@ -1135,7 +1135,8 @@ WITH const AS (
 		rank() OVER (
 			PARTITION BY v.trial_id
 			ORDER BY (c.metadata->>'steps_completed')::int DESC
-		) AS trial_order_rank
+		) AS trial_order_rank,
+		v.metrics->'validation_metrics'->>const.metric_name as val_metric
 	FROM checkpoints_v2 c
 	JOIN const ON true
 	JOIN trial_id_task_id ON c.task_id = trial_id_task_id.task_id
@@ -1143,13 +1144,13 @@ WITH const AS (
 	LEFT JOIN validations v ON v.total_batches = (c.metadata->>'steps_completed')::int AND 
 		v.trial_id = t.id
 	WHERE c.report_time IS NOT NULL
-		AND v.metrics->'validation_metrics'->>const.metric_name IS NOT NULL
 		AND (SELECT COUNT(*) FROM trials t WHERE t.warm_start_checkpoint_id = c.id) = 0
 		AND t.experiment_id = $1
 )
 SELECT sc.uuid AS ID
 FROM selected_checkpoints sc
-WHERE trial_order_rank > $4 AND experiment_rank > $2 AND trial_rank > $3;`
+WHERE ((experiment_rank > $2 AND trial_rank > $3) OR (val_metric IS NULL))
+	AND trial_order_rank > $4;`
 
 	var checkpointIDRows []struct {
 		ID uuid.UUID
