@@ -10,12 +10,12 @@ import (
 	"go/parser"
 	"go/token"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/shopspring/decimal"
-	"golang.org/x/exp/slices"
 
 	"github.com/stretchr/testify/require"
 
