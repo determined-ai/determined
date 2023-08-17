@@ -252,6 +252,11 @@ func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.
 			len(uids), gid)
 	}
 
+	err = UpdateUsersTimestampTx(ctx, idb, uids)
+	if err != nil {
+		return errors.Wrapf(err, "Error when updating users timestamps")
+	}
+
 	return nil
 }
 
@@ -284,6 +289,11 @@ func RemoveUsersFromGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...m
 		}
 		return errors.Wrapf(sError, "Error when removing %d user(s) from group %d",
 			len(uids), gid)
+	}
+
+	err = UpdateUsersTimestampTx(ctx, idb, uids)
+	if err != nil {
+		return errors.Wrapf(err, "Error when updating users timestamps")
 	}
 
 	return nil
@@ -333,20 +343,10 @@ func UpdateGroupAndMembers(
 		if err != nil {
 			return nil, "", err
 		}
-
-		err = UpdateUsersTimestampTx(ctx, tx, addUsers)
-		if err != nil {
-			return nil, "", err
-		}
 	}
 
 	if len(removeUsers) > 0 {
 		err = RemoveUsersFromGroupTx(ctx, tx, gid, removeUsers...)
-		if err != nil {
-			return nil, "", err
-		}
-
-		err = UpdateUsersTimestampTx(ctx, tx, removeUsers)
 		if err != nil {
 			return nil, "", err
 		}
