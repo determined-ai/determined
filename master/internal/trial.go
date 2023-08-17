@@ -152,11 +152,11 @@ func newTrial(
 
 		exitCallback: exitCallback,
 	}
-	defer func() {
+	defer func(t *trial) {
 		if err != nil {
 			t.Exit()
 		}
-	}()
+	}(t)
 
 	if id != nil {
 		t.id = *id
@@ -407,6 +407,9 @@ func (t *trial) maybeAllocateTask() error {
 		if err != nil {
 			return err
 		}
+		t.syslog.
+			WithField("allocation-id", ar.AllocationID).
+			Infof("started restored trial allocation")
 		t.allocationID = &ar.AllocationID
 		return nil
 	}
