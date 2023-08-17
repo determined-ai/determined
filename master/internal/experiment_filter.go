@@ -450,14 +450,16 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 // group_a.value.last -> group_a, value, last
 // group_b.value.a.last -> group_b, value.a, last .
 func parseMetricsName(str string) (string, string, string, error) {
-	template := regexp.MustCompile("[[:print:]]+\\.[[:print:]]+\\.min|max|mean|last")
-	if !template.MatchString(str) {
+	template := regexp.MustCompile(`(?P<group>[[:print:]]+?)\.(?P<name>[[:print:]]+)\.(?P<qualifier>min|max|mean|last)`)
+
+	matches := template.FindStringSubmatch(str)
+	if len(matches) < 4 {
 		return "", "", "", fmt.Errorf("%s is not a valid metrics id", str)
 	}
-	slice := strings.Split(str, ".")
-	metricGroup := slice[0]
-	metricQualifier := slice[len(slice)-1]
-	metricName := strings.Join(slice[1:len(slice)-1], ".")
+
+	metricGroup := matches[1]
+	metricName := matches[2]
+	metricQualifier := matches[3]
 
 	if metricGroup == metricIDTraining {
 		metricGroup = metricGroupTraining

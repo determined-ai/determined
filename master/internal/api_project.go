@@ -438,7 +438,7 @@ func (a *apiServer) getProjectNumericMetricsRange(
 		ID                  int32
 		SmallerIsBetter     bool
 		SearcherMetricValue *float64
-		SummaryMetrics      *map[string](*map[string]metrics)
+		SummaryMetrics      map[string](map[string]metrics)
 	}
 
 	if err := query.Scan(ctx, &res); err != nil {
@@ -452,8 +452,8 @@ func (a *apiServer) getProjectNumericMetricsRange(
 			searcherMetricsValue = append(searcherMetricsValue, *r.SearcherMetricValue)
 		}
 		if r.SummaryMetrics != nil {
-			for metricsGroup, metrics := range *r.SummaryMetrics {
-				for name, value := range *metrics {
+			for metricsGroup, metrics := range r.SummaryMetrics {
+				for name, value := range metrics {
 					if value.Type != "number" {
 						continue
 					}
