@@ -450,7 +450,8 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 // group_a.value.last -> group_a, value, last
 // group_b.value.a.last -> group_b, value.a, last .
 func parseMetricsName(str string) (string, string, string, error) {
-	template := regexp.MustCompile(`(?P<group>[[:print:]]+?)\.(?P<name>[[:print:]]+)\.(?P<qualifier>min|max|mean|last)`)
+	template := regexp.MustCompile(
+		`(?P<group>[[:print:]]+?)\.(?P<name>[[:print:]]+)\.(?P<qualifier>min|max|mean|last)`)
 
 	matches := template.FindStringSubmatch(str)
 	if len(matches) < 4 {
