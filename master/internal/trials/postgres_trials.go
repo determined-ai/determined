@@ -177,10 +177,9 @@ type Trial struct {
 	RequestID             *string        `bun:"request_id"`
 	BestValidationID      *int           `bun:"best_validation_id"`
 	// TODO(ilia): enum for training/validating/checkpointing.
-	RunnerState string  `bun:"runner_state"`
-	TaskID      *string `bun:"task_id"`
-	RunID       int     `bun:"run_id"`
-	Restarts    int     `bun:"restarts"`
+	RunnerState string `bun:"runner_state"`
+	RunID       int    `bun:"run_id"`
+	Restarts    int    `bun:"restarts"`
 	// Note: Tags map values are always "".
 	Tags                      map[string]string `bun:"tags"`
 	CheckpointSize            int               `bun:"checkpoint_size"`
