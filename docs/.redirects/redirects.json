@@ -1,4 +1,5 @@
 {
+    "tutorials/pytorch-porting-tutorial": "pytorch-mnist-tutorial.html",
     "reference/training/api-pytorch-lightning-reference": "index.html",
     "model-dev-guide/apis-howto/api-pytorch-lightning-ug": "overview.html",
     "model-dev-guide/dtrain-introduction": "dtrain/dtrain-introduction.html",
@@ -295,7 +296,7 @@
     "training-apis/api-keras": "../model-dev-guide/apis-howto/api-keras-ug.html",
     "training-apis/api-pytorch-advanced": "../model-dev-guide/apis-howto/api-pytorch-ug.html",
     "training-apis/api-pytorch-lightning": "../model-dev-guide/apis-howto/overview.html",
-    "training-apis/api-pytorch-porting": "../tutorials/pytorch-porting-tutorial.html",
+    "training-apis/api-pytorch-porting": "../tutorials/pytorch-mnist-tutorial.html",
     "training-apis/api-pytorch-reference": "../reference/training/api-pytorch-reference.html",
     "training-apis/api-pytorch-samplers": "../model-dev-guide/apis-howto/api-pytorch-ug.html",
     "training-apis/api-pytorch": "../model-dev-guide/apis-howto/api-pytorch-ug.html",
@@ -325,6 +326,6 @@
     "tutorials/data-access": "../model-dev-guide/load-model-data.html",
     "tutorials/model-registry": "../model-dev-guide/model-management/model-registry-org.html",
     "tutorials/notebook-tutorial": "../interfaces/notebooks.html",
-    "tutorials/porting-tutorial": "pytorch-porting-tutorial.html",
+    "tutorials/porting-tutorial": "pytorch-mnist-tutorial.html",
     "tutorials/quick-start": "quickstart-mdldev.html"
 }

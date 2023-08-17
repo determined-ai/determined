@@ -39,10 +39,6 @@ For an introduction to using the training API, please visit the Training APIs se
       -  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
 
    -  -  PyTorch
-      -  ImageNet
-      -  :download:`imagenet_pytorch.tgz </examples/imagenet_pytorch.tgz>`
-
-   -  -  PyTorch
       -  Penn-Fudan Dataset
       -  :download:`fasterrcnn_coco_pytorch.tgz </examples/fasterrcnn_coco_pytorch.tgz>`
 
