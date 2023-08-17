@@ -366,6 +366,7 @@ func TestGetExperiments(t *testing.T) {
 		UserId:         1,
 		Username:       "admin",
 		SearcherType:   "single",
+		SearcherMetric: "loss",
 		Name:           "name",
 		Notes:          "omitted", // Notes get omitted when non null.
 		JobId:          job0ID,
@@ -412,6 +413,7 @@ func TestGetExperiments(t *testing.T) {
 		UserId:         userResp.User.Id,
 		Username:       userResp.User.Username,
 		SearcherType:   "single",
+		SearcherMetric: "loss",
 		Name:           "longername",
 		JobId:          job1ID,
 		ProjectId:      pid,
@@ -613,7 +615,9 @@ func TestSearchExperiments(t *testing.T) {
 	require.Equal(t, int32(noValidationsExp.ID), resp.Experiments[1].Experiment.Id)
 
 	// Validations returned properly.
-	metricTrial, _, valMetrics := createTestTrialWithMetrics(ctx, t, api, curUser, true)
+	metricTrial, metrics := createTestTrialWithMetrics(ctx, t, api, curUser, true)
+	valMetrics := metrics[model.ValidationMetricGroup]
+
 	// Move experiment to our project.
 	_, err = db.Bun().NewUpdate().Table("experiments").
 		Set("project_id = ?", projectID).

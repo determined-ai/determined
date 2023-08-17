@@ -79,13 +79,8 @@ func initializeConfig() error {
 	if err != nil {
 		return err
 	}
-	if err = mergeConfigBytesIntoViper(bs); err != nil {
-		return err
-	}
 
-	// Now call viper.AllSettings() again to get the full config, containing all values from CLI flags,
-	// environment variables, and the configuration file.
-	conf, err := getConfig(v.AllSettings())
+	conf, err := mergeConfigIntoViper(bs)
 	if err != nil {
 		return err
 	}
@@ -101,6 +96,46 @@ func initializeConfig() error {
 	}
 
 	return nil
+}
+
+func mergeConfigIntoViper(bs []byte) (*config.Config, error) {
+	// Write a configMap from the config file, and create a copy (cpMap) to
+	// deepcopy values needed to override viper's merge auto-lowercasing.
+	var configMap, cpMap map[string]interface{}
+	if err := yaml.Unmarshal(bs, &configMap); err != nil {
+		return nil, fmt.Errorf("unmarshalling yaml configuration file: %w", err)
+	}
+	if err := yaml.Unmarshal(bs, &cpMap); err != nil {
+		return nil, fmt.Errorf("unmarshalling yaml configuration file: %w", err)
+	}
+
+	// Now merge the config file values into viper.
+	if err := v.MergeConfigMap(configMap); err != nil {
+		return nil, fmt.Errorf("can't merge configuration to viper: %w", err)
+	}
+
+	// Now call viper.AllSettings() again to get the full config, containing all values from CLI flags,
+	// environment variables, and the configuration file. Override the task_container_defaults value
+	// using the map you copied.
+	customConfig := mergeCustomSpecs(v.AllSettings(), cpMap)
+
+	return getConfig(customConfig)
+}
+
+func mergeCustomSpecs(
+	config map[string]interface{},
+	cp map[string]interface{},
+) map[string]interface{} {
+	if conf, ok := cp["task_container_defaults"]; ok {
+		if cpu, ok := conf.(map[string]interface{})["cpu_pod_spec"]; ok {
+			config["task_container_defaults"].(map[string]interface{})["cpu_pod_spec"] = cpu
+		}
+		if gpu, ok := conf.(map[string]interface{})["gpu_pod_spec"]; ok {
+			config["task_container_defaults"].(map[string]interface{})["gpu_pod_spec"] = gpu
+		}
+	}
+
+	return config
 }
 
 func readConfigFile(configPath string) ([]byte, error) {
@@ -122,17 +157,6 @@ func readConfigFile(configPath string) ([]byte, error) {
 		return nil, errors.Wrap(err, "error reading configuration file")
 	}
 	return bs, nil
-}
-
-func mergeConfigBytesIntoViper(bs []byte) error {
-	var configMap map[string]interface{}
-	if err := yaml.Unmarshal(bs, &configMap); err != nil {
-		return errors.Wrap(err, "error unmarshal yaml configuration file")
-	}
-	if err := v.MergeConfigMap(configMap); err != nil {
-		return errors.Wrap(err, "error merge configuration to viper")
-	}
-	return nil
 }
 
 func getConfig(configMap map[string]interface{}) (*config.Config, error) {

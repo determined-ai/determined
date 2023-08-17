@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Serie, TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'components/kit/LineChart';
@@ -8,10 +9,8 @@ import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { timeSeries } from 'services/api';
 import { Metric, MetricContainer, MetricType, RunState, Scale, TrialDetails } from 'types';
-import { isEqual } from 'utils/data';
 import { message } from 'utils/dialogApi';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { metricToKey } from 'utils/metric';
 
@@ -74,9 +73,9 @@ const summarizedMetricToSeries = (
 
     const series: Serie = {
       color:
-        metric.type === MetricType.Validation ? VALIDATION_SERIES_COLOR : TRAINING_SERIES_COLOR,
+        metric.group === MetricType.Validation ? VALIDATION_SERIES_COLOR : TRAINING_SERIES_COLOR,
       data,
-      metricType: metric.type,
+      metricType: metric.group,
       name: metric.name,
     };
     trialData[metricToKey(metric)] = series;
@@ -129,7 +128,7 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
   const fetchTrialSummary = useCallback(async () => {
     // If the trial ids have not changed then we do not need to
     // show the loading state again.
-    if (!isEqual(previousTrials, trials)) setLoadableData(NotLoaded);
+    if (!_.isEqual(previousTrials, trials)) setLoadableData(NotLoaded);
 
     if (trials.length === 0) {
       // If there are no trials selected then
@@ -143,7 +142,7 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
         const metricsHaveData: Record<string, boolean> = {};
         const response = await timeSeries({
           maxDatapoints: screen.width > 1600 ? 1500 : 1000,
-          metricNames: metrics,
+          metrics,
           startBatches: 0,
           trialIds: trials?.map((t) => t?.id || 0).filter((i) => i > 0),
         });
@@ -158,10 +157,10 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
             metricsHaveData[key] ||= metricHasData[key];
           });
           newData[r.id] = trialData;
-          setSelectedMetrics((prev) => (isEqual(selectedMetrics, s) ? prev : s));
+          setSelectedMetrics((prev) => (_.isEqual(selectedMetrics, s) ? prev : s));
         });
         setLoadableData((prev) =>
-          isEqual(Loadable.getOrElse([], prev), newData) ? prev : Loaded(newData),
+          _.isEqual(Loadable.getOrElse([], prev), newData) ? prev : Loaded(newData),
         );
         // Wait until the metric names are loaded
         // to determine if trials have data for any metric

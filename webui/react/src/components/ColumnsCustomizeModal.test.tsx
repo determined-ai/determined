@@ -6,7 +6,7 @@ import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
 import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
-import { camelCaseToSentence, generateAlphaNumeric, sentenceToCamelCase } from 'utils/string';
+import { generateAlphaNumeric, sentenceToCamelCase } from 'utils/string';
 
 const BUTTON_TEXT = 'Columns';
 const NUM_GENERATED_COLUMNS = 500;
@@ -24,7 +24,7 @@ const camelCaseToListItem = (columnName: string) => {
     case 'numTrials':
       return 'Trials';
     default:
-      return camelCaseToSentence(columnName);
+      return columnName;
   }
 };
 

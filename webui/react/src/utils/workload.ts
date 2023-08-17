@@ -1,4 +1,4 @@
-import { RecordKey } from 'types';
+import { MetricsWorkload, RecordKey } from 'types';
 import * as Type from 'types';
 
 // Checkpoint size in bytes.
@@ -7,12 +7,6 @@ export const checkpointSize = (checkpoint?: { resources?: Record<RecordKey, numb
     return Object.values(checkpoint.resources).reduce((acc, size) => acc + size, 0);
   }
   return 0;
-};
-
-export const getWorkload = (
-  workload: Type.WorkloadGroup,
-): Type.MetricsWorkload | Type.CheckpointWorkload => {
-  return Object.values(workload).find((val) => !!val);
 };
 
 export const hasCheckpoint = (workload: Type.WorkloadGroup): boolean => {
@@ -27,17 +21,21 @@ export const workloadsToSteps = (workloads: Type.WorkloadGroup[]): Type.Step[] =
   const stepsDict: Record<number, Partial<Type.Step>> = {};
 
   workloads.forEach((workload) => {
-    const wl = getWorkload(workload);
-    const batchNum = wl.totalBatches;
-    if (stepsDict[batchNum] === undefined) stepsDict[batchNum] = {};
-    stepsDict[batchNum].batchNum = batchNum;
-
+    let batchNum: number | undefined = undefined;
     if (workload.checkpoint) {
+      batchNum = workload.checkpoint.totalBatches;
+      stepsDict[batchNum] = stepsDict[batchNum] ?? {};
+      stepsDict[batchNum].batchNum = batchNum;
       stepsDict[batchNum].checkpoint = workload.checkpoint;
-    } else if (workload.validation) {
-      stepsDict[batchNum].validation = workload.validation;
-    } else if (workload.training) {
-      stepsDict[batchNum].training = workload.training;
+    } else {
+      for (const group in workload.metrics) {
+        batchNum = workload.metrics[group].totalBatches;
+        stepsDict[batchNum] = stepsDict[batchNum] ?? {};
+        stepsDict[batchNum].batchNum = batchNum;
+        stepsDict[batchNum].metrics = stepsDict[batchNum].metrics ?? {};
+        (stepsDict[batchNum].metrics as Record<string, MetricsWorkload>)[group] =
+          workload.metrics[group];
+      }
     }
   });
 

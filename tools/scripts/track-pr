@@ -172,6 +172,9 @@ def cherry_pick_pr(pr_id: str) -> None:
 
     try:
         # Find and fetch the PR commit and both release branches.
+        branch_pat = re.compile(
+            r"/release-(\d+)\.(\d+)\.(\d+){}$".format("-ee" if is_ee_pr else "")
+        )
         release_branch = max(
             (
                 line.split()[1]
@@ -179,9 +182,7 @@ def cherry_pick_pr(pr_id: str) -> None:
                     "git", "ls-remote", CLONED_REMOTE, "refs/heads/release-*"
                 ).stdout.splitlines()
             ),
-            key=lambda branch: [
-                int(part) for part in re.search(r"/release-(\d+)\.(\d+)\.(\d+)$", branch).groups()
-            ],
+            key=lambda branch: [int(part) for part in branch_pat.search(branch).groups()],
         )[len("refs/heads/") :]
         print(f"Found release branch {release_branch}")
 
@@ -240,7 +241,7 @@ def cherry_pick_pr(pr_id: str) -> None:
         requests.post(
             "https://casper.internal.infra.determined.ai/hubot/conflict",
             headers={"X-Casper-Token": CASPER_TOKEN},
-            json={"url": pr["url"]},
+            json={"url": pr["url"], "logs_url": os.environ.get("LOGS_URL")},
         )
 
 

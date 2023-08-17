@@ -13,6 +13,7 @@ import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
+import { ExpListView, RowHeight } from 'pages/F_ExpList/F_ExperimentList.settings';
 import {
   activateExperiments,
   archiveExperiments,
@@ -24,7 +25,6 @@ import {
   unarchiveExperiments,
 } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import { RecordKey } from 'types';
 import {
   BulkActionResult,
   ExperimentAction,
@@ -32,20 +32,18 @@ import {
   Project,
   ProjectColumn,
   ProjectExperiment,
+  RecordKey,
 } from 'types';
 import { notification } from 'utils/dialogApi';
-import { ErrorLevel } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel } from 'utils/error';
 import {
   canActionExperiment,
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
+import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
-
-import { pluralizer } from '../../../utils/string';
-import { ExpListView, RowHeight } from '../F_ExperimentList.settings';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
 import MultiSortMenu, { Sort } from './MultiSortMenu';
@@ -384,6 +382,12 @@ const TableActionBar: React.FC<Props> = ({
             projectId={project.id}
             setVisibleColumns={setVisibleColumns}
           />
+          <OptionsMenu
+            expListView={expListView}
+            rowHeight={rowHeight}
+            setExpListView={setExpListView}
+            onRowHeightChange={onRowHeightChange}
+          />
           {(selectAll || selectedExperimentIds.length > 0) && (
             <Dropdown menu={editMenuItems} onClick={handleAction}>
               <Button hideChildren={isMobile}>Actions</Button>
@@ -403,12 +407,6 @@ const TableActionBar: React.FC<Props> = ({
               />
             </Tooltip>
           )}
-          <OptionsMenu
-            expListView={expListView}
-            rowHeight={rowHeight}
-            setExpListView={setExpListView}
-            onRowHeightChange={onRowHeightChange}
-          />
           {!!toggleComparisonView && (
             <Button
               hideChildren={isMobile}

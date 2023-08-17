@@ -1,10 +1,9 @@
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
-import { isEqual } from 'utils/data';
-import { camelCaseToSentence } from 'utils/string';
 
 import DraggableListItem from './DraggableListItem';
 import css from './Transfer.module.scss';
@@ -14,6 +13,7 @@ interface Props {
   entries: string[];
   initialTargetEntries?: string[];
   onChange?: (targetList: string[]) => void;
+  placeholder?: string;
   reorder?: boolean;
   sourceListTitle?: string;
   targetListTitle?: string;
@@ -26,6 +26,7 @@ const Transfer: React.FC<Props> = ({
   initialTargetEntries,
   sourceListTitle = 'Source',
   targetListTitle = 'Target',
+  placeholder = 'Search entries...',
   reorder = true,
   persistentEntries,
   onChange,
@@ -46,12 +47,12 @@ const Transfer: React.FC<Props> = ({
 
   const filteredHiddenEntries = useMemo(() => {
     const regex = RegExp(searchTerm, 'i');
-    return hiddenEntries.filter((entry) => regex.test(camelCaseToSentence(entry)));
+    return hiddenEntries.filter((entry) => regex.test(entry));
   }, [hiddenEntries, searchTerm]);
 
   const filteredVisibleEntries = useMemo(() => {
     const regex = RegExp(searchTerm, 'i');
-    return targetEntries.filter((entry) => regex.test(camelCaseToSentence(entry)));
+    return targetEntries.filter((entry) => regex.test(entry));
   }, [targetEntries, searchTerm]);
 
   const moveToLeft = useCallback((transfer: string | string[]) => {
@@ -94,7 +95,7 @@ const Transfer: React.FC<Props> = ({
           case 'numTrials':
             return 'Trials';
           default:
-            return camelCaseToSentence(entryName);
+            return entryName;
         }
       };
       const sentenceEntryName = renameEntry();
@@ -184,7 +185,7 @@ const Transfer: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <Input placeholder="Search entries..." onChange={handleSearch} />
+      <Input placeholder={placeholder} onChange={handleSearch} />
       <div className={css.entries}>
         <div className={css.column}>
           <h2>{sourceListTitle}</h2>
@@ -202,7 +203,7 @@ const Transfer: React.FC<Props> = ({
         <div className={css.column}>
           <div className={css.targetTitleRow}>
             <h2>{targetListTitle}</h2>
-            {!isEqual(defaultTargetEntries, targetEntries) && (
+            {!_.isEqual(defaultTargetEntries, targetEntries) && (
               <Link onClick={resetEntries}>Reset</Link>
             )}
           </div>

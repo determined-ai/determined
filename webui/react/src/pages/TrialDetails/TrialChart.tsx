@@ -15,6 +15,7 @@ import { Metric, MetricContainer, Scale } from 'types';
 import { glasbeyColor } from 'utils/color';
 import handleError, { ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { metricToStr } from 'utils/metric';
 
 interface Props {
   defaultMetricNames: Metric[];
@@ -25,12 +26,6 @@ interface Props {
   trialId?: number;
   trialTerminated: boolean;
 }
-
-const getChartMetricLabel = (metric: Metric): string => {
-  if (metric.type === 'training') return `[T] ${metric.name}`;
-  if (metric.type === 'validation') return `[V] ${metric.name}`;
-  return metric.name;
-};
 
 const TrialChart: React.FC<Props> = ({
   defaultMetricNames,
@@ -48,7 +43,7 @@ const TrialChart: React.FC<Props> = ({
       try {
         const summary = await timeSeries({
           maxDatapoints: screen.width > 1600 ? 1500 : 1000,
-          metricNames: metricNames,
+          metrics: metricNames,
           startBatches: 0,
           trialIds: [trialId],
         });
@@ -84,10 +79,8 @@ const TrialChart: React.FC<Props> = ({
       yValues[index] = {};
 
       const summary = Loadable.getOrElse([], trialSummary);
-      const mWrapper = summary.find((mContainer) => mContainer.type === metric.type);
-      if (!mWrapper?.data) {
-        return;
-      }
+      const mWrapper = summary.find((mContainer) => mContainer.group === metric.group);
+      if (!mWrapper?.data) return;
 
       mWrapper.data.forEach((avgMetrics) => {
         if (avgMetrics.values[metric.name] || avgMetrics.values[metric.name] === 0) {
@@ -114,7 +107,7 @@ const TrialChart: React.FC<Props> = ({
     return {
       axes: [
         { label: 'Batches' },
-        { label: metrics.length === 1 ? getChartMetricLabel(metrics[0]) : 'Metric Value' },
+        { label: metrics.length === 1 ? metricToStr(metrics[0]) : 'Metric Value' },
       ],
       height: 400,
       key: trialId,
@@ -127,7 +120,7 @@ const TrialChart: React.FC<Props> = ({
       series: [
         { label: 'Batch' },
         ...metrics.map((metric, index) => ({
-          label: getChartMetricLabel(metric),
+          label: metricToStr(metric),
           spanGaps: true,
           stroke: glasbeyColor(index),
           width: 2,

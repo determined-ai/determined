@@ -451,7 +451,7 @@ export const getAgents: DetApi<EmptyParams, Api.V1GetAgentsResponse, Type.Agent[
 };
 
 export const getResourcePools: DetApi<
-  EmptyParams,
+  Service.GetResourcePoolsParams,
   Api.V1GetResourcePoolsResponse,
   Type.ResourcePool[]
 > = {
@@ -459,7 +459,8 @@ export const getResourcePools: DetApi<
   postProcess: (response) => {
     return response.resourcePools?.map(decoder.mapV1ResourcePool) || [];
   },
-  request: () => detApi.Internal.getResourcePools(),
+  request: (params: Service.GetResourcePoolsParams, options) =>
+    detApi.Internal.getResourcePools(params?.offset, params?.limit, params?.unbound, options),
 };
 
 export const getResourceAllocationAggregated: DetApi<
@@ -944,16 +945,18 @@ export const timeSeries: DetApi<
   postProcess: (response: Api.V1CompareTrialsResponse) => {
     return response.trials.map(decoder.decodeTrialSummary);
   },
-  request: (params: Service.TimeSeriesParams) =>
-    detApi.Experiments.compareTrials(
+  request: (params: Service.TimeSeriesParams) => {
+    return detApi.Experiments.compareTrials(
       params.trialIds,
       params.maxDatapoints,
-      params.metricNames.map((m) => m.name),
+      undefined,
       params.startBatches,
       params.endBatches,
       params.metricType ? Type.metricTypeParamMap[params.metricType] : 'METRIC_TYPE_UNSPECIFIED',
       undefined,
-    ),
+      params.metrics.map((metric) => [metric.group, metric.name].join('.')),
+    );
+  },
 };
 
 export const getExperimentFileTree: DetApi<
@@ -1022,11 +1025,7 @@ export const getTrialWorkloads: DetApi<
       WorkloadFilterParamMap[params.filter || 'FILTER_OPTION_UNSPECIFIED'] ||
         'FILTER_OPTION_UNSPECIFIED',
       undefined,
-      params.metricType
-        ? params.metricType === Type.MetricType.Training
-          ? 'METRIC_TYPE_TRAINING'
-          : 'METRIC_TYPE_VALIDATION'
-        : undefined,
+      undefined, // Specifically set to `undefined` to return custom group metrics.
       undefined,
       true, // remove deleted checkpoints
     ),
@@ -1391,7 +1390,12 @@ export const patchWorkspace: DetApi<
   request: (params, options) => {
     return detApi.Workspaces.patchWorkspace(
       params.id,
-      { name: params.name?.trim(), ...params },
+      {
+        defaultAuxResourcePool: params.defaultAuxPool,
+        defaultComputeResourcePool: params.defaultComputePool,
+        name: params.name?.trim(),
+        ...params,
+      },
       options,
     );
   },

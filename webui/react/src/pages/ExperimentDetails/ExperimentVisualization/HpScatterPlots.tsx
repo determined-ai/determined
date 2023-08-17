@@ -14,8 +14,14 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useUI from 'stores/contexts/UI';
-import { Primitive } from 'types';
-import { ExperimentBase, HyperparameterType, Metric, metricTypeParamMap, Scale } from 'types';
+import {
+  ExperimentBase,
+  HyperparameterType,
+  Metric,
+  metricTypeParamMap,
+  Primitive,
+  Scale,
+} from 'types';
 import { flattenObject, isBoolean, isString } from 'utils/data';
 import { metricToStr } from 'utils/metric';
 
@@ -149,7 +155,7 @@ const ScatterPlots: React.FC<Props> = ({
         experiment.id,
         selectedMetric.name,
         selectedBatch,
-        metricTypeParamMap[selectedMetric.type],
+        metricTypeParamMap[selectedMetric.group],
         undefined, // custom metric group
         selectedBatchMargin,
         undefined,

@@ -1,4 +1,5 @@
 import { Space } from 'antd';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
@@ -35,9 +36,7 @@ import { getWorkspaceProjects, patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import { Project, Workspace } from 'types';
-import { isEqual } from 'utils/data';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
@@ -89,7 +88,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       );
       setTotal(response.pagination.total ?? 0);
       setProjects((prev) => {
-        if (isEqual(prev, response.projects)) return prev;
+        if (_.isEqual(prev, response.projects)) return prev;
         return response.projects;
       });
     } catch (e) {

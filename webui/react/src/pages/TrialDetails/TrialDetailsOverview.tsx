@@ -7,9 +7,9 @@ import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'types';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { metricKeyToMetric, metricToKey } from 'utils/metric';
 
 import TrialChart from './TrialChart';
 import { Settings, settingsConfigForExperiment } from './TrialDetailsOverview.settings';
@@ -50,22 +50,21 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     const validationMetric = experiment?.config?.searcher.metric;
     const defaultValidationMetric = metricNames.find(
       (metricName) =>
-        metricName.name === validationMetric && metricName.type === MetricType.Validation,
+        metricName.name === validationMetric && metricName.group === MetricType.Validation,
     );
     const fallbackMetric = metricNames[0];
     const defaultMetric = defaultValidationMetric || fallbackMetric;
     const defaultMetrics = defaultMetric ? [defaultMetric] : [];
-    const settingMetrics: Metric[] = (settings.metric || []).map((metric) => {
-      const splitMetric = metric.split('|');
-      return { name: splitMetric[1], type: splitMetric[0] as MetricType };
-    });
+    const settingMetrics: Metric[] = (settings.metric || []).map((metric) =>
+      metricKeyToMetric(metric),
+    );
     const metrics = settingMetrics.length !== 0 ? settingMetrics : defaultMetrics;
     return { defaultMetrics, metrics };
   }, [experiment?.config?.searcher, metricNames, settings.metric]);
 
   const handleMetricChange = useCallback(
     (value: Metric[]) => {
-      const newMetrics = value.map((metricName) => `${metricName.type}|${metricName.name}`);
+      const newMetrics = value.map((metric) => metricToKey(metric));
       updateSettings({ metric: newMetrics, tableOffset: 0 });
     },
     [updateSettings],

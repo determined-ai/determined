@@ -13,6 +13,7 @@
    Quickstart for Model Developers <tutorials/quickstart-mdldev>
    Examples <example-solutions/examples>
    Model Hub Library <model-hub-library/index>
+   How-To Articles <articles/index>
 
 .. toctree::
    :caption: Set Up

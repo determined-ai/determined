@@ -1,4 +1,5 @@
 import { Map } from 'immutable';
+import _ from 'lodash';
 import { Observable, observable, WritableObservable } from 'micro-observables';
 
 import {
@@ -14,10 +15,9 @@ import {
 import { V1PostWorkspaceRequest } from 'services/api-ts-sdk';
 import { GetWorkspacesParams } from 'services/types';
 import { Workspace } from 'types';
-import { isEqual } from 'utils/data';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { alphaNumericSorter } from 'utils/sort';
+import { workspaceSorter } from 'utils/sort';
 
 import PollingStore from './polling';
 
@@ -41,11 +41,7 @@ class WorkspaceStore extends PollingStore {
 
   public readonly mutables = this.#loadableWorkspaces.select((loadable) => {
     return Loadable.quickMatch(loadable, NotLoaded, (workspaces) => {
-      return Loaded(
-        workspaces
-          .filter((workspace) => !workspace.immutable)
-          .sort((a, b) => alphaNumericSorter(a.name, b.name)),
-      );
+      return Loaded(workspaces.filter((workspace) => !workspace.immutable));
     });
   });
 
@@ -148,18 +144,19 @@ class WorkspaceStore extends PollingStore {
           // Prevents unnecessary re-renders.
           if (!force && this.#loadableWorkspaces.get() !== NotLoaded) return;
 
+          const newWorkspaces = response.workspaces.sortAll(workspaceSorter);
           const currentWorkspaces = Loadable.getOrElse([], this.#loadableWorkspaces.get());
           let workspacesChanged = currentWorkspaces.length === response.workspaces.length;
           if (!workspacesChanged) {
-            response.workspaces.forEach((wspace, idx) => {
-              if (!isEqual(wspace, currentWorkspaces[idx])) {
+            newWorkspaces.forEach((wspace, idx) => {
+              if (!_.isEqual(wspace, currentWorkspaces[idx])) {
                 workspacesChanged = true;
               }
             });
           }
 
           if (workspacesChanged) {
-            this.#loadableWorkspaces.set(Loaded(response.workspaces));
+            this.#loadableWorkspaces.set(Loaded(newWorkspaces));
           }
         })
         .catch(handleError);
@@ -174,7 +171,7 @@ class WorkspaceStore extends PollingStore {
 
   protected async poll(settings: GetWorkspacesParams = {}) {
     const response = await getWorkspaces(settings, { signal: this.canceler?.signal });
-    this.#loadableWorkspaces.set(Loaded(response.workspaces));
+    this.#loadableWorkspaces.set(Loaded(response.workspaces.sortAll(workspaceSorter)));
   }
 }
 

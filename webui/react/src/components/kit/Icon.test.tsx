@@ -1,8 +1,7 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import Icon, { IconNameArray, IconSizeArray, svgIcons } from './Icon';
-import type { Props } from './Icon';
+import Icon, { IconNameArray, IconSizeArray, type Props, svgIcons } from './Icon';
 
 const setup = (props?: Props) => {
   const user = userEvent.setup();

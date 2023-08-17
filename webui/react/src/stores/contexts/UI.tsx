@@ -2,10 +2,9 @@ import React, { Dispatch, useContext, useMemo, useReducer } from 'react';
 
 import rootLogger from 'utils/Logger';
 import { checkDeepEquality } from 'utils/store';
+import { DarkLight, Mode, Theme } from 'utils/themes';
 
 const logger = rootLogger.extend('stores/ui');
-
-import { DarkLight, Mode, Theme } from '../../utils/themes';
 
 interface StateUI {
   chromeCollapsed: boolean;

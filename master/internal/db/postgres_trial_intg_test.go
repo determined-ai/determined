@@ -1000,6 +1000,7 @@ func TestGenericMetricsIO(t *testing.T) {
 		StartTime:    time.Now(),
 	}
 	require.NoError(t, AddTrial(ctx, &tr, task.TaskID))
+	testMetricName := "zgroup_b/me.t r%i]\\c_1"
 
 	dbTr, err := TrialByID(ctx, tr.ID)
 	require.NoError(t, err)
@@ -1013,7 +1014,11 @@ func TestGenericMetricsIO(t *testing.T) {
 	err = db.AddAllocation(a)
 	require.NoError(t, err, "failed to add allocation")
 
-	metrics, err := structpb.NewStruct(map[string]any{"aloss": 10})
+	metrics, err := structpb.NewStruct(map[string]any{
+		"aloss":        10,
+		testMetricName: 20,
+		"closs":        30,
+	})
 	require.NoError(t, err)
 
 	trialRunID := 1
@@ -1062,8 +1067,8 @@ ORDER BY name ASC`, "inference")
 	summaryRows := []*summaryMetrics{}
 	err = Bun().NewRaw(query, tr.ID).Scan(ctx, &summaryRows)
 	require.NoError(t, err)
-	require.Equal(t, 2, len(summaryRows), summaryRows)
-	require.Equal(t, *summaryRows[0], summaryMetrics{
+	require.Equal(t, 4, len(summaryRows), summaryRows)
+	require.Equal(t, summaryMetrics{
 		Name:  "aloss",
 		Max:   20,
 		Min:   10,
@@ -1072,8 +1077,8 @@ ORDER BY name ASC`, "inference")
 		Last:  "20",
 		Count: 2,
 		Type:  "number",
-	})
-	require.Equal(t, *summaryRows[1], summaryMetrics{
+	}, *summaryRows[0])
+	require.Equal(t, summaryMetrics{
 		Name:  "bloss",
 		Max:   30,
 		Min:   30,
@@ -1082,7 +1087,25 @@ ORDER BY name ASC`, "inference")
 		Last:  "30",
 		Count: 1,
 		Type:  "number",
-	})
+	}, *summaryRows[1])
+	require.Equal(t, summaryMetrics{
+		Name:  "closs",
+		Max:   30,
+		Min:   30,
+		Sum:   30,
+		Last:  nil,
+		Count: 1,
+		Type:  "number",
+	}, *summaryRows[2])
+	require.Equal(t, summaryMetrics{
+		Name:  testMetricName,
+		Max:   20,
+		Min:   20,
+		Sum:   20,
+		Last:  nil,
+		Count: 1,
+		Type:  "number",
+	}, *summaryRows[3])
 }
 
 func TestConcurrentMetricUpdate(t *testing.T) {

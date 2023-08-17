@@ -15,8 +15,7 @@ import { postModel } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { Metadata } from 'types';
 import { notification } from 'utils/dialogApi';
-import { DetError, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { DetError, ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
 import css from './ModelCreateModal.module.scss';

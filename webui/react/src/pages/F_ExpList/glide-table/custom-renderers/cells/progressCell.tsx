@@ -1,6 +1,6 @@
 import { CustomCell, CustomRenderer, GridCellKind } from '@hpe.com/glide-data-grid';
 
-import { roundedRect } from '../utils';
+import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 
 interface RangeCellProps {
   readonly kind: 'range-cell';

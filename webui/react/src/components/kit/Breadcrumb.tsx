@@ -3,8 +3,7 @@ import React, { ReactNode } from 'react';
 
 import Button from 'components/kit/Button';
 import { Column, Columns } from 'components/kit/Columns';
-import Dropdown from 'components/kit/Dropdown';
-import { MenuItem } from 'components/kit/Dropdown';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 
 import css from './Breadcrumb.module.css';

@@ -33,7 +33,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.7.15
+          python-version: 3.8.16
           cache: pip
           cache-dependency-path: |
             harness/setup.py
@@ -44,7 +44,6 @@ jobs:
           python --version
           python -m pip install --upgrade pip wheel setuptools
           pip --version
-          pip install "torch==1.9.0"
           pip install -r requirements.txt
       - name: Install harness
         working-directory: harness

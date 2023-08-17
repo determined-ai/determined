@@ -1,5 +1,5 @@
 pillow
-rstfmt==0.0.12
+rstfmt==0.0.14
 sphinx==4.2.0
 
 # Plugins
@@ -25,3 +25,8 @@ algoliasearch>=2.0,<3.0
 
 # Uploading doc site files to S3
 boto3>=1.24.4<2.0
+
+# build requirements
+tensorflow==2.12.0
+torch==1.11.0
+torchvision==0.12.0

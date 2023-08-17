@@ -4,10 +4,9 @@ import { ModalFunc } from 'antd/es/modal/confirm';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import usePrevious from 'hooks/usePrevious';
 import { RecordUnknown, ValueOf } from 'types';
 import { isAsyncFunction } from 'utils/data';
-
-import usePrevious from '../../hooks/usePrevious';
 
 export const ModalCloseReason = {
   Cancel: 'Cancel',

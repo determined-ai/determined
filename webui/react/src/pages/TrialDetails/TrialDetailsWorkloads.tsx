@@ -1,5 +1,5 @@
-// import { SelectValue } from 'antd/es/select';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/es/table/interface';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
@@ -20,9 +20,8 @@ import {
   TrialWorkloadFilter,
   WorkloadGroup,
 } from 'types';
-import { isEqual } from 'utils/data';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import {
   extractMetricSortValue,
   extractMetricValue,
@@ -31,8 +30,6 @@ import {
 } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
-
-import { Loadable, Loaded, NotLoaded } from '../../utils/loadable';
 
 import { Settings } from './TrialDetailsOverview.settings';
 import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
@@ -56,7 +53,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   updateSettings,
 }: Props) => {
   const hasFiltersApplied = useMemo(() => {
-    const metricsApplied = !isEqual(metrics, defaultMetrics);
+    const metricsApplied = !_.isEqual(metrics, defaultMetrics);
     const checkpointValidationFilterApplied = settings.filter !== TrialWorkloadFilter.All;
     return metricsApplied || checkpointValidationFilterApplied;
   }, [defaultMetrics, metrics, settings.filter]);
@@ -80,34 +77,32 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       return null;
     };
 
-    const metricRenderer = (metricName: Metric) => {
-      const metricCol = (_: string, record: Step) => {
-        const value = extractMetricValue(record, metricName);
-        return <HumanReadableNumber num={value} />;
-      };
-      return metricCol;
+    const metricRenderer = (metric: Metric) => (_: string, record: Step) => {
+      const value = extractMetricValue(record, metric);
+      return <HumanReadableNumber num={value} />;
     };
 
-    const { metric, smallerIsBetter } = experiment?.config?.searcher || {};
+    const { metric: searcherMetric, smallerIsBetter } = experiment?.config?.searcher || {};
     const newColumns = [...defaultColumns].map((column) => {
       if (column.key === 'checkpoint') column.render = checkpointRenderer;
       return column;
     });
 
-    metrics.forEach((metricName) => {
+    metrics.forEach((metric) => {
+      if (!['validation', 'training'].includes(metric.group)) return;
       const stateIndex = newColumns.findIndex((column) => column.key === 'state');
       newColumns.splice(stateIndex, 0, {
         defaultSortOrder:
-          metric && metric === metricName.name
+          searcherMetric && searcherMetric === metric.name
             ? smallerIsBetter
               ? 'ascend'
               : 'descend'
             : undefined,
-        key: metricToKey(metricName),
-        render: metricRenderer(metricName),
+        key: metricToKey(metric),
+        render: metricRenderer(metric),
         sorter: (a, b) => {
-          const aVal = extractMetricSortValue(a, metricName),
-            bVal = extractMetricSortValue(b, metricName);
+          const aVal = extractMetricSortValue(a, metric),
+            bVal = extractMetricSortValue(b, metric);
           if (aVal === undefined && bVal !== undefined) {
             return settings.sortDesc ? -1 : 1;
           } else if (aVal !== undefined && bVal === undefined) {
@@ -115,7 +110,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           }
           return numericSorter(aVal, bVal);
         },
-        title: <MetricBadgeTag metric={metricName} />,
+        title: <MetricBadgeTag metric={metric} />,
       });
     });
 
@@ -138,7 +133,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           filter: settings.filter,
           id: trial.id,
           limit: settings.tableLimit,
-          metricType: metricKeyToMetric(settings.sortKey)?.type || undefined,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortKey: metricKeyToMetric(settings.sortKey)?.name || undefined,
@@ -176,9 +170,9 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           if (settings.filter === TrialWorkloadFilter.Checkpoint) {
             return hasCheckpoint(wlStep);
           } else if (settings.filter === TrialWorkloadFilter.Validation) {
-            return !!wlStep.validation;
+            return !!wlStep.metrics.validation;
           } else if (settings.filter === TrialWorkloadFilter.CheckpointOrValidation) {
-            return !!wlStep.checkpoint || !!wlStep.validation;
+            return !!wlStep.checkpoint || !!wlStep.metrics.validation;
           }
           return false;
         });
