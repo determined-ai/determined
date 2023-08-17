@@ -79,6 +79,7 @@
 
    Works with Determined <integrations/ecosystem/ecosystem-integration>
    IDE Integration <interfaces/ide-integration>
+   Pachyderm <integrations/pachyderm/pachyderm>
    Prometheus and Grafana <integrations/prometheus/prometheus>
    attributions
 
