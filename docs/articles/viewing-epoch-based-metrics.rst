@@ -101,9 +101,9 @@ specific epoch for which training loss is being reported.
 
 .. code:: python
 
-   core_context.train.report_validation_metrics(
-     steps_completed=steps_completed,
-     metrics={"test_loss": test_loss, "epoch": epoch},
+   core_context.train.report_training_metrics(
+     steps_completed=batches_completed + epoch_idx * len(train_loader),
+     metrics={"train_loss": loss.item(), "epoch": epoch_idx},
    )
 
 -  Similarly, we'll include ``epoch`` as a metric in the reported validation metrics. This allows
