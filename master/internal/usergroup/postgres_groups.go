@@ -333,10 +333,20 @@ func UpdateGroupAndMembers(
 		if err != nil {
 			return nil, "", err
 		}
+
+		err = UpdateUsersTimestampTx(ctx, tx, addUsers)
+		if err != nil {
+			return nil, "", err
+		}
 	}
 
 	if len(removeUsers) > 0 {
 		err = RemoveUsersFromGroupTx(ctx, tx, gid, removeUsers...)
+		if err != nil {
+			return nil, "", err
+		}
+
+		err = UpdateUsersTimestampTx(ctx, tx, removeUsers)
 		if err != nil {
 			return nil, "", err
 		}
@@ -354,6 +364,21 @@ func UpdateGroupAndMembers(
 	}
 
 	return users, newName, nil
+}
+
+// UpdateUsersTimestampTx updates the user modified_at field to the present time.
+func UpdateUsersTimestampTx(ctx context.Context, idb bun.IDB,
+	uids []model.UserID,
+) error {
+	_, err := idb.NewUpdate().Table("users").
+		Set("modified_at = NOW()").
+		Where("id IN (?)", bun.In(uids)).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(db.MatchSentinelError(err),
+			"Error updating modified_at timestamp for users")
+	}
+	return nil
 }
 
 // UsersInGroupTx searches for users that belong to a group and returns them.
