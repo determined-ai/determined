@@ -77,62 +77,62 @@ const actionIcons: Record<BatchAction, IconName> = {
 } as const;
 
 interface Props {
+  compareViewOn?: boolean;
+  excludedExperimentIds?: Set<number>;
   experiments: Loadable<ExperimentWithTrial>[];
+  expListView: ExpListView;
   filters: V1BulkExperimentFilters;
+  formStore: FilterFormStore;
+  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
+  heatmapBtnVisible: boolean;
+  heatmapOn: boolean;
   initialVisibleColumns: string[];
+  isOpenFilter: boolean;
   onAction: () => Promise<void>;
-  sorts: Sort[];
+  onRowHeightChange: (r: RowHeight) => void;
   onSortChange: (sorts: Sort[]) => void;
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
-  selectAll: boolean;
-  excludedExperimentIds?: Set<number>;
-  selectedExperimentIds: number[];
-  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
-  setVisibleColumns: (newColumns: string[]) => void;
-  toggleComparisonView?: () => void;
-  compareViewOn?: boolean;
-  total: Loadable<number>;
-  formStore: FilterFormStore;
-  setIsOpenFilter: (value: boolean) => void;
-  isOpenFilter: boolean;
-  expListView: ExpListView;
-  setExpListView: (view: ExpListView) => void;
   rowHeight: RowHeight;
-  onRowHeightChange: (r: RowHeight) => void;
+  selectAll: boolean;
+  selectedExperimentIds: number[];
+  setExpListView: (view: ExpListView) => void;
   setHeatmapApplied: (selection: string[]) => void;
+  setIsOpenFilter: (value: boolean) => void;
+  setVisibleColumns: (newColumns: string[]) => void;
+  sorts: Sort[];
+  toggleComparisonView?: () => void;
   toggleHeatmap: (heatmapOn: boolean) => void;
-  heatmapOn: boolean;
-  heatmapBtnVisible: boolean;
+  total: Loadable<number>;
 }
 
 const TableActionBar: React.FC<Props> = ({
-  heatmapOn,
-  toggleHeatmap,
-  experiments,
+  compareViewOn,
   excludedExperimentIds,
+  experiments,
+  expListView,
   filters,
-  onAction,
-  onSortChange,
-  selectAll,
-  selectedExperimentIds,
+  formStore,
   handleUpdateExperimentList,
-  sorts,
+  heatmapBtnVisible,
+  heatmapOn,
+  initialVisibleColumns,
+  isOpenFilter,
+  onAction,
+  onRowHeightChange,
+  onSortChange,
   project,
   projectColumns,
-  total,
-  initialVisibleColumns,
-  setVisibleColumns,
-  formStore,
-  setIsOpenFilter,
-  isOpenFilter,
-  expListView,
-  setExpListView,
-  toggleComparisonView,
   rowHeight,
-  onRowHeightChange,
-  compareViewOn,
-  heatmapBtnVisible,
+  selectAll,
+  selectedExperimentIds,
+  setExpListView,
+  setIsOpenFilter,
+  setVisibleColumns,
+  sorts,
+  toggleComparisonView,
+  toggleHeatmap,
+  total,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();

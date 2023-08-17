@@ -35,26 +35,26 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: (event: Eve
 
 export interface TableContextMenuProps extends MenuProps {
   cell?: GridCell;
-  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
-  open: boolean;
   experiment: ProjectExperiment;
   handleClose: (e?: Event) => void;
+  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   link?: string;
+  onComplete?: () => void;
+  open: boolean;
   x: number;
   y: number;
-  onComplete?: () => void;
 }
 
 export const TableContextMenu: React.FC<TableContextMenuProps> = ({
+  cell,
   experiment,
-  handleUpdateExperimentList,
   handleClose,
-  open,
+  handleUpdateExperimentList,
   link,
+  onComplete,
+  open,
   x,
   y,
-  onComplete,
-  cell,
 }) => {
   const containerRef = useRef(null);
   useOutsideClickHandler(containerRef, handleClose);

@@ -79,34 +79,34 @@ export interface GlideTableProps {
   comparisonViewOpen?: boolean;
   data: Loadable<ExperimentWithTrial>[];
   dataTotal: number;
+  formStore: FilterFormStore;
   handleScroll?: (r: Rectangle) => void;
+  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
+  heatmapOn: boolean;
+  heatmapSkipped: string[];
   height: number;
-  scrollPositionSetCount: WritableObservable<number>;
-  sortableColumnIds: string[];
-  setSortableColumnIds: (newColumns: string[]) => void;
+  onContextMenuComplete?: () => void;
+  onIsOpenFilterChange: (value: boolean) => void;
+  onSortChange: (sorts: Sort[]) => void;
   page: number;
+  pinnedColumnsCount: number;
   project?: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   projectHeatmap: ProjectMetricsRange[];
-  heatmapSkipped: string[];
-  setHeatmapApplied: (selection: string[]) => void;
   rowHeight: RowHeight;
-  selection: GridSelection;
-  setSelection: Dispatch<SetStateAction<GridSelection>>;
-  setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
+  scrollPositionSetCount: WritableObservable<number>;
   selectAll: boolean;
-  staticColumns: string[];
+  selection: GridSelection;
   setColumnWidths: (newWidths: Record<string, number>) => void;
-  setSelectAll: (arg0: boolean) => void;
-  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
-  sorts: Sort[];
-  onSortChange: (sorts: Sort[]) => void;
-  formStore: FilterFormStore;
-  onIsOpenFilterChange: (value: boolean) => void;
-  onContextMenuComplete?: () => void;
-  pinnedColumnsCount: number;
+  setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
+  setHeatmapApplied: (selection: string[]) => void;
   setPinnedColumnsCount: (count: number) => void;
-  heatmapOn: boolean;
+  setSelectAll: (arg0: boolean) => void;
+  setSelection: Dispatch<SetStateAction<GridSelection>>;
+  setSortableColumnIds: (newColumns: string[]) => void;
+  sortableColumnIds: string[];
+  sorts: Sort[];
+  staticColumns: string[];
 }
 
 /**
@@ -132,39 +132,39 @@ const rowHeightMap: Record<RowHeight, number> = {
 };
 
 export const GlideTable: React.FC<GlideTableProps> = ({
+  colorMap,
+  columnWidths,
+  comparisonViewOpen = false,
   data,
   dataTotal,
-  selection,
-  setSelection,
-  sortableColumnIds,
-  setSortableColumnIds,
-  colorMap,
-  height,
-  rowHeight,
-  selectAll,
-  setSelectAll,
-  setExcludedExperimentIds,
-  handleScroll,
-  scrollPositionSetCount,
-  page,
-  project,
-  handleUpdateExperimentList,
-  onSortChange,
-  sorts,
-  projectColumns,
   formStore,
-  onIsOpenFilterChange,
-  onContextMenuComplete,
-  comparisonViewOpen = false,
-  columnWidths,
-  setColumnWidths,
-  staticColumns,
-  pinnedColumnsCount,
-  setPinnedColumnsCount,
-  projectHeatmap,
-  heatmapSkipped,
-  setHeatmapApplied,
+  handleScroll,
+  handleUpdateExperimentList,
   heatmapOn,
+  heatmapSkipped,
+  height,
+  onContextMenuComplete,
+  onIsOpenFilterChange,
+  onSortChange,
+  page,
+  pinnedColumnsCount,
+  project,
+  projectColumns,
+  projectHeatmap,
+  rowHeight,
+  scrollPositionSetCount,
+  selectAll,
+  selection,
+  setColumnWidths,
+  setExcludedExperimentIds,
+  setHeatmapApplied,
+  setPinnedColumnsCount,
+  setSelectAll,
+  setSelection,
+  setSortableColumnIds,
+  sortableColumnIds,
+  sorts,
+  staticColumns,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
   const [hoveredRow, setHoveredRow] = useState<number>();

@@ -37,6 +37,7 @@ interface Props {
   children?: React.ReactNode;
   cell?: GridCell;
   experiment: ProjectExperiment;
+  handleUpdateExperimentList?: (action: BatchAction, successfulIds: number[]) => void;
   isContextMenu?: boolean;
   link?: string;
   makeOpen?: boolean;
@@ -46,7 +47,6 @@ interface Props {
   settings?: ExperimentListSettings;
   updateSettings?: UpdateSettings<ExperimentListSettings>;
   workspaceId?: number;
-  handleUpdateExperimentList?: (action: BatchAction, successfulIds: number[]) => void;
 }
 
 const Action = {
@@ -75,6 +75,7 @@ const dropdownActions = [
 const ExperimentActionDropdown: React.FC<Props> = ({
   experiment,
   cell,
+  handleUpdateExperimentList,
   isContextMenu,
   link,
   makeOpen,
@@ -84,7 +85,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   settings,
   updateSettings,
   children,
-  handleUpdateExperimentList,
 }: Props) => {
   const id = experiment.id;
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
