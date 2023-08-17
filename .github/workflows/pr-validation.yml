@@ -1,0 +1,45 @@
+---
+name: "PR Validation"
+
+on:  # yamllint disable-line rule:truthy
+  #pull_request_target:
+  pull_request:
+    types:
+      - opened
+      - edited
+      # - synchronize
+
+jobs:
+  validate-test-plan:
+    runs-on: ubuntu-latest
+    env:
+      # both used by create-file-action
+      FILE_NAME: ./pr_body
+      FILE_DATA: ${{ github.event.pull_request.body }}
+    steps:
+      - name: get body into file
+        uses: finnp/create-file-action@2.0.0
+      - name: extract test plan
+        uses: sean0x42/markdown-extract@v2
+        id: testplan-with-comment
+        with:
+          file: ${{ env.FILE_NAME }}
+          pattern: "Test Plan"
+          no-print-matched-heading: true
+      - name: validate test plan
+        id: validate
+        shell: python
+        env:
+          DATA: ${{ steps.testplan-with-comment.outputs.markdown }}
+        run: |
+          import re
+          from os import environ
+          comment = re.compile(r"<!---.*?-->", flags=re.DOTALL)
+          body = comment.sub("", environ["DATA"]).strip()
+          print(f"plan='{body}'")
+          if not body:
+            raise SystemExit("Empty test plan")
+#       continue-on-error: true
+#     - name: comment on failure
+#       if: steps.validate.outcome != 'success'
+
