@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := build
 SHELL := bash
 GENERATED := packaging/LICENSE
-GENERATION_INPUTS = ../schemas/gen.py $(shell find ../schemas/expconf -name '*.go') $(shell find ../schemas/expconf -name '*.json')
+GENERATION_INPUTS = ../schemas/gen.py $(shell find ../schemas/expconf -name '*.json')
 MOCK_GENERATION_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go ./go.mod ./go.sum ./internal/rm/resource_manager_iface.go ./internal/task/allocation_service_iface.go
 GORELEASER = goreleaser
 
