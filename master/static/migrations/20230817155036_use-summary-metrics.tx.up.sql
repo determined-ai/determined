@@ -11,13 +11,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER autoupdate_exp_validation_metrics_name ON raw_validations;
+DROP TRIGGER IF EXISTS autoupdate_exp_validation_metrics_name ON raw_validations;
 
-DROP FUNCTION autoupdate_exp_validation_metrics_name;
+DROP FUNCTION IF EXISTS autoupdate_exp_validation_metrics_name;
 
-DROP TABLE exp_metrics_name;
+DROP TABLE IF EXISTS exp_metrics_name;
 
-ALTER TABLE experiments DROP COLUMN validation_metrics;
+ALTER TABLE experiments DROP COLUMN IF EXISTS validation_metrics;
 
 WITH summary_metrics_with_mean AS (
   SELECT 
