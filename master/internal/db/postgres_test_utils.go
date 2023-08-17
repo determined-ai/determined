@@ -302,9 +302,23 @@ func RequireMockAllocation(t *testing.T, db *PgDB, tID model.TaskID) *model.Allo
 	return &a
 }
 
+// Option is the return type for WithSteps helper function.
+type Option func(f *model.CheckpointV2)
+
+// WithSteps function will add the specified steps to the checkpoint.
+func WithSteps(numSteps int) Option {
+	return func(f *model.CheckpointV2) {
+		f.Metadata = map[string]interface{}{
+			"framework":          "some framework",
+			"determined_version": "1.0.0",
+			"steps_completed":    float64(numSteps),
+		}
+	}
+}
+
 // MockModelCheckpoint returns a mock model checkpoint.
 func MockModelCheckpoint(
-	ckptUUID uuid.UUID, tr *model.Trial, a *model.Allocation,
+	ckptUUID uuid.UUID, tr *model.Trial, a *model.Allocation, opts ...Option,
 ) model.CheckpointV2 {
 	stepsCompleted := int32(10)
 	ckpt := model.CheckpointV2{
@@ -323,34 +337,15 @@ func MockModelCheckpoint(
 		},
 	}
 
-	return ckpt
-}
-
-// MockModelCheckpointSteps returns a mock model checkpoint with specified steps.
-func MockModelCheckpointSteps(
-	ckptUUID uuid.UUID, tr *model.Trial, a *model.Allocation, stepsCompleted int,
-) model.CheckpointV2 {
-	ckpt := model.CheckpointV2{
-		UUID:         ckptUUID,
-		TaskID:       tr.TaskID,
-		AllocationID: &a.AllocationID,
-		ReportTime:   time.Now().UTC(),
-		State:        model.CompletedState,
-		Resources: map[string]int64{
-			"ok": 1.0,
-		},
-		Metadata: map[string]interface{}{
-			"framework":          "some framework",
-			"determined_version": "1.0.0",
-			"steps_completed":    float64(stepsCompleted),
-		},
+	for _, opt := range opts {
+		opt(&ckpt)
 	}
 
 	return ckpt
 }
 
-// MockTrialMetrics returns a mock Trial Metric.
-func MockTrialMetrics(
+// AddTrialValidationMetrics adds mock Trial Metrics to the database.
+func AddTrialValidationMetrics(
 	ctx context.Context, ckptUUID uuid.UUID, tr *model.Trial, stepsCompleted int32,
 	valMetric int32, pgDB *PgDB,
 ) error {
