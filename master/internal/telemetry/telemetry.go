@@ -150,7 +150,6 @@ func (s *Telemeter) sleepInterval() time.Duration {
 	randNum, err := rand.Int(rand.Reader, bg)
 	if err != nil {
 		s.syslog.Error(err)
-		// Error handling: if random int can't be generated, return maxInterval
 		return time.Duration(maxTickIntervalMins) * time.Minute
 	}
 	randInt := int(randNum.Int64()) + minTickIntervalMins
