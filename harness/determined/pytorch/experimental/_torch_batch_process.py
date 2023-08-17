@@ -24,12 +24,18 @@ DEFAULT_BATCH_SIZE = 1
 class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
     def __init__(self, core_context: core.Context, storage_path: str) -> None:
         super().__init__()
-        self._core_context = core_context
-        self.distributed = self._core_context.distributed
+        self.core_context = core_context
+        self.distributed = self.core_context.distributed
         self.device = get_default_device(core_context)
         self._tensorboard_path = core_context.train.get_tensorboard_path()
         self._storage_path = storage_path
         self._use_default_storage = False
+        info = det.get_cluster_info()
+        assert info
+        self._hparams = info.trial.hparams
+
+    def get_hparams(self):
+        return self._hparams
 
     def to_device(
         self, data: pytorch._Data, warned_types: Optional[Set[Type]] = None
@@ -76,7 +82,7 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         Returns a context that uploads files to default storage path on exit.
         """
         self._use_default_storage = True
-        return self._core_context.checkpoint._storage_manager.store_path(self._storage_path)
+        return self.core_context.checkpoint._storage_manager.store_path(self._storage_path)
 
 
 def get_default_device(core_context: core.Context) -> torch.device:
@@ -348,7 +354,9 @@ def torch_batch_process(
         slots_per_node = len(info.slot_ids)
 
         num_nodes = len(info.container_addrs)
-        total_worker = num_nodes * slots_per_node
+        total_worker = num_nodes
+        if slots_per_node > 0:
+            total_worker *= slots_per_node
         # Get global rank
         rank = core_context.distributed.get_rank()
         latest_checkpoint = info.latest_checkpoint
@@ -395,6 +403,10 @@ def torch_batch_process(
         # they would hang forever as other workers never hit that last batch_idx.
         # To avoid the issue, we calculate and take the ceiling of the iteration count to ensure
         # all workers iterate for the same number of times.
+        logging.warning(
+            f"logging with dataset_len: {dataset_len}, batch_size: {batch_size}, "
+            f"total_worker: {total_worker}"
+        )
         dist_dataset_batch_count = math.ceil(dataset_len / batch_size / total_worker)
         iterate_length = _validate_iterate_length(max_batches, dist_dataset_batch_count)
 

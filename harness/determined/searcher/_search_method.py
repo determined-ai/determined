@@ -258,7 +258,7 @@ class SearchMethod:
             List[Operation]: Initial list of :class:`~Operation` to start the Hyperparameter
             search
         """
-        pass
+        return []
 
     @abstractmethod
     def on_trial_created(
@@ -292,7 +292,7 @@ class SearchMethod:
             List[Operation]: List of :class:`~Operation` to run upon creation of the given
             trial
         """
-        pass
+        return []
 
     @abstractmethod
     def on_validation_completed(
@@ -334,7 +334,7 @@ class SearchMethod:
             List[Operation]: List of :class:`~Operation` to run upon completion of training for
             the given trial
         """
-        pass
+        return []
 
     @abstractmethod
     def on_trial_closed(
@@ -373,7 +373,7 @@ class SearchMethod:
             List[Operation]: List of :class:`~Operation` to run after closing the given
             trial
         """
-        pass
+        return []
 
     @abstractmethod
     def progress(self, searcher_state: SearcherState) -> float:
@@ -393,7 +393,7 @@ class SearchMethod:
         Returns:
             float: Experiment progress as a float between 0 and 1.
         """
-        pass
+        return 1.0
 
     @abstractmethod
     def on_trial_exited_early(
@@ -437,7 +437,7 @@ class SearchMethod:
             List[Operation]: List of :class:`~Operation` to run in response to the given
             trial exiting early
         """
-        pass
+        return []
 
     def save(
         self, searcher_state: SearcherState, path: pathlib.Path, *, experiment_id: int
