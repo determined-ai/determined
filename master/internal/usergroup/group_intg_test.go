@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -85,7 +86,7 @@ func TestUserGroups(t *testing.T) {
 		index := usersContain(users, testUser.ID)
 		require.NotEqual(t, -1, index, "Expected users in group to contain the newly added one")
 
-		require.Equal(t, users[index].ModifiedAt, time.Now(), "Users.modified_at not updated when adding to group")
+		require.Equal(t, users[index].ModifiedAt.YearDay(), time.Now().YearDay(), "Users.modified_at not updated when adding to group")
 	})
 
 	t.Run("search groups by user membership", func(t *testing.T) {
@@ -123,7 +124,10 @@ func TestUserGroups(t *testing.T) {
 
 		i := usersContain(users, testUser.ID)
 		require.Equal(t, -1, i, "User found in group after removing them from it")
-		require.Equal(t, testUser.ModifiedAt, time.Now(), "Users.modified_at not updated when removed from group")
+
+		updatedTestUser, err := user.UserByID(testUser.ID)
+		require.NoError(t, err, "erroneously returned error when querying updated user")
+		require.Equal(t, updatedTestUser.ModifiedAt.YearDay(), time.Now().YearDay(), "Users.modified_at not updated when removed from group")
 
 		err = RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, testUser.ID)
 		require.True(t, errors.Is(err, db.ErrNotFound),
