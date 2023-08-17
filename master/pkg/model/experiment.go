@@ -72,6 +72,8 @@ const (
 	DeletedState State = "DELETED"
 	// PartiallyDeletedState constant.
 	PartiallyDeletedState State = "PARTIALLY_DELETED"
+	// RunningState constant. Currently only used by unmanaged trials.
+	RunningState State = "RUNNING"
 
 	// TrialWorkloadSequencerType constant.
 	TrialWorkloadSequencerType WorkloadSequencerType = "TRIAL_WORKLOAD_SEQUENCER"
@@ -319,7 +321,7 @@ var CheckpointReverseTransitions = reverseTransitions(CheckpointTransitions)
 
 // Experiment represents a row from the `experiments` table.
 type Experiment struct {
-	ID    int    `db:"id"`
+	ID    int    `db:"id" bun:"id,pk"`
 	JobID JobID  `db:"job_id"`
 	State State  `db:"state"`
 	Notes string `db:"notes"`
@@ -343,6 +345,8 @@ type Experiment struct {
 	Username             string     `db:"username"`
 	ProjectID            int        `db:"project_id"`
 	Unmanaged            bool       `db:"unmanaged"`
+	ExternalExperimentID *string    `db:"external_experiment_id"`
+	Progress             *float64
 }
 
 // ExperimentFromProto converts a experimentv1.Experiment to a model.Experiment.
@@ -460,6 +464,7 @@ type Trial struct {
 	WarmStartCheckpointID *int           `db:"warm_start_checkpoint_id"`
 	Seed                  int64          `db:"seed"`
 	TotalBatches          int            `db:"total_batches"`
+	ExternalTrialID       *string        `db:"external_trial_id"`
 }
 
 // TrialTaskID represents a row from the `trial_id_task_id` table.
@@ -598,7 +603,7 @@ type CheckpointTrainingMetadata struct {
 	TrialID           int      `db:"trial_id"`
 	ExperimentID      int      `db:"experiment_id"`
 	ExperimentConfig  JSONObj  `db:"experiment_config"`
-	HParams           JSONObj  `db:"hparams"`
+	HParams           JSONObj  `db:"hparams" bun:"hparams"`
 	TrainingMetrics   JSONObj  `db:"training_metrics"`
 	ValidationMetrics JSONObj  `db:"validation_metrics"`
 	SearcherMetric    *float64 `db:"searcher_metric"`
@@ -607,7 +612,8 @@ type CheckpointTrainingMetadata struct {
 
 // Checkpoint represents a row from the `checkpoints_view` view.
 type Checkpoint struct {
-	ID int `db:"id"`
+	bun.BaseModel `bun:"table:checkpoints_view"`
+	ID            int `db:"id"`
 
 	UUID         *uuid.UUID    `db:"uuid"`
 	TaskID       *TaskID       `db:"task_id"`

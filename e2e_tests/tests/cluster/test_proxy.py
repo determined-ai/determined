@@ -1,5 +1,4 @@
 import csv
-import os
 import pathlib
 import re
 import subprocess
@@ -13,6 +12,7 @@ from determined.common.api import bindings
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
+from tests import ray_utils
 
 
 def _experiment_task_id(exp_id: int) -> str:
@@ -53,22 +53,7 @@ def _probe_tunnel(proc: "subprocess.Popen[str]", port: int = 8265) -> None:
 
 
 def _ray_job_submit(exp_path: pathlib.Path, port: int = 8265) -> None:
-    env = os.environ.copy()
-    env["RAY_ADDRESS"] = f"http://localhost:{port}"
-    subprocess.run(
-        [
-            "ray",
-            "job",
-            "submit",
-            "--working-dir",
-            str(exp_path),
-            "--",
-            "python",
-            "ray_job.py",
-        ],
-        check=True,
-        env=env,
-    )
+    return ray_utils.ray_job_submit(exp_path, ["python", "ray_job.py"], port=port)
 
 
 @pytest.mark.e2e_cpu
