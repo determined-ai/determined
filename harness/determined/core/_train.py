@@ -134,15 +134,16 @@ class TrainContext:
 
         self._report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
 
-    def report_inference_metrics(
+    def report_metrics(
         self,
+        group: str,
         steps_completed: int,
         metrics: Dict[str, Any],
     ) -> None:
         """
-        Report batch inference metrics to the master.
+        Report generic metrics to the master.
         """
-        self._report_trial_metrics(util._INFERENCE, steps_completed, metrics)
+        self._report_trial_metrics(group, steps_completed, metrics)
 
     def get_tensorboard_path(self) -> pathlib.Path:
         """
@@ -273,6 +274,9 @@ class DummyTrainContext(TrainContext):
 
     def report_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
         self._report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
+
+    def report_metrics(self, group: str, steps_completed: int, metrics: Dict[str, Any]) -> None:
+        self._report_trial_metrics(group, steps_completed, metrics)
 
     def upload_tensorboard_files(
         self,

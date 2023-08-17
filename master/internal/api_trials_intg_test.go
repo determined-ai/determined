@@ -779,9 +779,13 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
 		Return(nil).Times(3)
 
+	metricGroup := "inference"
 	// If there are no restrictions, we should see all the trials
 	getCkptResp, getErr := api.GetTrialMetricsByCheckpoint(
-		ctx, &apiv1.GetTrialMetricsByCheckpointRequest{CheckpointUuid: checkpointUUID},
+		ctx, &apiv1.GetTrialMetricsByCheckpointRequest{
+			CheckpointUuid: checkpointUUID,
+			MetricGroup:    &metricGroup,
+		},
 	)
 	require.NoError(t, getErr)
 	require.Equal(t, len(getCkptResp.Metrics), 2)
@@ -804,7 +808,10 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, infTrial2Exp).
 		Return(nil).Once()
 	getCkptResp, getErr = api.GetTrialMetricsByCheckpoint(
-		ctx, &apiv1.GetTrialMetricsByCheckpointRequest{CheckpointUuid: checkpointUUID},
+		ctx, &apiv1.GetTrialMetricsByCheckpointRequest{
+			CheckpointUuid: checkpointUUID,
+			MetricGroup:    &metricGroup,
+		},
 	)
 	require.NoError(t, getErr)
 	// Only infTrial2 should be visible, but it doesn't have metrics
@@ -850,10 +857,12 @@ func TestTrialSourceInfoModelVersion(t *testing.T) {
 	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
 	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
 
+	metricGroup := "inference"
 	getMVResp, getMVErr := api.GetTrialMetricsByModelVersion(
 		ctx, &apiv1.GetTrialMetricsByModelVersionRequest{
 			ModelName:       modelVersion.Model.Name,
 			ModelVersionNum: modelVersion.Version,
+			MetricGroup:     &metricGroup,
 		},
 	)
 	require.NoError(t, getMVErr)

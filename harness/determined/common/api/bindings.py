@@ -15606,9 +15606,11 @@ def get_GetTrialMetricsByCheckpoint(
     session: "api.Session",
     *,
     checkpointUuid: str,
+    metricGroup: "typing.Optional[str]" = None,
     trialSourceInfoType: "typing.Optional[v1TrialSourceInfoType]" = None,
 ) -> "v1GetTrialMetricsByCheckpointResponse":
     _params = {
+        "metricGroup": metricGroup,
         "trialSourceInfoType": trialSourceInfoType.value if trialSourceInfoType is not None else None,
     }
     _resp = session._do_request(
@@ -15630,9 +15632,11 @@ def get_GetTrialMetricsByModelVersion(
     *,
     modelName: str,
     modelVersionNum: int,
+    metricGroup: "typing.Optional[str]" = None,
     trialSourceInfoType: "typing.Optional[v1TrialSourceInfoType]" = None,
 ) -> "v1GetTrialMetricsByModelVersionResponse":
     _params = {
+        "metricGroup": metricGroup,
         "trialSourceInfoType": trialSourceInfoType.value if trialSourceInfoType is not None else None,
     }
     _resp = session._do_request(

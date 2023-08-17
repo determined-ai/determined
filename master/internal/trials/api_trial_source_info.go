@@ -35,7 +35,7 @@ func (a *TrialSourceInfoAPIServer) ReportTrialSourceInfo(
 // trial_source_infos table, and fetches the metrics for each of the connected trials.
 func GetMetricsForTrialSourceInfoQuery(
 	ctx context.Context, q *bun.SelectQuery,
-	// ) ([]*trialv1.TrialSourceInfoMetric, error) {
+	groupName *string,
 ) ([]*trialv1.MetricsReport, error) {
 	trialIds := []struct {
 		TrialID             int
@@ -45,6 +45,11 @@ func GetMetricsForTrialSourceInfoQuery(
 	err := q.Scan(ctx, &trialIds)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get trial source info %w", err)
+	}
+
+	metricGroup := model.MetricGroup("")
+	if groupName != nil {
+		metricGroup = model.MetricGroup(*groupName)
 	}
 
 	// TODO (Taylor): If we reach a point where this becomes a performance bottleneck
@@ -60,23 +65,10 @@ func GetMetricsForTrialSourceInfoQuery(
 			// particular trials.
 			continue
 		}
-		// sourceType := trialv1.TrialSourceInfoType_value[val.TrialSourceInfoType]
-		res, err := db.GetMetrics(ctx, val.TrialID, -1, numMetricsLimit, model.InferenceMetricGroup)
+		res, err := db.GetMetrics(ctx, val.TrialID, -1, numMetricsLimit, metricGroup)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get metrics %w", err)
 		}
-		// if len(res) > 0 {
-		// 	for i := 0; i < len(res); i++ {
-		// 		// TODO we are giving too precise timestamps for our Python parsing code somehow.
-		// 		res[i].EndTime = timestamppb.New(res[i].EndTime.AsTime().Truncate(time.Millisecond))
-		// 	}
-		// }
-		// trialSourceInfoMetric := &trialv1.TrialSourceInfoMetric{
-		// 	TrialId:             int32(val.TrialID),
-		// 	TrialSourceInfoType: trialv1.TrialSourceInfoType(sourceType),
-		// 	MetricReports:       res,
-		// }
-		// ret = append(ret, trialSourceInfoMetric)
 		ret = append(ret, res...)
 	}
 	return ret, nil

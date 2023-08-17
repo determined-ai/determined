@@ -370,6 +370,8 @@ message GetTrialMetricsByModelVersionRequest {
   int32 model_version_num = 2;
   // Type of the TrialSourceInfo
   optional determined.trial.v1.TrialSourceInfoType trial_source_info_type = 3;
+  // Metric Group string ("training", "validation", or anything else)
+  optional string metric_group = 4;
 }
 
 // Response for all metrics related to a given checkpoint

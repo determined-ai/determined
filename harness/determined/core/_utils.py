@@ -1,8 +1,6 @@
 from determined.common import api
 from determined.common.api import bindings
 
-# from determined.experimental import Checkpoint
-
 
 class UtilsContext:
     """
@@ -13,20 +11,6 @@ class UtilsContext:
         self._session = session
         self._trial_id = trial_id
 
-    # def report_task_using_checkpoint(self, checkpoint_uuid: str) -> None:
-    #     req = bindings.v1ReportTrialSourceInfoRequest(
-    #         trialSourceInfo=bindings.v1TrialSourceInfo(
-    #             checkpointUuid=checkpoint_uuid,
-    #             trialId=self._trial_id,
-    #             trialSourceInfoType=bindings.v1TrialSourceInfoType.INFERENCE,
-    #         )
-    #     )
-    #     bindings.post_ReportTrialSourceInfo(
-    #         session=self._session,
-    #         body=req,
-    #     )
-
-    # def report_task_using_checkpoint_full_obj(self, checkpoint: Checkpoint) -> None:
     def report_task_using_checkpoint(self, checkpoint) -> None:
         req = bindings.v1ReportTrialSourceInfoRequest(
             trialSourceInfo=bindings.v1TrialSourceInfo(

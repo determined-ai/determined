@@ -17,18 +17,18 @@ metric_groups = [
 
 def main(core_context: det.core.Context, increment_by: float):
     x = 0
-    total_batches = 1
+    steps_completed = 1
     for batch in range(100):
         x += increment_by
-        total_batches = batch + 1
+        steps_completed = batch + 1
         time.sleep(0.1)
         logging.info(f"x is now {x}")
         idx = batch % len(metric_groups)
         group = metric_groups[idx]
         noise = random.random() * x
         metrics = {f"z{group}/me.t r%i]\\c_{i}": x * (i + 1) + noise for i in range(3)}
-        core_context.train._report_trial_metrics(
-            group=group, total_batches=total_batches, metrics=metrics
+        core_context.train.report_metrics(
+            group=group, steps_completed=steps_completed, metrics=metrics
         )
 
 

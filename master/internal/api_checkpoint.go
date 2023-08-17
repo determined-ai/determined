@@ -447,7 +447,7 @@ func (a *apiServer) GetTrialMetricsByCheckpoint(
 		trialIDsQuery.Where("trial_source_info_type = ?", req.TrialSourceInfoType.String())
 	}
 
-	metrics, err := trials.GetMetricsForTrialSourceInfoQuery(ctx, trialIDsQuery)
+	metrics, err := trials.GetMetricsForTrialSourceInfoQuery(ctx, trialIDsQuery, req.MetricGroup)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get trial source info %w", err)
 	}

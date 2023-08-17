@@ -646,6 +646,61 @@ func TestMetricMerge(t *testing.T) {
 	}
 }
 
+func TestGetAllMetrics(t *testing.T) {
+	// Test that any type of MetricGroup (training, validation, anything else)
+	// will be returned when you ask for a blank MetricGroup ("")
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	mGroup := model.MetricGroup("")
+
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
+
+	addMetricAt := func(
+		batchNumber int,
+		metricsJSON string,
+		trialID int,
+		groupName model.MetricGroup,
+	) error {
+		trialRunID := 0
+		require.NoError(t, db.AddTrialMetrics(ctx, &trialv1.TrialMetrics{
+			TrialId:        int32(trialID),
+			TrialRunId:     int32(trialRunID),
+			StepsCompleted: int32(batchNumber),
+			Metrics: &commonv1.Metrics{
+				AvgMetrics: jsonToStruct(t, metricsJSON),
+			},
+		}, groupName))
+		return nil
+	}
+
+	cases := []struct {
+		reports []string
+	}{
+		{[]string{`{"a":1.0}`}},
+		{[]string{`{"a":1.0}`, `{"b":2.0}`}},
+		{[]string{`{"a":1.0}`, `{"b":2.0}`, `{"c":2.0}`}},
+	}
+
+	for _, c := range cases {
+		t.Log(c)
+		trialID := RequireMockTrial(t, db, exp).ID
+		for _, metricReport := range c.reports {
+			err := addMetricAt(1, metricReport, trialID, model.TrainingMetricGroup)
+			require.NoError(t, err)
+			err = addMetricAt(1, metricReport, trialID, model.ValidationMetricGroup)
+			require.NoError(t, err)
+			err = addMetricAt(1, metricReport, trialID, model.MetricGroup("inference"))
+			require.NoError(t, err)
+			metrics, err := GetMetrics(ctx, trialID, 0, 100, mGroup)
+			require.NoError(t, err)
+			require.Len(t, metrics, 3)
+		}
+	}
+}
+
 func TestLatestMetricID(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
