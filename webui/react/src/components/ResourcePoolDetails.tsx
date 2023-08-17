@@ -16,14 +16,13 @@ interface Props {
 }
 
 const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: Props) => {
-  const details = structuredClone(pool.details);
+  const { details, ...mainSection } = pool;
+
   for (const key in details) {
     if (details[key as keyof V1ResourcePoolDetail] === null) {
       delete details[key as keyof V1ResourcePoolDetail];
     }
   }
-
-  const mainSection = structuredClone(pool);
 
   const title = (
     <div>
