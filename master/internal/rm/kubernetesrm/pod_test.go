@@ -34,7 +34,7 @@ func createPod(
 	resourceHandler *requestQueue,
 	task tasks.TaskSpec,
 ) *pod {
-	msg := StartTaskPod{
+	msg := StartTaskPodRequest{
 		AllocationID: allocationID,
 		Spec:         task,
 		Slots:        1,
