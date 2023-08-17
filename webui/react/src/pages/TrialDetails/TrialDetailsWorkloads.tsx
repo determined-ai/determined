@@ -20,8 +20,8 @@ import {
   TrialWorkloadFilter,
   WorkloadGroup,
 } from 'types';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import {
   extractMetricSortValue,
   extractMetricValue,
@@ -30,8 +30,6 @@ import {
 } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
-
-import { Loadable, Loaded, NotLoaded } from '../../utils/loadable';
 
 import { Settings } from './TrialDetailsOverview.settings';
 import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
@@ -91,6 +89,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     });
 
     metrics.forEach((metric) => {
+      if (!['validation', 'training'].includes(metric.group)) return;
       const stateIndex = newColumns.findIndex((column) => column.key === 'state');
       newColumns.splice(stateIndex, 0, {
         defaultSortOrder:

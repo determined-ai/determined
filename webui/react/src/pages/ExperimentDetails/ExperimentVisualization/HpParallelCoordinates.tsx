@@ -8,12 +8,12 @@ import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';
+import TrialsComparisonModal from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useUI from 'stores/contexts/UI';
-import { Primitive, Range } from 'types';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -24,19 +24,18 @@ import {
   Metric,
   MetricType,
   metricTypeParamMap,
+  Primitive,
+  Range,
   Scale,
   TrialDetails,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import { rgba2str, str2rgba } from 'utils/color';
-import { flattenObject, isPrimitive } from 'utils/data';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import { clone, flattenObject, isPrimitive } from 'utils/data';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { metricToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { openCommandResponse } from 'utils/wait';
-
-import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import css from './HpParallelCoordinates.module.scss';
 import HpTrialTable, { TrialHParams } from './HpTrialTable';

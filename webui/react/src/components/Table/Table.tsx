@@ -18,7 +18,6 @@ import { OMITTED_STR } from 'constants/accessControl';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { StateOfUnion } from 'themes';
-import { Pagination } from 'types';
 import {
   CommandTask,
   CommandType,
@@ -26,6 +25,7 @@ import {
   ExperimentItem,
   ModelItem,
   ModelVersion,
+  Pagination,
   Project,
   RunState,
   StartEndTimes,

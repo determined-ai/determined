@@ -2,8 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import { UpdateSettings } from 'hooks/useSettings';
-
-import { AvailableSeriesType } from '../types';
+import { AvailableSeriesType } from 'pages/TrialDetails/Profiles/types';
 
 import { Settings } from './SystemMetricChart';
 

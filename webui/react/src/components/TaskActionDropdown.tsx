@@ -8,8 +8,7 @@ import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { killTask } from 'services/api';
 import { ExperimentAction as Action, AnyTask, CommandTask, DetailedUser } from 'types';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { capitalize } from 'utils/string';
 import { isTaskKillable } from 'utils/task';
 

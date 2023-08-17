@@ -47,17 +47,16 @@ import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } fro
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
-import { ValueOf } from 'types';
 import {
   ExperimentAction as Action,
   AnyTask,
   CommandState,
   CommandTask,
   CommandType,
+  ValueOf,
   Workspace,
 } from 'types';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'utils/sort';

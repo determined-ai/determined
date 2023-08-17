@@ -7,13 +7,12 @@ import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import Section from 'components/Section';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
+import { ClusterOverallBar } from 'pages/Cluster/ClusterOverallBar';
+import { ClusterOverallStats } from 'pages/Cluster/ClusterOverallStats';
 import clusterStore from 'stores/cluster';
 import { ResourcePool } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-
-import { ClusterOverallBar } from '../Cluster/ClusterOverallBar';
-import { ClusterOverallStats } from '../Cluster/ClusterOverallStats';
 
 const ClusterOverview: React.FC = () => {
   const resourcePools = useObservable(clusterStore.resourcePools);
@@ -26,10 +25,11 @@ const ClusterOverview: React.FC = () => {
 
   const actionMenu = useCallback(
     (pool: ResourcePool) =>
-      rpBindingFlagOn && canManageResourcePoolBindings
+      rpBindingFlagOn &&
+      canManageResourcePoolBindings &&
+      !(pool.defaultAuxPool || pool.defaultComputePool)
         ? [
             {
-              disabled: pool.defaultAuxPool || pool.defaultComputePool,
               icon: <Icon name="four-squares" title="manage-bindings" />,
               key: 'bindings',
               label: 'Manage bindings',

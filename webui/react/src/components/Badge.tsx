@@ -4,8 +4,7 @@ import Tooltip from 'components/kit/Tooltip';
 import { stateToLabel } from 'constants/states';
 import useUI from 'stores/contexts/UI';
 import { getStateColorCssVar, StateOfUnion } from 'themes';
-import { ValueOf } from 'types';
-import { ResourceState, RunState, SlotState } from 'types';
+import { ResourceState, RunState, SlotState, ValueOf } from 'types';
 import { hsl2str, str2hsl } from 'utils/color';
 import { DarkLight, getCssVar } from 'utils/themes';
 

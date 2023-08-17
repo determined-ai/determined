@@ -1,8 +1,7 @@
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
-import { DetError } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { DetError } from 'utils/error';
 import { isApiResponse, processApiError } from 'utils/service';
 
 /* Response Helpers */

@@ -245,7 +245,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
                 return delattr(to_wrap, name)
 
             def forward(wrapper, *arg, **kwarg):  # type: ignore
-                with amp.autocast():  # type: ignore
+                with amp.autocast():
                     return to_wrap.forward(*arg, **kwarg)
 
         wrapped = _AutocastForwardPassModel()

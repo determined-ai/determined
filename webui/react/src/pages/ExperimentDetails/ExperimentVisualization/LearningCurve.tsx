@@ -10,6 +10,7 @@ import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
 import { UPlotPoint } from 'components/UPlot/types';
 import { terminalRunStates } from 'constants/states';
+import TrialsComparisonModal from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { paths } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
@@ -30,14 +31,11 @@ import {
 } from 'types';
 import { glasbeyColor } from 'utils/color';
 import { flattenObject, isPrimitive } from 'utils/data';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { metricToStr } from 'utils/metric';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'utils/routes';
 import { openCommandResponse } from 'utils/wait';
-
-import { metricToStr } from '../../../utils/metric';
-import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import HpTrialTable, { TrialHParams } from './HpTrialTable';
 import css from './LearningCurve.module.scss';

@@ -123,6 +123,8 @@ Example:
 
    python3 -m determined.launch.horovod --fusion-threshold-mb 1 --cycle-time-ms 2 -- --trial model_def:MyTrial
 
+.. _pytorch-dist-launcher:
+
 PyTorch Distributed Launcher
 ============================
 

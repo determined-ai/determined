@@ -9,8 +9,7 @@ import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 
 const GROUPS_NAME = 'groups';

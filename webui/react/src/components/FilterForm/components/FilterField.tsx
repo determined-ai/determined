@@ -1,6 +1,5 @@
 import { HolderOutlined } from '@ant-design/icons';
-import { DatePicker } from 'antd';
-import type { SelectProps as AntdSelectProps } from 'antd';
+import { type SelectProps as AntdSelectProps, DatePicker } from 'antd';
 import type { DatePickerProps } from 'antd/es/date-picker';
 import dayjs from 'dayjs';
 import { useObservable } from 'micro-observables';
@@ -188,7 +187,7 @@ const FilterField = ({
       <div className={css.fieldCard} ref={preview}>
         <Select
           autoFocus
-          dropdownMatchSelectWidth={250}
+          dropdownMatchSelectWidth={300}
           options={columns.map((col) => ({
             label: col.displayName || col.column,
             value: col.column,

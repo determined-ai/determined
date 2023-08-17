@@ -14,12 +14,13 @@ import ExperimentVisualizationFilters, {
   VisualizationFilters,
 } from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
-import { Primitive, Range } from 'types';
 import {
   ExperimentWithTrial,
   HpTrialData,
   Hyperparameter,
   HyperparameterType,
+  Primitive,
+  Range,
   Scale,
   TrialItem,
 } from 'types';

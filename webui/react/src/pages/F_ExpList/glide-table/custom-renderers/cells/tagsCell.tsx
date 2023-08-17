@@ -7,7 +7,7 @@ import {
   Rectangle,
 } from '@hpe.com/glide-data-grid';
 
-import { roundedRect } from '../utils';
+import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 
 interface TagsCellProps {
   readonly kind: 'tags-cell';

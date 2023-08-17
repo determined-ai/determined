@@ -28,6 +28,7 @@ const ProjectCard: React.FC<Props> = ({
 }: Props) => {
   const { contextHolders, menu, onClick } = useProjectActionMenu({
     onComplete: fetchProjects,
+    onDelete: fetchProjects,
     project,
     workspaceArchived,
   });

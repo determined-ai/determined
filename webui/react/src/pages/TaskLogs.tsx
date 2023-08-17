@@ -11,8 +11,7 @@ import { Settings, settingsConfigForTask } from 'components/kit/LogViewer/LogVie
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
 import { useSettings } from 'hooks/useSettings';
-import { serverAddress } from 'routes/utils';
-import { paths } from 'routes/utils';
+import { paths, serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';

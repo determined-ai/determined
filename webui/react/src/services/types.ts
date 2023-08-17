@@ -1,14 +1,16 @@
 import { Dayjs } from 'dayjs';
 
-import { FetchOptions, RecordKey, SingleEntityParams } from 'types';
 import {
   DetailedUser,
+  FetchOptions,
   Job,
   Metadata,
   Metric,
   MetricType,
   Note,
+  RecordKey,
   RunState,
+  SingleEntityParams,
   TrialWorkloadFilter,
 } from 'types';
 

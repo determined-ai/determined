@@ -2,6 +2,8 @@ import warnings
 from typing import Any, Union
 
 import numpy as np
+import torch
+from packaging import version
 
 from determined import tensorboard
 
@@ -9,7 +11,9 @@ from determined import tensorboard
 # bug is that it attempts to import distutils then access distutils.version without actually
 # importing distutils.version.  We can workaround this by prepopulating the distutils.version
 # submodule in the distutils module.
-import distutils.version  # isort:skip  # noqa: F401
+if version.parse("1.9.0") <= version.parse(torch.__version__) < version.parse("1.11.0"):
+    import distutils.version  # isort:skip  # noqa: F401
+
 from torch.utils.tensorboard import SummaryWriter  # isort:skip
 
 

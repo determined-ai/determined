@@ -15,8 +15,7 @@ import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import userStore from 'stores/users';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 import { StorageManager } from 'utils/storage';
 

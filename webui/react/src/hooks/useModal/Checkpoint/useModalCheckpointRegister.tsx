@@ -14,8 +14,7 @@ import { getModels, postModelVersion } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { Metadata, ModelItem } from 'types';
 import { notification } from 'utils/dialogApi';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { validateDetApiEnum } from 'utils/service';
 import { pluralizer } from 'utils/string';
 

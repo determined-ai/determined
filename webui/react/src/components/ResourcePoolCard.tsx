@@ -10,13 +10,14 @@ import { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
+import Tooltip from 'components/kit/Tooltip';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
-import { maxPoolSlotCapacity } from 'stores/cluster';
-import clusterStore from 'stores/cluster';
+import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
 import useUI from 'stores/contexts/UI';
 import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
@@ -95,10 +96,11 @@ const ResourcePoolCard: React.FC<Props> = ({
   descriptiveLabel,
 }: Props) => {
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
+  const { canManageResourcePoolBindings } = usePermissions();
   const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
-
+  const isDefaultPool = pool.defaultAuxPool || pool.defaultComputePool;
   const descriptionClasses = [css.description];
-
+  const showDescriptiveLabel = !(canManageResourcePoolBindings && rpBindingFlagOn) ?? isDefaultPool;
   const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
   const resourcePoolBindings: number[] = resourcePoolBindingMap.get(pool.name, []);
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
@@ -169,9 +171,16 @@ const ResourcePoolCard: React.FC<Props> = ({
               <div className={css.name}>{pool.name}</div>
             </div>
             <div className={css.default}>
-              <span>{descriptiveLabel}</span>
+              {showDescriptiveLabel && <span>{descriptiveLabel}</span>}
               {pool.description && <Icon name="info" showTooltip title={pool.description} />}
             </div>
+            {!showDescriptiveLabel && (
+              <div className={css.defaultPoolTooltip}>
+                <Tooltip content="You cannot bind your default resource pool to a workspace.">
+                  <span>Default</span>
+                </Tooltip>
+              </div>
+            )}
           </div>
           <Suspense fallback={<Spinner center spinning />}>
             <div className={css.body}>

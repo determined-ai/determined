@@ -6,6 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import Message from 'components/Message';
+import ModelRegistry from 'components/ModelRegistry';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import TaskList from 'components/TaskList';
@@ -18,13 +19,10 @@ import { V1Group, V1GroupSearchResult, V1Role, V1RoleWithAssignments } from 'ser
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
-import { ValueOf } from 'types';
-import { User } from 'types';
+import { User, ValueOf } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-
-import ModelRegistry from '../components/ModelRegistry';
 
 import ResourcePoolsBound from './WorkspaceDetails/ResourcePoolsBound';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';

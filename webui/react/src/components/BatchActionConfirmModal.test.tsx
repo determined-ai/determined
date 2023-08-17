@@ -4,8 +4,7 @@ import React from 'react';
 
 import Button from 'components/kit/Button';
 import { DEFAULT_CANCEL_LABEL, useModal } from 'components/kit/Modal';
-
-import { ExperimentAction as Action, ExperimentAction } from '../types';
+import { ExperimentAction as Action, ExperimentAction } from 'types';
 
 import BatchActionConfirmModalComponent from './BatchActionConfirmModal';
 

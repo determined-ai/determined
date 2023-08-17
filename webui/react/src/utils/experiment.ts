@@ -5,7 +5,6 @@ import {
   pausableRunStates,
   terminalRunStates,
 } from 'constants/states';
-import { RawJson } from 'types';
 import {
   AnyTask,
   ExperimentAction,
@@ -17,6 +16,7 @@ import {
   HyperparameterType,
   Project,
   ProjectExperiment,
+  RawJson,
   RunState,
   TrialDetails,
   TrialHyperparameters,

@@ -1,5 +1,4 @@
-import { RecordKey } from 'types';
-import { Metric, MetricType, WorkloadGroup } from 'types';
+import { Metric, MetricType, RecordKey, WorkloadGroup } from 'types';
 import { alphaNumericSorter } from 'utils/sort';
 
 export const METRIC_KEY_DELIMITER = '.';
