@@ -3,7 +3,9 @@ package detect
 import (
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"sort"
 	"strconv"
@@ -73,7 +75,7 @@ func parseRocmSmi(jsonData []byte) ([]RocmDevice, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	allocatedDevices := parseVisibleDevices()
 	result := []RocmDevice{}
 
 	for k, d := range parsed {
@@ -82,6 +84,10 @@ func parseRocmSmi(jsonData []byte) ([]RocmDevice, error) {
 			return nil, errors.Wrap(
 				err, "failed to parse card index")
 		}
+		if !deviceAllocated(d.Index, allocatedDevices) {
+			log.Tracef("Device not allocated: %d", d.Index)
+			continue
+		}
 		result = append(result, d)
 	}
 
@@ -89,6 +95,27 @@ func parseRocmSmi(jsonData []byte) ([]RocmDevice, error) {
 		return result[i].Index < result[j].Index
 	})
 	return result, nil
+}
+
+func deviceAllocated(deviceIndex int, allocatedDevices []string) bool {
+	if allocatedDevices == nil {
+		return true
+	}
+	for _, d := range allocatedDevices {
+		if d == fmt.Sprintf("%d", deviceIndex) {
+			return true
+		}
+	}
+	return false
+}
+
+func parseVisibleDevices() []string {
+	devices, found := os.LookupEnv("ROCR_VISIBLE_DEVICES")
+	if !found {
+		return nil
+	}
+	log.Tracef("ROCR_VISIBLE_DEVICES: '%s'", devices)
+	return strings.Split(devices, ",")
 }
 
 func detectRocmGPUs(visibleGPUs string) ([]device.Device, error) {
