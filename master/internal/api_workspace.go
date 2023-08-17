@@ -445,16 +445,16 @@ func (a *apiServer) PatchWorkspace(
 
 		if req.Workspace.DefaultComputePool != "" {
 			if !rpNames.Contains(req.Workspace.DefaultComputePool) {
-				return nil, status.Error(codes.FailedPrecondition, "unable to bind a resource "+
-					"pool that does not exist or is not available to the workspace")
+				return nil, status.Error(codes.FailedPrecondition, "unable to set a default "+
+					"resource pool that does not exist or is not available to the workspace")
 			}
 			updatedWorkspace.DefaultComputePool = req.Workspace.DefaultComputePool
 			insertColumns = append(insertColumns, "default_compute_pool")
 		}
 		if req.Workspace.DefaultAuxPool != "" {
 			if !rpNames.Contains(req.Workspace.DefaultAuxPool) {
-				return nil, status.Error(codes.FailedPrecondition, "unable to bind a resource "+
-					"pool that does not exist or is not available to the workspace")
+				return nil, status.Error(codes.FailedPrecondition, "unable to set a default "+
+					"resource pool that does not exist or is not available to the workspace")
 			}
 			updatedWorkspace.DefaultAuxPool = req.Workspace.DefaultAuxPool
 			insertColumns = append(insertColumns, "default_aux_pool")
