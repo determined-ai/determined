@@ -116,11 +116,12 @@ const ResourcePoolCard: React.FC<Props> = ({
   }, [pool]);
 
   const processedPool = useMemo(() => {
+    const { slotsPerAgent, schedulerType, details } = pool;
     return {
       ...pool,
-      details: JSON.parse(JSON.stringify(pool.details)),
-      schedulerType: V1SchedulerTypeToLabel[pool.schedulerType],
-      slotsPerAgent: pool.slotsPerAgent === -1 ? 'Unknown' : pool.slotsPerAgent,
+      details: JSON.parse(JSON.stringify(details)),
+      schedulerType: V1SchedulerTypeToLabel[schedulerType],
+      slotsPerAgent: slotsPerAgent === -1 ? 'Unknown' : slotsPerAgent,
     };
   }, [pool]);
 
