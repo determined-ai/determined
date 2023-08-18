@@ -3,6 +3,7 @@ package usergroup
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -254,7 +255,7 @@ func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.
 
 	err = UpdateUsersTimestampTx(ctx, idb, uids)
 	if err != nil {
-		return errors.Wrapf(err, "Error when updating users timestamps")
+		return fmt.Errorf("Error when updating users timestamps: %w", err)
 	}
 
 	return nil
@@ -293,7 +294,7 @@ func RemoveUsersFromGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...m
 
 	err = UpdateUsersTimestampTx(ctx, idb, uids)
 	if err != nil {
-		return errors.Wrapf(err, "Error when updating users timestamps")
+		return fmt.Errorf("Error when updating users timestamps: %w", err)
 	}
 
 	return nil
@@ -375,8 +376,8 @@ func UpdateUsersTimestampTx(ctx context.Context, idb bun.IDB,
 		Where("id IN (?)", bun.In(uids)).
 		Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(db.MatchSentinelError(err),
-			"Error updating modified_at timestamp for users")
+		return fmt.Errorf("updating modified_at timestamp for users: %w",
+			db.MatchSentinelError(err))
 	}
 	return nil
 }

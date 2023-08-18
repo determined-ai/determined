@@ -76,6 +76,7 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("add users to group", func(t *testing.T) {
+		testStart := time.Now()
 		err := AddUsersToGroupTx(ctx, nil, testGroup.ID, testUser.ID)
 		require.NoError(t, err, "failed to add users to group")
 
@@ -86,7 +87,7 @@ func TestUserGroups(t *testing.T) {
 		index := usersContain(users, testUser.ID)
 		require.NotEqual(t, -1, index, "Expected users in group to contain the newly added one")
 
-		require.Equal(t, users[index].ModifiedAt.YearDay(), time.Now().YearDay(),
+		require.Greater(t, users[index].ModifiedAt, testStart,
 			"Users.modified_at not updated when adding to group")
 	})
 
@@ -112,6 +113,7 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("remove users from group", func(t *testing.T) {
+		testStart := time.Now()
 		err := RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, -500)
 		require.True(t, errors.Is(err, db.ErrNotFound),
 			"failed to return ErrNotFound when removing non-existent users from group")
@@ -128,7 +130,7 @@ func TestUserGroups(t *testing.T) {
 
 		updatedTestUser, err := user.UserByID(testUser.ID)
 		require.NoError(t, err, "returned error when querying updated user")
-		require.Equal(t, updatedTestUser.ModifiedAt.YearDay(), time.Now().YearDay(),
+		require.Greater(t, updatedTestUser.ModifiedAt, testStart,
 			"Users.modified_at not updated when removed from group")
 
 		err = RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, testUser.ID)
