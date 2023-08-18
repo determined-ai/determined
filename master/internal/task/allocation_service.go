@@ -53,25 +53,33 @@ func (as *allocationService) StartAllocation(
 	system *actor.System,
 	onExit func(*AllocationExited),
 ) error {
+	as.syslog.WithField("allocation_id", req.AllocationID).Info("waiting to start allocation")
+
 	as.mu.Lock()
 	defer as.mu.Unlock()
+
+	as.syslog.WithField("allocation_id", req.AllocationID).Info("starting allocation")
 
 	ref, err := newAllocation(logCtx, req, db, rm, specifier, system)
 	if err != nil {
 		return err
 	}
 	as.allocations[req.AllocationID] = ref
+	as.syslog.WithField("allocation_id", req.AllocationID).Info("started allocation")
 
 	go func() {
+		as.syslog.WithField("allocation_id", req.AllocationID).Info("awaiting allocation termination...")
 		_ = ref.awaitTermination()
 		if err := ref.Cleanup(); err != nil {
 			syslog.WithError(err).Error("cleaning up allocation")
 		}
-
+		as.syslog.WithField("allocation_id", req.AllocationID).Info("allocation done...")
 		as.mu.Lock()
 		defer as.mu.Unlock()
+		as.syslog.WithField("allocation_id", req.AllocationID).Info("allocation done pt2...")
 		delete(as.allocations, req.AllocationID)
-		onExit(ref.exited)
+		go onExit(ref.exited)
+		as.syslog.WithField("allocation_id", req.AllocationID).Info("allocation done pt3...")
 	}()
 	return nil
 }
