@@ -5,6 +5,7 @@ import {
   SorterResult,
   TablePaginationConfig,
 } from 'antd/es/table/interface';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -46,18 +47,16 @@ import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } fro
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
-import { ValueOf } from 'types';
 import {
   ExperimentAction as Action,
   AnyTask,
   CommandState,
   CommandTask,
   CommandType,
+  ValueOf,
   Workspace,
 } from 'types';
-import { isEqual } from 'utils/data';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'utils/sort';
@@ -168,7 +167,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
       ]);
       const newTasks = [...commands, ...jupyterLabs, ...shells, ...tensorboards];
       setTasks((prev) => {
-        if (isEqual(prev, newTasks)) return prev;
+        if (_.isEqual(prev, newTasks)) return prev;
         return newTasks;
       });
     } catch (e) {

@@ -40,6 +40,7 @@ import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
 import Paragraph from 'components/kit/Typography/Paragraph';
+import useConfirm, { voidPromiseFn } from 'components/kit/useConfirm';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
@@ -55,9 +56,7 @@ import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'stores/contexts/UI';
 import { BrandingType } from 'stores/determinedInfo';
-import { ValueOf } from 'types';
-import { Note } from 'types';
-import { MetricType, User } from 'types';
+import { MetricType, Note, User, ValueOf } from 'types';
 import {
   Background,
   Brand,
@@ -73,8 +72,6 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum, { loremIpsumSentence } from 'utils/loremIpsum';
 import { noOp } from 'utils/service';
 import { KeyboardShortcut } from 'utils/shortcut';
-
-import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 
 import css from './DesignKit.module.scss';
 
@@ -904,6 +901,48 @@ const DropdownSection: React.FC = () => {
   );
 };
 
+const UncontrolledCodeEditor = () => {
+  const [path, setPath] = useState<string>('one.yaml');
+  const file = useMemo(() => {
+    if (!path) {
+      return NotLoaded;
+    }
+    return (
+      {
+        'one.yaml': Loaded(
+          'hyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 512\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5',
+        ),
+        'two.yaml': Loaded('searcher:\n  name: single\n  metric: validation_loss\n'),
+      }[path] || NotLoaded
+    );
+  }, [path]);
+  return (
+    <CodeEditor
+      file={file}
+      files={[
+        {
+          isLeaf: true,
+          key: 'one.yaml',
+          title: 'one.yaml',
+        },
+        {
+          isLeaf: true,
+          key: 'two.yaml',
+          title: 'two.yaml',
+        },
+        {
+          isLeaf: true,
+          key: 'unloaded.yaml',
+          title: 'unloaded.yaml',
+        },
+      ]}
+      readonly={true}
+      selectedFilePath={path}
+      onError={handleError}
+      onSelectFile={setPath}
+    />
+  );
+};
 const CodeEditorSection: React.FC = () => {
   return (
     <ComponentSection id="CodeEditor" title="CodeEditor">
@@ -919,9 +958,9 @@ const CodeEditorSection: React.FC = () => {
       <AntDCard title="Usage">
         <strong>Editable Python file</strong>
         <CodeEditor
+          file={Loaded('import math\nprint(math.pi)\n\n')}
           files={[
             {
-              content: Loaded('import math\nprint(math.pi)\n\n'),
               key: 'test.py',
               title: 'test.py',
             },
@@ -930,11 +969,11 @@ const CodeEditorSection: React.FC = () => {
         />
         <strong>Read-only YAML file</strong>
         <CodeEditor
+          file={Loaded(
+            'name: Unicode Test 日本😃\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2',
+          )}
           files={[
             {
-              content: Loaded(
-                'name: Unicode Test 日本😃\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2',
-              ),
               key: 'test1.yaml',
               title: 'test1.yaml',
             },
@@ -943,27 +982,7 @@ const CodeEditorSection: React.FC = () => {
           onError={handleError}
         />
         <strong>Multiple files, one not finished loading.</strong>
-        <CodeEditor
-          files={[
-            {
-              content: Loaded(
-                'hyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 512\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5',
-              ),
-              isLeaf: true,
-              key: 'one.yaml',
-              title: 'one.yaml',
-            },
-            {
-              content: Loaded('searcher:\n  name: single\n  metric: validation_loss\n'),
-              isLeaf: true,
-              key: 'two.yaml',
-              title: 'two.yaml',
-            },
-            { content: NotLoaded, isLeaf: true, key: 'unloaded.yaml', title: 'unloaded.yaml' },
-          ]}
-          readonly={true}
-          onError={handleError}
-        />
+        <UncontrolledCodeEditor />
       </AntDCard>
     </ComponentSection>
   );
@@ -3031,6 +3050,11 @@ const DesignKit: React.FC = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const isExclusiveMode = searchParams.get('exclusive') === 'true';
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const closeDrawer = useCallback(() => {
+    setIsDrawerOpen(false);
+  }, []);
 
   useEffect(() => {
     actions.hideChrome();
@@ -3046,20 +3070,29 @@ const DesignKit: React.FC = () => {
   }, []);
 
   return (
-    <Page bodyNoPadding breadcrumb={[]} docTitle="Design Kit">
+    <Page bodyNoPadding breadcrumb={[]} docTitle="Design Kit" stickyHeader>
       <div className={css.base}>
-        <nav>
+        <nav className={css.default}>
           <Link reloadDocument to={'/'}>
             <Logo branding={BrandingType.Determined} orientation="horizontal" />
           </Link>
           <ThemeToggle />
-          <ul>
+          <ul className={css.sections}>
             {componentOrder.map((componentId) => (
               <li key={componentId}>
                 <a href={`#${componentId}`}>{ComponentTitles[componentId]}</a>
               </li>
             ))}
           </ul>
+        </nav>
+        <nav className={css.mobile}>
+          <Link reloadDocument to={'/'}>
+            <Logo branding={BrandingType.Determined} orientation="horizontal" />
+          </Link>
+          <div className={css.controls}>
+            <ThemeToggle iconOnly />
+            <Button onClick={() => setIsDrawerOpen(true)}>Sections</Button>
+          </div>
         </nav>
         <article>
           {componentOrder
@@ -3068,6 +3101,15 @@ const DesignKit: React.FC = () => {
               <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
             ))}
         </article>
+        <Drawer open={isDrawerOpen} placement="right" title="Sections" onClose={closeDrawer}>
+          <ul className={css.sections}>
+            {componentOrder.map((componentId) => (
+              <li key={componentId} onClick={closeDrawer}>
+                <a href={`#${componentId}`}>{ComponentTitles[componentId]}</a>
+              </li>
+            ))}
+          </ul>
+        </Drawer>
       </div>
     </Page>
   );

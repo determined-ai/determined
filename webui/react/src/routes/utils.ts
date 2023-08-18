@@ -3,8 +3,7 @@ import { pathToRegexp } from 'path-to-regexp';
 import { globalStorage } from 'globalStorage';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
 import { BrandingType } from 'stores/determinedInfo';
-import { RouteConfig } from 'types';
-import { CommandTask } from 'types';
+import { CommandTask, RouteConfig } from 'types';
 import {
   AnyMouseEvent,
   AnyMouseEventHandler,

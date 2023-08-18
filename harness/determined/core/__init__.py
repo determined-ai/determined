@@ -28,4 +28,20 @@ from determined.core._preempt import (
 from determined.core._utils import (
     UtilsContext,
 )
-from determined.core._context import Context, init, _dummy_init
+from determined.core._heartbeat import (
+    _Heartbeat,
+    _ManagedTrialHeartbeat,
+    _UnmanagedTrialHeartbeat,
+)
+from determined.core._log_shipper import (
+    _LogShipper,
+    _ManagedTrialLogShipper,
+    _UnmanagedTrialLogShipper,
+)
+from determined.core._context import (
+    Context,
+    init,
+    _dummy_init,
+    _get_storage_manager,
+    _install_stacktrace_on_sigusr1,
+)

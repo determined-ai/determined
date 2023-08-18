@@ -5,6 +5,7 @@ import {
   SorterResult,
   TablePaginationConfig,
 } from 'antd/lib/table/interface';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import DeleteModelModal from 'components/DeleteModelModal';
@@ -46,9 +47,7 @@ import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { ModelItem, Workspace } from 'types';
-import { isEqual } from 'utils/data';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
@@ -129,7 +128,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       );
       setTotal(response.pagination.total || 0);
       setModels((prev) => {
-        if (isEqual(prev, response.models)) return prev;
+        if (_.isEqual(prev, response.models)) return prev;
         return response.models;
       });
     } catch (e) {

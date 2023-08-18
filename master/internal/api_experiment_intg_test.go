@@ -184,6 +184,7 @@ func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 			return
 		}
 		require.NotEqual(t, experimentv1.State_STATE_DELETE_FAILED, e.Experiment.State)
+		time.Sleep(1 * time.Second)
 	}
 	t.Error("expected experiment to delete after 1 minute and it did not")
 }
@@ -344,13 +345,12 @@ func TestGetExperiments(t *testing.T) {
 	}
 	require.NoError(t, api.m.db.AddExperiment(exp0, activeConfig0))
 	for i := 0; i < 3; i++ {
-		task := &model.Task{TaskType: model.TaskTypeTrial}
+		task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 		require.NoError(t, api.m.db.AddTask(task))
-		require.NoError(t, api.m.db.AddTrial(&model.Trial{
+		require.NoError(t, db.AddTrial(ctx, &model.Trial{
 			State:        model.PausedState,
 			ExperimentID: exp0.ID,
-			TaskID:       task.TaskID,
-		}))
+		}, task.TaskID))
 	}
 	exp0Expected := &experimentv1.Experiment{
 		Id:             int32(exp0.ID),
@@ -366,6 +366,7 @@ func TestGetExperiments(t *testing.T) {
 		UserId:         1,
 		Username:       "admin",
 		SearcherType:   "single",
+		SearcherMetric: "loss",
 		Name:           "name",
 		Notes:          "omitted", // Notes get omitted when non null.
 		JobId:          job0ID,
@@ -412,6 +413,7 @@ func TestGetExperiments(t *testing.T) {
 		UserId:         userResp.User.Id,
 		Username:       userResp.User.Username,
 		SearcherType:   "single",
+		SearcherMetric: "loss",
 		Name:           "longername",
 		JobId:          job1ID,
 		ProjectId:      pid,
@@ -595,13 +597,12 @@ func TestSearchExperiments(t *testing.T) {
 
 	// Trial without validations doesn't cause issues.
 	noValidationsExp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
-	task := &model.Task{TaskType: model.TaskTypeTrial}
+	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, api.m.db.AddTask(task))
-	require.NoError(t, api.m.db.AddTrial(&model.Trial{
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
 		State:        model.PausedState,
 		ExperimentID: noValidationsExp.ID,
-		TaskID:       task.TaskID,
-	}))
+	}, task.TaskID))
 
 	resp, err = api.SearchExperiments(ctx, req)
 	require.NoError(t, err)
@@ -614,7 +615,9 @@ func TestSearchExperiments(t *testing.T) {
 	require.Equal(t, int32(noValidationsExp.ID), resp.Experiments[1].Experiment.Id)
 
 	// Validations returned properly.
-	metricTrial, _, valMetrics := createTestTrialWithMetrics(ctx, t, api, curUser, true)
+	metricTrial, metrics := createTestTrialWithMetrics(ctx, t, api, curUser, true)
+	valMetrics := metrics[model.ValidationMetricGroup]
+
 	// Move experiment to our project.
 	_, err = db.Bun().NewUpdate().Table("experiments").
 		Set("project_id = ?", projectID).
@@ -1358,18 +1361,18 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_EXPERIMENT", "columnName":"tags","kind":"field","operator":"notContains", "value":"val"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.config->>'labels' NOT ILIKE '%val%')))`},
 		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_EXPERIMENT", "columnName":"duration","kind":"field","operator":">", "value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((extract(epoch FROM coalesce(e.end_time, now()) - e.start_time) > 0)))`},
 		{`{"filterGroup":{"children":[{"columnName":"projectId","location":"LOCATION_TYPE_EXPERIMENT", "kind":"field","operator":">=","value":-1}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((project_id >= -1)))`},
-		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_accuracy","kind":"field","operator":">=","value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((e.validation_metrics->>'validation_accuracy')::float8 >= 0)))`},
-		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_string","kind":"field","operator":"=","value":"string"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.validation_metrics->>'validation_string' = 'string')))`},
-		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_string","kind":"field","operator":"!=","value":"string"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.validation_metrics->>'validation_string' != 'string')))`},
-		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_string","kind":"field","operator":"contains","value":"string"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.validation_metrics->>'validation_string' LIKE '%string%')))`},
-		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_string","kind":"field","operator":"notContains","value":"string"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.validation_metrics->>'validation_string' NOT LIKE '%string%')))`},
-		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_error","kind":"field","operator":">=","value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((e.validation_metrics->>'validation_error')::float8 >= 0)))`},
-		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_error","kind":"field","operator":"notEmpty","value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((e.validation_metrics->>'validation_error')::float8 IS NOT NULL)))`},
-		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_error","kind":"field","operator":"isEmpty","value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((e.validation_metrics->>'validation_error')::float8 IS NULL)))`},
-		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.x","kind":"field","operator":"=","value": 0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((e.validation_metrics->>'x')::float8 = 0)))`},
-		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.loss","kind":"field","operator":"!=","value":0.004}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((e.validation_metrics->>'loss')::float8 != 0.004)))`},
-		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_accuracy","kind":"field","operator":"<","value":-3}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((e.validation_metrics->>'validation_accuracy')::float8 < -3)))`},
-		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_accuracy","kind":"field","operator":"<=","value":10}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((e.validation_metrics->>'validation_accuracy')::float8 <= 10)))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_accuracy.mean","kind":"field","operator":">=","value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((trials.summary_metrics->'validation_metrics'->'validation_accuracy'->>'mean')::float8 >= 0)))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_string.min","kind":"field","operator":"=","value":"string"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((trials.summary_metrics->'validation_metrics'->'validation_string'->>'min' = 'string')))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_string.max","kind":"field","operator":"!=","value":"string"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((trials.summary_metrics->'validation_metrics'->'validation_string'->>'max' != 'string')))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_string.mean","kind":"field","operator":"contains","value":"string"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((trials.summary_metrics->'validation_metrics'->'validation_string'->>'mean' LIKE '%string%')))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_string.min","kind":"field","operator":"notContains","value":"string"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((trials.summary_metrics->'validation_metrics'->'validation_string'->>'min' NOT LIKE '%string%')))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_error.min","kind":"field","operator":">=","value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((trials.summary_metrics->'validation_metrics'->'validation_error'->>'min')::float8 >= 0)))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_error.max","kind":"field","operator":"notEmpty","value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((trials.summary_metrics->'validation_metrics'->'validation_error'->>'max')::float8 IS NOT NULL)))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_error.max","kind":"field","operator":"isEmpty","value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((trials.summary_metrics->'validation_metrics'->'validation_error'->>'max')::float8 IS NULL)))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.x.max","kind":"field","operator":"=","value": 0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((trials.summary_metrics->'validation_metrics'->'x'->>'max')::float8 = 0)))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.loss.last","kind":"field","operator":"!=","value":0.004}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((trials.summary_metrics->'validation_metrics'->'loss'->>'last')::float8 != 0.004)))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_accuracy.max","kind":"field","operator":"<","value":-3}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((trials.summary_metrics->'validation_metrics'->'validation_accuracy'->>'max')::float8 < -3)))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_accuracy.min","kind":"field","operator":"<=","value":10}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((trials.summary_metrics->'validation_metrics'->'validation_accuracy'->>'min')::float8 <= 10)))`},
 		{`{"filterGroup":{"children":[{"columnName":"projectId","kind":"field","operator":">=","value":null}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((true)))`},
 		{`{"filterGroup":{"children":[{"columnName":"id","kind":"field","operator":"=","value":1},{"children":[{"columnName":"id","kind":"field","operator":"=","value":2},{"columnName":"id","kind":"field","operator":"=","value":3}],"conjunction":"and","kind":"group"},{"columnName":"id","kind":"field","operator":"=","value":4},{"children":[{"columnName":"id","kind":"field","operator":"=","value":5}],"conjunction":"and","kind":"group"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.id = 1)) AND (((e.id = 2)) AND ((e.id = 3))) AND ((e.id = 4)) AND (((e.id = 5))))`},
 		{`{"filterGroup":{"children":[{"children":[{"columnName":"checkpointCount","kind":"field","operator":"=","value":4},{"columnName":"numTrials","kind":"field","operator":"=","value":1},{"columnName":"progress","kind":"field","operator":"=","value":100}],"conjunction":"and","kind":"group"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((e.checkpoint_count = 4)) AND (((SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id) = 1)) AND ((COALESCE(progress, 0) = 100))))`},

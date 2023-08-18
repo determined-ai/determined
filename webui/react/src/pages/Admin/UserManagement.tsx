@@ -1,6 +1,7 @@
 import { Space } from 'antd';
 import { SortOrder } from 'antd/es/table/interface';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import dropdownCss from 'components/ActionDropdown/ActionDropdown.module.scss';
@@ -29,10 +30,8 @@ import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
-import { isEqual } from 'utils/data';
 import { message } from 'utils/dialogApi';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
@@ -157,11 +156,12 @@ const UserManagement: React.FC = () => {
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], loadableUsers);
 
-  const filteredUsers = settings.name
-    ? users.filter((user) => {
-        return settings.name && (user.displayName || user.username).includes(settings.name);
-      })
-    : users;
+  const nameRegex = useMemo(() => {
+    if (settings.name === undefined) return new RegExp('.*');
+    const escapedName = settings.name?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(escapedName, 'i');
+  }, [settings.name]);
+  const filteredUsers = users.filter((user) => nameRegex.test(user.displayName || user.username));
 
   const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyUsers } = usePermissions();
@@ -179,7 +179,7 @@ const UserManagement: React.FC = () => {
       const response = await getGroups({ limit: 500 }, { signal: canceler.current.signal });
 
       setGroups((prev) => {
-        if (isEqual(prev, response.groups)) return prev;
+        if (_.isEqual(prev, response.groups)) return prev;
         return response.groups || [];
       });
     } catch (e) {

@@ -15,7 +15,7 @@ import (
 // QueryProto returns the result of the query. Any placeholder parameters are replaced
 // with supplied args. Enum values must be the full name of the enum.
 func (db *PgDB) QueryProto(queryName string, v interface{}, args ...interface{}) error {
-	err := db.queryRowsWithParser(db.queries.getOrLoad(queryName), protoParser, v, args...)
+	err := db.queryRowsWithParser(db.queries.GetOrLoad(queryName), protoParser, v, args...)
 	if err == ErrNotFound {
 		return err
 	}
@@ -27,7 +27,7 @@ func (db *PgDB) QueryProto(queryName string, v interface{}, args ...interface{})
 func (db *PgDB) QueryProtof(
 	queryName string, args []interface{}, v interface{}, params ...interface{},
 ) error {
-	query := db.queries.getOrLoad(queryName)
+	query := db.queries.GetOrLoad(queryName)
 	if len(args) > 0 {
 		query = fmt.Sprintf(query, args...)
 	}
@@ -38,14 +38,21 @@ func (db *PgDB) QueryProtof(
 }
 
 func protoParser(rows *sqlx.Rows, val interface{}) error {
-	message, ok := val.(proto.Message)
-	if !ok {
-		return errors.Errorf("invalid type conversion: %T is not a Protobuf message", val)
-	}
 	dest := make(map[string]interface{})
 	if err := rows.MapScan(dest); err != nil {
 		return errors.Wrap(err, "error reading row from database")
 	}
+
+	return ParseMapToProto(dest, val)
+}
+
+// ParseMapToProto converts sqlx/bun-scanned map to a proto object.
+func ParseMapToProto(dest map[string]interface{}, val interface{}) error {
+	message, ok := val.(proto.Message)
+	if !ok {
+		return errors.Errorf("invalid type conversion: %T is not a Protobuf message", val)
+	}
+
 	for key, value := range dest {
 		switch parsed := value.(type) {
 		case float64:

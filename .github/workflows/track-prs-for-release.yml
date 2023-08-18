@@ -13,6 +13,9 @@ on:  # yamllint disable-line rule:truthy
 concurrency:
   group: track-prs-for-release
 
+env:
+  LOGS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
 # All jobs require a specifically generated token to run, since we want to
 # access org-level projects and the normal GITHUB_TOKEN only has access to this
 # repository.

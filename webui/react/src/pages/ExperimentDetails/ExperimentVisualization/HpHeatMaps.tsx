@@ -16,13 +16,14 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useUI from 'stores/contexts/UI';
-import { Primitive, Range } from 'types';
 import {
   ExperimentBase,
   HyperparameterType,
   Metric,
   MetricType,
   metricTypeParamMap,
+  Primitive,
+  Range,
   Scale,
 } from 'types';
 import { getColorScale } from 'utils/chart';
@@ -92,7 +93,7 @@ const HpHeatMaps: React.FC<Props> = ({
   const smallerIsBetter = useMemo(() => {
     if (
       selectedMetric &&
-      selectedMetric.type === MetricType.Validation &&
+      selectedMetric.group === MetricType.Validation &&
       selectedMetric.name === experiment.config.searcher.metric
     ) {
       return experiment.config.searcher.smallerIsBetter;
@@ -226,7 +227,7 @@ const HpHeatMaps: React.FC<Props> = ({
         experiment.id,
         selectedMetric.name,
         selectedBatch,
-        metricTypeParamMap[selectedMetric.type],
+        metricTypeParamMap[selectedMetric.group],
         undefined, // custom metric group
         selectedBatchMargin,
         undefined,

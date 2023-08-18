@@ -12,6 +12,7 @@ import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
 import Button from 'components/kit/Button';
+import ClipboardButton from 'components/kit/ClipboardButton';
 import Icon from 'components/kit/Icon';
 import {
   clone,
@@ -22,14 +23,17 @@ import {
 import Link from 'components/kit/internal/Link';
 import Section from 'components/kit/internal/Section';
 import { readLogStream } from 'components/kit/internal/services';
-import { FetchArgs, RecordKey, ValueOf } from 'components/kit/internal/types';
-import { ErrorHandler } from 'components/kit/internal/types';
-import { Log, LogLevel } from 'components/kit/internal/types';
+import {
+  ErrorHandler,
+  FetchArgs,
+  Log,
+  LogLevel,
+  RecordKey,
+  ValueOf,
+} from 'components/kit/internal/types';
 import useGetCharMeasureInContainer from 'components/kit/internal/useGetCharMeasureInContainer';
 import useResize from 'components/kit/internal/useResize';
 import Spinner from 'components/kit/Spinner';
-
-import ClipboardButton from '../ClipboardButton';
 
 import css from './LogViewer.module.scss';
 import LogViewerEntry, { DATETIME_FORMAT, ICON_WIDTH, MAX_DATETIME_LENGTH } from './LogViewerEntry';

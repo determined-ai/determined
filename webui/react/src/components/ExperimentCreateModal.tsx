@@ -1,5 +1,6 @@
 import { Alert } from 'antd';
 import yaml from 'js-yaml';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from 'components/kit/Button';
@@ -10,13 +11,17 @@ import Spinner from 'components/kit/Spinner';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
-import { RawJson, ValueOf } from 'types';
-import { ExperimentBase, TrialHyperparameters, TrialItem } from 'types';
-import { clone, isEqual } from 'utils/data';
-import { DetError, ErrorLevel, ErrorType, isDetError, isError } from 'utils/error';
-import handleError, { handleWarning } from 'utils/error';
-import { trialHParamsToExperimentHParams } from 'utils/experiment';
-import { upgradeConfig } from 'utils/experiment';
+import { ExperimentBase, RawJson, TrialHyperparameters, TrialItem, ValueOf } from 'types';
+import { clone } from 'utils/data';
+import handleError, {
+  DetError,
+  ErrorLevel,
+  ErrorType,
+  handleWarning,
+  isDetError,
+  isError,
+} from 'utils/error';
+import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/experiment';
 import { Loaded } from 'utils/loadable';
 import { routeToReactUrl } from 'utils/routes';
 
@@ -340,7 +345,7 @@ const ExperimentCreateModalComponent = ({
         trial,
         type,
       };
-      return isEqual(prev, newModalState) ? prev : newModalState;
+      return _.isEqual(prev, newModalState) ? prev : newModalState;
     });
     setDisabled(!experiment.name); // initial disabled state set here, gets updated later in handleFieldsChange
   }, [experiment, trial, type, isFork, form]);
@@ -368,7 +373,8 @@ const ExperimentCreateModalComponent = ({
         {modalState.isAdvancedMode && (
           <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>
             <CodeEditor
-              files={[{ content: Loaded(modalState.configString), key: 'config.yaml' }]}
+              file={Loaded(modalState.configString)}
+              files={[{ key: 'config.yaml' }]}
               height="40vh"
               onChange={handleEditorChange}
               onError={handleError}

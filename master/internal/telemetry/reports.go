@@ -9,7 +9,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -19,16 +18,8 @@ import (
 )
 
 // ReportMasterTick reports the master snapshot on a periodic tick.
-func ReportMasterTick(system *actor.System, db db.DB, rm telemetryRPFetcher) {
+func ReportMasterTick(resp *apiv1.GetResourcePoolsResponse, db db.DB) {
 	resourceManagerType := ""
-
-	req := &apiv1.GetResourcePoolsRequest{}
-	resp, err := rm.GetResourcePools(system, req)
-	if err != nil {
-		// TODO(Brad): Make this routine more accepting of failures.
-		logrus.WithError(err).Error("failed to receive resource pool telemetry information")
-		return
-	}
 
 	gpuTotalNum, gpuUsedNum := 0, 0
 	poolTypes := make(map[string]int, len(resp.ResourcePools))
@@ -59,21 +50,16 @@ func ReportMasterTick(system *actor.System, db db.DB, rm telemetryRPFetcher) {
 		return
 	}
 
-	system.TellAt(
-		actor.Addr("telemetry"),
+	DefaultTelemeter.track(
 		analytics.Track{
 			Event:      "master_tick",
 			Properties: props,
-		},
-	)
+		})
 }
 
 // ReportProvisionerTick reports the state of all provision requests by a provisioner.
-func ReportProvisionerTick(
-	system *actor.System, instances []*model.Instance, instanceType string,
-) {
-	system.TellAt(
-		actor.Addr("telemetry"),
+func ReportProvisionerTick(instances []*model.Instance, instanceType string) {
+	DefaultTelemeter.track(
 		analytics.Track{
 			Event: "provisioner_tick",
 			Properties: map[string]interface{}{
@@ -84,9 +70,8 @@ func ReportProvisionerTick(
 }
 
 // ReportExperimentCreated reports that an experiment has been created.
-func ReportExperimentCreated(system *actor.System, id int, config expconf.ExperimentConfig) {
-	system.TellAt(
-		actor.Addr("telemetry"),
+func ReportExperimentCreated(id int, config expconf.ExperimentConfig) {
+	DefaultTelemeter.track(
 		analytics.Track{
 			Event: "experiment_created",
 			Properties: map[string]interface{}{
@@ -102,8 +87,7 @@ func ReportExperimentCreated(system *actor.System, id int, config expconf.Experi
 }
 
 // ReportAllocationTerminal reports that an allocation ends.
-func ReportAllocationTerminal(
-	system *actor.System, db db.DB, a model.Allocation, d *device.Device,
+func ReportAllocationTerminal(db db.DB, a model.Allocation, d *device.Device,
 ) {
 	res, err := db.CompleteAllocationTelemetry(a.AllocationID)
 	if err != nil {
@@ -115,7 +99,7 @@ func ReportAllocationTerminal(
 		"allocation_id": a.AllocationID,
 		"task_id":       a.TaskID,
 		"start_time":    a.StartTime,
-		"end_time":      *a.EndTime,
+		"end_time":      a.EndTime,
 		"slots":         a.Slots,
 	}
 	if d != nil {
@@ -128,8 +112,7 @@ func ReportAllocationTerminal(
 		return
 	}
 
-	system.TellAt(
-		actor.Addr("telemetry"),
+	DefaultTelemeter.track(
 		analytics.Track{
 			Event:      "allocation_terminal",
 			Properties: props,
@@ -165,7 +148,7 @@ func fetchTotalStepTime(db *db.PgDB, experimentID int) *float64 {
 }
 
 // ReportExperimentStateChanged reports that the state of an experiment has changed.
-func ReportExperimentStateChanged(system *actor.System, db *db.PgDB, e model.Experiment) {
+func ReportExperimentStateChanged(db *db.PgDB, e *model.Experiment) {
 	var numTrials *int64
 	var numSteps *int64
 	var totalStepTime *float64
@@ -178,8 +161,7 @@ func ReportExperimentStateChanged(system *actor.System, db *db.PgDB, e model.Exp
 		totalStepTime = fetchTotalStepTime(db, e.ID)
 	}
 
-	system.TellAt(
-		actor.Addr("telemetry"),
+	DefaultTelemeter.track(
 		analytics.Track{
 			Event: "experiment_state_changed",
 			Properties: map[string]interface{}{
@@ -196,9 +178,8 @@ func ReportExperimentStateChanged(system *actor.System, db *db.PgDB, e model.Exp
 }
 
 // ReportUserCreated reports that a user has been created.
-func ReportUserCreated(system *actor.System, admin, active bool) {
-	system.TellAt(
-		actor.Addr("telemetry"),
+func ReportUserCreated(admin, active bool) {
+	DefaultTelemeter.track(
 		analytics.Track{
 			Event: "user_created",
 			Properties: map[string]interface{}{

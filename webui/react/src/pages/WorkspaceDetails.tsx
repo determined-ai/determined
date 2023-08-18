@@ -1,13 +1,16 @@
 import type { TabsProps } from 'antd';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import Message from 'components/Message';
+import ModelRegistry from 'components/ModelRegistry';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import TaskList from 'components/TaskList';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
@@ -16,15 +19,12 @@ import { V1Group, V1GroupSearchResult, V1Role, V1RoleWithAssignments } from 'ser
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
-import { ValueOf } from 'types';
-import { User } from 'types';
-import { isEqual } from 'utils/data';
+import { User, ValueOf } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
-import ModelRegistry from '../components/ModelRegistry';
-
+import ResourcePoolsBound from './WorkspaceDetails/ResourcePoolsBound';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
 import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
 import { useWorkspaceActionMenu } from './WorkspaceList/WorkspaceActionDropdown';
@@ -38,6 +38,7 @@ export const WorkspaceDetailsTab = {
   Members: 'members',
   ModelRegistry: 'models',
   Projects: 'projects',
+  ResourcePools: 'pools',
   Tasks: 'tasks',
 } as const;
 
@@ -45,7 +46,7 @@ export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 
 const WorkspaceDetails: React.FC = () => {
   const { rbacEnabled } = useObservable(determinedStore.info);
-
+  const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], loadableUsers);
   const { tab, workspaceId: workspaceID } = useParams<Params>();
@@ -80,7 +81,7 @@ const WorkspaceDetails: React.FC = () => {
       const response = await getGroups({ limit: 100 }, { signal: canceler.signal });
 
       setGroups((prev) => {
-        if (isEqual(prev, response.groups)) return prev;
+        if (_.isEqual(prev, response.groups)) return prev;
         return response.groups || [];
       });
     } catch (e) {
@@ -115,7 +116,7 @@ const WorkspaceDetails: React.FC = () => {
       );
 
       setRolesAssignableToScope((prev) => {
-        if (isEqual(prev, response.roles)) return prev;
+        if (_.isEqual(prev, response.roles)) return prev;
         return response.roles || [];
       });
     } catch (e) {
@@ -196,10 +197,19 @@ const WorkspaceDetails: React.FC = () => {
       });
     }
 
+    if (rpBindingFlagOn && canViewWorkspace({ workspace })) {
+      items.push({
+        children: <ResourcePoolsBound workspace={workspace} />,
+        key: WorkspaceDetailsTab.ResourcePools,
+        label: 'Resource Pools',
+      });
+    }
+
     return items;
   }, [
     addableUsersAndGroups,
     canViewModelRegistry,
+    canViewWorkspace,
     fetchGroupsAndUsersAssignedToWorkspace,
     groupsAssignedDirectly,
     id,
@@ -208,6 +218,7 @@ const WorkspaceDetails: React.FC = () => {
     usersAssignedDirectly,
     workspace,
     workspaceAssignments,
+    rpBindingFlagOn,
   ]);
 
   const canViewWorkspaceFlag = canViewWorkspace({ workspace: { id } });

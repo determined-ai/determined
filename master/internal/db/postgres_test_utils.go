@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -31,6 +32,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 const (
@@ -270,20 +273,25 @@ func ReadTestModelDefiniton(t *testing.T, folderPath string) []byte {
 }
 
 // RequireMockTrial returns a mock trial.
-func RequireMockTrial(t *testing.T, db *PgDB, exp *model.Experiment) *model.Trial {
+func RequireMockTrial(t *testing.T, db *PgDB, exp *model.Experiment) (*model.Trial, *model.Task) {
 	task := RequireMockTask(t, db, exp.OwnerID)
 	rqID := model.NewRequestID(rand.Reader)
 	tr := model.Trial{
-		TaskID:       task.TaskID,
 		RequestID:    &rqID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
 		HParams:      model.JSONObj{"global_batch_size": 1},
 	}
-	err := db.AddTrial(&tr)
+	err := AddTrial(context.TODO(), &tr, task.TaskID)
 	require.NoError(t, err, "failed to add trial")
-	return &tr
+	return &tr, task
+}
+
+// RequireMockTrialID returns a mock trial ID.
+func RequireMockTrialID(t *testing.T, db *PgDB, exp *model.Experiment) int {
+	trial, _ := RequireMockTrial(t, db, exp)
+	return trial.ID
 }
 
 // RequireMockAllocation returns a mock allocation.
@@ -299,14 +307,28 @@ func RequireMockAllocation(t *testing.T, db *PgDB, tID model.TaskID) *model.Allo
 	return &a
 }
 
+// Option is the return type for WithSteps helper function.
+type Option func(f *model.CheckpointV2)
+
+// WithSteps function will add the specified steps to the checkpoint.
+func WithSteps(numSteps int) Option {
+	return func(f *model.CheckpointV2) {
+		f.Metadata = map[string]interface{}{
+			"framework":          "some framework",
+			"determined_version": "1.0.0",
+			"steps_completed":    float64(numSteps),
+		}
+	}
+}
+
 // MockModelCheckpoint returns a mock model checkpoint.
 func MockModelCheckpoint(
-	ckptUUID uuid.UUID, tr *model.Trial, a *model.Allocation,
+	ckptUUID uuid.UUID, a *model.Allocation, opts ...Option,
 ) model.CheckpointV2 {
 	stepsCompleted := int32(10)
 	ckpt := model.CheckpointV2{
 		UUID:         ckptUUID,
-		TaskID:       tr.TaskID,
+		TaskID:       a.TaskID,
 		AllocationID: &a.AllocationID,
 		ReportTime:   time.Now().UTC(),
 		State:        model.CompletedState,
@@ -320,7 +342,36 @@ func MockModelCheckpoint(
 		},
 	}
 
+	for _, opt := range opts {
+		opt(&ckpt)
+	}
+
 	return ckpt
+}
+
+// AddTrialValidationMetrics adds mock Trial Metrics to the database.
+func AddTrialValidationMetrics(
+	ctx context.Context, ckptUUID uuid.UUID, tr *model.Trial, stepsCompleted int32,
+	valMetric int32, pgDB *PgDB,
+) error {
+	trialMetrics := trialv1.TrialMetrics{
+		TrialId:        int32(tr.ID),
+		TrialRunId:     int32(0),
+		StepsCompleted: stepsCompleted,
+		Metrics: &commonv1.Metrics{
+			AvgMetrics: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"okness": {
+						Kind: &structpb.Value_NumberValue{
+							NumberValue: float64(valMetric),
+						},
+					},
+				},
+			},
+		},
+	}
+	err := pgDB.AddValidationMetrics(ctx, &trialMetrics)
+	return err
 }
 
 // MustExec allows integration tests to run raw queries directly against a PgDB.

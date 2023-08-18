@@ -20,56 +20,94 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
-// TODO: rename raw_steps.
-
 // AddTrial adds the trial to the database and sets its ID.
-func (db *PgDB) AddTrial(trial *model.Trial) error {
+func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) error {
 	if trial.ID != 0 {
 		return errors.Errorf("error adding a trial with non-zero id %v", trial.ID)
 	}
 
-	if err := db.namedGet(&trial.ID, `
-INSERT INTO trials
-(task_id, request_id, experiment_id, state, start_time, end_time,
-hparams, warm_start_checkpoint_id, seed)
-VALUES (:task_id, :request_id, :experiment_id, :state, :start_time,
-	:end_time, :hparams, :warm_start_checkpoint_id, :seed)
-RETURNING id`, trial); err != nil {
-		// Assume the foreign key constraint is handled by the database.
-		return errors.Wrapf(err, "error inserting trial %v", *trial)
+	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewInsert().Model(trial).Returning("id").Exec(ctx); err != nil {
+			return fmt.Errorf("inserting trial model: %w", err)
+		}
+
+		trialTaskID := &model.TrialTaskID{TrialID: trial.ID, TaskID: taskID}
+		if _, err := tx.NewInsert().Model(trialTaskID).Exec(ctx); err != nil {
+			return fmt.Errorf("inserting trial task id relationship: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("inserting trial %v: %w", trial, err)
+	}
+
+	return nil
+}
+
+// UpsertTrialByExternalIDTx UPSERTs the trial with respect to the external_trial_id.
+func UpsertTrialByExternalIDTx(
+	ctx context.Context, tx bun.Tx, trial *model.Trial, taskID model.TaskID,
+) error {
+	if trial.ID != 0 {
+		return errors.Errorf("error adding a trial with non-zero id %v", trial.ID)
+	}
+
+	if _, err := tx.NewInsert().Model(trial).
+		On("CONFLICT (experiment_id, external_trial_id) DO UPDATE").
+		Set("hparams = EXCLUDED.hparams").
+		Returning("id").Exec(ctx); err != nil {
+		return fmt.Errorf("upserting trial model: %w", err)
+	}
+
+	trialTaskID := &model.TrialTaskID{TrialID: trial.ID, TaskID: taskID}
+	if _, err := tx.NewInsert().Model(trialTaskID).
+		On("CONFLICT (trial_id, task_id) DO NOTHING").Exec(ctx); err != nil {
+		return fmt.Errorf("upserting trial task id relationship: %w", err)
 	}
 
 	return nil
 }
 
 // TrialByID looks up a trial by ID, returning an error if none exists.
-func (db *PgDB) TrialByID(id int) (*model.Trial, error) {
-	var trial model.Trial
-	err := db.query(`
-SELECT id, COALESCE(task_id, '') AS task_id, request_id, experiment_id, state, start_time,
-	end_time, hparams, warm_start_checkpoint_id, seed, total_batches
-FROM trials
-WHERE id = $1`, &trial, id)
-	return &trial, errors.Wrapf(err, "error querying for trial %v", id)
+func TrialByID(ctx context.Context, id int) (*model.Trial, error) {
+	t := &model.Trial{}
+	if err := Bun().NewSelect().Model(t).Where("id = ?", id).Scan(ctx); err != nil {
+		return nil, fmt.Errorf("error querying for trial %d: %w", id, err)
+	}
+	return t, nil
+}
+
+// TrialTaskIDsByTrialID returns trial id task ids by trial ID, sorted by task run ID.
+func TrialTaskIDsByTrialID(ctx context.Context, trialID int) ([]*model.TrialTaskID, error) {
+	var ids []*model.TrialTaskID
+	if err := Bun().NewSelect().Model(&ids).
+		Where("trial_id = ?", trialID).
+		Join("JOIN tasks t ON trial_task_id.task_id = t.task_id").
+		Order("t.start_time").
+		Scan(ctx); err != nil {
+		return nil, fmt.Errorf("getting tasks for trial ID %d: %w", trialID, err)
+	}
+	return ids, nil
 }
 
 // TrialByExperimentAndRequestID looks up a trial, returning an error if none exists.
-func (db *PgDB) TrialByExperimentAndRequestID(
-	experimentID int, requestID model.RequestID,
+func TrialByExperimentAndRequestID(
+	ctx context.Context, experimentID int, requestID model.RequestID,
 ) (*model.Trial, error) {
-	var trial model.Trial
-	err := db.query(`
-SELECT id, task_id, request_id, experiment_id, state, start_time,
-  end_time, hparams, warm_start_checkpoint_id, seed, total_batches
-FROM trials
-WHERE experiment_id = $1 AND request_id = $2`, &trial, experimentID, requestID)
-	return &trial, errors.Wrapf(err, "error querying for trial %v", requestID)
+	t := &model.Trial{}
+	if err := Bun().NewSelect().Model(t).
+		Where("experiment_id = ?", experimentID).
+		Where("request_id = ?", requestID).Scan(ctx); err != nil {
+		return nil, fmt.Errorf("error querying for trial %s: %w", requestID, err)
+	}
+	return t, nil
 }
 
 // UpdateTrial updates an existing trial. Fields that are nil or zero are not
 // updated.  end_time is set if the trial moves to a terminal state.
 func (db *PgDB) UpdateTrial(id int, newState model.State) error {
-	trial, err := db.TrialByID(id)
+	trial, err := TrialByID(context.TODO(), id)
 	if err != nil {
 		return errors.Wrapf(err, "error finding trial %v to update", id)
 	}
@@ -102,7 +140,7 @@ WHERE id = :id`, setClause(toUpdate)), trial); err != nil {
 		}
 
 		if model.TerminalStates[newState] && trial.EndTime != nil {
-			return completeTask(tx, trial.TaskID, *trial.EndTime)
+			return completeTrialsTasks(tx, id, *trial.EndTime)
 		}
 
 		return nil
@@ -201,7 +239,7 @@ func (db *PgDB) calculateFullTrialSummaryMetrics(
 	partition := customMetricGroupToPartitionType(metricGroup)
 	jsonPath := model.TrialMetricsJSONPath(partition == ValidationMetric)
 	//nolint: execinquery
-	rows, err := tx.QueryContext(ctx, db.queries.getOrLoad("calculate-full-trial-summary-metrics"),
+	rows, err := tx.QueryContext(ctx, db.queries.GetOrLoad("calculate-full-trial-summary-metrics"),
 		trialID, jsonPath, partition, metricGroup)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getting full compute trial %d summary metrics", trialID)
@@ -401,6 +439,10 @@ func jsonAnyToFloat(v any) float64 {
 		return f
 	}
 
+	if f, ok := v.(int); ok {
+		return float64(f)
+	}
+
 	log.Errorf("summary metric value expected as float instead got %T %v", v, v)
 	return 0.0
 }
@@ -491,6 +533,7 @@ func calculateNewSummaryMetrics(
 		if _, ok = summaryMetric["count"]; !ok {
 			summaryMetric["max"] = replaceSpecialFloatsWithString(metricFloatValue)
 			summaryMetric["min"] = replaceSpecialFloatsWithString(metricFloatValue)
+			summaryMetric["mean"] = replaceSpecialFloatsWithString(metricFloatValue)
 			summaryMetric["sum"] = replaceSpecialFloatsWithString(metricFloatValue)
 			summaryMetric["count"] = 1
 		} else {
@@ -502,6 +545,8 @@ func calculateNewSummaryMetrics(
 				jsonAnyToFloat(summaryMetric["sum"]) + metricFloatValue)
 			// Go parsing odditity treats JSON whole numbers as floats.
 			summaryMetric["count"] = int(jsonAnyToFloat(summaryMetric["count"])) + 1
+			summaryMetric["mean"] = replaceSpecialFloatsWithString(
+				jsonAnyToFloat(summaryMetric["sum"]) / jsonAnyToFloat(summaryMetric["count"]))
 		}
 	}
 

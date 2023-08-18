@@ -9,8 +9,7 @@ import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import useUI from 'stores/contexts/UI';
 import { CommandState } from 'types';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { capitalize } from 'utils/string';
 import { WaitStatus } from 'utils/wait';
 

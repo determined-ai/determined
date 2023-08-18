@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import HpSelect from 'components/HpSelect';
@@ -7,11 +8,8 @@ import Select, { Option, SelectValue } from 'components/kit/Select';
 import MetricSelect from 'components/MetricSelect';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelect from 'components/ScaleSelect';
-import { ValueOf } from 'types';
-import { Metric, Scale } from 'types';
-import { isEqual } from 'utils/data';
-
-import { ExperimentVisualizationType } from '../ExperimentVisualization';
+import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
+import { Metric, Scale, ValueOf } from 'types';
 
 import css from './ExperimentVisualizationFilters.module.scss';
 
@@ -157,7 +155,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   useEffect(() => {
     if (
       metrics.length === 0 ||
-      (!!filters.metric && metrics.some((metric) => isEqual(metric, filters.metric)))
+      (!!filters.metric && metrics.some((metric) => _.isEqual(metric, filters.metric)))
     )
       return;
     onChange?.({ metric: metrics.first() });
@@ -185,7 +183,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
             label="Batches Processed"
             searchable={false}
             value={filters.batch}
-            width={70}
+            width={100}
             onChange={handleBatchChange}>
             {batches.map((batch) => (
               <Option key={batch} value={batch}>

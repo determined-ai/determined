@@ -198,7 +198,7 @@ export const getAgents = generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Ty
 );
 
 export const getResourcePools = generateDetApi<
-  EmptyParams,
+  Service.GetResourcePoolsParams,
   Api.V1GetResourcePoolsResponse,
   Type.ResourcePool[]
 >(Config.getResourcePools);

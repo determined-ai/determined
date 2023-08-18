@@ -1,6 +1,6 @@
+import _ from 'lodash';
 import { Reducer } from 'react';
 
-import { isEqual } from './data';
 import { LoggerInterface } from './Logger';
 
 /** has a printable type */
@@ -18,7 +18,7 @@ export const checkDeepEquality = <State, Action extends TypeWise>(
 ) => {
   return (state: State, action: Action): State => {
     const newState = reducer(state, action);
-    if (isEqual(state, newState)) return state;
+    if (_.isEqual(state, newState)) return state;
     logger?.debug('store state updated', action.type);
     return newState;
   };

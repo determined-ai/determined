@@ -154,7 +154,7 @@ func (a *apiServer) getProjectColumnsByID(
 			Column:      "searcherMetricsVal",
 			DisplayName: "Searcher Metric Value",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 		},
 	}
 
@@ -197,72 +197,61 @@ func (a *apiServer) getProjectColumnsByID(
 		}
 	}
 	summaryMetrics := []struct {
-		ID             int
-		SummaryMetrics model.JSONObj
+		MetricName string
+		JSONPath   string
+		MetricType string
+		Count      int32
 	}{}
 
 	if len(trialIDs) > 0 {
-		trialsQuery := db.Bun().NewSelect().
-			Column("id", "summary_metrics").
-			Table("trials").
-			Where("id IN (?)", bun.In(trialIDs)).
-			Order("id")
+		subQuery := db.BunSelectMetricGroupNames().ColumnExpr(
+			`summary_metrics->jsonb_object_keys(summary_metrics)->
+		jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))->>'type'
+		AS metric_type`).
+			Where("id IN (?)", bun.In(trialIDs)).Distinct()
+		trialsQuery := db.Bun().NewSelect().TableExpr("(?) AS stats", subQuery).
+			ColumnExpr("*").ColumnExpr(
+			"ROW_NUMBER() OVER(PARTITION BY json_path, metric_name order by metric_type) AS count").
+			Order("json_path").Order("metric_name")
 		err = trialsQuery.Scan(ctx, &summaryMetrics)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	summaryMetricsSet := make(map[string]struct{})
-	for _, trial := range summaryMetrics {
-		if rawMetrics, ok := trial.SummaryMetrics["avg_metrics"]; ok {
-			// iterate in order
-			metrics := rawMetrics.(map[string]interface{})
-			metricsKeys := make([]string, 0, len(metrics))
-			for metricKey := range metrics {
-				metricsKeys = append(metricsKeys, metricKey)
-			}
-			sort.Strings(metricsKeys)
+	for _, stats := range summaryMetrics {
+		// If there are multiple metrics with the same group and name, report the type as unspecified.
+		if stats.Count > 1 {
+			columns[len(columns)-1].Type = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+		}
 
-			for _, key := range metricsKeys {
-				if _, seen := summaryMetricsSet[key]; !seen {
-					summaryMetricsSet[key] = struct{}{}
-					var columnType projectv1.ColumnType
-					metric := metrics[key].(map[string]interface{})
-					if metricType, ok := metric["type"]; ok {
-						switch metricType.(string) {
-						case db.MetricTypeString:
-							columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
-						case db.MetricTypeNumber:
-							columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
-						case db.MetricTypeDate:
-							columnType = projectv1.ColumnType_COLUMN_TYPE_DATE
-						case db.MetricTypeBool:
-							columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
-						default:
-							// unsure of how to treat arrays/objects/nulls
-							columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
-						}
-						// don't surface aggregates that don't make sense for non-numbers
-						if columnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER {
-							aggregates := []string{"last", "max", "mean", "min"}
-							for _, aggregate := range aggregates {
-								columns = append(columns, &projectv1.ProjectColumn{
-									Column:   fmt.Sprintf("training.%s.%s", key, aggregate),
-									Location: projectv1.LocationType_LOCATION_TYPE_TRAINING,
-									Type:     columnType,
-								})
-							}
-						} else {
-							columns = append(columns, &projectv1.ProjectColumn{
-								Column:   fmt.Sprintf("training.%s.last", key),
-								Location: projectv1.LocationType_LOCATION_TYPE_TRAINING,
-								Type:     columnType,
-							})
-						}
-					}
-				}
+		columnType := parseMetricsType(stats.MetricType)
+		columnPrefix := stats.JSONPath
+		columnLocation := projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC
+		if stats.JSONPath == metricGroupTraining {
+			columnPrefix = metricIDTraining
+			columnLocation = projectv1.LocationType_LOCATION_TYPE_TRAINING
+		}
+		if stats.JSONPath == metricGroupValidation {
+			columnPrefix = metricIDValidation
+			columnLocation = projectv1.LocationType_LOCATION_TYPE_VALIDATIONS
+		}
+		// don't surface aggregates that don't make sense for non-numbers
+		if columnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER {
+			aggregates := []string{"last", "max", "mean", "min"}
+			for _, aggregate := range aggregates {
+				columns = append(columns, &projectv1.ProjectColumn{
+					Column:   fmt.Sprintf("%s.%s.%s", columnPrefix, stats.MetricName, aggregate),
+					Location: columnLocation,
+					Type:     columnType,
+				})
 			}
+		} else {
+			columns = append(columns, &projectv1.ProjectColumn{
+				Column:   fmt.Sprintf("%s.%s.last", columnPrefix, stats.MetricName),
+				Location: columnLocation,
+				Type:     columnType,
+			})
 		}
 	}
 	hparamSet := make(map[string]struct{})
@@ -308,64 +297,25 @@ func (a *apiServer) getProjectColumnsByID(
 		}
 	}
 
-	// Get metrics columns
-	metricNames, err := a.getProjectMetricsNames(ctx, curUser, p)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, mn := range metricNames {
-		columns = append(columns, &projectv1.ProjectColumn{
-			Column:   fmt.Sprintf("validation.%s", mn),
-			Location: projectv1.LocationType_LOCATION_TYPE_VALIDATIONS,
-			Type:     projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-		})
-	}
-
 	return &apiv1.GetProjectColumnsResponse{
 		Columns: columns,
 	}, nil
 }
 
-func (a *apiServer) getProjectMetricsNames(
-	ctx context.Context, curUser model.User, project *projectv1.Project,
-) ([]string, error) {
-	metricNames := []struct {
-		Vname       []string
-		WorkspaceID int
-	}{}
-
-	metricQuery := db.Bun().
-		NewSelect().
-		TableExpr("exp_metrics_name").
-		TableExpr("LATERAL json_array_elements_text(vname) AS vnames").
-		ColumnExpr("array_to_json(array_agg(DISTINCT vnames)) AS vname").
-		ColumnExpr("?::int as workspace_id", project.WorkspaceId).
-		Where("project_id = ?", project.Id)
-
-	metricQuery, err := exputil.AuthZProvider.Get().FilterExperimentsQuery(
-		ctx,
-		curUser,
-		project,
-		db.Bun().NewSelect().TableExpr("(?) AS subq", metricQuery),
-		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS},
-	)
-	if err != nil {
-		return nil, err
+func parseMetricsType(metricType string) projectv1.ColumnType {
+	switch metricType {
+	case db.MetricTypeString:
+		return projectv1.ColumnType_COLUMN_TYPE_TEXT
+	case db.MetricTypeNumber:
+		return projectv1.ColumnType_COLUMN_TYPE_NUMBER
+	case db.MetricTypeDate:
+		return projectv1.ColumnType_COLUMN_TYPE_DATE
+	case db.MetricTypeBool:
+		return projectv1.ColumnType_COLUMN_TYPE_TEXT
+	default:
+		// unsure of how to treat arrays/objects/nulls
+		return projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
 	}
-
-	err = metricQuery.Scan(ctx, &metricNames)
-	if err != nil {
-		return nil, errors.Wrapf(
-			err, "error fetching metrics names for project (%d) from database", project.Id)
-	}
-	var names []string
-	for _, n := range metricNames {
-		for _, m := range n.Vname {
-			names = append(names, m)
-		}
-	}
-	return names, nil
 }
 
 func (a *apiServer) getProjectAndCheckCanDoActions(
@@ -439,23 +389,16 @@ func (a *apiServer) GetProjectNumericMetricsRange(
 	if err != nil {
 		return nil, err
 	}
-	valMetricsRange, traMetricsRange, searcherMetricsValue, err := a.getProjectNumericMetricsRange(
+	metricsValues, searcherMetricsValue, err := a.getProjectNumericMetricsRange(
 		ctx, *curUser, p)
 	if err != nil {
 		return nil, err
 	}
 
 	var ranges []*projectv1.MetricsRange
-	for mn, mr := range valMetricsRange {
+	for mn, mr := range metricsValues {
 		ranges = append(ranges, &projectv1.MetricsRange{
-			MetricsName: fmt.Sprintf("validation.%s", mn),
-			Min:         mathx.Min(mr...),
-			Max:         mathx.Max(mr...),
-		})
-	}
-	for mn, mr := range traMetricsRange {
-		ranges = append(ranges, &projectv1.MetricsRange{
-			MetricsName: fmt.Sprintf("training.%s", mn),
+			MetricsName: mn,
 			Min:         mathx.Min(mr...),
 			Max:         mathx.Max(mr...),
 		})
@@ -474,88 +417,79 @@ func (a *apiServer) GetProjectNumericMetricsRange(
 
 func (a *apiServer) getProjectNumericMetricsRange(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
-) (map[string]([]float64), map[string]([]float64), []float64, error) {
+) (map[string]([]float64), []float64, error) {
 	query := db.Bun().NewSelect().Table("trials").Table("experiments").
-		ColumnExpr("summary_metrics -> 'validation_metrics' AS validation_metrics").
-		ColumnExpr("summary_metrics -> 'avg_metrics' AS avg_metrics").
 		ColumnExpr(`searcher_metric_value_signed = searcher_metric_value AS smaller_is_better`).
 		Column("searcher_metric_value").
+		Column("summary_metrics").
+		Where("summary_metrics IS NOT NULL").
 		Where("project_id = ?", project.Id).
 		Where("experiments.best_trial_id = trials.id")
 
 	type metrics struct {
-		Min   interface{}
-		Max   interface{}
-		Last  interface{}
-		Sum   interface{}
-		Count *int32
+		Min  interface{}
+		Max  interface{}
+		Last interface{}
+		Mean interface{}
+		Type interface{}
 	}
 
 	var res []struct {
+		ID                  int32
 		SmallerIsBetter     bool
 		SearcherMetricValue *float64
-		ValidationMetrics   *map[string]metrics
-		AvgMetrics          *map[string]metrics
+		SummaryMetrics      map[string](map[string]metrics)
 	}
 
 	if err := query.Scan(ctx, &res); err != nil {
-		return nil, nil, nil, errors.Wrapf(
+		return nil, nil, errors.Wrapf(
 			err, "error fetching metrics range for project (%d) from database", project.Id)
 	}
-	valMetricsValues := make(map[string]([]float64))
-	traMetricsValues := make(map[string]([]float64))
+	metricsValues := make(map[string]([]float64))
 	searcherMetricsValue := []float64{}
 	for _, r := range res {
 		if r.SearcherMetricValue != nil {
 			searcherMetricsValue = append(searcherMetricsValue, *r.SearcherMetricValue)
 		}
-		if r.ValidationMetrics != nil {
-			for metricsName, value := range *r.ValidationMetrics {
-				if value.Count == nil {
-					continue
-				}
-				metricsValue := value.Min
-				if !r.SmallerIsBetter {
-					metricsValue = value.Max
-				}
-				switch v := metricsValue.(type) {
-				case float64:
-					valMetricsValues[metricsName] = append(valMetricsValues[metricsName], v)
-				}
-			}
-		}
-		if r.AvgMetrics != nil {
-			for metricsName, value := range *r.AvgMetrics {
-				if value.Count == nil {
-					continue
-				}
-				aggregates := []string{"count", "last", "max", "min", "sum"}
-				for _, aggregate := range aggregates {
-					tMetricsName := fmt.Sprintf("%s.%s", metricsName, aggregate)
-					var tMetricsValue interface{}
-					switch aggregate {
-					case "count":
-						tMetricsValue = value.Count
-					case "last":
-						tMetricsValue = value.Last
-					case "max":
-						tMetricsValue = value.Max
-					case "min":
-						tMetricsValue = value.Min
-					case "sum":
-						tMetricsValue = value.Sum
+		if r.SummaryMetrics != nil {
+			for metricsGroup, metrics := range r.SummaryMetrics {
+				for name, value := range metrics {
+					if value.Type != "number" {
+						continue
 					}
-					switch v := tMetricsValue.(type) {
-					case float64:
-						traMetricsValues[tMetricsName] = append(traMetricsValues[tMetricsName], v)
-					case *int32:
-						traMetricsValues[tMetricsName] = append(traMetricsValues[tMetricsName], float64(*v))
+
+					for _, aggregate := range SummaryMetricStatistics {
+						group := metricsGroup
+						if metricsGroup == metricGroupTraining {
+							group = metricIDTraining
+						}
+						if metricsGroup == metricGroupValidation {
+							group = metricIDValidation
+						}
+						tMetricsName := fmt.Sprintf("%s.%s.%s", group, name, aggregate)
+						var tMetricsValue interface{}
+						switch aggregate {
+						case "last":
+							tMetricsValue = value.Last
+						case "max":
+							tMetricsValue = value.Max
+						case "min":
+							tMetricsValue = value.Min
+						case "mean":
+							tMetricsValue = value.Mean
+						}
+						switch v := tMetricsValue.(type) {
+						case float64:
+							metricsValues[tMetricsName] = append(metricsValues[tMetricsName], v)
+						case *int32:
+							metricsValues[tMetricsName] = append(metricsValues[tMetricsName], float64(*v))
+						}
 					}
 				}
 			}
 		}
 	}
-	return valMetricsValues, traMetricsValues, searcherMetricsValue, nil
+	return metricsValues, searcherMetricsValue, nil
 }
 
 func (a *apiServer) PostProject(

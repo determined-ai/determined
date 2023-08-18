@@ -99,6 +99,32 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB) (*apiServer, model.User, context.
 	return api, *userModel, ctx
 }
 
+func TestGetUsersRemote(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+
+	remoteUser, err := api.m.db.AddUser(&model.User{
+		Username: uuid.New().String(),
+		Remote:   true,
+	}, nil)
+	require.NoError(t, err)
+
+	nonRemoteUser, err := api.m.db.AddUser(&model.User{
+		Username: uuid.New().String(),
+		Remote:   false,
+	}, nil)
+	require.NoError(t, err)
+
+	resp, err := api.GetUsers(ctx, &apiv1.GetUsersRequest{})
+	require.NoError(t, err)
+	for _, u := range resp.Users {
+		if model.UserID(u.Id) == remoteUser {
+			require.True(t, u.Remote)
+		} else if model.UserID(u.Id) == nonRemoteUser {
+			require.False(t, u.Remote)
+		}
+	}
+}
+
 func TestPatchUser(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 	userID, err := api.m.db.AddUser(&model.User{

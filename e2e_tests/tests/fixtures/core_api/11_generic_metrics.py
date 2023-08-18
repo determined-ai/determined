@@ -27,6 +27,7 @@ def main(core_context: det.core.Context, increment_by: float):
         group = metric_groups[idx]
         noise = random.random() * x
         metrics = {f"z{group}/me.t r%i]\\c_{i}": x * (i + 1) + noise for i in range(3)}
+        metrics.update({f"m{i}": x * (i + 2) + noise for i in range(3)})
         core_context.train.report_metrics(
             group=group, steps_completed=steps_completed, metrics=metrics
         )

@@ -61,10 +61,11 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
 
   useEffect(() => workspaceStore.fetch(), []);
 
-  useEffect(
-    () => (workspaceId === undefined ? undefined : projectStore.fetch(workspaceId)),
-    [workspaceId],
-  );
+  useEffect(() => {
+    if (workspaceId !== undefined) {
+      projectStore.fetch(workspaceId, undefined, true);
+    }
+  }, [workspaceId]);
 
   const closeNotification = useCallback(() => notification.destroy(), []);
 

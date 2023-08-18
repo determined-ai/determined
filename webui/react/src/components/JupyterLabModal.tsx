@@ -14,8 +14,7 @@ import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { getTaskTemplates } from 'services/api';
 import clusterStore from 'stores/cluster';
 import workspaceStore from 'stores/workspaces';
-import { RawJson } from 'types';
-import { Template, Workspace } from 'types';
+import { RawJson, Template, Workspace } from 'types';
 import handleError from 'utils/error';
 import { JupyterLabOptions, launchJupyterLab, previewJupyterLab } from 'utils/jupyter';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -317,7 +316,8 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
             },
           ]}>
           <CodeEditor
-            files={[{ content: config, key: 'config.yaml' }]}
+            file={config}
+            files={[{ key: 'config.yaml' }]}
             height="40vh"
             onError={handleError}
           />

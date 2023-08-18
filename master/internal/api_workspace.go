@@ -423,12 +423,12 @@ func (a *apiServer) PatchWorkspace(
 		insertColumns = append(insertColumns, "uid", "user_", "gid", "group_")
 	}
 
-	if req.Workspace.DefaultComputePool != "" {
-		updatedWorkspace.DefaultComputePool = req.Workspace.DefaultComputePool
+	if req.Workspace.DefaultComputeResourcePool != nil {
+		updatedWorkspace.DefaultComputePool = *req.Workspace.DefaultComputeResourcePool
 		insertColumns = append(insertColumns, "default_compute_pool")
 	}
-	if req.Workspace.DefaultAuxPool != "" {
-		updatedWorkspace.DefaultAuxPool = req.Workspace.DefaultAuxPool
+	if req.Workspace.DefaultAuxResourcePool != nil {
+		updatedWorkspace.DefaultAuxPool = *req.Workspace.DefaultAuxResourcePool
 		insertColumns = append(insertColumns, "default_aux_pool")
 	}
 

@@ -10,8 +10,7 @@ import Dropdown from 'components/kit/Dropdown';
 import Link from 'components/Link';
 import Section from 'components/Section';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
-import { Renderer } from 'components/Table/Table';
-import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
+import { defaultRowClassName, getFullPaginationConfig, Renderer } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
@@ -23,7 +22,6 @@ import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
 import { Experimentv1State, V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
-import { ValueOf } from 'types';
 import {
   ExperimentAction as Action,
   CheckpointWorkloadExtended,
@@ -32,9 +30,9 @@ import {
   MetricsWorkload,
   RunState,
   TrialItem,
+  ValueOf,
 } from 'types';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getMetricValue } from 'utils/metric';
 import { routeToReactUrl } from 'utils/routes';
 import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';

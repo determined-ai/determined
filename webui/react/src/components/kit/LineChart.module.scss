@@ -17,14 +17,13 @@
 .chartgridCell {
   background-color: var(--theme-background);
   padding: 0;
-  padding-left: var(--grid-spacing);
-  padding-right: var(--grid-spacing);
+  padding: var(--grid-spacing);
 }
 .chartgridCellCard {
   background-color: var(--theme-stage);
   border: 1px solid var(--theme-stage-border);
   border-radius: 4px;
-  height: calc(100% - var(--grid-spacing));
+  height: 100%;
   padding: 24px;
 }
 .chartTitle {

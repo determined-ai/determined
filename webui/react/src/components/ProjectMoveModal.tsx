@@ -11,8 +11,7 @@ import { moveProject } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { Project, Workspace } from 'types';
 import { notification } from 'utils/dialogApi';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
@@ -52,6 +51,7 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onClose, project }: Props)
         ),
         message: 'Move Success',
       });
+      onClose?.();
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -61,7 +61,7 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onClose, project }: Props)
         type: ErrorType.Server,
       });
     }
-  }, [destinationWorkspaceId, project.id, project.name, workspaces]);
+  }, [destinationWorkspaceId, onClose, project.id, project.name, workspaces]);
 
   const handleWorkspaceSelect = useCallback(
     (selectedWorkspaceId: SelectValue) => {

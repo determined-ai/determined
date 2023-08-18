@@ -1,8 +1,7 @@
 import React from 'react';
 
+import { ExperimentAction } from 'types';
 import handleError from 'utils/error';
-
-import { ExperimentAction } from '../types';
 
 import { Modal } from './kit/Modal';
 

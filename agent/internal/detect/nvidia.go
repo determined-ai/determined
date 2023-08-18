@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -14,6 +15,12 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/device"
+)
+
+const (
+	deviceIndex = 0
+	deviceName  = 1
+	deviceUUID  = 2
 )
 
 var (
@@ -82,6 +89,7 @@ func detectCudaGPUs(visibleGPUs string) ([]device.Device, error) {
 	devices = make([]device.Device, 0)
 
 	r := csv.NewReader(strings.NewReader(string(out)))
+	cudaVisibleDevices := parseCudaVisibleDevices()
 	for {
 		record, err := r.Read()
 		switch {
@@ -93,15 +101,18 @@ func detectCudaGPUs(visibleGPUs string) ([]device.Device, error) {
 			return nil, errors.New(
 				"error parsing output of nvidia-smi; GPU record should have exactly 3 fields")
 		}
-
-		index, err := strconv.Atoi(strings.TrimSpace(record[0]))
+		if !deviceAllocated(cudaVisibleDevices, record) {
+			log.Tracef("Device not allocated: %s (%s)", record[deviceIndex], record[deviceUUID])
+			continue // skip device outside of our allocation
+		}
+		index, err := strconv.Atoi(strings.TrimSpace(record[deviceIndex]))
 		if err != nil {
 			return nil, errors.Wrap(
 				err, "error parsing output of nvidia-smi; index of GPU cannot be converted to int")
 		}
 
-		brand := strings.TrimSpace(record[1])
-		uuid := strings.TrimSpace(record[2])
+		brand := strings.TrimSpace(record[deviceName])
+		uuid := strings.TrimSpace(record[deviceUUID])
 
 		devices = append(devices, device.Device{
 			ID:    device.ID(index),
@@ -110,6 +121,35 @@ func detectCudaGPUs(visibleGPUs string) ([]device.Device, error) {
 			Type:  device.CUDA,
 		})
 	}
+}
+
+// parseCudaVisibleDevices returns as a slice the content of CUDA_VISIBLE_DEVICES
+// if defined, else nil.
+func parseCudaVisibleDevices() []string {
+	devices, found := os.LookupEnv("CUDA_VISIBLE_DEVICES")
+	if !found {
+		return nil
+	}
+	log.Tracef("CUDA_VISIBLE_DEVICES: '%s'", devices)
+	return strings.Split(devices, ",")
+}
+
+// deviceAllocated returns true if the specified device is within the set of resources
+// allocated to the process.
+func deviceAllocated(allocatedDevices []string, device []string) bool {
+	if allocatedDevices == nil {
+		log.Trace("No allocated devices")
+		return true
+	}
+	// Slurm identifies GPUs in CUDA_VISIBLE_DEVICES by index: "0", "1", etc.
+	// PBS may identify GPUs using the pattern "GPU-<UUID>".
+	// Accept a match on either quantity.
+	for _, d := range allocatedDevices {
+		if d == strings.TrimSpace(device[deviceIndex]) || d == strings.TrimSpace(device[deviceUUID]) {
+			return true
+		}
+	}
+	return false
 }
 
 // detect if MIG is enabled and if there are instances configured.

@@ -13,6 +13,7 @@
    Quickstart for Model Developers <tutorials/quickstart-mdldev>
    Examples <example-solutions/examples>
    Model Hub Library <model-hub-library/index>
+   How-To Articles <articles/index>
 
 .. toctree::
    :caption: Set Up
@@ -78,6 +79,7 @@
 
    Works with Determined <integrations/ecosystem/ecosystem-integration>
    IDE Integration <interfaces/ide-integration>
+   Pachyderm <integrations/pachyderm/pachyderm>
    Prometheus and Grafana <integrations/prometheus/prometheus>
    attributions
 

@@ -12,6 +12,7 @@ import (
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -189,7 +190,7 @@ func newExperiment(
 		if err = m.db.AddExperiment(expModel, activeConfig); err != nil {
 			return nil, launchWarnings, err
 		}
-		telemetry.ReportExperimentCreated(m.system, expModel.ID, activeConfig)
+		telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
 	}
 
 	agentUserGroup, err := user.GetAgentUserGroup(*expModel.OwnerID, expModel)
@@ -229,19 +230,20 @@ func newExperiment(
 }
 
 func newUnmanagedExperiment(
+	ctx context.Context,
+	idb bun.IDB,
 	m *Master,
 	expModel *model.Experiment,
 	activeConfig expconf.ExperimentConfig,
 	taskSpec *tasks.TaskSpec,
 ) (*experiment, []command.LaunchWarning, error) {
-	// TODO(DET-9477): Experiment state management.
-	expModel.State = model.CompletedState
+	expModel.State = model.PausedState
 	expModel.Unmanaged = true
 
-	if err := m.db.AddExperiment(expModel, activeConfig); err != nil {
+	if err := db.AddExperimentTx(ctx, idb, expModel, activeConfig, true); err != nil {
 		return nil, nil, err
 	}
-	telemetry.ReportExperimentCreated(m.system, expModel.ID, activeConfig)
+	telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
 
 	// Will only have the model, nothing required for the experiment actor.
 	return &experiment{
@@ -435,7 +437,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		} else if !wasPatched {
 			return errors.New("experiment is already in a terminal state")
 		}
-		telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
+		telemetry.ReportExperimentStateChanged(e.db, e.Experiment)
 		if err := webhooks.ReportExperimentStateChanged(
 			context.TODO(), *e.Experiment, e.activeConfig,
 		); err != nil {
@@ -773,7 +775,7 @@ func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint,
 	checkpoint := e.warmStartCheckpoint
 	// If the Create specifies a checkpoint, ignore the experiment-wide one.
 	if op.Checkpoint != nil {
-		trial, err := e.db.TrialByExperimentAndRequestID(e.ID, op.Checkpoint.RequestID)
+		trial, err := db.TrialByExperimentAndRequestID(context.TODO(), e.ID, op.Checkpoint.RequestID)
 		if err != nil {
 			return nil, errors.Wrapf(err,
 				"invalid request ID in Create operation: %d", op.Checkpoint.RequestID)
@@ -794,7 +796,7 @@ func (e *experiment) updateState(ctx *actor.Context, state model.StateWithReason
 	} else if !wasPatched {
 		return true
 	}
-	telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
+	telemetry.ReportExperimentStateChanged(e.db, e.Experiment)
 	if err := webhooks.ReportExperimentStateChanged(
 		context.TODO(), *e.Experiment, e.activeConfig,
 	); err != nil {

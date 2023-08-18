@@ -1,9 +1,7 @@
-import { DataNode } from 'antd/lib/tree';
 import { RouteProps } from 'react-router-dom';
 
 import * as Api from 'services/api-ts-sdk';
 import { V1AgentUserGroup, V1Group, V1LaunchWarning, V1Trigger } from 'services/api-ts-sdk';
-import { Loadable } from 'utils/loadable';
 
 export type Primitive = boolean | number | string;
 export type RecordKey = string | number | symbol;
@@ -473,8 +471,8 @@ export const metricTypeParamMap: Record<string, MetricTypeParam> = {
 };
 
 export interface Metric {
+  group: string;
   name: string;
-  type: MetricType;
 }
 
 export interface BaseWorkload extends EndTimes {
@@ -497,8 +495,7 @@ export interface MetricsWorkload extends BaseWorkload {
 }
 export interface WorkloadGroup {
   checkpoint?: CheckpointWorkload;
-  training?: MetricsWorkload;
-  validation?: MetricsWorkload;
+  metrics: Record<string, MetricsWorkload>;
 }
 
 export const TrialWorkloadFilter = {
@@ -515,7 +512,7 @@ export type TrialWorkloadFilter = ValueOf<typeof TrialWorkloadFilter>;
 export interface Step extends WorkloadGroup, StartEndTimes {
   batchNum: number;
   key: string;
-  training: MetricsWorkload;
+  // training: MetricsWorkload;
 }
 
 type MetricStruct = Record<string, number>;
@@ -591,6 +588,7 @@ export interface TrialItem extends StartEndTimes {
   summaryMetrics?: SummaryMetrics;
   totalBatchesProcessed: number;
   totalCheckpointSize: number;
+  searcherMetricsVal?: number;
 }
 
 export interface TrialDetails extends TrialItem {
@@ -628,8 +626,8 @@ export interface MetricDatapointEpoch {
 export interface MetricContainer {
   data: MetricDatapoint[];
   epochs?: MetricDatapointEpoch[];
+  group: string;
   time?: MetricDatapointTime[];
-  type: MetricType;
 }
 
 export interface TrialSummary extends TrialItem {
@@ -1057,22 +1055,6 @@ export type UserWithRoleInfo = {
 };
 
 export type UserOrGroupWithRoleInfo = UserWithRoleInfo | GroupWithRoleInfo;
-
-export interface TreeNode extends DataNode {
-  /**
-   * DataNode is the interface antd works with. DateNode properties we are interested in:
-   *
-   * key: we use V1FileNode.path
-   * title: name of node
-   * icon: custom Icon component
-   */
-  children?: TreeNode[];
-  content: Loadable<string>;
-  download?: string;
-  get?: (path: string) => Promise<string>;
-  isConfig?: boolean;
-  isLeaf?: boolean;
-}
 
 export interface HpTrialData {
   data: Record<string, Primitive[]>;

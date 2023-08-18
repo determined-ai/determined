@@ -37,6 +37,8 @@ import { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
+import { PAGE_SIZE } from 'pages/F_ExpList/F_ExperimentList';
+import { RowHeight } from 'pages/F_ExpList/F_ExperimentList.settings';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'stores/contexts/UI';
@@ -48,9 +50,6 @@ import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
 import { getCssVar } from 'utils/themes';
-
-import { PAGE_SIZE } from '../F_ExperimentList';
-import { RowHeight } from '../F_ExperimentList.settings';
 
 import {
   ColumnDef,
@@ -632,6 +631,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
           // Update the context menu based on the cell context.
           setContextMenuProps({
+            cell,
             experiment: getProjectExperimentForExperimentItem(rowData.experiment, project),
             handleClose: (e?: Event) => {
               // Prevent the context menu closing click from triggering something else.
@@ -709,7 +709,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             )}.val`;
             break;
           case V1LocationType.VALIDATIONS:
-            dataPath = `bestTrial.bestValidationMetric.metrics.${currentColumn.column.replace(
+            dataPath = `bestTrial.summaryMetrics.validationMetrics.${currentColumn.column.replace(
               'validation.',
               '',
             )}`;
@@ -719,6 +719,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               'training.',
               '',
             )}`;
+            break;
+          case V1LocationType.CUSTOMMETRIC:
+            dataPath = `bestTrial.summaryMetrics.${currentColumn.column}`;
             break;
           case V1LocationType.UNSPECIFIED:
             break;

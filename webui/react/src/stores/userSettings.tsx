@@ -180,11 +180,24 @@ export class UserSettingsStore extends PollingStore {
     });
   }
 
-  /** Clears the setting, returning it to `null`. */
+  /** Clears the setting and removes the entry entirely from the database. */
   public remove(key: string): void {
-    this.updateUserSetting(key, null);
     this.#settings.update((loadable) => {
       return Loadable.map(loadable, (map) => {
+        /**
+         * Construct a dictionary to specifically target specific settings keys to clear out.
+         * To clear out an object setting, an object of `{ [key]: undefined }` must be used instead of
+         * `null` to clear out each keyed setting in the object.
+         */
+        const value = map.get(key);
+        const resetValue = isObject(value)
+          ? Object.keys(value as object).reduce((acc, settingsKey) => {
+              acc[settingsKey] = undefined;
+              return acc;
+            }, {} as Record<string, undefined>)
+          : null;
+        this.updateUserSetting(key, resetValue);
+
         return map.removeAll(key);
       });
     });

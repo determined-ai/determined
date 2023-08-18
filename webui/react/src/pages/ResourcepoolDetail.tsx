@@ -1,5 +1,4 @@
-import type { TabsProps } from 'antd';
-import { Divider } from 'antd';
+import { Divider, type TabsProps } from 'antd';
 import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -17,15 +16,12 @@ import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
 import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
-import clusterStore from 'stores/cluster';
-import { maxPoolSlotCapacity } from 'stores/cluster';
+import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
 import { ShirtSize } from 'themes';
-import { ValueOf } from 'types';
-import { JobState, ResourceState } from 'types';
+import { JobState, ResourceState, ValueOf } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { clone } from 'utils/data';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { camelCaseToSentence, floatToPercent } from 'utils/string';

@@ -1,14 +1,16 @@
 import { Dayjs } from 'dayjs';
 
-import { FetchOptions, RecordKey, SingleEntityParams } from 'types';
 import {
   DetailedUser,
+  FetchOptions,
   Job,
   Metadata,
   Metric,
   MetricType,
   Note,
+  RecordKey,
   RunState,
+  SingleEntityParams,
   TrialWorkloadFilter,
 } from 'types';
 
@@ -29,7 +31,7 @@ export type TrialDetailsParams = SingleEntityParams;
 export interface TrialSummaryBaseParams {
   endBatches?: number;
   maxDatapoints: number;
-  metricNames: Metric[];
+  metrics: Metric[];
   metricType?: MetricType;
   startBatches?: number;
 }
@@ -280,6 +282,10 @@ export interface LaunchJupyterLabParams {
   preview?: boolean;
   templateName?: string;
   workspaceId?: number;
+}
+
+export interface GetResourcePoolsParams extends PaginationParams {
+  unbound?: boolean;
 }
 
 export interface GetCommandsParams extends FetchOptions, PaginationParams {

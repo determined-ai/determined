@@ -12,10 +12,8 @@ import ExperimentCodeViewer from 'pages/ExperimentDetails/ExperimentCodeViewer';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
-import { ValueOf } from 'types';
-import { ExperimentBase, Note } from 'types';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import { ExperimentBase, Note, ValueOf } from 'types';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 import { ExperimentVisualizationType } from './ExperimentVisualization';
 

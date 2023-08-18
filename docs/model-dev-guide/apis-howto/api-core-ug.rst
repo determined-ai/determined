@@ -79,13 +79,9 @@ CD into the directory and run this command:
 
 Open the Determined WebUI by navigating to the master URL. One way to do this is to navigate to
 ``http://localhost:8080/``, accept the default Determined username, leave the password empty, and
-click **Sign In**.
+then click **Sign In**.
 
-.. note::
-
-   This tutorial provides instructions for running a local distributed training job. Your setup may
-   be different. For example, for instructions on how to run a remote distributed training job,
-   visit the :ref:`qs-mdldev`.
+.. include:: ../../_shared/note-local-dtrain-job.txt
 
 In the WebUI, select your experiment. You'll notice the tabs do not yet contain any information. In
 the next section, we'll report training and validation metrics.
@@ -178,7 +174,7 @@ Run the following command to run the experiment:
 
    det e create metrics.yaml .
 
-Open the Determined WebUI again and navigate to the **Overview** tab.
+Open the Determined WebUI again and go to the **Overview** tab.
 
 The WebUI now displays metrics. In this step, you learned how to add a few new lines of code in
 order to report training and validation metrics to the Determined master. Next, we’ll modify our
@@ -506,7 +502,7 @@ Run the following command to run the experiment:
 
    det e create distributed.yaml .
 
-In the Determined WebUI, navigate to the **Cluster** pane.
+In the Determined WebUI, go to the **Cluster** pane.
 
 You should be able to see multiple slots active corresponding to the value you set for
 ``slots_per_trial`` you set in ``distributed.yaml``, as well as logs appearing from multiple ranks.

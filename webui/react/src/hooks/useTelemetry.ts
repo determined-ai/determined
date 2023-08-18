@@ -4,8 +4,7 @@ import { useRef } from 'react';
 import { getTelemetry } from 'services/api';
 import { DeterminedInfo } from 'stores/determinedInfo';
 import { Auth, DetailedUser } from 'types';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 /*
  * Telemetry is written as a modular class instance instead of

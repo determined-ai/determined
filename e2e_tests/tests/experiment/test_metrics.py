@@ -288,6 +288,41 @@ def request_valid_trials_sample(experiment_id):  # type: ignore
 
 
 @pytest.mark.e2e_cpu
+@pytest.mark.parametrize("group", ["validation", "training", "abc"])
+def test_trial_time_series(group: str) -> None:
+    exp_id = exp.create_experiment(
+        conf.fixtures_path("no_op/single-one-short-step.yaml"),
+        conf.fixtures_path("no_op"),
+        ["--project_id", str(1), ("--paused")],
+    )
+    trials = exp.experiment_trials(exp_id)
+    trial_id = trials[0].trial.id
+    sess = api_utils.determined_test_session(admin=False)
+    metric_names = ["lossx"]
+
+    trial_metrics = bindings.v1TrialMetrics(
+        metrics=bindings.v1Metrics(avgMetrics={name: 3.3 for name in metric_names}),
+        stepsCompleted=10,
+        trialId=trial_id,
+        trialRunId=0,
+    )
+    bindings.post_ReportTrialMetrics(
+        sess,
+        body=bindings.v1ReportTrialMetricsRequest(group=group, metrics=trial_metrics),
+        metrics_trialId=trial_id,
+    )
+    trial_resp = bindings.get_CompareTrials(
+        sess, trialIds=[trial_id], metricIds=[f"{group}.{name}" for name in metric_names]
+    ).trials[0]
+
+    assert trial_resp.metrics[0].data[0].values is not None
+    print(trial_resp.metrics[0].data[0].values)
+    for name in metric_names:
+        val = trial_resp.metrics[0].data[0].values[name]
+        assert val == 3.3, f"unexpected value for metric {name}, type: {type(val)}"
+
+
+@pytest.mark.e2e_cpu
 def test_trial_describe_metrics() -> None:
     exp_id = exp.run_basic_test(
         conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op"), 1
@@ -325,5 +360,5 @@ def test_trial_describe_metrics() -> None:
     assert summaryMetrics["avg_metrics"]["loss"]["count"] == 100
     assert summaryMetrics["avg_metrics"]["loss"]["max"] is not None
     assert summaryMetrics["avg_metrics"]["loss"]["min"] is not None
-    assert summaryMetrics["avg_metrics"]["loss"]["sum"] is not None
+    assert summaryMetrics["avg_metrics"]["loss"]["mean"] is not None
     assert summaryMetrics["avg_metrics"]["loss"]["type"] == "number"

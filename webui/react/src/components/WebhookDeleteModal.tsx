@@ -4,8 +4,7 @@ import { Modal } from 'components/kit/Modal';
 import { paths } from 'routes/utils';
 import { deleteWebhook } from 'services/api';
 import { Webhook } from 'types';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { routeToReactUrl } from 'utils/routes';
 
 interface Props {

@@ -92,7 +92,7 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
 
     const canceler = new AbortController();
     const metricTypeParam =
-      settings.metric.type === MetricType.Training
+      settings.metric.group === MetricType.Training
         ? 'METRIC_TYPE_TRAINING'
         : 'METRIC_TYPE_VALIDATION';
     const batchesMap: Record<number, number> = {};
@@ -152,7 +152,7 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
     if (settings.metric !== undefined) return;
     const activeMetricFound = metrics.find(
       (metric) =>
-        metric.type === MetricType.Validation && metric.name === experiment.config.searcher.metric,
+        metric.group === MetricType.Validation && metric.name === experiment.config.searcher.metric,
     );
     updateSettings({ metric: activeMetricFound ?? metrics.first() });
   }, [experiment.config.searcher.metric, metrics, settings.metric, updateSettings]);

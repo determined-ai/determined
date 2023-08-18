@@ -11,12 +11,14 @@ import Input from 'components/kit/Input';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import { useSettings } from 'hooks/useSettings';
+import {
+  F_ExperimentListSettings,
+  settingsConfigForProject,
+} from 'pages/F_ExpList/F_ExperimentList.settings';
 import { V1LocationType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
 import { ensureArray } from 'utils/data';
 import { Loadable } from 'utils/loadable';
-
-import { F_ExperimentListSettings, settingsConfigForProject } from '../F_ExperimentList.settings';
 
 import css from './ColumnPickerMenu.module.scss';
 import { defaultExperimentColumns } from './columns';
@@ -30,6 +32,7 @@ const locationLabelMap = {
   [V1LocationType.EXPERIMENT]: 'General',
   [V1LocationType.VALIDATIONS]: 'Metrics',
   [V1LocationType.TRAINING]: 'Metrics',
+  [V1LocationType.CUSTOMMETRIC]: 'Metrics',
   [V1LocationType.HYPERPARAMETERS]: 'Hyperparameters',
 } as const;
 
@@ -237,7 +240,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
           <Pivot
             items={[
               V1LocationType.EXPERIMENT,
-              [V1LocationType.VALIDATIONS, V1LocationType.TRAINING],
+              [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
               V1LocationType.HYPERPARAMETERS,
             ].map((tab) => {
               const canonicalTab = Array.isArray(tab) ? tab[0] : tab;

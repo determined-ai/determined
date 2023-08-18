@@ -8,8 +8,7 @@ import { paths } from 'routes/utils';
 import { createWebhook } from 'services/api';
 import { V1TriggerType, V1WebhookType } from 'services/api-ts-sdk/api';
 import { RunState } from 'types';
-import { DetError, ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { routeToReactUrl } from 'utils/routes';
 
 interface FormInputs {

@@ -41,8 +41,7 @@ import {
   TrialItem,
 } from 'types';
 import { getDuration } from 'utils/datetime';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
 

@@ -344,6 +344,16 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Put an experiment by external id.
+  rpc PutExperiment(PutExperimentRequest) returns (PutExperimentResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/experiments/by-external-id/{external_experiment_id}"
+      body: "create_experiment_request"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Get the requested experiment.
   rpc GetExperiment(GetExperimentRequest) returns (GetExperimentResponse) {
     option (google.api.http) = {
@@ -641,6 +651,39 @@ service Determined {
   rpc CreateTrial(CreateTrialRequest) returns (CreateTrialResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
+    };
+  }
+
+  // Put a trial.
+  rpc PutTrial(PutTrialRequest) returns (PutTrialResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/trials"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
+    };
+  }
+
+  // Patch (an unmanaged) trial.
+  rpc PatchTrial(PatchTrialRequest) returns (PatchTrialResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/trials/{trial_id}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
+    };
+  }
+
+  // Start (an unmanaged) trial.
+  rpc StartTrial(StartTrialRequest) returns (StartTrialResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/start"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -2196,7 +2239,8 @@ service Determined {
     };
   }
 
-  // List all resource pools bound to a specific workspace
+  // List all resource pools, bound and unbound, available to a specific
+  // workspace
   rpc ListRPsBoundToWorkspace(ListRPsBoundToWorkspaceRequest)
       returns (ListRPsBoundToWorkspaceResponse) {
     option (google.api.http) = {

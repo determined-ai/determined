@@ -607,9 +607,11 @@ export const decodeCheckpoints = (
 
 const decodeSummaryMetrics = (data: unknown): types.SummaryMetrics => {
   const ioSummaryMetrics = ioTypes.decode<ioTypes.ioSummaryMetrics>(ioTypes.ioSummaryMetrics, data);
+  const { avg_metrics, validation_metrics, ...custom_metrics } = ioSummaryMetrics;
   return {
-    avgMetrics: ioSummaryMetrics.avg_metrics,
-    validationMetrics: ioSummaryMetrics.validation_metrics,
+    avgMetrics: avg_metrics,
+    validationMetrics: validation_metrics,
+    ...custom_metrics,
   };
 };
 
@@ -624,6 +626,7 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     hyperparameters: flattenObject(data.hparams || {}),
     id: data.id,
     latestValidationMetric: data.latestValidation && decodeMetricsWorkload(data.latestValidation),
+    searcherMetricsVal: data.searcherMetricValue,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     summaryMetrics: data.summaryMetrics && decodeSummaryMetrics(data.summaryMetrics),
@@ -641,10 +644,7 @@ const decodeDownsampledMetrics = (data: Sdk.V1DownsampledMetrics[]): types.Metri
         time: pt.time,
         values: pt.values,
       })),
-      type:
-        m.type === Sdk.V1MetricType.TRAINING
-          ? types.MetricType.Training
-          : types.MetricType.Validation,
+      group: m.group,
     };
     return metrics;
   });
@@ -662,11 +662,20 @@ export const decodeTrialSummary = (data: Sdk.V1ComparableTrial): types.TrialSumm
 export const decodeTrialWorkloads = (
   data: Sdk.V1GetTrialWorkloadsResponse,
 ): types.TrialWorkloads => {
-  const workloads = data.workloads.map((ww) => ({
-    checkpoint: ww.checkpoint && decodeCheckpointWorkload(ww.checkpoint),
-    training: ww.training && decodeMetricsWorkload(ww.training),
-    validation: ww.validation && decodeMetricsWorkload(ww.validation),
-  }));
+  const workloads = data.workloads.map((ww) => {
+    return Object.keys(ww).reduce(
+      (acc, key) => {
+        const value = ww[key as keyof Sdk.V1WorkloadContainer];
+        if (value) {
+          if (key === 'checkpoint')
+            acc[key] = decodeCheckpointWorkload(value as Sdk.V1CheckpointWorkload);
+          else acc.metrics[key] = decodeMetricsWorkload(value as Sdk.V1MetricsWorkload);
+        }
+        return acc;
+      },
+      { metrics: {} } as types.WorkloadGroup,
+    );
+  });
   return {
     pagination: data.pagination,
     workloads: workloads,

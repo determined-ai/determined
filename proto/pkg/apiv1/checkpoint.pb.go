@@ -502,7 +502,8 @@ type GetTrialMetricsByCheckpointRequest struct {
 	CheckpointUuid string `protobuf:"bytes,1,opt,name=checkpoint_uuid,json=checkpointUuid,proto3" json:"checkpoint_uuid,omitempty"`
 	// Type of the TrialSourceInfo
 	TrialSourceInfoType *trialv1.TrialSourceInfoType `protobuf:"varint,2,opt,name=trial_source_info_type,json=trialSourceInfoType,proto3,enum=determined.trial.v1.TrialSourceInfoType,oneof" json:"trial_source_info_type,omitempty"`
-	// Metric Group string ("training", "validation", or anything else) ("" means all groups)
+	// Metric Group string ("training", "validation", or anything else) ("" means
+	// all groups)
 	MetricGroup string `protobuf:"bytes,3,opt,name=metric_group,json=metricGroup,proto3" json:"metric_group,omitempty"`
 }
 

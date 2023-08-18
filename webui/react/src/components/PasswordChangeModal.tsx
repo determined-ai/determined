@@ -6,8 +6,7 @@ import { Modal } from 'components/kit/Modal';
 import { login, setUserPassword } from 'services/api';
 import userStore from 'stores/users';
 import { message } from 'utils/dialogApi';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
