@@ -41,7 +41,6 @@ import css from './App.module.scss';
 
 import 'antd/dist/reset.css';
 import '@hpe.com/glide-data-grid/dist/index.css';
-import 'core-js/actual/structured-clone';
 
 const AppView: React.FC = () => {
   const resize = useResize();

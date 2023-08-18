@@ -28,7 +28,11 @@ const HpSelect: React.FC<Props> = ({ fullHParams, onChange, value, ...props }: P
         const newValue = structuredClone(values);
         const selectedValue = isObject(selected) ? (selected as LabeledValue).value : selected;
 
-        if (!!selectedValue && !Array.isArray(selectedValue) && !newValue.includes(selectedValue))
+        if (
+          selectedValue !== undefined &&
+          !Array.isArray(selectedValue) &&
+          !newValue.includes(selectedValue)
+        )
           newValue.push(selectedValue);
 
         onChange(newValue as SelectValue, option);
@@ -42,9 +46,7 @@ const HpSelect: React.FC<Props> = ({ fullHParams, onChange, value, ...props }: P
       if (!onChange) return;
 
       const selectedValue = isObject(selected) ? (selected as LabeledValue).value : selected;
-      const newValue = (structuredClone(values) as SelectValue[]).filter(
-        (item) => item !== selectedValue,
-      );
+      const newValue = structuredClone(values).filter((item) => item !== selectedValue);
 
       onChange(newValue as SelectValue, option);
     },
