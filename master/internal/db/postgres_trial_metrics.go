@@ -287,6 +287,7 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 	query := Bun().NewSelect().Table("metrics").
 		Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
 		ColumnExpr("proto_time(end_time) AS end_time").
+		ColumnExpr("metric_group AS group").
 		Where("trial_id = ?", trialID).
 		Where("total_batches > ?", afterBatches).
 		Where("archived = false")

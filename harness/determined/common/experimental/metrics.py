@@ -25,6 +25,7 @@ class TrialMetrics:
     total_batches: int
     end_time: datetime.datetime
     metrics: Dict[str, Any]
+    group: str
     batch_metrics: Optional[List[Dict[str, Any]]] = None
 
     @classmethod
@@ -37,6 +38,7 @@ class TrialMetrics:
             end_time=util.parse_protobuf_timestamp(metric_report.endTime),
             metrics=metric_report.metrics[key],
             batch_metrics=metric_report.metrics.get("batch_metrics", None),
+            group=metric_report.group,
         )
 
     @property

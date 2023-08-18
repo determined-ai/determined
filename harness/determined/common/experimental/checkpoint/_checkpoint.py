@@ -362,16 +362,27 @@ class Checkpoint:
         else:
             logging.info(f"Partial deletion of checkpoint {self.uuid} is in progress.")
 
-    def get_inference_metrics(self):  # -> Iterable["metrics.InferenceMetrics"]:
+    def get_metrics(self, group: str = ""):  # -> Iterable["metrics.InferenceMetrics"]:
+        """
+        Gets all metrics for a given metric group associated with this checkpoint.
+        The checkpoint can be originally associated by calling
+        ``core_context.utils.report_task_using_checkpoint(<CHECKPOINT>)``
+        from within a task.
+
+        Arguments:
+            group (str, optional): Group name for the metrics (example: "training", "validation").
+                All metrics will be returned when querying by "".
+        """
         from determined.experimental import metrics
 
         resp = bindings.get_GetTrialMetricsByCheckpoint(
             session=self._session,
             checkpointUuid=self.uuid,
             trialSourceInfoType=bindings.v1TrialSourceInfoType.INFERENCE,
+            metricGroup=group,
         )
         for d in resp.metrics:
-            yield metrics.InferenceMetrics._from_bindings(d)
+            yield metrics.TrialMetrics._from_bindings(d, group)
 
     def __repr__(self) -> str:
         if self.training is not None:

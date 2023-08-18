@@ -266,7 +266,8 @@ message MetricsReport {
         "total_batches",
         "archived",
         "id",
-        "trial_run_id"
+        "trial_run_id",
+        "group"
       ]
     }
   };
@@ -284,6 +285,8 @@ message MetricsReport {
   int32 id = 6;
   // Run ID of trial when metric was reported.
   int32 trial_run_id = 7;
+  // Run ID of trial when metric was reported.
+  string group = 8;
 }
 
 // TrialSourceInfoType is the type of the TrialSourceInfo, which serves as a

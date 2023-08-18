@@ -662,10 +662,12 @@ func TestMetricMerge(t *testing.T) {
 			metrics, err := GetMetrics(ctx, trialID, 0, 100, mGroup)
 			require.NoError(t, err)
 			require.Len(t, metrics, 1)
+			require.Equal(t, metrics[0].Group, string(mGroup))
 		}
 		metrics, err := GetMetrics(ctx, trialID, 0, 100, mGroup)
 		require.NoError(t, err)
 		require.Len(t, metrics, 1)
+		require.Equal(t, metrics[0].Group, string(mGroup))
 		deserializedMetrics := map[string]any{}
 		require.NoError(t, json.Unmarshal([]byte(c.merged), &deserializedMetrics))
 		require.EqualValues(t, deserializedMetrics, metrics[0].Metrics.AsMap()["avg_metrics"])

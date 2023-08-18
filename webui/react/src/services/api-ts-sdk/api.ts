@@ -5520,6 +5520,12 @@ export interface V1MetricsReport {
      * @memberof V1MetricsReport
      */
     trialRunId: number;
+    /**
+     * Run ID of trial when metric was reported.
+     * @type {string}
+     * @memberof V1MetricsReport
+     */
+    group: string;
 }
 /**
  * MetricsWorkload is a workload generating metrics.

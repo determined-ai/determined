@@ -7004,6 +7004,7 @@ class v1MetricsReport(Printable):
         *,
         archived: bool,
         endTime: str,
+        group: str,
         id: int,
         metrics: "typing.Dict[str, typing.Any]",
         totalBatches: int,
@@ -7012,6 +7013,7 @@ class v1MetricsReport(Printable):
     ):
         self.archived = archived
         self.endTime = endTime
+        self.group = group
         self.id = id
         self.metrics = metrics
         self.totalBatches = totalBatches
@@ -7023,6 +7025,7 @@ class v1MetricsReport(Printable):
         kwargs: "typing.Dict[str, typing.Any]" = {
             "archived": obj["archived"],
             "endTime": obj["endTime"],
+            "group": obj["group"],
             "id": obj["id"],
             "metrics": obj["metrics"],
             "totalBatches": obj["totalBatches"],
@@ -7035,6 +7038,7 @@ class v1MetricsReport(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "archived": self.archived,
             "endTime": self.endTime,
+            "group": self.group,
             "id": self.id,
             "metrics": self.metrics,
             "totalBatches": self.totalBatches,
