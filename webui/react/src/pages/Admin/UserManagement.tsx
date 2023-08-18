@@ -161,9 +161,7 @@ const UserManagement: React.FC = () => {
     const escapedName = settings.name?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return new RegExp(escapedName, 'i');
   }, [settings.name]);
-  const filteredUsers = settings.name
-    ? users.filter((user) => nameRegex.test(user.displayName || user.username))
-    : users;
+  const filteredUsers = users.filter((user) => nameRegex.test(user.displayName || user.username));
 
   const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyUsers } = usePermissions();
