@@ -95,7 +95,7 @@ export interface GlideTableProps {
   onIsOpenFilterChange?: (value: boolean) => void;
   onScroll?: (r: Rectangle) => void;
   onSortableColumnChange?: (newColumns: string[]) => void;
-  onSortChange: (sorts: Sort[]) => void;
+  onSortChange?: (sorts: Sort[]) => void;
   page: number;
   pinnedColumnsCount: number;
   project?: Project;

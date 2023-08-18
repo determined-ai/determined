@@ -93,7 +93,7 @@ interface Props {
   onIsOpenFilterChange?: (value: boolean) => void;
   onRowHeightChange?: (rowHeight: RowHeight) => void;
   onTableViewModeChange?: (mode: TableViewMode) => void;
-  onSortChange: (sorts: Sort[]) => void;
+  onSortChange?: (sorts: Sort[]) => void;
   onVisibleColumnChange?: (newColumns: string[]) => void;
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;

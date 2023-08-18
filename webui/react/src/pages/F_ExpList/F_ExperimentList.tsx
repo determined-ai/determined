@@ -288,16 +288,14 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     setExperiments(INITIAL_LOADING_EXPERIMENTS);
   }, []);
 
-  const onSortChange = useCallback(
+  const handleSortChange = useCallback(
     (sorts: Sort[]) => {
       setSorts(sorts);
       const newSortString = makeSortString(sorts.filter(validSort.is));
       if (newSortString !== sortString) {
         resetPagination();
       }
-      updateSettings({
-        sortString: newSortString,
-      });
+      updateSettings({ sortString: newSortString });
     },
     [resetPagination, sortString, updateSettings],
   );
@@ -691,7 +689,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         onHeatmapToggle={handleHeatmapToggle}
         onIsOpenFilterChange={handleIsOpenFilterChange}
         onRowHeightChange={handleRowHeightChange}
-        onSortChange={onSortChange}
+        onSortChange={handleSortChange}
         onTableViewModeChange={handleTableViewModeChange}
         onVisibleColumnChange={handleVisibleColumnChange}
       />
@@ -745,7 +743,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 onIsOpenFilterChange={handleIsOpenFilterChange}
                 onScroll={isPagedView ? undefined : handleScroll}
                 onSortableColumnChange={handleVisibleColumnChange}
-                onSortChange={onSortChange}
+                onSortChange={handleSortChange}
               />
             </ComparisonView>
             {showPagination && (
