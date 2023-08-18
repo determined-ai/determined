@@ -39,10 +39,8 @@ import { getCssVar } from 'utils/themes';
 import ComparisonView from './ComparisonView';
 import css from './F_ExperimentList.module.scss';
 import {
-  ExpListView,
   F_ExperimentListGlobalSettings,
   F_ExperimentListSettings,
-  RowHeight,
   settingsConfigForProject,
   settingsConfigGlobal,
 } from './F_ExperimentList.settings';
@@ -55,8 +53,9 @@ import {
   NO_PINS_WIDTH,
 } from './glide-table/columns';
 import { Error, NoExperiments } from './glide-table/exceptions';
-import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
+import GlideTable, { SCROLL_SET_COUNT_NEEDED, TableViewMode } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
+import { RowHeight } from './glide-table/OptionsMenu';
 import TableActionBar from './glide-table/TableActionBar';
 
 interface Props {
@@ -99,7 +98,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   } = useSettings<F_ExperimentListSettings>(settingsConfig);
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<F_ExperimentListGlobalSettings>(settingsConfigGlobal);
-  const isPagedView = globalSettings.expListView === 'paged';
+  const isPagedView = globalSettings.tableViewMode === 'paged';
   const [page, setPage] = useState(() =>
     isFinite(Number(searchParams.get('page'))) ? Math.max(Number(searchParams.get('page')), 0) : 0,
   );
@@ -516,7 +515,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
-  const onRowHeightChange = useCallback(
+  const handleRowHeightChange = useCallback(
     (newRowHeight: RowHeight) => {
       updateGlobalSettings({ rowHeight: newRowHeight });
     },
@@ -540,11 +539,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
   }, [setSelectAll, setSelection]);
 
-  const updateExpListView = useCallback(
-    (view: ExpListView) => {
+  const handleTableViewModeChange = useCallback(
+    (mode: TableViewMode) => {
       // Reset page index when table view mode changes.
       resetPagination();
-      updateGlobalSettings({ expListView: view });
+      updateGlobalSettings({ tableViewMode: mode });
     },
     [resetPagination, updateGlobalSettings],
   );
@@ -672,7 +671,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         compareViewOn={settings.compare}
         excludedExperimentIds={excludedExperimentIds}
         experiments={experiments}
-        expListView={globalSettings.expListView}
         filters={experimentFilters}
         formStore={formStore}
         heatmapBtnVisible={heatmapBtnVisible}
@@ -684,16 +682,17 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         rowHeight={globalSettings.rowHeight}
         selectAll={selectAll}
         selectedExperimentIds={selectedExperimentIds}
-        setExpListView={updateExpListView}
         sorts={sorts}
+        tableViewMode={globalSettings.tableViewMode}
         total={total}
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
         onComparisonViewToggle={handleToggleComparisonView}
         onHeatmapToggle={handleHeatmapToggle}
         onIsOpenFilterChange={handleIsOpenFilterChange}
-        onRowHeightChange={onRowHeightChange}
+        onRowHeightChange={handleRowHeightChange}
         onSortChange={onSortChange}
+        onTableViewModeChange={handleTableViewModeChange}
         onVisibleColumnChange={handleVisibleColumnChange}
       />
       <div className={css.content} ref={contentRef}>

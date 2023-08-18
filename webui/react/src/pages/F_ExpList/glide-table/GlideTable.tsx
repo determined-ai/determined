@@ -15,6 +15,7 @@ import DataEditor, {
   Theme,
 } from '@hpe.com/glide-data-grid';
 import { DrawHeaderCallback } from '@hpe.com/glide-data-grid/dist/ts/data-grid/data-grid-types';
+import { literal, union } from 'io-ts';
 import React, {
   Dispatch,
   SetStateAction,
@@ -38,7 +39,6 @@ import Icon from 'components/kit/Icon';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import { PAGE_SIZE } from 'pages/F_ExpList/F_ExperimentList';
-import { RowHeight } from 'pages/F_ExpList/F_ExperimentList.settings';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'stores/contexts/UI';
@@ -75,6 +75,7 @@ import { drawArrow, drawTextWithEllipsis } from './custom-renderers/utils';
 import css from './GlideTable.module.scss';
 import { TableActionMenu, TableActionMenuProps } from './menu';
 import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
+import { RowHeight } from './OptionsMenu';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
 
@@ -112,6 +113,10 @@ export interface GlideTableProps {
   sorts: Sort[];
   staticColumns: string[];
 }
+
+export type TableViewMode = 'scroll' | 'paged';
+
+export const ioTableViewMode = union([literal('scroll'), literal('paged')]);
 
 /**
  * Number of renders with gridRef.current !== null

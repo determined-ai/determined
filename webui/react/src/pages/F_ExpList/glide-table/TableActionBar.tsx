@@ -13,7 +13,6 @@ import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
-import { ExpListView, RowHeight } from 'pages/F_ExpList/F_ExperimentList.settings';
 import {
   activateExperiments,
   archiveExperiments,
@@ -46,8 +45,9 @@ import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
+import { TableViewMode } from './GlideTable';
 import MultiSortMenu, { Sort } from './MultiSortMenu';
-import { OptionsMenu } from './OptionsMenu';
+import { OptionsMenu, RowHeight } from './OptionsMenu';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -80,7 +80,6 @@ interface Props {
   compareViewOn?: boolean;
   excludedExperimentIds?: Set<number>;
   experiments: Loadable<ExperimentWithTrial>[];
-  expListView: ExpListView;
   filters: V1BulkExperimentFilters;
   formStore: FilterFormStore;
   heatmapBtnVisible: boolean;
@@ -92,7 +91,8 @@ interface Props {
   onComparisonViewToggle?: () => void;
   onHeatmapToggle?: (heatmapOn: boolean) => void;
   onIsOpenFilterChange?: (value: boolean) => void;
-  onRowHeightChange: (r: RowHeight) => void;
+  onRowHeightChange?: (rowHeight: RowHeight) => void;
+  onTableViewModeChange?: (mode: TableViewMode) => void;
   onSortChange: (sorts: Sort[]) => void;
   onVisibleColumnChange?: (newColumns: string[]) => void;
   project: Project;
@@ -100,8 +100,8 @@ interface Props {
   rowHeight: RowHeight;
   selectAll: boolean;
   selectedExperimentIds: number[];
-  setExpListView: (view: ExpListView) => void;
   sorts: Sort[];
+  tableViewMode: TableViewMode;
   total: Loadable<number>;
 }
 
@@ -109,7 +109,6 @@ const TableActionBar: React.FC<Props> = ({
   compareViewOn,
   excludedExperimentIds,
   experiments,
-  expListView,
   filters,
   formStore,
   heatmapBtnVisible,
@@ -123,14 +122,15 @@ const TableActionBar: React.FC<Props> = ({
   onIsOpenFilterChange,
   onRowHeightChange,
   onSortChange,
+  onTableViewModeChange,
   onVisibleColumnChange,
   project,
   projectColumns,
   rowHeight,
   selectAll,
   selectedExperimentIds,
-  setExpListView,
   sorts,
+  tableViewMode,
   total,
 }) => {
   const permissions = usePermissions();
@@ -382,10 +382,10 @@ const TableActionBar: React.FC<Props> = ({
             onVisibleColumnChange={onVisibleColumnChange}
           />
           <OptionsMenu
-            expListView={expListView}
             rowHeight={rowHeight}
-            setExpListView={setExpListView}
+            tableViewMode={tableViewMode}
             onRowHeightChange={onRowHeightChange}
+            onTableViewModeChange={onTableViewModeChange}
           />
           {(selectAll || selectedExperimentIds.length > 0) && (
             <Dropdown menu={editMenuItems} onClick={handleAction}>
