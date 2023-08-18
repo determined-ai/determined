@@ -89,6 +89,7 @@ interface Props {
   isOpenFilter: boolean;
   onActionComplete?: () => Promise<void>;
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
+  onHeatmapToggle?: (heatmapOn: boolean) => void;
   onRowHeightChange: (r: RowHeight) => void;
   onSortChange: (sorts: Sort[]) => void;
   project: Project;
@@ -97,12 +98,10 @@ interface Props {
   selectAll: boolean;
   selectedExperimentIds: number[];
   setExpListView: (view: ExpListView) => void;
-  setHeatmapApplied: (selection: string[]) => void;
   setIsOpenFilter: (value: boolean) => void;
   setVisibleColumns: (newColumns: string[]) => void;
   sorts: Sort[];
   toggleComparisonView?: () => void;
-  toggleHeatmap: (heatmapOn: boolean) => void;
   total: Loadable<number>;
 }
 
@@ -119,6 +118,7 @@ const TableActionBar: React.FC<Props> = ({
   isOpenFilter,
   onActionComplete,
   onActionSuccess,
+  onHeatmapToggle,
   onRowHeightChange,
   onSortChange,
   project,
@@ -131,7 +131,6 @@ const TableActionBar: React.FC<Props> = ({
   setVisibleColumns,
   sorts,
   toggleComparisonView,
-  toggleHeatmap,
   total,
 }) => {
   const permissions = usePermissions();
@@ -403,7 +402,7 @@ const TableActionBar: React.FC<Props> = ({
               <Button
                 icon={<Icon name="heatmap" title="heatmap" />}
                 type={heatmapOn ? 'primary' : 'default'}
-                onClick={() => toggleHeatmap(heatmapOn)}
+                onClick={() => onHeatmapToggle?.(heatmapOn)}
               />
             </Tooltip>
           )}

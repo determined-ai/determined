@@ -88,7 +88,9 @@ export interface GlideTableProps {
   heatmapOn: boolean;
   heatmapSkipped: string[];
   height: number;
+  onColumnResize?: (newColumnWidths: Record<string, number>) => void;
   onContextMenuComplete?: (action: ExperimentAction, id: number) => void;
+  onHeatmapSelection?: (selection: string[]) => void;
   onIsOpenFilterChange: (value: boolean) => void;
   onScroll?: (r: Rectangle) => void;
   onSortChange: (sorts: Sort[]) => void;
@@ -101,9 +103,7 @@ export interface GlideTableProps {
   scrollPositionSetCount: WritableObservable<number>;
   selectAll: boolean;
   selection: GridSelection;
-  setColumnWidths: (newWidths: Record<string, number>) => void;
   setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
-  setHeatmapApplied: (selection: string[]) => void;
   setPinnedColumnsCount: (count: number) => void;
   setSelectAll: (arg0: boolean) => void;
   setSelection: Dispatch<SetStateAction<GridSelection>>;
@@ -145,7 +145,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   heatmapOn,
   heatmapSkipped,
   height,
+  onColumnResize,
   onContextMenuComplete,
+  onHeatmapSelection,
   onIsOpenFilterChange,
   onScroll,
   onSortChange,
@@ -158,9 +160,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   scrollPositionSetCount,
   selectAll,
   selection,
-  setColumnWidths,
   setExcludedExperimentIds,
-  setHeatmapApplied,
   setPinnedColumnsCount,
   setSelectAll,
   setSelection,
@@ -284,13 +284,13 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [colorMap, data, hoveredRow, selection.rows],
   );
 
-  const onColumnResize: DataEditorProps['onColumnResize'] = useCallback(
+  const handleColumnResize: DataEditorProps['onColumnResize'] = useCallback(
     (column: GridColumn, width: number) => {
       const columnId = column.id;
       if (columnId === undefined || columnId === MULTISELECT) return;
-      setColumnWidths({ ...columnWidths, [columnId]: width });
+      onColumnResize?.({ ...columnWidths, [columnId]: width });
     },
-    [columnWidths, setColumnWidths],
+    [columnWidths, onColumnResize],
   );
 
   const deselectAllRows = useCallback(() => {
@@ -309,14 +309,13 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   }, [setSelectAll, setSelection, data, setExcludedExperimentIds]);
 
   const toggleHeatmap = useCallback(
-    (col: string) => {
-      setHeatmapApplied(
+    (col: string) =>
+      onHeatmapSelection?.(
         heatmapSkipped.includes(col)
           ? heatmapSkipped.filter((p) => p !== col)
           : [...heatmapSkipped, col],
-      );
-    },
-    [setHeatmapApplied, heatmapSkipped],
+      ),
+    [heatmapSkipped, onHeatmapSelection],
   );
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
@@ -871,7 +870,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           onCellClicked={onCellClicked}
           onCellContextMenu={onCellContextMenu}
           onColumnMoved={onColumnMoved}
-          onColumnResize={onColumnResize}
+          onColumnResize={handleColumnResize}
           onHeaderClicked={onHeaderClicked}
           onHeaderContextMenu={onHeaderClicked} // right-click
           onItemHovered={onColumnHovered}

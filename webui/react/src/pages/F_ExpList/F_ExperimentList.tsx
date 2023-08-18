@@ -615,17 +615,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
-  const handleHeatmapChange = useCallback(
-    (selection: string[]) => {
-      updateSettings({ heatmapSkipped: selection });
-    },
+  const handleHeatmapToggle = useCallback(
+    (heatmapOn: boolean) => updateSettings({ heatmapOn: !heatmapOn }),
     [updateSettings],
   );
 
-  const handleToggleHeatmap = useCallback(
-    (heatmapOn: boolean) => {
-      updateSettings({ heatmapOn: !heatmapOn });
-    },
+  const handleHeatmapSelection = useCallback(
+    (selection: string[]) => updateSettings({ heatmapSkipped: selection }),
     [updateSettings],
   );
 
@@ -689,15 +685,14 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         selectAll={selectAll}
         selectedExperimentIds={selectedExperimentIds}
         setExpListView={updateExpListView}
-        setHeatmapApplied={handleHeatmapChange}
         setIsOpenFilter={onIsOpenFilterChange}
         setVisibleColumns={setVisibleColumns}
         sorts={sorts}
         toggleComparisonView={handleToggleComparisonView}
-        toggleHeatmap={handleToggleHeatmap}
         total={total}
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
+        onHeatmapToggle={handleHeatmapToggle}
         onRowHeightChange={onRowHeightChange}
         onSortChange={onSortChange}
       />
@@ -738,9 +733,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 scrollPositionSetCount={scrollPositionSetCount}
                 selectAll={selectAll}
                 selection={selection}
-                setColumnWidths={handleColumnWidthChange}
                 setExcludedExperimentIds={setExcludedExperimentIds}
-                setHeatmapApplied={handleHeatmapChange}
                 setPinnedColumnsCount={setPinnedColumnsCount}
                 setSelectAll={setSelectAll}
                 setSelection={setSelection}
@@ -748,7 +741,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 sortableColumnIds={columnsIfLoaded}
                 sorts={sorts}
                 staticColumns={STATIC_COLUMNS}
+                onColumnResize={handleColumnWidthChange}
                 onContextMenuComplete={handleContextMenuComplete}
+                onHeatmapSelection={handleHeatmapSelection}
                 onIsOpenFilterChange={onIsOpenFilterChange}
                 onScroll={isPagedView ? undefined : handleScroll}
                 onSortChange={onSortChange}
