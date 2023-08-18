@@ -57,7 +57,7 @@ import {
 import { Error, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
-import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
+import TableActionBar from './glide-table/TableActionBar';
 
 interface Props {
   project: Project;
@@ -370,8 +370,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
 
-  const onContextMenuComplete = useCallback(fetchExperiments, [fetchExperiments]);
-
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -431,7 +429,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     });
   }, [resetPagination, updateSettings]);
 
-  const handleOnAction = useCallback(async () => {
+  const handleActionComplete = useCallback(async () => {
     /*
      * Deselect selected rows since their states may have changed where they
      * are no longer part of the filter criteria.
@@ -446,8 +444,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     await fetchExperiments();
   }, [fetchExperiments, setSelectAll, setSelection]);
 
-  const handleUpdateExperimentList = useCallback(
-    (action: BatchAction, successfulIds: number[]) => {
+  const handleActionSuccess = useCallback(
+    (action: ExperimentAction, successfulIds: number[]) => {
       const idSet = new Set(successfulIds);
       const updateExperiment = (updated: Partial<ExperimentItem>) => {
         setExperiments((prev) =>
@@ -461,8 +459,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         );
       };
       switch (action) {
-        case ExperimentAction.OpenTensorBoard:
-          break;
         case ExperimentAction.Activate:
           updateExperiment({ state: RunState.Active });
           break;
@@ -492,9 +488,25 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             ),
           );
           break;
+        // Exhaustive cases to ignore.
+        case ExperimentAction.CompareTrials:
+        case ExperimentAction.ContinueTrial:
+        case ExperimentAction.DownloadCode:
+        case ExperimentAction.Edit:
+        case ExperimentAction.Fork:
+        case ExperimentAction.HyperparameterSearch:
+        case ExperimentAction.OpenTensorBoard:
+        case ExperimentAction.SwitchPin:
+        case ExperimentAction.ViewLogs:
+          break;
       }
     },
     [setExperiments],
+  );
+
+  const handleContextMenuComplete = useCallback(
+    (action: ExperimentAction, id: number) => handleActionSuccess(action, [id]),
+    [handleActionSuccess],
   );
 
   const setVisibleColumns = useCallback(
@@ -667,7 +679,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         expListView={globalSettings.expListView}
         filters={experimentFilters}
         formStore={formStore}
-        handleUpdateExperimentList={handleUpdateExperimentList}
         heatmapBtnVisible={heatmapBtnVisible}
         heatmapOn={settings.heatmapOn}
         initialVisibleColumns={columnsIfLoaded}
@@ -685,7 +696,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         toggleComparisonView={handleToggleComparisonView}
         toggleHeatmap={handleToggleHeatmap}
         total={total}
-        onAction={handleOnAction}
+        onActionComplete={handleActionComplete}
+        onActionSuccess={handleActionSuccess}
         onRowHeightChange={onRowHeightChange}
         onSortChange={onSortChange}
       />
@@ -715,7 +727,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 dataTotal={isPagedView ? experiments.length : Loadable.getOrElse(0, total)}
                 formStore={formStore}
                 handleScroll={isPagedView ? undefined : handleScroll}
-                handleUpdateExperimentList={handleUpdateExperimentList}
                 heatmapOn={settings.heatmapOn}
                 heatmapSkipped={settings.heatmapSkipped}
                 height={height}
@@ -738,7 +749,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 sortableColumnIds={columnsIfLoaded}
                 sorts={sorts}
                 staticColumns={STATIC_COLUMNS}
-                onContextMenuComplete={onContextMenuComplete}
+                onContextMenuComplete={handleContextMenuComplete}
                 onIsOpenFilterChange={onIsOpenFilterChange}
                 onSortChange={onSortChange}
               />

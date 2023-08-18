@@ -33,7 +33,7 @@ import {
   Operator,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
-import { MenuItem } from 'components/kit/Dropdown';
+import { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
@@ -43,7 +43,13 @@ import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'stores/contexts/UI';
 import usersStore from 'stores/users';
-import { ExperimentWithTrial, Project, ProjectColumn, ProjectMetricsRange } from 'types';
+import {
+  ExperimentAction,
+  ExperimentWithTrial,
+  Project,
+  ProjectColumn,
+  ProjectMetricsRange,
+} from 'types';
 import { Float, Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
@@ -69,7 +75,6 @@ import { drawArrow, drawTextWithEllipsis } from './custom-renderers/utils';
 import css from './GlideTable.module.scss';
 import { TableActionMenu, TableActionMenuProps } from './menu';
 import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
-import { BatchAction } from './TableActionBar';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
 
@@ -81,11 +86,10 @@ export interface GlideTableProps {
   dataTotal: number;
   formStore: FilterFormStore;
   handleScroll?: (r: Rectangle) => void;
-  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   heatmapOn: boolean;
   heatmapSkipped: string[];
   height: number;
-  onContextMenuComplete?: () => void;
+  onContextMenuComplete?: (action: ExperimentAction, id: number) => void;
   onIsOpenFilterChange: (value: boolean) => void;
   onSortChange: (sorts: Sort[]) => void;
   page: number;
@@ -139,7 +143,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   dataTotal,
   formStore,
   handleScroll,
-  handleUpdateExperimentList,
   heatmapOn,
   heatmapSkipped,
   height,
@@ -189,16 +192,19 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     handleClose: () => setMenuIsOpen(false),
   });
 
-  const handleContextMenuComplete = useCallback(() => {
-    onContextMenuComplete?.();
-  }, [onContextMenuComplete]);
+  const handleContextMenuComplete = useCallback(
+    (action: ExperimentAction, id: number) => {
+      onContextMenuComplete?.(action, id);
+    },
+    [onContextMenuComplete],
+  );
 
   const [contextMenuOpen] = useState(observable(false));
   const contextMenuIsOpen = useObservable(contextMenuOpen);
 
   const [contextMenuProps, setContextMenuProps] = useState<null | Omit<
     TableContextMenuProps,
-    'open' | 'handleUpdateExperimentList'
+    'open'
   >>(null);
 
   const {
@@ -633,12 +639,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           setContextMenuProps({
             cell,
             experiment: getProjectExperimentForExperimentItem(rowData.experiment, project),
-            handleClose: (e?: Event) => {
+            link: isLinkCell(cell) ? cell.data.link.href : undefined,
+            onClose: (e?: DropdownEvent | Event) => {
               // Prevent the context menu closing click from triggering something else.
               if (contextMenuOpen.get()) e?.stopPropagation();
               contextMenuOpen.set(false);
             },
-            link: isLinkCell(cell) ? cell.data.link.href : undefined,
             x: Math.max(0, event.bounds.x + event.localEventX - 4),
             y: Math.max(0, event.bounds.y + event.localEventY - 4),
           });
@@ -876,7 +882,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       {contextMenuProps && (
         <TableContextMenu
           {...contextMenuProps}
-          handleUpdateExperimentList={handleUpdateExperimentList}
           open={contextMenuIsOpen}
           onComplete={handleContextMenuComplete}
         />

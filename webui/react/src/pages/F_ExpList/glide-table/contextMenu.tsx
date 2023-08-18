@@ -3,9 +3,8 @@ import { MenuProps } from 'antd';
 import React, { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
-import { ProjectExperiment } from 'types';
-
-import { BatchAction } from './TableActionBar';
+import { DropdownEvent } from 'components/kit/Dropdown';
+import { ExperimentAction, ProjectExperiment } from 'types';
 
 // eslint-disable-next-line
 function useOutsideClickHandler(ref: MutableRefObject<any>, handler: (event: Event) => void) {
@@ -36,10 +35,9 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: (event: Eve
 export interface TableContextMenuProps extends MenuProps {
   cell?: GridCell;
   experiment: ProjectExperiment;
-  handleClose: (e?: Event) => void;
-  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   link?: string;
-  onComplete?: () => void;
+  onClose: (e?: DropdownEvent | Event) => void;
+  onComplete?: (action: ExperimentAction, id: number) => void;
   open: boolean;
   x: number;
   y: number;
@@ -48,21 +46,25 @@ export interface TableContextMenuProps extends MenuProps {
 export const TableContextMenu: React.FC<TableContextMenuProps> = ({
   cell,
   experiment,
-  handleClose,
-  handleUpdateExperimentList,
   link,
+  onClose,
   onComplete,
   open,
   x,
   y,
 }) => {
   const containerRef = useRef(null);
-  useOutsideClickHandler(containerRef, handleClose);
+  useOutsideClickHandler(containerRef, onClose);
 
-  const handleComplete = useCallback(() => {
-    onComplete?.();
-    handleClose();
-  }, [handleClose, onComplete]);
+  const handleComplete = useCallback(
+    (action: ExperimentAction, id: number) => {
+      onComplete?.(action, id);
+      onClose();
+    },
+    [onClose, onComplete],
+  );
+
+  const handleVisibleChange = useCallback(() => onClose(), [onClose]);
 
   return (
     <div
@@ -76,12 +78,11 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
       <ExperimentActionDropdown
         cell={cell}
         experiment={experiment}
-        handleUpdateExperimentList={handleUpdateExperimentList}
         link={link}
         makeOpen={open}
         onComplete={handleComplete}
-        onLink={handleClose}
-        onVisibleChange={() => handleClose()}>
+        onLink={onClose}
+        onVisibleChange={handleVisibleChange}>
         <div />
       </ExperimentActionDropdown>
     </div>

@@ -83,12 +83,12 @@ interface Props {
   expListView: ExpListView;
   filters: V1BulkExperimentFilters;
   formStore: FilterFormStore;
-  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   heatmapBtnVisible: boolean;
   heatmapOn: boolean;
   initialVisibleColumns: string[];
   isOpenFilter: boolean;
-  onAction: () => Promise<void>;
+  onActionComplete?: () => Promise<void>;
+  onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
   onRowHeightChange: (r: RowHeight) => void;
   onSortChange: (sorts: Sort[]) => void;
   project: Project;
@@ -113,12 +113,12 @@ const TableActionBar: React.FC<Props> = ({
   expListView,
   filters,
   formStore,
-  handleUpdateExperimentList,
   heatmapBtnVisible,
   heatmapOn,
   initialVisibleColumns,
   isOpenFilter,
-  onAction,
+  onActionComplete,
+  onActionSuccess,
   onRowHeightChange,
   onSortChange,
   project,
@@ -226,10 +226,10 @@ const TableActionBar: React.FC<Props> = ({
   const handleSubmitMove = useCallback(
     async (successfulIds?: number[]) => {
       if (!successfulIds) return;
-      handleUpdateExperimentList(ExperimentAction.Move, successfulIds);
-      await onAction();
+      onActionSuccess?.(ExperimentAction.Move, successfulIds);
+      await onActionComplete?.();
     },
-    [handleUpdateExperimentList, onAction],
+    [onActionComplete, onActionSuccess],
   );
 
   const closeNotification = useCallback(() => notification.destroy(), []);
@@ -240,7 +240,7 @@ const TableActionBar: React.FC<Props> = ({
         const results = await sendBatchActions(action);
         if (results === undefined) return;
 
-        handleUpdateExperimentList(action, results.successful);
+        onActionSuccess?.(action, results.successful);
 
         const numSuccesses = results.successful.length;
         const numFailures = results.failed.length;
@@ -294,10 +294,10 @@ const TableActionBar: React.FC<Props> = ({
           silent: false,
         });
       } finally {
-        onAction();
+        onActionComplete?.();
       }
     },
-    [sendBatchActions, closeNotification, onAction, handleUpdateExperimentList],
+    [sendBatchActions, closeNotification, onActionComplete, onActionSuccess],
   );
 
   const handleBatchAction = useCallback(
