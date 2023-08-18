@@ -140,10 +140,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
-  const setPinnedColumnsCount = useCallback(
-    (newCount: number) => {
-      updateSettings({ pinnedColumnsCount: newCount });
-    },
+  const handlePinnedColumnsCountChange = useCallback(
+    (newCount: number) => updateSettings({ pinnedColumnsCount: newCount }),
     [updateSettings],
   );
   const handleIsOpenFilterChange = useCallback((newOpen: boolean) => {
@@ -731,7 +729,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 selectAll={selectAll}
                 selection={selection}
                 setExcludedExperimentIds={setExcludedExperimentIds}
-                setPinnedColumnsCount={setPinnedColumnsCount}
                 setSelectAll={setSelectAll}
                 setSelection={setSelection}
                 sortableColumnIds={columnsIfLoaded}
@@ -741,6 +738,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 onContextMenuComplete={handleContextMenuComplete}
                 onHeatmapSelection={handleHeatmapSelection}
                 onIsOpenFilterChange={handleIsOpenFilterChange}
+                onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
                 onScroll={isPagedView ? undefined : handleScroll}
                 onSortableColumnChange={handleVisibleColumnChange}
                 onSortChange={handleSortChange}
