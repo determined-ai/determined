@@ -291,11 +291,13 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 		Where("total_batches > ?", afterBatches).
 		Where("archived = false")
 
-	if pType == GenericMetric && mGroup != "" {
-		// Going off of our current schema were looking for custom types in our legacy
-		// metrics tables is pointless.
-		query.Where("metric_group = ?", mGroup).
-			Where("partition_type = ?", pType)
+	if mGroup != "" {
+		query.Where("partition_type = ?", pType)
+		if pType == GenericMetric {
+			// Going off of our current schema were looking for custom types in our legacy
+			// metrics tables is pointless.
+			query.Where("metric_group = ?", mGroup)
+		}
 	}
 
 	err := query.

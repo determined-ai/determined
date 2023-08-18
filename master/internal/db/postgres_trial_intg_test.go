@@ -622,7 +622,12 @@ func TestMetricMerge(t *testing.T) {
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)
 
-	addMetricAt := func(batchNumber int, metricsJSON string, trialID int) error {
+	addMetricAt := func(
+		batchNumber int,
+		metricsJSON string,
+		trialID int,
+		groupName model.MetricGroup,
+	) error {
 		trialRunID := 0
 		require.NoError(t, db.AddTrialMetrics(ctx, &trialv1.TrialMetrics{
 			TrialId:        int32(trialID),
@@ -631,7 +636,7 @@ func TestMetricMerge(t *testing.T) {
 			Metrics: &commonv1.Metrics{
 				AvgMetrics: jsonToStruct(t, metricsJSON),
 			},
-		}, mGroup))
+		}, groupName))
 		return nil
 	}
 
@@ -648,7 +653,11 @@ func TestMetricMerge(t *testing.T) {
 		t.Log(c)
 		trialID := RequireMockTrialID(t, db, exp)
 		for _, metricReport := range c.reports {
-			err := addMetricAt(1, metricReport, trialID)
+			err := addMetricAt(1, metricReport, trialID, mGroup)
+			require.NoError(t, err)
+			// Also add some validation metrics, we shouldn't see them when we
+			// query only for the training metrics
+			err = addMetricAt(1, metricReport, trialID, model.ValidationMetricGroup)
 			require.NoError(t, err)
 			metrics, err := GetMetrics(ctx, trialID, 0, 100, mGroup)
 			require.NoError(t, err)
@@ -670,7 +679,6 @@ func TestGetAllMetrics(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
-	mGroup := model.MetricGroup("")
 
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)
@@ -711,8 +719,10 @@ func TestGetAllMetrics(t *testing.T) {
 			require.NoError(t, err)
 			err = addMetricAt(1, metricReport, trialID, model.MetricGroup("inference"))
 			require.NoError(t, err)
-			metrics, err := GetMetrics(ctx, trialID, 0, 100, mGroup)
+			metrics, err := GetMetrics(ctx, trialID, 0, 100, model.MetricGroup(""))
 			require.NoError(t, err)
+			// We added three different metric groups and then queried for an empty group
+			// which should yield all metrics
 			require.Len(t, metrics, 3)
 		}
 	}
