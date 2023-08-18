@@ -91,7 +91,7 @@ export interface GlideTableProps {
   onColumnResize?: (newColumnWidths: Record<string, number>) => void;
   onContextMenuComplete?: (action: ExperimentAction, id: number) => void;
   onHeatmapSelection?: (selection: string[]) => void;
-  onIsOpenFilterChange: (value: boolean) => void;
+  onIsOpenFilterChange?: (value: boolean) => void;
   onScroll?: (r: Rectangle) => void;
   onSortChange: (sorts: Sort[]) => void;
   page: number;
@@ -390,7 +390,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             value: null,
           },
         });
-        onIsOpenFilterChange(true);
+        onIsOpenFilterChange?.(true);
         setMenuIsOpen(false);
       };
 

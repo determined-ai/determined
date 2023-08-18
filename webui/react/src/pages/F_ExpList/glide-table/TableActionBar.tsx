@@ -90,6 +90,7 @@ interface Props {
   onActionComplete?: () => Promise<void>;
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
   onHeatmapToggle?: (heatmapOn: boolean) => void;
+  onIsOpenFilterChange?: (value: boolean) => void;
   onRowHeightChange: (r: RowHeight) => void;
   onSortChange: (sorts: Sort[]) => void;
   project: Project;
@@ -98,7 +99,6 @@ interface Props {
   selectAll: boolean;
   selectedExperimentIds: number[];
   setExpListView: (view: ExpListView) => void;
-  setIsOpenFilter: (value: boolean) => void;
   setVisibleColumns: (newColumns: string[]) => void;
   sorts: Sort[];
   toggleComparisonView?: () => void;
@@ -119,6 +119,7 @@ const TableActionBar: React.FC<Props> = ({
   onActionComplete,
   onActionSuccess,
   onHeatmapToggle,
+  onIsOpenFilterChange,
   onRowHeightChange,
   onSortChange,
   project,
@@ -127,7 +128,6 @@ const TableActionBar: React.FC<Props> = ({
   selectAll,
   selectedExperimentIds,
   setExpListView,
-  setIsOpenFilter,
   setVisibleColumns,
   sorts,
   toggleComparisonView,
@@ -366,7 +366,7 @@ const TableActionBar: React.FC<Props> = ({
             isMobile={isMobile}
             isOpenFilter={isOpenFilter}
             loadableColumns={projectColumns}
-            setIsOpenFilter={setIsOpenFilter}
+            onIsOpenFilterChange={onIsOpenFilterChange}
           />
           <MultiSortMenu
             columns={projectColumns}

@@ -147,7 +147,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     },
     [updateSettings],
   );
-  const onIsOpenFilterChange = useCallback((newOpen: boolean) => {
+  const handleIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
     if (!newOpen) {
       formStore.sweep();
@@ -685,7 +685,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         selectAll={selectAll}
         selectedExperimentIds={selectedExperimentIds}
         setExpListView={updateExpListView}
-        setIsOpenFilter={onIsOpenFilterChange}
         setVisibleColumns={setVisibleColumns}
         sorts={sorts}
         toggleComparisonView={handleToggleComparisonView}
@@ -693,6 +692,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
         onHeatmapToggle={handleHeatmapToggle}
+        onIsOpenFilterChange={handleIsOpenFilterChange}
         onRowHeightChange={onRowHeightChange}
         onSortChange={onSortChange}
       />
@@ -744,7 +744,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 onColumnResize={handleColumnWidthChange}
                 onContextMenuComplete={handleContextMenuComplete}
                 onHeatmapSelection={handleHeatmapSelection}
-                onIsOpenFilterChange={onIsOpenFilterChange}
+                onIsOpenFilterChange={handleIsOpenFilterChange}
                 onScroll={isPagedView ? undefined : handleScroll}
                 onSortChange={onSortChange}
               />
