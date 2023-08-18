@@ -162,6 +162,7 @@ func newTrial(
 		t.id = *id
 		t.idSet = true
 		t.trialCreationSent = createSent
+		t.syslog.Info("restoring trial")
 		if err := t.recover(); err != nil {
 			return nil, fmt.Errorf("recovering trial in prestart: %w", err)
 		}
@@ -197,11 +198,13 @@ func (t *trial) Exit() {
 	if err := t.close(); err != nil {
 		t.syslog.WithError(err).Error("error closing trial")
 	}
-	t.exitCallback(t.searcher.Create.RequestID)
+	go t.exitCallback(t.searcher.Create.RequestID)
 }
 
 func (t *trial) close() error {
+	t.syslog.WithField("id", t.id).Info("closing trial")
 	t.wg.Close()
+	t.syslog.WithField("id", t.id).Info("waitgroup closed")
 
 	if !t.idSet {
 		return nil
@@ -210,7 +213,9 @@ func (t *trial) close() error {
 		if t.allocationID != nil {
 			err := task.DefaultService.Signal(*t.allocationID, task.KillAllocation, "trial crashed")
 			if err == nil {
+				t.syslog.Info("signaled trial task to stop, awaiting termination")
 				task.DefaultService.AwaitTermination(*t.allocationID)
+				t.syslog.Info("trial task terminated")
 			}
 		}
 		return t.transition(model.StateWithReason{
@@ -359,6 +364,7 @@ func (t *trial) recover() error {
 
 // maybeAllocateTask checks if the trial should allocate state and allocates it if so.
 func (t *trial) maybeAllocateTask() error {
+	t.syslog.Info("checking if we should allocate trial")
 	if !(t.allocationID == nil &&
 		!t.searcher.Complete &&
 		t.state == model.ActiveState) {
@@ -405,6 +411,7 @@ func (t *trial) maybeAllocateTask() error {
 			t.AllocationExitedCallback,
 		)
 		if err != nil {
+			t.syslog.WithError(err).Error("failed to restore trial allocation")
 			return err
 		}
 		t.syslog.
@@ -508,6 +515,7 @@ func (t *trial) buildTaskSpecifier() (*tasks.TrialSpec, error) {
 
 // AllocationExitedCallback cleans up after an allocation exit and exits permanently or reallocates.
 func (t *trial) AllocationExitedCallback(exit *task.AllocationExited) {
+	t.syslog.Debug("handling allocation exited callback")
 	t.mu.Lock()
 	defer t.mu.Unlock()
 

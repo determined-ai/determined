@@ -729,10 +729,9 @@ func closeWithErrCheck(name string, closer io.Closer) {
 	}
 }
 
-func (m *Master) tryRestoreExperiment(sema chan struct{}, wg *sync.WaitGroup, e *model.Experiment) {
+func (m *Master) tryRestoreExperiment(sema chan struct{}, e *model.Experiment) {
 	sema <- struct{}{}
 	defer func() { <-sema }()
-	defer func() { wg.Done() }()
 
 	// restoreExperiments waits for experiment allocations to be initialized.
 	if err := m.restoreExperiment(e); err != nil {
@@ -772,19 +771,28 @@ func (m *Master) restoreNonTerminalExperiments() error {
 		return errors.Wrap(err, "couldn't retrieve experiments to restore")
 	}
 
-	wg := sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
 	for _, exp := range toRestore {
 		wg.Add(1)
-		go m.tryRestoreExperiment(sema, &wg, exp)
+		exp := exp
+		go func() {
+			m.tryRestoreExperiment(sema, exp)
+			wg.Done()
+		}()
+		// go m.tryRestoreExperiment(sema, exp)
 	}
 
+	log.Info("waiting for all experiments to restore")
 	wg.Wait()
+	log.Info("all experiments restored")
 
 	return nil
 }
 
 func (m *Master) closeOpenAllocations() error {
+	log.Info("getting allocation ids")
 	allocationIds := task.DefaultService.GetAllAllocationIDs()
+	log.Info("got allocation ids")
 	if err := m.db.CloseOpenAllocations(allocationIds); err != nil {
 		return err
 	}
@@ -1019,6 +1027,7 @@ func (m *Master) Run(ctx context.Context) error {
 		return errors.Wrap(err, "could not update end stats for instances")
 	}
 
+	log.Info("starting resource manager")
 	// Resource Manager.
 	m.rm = rm.New(
 		m.system,
@@ -1032,14 +1041,18 @@ func (m *Master) Run(ctx context.Context) error {
 		},
 		cert,
 	)
+	log.Info("created resource manager")
 	jobservice.SetDefaultService(job.NewManager(m.rm, m.system))
+	log.Info("set default service for job manager")
 
 	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 
+	log.Info("restoring non-terminal experiments")
 	if err = m.restoreNonTerminalExperiments(); err != nil {
+		log.WithError(err).Error("failed to restore non-terminal experiments")
 		return err
 	}
 
@@ -1047,7 +1060,9 @@ func (m *Master) Run(ctx context.Context) error {
 		return err
 	}
 
+	log.Info("taskmodel cleanup resources state")
 	if err = taskmodel.CleanupResourcesState(); err != nil {
+		log.WithError(err).Error("failed to cleanup resources state")
 		return err
 	}
 
@@ -1058,9 +1073,12 @@ func (m *Master) Run(ctx context.Context) error {
 		m.rm,
 	)
 
+	log.Info("close open allocations")
 	if err = m.closeOpenAllocations(); err != nil {
+		log.WithError(err).Error("failed to close open allocations")
 		return err
 	}
+	log.Info("done closing open allocations")
 
 	if err = m.db.EndAllTaskStats(); err != nil {
 		return err
@@ -1218,5 +1236,6 @@ func (m *Master) Run(ctx context.Context) error {
 	webhooks.Init()
 	defer webhooks.Deinit()
 
+	log.Info("starting servers")
 	return m.startServers(ctx, cert)
 }
