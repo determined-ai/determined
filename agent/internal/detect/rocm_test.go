@@ -49,3 +49,47 @@ func TestRocmSmiParser(t *testing.T) {
 	assert.Equal(t, len(result), 4)
 	assert.Equal(t, result[1].UUID, "0x6be2ee3b2b314cfc")
 }
+
+func Test_deviceAllocated(t *testing.T) {
+	type args struct {
+		deviceIndex      int
+		allocatedDevices []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "VISIBLE_DEVICES not defined",
+			args: args{
+				deviceIndex:      0,
+				allocatedDevices: nil,
+			},
+			want: true,
+		},
+		{
+			name: "Device allocated",
+			args: args{
+				deviceIndex:      0,
+				allocatedDevices: []string{"0", "1"},
+			},
+			want: true,
+		},
+		{
+			name: "Device not allocated",
+			args: args{
+				deviceIndex:      2,
+				allocatedDevices: []string{"0", "1"},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := deviceAllocated(tt.args.deviceIndex, tt.args.allocatedDevices); got != tt.want {
+				t.Errorf("deviceAllocated() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -97,6 +97,8 @@ func parseRocmSmi(jsonData []byte) ([]RocmDevice, error) {
 	return result, nil
 }
 
+// deviceAllocated returns true if the specified device is within the set of resources
+// allocated to the process.
 func deviceAllocated(deviceIndex int, allocatedDevices []string) bool {
 	if allocatedDevices == nil {
 		return true
@@ -109,6 +111,7 @@ func deviceAllocated(deviceIndex int, allocatedDevices []string) bool {
 	return false
 }
 
+// parseVisibleDevices returns as a slice the content of ROCR_VISIBLE_DEVICES.
 func parseVisibleDevices() []string {
 	devices, found := os.LookupEnv("ROCR_VISIBLE_DEVICES")
 	if !found {
