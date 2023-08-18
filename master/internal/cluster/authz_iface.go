@@ -52,11 +52,6 @@ type MiscAuthZ interface {
 	CanGetUsageDetails(
 		ctx context.Context, curUser *model.User,
 	) (permErr error, err error)
-
-	// CanViewExternalJobs returns an error if the user is not authorized to view external jobs.
-	CanViewExternalJobs(
-		ctx context.Context, curUser *model.User,
-	) (permErr error, err error)
 }
 
 // AuthZProvider is the authz registry for Notebooks, Shells, and Commands.

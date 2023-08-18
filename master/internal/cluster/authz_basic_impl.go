@@ -61,13 +61,6 @@ func (a *MiscAuthZBasic) CanGetUsageDetails(
 	return nil, nil
 }
 
-// CanViewExternalJobs returns nil and nil error.
-func (a *MiscAuthZBasic) CanViewExternalJobs(
-	ctx context.Context, curUser *model.User,
-) (permErr error, err error) {
-	return nil, nil
-}
-
 func init() {
 	AuthZProvider.Register("basic", &MiscAuthZBasic{})
 }

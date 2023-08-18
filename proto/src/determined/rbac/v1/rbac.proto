@@ -144,8 +144,6 @@ enum PermissionType {
   PERMISSION_TYPE_VIEW_MASTER_CONFIG = 8005;
   // Ability to update master configs.
   PERMISSION_TYPE_UPDATE_MASTER_CONFIG = 8006;
-  // Ability to view external jobs.
-  PERMISSION_TYPE_VIEW_EXTERNAL_JOBS = 8007;
 
   // Ability to control strict job queue.
   PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE = 8101;
