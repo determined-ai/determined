@@ -6,12 +6,33 @@
  Release Notes
 ###############
 
-**************
- Version 0.23
-**************
+****************
+ Version 0.24.0
+****************
 
-Version 0.23.4
-==============
+**Release Date:** August 18, 2023
+
+**Breaking Changes**
+
+-  API: Remove PyTorchLightningAdapter, which was deprecated in 0.23.1. We recommend that PyTorch
+   Lightning users migrate to the :ref:`Core API <core-getting-started>`.
+
+**New Features**
+
+-  Environments: Add the following PyTorch 2.0 images (experimental): ``pytorch==2.0.1``,
+   ``python==3.10.12``, and ``CUDA==11.8``.
+
+**Bug Fixes**
+
+-  Users: Fix an issue that caused the CLI command ``det user list`` to always return false for the
+   remote column.
+
+Version 0.23
+============
+
+****************
+ Version 0.23.4
+****************
 
 **Release Date:** July 31, 2023
 
@@ -56,8 +77,9 @@ Version 0.23.4
 
 -  WebUI: Improve performance and stability.
 
-Version 0.23.3
-==============
+****************
+ Version 0.23.3
+****************
 
 **Release Date:** July 18, 2023
 
@@ -77,8 +99,9 @@ Version 0.23.3
 -  API: Remove the ``scale`` from the ``CompareTrialsRequest`` endpoint; this was used only for LTTB
    downsampling, which has since been replaced.
 
-Version 0.23.2
-==============
+****************
+ Version 0.23.2
+****************
 
 **Release Date:** July 05, 2023
 
@@ -97,8 +120,9 @@ Version 0.23.2
    <project_id>`` was added that deletes a particular cluster from the project. ``det deploy gcp
    down`` can still be used to delete clusters with local Terraform state files.
 
-Version 0.23.1
-==============
+****************
+ Version 0.23.1
+****************
 
 **Release Date:** June 21, 2023
 
@@ -119,8 +143,9 @@ Version 0.23.1
 -  Users: Resolved an issue that was causing an error when attempting to create a new user with a
    username that was previously used by a renamed user.
 
-Version 0.23.0
-==============
+****************
+ Version 0.23.0
+****************
 
 **Release Date:** June 05, 2023
 
@@ -176,12 +201,12 @@ Version 0.23.0
 -  Checkpoints: In checkpoint-related views and APIs, the previously hidden file ``metadata.json``
    is now visible.
 
-**************
- Version 0.22
-**************
+Version 0.22
+============
 
-Version 0.22.2
-==============
+****************
+ Version 0.22.2
+****************
 
 **Release Date:** May 24, 2023
 
@@ -218,8 +243,9 @@ Version 0.22.2
       show only unarchived experiments and ``det e list -a`` will show both archived and unarchived
       experiments.
 
-Version 0.22.1
-==============
+****************
+ Version 0.22.1
+****************
 
 **Release Date:** May 17, 2023
 
@@ -230,8 +256,9 @@ Version 0.22.1
    occur when the ``max_restarts`` experiment configuration option is set to a value greater than
    zero (default: 5). We advise all users running 0.22.0 to upgrade as soon as possible.
 
-Version 0.22.0
-==============
+****************
+ Version 0.22.0
+****************
 
 **Release Date:** May 05, 2023
 
@@ -288,12 +315,12 @@ Version 0.22.0
    against their cluster's database while it is still running before upgrading to a new version.
    This is an optional step and is only recommended for significantly large databases.
 
-**************
- Version 0.21
-**************
+Version 0.21
+============
 
-Version 0.21.2
-==============
+****************
+ Version 0.21.2
+****************
 
 **Release Date:** April 28, 2023
 
@@ -324,8 +351,9 @@ Version 0.21.2
 -  Tasks: Fix an issue where task proxies were not recovered when running on Slurm.
 -  Tasks: Fix an issue where ``det task list`` would sometimes return an incorrect 404 error.
 
-Version 0.21.1
-==============
+****************
+ Version 0.21.1
+****************
 
 **Release Date:** April 11, 2023
 
@@ -373,8 +401,9 @@ Version 0.21.1
 -  The separate ``det-deploy`` executable was deprecated in 0.15.0 (April 2021) and is now removed.
    Use the ``det deploy`` subcommand instead.
 
-Version 0.21.0
-==============
+****************
+ Version 0.21.0
+****************
 
 **Release Date:** March 27, 2023
 
@@ -440,12 +469,12 @@ Version 0.21.0
    -  ``Model.from_json()``
    -  ``ModelVersion.from_json()``
 
-**************
- Version 0.20
-**************
+Version 0.20
+============
 
-Version 0.20.1
-==============
+****************
+ Version 0.20.1
+****************
 
 **Release Date:** March 15, 2023
 
@@ -476,8 +505,9 @@ Version 0.20.1
 -  For multi-trial experiments, training metrics do not start appearing unless there has been at
    least one validation.
 
-Version 0.20.0
-==============
+****************
+ Version 0.20.0
+****************
 
 **Release Date:** February 28, 2023
 
@@ -527,12 +557,12 @@ Version 0.20.0
    These changes allow for more granular control over who can access what resources. See :ref:`rbac`
    for more information.
 
-**************
- Version 0.19
-**************
+Version 0.19
+============
 
-Version 0.19.11
-===============
+*****************
+ Version 0.19.11
+*****************
 
 **Release Date:** February 17, 2023
 
@@ -585,8 +615,9 @@ Version 0.19.11
       ``det deploy aws up`` -- if the argument is missing, any previously added tags would be
       removed.
 
-Version 0.19.10
-===============
+*****************
+ Version 0.19.10
+*****************
 
 **Release Date:** January 20, 2023
 
@@ -654,8 +685,9 @@ Version 0.19.10
    may be found `here <https://gist.github.com/rb-determined-ai/60813f1f75f75e3073dfea351a081d7e>`_.
    Affected users are encouraged to follow the migration guide before upgrading to avoid downtime.
 
-Version 0.19.9
-==============
+****************
+ Version 0.19.9
+****************
 
 **Release Date:** December 20, 2022
 
@@ -675,8 +707,9 @@ Version 0.19.9
    <https://github.com/NVIDIA/enroot>`__ container platform as an alternative to
    Apptainer/Singularity/Podman.
 
-Version 0.19.8
-==============
+****************
+ Version 0.19.8
+****************
 
 **Release Date:** December 02, 2022
 
@@ -708,8 +741,9 @@ Version 0.19.8
    expression. If you have partitions with mixed GPU types, you may now specify the desired type
    using the ``slurm.gpu_type`` attribute of the experiment configuration.
 
-Version 0.19.7
-==============
+****************
+ Version 0.19.7
+****************
 
 **Release Date:** November 14, 2022
 
@@ -744,8 +778,9 @@ Version 0.19.7
 
 -  Master: Correctly handle pending allocations in historical resource allocation aggregation.
 
-Version 0.19.6
-==============
+****************
+ Version 0.19.6
+****************
 
 **Release Date:** October 28, 2022
 
@@ -811,8 +846,9 @@ Version 0.19.6
    workloads to coexist and access all of the advanced capabilities of the PBS workload manager. You
    can use either Singularity or Podman for the container runtime.
 
-Version 0.19.5
-==============
+****************
+ Version 0.19.5
+****************
 
 **Release Date:** October 10, 2022
 
@@ -830,8 +866,9 @@ Version 0.19.5
 -  Kubernetes: When a TensorBoard inherits its images from an experiment configuration, it now also
    inherits the ``environment.pod_spec.spec.imagePullSecrets`` value.
 
-Version 0.19.4
-==============
+****************
+ Version 0.19.4
+****************
 
 **Release Date:** September 22, 2022
 
@@ -854,8 +891,9 @@ Version 0.19.4
 -  Checkpoints: Fixed a bug where operations that listed checkpoints could sometimes return the same
    checkpoint multiple times.
 
-Version 0.19.3
-==============
+****************
+ Version 0.19.3
+****************
 
 **Release Date:** September 09, 2022
 
@@ -873,8 +911,9 @@ Version 0.19.3
 -  Kubernetes: Allow the UID and GID of Fluent Bit logging sidecars to be configured on a
    cluster-wide basis.
 
-Version 0.19.2
-==============
+****************
+ Version 0.19.2
+****************
 
 **Release Date:** August 26, 2022
 
@@ -931,8 +970,9 @@ Version 0.19.2
    Slurm workload manager. The Determined Slurm integration can use either Singularity or Podman for
    the container runtime.
 
-Version 0.19.1
-==============
+****************
+ Version 0.19.1
+****************
 
 **Release Date:** August 11, 2022
 
@@ -954,8 +994,9 @@ Version 0.19.1
 -  Web: Add a button to start a hyperparameter search experiment based on an experiment or trial.
    The button brings up a form allowing users to change searcher settings and hyperparameter ranges.
 
-Version 0.19.0
-==============
+****************
+ Version 0.19.0
+****************
 
 **Release Date:** July 29, 2022
 
@@ -1021,12 +1062,12 @@ Version 0.19.0
 -  **Breaking Change** PyTorch Lightning is no longer a part of Determined environments. When
    needed, it should be installed as part of startup hooks.
 
-**************
- Version 0.18
-**************
+Version 0.18
+============
 
-Version 0.18.4
-==============
+****************
+ Version 0.18.4
+****************
 
 **Release Date:** July 14, 2022
 
@@ -1057,8 +1098,9 @@ Version 0.18.4
 -  Add the resource pool field when listing experiments or commands in Kubernetes, where it was
    previously left blank.
 
-Version 0.18.3
-==============
+****************
+ Version 0.18.3
+****************
 
 **Release Date:** July 07, 2022
 
@@ -1108,8 +1150,9 @@ Version 0.18.3
 -  Configuration: Experiment configuration ``resources.shm_size`` now supports passing in a unit
    like ``4.5 G`` or ``128MiB``.
 
-Version 0.18.2
-==============
+****************
+ Version 0.18.2
+****************
 
 **Release Date:** June 14, 2022
 
@@ -1168,8 +1211,9 @@ Version 0.18.2
 
 -  API: Endpoints under ``/debug/pprof`` now require authentication.
 
-Version 0.18.1
-==============
+****************
+ Version 0.18.1
+****************
 
 **Release Date:** May 24, 2022
 
@@ -1240,8 +1284,9 @@ Version 0.18.1
 -  API: Fix an issue where the ``POST /users`` endpoint always returned an error instead of the
    user's information, even when the user was created successfully.
 
-Version 0.18.0
-==============
+****************
+ Version 0.18.0
+****************
 
 **Release Date:** May 09, 2022
 
@@ -1299,12 +1344,12 @@ Version 0.18.0
 -  Python API: Remove the ``det.pytorch.reset_parameters()`` function, which was deprecated in
    0.12.13 (August 2020).
 
-**************
- Version 0.17
-**************
+Version 0.17
+============
 
-Version 0.17.15
-===============
+*****************
+ Version 0.17.15
+*****************
 
 **Release Date:** April 22, 2022
 
@@ -1326,8 +1371,9 @@ Version 0.17.15
 
 -  Add a translation of DeepSpeed's DCGAN example using the new DeepSpeedTrial API.
 
-Version 0.17.14
-===============
+*****************
+ Version 0.17.14
+*****************
 
 **Release Date:** April 13, 2022
 
@@ -1337,8 +1383,9 @@ Version 0.17.14
    submitting a command with a non-default priority. We recommend that all users on 0.17.12 and
    0.17.13 update to 0.17.14 or later.
 
-Version 0.17.13
-===============
+*****************
+ Version 0.17.13
+*****************
 
 **Release Date:** April 07, 2022
 
@@ -1390,8 +1437,9 @@ Version 0.17.13
    authentication flow was not remembered.
 -  Fix an issue where trial logs may display timestamps twice.
 
-Version 0.17.12
-===============
+*****************
+ Version 0.17.12
+*****************
 
 **Release Date:** March 28, 2022
 
@@ -1434,8 +1482,9 @@ Version 0.17.12
    hyperparameter exits. Previously, if more than one report was received, the experiment would
    fail.
 
-Version 0.17.11
-===============
+*****************
+ Version 0.17.11
+*****************
 
 **Release Date:** March 14, 2022
 
@@ -1448,8 +1497,9 @@ Version 0.17.11
    to start a background thread or process for data loading and shut it down before the process
    exits.
 
-Version 0.17.10
-===============
+*****************
+ Version 0.17.10
+*****************
 
 **Release Date:** March 03, 2022
 
@@ -1477,8 +1527,9 @@ Version 0.17.10
    ``sslMode``, ``sslRootCert``, ``resourceType``, and ``certResourceName``. Additional details can
    be found in the default values.yaml file.
 
-Version 0.17.9
-==============
+****************
+ Version 0.17.9
+****************
 
 **Release Date:** February 11, 2022
 
@@ -1559,8 +1610,9 @@ Version 0.17.9
    endpoints from the legacy API. These functions were already replaced by the gRPC API
    (``/api/v1/preview-hp-search`` and ``/api/v1/checkpoints``) in the web UI, CLI, and tests.
 
-Version 0.17.8
-==============
+****************
+ Version 0.17.8
+****************
 
 **Release Date:** February 3, 2022
 
@@ -1569,8 +1621,9 @@ Version 0.17.8
 -  Distributed Training: Fix a bug that shows experiments in a COMPLETED state even if they errored
    out. We recommend that users of distributed training update to 0.17.8 or later.
 
-Version 0.17.7
-==============
+****************
+ Version 0.17.7
+****************
 
 **Release Date:** January 26, 2022
 
@@ -1603,8 +1656,9 @@ Version 0.17.7
    endpoints from the legacy API. These functions are now replaced by the gRPC API
    (``/api/v1/experiments``) in the web UI, CLI, and tests.
 
-Version 0.17.6
-==============
+****************
+ Version 0.17.6
+****************
 
 **Release Date:** January 20, 2022
 
@@ -1648,8 +1702,9 @@ Version 0.17.6
 
 -  Remove support for Python 3.6, which has reached end-of-life.
 
-Version 0.17.5
-==============
+****************
+ Version 0.17.5
+****************
 
 **Release Date:** December 10, 2021
 
@@ -1683,8 +1738,9 @@ Version 0.17.5
 -  Deploy: Fix a bug where GCP clusters created with ``--no-filestore`` still had unused filestores
    created.
 
-Version 0.17.4
-==============
+****************
+ Version 0.17.4
+****************
 
 **Release Date:** November 30, 2021
 
@@ -1721,8 +1777,9 @@ Version 0.17.4
 -  Master: Fix a bug where deleting experiments with trial restarts always failed, and then failed
    to be marked as failed.
 
-Version 0.17.3
-==============
+****************
+ Version 0.17.3
+****************
 
 **Release Date:** November 12, 2021
 
@@ -1740,8 +1797,9 @@ Version 0.17.3
 
 -  Model Registry APIs: Change the ``/models/{}/versions/{}`` to accept model ID as an int.
 
-Version 0.17.2
-==============
+****************
+ Version 0.17.2
+****************
 
 **Release Date:** October 29, 2021
 
@@ -1773,8 +1831,9 @@ Version 0.17.2
 -  WebUI: Convert infinite and NaN value strings to numeric metrics.
 -  WebUI: Report login failures caused by the cluster being unreachable.
 
-Version 0.17.1
-==============
+****************
+ Version 0.17.1
+****************
 
 **Release Date:** October 18, 2021
 
@@ -1810,8 +1869,9 @@ Version 0.17.1
 -  Deploy: Fix an issue where the default checkpoint storage directory was not created for some
    users.
 
-Version 0.17.0
-==============
+****************
+ Version 0.17.0
+****************
 
 **Release Date:** September 28, 2021
 
@@ -1924,12 +1984,12 @@ Version 0.17.0
 
 -  WebUI: Fix continuing trials with nested hyperparameters.
 
-**************
- Version 0.16
-**************
+Version 0.16
+============
 
-Version 0.16.5
-==============
+****************
+ Version 0.16.5
+****************
 
 **Release Date:** September 3, 2021
 
@@ -1956,8 +2016,9 @@ Version 0.16.5
 -  WebUI: Show metrics with a value of 0 in graphs.
 -  Properly load very old (pre-0.13.8) checkpoints with ``TFKerasTrial``.
 
-Version 0.16.4
-==============
+****************
+ Version 0.16.4
+****************
 
 **Release Date:** August 23, 2021
 
@@ -1983,8 +2044,9 @@ Version 0.16.4
 -  WebUI: Prevent the zoom from resetting when chart data series are added.
 -  WebUI: Fix the issue of learning curves not resizing properly.
 
-Version 0.16.3
-==============
+****************
+ Version 0.16.3
+****************
 
 **Release Date:** July 22, 2021
 
@@ -2009,8 +2071,9 @@ Version 0.16.3
 -  WebUI: Fix the issue of experiments showing incorrect data if they were forked from another
    experiment or continued from a trial.
 
-Version 0.16.2
-==============
+****************
+ Version 0.16.2
+****************
 
 **Release Date:** July 9, 2021
 
@@ -2036,8 +2099,9 @@ Version 0.16.2
 -  WebUI: Fix an issue with boolean hyperparameter values not being rendered in learning curve
    tables.
 
-Version 0.16.1
-==============
+****************
+ Version 0.16.1
+****************
 
 **Release Date:** June 28, 2021
 
@@ -2064,8 +2128,9 @@ Version 0.16.1
 -  Support using Docker images with ``EXPOSE`` commands as images for notebooks/shells/TensorBoards.
    Previously, the ``EXPOSE`` command could break proxying through the Determined master.
 
-Version 0.16.0
-==============
+****************
+ Version 0.16.0
+****************
 
 **Release Date:** June 14, 2021
 
@@ -2129,12 +2194,12 @@ Version 0.16.0
 -  The methods ``det.experimental.keras.init()`` and ``det.experimental.estimator.init()`` have been
    removed. They were deprecated in 0.13.5.
 
-**************
- Version 0.15
-**************
+Version 0.15
+============
 
-Version 0.15.6
-==============
+****************
+ Version 0.15.6
+****************
 
 **Release Date:** June 2, 2021
 
@@ -2165,8 +2230,9 @@ Version 0.15.6
    hang when exiting.
 -  WebUI: Prevent TQDM log lines from generating large quantities of whitespace when rendering logs.
 
-Version 0.15.5
-==============
+****************
+ Version 0.15.5
+****************
 
 **Release Date:** May 18, 2021
 
@@ -2181,8 +2247,9 @@ Version 0.15.5
    ``resource_manager`` and ``resource_pools``. They will be removed in the next minor release,
    Determined 0.16.0.
 
-Version 0.15.4
-==============
+****************
+ Version 0.15.4
+****************
 
 **Release Date:** May 12, 2021
 
@@ -2201,8 +2268,9 @@ Version 0.15.4
 -  API: Update the trial detail endpoint (``GET /api/v1/trials/:id``), dropping
    ``prior_batches_processed`` and ``num_inputs`` in favor of ``total_batches``.
 
-Version 0.15.3
-==============
+****************
+ Version 0.15.3
+****************
 
 **Release Date:** May 5, 2021
 
@@ -2212,8 +2280,9 @@ Version 0.15.3
 -  Trials: Update to match ``websockets>= 9.0`` library API change.
 -  Trials: Fix a bug that caused trials to panic upon receiving too many rendezvous addresses.
 
-Version 0.15.2
-==============
+****************
+ Version 0.15.2
+****************
 
 **Release Date:** April 29, 2021
 
@@ -2263,8 +2332,9 @@ Version 0.15.2
 
 -  WebUI: Fix the issue of trial logs not rendering properly on Safari 14.
 
-Version 0.15.1
-==============
+****************
+ Version 0.15.1
+****************
 
 **Release Date:** April 16, 2021
 
@@ -2275,8 +2345,9 @@ Version 0.15.1
 -  Master: Fix two issues that caused experiments to not recover successfully on master crashes
    (after upgrading to version 0.15.0).
 
-Version 0.15.0
-==============
+****************
+ Version 0.15.0
+****************
 
 **Release Date:** April 14, 2021
 
@@ -2315,12 +2386,12 @@ Version 0.15.0
 
 -  WebUI: Fix an issue where the metric value occasionally had the word "undefined" prepended.
 
-**************
- Version 0.14
-**************
+Version 0.14
+============
 
-Version 0.14.6
-==============
+****************
+ Version 0.14.6
+****************
 
 **Release Date:** April 1, 2021
 
@@ -2355,8 +2426,9 @@ Version 0.14.6
 -  WebUI: Fix the hyperparameter visualization page crashing when viewing single trial or PBT
    experiments, both of which are intentionally unsupported for hyperparameter visualizations.
 
-Version 0.14.5
-==============
+****************
+ Version 0.14.5
+****************
 
 **Release Date:** March 18, 2021
 
@@ -2391,8 +2463,9 @@ Version 0.14.5
 
 -  Fix an unauthorized access issue when attempting to use the Determined CLI within a notebook.
 
-Version 0.14.3
-==============
+****************
+ Version 0.14.3
+****************
 
 **Release Date:** March 4, 2021
 
@@ -2421,8 +2494,9 @@ Version 0.14.3
    validation is completed.
 -  WebUI: Fix the order of batches to be numeric instead of alphanumeric.
 
-Version 0.14.2
-==============
+****************
+ Version 0.14.2
+****************
 
 **Release Date:** February 17, 2021
 
@@ -2453,8 +2527,9 @@ Version 0.14.2
 
 -  Kubernetes: Fix a bug that caused the Cluster page to not render when using a Kubernetes cluster.
 
-Version 0.14.1
-==============
+****************
+ Version 0.14.1
+****************
 
 **Release Date:** February 9, 2021
 
@@ -2462,8 +2537,9 @@ Version 0.14.1
 
 -  Trial: Fix a bug that prevented trial logs created before 0.13.8 from loading correctly.
 
-Version 0.14.0
-==============
+****************
+ Version 0.14.0
+****************
 
 **Release Date:** February 4, 2021
 
@@ -2533,12 +2609,12 @@ Version 0.14.0
 
 -  WebUI: Improve the sorting behavior for numeric table columns.
 
-**************
- Version 0.13
-**************
+Version 0.13
+============
 
-Version 0.13.13
-===============
+*****************
+ Version 0.13.13
+*****************
 
 **Release Date:** January 25, 2021
 
@@ -2568,8 +2644,9 @@ Version 0.13.13
 -  The old PyTorch API was deprecated in 0.12.13 and will be removed in the next release. See the
    PyTorch migration guide for details on updating your PyTorch model code to use the new API.
 
-Version 0.13.12
-===============
+*****************
+ Version 0.13.12
+*****************
 
 **Release Date:** January 11, 2021
 
@@ -2579,8 +2656,9 @@ Version 0.13.12
 -  WebUI: Fix an issue with unexpected hyperparameter types in experiment configuration.
 -  WebUI: Fix trial metric workload duration reporting in the trial detail page.
 
-Version 0.13.11
-===============
+*****************
+ Version 0.13.11
+*****************
 
 **Release Date:** January 6, 2021
 
@@ -2610,8 +2688,9 @@ Version 0.13.11
    intended.
 -  Scheduling: Fix a bug where command priority was not respected.
 
-Version 0.13.10
-===============
+*****************
+ Version 0.13.10
+*****************
 
 **Release Date:** December 10, 2020
 
@@ -2660,8 +2739,9 @@ Version 0.13.10
 -  The previous version of the priority scheduler is now deprecated. It will remain available as the
    ``round_robin`` scheduler for a limited period of time.
 
-Version 0.13.9
-==============
+****************
+ Version 0.13.9
+****************
 
 **Release Date:** November 20, 2020
 
@@ -2675,8 +2755,9 @@ Version 0.13.9
 -  API: Fix a bug that caused the WebUI's log viewer to fail to render previous pages of trial logs.
 -  WebUI: Fix a bug in opening TensorBoards from the experiment list page via batch selection.
 
-Version 0.13.8
-==============
+****************
+ Version 0.13.8
+****************
 
 **Release Date:** November 17, 2020
 
@@ -2791,8 +2872,9 @@ Version 0.13.8
    future version. Users should use ``self.context.configure_fit()`` instead, which is both more
    capable and more similar to the normal ``tf.keras`` APIs.
 
-Version 0.13.7
-==============
+****************
+ Version 0.13.7
+****************
 
 **Release Date:** October 29, 2020
 
@@ -2853,8 +2935,9 @@ Version 0.13.7
 -  Master: Fix the default value for the ``fit`` field if the ``scheduler`` is set in the
    :ref:`cluster-configuration`.
 
-Version 0.13.6
-==============
+****************
+ Version 0.13.6
+****************
 
 **Release Date:** October 14, 2020
 
@@ -2889,8 +2972,9 @@ Version 0.13.6
 -  WebUI: Fix a bug which caused the Experiment Details page to not render when the latest
    validation metric is not available.
 
-Version 0.13.5
-==============
+****************
+ Version 0.13.5
+****************
 
 **Release Date:** September 30, 2020
 
@@ -2953,8 +3037,9 @@ Version 0.13.5
 -  WebUI: Fix the issue where the chart in the Experiment page does not have the metric name in the
    legend.
 
-Version 0.13.4
-==============
+****************
+ Version 0.13.4
+****************
 
 **Release Date:** September 16, 2020
 
@@ -3009,8 +3094,9 @@ Version 0.13.4
 -  WebUI: In the trial detail metrics view, experiments that have both a training metric and a
    validation metric of the same name will not be displayed correctly on the metrics chart.
 
-Version 0.13.3
-==============
+****************
+ Version 0.13.3
+****************
 
 **Release Date:** September 8, 2020
 
@@ -3020,8 +3106,9 @@ Version 0.13.3
 -  WebUI: Fix a bug where experiment labels were not displayed on the experiment list page.
 -  WebUI: Fix a bug with decoding API responses because of unexpected non-numeric metric values.
 
-Version 0.13.2
-==============
+****************
+ Version 0.13.2
+****************
 
 **Release Date:** September 3, 2020
 
@@ -3088,8 +3175,9 @@ Version 0.13.2
 -  Fix progress reporting for ``adaptive_asha`` searches that contain failed trials.
 -  Fix an issue that was causing OOM errors for some distributed ``EstimatorTrial`` experiments.
 
-Version 0.13.1
-==============
+****************
+ Version 0.13.1
+****************
 
 **Release Date:** August 31, 2020
 
@@ -3108,8 +3196,9 @@ Version 0.13.1
 
 -  WebUI: Fix an issue where terminated TensorBoard and notebook tasks were rendered as openable.
 
-Version 0.13.0
-==============
+****************
+ Version 0.13.0
+****************
 
 **Release Date:** August 20, 2020
 
@@ -3301,12 +3390,12 @@ to the following changes:
 
 -  WebUI: Fix issue of archive/unarchive not showing up properly under the task actions.
 
-**************
- Version 0.12
-**************
+Version 0.12
+============
 
-Version 0.12.13
-===============
+*****************
+ Version 0.12.13
+*****************
 
 **Release Date:** August 6, 2020
 
@@ -3370,8 +3459,9 @@ Version 0.12.13
 -  Fix an issue where killed experiments had their state reset to the latest checkpoint.
 -  Randomize the notebook listening port to avoid port binding issues in host mode.
 
-Version 0.12.12
-===============
+*****************
+ Version 0.12.12
+*****************
 
 **Release Date:** July 22, 2020
 
@@ -3411,8 +3501,9 @@ Version 0.12.12
 
 -  WebUI: Older trial logs are not loaded by scrolling to the top of the page.
 
-Version 0.12.11
-===============
+*****************
+ Version 0.12.11
+*****************
 
 **Release Date:** July 8, 2020
 
@@ -3434,8 +3525,9 @@ Version 0.12.11
 -  WebUI: Fix an issue where having telemetry enabled with an invalid key would cause the WebUI to
    render incorrectly.
 
-Version 0.12.10
-===============
+*****************
+ Version 0.12.10
+*****************
 
 **Release Date:** June 26, 2020
 
@@ -3465,8 +3557,9 @@ Version 0.12.10
 -  Fix an issue that affected multi-GPU in ``PyTorchTrial`` with mixed precision enabled.
 -  Add a timeout to trial containers to ensure they are terminated promptly.
 
-Version 0.12.9
-==============
+****************
+ Version 0.12.9
+****************
 
 **Release Date:** June 16, 2020
 
@@ -3474,8 +3567,9 @@ Version 0.12.9
 -  Fix a bug where the CLI was unable to make secure websocket connections to the master.
 -  Add the ``det user rename`` CLI command for admins to change the username of existing users.
 
-Version 0.12.7
-==============
+****************
+ Version 0.12.7
+****************
 
 **Release Date:** June 11, 2020
 
@@ -3542,15 +3636,17 @@ Version 0.12.7
 -  Add a ``det-nobody`` user (with UID 65533) to default images. This provides an out-of-the-box
    option for running non-privileged containers with a working home directory.
 
-Version 0.12.6
-==============
+****************
+ Version 0.12.6
+****************
 
 **Release Date:** June 5, 2020
 
 -  Add end of training callback to EstimatorTrial.
 
-Version 0.12.5
-==============
+****************
+ Version 0.12.5
+****************
 
 **Release Date:** May 27, 2020
 
@@ -3588,8 +3684,9 @@ Enterprise:
 -  Add support for using OAuth2 to secure Determined's SCIM integration.
 -  Add support for users to sign-on through an external IdP with SAML.
 
-Version 0.12.4
-==============
+****************
+ Version 0.12.4
+****************
 
 **Release Date:** May 14, 2020
 
@@ -3621,8 +3718,9 @@ Version 0.12.4
 
 -  UI: Fix an issue with badges appearing as the wrong color.
 
-Version 0.12.3
-==============
+****************
+ Version 0.12.3
+****************
 
 **Release Date:** April 27, 2020
 
@@ -3670,8 +3768,9 @@ Version 0.12.3
 -  UI: Move the authenticated user to the top of the users list filter on the dashboard, right after
    "All".
 
-Version 0.12.2
-==============
+****************
+ Version 0.12.2
+****************
 
 **Release Date:** April 21, 2020
 
