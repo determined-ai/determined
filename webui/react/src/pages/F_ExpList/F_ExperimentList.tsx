@@ -509,7 +509,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [handleActionSuccess],
   );
 
-  const setVisibleColumns = useCallback(
+  const handleVisibleColumnChange = useCallback(
     (newColumns: string[]) => {
       updateSettings({ columns: newColumns });
     },
@@ -685,7 +685,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         selectAll={selectAll}
         selectedExperimentIds={selectedExperimentIds}
         setExpListView={updateExpListView}
-        setVisibleColumns={setVisibleColumns}
         sorts={sorts}
         total={total}
         onActionComplete={handleActionComplete}
@@ -695,6 +694,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         onIsOpenFilterChange={handleIsOpenFilterChange}
         onRowHeightChange={onRowHeightChange}
         onSortChange={onSortChange}
+        onVisibleColumnChange={handleVisibleColumnChange}
       />
       <div className={css.content} ref={contentRef}>
         {!isLoading && experiments.length === 0 ? (
@@ -737,7 +737,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 setPinnedColumnsCount={setPinnedColumnsCount}
                 setSelectAll={setSelectAll}
                 setSelection={setSelection}
-                setSortableColumnIds={setVisibleColumns}
                 sortableColumnIds={columnsIfLoaded}
                 sorts={sorts}
                 staticColumns={STATIC_COLUMNS}
@@ -746,6 +745,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 onHeatmapSelection={handleHeatmapSelection}
                 onIsOpenFilterChange={handleIsOpenFilterChange}
                 onScroll={isPagedView ? undefined : handleScroll}
+                onSortableColumnChange={handleVisibleColumnChange}
                 onSortChange={onSortChange}
               />
             </ComparisonView>

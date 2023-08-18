@@ -94,13 +94,13 @@ interface Props {
   onIsOpenFilterChange?: (value: boolean) => void;
   onRowHeightChange: (r: RowHeight) => void;
   onSortChange: (sorts: Sort[]) => void;
+  onVisibleColumnChange?: (newColumns: string[]) => void;
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
   selectAll: boolean;
   selectedExperimentIds: number[];
   setExpListView: (view: ExpListView) => void;
-  setVisibleColumns: (newColumns: string[]) => void;
   sorts: Sort[];
   total: Loadable<number>;
 }
@@ -123,13 +123,13 @@ const TableActionBar: React.FC<Props> = ({
   onIsOpenFilterChange,
   onRowHeightChange,
   onSortChange,
+  onVisibleColumnChange,
   project,
   projectColumns,
   rowHeight,
   selectAll,
   selectedExperimentIds,
   setExpListView,
-  setVisibleColumns,
   sorts,
   total,
 }) => {
@@ -379,7 +379,7 @@ const TableActionBar: React.FC<Props> = ({
             isMobile={isMobile}
             projectColumns={projectColumns}
             projectId={project.id}
-            setVisibleColumns={setVisibleColumns}
+            onVisibleColumnChange={onVisibleColumnChange}
           />
           <OptionsMenu
             expListView={expListView}

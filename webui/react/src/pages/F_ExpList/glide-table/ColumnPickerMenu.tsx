@@ -37,33 +37,33 @@ const locationLabelMap = {
 } as const;
 
 interface ColumnMenuProps {
-  initialVisibleColumns: string[];
-  projectColumns: Loadable<ProjectColumn[]>;
-  setVisibleColumns: (newColumns: string[]) => void;
-  projectId: number;
   isMobile?: boolean;
+  initialVisibleColumns: string[];
+  onVisibleColumnChange?: (newColumns: string[]) => void;
+  projectColumns: Loadable<ProjectColumn[]>;
+  projectId: number;
 }
 
 interface ColumnTabProps {
   columnState: string[];
   handleShowSuggested: () => void;
+  onVisibleColumnChange?: (newColumns: string[]) => void;
+  projectId: number;
   searchString: string;
   setSearchString: React.Dispatch<React.SetStateAction<string>>;
-  setVisibleColumns: (newColumns: string[]) => void;
   tab: V1LocationType | V1LocationType[];
   totalColumns: ProjectColumn[];
-  projectId: number;
 }
 
 const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   columnState,
   handleShowSuggested,
+  projectId,
   searchString,
   setSearchString,
-  setVisibleColumns,
   tab,
   totalColumns,
-  projectId,
+  onVisibleColumnChange,
 }) => {
   const settingsConfig = useMemo(() => settingsConfigForProject(projectId), [projectId]);
 
@@ -98,7 +98,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
     const newColumns = allFilteredColumnsChecked
       ? columnState.filter((col) => !filteredColumnMap[col])
       : [...new Set([...columnState, ...filteredColumns.map((col) => col.column)])];
-    setVisibleColumns(newColumns);
+    onVisibleColumnChange?.(newColumns);
 
     // If uncheck something pinned, reduce the pinnedColumnsCount
     allFilteredColumnsChecked &&
@@ -109,11 +109,11 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
       });
   }, [
     allFilteredColumnsChecked,
-    filteredColumns,
-    setVisibleColumns,
     columnState,
-    updateSettings,
+    filteredColumns,
+    onVisibleColumnChange,
     settings.pinnedColumnsCount,
+    updateSettings,
   ]);
 
   const handleColumnChange = useCallback(
@@ -131,7 +131,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
           newColumns.splice(pinnedColumnsCount - 1, 0, id);
           updateSettings({ pinnedColumnsCount: Math.max(pinnedColumnsCount - 1, 0) });
         }
-        setVisibleColumns(newColumns);
+        onVisibleColumnChange?.(newColumns);
       } else {
         // If uncheck something pinned, reduce the pinnedColumnsCount
         if (!checked && columnState.indexOf(id) < pinnedColumnsCount) {
@@ -143,16 +143,16 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
         }
         const newColumnSet = new Set(columnState);
         checked ? newColumnSet.add(id) : newColumnSet.delete(id);
-        setVisibleColumns([...newColumnSet]);
+        onVisibleColumnChange?.([...newColumnSet]);
       }
     },
     [
       columnState,
-      setVisibleColumns,
+      onVisibleColumnChange,
       settings.compare,
       settings.pinnedColumnsCount,
-      updateSettings,
       settings.heatmapSkipped,
+      updateSettings,
     ],
   );
 
@@ -207,10 +207,10 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
 
 const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   projectColumns,
-  setVisibleColumns,
   initialVisibleColumns,
   projectId,
   isMobile = false,
+  onVisibleColumnChange,
 }) => {
   const [searchString, setSearchString] = useState('');
   const [open, setOpen] = useState(false);
@@ -229,9 +229,9 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   );
 
   const handleShowSuggested = useCallback(() => {
-    setVisibleColumns(defaultExperimentColumns);
+    onVisibleColumnChange?.(defaultExperimentColumns);
     closeMenu();
-  }, [setVisibleColumns]);
+  }, [onVisibleColumnChange]);
 
   return (
     <Dropdown
@@ -252,9 +252,9 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
                     projectId={projectId}
                     searchString={searchString}
                     setSearchString={setSearchString}
-                    setVisibleColumns={setVisibleColumns}
                     tab={tab}
                     totalColumns={totalColumns}
+                    onVisibleColumnChange={onVisibleColumnChange}
                   />
                 ),
                 forceRender: true,

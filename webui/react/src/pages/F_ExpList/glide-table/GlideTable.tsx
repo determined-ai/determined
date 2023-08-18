@@ -93,6 +93,7 @@ export interface GlideTableProps {
   onHeatmapSelection?: (selection: string[]) => void;
   onIsOpenFilterChange?: (value: boolean) => void;
   onScroll?: (r: Rectangle) => void;
+  onSortableColumnChange?: (newColumns: string[]) => void;
   onSortChange: (sorts: Sort[]) => void;
   page: number;
   pinnedColumnsCount: number;
@@ -107,7 +108,6 @@ export interface GlideTableProps {
   setPinnedColumnsCount: (count: number) => void;
   setSelectAll: (arg0: boolean) => void;
   setSelection: Dispatch<SetStateAction<GridSelection>>;
-  setSortableColumnIds: (newColumns: string[]) => void;
   sortableColumnIds: string[];
   sorts: Sort[];
   staticColumns: string[];
@@ -150,6 +150,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   onHeatmapSelection,
   onIsOpenFilterChange,
   onScroll,
+  onSortableColumnChange,
   onSortChange,
   page,
   pinnedColumnsCount,
@@ -164,7 +165,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   setPinnedColumnsCount,
   setSelectAll,
   setSelection,
-  setSortableColumnIds,
   sortableColumnIds,
   sorts,
   staticColumns,
@@ -435,7 +435,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               onClick: () => {
                 const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
                 newSortableColumns.splice(pinnedColumnsCount, 0, column.column);
-                setSortableColumnIds(newSortableColumns);
+                onSortableColumnChange?.(newSortableColumns);
                 setPinnedColumnsCount(Math.min(pinnedColumnsCount + 1, sortableColumnIds.length));
                 setMenuIsOpen(false);
               },
@@ -447,7 +447,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               onClick: () => {
                 const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
                 newSortableColumns.splice(pinnedColumnsCount - 1, 0, column.column);
-                setSortableColumnIds(newSortableColumns);
+                onSortableColumnChange?.(newSortableColumns);
                 setPinnedColumnsCount(Math.max(pinnedColumnsCount - 1, 0));
                 setMenuIsOpen(false);
               },
@@ -469,8 +469,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       deselectAllRows,
       selectAllRows,
       onIsOpenFilterChange,
+      onSortableColumnChange,
       sortableColumnIds,
-      setSortableColumnIds,
       setPinnedColumnsCount,
       heatmapSkipped,
       toggleHeatmap,
@@ -675,12 +675,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       const newCols = [...sortableColumnIds];
       const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
       newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
-      setSortableColumnIds(newCols);
+      onSortableColumnChange?.(newCols);
     },
     [
+      onSortableColumnChange,
       pinnedColumnsCount,
       setPinnedColumnsCount,
-      setSortableColumnIds,
       sortableColumnIds,
       staticColumns.length,
     ],
