@@ -17,10 +17,8 @@ Version 0.24.0
 
 **Breaking Changes**
 
--  Remove PyTorchLightningAdapter
-
-   -  PyTorchLightningAdapter was deprecated in determined Version 0.23.1. It is now being removed
-      entirely.
+-  API: Remove PyTorchLightningAdapter, which was deprecated in 0.23.1. We recommend that PyTorch
+   Lightning users migrate to the :ref:`Core API <core-getting-started>`.
 
 **New Features**
 
