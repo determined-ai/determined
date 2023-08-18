@@ -28,7 +28,7 @@ Version 0.24.0
 **Bug Fixes**
 
 -  Users: Fix an issue that caused the CLI command ``det user list`` to always show "false" in the
-   remote column.
+   "remote" column.
 
 **************
  Version 0.23
