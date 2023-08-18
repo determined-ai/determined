@@ -10,8 +10,6 @@ import { copyToClipboard } from 'components/kit/internal/functions';
 import { useModal } from 'components/kit/Modal';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings } from 'hooks/useSettings';
-import { ExperimentListSettings } from 'pages/ExperimentList.settings';
 import { handlePath } from 'routes/utils';
 import {
   activateExperiment,
@@ -24,7 +22,7 @@ import {
   unarchiveExperiment,
 } from 'services/api';
 import { ExperimentAction, ProjectExperiment, ValueOf } from 'types';
-import { message, notification } from 'utils/dialogApi';
+import { message } from 'utils/dialogApi';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { capitalize } from 'utils/string';
@@ -42,8 +40,6 @@ interface Props {
   onComplete?: (action: ExperimentAction, id: number) => void | Promise<void>;
   onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
-  settings?: ExperimentListSettings;
-  updateSettings?: UpdateSettings<ExperimentListSettings>;
   workspaceId?: number;
 }
 
@@ -79,8 +75,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   onComplete,
   onLink,
   onVisibleChange,
-  settings,
-  updateSettings,
   children,
 }: Props) => {
   const id = experiment.id;
@@ -103,16 +97,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   }, [id, onComplete]);
 
   const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
-    .filter((action) => action !== Action.SwitchPin || settings)
+    .filter((action) => action !== Action.SwitchPin)
     .map((action) => {
-      if (action === Action.SwitchPin) {
-        const label = (settings?.pinned?.[experiment.projectId] ?? []).includes(id)
-          ? 'Unpin'
-          : 'Pin';
-        return { key: action, label };
-      } else {
-        return { danger: action === Action.Delete, key: action, label: action };
-      }
+      return { danger: action === Action.Delete, key: action, label: action };
     });
 
   const dropdownMenu = useMemo(() => {
@@ -164,22 +151,24 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             break;
           }
           case Action.SwitchPin: {
-            const newPinned = { ...(settings?.pinned ?? {}) };
-            const pinSet = new Set(newPinned[experiment.projectId]);
-            if (pinSet.has(id)) {
-              pinSet.delete(id);
-            } else {
-              if (pinSet.size >= 5) {
-                notification.warning({
-                  description: 'Up to 5 pinned items',
-                  message: 'Unable to pin this item',
-                });
-                break;
-              }
-              pinSet.add(id);
-            }
-            newPinned[experiment.projectId] = Array.from(pinSet);
-            updateSettings?.({ pinned: newPinned });
+            // TODO: leaving old code behind for when we want to enable this for our current experiment list.
+            // const newPinned = { ...(settings?.pinned ?? {}) };
+            // const pinSet = new Set(newPinned[experiment.projectId]);
+            // if (pinSet.has(id)) {
+            //   pinSet.delete(id);
+            // } else {
+            //   if (pinSet.size >= 5) {
+            //     notification.warning({
+            //       description: 'Up to 5 pinned items',
+            //       message: 'Unable to pin this item',
+            //     });
+            //     break;
+            //   }
+            //   pinSet.add(id);
+            // }
+            // newPinned[experiment.projectId] = Array.from(pinSet);
+            // updateSettings?.({ pinned: newPinned });
+            // await onComplete?.(action, id);
             break;
           }
           case Action.Kill:
@@ -242,7 +231,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     },
     [
       confirm,
-      experiment.projectId,
       ExperimentMoveModal,
       experiment.workspaceId,
       handleHyperparameterSearch,
@@ -251,8 +239,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       onComplete,
       onLink,
       onVisibleChange,
-      settings?.pinned,
-      updateSettings,
       cell,
     ],
   );
