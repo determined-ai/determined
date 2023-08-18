@@ -255,7 +255,7 @@ func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.
 
 	err = UpdateUsersTimestampTx(ctx, idb, uids)
 	if err != nil {
-		return fmt.Errorf("Error when updating users timestamps: %w", err)
+		return fmt.Errorf("error when updating users timestamps: %w", err)
 	}
 
 	return nil
@@ -294,7 +294,7 @@ func RemoveUsersFromGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...m
 
 	err = UpdateUsersTimestampTx(ctx, idb, uids)
 	if err != nil {
-		return fmt.Errorf("Error when updating users timestamps: %w", err)
+		return fmt.Errorf("error when updating users timestamps: %w", err)
 	}
 
 	return nil
