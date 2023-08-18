@@ -35,7 +35,7 @@ func (a *TrialSourceInfoAPIServer) ReportTrialSourceInfo(
 // trial_source_infos table, and fetches the metrics for each of the connected trials.
 func GetMetricsForTrialSourceInfoQuery(
 	ctx context.Context, q *bun.SelectQuery,
-	groupName *string,
+	groupName string,
 ) ([]*trialv1.MetricsReport, error) {
 	trialIds := []struct {
 		TrialID             int
@@ -45,11 +45,6 @@ func GetMetricsForTrialSourceInfoQuery(
 	err := q.Scan(ctx, &trialIds)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get trial source info %w", err)
-	}
-
-	metricGroup := model.MetricGroup("")
-	if groupName != nil {
-		metricGroup = model.MetricGroup(*groupName)
 	}
 
 	// TODO (Taylor): If we reach a point where this becomes a performance bottleneck
@@ -65,7 +60,7 @@ func GetMetricsForTrialSourceInfoQuery(
 			// particular trials.
 			continue
 		}
-		res, err := db.GetMetrics(ctx, val.TrialID, -1, numMetricsLimit, metricGroup)
+		res, err := db.GetMetrics(ctx, val.TrialID, -1, numMetricsLimit, model.MetricGroup(groupName))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get metrics %w", err)
 		}

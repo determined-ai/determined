@@ -84,8 +84,9 @@ message GetTrialMetricsByCheckpointRequest {
   string checkpoint_uuid = 1;
   // Type of the TrialSourceInfo
   optional determined.trial.v1.TrialSourceInfoType trial_source_info_type = 2;
-  // Metric Group ("training", "validation", or anything else)
-  optional string metric_group = 3;
+  // Metric Group string ("training", "validation", or anything else) ("" means
+  // all groups)
+  string metric_group = 3;
 }
 
 // Response for all metrics related to a given checkpoint

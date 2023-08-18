@@ -31,6 +31,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
+const inferenceMetricGroup = "inference"
+
 func createTestTrial(
 	t *testing.T, api *apiServer, curUser model.User,
 ) *model.Trial {
@@ -779,12 +781,11 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
 		Return(nil).Times(3)
 
-	metricGroup := "inference"
 	// If there are no restrictions, we should see all the trials
 	getCkptResp, getErr := api.GetTrialMetricsByCheckpoint(
 		ctx, &apiv1.GetTrialMetricsByCheckpointRequest{
 			CheckpointUuid: checkpointUUID,
-			MetricGroup:    &metricGroup,
+			MetricGroup:    inferenceMetricGroup,
 		},
 	)
 	require.NoError(t, getErr)
@@ -810,7 +811,7 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 	getCkptResp, getErr = api.GetTrialMetricsByCheckpoint(
 		ctx, &apiv1.GetTrialMetricsByCheckpointRequest{
 			CheckpointUuid: checkpointUUID,
-			MetricGroup:    &metricGroup,
+			MetricGroup:    inferenceMetricGroup,
 		},
 	)
 	require.NoError(t, getErr)
@@ -857,12 +858,11 @@ func TestTrialSourceInfoModelVersion(t *testing.T) {
 	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
 	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
 
-	metricGroup := "inference"
 	getMVResp, getMVErr := api.GetTrialMetricsByModelVersion(
 		ctx, &apiv1.GetTrialMetricsByModelVersionRequest{
 			ModelName:       modelVersion.Model.Name,
 			ModelVersionNum: modelVersion.Version,
-			MetricGroup:     &metricGroup,
+			MetricGroup:     inferenceMetricGroup,
 		},
 	)
 	require.NoError(t, getMVErr)
