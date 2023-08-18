@@ -549,7 +549,7 @@ func (a *agentState) clearUnlessRecovered(
 	return nil
 }
 
-func listResourcePoolsWithReattachEnabled() []string {
+func listResourcePoolNames() []string {
 	rpConfigList := config.GetMasterConfig().ResourcePools
 	result := make([]string, 0, len(rpConfigList))
 	for _, rpConfig := range rpConfigList {
@@ -561,7 +561,7 @@ func listResourcePoolsWithReattachEnabled() []string {
 // retrieveAgentStates reconstructs AgentStates from the database for all resource pools that
 // have agent_container_reattachment enabled.
 func retrieveAgentStates() (map[agentID]agentState, error) {
-	rpNames := listResourcePoolsWithReattachEnabled()
+	rpNames := listResourcePoolNames()
 
 	if len(rpNames) == 0 {
 		return map[agentID]agentState{}, nil

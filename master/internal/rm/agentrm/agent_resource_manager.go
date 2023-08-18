@@ -73,16 +73,6 @@ func (a ResourceManager) ValidateResourcePool(ctx actor.Messenger, name string) 
 	return err
 }
 
-// IsReattachEnabled is true if any RP is configured to support it.
-func (a ResourceManager) IsReattachEnabled(ctx actor.Messenger) bool {
-	return true
-}
-
-// IsReattachEnabledForRP returns true, if the specified RP has AgentReattachEnabled.
-func (a ResourceManager) IsReattachEnabledForRP(ctx actor.Messenger, rpName string) bool {
-	return true
-}
-
 // CheckMaxSlotsExceeded checks if the job exceeded the maximum number of slots.
 func (a ResourceManager) CheckMaxSlotsExceeded(
 	ctx actor.Messenger, name string, slots int,

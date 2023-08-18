@@ -25,7 +25,6 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -61,6 +60,7 @@ type podMetadata struct {
 //	  +- requestQueue: queues requests to create / delete kubernetes resources.
 //	     +- requestProcessingWorkers: processes request to create / delete kubernetes resources.
 type pods struct {
+<<<<<<< HEAD
 	mu sync.RWMutex
 	wg waitgroupx.Group
 
@@ -75,6 +75,19 @@ type pods struct {
 	resourcePoolConfigs      []config.ResourcePoolConfig
 	baseContainerDefaults    *model.TaskContainerDefaultsConfig
 	credsDir                 string
+=======
+	cluster               *actor.Ref
+	namespace             string
+	namespaceToPoolName   map[string]string
+	masterServiceName     string
+	scheduler             string
+	slotType              device.Type
+	slotResourceRequests  config.PodSlotResourceRequests
+	fluentConfig          config.FluentConfig
+	resourcePoolConfigs   []config.ResourcePoolConfig
+	baseContainerDefaults *model.TaskContainerDefaultsConfig
+	credsDir              string
+>>>>>>> 223056185a (refactor: flipped k8's enable reattach to always true [DET-9726])
 
 	clientSet        *k8sClient.Clientset
 	masterIP         string
@@ -146,7 +159,6 @@ func Initialize(
 	masterServiceName string,
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
-	leaveKubernetesResources bool,
 	scheduler string,
 	slotType device.Type,
 	slotResourceRequests config.PodSlotResourceRequests,
@@ -176,8 +188,12 @@ func Initialize(
 		containerIDToPodName:         make(map[string]string),
 		containerIDToSchedulingState: make(map[string]sproto.SchedulingState),
 		podNameToContainerID:         make(map[string]string),
+<<<<<<< HEAD
 		podHandlerToMetadata:         make(map[*pod]podMetadata),
 		leaveKubernetesResources:     leaveKubernetesResources,
+=======
+		podHandlerToMetadata:         make(map[*actor.Ref]podMetadata),
+>>>>>>> 223056185a (refactor: flipped k8's enable reattach to always true [DET-9726])
 		slotType:                     slotType,
 		slotResourceRequests:         slotResourceRequests,
 		resourcePoolConfigs:          resourcePoolConfigs,
@@ -240,12 +256,6 @@ func (p *pods) Receive(ctx *actor.Context) error {
 			return err
 		}
 		p.startResourceRequestQueue(ctx)
-
-		if !p.leaveKubernetesResources {
-			if err := p.deleteDoomedKubernetesResources(ctx); err != nil {
-				return err
-			}
-		}
 
 	case actor.PostStop:
 
@@ -505,7 +515,6 @@ func (p *pods) reattachPod(
 		p.podInterfaces[pod.Namespace],
 		p.configMapInterfaces[pod.Namespace],
 		p.resourceRequestQueue,
-		p.leaveKubernetesResources,
 		p.slotType,
 		p.slotResourceRequests,
 		p.scheduler,
@@ -584,86 +593,6 @@ func (p *pods) deleteKubernetesResources(
 	for _, configMap := range configMaps.Items {
 		p.resourceRequestQueue.deleteKubernetesResources(configMap.Namespace, "", configMap.Name)
 	}
-}
-
-func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
-	var openAllocations []model.Allocation
-	if err := db.Bun().NewSelect().Model(&openAllocations).
-		Where("end_time IS NULL").
-		Scan(context.TODO()); err != nil {
-		return errors.Wrap(err, "error querying the database for open allocations")
-	}
-	openAllocationIDs := make(set.Set[model.AllocationID])
-	for _, alloc := range openAllocations {
-		openAllocationIDs.Insert(alloc.AllocationID)
-	}
-
-	listOptions := metaV1.ListOptions{LabelSelector: determinedLabel}
-	pods, err := p.listPodsInAllNamespaces(context.TODO(), listOptions)
-	if err != nil {
-		return errors.Wrap(err, "error listing existing pods")
-	}
-	toKillPods := &k8sV1.PodList{}
-	savedPodNames := make(set.Set[string])
-	for _, pod := range pods.Items {
-		if _, ok := p.namespaceToPoolName[pod.Namespace]; !ok {
-			continue
-		}
-
-		resourcePool := (func() string {
-			for _, c := range pod.Spec.Containers {
-				for _, e := range c.Env {
-					if e.Name == resourcePoolEnvVar {
-						return e.Value
-					}
-				}
-			}
-			return ""
-		})()
-
-		if resourcePool == "" {
-			ctx.Log().Debugf("deleting pod '%s' without environment variable '%s'",
-				pod.Name, resourcePoolEnvVar)
-			toKillPods.Items = append(toKillPods.Items, pod)
-			continue
-		}
-		if !isReattachEnabledForRP(resourcePool) {
-			ctx.Log().Debugf("deleting pod '%s' in resource pool '%s' since "+
-				"agent_reattach_enabled is disabled", pod.Name, resourcePool)
-			toKillPods.Items = append(toKillPods.Items, pod)
-			continue
-		}
-
-		if !openAllocationIDs.Contains(model.AllocationID(pod.Labels[determinedLabel])) {
-			ctx.Log().Warnf("deleting pod '%s', did not find open allocation '%s'",
-				pod.Name, pod.Labels[determinedLabel])
-			toKillPods.Items = append(toKillPods.Items, pod)
-			continue
-		}
-		savedPodNames.Insert(pod.Name)
-	}
-
-	configMaps, err := p.listConfigMapsInAllNamespaces(context.TODO(), listOptions)
-	if err != nil {
-		return errors.Wrap(err, "error listing existing config maps")
-	}
-	toKillConfigMaps := &k8sV1.ConfigMapList{}
-	for _, cm := range configMaps.Items {
-		if _, ok := p.namespaceToPoolName[cm.Namespace]; !ok {
-			continue
-		}
-
-		if savedPodNames.Contains(cm.Name) { // PodName is same as config map name.
-			continue
-		}
-
-		ctx.Log().Debugf("Deleting config map '%s' did not find a matching pod that will be restored",
-			cm.Name)
-		toKillConfigMaps.Items = append(toKillConfigMaps.Items, cm)
-	}
-
-	p.deleteKubernetesResources(ctx, toKillPods, toKillConfigMaps)
-	return nil
 }
 
 func (p *pods) startPodInformer(s *actor.System) error {
@@ -803,7 +732,6 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 		p.podInterfaces[msg.Namespace],
 		p.configMapInterfaces[msg.Namespace],
 		p.resourceRequestQueue,
-		p.leaveKubernetesResources,
 		p.slotType,
 		p.slotResourceRequests,
 		p.scheduler,

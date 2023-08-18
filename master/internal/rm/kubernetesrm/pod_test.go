@@ -47,7 +47,6 @@ func createPod(
 	podInterface := &mockPodInterface{}
 	configMapInterface := clientSet.CoreV1().ConfigMaps(namespace)
 	resourceRequestQueue := resourceHandler
-	leaveKubernetesResources := false
 	slotType := device.CUDA
 	slotResourceRequests := config.PodSlotResourceRequests{}
 

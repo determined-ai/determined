@@ -38,9 +38,7 @@ type ResourceManager interface {
 	SetGroupWeight(actor.Messenger, sproto.SetGroupWeight) error
 	SetGroupPriority(actor.Messenger, sproto.SetGroupPriority) error
 	ExternalPreemptionPending(actor.Messenger, sproto.PendingPreemption) error
-	IsReattachEnabled(ctx actor.Messenger) bool
 	IsReattachableOnlyAfterStarted(ctx actor.Messenger) bool
-	IsReattachEnabledForRP(ctx actor.Messenger, rpName string) bool
 
 	// Resource pool stuff.
 	GetResourcePoolRef(ctx actor.Messenger, name string) (*actor.Ref, error)

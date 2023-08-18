@@ -692,10 +692,6 @@ func (t *trial) maybeRestoreAllocation(ctx *actor.Context) (*model.Allocation, e
 		return nil, nil
 	case openAllocs == 1:
 		allocation := &allocations[0]
-		if !t.rm.IsReattachEnabledForRP(ctx, allocation.ResourcePool) {
-			return nil, nil
-		}
-
 		return allocation, nil
 	case openAllocs > 1:
 		const maxAllocsToLog int = 3
