@@ -498,6 +498,7 @@ class trialv1Trial(Printable):
     endTime: "typing.Optional[str]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
     runnerState: "typing.Optional[str]" = None
+    searcherMetricValue: "typing.Optional[float]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     taskId: "typing.Optional[str]" = None
     taskIds: "typing.Optional[typing.Sequence[str]]" = None
@@ -521,6 +522,7 @@ class trialv1Trial(Printable):
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
+        searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         taskId: "typing.Union[str, None, Unset]" = _unset,
         taskIds: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
@@ -547,6 +549,8 @@ class trialv1Trial(Printable):
             self.latestValidation = latestValidation
         if not isinstance(runnerState, Unset):
             self.runnerState = runnerState
+        if not isinstance(searcherMetricValue, Unset):
+            self.searcherMetricValue = searcherMetricValue
         if not isinstance(summaryMetrics, Unset):
             self.summaryMetrics = summaryMetrics
         if not isinstance(taskId, Unset):
@@ -583,6 +587,8 @@ class trialv1Trial(Printable):
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
         if "runnerState" in obj:
             kwargs["runnerState"] = obj["runnerState"]
+        if "searcherMetricValue" in obj:
+            kwargs["searcherMetricValue"] = float(obj["searcherMetricValue"]) if obj["searcherMetricValue"] is not None else None
         if "summaryMetrics" in obj:
             kwargs["summaryMetrics"] = obj["summaryMetrics"]
         if "taskId" in obj:
@@ -619,6 +625,8 @@ class trialv1Trial(Printable):
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
         if not omit_unset or "runnerState" in vars(self):
             out["runnerState"] = self.runnerState
+        if not omit_unset or "searcherMetricValue" in vars(self):
+            out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
         if not omit_unset or "summaryMetrics" in vars(self):
             out["summaryMetrics"] = self.summaryMetrics
         if not omit_unset or "taskId" in vars(self):
@@ -6681,6 +6689,7 @@ class v1LocationType(DetEnum):
     HYPERPARAMETERS = "LOCATION_TYPE_HYPERPARAMETERS"
     VALIDATIONS = "LOCATION_TYPE_VALIDATIONS"
     TRAINING = "LOCATION_TYPE_TRAINING"
+    CUSTOM_METRIC = "LOCATION_TYPE_CUSTOM_METRIC"
 
 class v1LogConfig(Printable):
     color: "typing.Optional[bool]" = None

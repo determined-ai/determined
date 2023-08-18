@@ -137,7 +137,7 @@ func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 	}
 	rows := []MetricNamesRow{}
 
-	metricNames := BunSelectMetricGroupNames().
+	metricNames := BunSelectMetricGroupNames().Distinct().
 		Where("experiment_id IN (?)", bun.In(experimentIDs))
 
 	err := Bun().NewSelect().TableExpr("(?) as metric_names", metricNames).

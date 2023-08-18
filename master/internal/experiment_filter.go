@@ -2,14 +2,10 @@ package internal
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/uptrace/bun"
-
-	"golang.org/x/exp/slices"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
@@ -29,7 +25,15 @@ const (
 	doesNotContain     operator          = "notContains"
 	empty              operator          = "isEmpty"
 	notEmpty           operator          = "notEmpty"
+
+	metricGroupValidation string = "validation_metrics"
+	metricGroupTraining   string = "avg_metrics"
+	metricIDTraining      string = "training"
+	metricIDValidation    string = "validation"
 )
+
+var metricIDTemplate = regexp.MustCompile(
+	`(?P<group>[[:print:]]+?)\.(?P<name>[[:print:]]+)\.(?P<qualifier>min|max|mean|last)`)
 
 type (
 	filterConjunction string
@@ -371,64 +375,22 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			if err != nil {
 				return nil, err
 			}
-		case projectv1.LocationType_LOCATION_TYPE_VALIDATIONS.String():
-			metricName := strings.TrimPrefix(e.ColumnName, "validation.")
+		case projectv1.LocationType_LOCATION_TYPE_VALIDATIONS.String(),
+			projectv1.LocationType_LOCATION_TYPE_TRAINING.String(),
+			projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC.String():
 			queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
 			if e.Type != nil {
 				queryColumnType = *e.Type
 			}
-			col := `e.validation_metrics->>?`
-			var queryArgs []interface{}
-			var queryString string
-			switch queryColumnType {
-			case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
-				col = fmt.Sprintf(`(%v)::float8`, col)
-			}
-			switch *e.Operator {
-			case contains:
-				queryArgs = append(queryArgs, metricName, fmt.Sprintf("%%%s%%", *e.Value))
-				queryString = fmt.Sprintf("%s LIKE ?", col)
-			case doesNotContain:
-				queryArgs = append(queryArgs, metricName, fmt.Sprintf("%%%s%%", *e.Value))
-				queryString = fmt.Sprintf("%s NOT LIKE ?", col)
-			case empty, notEmpty:
-				queryArgs = append(queryArgs, metricName, bun.Safe(oSQL))
-				queryString = fmt.Sprintf("%s ?", col)
-			default:
-				queryArgs = append(queryArgs, metricName,
-					bun.Safe(oSQL), *e.Value)
-				queryString = fmt.Sprintf("%s ? ?", col)
-			}
-			if c != nil && *c == or {
-				q.WhereOr(queryString, queryArgs...)
-			} else {
-				q.Where(queryString, queryArgs...)
-			}
-		case projectv1.LocationType_LOCATION_TYPE_TRAINING.String():
-			queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
-			if e.Type != nil {
-				queryColumnType = *e.Type
-			}
-			metricDetails := strings.Split(e.ColumnName, ".")
-			metricQualifier := metricDetails[len(metricDetails)-1]
-			metricName := strings.TrimSuffix(
-				strings.TrimPrefix(e.ColumnName, "training."),
-				"."+metricQualifier)
-			if !slices.Contains(SummaryMetricStatistics, metricQualifier) {
-				return nil, status.Errorf(codes.InvalidArgument,
-					"sort training metrics by statistic: last, max, min, or mean")
+			metricGroup, metricName, metricQualifier, err := parseMetricsName(e.ColumnName)
+			if err != nil {
+				return nil, err
 			}
 			var col string
 			var queryArgs []interface{}
 			var queryString string
-			if metricQualifier == "mean" {
-				locator := bun.Safe("trials.summary_metrics->'avg_metrics'")
-				col = fmt.Sprintf(`(?->?->>'sum')::float8 / (?->?->>'count')::int`)
-				queryArgs = append(queryArgs, locator, metricName, locator, metricName)
-			} else {
-				col = `trials.summary_metrics->'avg_metrics'->?->>?`
-				queryArgs = append(queryArgs, metricName, metricQualifier)
-			}
+			col = `trials.summary_metrics->?->?->>?`
+			queryArgs = append(queryArgs, metricGroup, metricName, metricQualifier)
 			if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
 				col = fmt.Sprintf(`(%v)::float8`, col)
 			}
@@ -485,4 +447,27 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 		}
 	}
 	return q, nil
+}
+
+// training.loss.min -> avg_metrics, loss, min
+// group_a.value.last -> group_a, value, last
+// group_b.value.a.last -> group_b, value.a, last .
+func parseMetricsName(str string) (string, string, string, error) {
+	matches := metricIDTemplate.FindStringSubmatch(str)
+	if len(matches) < 4 {
+		return "", "", "", fmt.Errorf("%s is not a valid metrics id", str)
+	}
+
+	metricGroup := matches[1]
+	metricName := matches[2]
+	metricQualifier := matches[3]
+
+	if metricGroup == metricIDTraining {
+		metricGroup = metricGroupTraining
+	}
+	if metricGroup == metricIDValidation {
+		metricGroup = metricGroupValidation
+	}
+
+	return metricGroup, metricName, metricQualifier, nil
 }

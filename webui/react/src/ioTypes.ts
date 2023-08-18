@@ -311,6 +311,7 @@ export const ioLocationType: io.Type<V1LocationType> = io.keyof({
   [V1LocationType.HYPERPARAMETERS]: null,
   [V1LocationType.TRAINING]: null,
   [V1LocationType.VALIDATIONS]: null,
+  [V1LocationType.CUSTOMMETRIC]: null,
   [V1LocationType.UNSPECIFIED]: null,
 });
 export const ioColumnType: io.Type<V1ColumnType> = io.keyof({

@@ -2217,29 +2217,13 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 			hps := strings.ReplaceAll(strings.TrimPrefix(paramDetail[0], "hp."), ".", "'->'")
 			experimentQuery.OrderExpr(
 				fmt.Sprintf("e.config->'hyperparameters'->'%s' %s", hps, sortDirection))
-		case strings.HasPrefix(paramDetail[0], "validation."):
-			metricName := strings.TrimPrefix(paramDetail[0], "validation.")
-			experimentQuery.OrderExpr(
-				fmt.Sprintf("e.validation_metrics->'%s' %s",
-					metricName, sortDirection))
-		case strings.HasPrefix(paramDetail[0], "training."):
-			metricDetails := strings.Split(paramDetail[0], ".")
-			metricQualifier := metricDetails[len(metricDetails)-1]
-			metricName := strings.TrimSuffix(
-				strings.TrimPrefix(paramDetail[0], "training."),
-				"."+metricQualifier)
-			if !slices.Contains(SummaryMetricStatistics, metricQualifier) {
-				return status.Errorf(codes.InvalidArgument,
-					"sort training metrics by statistic: last, max, min, or mean")
+		case strings.Contains(paramDetail[0], "."):
+			metricGroup, metricName, metricQualifier, err := parseMetricsName(paramDetail[0])
+			if err != nil {
+				return err
 			}
-			if metricQualifier == "mean" { //nolint: goconst
-				locator := bun.Safe("trials.summary_metrics->'avg_metrics'")
-				experimentQuery.OrderExpr("(?0->?1->>'sum')::float8 / (?0->?1->>'count')::int ?2",
-					locator, metricName, bun.Safe(sortDirection))
-			} else {
-				experimentQuery.OrderExpr("trials.summary_metrics->'avg_metrics'->?->>? ?",
-					metricName, metricQualifier, bun.Safe(sortDirection))
-			}
+			experimentQuery.OrderExpr("trials.summary_metrics->?->?->>? ?",
+				metricGroup, metricName, metricQualifier, bun.Safe(sortDirection))
 		default:
 			if _, ok := orderColMap[paramDetail[0]]; !ok {
 				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
@@ -2351,15 +2335,7 @@ func (a *apiServer) SearchExperiments(
 		Column("trials.experiment_id").
 		Column("trials.runner_state").
 		Column("trials.checkpoint_count").
-		ColumnExpr(`trials.summary_metrics || jsonb_build_object(
-				'avg_metrics',
-					(SELECT jsonb_object_agg(m.key, CASE WHEN m.value -> 'type' = '"number"'::jsonb
-						THEN m.value - '{sum, count}'::text[] ||
-							jsonb_build_object(
-								'mean', (m.value ->> 'sum')::float8 / (m.value ->> 'count')::int)
-						ELSE m.value END)
-					FROM jsonb_each(summary_metrics -> 'avg_metrics') AS m(key, value))
-				) AS summary_metrics`).
+		Column("trials.summary_metrics").
 		ColumnExpr(`(
 				SELECT tt.task_id FROM trial_id_task_id tt
 				JOIN tasks ta ON tt.task_id = ta.task_id
@@ -2398,6 +2374,7 @@ func (a *apiServer) SearchExperiments(
 				'num_inputs', bv.metrics->'num_inputs') AS best_validation`).
 		ColumnExpr("null::jsonb AS best_checkpoint").
 		ColumnExpr("null::jsonb AS wall_clock_time").
+		ColumnExpr("searcher_metric_value_signed AS searcher_metric_value").
 		Join("LEFT JOIN validations bv ON trials.best_validation_id = bv.id").
 		Join("LEFT JOIN validations lv ON trials.latest_validation_id = lv.id").
 		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").

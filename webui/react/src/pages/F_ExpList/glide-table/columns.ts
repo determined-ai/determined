@@ -415,8 +415,7 @@ export const searcherMetricsValColumn = (
     id: 'searcherMetricsVal',
     isNumerical: true,
     renderer: (record: ExperimentWithTrial) => {
-      const sMetric = record.experiment.config.searcher.metric;
-      const sMetricValue = record.bestTrial?.bestValidationMetric?.metrics?.[sMetric];
+      const sMetricValue = record.bestTrial?.searcherMetricsVal;
 
       let theme: Partial<GTheme> = {};
       if (heatmapProps && sMetricValue) {
@@ -494,7 +493,7 @@ export const defaultNumberColumn = (
     renderer: (record: ExperimentWithTrial) => {
       const data = isString(dataPath) ? getPath<number>(record, dataPath) : undefined;
       let theme: Partial<GTheme> = {};
-      if (heatmapProps && data) {
+      if (heatmapProps && data !== undefined) {
         const { min, max } = heatmapProps;
         theme = {
           accentLight: getHeatmapColor(min, max, data),

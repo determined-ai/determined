@@ -22,6 +22,8 @@ enum LocationType {
   LOCATION_TYPE_VALIDATIONS = 3;
   // Column is located on the experiment's training steps
   LOCATION_TYPE_TRAINING = 4;
+  // Column is located on the experiment's custom metric
+  LOCATION_TYPE_CUSTOM_METRIC = 5;
 }
 
 // ColumnType indicates the type of data under the column

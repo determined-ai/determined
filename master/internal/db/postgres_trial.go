@@ -439,6 +439,10 @@ func jsonAnyToFloat(v any) float64 {
 		return f
 	}
 
+	if f, ok := v.(int); ok {
+		return float64(f)
+	}
+
 	log.Errorf("summary metric value expected as float instead got %T %v", v, v)
 	return 0.0
 }
@@ -529,6 +533,7 @@ func calculateNewSummaryMetrics(
 		if _, ok = summaryMetric["count"]; !ok {
 			summaryMetric["max"] = replaceSpecialFloatsWithString(metricFloatValue)
 			summaryMetric["min"] = replaceSpecialFloatsWithString(metricFloatValue)
+			summaryMetric["mean"] = replaceSpecialFloatsWithString(metricFloatValue)
 			summaryMetric["sum"] = replaceSpecialFloatsWithString(metricFloatValue)
 			summaryMetric["count"] = 1
 		} else {
@@ -540,6 +545,8 @@ func calculateNewSummaryMetrics(
 				jsonAnyToFloat(summaryMetric["sum"]) + metricFloatValue)
 			// Go parsing odditity treats JSON whole numbers as floats.
 			summaryMetric["count"] = int(jsonAnyToFloat(summaryMetric["count"])) + 1
+			summaryMetric["mean"] = replaceSpecialFloatsWithString(
+				jsonAnyToFloat(summaryMetric["sum"]) / jsonAnyToFloat(summaryMetric["count"]))
 		}
 	}
 
