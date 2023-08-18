@@ -2342,6 +2342,9 @@ jobs:
         type: string
         default: |
           task_container_defaults:
+            slurm:
+              sbatch_args:
+                - --time=04:00:00
             environment_variables:
               # Some ports are not working, disable them so distributed jobs work.
               - NCCL_IB_HCA=mlx6_0:0
@@ -3468,6 +3471,9 @@ workflows:
           mark: e2e_slurm_misconfigured
           master_config: |
             task_container_defaults:
+            slurm:
+              sbatch_args:
+                - --time=04:00:00
               environment_variables:
                 # Some ports are not working, disable them so distributed jobs work.
                 - NCCL_IB_HCA=mlx6_0:0
@@ -4345,6 +4351,9 @@ workflows:
             - package-and-push-system-local
           master_config: |
             task_container_defaults:
+            slurm:
+              sbatch_args:
+                - --time=04:00:00
               # The current image must be created in the launcher account before running this test
               # cd /lustre/ssd/foundation_engineering/
               # enroot import docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
@@ -4395,6 +4404,9 @@ workflows:
             # the error is "failed to create experiment: slots requested exceeds cluster capacity" instead of the expected message.
             master_config: |
                 task_container_defaults:
+                  slurm:
+                    sbatch_args:
+                      - --time=04:00:00
                   environment_variables:
                     # Some ports are not working, disable them so distributed jobs work.
                     - NCCL_IB_HCA=mlx6_0:0
