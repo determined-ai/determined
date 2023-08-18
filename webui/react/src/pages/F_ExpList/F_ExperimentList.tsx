@@ -726,7 +726,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 data={experimentsIfLoaded}
                 dataTotal={isPagedView ? experiments.length : Loadable.getOrElse(0, total)}
                 formStore={formStore}
-                handleScroll={isPagedView ? undefined : handleScroll}
                 heatmapOn={settings.heatmapOn}
                 heatmapSkipped={settings.heatmapSkipped}
                 height={height}
@@ -751,6 +750,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 staticColumns={STATIC_COLUMNS}
                 onContextMenuComplete={handleContextMenuComplete}
                 onIsOpenFilterChange={onIsOpenFilterChange}
+                onScroll={isPagedView ? undefined : handleScroll}
                 onSortChange={onSortChange}
               />
             </ComparisonView>

@@ -85,12 +85,12 @@ export interface GlideTableProps {
   data: Loadable<ExperimentWithTrial>[];
   dataTotal: number;
   formStore: FilterFormStore;
-  handleScroll?: (r: Rectangle) => void;
   heatmapOn: boolean;
   heatmapSkipped: string[];
   height: number;
   onContextMenuComplete?: (action: ExperimentAction, id: number) => void;
   onIsOpenFilterChange: (value: boolean) => void;
+  onScroll?: (r: Rectangle) => void;
   onSortChange: (sorts: Sort[]) => void;
   page: number;
   pinnedColumnsCount: number;
@@ -118,8 +118,8 @@ export interface GlideTableProps {
  * needed for the table to be properly initialized.
  * We set the scroll position to the persisted page
  * this many times, and then consider the scroll position to be
- * 'set' for purposes of the `handleScroll` in the parent component.
- * Otherwise handleScroll would erroneously set the page to 0
+ * 'set' for purposes of the `onScroll` in the parent component.
+ * Otherwise `onScroll` would erroneously set the page to 0
  * when the table is first initialized.
  */
 export const SCROLL_SET_COUNT_NEEDED = 3;
@@ -142,12 +142,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   data,
   dataTotal,
   formStore,
-  handleScroll,
   heatmapOn,
   heatmapSkipped,
   height,
   onContextMenuComplete,
   onIsOpenFilterChange,
+  onScroll,
   onSortChange,
   page,
   pinnedColumnsCount,
@@ -875,7 +875,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           onHeaderClicked={onHeaderClicked}
           onHeaderContextMenu={onHeaderClicked} // right-click
           onItemHovered={onColumnHovered}
-          onVisibleRegionChanged={handleScroll}
+          onVisibleRegionChanged={onScroll}
         />
       </div>
       <TableActionMenu {...menuProps} open={menuIsOpen} />
