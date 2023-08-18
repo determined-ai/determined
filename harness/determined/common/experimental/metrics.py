@@ -39,8 +39,6 @@ class TrialMetrics:
             batch_metrics=metric_report.metrics.get("batch_metrics", None),
         )
 
-
-class StepsBackwardCompat:
     @property
     def steps_completed(self) -> int:
         """@deprecated: Use total_batches instead."""
@@ -51,7 +49,7 @@ class StepsBackwardCompat:
         self.total_batches = value
 
 
-class TrainingMetrics(TrialMetrics, StepsBackwardCompat):
+class TrainingMetrics(TrialMetrics):
     """
     Specifies a training metric report that the trial reported.
     """
@@ -69,7 +67,7 @@ class TrainingMetrics(TrialMetrics, StepsBackwardCompat):
         return cast("TrainingMetrics", super()._from_bindings(metric_report, util._LEGACY_TRAINING))
 
 
-class ValidationMetrics(TrialMetrics, StepsBackwardCompat):
+class ValidationMetrics(TrialMetrics):
     """
     Specifies a validation metric report that the trial reported.
     """
@@ -88,7 +86,7 @@ class ValidationMetrics(TrialMetrics, StepsBackwardCompat):
         )
 
 
-class InferenceMetrics(TrialMetrics, StepsBackwardCompat):
+class InferenceMetrics(TrialMetrics):
     """
     Specifies a validation metric report that the trial reported.
     """

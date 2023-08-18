@@ -403,10 +403,6 @@ def torch_batch_process(
         # they would hang forever as other workers never hit that last batch_idx.
         # To avoid the issue, we calculate and take the ceiling of the iteration count to ensure
         # all workers iterate for the same number of times.
-        logging.warning(
-            f"logging with dataset_len: {dataset_len}, batch_size: {batch_size}, "
-            f"total_worker: {total_worker}"
-        )
         dist_dataset_batch_count = math.ceil(dataset_len / batch_size / total_worker)
         iterate_length = _validate_iterate_length(max_batches, dist_dataset_batch_count)
 

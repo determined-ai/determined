@@ -13,7 +13,6 @@ with warnings.catch_warnings(record=True):
         TrialReference,
         TrialOrderBy,
         TrialSortBy,
-        # TrialSourceInfoMetrics,
         metrics,
     )
 

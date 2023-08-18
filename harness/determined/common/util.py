@@ -32,8 +32,6 @@ _yaml = yaml.YAML(typ="safe", pure=True)
 
 _LEGACY_TRAINING = "training"
 _LEGACY_VALIDATION = "validation"
-_INFERENCE = "inference"
-
 
 T = TypeVar("T")
 

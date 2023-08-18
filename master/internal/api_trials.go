@@ -899,11 +899,6 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 			return err
 		}
 		if len(res) > 0 {
-			// for i := 0; i < len(res); i++ {
-			// 	// TODO we are giving too precise timestamps for our Python parsing code somehow.
-			// 	res[i].EndTime = timestamppb.New(res[i].EndTime.AsTime().Truncate(time.Millisecond))
-			// }
-
 			if err := ctx.Err(); err != nil {
 				return err
 			}
