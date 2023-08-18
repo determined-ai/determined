@@ -22,8 +22,8 @@ Version 0.24.0
 
 **New Features**
 
--  Environments: Add the following PyTorch2.0 images (experimental): ``pytorch==2.0.1``,
-   ``python==3.10.12``, and ``CUDA==11.8``.
+-  Environments: Add experimental PyTorch 2.0 images containing PyTorch 2.0.1, Python 3.10.12, and
+   (for the GPU image) CUDA 11.8.
 
 **Bug Fixes**
 
