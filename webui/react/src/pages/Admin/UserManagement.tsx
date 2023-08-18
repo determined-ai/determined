@@ -158,7 +158,11 @@ const UserManagement: React.FC = () => {
 
   const filteredUsers = settings.name
     ? users.filter((user) => {
-        return settings.name && (user.displayName || user.username).includes(settings.name);
+        return (
+          settings.name &&
+          (user.displayName?.toLowerCase?.().includes(settings.name.toLowerCase()) ||
+            user.username?.toLowerCase?.().includes(settings.name.toLowerCase()))
+        );
       })
     : users;
 
