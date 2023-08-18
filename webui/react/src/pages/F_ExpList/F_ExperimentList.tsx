@@ -687,10 +687,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         setExpListView={updateExpListView}
         setVisibleColumns={setVisibleColumns}
         sorts={sorts}
-        toggleComparisonView={handleToggleComparisonView}
         total={total}
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
+        onComparisonViewToggle={handleToggleComparisonView}
         onHeatmapToggle={handleHeatmapToggle}
         onIsOpenFilterChange={handleIsOpenFilterChange}
         onRowHeightChange={onRowHeightChange}

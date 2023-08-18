@@ -89,6 +89,7 @@ interface Props {
   isOpenFilter: boolean;
   onActionComplete?: () => Promise<void>;
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
+  onComparisonViewToggle?: () => void;
   onHeatmapToggle?: (heatmapOn: boolean) => void;
   onIsOpenFilterChange?: (value: boolean) => void;
   onRowHeightChange: (r: RowHeight) => void;
@@ -101,7 +102,6 @@ interface Props {
   setExpListView: (view: ExpListView) => void;
   setVisibleColumns: (newColumns: string[]) => void;
   sorts: Sort[];
-  toggleComparisonView?: () => void;
   total: Loadable<number>;
 }
 
@@ -118,6 +118,7 @@ const TableActionBar: React.FC<Props> = ({
   isOpenFilter,
   onActionComplete,
   onActionSuccess,
+  onComparisonViewToggle,
   onHeatmapToggle,
   onIsOpenFilterChange,
   onRowHeightChange,
@@ -130,7 +131,6 @@ const TableActionBar: React.FC<Props> = ({
   setExpListView,
   setVisibleColumns,
   sorts,
-  toggleComparisonView,
   total,
 }) => {
   const permissions = usePermissions();
@@ -406,11 +406,11 @@ const TableActionBar: React.FC<Props> = ({
               />
             </Tooltip>
           )}
-          {!!toggleComparisonView && (
+          {!!onComparisonViewToggle && (
             <Button
               hideChildren={isMobile}
               icon={<Icon name={compareViewOn ? 'panel-on' : 'panel'} title="compare" />}
-              onClick={toggleComparisonView}>
+              onClick={onComparisonViewToggle}>
               Compare
             </Button>
           )}
