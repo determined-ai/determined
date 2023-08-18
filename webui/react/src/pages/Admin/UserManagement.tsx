@@ -156,13 +156,12 @@ const UserManagement: React.FC = () => {
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], loadableUsers);
 
-  const filteredUsers = settings.name
-    ? users.filter((user) => {
-        return (
-          settings.name && new RegExp(settings.name, 'i').test(user.displayName || user.username)
-        );
-      })
-    : users;
+  const nameRegex = useMemo(() => {
+    if (settings.name === undefined) return new RegExp('.*');
+    const escapedName = settings.name?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(escapedName, 'i');
+  }, [settings.name]);
+  const filteredUsers = users.filter((user) => nameRegex.test(user.displayName || user.username));
 
   const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyUsers } = usePermissions();
