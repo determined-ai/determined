@@ -158,7 +158,9 @@ const UserManagement: React.FC = () => {
 
   const filteredUsers = settings.name
     ? users.filter((user) => {
-        return settings.name && (user.displayName || user.username).includes(settings.name);
+        return (
+          settings.name && new RegExp(settings.name, 'i').test(user.displayName || user.username)
+        );
       })
     : users;
 
