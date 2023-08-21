@@ -21,22 +21,22 @@ FOR EACH ROW EXECUTE PROCEDURE stream_trial_seq_modify();
 
 -- helper function to create trial jsonb object for streaming
 CREATE OR REPLACE FUNCTION stream_trial_notify(
-    old jsonb, oldproj integer, new jsonb, newproj integer
+    before jsonb, beforeproj integer, after jsonb, afterproj integer
 ) RETURNS integer AS $$
 DECLARE
     output jsonb = NULL;
     temp jsonb = NULL;
 BEGIN
-    IF old IS NOT NULL THEN
-        temp = old || jsonb_object_agg('project_id', oldproj);
-        output = jsonb_object_agg('old', temp);
+    IF before IS NOT NULL THEN
+        temp = before || jsonb_object_agg('project_id', beforeproj);
+        output = jsonb_object_agg('before', temp);
     END IF;
-    IF new IS NOT NULL THEN
-        temp = new || jsonb_object_agg('project_id', newproj);
+    IF after IS NOT NULL THEN
+        temp = after || jsonb_object_agg('project_id', afterproj);
         IF output IS NULL THEN
-            output = jsonb_object_agg('new', temp);
+            output = jsonb_object_agg('after', temp);
         ELSE
-            output = output || jsonb_object_agg('new', temp);
+            output = output || jsonb_object_agg('after', temp);
         END IF;
     END IF;
     PERFORM pg_notify('stream_trial_chan', output::text);

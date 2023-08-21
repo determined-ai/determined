@@ -1240,9 +1240,9 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	webhooks.Init()
 	defer webhooks.Deinit()
 
-	pss := stream.NewPubSubSystem()
-	pss.Start(context.Background())
-	m.echo.GET("/stream", api.WebSocketRoute(pss.Websocket))
+	ps := stream.NewPublisherSet()
+	ps.Start(context.Background())
+	m.echo.GET("/stream", api.WebSocketRoute(ps.Websocket))
 
 	return m.startServers(ctx, cert)
 }

@@ -18,54 +18,77 @@ import (
 // JsonB is the golang equivalent of the postgres jsonb column type.
 type JsonB interface{}
 
-// PubSubSystem contains all publishers, and handles all websockets.  It will connect each websocket
+// PublisherSet contains all publishers, and handles all websockets.  It will connect each websocket
 // with the appropriate set of publishers, based on that websocket's subscriptions.
 //
-// There is one PubSubSystem for the whole process.  It has one Publisher per streamable type.
-type PubSubSystem struct {
+// There is one PublisherSet for the whole process.  It has one Publisher per streamable type.
+type PublisherSet struct {
 	Trials *stream.Publisher[*TrialMsg]
 	// Experiments *stream.Publisher[*ExperimentMsg]
 }
 
-// SubscriptionSet is a set of all subscribers for this PubSubSystem.
+// SubscriptionSet is a set of all subscribers for this PublisherSet.
 //
 // There is one SubscriptionSet for each websocket connection.  It has one SubscriptionManager per
 // streamable type.
 type SubscriptionSet struct {
-	Trials SubscriptionManager[*TrialMsg, TrialFilterMod]
-	// Experiments SubscriptionManager[*ExperimentMsg, ExperimentFilterMod]
+	Trials *subscriptionState[*TrialMsg, TrialSubscriptionSpec]
+	// Experiments *subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]
+}
+
+// subscriptionState contains per-type subscription state
+type subscriptionState[T stream.Msg, S any] struct {
+	Subscription stream.Subscription[T]
+	FilterMaker FilterMaker[T, S]
+	CollectStartupMsgs CollectStartupMsgsFunc[S]
+	CollectSubscriptionModMsgs CollectSubscriptionModMsgsFunc[S]
+}
+
+type CollectStartupMsgsFunc[S any] func(known string, spec S, ctx context.Context) (
+	[]*websocket.PreparedMessage, error,
+)
+
+type CollectSubscriptionModMsgsFunc[S any] func(addSpec S, ctx context.Context) (
+	[]*websocket.PreparedMessage, error,
+)
+
+func NewPublisherSet() PublisherSet {
+	return PublisherSet {
+		Trials: stream.NewPublisher[*TrialMsg](),
+	}
 }
 
 // StartupMsg is the first message a streaming client sends.
 //
 // It declares initially known keys and also configures the initial subscriptions for the stream.
 type StartupMsg struct {
-	Known KeySet `json:"known"`
-	Subscribe AddOrDropSet `json:"subscribe"`
+	Known KnownKeySet `json:"known"`
+	Subscribe SubscriptionSpecSet `json:"subscribe"`
 }
 
-// FilterModSet is a subsequent message from a streaming client.
+// SubscriptionModMsg is a subsequent message from a streaming client.
 //
 // It allows removing old subscriptions and adding new ones.
-type FilterModSet struct {
-	Add AddOrDropSet `json:"add"`
-	Drop AddOrDropSet `json:"drop"`
+type SubscriptionModMsg struct {
+	Add SubscriptionSpecSet `json:"add"`
+	Drop SubscriptionSpecSet `json:"drop"`
 }
 
-// KeySet allows a client to describe which primary keys it knows of as existing, so the server
-// can respond with a different KeySet of deleted messages of client-known keys that don't exist.
+// KnownKeySet allows a client to describe which primary keys it knows of as existing, so the server
+// can respond with a different KnownKeySet of deleted messages of client-known keys that don't
+// exist.
 //
-// Each field of a KeySet is a comma-separated list of int64s and ranges like "a,b-c,d".
-type KeySet struct {
+// Each field of a KnownKeySet is a comma-separated list of int64s and ranges like "a,b-c,d".
+type KnownKeySet struct {
 	Trials string `json:"trials"`
 	// Experiments string `json:"experiments"`
 }
 
-// AddOrDropSet is both the type for .Add and .Drop of the FilterModSet type that a streaming
+// SubscriptionSpecSet is both the type for .Add and .Drop of the SubscriptionModMsg type that a streaming
 // client can write to the websocket to change their message type.
-type AddOrDropSet struct {
-	Trials *TrialFilterMod `json:"trials"`
-	// Experiments *ExperimentFilterMod `json:"experiments"`
+type SubscriptionSpecSet struct {
+	Trials *TrialSubscriptionSpec `json:"trials"`
+	// Experiments *ExperimentSubscriptionSpec `json:"experiments"`
 }
 
 // FilterMaker is a stateful object for building efficient filters.
@@ -73,34 +96,17 @@ type AddOrDropSet struct {
 // For example, if streaming clients can subscribe to a type Thing by it's primary key, the
 // ThingFilterMaker should probably generate a filter function that check if a given ThingMsg.ID
 // appears in a map, for O(1) lookups during filtering.
-type FilterMaker[T stream.Msg] interface {
-	AddSpec(spec FilterMod)
-	DropSpec(spec FilterMod)
+type FilterMaker[T stream.Msg, S any] interface {
+	AddSpec(spec S)
+	DropSpec(spec S)
 	// MakeFilter should return a nil function if it would always return false.
 	MakeFilter() func(T) bool
 }
 
-// FilterMod is what a streaming client specifies through the REST API.  There should be one
-// FilterMod implementation per streamable type.
-type FilterMod interface {
-	// Startup emits deletion and upsert messages for known ids and subscription.  Startup is
-	// expected to be called only for the startup message from the streaming client.
-	Startup(known string, ctx context.Context) ([]*websocket.PreparedMessage, error)
-	// Modify emits messages matching newly-added subcscriptions.  Modify is meant to be called once
-	// per FilterModSet message from the streaming client.
-	Modify(ctx context.Context) ([]*websocket.PreparedMessage, error)
-}
-
-func NewPubSubSystem() PubSubSystem {
-	return PubSubSystem {
-		Trials: stream.NewPublisher[*TrialMsg](),
-	}
-}
-
-func (pss PubSubSystem) Start(ctx context.Context) {
+func (ps PublisherSet) Start(ctx context.Context) {
 	// start each publisher
-	go publishLoop(ctx, "stream_trial_chan", pss.Trials)
-	// go publishLoop(ctx, "stream_experiment_chan", pss.Experiments)
+	go publishLoop(ctx, "stream_trial_chan", ps.Trials)
+	// go publishLoop(ctx, "stream_experiment_chan", ps.Experiments)
 }
 
 func writeAll(socket *websocket.Conn, msgs []*websocket.PreparedMessage) error {
@@ -114,11 +120,11 @@ func writeAll(socket *websocket.Conn, msgs []*websocket.PreparedMessage) error {
 }
 
 // Websocket is an Echo websocket endpoint.
-func (pss PubSubSystem) Websocket(socket *websocket.Conn, c echo.Context) error {
+func (ps PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
 	ctx := c.Request().Context()
 	streamer := stream.NewStreamer()
 
-	ss := NewSubscriptionSet(streamer, pss)
+	ss := NewSubscriptionSet(streamer, ps)
 	defer ss.UnsubscribeAll()
 
 	// First read the startup message.
@@ -161,15 +167,15 @@ func (pss PubSubSystem) Websocket(socket *websocket.Conn, c echo.Context) error 
 		streamer.Close()
 	}()
 
-	// reads is where we collect FilterModSet messages we read from the websocket until
+	// reads is where we collect SubscriptionModMsg messages we read from the websocket until
 	// waitForSomething() delivers those messages to the websocket goroutine.
-	var reads []FilterModSet
+	var reads []SubscriptionModMsg
 
 	// always be reading for new subscriptions
 	go func() {
 		defer streamer.Close()
 		for {
-			var mods FilterModSet
+			var mods SubscriptionModMsg
 			err := socket.ReadJSON(&mods)
 			if err != nil {
 				if websocket.IsUnexpectedCloseError(
@@ -179,7 +185,7 @@ func (pss PubSubSystem) Websocket(socket *websocket.Conn, c echo.Context) error 
 				}
 				break
 			}
-			// wake up streamer goroutine with the newly-read FilterModSet
+			// wake up streamer goroutine with the newly-read SubscriptionModMsg
 			func(){
 				streamer.Cond.L.Lock()
 				defer streamer.Cond.L.Unlock()
@@ -190,7 +196,7 @@ func (pss PubSubSystem) Websocket(socket *websocket.Conn, c echo.Context) error 
 	}()
 
 	// waitForSomething returns a tuple of (mods, msgs, closed)
-	waitForSomething := func() ([]FilterModSet, []*websocket.PreparedMessage, bool) {
+	waitForSomething := func() ([]SubscriptionModMsg, []*websocket.PreparedMessage, bool) {
 		streamer.Cond.L.Lock()
 		defer streamer.Cond.L.Unlock()
 		streamer.Cond.Wait()
@@ -204,19 +210,22 @@ func (pss PubSubSystem) Websocket(socket *websocket.Conn, c echo.Context) error 
 
 	for {
 		mods, msgs, closed := waitForSomething()
+
 		// were we closed?
 		if closed {
 			return nil
 		}
+
 		// any modifications to our subscriptions?
-		if len(mods) > 0 {
-			temp, err := ss.Apply(mods, ctx)
+		for _, mod := range mods {
+			temp, err := ss.SubscriptionMod(mod, ctx)
 			if err != nil {
 				return errors.Wrapf(err, "error modifying subscriptions")
 			}
 			msgs = append(msgs, temp...)
-			// TODO: also append a sync message (or one sync per FilterModSet)
+			// TODO: also append a sync message (or one sync per SubscriptionModMsg)
 		}
+
 		// write msgs to the websocket
 		err = writeAll(socket, msgs)
 		if err != nil {
@@ -314,7 +323,7 @@ func doPublishLoop[T stream.Msg](
 				}
 			}
 			// Broadcast all the events.
-			stream.Broadcast(publisher, events)
+			publisher.Broadcast(events)
 			break
 		}
 	}
@@ -322,17 +331,49 @@ func doPublishLoop[T stream.Msg](
 	return nil
 }
 
-func NewSubscriptionSet(streamer *stream.Streamer, pss PubSubSystem) SubscriptionSet {
+func NewSubscriptionSet(streamer *stream.Streamer, ps PublisherSet) SubscriptionSet {
 	return SubscriptionSet{
-		Trials: NewSubscriptionManager[*TrialMsg, TrialFilterMod](
-			streamer, pss.Trials, NewTrialFilterMaker(),
-		),
+		Trials: &subscriptionState[*TrialMsg, TrialSubscriptionSpec]{
+			stream.NewSubscription(streamer, ps.Trials),
+			NewTrialFilterMaker(),
+			TrialCollectStartupMsgs,
+			TrialCollectSubscriptionModMsgs,
+		},
 	}
 }
 
-func (ss *SubscriptionSet) UnsubscribeAll() {
-	ss.Trials.Unsubscribe()
-	// ss.Exps.Unsubscribe()
+func startup[T stream.Msg, S any](
+	msgs []*websocket.PreparedMessage,
+	err error,
+	ctx context.Context,
+	state *subscriptionState[T, S],
+	known string,
+	spec *S,
+) ([]*websocket.PreparedMessage, error) {
+	if err != nil {
+		return nil, err
+	}
+	if spec == nil {
+		// no change
+		return msgs, nil
+	}
+
+	// configure intial filter
+	state.FilterMaker.AddSpec(*spec)
+
+	// Sync subscription with publishers.  Do this before initial scan so that we don't
+	// miss any events.
+	filter := state.FilterMaker.MakeFilter()
+	state.Subscription.Configure(filter)
+
+	// Scan for historical msgs matching newly-added subscriptions.
+	var newmsgs []*websocket.PreparedMessage
+	newmsgs, err = state.CollectStartupMsgs(known, *spec, ctx)
+	if err != nil {
+		return nil, err
+	}
+	msgs = append(msgs, newmsgs...)
+	return msgs, nil
 }
 
 func (ss *SubscriptionSet) Startup(startupMsg StartupMsg, ctx context.Context) (
@@ -341,118 +382,70 @@ func (ss *SubscriptionSet) Startup(startupMsg StartupMsg, ctx context.Context) (
 	known := startupMsg.Known
 	sub := startupMsg.Subscribe
 
-	// Configure startup subscriptions.
-	ss.Trials.Apply(sub.Trials, nil)
-	// ss.Experiments.Apply(sub.Experiments, nil)
-
-	// Sync subscription changes with publishers.  Do this before initial scan so that we don't
-	// miss any events.
-	ss.Trials.Flush()
-	// ss.Experiments.Flush()
-
-	// Do initial startup message scans, which includes detecting removed and added messages.
 	var msgs []*websocket.PreparedMessage
 	var err error
-	msgs, err = ss.Trials.Startup(msgs, err, known.Trials, sub.Trials, ctx)
-	// msgs, err = ss.Experiments.Startup(msgs, err, known.Experiments, sub.Experiments, ctx)
+	msgs, err = startup(msgs, err, ctx, ss.Trials, known.Trials, sub.Trials)
+	// msgs, err = startup(msgs, err, ctx, ss.Experiments, known.Experiments, sub.Experiments)
 	return msgs, err
 }
 
-func (ss *SubscriptionSet) Apply(mods []FilterModSet, ctx context.Context) (
+func subMod[T stream.Msg, S any](
+	msgs []*websocket.PreparedMessage,
+	err error,
+	ctx context.Context,
+	state *subscriptionState[T, S],
+	addSpec *S,
+	dropSpec *S,
+) ([]*websocket.PreparedMessage, error) {
+	if err != nil {
+		return nil, err
+	}
+	if addSpec == nil && dropSpec == nil {
+		// no change
+		return msgs, nil
+	}
+
+	// apply SubscriptionSpec changes
+	if addSpec != nil {
+		state.FilterMaker.AddSpec(*addSpec)
+	}
+	if dropSpec != nil {
+		state.FilterMaker.DropSpec(*dropSpec)
+	}
+
+	// Sync subscription changes with publishers.  Do this before initial scan so that we don't
+	// miss any events.
+	filter := state.FilterMaker.MakeFilter()
+	state.Subscription.Configure(filter)
+
+	if addSpec != nil {
+		// Scan for historical msgs matching newly-added subscriptions.
+		var newmsgs []*websocket.PreparedMessage
+		newmsgs, err = state.CollectSubscriptionModMsgs(*addSpec, ctx)
+		if err != nil {
+			return nil, err
+		}
+		msgs = append(msgs, newmsgs...)
+	}
+	return msgs, nil
+}
+
+func (ss *SubscriptionSet) SubscriptionMod(msg SubscriptionModMsg, ctx context.Context) (
 	[]*websocket.PreparedMessage, error,
 ) {
-	// apply subscription changes first
-	for _, m := range mods {
-		ss.Trials.Apply(m.Add.Trials, m.Drop.Trials)
-		// ss.Experiments.Apply(m.Add.Experiments, m.Drop.Experiments)
-	}
+	add := msg.Add
+	drop := msg.Drop
 
-	// Sync subscription changes with publishers.  Do this before initial scan so that we don't
-	// miss any events.
-	ss.Trials.Flush()
-	// ss.Expermients.Flush()
-
-	// Do initial scans for newly-added subscriptions.
 	var msgs []*websocket.PreparedMessage
 	var err error
-	for _, m := range mods {
-		msgs, err = ss.Trials.Modify(msgs, err, m.Add.Trials, ctx)
-		// msgs, err = ss.Experiments.Modify(msgs, err, m.Add.Experiments, ctx)
-	}
+	msgs, err = subMod(msgs, err, ctx, ss.Trials, add.Trials, drop.Trials)
+	// msgs, err = subMod(msgs, err, ctx, ss.Experiments, add.Experiments, drop.Experiments)
 	return msgs, err
 }
 
-// SubscriptionManager is a helper type to automate logic around:
-// - Running initial db scans after the StartupMsg.
-// - Running additional db scans when new subscriptions are added in a FilterModSet message.
-// - Passing FilterMod objects to update
-// - Updating the filter function for the stream.Subscription.
-type SubscriptionManager[T stream.Msg, C FilterMod] struct {
-	FilterMaker FilterMaker[T]
-	StreamSubscription stream.Subscription[T]
-	dirty bool
-}
-
-func NewSubscriptionManager[T stream.Msg, C FilterMod](
-	streamer *stream.Streamer,
-	publisher *stream.Publisher[T],
-	filterMaker FilterMaker[T],
-) SubscriptionManager[T, C] {
-	return SubscriptionManager[T, C]{
-		FilterMaker: filterMaker,
-		StreamSubscription: stream.NewSubscription(streamer, publisher),
-	}
-}
-
-func (sm *SubscriptionManager[T, C]) Unsubscribe() {
-	sm.StreamSubscription.Configure(nil)
-}
-
-func (sm *SubscriptionManager[T, C]) Apply(add *C, drop *C) {
-	if add != nil {
-		sm.FilterMaker.AddSpec(*add)
-		sm.dirty = true
-	}
-	if drop != nil {
-		sm.FilterMaker.DropSpec(*drop)
-		sm.dirty = true
-	}
-}
-
-func (sm *SubscriptionManager[T, C]) Flush() {
-	if !sm.dirty {
-		return
-	}
-	sm.dirty = false
-	sm.StreamSubscription.Configure(sm.FilterMaker.MakeFilter())
-}
-
-func (sm *SubscriptionManager[T, C]) Startup(
-	msgs []*websocket.PreparedMessage, err error, known string, subscribe *C, ctx context.Context,
-) ([]*websocket.PreparedMessage, error) {
-	if err != nil || subscribe == nil {
-		return msgs, err
-	}
-	var newMsgs []*websocket.PreparedMessage
-	newMsgs, err = (*subscribe).Startup(known, ctx)
-	if err != nil {
-		return msgs, err
-	}
-	return append(msgs, newMsgs...), nil
-}
-
-func (sm *SubscriptionManager[T, C]) Modify(
-	msgs []*websocket.PreparedMessage, err error, add *C, ctx context.Context,
-) ([]*websocket.PreparedMessage, error) {
-	if err != nil || add == nil {
-		return msgs, err
-	}
-	var newMsgs []*websocket.PreparedMessage
-	newMsgs, err = (*add).Modify(ctx)
-	if err != nil {
-		return msgs, err
-	}
-	return append(msgs, newMsgs...), nil
+func (ss *SubscriptionSet) UnsubscribeAll() {
+	ss.Trials.Subscription.Configure(nil)
+	// ss.Experiments.Subscription.Configure(nil)
 }
 
 func prepareMessageWithCache(
