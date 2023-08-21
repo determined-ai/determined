@@ -68,7 +68,18 @@ func Test_isForeignJob(t *testing.T) {
 					},
 				},
 			},
-			want: true,
+			want: false,
+		},
+		{
+			name: "name blank",
+			args: args{
+				v: launcher.DispatchInfo{
+					LaunchedCapsuleReference: &launcher.OwnedResourceReference{
+						Name: launcher.PtrString(""),
+					},
+				},
+			},
+			want: false,
 		},
 	}
 	for _, tt := range tests {
