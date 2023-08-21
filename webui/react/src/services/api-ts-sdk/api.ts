@@ -16876,12 +16876,16 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary Get the set of metric names recorded for a list of experiments.
-         * @param {Array<number>} [ids] The ids for the experiments.
+         * @param {Array<number>} ids The ids for the experiments.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        expMetricNames(ids?: Array<number>, periodSeconds?: number, options: any = {}): FetchArgs {
+        expMetricNames(ids: Array<number>, periodSeconds?: number, options: any = {}): FetchArgs {
+            // verify required parameter 'ids' is not null or undefined
+            if (ids === null || ids === undefined) {
+                throw new RequiredError('ids','Required parameter ids was null or undefined when calling expMetricNames.');
+            }
             const localVarPath = `/api/v1/experiments/metrics-stream/metric-names`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -19079,12 +19083,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get the set of metric names recorded for a list of experiments.
-         * @param {Array<number>} [ids] The ids for the experiments.
+         * @param {Array<number>} ids The ids for the experiments.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        expMetricNames(ids?: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpMetricNamesResponse> {
+        expMetricNames(ids: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpMetricNamesResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expMetricNames(ids, periodSeconds, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -20109,12 +20113,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary Get the set of metric names recorded for a list of experiments.
-         * @param {Array<number>} [ids] The ids for the experiments.
+         * @param {Array<number>} ids The ids for the experiments.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        expMetricNames(ids?: Array<number>, periodSeconds?: number, options?: any) {
+        expMetricNames(ids: Array<number>, periodSeconds?: number, options?: any) {
             return InternalApiFp(configuration).expMetricNames(ids, periodSeconds, options)(fetch, basePath);
         },
         /**
@@ -20779,13 +20783,13 @@ export class InternalApi extends BaseAPI {
     /**
      * 
      * @summary Get the set of metric names recorded for a list of experiments.
-     * @param {Array<number>} [ids] The ids for the experiments.
+     * @param {Array<number>} ids The ids for the experiments.
      * @param {number} [periodSeconds] Seconds to wait when polling for updates.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public expMetricNames(ids?: Array<number>, periodSeconds?: number, options?: any) {
+    public expMetricNames(ids: Array<number>, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).expMetricNames(ids, periodSeconds, options)(this.fetch, this.basePath)
     }
     

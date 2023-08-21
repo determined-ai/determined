@@ -553,7 +553,11 @@ message PutExperimentResponse {
 // Request for the set of metrics recorded by multiple experiments.
 message ExpMetricNamesRequest {
   // The ids for the experiments.
-  repeated int32 ids = 1;
+  repeated int32 ids = 1
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required:
+          ["ids"];
+      }];
   // Seconds to wait when polling for updates.
   int32 period_seconds = 2;
 }
