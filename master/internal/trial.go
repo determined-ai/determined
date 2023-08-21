@@ -133,6 +133,7 @@ func newTrial(
 		experimentID:      experimentID,
 		state:             initialState,
 		searcher:          searcher,
+		parent:            parent,
 
 		db:     db,
 		rm:     rm,
@@ -477,7 +478,12 @@ func (t *trial) addTask() error {
 }
 
 func (t *trial) buildTaskSpecifier() (*tasks.TrialSpec, error) {
+	t.syslog.WithField("requstId", t.searcher.Create.RequestID).Info("trial building task specifier")
 	if !t.trialCreationSent {
+		t.syslog.WithField("parent", t.parent).Info("trial created")
+		if t.parent == nil {
+			panic("parent is nil")
+		}
 		t.system.Tell(t.parent, trialCreated{requestID: t.searcher.Create.RequestID})
 		t.trialCreationSent = true
 	}

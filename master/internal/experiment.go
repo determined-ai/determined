@@ -270,6 +270,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	// Searcher-related messages.
 	case actor.PreStart:
 		e.self = ctx.Self()
+		e.syslog.WithField("self", e.self).Info("experiment actor started")
 		ctx.AddLabels(e.logCtx)
 		e.rm.SetGroupMaxSlots(ctx, sproto.SetGroupMaxSlots{
 			MaxSlots: e.activeConfig.Resources().MaxSlots(),
@@ -326,6 +327,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.processOperations(ops, nil)
 
 	case trialCreated:
+		e.syslog.WithField("requstId", msg.requestID).Info("experiment received trial created")
 		ops, err := e.searcher.TrialCreated(msg.requestID)
 		e.processOperations(ops, err)
 	case trialCompleteOperation:
@@ -595,7 +597,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				e.syslog.Errorf("unimplemented op %+v", concreteOperation)
 			}
 		}
-		e.syslog.Infof("processing searcher operations %+v", ops)
+		e.syslog.WithField("HasSelf", e.self != nil).Infof("processing searcher operations %+v", ops)
 
 		// Remove newly processed events from queue.
 		if err := queue.RemoveUpTo(int(msg.TriggeredByEvent.Id)); err != nil {
@@ -771,6 +773,10 @@ func (e *experiment) processOperations(
 			config := schemas.Copy(e.activeConfig)
 			state := trialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
+			if e.self == nil {
+				e.syslog.Error("experiment actor not started")
+				panic("experiment actor not started")
+			}
 			t, err := newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
