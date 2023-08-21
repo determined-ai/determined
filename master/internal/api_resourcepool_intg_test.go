@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
@@ -308,6 +309,10 @@ func TestPatchBindingsSucceeds(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, 2, len(resp.WorkspaceIds))
+	expectedIds := set.FromSlice[int32](workspaceIDs)
+	for _, id := range resp.WorkspaceIds {
+		require.True(t, expectedIds.Contains(id))
+	}
 	require.Equal(t, workspaceIDs[0], resp.WorkspaceIds[0])
 	require.Equal(t, workspaceIDs[1], resp.WorkspaceIds[1])
 
