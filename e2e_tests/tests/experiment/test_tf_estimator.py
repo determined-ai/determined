@@ -6,19 +6,6 @@ from tests import config as conf
 from tests import experiment as exp
 
 
-@pytest.mark.parallel
-@pytest.mark.tensorflow2
-@pytest.mark.parametrize("tf2", [False, True])
-def test_mnist_estimator_const_parallel(tf2: bool) -> None:
-    config = conf.load_config(conf.fixtures_path("mnist_estimator/single-multi-slot.yaml"))
-    config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_max_length(config, {"batches": 200})
-    config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
-    config = conf.set_perform_initial_validation(config, True)
-
-    exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("mnist_estimator"), 1)
-    exp.assert_performed_initial_validation(exp_id)
-
 
 @pytest.mark.parallel
 @pytest.mark.tensorflow2

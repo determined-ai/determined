@@ -379,7 +379,7 @@ step only applies if you have multiple GPUs and want to use distributed training
 
    -  Determined is designed to control the details of distributed training for you. If you also try
       to control those details, such as by calling ``tf.config.set_visible_devices()`` in a
-      :class:`~determined.keras.TFKerasTrial` or :class:`~determined.estimator.EstimatorTrial`, it
+      :class:`~determined.keras.TFKerasTrial`, it
       is likely to cause issues.
 
    -  Some classes of metrics must be specially calculated during distributed training. Most

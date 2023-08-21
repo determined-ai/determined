@@ -6,7 +6,7 @@ import tensorflow as tf
 from _pytest import monkeypatch
 
 import determined as det
-from determined import estimator, experimental, keras, pytorch
+from determined import experimental, keras, pytorch
 from tests.experiment.fixtures import pytorch_onevar_model
 
 
@@ -32,23 +32,6 @@ def test_test_one_batch(monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.
             },
         )
 
-
-def test_estimator_from_config() -> None:
-    from tests.experiment.fixtures import estimator_linear_model
-
-    config = {"hyperparameters": {"global_batch_size": 4, "learning_rate": 0.001}}
-    context = estimator.EstimatorTrialContext.from_config(config)
-    trial = estimator_linear_model.LinearEstimator(context)
-
-    eval_spec = trial.build_validation_spec()
-
-    eval_metrics, _ = tf.estimator.train_and_evaluate(
-        trial.build_estimator(),
-        trial.build_train_spec(),
-        tf.estimator.EvalSpec(input_fn=eval_spec.input_fn),
-    )
-    # Verify the custom reducer and validation datasets are correct.
-    assert eval_metrics["label_sum_tensor_fn"] == estimator_linear_model.validation_label_sum()
 
 
 def test_keras_from_config() -> None:

@@ -153,12 +153,6 @@ For models using :class:`~determined.keras.TFKerasTrial`, add a
        def keras_callbacks(self):
            return [TensorBoard()]
 
-Estimator
-=========
-
-There is no configuration necessary for trials using :class:`~determined.estimator.EstimatorTrial`.
-By default, Estimators automatically log TensorBoard events to the ``model_dir``, which Determined
-then moves to ``/tmp/tensorboard``.
 
 PyTorch
 =======
@@ -211,7 +205,5 @@ following functions:
 -  For DeepSpeedTrial users:
    :func:`~determined.pytorch.deepspeed.DeepSpeedTrialContext.get_tensorboard_path`
 -  For TFKerasTrial users: :func:`~determined.keras.TFKerasTrialContext.get_tensorboard_path`
--  For EstimatorTrial users:
-   :func:`~determined.estimator.EstimatorTrialContext.get_tensorboard_path`
 
 For more details and examples, refer to the :ref:`TensorBoard How-To Guide <data-in-tensorboard>`.

@@ -86,24 +86,6 @@ def test_fasterrcnn_coco_pytorch_accuracy(client: _client.Determined) -> None:
 
 
 @pytest.mark.nightly
-def test_mnist_estimator_accuracy(client: _client.Determined) -> None:
-    config = conf.load_config(conf.fixtures_path("mnist_estimator/const.yaml"))
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.fixtures_path("mnist_estimator"), 1
-    )
-
-    trials = exp.experiment_trials(experiment_id)
-    validations = _get_validation_metrics(client, trials[0].trial.id)
-    validation_accuracies = [v["accuracy"] for v in validations]
-
-    target_accuracy = 0.95
-    assert max(validation_accuracies) > target_accuracy, (
-        "mnist_estimator did not reach minimum target accuracy {}."
-        " full validation accuracy history: {}".format(target_accuracy, validation_accuracies)
-    )
-
-
-@pytest.mark.nightly
 def test_cifar10_tf_keras_accuracy(client: _client.Determined) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_random_seed(config, 1591110586)
@@ -155,29 +137,6 @@ def test_unets_tf_keras_accuracy(client: _client.Determined) -> None:
     target_accuracy = 0.85
     assert max(validation_accuracies) > target_accuracy, (
         "unets_tf_keras did not reach minimum target accuracy {}."
-        " full validation accuracy history: {}".format(target_accuracy, validation_accuracies)
-    )
-
-
-@pytest.mark.nightly
-def test_gbt_titanic_estimator_accuracy(client: _client.Determined) -> None:
-    import tensorflow as tf  # noqa: I2000
-    from packaging import version  # noqa: I2000
-
-    if version.parse(tf.__version__) >= version.parse("2.11.0"):
-        pytest.skip("# TODO [MLG-442], see comment in gbt_titanic_estimator model_def")
-    config = conf.load_config(conf.decision_trees_examples_path("gbt_titanic_estimator/const.yaml"))
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.decision_trees_examples_path("gbt_titanic_estimator"), 1
-    )
-
-    trials = exp.experiment_trials(experiment_id)
-    validations = _get_validation_metrics(client, trials[0].trial.id)
-    validation_accuracies = [v["accuracy"] for v in validations]
-
-    target_accuracy = 0.74
-    assert max(validation_accuracies) > target_accuracy, (
-        "gbt_titanic_estimator did not reach minimum target accuracy {}."
         " full validation accuracy history: {}".format(target_accuracy, validation_accuracies)
     )
 

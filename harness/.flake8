@@ -68,10 +68,6 @@ per-file-ignores =
   determined/deploy/local/cli.py:I2041
   determined/deploy/local/cluster_utils.py:I2041
   determined/deploy/local/preflight.py:I2041
-  determined/estimator/_estimator_context.py:I2041
-  determined/estimator/_estimator_trial.py:I2041
-  determined/estimator/_load.py:I2041
-  determined/estimator/_util.py:I2041
   determined/experimental/client.py:I2041
   determined/experimental/unmanaged.py:I2041
   determined/keras/_load.py:I2041
@@ -119,7 +115,6 @@ per-file-ignores =
   tests/custom_search_mocks.py:I2041
   tests/determined/common/experimental/test_determined.py:I2041
   tests/experiment/fixtures/ancient_keras_ckpt.py:I2041
-  tests/experiment/fixtures/estimator_xor_model.py:I2041
   tests/experiment/fixtures/keras_no_op/model_def.py:I2041
   tests/experiment/fixtures/keras_tf2_disabled_no_op/model_def.py:I2041
   tests/experiment/fixtures/pytorch_amp/apex_amp_model_def.py:I2041
