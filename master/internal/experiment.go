@@ -77,6 +77,11 @@ type (
 		reason    model.ExitedReason
 	}
 
+	patchTrialState struct {
+		requestID model.RequestID
+		state     model.StateWithReason
+	}
+
 	// UnwatchEvents is initiated from the get searcher events API. It deletes the watcher with the
 	// given ID.
 	UnwatchEvents struct {
@@ -407,9 +412,22 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 			return nil
 		}
+	case patchTrialState:
+		ref, ok := e.trials[msg.requestID]
+		if !ok {
+			ctx.Respond(fmt.Errorf("no such trial: %s", msg.requestID))
+			return nil
+		}
+		err := ref.PatchState(msg.state)
+		if err != nil {
+			e.syslog.WithError(err).Error("patching trial state")
+			ctx.Respond(err)
+			return nil
+		}
 
 	// Patch experiment messages.
 	case model.StateWithReason:
+		e.syslog.WithField("jobId", e.JobID).Infof("received state update: %s", msg.State)
 		e.updateState(msg)
 	case model.State:
 		e.updateState(model.StateWithReason{State: msg})
