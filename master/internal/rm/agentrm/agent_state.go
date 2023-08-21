@@ -553,6 +553,9 @@ func listResourcePoolsWithReattachEnabled() []string {
 	rpConfigList := config.GetMasterConfig().ResourcePools
 	result := make([]string, 0, len(rpConfigList))
 	for _, rpConfig := range rpConfigList {
+		if rpConfig.PoolName == "" {
+			continue
+		}
 		result = append(result, rpConfig.PoolName)
 	}
 	return result

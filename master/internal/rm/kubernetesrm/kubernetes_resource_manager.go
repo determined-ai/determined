@@ -379,7 +379,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case sproto.GetJobQ:
-		if msg.ResourcePool == "" {
+		if msg.ResourcePool == "" && !k.config.NoDefaultResourcePools {
 			msg.ResourcePool = k.config.DefaultComputeResourcePool
 		}
 

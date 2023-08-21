@@ -822,6 +822,9 @@ func updateClusterHeartbeat(ctx context.Context, db *db.PgDB) {
 
 func (m *Master) checkIfRMDefaultsAreUnbound(rmConfig *config.ResourceManagerConfig) error {
 	if rmConfig.AgentRM != nil {
+		if rmConfig.AgentRM.NoDefaultResourcePools {
+			return nil
+		}
 		err := db.CheckIfRPUnbound(rmConfig.AgentRM.DefaultComputeResourcePool)
 		if err != nil {
 			return err
@@ -830,6 +833,9 @@ func (m *Master) checkIfRMDefaultsAreUnbound(rmConfig *config.ResourceManagerCon
 		return err
 	}
 	if rmConfig.KubernetesRM != nil {
+		if rmConfig.KubernetesRM.NoDefaultResourcePools {
+			return nil
+		}
 		err := db.CheckIfRPUnbound(rmConfig.KubernetesRM.DefaultComputeResourcePool)
 		if err != nil {
 			return err

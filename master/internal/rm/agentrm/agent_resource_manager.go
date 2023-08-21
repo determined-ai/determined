@@ -325,7 +325,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(response.Get())
 
 	case sproto.GetJobQ:
-		if msg.ResourcePool == "" {
+		if msg.ResourcePool == "" && !a.config.NoDefaultResourcePools {
 			msg.ResourcePool = a.config.DefaultComputeResourcePool
 		}
 
