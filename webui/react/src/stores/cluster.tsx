@@ -16,6 +16,7 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { percent } from 'utils/number';
 import { Observable, observable, WritableObservable } from 'utils/observable';
 
+import 'core-js/actual/structured-clone'; // TODO: investigate why structuredClone is breaking if we remove this import.
 import PollingStore from './polling';
 
 const initResourceTally: ClusterOverviewResource = { allocation: 0, available: 0, total: 0 };
