@@ -1,6 +1,5 @@
 import DataEditor, {
   CellClickedEventArgs,
-  CompactSelection,
   DataEditorProps,
   DataEditorRef,
   getMiddleCenterBias,
@@ -95,6 +94,10 @@ export interface GlideTableProps {
   onIsOpenFilterChange?: (value: boolean) => void;
   onPinnedColumnsCountChange?: (count: number) => void;
   onScroll?: (r: Rectangle) => void;
+  onSelectionChange?: (
+    selectionType: 'add' | 'add-all' | 'remove' | 'remove-all' | 'set',
+    range: [number, number],
+  ) => void;
   onSortableColumnChange?: (newColumns: string[]) => void;
   onSortChange?: (sorts: Sort[]) => void;
   page: number;
@@ -107,8 +110,6 @@ export interface GlideTableProps {
   selectAll: boolean;
   selection: GridSelection;
   setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
-  setSelectAll: (arg0: boolean) => void;
-  setSelection: Dispatch<SetStateAction<GridSelection>>;
   sortableColumnIds: string[];
   sorts: Sort[];
   staticColumns: string[];
@@ -156,6 +157,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   onIsOpenFilterChange,
   onPinnedColumnsCountChange,
   onScroll,
+  onSelectionChange,
   onSortableColumnChange,
   onSortChange,
   page,
@@ -168,13 +170,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   selectAll,
   selection,
   setExcludedExperimentIds,
-  setSelectAll,
-  setSelection,
   sortableColumnIds,
   sorts,
   staticColumns,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
+  const clickedCellRef = useRef<{ col: number; row: number } | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number>();
 
   useEffect(() => {
@@ -228,10 +229,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         : [...staticColumns, ...sortableColumnIds],
     [comparisonViewOpen, pinnedColumnsCount, sortableColumnIds, staticColumns],
   );
-
-  // Detect if user just click a row away from current selected group.
-  // If this stand alone select is set, use it as the base when doing multi select.
-  const [standAloneSelect, setStandAloneSelect] = React.useState<number>();
 
   const columnDefs = useMemo<Record<string, ColumnDef>>(
     () =>
@@ -298,21 +295,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [columnWidths, onColumnResize],
   );
 
-  const deselectAllRows = useCallback(() => {
-    setSelection((prev) => ({ ...prev, rows: CompactSelection.empty() }));
-    setSelectAll(false);
-    setExcludedExperimentIds(new Set());
-  }, [setSelectAll, setSelection, setExcludedExperimentIds]);
-
-  const selectAllRows = useCallback(() => {
-    setSelection(({ columns, rows }: GridSelection) => ({
-      columns,
-      rows: rows.add([0, data.length]),
-    }));
-    setExcludedExperimentIds(new Set());
-    setSelectAll(true);
-  }, [setSelectAll, setSelection, data, setExcludedExperimentIds]);
-
   const toggleHeatmap = useCallback(
     (col: string) =>
       onHeatmapSelection?.(
@@ -335,7 +317,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 key: 'select-none',
                 label: 'Clear selected',
                 onClick: () => {
-                  deselectAllRows();
+                  onSelectionChange?.('remove-all', [0, data.length]);
                   setMenuIsOpen(false);
                 },
               }
@@ -344,11 +326,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             key: `select-${n}`,
             label: `Select first ${n}`,
             onClick: () => {
-              setSelectAll(false);
-              setSelection((s) => ({
-                ...s,
-                rows: CompactSelection.fromSingleSelection([0, n]),
-              }));
+              onSelectionChange?.('set', [0, n]);
               if (gridRef.current) {
                 // scroll first row into view for feedback
                 gridRef.current.scrollTo(0, 0);
@@ -360,7 +338,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             key: 'select-all',
             label: 'Select all',
             onClick: () => {
-              selectAllRows();
+              onSelectionChange?.('add-all', [0, data.length]);
               setMenuIsOpen(false);
             },
           },
@@ -465,6 +443,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     },
     [
       columnIds,
+      data.length,
       projectColumns,
       formStore,
       sorts,
@@ -473,17 +452,14 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       isMobile,
       pinnedColumnsCount,
       selection.rows.length,
-      deselectAllRows,
-      selectAllRows,
       onIsOpenFilterChange,
       onPinnedColumnsCountChange,
+      onSelectionChange,
       onSortableColumnChange,
       sortableColumnIds,
       heatmapSkipped,
       toggleHeatmap,
       heatmapOn,
-      setSelection,
-      setSelectAll,
     ],
   );
 
@@ -517,29 +493,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
-      const findConsecutiveBefore = (rows: number[], row: number) => {
-        while (row >= 0) {
-          row = row - 1;
-          if (!rows.includes(row)) return row + 1;
-        }
-        return row;
-      };
-      const findConsecutiveAfter = (rows: number[], row: number) => {
-        while (row < data.length) {
-          row = row + 1;
-          if (!rows.includes(row)) return row - 1;
-        }
-        return row;
-      };
-      const isStandAlone = (rows: CompactSelection, row: number) => {
-        if (row === 0) return !rows.hasIndex(row + 1);
-        if (row === data.length - 1) return !rows.hasIndex(row - 1);
-        return !rows.hasIndex(row - 1) && !rows.hasIndex(row + 1);
-      };
-
-      setStandAloneSelect(undefined);
-
       const [col, row] = cell;
+
       Loadable.forEach(data[row], (rowData) => {
         const columnId = columnIds[col];
         const cell = columnDefs[columnId].renderer(rowData, row);
@@ -548,44 +503,19 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           handlePath(event as unknown as AnyMouseEvent, { path: cell.data.link.href });
         } else {
           if (event.shiftKey) {
-            setSelection(({ rows }: GridSelection) => {
-              if (standAloneSelect && standAloneSelect > row) {
-                return {
-                  columns: CompactSelection.empty(),
-                  rows: event.metaKey
-                    ? rows.add([row, standAloneSelect + 1])
-                    : CompactSelection.fromSingleSelection([row, standAloneSelect + 1]),
-                };
-              }
-              const rowsArray = rows.toArray();
-              const smallestClosest = rowsArray.filter((r) => r < row).last();
-              const largestClosest = rowsArray.filter((r) => r > row).first();
-              const smallestLinked = findConsecutiveBefore(rowsArray, smallestClosest);
-              const greatestLinked = findConsecutiveAfter(rowsArray, largestClosest);
-              return {
-                columns: CompactSelection.empty(),
-                rows:
-                  smallestClosest >= 0
-                    ? event.metaKey
-                      ? rows.add([smallestClosest, row + 1])
-                      : CompactSelection.fromSingleSelection([smallestLinked, row + 1])
-                    : largestClosest
-                    ? event.metaKey
-                      ? rows.add([row, largestClosest + 1])
-                      : CompactSelection.fromSingleSelection([row, greatestLinked + 1])
-                    : CompactSelection.fromSingleSelection(row),
-              };
-            });
+            if (clickedCellRef.current !== null) {
+              const previousRow = clickedCellRef.current.row;
+              const selectionType = selection.rows.toArray().includes(row) ? 'remove' : 'add';
+              const range: [number, number] =
+                previousRow < row ? [previousRow, row + 1] : [row, previousRow + 1];
+              onSelectionChange?.(selectionType, range);
+            }
           } else {
-            isStandAlone(selection.rows, row) &&
-              !selection.rows.hasIndex(row) &&
-              setStandAloneSelect(row);
+            clickedCellRef.current = { col, row };
 
             if (selection.rows.hasIndex(row)) {
-              setSelection(({ columns, rows }: GridSelection) => ({
-                columns,
-                rows: rows.remove(row),
-              }));
+              onSelectionChange?.('remove', [row, row + 1]);
+
               if (selectAll) {
                 const experiment = data[row];
                 if (Loadable.isLoaded(experiment)) {
@@ -599,10 +529,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 }
               }
             } else {
-              setSelection(({ columns, rows }: GridSelection) => ({
-                columns,
-                rows: rows.add(row),
-              }));
+              onSelectionChange?.('add', [row, row + 1]);
+
               const experiment = data[row];
               if (Loadable.isLoaded(experiment)) {
                 setExcludedExperimentIds((prev) => {
@@ -618,20 +546,20 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       data,
       columnIds,
       columnDefs,
+      onSelectionChange,
       selection,
       selectAll,
       setExcludedExperimentIds,
-      standAloneSelect,
-      setSelection,
     ],
   );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
+      const [col, row] = cell;
+
       // Close existing context menu.
       contextMenuOpen.set(false);
 
-      const [col, row] = cell;
       Loadable.forEach(data[row], (rowData) => {
         // Prevent the browser native context menu from showing up.
         event.preventDefault();

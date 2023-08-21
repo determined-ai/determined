@@ -204,35 +204,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     if (isLoading) {
       return;
     }
-    let rows = CompactSelection.empty();
-    experiments.forEach((ex, ix) => {
-      if (
-        Loadable.exists(ex, (e) =>
-          selectAll
-            ? !settings.excludedExperiments.some((id) => id === e.experiment.id)
-            : settings.selectedExperiments.some((id) => id === e.experiment.id),
-        ) ||
-        (!Loadable.isLoaded(ex) && selectAll)
-      ) {
-        rows = rows.add(ix);
-      }
-    });
-    setSelection({
-      columns: CompactSelection.empty(),
-      rows: rows,
-    });
-  }, [
-    experiments,
-    selectAll,
-    settings.selectedExperiments,
-    settings.excludedExperiments,
-    isLoading,
-  ]);
-
-  useMemo(() => {
-    if (isLoading) {
-      return;
-    }
     const selectedRowIndices = selection.rows.toArray();
     setSelectedExperimentIds((prevIds) => {
       const selectedIds = selectedRowIndices
@@ -504,6 +475,40 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [handleActionSuccess],
   );
 
+  const handleSelectionChange = useCallback(
+    (
+      selectionType: 'add' | 'add-all' | 'remove' | 'remove-all' | 'set',
+      range: [number, number],
+    ) => {
+      const totalCount = Loadable.getOrElse(0, total);
+      if (!totalCount) return;
+
+      setSelection((prevSelection) => {
+        switch (selectionType) {
+          case 'add':
+            updateSettings({ selectAll: false });
+            return { ...prevSelection, rows: prevSelection.rows.add(range) };
+          case 'add-all':
+            updateSettings({ selectAll: true });
+            return {
+              columns: CompactSelection.empty(),
+              rows: CompactSelection.empty().add([0, totalCount]),
+            };
+          case 'remove':
+            return { ...prevSelection, rows: prevSelection.rows.remove(range) };
+          case 'remove-all':
+            updateSettings({ selectAll: false });
+            return { columns: CompactSelection.empty(), rows: CompactSelection.empty() };
+          case 'set':
+            updateSettings({ selectAll: false });
+            return { ...prevSelection, rows: CompactSelection.empty().add(range) };
+        }
+        return prevSelection;
+      });
+    },
+    [total, updateSettings],
+  );
+
   const handleVisibleColumnChange = useCallback(
     (newColumns: string[]) => {
       updateSettings({ columns: newColumns });
@@ -729,8 +734,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 selectAll={selectAll}
                 selection={selection}
                 setExcludedExperimentIds={setExcludedExperimentIds}
-                setSelectAll={setSelectAll}
-                setSelection={setSelection}
                 sortableColumnIds={columnsIfLoaded}
                 sorts={sorts}
                 staticColumns={STATIC_COLUMNS}
@@ -740,6 +743,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 onIsOpenFilterChange={handleIsOpenFilterChange}
                 onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
                 onScroll={isPagedView ? undefined : handleScroll}
+                onSelectionChange={handleSelectionChange}
                 onSortableColumnChange={handleVisibleColumnChange}
                 onSortChange={handleSortChange}
               />
