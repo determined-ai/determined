@@ -86,20 +86,3 @@ class ValidationMetrics(TrialMetrics):
         return cast(
             "ValidationMetrics", super()._from_bindings(metric_report, util._LEGACY_VALIDATION)
         )
-
-
-class InferenceMetrics(TrialMetrics):
-    """
-    Specifies a validation metric report that the trial reported.
-    """
-
-    def __init__(self, steps_completed: Optional[int] = None, **kwargs: Any):
-        if steps_completed is not None:
-            kwargs["total_batches"] = steps_completed
-        super().__init__(**kwargs)
-
-    @classmethod
-    def _from_bindings(  # type: ignore
-        cls, metric_report: bindings.v1MetricsReport
-    ) -> "InferenceMetrics":
-        return cast("InferenceMetrics", super()._from_bindings(metric_report, util._INFERENCE))

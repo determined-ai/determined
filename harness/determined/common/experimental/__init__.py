@@ -8,7 +8,6 @@ from determined.common.experimental.experiment import ExperimentReference
 from determined.common.experimental.trial import TrialReference, TrialSortBy, TrialOrderBy
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy, ModelVersion
 from determined.common.experimental.metrics import (
-    InferenceMetrics,
     TrialMetrics,
     TrainingMetrics,
     ValidationMetrics,
