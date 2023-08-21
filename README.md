@@ -4,10 +4,10 @@ Determined is an all-in-one deep learning platform, compatible with PyTorch and 
 
 It takes care of:
 
-- **Distributed training**, for faster results.
-- **Hyperparameter tuning**, for obtaining the best models.
-- **Resource management**, for cutting cloud GPU costs.
-- **Experiment tracking**, for analysis and reproducibility.
+- Distributed training for faster results.
+- Hyperparameter tuning for obtaining the best models.
+- Resource management for cutting cloud GPU costs.
+- Experiment tracking for analysis and reproducibility.
 
 
 # How Determined Works
@@ -38,25 +38,27 @@ with det.core.init() as core_context:
 
 ## Command Line Interface (CLI)
 
-Use the CLI to start the Determined cluster locally:
+You can use the CLI to:
+
+- Start a Determined cluster locally:
 
 ```
 det deploy local cluster-up
 ```
 
-Or on cloud services like AWS and GCP:
+- Launch Determined on cloud services, such as Amazon Web Services (AWS) or Google Cloud Platform (GCP):
 
 ```
 det deploy aws up
 ```
 
 
-Then train your models:
+- Train your models:
 ```bash
 det experiment create gpt.yaml .
 ```
 
-And use yaml files to configure everything from distributed training to hyperparameter tuning:
+Configure everything from distributed training to hyperparameter tuning using YAML files:
 
 ```yaml
 resources:
@@ -83,14 +85,14 @@ Use the Web UI to view loss curves, hyperparameter plots, code and configuration
 
 # Installation
 
-Install the CLI:
+To install the CLI:
 ```bash
 pip install determined
 ```
 
 Then use `det deploy` to start the Determined cluster locally, or on cloud services like AWS and GCP.
 
-See the following guides for all installation details:
+For installation details, visit the the cluster deployment guide for your environment:
 
 - [Local (on-prem)](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/on-prem/overview.html)
 - [AWS](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/aws/overview.html)
