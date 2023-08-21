@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # both used by create-file-action
-      FILE_NAME: ./pr_body
+      FILE_NAME: pr_body
       FILE_DATA: ${{ github.event.pull_request.body }}
     steps:
       - name: get body into file
@@ -24,10 +24,12 @@ jobs:
         id: testplan-with-comment
         with:
           # https://github.com/sean0x42/markdown-extract/issues/19
-          file: /github/workspace/${{ env.FILE_NAME }}
+          #file: /github/workspace/${{ env.FILE_NAME }}
+          file: ${{ env.FILE_NAME }}
           #pattern: "Test Plan"
           pattern: Description
-          no-print-matched-heading: true
+          no-print-matched-heading: False
+          case-sensitive: False
       - name: validate test plan
         id: validate
         shell: python
