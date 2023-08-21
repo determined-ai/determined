@@ -9,6 +9,7 @@ from determined.common.api import authentication, bindings, certs
 from determined.common.experimental import (
     checkpoint,
     experiment,
+    metrics,
     model,
     oauth2_scim_client,
     trial,
@@ -383,7 +384,7 @@ class Determined:
 
     def _stream_trials_metrics(
         self, trial_ids: List[int], group: str
-    ) -> Iterable[trial.TrialMetrics]:
+    ) -> Iterable[metrics.TrialMetrics]:
         """
         Streams metrics for one or more trials sorted by
         trial_id, trial_run_id and total_batches.
@@ -395,7 +396,7 @@ class Determined:
 
     def stream_trials_training_metrics(
         self, trial_ids: List[int]
-    ) -> Iterable[trial.TrainingMetrics]:
+    ) -> Iterable[metrics.TrainingMetrics]:
         """
         Streams training metrics for one or more trials sorted by
         trial_id, trial_run_id and steps_completed.
@@ -407,7 +408,7 @@ class Determined:
 
     def stream_trials_validation_metrics(
         self, trial_ids: List[int]
-    ) -> Iterable[trial.ValidationMetrics]:
+    ) -> Iterable[metrics.ValidationMetrics]:
         """
         Streams validation metrics for one or more trials sorted by
         trial_id, trial_run_id and steps_completed.
