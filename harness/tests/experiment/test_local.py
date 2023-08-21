@@ -33,7 +33,6 @@ def test_test_one_batch(monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.
         )
 
 
-
 def test_keras_from_config() -> None:
     from tests.experiment.fixtures import tf_keras_one_var_model
 
