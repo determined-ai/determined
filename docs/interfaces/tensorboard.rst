@@ -153,7 +153,6 @@ For models using :class:`~determined.keras.TFKerasTrial`, add a
        def keras_callbacks(self):
            return [TensorBoard()]
 
-
 PyTorch
 =======
 
