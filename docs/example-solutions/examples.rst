@@ -33,10 +33,6 @@ For an introduction to using the training API, please visit the Training APIs se
       -  Filename
 
    -  -  PyTorch
-      -  CIFAR-10
-      -  :download:`cifar10_pytorch.tgz </examples/cifar10_pytorch.tgz>`
-
-   -  -  PyTorch
       -  MNIST
       -  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
 
