@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
@@ -12,12 +13,35 @@ func TestDispatcherResourceManagerConfig_Validate(t *testing.T) {
 	type fields struct {
 		LauncherContainerRunType string
 		JobProjectSource         *string
+		SlotType                 *string
 	}
 	tests := []struct {
 		name   string
 		fields fields
 		want   []error
 	}{
+		{
+			name:   "Default slot_type",
+			fields: fields{LauncherContainerRunType: "singularity"},
+			want:   nil,
+		},
+		{
+			name: "cuda slot_type",
+			fields: fields{
+				LauncherContainerRunType: "singularity",
+				SlotType:                 ptrs.Ptr("cuda"),
+			},
+			want: nil,
+		},
+		{
+			name: "Invalid slot_type",
+			fields: fields{
+				LauncherContainerRunType: "singularity",
+				SlotType:                 ptrs.Ptr("invalid-type"),
+			},
+			want: []error{fmt.Errorf(
+				"invalid slot_type 'invalid-type'.  Specify one of cuda, rocm, or cpu")},
+		},
 		{
 			name:   "Invalid type case",
 			fields: fields{LauncherContainerRunType: "invalid-type"},
@@ -86,9 +110,10 @@ func TestDispatcherResourceManagerConfig_Validate(t *testing.T) {
 			c := DispatcherResourceManagerConfig{
 				LauncherContainerRunType: tt.fields.LauncherContainerRunType,
 				JobProjectSource:         tt.fields.JobProjectSource,
+				SlotType:                 (*device.Type)(tt.fields.SlotType),
 			}
 			if got := c.Validate(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("DispatcherResourceManagerConfig.Validate() = %v, want %v", got, tt.want)
+				t.Errorf("DispatcherResourceManagerConfig.Validate(%s) = %v, want %v", tt.name, got, tt.want)
 			}
 		})
 	}
