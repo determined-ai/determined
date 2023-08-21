@@ -9,7 +9,7 @@ import pytest
 from determined.common import yaml
 from determined.common.api import bindings, errors
 from determined.common.experimental import resource_pool
-from determined.common.experimental.trial import TrainingMetrics, ValidationMetrics
+from determined.common.experimental.metrics import TrainingMetrics, ValidationMetrics
 from determined.experimental import client as _client
 from tests import config as conf
 
