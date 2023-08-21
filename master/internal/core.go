@@ -857,6 +857,36 @@ func (m *Master) checkIfRMDefaultsAreUnbound(rmConfig *config.ResourceManagerCon
 		err = db.CheckIfRPUnbound(rmConfig.KubernetesRM.DefaultAuxResourcePool)
 		return err
 	}
+	if rmConfig.DispatcherRM != nil {
+		if rmConfig.DispatcherRM.DefaultComputeResourcePool != nil {
+			err := db.CheckIfRPUnbound(*rmConfig.DispatcherRM.DefaultComputeResourcePool)
+			if err != nil {
+				return err
+			}
+		}
+		if rmConfig.DispatcherRM.DefaultAuxResourcePool != nil {
+			err := db.CheckIfRPUnbound(*rmConfig.DispatcherRM.DefaultAuxResourcePool)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	if rmConfig.PbsRM != nil {
+		if rmConfig.PbsRM.DefaultComputeResourcePool != nil {
+			err := db.CheckIfRPUnbound(*rmConfig.DispatcherRM.DefaultComputeResourcePool)
+			if err != nil {
+				return err
+			}
+		}
+		if rmConfig.PbsRM.DefaultAuxResourcePool != nil {
+			err := db.CheckIfRPUnbound(*rmConfig.DispatcherRM.DefaultAuxResourcePool)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	return fmt.Errorf("no Resource Manager found")
 }
 
