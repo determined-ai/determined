@@ -30,12 +30,11 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         self._tensorboard_path = core_context.train.get_tensorboard_path()
         self._storage_path = storage_path
         self._use_default_storage = False
-        info = det.get_cluster_info()
-        assert info
-        self._hparams = info.trial.hparams
 
     def get_hparams(self) -> Dict[str, Any]:
-        return self._hparams
+        info = det.get_cluster_info()
+        assert info, "Must run TorchBatchProcessor in a cluster to run get_hparams()"
+        return info.trial.hparams
 
     def to_device(
         self, data: pytorch._Data, warned_types: Optional[Set[Type]] = None
