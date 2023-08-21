@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -16,6 +17,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/usergroup"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -191,6 +193,7 @@ func TestRbac(t *testing.T) {
 	assignment := RoleAssignment{}
 
 	t.Run("test user role assignment", func(t *testing.T) {
+		testStart := time.Now()
 		// TODO: populate the permission assignments table in the future
 		err := AddRoleAssignments(
 			ctx, []*rbacv1.GroupRoleAssignment{}, []*rbacv1.UserRoleAssignment{&userRoleAssignment})
@@ -206,9 +209,15 @@ func TestRbac(t *testing.T) {
 		require.Equal(t, testGroupOwnedByUser.ID, assignment.GroupID, "incorrect group ID was assigned")
 		require.Equal(t, testRole.ID, assignment.RoleID, "incorrect role ID was assigned")
 		require.Equal(t, assignmentScope.ID, assignment.ScopeID, "incorrect scope ID was assigned")
+
+		updatedTestUser, err := user.UserByID(testUser.ID)
+		require.NoError(t, err, "returned error when querying updated user")
+		require.Greater(t, updatedTestUser.ModifiedAt, testStart,
+			"Users.modified_at not updated when role is assigned")
 	})
 
 	t.Run("test delete user role assignment", func(t *testing.T) {
+		testStart := time.Now()
 		err := RemoveRoleAssignments(
 			ctx, []*rbacv1.GroupRoleAssignment{}, []*rbacv1.UserRoleAssignment{&userRoleAssignment})
 		require.NoError(t, err, "error removing role assignment")
@@ -221,6 +230,11 @@ func TestRbac(t *testing.T) {
 			Scan(ctx)
 		require.Errorf(t, err, "assignment should not exist after removal")
 		require.True(t, errors.Is(db.MatchSentinelError(err), db.ErrNotFound), "incorrect error returned")
+
+		updatedTestUser, err := user.UserByID(testUser.ID)
+		require.NoError(t, err, "returned error when querying updated user")
+		require.Greater(t, updatedTestUser.ModifiedAt, testStart,
+			"Users.modified_at not updated when role is removed")
 	})
 
 	t.Run("test group role assignment", func(t *testing.T) {

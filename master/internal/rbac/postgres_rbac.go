@@ -3,6 +3,7 @@ package rbac
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -261,6 +262,11 @@ func AddRoleAssignments(ctx context.Context, groups []*rbacv1.GroupRoleAssignmen
 			return errors.Wrap(
 				db.MatchSentinelError(err), "error inserting role assignments for user groups")
 		}
+
+		err = UpdateUsersTimestampTx(ctx, tx, users)
+		if err != nil {
+			return fmt.Errorf("error updating user timestamps: %w", db.MatchSentinelError(err))
+		}
 	}
 
 	err = tx.Commit()
@@ -306,6 +312,11 @@ func RemoveRoleAssignments(ctx context.Context, groups []*rbacv1.GroupRoleAssign
 		if err != nil {
 			return errors.Wrap(
 				db.MatchSentinelError(err), "error removing user group assignments")
+		}
+
+		err = UpdateUsersTimestampTx(ctx, tx, users)
+		if err != nil {
+			return fmt.Errorf("error updating user timestamps: %w", db.MatchSentinelError(err))
 		}
 	}
 
@@ -420,6 +431,26 @@ func RemoveGroupAssignmentsTx(ctx context.Context, idb bun.IDB,
 			return errors.Wrapf(db.MatchSentinelError(foundErr),
 				"Error deleting assignment for group id %d", group.GroupId)
 		}
+	}
+	return nil
+}
+
+// UpdateUsersTimestampTx updates the user modified_at field to the present time.
+func UpdateUsersTimestampTx(ctx context.Context, idb bun.IDB,
+	users []*rbacv1.UserRoleAssignment,
+) error {
+	var uids []int32
+	for _, user := range users {
+		uids = append(uids, user.UserId)
+	}
+
+	_, err := idb.NewUpdate().Table("users").
+		Set("modified_at = NOW()").
+		Where("id IN (?)", bun.In(uids)).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("error updating modified_at timestamp for users: %w",
+			db.MatchSentinelError(err))
 	}
 	return nil
 }
