@@ -23,7 +23,8 @@ jobs:
         uses: sean0x42/markdown-extract@v2
         id: testplan-with-comment
         with:
-          file: ${{ env.FILE_NAME }}
+          # https://github.com/sean0x42/markdown-extract/issues/19
+          file: /github/workspace/${{ env.FILE_NAME }}
           pattern: "Test Plan"
           no-print-matched-heading: true
       - name: validate test plan
