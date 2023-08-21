@@ -57,7 +57,6 @@ test:
 .PHONY: test-tf2
 test-tf2:
 	pip freeze | grep "tensorflow==2.*"
-	coverage run -m pytest -v --runslow --durations=0 tests/experiment/tensorflow
 	# We must run these tests separately becuase estimators need to disable v2
 	# behavior (a global operation). We are explicitly testing eager execution
 	# for tf keras which needs v2 behavior enabled. You can't enable v2 behavior
