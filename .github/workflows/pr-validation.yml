@@ -25,7 +25,8 @@ jobs:
         with:
           # https://github.com/sean0x42/markdown-extract/issues/19
           file: /github/workspace/${{ env.FILE_NAME }}
-          pattern: "Test Plan"
+          #pattern: "Test Plan"
+          pattern: Description
           no-print-matched-heading: true
       - name: validate test plan
         id: validate
