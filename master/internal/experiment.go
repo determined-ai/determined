@@ -392,6 +392,18 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 			return nil
 		}
+	case patchTrialState:
+		ref, ok := e.trials[msg.requestID]
+		if !ok {
+			ctx.Respond(fmt.Errorf("no such trial: %s", msg.requestID))
+			return nil
+		}
+		err := ref.PatchState(msg.state)
+		if err != nil {
+			e.syslog.WithError(err).Error("patching trial state")
+			ctx.Respond(err)
+			return nil
+		}
 
 	// Patch experiment messages.
 	case model.StateWithReason:
