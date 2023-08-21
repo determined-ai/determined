@@ -65,10 +65,6 @@ For an introduction to using the training API, please visit the Training APIs se
       -  :download:`cifar10_tf_keras.tgz </examples/cifar10_tf_keras.tgz>`
 
    -  -  TensorFlow (tf.keras)
-      -  Iris Dataset
-      -  :download:`iris_tf_keras.tgz </examples/iris_tf_keras.tgz>`
-
-   -  -  TensorFlow (tf.keras)
       -  Oxford-IIIT Pet Dataset
       -  :download:`unets_tf_keras.tgz </examples/unets_tf_keras.tgz>`
 
