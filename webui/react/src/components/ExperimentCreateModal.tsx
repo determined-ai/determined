@@ -340,7 +340,7 @@ const ExperimentCreateModalComponent = ({
         config: publicConfig,
         configString: yaml.dump(publicConfig),
         experiment,
-        isAdvancedMode: false,
+        isAdvancedMode: prev.isAdvancedMode,
         open: true,
         trial,
         type,
