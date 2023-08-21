@@ -4,12 +4,11 @@ from typing import Any, List
 
 import determined.cli.render
 from determined import cli
+from determined.cli import render
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.experimental import Determined, Model, ModelOrderBy, ModelSortBy, ModelVersion
-
-from . import render
 
 
 def render_model(model: Model) -> None:

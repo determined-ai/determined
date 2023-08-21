@@ -1,9 +1,9 @@
 import { TabsProps } from 'antd';
+import _ from 'lodash';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot, { PivotTabType } from 'components/kit/Pivot';
-import { isEqual } from 'utils/data';
 
 interface DynamicTabBarProps extends Omit<TabsProps, 'activeKey' | 'type'> {
   basePath: string;
@@ -27,7 +27,7 @@ const DynamicTabs: React.FC<DynamicTabBarProps> = ({
 
   useEffect(() => {
     const newTabKeys = React.Children.map(children, (c) => (c as { key: string })?.key ?? '');
-    if (Array.isArray(newTabKeys) && !isEqual(newTabKeys, tabKeys)) setTabKeys(newTabKeys);
+    if (Array.isArray(newTabKeys) && !_.isEqual(newTabKeys, tabKeys)) setTabKeys(newTabKeys);
   }, [children, tabKeys]);
 
   const { tab } = useParams<{ tab: string }>();
@@ -74,5 +74,9 @@ export const useSetDynamicTabBar = (content: JSX.Element | undefined): void => {
   const updateTabBarContent = useContext(TabBarContext);
   useEffect(() => {
     if (content !== undefined) updateTabBarContent?.(content);
+
+    return () => {
+      updateTabBarContent?.(undefined);
+    };
   }, [updateTabBarContent, content]);
 };

@@ -4,8 +4,7 @@ import { Modal } from 'components/kit/Modal';
 import { deleteGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { message } from 'utils/dialogApi';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 
 export const API_SUCCESS_MESSAGE = 'Group deleted.';
 export const MODAL_HEADER = 'Delete Group';

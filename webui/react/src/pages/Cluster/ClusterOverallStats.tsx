@@ -1,14 +1,13 @@
 import React, { ReactNode, useEffect, useMemo } from 'react';
 
 import Card from 'components/kit/Card';
+import Spinner from 'components/kit/Spinner';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
 import { activeRunStates } from 'constants/states';
 import usePermissions from 'hooks/usePermissions';
 import { GetExperimentsParams } from 'services/types';
-import clusterStore from 'stores/cluster';
-import { maxClusterSlotCapacity } from 'stores/cluster';
+import clusterStore, { maxClusterSlotCapacity } from 'stores/cluster';
 import determinedStore from 'stores/determinedInfo';
 import experimentStore from 'stores/experiments';
 import taskStore from 'stores/tasks';
@@ -62,7 +61,7 @@ export const ClusterOverallStats: React.FC = () => {
         <OverviewStats title="Connected Agents">
           {Loadable.match(agents, {
             Loaded: (agents) => (agents ? agents.length : '?'),
-            NotLoaded: (): ReactNode => <Spinner />,
+            NotLoaded: (): ReactNode => <Spinner spinning />,
           })}
         </OverviewStats>
         {Loadable.match(Loadable.all([maxTotalSlots, clusterOverview]), {
@@ -87,31 +86,31 @@ export const ClusterOverallStats: React.FC = () => {
             <OverviewStats title="Active Experiments">
               {Loadable.match(activeExperiments, {
                 Loaded: (activeExperiments) => activeExperiments.pagination?.total ?? 0,
-                NotLoaded: (): ReactNode => <Spinner />,
+                NotLoaded: (): ReactNode => <Spinner spinning />,
               })}
             </OverviewStats>
             <OverviewStats title="Active JupyterLabs">
               {Loadable.match(activeTasks, {
                 Loaded: (activeTasks) => activeTasks.notebooks ?? 0,
-                NotLoaded: (): ReactNode => <Spinner />,
+                NotLoaded: (): ReactNode => <Spinner spinning />,
               })}
             </OverviewStats>
             <OverviewStats title="Active TensorBoards">
               {Loadable.match(activeTasks, {
                 Loaded: (activeTasks) => activeTasks.tensorboards ?? 0,
-                NotLoaded: (): ReactNode => <Spinner />,
+                NotLoaded: (): ReactNode => <Spinner spinning />,
               })}
             </OverviewStats>
             <OverviewStats title="Active Shells">
               {Loadable.match(activeTasks, {
                 Loaded: (activeTasks) => activeTasks.shells ?? 0,
-                NotLoaded: (): ReactNode => <Spinner />,
+                NotLoaded: (): ReactNode => <Spinner spinning />,
               })}
             </OverviewStats>
             <OverviewStats title="Active Commands">
               {Loadable.match(activeTasks, {
                 Loaded: (activeTasks) => activeTasks.commands ?? 0,
-                NotLoaded: (): ReactNode => <Spinner />,
+                NotLoaded: (): ReactNode => <Spinner spinning />,
               })}
             </OverviewStats>
           </>

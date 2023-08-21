@@ -8,12 +8,12 @@ import { useParams } from 'react-router-dom';
 
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Button from 'components/kit/Button';
+import Spinner from 'components/kit/Spinner';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
-import Spinner from 'components/Spinner/Spinner';
 import { ThemeProvider } from 'components/ThemeProvider';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useKeyTracker from 'hooks/useKeyTracker';
@@ -170,11 +170,11 @@ const AppView: React.FC = () => {
             )}
           </>
         ) : (
-          <Spinner center />
+          <Spinner center spinning />
         )}
       </div>
     ),
-    NotLoaded: () => <Spinner center />,
+    NotLoaded: () => <Spinner center spinning />,
   });
 };
 

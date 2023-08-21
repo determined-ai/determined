@@ -4,7 +4,7 @@ import pathlib
 from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type, Union
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 import determined as det
 from determined import profiler, pytorch, util
@@ -20,7 +20,7 @@ except ImportError:  # pragma: no cover
 
 # AMP is only available in PyTorch 1.6+
 try:
-    import torch.cuda.amp as amp
+    from torch.cuda import amp
 
     HAVE_AMP = True
 except ImportError:  # pragma: no cover
@@ -59,6 +59,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         steps_completed: int,
         managed_training: bool,
         debug_enabled: bool,
+        enable_tensorboard_logging: bool = True,
     ) -> None:
         self._core = core_context
         self.distributed = self._core.distributed
@@ -128,6 +129,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         self._stop_requested = False
 
         self._tbd_writer = None  # type: Optional[Any]
+        self._enable_tensorboard_logging = enable_tensorboard_logging
 
     def get_global_batch_size(self) -> int:
         """
@@ -212,6 +214,21 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         )
         self._stop_requested = stop_requested
 
+    def set_enable_tensorboard_logging(self, enable_tensorboard_logging: bool) -> None:
+        """
+        Set a flag to indicate whether automatic upload to tensorboard is enabled.
+        """
+        if not isinstance(enable_tensorboard_logging, bool):
+            raise AssertionError("enable_tensorboard_logging must be a boolean")
+
+        self._enable_tensorboard_logging = enable_tensorboard_logging
+
+    def get_enable_tensorboard_logging(self) -> bool:
+        """
+        Return whether automatic tensorboard logging is enabled
+        """
+        return self._enable_tensorboard_logging
+
     def autocast_forward_pass(self, to_wrap: torch.nn.Module) -> torch.nn.Module:
         # First, ensure the forward pass is wrapped in an autocast context:
         class _AutocastForwardPassModel(type(to_wrap)):  # type: ignore
@@ -228,7 +245,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
                 return delattr(to_wrap, name)
 
             def forward(wrapper, *arg, **kwarg):  # type: ignore
-                with amp.autocast():  # type: ignore
+                with amp.autocast():
                     return to_wrap.forward(*arg, **kwarg)
 
         wrapped = _AutocastForwardPassModel()

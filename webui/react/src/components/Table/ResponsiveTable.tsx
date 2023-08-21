@@ -4,7 +4,7 @@ import { TableProps } from 'antd/es/table';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
 
-import Spinner from 'components/Spinner/Spinner';
+import Spinner from 'components/kit/Spinner';
 import useResize from 'hooks/useResize';
 import { TrialItem } from 'types';
 import { hasObjectKeys } from 'utils/data';

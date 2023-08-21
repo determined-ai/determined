@@ -1,23 +1,24 @@
 import React, { Suspense, useCallback, useEffect, useMemo } from 'react';
 
-import awsLogoOnDark from 'assets/images/aws-logo-on-dark.svg';
-import awsLogo from 'assets/images/aws-logo.svg';
-import gcpLogo from 'assets/images/gcp-logo.svg';
-import k8sLogo from 'assets/images/k8s-logo.svg';
-import staticLogo from 'assets/images/on-prem-logo.svg';
+import awsLogoOnDark from 'assets/images/aws-logo-on-dark.svg?url';
+import awsLogo from 'assets/images/aws-logo.svg?url';
+import gcpLogo from 'assets/images/gcp-logo.svg?url';
+import k8sLogo from 'assets/images/k8s-logo.svg?url';
+import staticLogo from 'assets/images/on-prem-logo.svg?url';
 import Card from 'components/kit/Card';
+import { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
+import { useModal } from 'components/kit/Modal';
+import Spinner from 'components/kit/Spinner';
+import Tooltip from 'components/kit/Tooltip';
 import SlotAllocationBar from 'components/SlotAllocationBar';
-import Spinner from 'components/Spinner';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
-import { maxPoolSlotCapacity } from 'stores/cluster';
-import clusterStore from 'stores/cluster';
+import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
 import useUI from 'stores/contexts/UI';
-import determinedStore from 'stores/determinedInfo';
 import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
 import { isDeviceType, JsonObject, ResourcePool } from 'types';
@@ -28,14 +29,15 @@ import { useObservable } from 'utils/observable';
 import { DarkLight } from 'utils/themes';
 
 import Json from './Json';
-import { useModal } from './kit/Modal';
 import ResourcePoolBindingModalComponent from './ResourcePoolBindingModal';
 import css from './ResourcePoolCard.module.scss';
 
 interface Props {
+  actionMenu?: MenuItem[];
   poolStats?: V1RPQueueStat | undefined;
   resourcePool: ResourcePool;
   size?: ShirtSize;
+  descriptiveLabel?: string;
 }
 
 const poolAttributes = [
@@ -89,13 +91,17 @@ export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
   return <img className={css['rp-type-logo']} src={iconSrc} />;
 };
 
-const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
+const ResourcePoolCard: React.FC<Props> = ({
+  resourcePool: pool,
+  actionMenu,
+  descriptiveLabel,
+}: Props) => {
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
-  const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
-
-  const descriptionClasses = [css.description];
-  const { rbacEnabled } = useObservable(determinedStore.info);
   const { canManageResourcePoolBindings } = usePermissions();
+  const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
+  const isDefaultPool = pool.defaultAuxPool || pool.defaultComputePool;
+  const descriptionClasses = [css.description];
+  const showDescriptiveLabel = !(canManageResourcePoolBindings && rpBindingFlagOn) ?? isDefaultPool;
   const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
   const resourcePoolBindings: number[] = resourcePoolBindingMap.get(pool.name, []);
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
@@ -134,9 +140,14 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
     }, {} as JsonObject);
   }, [processedPool, isAux, pool]);
 
-  const onDropdown = useCallback(() => {
-    ResourcePoolBindingModal.open();
-  }, [ResourcePoolBindingModal]);
+  const onDropdown = useCallback(
+    (key: string) => {
+      if (key === 'bindings') {
+        ResourcePoolBindingModal.open();
+      }
+    },
+    [ResourcePoolBindingModal],
+  );
 
   const onSaveBindings = useCallback(
     (bindings: string[]) => {
@@ -149,17 +160,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
   return (
     <>
       <Card
-        actionMenu={
-          rpBindingFlagOn && canManageResourcePoolBindings
-            ? [
-                {
-                  icon: <Icon name="four-squares" title="manage-bindings" />,
-                  key: 'bindings',
-                  label: 'Manage bindings',
-                },
-              ]
-            : []
-        }
+        actionMenu={actionMenu}
         href={paths.resourcePool(pool.name)}
         size="medium"
         onDropdown={onDropdown}>
@@ -169,16 +170,21 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
               <div className={css.name}>{pool.name}</div>
             </div>
             <div className={css.default}>
-              {(pool.defaultAuxPool && pool.defaultComputePool && <span>Default</span>) ||
-                (pool.defaultComputePool && <span>Default Compute</span>) ||
-                (pool.defaultAuxPool && <span>Default Aux</span>)}
+              {showDescriptiveLabel && <span>{descriptiveLabel}</span>}
               {pool.description && <Icon name="info" showTooltip title={pool.description} />}
             </div>
+            {!showDescriptiveLabel && (
+              <div className={css.defaultPoolTooltip}>
+                <Tooltip content="You cannot bind your default resource pool to a workspace.">
+                  <span>Default</span>
+                </Tooltip>
+              </div>
+            )}
           </div>
-          <Suspense fallback={<Spinner center />}>
+          <Suspense fallback={<Spinner center spinning />}>
             <div className={css.body}>
               <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
-              {rpBindingFlagOn && rbacEnabled && resourcePoolBindings.length > 0 && (
+              {rpBindingFlagOn && resourcePoolBindings.length > 0 && (
                 <section className={css.resoucePoolBoundContainer}>
                   <div>Bound to:</div>
                   <div className={css.resoucePoolBoundCount}>

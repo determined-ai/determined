@@ -3,6 +3,7 @@ import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
@@ -14,10 +15,10 @@ import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
+import Spinner from 'components/kit/Spinner';
 import Tags from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
-import Spinner from 'components/Spinner';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -59,7 +60,6 @@ import { Experimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-t
 import { encodeExperimentState } from 'services/decoder';
 import { GetExperimentsParams } from 'services/types';
 import userStore from 'stores/users';
-import { RecordKey } from 'types';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -68,10 +68,10 @@ import {
   ExperimentPagination,
   Project,
   ProjectExperiment,
+  RecordKey,
   RunState,
 } from 'types';
-import { ErrorLevel } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel } from 'utils/error';
 import {
   canActionExperiment,
   getActionsForExperimentsUnion,
@@ -84,8 +84,6 @@ import { alphaNumericSorter } from 'utils/sort';
 import { humanReadableBytes } from 'utils/string';
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
-
-import BatchActionConfirmModalComponent from '../components/BatchActionConfirmModal';
 
 import {
   DEFAULT_COLUMN_WIDTHS,

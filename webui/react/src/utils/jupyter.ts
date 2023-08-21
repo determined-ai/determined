@@ -1,8 +1,9 @@
-import { launchJupyterLab as apiLaunchJupyterLab } from 'services/api';
-import { previewJupyterLab as apiPreviewJupyterLab } from 'services/api';
+import {
+  launchJupyterLab as apiLaunchJupyterLab,
+  previewJupyterLab as apiPreviewJupyterLab,
+} from 'services/api';
 import { RawJson } from 'types';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { openCommandResponse } from 'utils/wait';
 
 export interface JupyterLabOptions {

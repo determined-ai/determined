@@ -10,8 +10,10 @@ import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import Tooltip from 'components/kit/Tooltip';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
+import { ExpListView, RowHeight } from 'pages/F_ExpList/F_ExperimentList.settings';
 import {
   activateExperiments,
   archiveExperiments,
@@ -23,7 +25,6 @@ import {
   unarchiveExperiments,
 } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import { RecordKey } from 'types';
 import {
   BulkActionResult,
   ExperimentAction,
@@ -31,20 +32,18 @@ import {
   Project,
   ProjectColumn,
   ProjectExperiment,
+  RecordKey,
 } from 'types';
 import { notification } from 'utils/dialogApi';
-import { ErrorLevel } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel } from 'utils/error';
 import {
   canActionExperiment,
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
+import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
-
-import { pluralizer } from '../../../utils/string';
-import { ExpListView, RowHeight } from '../F_ExperimentList.settings';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
 import MultiSortMenu, { Sort } from './MultiSortMenu';
@@ -101,9 +100,15 @@ interface Props {
   setExpListView: (view: ExpListView) => void;
   rowHeight: RowHeight;
   onRowHeightChange: (r: RowHeight) => void;
+  setHeatmapApplied: (selection: string[]) => void;
+  toggleHeatmap: (heatmapOn: boolean) => void;
+  heatmapOn: boolean;
+  heatmapBtnVisible: boolean;
 }
 
 const TableActionBar: React.FC<Props> = ({
+  heatmapOn,
+  toggleHeatmap,
   experiments,
   excludedExperimentIds,
   filters,
@@ -127,6 +132,7 @@ const TableActionBar: React.FC<Props> = ({
   rowHeight,
   onRowHeightChange,
   compareViewOn,
+  heatmapBtnVisible,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -376,6 +382,12 @@ const TableActionBar: React.FC<Props> = ({
             projectId={project.id}
             setVisibleColumns={setVisibleColumns}
           />
+          <OptionsMenu
+            expListView={expListView}
+            rowHeight={rowHeight}
+            setExpListView={setExpListView}
+            onRowHeightChange={onRowHeightChange}
+          />
           {(selectAll || selectedExperimentIds.length > 0) && (
             <Dropdown menu={editMenuItems} onClick={handleAction}>
               <Button hideChildren={isMobile}>Actions</Button>
@@ -386,12 +398,15 @@ const TableActionBar: React.FC<Props> = ({
       </Column>
       <Column align="right">
         <Columns>
-          <OptionsMenu
-            expListView={expListView}
-            rowHeight={rowHeight}
-            setExpListView={setExpListView}
-            onRowHeightChange={onRowHeightChange}
-          />
+          {heatmapBtnVisible && (
+            <Tooltip content={'Toggle Metric Heatmap'}>
+              <Button
+                icon={<Icon name="heatmap" title="heatmap" />}
+                type={heatmapOn ? 'primary' : 'default'}
+                onClick={() => toggleHeatmap(heatmapOn)}
+              />
+            </Tooltip>
+          )}
           {!!toggleComparisonView && (
             <Button
               hideChildren={isMobile}

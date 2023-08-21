@@ -305,7 +305,8 @@ func (a *allocation) SetProxyAddress(_ context.Context, address string) error {
 	defer a.mu.Unlock()
 
 	if len(a.req.ProxyPorts) == 0 {
-		return ErrBehaviorUnsupported{Behavior: "proxying"}
+		a.syslog.Debug("No ports to proxy. Skipping proxy registration.")
+		return nil
 	}
 	a.model.ProxyAddress = &address
 	if err := a.db.UpdateAllocationProxyAddress(a.model); err != nil {
@@ -1183,8 +1184,7 @@ func (a *allocation) markResourcesReleased() {
 		a.syslog.WithError(err).Error("failed to mark allocation completed")
 	}
 
-	telemetry.ReportAllocationTerminal(
-		a.system, a.db, a.model, a.resources.firstDevice())
+	telemetry.ReportAllocationTerminal(a.db, a.model, a.resources.firstDevice())
 }
 
 func (a *allocation) purgeRestorableResources() error {

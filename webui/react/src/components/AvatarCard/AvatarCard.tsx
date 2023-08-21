@@ -1,6 +1,6 @@
 import React from 'react';
 
-import Avatar, { Props as AvatarProps } from '../Avatar';
+import Avatar, { Props as AvatarProps } from 'components/Avatar';
 
 import css from './AvatarCard.module.scss';
 

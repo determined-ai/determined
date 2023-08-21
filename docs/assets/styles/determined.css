@@ -1,5 +1,10 @@
 /*! determined.css */
 
+/* Jump to sections instead of scrolling to them */
+html {
+  scroll-behavior: auto !important;
+}
+
 html {
   --pst-font-family-base-system: "Open Sans", "Metric HPE", Arial, sans-serif;
   --docsearch-modal-max-width: 1000px;

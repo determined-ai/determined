@@ -1,5 +1,6 @@
 # Note: This should be kept in sync with the .flake8 file in the root of the repo.
 [flake8]
+jobs = 8
 max-line-length = 100
 exclude =
     .git,
@@ -12,9 +13,140 @@ exclude =
 # We ignore F401 in __init__.py because it is expected for there to be
 # "unused imports" when defining a "regular" package. (This file is
 # implicitly executed when the package is imported, and the imports would
-# be used by the importer.) We ignore patch_saver_restore.py because it includes
-# a near-verbatim TensorFlow function with a small patch.
-per-file-ignores = __init__.py:F401 patch_saver_restore.py:E111,E114,
+# be used by the importer.)
+per-file-ignores =
+  __init__.py:F401,I2041
+  determined/cli/agent.py:I2041
+  determined/cli/checkpoint.py:I2041
+  determined/cli/cli.py:I2041
+  determined/cli/command.py:I2041
+  determined/cli/dev.py:I2041
+  determined/cli/experiment.py:I2041
+  determined/cli/job.py:I2041
+  determined/cli/master.py:I2041
+  determined/cli/model.py:I2041
+  determined/cli/notebook.py:I2041
+  determined/cli/oauth.py:I2041
+  determined/cli/project.py:I2041
+  determined/cli/proxy.py:I2041
+  determined/cli/rbac.py:I2041
+  determined/cli/remote.py:I2041
+  determined/cli/render.py:I2041
+  determined/cli/resource_pool.py:I2041
+  determined/cli/resources.py:I2041
+  determined/cli/shell.py:I2041
+  determined/cli/sso.py:I2041
+  determined/cli/task.py:I2041
+  determined/cli/template.py:I2041
+  determined/cli/tensorboard.py:I2041
+  determined/cli/top_arg_descriptions.py:I2041
+  determined/cli/trial.py:I2041
+  determined/cli/tunnel.py:I2041
+  determined/cli/user.py:I2041
+  determined/cli/user_groups.py:I2041
+  determined/cli/version.py:I2041
+  determined/cli/workspace.py:I2041
+  determined/common/declarative_argparse.py:I2041
+  determined/common/experimental/session.py:I2041
+  determined/common/storage/azure_client.py:I2041
+  determined/common/storage/boto3_credential_manager.py:I2041
+  determined/common/storage/gcs.py:I2041
+  determined/deploy/aws/aws.py:I2041
+  determined/deploy/aws/cli.py:I2041
+  determined/deploy/aws/deployment_types/base.py:I2041
+  determined/deploy/aws/deployment_types/govcloud.py:I2041
+  determined/deploy/aws/deployment_types/secure.py:I2041
+  determined/deploy/aws/gen_vcpu_mapping.py:I2041
+  determined/deploy/aws/master_config_inject.py:I2041
+  determined/deploy/aws/preflight.py:I2041
+  determined/deploy/cli.py:I2041
+  determined/deploy/gcp/cli.py:I2041
+  determined/deploy/gcp/gcp.py:I2041
+  determined/deploy/gcp/preflight.py:I2041
+  determined/deploy/gke/cli.py:I2041
+  determined/deploy/healthcheck.py:I2041
+  determined/deploy/local/cli.py:I2041
+  determined/deploy/local/cluster_utils.py:I2041
+  determined/deploy/local/preflight.py:I2041
+  determined/estimator/_estimator_context.py:I2041
+  determined/estimator/_estimator_trial.py:I2041
+  determined/estimator/_load.py:I2041
+  determined/estimator/_util.py:I2041
+  determined/experimental/client.py:I2041
+  determined/experimental/unmanaged.py:I2041
+  determined/keras/_load.py:I2041
+  determined/keras/_tf_keras_context.py:I2041
+  determined/keras/_tf_keras_trial.py:I2041
+  determined/launch/deepspeed.py:I2041
+  determined/launch/horovod.py:I2041
+  determined/lightning/experimental.py:I2041
+  determined/profiler.py:I2041
+  determined/pytorch/_data.py:I2041
+  determined/pytorch/_pytorch_context.py:I2041
+  determined/pytorch/_pytorch_trial.py:I2041
+  determined/pytorch/_trainer.py:I2041
+  determined/pytorch/deepspeed/_deepspeed_context.py:I2041
+  determined/pytorch/deepspeed/_mpu.py:I2041
+  determined/pytorch/dsat/_dsat_search_method.py:I2041
+  determined/pytorch/dsat/_run_dsat.py:I2041
+  determined/pytorch/dsat/_utils.py:I2041
+  determined/searcher/_remote_search_runner.py:I2041
+  determined/searcher/_search_method.py:I2041
+  determined/searcher/_search_runner.py:I2041
+  determined/tensorboard/base.py:I2041
+  determined/tensorboard/build.py:I2041
+  determined/tensorboard/fetchers/azure.py:I2041
+  determined/tensorboard/fetchers/gcs.py:I2041
+  determined/tensorboard/fetchers/s3.py:I2041
+  determined/tensorboard/fetchers/shared.py:I2041
+  determined/tensorboard/gcs.py:I2041
+  determined/tensorboard/metric_writers/pytorch.py:I2041
+  determined/tensorboard/metric_writers/tensorflow.py:I2041
+  determined/tensorboard/s3.py:I2041
+  determined/transformers/_hf_callback.py:I2041
+  determined/transformers/experimental.py:I2041
+  determined/workload.py:I2041
+  tests/checkpoints/test_checkpoint.py:I2041
+  tests/cli/filetree.py:I2041
+  tests/cli/test_auth.py:I2041
+  tests/cli/test_cli.py:I2041
+  tests/cli/test_experiment.py:I2041
+  tests/common/api_server.py:I2041
+  tests/common/test_api_server.py:I2041
+  tests/common/test_multimaster.py:I2041
+  tests/confdir.py:I2041
+  tests/conftest.py:I2041
+  tests/custom_search_mocks.py:I2041
+  tests/determined/common/experimental/test_determined.py:I2041
+  tests/experiment/fixtures/ancient_keras_ckpt.py:I2041
+  tests/experiment/fixtures/estimator_xor_model.py:I2041
+  tests/experiment/fixtures/keras_no_op/model_def.py:I2041
+  tests/experiment/fixtures/keras_tf2_disabled_no_op/model_def.py:I2041
+  tests/experiment/fixtures/pytorch_amp/apex_amp_model_def.py:I2041
+  tests/experiment/fixtures/pytorch_amp/auto_amp_model_def.py:I2041
+  tests/experiment/fixtures/pytorch_amp/layers.py:I2041
+  tests/experiment/fixtures/pytorch_amp/manual_amp_model_def.py:I2041
+  tests/experiment/fixtures/pytorch_amp/model_def.py:I2041
+  tests/experiment/fixtures/tf_keras_one_var_model.py:I2041
+  tests/experiment/fixtures/tf_keras_xor_model.py:I2041
+  tests/experiment/keras/test_keras_data.py:I2041
+  tests/experiment/keras/test_tf_keras_trial.py:I2041
+  tests/experiment/pytorch/test_deepspeed_autotuning.py:I2041
+  tests/experiment/pytorch/test_pytorch_data.py:I2041
+  tests/experiment/pytorch/test_reducer.py:I2041
+  tests/experiment/tensorflow/test_util.py:I2041
+  tests/experiment/test_local.py:I2041
+  tests/experiment/utils.py:I2041
+  tests/filetree.py:I2041
+  tests/launch/test_deepspeed.py:I2041
+  tests/search_methods.py:I2041
+  tests/storage/test_azure.py:I2041
+  tests/storage/test_gcs.py:I2041
+  tests/storage/test_s3.py:I2041
+  tests/storage/test_shared_fs.py:I2041
+  tests/tensorboard/test_util.py:I2041
+  tests/test_custom_searcher.py:I2041
+  tests/test_gc_harness.py:I2041
 
 # Explanations for ignored error codes:
 # - D1* (no missing docstrings): too much effort to start enforcing
@@ -28,7 +160,8 @@ per-file-ignores = __init__.py:F401 patch_saver_restore.py:E111,E114,
 # - W503 (no line breaks before binary operator): not PEP8-compliant; triggered by Black-formatted code
 # - C812-C816 (missing trailing comma): stylistic choice
 # - A003 (class attribute is shadowing a python builtin): not a high risk of causing issues.
-ignore = D1,D200,D202,D203,D205,D212,D4,E203,W503,C812,C813,C814,C815,C816,A003
+# - I2000 Imports are only allowed on module level: often useful for optional imports or import perf
+ignore = D1,D200,D202,D203,D205,D212,D4,E203,W503,C812,C813,C814,C815,C816,A003,I2000
 
 show_source = true
 

@@ -165,6 +165,12 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			return nil
 		}
 		if !model.TerminalStates[t.state] {
+			if t.allocationID != nil {
+				err := task.DefaultService.Signal(*t.allocationID, task.KillAllocation, "trial crashed")
+				if err == nil {
+					task.DefaultService.AwaitTermination(*t.allocationID)
+				}
+			}
 			return t.transition(ctx, model.StateWithReason{
 				State:               model.ErrorState,
 				InformationalReason: "trial did not finish properly",
@@ -239,7 +245,6 @@ func (t *trial) Receive(ctx *actor.Context) error {
 func (t *trial) create(ctx *actor.Context) error {
 	m := model.NewTrial(
 		t.state,
-		t.taskID,
 		t.searcher.Create.RequestID,
 		t.experimentID,
 		model.JSONObj(t.searcher.Create.Hparams),
@@ -252,7 +257,7 @@ func (t *trial) create(ctx *actor.Context) error {
 		return err
 	}
 
-	err = t.db.AddTrial(m)
+	err = db.AddTrial(context.TODO(), m, t.taskID)
 	if err != nil {
 		return errors.Wrap(err, "failed to save trial to database")
 	}
@@ -698,19 +703,15 @@ func (t *trial) maybeRestoreAllocation(ctx *actor.Context) (*model.Allocation, e
 		for _, alloc := range allocations[0:mathx.Min(len(allocations), maxAllocsToLog)] {
 			allocIDs = append(allocIDs, alloc.AllocationID.String())
 		}
-		return nil, errors.New(
-			fmt.Sprintf(
-				"discovered %d open allocations on restore: %s",
-				len(allocations),
-				strings.Join(allocIDs, " "),
-			),
+		return nil, fmt.Errorf(
+			"discovered %d open allocations on restore: %s",
+			len(allocations),
+			strings.Join(allocIDs, " "),
 		)
 	default:
-		return nil, errors.New(
-			fmt.Sprintf(
-				"discovered %d open allocations on restore",
-				len(allocations),
-			),
+		return nil, fmt.Errorf(
+			"discovered %d open allocations on restore",
+			len(allocations),
 		)
 	}
 }

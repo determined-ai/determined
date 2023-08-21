@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
+	"github.com/determined-ai/determined/master/internal/rm/rmutils"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -83,13 +84,13 @@ func (k ResourceManager) GetResourcePoolRef(
 
 // ResolveResourcePool resolves the resource pool completely.
 func (k ResourceManager) ResolveResourcePool(
-	ctx actor.Messenger,
+	actorCtx actor.Messenger,
 	name string,
 	workspaceID int,
 	slots int,
 ) (string, error) {
-	ctxTODO := context.TODO()
-	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctxTODO, workspaceID)
+	ctx := context.TODO()
+	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctx, workspaceID)
 	if err != nil {
 		return "", err
 	}
@@ -97,35 +98,34 @@ func (k ResourceManager) ResolveResourcePool(
 	if name == "" && slots == 0 {
 		if defaultAuxPool == "" {
 			req := sproto.GetDefaultAuxResourcePoolRequest{}
-			resp, err := k.GetDefaultAuxResourcePool(ctx, req)
+			resp, err := k.GetDefaultAuxResourcePool(actorCtx, req)
 			if err != nil {
 				return "", fmt.Errorf("defaulting to aux pool: %w", err)
 			}
 			return resp.PoolName, nil
 		}
-		if err := k.ValidateResourcePool(ctx, defaultAuxPool); err != nil {
-			return "", fmt.Errorf("validating default aux pool: %w", err)
-		}
-		return defaultAuxPool, nil
+		name = defaultAuxPool
 	}
 
 	if name == "" && slots >= 0 {
 		if defaultComputePool == "" {
 			req := sproto.GetDefaultComputeResourcePoolRequest{}
-			resp, err := k.GetDefaultComputeResourcePool(ctx, req)
+			resp, err := k.GetDefaultComputeResourcePool(actorCtx, req)
 			if err != nil {
 				return "", fmt.Errorf("defaulting to compute pool: %w", err)
 			}
 			return resp.PoolName, nil
 		}
-		if err := k.ValidateResourcePool(ctx, defaultComputePool); err != nil {
-			return "", fmt.Errorf("validating default compute pool: %w", err)
-		}
-		return defaultComputePool, nil
+		name = defaultComputePool
+	}
+
+	resp, err := k.GetResourcePools(actorCtx, &apiv1.GetResourcePoolsRequest{})
+	if err != nil {
+		return "", err
 	}
 
 	poolNames, _, err := db.ReadRPsAvailableToWorkspace(
-		context.TODO(), int32(workspaceID), 0, -1, config.GetMasterConfig().ResourcePools)
+		ctx, int32(workspaceID), 0, -1, rmutils.ResourcePoolsToConfig(resp.ResourcePools))
 	if err != nil {
 		return "", err
 	}
@@ -142,7 +142,7 @@ func (k ResourceManager) ResolveResourcePool(
 			name, workspaceID)
 	}
 
-	if err := k.ValidateResourcePool(ctx, name); err != nil {
+	if err := k.ValidateResourcePool(actorCtx, name); err != nil {
 		return "", fmt.Errorf("validating pool: %w", err)
 	}
 	return name, nil
@@ -446,6 +446,9 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		resp := ctx.Ask(k.podsActor, msg)
 		ctx.Respond(resp.Get())
 
+	case sproto.GetExternalJobs:
+		ctx.Respond(rmerrors.ErrNotSupported)
+
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
@@ -609,17 +612,6 @@ func (k *kubernetesResourceManager) fetchAvgQueuedTime(pool string) (
 		Seconds:     today,
 	})
 	return res, nil
-}
-
-func (k *kubernetesResourceManager) aggregateTaskHandler(
-	resps map[*actor.Ref]actor.Message,
-) (*actor.Ref, error) {
-	for _, resp := range resps {
-		if typed, ok := resp.(*actor.Ref); ok && typed != nil {
-			return typed, nil
-		}
-	}
-	return nil, errors.New("task handler not found on any resource pool")
 }
 
 func (k *kubernetesResourceManager) aggregateTaskSummary(

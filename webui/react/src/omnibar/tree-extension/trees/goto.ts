@@ -2,8 +2,12 @@ import { terminalCommandStates } from 'constants/states';
 import { alertAction, parseIds, visitAction } from 'omnibar/tree-extension/trees/actions';
 import { Children, TreeNode } from 'omnibar/tree-extension/types';
 import { paths } from 'routes/utils';
-import { getExperimentDetails, getTrialDetails } from 'services/api';
-import { getJupyterLabs, getTensorBoards } from 'services/api';
+import {
+  getExperimentDetails,
+  getJupyterLabs,
+  getTensorBoards,
+  getTrialDetails,
+} from 'services/api';
 import { openCommand } from 'utils/wait';
 
 const locations: TreeNode[] = [

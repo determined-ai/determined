@@ -5,12 +5,11 @@ from typing import Any, Dict, List
 from termcolor import colored
 
 from determined import cli
+from determined.cli import render
 from determined.cli.workspace import get_workspace_id_from_args, workspace_arg
 from determined.common import api, util, yaml
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
-
-from . import render
 
 TemplateClean = namedtuple("TemplateClean", ["name", "workspace"])
 TemplateAll = namedtuple("TemplateAll", ["name", "workspace", "config"])

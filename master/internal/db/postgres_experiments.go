@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -136,7 +137,7 @@ func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 	}
 	rows := []MetricNamesRow{}
 
-	metricNames := BunSelectMetricGroupNames().
+	metricNames := BunSelectMetricGroupNames().Distinct().
 		Where("experiment_id IN (?)", bun.In(experimentIDs))
 
 	err := Bun().NewSelect().TableExpr("(?) as metric_names", metricNames).
@@ -478,8 +479,28 @@ WHERE id = $1`, id)
 }
 
 // AddExperiment adds the experiment to the database and sets its ID.
+//
+// TODO(ilia): deprecate and use module function instead.
 func (db *PgDB) AddExperiment(
 	experiment *model.Experiment, activeConfig expconf.ExperimentConfig,
+) (err error) {
+	return AddExperiment(context.TODO(), experiment, activeConfig)
+}
+
+// AddExperiment adds the experiment to the database and sets its ID.
+func AddExperiment(
+	ctx context.Context, experiment *model.Experiment, activeConfig expconf.ExperimentConfig,
+) (err error) {
+	return Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		return AddExperimentTx(ctx, tx, experiment, activeConfig, false)
+	})
+}
+
+// AddExperimentTx adds the experiment to the database and sets its ID.
+func AddExperimentTx(
+	ctx context.Context, idb bun.IDB,
+	experiment *model.Experiment, activeConfig expconf.ExperimentConfig,
+	upsert bool,
 ) (err error) {
 	if experiment.ID != 0 {
 		return errors.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
@@ -490,56 +511,43 @@ func (db *PgDB) AddExperiment(
 		return errors.Wrapf(err, "error handling experiment config %v", activeConfig)
 	}
 
-	ctx := context.TODO()
-	tx, err := Bun().BeginTx(ctx, nil)
-	defer func() {
-		txErr := tx.Rollback()
-		if txErr != nil && txErr != sql.ErrTxDone {
-			log.WithError(txErr).Error("error rolling back transaction in AddExperiment")
-		}
-	}()
 	job := model.Job{
 		JobID:   experiment.JobID,
 		JobType: model.JobTypeExperiment,
 		OwnerID: experiment.OwnerID,
 	}
-	_, err = tx.NewInsert().Model(&job).Exec(ctx)
-	if err != nil {
+	if _, err = idb.NewInsert().Model(&job).Exec(ctx); err != nil {
 		return errors.Wrapf(err, "error inserting job %v", job)
 	}
-	err = tx.NewRaw(`INSERT INTO experiments
-	(state, config, model_definition, start_time, end_time, archived, parent_id, progress,
-	 git_remote, git_commit, git_committer, git_commit_date,
-	 owner_id, original_config, notes, job_id, project_id, unmanaged)
-	VALUES (?, ?, ?, ?, ?, ?, ?, 0,
-		    ?, ?, ?, ?,
-	        ?, ?, ?, ?, ?, ?)
-	RETURNING id`,
-		experiment.State,
-		string(activeConfigStr),
-		experiment.ModelDefinitionBytes,
-		experiment.StartTime,
-		experiment.EndTime,
-		experiment.Archived,
-		experiment.ParentID,
-		experiment.GitRemote,
-		experiment.GitCommit,
-		experiment.GitCommitter,
-		experiment.GitCommitDate,
-		experiment.OwnerID,
-		experiment.OriginalConfig,
-		experiment.Notes,
-		experiment.JobID,
-		experiment.ProjectID,
-		experiment.Unmanaged).Scan(ctx, &experiment.ID)
+
+	q := idb.NewInsert().Model(experiment).
+		ExcludeColumn("id", "username").
+		Value("progress", "?", 0).
+		Value("config", "?", string(activeConfigStr)).
+		Returning("id")
+
+	if upsert {
+		// TODO(ilia): are there any fields user will expect us to update here?
+		// `config` field will cover the metadata: name, data, description, labels, etc.
+		// No-op SET for external_experiment_id is required for `RETURNING` clause to work.
+		q = q.On("CONFLICT (external_experiment_id) DO UPDATE").
+			Set("external_experiment_id = EXCLUDED.external_experiment_id").
+			Set("config = EXCLUDED.config")
+		// TODO(ilia): do something with the job we've already created.
+		// Option A) make jobs nullable/optional for unmanaged experiments.
+		// Option B) just delete it.
+	}
+
+	_, err = q.Exec(ctx)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting experiment %v", experiment)
 	}
 	if err = AddProjectHyperparameters(
-		ctx, tx, int32(experiment.ProjectID), []int32{int32(experiment.ID)}); err != nil {
+		ctx, idb, int32(experiment.ProjectID), []int32{int32(experiment.ID)}); err != nil {
 		return errors.Wrapf(err, "error updating hyperparameters")
 	}
-	return tx.Commit()
+
+	return nil
 }
 
 // RemoveProjectHyperparameters take a list of experiment ids,
@@ -664,8 +672,28 @@ SELECT e.id, e.state, e.config, e.model_definition, e.start_time,
        e.owner_id, e.notes, e.job_id, u.username as username, e.project_id, e.unmanaged
 FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
+JOIN trial_id_task_id ON t.id = trial_id_task_id.trial_id
 JOIN users u ON e.owner_id = u.id
-WHERE t.task_id = ?`, taskID).Scan(ctx, &experiment); err != nil {
+WHERE trial_id_task_id.task_id = ?`, taskID).Scan(ctx, &experiment); err != nil {
+		return nil, MatchSentinelError(err)
+	}
+
+	return &experiment, nil
+}
+
+// ExperimentByExternalIDTx looks up an experiment by a given external experiment id.
+func ExperimentByExternalIDTx(ctx context.Context, idb bun.IDB, externalExperimentID string) (
+	*model.Experiment, error,
+) {
+	var experiment model.Experiment
+
+	if err := idb.NewRaw(`
+	SELECT e.id, state, config, model_definition, start_time, end_time, archived,
+	git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
+		job_id, u.username as username, project_id, unmanaged
+	FROM experiments e
+	JOIN users u ON (e.owner_id = u.id)
+	WHERE e.external_experiment_id = ?`, externalExperimentID).Scan(ctx, &experiment); err != nil {
 		return nil, MatchSentinelError(err)
 	}
 
@@ -710,7 +738,7 @@ SELECT e.id, state, config, model_definition, start_time, end_time, archived,
        u.username as username, project_id, unmanaged
 FROM experiments e
 JOIN users u ON e.owner_id = u.id
-WHERE state IN (
+WHERE unmanaged = false AND state IN (
 	'ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', 'STOPPING_ERROR',
 	'STOPPING_KILLED'
 )`)
@@ -919,10 +947,9 @@ func (db *PgDB) DeleteExperiments(ctx context.Context, ids []int) error {
 
 	if _, err = tx.NewDelete().Model(&delIDs).Table("checkpoints_v2").
 		Where(`task_id IN (
-	SELECT tk.task_id
-	FROM tasks tk
-	JOIN trials t ON t.task_id = tk.task_id
-	JOIN experiments e ON t.experiment_id = e.id
+	SELECT tt.task_id
+	FROM trial_id_task_id tt
+	JOIN trials t ON t.id = tt.trial_id
 	WHERE experiment_id IN (?)
 )`, bun.In(ids)).
 		Returning("id").
@@ -1006,8 +1033,10 @@ func (db *PgDB) ExperimentTotalStepTime(id int) (float64, error) {
 	var seconds float64
 	if err := db.sql.Get(&seconds, `
 SELECT COALESCE(extract(epoch from sum(a.end_time - a.start_time)), 0)
-FROM allocations a, trials t
-WHERE t.experiment_id = $1 AND a.task_id = t.task_id
+FROM allocations a
+JOIN trial_id_task_id tasks ON a.task_id = tasks.task_id
+JOIN trials t ON tasks.trial_id = t.id
+WHERE t.experiment_id = $1
 `, id); err != nil {
 		return 0, errors.Wrapf(err, "querying for total step time of experiment %v", id)
 	}
@@ -1047,32 +1076,29 @@ WHERE trials.experiment_id = $1
 }
 
 // ExperimentsTrialAndTaskIDs returns the trial and task IDs for one or more experiments.
-func (db *PgDB) ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int,
+func ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int,
 	[]model.TaskID, error,
 ) {
 	if len(expIDs) == 0 {
 		return nil, nil, nil
 	}
-	var trialIDRows []struct {
-		ID     int          `db:"id"`
-		TaskID model.TaskID `db:"task_id"`
+
+	var res []model.TrialTaskID
+	if err := idb.NewSelect().Model(&res).
+		Join("JOIN trials ON trials.id = trial_task_id.trial_id").
+		Where("trials.experiment_id IN (?)", bun.In(expIDs)).
+		Scan(ctx); err != nil {
+		return nil, nil, fmt.Errorf("querying for trial / task IDs of experiments %v: %w", expIDs, err)
 	}
-	query := idb.NewSelect().
-		ColumnExpr("id").
-		ColumnExpr("task_id").
-		Table("trials").
-		Model(&trialIDRows).
-		Where("trials.experiment_id IN (?)", bun.In(expIDs))
-	if err := query.Scan(ctx); err != nil {
-		return nil, nil, errors.Wrapf(err, "querying for trial IDs of experiments %v", expIDs)
-	}
-	var trialIDs []int
+
 	var taskIDs []model.TaskID
-	for _, r := range trialIDRows {
-		trialIDs = append(trialIDs, r.ID)
+	trialIDsMap := make(map[int]bool)
+	for _, r := range res {
+		trialIDsMap[r.TrialID] = true
 		taskIDs = append(taskIDs, r.TaskID)
 	}
-	return trialIDs, taskIDs, nil
+
+	return maps.Keys(trialIDsMap), taskIDs, nil
 }
 
 // ExperimentNumSteps returns the total number of steps for all trials of the experiment.
@@ -1117,65 +1143,40 @@ WITH const AS (
             END) AS sign
     FROM experiments WHERE id = $1
 ), selected_checkpoints AS (
-    SELECT *
-    FROM (
-        SELECT *,
-               -- The order includes the id to prevent different rows from having the same
-               -- rank, which could cause more than the desired number of checkpoints to be
-               -- left out of the result set. Also, any rows with null validation values
-               -- will sort to the end, thereby not affecting the ranks of rows with
-               -- non-null validations, and will be filtered out later.
-               rank() OVER (
-                   ORDER BY
-                       const.sign * (step->'validation'->'metrics'->'validation_metrics'
-                                     ->>const.metric_name)::float8 ASC NULLS LAST, id ASC
-               ) AS experiment_rank,
-               rank() OVER (
-                   PARTITION BY trial_id
-                   ORDER BY
-                       const.sign * (step->'validation'->'metrics'->'validation_metrics'
-                                     ->>const.metric_name)::float8 ASC NULLS LAST, id ASC
-               ) AS trial_rank,
-               rank() OVER (
-                   PARTITION BY trial_id
-                   ORDER BY total_batches DESC
-               ) AS trial_order_rank
-        FROM (
-            SELECT c.id, c.trial_id, c.steps_completed as total_batches, c.state,
-                   c.report_time as end_time, c.uuid, c.resources, c.metadata,
-                   (SELECT row_to_json(s)
-                    FROM (
-                        SELECT s.end_time, s.id, s.trial_id,
-                            s.total_batches,
-                            (SELECT row_to_json(v)
-                            FROM (
-                                SELECT v.end_time, v.id, v.metrics,
-                                    v.total_batches, v.trial_id
-                                    FROM validations v
-                                    WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
-                                ) v
-                               ) AS validation
-                        FROM steps s
-                        WHERE s.total_batches = c.steps_completed AND s.trial_id = c.trial_id
-                    ) s
-                   ) AS step,
-                   -- We later filter out any checkpoints with any corresponding warm start
-                   -- trials, so we can just put an empty list here. (TODO(dzhu): This is
-                   -- here for backwards compatibility with Python, but could maybe be
-                   -- removed.)
-                   '[]'::jsonb AS warm_start_trials
-            FROM checkpoints_view c, trials t, const
-            WHERE c.state = 'COMPLETED' AND c.trial_id = t.id AND t.experiment_id = $1
-        ) _, const
-    ) c, const
-    WHERE (SELECT COUNT(*) FROM trials t WHERE t.warm_start_checkpoint_id = c.id) = 0
-          AND c.trial_order_rank > $4
-          AND ((c.experiment_rank > $2
-                AND c.trial_rank > $3)
-               OR (c.step->'validation'->'metrics'->'validation_metrics'->>const.metric_name
-                   IS NULL))
+	SELECT c.uuid,
+		-- The order includes the id to prevent different rows from having the same
+		-- rank, which could cause more than the desired number of checkpoints to be
+		-- left out of the result set. Also, any rows with null validation values
+		-- will sort to the end, thereby not affecting the ranks of rows with
+		-- non-null validations, and will be filtered out later.
+		rank() OVER (
+			ORDER BY const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8
+			ASC NULLS LAST, v.id ASC
+		) AS experiment_rank,
+		rank() OVER (
+			PARTITION BY v.trial_id
+			ORDER BY const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8 
+			ASC NULLS LAST, v.id ASC
+		) AS trial_rank,
+		rank() OVER (
+			PARTITION BY v.trial_id
+			ORDER BY (c.metadata->>'steps_completed')::int DESC
+		) AS trial_order_rank,
+		v.metrics->'validation_metrics'->>const.metric_name as val_metric
+	FROM checkpoints_v2 c
+	JOIN const ON true
+	JOIN trial_id_task_id ON c.task_id = trial_id_task_id.task_id
+    JOIN trials t ON trial_id_task_id.trial_id = t.id
+	LEFT JOIN validations v ON v.total_batches = (c.metadata->>'steps_completed')::int AND 
+		v.trial_id = t.id
+	WHERE c.report_time IS NOT NULL
+		AND (SELECT COUNT(*) FROM trials t WHERE t.warm_start_checkpoint_id = c.id) = 0
+		AND t.experiment_id = $1
 )
-SELECT selected_checkpoints.uuid AS ID from selected_checkpoints;`
+SELECT sc.uuid AS ID
+FROM selected_checkpoints sc
+WHERE ((experiment_rank > $2 AND trial_rank > $3) OR (val_metric IS NULL))
+	AND trial_order_rank > $4;`
 
 	var checkpointIDRows []struct {
 		ID uuid.UUID

@@ -7,7 +7,7 @@ import userSettings from 'stores/userSettings';
 import { Loadable } from 'utils/loadable';
 
 // add new feature switches here
-export type ValidFeature = 'chart' | 'explist_v2' | 'rp_binding';
+export type ValidFeature = 'explist_v2' | 'rp_binding';
 
 type FeatureDescription = {
   friendlyName: string;
@@ -16,13 +16,8 @@ type FeatureDescription = {
 };
 
 export const FEATURES: Record<ValidFeature, FeatureDescription> = {
-  chart: {
-    defaultValue: false,
-    description: 'Enable improved learning curve charts for experiment visualizations',
-    friendlyName: 'New Charts',
-  },
   explist_v2: {
-    defaultValue: false,
+    defaultValue: true,
     description: 'Enable improved experiment listing, filtering, and comparison',
     friendlyName: 'New Experiment List',
   },

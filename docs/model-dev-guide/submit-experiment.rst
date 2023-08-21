@@ -123,6 +123,8 @@ Example:
 
    python3 -m determined.launch.horovod --fusion-threshold-mb 1 --cycle-time-ms 2 -- --trial model_def:MyTrial
 
+.. _pytorch-dist-launcher:
+
 PyTorch Distributed Launcher
 ============================
 
@@ -290,8 +292,8 @@ scheduler. Queue Management, described in detail in the following sections, show
 and their states, and lets you modify some configuration options, such as priority, position in the
 queue, and resource pool.
 
-To begin managing job queues, navigate to the WebUI ``Job Queue`` section or use the ``det job`` set
-of CLI commands.
+To begin managing job queues, go to the WebUI ``Job Queue`` section or use the ``det job`` set of
+CLI commands.
 
 Queued jobs can be in the ``Queued`` or ``Scheduled`` state:
 

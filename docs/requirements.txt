@@ -1,13 +1,12 @@
-# pin docutils at 0.15.2 to avoid transitive dependency conflict with botocore (requires < 0.16)
-docutils==0.15.2
 pillow
-rstfmt==0.0.12
+rstfmt==0.0.14
+sphinx==4.2.0
 
 # Plugins
 sphinx-reredirects>=0.0.1
 sphinx-copybutton>=0.4.0
 sphinx-sitemap>=2.2.0
-sphinx==4.2.0
+sphinx-tabs>=3.0
 myst_parser
 
 # Theme
@@ -26,3 +25,9 @@ algoliasearch>=2.0,<3.0
 
 # Uploading doc site files to S3
 boto3>=1.24.4<2.0
+
+# build requirements
+tensorflow==2.12.0; sys_platform != 'darwin' or platform_machine != 'arm64'
+tensorflow-macos==2.11.0; sys_platform == 'darwin' and platform_machine == 'arm64'
+torch==1.11.0
+torchvision==0.12.0

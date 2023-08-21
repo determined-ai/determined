@@ -3,11 +3,10 @@ import { Card, Space } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import Spinner from 'components/kit/Spinner';
 import Tooltip from 'components/kit/Tooltip';
-import Spinner from 'components/Spinner/Spinner';
 import { Metadata } from 'types';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 
 import EditableMetadata from './EditableMetadata';
 

@@ -11,11 +11,8 @@ get-deps: get-deps-pip get-deps-go get-deps-webui
 get-deps-%:
 	$(MAKE) -C $(subst -,/,$*) get-deps
 
-# This version of torch is de-facto the supported version of torch across our repo. When it is
-# updated, find/replace all other pinned versions.
 .PHONY: get-deps-pip
 get-deps-pip:
-	pip install torch==1.9.0
 	pip install -r requirements.txt
 
 .PHONY: get-deps-go

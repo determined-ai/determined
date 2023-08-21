@@ -198,7 +198,7 @@ export const getAgents = generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Ty
 );
 
 export const getResourcePools = generateDetApi<
-  EmptyParams,
+  Service.GetResourcePoolsParams,
   Api.V1GetResourcePoolsResponse,
   Type.ResourcePool[]
 >(Config.getResourcePools);
@@ -702,6 +702,12 @@ export const getProjectColumns = generateDetApi<
   Api.V1GetProjectColumnsResponse,
   Type.ProjectColumn[]
 >(Config.getProjectColumns);
+
+export const getProjectNumericMetricsRange = generateDetApi<
+  Service.GetProjectNumericMetricsRangeParams,
+  Api.V1GetProjectNumericMetricsRangeResponse,
+  Type.ProjectMetricsRange[]
+>(Config.getProjectNumericMetricsRange);
 
 /* Tasks */
 

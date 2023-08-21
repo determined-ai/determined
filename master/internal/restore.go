@@ -67,7 +67,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 			return errors.Wrapf(err, "terminating experiment %d", expModel.ID)
 		}
 		expModel.State = terminal
-		telemetry.ReportExperimentStateChanged(m.system, m.db, *expModel)
+		telemetry.ReportExperimentStateChanged(m.db, expModel)
 		if err := webhooks.ReportExperimentStateChanged(
 			context.TODO(), *expModel, activeConfig,
 		); err != nil {
@@ -154,7 +154,8 @@ func (e *experiment) restoreTrial(
 
 	var trialID *int
 	var terminal bool
-	switch trial, err := e.db.TrialByExperimentAndRequestID(e.ID, searcher.Create.RequestID); {
+	switch trial, err := db.TrialByExperimentAndRequestID(context.TODO(),
+		e.ID, searcher.Create.RequestID); {
 	case errors.Cause(err) == db.ErrNotFound:
 		l.Debug("trial was not previously persisted")
 	case err != nil:

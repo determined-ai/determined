@@ -1,4 +1,5 @@
 import contextlib
+import datetime
 import enum
 import hashlib
 import json
@@ -6,7 +7,6 @@ import logging
 import os
 import pathlib
 import uuid
-from datetime import datetime, timezone
 from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Union
 
 from determined import core, tensorboard
@@ -181,7 +181,7 @@ class CheckpointContext:
         task_id: str,
         allocation_id: Optional[str],
         tbd_sync_mode: core.TensorboardMode,
-        tensorboard_manager: tensorboard.TensorboardManager,
+        tensorboard_manager: Optional[tensorboard.TensorboardManager],
     ) -> None:
         self._dist = dist
         self._storage_manager = storage_manager
@@ -189,6 +189,8 @@ class CheckpointContext:
         self._task_id = task_id
         self._allocation_id = allocation_id
         self._tensorboard_mode = tbd_sync_mode
+        if tbd_sync_mode != core.TensorboardMode.MANUAL and tensorboard_manager is None:
+            raise ValueError("either set TensorboardMode.MANUAL, or pass a tensorboard manager.")
         self._tensorboard_manager = tensorboard_manager
 
     def upload(
@@ -698,7 +700,7 @@ class CheckpointContext:
             taskId=self._task_id,
             training=bindings.v1CheckpointTrainingMetadata(),
             uuid=storage_id,
-            reportTime=datetime.now(timezone.utc).isoformat(),
+            reportTime=datetime.datetime.now(datetime.timezone.utc).isoformat(),
             state=bindings.checkpointv1State.COMPLETED,
         )
         bindings.post_ReportCheckpoint(self._session, body=ckpt)
@@ -706,6 +708,7 @@ class CheckpointContext:
 
         # Also sync tensorboard.
         if self._tensorboard_mode == core.TensorboardMode.AUTO:
+            assert self._tensorboard_manager is not None
             self._tensorboard_manager.sync()
 
 

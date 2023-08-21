@@ -1,29 +1,27 @@
 import type { TabsProps } from 'antd';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
+import Spinner from 'components/kit/Spinner';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';
-import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
-import useFeature from 'hooks/useFeature';
+import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
-import F_TrialDetailsOverview from 'pages/TrialDetails/F_TrialDetailsOverview';
 import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
+import TrialDetailsMetrics from 'pages/TrialDetails/TrialDetailsMetrics';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails } from 'services/api';
 import workspaceStore from 'stores/workspaces';
-import { ApiState, ValueOf } from 'types';
-import { ExperimentBase, TrialDetails, Workspace } from 'types';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import { ApiState, ExperimentBase, TrialDetails, ValueOf, Workspace } from 'types';
+import handleError, { ErrorType } from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -34,6 +32,7 @@ import MultiTrialDetailsHyperparameters from './TrialDetails/MultiTrialDetailsHy
 const TabType = {
   Hyperparameters: 'hyperparameters',
   Logs: 'logs',
+  Metrics: 'metrics',
   Overview: 'overview',
   Profiler: 'profiler',
   Workloads: 'workloads',
@@ -64,10 +63,13 @@ const TrialDetailsComp: React.FC = () => {
     error: undefined,
   });
   const pageRef = useRef<HTMLElement>(null);
-  const chartFlagOn = useFeature().isOn('chart');
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const basePath = paths.trialDetails(trialId, experimentId);
   const trial = trialDetails.data;
+
+  const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
+    workspace: { id: experiment?.workspaceId ?? 0 },
+  });
 
   const fetchExperimentDetails = useCallback(async () => {
     if (!trial) return;
@@ -133,13 +135,9 @@ const TrialDetailsComp: React.FC = () => {
       return [];
     }
 
-    return [
+    const tabs: Array<{ children: ReactNode; key: TabType; label: string }> = [
       {
-        children: chartFlagOn ? (
-          <F_TrialDetailsOverview experiment={experiment} trial={trial} />
-        ) : (
-          <TrialDetailsOverview experiment={experiment} trial={trial} />
-        ),
+        children: <TrialDetailsOverview experiment={experiment} trial={trial} />,
         key: TabType.Overview,
         label: 'Overview',
       },
@@ -167,7 +165,17 @@ const TrialDetailsComp: React.FC = () => {
         label: 'Logs',
       },
     ];
-  }, [experiment, trial, chartFlagOn]);
+
+    if (showExperimentArtifacts) {
+      tabs.splice(1, 0, {
+        children: <TrialDetailsMetrics experiment={experiment} trial={trial} />,
+        key: TabType.Metrics,
+        label: 'Metrics',
+      });
+    }
+
+    return tabs;
+  }, [experiment, trial, showExperimentArtifacts]);
 
   const { stopPolling } = usePolling(fetchTrialDetails);
 
@@ -206,7 +214,7 @@ const TrialDetailsComp: React.FC = () => {
   }
 
   if (!trial || !experiment) {
-    return <Spinner tip={`Fetching ${trial ? 'experiment' : 'trial'} information...`} />;
+    return <Spinner spinning tip={`Fetching ${trial ? 'experiment' : 'trial'} information...`} />;
   }
 
   const workspaceName = workspaces.find((ws: Workspace) => ws.id === experiment?.workspaceId)?.name;

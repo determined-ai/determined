@@ -1,31 +1,27 @@
-import type { TabsProps } from 'antd';
-import { Divider } from 'antd';
+import { Divider, type TabsProps } from 'antd';
 import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
 import Empty from 'components/kit/Empty';
 import Pivot from 'components/kit/Pivot';
+import Spinner from 'components/kit/Spinner';
 import Page from 'components/Page';
 import ResourcePoolBindings from 'components/ResourcePoolBindings';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
 import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
-import clusterStore from 'stores/cluster';
-import { maxPoolSlotCapacity } from 'stores/cluster';
+import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
 import { ShirtSize } from 'themes';
-import { ValueOf } from 'types';
-import { JobState, ResourceState } from 'types';
+import { JobState, ResourceState, ValueOf } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { clone } from 'utils/data';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { camelCaseToSentence, floatToPercent } from 'utils/string';
@@ -41,7 +37,7 @@ type Params = {
 
 const TabType = {
   Active: 'active',
-  Bindings: 'Bindings',
+  Bindings: 'bindings',
   Configuration: 'configuration',
   Queued: 'queued',
   Stats: 'stats',
@@ -180,7 +176,7 @@ const ResourcepoolDetailInner: React.FC = () => {
 
     if (rpBindingFlagOn && canManageResourcePoolBindings) {
       tabItems.push({
-        children: <ResourcePoolBindings poolName={pool.name} />,
+        children: <ResourcePoolBindings pool={pool} />,
         key: TabType.Bindings,
         label: 'Bindings',
       });
@@ -235,7 +231,7 @@ const ResourcepoolDetailInner: React.FC = () => {
 };
 
 const ResourcepoolDetail: React.FC = () => (
-  <Suspense fallback={<Spinner />}>
+  <Suspense fallback={<Spinner spinning />}>
     <ResourcepoolDetailInner />
   </Suspense>
 );

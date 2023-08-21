@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -102,8 +103,22 @@ func (j *Manager) GetJobs(
 		return nil, err
 	}
 
+	// Try to fetch External jobs, if supported by the Resource Manager (RM).
+	// If the GetExternalJobs call is supported, RM returns a list of external jobs or
+	// an error if there is any problem. Otherwise, RM returns rmerrors.ErrNotSupported
+	// error. In this case, continue without the External jobs.
+	externalJobs, err := j.rm.GetExternalJobs(j.system, sproto.GetExternalJobs{
+		ResourcePool: resourcePool,
+	})
+	if err != nil {
+		// If the error is not 'ErrNotSupported' error, propagate the error upwards.
+		if err != rmerrors.ErrNotSupported {
+			return nil, err
+		}
+	}
+
 	// Merge the results.
-	jobsInRM := make([]*jobv1.Job, 0, len(jobQ))
+	jobsInRM := make([]*jobv1.Job, 0, len(jobQ)+len(externalJobs))
 	for jID, jRMInfo := range jobQ {
 		v1Job, ok := jobs[jID]
 		if ok {
@@ -134,6 +149,9 @@ func (j *Manager) GetJobs(
 		}
 		return jobsInRM[i].JobId < jobsInRM[j].JobId
 	})
+
+	// Append any External jobs to the bottom of the list.
+	jobsInRM = append(jobsInRM, externalJobs...)
 
 	return jobsInRM, nil
 }

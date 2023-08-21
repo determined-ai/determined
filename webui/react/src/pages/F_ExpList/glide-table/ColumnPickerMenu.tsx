@@ -1,21 +1,24 @@
-import { Popover, Space } from 'antd';
+import { Space } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
+import Dropdown from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Pivot from 'components/kit/Pivot';
-import Spinner from 'components/Spinner';
+import Spinner from 'components/kit/Spinner';
 import { useSettings } from 'hooks/useSettings';
+import {
+  F_ExperimentListSettings,
+  settingsConfigForProject,
+} from 'pages/F_ExpList/F_ExperimentList.settings';
 import { V1LocationType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
 import { ensureArray } from 'utils/data';
 import { Loadable } from 'utils/loadable';
-
-import { F_ExperimentListSettings, settingsConfigForProject } from '../F_ExperimentList.settings';
 
 import css from './ColumnPickerMenu.module.scss';
 import { defaultExperimentColumns } from './columns';
@@ -29,6 +32,7 @@ const locationLabelMap = {
   [V1LocationType.EXPERIMENT]: 'General',
   [V1LocationType.VALIDATIONS]: 'Metrics',
   [V1LocationType.TRAINING]: 'Metrics',
+  [V1LocationType.CUSTOMMETRIC]: 'Metrics',
   [V1LocationType.HYPERPARAMETERS]: 'Hyperparameters',
 } as const;
 
@@ -133,12 +137,23 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
         if (!checked && columnState.indexOf(id) < pinnedColumnsCount) {
           updateSettings({ pinnedColumnsCount: Math.max(pinnedColumnsCount - 1, 0) });
         }
+        // If uncheck something had heatmap skipped, reset to heatmap visible
+        if (!checked) {
+          updateSettings({ heatmapSkipped: settings.heatmapSkipped.filter((s) => s !== id) });
+        }
         const newColumnSet = new Set(columnState);
         checked ? newColumnSet.add(id) : newColumnSet.delete(id);
         setVisibleColumns([...newColumnSet]);
       }
     },
-    [columnState, setVisibleColumns, settings.compare, settings.pinnedColumnsCount, updateSettings],
+    [
+      columnState,
+      setVisibleColumns,
+      settings.compare,
+      settings.pinnedColumnsCount,
+      updateSettings,
+      settings.heatmapSkipped,
+    ],
   );
 
   const handleSearch = useCallback(
@@ -174,7 +189,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
           )}
         </Space>
       ) : (
-        <Spinner />
+        <Spinner spinning />
       )}
       {!settings.compare && (
         <div className={css.actionRow}>
@@ -219,13 +234,13 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   }, [setVisibleColumns]);
 
   return (
-    <Popover
+    <Dropdown
       content={
         <div className={css.base}>
           <Pivot
             items={[
               V1LocationType.EXPERIMENT,
-              [V1LocationType.VALIDATIONS, V1LocationType.TRAINING],
+              [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
               V1LocationType.HYPERPARAMETERS,
             ].map((tab) => {
               const canonicalTab = Array.isArray(tab) ? tab[0] : tab;
@@ -251,13 +266,11 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
         </div>
       }
       open={open}
-      placement="bottom"
-      trigger="click"
       onOpenChange={handleOpenChange}>
       <Button hideChildren={isMobile} icon={<Icon name="columns" title="column picker" />}>
         Columns
       </Button>
-    </Popover>
+    </Dropdown>
   );
 };
 

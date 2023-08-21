@@ -605,7 +605,7 @@ def experiment_logs(args: Namespace) -> None:
             rank_ids=args.rank_ids,
             sources=args.sources,
             stdtypes=args.stdtypes,
-            min_level=args.level,
+            min_level=None if args.level is None else bindings.v1LogLevel[args.level],
             timestamp_before=args.timestamp_before,
             timestamp_after=args.timestamp_after,
         )

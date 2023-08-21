@@ -2,23 +2,25 @@ import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Spinner from 'components/kit/internal/Spinner/Spinner';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
+import Spinner from 'components/kit/Spinner';
 import Message, { MessageType } from 'components/Message';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
+import { useGlasbey } from 'hooks/useGlasbey';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
 import ExperimentVisualizationFilters, {
   VisualizationFilters,
 } from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
-import { Primitive, Range } from 'types';
 import {
   ExperimentWithTrial,
   HpTrialData,
   Hyperparameter,
   HyperparameterType,
+  Primitive,
+  Range,
   Scale,
   TrialItem,
 } from 'types';
@@ -32,7 +34,6 @@ import {
   settingsConfigForExperimentHyperparameters,
 } from './CompareParallelCoordinates.settings';
 import css from './HpParallelCoordinates.module.scss';
-import { useGlasbey } from './useGlasbey';
 
 interface Props {
   projectId: number;
@@ -95,7 +96,8 @@ const CompareParallelCoordinates: React.FC<Props> = ({
 
   useEffect(() => {
     const activeMetricFound = metrics.find(
-      (metric) => metric.name === settings?.metric?.name && metric.type === settings?.metric?.type,
+      (metric) =>
+        metric.name === settings?.metric?.name && metric.group === settings?.metric?.group,
     );
     updateSettings({ metric: activeMetricFound ?? metrics.first() });
   }, [selectedExperiments, metrics, settings.metric, updateSettings]);
@@ -218,7 +220,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
 
     trials?.forEach((trial) => {
       const expId = trial.experimentId;
-      const key = `${selectedMetric.type}|${selectedMetric.name}`;
+      const key = `${selectedMetric.group}|${selectedMetric.name}`;
 
       // Choose the final metric value for each trial
       const metricValue = data?.[trial.id]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];

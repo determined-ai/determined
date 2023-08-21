@@ -28,6 +28,7 @@ type AllocationService interface {
 		system *actor.System,
 		onExit func(*AllocationExited),
 	) error
+	AwaitTermination(id model.AllocationID)
 	Signal(
 		id model.AllocationID,
 		sig AllocationSignal,

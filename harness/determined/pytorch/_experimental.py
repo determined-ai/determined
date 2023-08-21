@@ -3,7 +3,7 @@ from typing import Any
 
 # AMP is only available in PyTorch 1.6+
 try:
-    import torch.cuda.amp as amp
+    from torch.cuda import amp
 
     HAVE_AMP = True
 except ImportError:  # pragma: no cover

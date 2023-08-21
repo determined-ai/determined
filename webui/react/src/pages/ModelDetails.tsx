@@ -1,11 +1,13 @@
 import { Typography } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
 import Notes from 'components/kit/Notes';
+import Spinner from 'components/kit/Spinner';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
@@ -13,7 +15,6 @@ import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
-import Spinner from 'components/Spinner/Spinner';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
   defaultRowClassName,
@@ -38,9 +39,7 @@ import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions, Note } from 'types';
-import { isEqual } from 'utils/data';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { isAborted, isNotFound, validateDetApiEnum } from 'utils/service';
@@ -94,7 +93,7 @@ const ModelDetails: React.FC = () => {
         sortBy: validateDetApiEnum(V1GetModelVersionsRequestSortBy, settings.sortKey),
       });
       setTotal(modelData?.pagination.total || 0);
-      setModel((prev) => (!isEqual(modelData, prev) ? modelData : prev));
+      setModel((prev) => (!_.isEqual(modelData, prev) ? modelData : prev));
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     } finally {

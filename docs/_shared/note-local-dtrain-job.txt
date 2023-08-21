@@ -1,0 +1,6 @@
+.. note::
+
+   This tutorial provides instructions for running a local distributed training job. Your setup may
+   be different. For example, for instructions on how to run a remote distributed training job,
+   visit the :ref:`qs-mdldev`.
+

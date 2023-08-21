@@ -5,17 +5,15 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Notes from 'components/kit/Notes';
 import Pivot from 'components/kit/Pivot';
-import Spinner from 'components/Spinner/Spinner';
+import Spinner from 'components/kit/Spinner';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import ExperimentCodeViewer from 'pages/ExperimentDetails/ExperimentCodeViewer';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
-import { ValueOf } from 'types';
-import { ExperimentBase, Note } from 'types';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import { ExperimentBase, Note, ValueOf } from 'types';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 import { ExperimentVisualizationType } from './ExperimentVisualization';
 
@@ -128,7 +126,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
     const items: TabsProps['items'] = [
       {
         children: (
-          <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
+          <React.Suspense fallback={<Spinner spinning tip="Loading experiment visualization..." />}>
             <ExperimentVisualization
               basePath={`${basePath}/${TabType.Visualization}`}
               experiment={experiment}

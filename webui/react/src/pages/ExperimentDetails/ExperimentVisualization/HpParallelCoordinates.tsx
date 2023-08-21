@@ -3,17 +3,17 @@ import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Empty from 'components/kit/Empty';
+import Spinner from 'components/kit/Spinner';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner/Spinner';
 import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';
+import TrialsComparisonModal from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useUI from 'stores/contexts/UI';
-import { Primitive, Range } from 'types';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -24,19 +24,18 @@ import {
   Metric,
   MetricType,
   metricTypeParamMap,
+  Primitive,
+  Range,
   Scale,
   TrialDetails,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import { rgba2str, str2rgba } from 'utils/color';
 import { clone, flattenObject, isPrimitive } from 'utils/data';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { metricToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { openCommandResponse } from 'utils/wait';
-
-import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import css from './HpParallelCoordinates.module.scss';
 import HpTrialTable, { TrialHParams } from './HpTrialTable';
@@ -89,7 +88,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const smallerIsBetter = useMemo(() => {
     if (
       selectedMetric &&
-      selectedMetric.type === MetricType.Validation &&
+      selectedMetric.group === MetricType.Validation &&
       selectedMetric.name === experiment.config.searcher.metric
     ) {
       return experiment.config.searcher.smallerIsBetter;
@@ -237,7 +236,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         experiment.id,
         selectedMetric.name,
         selectedBatch,
-        metricTypeParamMap[selectedMetric.type],
+        metricTypeParamMap[selectedMetric.group],
         undefined, // custom metric group
         selectedBatchMargin,
         undefined,
@@ -378,7 +377,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
           description="Please wait until the experiment is further along."
           message="Not enough data points to plot."
         />
-        <Spinner />
+        <Spinner spinning />
       </div>
     );
   }

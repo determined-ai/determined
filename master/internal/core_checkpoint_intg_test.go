@@ -134,10 +134,10 @@ func addMockCheckpointDB(t *testing.T, pgDB *db.PgDB, id uuid.UUID) {
 	user := db.RequireMockUser(t, pgDB)
 	// Using a different path than DefaultTestSrcPath since we are one level up than most db tests
 	exp := mockExperimentS3(t, pgDB, user, "../../examples/tutorials/mnist_pytorch")
-	tr := db.RequireMockTrial(t, pgDB, exp)
-	allocation := db.RequireMockAllocation(t, pgDB, tr.TaskID)
+	_, task := db.RequireMockTrial(t, pgDB, exp)
+	allocation := db.RequireMockAllocation(t, pgDB, task.TaskID)
 	// Create checkpoints
-	checkpoint := db.MockModelCheckpoint(id, tr, allocation)
+	checkpoint := db.MockModelCheckpoint(id, allocation)
 	err := db.AddCheckpointMetadata(context.TODO(), &checkpoint)
 	require.NoError(t, err)
 }

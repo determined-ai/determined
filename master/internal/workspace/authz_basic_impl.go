@@ -158,6 +158,13 @@ func (a *WorkspaceAuthZBasic) CanCreateWorkspaceWithCheckpointStorageConfig(
 	return nil
 }
 
+// CanSetWorkspacesDefaultPools returns a nil error.
+func (a *WorkspaceAuthZBasic) CanSetWorkspacesDefaultPools(
+	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
+) error {
+	return nil
+}
+
 func init() {
 	AuthZProvider.Register("basic", &WorkspaceAuthZBasic{})
 }

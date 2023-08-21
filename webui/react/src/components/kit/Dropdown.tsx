@@ -37,6 +37,7 @@ interface BaseProps {
   isContextMenu?: boolean;
   menu?: MenuItem[];
   open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   autoWidthOverlay?: boolean;
   placement?: Placement;
   onClick?: (key: string, e: DropdownEvent) => void | Promise<void>;
@@ -68,6 +69,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
   autoWidthOverlay,
   placement = 'bottomLeft',
   onClick,
+  onOpenChange,
   selectable,
   selectedKeys,
 }) => {
@@ -96,7 +98,8 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
       overlayStyle={overlayStyle}
       placement={placement}
       showArrow={false}
-      trigger="click">
+      trigger="click"
+      onOpenChange={onOpenChange}>
       {children}
     </AntdPopover>
   ) : (
@@ -107,7 +110,8 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
       open={open}
       overlayStyle={overlayStyle}
       placement={placement}
-      trigger={[isContextMenu ? 'contextMenu' : 'click']}>
+      trigger={[isContextMenu ? 'contextMenu' : 'click']}
+      onOpenChange={onOpenChange}>
       {children}
     </AntDropdown>
   );

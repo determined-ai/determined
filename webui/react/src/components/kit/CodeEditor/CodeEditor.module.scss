@@ -1,14 +1,15 @@
 .codeEditorBase {
   display: grid;
-  grid-template-columns: minmax(15%, auto) minmax(52%, auto);
-  height: 100%;
+  grid-template:
+    'tree title' min-content
+    'tree editor' auto / minmax(15%, auto) minmax(52%, auto);
   max-width: 100vw;
+  min-height: 250px;
 
   .fileTree {
     background-color: transparent;
     color: var(--theme-background-on-strong);
-    grid-column: 1 / 2;
-    grid-row: 1 / 3;
+    grid-area: tree;
     height: 100%;
     padding: 0.5em;
 
@@ -20,12 +21,6 @@
       white-space: nowrap;
       width: 100%;
     }
-
-    @media screen and (max-width: 1024px) {
-      border-right: none;
-      grid-column: 1 / 3;
-      grid-row: 1 / 2;
-    }
   }
   h5 {
     color: var(--theme-background-on-strong);
@@ -33,6 +28,8 @@
     text-align: center;
   }
   .fileDir {
+    grid-area: title;
+
     .fileInfo {
       align-items: center;
       background-color: var(--theme-stage);
@@ -70,40 +67,29 @@
         }
       }
     }
-
-    @media screen and (max-width: 1024px) {
-      grid-column: 1 / 3;
-      grid-row: 2 / 2;
-    }
   }
   .editor {
     border: solid var(--theme-stroke-width) var(--theme-stage-border);
-    grid-column: 2 / 3;
-    min-height: 250px;
-
-    @media screen and (max-width: 1024px) {
-      grid-column: 1 / 3;
-      grid-row: 3;
-    }
+    grid-area: editor;
+    height: auto;
+    min-height: 200px;
   }
   &.editorMode {
-    .editor,
-    .fileDir {
-      grid-column: span 2;
-    }
+    grid-template:
+      '.' min-content
+      'title' min-content
+      'editor' auto / 100%;
   }
 
   @media screen and (max-width: 1024px) {
-    grid-template-rows: auto;
+    grid-template:
+      'tree' auto
+      'title' min-content
+      'editor' auto / 100%;
   }
 }
 .pageError {
-  grid-column: 2 / 3;
-  grid-row: 2 / 3;
-
-  @media screen and (max-width: 1024px) {
-    grid-column: 1 / 2;
-  }
+  grid-area: editor;
 }
 .hideElement {
   display: none;

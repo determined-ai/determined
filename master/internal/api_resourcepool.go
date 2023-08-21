@@ -2,19 +2,44 @@ package internal
 
 import (
 	"context"
-
-	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/pkg/set"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	workspaceauth "github.com/determined-ai/determined/master/internal/workspace"
+	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
+
+func (a *apiServer) getUnboundResourcePools(ctx context.Context,
+	resourcePools []*resourcepoolv1.ResourcePool,
+) ([]*resourcepoolv1.ResourcePool, error) {
+	var poolNames []string
+	for _, pool := range resourcePools {
+		poolNames = append(poolNames, pool.Name)
+	}
+
+	unboundPoolNames, err := db.GetUnboundRPs(ctx, poolNames)
+	if err != nil {
+		return nil, err
+	}
+	unboundPoolNameSet := set.FromSlice[string](unboundPoolNames)
+
+	var unboundPools []*resourcepoolv1.ResourcePool
+
+	for _, pool := range resourcePools {
+		if unboundPoolNameSet.Contains(pool.Name) {
+			unboundPools = append(unboundPools, pool)
+		}
+	}
+
+	return unboundPools, nil
+}
 
 func (a *apiServer) GetResourcePools(
 	ctx context.Context, req *apiv1.GetResourcePoolsRequest,
@@ -47,21 +72,22 @@ func (a *apiServer) GetResourcePools(
 		return nil, err
 	}
 	resp.ResourcePools = filteredPools
+
+	if req.Unbound {
+		unboundPools, err := a.getUnboundResourcePools(ctx, filteredPools)
+		if err != nil {
+			return nil, err
+		}
+		resp.ResourcePools = unboundPools
+	}
+
 	return resp, a.paginate(&resp.Pagination, &resp.ResourcePools, req.Offset, req.Limit)
 }
 
 func (a *apiServer) BindRPToWorkspace(
 	ctx context.Context, req *apiv1.BindRPToWorkspaceRequest,
 ) (*apiv1.BindRPToWorkspaceResponse, error) {
-	defaultComputePool, defaultAuxPool, err := a.m.config.DefaultResourcePools()
-	if err != nil {
-		return nil, err
-	}
-	if req.ResourcePoolName == defaultComputePool || req.ResourcePoolName == defaultAuxPool {
-		return nil, errors.Errorf("default resource pool %s cannot be bound to any workspace",
-			req.ResourcePoolName)
-	}
-	curUser, _, err := grpcutil.GetUser(ctx)
+	err := a.checkIfPoolIsDefault(req.ResourcePoolName)
 	if err != nil {
 		return nil, err
 	}
@@ -71,13 +97,9 @@ func (a *apiServer) BindRPToWorkspace(
 		return nil, err
 	}
 
-	if err = workspaceauth.AuthZProvider.Get().CanModifyRPWorkspaceBindings(ctx, *curUser,
-		allWorkspaceIDs); err != nil {
-		return nil, authz.SubIfUnauthorized(
-			err,
-			errors.Errorf(
-				`current user %q doesn't have permissions to modify resource pool bindings.`,
-				curUser.Username))
+	err = a.canUserModifyWorkspaces(ctx, allWorkspaceIDs)
+	if err != nil {
+		return nil, err
 	}
 
 	rpConfigs, err := a.resourcePoolsAsConfigs()
@@ -96,16 +118,7 @@ func (a *apiServer) BindRPToWorkspace(
 func (a *apiServer) OverwriteRPWorkspaceBindings(
 	ctx context.Context, req *apiv1.OverwriteRPWorkspaceBindingsRequest,
 ) (*apiv1.OverwriteRPWorkspaceBindingsResponse, error) {
-	defaultComputePool, defaultAuxPool, err := a.m.config.DefaultResourcePools()
-	if err != nil {
-		return nil, err
-	}
-	if req.ResourcePoolName == defaultComputePool || req.ResourcePoolName == defaultAuxPool {
-		return nil, errors.Errorf("default resource pool %s cannot be bound to any workspace",
-			req.ResourcePoolName)
-	}
-
-	curUser, _, err := grpcutil.GetUser(ctx)
+	err := a.checkIfPoolIsDefault(req.ResourcePoolName)
 	if err != nil {
 		return nil, err
 	}
@@ -115,12 +128,9 @@ func (a *apiServer) OverwriteRPWorkspaceBindings(
 		return nil, err
 	}
 
-	if err = workspaceauth.AuthZProvider.Get().CanModifyRPWorkspaceBindings(ctx, *curUser,
-		allWorkspaceIDs); err != nil {
-		return nil, authz.SubIfUnauthorized(err,
-			errors.Errorf(
-				`current user %q doesn't have permissions to modify resource pool bindings.`,
-				curUser.Username))
+	err = a.canUserModifyWorkspaces(ctx, allWorkspaceIDs)
+	if err != nil {
+		return nil, err
 	}
 
 	rpConfigs, err := a.resourcePoolsAsConfigs()
@@ -139,24 +149,14 @@ func (a *apiServer) OverwriteRPWorkspaceBindings(
 func (a *apiServer) UnbindRPFromWorkspace(
 	ctx context.Context, req *apiv1.UnbindRPFromWorkspaceRequest,
 ) (*apiv1.UnbindRPFromWorkspaceResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	allWorkspaceIDs, err := combineWorkspaceIDsAndNames(ctx, req.WorkspaceIds, req.WorkspaceNames)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check permissions for all workspaces. Return err if any workspace doesn't have permissions.
-	// No partial unbinding.
-	if err = workspaceauth.AuthZProvider.Get().CanModifyRPWorkspaceBindings(ctx, *curUser,
-		allWorkspaceIDs); err != nil {
-		return nil, authz.SubIfUnauthorized(err,
-			errors.Errorf(
-				`current user %q doesn't have permissions to modify resource pool bindings.`,
-				curUser.Username))
+	err = a.canUserModifyWorkspaces(ctx, allWorkspaceIDs)
+	if err != nil {
+		return nil, err
 	}
 
 	err = db.RemoveRPWorkspaceBindings(ctx, allWorkspaceIDs, req.ResourcePoolName)
@@ -201,6 +201,49 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 	return &apiv1.ListWorkspacesBoundToRPResponse{
 		WorkspaceIds: workspaceIDs, Pagination: pagination,
 	}, nil
+}
+
+func (a *apiServer) checkIfPoolIsDefault(poolName string) error {
+	defaultComputePool, err := a.m.rm.GetDefaultComputeResourcePool(
+		a.m.system,
+		sproto.GetDefaultComputeResourcePoolRequest{})
+	if err != nil {
+		return err
+	}
+
+	defaultAuxPool, err := a.m.rm.GetDefaultAuxResourcePool(
+		a.m.system,
+		sproto.GetDefaultAuxResourcePoolRequest{},
+	)
+	if err != nil {
+		return err
+	}
+
+	isDefaultCompute := poolName == defaultComputePool.PoolName
+	isDefaultAux := poolName == defaultAuxPool.PoolName
+	if isDefaultCompute || isDefaultAux {
+		return fmt.Errorf(
+			"default resource pool %s cannot be bound to any workspace",
+			poolName,
+		)
+	}
+	return nil
+}
+
+func (a *apiServer) canUserModifyWorkspaces(ctx context.Context, ids []int32) error {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err = workspaceauth.AuthZProvider.Get().CanModifyRPWorkspaceBindings(ctx, *curUser,
+		ids); err != nil {
+		return authz.SubIfUnauthorized(err,
+			fmt.Errorf(
+				`current user %q doesn't have permissions to modify resource pool bindings`,
+				curUser.Username))
+	}
+	return nil
 }
 
 func (a *apiServer) resourcePoolsAsConfigs() ([]config.ResourcePoolConfig, error) {

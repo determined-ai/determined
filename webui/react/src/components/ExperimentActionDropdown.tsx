@@ -1,3 +1,4 @@
+import { GridCell } from '@hpe.com/glide-data-grid';
 import React, { MouseEvent, useCallback, useMemo } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
@@ -5,6 +6,7 @@ import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
 import Dropdown, { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
+import { copyToClipboard } from 'components/kit/internal/functions';
 import { useModal } from 'components/kit/Modal';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
@@ -22,11 +24,9 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import { ValueOf } from 'types';
-import { ExperimentAction, ProjectExperiment } from 'types';
-import { notification } from 'utils/dialogApi';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import { ExperimentAction, ProjectExperiment, ValueOf } from 'types';
+import { message, notification } from 'utils/dialogApi';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { capitalize } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
@@ -35,6 +35,7 @@ import useConfirm from './kit/useConfirm';
 
 interface Props {
   children?: React.ReactNode;
+  cell?: GridCell;
   experiment: ProjectExperiment;
   isContextMenu?: boolean;
   link?: string;
@@ -49,6 +50,7 @@ interface Props {
 }
 
 const Action = {
+  Copy: 'Copy Value',
   NewTab: 'Open Link in New Tab',
   NewWindow: 'Open Link in New Window',
   ...ExperimentAction,
@@ -72,6 +74,7 @@ const dropdownActions = [
 
 const ExperimentActionDropdown: React.FC<Props> = ({
   experiment,
+  cell,
   isContextMenu,
   link,
   makeOpen,
@@ -114,6 +117,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const dropdownMenu = useMemo(() => {
     const items: MenuItem[] = [...menuItems];
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    if (cell && (cell.copyData || (cell as any).displayData)) {
+      items.unshift({ key: Action.Copy, label: Action.Copy });
+    }
     if (link) {
       items.unshift(
         { key: Action.NewTab, label: Action.NewTab },
@@ -122,7 +129,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       );
     }
     return items;
-  }, [link, menuItems]);
+  }, [link, menuItems, cell]);
 
   const handleDropdown = useCallback(
     async (action: string, e: DropdownEvent) => {
@@ -223,6 +230,11 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           case Action.HyperparameterSearch:
             handleHyperparameterSearch();
             break;
+          case Action.Copy:
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+            await copyToClipboard((cell as any).displayData || cell?.copyData);
+            message.success('Value has been copied to clipboard.');
+            break;
         }
       } catch (e) {
         handleError(e, {
@@ -250,6 +262,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       settings?.pinned,
       updateSettings,
       handleUpdateExperimentList,
+      cell,
     ],
   );
 

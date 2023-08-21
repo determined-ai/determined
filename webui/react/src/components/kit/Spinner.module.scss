@@ -1,0 +1,26 @@
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.base {
+  height: 100%;
+  min-height: inherit;
+  position: relative;
+  width: 100%;
+
+  .spin {
+    animation: rotate 1s linear infinite;
+    color: var(--theme-brand);
+    display: flex;
+  }
+  &.center {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+  }
+}

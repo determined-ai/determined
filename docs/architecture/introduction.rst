@@ -75,9 +75,9 @@ can then be referenced by configurations that require those settings.
 Each configuration template has a unique name and is stored by the Determined master. If a
 configuration specifies a template, the effective configuration of the task will be the result of
 merging the two YAML files (configuration file and template). The semantics of this merge operation
-is described below. Determined stores this expanded configuration so that future changes to a
-template will not affect the reproducibility of experiments that used a previous version of the
-configuration template.
+is described under :ref:`Configuration Templates: Merge Behavior <config-templates-merge-behavior>`.
+Determined stores this expanded configuration so that future changes to a template will not affect
+the reproducibility of experiments that used a previous version of the configuration template.
 
 A single configuration file can use at most one configuration template. A configuration template
 cannot use another configuration template.
@@ -94,8 +94,8 @@ scheduler. Queue Management, described in detail in the following sections, show
 and their states and lets you modify some configuration options, such as priority, position in the
 queue, and resource pool.
 
-To begin managing job queues, navigate to the WebUI ``Job Queue`` section or use the ``det job`` set
-of CLI commands.
+To begin managing job queues, go to the WebUI ``Job Queue`` section or use the ``det job`` set of
+CLI commands.
 
 Model Registry
 ==============
@@ -133,13 +133,15 @@ Determined Notebooks have the following benefits:
    traffic and it is not otherwise active (as defined by the ``notebook_idle_type`` option in the
    :ref:`task configuration <command-notebook-configuration>`).
 
--  Once a Notebook is terminated, it is not possible to restore the files that are not stored in the
-   persistent directories. **You need to ensure that the cluster is configured to mount persistent
-   directories into the container and save files in the persistent directories in the container.**
-   See :ref:`notebook-state` for more information.
+.. note::
 
--  If you open a Notebook tab in JupyterLab, it will automatically open a kernel that will not be
-   shut down automatically so you need to manually terminate the kernels.
+   -  Once a Notebook is terminated, it is not possible to restore the files that are not stored in
+      the persistent directories. **You need to ensure that the cluster is configured to mount
+      persistent directories into the container and save files in the persistent directories in the
+      container.** See :ref:`notebook-state` for more information.
+
+   -  If you open a Notebook tab in JupyterLab, it will automatically open a kernel that will not be
+      shut down automatically so you need to manually terminate the kernels.
 
 TensorBoards
 ============
@@ -150,6 +152,8 @@ experiment or to compare multiple experiments.
 
 TensorBoard instances can be launched via the WebUI or the CLI. To launch TensorBoard instances from
 the CLI, first :ref:`install the CLI <install-cli>` on your development machine.
+
+.. _benefits:
 
 **********
  Benefits
@@ -213,6 +217,10 @@ following benefits:
 |                                                | Different frameworks for different models can be used     |
 |                                                | without risking future lock-in. See                       |
 |                                                | :doc:`/model-dev-guide/apis-howto/overview`.              |
++------------------------------------------------+-----------------------------------------------------------+
+| Profiling                                      | Out-of-the-box system metrics (measurements of hardware   |
+|                                                | usage) and timings (durations of actions taken during     |
+|                                                | training, such as data loading).                          |
 +------------------------------------------------+-----------------------------------------------------------+
 | Visualization                                  | Visualize your model and training procedure by using The  |
 |                                                | built-in WebUI and by launching managed                   |

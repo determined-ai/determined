@@ -1,21 +1,22 @@
 WITH const AS (
     SELECT
         tstzrange(
-            $1 :: timestamptz,
-            ($1 :: timestamptz + interval '1 day')
+            $1::timestamptz,
+            ($1::timestamptz + interval '1 day')
         ) AS period
 ),
+
 -- Allocations that had any overlap with the target interval, along with the length of the overlap of
 -- their time with the requested period.
 allocs_in_range AS (
     SELECT
         a.*,
         extract(
-            epoch
+            EPOCH
             FROM
-                -- `*` computes the intersection of the two ranges.
-                upper(const.period * a.range) - lower(const.period * a.range)
-        ) * a.slots :: float AS seconds
+            -- `*` computes the intersection of the two ranges.
+            upper(const.period * a.range) - lower(const.period * a.range)
+        ) * a.slots::float AS seconds
     FROM
         (
             SELECT
@@ -31,6 +32,7 @@ allocs_in_range AS (
         -- `&&` determines whether the ranges overlap.
         const.period && a.range
 ),
+
 user_agg AS (
     SELECT
         'username' AS aggregation_type,
@@ -50,6 +52,7 @@ user_agg AS (
     GROUP BY
         users.username
 ),
+
 label_agg AS (
     SELECT
         'experiment_label' AS aggregation_type,
@@ -60,6 +63,7 @@ label_agg AS (
     FROM
         allocs_in_range,
         trials,
+        trial_id_task_id,
         -- An exploded view of experiment labels (one row for each label for each experiment).
         -- If we want this to work for generic jobs, we will likely need to rethink labels.
         (
@@ -67,7 +71,7 @@ label_agg AS (
                 id,
                 jsonb_array_elements(
                     CASE
-                        WHEN config ->> 'labels' IS NULL THEN '[]' :: jsonb
+                        WHEN config ->> 'labels' IS NULL THEN '[]'::jsonb
                         ELSE config -> 'labels'
                     END
                 ) AS label
@@ -75,11 +79,13 @@ label_agg AS (
                 experiments
         ) AS labels
     WHERE
-        allocs_in_range.task_id = trials.task_id
+        allocs_in_range.task_id = trial_id_task_id.task_id
+        AND trial_id_task_id.trial_id = trials.id
         AND trials.experiment_id = labels.id
     GROUP BY
         labels.label
 ),
+
 pool_agg AS (
     SELECT
         'resource_pool' AS aggregation_type,
@@ -90,19 +96,17 @@ pool_agg AS (
     GROUP BY
         allocs_in_range.resource_pool
 ),
+
 all_aggs AS (
-    SELECT
-        *
+    SELECT *
     FROM
         user_agg
     UNION ALL
-    SELECT
-        *
+    SELECT *
     FROM
         label_agg
     UNION ALL
-    SELECT
-        *
+    SELECT *
     FROM
         pool_agg
     UNION ALL
@@ -113,12 +117,13 @@ all_aggs AS (
     FROM
         allocs_in_range
 )
+
 INSERT INTO
-    resource_aggregates (
-        SELECT
-            lower(const.period) AS date,
-            all_aggs.*
-        FROM
-            all_aggs,
-            const
-    )
+resource_aggregates (
+    SELECT
+        lower(const.period) AS date,
+        all_aggs.*
+    FROM
+        all_aggs,
+        const
+)

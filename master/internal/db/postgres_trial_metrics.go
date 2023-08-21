@@ -79,7 +79,7 @@ func newMetricsBody(
 	batchMetrics []*structpb.Struct,
 	isValidation bool,
 ) *metricsBody {
-	var bMetrics any = nil
+	var bMetrics any
 	if len(batchMetrics) != 0 {
 		bMetrics = batchMetrics
 	}
@@ -106,7 +106,7 @@ func BunSelectMetricsQuery(metricGroup model.MetricGroup, inclArchived bool) *bu
 // BunSelectMetricGroupNames sets up a bun select query for getting all the metric group and names.
 func BunSelectMetricGroupNames() *bun.SelectQuery {
 	return Bun().NewSelect().Table("trials").
-		ColumnExpr("DISTINCT jsonb_object_keys(summary_metrics) as json_path").
+		ColumnExpr("jsonb_object_keys(summary_metrics) as json_path").
 		ColumnExpr("jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))" +
 			" as metric_name").
 		Where("summary_metrics IS NOT NULL").

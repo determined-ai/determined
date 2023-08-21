@@ -1,5 +1,6 @@
 import { Map } from 'immutable';
 import * as t from 'io-ts';
+import _ from 'lodash';
 import { useObservable } from 'micro-observables';
 import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -7,9 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { Primitive } from 'types';
-import { isEqual } from 'utils/data';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useValueMemoizedObservable } from 'utils/observable';
 
@@ -43,7 +42,7 @@ const settingsToQuery = <T>(config: SettingsConfig<T>, settings: Settings) => {
   const retVal = new URLSearchParams();
   (Object.values(config.settings) as SettingsConfigProp<T>[]).forEach((setting) => {
     const value = settings[setting.storageKey];
-    const isDefault = isEqual(setting.defaultValue, value);
+    const isDefault = _.isEqual(setting.defaultValue, value);
     if (!setting.skipUrlEncoding && !isDefault) {
       if (Array.isArray(value) && value.length > 0) {
         retVal.set(setting.storageKey, value[0]);
@@ -198,7 +197,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
         const key = prop.storageKey as keyof T;
         const includesKey = !keys || keys.includes(prop.storageKey);
-        const isDefault = isEqual(settings[key], prop.defaultValue);
+        const isDefault = _.isEqual(settings[key], prop.defaultValue);
 
         if (includesKey && !isDefault) acc.push(prop.storageKey);
 
@@ -218,6 +217,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         return Loadable.map(s, (s) => {
           return s.update(config.storagePath, (old) => {
             const news = { ...old };
+
             array.forEach((setting) => {
               let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined =
                 undefined;
@@ -235,6 +235,9 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
               news[setting] = defaultSetting.defaultValue;
             });
+
+            userSettings.remove(config.storagePath);
+
             return news;
           });
         });
@@ -250,7 +253,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         Loadable.forEach(s, (s) => {
           const oldSettings = s.get(config.storagePath) ?? {};
           const newSettings = { ...s.get(config.storagePath), ...updates };
-          if (!isEqual(oldSettings, newSettings)) {
+          if (!_.isEqual(oldSettings, newSettings)) {
             const props: { [k: string]: t.Type<unknown> } = {};
             Object.keys(updates).forEach((key) => {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -7,11 +7,13 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -74,6 +76,7 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("add users to group", func(t *testing.T) {
+		testStart := time.Now()
 		err := AddUsersToGroupTx(ctx, nil, testGroup.ID, testUser.ID)
 		require.NoError(t, err, "failed to add users to group")
 
@@ -83,6 +86,9 @@ func TestUserGroups(t *testing.T) {
 
 		index := usersContain(users, testUser.ID)
 		require.NotEqual(t, -1, index, "Expected users in group to contain the newly added one")
+
+		require.Greater(t, users[index].ModifiedAt, testStart,
+			"Users.modified_at not updated when adding to group")
 	})
 
 	t.Run("search groups by user membership", func(t *testing.T) {
@@ -107,6 +113,7 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("remove users from group", func(t *testing.T) {
+		testStart := time.Now()
 		err := RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, -500)
 		require.True(t, errors.Is(err, db.ErrNotFound),
 			"failed to return ErrNotFound when removing non-existent users from group")
@@ -120,6 +127,11 @@ func TestUserGroups(t *testing.T) {
 
 		i := usersContain(users, testUser.ID)
 		require.Equal(t, -1, i, "User found in group after removing them from it")
+
+		updatedTestUser, err := user.UserByID(testUser.ID)
+		require.NoError(t, err, "returned error when querying updated user")
+		require.Greater(t, updatedTestUser.ModifiedAt, testStart,
+			"Users.modified_at not updated when removed from group")
 
 		err = RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, testUser.ID)
 		require.True(t, errors.Is(err, db.ErrNotFound),

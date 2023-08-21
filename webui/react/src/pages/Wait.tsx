@@ -2,15 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
+import Spinner from 'components/kit/Spinner';
 import PageMessage from 'components/PageMessage';
-import Spinner from 'components/Spinner/Spinner';
 import { terminalCommandStates } from 'constants/states';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import useUI from 'stores/contexts/UI';
 import { CommandState } from 'types';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { capitalize } from 'utils/string';
 import { WaitStatus } from 'utils/wait';
 

@@ -3,8 +3,7 @@ import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { globalStorage } from 'globalStorage';
-import { routeAll } from 'routes/utils';
-import { paths } from 'routes/utils';
+import { paths, routeAll } from 'routes/utils';
 import { getCurrentUser } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import authStore, { AUTH_COOKIE_KEY } from 'stores/auth';

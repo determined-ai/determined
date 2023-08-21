@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/pkg/check"
 )
 
@@ -77,7 +75,7 @@ func (l *LengthV0) UnmarshalJSON(b []byte) error {
 	case !rOk && !bOk && eOk:
 		*l = NewLengthInEpochs(epochs)
 	default:
-		return errors.New(fmt.Sprintf("invalid length: %s", b))
+		return fmt.Errorf("invalid length: %s", b)
 	}
 
 	return nil

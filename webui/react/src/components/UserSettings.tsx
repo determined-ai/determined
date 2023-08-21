@@ -7,9 +7,9 @@ import Input from 'components/kit/Input';
 import InputShortcut from 'components/kit/InputShortcut';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
+import Spinner from 'components/kit/Spinner';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
 import { ThemeOptions } from 'components/ThemeToggle';
 import {
   shortcutSettingsConfig,
@@ -36,8 +36,7 @@ import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { message } from 'utils/dialogApi';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { KeyboardShortcut, shortcutToString } from 'utils/shortcut';

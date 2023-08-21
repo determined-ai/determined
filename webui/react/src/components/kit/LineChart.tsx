@@ -1,11 +1,11 @@
+import _ from 'lodash';
 import React, { ReactNode, useMemo, useRef } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
 import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/internal/functions';
 import ScaleSelect from 'components/kit/internal/ScaleSelect';
-import Spinner from 'components/kit/internal/Spinner/Spinner';
-import { ErrorHandler, MetricType, Scale } from 'components/kit/internal/types';
+import { ErrorHandler, Scale } from 'components/kit/internal/types';
 import { SyncProvider } from 'components/kit/internal/UPlot/SyncProvider';
 import { UPlotPoint } from 'components/kit/internal/UPlot/types';
 import UPlotChart, { Options } from 'components/kit/internal/UPlot/UPlotChart';
@@ -13,7 +13,12 @@ import { closestPointPlugin } from 'components/kit/internal/UPlot/UPlotChart/clo
 import { tooltipsPlugin } from 'components/kit/internal/UPlot/UPlotChart/tooltipsPlugin';
 import useResize from 'components/kit/internal/useResize';
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
-import { Loadable } from 'utils/loadable';
+import Spinner from 'components/kit/Spinner';
+import MetricBadgeTag from 'components/MetricBadgeTag';
+import { MapOfIdsToColors } from 'hooks/useGlasbey';
+import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
+import { ExperimentWithTrial, TrialItem } from 'types';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import css from './LineChart.module.scss';
 
@@ -33,7 +38,7 @@ export interface Serie {
   color?: string;
   data: Partial<Record<XAxisDomain, [x: number, y: number][]>>;
   key?: number;
-  metricType?: MetricType;
+  metricType?: string;
   name?: string;
 }
 
@@ -103,14 +108,10 @@ export const LineChart: React.FC<LineChartProps> = ({
   );
 
   const seriesNames: string[] = useMemo(() => {
-    return series.map(
-      (s, idx) =>
-        (s.metricType === MetricType.Training
-          ? '[T] '
-          : s.metricType === MetricType.Validation
-          ? '[V] '
-          : '') + (s.name || `Series ${idx + 1}`),
-    );
+    return series.map((s, idx) => {
+      const badge = s.metricType?.substring(0, 1).toUpperCase();
+      return [badge ? `[${badge}]` : '', s.name || `Series ${idx + 1}`].join(' ');
+    });
   }, [series]);
 
   const chartData: AlignedData = useMemo(() => {
@@ -149,6 +150,7 @@ export const LineChart: React.FC<LineChartProps> = ({
   const chartOptions: Options = useMemo(() => {
     const plugins: Plugin[] = propPlugins ?? [
       tooltipsPlugin({
+        closeOnMouseExit: true,
         isShownEmptyVal: false,
         // use specified color on Serie, or glasbeyColor
         seriesColors,
@@ -310,6 +312,71 @@ const VirtualChartRenderer: React.FC<
   );
 };
 
+export const calculateChartProps = (
+  metricData: TrialMetricData,
+  experiments: ExperimentWithTrial[],
+  trials: TrialItem[],
+  xAxis: XAxisDomain,
+  colorMap: MapOfIdsToColors,
+): Loadable<ChartsProps> => {
+  const { metricHasData, metrics, data, isLoaded, selectedMetrics } = metricData;
+  const chartedMetrics: Record<string, boolean> = {};
+  const out: ChartsProps = [];
+  const expNameById: Record<number, string> = {};
+  experiments.forEach((e) => {
+    expNameById[e.experiment.id] = e.experiment.name;
+  });
+  metrics.forEach((metric) => {
+    const series: Serie[] = [];
+    const key = `${metric.group}|${metric.name}`;
+    trials.forEach((t) => {
+      const m = data[t?.id || 0];
+      m?.[key] &&
+        t &&
+        series.push({
+          ...m[key],
+          color: colorMap[t.experimentId],
+          metricType: undefined,
+          name: expNameById[t.experimentId]
+            ? `${expNameById[t.experimentId]} (${t.experimentId})`
+            : String(t.experimentId),
+        });
+      chartedMetrics[key] ||= series.length > 0;
+    });
+    out.push({
+      series: Loaded(series),
+      title: <MetricBadgeTag metric={metric} />,
+      xAxis,
+      xLabel: String(xAxis),
+    });
+  });
+
+  // In order to show the spinner for each chart in the ChartGrid until
+  // metrics are visible, we must determine whether the metrics have been
+  // loaded and whether the chart props have been updated.
+  // If any metric has data but no chartProps contain data for the metric,
+  // then the charts have not been updated and we need to continue to show the
+  // spinner.
+  const chartDataIsLoaded = metrics.every((metric) => {
+    const metricKey = `${metric.group}|${metric.name}`;
+    return metricHasData?.[metricKey] ? !!chartedMetrics?.[metricKey] : true;
+  });
+  if (!isLoaded) {
+    // When trial metrics hasn't loaded metric names or individual trial metrics.
+    return NotLoaded;
+  } else if (!chartDataIsLoaded || !_.isEqual(selectedMetrics, metrics)) {
+    // In some cases the selectedMetrics returned may not be up to date
+    // with the metrics selected by the user. In this case we want to
+    // show a loading state until the metrics match.
+
+    // returns the chartProps with a NotLoaded series which enables
+    // the ChartGrid to show a spinner for the loading charts.
+    return Loaded(out.map((chartProps) => ({ ...chartProps, series: NotLoaded })));
+  } else {
+    return Loaded(out);
+  }
+};
+
 export const ChartGrid: React.FC<GroupProps> = React.memo(
   ({
     chartsProps: propChartsProps,
@@ -322,9 +389,19 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     const chartGridRef = useRef<HTMLDivElement | null>(null);
     const { width, height } = useResize(chartGridRef);
     const columnCount = Math.max(1, Math.floor(width / 540));
-    const chartsProps = Loadable.isLoadable(propChartsProps)
-      ? Loadable.getOrElse([], propChartsProps)
-      : propChartsProps;
+    const chartsProps = (
+      Loadable.isLoadable(propChartsProps)
+        ? Loadable.getOrElse([], propChartsProps)
+        : propChartsProps
+    ).filter(
+      (c) =>
+        // filter out Loadable series which are Loaded yet have no serie with more than 0 points.
+        !Loadable.isLoadable(c.series) ||
+        !Loadable.isLoaded(c.series) ||
+        Loadable.getOrElse([], c.series).find((serie) =>
+          Object.entries(serie.data).find(([, points]) => points.length > 0),
+        ),
+    );
     const isLoading = Loadable.isLoadable(propChartsProps) && Loadable.isLoading(propChartsProps);
     // X-Axis control
 
@@ -348,11 +425,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     return (
       <div className={css.scrollContainer}>
         <div className={css.chartgridContainer} ref={chartGridRef}>
-          <Spinner
-            center
-            className={css.chartgridLoading}
-            spinning={isLoading}
-            tip="Loading chart data...">
+          <Spinner center spinning={isLoading} tip="Loading chart data...">
             {chartsProps.length > 0 && (
               <>
                 <div className={css.filterContainer}>

@@ -5,15 +5,14 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
+import Spinner from 'components/kit/Spinner';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
-import Spinner from 'components/Spinner';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { Project, Workspace } from 'types';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
@@ -156,7 +155,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
         onCancel={onHideModal}>
         <div className={css.modalBody}>
           {isLoading ? (
-            <Spinner center tip={'Loading...'} />
+            <Spinner center spinning tip={'Loading...'} />
           ) : (
             <>
               {treeData.length === 0 ? (

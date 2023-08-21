@@ -19,9 +19,9 @@ In this guide, you'll learn how to use :ref:`pytorch_trial_ug` and :ref:`pytorch
  PyTorch Trial
 ***************
 
-This section guides you through training a PyTorch model in Determined. You need to implement a
-trial class that inherits from :class:`~determined.pytorch.PyTorchTrial` and specify it as the
-entrypoint in the :ref:`experiment configuration <experiment-config-reference>`.
+To train a PyTorch model in Determined, you need to implement a trial class that inherits from
+:class:`~determined.pytorch.PyTorchTrial` and specify it as the entrypoint in the :ref:`experiment
+configuration <experiment-config-reference>`.
 
 To implement a :class:`~determined.pytorch.PyTorchTrial`, you need to override specific functions
 that represent the components that are used in the training procedure. It is helpful to work off of
@@ -60,6 +60,13 @@ following examples:
 For tips on debugging, see :ref:`model-debug`.
 
 .. _pytorch-downloading-data:
+
+Distributed Backend
+===================
+
+By default, PyTorch Trial uses Horovod as the backend. You can choose to use ``torch.distributed``
+and ``DistributedDataParallel`` as your distributed backend, by following :ref:`PyTorch Distributed
+Launcher <pytorch-dist-launcher>`.
 
 Download Data
 =============
@@ -169,8 +176,8 @@ the following formats:
        "label": (torch.Tensor([0, 0]), torch.Tensor([[0, 0], [0, 0]])),
    }
 
-Initializing Objects
-====================
+Initialize Objects
+==================
 
 You need to initialize the objects that will be used in training in the constructor
 :meth:`~determined.pytorch.PyTorchTrial.__init__` of :class:`determined.pytorch.PyTorchTrial` using

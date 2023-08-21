@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import ClipboardButton from 'components/kit/ClipboardButton';
 import LogViewer, {
   FetchConfig,
   FetchDirection,
@@ -10,8 +11,8 @@ import {
   Settings,
   settingsConfigForTrial,
 } from 'components/kit/LogViewer/LogViewerSelect.settings';
+import Spinner from 'components/kit/Spinner';
 import useConfirm from 'components/kit/useConfirm';
-import Spinner from 'components/Spinner';
 import { useSettings } from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
@@ -20,10 +21,7 @@ import { readStream } from 'services/utils';
 import useUI from 'stores/contexts/UI';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
-import { ErrorType } from 'utils/error';
-import handleError from 'utils/error';
-
-import ClipboardButton from '../../components/kit/ClipboardButton';
+import handleError, { ErrorType } from 'utils/error';
 
 import css from './TrialDetailsLogs.module.scss';
 

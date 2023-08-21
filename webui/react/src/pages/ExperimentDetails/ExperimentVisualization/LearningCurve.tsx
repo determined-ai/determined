@@ -1,14 +1,16 @@
 import { Alert } from 'antd';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { LineChart, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
+import Spinner from 'components/kit/Spinner';
 import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner/Spinner';
 import TableBatch from 'components/Table/TableBatch';
 import { UPlotPoint } from 'components/UPlot/types';
 import { terminalRunStates } from 'constants/states';
+import TrialsComparisonModal from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { paths } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
@@ -28,14 +30,12 @@ import {
   Scale,
 } from 'types';
 import { glasbeyColor } from 'utils/color';
-import { flattenObject, isEqual, isPrimitive } from 'utils/data';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import { flattenObject, isPrimitive } from 'utils/data';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { metricToStr } from 'utils/metric';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'utils/routes';
 import { openCommandResponse } from 'utils/wait';
-
-import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import HpTrialTable, { TrialHParams } from './HpTrialTable';
 import css from './LearningCurve.module.scss';
@@ -86,7 +86,7 @@ export const getCustomSearchVaryingHPs = (
       }
       if (!(key in check_dict)) {
         check_dict[key] = value;
-      } else if (!isEqual(check_dict[key], value)) {
+      } else if (!_.isEqual(check_dict[key], value)) {
         uniq.add(key);
       }
     });
@@ -189,7 +189,7 @@ const LearningCurve: React.FC<Props> = ({
       detApi.StreamingInternal.trialsSample(
         experiment.id,
         selectedMetric.name,
-        metricTypeParamMap[selectedMetric.type],
+        metricTypeParamMap[selectedMetric.group],
         undefined,
         selectedMaxTrial,
         MAX_DATAPOINTS,
@@ -333,7 +333,7 @@ const LearningCurve: React.FC<Props> = ({
               scale={selectedScale}
               series={chartData}
               xLabel="Batches Processed"
-              yLabel={`[${selectedMetric.type[0].toUpperCase()}] ${selectedMetric.name}`}
+              yLabel={metricToStr(selectedMetric)}
               onPointClick={handlePointClick}
               onPointFocus={handlePointFocus}
             />

@@ -31,6 +31,10 @@ export const optional = (x: io.Mixed): io.Mixed | io.NullC | io.UndefinedC => {
   return io.union([x, io.null, io.undefined]);
 };
 
+export const nullable = (x: io.Mixed): io.Mixed | io.NullC => {
+  return io.union([x, io.null]);
+};
+
 export class ValueofType<D extends { [key: string]: unknown }> extends io.Type<ValueOf<D>> {
   readonly _tag: 'ValueofType' = 'ValueofType' as const;
   constructor(
@@ -153,9 +157,10 @@ const ioMetric = io.record(io.string, ioMetricValue);
 export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
 
 const ioMetricSummary = io.type({
-  count: optional(io.union([io.number, io.undefined])),
-  last: optional(io.union([io.number, io.string, io.boolean])),
+  count: optional(io.number),
+  last: optional(io.any),
   max: optional(float),
+  mean: optional(float),
   min: optional(float),
   sum: optional(float),
   type: io.union([
@@ -169,10 +174,10 @@ const ioMetricSummary = io.type({
   ]),
 });
 
-export const ioSummaryMetrics = io.partial({
-  avg_metrics: io.record(io.string, ioMetricSummary),
-  validation_metrics: io.record(io.string, ioMetricSummary),
-});
+export const ioSummaryMetrics = io.record(
+  io.string,
+  nullable(io.record(io.string, ioMetricSummary)),
+);
 export type ioSummaryMetrics = io.TypeOf<typeof ioSummaryMetrics>;
 
 /* Experiments */
@@ -306,6 +311,7 @@ export const ioLocationType: io.Type<V1LocationType> = io.keyof({
   [V1LocationType.HYPERPARAMETERS]: null,
   [V1LocationType.TRAINING]: null,
   [V1LocationType.VALIDATIONS]: null,
+  [V1LocationType.CUSTOMMETRIC]: null,
   [V1LocationType.UNSPECIFIED]: null,
 });
 export const ioColumnType: io.Type<V1ColumnType> = io.keyof({

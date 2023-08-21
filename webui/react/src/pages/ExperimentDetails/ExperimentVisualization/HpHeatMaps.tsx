@@ -4,10 +4,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ColorLegend from 'components/ColorLegend';
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
+import Spinner from 'components/kit/Spinner';
 import Message, { MessageType } from 'components/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner/Spinner';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
@@ -16,13 +16,14 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useUI from 'stores/contexts/UI';
-import { Primitive, Range } from 'types';
 import {
   ExperimentBase,
   HyperparameterType,
   Metric,
   MetricType,
   metricTypeParamMap,
+  Primitive,
+  Range,
   Scale,
 } from 'types';
 import { getColorScale } from 'utils/chart';
@@ -92,7 +93,7 @@ const HpHeatMaps: React.FC<Props> = ({
   const smallerIsBetter = useMemo(() => {
     if (
       selectedMetric &&
-      selectedMetric.type === MetricType.Validation &&
+      selectedMetric.group === MetricType.Validation &&
       selectedMetric.name === experiment.config.searcher.metric
     ) {
       return experiment.config.searcher.smallerIsBetter;
@@ -226,7 +227,7 @@ const HpHeatMaps: React.FC<Props> = ({
         experiment.id,
         selectedMetric.name,
         selectedBatch,
-        metricTypeParamMap[selectedMetric.type],
+        metricTypeParamMap[selectedMetric.group],
         undefined, // custom metric group
         selectedBatchMargin,
         undefined,
@@ -345,7 +346,7 @@ const HpHeatMaps: React.FC<Props> = ({
           description="Please wait until the experiment is further along."
           message="Not enough data points to plot."
         />
-        <Spinner />
+        <Spinner spinning />
       </div>
     );
   }

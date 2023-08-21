@@ -9,10 +9,11 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/rm/actorrm"
-
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
+	"github.com/determined-ai/determined/master/internal/rm/rmutils"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -101,10 +102,10 @@ func (a ResourceManager) CheckMaxSlotsExceeded(
 
 // ResolveResourcePool fully resolves the resource pool name.
 func (a ResourceManager) ResolveResourcePool(
-	ctx actor.Messenger, name string, workspaceID, slots int,
+	actorCtx actor.Messenger, name string, workspaceID, slots int,
 ) (string, error) {
-	ctxTODO := context.TODO()
-	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctxTODO, workspaceID)
+	ctx := context.TODO()
+	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctx, workspaceID)
 	if err != nil {
 		return "", err
 	}
@@ -112,35 +113,34 @@ func (a ResourceManager) ResolveResourcePool(
 	if name == "" && slots == 0 {
 		if defaultAuxPool == "" {
 			req := sproto.GetDefaultAuxResourcePoolRequest{}
-			resp, err := a.GetDefaultAuxResourcePool(ctx, req)
+			resp, err := a.GetDefaultAuxResourcePool(actorCtx, req)
 			if err != nil {
 				return "", fmt.Errorf("defaulting to aux pool: %w", err)
 			}
 			return resp.PoolName, nil
 		}
-		if err := a.ValidateResourcePool(ctx, defaultAuxPool); err != nil {
-			return "", fmt.Errorf("validating default aux pool: %w", err)
-		}
-		return defaultAuxPool, nil
+		name = defaultAuxPool
 	}
 
 	if name == "" && slots >= 0 {
 		if defaultComputePool == "" {
 			req := sproto.GetDefaultComputeResourcePoolRequest{}
-			resp, err := a.GetDefaultComputeResourcePool(ctx, req)
+			resp, err := a.GetDefaultComputeResourcePool(actorCtx, req)
 			if err != nil {
 				return "", fmt.Errorf("defaulting to compute pool: %w", err)
 			}
 			return resp.PoolName, nil
 		}
-		if err := a.ValidateResourcePool(ctx, defaultComputePool); err != nil {
-			return "", fmt.Errorf("validating default compute pool: %w", err)
-		}
-		return defaultComputePool, nil
+		name = defaultComputePool
+	}
+
+	resp, err := a.GetResourcePools(actorCtx, &apiv1.GetResourcePoolsRequest{})
+	if err != nil {
+		return "", err
 	}
 
 	poolNames, _, err := db.ReadRPsAvailableToWorkspace(
-		context.TODO(), int32(workspaceID), 0, -1, config.GetMasterConfig().ResourcePools)
+		ctx, int32(workspaceID), 0, -1, rmutils.ResourcePoolsToConfig(resp.ResourcePools))
 	if err != nil {
 		return "", err
 	}
@@ -157,7 +157,7 @@ func (a ResourceManager) ResolveResourcePool(
 			name, workspaceID)
 	}
 
-	if err := a.ValidateResourcePool(ctx, name); err != nil {
+	if err := a.ValidateResourcePool(actorCtx, name); err != nil {
 		return "", fmt.Errorf("validating pool: %w", err)
 	}
 	return name, nil
@@ -381,6 +381,9 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case taskContainerDefaults:
 		ctx.Respond(a.getTaskContainerDefaults(msg))
 
+	case sproto.GetExternalJobs:
+		ctx.Respond(rmerrors.ErrNotSupported)
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -479,17 +482,6 @@ func (a *agentResourceManager) getPoolJobStats(
 		return nil, fmt.Errorf("unexpected response type from jobStats")
 	}
 	return jobStats, nil
-}
-
-func (a *agentResourceManager) aggregateTaskHandler(
-	resps map[*actor.Ref]actor.Message,
-) (*actor.Ref, error) {
-	for _, resp := range resps {
-		if typed, ok := resp.(*actor.Ref); ok && typed != nil {
-			return typed, nil
-		}
-	}
-	return nil, errors.New("task handler not found on any resource pool")
 }
 
 func (a *agentResourceManager) aggregateTaskSummary(
@@ -783,20 +775,4 @@ func (a ResourceManager) TaskContainerDefaults(
 ) (result model.TaskContainerDefaultsConfig, err error) {
 	req := taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}
 	return result, a.Ask(ctx, req, &result)
-}
-
-// EnableSlot implements 'det slot enable...' functionality.
-func (a ResourceManager) EnableSlot(
-	m actor.Messenger,
-	req *apiv1.EnableSlotRequest,
-) (resp *apiv1.EnableSlotResponse, err error) {
-	return resp, actorrm.AskAt(a.Ref().System(), actorrm.SlotAddr(req.AgentId, req.SlotId), req, &resp)
-}
-
-// DisableSlot implements 'det slot disable...' functionality.
-func (a ResourceManager) DisableSlot(
-	m actor.Messenger,
-	req *apiv1.DisableSlotRequest,
-) (resp *apiv1.DisableSlotResponse, err error) {
-	return resp, actorrm.AskAt(a.Ref().System(), actorrm.SlotAddr(req.AgentId, req.SlotId), req, &resp)
 }

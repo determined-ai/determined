@@ -90,14 +90,14 @@ const UserSettingsModalComponent: React.FC<Props> = ({ onSave }: Props) => {
       }}
       title="Edit Raw Settings">
       <CodeEditor
+        file={editedSettingsString}
         files={[
           {
-            content: editedSettingsString,
             key: 'settings.json',
             title: 'settings.json',
           },
         ]}
-        height="400px"
+        height="438px"
         onChange={handleChange}
         onError={handleError}
       />

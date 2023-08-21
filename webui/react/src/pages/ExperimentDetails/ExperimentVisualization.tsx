@@ -1,12 +1,11 @@
-import { Alert } from 'antd';
-import type { TabsProps } from 'antd';
+import { Alert, type TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
+import Spinner from 'components/kit/Spinner';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
-import Spinner from 'components/Spinner/Spinner';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import useStorage from 'hooks/useStorage';
@@ -15,7 +14,6 @@ import { V1MetricBatchesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useUI from 'stores/contexts/UI';
-import { ValueOf } from 'types';
 import {
   ExperimentBase,
   ExperimentSearcherName,
@@ -24,6 +22,7 @@ import {
   MetricType,
   RunState,
   Scale,
+  ValueOf,
 } from 'types';
 import { Loadable } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';
@@ -80,8 +79,8 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   const location = useLocation();
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
   const searcherMetric = useRef<Metric>({
+    group: MetricType.Validation,
     name: experiment.config.searcher.metric,
-    type: MetricType.Validation,
   });
 
   const { viz: type } = useParams<{ viz: ExperimentVisualizationType }>();
@@ -152,7 +151,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     if (!hasSearcherMetric) {
       const activeMetricFound = metrics.find(
         (metric) =>
-          metric.type === searcherMetric.current.type &&
+          metric.group === searcherMetric.current.group &&
           metric.name === searcherMetric.current.name,
       );
       if (activeMetricFound) {
@@ -302,7 +301,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
     const canceler = new AbortController();
     const metricTypeParam =
-      filters.metric.type === MetricType.Training
+      filters.metric.group === MetricType.Training
         ? 'METRIC_TYPE_TRAINING'
         : 'METRIC_TYPE_VALIDATION';
     const batchesMap: Record<number, number> = {};
@@ -387,7 +386,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
           description="Please wait until the experiment is further along."
           message="Not enough data points to plot."
         />
-        <Spinner center className={css.alertSpinner} />
+        <Spinner center spinning />
       </div>
     );
   }

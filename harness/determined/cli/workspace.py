@@ -5,12 +5,11 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import determined.cli.render
 from determined import cli
+from determined.cli import render
 from determined.cli.user import AGENT_USER_GROUP_ARGS
 from determined.common import api, util
 from determined.common.api import authentication, bindings, errors
 from determined.common.declarative_argparse import Arg, Cmd
-
-from . import render
 
 PROJECT_HEADERS = ["ID", "Name", "Description", "# Experiments", "# Active Experiments"]
 WORKSPACE_HEADERS = [
@@ -281,8 +280,8 @@ def edit_workspace(args: Namespace) -> None:
         name=args.name,
         agentUserGroup=agent_user_group,
         checkpointStorageConfig=checkpoint_storage,
-        defaultComputePool=args.default_compute_pool,
-        defaultAuxPool=args.default_aux_pool,
+        defaultComputeResourcePool=args.default_compute_pool,
+        defaultAuxResourcePool=args.default_aux_pool,
     )
     w = bindings.patch_PatchWorkspace(sess, body=updated, id=current.id).workspace
 

@@ -12,10 +12,10 @@ import ExperimentStopModalComponent from 'components/ExperimentStopModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import Spinner from 'components/kit/Spinner';
 import Tags from 'components/kit/Tags';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
-import Spinner from 'components/Spinner/Spinner';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import { pausableRunStates, stateToLabel, terminalRunStates } from 'constants/states';
@@ -41,8 +41,7 @@ import {
   TrialItem,
 } from 'types';
 import { getDuration } from 'utils/datetime';
-import { ErrorLevel, ErrorType } from 'utils/error';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
 
