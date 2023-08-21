@@ -363,6 +363,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ops, err := e.searcher.ValidationCompleted(msg.requestID, msg.metric, msg.op)
 		e.processOperations(ops, err)
 	case trialReportEarlyExit:
+		e.syslog.WithField("requestId", msg.requestID).Info("experiment received trial early exit")
 		state, ok := e.TrialSearcherState[msg.requestID]
 		if !ok {
 			ctx.Respond(api.AsValidationError("trial has no state"))

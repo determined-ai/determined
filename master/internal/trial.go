@@ -693,6 +693,18 @@ func (t *trial) transition(s model.StateWithReason) error {
 			}
 		}
 	case model.TerminalStates[t.state]:
+		switch t.state {
+		case model.ErrorState:
+			t.system.Tell(t.parent, trialReportEarlyExit{
+				requestID: t.searcher.Create.RequestID,
+				reason:    model.Errored,
+			})
+		case model.CanceledState:
+			t.system.Tell(t.parent, trialReportEarlyExit{
+				requestID: t.searcher.Create.RequestID,
+				reason:    model.UserCanceled,
+			})
+		}
 		t.Exit()
 	default:
 		panic(fmt.Errorf("unmatched state in transition %s", t.state))
