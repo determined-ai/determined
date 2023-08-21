@@ -1,7 +1,6 @@
 import base64
 import math
 import os
-import pathlib
 from typing import Callable
 from unittest import mock
 
@@ -224,9 +223,8 @@ def test_download_code_writes_output_to_file(
     # Encode sample response to base64, decode bytes to string.
     sample_tgz_content = base64.b64encode(b"b64TgzResponse").decode()
     mock_bindings.return_value = bindings.v1GetModelDefResponse(b64Tgz=sample_tgz_content)
-    output_file = str(pathlib.Path(tmp_path) / "exp-1_model_def.tar.gz")
 
-    expref.download_code(output_dir=str(tmp_path))
+    output_file = expref.download_code(output_dir=str(tmp_path))
 
     with open(output_file, "rb") as f:
         file_content = f.read()
