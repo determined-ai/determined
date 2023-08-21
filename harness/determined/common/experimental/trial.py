@@ -3,8 +3,9 @@ from typing import Any, Iterable, List, Optional, Union
 
 from determined.common import api
 from determined.common.api import bindings, logs
-from determined.common.experimental import checkpoint
-from determined.common.experimental.metrics import TrainingMetrics, TrialMetrics, ValidationMetrics
+from determined.common.experimental import checkpoint, metrics
+
+# from determined.common.experimentalimport
 
 
 class LogLevel(enum.Enum):
@@ -289,21 +290,21 @@ class TrialReference:
     def __repr__(self) -> str:
         return "Trial(id={})".format(self.id)
 
-    def _stream_metrics(self, group: str) -> Iterable[TrialMetrics]:
+    def _stream_metrics(self, group: str) -> Iterable[metrics.TrialMetrics]:
         """
         Streams metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.
         """
         return _stream_trials_metrics(self._session, [self.id], group=group)
 
-    def stream_training_metrics(self) -> Iterable[TrainingMetrics]:
+    def stream_training_metrics(self) -> Iterable[metrics.TrainingMetrics]:
         """
         Streams training metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.
         """
         return _stream_training_metrics(self._session, [self.id])
 
-    def stream_validation_metrics(self) -> Iterable[ValidationMetrics]:
+    def stream_validation_metrics(self) -> Iterable[metrics.ValidationMetrics]:
         """
         Streams validation metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.
@@ -353,25 +354,25 @@ class TrialOrderBy(enum.Enum):
 
 def _stream_trials_metrics(
     session: api.Session, trial_ids: List[int], group: str
-) -> Iterable[TrialMetrics]:
+) -> Iterable[metrics.TrialMetrics]:
     for i in bindings.get_GetMetrics(session, trialIds=trial_ids, group=group):
         for m in i.metrics:
-            yield TrialMetrics._from_bindings(m, group=group)
+            yield metrics.TrialMetrics._from_bindings(m, group=group)
 
 
 def _stream_training_metrics(
     session: api.Session, trial_ids: List[int]
-) -> Iterable[TrainingMetrics]:
+) -> Iterable[metrics.TrainingMetrics]:
     """@deprecated"""
     for i in bindings.get_GetTrainingMetrics(session, trialIds=trial_ids):
         for m in i.metrics:
-            yield TrainingMetrics._from_bindings(m)
+            yield metrics.TrainingMetrics._from_bindings(m)
 
 
 def _stream_validation_metrics(
     session: api.Session, trial_ids: List[int]
-) -> Iterable[ValidationMetrics]:
+) -> Iterable[metrics.ValidationMetrics]:
     """@deprecated"""
     for i in bindings.get_GetValidationMetrics(session, trialIds=trial_ids):
         for m in i.metrics:
-            yield ValidationMetrics._from_bindings(m)
+            yield metrics.ValidationMetrics._from_bindings(m)
