@@ -49,25 +49,6 @@ def test_fashion_mnist_tf_keras(client: _client.Determined) -> None:
 
 
 @pytest.mark.nightly
-def test_fasterrcnn_coco_pytorch_accuracy(client: _client.Determined) -> None:
-    config = conf.load_config(conf.cv_examples_path("fasterrcnn_coco_pytorch/const.yaml"))
-    config = conf.set_random_seed(config, 1590497309)
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("fasterrcnn_coco_pytorch"), 1
-    )
-
-    trials = exp.experiment_trials(experiment_id)
-    validations = _get_validation_metrics(client, trials[0].trial.id)
-    validation_iou = [v["val_avg_iou"] for v in validations]
-
-    target_iou = 0.42
-    assert max(validation_iou) > target_iou, (
-        "fasterrcnn_coco_pytorch did not reach minimum target accuracy {}."
-        " full validation avg_iou history: {}".format(target_iou, validation_iou)
-    )
-
-
-@pytest.mark.nightly
 def test_mnist_estimator_accuracy(client: _client.Determined) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_estimator/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(

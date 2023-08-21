@@ -38,10 +38,6 @@ For an introduction to using the training API, please visit the Training APIs se
       -  ImageNet
       -  :download:`imagenet_pytorch.tgz </examples/imagenet_pytorch.tgz>`
 
-   -  -  PyTorch
-      -  Penn-Fudan Dataset
-      -  :download:`fasterrcnn_coco_pytorch.tgz </examples/fasterrcnn_coco_pytorch.tgz>`
-
    -  -  PyTorch (:ref:`Model Hub MMDetection <model-hub-mmdetection>`)
       -  COCO
       -  :download:`mmdetection.tgz </examples/mmdetection.tgz>`
