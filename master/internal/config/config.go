@@ -262,8 +262,8 @@ func (c *Config) Deprecations() (errs []error) {
 				"agent_reattach_enabled is set for resource pool %s but will be ignored; "+
 					"as of 0.21.0 this feature is always on", rp.PoolName,
 			), fmt.Errorf(
-				"agent_reattach_enabled does not impact Kubernetes resources behavior;"+
-					"as of 0.24.1 IsReattachEnabled for Kubernetes resource pools always true",
+				"agent_reattach_enabled does not impact Kubernetes resources behavior; "+
+					"reattach is always enabled for Kubernetes resource pools",
 			),
 			)
 		}
