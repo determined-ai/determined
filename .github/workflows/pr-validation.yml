@@ -26,8 +26,8 @@ jobs:
           # https://github.com/sean0x42/markdown-extract/issues/19
           #file: /github/workspace/${{ env.FILE_NAME }}
           file: ${{ env.FILE_NAME }}
-          #pattern: "Test Plan"
-          pattern: Description
+          pattern: "Test Plan"
+          #pattern: Description
           no-print-matched-heading: False
           case-sensitive: False
       - name: validate test plan
