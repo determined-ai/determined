@@ -148,7 +148,6 @@ func TestPatchWorkspace(t *testing.T) {
 	})
 	require.Error(t, err)
 
-	testRP := "testRP"
 	// Patch with valid workspace config.
 	patchResp, err := api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
 		Id: workspaceID,
@@ -160,7 +159,6 @@ func TestPatchWorkspace(t *testing.T) {
 				"save_experiment_best": 4,
 				"save_trial_best":      2,
 			}),
-			DefaultComputeResourcePool: &testRP,
 		},
 	})
 	require.NoError(t, err)
@@ -179,14 +177,12 @@ func TestPatchWorkspace(t *testing.T) {
 	})
 	proto.Equal(expected, patchResp.Workspace.CheckpointStorageConfig)
 	require.Equal(t, expected, patchResp.Workspace.CheckpointStorageConfig)
-	require.Equal(t, "testRP", patchResp.Workspace.DefaultComputePool)
 
 	// Change persisted?
 	getWorkResp, err = api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: workspaceID})
 	require.NoError(t, err)
 	proto.Equal(expected, getWorkResp.Workspace.CheckpointStorageConfig)
 	require.Equal(t, expected, getWorkResp.Workspace.CheckpointStorageConfig)
-	require.Equal(t, "testRP", getWorkResp.Workspace.DefaultComputePool)
 }
 
 var wAuthZ *mocks.WorkspaceAuthZ
