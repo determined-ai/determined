@@ -2,7 +2,6 @@ import pathlib
 import typing
 
 import pytest
-import tensorflow as tf
 from _pytest import monkeypatch
 
 import determined as det
