@@ -34,7 +34,7 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         assert info
         self._hparams = info.trial.hparams
 
-    def get_hparams(self):
+    def get_hparams(self) -> Dict[str, Any]:
         return self._hparams
 
     def to_device(
@@ -289,7 +289,7 @@ def _reduce_metrics(
             gathered = core_context.distributed.gather(gatherables)
             if gathered is not None:
                 metrics = batch_processor_context.run_cross_slot_reduction(reducables, gathered)
-                core_context.train.report_validation_metrics(
+                core_context.train.report_validation_metrics(  # type: ignore
                     steps_completed=steps_completed,
                     metrics=metrics,
                 )

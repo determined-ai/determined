@@ -5,7 +5,9 @@ from typing import Any, Dict, Iterable, List, Optional
 
 from determined.common import api, util
 from determined.common.api import bindings
-from determined.common.experimental import checkpoint
+from determined.common.experimental import checkpoint, metrics
+
+# from determined.experimental import metrics
 
 
 class ModelVersion:
@@ -74,7 +76,7 @@ class ModelVersion:
             self._session, modelName=self.model_name, modelVersionNum=self.model_version
         )
 
-    def get_metrics(self, group: str = ""):  # -> Iterable["metrics.InferenceMetrics"]:
+    def get_metrics(self, group: str = "") -> Iterable["metrics.TrialMetrics"]:
         """
         Gets all metrics for a given metric group associated with this model version.
         The checkpoint can be originally associated by calling
@@ -85,7 +87,6 @@ class ModelVersion:
             group (str, optional): Group name for the metrics (example: "training", "validation").
                 All metrics will be returned when querying by "".
         """
-        from determined.experimental import metrics
 
         resp = bindings.get_GetTrialMetricsByModelVersion(
             session=self._session,

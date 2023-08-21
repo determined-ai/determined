@@ -1,5 +1,6 @@
 from determined.common import api
 from determined.common.api import bindings
+from determined.common.experimental import checkpoint, model
 
 
 class UtilsContext:
@@ -11,7 +12,7 @@ class UtilsContext:
         self._session = session
         self._trial_id = trial_id
 
-    def report_task_using_checkpoint(self, checkpoint) -> None:
+    def report_task_using_checkpoint(self, checkpoint: checkpoint.Checkpoint) -> None:
         req = bindings.v1ReportTrialSourceInfoRequest(
             trialSourceInfo=bindings.v1TrialSourceInfo(
                 checkpointUuid=checkpoint.uuid,
@@ -24,7 +25,7 @@ class UtilsContext:
             body=req,
         )
 
-    def report_task_using_model_version(self, model_version) -> None:
+    def report_task_using_model_version(self, model_version: model.ModelVersion) -> None:
         req = bindings.v1ReportTrialSourceInfoRequest(
             trialSourceInfo=bindings.v1TrialSourceInfo(
                 checkpointUuid=model_version.checkpoint.uuid,

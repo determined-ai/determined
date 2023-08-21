@@ -77,7 +77,7 @@ class DetCallback(TrainerCallback):  # type: ignore
             # step as the last during-training evaluation.
             if self.last_metrics["eval_step"] != state.global_step:
                 if state.is_world_process_zero:
-                    self.core_context.train.report_validation_metrics(
+                    self.core_context.train.report_validation_metrics(  # type: ignore
                         steps_completed=state.global_step, metrics=metrics
                     )
                 metrics["eval_step"] = state.global_step

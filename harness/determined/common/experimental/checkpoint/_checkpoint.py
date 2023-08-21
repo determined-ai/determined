@@ -6,11 +6,12 @@ import pathlib
 import shutil
 import sys
 import tarfile
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from determined import errors
 from determined.common import api, constants, storage
 from determined.common.api import bindings
+from determined.common.experimental import metrics
 from determined.common.storage import shared
 
 
@@ -362,7 +363,7 @@ class Checkpoint:
         else:
             logging.info(f"Partial deletion of checkpoint {self.uuid} is in progress.")
 
-    def get_metrics(self, group: str = ""):  # -> Iterable["metrics.InferenceMetrics"]:
+    def get_metrics(self, group: str = "") -> Iterable["metrics.TrialMetrics"]:
         """
         Gets all metrics for a given metric group associated with this checkpoint.
         The checkpoint can be originally associated by calling

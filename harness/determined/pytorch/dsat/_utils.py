@@ -339,7 +339,7 @@ def report_json_results(
         if add_gpu_info:
             gpu_mem = torch.cuda.get_device_properties(0).total_memory
             results_dict["gpu_mem"] = gpu_mem
-        core_context.train.report_validation_metrics(
+        core_context.train.report_validation_metrics(  # type: ignore
             steps_completed=steps_completed, metrics=results_dict
         )
         op.report_completed(results_dict)
