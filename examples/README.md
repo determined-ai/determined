@@ -13,7 +13,6 @@
 
 | Example                                                                      | Dataset                      | Framework                                |
 |:----------------------------------------------------------------------------:|:----------------------------:|:----------------------------------------:|
-| [cifar10\_pytorch](computer_vision/cifar10_pytorch)                          | CIFAR-10                     | PyTorch                                  |
 | [cifar10\_pytorch\_inference](computer_vision/cifar10_pytorch_inference)     | CIFAR-10                     | PyTorch                                  |
 | [fasterrcnn\_coco\_pytorch](computer_vision/fasterrcnn_coco_pytorch)         | Penn-Fudan Dataset           | PyTorch                                  |
 | [mmdetection\_pytorch](computer_vision/mmdetection_pytorch)                  | COCO                         | PyTorch                                  |

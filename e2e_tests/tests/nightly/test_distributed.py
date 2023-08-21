@@ -50,21 +50,6 @@ def test_imagenet_pytorch_distributed() -> None:
     exp.run_basic_test_with_temp_config(config, conf.tutorials_path("imagenet_pytorch"), 1)
 
 
-@pytest.mark.distributed
-@pytest.mark.parametrize("image_type", ["PT", "TF2"])
-def test_cifar10_pytorch_distributed(image_type: str) -> None:
-    config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/distributed.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-
-    if image_type == "PT":
-        config = conf.set_pt_image(config)
-    elif image_type == "TF2":
-        config = conf.set_tf2_image(config)
-    else:
-        warnings.warn("Using default images", stacklevel=2)
-
-    exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("cifar10_pytorch"), 1)
-
 
 @pytest.mark.distributed
 def test_mnist_estimator_distributed() -> None:
