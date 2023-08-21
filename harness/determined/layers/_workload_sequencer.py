@@ -307,7 +307,7 @@ class WorkloadSequencer(workload.Source):
             best_validation_before = self.core_context.train.get_experiment_best_validation()
 
         self.state.last_val = self.state.steps_completed
-        self.core_context.train.report_validation_metrics(  # type: ignore
+        self.core_context.train.report_validation_metrics(
             steps_completed=self.state.steps_completed,
             metrics=metrics,
         )

@@ -1043,9 +1043,7 @@ class _PyTorchTrialController:
             # Get best validation before reporting metrics.
             best_validation_before = self.core_context.train.get_experiment_best_validation()
 
-            self.core_context.train.report_validation_metrics(  # type: ignore
-                self.state.batches_trained, metrics
-            )
+            self.core_context.train.report_validation_metrics(self.state.batches_trained, metrics)
 
         searcher_metric = None
 
