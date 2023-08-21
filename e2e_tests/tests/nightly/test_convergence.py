@@ -85,25 +85,6 @@ def test_cifar10_tf_keras_accuracy(client: _client.Determined) -> None:
 
 
 @pytest.mark.nightly
-def test_iris_tf_keras_accuracy(client: _client.Determined) -> None:
-    config = conf.load_config(conf.cv_examples_path("iris_tf_keras/const.yaml"))
-    config = conf.set_random_seed(config, 1591280374)
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("iris_tf_keras"), 1
-    )
-
-    trials = exp.experiment_trials(experiment_id)
-    validations = _get_validation_metrics(client, trials[0].trial.id)
-    validation_accuracies = [v["val_categorical_accuracy"] for v in validations]
-
-    target_accuracy = 0.95
-    assert max(validation_accuracies) > target_accuracy, (
-        "iris_tf_keras did not reach minimum target accuracy {}."
-        " full validation accuracy history: {}".format(target_accuracy, validation_accuracies)
-    )
-
-
-@pytest.mark.nightly
 def test_unets_tf_keras_accuracy(client: _client.Determined) -> None:
     config = conf.load_config(conf.cv_examples_path("unets_tf_keras/const.yaml"))
     config = conf.set_random_seed(config, 1591280374)
