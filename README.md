@@ -1,75 +1,115 @@
-# Determined: Deep Learning Training Platform
-
 <p align="center"><img src="determined-logo.png" alt="Determined AI Logo"></p>
 
-Determined is an open-source deep learning training platform that makes building
-models fast and easy. Determined enables you to:
+Determined is an all-in-one deep learning platform, compatible with PyTorch and TensorFlow.
 
-* **Train models faster** using state-of-the-art distributed training, without
-  changing your model code
-* **Automatically find high-quality models** with advanced hyperparameter tuning
-  from the creators of Hyperband
-* **Get more from your GPUs** with smart scheduling and cut cloud GPU costs by
-  seamlessly using preemptible instances
-* **Track and reproduce your work** with experiment tracking that works
-  out-of-the-box, covering code versions, metrics, checkpoints, and
-  hyperparameters
+It takes care of:
 
-Determined integrates these features into an easy-to-use, high-performance deep
-learning environment — which means you can spend your time building models
-instead of managing infrastructure.
+- Distributed training for faster results.
+- Hyperparameter tuning for obtaining the best models.
+- Resource management for cutting cloud GPU costs.
+- Experiment tracking for analysis and reproducibility.
 
-To use Determined, you can continue using popular DL frameworks such as
-TensorFlow and PyTorch; you just need to update your model code to integrate
-with the Determined API.
 
-## Try out Determined Locally
+# How Determined Works
 
-Follow [these instructions](https://docs.determined.ai/latest/how-to/installation/requirements.html#install-docker) to install and set up docker.
+The main components of Determined are the Python library, the command line interface (CLI), and the Web UI.
 
- ```bash
+## Python Library
+Use the Python library to make your existing PyTorch or Tensorflow code compatible with Determined. 
 
-# Start a Determined cluster locally.
-python3 -m venv ~/.virtualenvs/test
-. ~/.virtualenvs/test/bin/activate
+You can do this by organizing your code into one of the class-based APIs:
+
+```python
+from determined.pytorch import PyTorchTrial
+
+class YourExperiment(PyTorchTrial):
+  def __init__(self, context):
+    ...
+```
+
+Or by using just the functions you want, via the Core API:
+
+```python
+import determined as det
+
+with det.core.init() as core_context:
+    ...
+```
+
+## Command Line Interface (CLI)
+
+You can use the CLI to:
+
+- Start a Determined cluster locally:
+
+```
+det deploy local cluster-up
+```
+
+- Launch Determined on cloud services, such as Amazon Web Services (AWS) or Google Cloud Platform (GCP):
+
+```
+det deploy aws up
+```
+
+
+- Train your models:
+```bash
+det experiment create gpt.yaml .
+```
+
+Configure everything from distributed training to hyperparameter tuning using YAML files:
+
+```yaml
+resources:
+  slots_per_trial: 8
+  priority: 1
+hyperparameters:
+  learning_rate:
+    type: double
+    minval: .0001
+    maxval: 1.0
+searcher:
+  name: adaptive_asha
+  metric: validation_loss
+  smaller_is_better: true
+```
+
+
+## Web UI
+
+Use the Web UI to view loss curves, hyperparameter plots, code and configuration snapshots, model registries, cluster utilization, debugging logs, performance profiling reports, and more.
+
+![Web UI](docs/assets/readme_images/webui.png)
+
+
+# Installation
+
+To install the CLI:
+```bash
 pip install determined
-# To start a cluster with GPUs, remove `no-gpu` flag.
-det deploy local cluster-up --no-gpu
-# Access web UI at localhost:8080. By default, "determined" user accepts a blank password.
+```
 
-# Navigate to a Determined example.
-git clone --recurse-submodules https://github.com/determined-ai/determined
-cd determined/examples/computer_vision/cifar10_pytorch
+Then use `det deploy` to start the Determined cluster locally, or on cloud services like AWS and GCP.
 
-# Submit job to train a single model on a single node.
-det experiment create const.yaml .
- ```
+For installation details, visit the the cluster deployment guide for your environment:
 
-## Detailed Installation Guide
+- [Local (on-prem)](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/on-prem/overview.html)
+- [AWS](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/aws/overview.html)
+- [GCP](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/gcp/overview.html)
+- [Kubernetes](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/k8s/overview.html)
+- [Slurm/PBS](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/slurm/overview.html)
 
-See [our installation guide](https://docs.determined.ai/latest/how-to/install-main.html) for details on how to install Determined, including on AWS and GCP.
+# Documentation
 
-### Try Now on AWS
+* [Documentation](https://docs.determined.ai)
+* [Quick Start Guide](https://docs.determined.ai/latest/getting-started.html)
+* Tutorials:
+  * [PyTorch MNIST Tutorial](https://docs.determined.ai/latest/tutorials/pytorch-mnist-tutorial.html)
+  * [TensorFlow Keras MNIST Tutorial](https://docs.determined.ai/latest/tutorials/tf-mnist-tutorial.html)
 
-[![Try Now](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://determined-ai-public.s3-us-west-2.amazonaws.com/simple.yaml)
 
-## Next Steps
-
-For a brief introduction to using Determined, check out our
-[Quick Start Guide](https://docs.determined.ai/latest/getting-started.html).
-
-To use an existing deep learning model with Determined, follow the
-tutorial for your preferred deep learning framework:
-
-* [PyTorch MNIST Tutorial](https://docs.determined.ai/latest/tutorials/pytorch-mnist-tutorial.html)
-* [TensorFlow Keras MNIST Tutorial](https://docs.determined.ai/latest/tutorials/tf-mnist-tutorial.html)
-
-## Documentation
-
-The documentation for the latest version of Determined can always be found
-[here](https://docs.determined.ai).
-
-## Community
+# Community
 
 If you need help, want to file a bug report, or just want to keep up-to-date
 with the latest news about Determined, please join the Determined community!
@@ -77,15 +117,16 @@ with the latest news about Determined, please join the Determined community!
 * [Slack](https://determined-community.slack.com) is the best place to
   ask questions about Determined and get support. [Click here to join our Slack](
   https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew).
+* You can also follow us on [YouTube](https://www.youtube.com/@DeterminedAI) and [Twitter](https://www.twitter.com/DeterminedAI).
 * You can also join the [community mailing list](https://groups.google.com/a/determined.ai/forum/#!forum/community)
   to ask questions about the project and receive announcements.
-* To report a bug, [file an issue](https://github.com/determined-ai/determined/issues) on GitHub.
+* To report a bug, [open an issue](https://github.com/determined-ai/determined/issues) on GitHub.
 * To report a security issue, email [`security@determined.ai`](mailto:security@determined.ai).
 
-## Contributing
+# Contributing
 
 [Contributor's Guide](CONTRIBUTING.md)
 
-## License
+# License
 
 [Apache V2](LICENSE)

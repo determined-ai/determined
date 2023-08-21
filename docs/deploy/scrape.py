@@ -197,6 +197,9 @@ def scrape_tree(root, excludes):
             dirs = []
             continue
         for file in files:
+            _, ext = os.path.splitext(file)
+            if ext != ".xml":
+                continue
             path = os.path.join(parent, file)
             if exclude_file(path):
                 print("skipping file", path, file=sys.stderr)

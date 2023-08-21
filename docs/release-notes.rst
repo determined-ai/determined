@@ -7,6 +7,30 @@
 ###############
 
 **************
+ Version 0.24
+**************
+
+Version 0.24.0
+==============
+
+**Release Date:** August 18, 2023
+
+**Breaking Changes**
+
+-  API: Remove ``LightningAdapter``, which was deprecated in 0.23.1 (June 2023). We recommend that
+   PyTorch Lightning users migrate to the :ref:`Core API <core-getting-started>`.
+
+**New Features**
+
+-  Environments: Add experimental PyTorch 2.0 images containing PyTorch 2.0.1, Python 3.10.12, and
+   (for the GPU image) CUDA 11.8.
+
+**Bug Fixes**
+
+-  Users: Fix an issue that caused the CLI command ``det user list`` to always show "false" in the
+   "remote" column.
+
+**************
  Version 0.23
 **************
 

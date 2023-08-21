@@ -30,7 +30,7 @@ jobs:
           cache: true
           cache-dependency-path: ${{ matrix.service }}/go.sum
       - name: Setup Protoc
-        uses: arduino/setup-protoc@v1
+        uses: arduino/setup-protoc@v2
         with:
           version: 3.17.1
           repo-token: ${{ secrets.DETERMINED_TOKEN }}
