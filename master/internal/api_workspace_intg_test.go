@@ -148,6 +148,7 @@ func TestPatchWorkspace(t *testing.T) {
 	})
 	require.Error(t, err)
 
+	testRP := "testRP"
 	// Patch with valid workspace config.
 	patchResp, err := api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
 		Id: workspaceID,
@@ -159,7 +160,7 @@ func TestPatchWorkspace(t *testing.T) {
 				"save_experiment_best": 4,
 				"save_trial_best":      2,
 			}),
-			DefaultComputePool: "testRP",
+			DefaultComputeResourcePool: &testRP,
 		},
 	})
 	require.NoError(t, err)
