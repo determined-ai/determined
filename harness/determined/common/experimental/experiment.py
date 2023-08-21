@@ -169,10 +169,9 @@ class Experiment:
         bindings.delete_DeleteExperiment(self._session, experimentId=self._id)
 
     def download_code(self, output_dir: Optional[str] = None) -> str:
-        """
-        Downloads a zipped tarball (*.tar.gz) of the experiment's submitted code locally.
+        """Downloads a zipped tarball (*.tar.gz) of the experiment's submitted code locally.
 
-        Saves a file named `exp-{ID}_model_def.tar.gz` to a local output directory. If a file
+        Saves a file named ``exp-{ID}_model_def.tar.gz`` to a local output directory. If a file
         with the same name already exists in the output directory, overwrites the file.
 
         Arguments:
