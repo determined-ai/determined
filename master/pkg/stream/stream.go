@@ -13,11 +13,11 @@ type Msg interface {
 	DeleteMsg() *websocket.PreparedMessage
 }
 
-// Event contains the old and new version a Msg.  Inserts will have Old==nil, deletions will
-// have New==nil.
+// Event contains the old and new version a Msg.  Inserts will have Before==nil, deletions will
+// have After==nil.
 type Event[T Msg] struct {
-	Old *T `json:"old"`
-	New *T `json:"new"`
+	Before *T `json:"before"`
+	After *T `json:"after"`
 }
 
 // Streamer aggregates many events and wakeups into a single slice of pre-marshaled messages.
@@ -45,11 +45,11 @@ func (s *Streamer) Close() {
 }
 
 type Subscription[T Msg] struct {
-	// Which streamer is collecting events from this Subscription?
+	// Which streamer is collecting messages from this Subscription?
 	Streamer *Streamer
 	// Which publisher should we connect to when active?
 	Publisher *Publisher[T]
-	// Decide if the streamer wants this event.
+	// Decide if the streamer wants this message.
 	filter func(T) bool
 	// wakeupID prevent duplicate wakeups if multiple events in a single Broadcast are relevant
 	wakeupID int64
@@ -99,7 +99,7 @@ func NewPublisher[T Msg]() *Publisher[T]{
 	return &Publisher[T]{}
 }
 
-func Broadcast[T Msg](p *Publisher[T], events []Event[T]) {
+func (p *Publisher[T]) Broadcast(events []Event[T]) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
@@ -112,12 +112,12 @@ func Broadcast[T Msg](p *Publisher[T], events []Event[T]) {
 		func(){
 			for _, ev := range events {
 				var msg *websocket.PreparedMessage
-				if ev.New != nil && sub.filter(*ev.New) {
+				if ev.After != nil && sub.filter(*ev.After) {
 					// update, insert, or fallin: send the record to the client.
-					msg = (*ev.New).UpsertMsg()
-				} else if ev.Old != nil && sub.filter(*ev.Old) {
+					msg = (*ev.After).UpsertMsg()
+				} else if ev.Before != nil && sub.filter(*ev.Before) {
 					// deletion or fallout: tell the client the record is deleted.
-					msg = (*ev.Old).DeleteMsg()
+					msg = (*ev.Before).DeleteMsg()
 				} else {
 					// ignore this message
 					continue

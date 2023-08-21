@@ -65,19 +65,19 @@ func (tm *TrialMsg) DeleteMsg() *websocket.PreparedMessage {
 	return newDeletedMsgWithCache(TrialsDeleteKey, deleted, &tm.deleteCache)
 }
 
-// TrialFilterMod is what a user submits to define a trial subscription.
-type TrialFilterMod struct {
+// TrialSubscriptionSpec is what a user submits to define a trial subscription.
+type TrialSubscriptionSpec struct {
 	TrialIds      []int  `json:"trial_ids"`
 	ExperimentIds []int  `json:"experiment_ids"`
 	Since         int64  `json:"since"`
 }
 
-func (tfm TrialFilterMod) Startup(known string, ctx context.Context) (
+func TrialCollectStartupMsgs(known string, spec TrialSubscriptionSpec, ctx context.Context) (
 	[]*websocket.PreparedMessage, error,
 ) {
 	var out []*websocket.PreparedMessage
 
-	if len(tfm.TrialIds) == 0 && len(tfm.ExperimentIds) == 0 {
+	if len(spec.TrialIds) == 0 && len(spec.ExperimentIds) == 0 {
 		// empty subscription: everything known should be returned as deleted
 		out = append(out, newDeletedMsg(TrialsDeleteKey, known))
 		return out, nil
@@ -86,13 +86,13 @@ func (tfm TrialFilterMod) Startup(known string, ctx context.Context) (
 	// step 1: calculate all ids matching this subscription
 	q := db.Bun().NewSelect().Table("trials").Column("id")
 
-	// Ignore tmf.Since, because we want appearances, which might not be have seq > tfm.Since.
+	// Ignore tmf.Since, because we want appearances, which might not be have seq > spec.Since.
 	ws := stream.WhereSince{Since: 0}
-	if len(tfm.TrialIds) > 0 {
-		ws.Include("id in (?)", bun.In(tfm.TrialIds))
+	if len(spec.TrialIds) > 0 {
+		ws.Include("id in (?)", bun.In(spec.TrialIds))
 	}
-	if len(tfm.ExperimentIds) > 0 {
-		ws.Include("experiment_id in (?)", bun.In(tfm.ExperimentIds))
+	if len(spec.ExperimentIds) > 0 {
+		ws.Include("experiment_id in (?)", bun.In(spec.ExperimentIds))
 	}
 	q = ws.Apply(q)
 
@@ -127,23 +127,23 @@ func (tfm TrialFilterMod) Startup(known string, ctx context.Context) (
 	return out, nil
 }
 
-// When a user submits a new TrialFilterMod, we scrape the database for initial matches.
-func (tfm TrialFilterMod) Modify(ctx context.Context) (
+// When a user submits a new TrialSubscriptionSpec, we scrape the database for initial matches.
+func TrialCollectSubscriptionModMsgs(addSpec TrialSubscriptionSpec, ctx context.Context) (
 	[]*websocket.PreparedMessage, error,
 ) {
-	if len(tfm.TrialIds) == 0 && len(tfm.ExperimentIds) == 0 {
+	if len(addSpec.TrialIds) == 0 && len(addSpec.ExperimentIds) == 0 {
 		return nil, nil
 	}
 	var trialMsgs []*TrialMsg
 	q := db.Bun().NewSelect().Model(&trialMsgs)
 
 	// Use WhereSince to build a complex WHERE clause.
-	ws := stream.WhereSince{Since: tfm.Since}
-	if len(tfm.TrialIds) > 0 {
-		ws.Include("id in (?)", bun.In(tfm.TrialIds))
+	ws := stream.WhereSince{Since: addSpec.Since}
+	if len(addSpec.TrialIds) > 0 {
+		ws.Include("id in (?)", bun.In(addSpec.TrialIds))
 	}
-	if len(tfm.ExperimentIds) > 0 {
-		ws.Include("experiment_id in (?)", bun.In(tfm.ExperimentIds))
+	if len(addSpec.ExperimentIds) > 0 {
+		ws.Include("experiment_id in (?)", bun.In(addSpec.ExperimentIds))
 	}
 	q = ws.Apply(q)
 
@@ -165,26 +165,24 @@ type TrialFilterMaker struct {
 	ExperimentIds map[int]bool
 }
 
-func NewTrialFilterMaker() FilterMaker[*TrialMsg] {
+func NewTrialFilterMaker() FilterMaker[*TrialMsg, TrialSubscriptionSpec] {
 	return &TrialFilterMaker{make(map[int]bool), make(map[int]bool)}
 }
 
-func (ts *TrialFilterMaker) AddSpec(spec FilterMod) {
-	tSpec := spec.(TrialFilterMod)
-	for _, id := range tSpec.TrialIds {
+func (ts *TrialFilterMaker) AddSpec(spec TrialSubscriptionSpec) {
+	for _, id := range spec.TrialIds {
 		ts.TrialIds[id] = true
 	}
-	for _, id := range tSpec.ExperimentIds {
+	for _, id := range spec.ExperimentIds {
 		ts.ExperimentIds[id] = true
 	}
 }
 
-func (ts *TrialFilterMaker) DropSpec(spec FilterMod) {
-	tSpec := spec.(TrialFilterMod)
-	for _, id := range tSpec.TrialIds {
+func (ts *TrialFilterMaker) DropSpec(spec TrialSubscriptionSpec) {
+	for _, id := range spec.TrialIds {
 		delete(ts.TrialIds, id)
 	}
-	for _, id := range tSpec.ExperimentIds {
+	for _, id := range spec.ExperimentIds {
 		delete(ts.ExperimentIds, id)
 	}
 }
