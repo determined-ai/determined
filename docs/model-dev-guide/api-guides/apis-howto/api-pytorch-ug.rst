@@ -52,11 +52,10 @@ a skeleton to keep track of what is still required. A good starting template can
        def evaluate_batch(self, batch: TorchData) -> Dict[str, Any]:
            return {}
 
-To learn more about the PyTorch API, you can start by reading the trial definitions from the
-following examples:
+To learn more about the PyTorch API, you can start by reading the trial definition from the
+following example:
 
 -  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
--  :download:`fasterrcnn_coco_pytorch.tgz </examples/fasterrcnn_coco_pytorch.tgz>`
 
 For tips on debugging, see :ref:`model-debug`.
 
