@@ -92,6 +92,17 @@ func (a *MiscAuthZRBAC) CanGetUsageDetails(
 	)
 }
 
+// CanViewExternalJobs checks if the user can view external jobs.
+func (a *MiscAuthZRBAC) CanViewExternalJobs(
+	ctx context.Context, curUser *model.User,
+) (permErr error, err error) {
+	return a.checkForPermission(
+		ctx,
+		curUser,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXTERNAL_JOBS,
+	)
+}
+
 func init() {
 	AuthZProvider.Register("rbac", &MiscAuthZRBAC{})
 }

@@ -350,6 +350,14 @@ func (r *WorkspaceAuthZRBAC) CanCreateWorkspaceWithCheckpointStorageConfig(
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_WORKSPACE)
 }
 
+// CanSetWorkspacesDefaultPools determines if a user can set
+// default pools for a given workspace.
+func (r *WorkspaceAuthZRBAC) CanSetWorkspacesDefaultPools(
+	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
+) (err error) {
+	return errors.New("CanSetWorkspacesDefaultPools is not implemented for RBAC")
+}
+
 func hasPermissionOnWorkspace(ctx context.Context, uid model.UserID,
 	workspace *workspacev1.Workspace, permID rbacv1.PermissionType,
 ) error {

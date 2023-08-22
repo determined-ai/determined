@@ -147,6 +147,14 @@ func (p *WorkspaceAuthZPermissive) CanCreateWorkspaceWithCheckpointStorageConfig
 	return (&WorkspaceAuthZBasic{}).CanCreateWorkspaceWithCheckpointStorageConfig(ctx, curUser)
 }
 
+// CanSetWorkspacesDefaultPools calls RBAC authz but enforces basic authz.
+func (p *WorkspaceAuthZPermissive) CanSetWorkspacesDefaultPools(
+	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
+) error {
+	_ = (&WorkspaceAuthZRBAC{}).CanSetWorkspacesDefaultPools(ctx, curUser, workspace)
+	return (&WorkspaceAuthZBasic{}).CanSetWorkspacesDefaultPools(ctx, curUser, workspace)
+}
+
 func init() {
 	AuthZProvider.Register("permissive", &WorkspaceAuthZPermissive{})
 }

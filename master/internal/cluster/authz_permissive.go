@@ -57,6 +57,14 @@ func (a *MiscAuthZPermissive) CanGetUsageDetails(
 	return (&MiscAuthZBasic{}).CanGetUsageDetails(ctx, curUser)
 }
 
+// CanViewExternalJobs calls the RBAC implementation but always allows access.
+func (a *MiscAuthZPermissive) CanViewExternalJobs(
+	ctx context.Context, curUser *model.User,
+) (permErr error, err error) {
+	_, _ = (&MiscAuthZRBAC{}).CanViewExternalJobs(ctx, curUser)
+	return (&MiscAuthZBasic{}).CanViewExternalJobs(ctx, curUser)
+}
+
 func init() {
 	AuthZProvider.Register("permissive", &MiscAuthZPermissive{})
 }
