@@ -15,15 +15,7 @@ import DataEditor, {
 } from '@hpe.com/glide-data-grid';
 import { DrawHeaderCallback } from '@hpe.com/glide-data-grid/dist/ts/data-grid/data-grid-types';
 import { literal, union } from 'io-ts';
-import React, {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
@@ -109,7 +101,6 @@ export interface GlideTableProps {
   scrollPositionSetCount: WritableObservable<number>;
   selectAll: boolean;
   selection: GridSelection;
-  setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
   sortableColumnIds: string[];
   sorts: Sort[];
   staticColumns: string[];
@@ -169,7 +160,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   scrollPositionSetCount,
   selectAll,
   selection,
-  setExcludedExperimentIds,
   sortableColumnIds,
   sorts,
   staticColumns,
@@ -515,42 +505,14 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
             if (selection.rows.hasIndex(row)) {
               onSelectionChange?.('remove', [row, row + 1]);
-
-              if (selectAll) {
-                const experiment = data[row];
-                if (Loadable.isLoaded(experiment)) {
-                  setExcludedExperimentIds((prev) => {
-                    if (experiment.data.experiment) {
-                      return new Set([...prev, experiment.data.experiment?.id]);
-                    } else {
-                      return prev;
-                    }
-                  });
-                }
-              }
             } else {
               onSelectionChange?.('add', [row, row + 1]);
-
-              const experiment = data[row];
-              if (Loadable.isLoaded(experiment)) {
-                setExcludedExperimentIds((prev) => {
-                  return new Set([...prev].filter((id) => id !== experiment.data.experiment?.id));
-                });
-              }
             }
           }
         }
       });
     },
-    [
-      data,
-      columnIds,
-      columnDefs,
-      onSelectionChange,
-      selection,
-      selectAll,
-      setExcludedExperimentIds,
-    ],
+    [data, columnIds, columnDefs, onSelectionChange, selection],
   );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(

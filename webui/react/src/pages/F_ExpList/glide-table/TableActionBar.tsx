@@ -99,7 +99,7 @@ interface Props {
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
   selectAll: boolean;
-  selectedExperimentIds: number[];
+  selectedExperimentIds: Set<number>;
   sorts: Sort[];
   tableViewMode: TableViewMode;
   total: Loadable<number>;
@@ -140,6 +140,8 @@ const TableActionBar: React.FC<Props> = ({
   const totalExperiments = Loadable.getOrElse(0, total);
   const isMobile = useMobile();
 
+  const experimentIds = useMemo(() => Array.from(selectedExperimentIds), [selectedExperimentIds]);
+
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
       acc[experiment.data.experiment.id] = getProjectExperimentForExperimentItem(
@@ -153,72 +155,50 @@ const TableActionBar: React.FC<Props> = ({
   const availableBatchActions = useMemo(() => {
     if (selectAll)
       return batchActions.filter((action) => action !== ExperimentAction.OpenTensorBoard);
-    const experiments = selectedExperimentIds.map((id) => experimentMap[id]) ?? [];
+    const experiments = experimentIds.map((id) => experimentMap[id]) ?? [];
     return getActionsForExperimentsUnion(experiments, [...batchActions], permissions);
     // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
-  }, [experimentMap, permissions, selectAll, selectedExperimentIds]);
+  }, [experimentIds, experimentMap, permissions, selectAll]);
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
-      let requestFilters = selectAll ? filters : undefined;
+      const params = {
+        experimentIds: Array.from(selectedExperimentIds),
+        filters: selectAll ? filters : undefined,
+      };
       if (excludedExperimentIds?.size) {
-        requestFilters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds) };
+        params.filters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds) };
       }
       switch (action) {
         case ExperimentAction.OpenTensorBoard:
           return openCommandResponse(
-            await openOrCreateTensorBoard({
-              experimentIds: selectedExperimentIds,
-              filters: requestFilters,
-              workspaceId: project?.workspaceId,
-            }),
+            await openOrCreateTensorBoard({ ...params, workspaceId: project?.workspaceId }),
           );
         case ExperimentAction.Move:
           return ExperimentMoveModal.open();
         case ExperimentAction.Activate:
-          return await activateExperiments({
-            experimentIds: selectedExperimentIds,
-            filters: requestFilters,
-          });
+          return await activateExperiments(params);
         case ExperimentAction.Archive:
-          return await archiveExperiments({
-            experimentIds: selectedExperimentIds,
-            filters: requestFilters,
-          });
+          return await archiveExperiments(params);
         case ExperimentAction.Cancel:
-          return await cancelExperiments({
-            experimentIds: selectedExperimentIds,
-            filters: requestFilters,
-          });
+          return await cancelExperiments(params);
         case ExperimentAction.Kill:
-          return await killExperiments({
-            experimentIds: selectedExperimentIds,
-            filters: requestFilters,
-          });
+          return await killExperiments(params);
         case ExperimentAction.Pause:
-          return await pauseExperiments({
-            experimentIds: selectedExperimentIds,
-            filters: requestFilters,
-          });
+          return await pauseExperiments(params);
         case ExperimentAction.Unarchive:
-          return await unarchiveExperiments({
-            experimentIds: selectedExperimentIds,
-            filters: requestFilters,
-          });
+          return await unarchiveExperiments(params);
         case ExperimentAction.Delete:
-          return await deleteExperiments({
-            experimentIds: selectedExperimentIds,
-            filters: requestFilters,
-          });
+          return await deleteExperiments(params);
       }
     },
     [
-      selectedExperimentIds,
-      selectAll,
       excludedExperimentIds,
+      ExperimentMoveModal,
       filters,
       project?.workspaceId,
-      ExperimentMoveModal,
+      selectAll,
+      selectedExperimentIds,
     ],
   );
 
@@ -348,8 +328,8 @@ const TableActionBar: React.FC<Props> = ({
         ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString() + ' '
         : '';
       label = `${all}${totalSelected}experiments selected`;
-    } else if (selectedExperimentIds.length > 0) {
-      label = `${selectedExperimentIds.length} of ${label} selected`;
+    } else if (selectedExperimentIds.size > 0) {
+      label = `${selectedExperimentIds.size} of ${label} selected`;
     }
 
     return label;
@@ -387,7 +367,7 @@ const TableActionBar: React.FC<Props> = ({
             onRowHeightChange={onRowHeightChange}
             onTableViewModeChange={onTableViewModeChange}
           />
-          {(selectAll || selectedExperimentIds.length > 0) && (
+          {(selectAll || selectedExperimentIds.size > 0) && (
             <Dropdown menu={editMenuItems} onClick={handleAction}>
               <Button hideChildren={isMobile}>Actions</Button>
             </Dropdown>
@@ -424,7 +404,7 @@ const TableActionBar: React.FC<Props> = ({
       )}
       <ExperimentMoveModal.Component
         excludedExperimentIds={excludedExperimentIds}
-        experimentIds={selectedExperimentIds.filter(
+        experimentIds={experimentIds.filter(
           (id) =>
             canActionExperiment(ExperimentAction.Move, experimentMap[id]) &&
             permissions.canMoveExperiment({ experiment: experimentMap[id] }),
