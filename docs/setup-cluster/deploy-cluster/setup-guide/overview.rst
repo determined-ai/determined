@@ -9,8 +9,9 @@
 .. meta::
    :description: Follow these steps to set up a brand new Determined training environment.
 
-Using Determined requires a training environment. If you have not used Determined before, or you
-want to set up a new training environment, you are at the right place!
+Using Determined requires a training environment. Your training environment can be a local
+development machine, an on-premise GPU cluster, or cloud resources. If you have not used Determined
+before, or you want to set up a new training environment, you are at the right place!
 
 This step-by-step checklist will help you get started by covering the basics of preparing for and
 setting up a new training environment. After completing these steps, your users will be able to see
@@ -43,7 +44,6 @@ installation method that best fits your environment and requirements.
    -  :ref:`GCP <install-gcp>`. The Determined CLI manages the setup of Google Cloud SQL instances
       for PostgreSQL.
 
-
 .. tabs::
 
    .. tab::
@@ -58,7 +58,6 @@ installation method that best fits your environment and requirements.
 
       :ref:`Installing Determined using Linux Packages <install-using-linux-packages-preliminary>`
       pulls in the official Docker image for PostgreSQL.
-
 
 ****************************************
  Step 2 - Install the Determined Master

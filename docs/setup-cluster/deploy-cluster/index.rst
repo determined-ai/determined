@@ -46,7 +46,9 @@ If you have not yet set up your training environment, consult the :ref:`setup ch
 .. toctree::
    :hidden:
 
-   Setup Overview <setup-guide/overview>
+   Basic Setup <../basic>
+   Advanced Setup <setup-guide/overview>
+   By Environment <self>
    Deploy on Prem <on-prem/overview>
    Deploy on AWS <aws/overview>
    Deploy on GCP <gcp/overview>

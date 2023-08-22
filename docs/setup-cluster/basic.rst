@@ -1,11 +1,14 @@
-#############
- Basic Setup
-#############
-
-temporary: :ref:`basic-setup`
+#################################
+ Local Setup (Was "Basic Setup")
+#################################
 
 Your training environment can be a local development machine, an on-premise GPU cluster, or cloud
-resources. To set up your training environment, follow the steps below.
+resources. To set up your local training environment, follow the steps below.
+
+.. note::
+
+   To set up an on-premise cluster or cloud resources, visit the :ref:`Setup Checklist
+   <basic-setup>`.
 
 **************************************************
  Step 1 - Set ``DET_MASTER`` Environment Variable

@@ -2,25 +2,24 @@
 
 .. _setup-postgresql:
 
-##################
+###################
  Set Up PostgreSQL
-##################
+###################
 
-Determined uses a PostgreSQL database to store experiment and trial metadata. 
+Determined uses a PostgreSQL database to store experiment and trial metadata.
 
 .. note::
 
    If you are using an existing PostgreSQL installation, we recommend confirming that
    ``max_connections`` is at least 96, which is sufficient for Determined.
 
-
 .. _install-postgres-docker:
 
 temporary: replaces the Original section in docker.rst
 
-*******************************************
+********************************************
  Setting Up a Docker PostgreSQL Environment
-*******************************************
+********************************************
 
 #. :ref:`Install Docker <install-docker>` on all machines in the cluster. If the agent machines have
    GPUs, ensure that the :ref:`NVIDIA Container Toolkit <validate-nvidia-container-toolkit>` on each
@@ -65,7 +64,6 @@ temporary: replaces the Original section in docker.rst
    debugging purposes. In order to expose the port only on the master machine's loopback network
    interface, pass ``-p 127.0.0.1:5432:5432`` instead of ``-p 5432:5432``.
 
-
 .. _install-using-linux-packages-preliminary:
 
 temporary: replaces the Original section in linux-packages.rst
@@ -75,11 +73,12 @@ temporary: replaces the Original section in linux-packages.rst
 *******************************************
 
 .. note::
-   
-   If you are installing Determined using Linux packages, you can use a Docker container or your Linux distribution's package and service.
+
+   If you are installing Determined using Linux packages, you can use a Docker container or your
+   Linux distribution's package and service.
 
 Install PostgreSQL using ``apt`` or ``yum``
--------------------------------------------
+===========================================
 
 #. Install PostgreSQL 10 or greater.
 
@@ -130,10 +129,9 @@ Install PostgreSQL using ``apt`` or ``yum``
       postgres=# CREATE USER determined WITH ENCRYPTED PASSWORD 'determined-password';
       postgres=# GRANT ALL PRIVILEGES ON DATABASE determined TO determined;
 
-
-
-*******************************************
+************
  Next Steps
-*******************************************
+************
 
-- :ref: `Set Up Determined Overview <basic-setup>`
+-  :ref:
+      `Set Up Determined Overview <basic-setup>`
