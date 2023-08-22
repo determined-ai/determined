@@ -21,18 +21,25 @@ read filename
 echo "Choose a category (or enter a new one):"
 category=$(autocomplete "${categories[@]}")
 
-echo "Choose a component (or enter a new one):"
-component=$(autocomplete "${components[@]}")
+echo ":orphan:" >"${filename}.rst"
+echo "" >>"${filename}.rst"
+echo "**${category}**" >>"${filename}.rst"
+echo "" >>"${filename}.rst"
 
-echo "Enter the details:"
-read details
+while true; do
+    echo "Choose a component (or enter a new one):"
+    component=$(autocomplete "${components[@]}")
 
-cat <<EOL >"${filename}.rst"
-:orphan:
+    echo "Enter the details:"
+    read details
 
-**${category}**
+    echo "-  ${component}: ${details}" >>"${filename}.rst"
 
--  ${component}: ${details}
-EOL
+    echo "Do you want to add another entry? (yes/no)"
+    read answer
+    if [[ $answer != "yes" ]]; then
+        break
+    fi
+done
 
 echo "Release note file '${filename}.rst' has been created successfully!"
