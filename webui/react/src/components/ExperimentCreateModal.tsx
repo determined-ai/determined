@@ -337,10 +337,9 @@ const ExperimentCreateModalComponent = ({
     };
     setModalState((prev) => {
       const newModalState = {
+        ...prev,
         config: publicConfig,
-        configString: yaml.dump(publicConfig),
         experiment,
-        isAdvancedMode: false,
         open: true,
         trial,
         type,
