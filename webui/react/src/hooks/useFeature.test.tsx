@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
 
 import useFeature, { ValidFeature } from './useFeature';
 
@@ -14,7 +15,11 @@ const FeatureTest: React.FC = () => {
 };
 
 const setup = () => {
-  return render(<FeatureTest />);
+  return render(
+    <BrowserRouter>
+      <FeatureTest />
+    </BrowserRouter>,
+  );
 };
 
 describe('useFeature', () => {
