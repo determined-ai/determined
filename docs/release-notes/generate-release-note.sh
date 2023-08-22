@@ -18,21 +18,21 @@ autocomplete() {
 echo "Enter the filename for the release note (without extension):"
 read filename
 
-echo "Choose a prefix (or enter a new one):"
-prefix=$(autocomplete "${categories[@]}")
+echo "Choose a category (or enter a new one):"
+category=$(autocomplete "${categories[@]}")
 
-echo "Choose a title (or enter a new one):"
-title=$(autocomplete "${components[@]}")
+echo "Choose a component (or enter a new one):"
+component=$(autocomplete "${components[@]}")
 
-echo "Enter the component details:"
-read component
+echo "Enter the details:"
+read details
 
 cat <<EOL >"${filename}.rst"
 :orphan:
 
-**${prefix}**
+**${category}**
 
--  ${title}: ${component}
+-  ${component}: ${details}
 EOL
 
 echo "Release note file '${filename}.rst' has been created successfully!"
