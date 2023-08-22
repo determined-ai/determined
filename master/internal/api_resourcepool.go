@@ -191,11 +191,17 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 	if err != nil {
 		return nil, err
 	}
+	allIDsLen := len(workspaceIDs)
 	workspaceIDs, err = workspaceauth.AuthZProvider.Get().FilterWorkspaceIDs(
 		ctx, *curUser, workspaceIDs,
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(workspaceIDs) == 0 && allIDsLen != 0 {
+		return nil, fmt.Errorf("resource pool %s does not exist or is not available to view",
+			req.ResourcePoolName)
 	}
 
 	return &apiv1.ListWorkspacesBoundToRPResponse{
