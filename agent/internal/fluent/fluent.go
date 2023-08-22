@@ -49,8 +49,8 @@ type Fluent struct {
 	mopts aproto.MasterSetAgentOptions
 
 	// System dependencies.
-	log    *log.Entry
-	docker *docker.Client
+	log *log.Entry
+	dcl *docker.Client
 
 	// Internal state.
 	fluentLogs      []*aproto.RunMessage
@@ -65,14 +65,14 @@ func Start(
 	ctx context.Context,
 	opts options.Options,
 	mopts aproto.MasterSetAgentOptions,
-	dclient *docker.Client,
+	dcl *docker.Client,
 ) (*Fluent, error) {
 	f := &Fluent{
 		opts:  opts,
 		mopts: mopts,
 
-		log:    log.WithField("component", "fluentbit"),
-		docker: dclient,
+		log: log.WithField("component", "fluentbit"),
+		dcl: dcl,
 
 		fluentLogs: make([]*aproto.RunMessage, 50),
 		wg:         errgroupx.WithContext(context.Background()),
@@ -120,7 +120,7 @@ func (f *Fluent) Close() error {
 }
 
 func (f *Fluent) monitor(ctx context.Context, cID string) error {
-	exitC, errC := f.docker.Inner().ContainerWait(
+	exitC, errC := f.dcl.Inner().ContainerWait(
 		ctx,
 		cID,
 		dcontainer.WaitConditionNotRunning,
@@ -169,7 +169,7 @@ func (f *Fluent) monitor(ctx context.Context, cID string) error {
 	}
 
 	f.printRecentLogs()
-	if err := f.docker.RemoveContainer(ctx, cID, true); err != nil {
+	if err := f.dcl.RemoveContainer(ctx, cID, true); err != nil {
 		f.log.WithError(err).Debug("ensuring Fluent Bit is cleaned up")
 	}
 	select {
@@ -194,11 +194,11 @@ func (f *Fluent) startContainer(ctx context.Context) (string, error) {
 
 	imageName := f.opts.Fluent.Image
 
-	if err := removeContainerByName(ctx, f.docker, f.opts.Fluent.ContainerName); err != nil {
+	if err := removeContainerByName(ctx, f.dcl, f.opts.Fluent.ContainerName); err != nil {
 		return "", errors.Wrap(err, "failed to kill old logging container")
 	}
 
-	if err := pullImageByName(ctx, f.docker, imageName); err != nil {
+	if err := pullImageByName(ctx, f.dcl, imageName); err != nil {
 		return "", errors.Wrap(err, "failed to pull logging image")
 	}
 
@@ -268,7 +268,7 @@ func (f *Fluent) startContainer(ctx context.Context) (string, error) {
 		tlsConfig,
 	)
 
-	createResponse, err := f.docker.Inner().ContainerCreate(
+	createResponse, err := f.dcl.Inner().ContainerCreate(
 		ctx,
 		&dcontainer.Config{
 			Image:      imageName,
@@ -311,7 +311,7 @@ func (f *Fluent) startContainer(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	err = f.docker.Inner().CopyToContainer(
+	err = f.dcl.Inner().CopyToContainer(
 		ctx,
 		createResponse.ID,
 		"/",
@@ -322,7 +322,7 @@ func (f *Fluent) startContainer(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	err = f.docker.Inner().ContainerStart(ctx, createResponse.ID, types.ContainerStartOptions{})
+	err = f.dcl.Inner().ContainerStart(ctx, createResponse.ID, types.ContainerStartOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -340,15 +340,15 @@ func (f *Fluent) startContainer(ctx context.Context) (string, error) {
 	return createResponse.ID, nil
 }
 
-func pullImageByName(ctx context.Context, docker *docker.Client, imageName string) error {
-	_, _, err := docker.Inner().ImageInspectWithRaw(ctx, imageName)
+func pullImageByName(ctx context.Context, dcl *docker.Client, imageName string) error {
+	_, _, err := dcl.Inner().ImageInspectWithRaw(ctx, imageName)
 	switch {
 	case err == nil:
 		// No error means the image is present; do nothing.
 	case client.IsErrNotFound(err):
 		// This error means the call to Docker went fine but the image doesn't exist; pull it now.
 		log.Infof("pulling Docker image %s", imageName)
-		pullResponse, pErr := docker.Inner().ImagePull(ctx, imageName, types.ImagePullOptions{})
+		pullResponse, pErr := dcl.Inner().ImagePull(ctx, imageName, types.ImagePullOptions{})
 		if pErr != nil {
 			return pErr
 		}
@@ -375,7 +375,7 @@ func (f *Fluent) trackLogs(
 	id string,
 	logs chan<- *aproto.ContainerLog,
 ) error {
-	reader, err := f.docker.Inner().ContainerLogs(
+	reader, err := f.dcl.Inner().ContainerLogs(
 		ctx,
 		id,
 		types.ContainerLogsOptions{
@@ -409,38 +409,73 @@ func (f *Fluent) trackLogs(
 
 func removeContainerByName(
 	ctx context.Context,
-	docker *docker.Client,
+	dcl *docker.Client,
 	name string,
 ) error {
-	containers, err := docker.Inner().ContainerList(ctx, types.ContainerListOptions{
+	cont, err := containerByName(ctx, dcl, name)
+	switch {
+	case err != nil:
+		return err
+	case cont == nil:
+		return nil
+	}
+
+	log.WithField("id", cont.ID).Infof("removing Docker container %s", name)
+	err = dcl.Inner().ContainerRemove(ctx, cont.ID, docker.ForceRemoveOpts)
+	switch {
+	case strings.Contains(err.Error(), docker.NoSuchContainer):
+		log.WithField("id", cont.ID).Tracef(err.Error())
+		return nil
+	case docker.RemovalInProgress.MatchString(err.Error()):
+		log.WithField("id", cont.ID).Tracef(err.Error())
+		exitC, errC := dcl.Inner().ContainerWait(ctx, cont.ID, dcontainer.WaitConditionRemoved)
+		select {
+		case resp := <-exitC:
+			err := resp.Error
+			if err == nil {
+				return fmt.Errorf("failed to wait for container %s removal: %s", cont.ID, err)
+			}
+			return nil
+		case err := <-errC:
+			return fmt.Errorf("failed to wait for container %s removal: %w", cont.ID, err)
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	case err != nil:
+		return fmt.Errorf("failed to remove container %s: %w", cont.ID, err)
+	default:
+		return nil
+	}
+}
+
+func containerByName(
+	ctx context.Context,
+	dcl *docker.Client,
+	name string,
+) (*types.Container, error) {
+	containers, err := dcl.Inner().ContainerList(ctx, types.ContainerListOptions{
 		All: true,
 		Filters: filters.NewArgs(
 			filters.Arg("name", name),
 		),
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to list containers by name")
+		return nil, errors.Wrap(err, "failed to list containers by name")
 	}
 
-	for _, cont := range containers {
+	for _, c := range containers {
 		// ContainerList by name filters by prefix.
 		// Check for an exact match while accounting for / prefix.
-		for _, containerName := range cont.Names {
-			if strings.TrimLeft(containerName, "/") == name {
-				log.WithFields(log.Fields{"name": name, "id": cont.ID}).Infof(
-					"killing and removing Docker container",
-				)
-
-				if err := docker.Inner().ContainerRemove(
-					ctx, cont.ID, types.ContainerRemoveOptions{Force: true},
-				); err != nil {
-					return fmt.Errorf("failed to remove container %s: %w", containerName, err)
-				}
-				break
+		for _, containerName := range c.Names {
+			if strings.TrimLeft(containerName, "/") != name {
+				continue
 			}
+
+			return &c, nil
 		}
 	}
-	return nil
+	log.Tracef("no container found with name %s", name)
+	return nil, nil
 }
 
 func (f *Fluent) printRecentLogs() {
