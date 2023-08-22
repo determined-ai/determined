@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import Select, { Option, SelectProps } from 'components/kit/Select';
 import { ALL_VALUE } from 'types';
-import { clone, isObject } from 'utils/data';
+import { isObject } from 'utils/data';
 
 import css from './HpSelect.module.scss';
 
@@ -25,10 +25,15 @@ const HpSelect: React.FC<Props> = ({ fullHParams, onChange, value, ...props }: P
         onChange([], option);
         if (document.activeElement) (document.activeElement as HTMLElement).blur();
       } else {
-        const newValue = clone(values);
+        const newValue = structuredClone(values);
         const selectedValue = isObject(selected) ? (selected as LabeledValue).value : selected;
 
-        if (!newValue.includes(selectedValue)) newValue.push(selectedValue);
+        if (
+          selectedValue !== undefined &&
+          !Array.isArray(selectedValue) &&
+          !newValue.includes(selectedValue)
+        )
+          newValue.push(selectedValue);
 
         onChange(newValue as SelectValue, option);
       }
@@ -41,7 +46,7 @@ const HpSelect: React.FC<Props> = ({ fullHParams, onChange, value, ...props }: P
       if (!onChange) return;
 
       const selectedValue = isObject(selected) ? (selected as LabeledValue).value : selected;
-      const newValue = (clone(values) as SelectValue[]).filter((item) => item !== selectedValue);
+      const newValue = structuredClone(values).filter((item) => item !== selectedValue);
 
       onChange(newValue as SelectValue, option);
     },

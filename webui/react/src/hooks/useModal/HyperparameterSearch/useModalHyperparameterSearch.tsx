@@ -29,7 +29,7 @@ import {
   TrialHyperparameters,
   TrialItem,
 } from 'types';
-import { clone, flattenObject, isBoolean, unflattenObject } from 'utils/data';
+import { flattenObject, isBoolean, unflattenObject } from 'utils/data';
 import { DetError, ErrorLevel, ErrorType, handleWarning, isDetError } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { roundToPrecision } from 'utils/number';
@@ -132,7 +132,7 @@ const useModalHyperparameterSearch = ({
     const fields: Record<string, Primitive | HyperparameterRowValues> = form.getFieldsValue(true);
 
     // Deep cloning parent experiment's config
-    const baseConfig = clone(experiment.configRaw, true);
+    const baseConfig = structuredClone(experiment.configRaw);
 
     // Replacing fields from orginial config with user-selected values
     baseConfig.name = (fields.name as string).trim();
