@@ -35,8 +35,6 @@ export const launchJupyterLab = async (options: JupyterLabLaunchOptions = {}): P
   } catch (e) {
     handleError(e, {
       level: ErrorLevel.Error,
-      publicMessage: 'Please try again later.',
-      publicSubject: 'Unable to Launch JupyterLab',
       silent: false,
       type: ErrorType.Server,
     });
