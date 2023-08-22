@@ -109,9 +109,9 @@ const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
   }, []);
 
   return (
-    <SettingsProvider>
-      <BrowserRouter>{children}</BrowserRouter>
-    </SettingsProvider>
+    <BrowserRouter>
+      <SettingsProvider>{children}</SettingsProvider>
+    </BrowserRouter>
   );
 };
 

@@ -1,5 +1,6 @@
 import { Map } from 'immutable';
 import React, { createContext, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import Spinner from 'components/kit/Spinner';
 import authStore from 'stores/auth';
@@ -32,13 +33,14 @@ export const UserSettings = createContext<UserSettingsContext>({
 
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
+  const location = useLocation();
   const isAuthChecked = useObservable(authStore.isChecked);
   const querySettings = useRef(new URLSearchParams(''));
   const isLoading = Loadable.isLoading(useObservable(userSettings._forUseSettingsOnly()));
 
   useEffect(() => {
-    querySettings.current = new URLSearchParams(window.location.search);
-  }, []);
+    querySettings.current = new URLSearchParams(location.search);
+  }, [location.search]);
 
   return (
     <Spinner spinning={isLoading && !(isAuthChecked && !currentUser)} tip="Loading Page">

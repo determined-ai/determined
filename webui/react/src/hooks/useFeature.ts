@@ -1,6 +1,7 @@
 import { map } from 'fp-ts/lib/Record';
 import { boolean, null as ioNull, partial, TypeOf, union } from 'io-ts';
 import { useObservable } from 'micro-observables';
+import { useLocation } from 'react-router-dom';
 
 import determinedStore, { DeterminedInfo } from 'stores/determinedInfo';
 import userSettings from 'stores/userSettings';
@@ -33,20 +34,19 @@ export const FEATURE_SETTINGS_PATH = 'global-features';
 export const FeatureSettingsConfig = partial(map(() => union([boolean, ioNull]))(FEATURES));
 export type FeatureSettingsConfig = TypeOf<typeof FeatureSettingsConfig>;
 
-const queryParams = new URLSearchParams(window.location.search);
-
 interface FeatureHook {
   isOn: (feature: ValidFeature) => boolean;
 }
 
 const useFeature = (): FeatureHook => {
+  const location = useLocation();
   const info = useObservable(determinedStore.info);
   const featureSettings = useObservable(
     userSettings
       .get(FeatureSettingsConfig, FEATURE_SETTINGS_PATH)
       .select((loadable) => Loadable.getOrElse(null, loadable)),
   );
-  return { isOn: (feature: ValidFeature) => IsOn(feature, info, featureSettings) };
+  return { isOn: (feature: ValidFeature) => IsOn(feature, info, featureSettings, location.search) };
 };
 
 // Priority: Default state < config settings < user settings < url
@@ -54,7 +54,9 @@ const IsOn = (
   feature: ValidFeature,
   info: DeterminedInfo,
   settings: FeatureSettingsConfig | null,
+  searchParams: string,
 ): boolean => {
+  const queryParams = new URLSearchParams(searchParams);
   const { featureSwitches } = info;
   // Read from default state
   let isOn: boolean = FEATURES[feature]?.defaultValue ?? false;

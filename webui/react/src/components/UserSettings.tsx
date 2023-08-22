@@ -359,7 +359,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                       });
 
                       if (location.search) {
-                        queryParams.delete(`f_${feature}`);
+                        queryParams.set(`f_${feature}`, val ? 'on' : 'off');
                         const newQuery = queryParams.toString();
 
                         navigate(`${location.pathname}${newQuery ? `?${newQuery}` : ''}`); // removes the query setting after changing it manually
