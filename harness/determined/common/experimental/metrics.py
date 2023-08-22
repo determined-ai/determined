@@ -59,6 +59,7 @@ class TrainingMetrics(TrialMetrics):
     def __init__(self, steps_completed: Optional[int] = None, **kwargs: Any):
         if steps_completed is not None:
             kwargs["total_batches"] = steps_completed
+        kwargs["group"] = util._LEGACY_TRAINING
         super().__init__(**kwargs)
 
     @classmethod
@@ -77,6 +78,7 @@ class ValidationMetrics(TrialMetrics):
     def __init__(self, steps_completed: Optional[int] = None, **kwargs: Any):
         if steps_completed is not None:
             kwargs["total_batches"] = steps_completed
+        kwargs["group"] = util._LEGACY_VALIDATION
         super().__init__(**kwargs)
 
     @classmethod
