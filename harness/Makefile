@@ -29,10 +29,6 @@ check: check-gen
 test-cpu:
 	coverage run -m pytest -v --runslow --durations=0 -m "not gpu or cpu" tests
 
-.PHONY: test-cpu-tf1
-test-cpu-tf1:
-	coverage run -m pytest -v --runslow --durations=0 -m "tf1_cpu" tests/experiment/keras tests/experiment/tensorflow --ignore=tests/experiment/integrations
-
 .PHONY: test-gpu
 test-gpu:
 	# Since integration tests are image-specific, they must be excluded and run separately
@@ -61,7 +57,6 @@ test:
 .PHONY: test-tf2
 test-tf2:
 	pip freeze | grep "tensorflow==2.*"
-	coverage run -m pytest -v --runslow --durations=0 tests/experiment/tensorflow
 	# We must run these tests separately becuase estimators need to disable v2
 	# behavior (a global operation). We are explicitly testing eager execution
 	# for tf keras which needs v2 behavior enabled. You can't enable v2 behavior

@@ -62,9 +62,8 @@ TensorFlow Core Models
 ======================
 
 Determined has support for TensorFlow models that use the :doc:`Keras
-</model-dev-guide/apis-howto/api-keras-ug>` or :doc:`Estimator
-</model-dev-guide/apis-howto/api-estimator-ug>` APIs. For models that use the low-level TensorFlow
-Core APIs, we recommend wrapping your model in Keras, as recommended by the official `TensorFlow
+</model-dev-guide/apis-howto/api-keras-ug>` API. For models that use the low-level TensorFlow Core
+APIs, we recommend wrapping your model in Keras, as recommended by the official `TensorFlow
 <https://www.tensorflow.org/guide/basics#training_loops>`_ documentation.
 
 TensorFlow 1 vs 2
@@ -114,4 +113,3 @@ Known limitations:
    api-pytorch-ug
    api-keras-ug
    deepspeed/overview
-   api-estimator-ug

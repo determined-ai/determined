@@ -47,7 +47,6 @@ per-file-ignores =
   tests/experiment/test_port_registry.py:I2041
   tests/experiment/test_profiling.py:I2041
   tests/filetree.py:I2041
-  tests/fixtures/mnist_estimator/model_def.py:I2041
   tests/fixtures/mnist_pytorch/layers.py:I2041
   tests/fixtures/mnist_pytorch/model_def.py:I2041
   tests/fixtures/mnist_pytorch/stop_requested_model_def.py:I2041

@@ -5,10 +5,10 @@
 .. meta::
    :description: By walking through this simple example, you'll learn how to organize your PyTorch code into Determined's PyTorch Trial API.
 
-Determined provides a high-level framework APIs for PyTorch, Keras, and Estimators that let users
-describe their model without boilerplate code. Determined reduces boilerplate by providing a
-state-of-the-art training loop that provides distributed training, hyperparameter search, automatic
-mixed precision, reproducibility, and many more features.
+Determined provides high-level framework APIs for PyTorch and Keras that let users describe their
+model without boilerplate code. Determined reduces boilerplate by providing a state-of-the-art
+training loop that provides distributed training, hyperparameter search, automatic mixed precision,
+reproducibility, and many more features.
 
 In this guide, we'll walk through an example and provide helpful hints to successfully organize
 PyTorch code into Determined's PyTorchTrial API. Once your code is in the PyTorchTrial format, you

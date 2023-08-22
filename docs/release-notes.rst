@@ -2247,10 +2247,9 @@ Version 0.15.2
    preempt experiments when higher priority ones are submitted.
 
 -  APIs: Promote the custom metric reducer APIs for both :ref:`pytorch <pytorch-custom-reducers>`
-   and :ref:`estimators <estimators-custom-reducers>` from experimental status to general
-   availability.
+   and estimators from experimental status to general availability.
 
--  Resource pools: Support configuring distinct ``task_container_defaults`` for each resource pool
+-  Resource pools: Support =configuring distinct ``task_container_defaults`` for each resource pool
    configured on the cluster. This can allow different resource pools which may have very different
    hardware to configure tasks in each pool with the correct settings.
 
