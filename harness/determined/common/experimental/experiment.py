@@ -1,4 +1,6 @@
+import base64
 import enum
+import pathlib
 import sys
 import time
 import warnings
@@ -165,6 +167,35 @@ class Experiment:
         You must be authenticated as admin to delete an experiment.
         """
         bindings.delete_DeleteExperiment(self._session, experimentId=self._id)
+
+    def download_code(self, output_dir: Optional[str] = None) -> str:
+        """Downloads a zipped tarball (``*.tar.gz``) of the experiment's submitted code locally.
+
+        Saves a file named ``exp-{ID}_model_def.tar.gz`` to a local output directory. If a file
+        with the same name already exists in the output directory, overwrites the file.
+
+        Arguments:
+            output_dir (string, optional): The local directory path to save downloaded archive to,
+                creating directory if it does not exist. If unspecified, will save to current
+                working directory.
+
+        Returns:
+             Filepath of downloaded code archive.
+        """
+        resp = bindings.get_GetModelDef(self._session, experimentId=self._id)
+        output_filename = f"exp-{self.id}_model_def.tar.gz"
+        if output_dir:
+            # Expand "~" to user home directory path.
+            output_path = pathlib.Path(output_dir).expanduser()
+            output_path.mkdir(parents=True, exist_ok=True)
+            output_path = output_path / output_filename
+        else:
+            output_path = pathlib.Path(output_filename)
+
+        with output_path.open("wb") as f:
+            f.write(base64.b64decode(resp.b64Tgz))
+
+        return str(output_path)
 
     def get_trials(
         self,
