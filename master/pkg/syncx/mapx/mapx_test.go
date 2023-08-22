@@ -3,6 +3,7 @@ package mapx
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/exp/maps"
 )
 
@@ -34,4 +35,33 @@ func FuzzMap(f *testing.F) {
 			m.Clear()
 		}
 	})
+}
+
+func TestMapx(t *testing.T) {
+	tests := []struct {
+		k string
+		v string
+	}{
+		{"1234", "hi"},
+		{"1235", "hello"},
+		{"1236", "world"},
+	}
+	testMap := New[string, string]()
+	for _, tt := range tests {
+		t.Run(tt.k, func(t *testing.T) {
+			testMap.Store(tt.k, tt.v)
+		})
+	}
+	assert.Equal(t, len(tests), testMap.Len())
+	value, _ := testMap.Load("1235")
+	assert.Equal(t, "hello", value)
+	testMap.Delete("1235")
+	expectedValueList := [...]string{"hi", "world"}
+	valueList := testMap.Values()
+	assert.Equal(t, 2, testMap.Len())
+	for i, v := range valueList {
+		assert.Equal(t, expectedValueList[i], v)
+	}
+	testMap.Clear()
+	assert.Equal(t, 0, testMap.Len())
 }
