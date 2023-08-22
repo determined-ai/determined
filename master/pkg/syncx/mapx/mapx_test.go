@@ -1,6 +1,7 @@
 package mapx
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,6 +60,7 @@ func TestMapx(t *testing.T) {
 	expectedValueList := [...]string{"hi", "world"}
 	valueList := testMap.Values()
 	assert.Equal(t, 2, testMap.Len())
+	sort.Strings(valueList)
 	for i, v := range valueList {
 		assert.Equal(t, expectedValueList[i], v)
 	}
