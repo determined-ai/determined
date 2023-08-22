@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -133,6 +134,7 @@ type reattachPodResponse struct {
 
 // Initialize creates a new global pods actor.
 func Initialize(
+	ctx *actor.Context,
 	s *actor.System,
 	e *echo.Echo,
 	c *actor.Ref,
@@ -202,7 +204,11 @@ func Initialize(
 
 	err = p.startNodeInformer()
 	if err != nil {
-		panic(err)
+		if strings.Contains(err.Error(), "nodes is forbidden") {
+			ctx.Log().Warnf("unable to start node informer due to permission error: %s", err)
+		} else {
+			panic(err)
+		}
 	}
 
 	err = p.startEventListeners(s)

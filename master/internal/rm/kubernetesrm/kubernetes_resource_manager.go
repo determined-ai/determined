@@ -273,6 +273,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		}
 
 		k.podsActor = Initialize(
+			ctx,
 			ctx.Self().System(),
 			k.echoRef,
 			ctx.Self(),
