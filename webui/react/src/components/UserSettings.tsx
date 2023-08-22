@@ -1,5 +1,6 @@
 import { Space } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import Drawer from 'components/kit/Drawer';
 import InlineForm from 'components/kit/InlineForm';
@@ -65,6 +66,9 @@ const rowHeightLabels = rowHeightItems.reduce((acc, { rowHeight, label }) => {
 }, {} as Record<RowHeight, string>);
 
 const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryParams = useMemo(() => new URLSearchParams(location.search), [location]);
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const info = useObservable(determinedStore.info);
   const confirm = useConfirm();
@@ -130,6 +134,18 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
   );
 
   const [editingPassword, setEditingPassword] = useState<boolean>(false);
+  const getInitialValue = useCallback(
+    (featureName: string, savedFeature: boolean) => {
+      const featureValue = queryParams.get(`f_${featureName}`);
+
+      if (featureValue) {
+        return featureValue === 'on' ? true : false;
+      }
+
+      return savedFeature;
+    },
+    [queryParams],
+  );
 
   return Loadable.match(
     Loadable.all([
@@ -325,9 +341,10 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
               <div className={css.section}>
                 {Object.entries(FEATURES).map(([feature, description]) => (
                   <InlineForm<boolean>
-                    initialValue={
-                      savedFeatureSettings?.[feature as ValidFeature] ?? description.defaultValue
-                    }
+                    initialValue={getInitialValue(
+                      feature,
+                      savedFeatureSettings?.[feature as ValidFeature] ?? description.defaultValue,
+                    )}
                     key={feature}
                     label={
                       <Space>
@@ -340,6 +357,13 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                       userSettings.set(FeatureSettingsConfig, FEATURE_SETTINGS_PATH, {
                         [feature]: val,
                       });
+
+                      if (location.search) {
+                        queryParams.delete(`f_${feature}`);
+                        const newQuery = queryParams.toString();
+
+                        navigate(`${location.pathname}${newQuery ? `?${newQuery}` : ''}`); // removes the query setting after changing it manually
+                      }
                     }}>
                     <Select searchable={false}>
                       <Option value={true}>On</Option>
