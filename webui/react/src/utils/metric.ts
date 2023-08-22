@@ -55,7 +55,7 @@ export const extractMetricSortValue = (
 };
 
 export const extractMetricValue = (workload: WorkloadGroup, metric: Metric): number | undefined => {
-  const source = workload.metrics[metric.group]?.metrics ?? {};
+  const source = workload.metrics?.[metric.group]?.metrics ?? {};
   return source[metric.name];
 };
 

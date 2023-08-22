@@ -1,10 +1,12 @@
+import inspect
 import io
 import os
+import sys
 import tempfile
 import uuid
 from collections import namedtuple
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List, Optional, Sequence, Tuple, TypeVar, Union
 from unittest import mock
 
 import pytest
@@ -13,6 +15,7 @@ import requests_mock
 
 from determined.cli import cli, command, render
 from determined.common import constants, context
+from determined.common.api import bindings
 from tests.filetree import FileTree
 
 MINIMAL_CONFIG = '{"description": "test"}'
@@ -442,3 +445,116 @@ def test_colored_str_output(case: Case) -> None:
     stream = io.StringIO()
     render.render_colorized_json(case.input, stream, indent="  ")
     assert stream.getvalue() == case.output + "\n"
+
+
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="requires Python3.8 or higher")
+def test_dev_unwrap_optional() -> None:
+    from determined.cli.dev import unwrap_optional
+
+    annots = [
+        Tuple[int, str],
+        int,
+        str,
+        float,
+        bool,
+    ]
+    for annot in annots:
+        assert unwrap_optional(annot) == annot
+        assert unwrap_optional(Optional[annot]) == annot
+        assert unwrap_optional(Union[annot, None]) == annot
+
+    cases = [
+        ("bool", bool),
+        (Optional[bool], bool),
+        ("Optional[bool]", bool),
+        ("Optional[str]", str),
+        ("List[str]", List[str]),
+        ("typing.Union[str, NoneType]", str),
+    ]
+    for annot, expected in cases:
+        assert unwrap_optional(annot) == expected, annot
+
+
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="requires Python3.8 or higher")
+def test_dev_bindings_parameter_inspect() -> None:
+    from determined.cli.dev import can_be_called_via_cli, is_supported_annotation
+
+    ComplexType = TypeVar("ComplexType")
+
+    unsupported = [ComplexType, Tuple[ComplexType, ...], Tuple[int, str]]
+    unsupported.extend([str(t) for t in unsupported])
+
+    supported = [
+        Optional[str],
+        Sequence[str],
+        Optional[Sequence[str]],
+    ]
+    supported.extend([str(t) for t in supported])
+
+    annot_expected: List[Tuple[Any, bool]] = []
+    annot_expected.extend([(a, False) for a in unsupported])
+    annot_expected.extend([(a, True) for a in supported])
+
+    for annot, expected in annot_expected:
+        assert is_supported_annotation(annot) is expected, f"{annot} expected: {expected}"
+
+        param1: inspect.Parameter = inspect.Parameter(
+            "sth_with_default",
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            annotation=annot,
+            default=None,
+        )
+        assert can_be_called_via_cli([param1]) is True, param1
+
+        param1 = inspect.Parameter(
+            "no_default",
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            annotation=annot,
+            default=inspect.Parameter.empty,
+        )
+        assert can_be_called_via_cli([param1]) is expected, param1
+
+
+args_sets = [
+    (
+        ["[1, 2]", "3"],
+        {
+            "ids": [1, 2],
+            "periodSeconds": 3,
+        },
+    ),
+    (
+        ["ids=[1, 2]", "3"],
+        {
+            "ids": [1, 2],
+            "periodSeconds": 3,
+        },
+    ),
+    (
+        ["ids=[1, 2]", "periodSeconds=3"],
+        {
+            "ids": [1, 2],
+            "periodSeconds": 3,
+        },
+    ),
+    (
+        ["periodSeconds=3"],
+        {
+            "periodSeconds": 3,
+        },
+    ),
+]
+
+
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="requires Python3.8 or higher")
+@pytest.mark.parametrize("case", args_sets)
+def test_dev_bindings_call_arg_unmarshal(case: Tuple[List[str], Dict[str, Any]]) -> None:
+    from determined.cli.dev import bindings_sig, parse_args_to_kwargs
+
+    args, expected = case
+    for a in args:
+        assert isinstance(a, str), a
+
+    _, params = bindings_sig(bindings.get_ExpMetricNames)
+    kwargs = parse_args_to_kwargs(args, params)
+    assert kwargs == expected, kwargs

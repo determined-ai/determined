@@ -416,7 +416,12 @@ def test_experiment_list_columns() -> None:
         "metrics_base.min_val",
         "metrics_base.max_val",
     ]
-    exp_metrics = ["validation.validation_error"]
+    exp_metrics = [
+        "validation.validation_error.min",
+        "validation.validation_error.max",
+        "validation.validation_error.last",
+        "validation.validation_error.mean",
+    ]
     columns = bindings.get_GetProjectColumns(api_utils.determined_test_session(), id=1)
 
     column_values = {c.column for c in columns.columns}

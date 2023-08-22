@@ -55,3 +55,23 @@ func (m *Map[K, V]) WithLock(f func(m map[K]V)) {
 
 	f(m.inner)
 }
+
+// Clear the map.
+func (m *Map[K, V]) Clear() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for k := range m.inner {
+		delete(m.inner, k)
+	}
+}
+
+// Values returns the list of values in the map.
+func (m *Map[K, V]) Values() []V {
+	m.mu.RLock()
+	defer m.mu.Unlock()
+	values := make([]V, 0, len(m.inner))
+	for k := range m.inner {
+		values = append(values, m.inner[k])
+	}
+	return values
+}

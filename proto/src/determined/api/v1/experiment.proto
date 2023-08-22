@@ -528,10 +528,36 @@ message CreateExperimentResponse {
   repeated LaunchWarning warnings = 3;
 }
 
+// PutExperimentRequest is CreateExperimentRequest with external_experiment_id
+// field added. Use for unmanaged experiments only.
+message PutExperimentRequest {
+  // CreateExperimentRequest payload.
+  CreateExperimentRequest create_experiment_request = 1;
+
+  // External experiment id.
+  string external_experiment_id = 41;
+}
+
+// Response to PutExperimentRequest.
+message PutExperimentResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment", "config" ] }
+  };
+  // The created experiment.
+  determined.experiment.v1.Experiment experiment = 1;
+  // The created experiment config.
+  google.protobuf.Struct config = 2;
+  // Note: no LaunchWarnings.
+}
+
 // Request for the set of metrics recorded by multiple experiments.
 message ExpMetricNamesRequest {
   // The ids for the experiments.
-  repeated int32 ids = 1;
+  repeated int32 ids = 1
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required:
+          ["ids"];
+      }];
   // Seconds to wait when polling for updates.
   int32 period_seconds = 2;
 }

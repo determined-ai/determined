@@ -10,18 +10,26 @@ type DrawerPlacement = 'left' | 'right';
 
 interface DrawerProps {
   children: React.ReactNode;
+  maskClosable?: boolean;
   open: boolean;
   placement: DrawerPlacement;
   title: string;
   onClose: () => void;
 }
 
-const DrawerComponent: React.FC<DrawerProps> = ({ children, open, placement, title, onClose }) => {
+const DrawerComponent: React.FC<DrawerProps> = ({
+  children,
+  maskClosable = true,
+  open,
+  placement,
+  title,
+  onClose,
+}) => {
   return (
     <Drawer
       bodyStyle={{ padding: 0 }}
       closable={false}
-      maskClosable={false}
+      maskClosable={maskClosable}
       open={open}
       placement={placement}
       rootClassName={css.mobileWidth}

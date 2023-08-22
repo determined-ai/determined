@@ -1,0 +1,17 @@
+name: unmanaged-3-torch-distributed
+entrypoint: >-
+  python3 -m determined.launch.torch_distributed
+  python3 3_torch_distributed.py
+
+resources:
+  slots_per_trial: 2
+
+# Use the single-searcher to run just one instance of the training script
+searcher:
+   name: single
+   # metric is required but it shouldn't hurt to ignore it at this point.
+   metric: x
+   # max_length is ignored if the training script ignores it.
+   max_length: 1
+
+max_restarts: 0

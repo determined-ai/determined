@@ -588,6 +588,7 @@ export interface TrialItem extends StartEndTimes {
   summaryMetrics?: SummaryMetrics;
   totalBatchesProcessed: number;
   totalCheckpointSize: number;
+  searcherMetricsVal?: number;
 }
 
 export interface TrialDetails extends TrialItem {

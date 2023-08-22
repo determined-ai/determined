@@ -20,7 +20,7 @@ func UserByID(userID model.UserID) (*model.FullUser, error) {
 	var fu model.FullUser
 	query := `
 SELECT
-	u.id, u.username, u.display_name, u.admin, u.active, u.remote,
+	u.id, u.username, u.display_name, u.admin, u.active, u.remote, u.modified_at,
 	h.uid AS agent_uid, h.gid AS agent_gid, h.user_ AS agent_user, h.group_ AS agent_group
 FROM users u
 LEFT OUTER JOIN agent_user_groups h ON (u.id = h.user_id)

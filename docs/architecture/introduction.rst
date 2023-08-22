@@ -153,6 +153,8 @@ experiment or to compare multiple experiments.
 TensorBoard instances can be launched via the WebUI or the CLI. To launch TensorBoard instances from
 the CLI, first :ref:`install the CLI <install-cli>` on your development machine.
 
+.. _benefits:
+
 **********
  Benefits
 **********

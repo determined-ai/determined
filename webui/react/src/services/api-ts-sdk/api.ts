@@ -842,6 +842,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     taskIds?: Array<string>;
+    /**
+     * Signed searcher metrics value.
+     * @type {number}
+     * @memberof Trialv1Trial
+     */
+    searcherMetricValue?: number;
 }
 /**
  * Acknowledge the receipt of some stop signal.
@@ -5222,7 +5228,7 @@ export interface V1ListWorkspacesBoundToRPResponse {
     pagination?: V1Pagination;
 }
 /**
- * - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics  - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps
+ * - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics  - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps  - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric
  * @export
  * @enum {string}
  */
@@ -5232,6 +5238,7 @@ export const V1LocationType = {
     HYPERPARAMETERS: 'LOCATION_TYPE_HYPERPARAMETERS',
     VALIDATIONS: 'LOCATION_TYPE_VALIDATIONS',
     TRAINING: 'LOCATION_TYPE_TRAINING',
+    CUSTOMMETRIC: 'LOCATION_TYPE_CUSTOM_METRIC',
 } as const
 export type V1LocationType = ValueOf<typeof V1LocationType>
 /**
@@ -6379,6 +6386,38 @@ export interface V1PatchTemplateConfigResponse {
     template: V1Template;
 }
 /**
+ * Patch a trial.
+ * @export
+ * @interface V1PatchTrialRequest
+ */
+export interface V1PatchTrialRequest {
+    /**
+     * Trial id.
+     * @type {number}
+     * @memberof V1PatchTrialRequest
+     */
+    trialId: number;
+    /**
+     * The state of the trial.
+     * @type {Trialv1State}
+     * @memberof V1PatchTrialRequest
+     */
+    state?: Trialv1State;
+}
+/**
+ * Response to PatchTrialRequest.
+ * @export
+ * @interface V1PatchTrialResponse
+ */
+export interface V1PatchTrialResponse {
+    /**
+     * The requested trial.
+     * @type {Trialv1Trial}
+     * @memberof V1PatchTrialResponse
+     */
+    trial: Trialv1Trial;
+}
+/**
  * Request to edit fields for a user.
  * @export
  * @interface V1PatchUser
@@ -6573,7 +6612,7 @@ export interface V1Permission {
     scopeTypeMask?: V1ScopeTypeMask;
 }
 /**
- * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_ADMINISTRATE_OAUTH: Ability to manage OAuth clients and settings.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry.  - PERMISSION_TYPE_DELETE_MODEL_VERSION: Ability to delete model version.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY: Ability to delete another user's model registry.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION: Ability to delete another user's model version.  - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.  - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO: Ability to view sensitive subset of agent info.  - PERMISSION_TYPE_VIEW_MASTER_CONFIG: Ability to view master configs.  - PERMISSION_TYPE_UPDATE_MASTER_CONFIG: Ability to update master configs.  - PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE: Ability to control strict job queue.  - PERMISSION_TYPE_VIEW_TEMPLATES: Ability to view templates.  - PERMISSION_TYPE_UPDATE_TEMPLATES: Ability to update templates.  - PERMISSION_TYPE_CREATE_TEMPLATES: Ability to create templates.  - PERMISSION_TYPE_DELETE_TEMPLATES: Ability to delete templates.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
+ * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_ADMINISTRATE_OAUTH: Ability to manage OAuth clients and settings.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL: Ability to set workspace default resource pool.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry.  - PERMISSION_TYPE_DELETE_MODEL_VERSION: Ability to delete model version.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY: Ability to delete another user's model registry.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION: Ability to delete another user's model version.  - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.  - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO: Ability to view sensitive subset of agent info.  - PERMISSION_TYPE_VIEW_MASTER_CONFIG: Ability to view master configs.  - PERMISSION_TYPE_UPDATE_MASTER_CONFIG: Ability to update master configs.  - PERMISSION_TYPE_VIEW_EXTERNAL_JOBS: Ability to view external jobs.  - PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE: Ability to control strict job queue.  - PERMISSION_TYPE_VIEW_TEMPLATES: Ability to view templates.  - PERMISSION_TYPE_UPDATE_TEMPLATES: Ability to update templates.  - PERMISSION_TYPE_CREATE_TEMPLATES: Ability to create templates.  - PERMISSION_TYPE_DELETE_TEMPLATES: Ability to delete templates.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.  - PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS: Ability to bind, unbind or overwrite resource pool workspace bindings.
  * @export
  * @enum {string}
  */
@@ -6597,6 +6636,7 @@ export const V1PermissionType = {
     DELETEWORKSPACE: 'PERMISSION_TYPE_DELETE_WORKSPACE',
     SETWORKSPACEAGENTUSERGROUP: 'PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP',
     SETWORKSPACECHECKPOINTSTORAGECONFIG: 'PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG',
+    SETWORKSPACEDEFAULTRESOURCEPOOL: 'PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL',
     CREATEPROJECT: 'PERMISSION_TYPE_CREATE_PROJECT',
     VIEWPROJECT: 'PERMISSION_TYPE_VIEW_PROJECT',
     UPDATEPROJECT: 'PERMISSION_TYPE_UPDATE_PROJECT',
@@ -6615,6 +6655,7 @@ export const V1PermissionType = {
     VIEWSENSITIVEAGENTINFO: 'PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO',
     VIEWMASTERCONFIG: 'PERMISSION_TYPE_VIEW_MASTER_CONFIG',
     UPDATEMASTERCONFIG: 'PERMISSION_TYPE_UPDATE_MASTER_CONFIG',
+    VIEWEXTERNALJOBS: 'PERMISSION_TYPE_VIEW_EXTERNAL_JOBS',
     CONTROLSTRICTJOBQUEUE: 'PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE',
     VIEWTEMPLATES: 'PERMISSION_TYPE_VIEW_TEMPLATES',
     UPDATETEMPLATES: 'PERMISSION_TYPE_UPDATE_TEMPLATES',
@@ -6622,6 +6663,7 @@ export const V1PermissionType = {
     DELETETEMPLATES: 'PERMISSION_TYPE_DELETE_TEMPLATES',
     UPDATEROLES: 'PERMISSION_TYPE_UPDATE_ROLES',
     EDITWEBHOOKS: 'PERMISSION_TYPE_EDIT_WEBHOOKS',
+    MODIFYRPWORKSPACEBINDINGS: 'PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS',
 } as const
 export type V1PermissionType = ValueOf<typeof V1PermissionType>
 /**
@@ -7293,6 +7335,25 @@ export interface V1ProxyPortConfig {
     unauthenticated?: boolean;
 }
 /**
+ * Response to PutExperimentRequest.
+ * @export
+ * @interface V1PutExperimentResponse
+ */
+export interface V1PutExperimentResponse {
+    /**
+     * The created experiment.
+     * @type {V1Experiment}
+     * @memberof V1PutExperimentResponse
+     */
+    experiment: V1Experiment;
+    /**
+     * The created experiment config.
+     * @type {any}
+     * @memberof V1PutExperimentResponse
+     */
+    config: any;
+}
+/**
  * Request for setting project notes.
  * @export
  * @interface V1PutProjectNotesRequest
@@ -7336,6 +7397,38 @@ export interface V1PutTemplateResponse {
      * @memberof V1PutTemplateResponse
      */
     template?: V1Template;
+}
+/**
+ * Put a trial.
+ * @export
+ * @interface V1PutTrialRequest
+ */
+export interface V1PutTrialRequest {
+    /**
+     * CreateTrialRequest payload.
+     * @type {V1CreateTrialRequest}
+     * @memberof V1PutTrialRequest
+     */
+    createTrialRequest?: V1CreateTrialRequest;
+    /**
+     * External trial id.
+     * @type {string}
+     * @memberof V1PutTrialRequest
+     */
+    externalTrialId?: string;
+}
+/**
+ * Response to PutTrialRequest.
+ * @export
+ * @interface V1PutTrialResponse
+ */
+export interface V1PutTrialResponse {
+    /**
+     * The requested trial.
+     * @type {Trialv1Trial}
+     * @memberof V1PutTrialResponse
+     */
+    trial: Trialv1Trial;
 }
 /**
  * Describes a message to control jobs in a queue.
@@ -9020,6 +9113,50 @@ export interface V1SSOProvider {
      * @memberof V1SSOProvider
      */
     ssoUrl: string;
+}
+/**
+ * Start a trial.
+ * @export
+ * @interface V1StartTrialRequest
+ */
+export interface V1StartTrialRequest {
+    /**
+     * Trial id.
+     * @type {number}
+     * @memberof V1StartTrialRequest
+     */
+    trialId: number;
+    /**
+     * Whether resume is allowed.
+     * @type {boolean}
+     * @memberof V1StartTrialRequest
+     */
+    resume?: boolean;
+}
+/**
+ * Response to StartTrialRequest.
+ * @export
+ * @interface V1StartTrialResponse
+ */
+export interface V1StartTrialResponse {
+    /**
+     * Trial run id.
+     * @type {number}
+     * @memberof V1StartTrialResponse
+     */
+    trialRunId: number;
+    /**
+     * Latest checkpoint.
+     * @type {string}
+     * @memberof V1StartTrialResponse
+     */
+    latestCheckpoint?: string;
+    /**
+     * Steps completed.
+     * @type {number}
+     * @memberof V1StartTrialResponse
+     */
+    stepsCompleted: number;
 }
 /**
  * Task is the model for a task in the database.
@@ -16739,12 +16876,16 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary Get the set of metric names recorded for a list of experiments.
-         * @param {Array<number>} [ids] The ids for the experiments.
+         * @param {Array<number>} ids The ids for the experiments.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        expMetricNames(ids?: Array<number>, periodSeconds?: number, options: any = {}): FetchArgs {
+        expMetricNames(ids: Array<number>, periodSeconds?: number, options: any = {}): FetchArgs {
+            // verify required parameter 'ids' is not null or undefined
+            if (ids === null || ids === undefined) {
+                throw new RequiredError('ids','Required parameter ids was null or undefined when calling expMetricNames.');
+            }
             const localVarPath = `/api/v1/experiments/metrics-stream/metric-names`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -17749,6 +17890,50 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Patch (an unmanaged) trial.
+         * @param {number} trialId Trial id.
+         * @param {V1PatchTrialRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrial(trialId: number, body: V1PatchTrialRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'trialId' is not null or undefined
+            if (trialId === null || trialId === undefined) {
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling patchTrial.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTrial.');
+            }
+            const localVarPath = `/api/v1/trials/{trialId}`
+                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationProxyAddressRequest} body
@@ -17850,6 +18035,88 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Put an experiment by external id.
+         * @param {string} externalExperimentId External experiment id.
+         * @param {V1CreateExperimentRequest} body CreateExperimentRequest payload.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperiment(externalExperimentId: string, body: V1CreateExperimentRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'externalExperimentId' is not null or undefined
+            if (externalExperimentId === null || externalExperimentId === undefined) {
+                throw new RequiredError('externalExperimentId','Required parameter externalExperimentId was null or undefined when calling putExperiment.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling putExperiment.');
+            }
+            const localVarPath = `/api/v1/experiments/by-external-id/{externalExperimentId}`
+                .replace(`{${"externalExperimentId"}}`, encodeURIComponent(String(externalExperimentId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PUT', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Put a trial.
+         * @param {V1PutTrialRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putTrial(body: V1PutTrialRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling putTrial.');
+            }
+            const localVarPath = `/api/v1/trials`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PUT', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
@@ -18218,6 +18485,50 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Start (an unmanaged) trial.
+         * @param {number} trialId Trial id.
+         * @param {V1StartTrialRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        startTrial(trialId: number, body: V1StartTrialRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'trialId' is not null or undefined
+            if (trialId === null || trialId === undefined) {
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling startTrial.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling startTrial.');
+            }
+            const localVarPath = `/api/v1/trials/{trialId}/start`
+                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -18772,12 +19083,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get the set of metric names recorded for a list of experiments.
-         * @param {Array<number>} [ids] The ids for the experiments.
+         * @param {Array<number>} ids The ids for the experiments.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        expMetricNames(ids?: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpMetricNamesResponse> {
+        expMetricNames(ids: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpMetricNamesResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expMetricNames(ids, periodSeconds, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -19243,6 +19554,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Patch (an unmanaged) trial.
+         * @param {number} trialId Trial id.
+         * @param {V1PatchTrialRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrial(trialId: number, body: V1PatchTrialRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).patchTrial(trialId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationProxyAddressRequest} body
@@ -19290,6 +19621,45 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         postTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTrialRunnerMetadataResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postTrialRunnerMetadata(trialId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Put an experiment by external id.
+         * @param {string} externalExperimentId External experiment id.
+         * @param {V1CreateExperimentRequest} body CreateExperimentRequest payload.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperiment(externalExperimentId: string, body: V1CreateExperimentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutExperimentResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).putExperiment(externalExperimentId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Put a trial.
+         * @param {V1PutTrialRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putTrial(body: V1PutTrialRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutTrialResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).putTrial(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19451,6 +19821,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, sort, filter, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Start (an unmanaged) trial.
+         * @param {number} trialId Trial id.
+         * @param {V1StartTrialRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        startTrial(trialId: number, body: V1StartTrialRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1StartTrialResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).startTrial(trialId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19723,12 +20113,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary Get the set of metric names recorded for a list of experiments.
-         * @param {Array<number>} [ids] The ids for the experiments.
+         * @param {Array<number>} ids The ids for the experiments.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        expMetricNames(ids?: Array<number>, periodSeconds?: number, options?: any) {
+        expMetricNames(ids: Array<number>, periodSeconds?: number, options?: any) {
             return InternalApiFp(configuration).expMetricNames(ids, periodSeconds, options)(fetch, basePath);
         },
         /**
@@ -19987,6 +20377,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Patch (an unmanaged) trial.
+         * @param {number} trialId Trial id.
+         * @param {V1PatchTrialRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrial(trialId: number, body: V1PatchTrialRequest, options?: any) {
+            return InternalApiFp(configuration).patchTrial(trialId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationProxyAddressRequest} body
@@ -20016,6 +20417,27 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         postTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options?: any) {
             return InternalApiFp(configuration).postTrialRunnerMetadata(trialId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Put an experiment by external id.
+         * @param {string} externalExperimentId External experiment id.
+         * @param {V1CreateExperimentRequest} body CreateExperimentRequest payload.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperiment(externalExperimentId: string, body: V1CreateExperimentRequest, options?: any) {
+            return InternalApiFp(configuration).putExperiment(externalExperimentId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Put a trial.
+         * @param {V1PutTrialRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putTrial(body: V1PutTrialRequest, options?: any) {
+            return InternalApiFp(configuration).putTrial(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -20105,6 +20527,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
             return InternalApiFp(configuration).searchExperiments(projectId, offset, limit, sort, filter, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Start (an unmanaged) trial.
+         * @param {number} trialId Trial id.
+         * @param {V1StartTrialRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        startTrial(trialId: number, body: V1StartTrialRequest, options?: any) {
+            return InternalApiFp(configuration).startTrial(trialId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -20350,13 +20783,13 @@ export class InternalApi extends BaseAPI {
     /**
      * 
      * @summary Get the set of metric names recorded for a list of experiments.
-     * @param {Array<number>} [ids] The ids for the experiments.
+     * @param {Array<number>} ids The ids for the experiments.
      * @param {number} [periodSeconds] Seconds to wait when polling for updates.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public expMetricNames(ids?: Array<number>, periodSeconds?: number, options?: any) {
+    public expMetricNames(ids: Array<number>, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).expMetricNames(ids, periodSeconds, options)(this.fetch, this.basePath)
     }
     
@@ -20660,6 +21093,19 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Patch (an unmanaged) trial.
+     * @param {number} trialId Trial id.
+     * @param {V1PatchTrialRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public patchTrial(trialId: number, body: V1PatchTrialRequest, options?: any) {
+        return InternalApiFp(this.configuration).patchTrial(trialId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
      * @param {string} allocationId The id of the allocation.
      * @param {V1PostAllocationProxyAddressRequest} body
@@ -20694,6 +21140,31 @@ export class InternalApi extends BaseAPI {
      */
     public postTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options?: any) {
         return InternalApiFp(this.configuration).postTrialRunnerMetadata(trialId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Put an experiment by external id.
+     * @param {string} externalExperimentId External experiment id.
+     * @param {V1CreateExperimentRequest} body CreateExperimentRequest payload.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public putExperiment(externalExperimentId: string, body: V1CreateExperimentRequest, options?: any) {
+        return InternalApiFp(this.configuration).putExperiment(externalExperimentId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Put a trial.
+     * @param {V1PutTrialRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public putTrial(body: V1PutTrialRequest, options?: any) {
+        return InternalApiFp(this.configuration).putTrial(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20799,6 +21270,19 @@ export class InternalApi extends BaseAPI {
      */
     public searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
         return InternalApiFp(this.configuration).searchExperiments(projectId, offset, limit, sort, filter, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Start (an unmanaged) trial.
+     * @param {number} trialId Trial id.
+     * @param {V1StartTrialRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public startTrial(trialId: number, body: V1StartTrialRequest, options?: any) {
+        return InternalApiFp(this.configuration).startTrial(trialId, body, options)(this.fetch, this.basePath)
     }
     
     /**

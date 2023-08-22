@@ -56,6 +56,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
+	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -819,10 +820,30 @@ func updateClusterHeartbeat(ctx context.Context, db *db.PgDB) {
 	}
 }
 
+func (m *Master) checkIfRMDefaultsAreUnbound(rmConfig *config.ResourceManagerConfig) error {
+	if rmConfig.AgentRM != nil {
+		err := db.CheckIfRPUnbound(rmConfig.AgentRM.DefaultComputeResourcePool)
+		if err != nil {
+			return err
+		}
+		err = db.CheckIfRPUnbound(rmConfig.AgentRM.DefaultAuxResourcePool)
+		return err
+	}
+	if rmConfig.KubernetesRM != nil {
+		err := db.CheckIfRPUnbound(rmConfig.KubernetesRM.DefaultComputeResourcePool)
+		if err != nil {
+			return err
+		}
+		err = db.CheckIfRPUnbound(rmConfig.KubernetesRM.DefaultAuxResourcePool)
+		return err
+	}
+	return fmt.Errorf("no Resource Manager found")
+}
+
 func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 	var logs []*model.TaskLog
 	if err := json.NewDecoder(c.Request().Body).Decode(&logs); err != nil {
-		return "", err
+		return "", fmt.Errorf("decoding task logs: %w", err)
 	}
 	if err := m.taskLogBackend.AddTaskLogs(logs); err != nil {
 		return "", errors.Wrap(err, "receiving task logs")
@@ -849,6 +870,11 @@ func (m *Master) Run(ctx context.Context) error {
 	m.ClusterID, err = m.db.GetOrCreateClusterID()
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")
+	}
+
+	err = m.checkIfRMDefaultsAreUnbound(m.config.ResourceManager)
+	if err != nil {
+		return fmt.Errorf("could not validate cluster default resource pools: %s", err.Error())
 	}
 
 	// Must happen before recovery. If tasks can't recover their allocations, they need an end time.
@@ -1044,6 +1070,7 @@ func (m *Master) Run(ctx context.Context) error {
 	// This ensures that in the scenario where a cluster fails all open allocations are
 	// set to the last cluster heartbeat when the cluster was running.
 	go updateClusterHeartbeat(ctx, m.db)
+	go trials.MarkLostTrialsWorker(ctx)
 
 	// Docs and WebUI.
 	webuiRoot := filepath.Join(m.config.Root, "webui")
