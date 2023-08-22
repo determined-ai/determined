@@ -14,7 +14,7 @@ func FuzzMap(f *testing.F) {
 
 	f.Add(uint8(0), uint8(0), "hello")
 	f.Fuzz(func(t *testing.T, op, k uint8, v string) {
-		switch op % 5 {
+		switch op % 7 {
 		case 0:
 			m.Len()
 		case 1:
@@ -28,6 +28,10 @@ func FuzzMap(f *testing.F) {
 			m.WithLock(func(m map[uint8]string) {
 				_ = maps.Keys(m)
 			})
+		case 5:
+			_ = m.Values()
+		case 6:
+			m.Clear()
 		}
 	})
 }
