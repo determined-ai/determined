@@ -68,7 +68,7 @@ func (m *Map[K, V]) Clear() {
 // Values returns the list of values in the map.
 func (m *Map[K, V]) Values() []V {
 	m.mu.RLock()
-	defer m.mu.Unlock()
+	defer m.mu.RUnlock()
 	values := make([]V, 0, len(m.inner))
 	for k := range m.inner {
 		values = append(values, m.inner[k])
