@@ -39,7 +39,7 @@ import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions, Note } from 'types';
-import handleError, { ErrorType } from 'utils/error';
+import handleError, { ErrorType, isOffsetError } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { isAborted, isNotFound, validateDetApiEnum } from 'utils/service';
@@ -95,11 +95,15 @@ const ModelDetails: React.FC = () => {
       setTotal(modelData?.pagination.total || 0);
       setModel((prev) => (!_.isEqual(modelData, prev) ? modelData : prev));
     } catch (e) {
+      if (isOffsetError(e) && settings.tableOffset > 0) {
+        updateSettings({ tableOffset: 0 });
+        return;
+      }
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     } finally {
       setIsLoading(false);
     }
-  }, [modelId, pageError, settings]);
+  }, [modelId, pageError, settings, updateSettings]);
 
   const modelDownloadModal = useModal(ModelDownloadModal);
   const modelVersionDeleteModal = useModal(ModelVersionDeleteModal);

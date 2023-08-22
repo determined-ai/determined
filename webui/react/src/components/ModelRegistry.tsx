@@ -47,7 +47,7 @@ import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { ModelItem, Workspace } from 'types';
-import handleError, { ErrorType } from 'utils/error';
+import handleError, { ErrorType, isOffsetError } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
@@ -127,11 +127,18 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         { signal: canceler.current.signal },
       );
       setTotal(response.pagination.total || 0);
+      if (response.models.length === 0 && settings.tableOffset > 0) {
+        updateSettings({ tableOffset: 0 });
+      }
       setModels((prev) => {
         if (_.isEqual(prev, response.models)) return prev;
         return response.models;
       });
     } catch (e) {
+      if (isOffsetError(e) && settings.tableOffset > 0) {
+        updateSettings({ tableOffset: 0 });
+        return;
+      }
       handleError(e, {
         publicSubject: 'Unable to fetch models.',
         silent: true,
@@ -140,7 +147,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     } finally {
       setIsLoading(false);
     }
-  }, [settings, workspace?.id]);
+  }, [settings, workspace?.id, updateSettings]);
 
   const fetchTags = useCallback(async () => {
     try {

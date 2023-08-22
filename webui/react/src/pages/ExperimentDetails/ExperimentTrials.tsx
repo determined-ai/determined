@@ -290,6 +290,9 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       setTotal(responsePagination?.total || 0);
       setTrials(experimentTrials);
       setIsLoading(false);
+      if (experimentTrials.length === 0 && settings.tableOffset > 0) {
+        updateSettings({ tableOffset: 0 });
+      }
     } catch (e) {
       handleError(e, {
         publicSubject: `Unable to fetch experiments ${experiment.id} trials.`,
@@ -298,7 +301,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       });
       setIsLoading(false);
     }
-  }, [experiment.id, canceler, settings, stateString]);
+  }, [experiment.id, canceler, settings, updateSettings, stateString]);
 
   const sendBatchActions = useCallback(
     async (action: Action) => {

@@ -20,7 +20,7 @@ import {
   TrialWorkloadFilter,
   WorkloadGroup,
 } from 'types';
-import handleError, { ErrorType } from 'utils/error';
+import handleError, { ErrorType, isOffsetError } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import {
   extractMetricSortValue,
@@ -143,6 +143,10 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         setWorkloadCount(0);
       }
     } catch (e) {
+      if (isOffsetError(e) && settings.tableOffset > 0) {
+        updateSettings({ tableOffset: 0 });
+        return;
+      }
       handleError(e, {
         publicMessage: 'Failed to load recent trial workloads.',
         publicSubject: 'Unable to fetch Trial Workloads.',
@@ -157,6 +161,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     settings.tableLimit,
     settings.tableOffset,
     settings.filter,
+    updateSettings,
   ]);
 
   const { stopPolling } = usePolling(fetchWorkloads, { rerunOnNewFn: true });

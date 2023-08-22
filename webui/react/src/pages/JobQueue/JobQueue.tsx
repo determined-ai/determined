@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import ActionDropdown, { Triggers } from 'components/ActionDropdown/ActionDropdown';
 import Icon from 'components/kit/Icon';
-import { DetError } from 'components/kit/internal/types';
 import Section from 'components/Section';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
@@ -24,7 +23,7 @@ import * as Api from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
 import { FullJob, Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError, { ErrorLevel, ErrorType, isOffsetError } from 'utils/error';
 import {
   canManageJob,
   jobTypeToCommandType,
@@ -113,7 +112,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
       // Process job stats response.
       setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));
     } catch (e) {
-      if ((e as DetError)?.publicMessage === 'offset out of bounds' && settings.tableOffset !== 0) {
+      if (isOffsetError(e) && settings.tableOffset > 0) {
         updateSettings({ tableOffset: 0 });
         return;
       }

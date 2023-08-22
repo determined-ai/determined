@@ -35,6 +35,7 @@ import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import { Workspace } from 'types';
+import { isOffsetError } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
@@ -88,11 +89,15 @@ const WorkspaceList: React.FC = () => {
         return withoutDefault;
       });
     } catch (e) {
+      if (isOffsetError(e) && settings.tableOffset > 0) {
+        updateSettings({ tableOffset: 0 });
+        return;
+      }
       if (!pageError) setPageError(e as Error);
     } finally {
       setIsLoading(false);
     }
-  }, [canceler.signal, pageError, settings]);
+  }, [canceler.signal, pageError, settings, updateSettings]);
 
   usePolling(fetchWorkspaces);
 

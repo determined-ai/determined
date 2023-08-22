@@ -33,7 +33,7 @@ import {
   RecordKey,
 } from 'types';
 import { canActionCheckpoint, getActionsForCheckpointsUnion } from 'utils/checkpoint';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError, { ErrorLevel, ErrorType, isOffsetError } from 'utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
 
 import { configForExperiment, Settings } from './ExperimentCheckpoints.settings';
@@ -238,6 +238,10 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       setTotal(response.pagination.total ?? 0);
       setCheckpoints(response.checkpoints);
     } catch (e) {
+      if (isOffsetError(e) && settings.tableOffset > 0) {
+        updateSettings({ tableOffset: 0 });
+        return;
+      }
       handleError(e, {
         publicSubject: `Unable to fetch experiment ${experiment.id} checkpoints.`,
         silent: true,
@@ -246,7 +250,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     } finally {
       setIsLoading(false);
     }
-  }, [experiment.id, canceler, settings, stateString]);
+  }, [experiment.id, canceler, settings, stateString, updateSettings]);
 
   const submitBatchAction = useCallback(
     async (action: CheckpointAction) => {

@@ -71,6 +71,10 @@ export const isDetError = (error: unknown): error is DetError => {
   return error instanceof DetError;
 };
 
+export const isOffsetError = (error: unknown): boolean => {
+  return isDetError(error) && error.publicMessage === 'offset out of bounds';
+};
+
 /**
  * used to preserve the public message potentially provided by lower levels where the error
  * was generated or rethrowed.

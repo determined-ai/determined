@@ -91,12 +91,16 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         if (_.isEqual(prev, response.projects)) return prev;
         return response.projects;
       });
+      if (response.projects.length === 0 && settings.tableOffset > 0) {
+        updateSettings({ tableOffset: 0 });
+        return;
+      }
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch projects.' });
     } finally {
       setIsLoading(false);
     }
-  }, [canceler.signal, id, workspace, settings]);
+  }, [canceler.signal, id, workspace, settings, updateSettings]);
 
   useEffect(() => {
     setIsLoading(true);

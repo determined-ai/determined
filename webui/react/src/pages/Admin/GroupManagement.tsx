@@ -22,7 +22,7 @@ import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
-import handleError, { ErrorType } from 'utils/error';
+import handleError, { ErrorType, isOffsetError } from 'utils/error';
 import { useObservable } from 'utils/observable';
 
 import css from './GroupManagement.module.scss';
@@ -117,11 +117,15 @@ const GroupManagement: React.FC = () => {
         return response.groups || [];
       });
     } catch (e) {
+      if (isOffsetError(e) && settings.tableOffset > 0) {
+        updateSettings({ tableOffset: 0 });
+        return;
+      }
       handleError(e, { publicSubject: 'Unable to fetch groups.' });
     } finally {
       setIsLoading(false);
     }
-  }, [settings]);
+  }, [settings, updateSettings]);
 
   const fetchGroup = useCallback(
     async (groupId: number): Promise<void> => {
