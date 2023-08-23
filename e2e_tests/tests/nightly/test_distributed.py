@@ -198,7 +198,7 @@ def test_byol_pytorch_distributed() -> None:
     exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("byol_pytorch"), 1)
 
 
-@pytest.mark.distributed
+@pytest.mark.distributed_quarantine
 @pytest.mark.gpu_required
 def test_hf_trainer_api_integration() -> None:
     test_dir = "hf_image_classification"
@@ -350,7 +350,7 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
             raise k
 
 
-@pytest.mark.distributed
+@pytest.mark.distributed_quarantine
 @pytest.mark.gpu_required
 @pytest.mark.deepspeed
 def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
@@ -368,7 +368,7 @@ def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
         )
 
 
-@pytest.mark.distributed
+@pytest.mark.distributed_quarantine
 @pytest.mark.gpu_required
 @pytest.mark.deepspeed
 def test_hf_trainer_language_modeling_deepspeed_autotuning() -> None:
