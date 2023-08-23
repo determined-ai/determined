@@ -204,7 +204,7 @@ func Initialize(
 	err = p.startNodeInformer()
 	switch {
 	case err != nil && k8error.IsForbidden(err):
-		p.syslog.Warnf("unable to start node informer due to permission error: %s", err)
+		p.syslog.Warnf("unable to start node informer due to permission error, some features will be degraded: %s", err)
 	case err != nil:
 		panic(err)
 	}
