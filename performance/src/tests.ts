@@ -1,5 +1,4 @@
-import { JSONArray, JSONObject, JSONValue, check } from 'k6';
-import { SharedArray } from 'k6/data';
+import { JSONArray, JSONObject, check } from 'k6';
 import { Options, Scenario } from 'k6/options';
 import http from "k6/http";
 import { vu } from 'k6/execution';
