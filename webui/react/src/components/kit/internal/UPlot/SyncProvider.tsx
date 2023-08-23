@@ -3,6 +3,7 @@ import React, { createContext, useContext, useMemo } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import { generateUUID } from 'components/kit/internal/functions';
+import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 
 type Bounds = {
   dataBounds: {
@@ -20,6 +21,7 @@ type Bounds = {
 };
 
 class SyncService {
+  axis: XAxisDomain | undefined;
   bounds = observable<Bounds>({ dataBounds: null, unzoomedBounds: null, zoomBounds: null });
 
   pubSub: uPlot.SyncPubSub;
@@ -52,7 +54,7 @@ class SyncService {
     this.bounds.update((b) => ({ ...b, zoomBounds: { max, min } }));
   }
 
-  updateDataBounds(data: AlignedData) {
+  updateDataBounds(data: AlignedData, axis?: XAxisDomain) {
     const xValues = data[0];
     const lastIdx = xValues.length - 1;
     const chartMin = xValues[0];
@@ -61,13 +63,16 @@ class SyncService {
     if (chartMin === undefined || chartMax === undefined) return;
 
     this.bounds.update((b) => {
+      const resetAxis = axis !== this.axis;
+      this.axis = axis;
+
       const previousMin =
-        b.dataBounds?.min !== undefined && isFinite(b.dataBounds?.min)
+        b.dataBounds?.min !== undefined && isFinite(b.dataBounds?.min) && !resetAxis
           ? b.dataBounds?.min
           : chartMin;
 
       const previousMax =
-        b.dataBounds?.max !== undefined && isFinite(b.dataBounds?.max)
+        b.dataBounds?.max !== undefined && isFinite(b.dataBounds?.max) && !resetAxis
           ? b.dataBounds?.max
           : chartMax;
 
