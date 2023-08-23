@@ -210,7 +210,7 @@ def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
         ts = ts[:-1] + "+00:00"
     # Remove the [milli,micro,nano]seconds portion from the timestamp because
     # fromisoformat cannot process nanoseconds and we do not other values either.
-    re.sub("\\..*?\\+", "", ts)
+    re.sub("\\.[0-9]*\\+", "+", ts)
     return datetime.datetime.fromisoformat(ts)
 
 
