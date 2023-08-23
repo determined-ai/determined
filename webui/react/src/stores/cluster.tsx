@@ -11,21 +11,21 @@ import {
 } from 'services/api';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { Agent, ClusterOverview, ClusterOverviewResource, ResourcePool, ResourceType } from 'types';
-import { clone } from 'utils/data';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { percent } from 'utils/number';
 import { Observable, observable, WritableObservable } from 'utils/observable';
 
+import 'core-js/actual/structured-clone'; // TODO: investigate why structuredClone is breaking if we remove this import.
 import PollingStore from './polling';
 
 const initResourceTally: ClusterOverviewResource = { allocation: 0, available: 0, total: 0 };
 const initClusterOverview: ClusterOverview = {
-  [ResourceType.CPU]: clone(initResourceTally),
-  [ResourceType.CUDA]: clone(initResourceTally),
-  [ResourceType.ROCM]: clone(initResourceTally),
-  [ResourceType.ALL]: clone(initResourceTally),
-  [ResourceType.UNSPECIFIED]: clone(initResourceTally),
+  [ResourceType.CPU]: structuredClone(initResourceTally),
+  [ResourceType.CUDA]: structuredClone(initResourceTally),
+  [ResourceType.ROCM]: structuredClone(initResourceTally),
+  [ResourceType.ALL]: structuredClone(initResourceTally),
+  [ResourceType.UNSPECIFIED]: structuredClone(initResourceTally),
 };
 
 /**
@@ -115,7 +115,7 @@ class ClusterStore extends PollingStore {
 
   public readonly clusterOverview = this.#agents.select((agents) =>
     Loadable.map(agents, (agents) => {
-      const overview: ClusterOverview = clone(initClusterOverview);
+      const overview: ClusterOverview = structuredClone(initClusterOverview);
 
       agents.forEach((agent) => {
         agent.resources

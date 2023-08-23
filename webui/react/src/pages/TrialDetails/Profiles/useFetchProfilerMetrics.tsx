@@ -7,7 +7,6 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useUI from 'stores/contexts/UI';
 import { RunState } from 'types';
-import { clone } from 'utils/data';
 
 import { MetricsAggregateInterface, MetricType, ProfilerMetricsResponse } from './types';
 
@@ -30,12 +29,12 @@ export const useFetchProfilerMetrics = (
   labelsGpuUuid: string | undefined = undefined,
 ): MetricsAggregateInterface => {
   const { ui } = useUI();
-  const [data, setData] = useState<MetricsAggregateInterface>(clone(DEFAULT_DATA));
+  const [data, setData] = useState<MetricsAggregateInterface>(structuredClone(DEFAULT_DATA));
 
   useEffect(() => {
     if (ui.isPageHidden) return;
 
-    setData(clone(DEFAULT_DATA));
+    setData(structuredClone(DEFAULT_DATA));
 
     const canceler = new AbortController();
     const follow = !terminalRunStates.has(trialState);

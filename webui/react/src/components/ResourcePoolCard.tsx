@@ -16,14 +16,13 @@ import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/sta
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
+import { V1ResourcePoolType, V1RPQueueStat } from 'services/api-ts-sdk';
 import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
 import useUI from 'stores/contexts/UI';
 import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
 import { isDeviceType, JsonObject, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
-import { clone } from 'utils/data';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { DarkLight } from 'utils/themes';
@@ -117,19 +116,19 @@ const ResourcePoolCard: React.FC<Props> = ({
   }, [pool]);
 
   const processedPool = useMemo(() => {
-    const newPool = clone(pool);
-    Object.keys(newPool).forEach((key) => {
-      const value = pool[key as keyof ResourcePool];
-      if (key === 'slotsPerAgent' && value === -1) newPool[key] = 'Unknown';
-      if (key === 'schedulerType') newPool[key] = V1SchedulerTypeToLabel[value as V1SchedulerType];
-    });
-    return newPool;
+    const { slotsPerAgent, schedulerType, details } = pool;
+    return {
+      ...pool,
+      details: JSON.parse(JSON.stringify(details)),
+      schedulerType: V1SchedulerTypeToLabel[schedulerType],
+      slotsPerAgent: slotsPerAgent === -1 ? 'Unknown' : slotsPerAgent,
+    };
   }, [pool]);
 
   const shortDetails = useMemo(() => {
     return poolAttributes.reduce((acc, attribute) => {
       const value = attribute.render
-        ? attribute.render(processedPool)
+        ? attribute.render(processedPool as ResourcePool)
         : processedPool[attribute.key as keyof ResourcePool];
       acc[attribute.label] = value;
       if (!isAux && attribute.key === 'auxContainerCapacityPerAgent') delete acc[attribute.label];

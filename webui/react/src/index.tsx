@@ -12,6 +12,7 @@ import * as serviceWorker from './serviceWorker';
 
 import 'utils/prototypes';
 import 'dev';
+import 'core-js/actual/structured-clone';
 
 // redirect to basename if needed
 if (process.env.PUBLIC_URL && window.location.pathname === '/') {

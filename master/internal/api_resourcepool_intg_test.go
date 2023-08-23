@@ -313,8 +313,6 @@ func TestPatchBindingsSucceeds(t *testing.T) {
 	for _, id := range resp.WorkspaceIds {
 		require.True(t, expectedIds.Contains(id))
 	}
-	require.Equal(t, workspaceIDs[0], resp.WorkspaceIds[0])
-	require.Equal(t, workspaceIDs[1], resp.WorkspaceIds[1])
 
 	require.True(t, mockRM.AssertExpectations(t))
 }

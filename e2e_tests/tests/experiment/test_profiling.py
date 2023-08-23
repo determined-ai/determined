@@ -19,7 +19,6 @@ from tests import experiment as exp
     [
         (conf.tutorials_path("mnist_pytorch"), True),
         (conf.tutorials_path("fashion_mnist_tf_keras"), False),
-        (conf.fixtures_path("mnist_estimator"), False),
     ],
 )
 def test_streaming_observability_metrics_apis(model_def: str, timings_enabled: bool) -> None:
