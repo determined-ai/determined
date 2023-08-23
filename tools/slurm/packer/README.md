@@ -33,11 +33,11 @@ When building a new image for `make slurmcluster WORKLOAD_MANAGER=[type]` the bu
 4. `git add  tools/slurm/terraform/images.conf`
 5. `git commit`
 6. Post PR to update the default images.
-7. Manually prune the images [det-environments-slurm-ci](https://console.cloud.google.com/compute/images?tab=images&authuser=0&project=determined-ai&pageState=(%22images%22:(%22p%22:0,%22r%22:200,%22f%22:%22%255B%257B_22k_22_3A_22Family_22_2C_22t_22_3A10_2C_22v_22_3A_22_5C_22det-environments-slurm-ci_5C_22_22_2C_22i_22_3A_22family_22%257D%255D%22,%22s%22:%5B(%22i%22:%22creationTimestamp%22,%22s%22:%221%22),(%22i%22:%22type%22,%22s%22:%220%22),(%22i%22:%22name%22,%22s%22:%220%22)%5D))) retaining the most recent 6 images or so.
+7. Manually prune the images [det-environments-slurm-ci](https://console.cloud.google.com/compute/images?tab=images&authuser=0&project=determined-ai&pageState=(%22images%22:(%22p%22:0,%22r%22:200,%22f%22:%22%255B%257B_22k_22_3A_22Family_22_2C_22t_22_3A10_2C_22v_22_3A_22_5C_22det-environments-slurm-ci_5C_22_22_2C_22i_22_3A_22family_22%257D%255D%22,%22s%22:%5B(%22i%22:%22creationTimestamp%22,%22s%22:%221%22),(%22i%22:%22type%22,%22s%22:%220%22),(%22i%22:%22name%22,%22s%22:%220%22)%5D))) retaining the most recent 6 images or so, not including those in use by release branches.   By convention we add a `branch` label during the HPC Launcher release process identifying a release branch that is referencing an image.   This enables any GCP tests executed on the branch to continue to work.
 
 To build with a specific launcher version, put the `hpe-hpc-launcher-*.deb` in the `tools/slurm/packer/build` directory and run `make -C tools/slurm/packer build` (without the `clean` option).
 
-Make sure you are on the vpn or have credentials to access arti.hpc.amslabs.hpecorp.net to download the latest launcher version.
+Make sure you are on the HPE VPN or have credentials to access arti.hpc.amslabs.hpecorp.net to download the latest launcher version.
 
 `make slurmcluster` is pinned to a specific image, not the image family, so just building will
 not cause (potentially destructive) updates to anyone using it. If you do publish the change

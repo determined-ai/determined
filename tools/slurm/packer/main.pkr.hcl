@@ -60,7 +60,7 @@ source "googlecompute" "determined-hpc-image" {
 
   image_family      = "det-environments-slurm-ci"
   image_name        = "det-environments-${var.workload_manager}-ci-{{timestamp}}"
-  image_description = "det environment with ${var.launcher_deb_name} for circleci and user HPC testing"
+  image_description = "HPC ${var.workload_manager} testing VM ${var.launcher_deb_name}"
 
   machine_type = "n1-standard-1"
   disk_size    = "100"
