@@ -254,6 +254,13 @@ commands:
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
       - run: echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
 
+  install-k6:
+    steps:
+      - run: sudo gpg -k
+      - run: sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+      - run: echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+      - run: sudo apt-get update
+      - run: sudo apt-get install k6
 
   install-protoc:
     steps:
@@ -590,6 +597,27 @@ commands:
       - upload-test-job:
           only_on_branch: main
           test_results_path: <<parameters.junit-path>>
+
+  run-perf-tests:
+    parameters:
+      # TODO(!!!): junit is possibly useful, and there is an library oss library for it.
+      master-scheme:
+        type: string
+        default: "http"
+      master-host:
+        type: string
+        default: "localhost"
+      master-port:
+        type: string
+        default: "8080"
+    steps:
+      - wait_for_master
+      - run:
+          name: Run pref tests
+          working_directory: ~/project/performance
+          no_output_timeout: 30m
+          command: |
+            k6 run tests.js
 
   run-det-deploy-tests:
     parameters:
@@ -2308,6 +2336,83 @@ jobs:
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
 
+  test-api-perf-aws:
+    parameters:
+      # TODO(!!!): prune useless configs.
+      cluster-id-prefix:
+        type: string
+      compute-agent-instance-type:
+        type: string
+        default: g4dn.xlarge
+      aux-agent-instance-type:
+        type: string
+        default: m5.large
+      max-dynamic-agents:
+        type: integer
+        default: 1
+      parallelism:
+        type: integer
+        default: 1
+      enable-tls:
+        type: boolean
+        default: false
+      slack-mentions:
+        type: string
+        default: ""
+      slack-channel:
+        type: string
+        default: ""
+      environment-gpu-enabled:
+        type: string
+        default: "1"
+    environment:
+      DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    parallelism: <<parameters.parallelism>>
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-github-only
+      - skip-if-webui-only
+      - set-slack-user-id
+      - install-k6
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - when:
+          condition: <<parameters.enable-tls>>
+          steps:
+            - generate-tls-cert
+      - setup-aws-cluster:
+          cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
+          extra-tags: test-mark=<<parameters.mark>>
+          det-version: ${CIRCLE_SHA1}
+          aux-agent-instance-type: <<parameters.aux-agent-instance-type>>
+          compute-agent-instance-type: <<parameters.compute-agent-instance-type>>
+          max-dynamic-agents: <<parameters.max-dynamic-agents>>
+          master-tls-cert: ${MASTER_TLS_CERT}
+          master-tls-key: ${MASTER_TLS_KEY}
+          master-cert-name: ${MASTER_CERT_NAME}
+      - run-pref-tests:
+          master-host: ${MASTER_HOST}
+          master-scheme: ${MASTER_SCHEME:-http}
+          master-port: ${MASTER_PORT:-8080}
+      - locate-cloudwatch-logs:
+          cluster-id: ${CLUSTER_ID}
+      - terminate-aws-cluster:
+          cluster-id: ${CLUSTER_ID}
+      - store_test_results:
+          path: /tmp/test-results/
+      - slack/status:
+          fail_only: True
+          only_for_branches: main
+          failure_message: ':thisisfine: A \`<<parameters.mark>>\` perf job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
+          mentions: <<parameters.slack-mentions>>
+          channel: <<parameters.slack-channel>>
+
   test-e2e-gke:
     parameters:
       cluster-id-prefix:
@@ -2859,6 +2964,23 @@ workflows:
               mark: ["e2e_gpu"]
               slack-mentions: ["${SLACK_USER_ID}"]
 
+      - test-api-perf-aws:
+          name: test-aws-api-perf
+          context: aws
+          filters:
+            branches:
+              only: main
+          requires:
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["api-perf"]
+              compute-agent-instance-type: ["c5.2xlarge"]
+              environment-gpu-enabled: ["0"]
+              aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [0]
+              slack-mentions: ["${SLACK_USER_ID}"]
+
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
           context: gcp-ci
@@ -3347,6 +3469,27 @@ workflows:
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
+
+      # Request performance tests
+      - request-api-perf-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-api-perf-aws:
+          name: test-aws-api-perf
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-api-perf-tests
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["api-perf"]
+              compute-agent-instance-type: ["c5.2xlarge"]
+              environment-gpu-enabled: ["0"]
+              aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [0]
+
 
   nightly:
     triggers:
