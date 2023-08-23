@@ -5,7 +5,7 @@ mypy==0.910
 responses!=0.23.2
 requests_mock
 coverage
-deepspeed==0.8.3
+deepspeed==0.10.1
 transformers>=4.8.2,<4.29.0
 torch==1.11.0
 torchvision==0.12.0
