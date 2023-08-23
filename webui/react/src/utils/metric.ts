@@ -79,7 +79,7 @@ export const metricToStr = (metric: Metric, truncateLimit = 30): string => {
 
 export const metricToKey = (metric: Metric): string => {
   try {
-    return JSON.stringify(metric);
+    return JSON.stringify(metric, Object.keys(metric).sort());
   } catch (e) {
     return [metric.group, metric.name].join(METRIC_KEY_DELIMITER);
   }

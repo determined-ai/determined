@@ -26,7 +26,7 @@ import {
 } from 'types';
 import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
 import { flattenObject, isPrimitive } from 'utils/data';
-import { metricToStr } from 'utils/metric';
+import { metricToKey, metricToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 
 import {
@@ -220,7 +220,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
 
     trials?.forEach((trial) => {
       const expId = trial.experimentId;
-      const key = `${selectedMetric.group}|${selectedMetric.name}`;
+      const key = metricToKey(selectedMetric);
 
       // Choose the final metric value for each trial
       const metricValue = data?.[trial.id]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];
