@@ -49,9 +49,7 @@ func TestMapx(t *testing.T) {
 	}
 	testMap := New[string, string]()
 	for _, tt := range tests {
-		t.Run(tt.k, func(t *testing.T) {
-			testMap.Store(tt.k, tt.v)
-		})
+		testMap.Store(tt.k, tt.v)
 	}
 	assert.Equal(t, len(tests), testMap.Len())
 	value, _ := testMap.Load("1235")
