@@ -19,6 +19,7 @@ import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { metricToKey } from 'utils/metric';
 
 import css from './LineChart.module.scss';
 
@@ -328,7 +329,7 @@ export const calculateChartProps = (
   });
   metrics.forEach((metric) => {
     const series: Serie[] = [];
-    const key = `${metric.group}|${metric.name}`;
+    const key = metricToKey(metric);
     trials.forEach((t) => {
       const m = data[t?.id || 0];
       m?.[key] &&
@@ -358,7 +359,7 @@ export const calculateChartProps = (
   // then the charts have not been updated and we need to continue to show the
   // spinner.
   const chartDataIsLoaded = metrics.every((metric) => {
-    const metricKey = `${metric.group}|${metric.name}`;
+    const metricKey = metricToKey(metric);
     return metricHasData?.[metricKey] ? !!chartedMetrics?.[metricKey] : true;
   });
   if (!isLoaded) {
