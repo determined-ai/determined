@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"archive/tar"
+	"fmt"
 	"os"
 	"reflect"
 	"sort"
@@ -1485,6 +1486,47 @@ func TestTaskSpec_computeResources(t *testing.T) {
 			},
 		},
 		{
+			name: "Task Type 'NOTEBOOK', Slot type GPU, gres & tres supported (Slurm)",
+			fields: fields{
+				SlurmConfig: slurmConfig,
+				TaskType:    "NOTEBOOK",
+			},
+			args: args{
+				tresSupported: true,
+				numSlots:      100,
+				slotType:      device.CUDA,
+				gresSupported: true,
+				isPbsLauncher: false,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"nodes": 1},
+				Gpus: &map[string]int32{
+					"total":        int32(100),
+					"per-instance": int32(32),
+				},
+			},
+		},
+		{
+			name: "Task Type 'NOTEBOOK', Slot type GPU, gres supported (PBS)",
+			fields: fields{
+				PbsConfig: pbsConfig,
+				TaskType:  "NOTEBOOK",
+			},
+			args: args{
+				tresSupported: false,
+				numSlots:      100,
+				slotType:      device.CUDA,
+				gresSupported: true,
+				isPbsLauncher: true,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"nodes": 1},
+				Gpus: &map[string]int32{
+					"per-node": int32(16),
+				},
+			},
+		},
+		{
 			name: "Slot type GPU, gres & tres supported, PBS, no slots_per_node",
 			fields: fields{
 				PbsConfig: pbsConfigSlotsUnspecified,
@@ -1843,4 +1885,80 @@ func TestTaskSpec_addQuotes(t *testing.T) {
 
 	// If the string is empty, add double quotes.
 	assert.Equal(t, addQuotes(""), "\"\"")
+}
+
+// Verifies that 'restrictCommandsShellsAndNotebooksToSingleNode()' only adds
+// the 'nodes=1' instance for commands, shells, and notebooks, since those
+// task types must only run on a single node.
+func Test_restrictCommandsShellsAndNotebooksToSingleNode(t *testing.T) {
+	taskTypes := []model.TaskType{
+		model.TaskTypeTrial,
+		model.TaskTypeTensorboard,
+		model.TaskTypeCheckpointGC,
+		model.TaskTypeCommand,
+		model.TaskTypeShell,
+		model.TaskTypeNotebook}
+
+	// For each task type, verify that the 'nodes=1' instance is added only for
+	// commands, shells, and notebooks.
+	for _, taskType := range taskTypes {
+		ts := &TaskSpec{TaskType: taskType}
+
+		// Start off with no resources.
+		resources := launcher.NewResourceRequirementsWithDefaults()
+
+		instancesBefore := make(map[string]int32)
+
+		// Pretend we already have "per-node" instance so we can verify that
+		// after the call to "restrictCommandsShellsAndNotebooksToSingleNode()"
+		// the "per-node" instance is not preserved for commands, shells, and
+		// notebooks, but preserved for all other task types.
+		instancesBefore["per-node"] = 2
+
+		resources.SetInstances(instancesBefore)
+
+		ts.restrictCommandsShellsAndNotebooksToSingleNode(resources)
+
+		instancesAfter := resources.GetInstances()
+
+		// Verify the 'nodes=1' instance was set for commands, shells, and
+		// notebooks, but not for all other task types.
+		switch ts.TaskType {
+		case model.TaskTypeCommand, model.TaskTypeShell, model.TaskTypeNotebook:
+			// Verify that the "per-node" instance was not preserved.
+			_, ok := instancesAfter["per-node"]
+
+			assert.Equal(
+				t,
+				ok,
+				false,
+				fmt.Sprintf("Did not expect 'per-node' instance to be preserved for %s", ts.TaskType))
+
+			// Verify that the "nodes" instance was added.
+			nodes, ok := instancesAfter["nodes"]
+
+			assert.Equal(t,
+				ok,
+				true,
+				fmt.Sprintf("Expected 'nodes' instance to be set for %s", ts.TaskType))
+
+			assert.Equal(t, nodes, int32(1))
+		default:
+			// Verify that the "per-node" instance was preserved.
+			_, ok := instancesAfter["per-node"]
+
+			assert.Equal(t,
+				ok,
+				true,
+				fmt.Sprintf("Expected 'per-node' instance to be preserved for %s", ts.TaskType))
+
+			// Verify that the "nodes" instance was not added.
+			_, ok = instancesAfter["nodes"]
+
+			assert.Equal(t,
+				ok,
+				false,
+				fmt.Sprintf("Did not expect 'nodes' instance to be set for %s", ts.TaskType))
+		}
+	}
 }
