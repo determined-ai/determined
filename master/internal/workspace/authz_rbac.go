@@ -179,13 +179,13 @@ func (r *WorkspaceAuthZRBAC) CanModifyRPWorkspaceBindings(
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	addInfoWithoutWorkspace(curUser, fields,
-		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_MASTER_CONFIG)
+		rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS)
 	defer func() {
 		audit.LogFromErr(fields, err)
 	}()
 
 	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
-		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_MASTER_CONFIG)
+		rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS)
 }
 
 // CanCreateWorkspace determines whether a user can create workspaces.
@@ -350,12 +350,20 @@ func (r *WorkspaceAuthZRBAC) CanCreateWorkspaceWithCheckpointStorageConfig(
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_WORKSPACE)
 }
 
-// CanSetWorkspacesDefaultPools determines if a user can set
-// default pools for a given workspace.
+// CanSetWorkspacesDefaultPools determines whether a user can set a workspace
+// default compute or aux pool.
 func (r *WorkspaceAuthZRBAC) CanSetWorkspacesDefaultPools(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) (err error) {
-	return errors.New("CanSetWorkspacesDefaultPools is not implemented for RBAC")
+	fields := audit.ExtractLogFields(ctx)
+	addInfoWithoutWorkspace(curUser, fields,
+		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
+
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
+		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL)
 }
 
 func hasPermissionOnWorkspace(ctx context.Context, uid model.UserID,

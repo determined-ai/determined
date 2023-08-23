@@ -553,7 +553,8 @@ func (t *TaskSpec) computeResources(
 //
 //	Not Running: Insufficient amount of resource: ngpus
 func (t *TaskSpec) restrictCommandsShellsAndNotebooksToSingleNode(
-	resources *launcher.ResourceRequirements) {
+	resources *launcher.ResourceRequirements,
+) {
 	switch t.TaskType {
 	case model.TaskTypeCommand, model.TaskTypeShell, model.TaskTypeNotebook:
 		resources.SetInstances(map[string]int32{
