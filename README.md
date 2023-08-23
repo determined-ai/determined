@@ -107,6 +107,11 @@ For installation details, visit the the cluster deployment guide for your enviro
 * Tutorials:
   * [PyTorch MNIST Tutorial](https://docs.determined.ai/latest/tutorials/pytorch-mnist-tutorial.html)
   * [TensorFlow Keras MNIST Tutorial](https://docs.determined.ai/latest/tutorials/tf-mnist-tutorial.html)
+* User Guides:
+  * [Core API](https://docs.determined.ai/latest/model-dev-guide/apis-howto/api-core-ug.html)
+  * [PyTorch API](https://docs.determined.ai/latest/model-dev-guide/apis-howto/api-pytorch-ug.html)
+  * [Keras API](https://docs.determined.ai/latest/model-dev-guide/apis-howto/api-keras-ug.html)
+  * [DeepSpeed API](https://docs.determined.ai/latest/model-dev-guide/apis-howto/deepspeed/overview.html)
 
 
 # Community
