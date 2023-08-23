@@ -1,4 +1,3 @@
-import { Alert } from 'antd';
 import _ from 'lodash';
 import React, { ReactNode, useMemo, useRef } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
@@ -15,6 +14,7 @@ import { tooltipsPlugin } from 'components/kit/internal/UPlot/UPlotChart/tooltip
 import useResize from 'components/kit/internal/useResize';
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
 import Spinner from 'components/kit/Spinner';
+import Message from 'components/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
@@ -423,7 +423,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
       return Array.from(xOpts).sort();
     }, [chartsProps]);
 
-    if (chartsProps.length === 0 && !isLoading) return <Alert message="No data available." />;
+    if (chartsProps.length === 0 && !isLoading) return <Message title="No data available." />;
 
     return (
       <div className={css.scrollContainer}>
@@ -443,7 +443,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
                     columnWidth={Math.floor(width / columnCount)}
                     height={height - 40}
                     itemData={{
-                      chartsProps: chartsProps,
+                      chartsProps,
                       columnCount,
                       handleError,
                       scale,

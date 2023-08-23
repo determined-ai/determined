@@ -1,5 +1,4 @@
 import { Modal, Tag, Typography } from 'antd';
-import { Alert } from 'antd';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -10,6 +9,7 @@ import usePrevious from 'components/kit/internal/usePrevious';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
 import Link from 'components/Link';
+import Message from 'components/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelect from 'components/MetricSelect';
 import useMetricNames from 'hooks/useMetricNames';
@@ -379,7 +379,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
           </table>
         </Spinner>
       ) : (
-        <Alert message="No data available." />
+        <Message title="No data available." />
       )}
     </div>
   );
