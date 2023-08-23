@@ -39,29 +39,26 @@ func FuzzMap(f *testing.F) {
 }
 
 func TestMapx(t *testing.T) {
-	tests := []struct {
-		k string
-		v string
-	}{
-		{"1234", "hi"},
-		{"1235", "hello"},
-		{"1236", "world"},
-	}
 	testMap := New[string, string]()
-	for _, tt := range tests {
-		testMap.Store(tt.k, tt.v)
-	}
-	assert.Equal(t, len(tests), testMap.Len())
+	testMap.Store("1234", "hi")
+	testMap.Store("1235", "hello")
+	testMap.Store("1236", "world")
+
+	assert.Equal(t, 3, testMap.Len())
+
 	value, _ := testMap.Load("1235")
 	assert.Equal(t, "hello", value)
-	testMap.Delete("1235")
+
 	expectedValueList := [...]string{"hi", "world"}
+	testMap.Delete("1235")
 	valueList := testMap.Values()
 	assert.Equal(t, 2, testMap.Len())
+
 	sort.Strings(valueList)
 	for i, v := range valueList {
 		assert.Equal(t, expectedValueList[i], v)
 	}
+
 	testMap.Clear()
 	assert.Equal(t, 0, testMap.Len())
 }
