@@ -8,7 +8,7 @@ coverage
 deepspeed==0.8.3
 transformers>=4.8.2,<4.29.0
 torch==1.11.0
-torchvision==0.12.0
+torchvision==0.15.2
 tensorflow==2.12.0; sys_platform != 'darwin' or platform_machine != 'arm64'
 tensorflow-macos==2.11.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 attrdict3
