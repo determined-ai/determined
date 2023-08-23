@@ -1897,7 +1897,8 @@ func Test_restrictCommandsShellsAndNotebooksToSingleNode(t *testing.T) {
 		model.TaskTypeCheckpointGC,
 		model.TaskTypeCommand,
 		model.TaskTypeShell,
-		model.TaskTypeNotebook}
+		model.TaskTypeNotebook,
+	}
 
 	// For each task type, verify that the 'nodes=1' instance is added only for
 	// commands, shells, and notebooks.
