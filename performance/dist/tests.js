@@ -52,7 +52,8 @@ __webpack_require__.r(__webpack_exports__);
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, {
   "default": () => (/* binding */ tests),
-  "options": () => (/* binding */ options)
+  "options": () => (/* binding */ options),
+  "setup": () => (/* binding */ setup)
 });
 
 ;// CONCATENATED MODULE: external "k6"
@@ -60,14 +61,47 @@ const external_k6_namespaceObject = require("k6");
 ;// CONCATENATED MODULE: external "k6/http"
 const http_namespaceObject = require("k6/http");
 var http_default = /*#__PURE__*/__webpack_require__.n(http_namespaceObject);
+;// CONCATENATED MODULE: external "k6/execution"
+const execution_namespaceObject = require("k6/execution");
 ;// CONCATENATED MODULE: ./src/tests.ts
 
 
-var clusterURL = __ENV.DET_MASTER;
-var masterEndpoint = '/api/v1/master'; // const userEndpoint = '/api/v1/users'
-// const vuIDs = {};
-// const userInfo = {};
+ // const { token, user } = await login(
+//     {
+//       password: creds.password || '',
+//       username: creds.username || '',
+//     },
+//     { signal: canceler.signal },
+//   );
+//   updateDetApi({ apiKey: `Bearer ${token}` });
 
+var clusterURL = __ENV.DET_MASTER;
+var masterEndpoint = '/api/v1/master';
+var userEndpoint = '/api/v1/users';
+var loginEndpoint = '/api/v1/auth/login';
+var userVuMap = new Map(); // test per endpoint per filter set
+//   for each test, at least smoke test + average load
+
+function setup() {
+  var payload = JSON.stringify({
+    username: 'admin',
+    password: ''
+  });
+  var params = {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  };
+  http_default().post("".concat(clusterURL).concat(loginEndpoint), payload, params);
+  var userRequest = http_default().get("".concat(clusterURL).concat(userEndpoint));
+  var userRequestJson = userRequest.json();
+  var users = userRequestJson["users"];
+  console.log("userRequestJson");
+  console.log(users);
+  return {
+    users: users
+  };
+}
 var scenarios = {
   smoke_test: {
     tags: {
@@ -135,23 +169,22 @@ var options = {
       abortOnFail: true
     }]
   }
-}; // test per endpoint per filter set
-//   for each test, at least smoke test + average load
-// export function setup() {
-//     const userRequest = http.get(`${clusterURL}${userEndpoint}`);
-//     console.log(`Status is: ${userRequest.status}`);
-//     const userIds = Array.from(Array(100).keys())
-//     const userInformation = userIds.map((u) => ({
-//         id: `u-${u}`,
-//         displayName: `user_${u}`,
-//     }));
-//     userInformation.forEach((u) => vuIDs)
-//     userInfo = userInformation;
-// }
+};
+/* harmony default export */ function tests(data) {
+  var vuId = execution_namespaceObject.vu.idInTest;
+  console.log("users", data.users);
+  console.log("ID for VU ".concat(vuId));
 
-/* harmony default export */ function tests() {
-  // const vuId = vu.idInTest;
-  // const userVuInfo = 
+  if (!userVuMap.has(vuId)) {
+    console.log("DID NOT FIND USER for VU ".concat(vuId));
+    userVuMap.set(vuId, data.users[vuId]);
+  } else {
+    console.log("Found user for VU ".concat(vuId, ":").concat(JSON.stringify(userVuMap.get(vuId))));
+  }
+
+  var testUser = userVuMap.get(vuId);
+  console.log("User info for this VU");
+  console.log(testUser);
   var res = http_default().get("".concat(clusterURL).concat(masterEndpoint));
   (0,external_k6_namespaceObject.check)(res, {
     '200 response': function response(r) {
