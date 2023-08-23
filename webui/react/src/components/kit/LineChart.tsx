@@ -244,6 +244,7 @@ export const LineChart: React.FC<LineChartProps> = ({
         handleError={handleError}
         isLoading={isLoading}
         options={chartOptions}
+        xAxis={xAxis}
       />
       {showLegend && (
         <div className={css.legendContainer}>
