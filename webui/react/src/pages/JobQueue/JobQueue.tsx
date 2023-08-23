@@ -330,7 +330,8 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
                 if (!user) {
                   // This is an external user. Create a new DetailedUser instance.
                   const externalUser: DetailedUser = {
-                    id: Date.now(),
+                    // external users do not have a user id. Indicate that with a value of -1.
+                    id: -1,
                     isActive: true,
                     isAdmin: false,
                     username: r.username,
