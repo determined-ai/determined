@@ -283,6 +283,7 @@ var gceGPUTypes = map[string][]int{
 	"nvidia-tesla-p4":   {0, 1, 2, 4},
 	"nvidia-tesla-v100": {0, 1, 2, 4, 8},
 	"nvidia-tesla-a100": {0, 1, 2, 4, 8, 16},
+	"nvidia-a100-80g":   {0, 1, 2, 4, 8},
 	"nvidia-l4":         {0, 1, 2, 4, 8},
 }
 
