@@ -24,3 +24,13 @@ else
     echo "ERROR: No $WORKLOAD_MANAGER property in ../terraform/images.conf" >&2
     exit 1
 fi
+
+# List images
+max_images=10
+image_list=$(gcloud compute images list --filter=family:det-environments-slurm-ci --format="value(NAME, creationTimestamp, description)" --sort-by=~creationTimestamp)
+active_images=$(echo $image_list | wc -l)
+echo >&2 "Existing Images"
+echo >&2 "==============="
+echo >&2 "$image_list"
+echo >&2
+echo >&2 "Consider pruning $((active_images - max_images)) oldest images."

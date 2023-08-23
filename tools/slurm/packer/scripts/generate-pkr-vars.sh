@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -x
-
 # Warning: this script is not meant to be ran directly. It is invoked by 'make build'.
 
 # This part of the script ensures that an HPC Launcher installation file is available in the build directory
