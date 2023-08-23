@@ -530,6 +530,35 @@ message PostAllocationProxyAddressRequest {
 // Response to PostAllocationProxyAddressRequest
 message PostAllocationProxyAddressResponse {}
 
+// Set the accelerator data for some allocation.
+message PostAllocationAcceleratorDataRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "allocation_id", "accelerator_data" ] }
+  };
+  // The id of the allocation.
+  string allocation_id = 1;
+  // The accelerator data used by the allocation.
+  AcceleratorData accelerator_data = 2;
+}
+// Response to PostAllocationAcceleratorDataRequest
+message PostAllocationAcceleratorDataResponse {}
+
+// Accelerator data for a given allocation
+message AcceleratorData {
+  // The id of the container.
+  string container_id = 1;
+  // The id of the allocation.
+  string allocation_id = 2;
+  // The name of the node the allocation is on.
+  string node_name = 3;
+  // The id of the agent associated with the allocation.
+  string task_id = 4;
+  // The type of accelerator.
+  string accelerator_type = 5;
+  // An array of IDs of the accelerators associated with the allocation.
+  repeated string accelerators = 6;
+}
+
 // Arguments to an all gather.
 message AllocationAllGatherRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
