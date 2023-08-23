@@ -5,8 +5,6 @@ from determined.common import api
 from determined.common.api import bindings, logs
 from determined.common.experimental import checkpoint, metrics
 
-# from determined.common.experimentalimport
-
 
 class LogLevel(enum.Enum):
     TRACE = bindings.v1LogLevel.TRACE.value

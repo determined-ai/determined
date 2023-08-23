@@ -7,8 +7,6 @@ from determined.common import api, util
 from determined.common.api import bindings
 from determined.common.experimental import checkpoint, metrics
 
-# from determined.experimental import metrics
-
 
 class ModelVersion:
     """
