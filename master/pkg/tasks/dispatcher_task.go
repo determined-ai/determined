@@ -522,7 +522,44 @@ func (t *TaskSpec) computeResources(
 		// GPUs requested, but neither TRES nor GRES supported.
 		resources.SetInstances(map[string]int32{"nodes": int32(numNodes)})
 	}
+
+	// Commands, Shells, and Notebooks must run on a single node.
+	t.restrictCommandsShellsAndNotebooksToSingleNode(resources)
+
 	return resources
+}
+
+// Restricts commands, shells, and notebooks to a single node.
+//
+// Commands, shells, and notebooks are intended to only run on a single
+// node.  However, if each compute node has 4 GPUs and, 8 GPUS are
+// specified in the configuration, as shown in the example below, then
+// more than one node will be allocated, which is not desirable.
+//
+// det notebook start --config resources.slots=8
+//
+// Therefore, explicitly request a single node.
+//
+// If more slots are requested than are available on any compute node
+// on the cluster, the behavior of the Workload Manager will be as
+// follows:
+//
+// For Slurm, the job will fail with the following error:
+//
+//	sbatch: error: Batch job submission failed: Requested node
+//	               configuration is not available
+//
+// For PBS, the job will remain queued with the following reason:
+//
+//	Not Running: Insufficient amount of resource: ngpus
+func (t *TaskSpec) restrictCommandsShellsAndNotebooksToSingleNode(
+	resources *launcher.ResourceRequirements) {
+	switch t.TaskType {
+	case model.TaskTypeCommand, model.TaskTypeShell, model.TaskTypeNotebook:
+		resources.SetInstances(map[string]int32{
+			"nodes": 1,
+		})
+	}
 }
 
 // slotsPerNode returns the number of slots per node specified in the
