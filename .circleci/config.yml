@@ -3310,6 +3310,7 @@ workflows:
             branches:
               only:
                 - main
+                - /release-(\d)+(\.(\d)+)+(-ee)?/
     jobs:
       - test-e2e-aws:
           name: test-e2e-gpu-nightly
