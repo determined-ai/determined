@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -17,6 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
 	k8sV1 "k8s.io/api/core/v1"
+	k8error "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -134,7 +134,6 @@ type reattachPodResponse struct {
 
 // Initialize creates a new global pods actor.
 func Initialize(
-	ctx *actor.Context,
 	s *actor.System,
 	e *echo.Echo,
 	c *actor.Ref,
@@ -203,12 +202,10 @@ func Initialize(
 	}
 
 	err = p.startNodeInformer()
-	if err != nil {
-		if strings.Contains(err.Error(), "nodes is forbidden") {
-			ctx.Log().Warnf("unable to start node informer due to permission error: %s", err)
-		} else {
-			panic(err)
-		}
+	if err != nil && !k8error.IsForbidden(err) {
+		panic(err)
+	} else if err != nil {
+		p.syslog.Warnf("unable to start node informer due to permission error: %s", err)
 	}
 
 	err = p.startEventListeners(s)
