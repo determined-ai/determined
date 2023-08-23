@@ -6,6 +6,7 @@ import os
 import pathlib
 import platform
 import random
+import re
 import sys
 import time
 import warnings
@@ -207,6 +208,9 @@ def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
     # [2] https://bugs.python.org/issue35829
     if ts.endswith("Z"):
         ts = ts[:-1] + "+00:00"
+    # Remove the [milli,micro,nano]seconds portion from the timestamp because
+    # fromisoformat cannot process nanoseconds and we do not use other values either.
+    re.sub("\\.[0-9]*\\+", "+", ts)
     return datetime.datetime.fromisoformat(ts)
 
 
