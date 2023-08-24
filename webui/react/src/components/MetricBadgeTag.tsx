@@ -11,7 +11,7 @@ interface Props {
 const MetricBadgeTag: React.FC<Props> = ({ metric }: Props) => {
   return (
     <BadgeTag label={metric.name} tooltip={metric.group}>
-      {metric.group.substring(0, 1).toUpperCase()}
+      {(metric.group ?? '').substring(0, 1).toUpperCase()}
     </BadgeTag>
   );
 };
