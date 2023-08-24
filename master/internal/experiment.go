@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 
@@ -755,20 +753,21 @@ func trialTaskID(eID int, rID model.RequestID) model.TaskID {
 
 var errIsNotTrialTaskID = fmt.Errorf("taskID is not a trial task ID")
 
-// Hack to associate allocations to experiments for RBAC.
-// Currently unable to go through the database since trials are not necessarily persisted when
-// we return allocation information.
 func experimentIDFromTrialTaskID(taskID model.TaskID) (int, error) {
-	expID, _, found := strings.Cut(string(taskID), ".")
-	if !found {
-		return 0, errors.Wrapf(errIsNotTrialTaskID, "error on task ID %s", taskID)
+	var experimentID int
+	err := db.Bun().NewSelect().
+		Table("trial_id_task_id").
+		Column("experiment_id").
+		Join("LEFT JOIN trials ON trials.id = trial_id_task_id.trial_id").
+		Where("task_id = ?", taskID).
+		Scan(context.TODO(), &experimentID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, errIsNotTrialTaskID
+	} else if err != nil {
+		return 0, fmt.Errorf("getting experiment ID from trial task ID: %w", err)
 	}
 
-	id, err := strconv.Atoi(expID)
-	if err != nil {
-		return 0, errors.Wrapf(err, "error parsing experiment ID for task ID %s", taskID)
-	}
-	return id, nil
+	return experimentID, nil
 }
 
 func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint, error) {
