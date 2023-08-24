@@ -100,10 +100,12 @@ def get_command_info(command_id: str) -> Dict[str, Any]:
     return get_task_info("command", command_id)
 
 
-def command_succeeded(command_id: str) -> bool:
-    print(get_command_info(command_id))
-
-    return "success" in get_command_info(command_id)["exitStatus"]
+def assert_command_succeeded(command_id: str) -> None:
+    command_info = get_command_info(command_id)
+    command_info_json = json.dumps(command_info, indent=2, separators=(",", ":"))
+    exit_status = command_info["exitStatus"]
+    succeeded = "success" in exit_status
+    assert succeeded, f"Command failed. Command Info:\n {command_info_json}"
 
 
 def wait_for_task_state(task_type: TaskType, task_id: str, state: str, ticks: int = 60) -> None:

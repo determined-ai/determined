@@ -12,7 +12,7 @@ from tests import config as conf
 from tests import experiment as exp
 
 from .test_users import ADMIN_CREDENTIALS, logged_in_user
-from .utils import get_command_info, run_zero_slot_command, wait_for_command_state
+from .utils import assert_command_succeeded, run_zero_slot_command, wait_for_command_state
 
 
 @pytest.mark.e2e_cpu
@@ -306,8 +306,8 @@ def test_drain_agent_sched_zeroslot() -> None:
         with _disable_agent(agent_id2, drain=True):
             for command_id in [command_id1, command_id2]:
                 wait_for_command_state(command_id, "TERMINATED", 60)
-                assert "success" in get_command_info(command_id)["exitStatus"]
+                assert_command_succeeded(command_id)
 
     command_id3 = run_zero_slot_command(1)
     wait_for_command_state(command_id3, "TERMINATED", 60)
-    assert "success" in get_command_info(command_id3)["exitStatus"]
+    assert_command_succeeded(command_id3)
