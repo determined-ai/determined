@@ -200,17 +200,44 @@ def get_max_retries_config() -> urllib3.util.retry.Retry:
 
 
 def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
-    # Protobuf emits timestamps in RFC3339 format, which are identical to canonical JavaScript date
-    # stamps [1].  datetime.datetime.fromisoformat parses a subset of ISO8601 timestamps, but
-    # notably does not handle the trailing Z to signify the UTC timezone [2].
+    # Protobuf emits timestamps in RFC3339 format [1], which are identical to canonical JavaScript
+    # date stamps [2]. In Python, we use the method datetime.datetime.fromisoformat() to parse a
+    # timestamp string using the ISO 8601 format [3]. Python versions below 3.11 have some
+    # restrictions while parsing a timestamp string using the ISO 8601 format. Two restrictions
+    # are specifically applicable in the case of DeterminedAI and are listed below.
+    #     1.  datetime.datetime.fromisoformat() parses a subset of ISO 8601 timestamps, but
+    #         notably does not handle the trailing Z to signify the UTC timezone [4].
+    #     2.  datetime.datetime.fromisoformat() can only parse milliseconds and microseconds but
+    #         not nanoseconds. Any other arbitrary length of the sub-second portion will fail [5].
+    # These two restrictions are fixed in the Python 3.11 version, but we have to handle them until
+    # the EOL for versions 3.10.x.
+    # This method updates the provided RFC3339 format timestamp string to workaround the above
+    # mentioned restrictions.
     #
-    # [1] https://tc39.es/ecma262/#sec-date-time-string-format
-    # [2] https://bugs.python.org/issue35829
+    # [1] https://datatracker.ietf.org/doc/html/rfc3339
+    # [2] https://tc39.es/ecma262/#sec-date-time-string-format
+    # [3] https://docs.python.org/3/library/datetime.html#datetime.datetime.fromisoformat
+    # [4] https://bugs.python.org/issue35829
+    # [5] https://discuss.python.org/t/parse-z-timezone-suffix-in-datetime/2220/27
+    #
+    # Workaround for restriction 1 - replace UTC timezone indicator "Z" with "+00:00"
     if ts.endswith("Z"):
         ts = ts[:-1] + "+00:00"
-    # Remove the [milli,micro,nano]seconds portion from the timestamp because
-    # fromisoformat cannot process nanoseconds and we do not use other values either.
-    re.sub("\\.[0-9]*\\+", "+", ts)
+    # Workaround for restriction 2 - remove any sub-second portion in the timestamp string
+    # Below are the list of examples demonstrating that the regex implementation is safe:
+    # >>> re.sub(r'\.[0-9]*', "", "2023-08-22T22:06:45.242391275+00:00")
+    # '2023-08-22T22:06:45+00:00'
+    # >>> re.sub(r'\.[0-9]*', "", "2023-08-22T22:06:45.242391275+06:00")
+    # '2023-08-22T22:06:45+06:00'
+    # >>> re.sub(r'\.[0-9]*', "", "2023-08-22T22:06:45.242391275-06:00")
+    # '2023-08-22T22:06:45-06:00'
+    # >>> re.sub(r'\.[0-9]*', "", "2023-08-22T22:06:45.242391+00:00")
+    # '2023-08-22T22:06:45+00:00'
+    # >>> re.sub(r'\.[0-9]*', "", "2023-08-22T22:06:45.242+00:00")
+    # '2023-08-22T22:06:45+00:00'
+    # >>> re.sub(r'\.[0-9]*', "", "2023-08-22T22:06:45+00:00")
+    # '2023-08-22T22:06:45+00:00'
+    re.sub(r"\.[0-9]*", "", ts)
     return datetime.datetime.fromisoformat(ts)
 
 
