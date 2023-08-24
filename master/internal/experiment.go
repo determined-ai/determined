@@ -759,9 +759,12 @@ var errIsNotTrialTaskID = fmt.Errorf("taskID is not a trial task ID")
 // Currently unable to go through the database since trials are not necessarily persisted when
 // we return allocation information.
 func experimentIDFromTrialTaskID(taskID model.TaskID) (int, error) {
-	expID, _, found := strings.Cut(string(taskID), ".")
+	expID, found := strings.CutPrefix(string(taskID), "backported.")
 	if !found {
-		return 0, errors.Wrapf(errIsNotTrialTaskID, "error on task ID %s", taskID)
+		expID, _, found = strings.Cut(string(taskID), ".")
+		if !found {
+			return 0, errors.Wrapf(errIsNotTrialTaskID, "error on task ID %s", taskID)
+		}
 	}
 
 	id, err := strconv.Atoi(expID)
