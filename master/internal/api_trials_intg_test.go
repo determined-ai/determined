@@ -813,6 +813,28 @@ func TestTrialProtoTaskIDs(t *testing.T) {
 	}
 }
 
+func TestExperimentIDFromTrialTaskID(t *testing.T) {
+	api, curUser, _ := setupAPITest(t, nil)
+
+	trial, task := createTestTrial(t, api, curUser)
+	actual, err := experimentIDFromTrialTaskID(task.TaskID)
+	require.NoError(t, err)
+	require.Equal(t, trial.ExperimentID, actual)
+
+	notTrialTask := &model.Task{
+		TaskType:   model.TaskTypeTrial,
+		LogVersion: model.TaskLogVersion1,
+		StartTime:  time.Now(),
+		TaskID:     model.TaskID(uuid.New().String()),
+	}
+	require.NoError(t, api.m.db.AddTask(task))
+	_, err = experimentIDFromTrialTaskID(notTrialTask.TaskID)
+	require.ErrorIs(t, err, errIsNotTrialTaskID)
+
+	_, err = experimentIDFromTrialTaskID(model.TaskID(uuid.New().String()))
+	require.ErrorIs(t, err, errIsNotTrialTaskID)
+}
+
 func TestTrialLogsBackported(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
