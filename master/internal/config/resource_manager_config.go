@@ -74,6 +74,12 @@ func (a *AgentResourceManagerConfig) UnmarshalJSON(data []byte) error {
 		a.DefaultComputeResourcePool = ""
 		a.DefaultAuxResourcePool = ""
 	} else {
+		if a.DefaultAuxResourcePool == "" && a.DefaultCPUResourcePool != "" {
+			a.DefaultAuxResourcePool = a.DefaultCPUResourcePool
+		}
+		if a.DefaultComputeResourcePool == "" && a.DefaultGPUResourcePool != "" {
+			a.DefaultComputeResourcePool = a.DefaultGPUResourcePool
+		}
 		if a.DefaultComputeResourcePool == "" {
 			a.DefaultComputeResourcePool = defaultResourcePoolName
 		}
