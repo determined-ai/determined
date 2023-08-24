@@ -11,7 +11,7 @@ you are at the right place!
 
 .. note::
 
-   To set up a Determined training environment on-prem or on cloud, visit the :ref:`Advanced Setup
+   To set up a Determined training environment on-prem or on cloud, visit :ref:`Advanced Setup
    <advanced-setup>`.
 
 **Prerequisites**
