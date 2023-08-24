@@ -24,7 +24,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
 
   const handleFieldsChange = () => {
     const values = form.getFieldsValue();
-    const missingRequiredFields = requiredFields.map((rf) => values[rf]).some((v) => !v);
+    const missingRequiredFields = requiredFields.map((rf) => values[rf]).some((v) => v == null);
     setDisabled(missingRequiredFields);
   };
 
@@ -52,7 +52,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
     if (user.agentUserGroup) {
       // validate initial values, before onFieldsChange
       const missingRequiredFields = Object.entries(user.agentUserGroup).some(([key, value]) => {
-        return requiredFields.includes(key) && !value;
+        return requiredFields.includes(key) && value != null;
       });
       setDisabled(missingRequiredFields);
     }
@@ -93,7 +93,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
             label="Agent User ID"
             name="agentUid"
             rules={[{ message: 'Agent User ID is required ', required: true }]}>
-            <InputNumber />
+            <InputNumber min={0} />
           </Form.Item>
           <Form.Item
             label="Agent User Name"
@@ -105,7 +105,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
             label="Agent User Group ID"
             name="agentGid"
             rules={[{ message: 'Agent User Group ID is required ', required: true }]}>
-            <InputNumber />
+            <InputNumber min={0} />
           </Form.Item>
           <Form.Item
             label="Agent Group Name"
