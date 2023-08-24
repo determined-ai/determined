@@ -89,7 +89,12 @@ func (a *AgentResourceManagerConfig) UnmarshalJSON(data []byte) error {
 // Validate implements the check.Validatable interface.
 func (a AgentResourceManagerConfig) Validate() []error {
 	if a.NoDefaultResourcePools {
-		return []error{nil, nil}
+		return []error{
+			check.Equal("", a.DefaultAuxResourcePool,
+				"default_aux_resource_pool should be empty"),
+			check.Equal("", a.DefaultComputeResourcePool,
+				"default_,compute_resource_pool should be empty"),
+		}
 	}
 	return []error{
 		check.NotEmpty(a.DefaultAuxResourcePool, "default_aux_resource_pool should be non-empty"),
@@ -132,15 +137,16 @@ func (k *KubernetesResourceManagerConfig) UnmarshalJSON(data []byte) error {
 	type DefaultParser *KubernetesResourceManagerConfig
 	err := json.Unmarshal(data, DefaultParser(k))
 
-	if k.DefaultComputeResourcePool == "" {
-		k.DefaultComputeResourcePool = defaultResourcePoolName
-	}
-	if k.DefaultAuxResourcePool == "" {
-		k.DefaultAuxResourcePool = defaultResourcePoolName
-	}
 	if k.NoDefaultResourcePools {
 		k.DefaultComputeResourcePool = ""
 		k.DefaultAuxResourcePool = ""
+	} else {
+		if k.DefaultComputeResourcePool == "" {
+			k.DefaultComputeResourcePool = defaultResourcePoolName
+		}
+		if k.DefaultAuxResourcePool == "" {
+			k.DefaultAuxResourcePool = defaultResourcePoolName
+		}
 	}
 
 	if err == nil && k.SlotType == "gpu" {

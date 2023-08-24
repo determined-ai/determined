@@ -325,7 +325,11 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(response.Get())
 
 	case sproto.GetJobQ:
-		if msg.ResourcePool == "" && !a.config.NoDefaultResourcePools {
+		if msg.ResourcePool == "" {
+			if a.config.NoDefaultResourcePools {
+				ctx.Respond(fmt.Errorf("no resource pool specified and no default pool set"))
+				return nil
+			}
 			msg.ResourcePool = a.config.DefaultComputeResourcePool
 		}
 

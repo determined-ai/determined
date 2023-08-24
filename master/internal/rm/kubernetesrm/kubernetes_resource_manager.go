@@ -379,7 +379,11 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case sproto.GetJobQ:
-		if msg.ResourcePool == "" && !k.config.NoDefaultResourcePools {
+		if msg.ResourcePool == "" {
+			if k.config.NoDefaultResourcePools {
+				ctx.Respond(fmt.Errorf("no resource pool specified and no default pool set"))
+				return nil
+			}
 			msg.ResourcePool = k.config.DefaultComputeResourcePool
 		}
 
