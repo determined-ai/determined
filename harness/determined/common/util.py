@@ -220,22 +220,22 @@ def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
     # [4] https://bugs.python.org/issue35829
     # [5] https://discuss.python.org/t/parse-z-timezone-suffix-in-datetime/2220/27
     #
-    # Workaround for restriction 1 - replace UTC timezone indicator "Z" with "+00:00"
+    # Workaround for restriction 1 - replace UTC timezone indicator "Z" with "+00:00".
     if ts.endswith("Z"):
         ts = ts[:-1] + "+00:00"
-    # Workaround for restriction 2 - remove any sub-second portion in the timestamp string
+    # Workaround for restriction 2 - remove any sub-second portion in the timestamp string.
     # Below are the list of examples demonstrating that the regex implementation is safe:
-    # >>> re.sub(r'\.[0-9]*', "", "2023-08-22T22:06:45.242391275+00:00")
+    # >>> re.sub(r"\.[0-9]*", "", "2023-08-22T22:06:45.242391275+00:00")
     # '2023-08-22T22:06:45+00:00'
-    # >>> re.sub(r'\.[0-9]*', "", "2023-08-22T22:06:45.242391275+06:00")
+    # >>> re.sub(r"\.[0-9]*", "", "2023-08-22T22:06:45.242391275+06:00")
     # '2023-08-22T22:06:45+06:00'
-    # >>> re.sub(r'\.[0-9]*', "", "2023-08-22T22:06:45.242391275-06:00")
+    # >>> re.sub(r"\.[0-9]*", "", "2023-08-22T22:06:45.242391275-06:00")
     # '2023-08-22T22:06:45-06:00'
-    # >>> re.sub(r'\.[0-9]*', "", "2023-08-22T22:06:45.242391+00:00")
+    # >>> re.sub(r"\.[0-9]*", "", "2023-08-22T22:06:45.242391+00:00")
     # '2023-08-22T22:06:45+00:00'
-    # >>> re.sub(r'\.[0-9]*', "", "2023-08-22T22:06:45.242+00:00")
+    # >>> re.sub(r"\.[0-9]*", "", "2023-08-22T22:06:45.242+00:00")
     # '2023-08-22T22:06:45+00:00'
-    # >>> re.sub(r'\.[0-9]*', "", "2023-08-22T22:06:45+00:00")
+    # >>> re.sub(r"\.[0-9]*", "", "2023-08-22T22:06:45+00:00")
     # '2023-08-22T22:06:45+00:00'
     re.sub(r"\.[0-9]*", "", ts)
     return datetime.datetime.fromisoformat(ts)
