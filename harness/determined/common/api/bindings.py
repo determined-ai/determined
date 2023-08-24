@@ -3548,6 +3548,52 @@ class v1GetAgentsResponse(Printable):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
+class v1GetAllocationResponse(Printable):
+    exitReason: "typing.Optional[str]" = None
+    statusCode: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        allocationId: str,
+        slots: int,
+        state: "taskv1State",
+        exitReason: "typing.Union[str, None, Unset]" = _unset,
+        statusCode: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        self.allocationId = allocationId
+        self.slots = slots
+        self.state = state
+        if not isinstance(exitReason, Unset):
+            self.exitReason = exitReason
+        if not isinstance(statusCode, Unset):
+            self.statusCode = statusCode
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetAllocationResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "allocationId": obj["allocationId"],
+            "slots": obj["slots"],
+            "state": taskv1State(obj["state"]),
+        }
+        if "exitReason" in obj:
+            kwargs["exitReason"] = obj["exitReason"]
+        if "statusCode" in obj:
+            kwargs["statusCode"] = obj["statusCode"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "allocationId": self.allocationId,
+            "slots": self.slots,
+            "state": self.state.value,
+        }
+        if not omit_unset or "exitReason" in vars(self):
+            out["exitReason"] = self.exitReason
+        if not omit_unset or "statusCode" in vars(self):
+            out["statusCode"] = self.statusCode
+        return out
+
 class v1GetBestSearcherValidationMetricResponse(Printable):
     metric: "typing.Optional[float]" = None
 
@@ -14649,6 +14695,26 @@ def get_GetAgents(
     if _resp.status_code == 200:
         return v1GetAgentsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetAgents", _resp)
+
+def get_GetAllocation(
+    session: "api.Session",
+    *,
+    allocationId: str,
+) -> "v1GetAllocationResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/allocations/{allocationId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetAllocationResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetAllocation", _resp)
 
 def get_GetBestSearcherValidationMetric(
     session: "api.Session",

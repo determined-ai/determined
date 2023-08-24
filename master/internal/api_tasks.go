@@ -215,6 +215,13 @@ func (a *apiServer) AllocationAllGather(
 	return &apiv1.AllocationAllGatherResponse{Data: out}, nil
 }
 
+func (a *apiServer) GetAllocation(
+	ctx context.Context,
+	req *apiv1.GetAllocationRequest,
+) (*apiv1.GetAllocationResponse, error) {
+	return nil, grpcutil.UnimplementedError
+}
+
 func (a *apiServer) PostAllocationProxyAddress(
 	ctx context.Context, req *apiv1.PostAllocationProxyAddressRequest,
 ) (*apiv1.PostAllocationProxyAddressResponse, error) {
