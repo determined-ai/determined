@@ -237,7 +237,7 @@ def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
     # '2023-08-22T22:06:45+00:00'
     # >>> re.sub(r"\.[0-9]*", "", "2023-08-22T22:06:45+00:00")
     # '2023-08-22T22:06:45+00:00'
-    re.sub(r"\.[0-9]*", "", ts)
+    ts = re.sub(r"\.[0-9]*", "", ts)
     return datetime.datetime.fromisoformat(ts)
 
 
