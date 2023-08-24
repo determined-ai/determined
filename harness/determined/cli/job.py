@@ -1,7 +1,6 @@
+import datetime
 from argparse import ONE_OR_MORE, Namespace
 from typing import Any, List, Union
-
-import pytz
 
 from determined import cli
 from determined.cli import render
@@ -77,7 +76,7 @@ def ls(args: Namespace) -> None:
             j.type.value,
             computed_job_name(j) if isinstance(j, bindings.v1Job) else render.OMITTED_VALUE,
             j.priority if is_priority else j.weight,
-            pytz.utc.localize(parse_protobuf_timestamp(j.submissionTime))
+            parse_protobuf_timestamp(j.submissionTime).astimezone(datetime.timezone.utc)
             if isinstance(j, bindings.v1Job)
             else render.OMITTED_VALUE,
             f"{j.allocatedSlots}/{j.requestedSlots}",
