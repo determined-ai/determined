@@ -25,6 +25,7 @@ import { isDeviceType, JsonObject, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { pluralizer } from 'utils/string';
 import { DarkLight } from 'utils/themes';
 
 import Json from './Json';
@@ -188,7 +189,8 @@ const ResourcePoolCard: React.FC<Props> = ({
                   <div>Bound to:</div>
                   <div className={css.resoucePoolBoundCount}>
                     <Icon name="lock" title="Bound Workspaces" />
-                    {resourcePoolBindings.length} workspace
+                    {resourcePoolBindings.length}{' '}
+                    {pluralizer(resourcePoolBindings.length, 'workspace')}
                   </div>
                 </section>
               )}
