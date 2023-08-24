@@ -27,5 +27,5 @@ from determined import util
 # WebUI's log viewer to filter logs by log level.
 #
 # Dev note: if this format is changed,
-# the fluentbit (deprecated) log parsing must be updated as well.
+# the enrich-task-logs.py log parsing must be updated as well.
 LOG_FORMAT = "%(levelname)s: [%(process)s] %(name)s: %(message)s"
