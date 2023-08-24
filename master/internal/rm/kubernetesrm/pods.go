@@ -16,6 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
 	k8sV1 "k8s.io/api/core/v1"
+	k8error "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -201,7 +202,12 @@ func Initialize(
 	}
 
 	err = p.startNodeInformer()
-	if err != nil {
+	switch {
+	case err != nil && k8error.IsForbidden(err):
+		p.syslog.Warnf("unable to start node informer due to permission error,"+
+			"some features will be degraded: %s", err,
+		)
+	case err != nil:
 		panic(err)
 	}
 
