@@ -65,8 +65,8 @@ class Determined:
         WARNING: Determined objects created with this contsructor will not have a token, and so
         have no access to the oauth API.
         """
-        new_det = cls.__new__(cls)
-        assert isinstance(new_det, Determined)  # mypy says new_det is Any, even if cls is annotated
+        # mypy gives new_det "Any" type, even if cls is annotated
+        new_det = cls.__new__(cls)  # type: Determined
         new_det._session = session
         new_det._token = None
         return new_det
