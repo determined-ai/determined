@@ -69,12 +69,8 @@ export const getMetricValue = (
 
 export const isMetric = (metric?: Metric): metric is Metric => metric !== undefined;
 export const metricToStr = (metric: Metric, truncateLimit = 30): string => {
-  const group = metric.group.substring(0, 1).toUpperCase();
-  const name =
-    metric.name.length > truncateLimit
-      ? metric.name.substring(0, truncateLimit) + '...'
-      : metric.name;
-  return `[${group}] ${name}`;
+  const label = [metric.group, metric.name].join(METRIC_KEY_DELIMITER);
+  return label.length > truncateLimit ? label.substring(0, truncateLimit) + '...' : label;
 };
 
 export const metricToKey = (metric: Metric): string => {
