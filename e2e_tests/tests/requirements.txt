@@ -18,5 +18,6 @@ kubernetes
 numpy>=1.20
 h5py>=3
 ray[default]
+pyarrow
 # Pydantic V2 has changes that break existing ray tests
 pydantic<2

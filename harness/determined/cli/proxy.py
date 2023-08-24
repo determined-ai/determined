@@ -221,7 +221,10 @@ def _http_tunnel_listener(
             c1.join()
             c2.join()
 
-    return socketserver.ThreadingTCPServer((tunnel.local_addr, tunnel.local_port), TunnelHandler)
+    class ReuseAddrServer(socketserver.ThreadingTCPServer):
+        allow_reuse_address = True
+
+    return ReuseAddrServer((tunnel.local_addr, tunnel.local_port), TunnelHandler)
 
 
 @contextlib.contextmanager

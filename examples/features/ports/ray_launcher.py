@@ -8,7 +8,11 @@ import determined as det
 
 def launcher_main(cross_rank, chief_ip):
     if cross_rank == 0:
-        subprocess.run(["ray", "start", "--head", "--dashboard-host", "0.0.0.0"], check=True)
+        subprocess.run([
+            "ray", "start", "--head",
+            "--dashboard-host", "0.0.0.0",
+            "--disable-usage-stats",
+        ], check=True)
     else:
         subprocess.run(["ray", "start", f"--address={chief_ip}:6379"], check=True)
     while True:

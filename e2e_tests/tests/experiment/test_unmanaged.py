@@ -44,7 +44,7 @@ def test_unmanaged_ray_hp_search() -> None:
     }
 
     try:
-        subprocess.run(["ray", "start", "--head"], check=True)
+        subprocess.run(["ray", "start", "--head", "--disable-usage-stats"], check=True)
         ray_utils.ray_job_submit(
             exp_path,
             ["python", "ray_hp_search.py"],
