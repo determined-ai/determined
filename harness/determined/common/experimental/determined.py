@@ -66,6 +66,7 @@ class Determined:
         have no access to the oauth API.
         """
         new_det = cls.__new__(cls)
+        assert isinstance(new_det, Determined)  # mypy says new_det is Any, even if cls is annotated
         new_det._session = session
         new_det._token = None
         return new_det
