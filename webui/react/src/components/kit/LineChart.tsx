@@ -19,7 +19,7 @@ import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { metricToKey } from 'utils/metric';
+import { metricToKey, metricToStr } from 'utils/metric';
 
 import css from './LineChart.module.scss';
 
@@ -109,9 +109,8 @@ export const LineChart: React.FC<LineChartProps> = ({
   );
 
   const seriesNames: string[] = useMemo(() => {
-    return series.map((s, idx) => {
-      const badge = s.metricType?.substring(0, 1).toUpperCase();
-      return [badge ? `[${badge}]` : '', s.name || `Series ${idx + 1}`].join(' ');
+    return series.map((s) => {
+      return metricToStr({ group: s.metricType ?? 'unknown', name: s.name ?? 'unknown' });
     });
   }, [series]);
 
