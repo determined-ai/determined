@@ -154,7 +154,7 @@ func newRunCmd() *cobra.Command {
 
 	// Deprecated Fluent Logging flags.
 	cmd.Flags().StringVar(&opts.Fluent.Image, "fluent-image", aproto.FluentImage,
-		"Deprecated: Docker image to use for the managed Fluent Bit daemon")
+		"Ignored: Determined no longer uses Fluent Bit to ship logs")
 	cmd.Flags().IntVar(&opts.Fluent.Port, "fluent-port", 24224,
 		"Deprecated: TCP port for the Fluent Bit daemon to listen on")
 	cmd.Flags().StringVar(&opts.Fluent.ContainerName, "fluent-container-name", "determined-fluent",
