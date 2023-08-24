@@ -1,5 +1,4 @@
 from argparse import ONE_OR_MORE, Namespace
-from datetime import datetime
 from typing import Any, List, Union
 
 import pytz
@@ -9,6 +8,7 @@ from determined.cli import render
 from determined.common import api, yaml
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
+from determined.common.util import parse_protobuf_timestamp
 
 
 def parse_jobv2_resp(
@@ -77,9 +77,7 @@ def ls(args: Namespace) -> None:
             j.type.value,
             computed_job_name(j) if isinstance(j, bindings.v1Job) else render.OMITTED_VALUE,
             j.priority if is_priority else j.weight,
-            pytz.utc.localize(
-                datetime.strptime(j.submissionTime.split(".")[0], "%Y-%m-%dT%H:%M:%S")
-            )
+            pytz.utc.localize(parse_protobuf_timestamp(j.submissionTime))
             if isinstance(j, bindings.v1Job)
             else render.OMITTED_VALUE,
             f"{j.allocatedSlots}/{j.requestedSlots}",
