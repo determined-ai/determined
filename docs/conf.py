@@ -31,6 +31,12 @@ html_css_files = [
     "styles/determined.css",
 ]
 
+# To use custom CSS for the Sphinx-tabs extension, you need to disable the pre-defined CSS styles
+# for Sphinx tabs from loading, by setting this value to True.
+
+sphinx_tabs_disable_css_loading = False
+
+
 html_js_files = [
     ("https://cdn.jsdelivr.net/npm/@docsearch/js@3", {"defer": "defer"}),
     ("scripts/docsearch.sbt.js", {"defer": "defer"}),
@@ -112,11 +118,6 @@ extensions = [
     "sphinx_tabs.tabs",
     "myst_parser",
 ]
-
-# To disable the pre-defined CSS styles for Sphinx tabs from loading,
-# set this to True.
-
-sphinx_tabs_disable_css_loading = False
 
 myst_extensions = [
     "colon_fence",
