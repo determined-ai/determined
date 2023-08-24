@@ -171,15 +171,15 @@ const ResourcePoolCard: React.FC<Props> = ({
             </div>
             <div className={css.default}>
               {showDescriptiveLabel && <span>{descriptiveLabel}</span>}
-              {pool.description && <Icon name="info" showTooltip title={pool.description} />}
-            </div>
-            {!showDescriptiveLabel && (
-              <div className={css.defaultPoolTooltip}>
+              {showDescriptiveLabel && pool.description && (
+                <Icon name="info" showTooltip title={pool.description} />
+              )}
+              {!showDescriptiveLabel && (
                 <Tooltip content="You cannot bind your default resource pool to a workspace.">
                   <span>Default</span>
                 </Tooltip>
-              </div>
-            )}
+              )}
+            </div>
           </div>
           <Suspense fallback={<Spinner center spinning />}>
             <div className={css.body}>
