@@ -89,6 +89,7 @@ class SyncService {
         ...b,
         dataBounds: { max: dataMax, min: dataMin },
         unzoomedBounds: { max: unzoomedMax, min: unzoomedMin },
+        zoomBounds: resetAxis ? null : b.zoomBounds,
       };
     });
   }
