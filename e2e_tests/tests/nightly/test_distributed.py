@@ -52,34 +52,6 @@ def test_cifar10_tf_keras_distributed() -> None:
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
-def test_gaea_pytorch_distributed() -> None:
-    config = conf.load_config(
-        conf.nas_examples_path("gaea_pytorch/eval/distributed_no_data_download.yaml")
-    )
-    config = conf.set_global_batch_size(config, 256)
-    config = conf.set_max_length(config, {"batches": 200})
-
-    exp.run_basic_test_with_temp_config(config, conf.nas_examples_path("gaea_pytorch/eval"), 1)
-
-
-@pytest.mark.distributed
-def test_gan_mnist_pytorch_distributed() -> None:
-    config = conf.load_config(conf.gan_examples_path("gan_mnist_pytorch/distributed.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-
-    exp.run_basic_test_with_temp_config(config, conf.gan_examples_path("gan_mnist_pytorch"), 1)
-
-
-@pytest.mark.distributed
-def test_pix2pix_facades_distributed() -> None:
-    config = conf.load_config(conf.gan_examples_path("pix2pix_tf_keras/distributed.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-
-    exp.run_basic_test_with_temp_config(config, conf.gan_examples_path("pix2pix_tf_keras"), 1)
-
-
-@pytest.mark.distributed
-@pytest.mark.gpu_required
 def test_hf_trainer_api_integration() -> None:
     test_dir = "hf_image_classification"
     config = conf.load_config(conf.hf_trainer_examples_path(f"{test_dir}/distributed.yaml"))

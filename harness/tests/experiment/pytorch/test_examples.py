@@ -80,14 +80,6 @@ def test_cifar10_parallel(tmp_path: pathlib.Path) -> None:
     launcher.elastic_launch(launch_config, run_cifar10)(tmp_path, outputs[0])
 
 
-@pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
-@pytest.mark.gpu_parallel
-def test_gan_parallel(tmp_path: pathlib.Path) -> None:
-    launch_config = pytorch_utils.setup_torch_distributed()
-
-    outputs = launcher.elastic_launch(launch_config, run_gan)(tmp_path)
-    launcher.elastic_launch(launch_config, run_gan)(tmp_path, outputs[0])
-
 
 def run_mnist(tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0) -> None:
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -155,46 +147,6 @@ def run_cifar10(tmp_path: pathlib.Path, batches_trained: int = 0):
     example_path = utils.cv_examples_path("cifar10_pytorch/model_def.py")
     trial_class = utils.import_class_from_module("CIFARTrial", example_path)
     trial_class._searcher_metric = "validation_error"
-
-    if batches_trained == 0:
-        return pytorch_utils.train_for_checkpoint(
-            trial_class=trial_class,
-            hparams=hparams,
-            slots_per_trial=2,
-            tmp_path=tmp_path,
-            exp_config=exp_config,
-            steps=1,
-        )
-    else:
-        pytorch_utils.train_from_checkpoint(
-            trial_class=trial_class,
-            hparams=hparams,
-            slots_per_trial=2,
-            tmp_path=tmp_path,
-            exp_config=exp_config,
-            steps=(1, 1),
-            batches_trained=batches_trained,
-        )
-
-
-def run_gan(tmp_path: pathlib.Path, batches_trained: int = 0):
-    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
-
-    config = utils.load_config(utils.gan_examples_path("gan_mnist_pytorch/const.yaml"))
-    hparams = config["hyperparameters"]
-
-    exp_config = utils.make_default_exp_config(
-        hparams,
-        scheduling_unit=1,
-        searcher_metric="validation_loss",
-        checkpoint_dir=checkpoint_dir,
-    )
-    exp_config.update(config)
-    exp_config["searcher"]["smaller_is_better"] = True
-
-    example_path = utils.gan_examples_path("gan_mnist_pytorch/model_def.py")
-    trial_class = utils.import_class_from_module("GANTrial", example_path)
-    trial_class._searcher_metric = "loss"
 
     if batches_trained == 0:
         return pytorch_utils.train_for_checkpoint(

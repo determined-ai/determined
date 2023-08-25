@@ -24,12 +24,6 @@
 | [darts\_cifar10\_pytorch](hp_search_benchmarks/darts_cifar10_pytorch)           | CIFAR-10              | PyTorch   |
 | [darts\_penntreebank\_pytorch](hp_search_benchmarks/darts_penntreebank_pytorch) | Penn Treebank Dataset | PyTorch   |
 
-## Neural Architecture Search (NAS)
-
-| Example                            | Dataset | Framework |
-|:---------------------------------:|:-------:|:---------:|
-| [gaea\_pytorch](nas/gaea_pytorch) | DARTS   | PyTorch   |
-
 ## Meta Learning
 
 | Example                                                                | Dataset  | Framework |
