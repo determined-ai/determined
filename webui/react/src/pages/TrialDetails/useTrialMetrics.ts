@@ -91,8 +91,11 @@ const summarizedMetricToSeries = (
 };
 
 export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetricData => {
-  const trialTerminated = trials?.every((trial) =>
+  const trialsAllTerminated = trials?.every((trial) =>
     terminalRunStates.has(trial?.state ?? RunState.Active),
+  );
+  const trialsAllNonTerminal = !trials?.find((trial) =>
+    terminalRunStates.has(trial?.state ?? RunState.Error),
   );
   const experimentIds = useMemo(
     () => trials?.map((t) => t?.experimentId || 0).filter((i) => i > 0),
@@ -111,7 +114,11 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
     [trials],
   );
 
-  const loadableMetrics = useMetricNames(experimentIds, handleMetricNamesError);
+  const loadableMetrics = useMetricNames(
+    experimentIds,
+    handleMetricNamesError,
+    trialsAllNonTerminal,
+  );
   const metricNamesLoaded = Loadable.isLoaded(loadableMetrics);
   const metrics = useMemo(() => {
     return Loadable.getOrElse([], loadableMetrics);
@@ -179,12 +186,12 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
   const { stopPolling } = usePolling(fetchAll, { interval: 2000, rerunOnNewFn: true });
 
   useEffect(() => {
-    if (trialTerminated) {
+    if (trialsAllTerminated) {
       stopPolling();
     }
-  }, [trialTerminated, stopPolling]);
+  }, [trialsAllTerminated, stopPolling]);
 
-  if (trialTerminated) {
+  if (trialsAllTerminated) {
     stopPolling();
   }
 
