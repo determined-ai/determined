@@ -480,7 +480,7 @@ func (t *trial) addTask() error {
 func (t *trial) buildTaskSpecifier() (*tasks.TrialSpec, error) {
 	t.syslog.WithField("requstId", t.searcher.Create.RequestID).Info("trial building task specifier")
 	if !t.trialCreationSent {
-		t.syslog.WithField("parent", t.parent).Info("trial created")
+		t.syslog.Info("trial created")
 		if t.parent == nil {
 			panic("parent is nil")
 		}

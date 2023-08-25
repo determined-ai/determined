@@ -270,7 +270,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	// Searcher-related messages.
 	case actor.PreStart:
 		e.self = ctx.Self()
-		e.syslog.WithField("self", e.self).Info("experiment actor started")
+		e.syslog.Info("experiment actor started")
 		ctx.AddLabels(e.logCtx)
 		e.rm.SetGroupMaxSlots(ctx, sproto.SetGroupMaxSlots{
 			MaxSlots: e.activeConfig.Resources().MaxSlots(),
