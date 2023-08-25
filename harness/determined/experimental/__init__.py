@@ -5,6 +5,7 @@ with warnings.catch_warnings(record=True):
         Checkpoint,
         Determined,
         Experiment,
+        ExperimentReference,
         Model,
         ModelOrderBy,
         ModelSortBy,
@@ -12,6 +13,7 @@ with warnings.catch_warnings(record=True):
         Session,
         Trial,
         TrialOrderBy,
+        TrialReference,
         TrialSortBy,
     )
     from determined.common.experimental import (
