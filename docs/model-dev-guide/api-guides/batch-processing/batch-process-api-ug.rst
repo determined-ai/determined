@@ -243,7 +243,7 @@ For example, inside the trial, you could use:
            group="inference",
            steps_completed=self.rank,
            metrics={
-               "total_frogs": self.total_frogs[self.rank],
+               "my_metric": 1.0,
            },
        )
 
