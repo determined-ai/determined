@@ -100,11 +100,12 @@ def get_command_info(command_id: str) -> Dict[str, Any]:
     return get_task_info("command", command_id)
 
 
+# assert_command_succeded checks if a command succeeded or not. It prints the command info in case
+# of a failure.
 def assert_command_succeeded(command_id: str) -> None:
     command_info = get_command_info(command_id)
     command_info_json = json.dumps(command_info, indent=2, separators=(",", ":"))
-    exit_status = command_info["exitStatus"]
-    succeeded = "success" in exit_status
+    succeeded = "success" in command_info["exitStatus"]
     assert succeeded, f"Command failed. Command Info:\n {command_info_json}"
 
 
