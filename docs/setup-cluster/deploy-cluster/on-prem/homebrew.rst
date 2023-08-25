@@ -49,8 +49,8 @@ them to one master.
 
       brew services start determined-master
 
-#. If needed, you can configure the master by editing ``/usr/local/etc/determined/master.yaml`` and
-   restarting the service.
+#. If needed, you can configure the master by editing ``$(brew
+   --prefix)/etc/determined/master.yaml`` and restarting the service.
 
 **********************
  Installation - Agent
@@ -76,9 +76,9 @@ them to one master.
 
       brew install determined-agent
 
-#. When installing on a different machine than the master, edit
-   ``/usr/local/etc/determined/agent.yaml`` and change ``master_host`` and ``container_master_host``
-   to your master network hostname, and ``master_port`` to your master network port.
+#. When installing on a different machine than the master, edit ``$(brew
+   --prefix)/etc/determined/agent.yaml`` and change ``master_host`` and ``container_master_host`` to
+   your master network hostname, and ``master_port`` to your master network port.
 
 #. Start the ``determined-agent`` service.
 
