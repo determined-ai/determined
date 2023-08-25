@@ -1,8 +1,8 @@
 .. _setup-checklists:
 
-#########################################
- Cluster Deployment Guide by Environment
-#########################################
+##########################
+ Cluster Deployment Guide
+##########################
 
 .. meta::
    :description: Discover how to set up your Determined cluster on AWS, GCP, Kubernetes, Slurm or On-Prem with an easy checklist.
@@ -11,7 +11,7 @@ If you have not yet set up your training environment, consult the :ref:`setup ch
 <basic-setup>`.
 
 +--------------------------------------------------------+
-| Environment                                            |
+| Determined Agent                                       |
 +========================================================+
 | :doc:`on-prem/overview`                                |
 |                                                        |
@@ -25,6 +25,10 @@ If you have not yet set up your training environment, consult the :ref:`setup ch
 +--------------------------------------------------------+
 | :doc:`gcp/overview`                                    |
 +--------------------------------------------------------+
+
++--------------------------------------------------------+
+| Kubernetes                                             |
++========================================================+
 | :doc:`k8s/overview`                                    |
 |                                                        |
 | -  :doc:`k8s/install-on-kubernetes`                    |
@@ -32,6 +36,10 @@ If you have not yet set up your training environment, consult the :ref:`setup ch
 | -  :doc:`k8s/setup-eks-cluster`                        |
 | -  :doc:`k8s/setup-gke-cluster`                        |
 +--------------------------------------------------------+
+
++--------------------------------------------------------+
+| Slurm                                                  |
++========================================================+
 | :doc:`slurm/overview`                                  |
 +--------------------------------------------------------+
 

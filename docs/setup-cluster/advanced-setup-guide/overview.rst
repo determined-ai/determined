@@ -158,18 +158,15 @@ The next step is to decide if you want to deploy the Determined Master on premis
             -  :ref:`setup-gke-cluster`
             -  :ref:`setup-aks-cluster`
 
-To do include Firewall rules
+Configure Your Cluster
+======================
 
-The firewall rules must satisfy the following network access requirements for the master and agents.
+Once you have set up the necessary components for your chosen environment, you can configure the
+cluster. Visit the cluster configuration resources below or visit :ref:`cluster-configuration`.
 
-Firewall Rules
-==============
-
--  Inbound TCP to the master's network port from the Determined agent instances, as well as all
-   machines where developers want to use the Determined CLI or WebUI. The default port is ``8443``
-   if TLS is enabled and ``8080`` if not.
-
--  Outbound TCP to all ports on the Determined agents.
+-  Common configuration reference: :doc:`/reference/deploy/config/common-config-options`
+-  Master configuration reference: :doc:`/reference/deploy/config/master-config-reference`
+-  Agent configuration reference: :doc:`/reference/deploy/config/agent-config-reference`
 
 ********************************
  Step 3 - Set Up TLS (Optional)
@@ -233,63 +230,17 @@ To validate Step 4, ensure the users can access the Determined cluster.
  Step 5 - Set Up Compute Resources
 ***********************************
 
-Step 5a - Set up Internet Access
-================================
+(this is agents) maybe link to Internet Access maybe link to Firewall Rules maybe link to
+Transferring the Context Directory
 
--  The Determined Docker images are hosted on Docker Hub. Determined agents need access to Docker
-   Hub for such tasks as building new images for user workloads.
+maybe this section does not need to be here since we don't have content yet?
 
--  If packages, data, or other resources needed by user workloads are hosted on the public Internet,
-   Determined agents need to be able to access them. Note that agents can be :ref:`configured to use
-   proxies <agent-network-proxy>` when accessing network resources.
+maybe this note doesn't go here?
 
--  For best performance, it is recommended that the Determined master and agents use the same
-   physical network or VPC. When using VPCs on a public cloud provider, additional steps might need
-   to be taken to ensure that instances in the VPC can access the Internet:
+.. note::
 
-   -  On GCP, the instances need to have an external IP address, or a `GCP Cloud NAT
-      <https://cloud.google.com/nat/docs/overview>`_ should be configured for the VPC.
-
-   -  On AWS, the instances need to have a public IP address, and a `VPC Internet Gateway
-      <https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html>`_ should be
-      configured for the VPC.
-
-Step 5b - Firewall Rules (Port Reference) for Agents
-====================================================
-
-To do: some is correct, some incorrect, needs to be rewritten
-
-The firewall rules must satisfy the following network access requirements for the master and agents.
-
--  Inbound TCP from all ports on the master to all ports on the agent.
-
--  Outbound TCP from all ports on the agent to the master's network port.
-
--  Outbound TCP to the services that host the Docker images, packages, data, and other resources
-   that need to be accessed by user workloads. For example, if your data is stored on Amazon S3,
-   ensure the firewall rules allow access to this data.
-
--  Inbound and outbound TCP on all ports to and from each Determined agent. The details are as
-   follows:
-
-   -  Inbound and outbound TCP ports 1734 and 1750 are used for synchronization between trial
-      containers.
-   -  Inbound and outbound TCP port 12350 is used for internal SSH-based communication between trial
-      containers.
-   -  When using ``DeepSpeedTrial``, port 29500 is used by for rendezvous between trial containers.
-   -  When using ``PyTorchTrial`` with the "torch" distributed training backend, port 29400 is used
-      for rendezvous between trial containers
-   -  For all other distributed training modes, inbound and outbound TCP port 12355 is used for GLOO
-      rendezvous between trial containers.
-   -  Inbound and outbound ephemeral TCP ports in the range 1024-65536 are used for communication
-      between trials via GLOO.
-   -  For every GPU on each agent machine, an inbound and outbound ephemeral TCP port in the range
-      1024-65536 is used for communication between trials via NCCL.
-   -  Two additional ephemeral TCP ports in the range 1024-65536 are used for additional intra-trial
-      communication between trial containers.
-   -  Each TensorBoard uses a port in the range 2600–2899
-   -  Each notebook uses a port in the range 2900–3199
-   -  Each shell uses a port in the range 3200–3599
+   :ref:`Firewall rules <firewall-rules>` must satisfy network access requirements for the master
+   and agents.
 
 *********************************************
  Step 6 - Set Up Monitoring Tools (Optional)
@@ -311,134 +262,30 @@ The following monitoring tools are officially supported: Prometheus/Grafana
 
       Description and link to instructions.
 
-.. _cluster-configuration:
-
-*************************
- Configuring the Cluster
-*************************
-
-Common configuration reference: :doc:`/reference/deploy/config/common-config-options`
-
-Master configuration reference: :doc:`/reference/deploy/config/master-config-reference`
-
-Agent configuration reference: :doc:`/reference/deploy/config/agent-config-reference`
-
-Basic Configuration
-===================
-
-To Do: Some of this is outdated (e.g., Docker Run)
-
-The behavior of the master and agent can be controlled by setting configuration variables; this can
-be done using a configuration file, environment variables, or command-line options. Although values
-from different sources will be merged, we generally recommend sticking to a single source for each
-service to keep things simple.
-
-The master and the agent both accept an optional ``--config-file`` command-line option, which
-specifies the path of the configuration file to use. Note that when running the master or agent
-inside a container, you will need to make the configuration file accessible inside the container
-(e.g., via a bind mount). For example, this command starts the agent using a configuration file:
-
-.. code::
-
-   docker run \
-     -v `pwd`/agent-config.yaml:/etc/determined/agent-config.yaml \
-     determinedai/determined-agent
-     --config-file /etc/determined/agent-config.yaml
-
-The ``agent-config.yaml`` file might contain
-
-.. code:: yaml
-
-   master_host: 127.0.0.1
-   master_port: 8080
-
-to configure the address of the Determined master that the agent will attempt to connect to.
-
-Each option in the master or agent configuration file can also be specified as an environment
-variable or a command-line option. To configure the behavior of the master or agent using
-environment variables, specify an environment variable starting with ``DET_`` followed by the name
-of the configuration variable. Underscores (``_``) should be used to indicate nested options: for
-example, the ``logging.type`` master configuration option can be specified via an environment
-variable named ``DET_LOGGING_TYPE``.
-
-The equivalent of the agent configuration file shown above can be specified by setting two
-environment variables, ``DET_MASTER_HOST`` and ``DET_MASTER_PORT``. When starting the agent as a
-container, environment variables can be specified as part of ``docker run``:
-
-.. code::
-
-   docker run \
-     -e DET_MASTER_HOST=127.0.0.1 \
-     -e DET_MASTER_PORT=8080 \
-     determinedai/determined-agent
-
-The equivalent behavior can be achieved using command-line options:
-
-.. code::
-
-   determined-agent run --master-host=127.0.0.1 --master-port=8080
-
-The same behavior applies to master configuration settings as well. For example, configuring the
-host where the Postgres database is running can be done via a configuration file containing:
-
-.. code:: yaml
-
-   db:
-     host: the-db-host
-
-Equivalent behavior can be achieved by setting the ``DET_DB_HOST=the-db-host`` environment variable
-or ``--db-host the-db-host`` command-line option.
-
-In the rest of this document, we will refer to options using their names in the configuration file.
-Periods (``.``) will be used to indicate nested options; for example, the option above would be
-indicated by ``db.host``.
-
-Advanced Configuration
-======================
-
-To Do: Move to Commands and Shells
-
-:ref:`Additional configuration settings <command-notebook-configuration>` for both commands and
-shells can be set using the ``--config`` and ``--config-file`` options. Typical settings include:
-
--  ``bind_mounts``: Specifies directories to be bind-mounted into the container from the host
-   machine. (Due to the structured values required for this setting, it needs to be specified in a
-   config file.)
-
--  ``resources.slots``: Specifies the number of slots the container will have access to.
-   (Distributed commands and shells are not supported; all slots will be on one machine and
-   attempting to use more slots than are available on one machine will prevent the container from
-   being scheduled.)
-
--  ``environment.image``: Specifies a custom Docker image to use for the container.
-
--  ``description``: Specifies a description for the command or shell to distinguish it from others.
-
 ************
  Next Steps
 ************
 
-RBAC
-====
+Configuring RBAC
+================
 
-x
+You should configure role-based access control (RBAC) before creating workspaces and projects. To
+configure RBAC, visit :ref:`rbac`.
 
-Workspaces
-==========
+.. attention::
 
-x
+   RBAC is only available on Determined Enterprise Edition.
 
-Checkpoint Storage
-==================
+Creating Workspaces and Projects
+================================
 
-x
+Determined lets you organize and control access to your experiments by team or department. To do
+this, you can create :ref:`workspaces` based on your RBAC groups.
 
-Deploying Your Cluster
-======================
+Configuring Checkpoint Storage
+==============================
 
-Once you have set up the necessary components for your chosen environment, you can configure the
-environment. For detailed instructions by environment, visit the :ref:`Cluster Deployment Guide by
-Environment <setup-checklists>`.
+To configure checkpoint storage, visit :ref:`checkpoint-storage`.
 
 .. toctree::
    :hidden:
