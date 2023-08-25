@@ -19,8 +19,7 @@ from .managed_cluster import ManagedCluster, get_agent_data
 from .managed_cluster_k8s import ManagedK8sCluster
 from .test_groups import det_cmd_json
 from .utils import (
-    command_succeeded,
-    get_command_info,
+    assert_command_succeeded,
     run_command,
     wait_for_command_state,
     wait_for_task_state,
@@ -52,7 +51,7 @@ def _test_master_restart_ok(managed_cluster: Cluster) -> None:
 
             for cmd_id in cmd_ids:
                 wait_for_command_state(cmd_id, "TERMINATED", 300)
-                assert command_succeeded(cmd_id)
+                assert_command_succeeded(cmd_id)
 
             managed_cluster.kill_master()
             managed_cluster.restart_master()
@@ -235,8 +234,7 @@ def _test_master_restart_cmd(managed_cluster: Cluster, slots: int, downtime: int
         managed_cluster.restart_master()
 
     wait_for_command_state(command_id, "TERMINATED", 30)
-    succeeded = "success" in get_command_info(command_id)["exitStatus"]
-    assert succeeded
+    assert_command_succeeded(command_id)
 
 
 @pytest.mark.managed_devcluster
@@ -433,4 +431,4 @@ def test_master_restart_with_queued(k8s_managed_cluster: ManagedK8sCluster) -> N
 
     for cmd_id in [running_command_id, queued_command_id]:
         wait_for_command_state(cmd_id, "TERMINATED", 60)
-        assert "success" in get_command_info(cmd_id)["exitStatus"]
+        assert_command_succeeded(cmd_id)
