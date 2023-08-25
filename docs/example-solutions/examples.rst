@@ -42,22 +42,6 @@ For an introduction to using the training API, please visit the Training APIs se
       -  COCO
       -  :download:`mmdetection.tgz </examples/mmdetection.tgz>`
 
-   -  -  PyTorch
-      -  COCO
-      -  :download:`detr_coco_pytorch.tgz </examples/detr_coco_pytorch.tgz>`
-
-   -  -  PyTorch
-      -  COCO
-      -  :download:`deformabledetr_coco_pytorch.tgz </examples/deformabledetr_coco_pytorch.tgz>`
-
-   -  -  PyTorch
-      -  COCO
-      -  :download:`efficientdet_pytorch.tgz </examples/efficientdet_pytorch.tgz>`
-
-   -  -  PyTorch
-      -  COCO
-      -  :download:`detectron2_coco_pytorch.tgz </examples/detectron2_coco_pytorch.tgz>`
-
    -  -  TensorFlow (tf.keras)
       -  Fashion MNIST
       -  :download:`fashion_mnist_tf_keras.tgz </examples/fashion_mnist_tf_keras.tgz>`
@@ -65,10 +49,6 @@ For an introduction to using the training API, please visit the Training APIs se
    -  -  TensorFlow (tf.keras)
       -  CIFAR-10
       -  :download:`cifar10_tf_keras.tgz </examples/cifar10_tf_keras.tgz>`
-
-   -  -  TensorFlow (tf.keras)
-      -  Oxford-IIIT Pet Dataset
-      -  :download:`unets_tf_keras.tgz </examples/unets_tf_keras.tgz>`
 
 ***********************************
  Natural Language Processing (NLP)

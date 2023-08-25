@@ -15,11 +15,7 @@
 |:----------------------------------------------------------------------------:|:----------------------------:|:----------------------------------------:|
 | [cifar10\_pytorch\_inference](computer_vision/cifar10_pytorch_inference)     | CIFAR-10                     | PyTorch                                  |
 | [mmdetection\_pytorch](computer_vision/mmdetection_pytorch)                  | COCO                         | PyTorch                                  |
-| [detr\_coco\_pytorch](computer_vision/detr_coco_pytorch)                     | COCO                         | PyTorch                                  |
-| [deformabledetr\_coco\_pytorch](computer_vision/deformabledetr_coco_pytorch) | COCO                         | PyTorch                                  |
 | [cifar10\_tf\_keras](computer_vision/cifar10_tf_keras)                       | CIFAR-10                     | TensorFlow (tf.keras)                    |
-| [unets\_tf\_keras](computer_vision/unets_tf_keras)                           | Oxford-IIIT Pet Dataset      | TensorFlow (tf.keras)                    |
-| [efficientdet\_pytorch](computer_vision/efficientdet_pytorch)                | COCO                         | PyTorch                                  |
 | [deepspeed\_cifar10_cpu_offloading](deepspeed/cifar10_cpu_offloading)        | CIFAR-10                     | PyTorch (DeepSpeed)                      |
 
 ## Natural Language Processing (NLP)
