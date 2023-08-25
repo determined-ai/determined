@@ -1,3 +1,5 @@
+.. _apis-howto-overview:
+
 ###############
  Training APIs
 ###############
@@ -14,11 +16,11 @@ guide contains a link to its corresponding API reference.
 **********
 
 The Core API is a low-level, flexible API that lets you train models in any deep learning framework.
-With the Core API, you can plug in your existing training code. You'll then use an :doc:`experiment
-configuration </reference/training/experiment-config-reference>` to tell Determined how to train the
-model - e.g., multi-GPU, hyperparameter search, etc.
+With the Core API, you can plug in your existing training code. You'll then use an :ref:`experiment
+configuration <experiment-configuration>` to tell Determined how to train the model - e.g.,
+multi-GPU, hyperparameter search, etc.
 
--  :doc:`/model-dev-guide/apis-howto/api-core-ug`
+-  :ref:`Core API User Guide <core-getting-started>`
 
 .. _high-level-apis:
 
@@ -33,13 +35,13 @@ learning rate scheduler, callbacks, etc. This is called the Trial definition. Wi
 structured in this way, Determined is able to run the training loop and provide advanced training
 and model management capabilities.
 
-Once you have converted your code, you can use an :doc:`experiment configuration
-</reference/training/experiment-config-reference>` to tell Determined how to train the model - e.g.,
-multi-GPU, hyperparameter search, etc.
+Once you have converted your code, you can use an :ref:`experiment configuration
+<experiment-configuration>` to tell Determined how to train the model - e.g., multi-GPU,
+hyperparameter search, etc.
 
--  :doc:`/model-dev-guide/apis-howto/api-pytorch-ug`
--  :doc:`/model-dev-guide/apis-howto/api-keras-ug`
--  :doc:`/model-dev-guide/apis-howto/deepspeed/overview`
+-  :ref:`api-pytorch-ug`
+-  :ref:`api-keras-ug`
+-  :ref:`api-deepspeed-ug`
 
 Looking for a Basic Tutorial?
 =============================
@@ -51,8 +53,7 @@ Prefer to use an Example Model?
 ===============================
 
 If you'd like to build off of an existing model that already runs on Determined, visit our
-:doc:`examples </example-solutions/examples>` to see if the model you'd like to train is already
-available.
+:ref:`example-solutions` to see if the model you'd like to train is already available.
 
 ********************
  TensorFlow Support
@@ -61,10 +62,10 @@ available.
 TensorFlow Core Models
 ======================
 
-Determined has support for TensorFlow models that use the :doc:`Keras
-</model-dev-guide/apis-howto/api-keras-ug>` API. For models that use the low-level TensorFlow Core
-APIs, we recommend wrapping your model in Keras, as recommended by the official `TensorFlow
-<https://www.tensorflow.org/guide/basics#training_loops>`_ documentation.
+Determined has support for TensorFlow models that use the :ref:`Keras <api-keras-ug>` API. For
+models that use the low-level TensorFlow Core APIs, we recommend wrapping your model in Keras, as
+recommended by the official `TensorFlow <https://www.tensorflow.org/guide/basics#training_loops>`_
+documentation.
 
 TensorFlow 1 vs 2
 =================

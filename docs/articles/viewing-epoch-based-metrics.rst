@@ -17,8 +17,8 @@ use it as the X-Axis label in the WebUI.
 
 **Recommended**
 
--  :doc:`Quickstart for Model Developers <../tutorials/quickstart-mdldev>`
--  :doc:`Core API User Guide <../model-dev-guide/apis-howto/api-core-ug>`
+-  :ref:`Quickstart for Model Developers <qs-mdldev>`
+-  :ref:`Core API User Guide <core-getting-started>`
 
 **********************************
  Set Up Your Training Environment

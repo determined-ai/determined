@@ -1,3 +1,5 @@
+.. _set-environment-images:
+
 ########################
  Set Environment Images
 ########################
@@ -25,4 +27,4 @@ If one of the images above contain your required libraries, there is no addition
 preparation needed.
 
 If you need to add additional customization to the training environment, review the
-:doc:`/model-dev-guide/prepare-container/custom-env` page.
+:ref:`custom-env` page.

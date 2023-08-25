@@ -1,3 +1,5 @@
+.. _api-core-ug:
+
 .. _core-getting-started:
 
 #####################
@@ -81,7 +83,7 @@ Open the Determined WebUI by navigating to the master URL. One way to do this is
 ``http://localhost:8080/``, accept the default Determined username, leave the password empty, and
 then click **Sign In**.
 
-.. include:: ../../_shared/note-local-dtrain-job.txt
+.. include:: ../../../_shared/note-local-dtrain-job.txt
 
 In the WebUI, select your experiment. You'll notice the tabs do not yet contain any information. In
 the next section, we'll report training and validation metrics.
@@ -98,7 +100,7 @@ interaction with the master. Then, we'll pass the ``core_context`` as an argumen
 To run our experiment, we'll use the ``model_def_metrics.py`` script and its accompanying
 ``metrics.yaml`` experiment configuration file.
 
-.. include:: ../../_shared/note-premade-tutorial-script.txt
+.. include:: ../../../_shared/note-premade-tutorial-script.txt
 
 Begin by importing Determined:
 
@@ -116,7 +118,7 @@ this, we'll modify the ``__main__`` loop to include ``core_context``:
 
    Refer to the ``if __name__ == "__main__":`` block in ``model_def_metrics.py``
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
    :language: python
    :start-after: # Docs snippet start: modify main loop core context
    :end-before: # Docs snippet end: modify main loop core content
@@ -129,7 +131,7 @@ Use ``core_context.train`` to report training and validation metrics.
 
 #. Begin by importing the ``determined`` module:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
    :language: python
    :start-after: # Docs snippet start: report training metrics
    :end-before: # Docs snippet end: report training metrics
@@ -137,7 +139,7 @@ Use ``core_context.train`` to report training and validation metrics.
 
 and ``core_context.train.report_validation_metrics()``:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
    :language: python
    :start-after: # Docs snippet start: report validation metrics
    :end-before: # Docs snippet end: report validation metrics
@@ -151,7 +153,7 @@ evaluation loop. The ``args`` variable lets you pass configuration settings such
 learning rate. In addition, pass the newly created ``core_context`` into both ``train()`` and
 ``test()``. Passing ``core_context`` enables reporting of metrics to the Determined master.
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
    :language: python
    :start-after: # Docs snippet start: pass core context
    :end-before: # Docs snippet end: pass core context
@@ -159,7 +161,7 @@ learning rate. In addition, pass the newly created ``core_context`` into both ``
 
 Create a ``steps_completed`` variable to plot metrics on a graph in the WebUI:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
    :language: python
    :start-after: # Docs snippet start: calculate steps completed
    :end-before: # Docs snippet end: calculate steps completed
@@ -191,14 +193,14 @@ checkpointing.
 In this step, we’ll run our experiment using the ``model_def_checkpoints.py`` script and its
 accompanying ``checkpoints.yaml`` experiment configuration file.
 
-.. include:: ../../_shared/note-premade-tutorial-script.txt
+.. include:: ../../../_shared/note-premade-tutorial-script.txt
 
 Step 3.1: Save Checkpoints
 ==========================
 
 To save checkpoints, add the ``store_path`` function to your script:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
    :start-after: # Docs snippet start: save checkpoint
    :end-before: # Docs snippet end: save checkpoint
@@ -222,7 +224,7 @@ To distinguish between the two types of continuations, you can save the trial ID
 
 To enable pausing an experiment, enable preemption:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
    :start-after: # Docs snippet start: enable preemption
    :end-before: # Docs snippet end: enable preemption
@@ -230,7 +232,7 @@ To enable pausing an experiment, enable preemption:
 
 Define a load_state function for restarting model training from existing checkpoint:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
    :start-after: # Docs snippet start: define load state to restart
    :end-before: # Docs snippet end: define load state to restart
@@ -238,7 +240,7 @@ Define a load_state function for restarting model training from existing checkpo
 
 If checkpoint exists, load it and assign it to model state prior to resuming training:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
    :start-after: # Docs snippet start: if checkpoint assign to model state
    :end-before: # Docs snippet end: if checkpoint assign to model state
@@ -252,7 +254,7 @@ is to load the checkpoint and save the checkpoint in a file in the checkpoint di
 Open the ``checkpoint.pt`` file in binary mode and compare ``ckpt_trial_id`` with the current
 ``trial_id``:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
    :start-after: # Docs snippet start: compare checkpoint and current trial IDs
    :end-before: # Docs snippet end: compare checkpoint and current trial IDs
@@ -260,7 +262,7 @@ Open the ``checkpoint.pt`` file in binary mode and compare ``ckpt_trial_id`` wit
 
 Save the checkpoint in the ``checkpoint.pt`` file:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
    :start-after: # Docs snippet start: save checkpoint
    :end-before: # Docs snippet end: save checkpoint
@@ -268,7 +270,7 @@ Save the checkpoint in the ``checkpoint.pt`` file:
 
 Detect when the experiment is paused by the WebUI:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
    :start-after: # Docs snippet start: enable preemption
    :end-before: # Docs snippet end: enable preemption
@@ -340,11 +342,11 @@ between the ``minval`` and ``maxval`` for each hyperparameter for each trial.
 In this step, we’ll run our experiment using the ``model_def_adaptive.py`` script and its
 accompanying ``adaptive.yaml`` experiment configuration file.
 
-.. include:: ../../_shared/note-premade-tutorial-script.txt
+.. include:: ../../../_shared/note-premade-tutorial-script.txt
 
 Begin by accessing the hyperparameters in your code:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
    :language: python
    :start-after: # Docs snippet start: get hparams
    :end-before: # Docs snippet end: get hparams
@@ -352,7 +354,7 @@ Begin by accessing the hyperparameters in your code:
 
 Then, pass the hyperparameters into your model and optimizer:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
    :language: python
    :start-after: # Docs snippet start: pass hyperparameters
    :end-before: # Docs snippet end: pass hyperparameters
@@ -361,7 +363,7 @@ Then, pass the hyperparameters into your model and optimizer:
 Ensure your model is set to use the selected values on a per-trial basis rather than your previously
 hardcoded values:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
    :language: python
    :start-after: # Docs snippet start: per trial basis
    :end-before: # Docs snippet end: per trial basis
@@ -413,7 +415,7 @@ changes to our configuration experiment file.
 In this step, we’ll run our experiment using the ``model_def_distributed.py`` script and its
 accompanying ``distributed.yaml`` experiment configuration file.
 
-.. include:: ../../_shared/note-premade-tutorial-script.txt
+.. include:: ../../../_shared/note-premade-tutorial-script.txt
 
 Step 5.1: Edit Your Experiment Configuration File
 =================================================
@@ -439,7 +441,7 @@ Step 5.2: Modify Your Training Script
 
 Add a few more imports to your training script:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
    :start-after: # Docs snippet start: import torch distrib
    :end-before: # Docs snippet end: import torch distrib
@@ -448,7 +450,7 @@ Add a few more imports to your training script:
 Initialize a process group using ``torch``. After initializing a process group, initialize a
 Determined distributed context using ``from_torch_distributed``:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
    :start-after: # Docs snippet start: initialize process group
    :end-before: # Docs snippet end: initialize process group
@@ -461,7 +463,7 @@ practice even if you only have a single GPU-per-node setup:
 
    Refer to the ``if use_cuda:`` block in ``model_def_distributed.py``
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
    :start-after: # Docs snippet start: set device
    :end-before: # Docs snippet end: set device
@@ -470,7 +472,7 @@ practice even if you only have a single GPU-per-node setup:
 Shard the data into ``num_replicas`` non-overlapping parts. ``num_replicas`` is equal to
 ``core_context.distributed.size``, or the number of slots:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
    :start-after: # Docs snippet start: shard data
    :end-before: # Docs snippet end: shard data
@@ -478,7 +480,7 @@ Shard the data into ``num_replicas`` non-overlapping parts. ``num_replicas`` is 
 
 Wrap your model with torch’s DistributedDataParallel:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
    :start-after: # Docs snippet start: DDP
    :end-before: # Docs snippet end: DDP
@@ -487,7 +489,7 @@ Wrap your model with torch’s DistributedDataParallel:
 Finally, at each place in the code where you upload checkpoints, report training metrics, or report
 progress to the master, make sure this is done only on rank 0, e.g.,:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
+.. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
    :start-after: # Docs snippet start: report metrics rank 0
    :end-before: # Docs snippet end: report metrics rank 0
@@ -515,4 +517,4 @@ In this user guide, you learned how to use the Core API to integrate a model int
 also saw how to modify a training script and use the appropriate configuration file to report
 metrics and checkpointing, perform a hyperparameter search, and run distributed training.
 
-.. include:: ../../_shared/note-dtrain-learn-more.txt
+.. include:: ../../../_shared/note-dtrain-learn-more.txt
