@@ -61,18 +61,6 @@ For an introduction to using the training API, please visit the Training APIs se
       -  Dataset
       -  Filename
 
-   -  -  PyTorch
-      -  SQuAD 2.0
-      -  :download:`albert_squad_pytorch.tgz </examples/albert_squad_pytorch.tgz>`
-
-   -  -  PyTorch
-      -  GLUE
-      -  :download:`bert_glue_pytorch.tgz </examples/bert_glue_pytorch.tgz>`
-
-   -  -  PyTorch
-      -  WikiText-2
-      -  :download:`word_language_model.tgz </examples/word_language_model.tgz>`
-
    -  -  PyTorch (:ref:`Model Hub Transformers <model-hub-transformers>`)
       -  WikiText-2
       -  :download:`language-modeling.tgz </examples/language-modeling.tgz>`
