@@ -70,10 +70,6 @@ For an introduction to using the training API, please visit the Training APIs se
       -  Oxford-IIIT Pet Dataset
       -  :download:`unets_tf_keras.tgz </examples/unets_tf_keras.tgz>`
 
-   -  -  PyTorch
-      -  CIFAR-10 / STL-10 / ImageNet
-      -  :download:`byol_pytorch.tgz </examples/byol_pytorch.tgz>`
-
 ***********************************
  Natural Language Processing (NLP)
 ***********************************
