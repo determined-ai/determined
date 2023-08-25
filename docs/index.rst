@@ -19,7 +19,7 @@
    :caption: Set Up
    :hidden:
 
-   Basic Setup <setup-cluster/basic-setup-guide/basic-setup>
+   Basic Setup <setup-cluster/basic-setup-guide/basic>
    Advanced Setup <setup-cluster/advanced-setup-guide/overview>
    By Environment <setup-cluster/deploy-cluster/index>
    Security <setup-cluster/security/overview>
