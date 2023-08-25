@@ -107,6 +107,7 @@ const fontIcons = [
   'critical',
   'trace',
   'webhooks',
+  'external',
 ] as const;
 
 type FontIconName = (typeof fontIcons)[number];

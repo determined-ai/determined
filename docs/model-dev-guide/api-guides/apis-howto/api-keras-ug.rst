@@ -1,3 +1,5 @@
+.. _api-keras-ug:
+
 ###########
  Keras API
 ###########
@@ -28,8 +30,8 @@ To learn about this API, you can start by reading the trial definitions from the
 
 .. note::
 
-   Before loading data, visit :doc:`/model-dev-guide/load-model-data` to understand how to work with
-   different sources of data.
+   Before loading data, visit :ref:`load-model-data` to understand how to work with different
+   sources of data.
 
 Loading data is done by defining :meth:`~determined.keras.TFKerasTrial.build_training_data_loader`
 and :meth:`~determined.keras.TFKerasTrial.build_validation_data_loader` methods. Each should return
@@ -52,7 +54,7 @@ using :meth:`self.context.wrap_dataset <determined.keras.TFKerasTrialContext.wra
 wrapper is used to shard the dataset for distributed training. For optimal performance, users should
 wrap a dataset immediately after creating it.
 
-.. include:: ../../_shared/note-dtrain-learn-more.txt
+.. include:: ../../../_shared/note-dtrain-learn-more.txt
 
 ******************
  Define the Model

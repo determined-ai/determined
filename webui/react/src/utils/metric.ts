@@ -69,17 +69,22 @@ export const getMetricValue = (
 
 export const isMetric = (metric?: Metric): metric is Metric => metric !== undefined;
 export const metricToStr = (metric: Metric, truncateLimit = 30): string => {
-  const group = metric.group.substring(0, 1).toUpperCase();
-  const name =
-    metric.name.length > truncateLimit
-      ? metric.name.substring(0, truncateLimit) + '...'
-      : metric.name;
-  return `[${group}] ${name}`;
+  /**
+   * TODO - also see `src/components/MetricBadgeTag.tsx'
+   * Metric group may sometimes end up being `undefined` when an old metric setting
+   * is restored and the UI attempts to use it. Adding a safeguard for now.
+   * Better approach of hunting down all the places it can be stored as a setting
+   * and validating it upon loading and discarding it if invalid.
+   */
+  const label = !metric.group
+    ? metric.name
+    : [metric.group, metric.name].join(METRIC_KEY_DELIMITER);
+  return label.length > truncateLimit ? label.substring(0, truncateLimit) + '...' : label;
 };
 
 export const metricToKey = (metric: Metric): string => {
   try {
-    return JSON.stringify(metric);
+    return JSON.stringify(metric, Object.keys(metric).sort());
   } catch (e) {
     return [metric.group, metric.name].join(METRIC_KEY_DELIMITER);
   }

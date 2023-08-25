@@ -12,7 +12,7 @@ from tests import config as conf
 from tests import experiment as exp
 
 from .managed_cluster import ManagedCluster
-from .utils import get_command_info, run_command, wait_for_command_state
+from .utils import assert_command_succeeded, get_command_info, run_command, wait_for_command_state
 
 DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devcluster")
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
@@ -165,10 +165,14 @@ def test_agent_restart_recover_cmd(
 
         wait_for_command_state(command_id, "TERMINATED", 30)
 
-        # Commands fail if they have finished while the agent was off.
+        # If the reattach_wait <= downtime, master would have considered agent
+        # to be dead marking the experiment fail. We can ignore such scenarios.
+        # We only need to check if the command succeeded when
+        # reattach_wait > downtime, which ensures that the agent would have
+        # reconnected in time.
         reattach_wait = restartable_managed_cluster.fetch_config_reattach_wait()
-        succeeded = "success" in get_command_info(command_id)["exitStatus"]
-        assert succeeded is (reattach_wait > downtime)
+        if reattach_wait > downtime:
+            assert_command_succeeded(command_id)
     except Exception:
         restartable_managed_cluster.restart_agent()
         raise
@@ -242,7 +246,7 @@ def test_agent_reconnect_keep_cmd(restartable_managed_cluster: ManagedCluster) -
 
         wait_for_command_state(command_id, "TERMINATED", 30)
 
-        assert "success" in get_command_info(command_id)["exitStatus"]
+        assert_command_succeeded(command_id)
     except Exception:
         restartable_managed_cluster.restart_proxy(wait_for_reconnect=False)
         restartable_managed_cluster.restart_agent()
@@ -262,7 +266,7 @@ def test_agent_reconnect_trigger_schedule(
         restartable_managed_cluster.restart_proxy()
         wait_for_command_state(command_id, "TERMINATED", 10)
 
-        assert "success" in get_command_info(command_id)["exitStatus"]
+        assert_command_succeeded(command_id)
     except Exception:
         restartable_managed_cluster.restart_proxy(wait_for_reconnect=False)
         restartable_managed_cluster.restart_agent()

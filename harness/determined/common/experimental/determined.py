@@ -56,6 +56,22 @@ class Determined:
         else:
             self._token = None
 
+    @classmethod
+    def _from_session(cls, session: api.Session) -> "Determined":
+        """Create a new Determined object that uses an existing session.
+
+        This constructor exists to help the CLI transition to using SDK methods, most of which are
+        derived from a Determined object at some point in their lifespan.
+
+        WARNING: Determined objects created with this contsructor will not have a token, and so
+        have no access to the oauth API.
+        """
+        # mypy gives new_det "Any" type, even if cls is annotated
+        new_det = cls.__new__(cls)  # type: Determined
+        new_det._session = session
+        new_det._token = None
+        return new_det
+
     def _from_bindings(self, raw: bindings.v1User) -> user.User:
         assert raw.id is not None
         if raw.agentUserGroup is not None:

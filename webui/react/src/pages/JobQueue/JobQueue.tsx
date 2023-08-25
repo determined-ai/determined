@@ -23,7 +23,16 @@ import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } fro
 import * as Api from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
-import { FullJob, Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
+import {
+  DetailedUser,
+  FullJob,
+  Job,
+  JobAction,
+  JobState,
+  JobType,
+  ResourcePool,
+  RPStats,
+} from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import {
   canManageJob,
@@ -316,9 +325,21 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
           case 'user':
             return {
               ...col,
-              render: createOmitableRenderer<Job, FullJob>('entityId', (_, r) =>
-                userRenderer(users.find((u) => u.id === r.userId)),
-              ),
+              render: createOmitableRenderer<Job, FullJob>('entityId', (_, r) => {
+                let user = users.find((u) => u.id === r.userId);
+                if (!user) {
+                  // This is an external user. Create a new DetailedUser instance.
+                  const externalUser: DetailedUser = {
+                    // external users do not have a user id. Indicate that with a value of -1.
+                    id: -1,
+                    isActive: true,
+                    isAdmin: false,
+                    username: r.username,
+                  };
+                  user = externalUser;
+                }
+                return userRenderer(user);
+              }),
             };
           default:
             return col;

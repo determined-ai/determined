@@ -152,7 +152,7 @@ the ``model`` attribute of the ``Trial`` object, as shown in the following snipp
    predictions = model(samples)
 
 PyTorch checkpoints are saved using `pickle <https://docs.python.org/3/library/pickle.html>`__ and
-loaded as :doc:`/model-dev-guide/apis-howto/api-pytorch-ug` objects (see `the PyTorch documentation
+loaded as :ref:`api-pytorch-ug` objects (see `the PyTorch documentation
 <https://pytorch.org/docs/stable/notes/serialization.html>`__ for details).
 
 TensorFlow Checkpoints

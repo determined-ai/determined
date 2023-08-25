@@ -1,3 +1,5 @@
+.. _api-pytorch-ug:
+
 #############
  PyTorch API
 #############

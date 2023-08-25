@@ -29893,15 +29893,16 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {V1OrderBy} [orderBy] Order workspaces in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of workspaces before returning results. Negative values denote number of workspaces to skip from the end before returning results.
          * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
-         * @param {string} [name] Limit the workspaces to those matching the name.
+         * @param {string} [name] Limit the workspaces to those matching the name (case insensitive).
          * @param {boolean} [archived] Limit the workspaces to those with an archived status.
          * @param {Array<string>} [users] Limit the workspaces to those from particular users, by usernames.
          * @param {Array<number>} [userIds] Limit the workspaces to those from particular users, by userIds.
          * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
+         * @param {string} [nameCaseSensitive] Limit the workspaces to those matching the name (case sensitive).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaces(sortBy?: V1GetWorkspacesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options: any = {}): FetchArgs {
+        getWorkspaces(sortBy?: V1GetWorkspacesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, nameCaseSensitive?: string, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/workspaces`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -29950,6 +29951,10 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             
             if (pinned !== undefined) {
                 localVarQueryParameter['pinned'] = pinned
+            }
+            
+            if (nameCaseSensitive !== undefined) {
+                localVarQueryParameter['nameCaseSensitive'] = nameCaseSensitive
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -30297,16 +30302,17 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
          * @param {V1OrderBy} [orderBy] Order workspaces in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of workspaces before returning results. Negative values denote number of workspaces to skip from the end before returning results.
          * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
-         * @param {string} [name] Limit the workspaces to those matching the name.
+         * @param {string} [name] Limit the workspaces to those matching the name (case insensitive).
          * @param {boolean} [archived] Limit the workspaces to those with an archived status.
          * @param {Array<string>} [users] Limit the workspaces to those from particular users, by usernames.
          * @param {Array<number>} [userIds] Limit the workspaces to those from particular users, by userIds.
          * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
+         * @param {string} [nameCaseSensitive] Limit the workspaces to those matching the name (case sensitive).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaces(sortBy?: V1GetWorkspacesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options);
+        getWorkspaces(sortBy?: V1GetWorkspacesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, nameCaseSensitive?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, nameCaseSensitive, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -30498,16 +30504,17 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {V1OrderBy} [orderBy] Order workspaces in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of workspaces before returning results. Negative values denote number of workspaces to skip from the end before returning results.
          * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
-         * @param {string} [name] Limit the workspaces to those matching the name.
+         * @param {string} [name] Limit the workspaces to those matching the name (case insensitive).
          * @param {boolean} [archived] Limit the workspaces to those with an archived status.
          * @param {Array<string>} [users] Limit the workspaces to those from particular users, by usernames.
          * @param {Array<number>} [userIds] Limit the workspaces to those from particular users, by userIds.
          * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
+         * @param {string} [nameCaseSensitive] Limit the workspaces to those matching the name (case sensitive).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaces(sortBy?: V1GetWorkspacesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any) {
-            return WorkspacesApiFp(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options)(fetch, basePath);
+        getWorkspaces(sortBy?: V1GetWorkspacesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, nameCaseSensitive?: string, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, nameCaseSensitive, options)(fetch, basePath);
         },
         /**
          * 
@@ -30645,17 +30652,18 @@ export class WorkspacesApi extends BaseAPI {
      * @param {V1OrderBy} [orderBy] Order workspaces in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of workspaces before returning results. Negative values denote number of workspaces to skip from the end before returning results.
      * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
-     * @param {string} [name] Limit the workspaces to those matching the name.
+     * @param {string} [name] Limit the workspaces to those matching the name (case insensitive).
      * @param {boolean} [archived] Limit the workspaces to those with an archived status.
      * @param {Array<string>} [users] Limit the workspaces to those from particular users, by usernames.
      * @param {Array<number>} [userIds] Limit the workspaces to those from particular users, by userIds.
      * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
+     * @param {string} [nameCaseSensitive] Limit the workspaces to those matching the name (case sensitive).
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public getWorkspaces(sortBy?: V1GetWorkspacesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any) {
-        return WorkspacesApiFp(this.configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options)(this.fetch, this.basePath)
+    public getWorkspaces(sortBy?: V1GetWorkspacesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, nameCaseSensitive?: string, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, nameCaseSensitive, options)(this.fetch, this.basePath)
     }
     
     /**

@@ -815,6 +815,64 @@ func TestTrialProtoTaskIDs(t *testing.T) {
 	}
 }
 
+func TestExperimentIDFromTrialTaskID(t *testing.T) {
+	api, curUser, _ := setupAPITest(t, nil)
+
+	trial, task := createTestTrial(t, api, curUser)
+	actual, err := experimentIDFromTrialTaskID(task.TaskID)
+	require.NoError(t, err)
+	require.Equal(t, trial.ExperimentID, actual)
+
+	notTrialTask := &model.Task{
+		TaskType:   model.TaskTypeTrial,
+		LogVersion: model.TaskLogVersion1,
+		StartTime:  time.Now(),
+		TaskID:     model.TaskID(uuid.New().String()),
+	}
+	require.NoError(t, api.m.db.AddTask(task))
+	_, err = experimentIDFromTrialTaskID(notTrialTask.TaskID)
+	require.ErrorIs(t, err, errIsNotTrialTaskID)
+
+	_, err = experimentIDFromTrialTaskID(model.TaskID(uuid.New().String()))
+	require.ErrorIs(t, err, errIsNotTrialTaskID)
+}
+
+func TestTrialLogsBackported(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	exp := createTestExpWithProjectID(t, api, curUser, 1)
+	task := &model.Task{
+		TaskType:   model.TaskTypeTrial,
+		LogVersion: model.TaskLogVersion1,
+		StartTime:  time.Now(),
+		TaskID:     model.TaskID(fmt.Sprintf("backported.%d", exp.ID)),
+	}
+	require.NoError(t, api.m.db.AddTask(task))
+
+	trial := &model.Trial{
+		StartTime:    time.Now(),
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+	}
+	require.NoError(t, db.AddTrial(context.TODO(), trial, task.TaskID))
+
+	expected := []*model.TaskLog{
+		{TaskID: string(task.TaskID), Log: "test"},
+	}
+	require.NoError(t, api.m.db.AddTaskLogs(expected))
+
+	stream := &mockStream[*apiv1.TrialLogsResponse]{ctx: ctx}
+	err := api.TrialLogs(&apiv1.TrialLogsRequest{
+		TrialId: int32(trial.ID),
+	}, stream)
+	require.NoError(t, err)
+
+	require.Equal(t, len(expected), len(stream.data))
+	for i, expected := range expected {
+		require.Equal(t, expected.Log, *stream.data[i].Log)
+	}
+}
+
 func TestTrialLogs(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	trial, task0 := createTestTrial(t, api, curUser)

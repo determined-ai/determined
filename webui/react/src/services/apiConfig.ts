@@ -1294,6 +1294,7 @@ export const getWorkspaces: DetApi<
       undefined,
       getUserIds(params.users),
       params.pinned,
+      undefined,
       options,
     );
   },
