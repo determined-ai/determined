@@ -1,10 +1,8 @@
 {
-  "name": "typescript",
+  "name": "determined-load-tests",
   "version": "1.0.0",
+  "private": true,
   "main": "index.js",
-  "repository": "ssh://git@github.com/k6io/example-typescript.git",
-  "author": "Simon Aronsson <simme@k6.io>",
-  "license": "MIT",
   "devDependencies": {
     "@babel/core": "7.13.16",
     "@babel/plugin-proposal-class-properties": "7.13.0",
