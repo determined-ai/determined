@@ -82,7 +82,7 @@ func TestPostBindingFails(t *testing.T) {
 		WorkspaceNames:   []string{testWorkspaceName, testWorkspace2Name},
 	})
 
-	require.ErrorContains(t, err, "pool with name testRP doesn't exist in config")
+	require.ErrorContains(t, err, "pool with name testRP doesn't exist")
 
 	// test resource pool is a default resource pool
 	mockRM.On("GetDefaultComputeResourcePool", mock.Anything, mock.Anything).
@@ -119,7 +119,7 @@ func TestPostBindingFails(t *testing.T) {
 		WorkspaceNames:   []string{testWorkspaceName, testWorkspace2Name},
 	})
 
-	require.ErrorContains(t, err, "doesn't exist in config")
+	require.ErrorContains(t, err, "doesn't exist")
 
 	require.True(t, mockRM.AssertExpectations(t))
 }
