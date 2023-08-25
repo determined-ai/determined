@@ -48,10 +48,6 @@ def cv_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/computer_vision", path)
 
 
-def nlp_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/nlp", path)
-
-
 def nas_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/nas", path)
 

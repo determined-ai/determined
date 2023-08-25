@@ -51,14 +51,6 @@ def test_cifar10_tf_keras_distributed() -> None:
 
 
 @pytest.mark.distributed
-def test_bert_glue_pytorch_distributed() -> None:
-    config = conf.load_config(conf.nlp_examples_path("bert_glue_pytorch/distributed.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-
-    exp.run_basic_test_with_temp_config(config, conf.nlp_examples_path("bert_glue_pytorch"), 1)
-
-
-@pytest.mark.distributed
 @pytest.mark.gpu_required
 def test_gaea_pytorch_distributed() -> None:
     config = conf.load_config(
@@ -84,35 +76,6 @@ def test_pix2pix_facades_distributed() -> None:
     config = conf.set_max_length(config, {"batches": 200})
 
     exp.run_basic_test_with_temp_config(config, conf.gan_examples_path("pix2pix_tf_keras"), 1)
-
-
-@pytest.mark.distributed
-@pytest.mark.parametrize("image_type", ["PT", "TF2"])
-def test_word_language_transformer_distributed(image_type: str) -> None:
-    config = conf.load_config(conf.nlp_examples_path("word_language_model/distributed.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-    config = config.copy()
-    config["hyperparameters"]["model_cls"] = "Transformer"
-
-    if image_type == "PT":
-        config = conf.set_pt_image(config)
-    elif image_type == "TF2":
-        config = conf.set_tf2_image(config)
-    else:
-        warnings.warn("Using default images", stacklevel=2)
-
-    exp.run_basic_test_with_temp_config(config, conf.nlp_examples_path("word_language_model"), 1)
-
-
-@pytest.mark.distributed
-def test_word_language_lstm_const() -> None:
-    config = conf.load_config(conf.nlp_examples_path("word_language_model/distributed.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-    config = config.copy()
-    config["hyperparameters"]["model_cls"] = "LSTM"
-    config["hyperparameters"]["tied"] = False
-
-    exp.run_basic_test_with_temp_config(config, conf.nlp_examples_path("word_language_model"), 1)
 
 
 @pytest.mark.distributed
