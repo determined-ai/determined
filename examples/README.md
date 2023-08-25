@@ -17,14 +17,6 @@
 | [cifar10\_tf\_keras](computer_vision/cifar10_tf_keras)                       | CIFAR-10                     | TensorFlow (tf.keras)                    |
 | [deepspeed\_cifar10_cpu_offloading](deepspeed/cifar10_cpu_offloading)        | CIFAR-10                     | PyTorch (DeepSpeed)                      |
 
-## Natural Language Processing (NLP)
-
-| Example                                            | Dataset    | Framework |
-|:--------------------------------------------------:|:----------:|:---------:|
-| [albert\_squad\_pytorch](nlp/albert_squad_pytorch) | SQuAD      | PyTorch   |
-| [bert\_glue\_pytorch](nlp/bert_glue_pytorch)       | GLUE       | PyTorch   |
-| [word\_language\_model](nlp/word_language_model)   | WikiText-2 | PyTorch   |
-
 ## HP Search Benchmarks
 
 | Example                                                                         | Dataset               | Framework |
