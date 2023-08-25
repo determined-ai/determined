@@ -227,6 +227,8 @@ def _http_tunnel_listener(
 
     socket_class = ReuseAddrServer
     if sys.platform == "win32":
+        # On Windows, SO_REUSEADDR is a security issue:
+        # https://learn.microsoft.com/en-us/windows/win32/winsock/using-so-reuseaddr-and-so-exclusiveaddruse#application-strategies
         socket_class = socketserver.ThreadingTCPServer
 
     return socket_class((tunnel.local_addr, tunnel.local_port), TunnelHandler)
