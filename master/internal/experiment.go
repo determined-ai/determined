@@ -50,17 +50,10 @@ const (
 // Experiment-specific actor messages.
 type (
 	// Searcher-related messages.
-	trialCreated struct {
-		requestID model.RequestID
-	}
 	trialCompleteOperation struct {
 		requestID model.RequestID
 		op        searcher.ValidateAfter
 		metric    interface{}
-	}
-	trialReportEarlyExit struct {
-		requestID model.RequestID
-		reason    model.ExitedReason
 	}
 	trialReportProgress struct {
 		requestID model.RequestID
@@ -326,10 +319,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 		e.processOperations(ops, nil)
 
-	case trialCreated:
-		e.syslog.WithField("requstId", msg.requestID).Info("experiment received trial created")
-		ops, err := e.searcher.TrialCreated(msg.requestID)
-		e.processOperations(ops, err)
 	case trialCompleteOperation:
 		state, ok := e.TrialSearcherState[msg.op.RequestID]
 		switch {
@@ -356,37 +345,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		err := t.PatchSearcherState(state)
 		if err != nil {
 			e.syslog.WithError(err).Error("patching trial search state")
-			e.trialClosed(msg.op.RequestID)
+			reason := model.ExitedReason(fmt.Sprintf("failed to patch trial search state: %v", err))
+			e.trialClosed(msg.op.RequestID, &reason)
 			return nil
 		}
 
 		ops, err := e.searcher.ValidationCompleted(msg.requestID, msg.metric, msg.op)
-		e.processOperations(ops, err)
-	case trialReportEarlyExit:
-		e.syslog.WithField("requestId", msg.requestID).Info("experiment received trial early exit")
-		state, ok := e.TrialSearcherState[msg.requestID]
-		if !ok {
-			ctx.Respond(api.AsValidationError("trial has no state"))
-			return nil
-		}
-		state.Complete = true
-		state.Closed = true
-		e.TrialSearcherState[msg.requestID] = state
-
-		t, ok := e.trials[msg.requestID]
-		if !ok {
-			e.syslog.Warnf("missing trial to propagate complete op: %s", msg.requestID)
-			return nil
-		}
-
-		err := t.PatchSearcherState(state)
-		if err != nil {
-			e.syslog.WithError(err).Error("patching trial search state")
-			e.trialClosed(msg.requestID)
-			return nil
-		}
-
-		ops, err := e.searcher.TrialExitedEarly(msg.requestID, msg.reason)
 		e.processOperations(ops, err)
 	case trialReportProgress:
 		e.searcher.SetTrialProgress(msg.requestID, msg.progress)
@@ -411,7 +375,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		err := ref.SetUserInitiatedEarlyExit(msg)
 		if err != nil {
 			e.syslog.WithError(err).Error("setting user initiated early exit")
-			e.trialClosed(msg.requestID)
+			reason := model.ExitedReason(fmt.Sprintf("user initiated early exit: %v", err))
+			e.trialClosed(msg.requestID, &reason)
 			ctx.Respond(err)
 			return nil
 		}
@@ -700,21 +665,61 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (e *experiment) TrialClosed(requestID model.RequestID) {
+func (e *experiment) TrialClosed(requestID model.RequestID, reason *model.ExitedReason) {
 	e.syslog.WithField("request_id", requestID).Info("TrialClosed")
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	e.trialClosed(requestID)
+	e.trialClosed(requestID, reason)
 }
 
-func (e *experiment) trialClosed(requestID model.RequestID) {
+func (e *experiment) trialClosed(requestID model.RequestID, reason *model.ExitedReason) {
 	e.syslog.WithField("request_id", requestID).Info("trialClosed")
 	delete(e.trials, requestID)
-	ops, err := e.searcher.TrialClosed(requestID)
-	e.processOperations(ops, err)
+	if reason != nil {
+		e.trialReportEarlyExit(requestID, *reason)
+	} else {
+		ops, err := e.searcher.TrialClosed(requestID)
+		e.processOperations(ops, err)
+	}
 	if e.canTerminate() {
 		e.self.Stop()
 	}
+}
+
+func (e *experiment) trialReportEarlyExit(requestID model.RequestID, reason model.ExitedReason) {
+	e.syslog.WithField("requestId", requestID).Info("experiment received trial early exit")
+	state, ok := e.TrialSearcherState[requestID]
+	if !ok {
+		err := api.AsValidationError("trial has no state")
+		e.syslog.WithError(err).Error()
+		return
+	}
+	state.Complete = true
+	state.Closed = true
+	e.TrialSearcherState[requestID] = state
+
+	t, ok := e.trials[requestID]
+	if !ok {
+		e.syslog.Warnf("missing trial to propagate complete op: %s", requestID)
+		return
+	}
+
+	err := t.PatchSearcherState(state)
+	if err != nil {
+		e.syslog.WithError(err).Error("patching trial search state")
+		return
+	}
+
+	ops, err := e.searcher.TrialExitedEarly(requestID, reason)
+	e.processOperations(ops, err)
+}
+
+func (e *experiment) trialCreated(t *trial) {
+	requestID := t.searcher.Create.RequestID
+	e.syslog.WithField("requstId", requestID).Info("experiment received trial created")
+	ops, err := e.searcher.TrialCreated(requestID)
+	e.processOperations(ops, err)
+	e.trials[requestID] = t
 }
 
 // restoreTrialsFromStates from the operations that were snapshotted with the
@@ -785,10 +790,11 @@ func (e *experiment) processOperations(
 			)
 			if err != nil {
 				e.syslog.WithError(err).Error("failed to create trial")
-				e.trialClosed(op.RequestID)
+				reason := model.ExitedReason(fmt.Sprintf("failed to create trial: %v", err))
+				e.trialClosed(op.RequestID, &reason)
 				continue
 			}
-			e.trials[op.RequestID] = t
+			e.trialCreated(t)
 		case searcher.ValidateAfter:
 			state := e.TrialSearcherState[op.RequestID]
 			state.Op = op
@@ -839,7 +845,6 @@ func (e *experiment) processOperations(
 		err := t.PatchSearcherState(e.TrialSearcherState[requestID])
 		if err != nil {
 			e.syslog.WithError(err).Error("updating trial search state")
-			e.trialClosed(requestID)
 			continue
 		}
 	}
@@ -910,7 +915,8 @@ func (e *experiment) updateState(state model.StateWithReason) bool {
 			err := t.PatchState(state)
 			if err != nil {
 				e.syslog.WithError(err).Error("patching trial state")
-				e.trialClosed(rID)
+				reason := model.ExitedReason(fmt.Sprintf("failed to patch trial state: %v", err))
+				e.trialClosed(rID, &reason)
 			}
 			return nil
 		})

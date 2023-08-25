@@ -179,7 +179,8 @@ func (e *experiment) restoreTrial(
 	// In the event a trial is terminal and is not recorded in the searcher, replay the close.
 	if terminal {
 		if !e.searcher.TrialsClosed[searcher.Create.RequestID] {
-			e.trialClosed(searcher.Create.RequestID)
+			reason := model.ExitedReason("trial was terminal in restore")
+			e.trialClosed(searcher.Create.RequestID, &reason)
 		}
 		return
 	}
@@ -200,11 +201,12 @@ func (e *experiment) restoreTrial(
 		// TODO(!!!): kinda sloppy.
 		l.WithError(err).Error("failed restoring trial, aborting restore")
 		if !e.searcher.TrialsClosed[searcher.Create.RequestID] {
-			e.trialClosed(searcher.Create.RequestID)
+			reason := model.ExitedReason(fmt.Sprintf("failed to restore trial: %v", err))
+			e.trialClosed(searcher.Create.RequestID, &reason)
 		}
 		return
 	}
-	e.trials[searcher.Create.RequestID] = t
+	e.trialCreated(t)
 
 	l.Debug("finished restoring trial")
 }

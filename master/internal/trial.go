@@ -43,7 +43,7 @@ var nonRetryableErrors = []*regexp.Regexp{
 	regexp.MustCompile("sbatch: error: Batch job submission failed"),
 }
 
-type trialExitCallback func(model.RequestID)
+type trialExitCallback func(model.RequestID, *model.ExitedReason)
 
 // A trial is a task actor which is responsible for handling:
 //   - messages from the resource manager,
@@ -155,7 +155,8 @@ func newTrial(
 	}
 	defer func(t *trial) {
 		if err != nil {
-			t.Exit()
+			reason := model.ExitedReason(fmt.Sprintf("error creating trial: %v", err))
+			t.Exit(&reason)
 		}
 	}(t)
 
@@ -195,11 +196,11 @@ func isNonRetryableError(err error) bool {
 	return false
 }
 
-func (t *trial) Exit() {
+func (t *trial) Exit(reason *model.ExitedReason) {
 	if err := t.close(); err != nil {
 		t.syslog.WithError(err).Error("error closing trial")
 	}
-	go t.exitCallback(t.searcher.Create.RequestID)
+	go t.exitCallback(t.searcher.Create.RequestID, reason)
 }
 
 func (t *trial) close() error {
@@ -272,7 +273,7 @@ func (t *trial) PatchRP(rp string) {
 func (t *trial) SetUserInitiatedEarlyExit(req userInitiatedEarlyExit) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	defer t.Exit()
+	defer t.Exit(&req.reason)
 
 	switch req.reason {
 	case model.InvalidHP, model.InitInvalidHP:
@@ -479,14 +480,14 @@ func (t *trial) addTask() error {
 
 func (t *trial) buildTaskSpecifier() (*tasks.TrialSpec, error) {
 	t.syslog.WithField("requstId", t.searcher.Create.RequestID).Info("trial building task specifier")
-	if !t.trialCreationSent {
-		t.syslog.Info("trial created")
-		if t.parent == nil {
-			panic("parent is nil")
-		}
-		t.system.Tell(t.parent, trialCreated{requestID: t.searcher.Create.RequestID})
-		t.trialCreationSent = true
-	}
+	// if !t.trialCreationSent {
+	// 	t.syslog.Info("trial created")
+	// 	if t.parent == nil {
+	// 		panic("parent is nil")
+	// 	}
+	// 	t.system.Tell(t.parent, trialCreated{requestID: t.searcher.Create.RequestID})
+	// 	t.trialCreationSent = true
+	// }
 
 	if err := t.db.UpdateTrialRunID(t.id, t.runID); err != nil {
 		return nil, errors.Wrap(err, "failed to save trial run ID")
@@ -529,7 +530,8 @@ func (t *trial) AllocationExitedCallback(exit *task.AllocationExited) {
 	if err != nil {
 		// TODO(!!!): in some cases we need to set something to force us to 'close'
 		t.syslog.WithError(err).Error("handling allocation exit")
-		t.Exit()
+		reason := model.ExitedReason(fmt.Sprintf("error handling allocation exit: %v", err))
+		t.Exit(&reason)
 		// t.system.Tell(t.parent, trialClosed{requestID: t.searcher.Create.RequestID})
 	}
 }
@@ -695,17 +697,12 @@ func (t *trial) transition(s model.StateWithReason) error {
 	case model.TerminalStates[t.state]:
 		switch t.state {
 		case model.ErrorState:
-			t.system.Tell(t.parent, trialReportEarlyExit{
-				requestID: t.searcher.Create.RequestID,
-				reason:    model.Errored,
-			})
+			reason := model.Errored
+			t.Exit(&reason)
 		case model.CanceledState:
-			t.system.Tell(t.parent, trialReportEarlyExit{
-				requestID: t.searcher.Create.RequestID,
-				reason:    model.UserCanceled,
-			})
+			reason := model.UserCanceled
+			t.Exit(&reason)
 		}
-		t.Exit()
 	default:
 		panic(fmt.Errorf("unmatched state in transition %s", t.state))
 	}
