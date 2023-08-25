@@ -52,7 +52,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
     if (user.agentUserGroup) {
       // validate initial values, before onFieldsChange
       const missingRequiredFields = Object.entries(user.agentUserGroup).some(([key, value]) => {
-        return requiredFields.includes(key) && value != null;
+        return requiredFields.includes(key) && value == null;
       });
       setDisabled(missingRequiredFields);
     }
