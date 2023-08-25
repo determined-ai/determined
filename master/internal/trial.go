@@ -532,8 +532,10 @@ func (t *trial) AllocationExitedCallback(exit *task.AllocationExited) {
 		t.syslog.WithError(err).Error("handling allocation exit")
 		reason := model.ExitedReason(fmt.Sprintf("error handling allocation exit: %v", err))
 		t.Exit(&reason)
+		return
 		// t.system.Tell(t.parent, trialClosed{requestID: t.searcher.Create.RequestID})
 	}
+	t.Exit(nil)
 }
 
 func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
