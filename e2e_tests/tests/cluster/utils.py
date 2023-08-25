@@ -11,6 +11,7 @@ from typing_extensions import Literal
 from determined.common import api
 from determined.common.api import authentication, certs
 from tests import config as conf
+from tests.command import print_command_logs
 
 
 def cluster_slots() -> Dict[str, Any]:
@@ -100,13 +101,12 @@ def get_command_info(command_id: str) -> Dict[str, Any]:
     return get_task_info("command", command_id)
 
 
-# assert_command_succeded checks if a command succeeded or not. It prints the command info in case
-# of a failure.
+# assert_command_succeded checks if a command succeeded or not. It prints the command logs if the
+# command failed.
 def assert_command_succeeded(command_id: str) -> None:
     command_info = get_command_info(command_id)
-    command_info_json = json.dumps(command_info, indent=2, separators=(",", ":"))
     succeeded = "success" in command_info["exitStatus"]
-    assert succeeded, f"Command failed. Command Info:\n {command_info_json}"
+    assert succeeded, print_command_logs(command_id)
 
 
 def wait_for_task_state(task_type: TaskType, task_id: str, state: str, ticks: int = 60) -> None:
