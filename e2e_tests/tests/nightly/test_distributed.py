@@ -159,15 +159,6 @@ def test_word_language_lstm_const() -> None:
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
-def test_byol_pytorch_distributed() -> None:
-    config = conf.load_config(conf.cv_examples_path("byol_pytorch/distributed-stl10.yaml"))
-    config = conf.set_max_length(config, {"epochs": 1})
-
-    exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("byol_pytorch"), 1)
-
-
-@pytest.mark.distributed
-@pytest.mark.gpu_required
 def test_hf_trainer_api_integration() -> None:
     test_dir = "hf_image_classification"
     config = conf.load_config(conf.hf_trainer_examples_path(f"{test_dir}/distributed.yaml"))

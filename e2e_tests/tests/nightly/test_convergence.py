@@ -105,24 +105,24 @@ def test_unets_tf_keras_accuracy(client: _client.Determined) -> None:
 
 
 @pytest.mark.nightly
-def test_cifar10_byol_pytorch_accuracy(client: _client.Determined) -> None:
-    config = conf.load_config(conf.cv_examples_path("byol_pytorch/const-cifar10.yaml"))
-    # Limit convergence time, since was running over 30 minute limit.
-    config["searcher"]["max_length"]["epochs"] = 20
-    config["hyperparameters"]["classifier"]["train_epochs"] = 1
-    config = conf.set_random_seed(config, 1591280374)
+def test_gbt_titanic_estimator_accuracy(client: _client.Determined) -> None:
+    import tensorflow as tf  # noqa: I2000
+    from packaging import version  # noqa: I2000
+
+    if version.parse(tf.__version__) >= version.parse("2.11.0"):
+        pytest.skip("# TODO [MLG-442], see comment in gbt_titanic_estimator model_def")
+    config = conf.load_config(conf.decision_trees_examples_path("gbt_titanic_estimator/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("byol_pytorch"), 1
+        config, conf.decision_trees_examples_path("gbt_titanic_estimator"), 1
     )
 
     trials = exp.experiment_trials(experiment_id)
     validations = _get_validation_metrics(client, trials[0].trial.id)
-    validation_accuracies = [v["test_accuracy"] for v in validations]
+    validation_accuracies = [v["accuracy"] for v in validations]
 
-    # Accuracy reachable within limited convergence time -- goes higher given full training.
-    target_accuracy = 0.40
+    target_accuracy = 0.74
     assert max(validation_accuracies) > target_accuracy, (
-        "cifar10_byol_pytorch did not reach minimum target accuracy {}."
+        "gbt_titanic_estimator did not reach minimum target accuracy {}."
         " full validation accuracy history: {}".format(target_accuracy, validation_accuracies)
     )
 
