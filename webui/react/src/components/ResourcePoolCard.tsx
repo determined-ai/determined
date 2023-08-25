@@ -28,6 +28,7 @@ import { useObservable } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 import { DarkLight } from 'utils/themes';
 
+import { ConditionalWrapper } from './ConditionalWrapper';
 import Json from './Json';
 import ResourcePoolBindingModalComponent from './ResourcePoolBindingModal';
 import css from './ResourcePoolCard.module.scss';
@@ -37,7 +38,8 @@ interface Props {
   poolStats?: V1RPQueueStat | undefined;
   resourcePool: ResourcePool;
   size?: ShirtSize;
-  descriptiveLabel?: string;
+  defaultAux?: boolean;
+  defaultCompute?: boolean;
 }
 
 const poolAttributes = [
@@ -94,17 +96,22 @@ export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
 const ResourcePoolCard: React.FC<Props> = ({
   resourcePool: pool,
   actionMenu,
-  descriptiveLabel,
+  defaultAux,
+  defaultCompute,
 }: Props) => {
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const { canManageResourcePoolBindings } = usePermissions();
   const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
-  const isDefaultPool = pool.defaultAuxPool || pool.defaultComputePool;
   const descriptionClasses = [css.description];
-  const showDescriptiveLabel = !(canManageResourcePoolBindings && rpBindingFlagOn) ?? isDefaultPool;
   const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
   const resourcePoolBindings: number[] = resourcePoolBindingMap.get(pool.name, []);
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
+
+  const defaultLabel = useMemo(() => {
+    if (defaultAux && defaultCompute) return 'Default';
+    if (defaultAux) return 'Default Aux';
+    if (defaultCompute) return 'Default Compute';
+  }, [defaultAux, defaultCompute]);
 
   useEffect(() => {
     return clusterStore.fetchResourcePoolBindings(pool.name);
@@ -166,19 +173,18 @@ const ResourcePoolCard: React.FC<Props> = ({
         onDropdown={onDropdown}>
         <div className={css.base}>
           <div className={css.header}>
-            <div className={css.info}>
-              <div className={css.name}>{pool.name}</div>
-            </div>
+            <div className={css.name}>{pool.name}</div>
             <div className={css.default}>
-              {showDescriptiveLabel && <span>{descriptiveLabel}</span>}
-              {showDescriptiveLabel && pool.description && (
-                <Icon name="info" showTooltip title={pool.description} />
-              )}
-              {!showDescriptiveLabel && (
-                <Tooltip content="You cannot bind your default resource pool to a workspace.">
-                  <span>Default</span>
-                </Tooltip>
-              )}
+              <ConditionalWrapper
+                condition={!!defaultLabel && canManageResourcePoolBindings}
+                wrapper={(children) => (
+                  <Tooltip content="You cannot bind your default resource pool to a workspace.">
+                    {children}
+                  </Tooltip>
+                )}>
+                <span>{defaultLabel}</span>
+              </ConditionalWrapper>
+              {pool.description && <Icon name="info" showTooltip title={pool.description} />}
             </div>
           </div>
           <Suspense fallback={<Spinner center spinning />}>

@@ -38,16 +38,6 @@ const ResourcePoolsBound: React.FC<Props> = ({ workspace }) => {
     );
   }, [resourcePools, boundResourcePoolNames, unboundResourcePools]);
 
-  const renderDefaultLabel = useCallback(
-    (pool: ResourcePool) => {
-      if (pool.name === workspace.defaultAuxPool && pool.name === workspace.defaultComputePool)
-        return 'Default';
-      if (pool.name === workspace.defaultAuxPool) return 'Default Aux';
-      if (pool.name === workspace.defaultComputePool) return 'Default Compute';
-    },
-    [workspace.defaultComputePool, workspace.defaultAuxPool],
-  );
-
   const actionMenu = useCallback(
     (pool: ResourcePool) =>
       canManageResourcePoolBindings
@@ -98,7 +88,8 @@ const ResourcePoolsBound: React.FC<Props> = ({ workspace }) => {
             {boundResourcePools.map((rp) => (
               <ResourcePoolCard
                 actionMenu={actionMenu(rp)}
-                descriptiveLabel={renderDefaultLabel(rp)}
+                defaultAux={rp.name === workspace.defaultAuxPool}
+                defaultCompute={rp.name === workspace.defaultComputePool}
                 key={rp.name}
                 resourcePool={rp}
               />

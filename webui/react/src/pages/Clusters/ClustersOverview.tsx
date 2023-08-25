@@ -39,12 +39,6 @@ const ClusterOverview: React.FC = () => {
     [canManageResourcePoolBindings, rpBindingFlagOn],
   );
 
-  const renderDefaultLabel = useCallback((pool: ResourcePool) => {
-    if (pool.defaultAuxPool && pool.defaultComputePool) return 'Default';
-    if (pool.defaultComputePool) return 'Default Aux';
-    if (pool.defaultAuxPool) return 'Default Compute';
-  }, []);
-
   return (
     <>
       <ClusterOverallStats />
@@ -55,7 +49,8 @@ const ClusterOverview: React.FC = () => {
             resourcePools.data.map((rp) => (
               <ResourcePoolCard
                 actionMenu={actionMenu(rp)}
-                descriptiveLabel={renderDefaultLabel(rp)}
+                defaultAux={rp.defaultAuxPool}
+                defaultCompute={rp.defaultComputePool}
                 key={rp.name}
                 resourcePool={rp}
               />
