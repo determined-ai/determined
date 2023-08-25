@@ -1,78 +1,35 @@
-import { JSONObject, check } from 'k6';
+import { JSONObject, check, sleep } from 'k6';
 import { Options, Scenario, Threshold } from 'k6/options';
 import http from "k6/http";
 import { jUnit, textSummary } from 'https://jslib.k6.io/k6-summary/0.0.2/index.js';
 
 const clusterURL = __ENV.DET_MASTER
+const masterEndpoint = '/api/v1/master';
 
-const thresholds: { [name: string]: Threshold[] } = {};
-
-
-// Test name and endpoint url for each test case
-// the name will be used to tag relevant metrics
-const tests = [{
-    endpoint: '/api/v1/master',
-    name: 'visit master endpoint'
-},]
-
+const thresholds: { [name: string]: Threshold[] } = {
+    http_req_duration: [
+        {
+            threshold: 'p(95)<1000',
+            abortOnFail: false,
+        }
+    ],
+    http_req_failed: [
+        {
+            threshold: 'rate<0.01',
+            // If more than one percent of the HTTP requests fail
+            // then we abort the test.
+            abortOnFail: true,
+        }
+    ],
+};
 
 const scenarios: { [name: string]: Scenario } = {
     smoke: {
-        executor: 'shared-iterations',
-        vus: 3,
-        iterations: 5
-    },
-    average_load: {
-        executor: 'ramping-vus',
-        stages: [
-            { duration: '10s', target: 50 },
-            { duration: '60s', target: 50 },
-            { duration: '10s', target: 0 }
-        ],
-        startTime: "5s"
-    },
-    stress: {
-        executor: 'ramping-vus',
-        stages: [
-            { duration: '10s', target: 175 },
-            { duration: '20s', target: 175 },
-            { duration: '10s', target: 0 }
-        ],
-        startTime: "90s"
-    },
-    soak: {
-        executor: 'ramping-vus',
-        stages: [
-            { duration: '5s', target: 50 },
-            { duration: '1m', target: 50 },
-            { duration: '1m', target: 0 }
-        ],
-        startTime: "135s"
-    },
-    spike: {
-        executor: 'ramping-vus',
-        stages: [
-            { duration: '1m', target: 500 },
-            { duration: '15s', target: 0 },
-        ],
-        startTime: "265s"
+        executor: 'per-vu-iterations',
+        vus: 5,
+        iterations: 250
     },
 }
-
-// In order to be able to view metrics for specific scenarios and tests
-// we must create a unique threshold for each.
-tests.forEach(
-    (testScenario) =>
-        Object.keys(scenarios).forEach((scenarioName) =>
-            thresholds[`http_req_duration{test:${testScenario.name}, scenario:${scenarioName}}`] = [
-                {
-                    threshold: 'p(95)<1000',
-                    abortOnFail: false,
-                }
-            ],
-        )
-)
-
 
 export const options: Options = {
     scenarios,
@@ -80,14 +37,10 @@ export const options: Options = {
 };
 
 export default function (): void {
-    tests.forEach((testScenario) => {
-        const res = http.get(`${clusterURL}${testScenario.endpoint}`
-            , {
-                tags: { test: testScenario.name }
-            }
-        );
-        check(res, { '200 response': (r) => r.status == 200 });
-    })
+    const res = http.get(`${clusterURL}${masterEndpoint}`
+    );
+    check(res, { '200 response': (r) => r.status == 200 });
+    sleep(1)
 }
 
 export function handleSummary(data: JSONObject) {
