@@ -216,6 +216,7 @@ func (a *apiServer) GetWorkspaces(
 	}
 
 	nameFilter := req.Name
+	nameCaseSensitiveFilter := req.NameCaseSensitive
 	archFilterExpr := ""
 	if req.Archived != nil {
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
@@ -265,6 +266,7 @@ func (a *apiServer) GetWorkspaces(
 		archFilterExpr,
 		pinFilterExpr,
 		curUser.ID,
+		nameCaseSensitiveFilter,
 	)
 	if err != nil {
 		return nil, err

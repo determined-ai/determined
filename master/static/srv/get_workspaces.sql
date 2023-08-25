@@ -15,6 +15,7 @@ LEFT JOIN experiments AS e ON e.project_id = p.id
 WHERE ($1 = '' OR (u.username IN (SELECT unnest(string_to_array($1, ',')))))
 AND ($2 = '' OR w.user_id IN (SELECT unnest(string_to_array($2, ',')::int [])))
 AND ($3 = '' OR w.name ILIKE $3)
+AND ($7 = '' OR w.name LIKE $7)
 AND ($4 = '' OR w.archived = $4::BOOL)
 AND ($5 = '' OR (pins.id IS NOT NULL) = $5::BOOL)
 
