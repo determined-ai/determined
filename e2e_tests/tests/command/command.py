@@ -123,6 +123,7 @@ def get_command_config(command_type: str, task_id: str) -> str:
     return str(completed_process.stdout)
 
 
-def print_command_logs(task_id: str) -> None:
+def print_command_logs(task_id: str) -> bool:
     for tl in task_logs(api_utils.determined_test_session(), task_id):
         print(tl.message)
+    return True
