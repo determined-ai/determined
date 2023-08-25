@@ -25,6 +25,7 @@ import { isDeviceType, JsonObject, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { pluralizer } from 'utils/string';
 import { DarkLight } from 'utils/themes';
 
 import Json from './Json';
@@ -170,15 +171,15 @@ const ResourcePoolCard: React.FC<Props> = ({
             </div>
             <div className={css.default}>
               {showDescriptiveLabel && <span>{descriptiveLabel}</span>}
-              {pool.description && <Icon name="info" showTooltip title={pool.description} />}
-            </div>
-            {!showDescriptiveLabel && (
-              <div className={css.defaultPoolTooltip}>
+              {showDescriptiveLabel && pool.description && (
+                <Icon name="info" showTooltip title={pool.description} />
+              )}
+              {!showDescriptiveLabel && (
                 <Tooltip content="You cannot bind your default resource pool to a workspace.">
                   <span>Default</span>
                 </Tooltip>
-              </div>
-            )}
+              )}
+            </div>
           </div>
           <Suspense fallback={<Spinner center spinning />}>
             <div className={css.body}>
@@ -188,7 +189,8 @@ const ResourcePoolCard: React.FC<Props> = ({
                   <div>Bound to:</div>
                   <div className={css.resoucePoolBoundCount}>
                     <Icon name="lock" title="Bound Workspaces" />
-                    {resourcePoolBindings.length} workspace
+                    {resourcePoolBindings.length}{' '}
+                    {pluralizer(resourcePoolBindings.length, 'workspace')}
                   </div>
                 </section>
               )}
