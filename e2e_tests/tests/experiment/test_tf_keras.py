@@ -85,20 +85,3 @@ def test_tf_keras_mnist_parallel(collect_trial_profiles: Callable[[int], None]) 
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
     collect_trial_profiles(trials[0].trial.id)
-
-
-@pytest.mark.parallel
-@pytest.mark.tensorflow2
-def run_tf_keras_dcgan_example(collect_trial_profiles: Callable[[int], None]) -> None:
-    config = conf.load_config(conf.gan_examples_path("dcgan_tf_keras/const.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-    config = conf.set_min_validation_period(config, {"batches": 200})
-    config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_tf2_image(config)
-    config = conf.set_profiling_enabled(config)
-
-    exp_id = exp.run_basic_test_with_temp_config(
-        config, conf.gan_examples_path("dcgan_tf_keras"), 1
-    )
-    trial_id = exp.experiment_trials(exp_id)[0].trial.id
-    collect_trial_profiles(trial_id)

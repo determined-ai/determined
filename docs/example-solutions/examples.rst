@@ -154,20 +154,6 @@ For an introduction to using the training API, please visit the Training APIs se
       -  Penn Treebank Dataset
       -  :download:`darts_penntreebank_pytorch.tgz </examples/darts_penntreebank_pytorch.tgz>`
 
-**********************************
- Neural Architecture Search (NAS)
-**********************************
-
-.. list-table::
-   :header-rows: 1
-
-   -  -  Framework
-      -  Dataset
-      -  Filename
-
-   -  -  PyTorch
-      -  DARTS
-      -  :download:`gaea_pytorch.tgz </examples/gaea_pytorch.tgz>`
 
 ***************
  Meta Learning

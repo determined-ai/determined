@@ -48,20 +48,12 @@ def cv_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/computer_vision", path)
 
 
-def nas_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/nas", path)
-
-
 def meta_learning_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/meta_learning", path)
 
 
 def diffusion_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/diffusion", path)
-
-
-def gan_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/gan", path)
 
 
 def decision_trees_examples_path(path: str) -> str:
