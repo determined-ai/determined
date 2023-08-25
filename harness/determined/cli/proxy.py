@@ -183,6 +183,10 @@ def http_connect_tunnel(
     c2.join()
 
 
+class ReuseAddrServer(socketserver.ThreadingTCPServer):
+    allow_reuse_address = True
+
+
 def _http_tunnel_listener(
     master_addr: str,
     tunnel: ListenerConfig,
@@ -221,10 +225,11 @@ def _http_tunnel_listener(
             c1.join()
             c2.join()
 
-    class ReuseAddrServer(socketserver.ThreadingTCPServer):
-        allow_reuse_address = True
+    socket_class = ReuseAddrServer
+    if sys.platform == "win32":
+        socket_class = socketserver.ThreadingTCPServer
 
-    return ReuseAddrServer((tunnel.local_addr, tunnel.local_port), TunnelHandler)
+    return socket_class((tunnel.local_addr, tunnel.local_port), TunnelHandler)
 
 
 @contextlib.contextmanager
