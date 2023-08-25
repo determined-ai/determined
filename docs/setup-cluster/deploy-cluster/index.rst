@@ -7,8 +7,8 @@
 .. meta::
    :description: Discover how to set up your Determined cluster on AWS, GCP, Kubernetes, Slurm or On-Prem with an easy checklist.
 
-If you have not yet set up your training environment, consult the :ref:`setup checklist
-<basic-setup>`.
+If you just want to quickly set up your training environment, consult the :ref:`basic-setup` guide.
+Administrators should consult the :ref:`advanced-setup` checklist.
 
 +--------------------------------------------------------+
 | Determined Agent                                       |
@@ -54,9 +54,6 @@ If you have not yet set up your training environment, consult the :ref:`setup ch
 .. toctree::
    :hidden:
 
-   Basic Setup <../basic>
-   Advanced Setup <setup-guide/overview>
-   By Environment <self>
    Deploy on Prem <on-prem/overview>
    Deploy on AWS <aws/overview>
    Deploy on GCP <gcp/overview>

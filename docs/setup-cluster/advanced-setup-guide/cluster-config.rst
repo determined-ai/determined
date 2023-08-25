@@ -2,25 +2,26 @@
 
 .. _cluster-configuration:
 
-########################
+#########################
  Configuring the Cluster
-########################
+#########################
 
 .. meta::
    :description: Follow these steps to set up a Determined training environment on-prem or on cloud.
 
-
 After setting up your cluster using the advanced setup guide, you can configure it.
 
-Cluster Configuration Resources
-===============================
+*********************************
+ Cluster Configuration Resources
+*********************************
 
 -  Common configuration reference: :doc:`/reference/deploy/config/common-config-options`
 -  Master configuration reference: :doc:`/reference/deploy/config/master-config-reference`
 -  Agent configuration reference: :doc:`/reference/deploy/config/agent-config-reference`
 
-Basic Configuration
-===================
+*********************
+ Basic Configuration
+*********************
 
 The behavior of the master and agent can be controlled by setting configuration variables; this can
 be done using a configuration file, environment variables, or command-line options. Although values
@@ -87,8 +88,9 @@ In the rest of this document, we will refer to options using their names in the 
 Periods (``.``) will be used to indicate nested options; for example, the option above would be
 indicated by ``db.host``.
 
-Advanced Configuration
-======================
+************************
+ Advanced Configuration
+************************
 
 :ref:`Additional configuration settings <command-notebook-configuration>` for both commands and
 shells can be set using the ``--config`` and ``--config-file`` options. Typical settings include:

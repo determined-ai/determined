@@ -1,6 +1,8 @@
-#################################
- Local Setup (Was "Basic Setup")
-#################################
+:orphan:
+
+###############################
+ Delete Me (Was "Basic Setup")
+###############################
 
 Your training environment can be a local development machine, an on-premise GPU cluster, or cloud
 resources. To set up your local training environment, follow the steps below.
@@ -78,8 +80,6 @@ Examples:
       <https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html>`_ should be
       configured for the VPC.
 
-.. _firewall-rules:
-
 ********************************
  Step 4 - Set up Firewall Rules
 ********************************
@@ -147,8 +147,6 @@ The total size of the files in the context directory must be less than 95 MB. La
 datasets, must be mounted into the container, downloaded after the container starts, or included in
 a :ref:`custom Docker image <custom-docker-images>`.
 
-.. _install-cluster:
-
 *****************************************
  Step 6 - Install the Determined Cluster
 *****************************************
@@ -156,8 +154,6 @@ a :ref:`custom Docker image <custom-docker-images>`.
 A Determined cluster comprises a master and one or more agents. The cluster can be installed on
 Amazon Web Services (AWS), Google Cloud Platform (GCP), on-premise, or on a local development
 machine.
-
-.. _cluster-configuration:
 
 ********************************
  Step 7 - Configure the Cluster
