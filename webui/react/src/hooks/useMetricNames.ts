@@ -14,7 +14,7 @@ import usePrevious from './usePrevious';
 const useMetricNames = (
   experimentIds: number[],
   errorHandler?: (e: unknown) => void,
-  initialRun?: boolean,
+  quickPoll?: boolean,
 ): Loadable<Metric[]> => {
   const [metrics, setMetrics] = useState<Loadable<Metric[]>>(NotLoaded);
   const [actualExpIds, setActualExpIds] = useState<number[]>([]);
@@ -36,7 +36,7 @@ const useMetricNames = (
     const xAxisMetrics = Object.values(XAxisDomain).map((v) => v.toLowerCase());
 
     readStream<V1ExpMetricNamesResponse>(
-      detApi.StreamingInternal.expMetricNames(actualExpIds, initialRun ? 5 : undefined, {
+      detApi.StreamingInternal.expMetricNames(actualExpIds, quickPoll ? 5 : undefined, {
         signal: canceler.signal,
       }),
       (event: V1ExpMetricNamesResponse) => {
@@ -83,7 +83,7 @@ const useMetricNames = (
       errorHandler,
     );
     return () => canceler.abort();
-  }, [actualExpIds, previousExpIds, errorHandler, initialRun]);
+  }, [actualExpIds, previousExpIds, errorHandler, quickPoll]);
 
   return metrics;
 };
