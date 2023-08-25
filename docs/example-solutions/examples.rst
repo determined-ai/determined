@@ -233,21 +233,6 @@ For an introduction to using the training API, please visit the Training APIs se
       -  pix2pix
       -  :download:`pix2pix_tf_keras.tgz </examples/pix2pix_tf_keras.tgz>`
 
-********
- Graphs
-********
-
-.. list-table::
-   :header-rows: 1
-
-   -  -  Framework
-      -  Dataset
-      -  Filename
-
-   -  -  PyTorch
-      -  PROTEINS
-      -  :download:`proteins_pytorch_geometric.tgz </examples/proteins_pytorch_geometric.tgz>`
-
 ***************************
  Features: Custom Reducers
 ***************************
