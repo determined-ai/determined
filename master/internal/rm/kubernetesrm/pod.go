@@ -270,7 +270,6 @@ func (p *pod) podStatusUpdate(updatedPod *k8sV1.Pod) (cproto.State, error) {
 	return p.container.State, nil
 }
 
-// TODO(!!!): consistency around locking / non-locking and caps.
 func (p *pod) podEventUpdate(event *k8sV1.Event) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -466,7 +465,6 @@ func (p *pod) preparePodUpdateMessage(msgText string) string {
 	return msgText
 }
 
-// TODO(!!!): weird non-lock-ness based on start call.
 func (p *pod) getPodState(
 	pod *k8sV1.Pod,
 	containerNames set.Set[string],

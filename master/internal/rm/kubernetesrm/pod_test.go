@@ -367,7 +367,7 @@ func TestReceivePodStatusUpdateAssigned(t *testing.T) {
 	time.Sleep(time.Second)
 	assert.Equal(t, sub.Len(), 0)
 
-	ref.container.State = cproto.Starting // TODO(!!!): Why is this setting this then testing it.
+	ref.container.State = cproto.Starting
 
 	_, err = ref.podStatusUpdate(statusUpdate.updatedPod)
 	require.NoError(t, err)
@@ -607,7 +607,7 @@ func TestReceivePodEventUpdate(t *testing.T) {
 	assert.Equal(t, sub.Len(), 0)
 
 	ref.podEventUpdate(&newEvent)
-	time.Sleep(time.Second) // TODO(!!!): remove sleeps
+	time.Sleep(time.Second) // TODO(DET-9790): Remove sleeps.
 
 	assert.Equal(t, sub.Len(), 1)
 	message := sub.Get()

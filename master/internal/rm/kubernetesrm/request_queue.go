@@ -55,7 +55,6 @@ func (e resourceCreationFailed) getPodName() string    { return e.podName }
 func (e resourceDeletionFailed) getPodName() string    { return e.podName }
 func (e resourceCreationCancelled) getPodName() string { return e.podName }
 
-// TODO(!!!): real error types.
 func (resourceCreationFailed) resourcesRequestFailure()    {}
 func (resourceDeletionFailed) resourcesRequestFailure()    {}
 func (resourceCreationCancelled) resourcesRequestFailure() {}

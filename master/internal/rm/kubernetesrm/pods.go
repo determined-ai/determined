@@ -728,7 +728,7 @@ func (p *pods) startPreemptionListeners(s *actor.System) error {
 }
 
 func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
-	failures := make(chan resourcesRequestFailure) // TODO(!!!): potentially buffer for perf.
+	failures := make(chan resourcesRequestFailure, 16)
 	p.resourceRequestQueue = startRequestQueue(p.podInterfaces, p.configMapInterfaces, failures)
 	p.wg.Go(func(ctx context.Context) {
 		for {
@@ -1007,19 +1007,11 @@ func (p *pods) cleanUpPodHandler(podHandler *pod) error {
 	// launch this work async, since we hold the lock and it does API calls.
 	p.wg.Go(func(ctx context.Context) {
 		name := fmt.Sprintf("%s-priorityclass", podInfo.containerID)
-		_, exists := p.clientSet.
-			SchedulingV1().
-			PriorityClasses().
-			Get(ctx, name, metaV1.GetOptions{})
-		if exists != nil {
-			return
-		}
-
 		err := p.clientSet.
 			SchedulingV1().
 			PriorityClasses().
 			Delete(ctx, name, metaV1.DeleteOptions{})
-		if err != nil {
+		if err != nil && !k8error.IsNotFound(err) {
 			p.syslog.Warnf("Deletion of PriorityClass %s failed.", name)
 		}
 	})
