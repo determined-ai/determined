@@ -432,3 +432,25 @@ class Experiment:
         exp = cls(session=session, experiment_id=exp_bindings.id)
         exp._hydrate(exp_bindings)
         return exp
+
+
+class ExperimentReference(Experiment):
+    """A legacy class representing an Experiment object.
+
+    This class was renamed to :class:`~determined.experimental.Experiment` and will be removed
+    in a future release.
+    """
+
+    def __init__(
+        self,
+        experiment_id: int,
+        session: api.Session,
+    ):
+        warnings.warn(
+            "'ExperimentReference' was renamed to 'Experiment' and will be removed in a future "
+            "release. Please consider replacing any code references to 'ExperimentReference' "
+            "with 'Experiment'.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        Experiment.__init__(self, experiment_id=experiment_id, session=session)
