@@ -75,7 +75,7 @@ def render_workspaces(
 
 def workspace_by_name(sess: api.Session, name: str) -> bindings.v1Workspace:
     assert name, "workspace name cannot be empty"
-    w = bindings.get_GetWorkspaces(sess, name=name).workspaces
+    w = bindings.get_GetWorkspaces(sess, nameCaseSensitive=name).workspaces
     assert len(w) <= 1, "workspace name is assumed to be unique."
     if len(w) == 0:
         raise cli.not_found_errs("workspace", name, sess)
