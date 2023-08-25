@@ -37,6 +37,17 @@ This API automatically handles the following for you:
 This is a flexible API that can be used for many different tasks, including batch (offline)
 inference.
 
+If you have some trained models in a :class:`~determined.experimental.checkpoint.Checkpoint` or a
+:class:`~determined.experimental.model.Model` with multiple
+:class:`~determined.experimental.model.ModelVersion` inside, you can associate the Trial with the
+:class:`~determined.experimental.checkpoint.Checkpoint` or
+:class:`~determined.experimental.model.ModelVersion` used in a given inference run to aggregate
+custom inference metrics.
+
+We can then query those :class:`~determined.experimental.checkpoint.Checkpoint` or
+:class:`~determined.experimental.model.ModelVersion` objects using the Python SDK to see all metrics
+associated with them.
+
 *******
  Usage
 *******
@@ -151,7 +162,37 @@ example.
 
            self.output = []
 
-Step 2: Initialize the Dataset
+(Optional) Step 2: Link the Run to a Checkpoint or Model Version
+================================================================
+
+You can optionally link your batch inference run with the
+:class:`~determined.experimental.checkpoint.Checkpoint` or
+:class:`~determined.experimental.model.ModelVersion` used in the run to aggregate custom metrics on
+that object for analysis later.
+
+A full example of this can be found in the `CIFAR10 Pytorch Example
+<https://github.com/determined-ai/determined/tree/main/examples/computer_vision/cifar10_pytorch>`__
+in `inference_example.py`.
+
+Connect the :class:`~determined.experimental.checkpoint.Checkpoint` or
+:class:`~determined.experimental.model.ModelVersion` to the inference run.
+
+.. code:: python
+
+   # Checkpoint
+   ckpt = client.get_checkpoint(hparams.get("checkpoint_uuid"))
+   core_context.utils.report_task_using_checkpoint(ckpt)
+
+   # Or Model Version
+   model = client.get_model(hparams.get("model_name"))
+   model_version = model.get_version(hparams.get("model_version"))
+   self.core_context.utils.report_task_using_model_version(model_version)
+
+Any metrics that you report within the trial will now be accessible to any query to `.get_metrics()`
+on the :class:`~determined.experimental.checkpoint.Checkpoint` or
+:class:`~determined.experimental.model.ModelVersion` used.
+
+Step 3: Initialize the Dataset
 ==============================
 
 Initialize the dataset you want to process.
@@ -169,10 +210,10 @@ Initialize the dataset you want to process.
            root="/data", train=False, download=True, transform=transform
        )
 
-Step 3: Pass the InferenceProcessor Class and Dataset
+Step 4: Pass the InferenceProcessor Class and Dataset
 =====================================================
 
-Finally, pass the InferenceProcessor class and the dataset to ``torch_batch_process``.
+Pass the InferenceProcessor class and the dataset to ``torch_batch_process``.
 
 .. code:: python
 
@@ -180,8 +221,43 @@ Finally, pass the InferenceProcessor class and the dataset to ``torch_batch_proc
    Pass processor class and dataset to torch_batch_process
    """
    torch_batch_process(
-           InferenceProcessor,
-           dataset,
-           batch_size=64,
-           checkpoint_interval=10
+        InferenceProcessor,
+        dataset,
+        batch_size=64,
+        checkpoint_interval=10
+    )
+
+(Optional) Step 5: Send and Query Custom Inference Metrics
+==========================================================
+
+Report metrics anywhere in the trial to have them aggreated for the
+:class:`~determined.experimental.checkpoint.Checkpoint` or
+:class:`~determined.experimental.model.ModelVersion` in question.
+
+For example, inside the trial, you could use:
+
+.. code:: python
+
+   def on_finish(self):
+       self.core_context.train.report_metrics(
+           group="inference",
+           steps_completed=self.rank,
+           metrics={
+               "total_frogs": self.total_frogs[self.rank],
+           },
        )
+
+And check the metric afterwards from the SDK:
+
+.. code:: python
+
+   from determined.experimental import client
+
+   # Checkpoint
+   ckpt = client.get_checkpoint("<CHECKPOINT_UUID>")
+   metrics = ckpt.get_metrics("inference")
+
+   # Or Model Version
+   model = client.get_model("<MODEL_NAME>")
+   model_version = model.get_version(MODEL_VERSION_NUM)
+   metrics = model_version.get_metrics("inference")
