@@ -102,7 +102,6 @@ const ResourcePoolCard: React.FC<Props> = ({
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const { canManageResourcePoolBindings } = usePermissions();
   const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
-  const descriptionClasses = [css.description];
   const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
   const resourcePoolBindings: number[] = resourcePoolBindingMap.get(pool.name, []);
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
@@ -116,8 +115,6 @@ const ResourcePoolCard: React.FC<Props> = ({
   useEffect(() => {
     return clusterStore.fetchResourcePoolBindings(pool.name);
   }, [pool.name]);
-
-  if (!pool.description) descriptionClasses.push(css.empty);
 
   const isAux = useMemo(() => {
     return pool.auxContainerCapacityPerAgent > 0;
@@ -174,7 +171,7 @@ const ResourcePoolCard: React.FC<Props> = ({
         <div className={css.base}>
           <div className={css.header}>
             <div className={css.name}>{pool.name}</div>
-            <div className={css.default}>
+            <div className={css.details}>
               <ConditionalWrapper
                 condition={!!defaultLabel && canManageResourcePoolBindings}
                 wrapper={(children) => (
@@ -200,9 +197,7 @@ const ResourcePoolCard: React.FC<Props> = ({
                   </div>
                 </section>
               )}
-              <section className={css.details}>
-                <Json hideDivider json={shortDetails} />
-              </section>
+              <Json hideDivider json={shortDetails} />
               <div />
             </div>
           </Suspense>
