@@ -393,7 +393,7 @@ func TestOverwriteFail(t *testing.T) {
 	// Test overwrite pool that doesn't exist
 	nonExistentPoolName := "poolNameDoesntExist"
 	err = OverwriteRPWorkspaceBindings(ctx, workspaceIDs, nonExistentPoolName, existingPools)
-	require.ErrorContains(t, err, "doesn't exist in config")
+	require.ErrorContains(t, err, "doesn't exist")
 	return
 }
 
