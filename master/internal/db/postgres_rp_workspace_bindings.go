@@ -41,7 +41,8 @@ func AddRPWorkspaceBindings(ctx context.Context, workspaceIds []int32, poolName 
 	}
 
 	if !poolExists {
-		return errors.Errorf("pool with name %v doesn't exist in config", poolName)
+		return errors.Errorf("pool with name %v doesn't exist",
+			poolName)
 	}
 
 	var bindings []RPWorkspaceBinding
@@ -103,7 +104,7 @@ func ReadWorkspacesBoundToRP(
 		}
 	}
 	if !poolExists {
-		return nil, nil, errors.Errorf("pool with name %v doesn't exist in config", poolName)
+		return nil, nil, errors.Errorf("pool with name %v doesn't exist or is not available", poolName)
 	}
 	var rpWorkspaceBindings []*RPWorkspaceBinding
 	query := Bun().NewSelect().Model(&rpWorkspaceBindings).Where("pool_name = ?",
@@ -190,7 +191,8 @@ func OverwriteRPWorkspaceBindings(ctx context.Context,
 	}
 
 	if !poolExists {
-		return errors.Errorf("pool with name %v doesn't exist in config", poolName)
+		return errors.Errorf("pool with name %v doesn't exist",
+			poolName)
 	}
 	// Remove existing ones with this pool name
 	_, err := Bun().NewDelete().Table("rp_workspace_bindings").
