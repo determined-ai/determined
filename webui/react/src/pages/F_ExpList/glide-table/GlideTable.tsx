@@ -501,14 +501,13 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               onSelectionChange?.(selectionType, range);
             }
           } else {
-            clickedCellRef.current = { col, row };
-
             if (selection.rows.hasIndex(row)) {
               onSelectionChange?.('remove', [row, row + 1]);
             } else {
               onSelectionChange?.('add', [row, row + 1]);
             }
           }
+          clickedCellRef.current = { col, row };
         }
       });
     },
