@@ -41,12 +41,12 @@ If you have some trained models in a :class:~determined.experimental.checkpoint.
 :class:~determined.experimental.model.Model with more than one
 :class:~determined.experimental.model.ModelVersion inside, you can associate the trial with the
 :class:~determined.experimental.checkpoint.Checkpoint or
-:class:~determined.experimental.model.ModelVersion used in a given inference run to aggregate
-custom inference metrics.
+:class:~determined.experimental.model.ModelVersion used in a given inference run to aggregate custom
+inference metrics.
 
 You can then query those :class:~determined.experimental.checkpoint.Checkpoint or
-:class:~determined.experimental.model.ModelVersion objects using the :ref:Python SDK <python-sdk> to see all metrics
-associated with them.
+:class:~determined.experimental.model.ModelVersion objects using the :ref:Python SDK <python-sdk> to
+see all metrics associated with them.
 
 *******
  Usage
@@ -162,14 +162,13 @@ example.
 
            self.output = []
 
-Step 2: Link the Run to a Checkpoint or Model Version (Optional) 
+Step 2: Link the Run to a Checkpoint or Model Version (Optional)
 ================================================================
 
 You have the option to associate your batch inference run with the
 :class:~determined.experimental.checkpoint.Checkpoint or
-:class:~determined.experimental.model.ModelVersion employed during the run.
-This allows you to compile custom metrics for that specific object,
-which can then be analyzed at a later stage.
+:class:~determined.experimental.model.ModelVersion employed during the run. This allows you to
+compile custom metrics for that specific object, which can then be analyzed at a later stage.
 
 The ``inference_example.py`` file in the `CIFAR10 Pytorch Example
 <https://github.com/determined-ai/determined/tree/main/examples/computer_vision/cifar10_pytorch>`__
@@ -190,7 +189,8 @@ Connect the :class:`~determined.experimental.checkpoint.Checkpoint` or
    self.core_context.utils.report_task_using_model_version(model_version)
 
 The :class:`~determined.experimental.checkpoint.Checkpoint` and
-:class:`~determined.experimental.model.ModelVersion` used are now available to any query via ``.get_metrics()``.
+:class:`~determined.experimental.model.ModelVersion` used are now available to any query via
+``.get_metrics()``.
 
 Step 3: Initialize the Dataset
 ==============================
