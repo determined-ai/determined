@@ -99,9 +99,10 @@ func (a AgentResourceManagerConfig) Validate() []error {
 	if a.NoDefaultResourcePools {
 		return []error{
 			check.Equal("", a.DefaultAuxResourcePool,
-				"default_aux_resource_pool should be empty"),
+				"default_aux_resource_pool should be empty if no_default_resource_pools is set"),
 			check.Equal("", a.DefaultComputeResourcePool,
-				"default_,compute_resource_pool should be empty"),
+				"default_compute_resource_pool should be empty if no_default_resource_pools is "+
+					"set"),
 		}
 	}
 	return []error{

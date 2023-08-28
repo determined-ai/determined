@@ -101,6 +101,8 @@ func (k ResourceManager) ResolveResourcePool(
 			resp, err := k.GetDefaultAuxResourcePool(actorCtx, req)
 			if err != nil {
 				return "", fmt.Errorf("defaulting to aux pool: %w", err)
+			} else if resp.PoolName == "" {
+				return "", fmt.Errorf("no resource pool specified and no default pool set")
 			}
 			return resp.PoolName, nil
 		}
@@ -113,6 +115,8 @@ func (k ResourceManager) ResolveResourcePool(
 			resp, err := k.GetDefaultComputeResourcePool(actorCtx, req)
 			if err != nil {
 				return "", fmt.Errorf("defaulting to compute pool: %w", err)
+			} else if resp.PoolName == "" {
+				return "", fmt.Errorf("no resource pool specified and no default pool set")
 			}
 			return resp.PoolName, nil
 		}
@@ -380,10 +384,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 
 	case sproto.GetJobQ:
 		if msg.ResourcePool == "" {
-			if k.config.NoDefaultResourcePools {
-				ctx.Respond(fmt.Errorf("no resource pool specified and no default pool set"))
-				return nil
-			}
 			msg.ResourcePool = k.config.DefaultComputeResourcePool
 		}
 
