@@ -285,7 +285,7 @@ message MetricsReport {
   int32 id = 6;
   // Run ID of trial when metric was reported.
   int32 trial_run_id = 7;
-  // Run ID of trial when metric was reported.
+  // Name of the Metric Group ("training", "validation", anything else)
   string group = 8;
 }
 

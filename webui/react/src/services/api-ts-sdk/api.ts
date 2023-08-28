@@ -5521,7 +5521,7 @@ export interface V1MetricsReport {
      */
     trialRunId: number;
     /**
-     * Run ID of trial when metric was reported.
+     * Name of the Metric Group ("training", "validation", anything else)
      * @type {string}
      * @memberof V1MetricsReport
      */

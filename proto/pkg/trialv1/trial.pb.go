@@ -1123,7 +1123,7 @@ type MetricsReport struct {
 	Id int32 `protobuf:"varint,6,opt,name=id,proto3" json:"id,omitempty"`
 	// Run ID of trial when metric was reported.
 	TrialRunId int32 `protobuf:"varint,7,opt,name=trial_run_id,json=trialRunId,proto3" json:"trial_run_id,omitempty"`
-	// Run ID of trial when metric was reported.
+	// Name of the Metric Group ("training", "validation", anything else)
 	Group string `protobuf:"bytes,8,opt,name=group,proto3" json:"group,omitempty"`
 }
 
