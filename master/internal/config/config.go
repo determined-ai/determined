@@ -263,7 +263,6 @@ func (c *Config) Deprecations() (errs []error) {
 				"agent_reattach_enabled does not impact Kubernetes resources behavior; "+
 					"reattach is always enabled for Kubernetes resource pools",
 			))
-			fallthrough
 		case rp.AgentReattachEnabled:
 			errs = append(errs, fmt.Errorf(
 				"agent_reattach_enabled is set for resource pool %s but will be ignored; "+
