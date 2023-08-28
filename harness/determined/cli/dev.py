@@ -167,6 +167,9 @@ def can_be_called_via_cli(params: List[inspect.Parameter]) -> bool:
 def get_available_bindings(
     show_unusable: bool = False,
 ) -> OrderedDict[str, List[inspect.Parameter]]:
+    """
+    return a dictionary of available bindings and their parameters.
+    """
     rv: List[Tuple[str, List[inspect.Parameter]]] = []
     for name, obj in inspect.getmembers(bindings):
         if not inspect.isfunction(obj):
@@ -255,6 +258,32 @@ def list_bindings(args: Namespace) -> None:
         print(bindings_sig_str(name, params))
 
 
+def auto_complete_binding(available_calls: List[str], fn_name: str) -> str:
+    """
+    utility to allow partial matching of binding names.
+    """
+    if fn_name in available_calls:
+        return fn_name
+    matches = [n for n in available_calls if re.match(f".*{fn_name}.*", n, re.IGNORECASE)]
+    if not matches:
+        raise errors.CliError(f"no such binding found: {fn_name}")
+    if not sys.stdout.isatty():
+        raise errors.CliError(
+            f"no exact matches for '{fn_name}'. Did you mean:" + "\n{}".format("\n".join(matches))
+        )
+    indexed_matches = [f"{idx}: {match}" for idx, match in list(enumerate(matches))]
+    user_idx = (
+        input(
+            f"{len(matches)} calls matched '{fn_name}'."
+            + " Pick one by index.\n"
+            + "\n".join(indexed_matches)
+        )
+        or "0"
+    )
+    fn_name = matches[int(user_idx.strip())]
+    return fn_name
+
+
 @authentication.required
 def call_bindings(args: Namespace) -> None:
     """
@@ -263,24 +292,8 @@ def call_bindings(args: Namespace) -> None:
     sess = cli.setup_session(args)
     fn_name: str = args.name
     fns = get_available_bindings(show_unusable=False)
-    try:
-        fn = getattr(bindings, fn_name)
-    except AttributeError:
-        matches = [n for n in fns.keys() if re.match(f".*{fn_name}.*", n, re.IGNORECASE)]
-        if not matches:
-            raise errors.CliError(f"no such binding found: {fn_name}")
-        indexed_matches = [f"{idx}: {match}" for idx, match in list(enumerate(matches))]
-        user_idx = (
-            input(
-                f"{len(matches)} calls matched '{fn_name}'."
-                + " Pick one by index.\n"
-                + "\n".join(indexed_matches)
-            )
-            or "0"
-        )
-        fn_name = matches[int(user_idx.strip())]
-        fn = getattr(bindings, fn_name)
-
+    fn_name = auto_complete_binding(list(fns.keys()), fn_name)
+    fn = getattr(bindings, fn_name)
     params = fns[fn_name]
     try:
         kwargs = parse_args_to_kwargs(args.args, params)
