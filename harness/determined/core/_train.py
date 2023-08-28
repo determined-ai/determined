@@ -143,7 +143,12 @@ class TrainContext:
         metrics: Dict[str, Any],
     ) -> None:
         """
-        Report generic metrics to the master.
+        Report metrics data to the master.
+        
+        Arguments:
+            group (string): metrics group name. Can be used to partition metrics into different logical groups or time series. "training" and "validation" group names map to built-in training and validation time series. Cannot contain ``.`` character.
+            steps_completed (int): global step number, e.g. the number of batches processed.
+            metrics (Dict[str, Any]): metrics data dictionary. Must be JSON-serializable. When reporting metrics with the same ``group`` and ``steps_completed`` values, the dictionary keys must not overlap.
         """
         self._report_trial_metrics(group, steps_completed, metrics)
 
