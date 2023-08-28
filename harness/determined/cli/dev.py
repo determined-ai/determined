@@ -274,9 +274,10 @@ def auto_complete_binding(available_calls: List[str], fn_name: str) -> str:
     indexed_matches = [f"{idx}: {match}" for idx, match in list(enumerate(matches))]
     user_idx = (
         input(
-            f"{len(matches)} calls matched '{fn_name}'."
+            f"{len(matches)} call(s) matched '{fn_name}'."
             + " Pick one by index.\n"
             + "\n".join(indexed_matches)
+            + "\n"
         )
         or "0"
     )
