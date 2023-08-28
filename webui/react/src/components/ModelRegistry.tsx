@@ -143,6 +143,20 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     }
   }, [settings, workspace?.id]);
 
+  const [permissionsByModel, setPermissionsByModel] = useState<Record<number, { canDelete: boolean, canModify: boolean }>>({});
+  useEffect(() => {
+    const allPerm: Record<number, { canDelete: boolean, canModify: boolean }> = {};
+    models.forEach((model) => {
+      allPerm[model.id] = {
+        canDelete: canDeleteModel({ model }),
+        canModify: canModifyModel({ model }),
+      };
+    });
+    setPermissionsByModel((prev) =>
+      _.isEqual(prev, allPerm) ? prev : allPerm
+    );
+  }, [models, canDeleteModel, canModifyModel]);
+
   const fetchTags = useCallback(async () => {
     try {
       const tags = await getModelLabels(
@@ -387,10 +401,8 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   const ModelActionMenu = useCallback(
     (record: ModelItem) => {
-      const canDeleteModelFlag = canDeleteModel({ model: record });
-      const canModifyModelFlag = canModifyModel({ model: record });
       const menuItems: MenuItem[] = [];
-      if (canModifyModelFlag) {
+      if (permissionsByModel[record.id]?.canModify) {
         menuItems.push({
           key: MenuKey.SwitchArchived,
           label: record.archived ? 'Unarchive' : 'Archive',
@@ -399,13 +411,13 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           menuItems.push({ key: MenuKey.MoveModel, label: 'Move' });
         }
       }
-      if (canDeleteModelFlag) {
+      if (permissionsByModel[record.id]?.canDelete) {
         menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete Model' });
       }
 
       return menuItems;
     },
-    [], // canDeleteModel, canModifyModel
+    [permissionsByModel],
   );
 
   const handleDropdown = useCallback(
@@ -424,7 +436,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           break;
       }
     },
-    [deleteModelModal, modelMoveModal, switchArchived],
+    [deleteModelModal, modelMoveModal, switchArchived]
   );
 
   const columns = useMemo(() => {
@@ -449,8 +461,8 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     );
 
     const actionRenderer = (_: string, record: ModelItem) => {
-      const canDeleteModelFlag = canDeleteModel({ model: record });
-      const canModifyModelFlag = canModifyModel({ model: record });
+      const canDeleteModelFlag = permissionsByModel[record.id]?.canDelete;
+      const canModifyModelFlag = permissionsByModel[record.id]?.canModify;
       return (
         <Dropdown
           disabled={!canDeleteModelFlag && !canModifyModelFlag}
@@ -588,11 +600,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     labelFilterDropdown,
     tags,
     userFilterDropdown,
-    // canModifyModel,
     setModelTags,
-    // canDeleteModel,
     ModelActionMenu,
-    // handleDropdown,
+    handleDropdown,
     saveModelDescription,
     workspaceRenderer,
   ]);
@@ -675,7 +685,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         </Dropdown>
       );
     },
-    [ModelActionMenu], // handleDropdown
+    [ModelActionMenu, handleDropdown]
   );
 
   return (
