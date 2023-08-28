@@ -128,6 +128,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       );
       setTotal(response.pagination.total || 0);
       setModels((prev) => {
+        response.models.map((m) => m.labels?.sort?.());
         if (_.isEqual(prev, response.models)) return prev;
         return response.models;
       });
