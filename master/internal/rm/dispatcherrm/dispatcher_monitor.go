@@ -5,12 +5,9 @@ package dispatcherrm
 import (
 	"context"
 	"fmt"
-	"io"
-	"io/fs"
 	"net/http"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -617,13 +614,7 @@ func (m *launcherMonitor) queuesFromCluster() map[string]map[string]string {
 		m.syslog.WithError(err).Errorf("failed to retrieve HPC job queue details. response: {%v}", resp)
 		return result
 	}
-
-	// Parse the carrier output file to a map of properties per job.
-	resourcesBytes, err := io.ReadAll(resp)
-	if err != nil {
-		m.syslog.WithError(err).Errorf("failed to read HPC job queue details")
-		return result
-	}
+	resourcesBytes := []byte(resp)
 	if err = yaml.Unmarshal(resourcesBytes, &result); err != nil {
 		m.syslog.WithError(err).Errorf("failed to parse HPC job queue details")
 		return result
@@ -1042,40 +1033,7 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 			dispatchID, logFileName, httpResponse)
 		return []string{}, err
 	}
-
-	contentLength := 0
-	// Content-Length is not always set sometimes only Content-Range
-	contentLengthStr := httpResponse.Header.Get("Content-Length")
-	if len(contentLengthStr) == 0 {
-		// No specified length header just read the whole http response
-		var fileStat fs.FileInfo
-		fileStat, err = logFile.Stat()
-		if err != nil {
-			m.syslog.Errorf("For dispatchID %s, logFile.Stat() failed: %s", dispatchID, err.Error())
-			return []string{}, nil
-		}
-		contentLength = int(fileStat.Size())
-	} else {
-		contentLength, err = strconv.Atoi(contentLengthStr)
-		if err != nil {
-			m.syslog.Errorf("For dispatchID %s, atoi(Content-Length) failed: %s", dispatchID, err.Error())
-			return []string{}, err
-		}
-		if contentLength == 0 {
-			m.syslog.Debugf("For dispatchID %s, no content yet for %s", dispatchID, logFileName)
-			return []string{}, nil
-		}
-	}
-
-	buffer := make([]byte, contentLength)
-	bytesRead, err := logFile.Read(buffer)
-	if err != nil || bytesRead != contentLength {
-		m.syslog.WithError(err).Errorf(
-			"For dispatcID %s, failed to read full http response: read %d != contentLength %d",
-			dispatchID, bytesRead, contentLength)
-		return nil, err
-	}
-	return strings.Split(string(buffer), "\n"), nil
+	return strings.Split(logFile, "\n"), nil
 }
 
 /*

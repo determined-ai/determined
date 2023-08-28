@@ -1,75 +1,77 @@
-# RunningApi
+# \RunningApi
 
 All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**getRunning**](RunningApi.md#getRunning) | **GET** /running/{owner}/environments/{environment} | Gets a specific running environment launched by the given owner
-[**getRunningACLs**](RunningApi.md#getRunningACLs) | **GET** /running/{owner}/acls | Gets the ACLs that control who can manage the running environments belonging to the given owner
-[**getUserInterfaces**](RunningApi.md#getUserInterfaces) | **GET** /running/{owner}/environments/{environment}/uis | Gets the User Interfaces associated with the running environment launched by the given owner
-[**listAllRunning**](RunningApi.md#listAllRunning) | **GET** /running | Gets all running environments that the user can view
-[**listOwnedRunning**](RunningApi.md#listOwnedRunning) | **GET** /running/{owner} | Gets all running environments launched by the given owner
-[**setRunningACLs**](RunningApi.md#setRunningACLs) | **PUT** /running/{owner}/acls | Sets the ACLs that control who can manage the running environments belonging to the given owner
-[**terminateAllRunning**](RunningApi.md#terminateAllRunning) | **DELETE** /running/{owner} | Terminates all running environments owned by the given owner
-[**terminateRunning**](RunningApi.md#terminateRunning) | **DELETE** /running/{owner}/environments/{environment} | Terminates a running environment
-[**terminateRunningAsync**](RunningApi.md#terminateRunningAsync) | **DELETE** /running/{owner}/environments/{environment}/async | Terminates a running environment in an asynchronous manner
+[**GetRunning**](RunningApi.md#GetRunning) | **Get** /running/{owner}/environments/{environment} | Gets a specific running environment launched by the given owner
+[**GetRunningACLs**](RunningApi.md#GetRunningACLs) | **Get** /running/{owner}/acls | Gets the ACLs that control who can manage the running environments belonging to the given owner
+[**GetUserInterfaces**](RunningApi.md#GetUserInterfaces) | **Get** /running/{owner}/environments/{environment}/uis | Gets the User Interfaces associated with the running environment launched by the given owner
+[**ListAllRunning**](RunningApi.md#ListAllRunning) | **Get** /running | Gets all running environments that the user can view
+[**ListOwnedRunning**](RunningApi.md#ListOwnedRunning) | **Get** /running/{owner} | Gets all running environments launched by the given owner
+[**SetRunningACLs**](RunningApi.md#SetRunningACLs) | **Put** /running/{owner}/acls | Sets the ACLs that control who can manage the running environments belonging to the given owner
+[**TerminateAllRunning**](RunningApi.md#TerminateAllRunning) | **Delete** /running/{owner} | Terminates all running environments owned by the given owner
+[**TerminateRunning**](RunningApi.md#TerminateRunning) | **Delete** /running/{owner}/environments/{environment} | Terminates a running environment
+[**TerminateRunningAsync**](RunningApi.md#TerminateRunningAsync) | **Delete** /running/{owner}/environments/{environment}/async | Terminates a running environment in an asynchronous manner
 
 
 
-## getRunning
+## GetRunning
 
-> com.cray.analytics.capsules.model.EnvironmentManifest getRunning(owner, environment)
+> Manifest GetRunning(ctx, owner, environment).Execute()
 
 Gets a specific running environment launched by the given owner
 
 ### Example
 
-```java
-// Import classes:
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
-import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
-import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
-import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
-import com.cray.analytics.capsules.dispatch.client.api.RunningApi;
+```go
+package main
 
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost");
-        
-        // Configure HTTP bearer authorization: BearerAuth
-        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
-        BearerAuth.setBearerToken("BEARER TOKEN");
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
 
-        RunningApi apiInstance = new RunningApi(defaultClient);
-        String owner = "lhamilton"; // String | The username of the user whose resources that you wish to access
-        String environment = "abcdef1234"; // String | The environment that you wish to access
-        try {
-            com.cray.analytics.capsules.model.EnvironmentManifest result = apiInstance.getRunning(owner, environment);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling RunningApi#getRunning");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
+func main() {
+    owner := "lhamilton" // string | The username of the user whose resources that you wish to access
+    environment := "abcdef1234" // string | The environment that you wish to access
+
+    configuration := openapiclient.NewConfiguration()
+    api_client := openapiclient.NewAPIClient(configuration)
+    resp, r, err := api_client.RunningApi.GetRunning(context.Background(), owner, environment).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `RunningApi.GetRunning``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
+    // response from `GetRunning`: Manifest
+    fmt.Fprintf(os.Stdout, "Response from `RunningApi.GetRunning`: %v\n", resp)
 }
 ```
 
-### Parameters
+### Path Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **owner** | **String**| The username of the user whose resources that you wish to access |
- **environment** | **String**| The environment that you wish to access |
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**owner** | **string** | The username of the user whose resources that you wish to access | 
+**environment** | **string** | The environment that you wish to access | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGetRunningRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
 
 ### Return type
 
-[**com.cray.analytics.capsules.model.EnvironmentManifest**](com.cray.analytics.capsules.model.EnvironmentManifest.md)
+[**Manifest**](Manifest.md)
 
 ### Authorization
 
@@ -80,68 +82,64 @@ Name | Type | Description  | Notes
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | A manifest describing the running environment |  -  |
-| **301** | The given environment has been terminated and can now be looked up elsewhere |  -  |
-| **403** | User does not have permission to view environments with the given owner |  -  |
-| **404** | The given environment does not exist or is no longer running |  -  |
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
-## getRunningACLs
+## GetRunningACLs
 
-> com.cray.analytics.capsules.security.ACL getRunningACLs(owner)
+> ACLS GetRunningACLs(ctx, owner).Execute()
 
 Gets the ACLs that control who can manage the running environments belonging to the given owner
 
 ### Example
 
-```java
-// Import classes:
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
-import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
-import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
-import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
-import com.cray.analytics.capsules.dispatch.client.api.RunningApi;
+```go
+package main
 
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost");
-        
-        // Configure HTTP bearer authorization: BearerAuth
-        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
-        BearerAuth.setBearerToken("BEARER TOKEN");
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
 
-        RunningApi apiInstance = new RunningApi(defaultClient);
-        String owner = "lhamilton"; // String | The username of the user whose resources that you wish to access
-        try {
-            com.cray.analytics.capsules.security.ACL result = apiInstance.getRunningACLs(owner);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling RunningApi#getRunningACLs");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
+func main() {
+    owner := "lhamilton" // string | The username of the user whose resources that you wish to access
+
+    configuration := openapiclient.NewConfiguration()
+    api_client := openapiclient.NewAPIClient(configuration)
+    resp, r, err := api_client.RunningApi.GetRunningACLs(context.Background(), owner).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `RunningApi.GetRunningACLs``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
+    // response from `GetRunningACLs`: ACLS
+    fmt.Fprintf(os.Stdout, "Response from `RunningApi.GetRunningACLs`: %v\n", resp)
 }
 ```
 
-### Parameters
+### Path Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **owner** | **String**| The username of the user whose resources that you wish to access |
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**owner** | **string** | The username of the user whose resources that you wish to access | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGetRunningACLsRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
 
 ### Return type
 
-[**com.cray.analytics.capsules.security.ACL**](com.cray.analytics.capsules.security.ACL.md)
+[**ACLS**](ACLS.md)
 
 ### Authorization
 
@@ -152,68 +150,67 @@ Name | Type | Description  | Notes
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | ACLs for the given owners running environments |  -  |
-| **403** | User does not have permission to manage running environment ACLs with the given owner |  -  |
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
-## getUserInterfaces
+## GetUserInterfaces
 
-> Map&lt;String, List&lt;com.cray.analytics.capsules.model.UserInterface&gt;&gt; getUserInterfaces(owner, environment)
+> map[string][]UserInterface GetUserInterfaces(ctx, owner, environment).Execute()
 
 Gets the User Interfaces associated with the running environment launched by the given owner
 
 ### Example
 
-```java
-// Import classes:
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
-import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
-import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
-import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
-import com.cray.analytics.capsules.dispatch.client.api.RunningApi;
+```go
+package main
 
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost");
-        
-        // Configure HTTP bearer authorization: BearerAuth
-        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
-        BearerAuth.setBearerToken("BEARER TOKEN");
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
 
-        RunningApi apiInstance = new RunningApi(defaultClient);
-        String owner = "lhamilton"; // String | The username of the user whose resources that you wish to access
-        String environment = "abcdef1234"; // String | The environment that you wish to access
-        try {
-            Map<String, List<com.cray.analytics.capsules.model.UserInterface>> result = apiInstance.getUserInterfaces(owner, environment);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling RunningApi#getUserInterfaces");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
+func main() {
+    owner := "lhamilton" // string | The username of the user whose resources that you wish to access
+    environment := "abcdef1234" // string | The environment that you wish to access
+
+    configuration := openapiclient.NewConfiguration()
+    api_client := openapiclient.NewAPIClient(configuration)
+    resp, r, err := api_client.RunningApi.GetUserInterfaces(context.Background(), owner, environment).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `RunningApi.GetUserInterfaces``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
+    // response from `GetUserInterfaces`: map[string][]UserInterface
+    fmt.Fprintf(os.Stdout, "Response from `RunningApi.GetUserInterfaces`: %v\n", resp)
 }
 ```
 
-### Parameters
+### Path Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **owner** | **String**| The username of the user whose resources that you wish to access |
- **environment** | **String**| The environment that you wish to access |
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**owner** | **string** | The username of the user whose resources that you wish to access | 
+**environment** | **string** | The environment that you wish to access | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGetUserInterfacesRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
 
 ### Return type
 
-[**Map&lt;String, List&lt;com.cray.analytics.capsules.model.UserInterface&gt;&gt;**](List.md)
+[**map[string][]UserInterface**](array.md)
 
 ### Authorization
 
@@ -224,76 +221,68 @@ Name | Type | Description  | Notes
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | A list of user interfaces available in the running environment |  -  |
-| **301** | The given environment has been terminated and can now be looked up elsewhere |  -  |
-| **403** | User does not have permission to view environments with the given owner |  -  |
-| **404** | The given environment does not exist |  -  |
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
-## listAllRunning
+## ListAllRunning
 
-> Map&lt;String, List&lt;com.cray.analytics.capsules.model.DispatchInfo&gt;&gt; listAllRunning(limit, offset, reverse, eventLimit, state)
+> map[string][]DispatchInfo ListAllRunning(ctx).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
 
 Gets all running environments that the user can view
 
 ### Example
 
-```java
-// Import classes:
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
-import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
-import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
-import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
-import com.cray.analytics.capsules.dispatch.client.api.RunningApi;
+```go
+package main
 
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost");
-        
-        // Configure HTTP bearer authorization: BearerAuth
-        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
-        BearerAuth.setBearerToken("BEARER TOKEN");
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
 
-        RunningApi apiInstance = new RunningApi(defaultClient);
-        Integer limit = 56; // Integer | Number of results to limit to, used in conjunction with offset to page through results
-        Integer offset = 0; // Integer | Number of results to offset by, used in conjunction with limit to page through results
-        Boolean reverse = false; // Boolean | Whether to reverse the default sort order in the returned results
-        Integer eventLimit = 56; // Integer | Number of events to limit to per DispatchInfo
-        List<com.cray.analytics.capsules.model.DispatchState> state = Arrays.asList(); // List<com.cray.analytics.capsules.model.DispatchState> | Results must be in the given state(s)
-        try {
-            Map<String, List<com.cray.analytics.capsules.model.DispatchInfo>> result = apiInstance.listAllRunning(limit, offset, reverse, eventLimit, state);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling RunningApi#listAllRunning");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
+func main() {
+    limit := int32(56) // int32 | Number of results to limit to, used in conjunction with offset to page through results (optional)
+    offset := int32(56) // int32 | Number of results to offset by, used in conjunction with limit to page through results (optional) (default to 0)
+    reverse := true // bool | Whether to reverse the default sort order in the returned results (optional) (default to false)
+    eventLimit := int32(56) // int32 | Number of events to limit to per DispatchInfo (optional)
+    state := []openapiclient.DispatchState{openapiclient.DispatchState("UNKNOWN")} // []DispatchState | Results must be in the given state(s) (optional)
+
+    configuration := openapiclient.NewConfiguration()
+    api_client := openapiclient.NewAPIClient(configuration)
+    resp, r, err := api_client.RunningApi.ListAllRunning(context.Background()).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `RunningApi.ListAllRunning``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
+    // response from `ListAllRunning`: map[string][]DispatchInfo
+    fmt.Fprintf(os.Stdout, "Response from `RunningApi.ListAllRunning`: %v\n", resp)
 }
 ```
 
-### Parameters
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiListAllRunningRequest struct via the builder pattern
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **limit** | **Integer**| Number of results to limit to, used in conjunction with offset to page through results | [optional]
- **offset** | **Integer**| Number of results to offset by, used in conjunction with limit to page through results | [optional] [default to 0]
- **reverse** | **Boolean**| Whether to reverse the default sort order in the returned results | [optional] [default to false]
- **eventLimit** | **Integer**| Number of events to limit to per DispatchInfo | [optional]
- **state** | [**List&lt;com.cray.analytics.capsules.model.DispatchState&gt;**](com.cray.analytics.capsules.model.DispatchState.md)| Results must be in the given state(s) | [optional]
+ **limit** | **int32** | Number of results to limit to, used in conjunction with offset to page through results | 
+ **offset** | **int32** | Number of results to offset by, used in conjunction with limit to page through results | [default to 0]
+ **reverse** | **bool** | Whether to reverse the default sort order in the returned results | [default to false]
+ **eventLimit** | **int32** | Number of events to limit to per DispatchInfo | 
+ **state** | [**[]DispatchState**](DispatchState.md) | Results must be in the given state(s) | 
 
 ### Return type
 
-[**Map&lt;String, List&lt;com.cray.analytics.capsules.model.DispatchInfo&gt;&gt;**](List.md)
+[**map[string][]DispatchInfo**](array.md)
 
 ### Authorization
 
@@ -304,76 +293,74 @@ Name | Type | Description  | Notes
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | List of running environments |  -  |
-| **403** | User does not have permission to view environments |  -  |
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
-## listOwnedRunning
+## ListOwnedRunning
 
-> Map&lt;String, List&lt;com.cray.analytics.capsules.model.DispatchInfo&gt;&gt; listOwnedRunning(owner, limit, offset, reverse, eventLimit, state)
+> map[string][]DispatchInfo ListOwnedRunning(ctx, owner).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
 
 Gets all running environments launched by the given owner
 
 ### Example
 
-```java
-// Import classes:
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
-import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
-import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
-import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
-import com.cray.analytics.capsules.dispatch.client.api.RunningApi;
+```go
+package main
 
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost");
-        
-        // Configure HTTP bearer authorization: BearerAuth
-        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
-        BearerAuth.setBearerToken("BEARER TOKEN");
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
 
-        RunningApi apiInstance = new RunningApi(defaultClient);
-        String owner = "lhamilton"; // String | The username of the user whose resources that you wish to access
-        Integer limit = 56; // Integer | Number of results to limit to, used in conjunction with offset to page through results
-        Integer offset = 0; // Integer | Number of results to offset by, used in conjunction with limit to page through results
-        Boolean reverse = false; // Boolean | Whether to reverse the default sort order in the returned results
-        Integer eventLimit = 56; // Integer | Number of events to limit to per DispatchInfo
-        List<com.cray.analytics.capsules.model.DispatchState> state = Arrays.asList(); // List<com.cray.analytics.capsules.model.DispatchState> | Results must be in the given state(s)
-        try {
-            Map<String, List<com.cray.analytics.capsules.model.DispatchInfo>> result = apiInstance.listOwnedRunning(owner, limit, offset, reverse, eventLimit, state);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling RunningApi#listOwnedRunning");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
+func main() {
+    owner := "lhamilton" // string | The username of the user whose resources that you wish to access
+    limit := int32(56) // int32 | Number of results to limit to, used in conjunction with offset to page through results (optional)
+    offset := int32(56) // int32 | Number of results to offset by, used in conjunction with limit to page through results (optional) (default to 0)
+    reverse := true // bool | Whether to reverse the default sort order in the returned results (optional) (default to false)
+    eventLimit := int32(56) // int32 | Number of events to limit to per DispatchInfo (optional)
+    state := []openapiclient.DispatchState{openapiclient.DispatchState("UNKNOWN")} // []DispatchState | Results must be in the given state(s) (optional)
+
+    configuration := openapiclient.NewConfiguration()
+    api_client := openapiclient.NewAPIClient(configuration)
+    resp, r, err := api_client.RunningApi.ListOwnedRunning(context.Background(), owner).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `RunningApi.ListOwnedRunning``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
+    // response from `ListOwnedRunning`: map[string][]DispatchInfo
+    fmt.Fprintf(os.Stdout, "Response from `RunningApi.ListOwnedRunning`: %v\n", resp)
 }
 ```
 
-### Parameters
+### Path Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **owner** | **String**| The username of the user whose resources that you wish to access |
- **limit** | **Integer**| Number of results to limit to, used in conjunction with offset to page through results | [optional]
- **offset** | **Integer**| Number of results to offset by, used in conjunction with limit to page through results | [optional] [default to 0]
- **reverse** | **Boolean**| Whether to reverse the default sort order in the returned results | [optional] [default to false]
- **eventLimit** | **Integer**| Number of events to limit to per DispatchInfo | [optional]
- **state** | [**List&lt;com.cray.analytics.capsules.model.DispatchState&gt;**](com.cray.analytics.capsules.model.DispatchState.md)| Results must be in the given state(s) | [optional]
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**owner** | **string** | The username of the user whose resources that you wish to access | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiListOwnedRunningRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **limit** | **int32** | Number of results to limit to, used in conjunction with offset to page through results | 
+ **offset** | **int32** | Number of results to offset by, used in conjunction with limit to page through results | [default to 0]
+ **reverse** | **bool** | Whether to reverse the default sort order in the returned results | [default to false]
+ **eventLimit** | **int32** | Number of events to limit to per DispatchInfo | 
+ **state** | [**[]DispatchState**](DispatchState.md) | Results must be in the given state(s) | 
 
 ### Return type
 
-[**Map&lt;String, List&lt;com.cray.analytics.capsules.model.DispatchInfo&gt;&gt;**](List.md)
+[**map[string][]DispatchInfo**](array.md)
 
 ### Authorization
 
@@ -384,67 +371,64 @@ Name | Type | Description  | Notes
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | List of owned running environments |  -  |
-| **403** | User does not have permission to view environments with the given owner |  -  |
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
-## setRunningACLs
+## SetRunningACLs
 
-> setRunningACLs(owner, comCrayAnalyticsCapsulesSecurityACL)
+> SetRunningACLs(ctx, owner).ACLS(aCLS).Execute()
 
 Sets the ACLs that control who can manage the running environments belonging to the given owner
 
 ### Example
 
-```java
-// Import classes:
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
-import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
-import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
-import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
-import com.cray.analytics.capsules.dispatch.client.api.RunningApi;
+```go
+package main
 
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost");
-        
-        // Configure HTTP bearer authorization: BearerAuth
-        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
-        BearerAuth.setBearerToken("BEARER TOKEN");
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
 
-        RunningApi apiInstance = new RunningApi(defaultClient);
-        String owner = "lhamilton"; // String | The username of the user whose resources that you wish to access
-        com.cray.analytics.capsules.security.ACL comCrayAnalyticsCapsulesSecurityACL = new com.cray.analytics.capsules.security.ACL(); // com.cray.analytics.capsules.security.ACL | The ACLs to set
-        try {
-            apiInstance.setRunningACLs(owner, comCrayAnalyticsCapsulesSecurityACL);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling RunningApi#setRunningACLs");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
+func main() {
+    owner := "lhamilton" // string | The username of the user whose resources that you wish to access
+    aCLS := *openapiclient.NewACLS() // ACLS | The ACLs to set
+
+    configuration := openapiclient.NewConfiguration()
+    api_client := openapiclient.NewAPIClient(configuration)
+    resp, r, err := api_client.RunningApi.SetRunningACLs(context.Background(), owner).ACLS(aCLS).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `RunningApi.SetRunningACLs``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
 }
 ```
 
-### Parameters
+### Path Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **owner** | **String**| The username of the user whose resources that you wish to access |
- **comCrayAnalyticsCapsulesSecurityACL** | [**com.cray.analytics.capsules.security.ACL**](com.cray.analytics.capsules.security.ACL.md)| The ACLs to set |
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**owner** | **string** | The username of the user whose resources that you wish to access | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiSetRunningACLsRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **aCLS** | [**ACLS**](ACLS.md) | The ACLs to set | 
 
 ### Return type
 
-null (empty response body)
+ (empty response body)
 
 ### Authorization
 
@@ -455,67 +439,64 @@ null (empty response body)
 - **Content-Type**: application/json, application/yaml
 - **Accept**: Not defined
 
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **204** | ACLs were successfully updated |  -  |
-| **403** | User does not have permission to manage running environment ACLs with the given owner |  -  |
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
-## terminateAllRunning
+## TerminateAllRunning
 
-> terminateAllRunning(owner, force)
+> TerminateAllRunning(ctx, owner).Force(force).Execute()
 
 Terminates all running environments owned by the given owner
 
 ### Example
 
-```java
-// Import classes:
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
-import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
-import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
-import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
-import com.cray.analytics.capsules.dispatch.client.api.RunningApi;
+```go
+package main
 
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost");
-        
-        // Configure HTTP bearer authorization: BearerAuth
-        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
-        BearerAuth.setBearerToken("BEARER TOKEN");
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
 
-        RunningApi apiInstance = new RunningApi(defaultClient);
-        String owner = "lhamilton"; // String | The username of the user whose resources that you wish to access
-        Boolean force = false; // Boolean | Whether to force termination
-        try {
-            apiInstance.terminateAllRunning(owner, force);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling RunningApi#terminateAllRunning");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
+func main() {
+    owner := "lhamilton" // string | The username of the user whose resources that you wish to access
+    force := true // bool | Whether to force termination (optional) (default to false)
+
+    configuration := openapiclient.NewConfiguration()
+    api_client := openapiclient.NewAPIClient(configuration)
+    resp, r, err := api_client.RunningApi.TerminateAllRunning(context.Background(), owner).Force(force).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `RunningApi.TerminateAllRunning``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
 }
 ```
 
-### Parameters
+### Path Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **owner** | **String**| The username of the user whose resources that you wish to access |
- **force** | **Boolean**| Whether to force termination | [optional] [default to false]
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**owner** | **string** | The username of the user whose resources that you wish to access | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiTerminateAllRunningRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **force** | **bool** | Whether to force termination | [default to false]
 
 ### Return type
 
-null (empty response body)
+ (empty response body)
 
 ### Authorization
 
@@ -526,71 +507,69 @@ null (empty response body)
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **204** | All running environments were terminated successfully |  -  |
-| **403** | User does not have permission to terminate environments with the given owner |  -  |
-| **500** | Could not terminate all running environments |  -  |
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
-## terminateRunning
+## TerminateRunning
 
-> com.cray.analytics.capsules.model.DispatchInfo terminateRunning(owner, environment, force)
+> DispatchInfo TerminateRunning(ctx, owner, environment).Force(force).Execute()
 
 Terminates a running environment
 
 ### Example
 
-```java
-// Import classes:
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
-import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
-import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
-import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
-import com.cray.analytics.capsules.dispatch.client.api.RunningApi;
+```go
+package main
 
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost");
-        
-        // Configure HTTP bearer authorization: BearerAuth
-        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
-        BearerAuth.setBearerToken("BEARER TOKEN");
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
 
-        RunningApi apiInstance = new RunningApi(defaultClient);
-        String owner = "lhamilton"; // String | The username of the user whose resources that you wish to access
-        String environment = "abcdef1234"; // String | The environment that you wish to access
-        Boolean force = false; // Boolean | Whether to force termination
-        try {
-            com.cray.analytics.capsules.model.DispatchInfo result = apiInstance.terminateRunning(owner, environment, force);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling RunningApi#terminateRunning");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
+func main() {
+    owner := "lhamilton" // string | The username of the user whose resources that you wish to access
+    environment := "abcdef1234" // string | The environment that you wish to access
+    force := true // bool | Whether to force termination (optional) (default to false)
+
+    configuration := openapiclient.NewConfiguration()
+    api_client := openapiclient.NewAPIClient(configuration)
+    resp, r, err := api_client.RunningApi.TerminateRunning(context.Background(), owner, environment).Force(force).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `RunningApi.TerminateRunning``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
+    // response from `TerminateRunning`: DispatchInfo
+    fmt.Fprintf(os.Stdout, "Response from `RunningApi.TerminateRunning`: %v\n", resp)
 }
 ```
 
-### Parameters
+### Path Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **owner** | **String**| The username of the user whose resources that you wish to access |
- **environment** | **String**| The environment that you wish to access |
- **force** | **Boolean**| Whether to force termination | [optional] [default to false]
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**owner** | **string** | The username of the user whose resources that you wish to access | 
+**environment** | **string** | The environment that you wish to access | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiTerminateRunningRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+ **force** | **bool** | Whether to force termination | [default to false]
 
 ### Return type
 
-[**com.cray.analytics.capsules.model.DispatchInfo**](com.cray.analytics.capsules.model.DispatchInfo.md)
+[**DispatchInfo**](DispatchInfo.md)
 
 ### Authorization
 
@@ -601,73 +580,69 @@ Name | Type | Description  | Notes
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **202** | Runtime environment was terminated |  -  |
-| **301** | The given environment has been terminated and can now be looked up elsewhere |  -  |
-| **403** | User does not have permission to terminate environments with the given owner |  -  |
-| **404** | The given environment does not exist or has already been terminated |  -  |
-| **500** | Could not terminate running environment |  -  |
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
-## terminateRunningAsync
+## TerminateRunningAsync
 
-> com.cray.analytics.capsules.model.DispatchInfo terminateRunningAsync(owner, environment, force)
+> DispatchInfo TerminateRunningAsync(ctx, owner, environment).Force(force).Execute()
 
 Terminates a running environment in an asynchronous manner
 
 ### Example
 
-```java
-// Import classes:
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
-import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
-import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
-import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
-import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
-import com.cray.analytics.capsules.dispatch.client.api.RunningApi;
+```go
+package main
 
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost");
-        
-        // Configure HTTP bearer authorization: BearerAuth
-        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
-        BearerAuth.setBearerToken("BEARER TOKEN");
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
 
-        RunningApi apiInstance = new RunningApi(defaultClient);
-        String owner = "lhamilton"; // String | The username of the user whose resources that you wish to access
-        String environment = "abcdef1234"; // String | The environment that you wish to access
-        Boolean force = false; // Boolean | Whether to force termination
-        try {
-            com.cray.analytics.capsules.model.DispatchInfo result = apiInstance.terminateRunningAsync(owner, environment, force);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling RunningApi#terminateRunningAsync");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
+func main() {
+    owner := "lhamilton" // string | The username of the user whose resources that you wish to access
+    environment := "abcdef1234" // string | The environment that you wish to access
+    force := true // bool | Whether to force termination (optional) (default to false)
+
+    configuration := openapiclient.NewConfiguration()
+    api_client := openapiclient.NewAPIClient(configuration)
+    resp, r, err := api_client.RunningApi.TerminateRunningAsync(context.Background(), owner, environment).Force(force).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `RunningApi.TerminateRunningAsync``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
+    // response from `TerminateRunningAsync`: DispatchInfo
+    fmt.Fprintf(os.Stdout, "Response from `RunningApi.TerminateRunningAsync`: %v\n", resp)
 }
 ```
 
-### Parameters
+### Path Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **owner** | **String**| The username of the user whose resources that you wish to access |
- **environment** | **String**| The environment that you wish to access |
- **force** | **Boolean**| Whether to force termination | [optional] [default to false]
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**owner** | **string** | The username of the user whose resources that you wish to access | 
+**environment** | **string** | The environment that you wish to access | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiTerminateRunningAsyncRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+ **force** | **bool** | Whether to force termination | [default to false]
 
 ### Return type
 
-[**com.cray.analytics.capsules.model.DispatchInfo**](com.cray.analytics.capsules.model.DispatchInfo.md)
+[**DispatchInfo**](DispatchInfo.md)
 
 ### Authorization
 
@@ -678,13 +653,7 @@ Name | Type | Description  | Notes
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **202** | Runtime environment was accepted for termination |  -  |
-| **301** | The given environment has already been terminated and can now be looked up elsewhere |  -  |
-| **403** | User does not have permission to terminate environments with the given owner |  -  |
-| **404** | The given environment does not exist or has already been terminated |  -  |
-| **500** | Could not terminate running environment |  -  |
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 

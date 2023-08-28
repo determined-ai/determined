@@ -202,7 +202,7 @@ func (c *launcherAPIClient) deleteDispatch(owner, id string) (resp *http.Respons
 }
 
 func (c *launcherAPIClient) loadEnvironmentLog(owner, id, logFileName string) (
-	log *os.File,
+	log string,
 	resp *http.Response,
 	err error,
 ) {
@@ -213,7 +213,7 @@ func (c *launcherAPIClient) loadEnvironmentLog(owner, id, logFileName string) (
 		LoadEnvironmentLog(c.withAuth(context.TODO()), owner, id, logFileName).
 		Execute() //nolint:bodyclose
 	if err != nil {
-		return nil, nil, fmt.Errorf(c.handleLauncherError(
+		return log, nil, fmt.Errorf(c.handleLauncherError(
 			resp, "Failed to retrieve HPC Resource details", err))
 	}
 	return log, resp, nil
