@@ -404,7 +404,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
       return menuItems;
     },
-    [canDeleteModel, canModifyModel],
+    [], // canDeleteModel, canModifyModel
   );
 
   const handleDropdown = useCallback(
@@ -587,11 +587,11 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     labelFilterDropdown,
     tags,
     userFilterDropdown,
-    canModifyModel,
+    // canModifyModel,
     setModelTags,
-    canDeleteModel,
+    // canDeleteModel,
     ModelActionMenu,
-    handleDropdown,
+    // handleDropdown,
     saveModelDescription,
     workspaceRenderer,
   ]);
@@ -674,7 +674,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         </Dropdown>
       );
     },
-    [ModelActionMenu, handleDropdown],
+    [ModelActionMenu], // handleDropdown
   );
 
   return (
