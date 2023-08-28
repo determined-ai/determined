@@ -123,7 +123,7 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 		msg.Name = "Unnamed Task"
 	}
 
-	log.Infof(
+	log.WithField("restore", msg.Restore).Infof(
 		"resources are requested by %s (Allocation ID: %s)",
 		msg.Name, msg.AllocationID,
 	)

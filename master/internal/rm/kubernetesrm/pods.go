@@ -133,6 +133,10 @@ type reattachPodResponse struct {
 	started     *sproto.ResourcesStarted
 }
 
+type refreshPodStates struct {
+	allocationID model.AllocationID
+}
+
 // Initialize creates a new global pods actor.
 func Initialize(
 	s *actor.System,
@@ -268,6 +272,11 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case reattachAllocationPods:
 		if err := p.reattachAllocationPods(ctx, msg); err != nil {
 			return err
+		}
+
+	case refreshPodStates:
+		if err := p.refreshPodStates(ctx, msg.allocationID); err != nil {
+			ctx.Respond(err)
 		}
 
 	case echo.Context:
@@ -544,15 +553,29 @@ func (p *pods) reattachPod(
 		containerID: containerID,
 	}
 
-	// Calls podStatusCallback for any missed updates between master going up
-	// and the pod being reattached.
-	updated, err := p.podInterfaces[pod.Namespace].Get(context.TODO(), pod.Name, metaV1.GetOptions{})
-	if err != nil {
-		return reattachPodResponse{}, errors.Wrap(err, "error getting pod status update in restore")
-	}
-	p.podStatusCallback(ctx.Self().System(), watch.Event{Object: updated})
-
 	return reattachPodResponse{containerID: containerID, started: started}, nil
+}
+
+func (p *pods) refreshPodStates(ctx *actor.Context, allocationID model.AllocationID) error {
+	if allocationID == "" {
+		return fmt.Errorf("invalid call: allocationID missing")
+	}
+
+	pods, err := p.listPodsInAllNamespaces(context.TODO(), metaV1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", determinedLabel, allocationID),
+	})
+	if err != nil {
+		return errors.Wrap(err, "error listing pods checking if they can be restored")
+	}
+
+	for _, pod := range pods.Items {
+		if _, ok := p.namespaceToPoolName[pod.Namespace]; !ok {
+			continue
+		}
+		pod := pod
+		p.podStatusCallback(ctx.Self().System(), watch.Event{Object: &pod})
+	}
+	return nil
 }
 
 func (p *pods) deleteKubernetesResources(
