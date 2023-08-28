@@ -89,12 +89,11 @@ class Workspace:
                 id=self.id,
             )
 
-        resps = api.read_paginated(get_with_offset)
-        v1projects: Iterable[bindings.v1Project] = itertools.chain.from_iterable(
-            r.projects for r in resps
+        bindings_projects: Iterable[bindings.v1Project] = itertools.chain.from_iterable(
+            r.projects for r in api.read_paginated(get_with_offset)
         )
 
-        return [project.Project._from_bindings(p, self._session) for p in v1projects]
+        return [project.Project._from_bindings(p, self._session) for p in bindings_projects]
 
 
 def _get_workspace_id_from_name(session: api.Session, name: str) -> int:
