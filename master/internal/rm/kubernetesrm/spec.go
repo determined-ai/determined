@@ -147,25 +147,6 @@ func (p *pod) configureConfigMapSpec(
 	}, nil
 }
 
-func (p *pod) configureLoggingVolumes() ([]k8sV1.VolumeMount, []k8sV1.Volume) {
-	logsVolumeName := "det-logs"
-	mounts := []k8sV1.VolumeMount{
-		{
-			Name:      logsVolumeName,
-			MountPath: "/run/determined/train/logs",
-		},
-	}
-	volumes := []k8sV1.Volume{
-		{
-			Name: logsVolumeName,
-			VolumeSource: k8sV1.VolumeSource{EmptyDir: &k8sV1.EmptyDirVolumeSource{
-				Medium: k8sV1.StorageMediumMemory,
-			}},
-		},
-	}
-	return mounts, volumes
-}
-
 func (p *pod) configureVolumes(
 	dockerMounts []mount.Mount,
 	runArchives []cproto.RunArchive,
@@ -391,10 +372,8 @@ func (p *pod) createPodSpec(scheduler string) error {
 
 	envVars = append(envVars, k8sV1.EnvVar{Name: "DET_K8S_LOG_TO_FILE", Value: "true"})
 
-	loggingMounts, loggingVolumes := p.configureLoggingVolumes()
-
-	volumes = append(volumes, loggingVolumes...)
-	volumeMounts = append(volumeMounts, loggingMounts...)
+	volumes = append(volumes)
+	volumeMounts = append(volumeMounts)
 
 	container := k8sV1.Container{
 		Name:            model.DeterminedK8ContainerName,
