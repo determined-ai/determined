@@ -17,12 +17,10 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
-	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
@@ -158,7 +156,7 @@ func newTrial(
 	defer func(t *trial) {
 		if err != nil {
 			reason := model.ExitedReason(fmt.Sprintf("error creating trial: %v", err))
-			t.Exit(&reason)
+			t.exit(&reason)
 		}
 	}(t)
 
@@ -198,10 +196,13 @@ func isNonRetryableError(err error) bool {
 	return false
 }
 
-func (t *trial) Exit(reason *model.ExitedReason) {
+func (t *trial) exit(reason *model.ExitedReason) {
 	if t.exited {
-		t.syslog.WithField("reason", reason).Error("trial exited twice")
-		panic("trial exited twice")
+		if reason != nil {
+			t.syslog.WithField("reason", *reason).Error("trial already exited")
+		}
+		return
+		// panic("trial exited twice")
 		// return
 	}
 	t.exited = true
@@ -281,7 +282,7 @@ func (t *trial) PatchRP(rp string) {
 func (t *trial) SetUserInitiatedEarlyExit(req userInitiatedEarlyExit) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	defer t.Exit(&req.reason)
+	defer t.exit(&req.reason)
 
 	switch req.reason {
 	case model.InvalidHP, model.InitInvalidHP:
@@ -308,26 +309,6 @@ func (t *trial) SetUserInitiatedEarlyExit(req userInitiatedEarlyExit) error {
 		return fmt.Errorf("should not report special exit reason %s to the master", req.reason)
 	default:
 		return fmt.Errorf("unhandled early exit reason: %s", req.reason)
-	}
-}
-
-func (t *trial) SendContainerLog(req sproto.ContainerLog) {
-	if log, err := t.enrichTaskLog(&model.TaskLog{
-		ContainerID: ptrs.Ptr(string(req.ContainerID)),
-		Log:         req.Message(),
-		Level:       req.Level,
-	}); err != nil {
-		t.syslog.WithError(err).Warn("dropping container log")
-	} else {
-		tasklogger.Insert(log)
-	}
-}
-
-func (t *trial) SendTaskLog(req model.TaskLog) {
-	if log, err := t.enrichTaskLog(&req); err != nil {
-		t.syslog.WithError(err).Warn("dropping trial log")
-	} else {
-		tasklogger.Insert(log)
 	}
 }
 
@@ -538,12 +519,12 @@ func (t *trial) AllocationExitedCallback(exit *task.AllocationExited) {
 	if err != nil {
 		// TODO(!!!): in some cases we need to set something to force us to 'close'
 		t.syslog.WithError(err).Error("handling allocation exit")
-		// reason := model.ExitedReason(fmt.Sprintf("error handling allocation exit: %v", err))
-		// t.Exit(&reason)
+		reason := model.ExitedReason(fmt.Sprintf("error handling allocation exit: %v", err))
+		t.exit(&reason)
 		return
 		// t.system.Tell(t.parent, trialClosed{requestID: t.searcher.Create.RequestID})
 	}
-	// t.Exit(nil)
+	t.exit(nil)
 }
 
 func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
@@ -709,39 +690,15 @@ func (t *trial) transition(s model.StateWithReason) error {
 		case model.ErrorState:
 			reason := model.Errored
 			t.syslog.WithField("reason", reason).Info("trial errored")
-			t.Exit(&reason)
+			t.exit(&reason)
 		case model.CanceledState:
 			reason := model.UserCanceled
-			t.Exit(&reason)
+			t.exit(&reason)
 		}
 	default:
 		panic(fmt.Errorf("unmatched state in transition %s", t.state))
 	}
 	return nil
-}
-
-func (t *trial) enrichTaskLog(log *model.TaskLog) (*model.TaskLog, error) {
-	if !t.idSet {
-		return nil, fmt.Errorf("cannot handle trial log before ID is set: %v", log)
-	}
-	log.TaskID = string(t.taskID)
-
-	if log.Timestamp == nil {
-		log.Timestamp = ptrs.Ptr(time.Now().UTC())
-	}
-	if log.Level == nil {
-		log.Level = ptrs.Ptr("INFO")
-	}
-	if log.Source == nil {
-		log.Source = ptrs.Ptr("master")
-	}
-	if log.StdType == nil {
-		log.StdType = ptrs.Ptr("stdout")
-	}
-
-	log.Log += "\n"
-
-	return log, nil
 }
 
 func (t *trial) maybeRestoreAllocation() (*model.Allocation, error) {
