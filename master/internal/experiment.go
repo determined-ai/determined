@@ -941,9 +941,9 @@ func (e *experiment) updateState(state model.StateWithReason) bool {
 	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
 		e.syslog.Errorf("error saving experiment state: %s", err)
 	}
-	// if e.canTerminate() {
-	// 	e.self.Stop()
-	// }
+	if e.canTerminate() {
+		e.self.Stop()
+	}
 	// The database error is explicitly ignored.
 	return true
 }
