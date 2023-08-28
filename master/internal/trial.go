@@ -519,12 +519,12 @@ func (t *trial) AllocationExitedCallback(exit *task.AllocationExited) {
 	if err != nil {
 		// TODO(!!!): in some cases we need to set something to force us to 'close'
 		t.syslog.WithError(err).Error("handling allocation exit")
-		reason := model.ExitedReason(fmt.Sprintf("error handling allocation exit: %v", err))
-		t.exit(&reason)
+		// reason := model.ExitedReason(fmt.Sprintf("error handling allocation exit: %v", err))
+		// t.exit(&reason)
 		return
 		// t.system.Tell(t.parent, trialClosed{requestID: t.searcher.Create.RequestID})
 	}
-	t.exit(nil)
+	// t.exit(nil)
 }
 
 func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
@@ -694,6 +694,8 @@ func (t *trial) transition(s model.StateWithReason) error {
 		case model.CanceledState:
 			reason := model.UserCanceled
 			t.exit(&reason)
+		default:
+			t.exit(nil)
 		}
 	default:
 		panic(fmt.Errorf("unmatched state in transition %s", t.state))
