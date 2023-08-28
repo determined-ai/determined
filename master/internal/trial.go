@@ -100,6 +100,8 @@ type trial struct {
 	logCtx logger.Context
 
 	exitCallback trialExitCallback
+
+	exited bool
 }
 
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
@@ -197,6 +199,12 @@ func isNonRetryableError(err error) bool {
 }
 
 func (t *trial) Exit(reason *model.ExitedReason) {
+	if t.exited {
+		t.syslog.WithField("reason", reason).Error("trial exited twice")
+		panic("trial exited twice")
+		// return
+	}
+	t.exited = true
 	if err := t.close(); err != nil {
 		t.syslog.WithError(err).Error("error closing trial")
 	}
@@ -530,12 +538,12 @@ func (t *trial) AllocationExitedCallback(exit *task.AllocationExited) {
 	if err != nil {
 		// TODO(!!!): in some cases we need to set something to force us to 'close'
 		t.syslog.WithError(err).Error("handling allocation exit")
-		reason := model.ExitedReason(fmt.Sprintf("error handling allocation exit: %v", err))
-		t.Exit(&reason)
+		// reason := model.ExitedReason(fmt.Sprintf("error handling allocation exit: %v", err))
+		// t.Exit(&reason)
 		return
 		// t.system.Tell(t.parent, trialClosed{requestID: t.searcher.Create.RequestID})
 	}
-	t.Exit(nil)
+	// t.Exit(nil)
 }
 
 func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
@@ -700,6 +708,7 @@ func (t *trial) transition(s model.StateWithReason) error {
 		switch t.state {
 		case model.ErrorState:
 			reason := model.Errored
+			t.syslog.WithField("reason", reason).Info("trial errored")
 			t.Exit(&reason)
 		case model.CanceledState:
 			reason := model.UserCanceled

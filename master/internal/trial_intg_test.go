@@ -76,7 +76,6 @@ func TestTrial(t *testing.T) {
 
 func TestTrialRestarts(t *testing.T) {
 	_, pgDB, rID, tr, _ := setup(t)
-
 	// Pre-scheduled stage.
 	require.NoError(t, tr.PatchState(
 		model.StateWithReason{State: model.ActiveState}))

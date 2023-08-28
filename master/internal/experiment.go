@@ -674,13 +674,14 @@ func (e *experiment) TrialClosed(requestID model.RequestID, reason *model.Exited
 
 func (e *experiment) trialClosed(requestID model.RequestID, reason *model.ExitedReason) {
 	e.syslog.WithField("request_id", requestID).Info("trialClosed")
-	delete(e.trials, requestID)
 	if reason != nil {
 		e.trialReportEarlyExit(requestID, *reason)
-	} else {
-		ops, err := e.searcher.TrialClosed(requestID)
-		e.processOperations(ops, err)
 	}
+	delete(e.trials, requestID)
+	// if reason == nil {
+	ops, err := e.searcher.TrialClosed(requestID)
+	e.processOperations(ops, err)
+	// }
 	if e.canTerminate() {
 		e.self.Stop()
 	}
@@ -813,6 +814,7 @@ func (e *experiment) processOperations(
 			e.TrialSearcherState[op.RequestID] = state
 			updatedTrials[op.RequestID] = true
 		case searcher.Shutdown:
+			e.syslog.WithField("op", operation).Info("searcher shutdown")
 			switch {
 			case op.Failure:
 				e.updateState(model.StateWithReason{
@@ -927,9 +929,9 @@ func (e *experiment) updateState(state model.StateWithReason) bool {
 	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
 		e.syslog.Errorf("error saving experiment state: %s", err)
 	}
-	if e.canTerminate() {
-		e.self.Stop()
-	}
+	// if e.canTerminate() {
+	// 	e.self.Stop()
+	// }
 	// The database error is explicitly ignored.
 	return true
 }
