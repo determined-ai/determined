@@ -1,7 +1,6 @@
 package dispatcherrm
 
 import (
-	"io"
 	"sync/atomic"
 	"time"
 
@@ -183,15 +182,7 @@ func (c *hpcResourceDetailsCache) fetchHpcResourceDetails() (
 		c.log.Error(err)
 		return nil, false
 	}
-
-	// Parse the HPC resources file and extract the details into a
-	// HpcResourceDetails object using YAML package.
-	resourcesBytes, err := io.ReadAll(log)
-	if err != nil {
-		c.log.WithError(err).Errorf("failed to read HPC resources environment log file")
-		return nil, false
-	}
-
+	resourcesBytes := []byte(log)
 	var newSample hpcResources
 	if err = yaml.Unmarshal(resourcesBytes, &newSample); err != nil {
 		c.log.WithError(err).Errorf("failed to parse HPC Resource details")
