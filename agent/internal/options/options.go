@@ -73,9 +73,8 @@ var DefaultFluentOptions = FluentOptions{
 // Deprecations describe fields which were recently or will soon be removed.
 func (o Options) Deprecations() (errs []error) {
 	if !reflect.DeepEqual(o.Fluent, DefaultFluentOptions) {
-		errs = append(errs, errors.Errorf("fluent options have been set for the following agent: %s; "+
+		errs = append(errs, errors.Errorf("fluent options have been set for the agent; "+
 			"support for fluent has been removed as of 0.24.1",
-			o.AgentID,
 		))
 	}
 	return errs
