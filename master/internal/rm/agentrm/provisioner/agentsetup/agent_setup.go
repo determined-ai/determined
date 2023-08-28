@@ -26,13 +26,11 @@ type AgentSetupScriptConfig struct {
 	AgentDockerRuntime           string
 	AgentNetwork                 string
 	AgentDockerImage             string
-	// deprecated, no longer in use.
-	AgentFluentImage       string
-	AgentID                string
-	ResourcePool           string
-	LogOptions             string
-	AgentReconnectAttempts int
-	AgentReconnectBackoff  int
+	AgentID                      string
+	ResourcePool                 string
+	LogOptions                   string
+	AgentReconnectAttempts       int
+	AgentReconnectBackoff        int
 }
 
 // Provider is the interface for interacting with the underlying instance provider.

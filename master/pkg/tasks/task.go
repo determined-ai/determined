@@ -285,10 +285,9 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 					Devices: devices,
 				},
 			},
-			Archives:         append(runArchives, rootArchives...),
-			UseFluentLogging: true,
-			DeviceType:       deviceType,
-			Registry:         env.RegistryAuth(),
+			Archives:   append(runArchives, rootArchives...),
+			DeviceType: deviceType,
+			Registry:   env.RegistryAuth(),
 		},
 	}
 

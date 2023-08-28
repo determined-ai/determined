@@ -30,10 +30,10 @@ if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
     # layer on some rotation. multilog is a tool that automatically writes its
     # stdin to rotated log files; the following line pipes stdout and stderr of
     # this process to separate multilog invocations. "n2" means to only store
-    # one old log file -- the logs are being streamed out by Fluent Bit, so we
+    # one old log file -- the logs are being streamed out, so we
     # don't need to keep any more old ones around. Create the dirs ahead of time
     # so they are 0755 (when they don't exist, multilog makes them 0700 and
-    # Fluent Bit can't access them with the non-root user).
+    # they can't accessed with the non-root user).
     STDOUT_ROTATE_DIR="$STDOUT_FILE-rotate"
     STDERR_ROTATE_DIR="$STDERR_FILE-rotate"
     mkdir -p -m 755 $STDOUT_ROTATE_DIR

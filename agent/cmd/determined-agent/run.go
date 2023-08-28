@@ -152,14 +152,6 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&opts.NoProxy, "no-proxy", "",
 		"Addresses that the agent's containers should not proxy")
 
-	// Deprecated Fluent Logging flags.
-	cmd.Flags().StringVar(&opts.Fluent.Image, "fluent-image", aproto.FluentImage,
-		"Ignored: Determined no longer uses Fluent Bit to ship logs")
-	cmd.Flags().IntVar(&opts.Fluent.Port, "fluent-port", 24224,
-		"Deprecated: TCP port for the Fluent Bit daemon to listen on")
-	cmd.Flags().StringVar(&opts.Fluent.ContainerName, "fluent-container-name", "determined-fluent",
-		"Deprecated : Name for the Fluent Bit container")
-
 	// Fault-tolerance flags.
 	cmd.Flags().IntVar(&opts.AgentReconnectAttempts, "agent-reconnect-attempts",
 		aproto.AgentReconnectAttempts, "Max attempts agent has to reconnect")

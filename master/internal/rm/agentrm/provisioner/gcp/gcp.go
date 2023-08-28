@@ -84,15 +84,13 @@ func New(
 	masterCertBase64 := base64.StdEncoding.EncodeToString(certBytes)
 
 	startupScript := string(agentsetup.MustMakeAgentSetupScript(agentsetup.AgentSetupScriptConfig{
-		MasterHost:         masterURL.Hostname(),
-		MasterPort:         masterURL.Port(),
-		MasterCertName:     config.MasterCertName,
-		SlotType:           config.GCP.SlotType(),
-		AgentNetwork:       config.AgentDockerNetwork,
-		AgentDockerRuntime: config.AgentDockerRuntime,
-		AgentDockerImage:   config.AgentDockerImage,
-		// deprecated, no longer in use.
-		AgentFluentImage:             config.AgentFluentImage,
+		MasterHost:                   masterURL.Hostname(),
+		MasterPort:                   masterURL.Port(),
+		MasterCertName:               config.MasterCertName,
+		SlotType:                     config.GCP.SlotType(),
+		AgentNetwork:                 config.AgentDockerNetwork,
+		AgentDockerRuntime:           config.AgentDockerRuntime,
+		AgentDockerImage:             config.AgentDockerImage,
 		AgentReconnectAttempts:       config.AgentReconnectAttempts,
 		AgentReconnectBackoff:        config.AgentReconnectBackoff,
 		StartupScriptBase64:          startupScriptBase64,

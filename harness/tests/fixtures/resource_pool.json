@@ -3,7 +3,6 @@
         "agentDockerImage": "",
         "agentDockerNetwork": "",
         "agentDockerRuntime": "",
-        "agentFluentImage": "",
         "auxContainerCapacity": 100,
         "auxContainerCapacityPerAgent": 100,
         "auxContainersRunning": 0,

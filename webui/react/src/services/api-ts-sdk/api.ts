@@ -7984,12 +7984,6 @@ export interface V1ResourcePool {
      */
     agentDockerImage: string;
     /**
-     * Deprecated, the Fluent docker image to use
-     * @type {string}
-     * @memberof V1ResourcePool
-     */
-    agentFluentImage: string;
-    /**
      * The maximum idle period of agents in seconds. The master waits for this period of time before shutting down idle agents.
      * @type {number}
      * @memberof V1ResourcePool

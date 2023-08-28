@@ -74,7 +74,6 @@ resource_pools:
 						AgentDockerRuntime:     "runc",
 						AgentDockerNetwork:     "default",
 						AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
-						AgentFluentImage:       aproto.FluentImage, // deprecated, no longer in use
 						AgentReconnectAttempts: aproto.AgentReconnectAttempts,
 						AgentReconnectBackoff:  aproto.AgentReconnectBackoffValue,
 						MaxIdleAgentPeriod:     model.Duration(30 * time.Second),
@@ -135,11 +134,9 @@ resource_pools:
 				{
 					PoolName: "cpu-pool",
 					Provider: &provconfig.Config{
-						AgentDockerRuntime: "runc",
-						AgentDockerNetwork: "default",
-						AgentDockerImage:   fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
-						// deprecated, no longer in use
-						AgentFluentImage:       aproto.FluentImage,
+						AgentDockerRuntime:     "runc",
+						AgentDockerNetwork:     "default",
+						AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
 						AgentReconnectAttempts: aproto.AgentReconnectAttempts,
 						AgentReconnectBackoff:  aproto.AgentReconnectBackoffValue,
 						MaxIdleAgentPeriod:     model.Duration(10 * time.Second),
@@ -153,11 +150,9 @@ resource_pools:
 				{
 					PoolName: "gpu-pool",
 					Provider: &provconfig.Config{
-						AgentDockerRuntime: "runc",
-						AgentDockerNetwork: "default",
-						AgentDockerImage:   fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
-						// deprecated, no longer in use
-						AgentFluentImage:       aproto.FluentImage,
+						AgentDockerRuntime:     "runc",
+						AgentDockerNetwork:     "default",
+						AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
 						AgentReconnectAttempts: aproto.AgentReconnectAttempts,
 						AgentReconnectBackoff:  aproto.AgentReconnectBackoffValue,
 						MaxIdleAgentPeriod:     model.Duration(30 * time.Second),

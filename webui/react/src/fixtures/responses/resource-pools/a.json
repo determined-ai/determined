@@ -27,7 +27,6 @@
       "agentDockerNetwork": "host",
       "agentDockerRuntime": "runc",
       "agentDockerImage": "determinedai/determined-ee-agent:0.14.0rc1",
-      "agentFluentImage": "",
       "maxIdleAgentPeriod": 1800,
       "maxAgentStartingPeriod": 1200,
       "details": {
@@ -85,7 +84,6 @@
       "agentDockerNetwork": "host",
       "agentDockerRuntime": "runc",
       "agentDockerImage": "determinedai/determined-ee-agent:0.14.0rc1",
-      "agentFluentImage": "",
       "maxIdleAgentPeriod": 1800,
       "maxAgentStartingPeriod": 1200,
       "details": {
@@ -143,7 +141,6 @@
       "agentDockerNetwork": "host",
       "agentDockerRuntime": "runc",
       "agentDockerImage": "determinedai/determined-ee-agent:0.14.0rc1",
-      "agentFluentImage": "",
       "maxIdleAgentPeriod": 1800,
       "maxAgentStartingPeriod": 1200,
       "details": {

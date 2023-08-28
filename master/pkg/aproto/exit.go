@@ -70,7 +70,7 @@ func NewContainerExit(code ExitCode) *ContainerFailure {
 	}
 	return &ContainerFailure{
 		FailureType: ContainerFailed,
-		ErrMsg:      errors.Errorf("%s: %s", ContainerFailed, code).Error(),
+		ErrMsg:      errors.Errorf("%s: %d", ContainerFailed, code).Error(),
 		ExitCode:    &code,
 	}
 }
