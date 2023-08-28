@@ -37,15 +37,15 @@ This API automatically handles the following for you:
 This is a flexible API that can be used for many different tasks, including batch (offline)
 inference.
 
-If you have some trained models in a :class:`~determined.experimental.checkpoint.Checkpoint` or a
-:class:`~determined.experimental.model.Model` with multiple
-:class:`~determined.experimental.model.ModelVersion` inside, you can associate the Trial with the
-:class:`~determined.experimental.checkpoint.Checkpoint` or
-:class:`~determined.experimental.model.ModelVersion` used in a given inference run to aggregate
+If you have some trained models in a :class:~determined.experimental.checkpoint.Checkpoint or a
+:class:~determined.experimental.model.Model with more than one
+:class:~determined.experimental.model.ModelVersion inside, you can associate the trial with the
+:class:~determined.experimental.checkpoint.Checkpoint or
+:class:~determined.experimental.model.ModelVersion used in a given inference run to aggregate
 custom inference metrics.
 
-We can then query those :class:`~determined.experimental.checkpoint.Checkpoint` or
-:class:`~determined.experimental.model.ModelVersion` objects using the Python SDK to see all metrics
+You can then query those :class:~determined.experimental.checkpoint.Checkpoint or
+:class:~determined.experimental.model.ModelVersion objects using the :ref:Python SDK <python-sdk> to see all metrics
 associated with them.
 
 *******
@@ -162,17 +162,18 @@ example.
 
            self.output = []
 
-(Optional) Step 2: Link the Run to a Checkpoint or Model Version
+Step 2: Link the Run to a Checkpoint or Model Version (Optional) 
 ================================================================
 
-You can optionally link your batch inference run with the
-:class:`~determined.experimental.checkpoint.Checkpoint` or
-:class:`~determined.experimental.model.ModelVersion` used in the run to aggregate custom metrics on
-that object for analysis later.
+You have the option to associate your batch inference run with the
+:class:~determined.experimental.checkpoint.Checkpoint or
+:class:~determined.experimental.model.ModelVersion employed during the run.
+This allows you to compile custom metrics for that specific object,
+which can then be analyzed at a later stage.
 
-A full example of this can be found in the `CIFAR10 Pytorch Example
+The ``inference_example.py`` file in the `CIFAR10 Pytorch Example
 <https://github.com/determined-ai/determined/tree/main/examples/computer_vision/cifar10_pytorch>`__
-in `inference_example.py`.
+is an example.
 
 Connect the :class:`~determined.experimental.checkpoint.Checkpoint` or
 :class:`~determined.experimental.model.ModelVersion` to the inference run.
@@ -188,9 +189,8 @@ Connect the :class:`~determined.experimental.checkpoint.Checkpoint` or
    model_version = model.get_version(hparams.get("model_version"))
    self.core_context.utils.report_task_using_model_version(model_version)
 
-Any metrics that you report within the trial will now be accessible to any query to `.get_metrics()`
-on the :class:`~determined.experimental.checkpoint.Checkpoint` or
-:class:`~determined.experimental.model.ModelVersion` used.
+The :class:`~determined.experimental.checkpoint.Checkpoint` and
+:class:`~determined.experimental.model.ModelVersion` used are now available to any query via ``.get_metrics()``.
 
 Step 3: Initialize the Dataset
 ==============================
@@ -227,10 +227,10 @@ Pass the InferenceProcessor class and the dataset to ``torch_batch_process``.
         checkpoint_interval=10
     )
 
-(Optional) Step 5: Send and Query Custom Inference Metrics
+Step 5: Send and Query Custom Inference Metrics (Optional)
 ==========================================================
 
-Report metrics anywhere in the trial to have them aggreated for the
+Report metrics anywhere in the trial to have them aggregated for the
 :class:`~determined.experimental.checkpoint.Checkpoint` or
 :class:`~determined.experimental.model.ModelVersion` in question.
 
