@@ -56,53 +56,48 @@ Install on Linux
 #. Install Docker. Docker version 20.10 or later is required on the machine where the agent is
    running.
 
-   On Ubuntu:
+   .. tabs::
 
-   .. code:: bash
+      .. code-tab:: bash Ubuntu
 
-      sudo apt-get update && sudo apt-get install -y software-properties-common
-      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-      sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+         sudo apt-get update && sudo apt-get install -y software-properties-common curl -fsSL
+         https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - sudo add-apt-repository "deb
+         [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
-      sudo apt-get update && sudo apt-get install -y --no-install-recommends docker-ce
-      sudo systemctl reload docker
-      sudo usermod -aG docker $USER
+         sudo apt-get update && sudo apt-get install -y --no-install-recommends docker-ce sudo
+         systemctl reload docker sudo usermod -aG docker $USER
 
-   On CentOS:
+      .. code-tab:: bash CentOS
 
-   .. code:: bash
+         sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+         sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 
-      sudo yum install -y yum-utils device-mapper-persistent-data lvm2
-      sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-
-      sudo yum install -y docker-ce
-      sudo systemctl start docker
+         sudo yum install -y docker-ce
+         sudo systemctl start docker
 
 #. If the machine has GPUs that you want to use with Determined, install the NVIDIA Container
    Toolkit to allow Docker to run containers that use the GPUs. For more information, see the
    `NVIDIA documentation <https://github.com/NVIDIA/nvidia-docker>`__.
 
-   On Ubuntu:
+   .. tabs::
 
-   .. code:: bash
+      .. code-tab:: bash Ubuntu
 
-      curl -fsSL https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-      distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-      curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-      sudo apt-get update
+         curl -fsSL https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+         distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+         curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+         sudo apt-get update
 
-      sudo apt-get install -y --no-install-recommends nvidia-container-toolkit
-      sudo systemctl restart docker
+         sudo apt-get install -y --no-install-recommends nvidia-container-toolkit
+         sudo systemctl restart docker
 
-   On CentOS:
+      .. code-tab:: bash CentOS
 
-   .. code:: bash
+         distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+         curl -fsSL https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.repo | sudo tee /etc/yum.repos.d/nvidia-docker.repo
 
-      distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-      curl -fsSL https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.repo | sudo tee /etc/yum.repos.d/nvidia-docker.repo
-
-      sudo yum install -y nvidia-container-toolkit
-      sudo systemctl restart docker
+         sudo yum install -y nvidia-container-toolkit
+         sudo systemctl restart docker
 
 #. Log out and start a new terminal session.
 

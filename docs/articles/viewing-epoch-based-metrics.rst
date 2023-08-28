@@ -27,7 +27,7 @@ use it as the X-Axis label in the WebUI.
 To begin, you'll need a Determined cluster. If you are new to Determined AI (Determined), you can
 install the Determined library and start a cluster locally.
 
--  Ensure you have Docker running and then run the following command:
+-  Ensure you have Docker running and then run the following commands:
 
 .. code::
 

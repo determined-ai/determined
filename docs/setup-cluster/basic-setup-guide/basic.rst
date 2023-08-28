@@ -11,17 +11,16 @@ you are at the right place!
 
 .. note::
 
-   To set up a Determined training environment on-prem or on cloud, visit :ref:`Advanced Setup
-   <advanced-setup>`.
-
+   For more advanced installations, visit :ref:`Advanced Setup <advanced-setup>`.
 
 **Prerequisites**
 
--  :ref:`Installation Requirements <system-requirements>`
+-  Your system must meet the software and hardware requirements described in the :ref:`Installation
+   Requirements <system-requirements>`.
 
-*********************************
- Step 1 - Install Docker Desktop
-*********************************
+*************************
+ Step 1 - Install Docker
+*************************
 
 -  :ref:`Install Docker <install-docker>` on your machine.
 
@@ -31,7 +30,7 @@ you are at the right place!
 
 Install the Determined library and start a cluster locally.
 
--  Ensure you have Docker running and then run the following command:
+-  Ensure you have Docker running and then run the following commands:
 
 .. code::
 
@@ -51,6 +50,5 @@ Install the Determined library and start a cluster locally.
 
 Once Determined is installed and Docker is running, you can sign in.
 
--  To do this, go to ``http://localhost:8080/``.
--  To sign in, accept the default determined username, leave the password empty, and then click
-   **Sign In**.
+-  Go to ``http://localhost:8080/``.
+-  Accept the default determined username, leave the password empty, and then click **Sign In**.
