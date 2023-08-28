@@ -59,8 +59,7 @@ fi
 if ! "$DET_PYTHON_EXECUTABLE" --version >/dev/null 2>&1; then
     echo "{\"log\": \"error: unable to find python3 as '$DET_PYTHON_EXECUTABLE'\n\", \"timestamp\": \"$(date --rfc-3339=seconds)\"}" >&2
     echo "{\"log\": \"please install python3 or set the environment variable DET_PYTHON_EXECUTABLE=/path/to/python3\n\", \"timestamp\": "$(date --rfc-3339=seconds)"}" >&2
-    export PYTHON_MISSING_EXIT_CODE=8
-    exit $PYTHON_MISSING_EXIT_CODE
+    exit 1
 fi
 
 if [ -z "$DET_SKIP_PIP_INSTALL" ]; then

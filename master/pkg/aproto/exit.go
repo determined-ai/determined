@@ -2,7 +2,6 @@ package aproto
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/pkg/errors"
 )
@@ -27,9 +26,6 @@ type ExitCode int
 const (
 	// SuccessExitCode is the 0 zero value exit code.
 	SuccessExitCode = 0
-	// PythonNotFoundExitCode is the non-zero value exit code
-	// for representing a container failure due to missing python.
-	PythonNotFoundExitCode = 8
 )
 
 // ContainerError returns a container failure wrapping the provided error. If the error is nil,
@@ -72,13 +68,9 @@ func NewContainerExit(code ExitCode) *ContainerFailure {
 	if code == SuccessExitCode {
 		return nil
 	}
-	exitReason := strconv.FormatInt(int64(code), 10)
-	if code == PythonNotFoundExitCode {
-		exitReason = "required python dependency was not found in container"
-	}
 	return &ContainerFailure{
 		FailureType: ContainerFailed,
-		ErrMsg:      errors.Errorf("%s: %s", ContainerFailed, exitReason).Error(),
+		ErrMsg:      errors.Errorf("%s: %s", ContainerFailed, code).Error(),
 		ExitCode:    &code,
 	}
 }
