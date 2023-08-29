@@ -3,6 +3,8 @@ import { Options, Scenario, Threshold } from 'k6/options';
 import http from "k6/http";
 import { jUnit, textSummary } from './utils/k6-summary';
 import { test, generateEndpointUrl } from './utils/helpers';
+
+
 const DEFAULT_CLUSTER_URL = 'http://localhost:8080';
 
 // Fallback to localhost if a cluster url is not supplied
