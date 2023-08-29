@@ -11,26 +11,28 @@ import css from './ClusterHistoricalUsageChart.module.scss';
 
 interface ClusterHistoricalUsageChartProps {
   chartKey?: number;
+  dateRange?: [number, number];
+  formatValues?: (self: uPlot, splits: number[]) => string[];
   groupBy?: GroupBy;
   height?: number;
   hoursByLabel: Record<string, number[]>;
   hoursTotal?: number[];
   label?: string;
   time: string[];
-  formatValues?: (self: uPlot, splits: number[]) => string[];
 }
 
 const CHART_HEIGHT = 350;
 
 const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = ({
+  chartKey,
+  dateRange,
+  formatValues,
   groupBy,
   height = CHART_HEIGHT,
-  label,
   hoursByLabel,
   hoursTotal,
+  label,
   time,
-  chartKey,
-  formatValues,
 }: ClusterHistoricalUsageChartProps) => {
   const chartData: AlignedData = useMemo(() => {
     const timeUnix: number[] = time.map((item) => Date.parse(item) / 1000);
@@ -109,18 +111,30 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
       scales: {
         x: {
           auto: !singlePoint,
-          range: singlePoint
-            ? [
-                new Date(`${new Date().getFullYear()}-01-01`).getTime() / 1000,
-                new Date(`${new Date().getFullYear() + 1}-01-01`).getTime() / 1000,
-              ]
-            : undefined,
+          range:
+            dateRange ??
+            (singlePoint
+              ? [
+                  new Date(`${new Date().getFullYear()}-01-01`).getTime() / 1000,
+                  new Date(`${new Date().getFullYear() + 1}-01-01`).getTime() / 1000,
+                ]
+              : undefined),
         },
       },
       series,
       tzDate: (ts) => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
     };
-  }, [groupBy, height, hoursByLabel, hoursTotal, label, chartKey, singlePoint, formatValues]);
+  }, [
+    chartKey,
+    dateRange,
+    formatValues,
+    groupBy,
+    height,
+    hoursByLabel,
+    hoursTotal,
+    label,
+    singlePoint,
+  ]);
 
   if (!hasData) {
     return <Message title="No data to plot." type={MessageType.Empty} />;
