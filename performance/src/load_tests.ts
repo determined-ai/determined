@@ -2,14 +2,25 @@ import { JSONObject, check, sleep } from 'k6';
 import { Options, Scenario, Threshold } from 'k6/options';
 import http from "k6/http";
 import { jUnit, textSummary } from './utils/k6-summary';
-
-const DEFAULT_CLUSTER_URL = "http://localhost:8080";
+import { test, generateEndpointUrl } from './utils/helpers';
+const DEFAULT_CLUSTER_URL = 'http://localhost:8080';
 
 // Fallback to localhost if a cluster url is not supplied
 const clusterURL = __ENV.DET_MASTER ?? DEFAULT_CLUSTER_URL
 
+// List of tests
+const getloadTests = () => [
 
-const masterEndpoint = '/api/v1/master';
+    // Query the master endpoint
+    test(
+        'visit master endpoint',
+        () => {
+            const res = http.get(generateEndpointUrl('/api/v1/master', clusterURL));
+            check(res, { '200 response': (r) => r.status == 200 });
+        }
+    ),
+]
+
 
 const thresholds: { [name: string]: Threshold[] } = {
     http_req_duration: [
@@ -20,7 +31,7 @@ const thresholds: { [name: string]: Threshold[] } = {
     ],
     http_req_failed: [
         {
-            threshold: 'rate>0.01',
+            threshold: 'rate<0.01',
             // If more than one percent of the HTTP requests fail
             // then we abort the test.
             abortOnFail: true,
@@ -28,20 +39,29 @@ const thresholds: { [name: string]: Threshold[] } = {
     ],
 };
 
+// In order to be able to view metrics for specific k6 groups
+// we must create a unique threshold for each.
+// See https://community.grafana.com/t/show-tag-data-in-output-or-summary-json-without-threshold/99320 
+// for more information
+getloadTests().forEach((group) => {
+    thresholds[`http_req_duration{group: ::${group.name
+        }}`] = [
+            {
+                threshold: 'p(95)<1000',
+                abortOnFail: false,
+            }
+        ]
+}
+)
+
 const scenarios: { [name: string]: Scenario } = {
-    smoke: {
-        executor: 'per-vu-iterations',
-        vus: 5,
-        iterations: 250
-    },
     average_load: {
         executor: 'ramping-vus',
         stages: [
-            { duration: '1m', target: 20 },
-            { duration: '5m', target: 20 },
-            { duration: '1ms', target: 0 }
+            { duration: '5m', target: 25 },
+            { duration: '10m', target: 25 },
+            { duration: '5m', target: 0 }
         ],
-        startTime: "5s"
     },
 }
 
@@ -50,10 +70,9 @@ export const options: Options = {
     thresholds,
 };
 
-export default function (): void {
-    const res = http.get(`${clusterURL}${masterEndpoint}`
-    );
-    check(res, { '200 response': (r) => r.status == 200 });
+export default (): void => {
+    getloadTests().map(test => test.group())
+    sleep(1)
 }
 
 export function handleSummary(data: JSONObject) {

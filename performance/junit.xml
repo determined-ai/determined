@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<testsuites tests="4" failures="0">
+<testsuite name="K6 Load Tests" tests="4" failures="0"><testcase name="http_req_duration - p(95)&lt;1000" />
+<testcase name="http_req_failed - rate&lt;0.01" />
+<testcase name="http_req_duration{group: ::visit master endpoint} - p(95)&lt;1000" />
+<testcase name="http_req_duration{group: ::dont visit master endpoint} - p(95)&lt;1000" />
+</testsuite >
+</testsuites >
