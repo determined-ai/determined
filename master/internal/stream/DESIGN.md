@@ -1,4 +1,4 @@
-# Streaming Updates ERD
+# Streaming Updates Design Doc
 
 ## Glossary
 
@@ -201,7 +201,7 @@ are:
 We prefer to just boot'em, as it's the simplest strategy, and the problem
 shouldn't arise very often.
 
-#### Just Boot'em Variations
+#### Just Boot'em Variation: invalidate the client cache
 
 Should just boot'em also invalidate the client cache?
 
@@ -214,6 +214,26 @@ Cons:
   - It requires restreaming a lot more state at rbac transitions.  If the
     offline appearance and disappearence problem is solved passively (due to
     declarative strategy) it would seem like a pointless performance hit.
+
+Conclusion: there's really no upside to invalidating the client cache, so we
+won't.
+
+#### Just Boot'em Variation: Boot Everybody
+
+Should just boot'em boot everybody after every rbac change?
+
+Pros:
+  - Figuring out exactly who to boot is hard, especially when the query to get
+    workspace access information involves about five different joins, but
+    booting everybody is really easy and really correct.
+
+Cons:
+  - There is high computation cost to having every client connect at the same
+    time, but it's rare, and likely on-par with the steady-state constant
+    polling that we do right now.
+
+Conclusion: we will boot everybody on every rbac change now, because it's
+simple, easy, and correct.  We'll optimize later, if necessary.
 
 ### Appearance Problem
 
@@ -276,28 +296,23 @@ For offline fallout, you'd either need to have an event log of transitions
 strategy effectively lets you leverage the client's cache to calculate offline
 fallout without having to store historical states in the streaming server.
 
-## Extensibility
+## Extensibility Ideas
 
 In no particular order.
 
 ### In-Memory Caching
 
 A cache containing primary keys, filterable columns, and rbac data from each
-row in a postgres table could speed up the initial calculations for:
+row in a postgres table could speed up the initial calculations of the
+declarative strategy.
 
-- Deletions
-- Disappearances
-- Appearances
-- Fallin
-- Fallout
+Such a cache could also make the NOTIFY-queue strategy unnecessary for online
+problems, and less important for the online deletion cases (though we'd still
+probably want to send the primary key being deleted for online deletions).
 
-Admittedly, passing additional information to NOTIFY about the OLD row during a
-TRIGGER could meet most of the same needs, but maybe not for the
-Appearance/Disappearance problem, since that involves rbac information not
-necessarily present in the row being udpated.
-
-It's not clear to me if this extension is necessary, or how beneficial it would
-be, so I think it's best to not worry about it until we know we need it.
+However, the memory cost could be quite large, and the performance benefits
+might not justify the memory cost, so I think it's best to not worry about it
+until we know we need it.
 
 ### Avoid goroutine-per-websocket
 
