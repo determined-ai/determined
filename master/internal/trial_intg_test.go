@@ -33,7 +33,7 @@ import (
 )
 
 func TestTrial(t *testing.T) {
-	_, _, rID, tr, alloc := setup(t)
+	_, _, rID, tr, alloc, done := setup(t)
 
 	// Pre-scheduled stage.
 	require.NoError(t, tr.PatchState(
@@ -67,6 +67,11 @@ func TestTrial(t *testing.T) {
 
 	// Terminating stage.
 	tr.AllocationExitedCallback(&task.AllocationExited{})
+	select {
+	case <-done: // success
+	case <-time.After(5 * time.Second):
+		require.Error(t, errors.New("timed out waiting for trial to terminate"))
+	}
 	require.True(t, model.TerminalStates[tr.state])
 
 	dbTrial, err = db.TrialByID(context.TODO(), tr.id)
@@ -75,7 +80,7 @@ func TestTrial(t *testing.T) {
 }
 
 func TestTrialRestarts(t *testing.T) {
-	_, pgDB, rID, tr, _ := setup(t)
+	_, pgDB, rID, tr, _, done := setup(t)
 	// Pre-scheduled stage.
 	require.NoError(t, tr.PatchState(
 		model.StateWithReason{State: model.ActiveState}))
@@ -106,7 +111,11 @@ func TestTrialRestarts(t *testing.T) {
 			require.Equal(t, i+2, runID)
 		}
 	}
-	// require.NoError(t, self.AwaitTermination())
+	select {
+	case <-done: // success
+	case <-time.After(5 * time.Second):
+		require.Error(t, errors.New("timed out waiting for trial to terminate"))
+	}
 	require.True(t, model.TerminalStates[tr.state])
 }
 
@@ -116,6 +125,7 @@ func setup(t *testing.T) (
 	model.RequestID,
 	*trial,
 	*allocationmocks.AllocationService,
+	chan bool,
 ) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
@@ -142,6 +152,7 @@ func setup(t *testing.T) (
 	// instantiate the trial
 	rID := model.NewRequestID(rand.Reader)
 	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, rID))
+	var done chan bool
 	tr, err := newTrial(
 		detLogger.Context{},
 		taskID,
@@ -169,8 +180,10 @@ func setup(t *testing.T) (
 		false,
 		nil, false, system, expRef, func(ri model.RequestID, reason *model.ExitedReason) {
 			require.Equal(t, rID, ri)
+			done <- true
+			close(done)
 		},
 	)
 	require.NoError(t, err)
-	return system, a.m.db, rID, tr, &as
+	return system, a.m.db, rID, tr, &as, done
 }

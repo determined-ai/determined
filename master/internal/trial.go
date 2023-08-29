@@ -272,7 +272,6 @@ func (t *trial) PatchRP(rp string) {
 func (t *trial) SetUserInitiatedEarlyExit(req userInitiatedEarlyExit) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	defer t.exit(&req.reason)
 
 	switch req.reason {
 	case model.InvalidHP, model.InitInvalidHP:
@@ -391,7 +390,6 @@ func (t *trial) maybeAllocateTask() error {
 			t.AllocationExitedCallback,
 		)
 		if err != nil {
-			t.syslog.WithError(err).Error("failed to restore trial allocation")
 			return err
 		}
 		t.allocationID = &ar.AllocationID
@@ -493,7 +491,6 @@ func (t *trial) AllocationExitedCallback(exit *task.AllocationExited) {
 	err := t.handleAllocationExit(exit)
 	if err != nil {
 		t.syslog.WithError(err).Error("handling allocation exit")
-		return
 	}
 }
 

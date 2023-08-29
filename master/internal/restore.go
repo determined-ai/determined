@@ -200,7 +200,7 @@ func (e *experiment) restoreTrial(
 	if err != nil {
 		l.WithError(err).Error("failed restoring trial, aborting restore")
 		if !e.searcher.TrialsClosed[searcher.Create.RequestID] {
-			e.trialClosed(searcher.Create.RequestID, ptrs.Ptr(model.InternalError))
+			e.trialClosed(searcher.Create.RequestID, ptrs.Ptr(model.Errored))
 		}
 		return
 	}

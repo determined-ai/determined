@@ -829,8 +829,6 @@ type ExitedReason string
 const (
 	// Errored signals the searcher that the workload errored out.
 	Errored ExitedReason = "ERRORED"
-	// InternalError constant.
-	InternalError ExitedReason = "INTERNAL_ERROR"
 	// UserRequestedStop signals the searcher that the user requested a cancelation, from code.
 	UserRequestedStop ExitedReason = "USER_REQUESTED_STOP"
 	// UserCanceled signals the searcher that the user requested a cancelation, from the CLI or UI.

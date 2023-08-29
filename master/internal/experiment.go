@@ -172,6 +172,7 @@ func newExperiment(
 		}
 	}
 	resources.SetResourcePool(poolName)
+
 	activeConfig.SetResources(resources)
 
 	method := searcher.NewSearchMethod(activeConfig.Searcher())
@@ -338,14 +339,14 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		t, ok := e.trials[msg.op.RequestID]
 		if !ok {
-			e.syslog.Warnf("missing trial to propagate complete op: %s", msg.op.RequestID)
+			ctx.Respond(api.AsErrNotFound("trial not found"))
 			return nil
 		}
 
 		err := t.PatchSearcherState(state)
 		if err != nil {
 			e.syslog.WithError(err).Error("patching trial search state")
-			e.trialClosed(msg.op.RequestID, ptrs.Ptr(model.InternalError))
+			ctx.Respond(err)
 			return nil
 		}
 
@@ -367,26 +368,23 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case userInitiatedEarlyExit:
 		ref, ok := e.trials[msg.requestID]
 		if !ok {
-			ctx.Respond(fmt.Errorf("no such trial: %s", msg.requestID))
+			ctx.Respond(api.AsErrNotFound("trial not found"))
 			return nil
 		}
 
 		err := ref.SetUserInitiatedEarlyExit(msg)
 		if err != nil {
-			e.syslog.WithError(err).Error("setting user initiated early exit")
-			e.trialClosed(msg.requestID, ptrs.Ptr(model.InternalError))
 			ctx.Respond(err)
 			return nil
 		}
 	case patchTrialState:
 		ref, ok := e.trials[msg.requestID]
 		if !ok {
-			ctx.Respond(fmt.Errorf("no such trial: %s", msg.requestID))
+			ctx.Respond(api.AsErrNotFound("trial not found"))
 			return nil
 		}
 		err := ref.PatchState(msg.state)
 		if err != nil {
-			e.syslog.WithError(err).Error("patching trial state")
 			ctx.Respond(err)
 			return nil
 		}
@@ -685,8 +683,7 @@ func (e *experiment) trialReportEarlyExit(requestID model.RequestID, reason mode
 	e.syslog.WithField("requestId", requestID).Info("experiment received trial early exit")
 	state, ok := e.TrialSearcherState[requestID]
 	if !ok {
-		err := api.AsValidationError("trial has no state")
-		e.syslog.WithError(err).Error()
+		e.syslog.WithField("requestID", requestID).Error("trial has no searcher state on early exit")
 		return
 	}
 	state.Complete = true
@@ -695,7 +692,7 @@ func (e *experiment) trialReportEarlyExit(requestID model.RequestID, reason mode
 
 	t, ok := e.trials[requestID]
 	if !ok {
-		e.syslog.Warnf("missing trial to propagate complete op: %s", requestID)
+		e.syslog.WithField("requestID", requestID).Warnf("missing trial to patch on early exit")
 		return
 	}
 
@@ -711,7 +708,6 @@ func (e *experiment) trialReportEarlyExit(requestID model.RequestID, reason mode
 
 func (e *experiment) trialCreated(t *trial) {
 	requestID := t.searcher.Create.RequestID
-	e.syslog.WithField("requstId", requestID).Info("experiment received trial created")
 	ops, err := e.searcher.TrialCreated(requestID)
 	e.processOperations(ops, err)
 	e.trials[requestID] = t
@@ -775,7 +771,6 @@ func (e *experiment) processOperations(
 			state := trialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
 			if e.self == nil {
-				e.syslog.Error("experiment actor not started")
 				panic("experiment actor not started")
 			}
 			t, err := newTrial(
@@ -785,7 +780,7 @@ func (e *experiment) processOperations(
 			)
 			if err != nil {
 				e.syslog.WithError(err).Error("failed to create trial")
-				e.trialClosed(op.RequestID, ptrs.Ptr(model.InternalError))
+				e.trialClosed(op.RequestID, ptrs.Ptr(model.Errored))
 				continue
 			}
 			e.trialCreated(t)
@@ -798,7 +793,6 @@ func (e *experiment) processOperations(
 		case searcher.SetSearcherProgress:
 			if err := e.searcher.SetCustomSearcherProgress(op.Progress); err != nil {
 				e.syslog.WithError(err).Error("failed to set searcher progress")
-				// ctx.Respond(status.Error(codes.Internal, err.Error()))
 			}
 
 		case searcher.Close:
@@ -904,20 +898,18 @@ func (e *experiment) updateState(state model.StateWithReason) bool {
 
 	var g errgroup.Group
 	g.SetLimit(maxConcurrentTrialOps)
-	for rID, t := range e.trials {
-		rID, t := rID, t
+	for _, t := range e.trials {
+		t := t
 		g.Go(func() error {
 			err := t.PatchState(state)
 			if err != nil {
 				e.syslog.WithError(err).Error("patching trial state")
-				e.trialClosed(rID, ptrs.Ptr(model.InternalError))
 			}
 			return nil
 		})
 	}
-	e.syslog.WithField("num_trials", len(e.trials)).Info("waiting for group patch state to finish")
 	_ = g.Wait() // Errors are handled in g.Go.
-	e.syslog.WithField("num_trials", len(e.trials)).Info("group patch state to finished")
+
 	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
 		e.syslog.Errorf("error saving experiment state: %s", err)
 	}
@@ -929,12 +921,7 @@ func (e *experiment) updateState(state model.StateWithReason) bool {
 }
 
 func (e *experiment) canTerminate() bool {
-	e.syslog.
-		WithField("state", e.State).
-		WithField("numTrials", len(e.trials)).
-		Debug("checking if experiment can terminate")
 	return model.StoppingStates[e.State] && len(e.trials) == 0
-	// return model.StoppingStates[e.State] && len(ctx.Children()) == 0
 }
 
 func (e *experiment) Snapshot() (json.RawMessage, error) {
