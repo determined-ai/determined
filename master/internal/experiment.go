@@ -263,8 +263,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	// Searcher-related messages.
 	case actor.PreStart:
 		e.self = ctx.Self()
-		e.syslog.Info("experiment actor started")
 		ctx.AddLabels(e.logCtx)
+
 		e.rm.SetGroupMaxSlots(ctx, sproto.SetGroupMaxSlots{
 			MaxSlots: e.activeConfig.Resources().MaxSlots(),
 			Handler:  e.self,
@@ -345,8 +345,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		err := t.PatchSearcherState(state)
 		if err != nil {
 			e.syslog.WithError(err).Error("patching trial search state")
-			reason := model.ExitedReason(fmt.Sprintf("failed to patch trial search state: %v", err))
-			e.trialClosed(msg.op.RequestID, &reason)
+			e.trialClosed(msg.op.RequestID, ptrs.Ptr(model.InternalError))
 			return nil
 		}
 
@@ -375,8 +374,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		err := ref.SetUserInitiatedEarlyExit(msg)
 		if err != nil {
 			e.syslog.WithError(err).Error("setting user initiated early exit")
-			reason := model.ExitedReason(fmt.Sprintf("user initiated early exit: %v", err))
-			e.trialClosed(msg.requestID, &reason)
+			e.trialClosed(msg.requestID, ptrs.Ptr(model.InternalError))
 			ctx.Respond(err)
 			return nil
 		}
@@ -394,7 +392,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 	// Patch experiment messages.
 	case model.StateWithReason:
-		e.syslog.WithField("jobId", e.JobID).Infof("received state update: %s", msg.State)
 		e.updateState(msg)
 	case model.State:
 		e.updateState(model.StateWithReason{State: msg})
@@ -562,7 +559,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				e.syslog.Errorf("unimplemented op %+v", concreteOperation)
 			}
 		}
-		e.syslog.WithField("HasSelf", e.self != nil).Infof("processing searcher operations %+v", ops)
+		e.syslog.Infof("processing searcher operations %+v", ops)
 
 		// Remove newly processed events from queue.
 		if err := queue.RemoveUpTo(int(msg.TriggeredByEvent.Id)); err != nil {
@@ -665,22 +662,20 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 }
 
 func (e *experiment) TrialClosed(requestID model.RequestID, reason *model.ExitedReason) {
-	e.syslog.WithField("request_id", requestID).Info("TrialClosed")
 	e.mu.Lock()
 	defer e.mu.Unlock()
+
 	e.trialClosed(requestID, reason)
 }
 
 func (e *experiment) trialClosed(requestID model.RequestID, reason *model.ExitedReason) {
-	e.syslog.WithField("request_id", requestID).Info("trialClosed")
 	if reason != nil {
 		e.trialReportEarlyExit(requestID, *reason)
 	}
 	delete(e.trials, requestID)
-	// if reason == nil {
+
 	ops, err := e.searcher.TrialClosed(requestID)
 	e.processOperations(ops, err)
-	// }
 	if e.canTerminate() {
 		e.self.Stop()
 	}
@@ -790,8 +785,7 @@ func (e *experiment) processOperations(
 			)
 			if err != nil {
 				e.syslog.WithError(err).Error("failed to create trial")
-				reason := model.ExitedReason(fmt.Sprintf("failed to create trial: %v", err))
-				e.trialClosed(op.RequestID, &reason)
+				e.trialClosed(op.RequestID, ptrs.Ptr(model.InternalError))
 				continue
 			}
 			e.trialCreated(t)
@@ -916,8 +910,7 @@ func (e *experiment) updateState(state model.StateWithReason) bool {
 			err := t.PatchState(state)
 			if err != nil {
 				e.syslog.WithError(err).Error("patching trial state")
-				reason := model.ExitedReason(fmt.Sprintf("failed to patch trial state: %v", err))
-				e.trialClosed(rID, &reason)
+				e.trialClosed(rID, ptrs.Ptr(model.InternalError))
 			}
 			return nil
 		})

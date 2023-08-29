@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 )
@@ -179,8 +180,7 @@ func (e *experiment) restoreTrial(
 	// In the event a trial is terminal and is not recorded in the searcher, replay the close.
 	if terminal {
 		if !e.searcher.TrialsClosed[searcher.Create.RequestID] {
-			reason := model.ExitedReason("trial was terminal in restore")
-			e.trialClosed(searcher.Create.RequestID, &reason)
+			e.trialClosed(searcher.Create.RequestID, nil)
 		}
 		return
 	}
@@ -198,11 +198,9 @@ func (e *experiment) restoreTrial(
 		e.searcher.TrialsCreated[searcher.Create.RequestID], e.system, e.self, e.TrialClosed,
 	)
 	if err != nil {
-		// TODO(!!!): kinda sloppy.
 		l.WithError(err).Error("failed restoring trial, aborting restore")
 		if !e.searcher.TrialsClosed[searcher.Create.RequestID] {
-			reason := model.ExitedReason(fmt.Sprintf("failed to restore trial: %v", err))
-			e.trialClosed(searcher.Create.RequestID, &reason)
+			e.trialClosed(searcher.Create.RequestID, ptrs.Ptr(model.InternalError))
 		}
 		return
 	}

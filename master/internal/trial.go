@@ -21,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
@@ -153,13 +154,6 @@ func newTrial(
 
 		exitCallback: exitCallback,
 	}
-	defer func(t *trial) {
-		if err != nil {
-			reason := model.ExitedReason(fmt.Sprintf("error creating trial: %v", err))
-			t.exit(&reason)
-		}
-	}(t)
-
 	if id != nil {
 		t.id = *id
 		t.idSet = true
@@ -213,10 +207,7 @@ func (t *trial) exit(reason *model.ExitedReason) {
 }
 
 func (t *trial) close() error {
-	t.syslog.WithField("id", t.id).Info("closing trial")
 	t.wg.Close()
-	t.syslog.WithField("id", t.id).Info("waitgroup closed")
-
 	if !t.idSet {
 		return nil
 	}
@@ -224,9 +215,7 @@ func (t *trial) close() error {
 		if t.allocationID != nil {
 			err := task.DefaultService.Signal(*t.allocationID, task.KillAllocation, "trial crashed")
 			if err == nil {
-				t.syslog.Info("signaled trial task to stop, awaiting termination")
 				task.DefaultService.AwaitTermination(*t.allocationID)
-				t.syslog.Info("trial task terminated")
 			}
 		}
 		return t.transition(model.StateWithReason{
@@ -240,6 +229,7 @@ func (t *trial) close() error {
 func (t *trial) PatchState(req model.StateWithReason) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+
 	return t.patchState(req)
 }
 
@@ -355,7 +345,6 @@ func (t *trial) recover() error {
 
 // maybeAllocateTask checks if the trial should allocate state and allocates it if so.
 func (t *trial) maybeAllocateTask() error {
-	t.syslog.Info("checking if we should allocate trial")
 	if !(t.allocationID == nil &&
 		!t.searcher.Complete &&
 		t.state == model.ActiveState) {
@@ -405,9 +394,6 @@ func (t *trial) maybeAllocateTask() error {
 			t.syslog.WithError(err).Error("failed to restore trial allocation")
 			return err
 		}
-		t.syslog.
-			WithField("allocation-id", ar.AllocationID).
-			Infof("started restored trial allocation")
 		t.allocationID = &ar.AllocationID
 		return nil
 	}
@@ -468,16 +454,6 @@ func (t *trial) addTask() error {
 }
 
 func (t *trial) buildTaskSpecifier() (*tasks.TrialSpec, error) {
-	t.syslog.WithField("requstId", t.searcher.Create.RequestID).Info("trial building task specifier")
-	// if !t.trialCreationSent {
-	// 	t.syslog.Info("trial created")
-	// 	if t.parent == nil {
-	// 		panic("parent is nil")
-	// 	}
-	// 	t.system.Tell(t.parent, trialCreated{requestID: t.searcher.Create.RequestID})
-	// 	t.trialCreationSent = true
-	// }
-
 	if err := t.db.UpdateTrialRunID(t.id, t.runID); err != nil {
 		return nil, errors.Wrap(err, "failed to save trial run ID")
 	}
@@ -511,20 +487,14 @@ func (t *trial) buildTaskSpecifier() (*tasks.TrialSpec, error) {
 
 // AllocationExitedCallback cleans up after an allocation exit and exits permanently or reallocates.
 func (t *trial) AllocationExitedCallback(exit *task.AllocationExited) {
-	t.syslog.Debug("handling allocation exited callback")
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
 	err := t.handleAllocationExit(exit)
 	if err != nil {
-		// TODO(!!!): in some cases we need to set something to force us to 'close'
 		t.syslog.WithError(err).Error("handling allocation exit")
-		// reason := model.ExitedReason(fmt.Sprintf("error handling allocation exit: %v", err))
-		// t.exit(&reason)
 		return
-		// t.system.Tell(t.parent, trialClosed{requestID: t.searcher.Create.RequestID})
 	}
-	// t.exit(nil)
 }
 
 func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
@@ -688,12 +658,9 @@ func (t *trial) transition(s model.StateWithReason) error {
 	case model.TerminalStates[t.state]:
 		switch t.state {
 		case model.ErrorState:
-			reason := model.Errored
-			t.syslog.WithField("reason", reason).Info("trial errored")
-			t.exit(&reason)
+			t.exit(ptrs.Ptr(model.Errored))
 		case model.CanceledState:
-			reason := model.UserCanceled
-			t.exit(&reason)
+			t.exit(ptrs.Ptr(model.UserCanceled))
 		default:
 			t.exit(nil)
 		}
