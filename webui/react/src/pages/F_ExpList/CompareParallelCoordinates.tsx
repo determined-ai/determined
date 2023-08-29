@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Spinner from 'components/kit/Spinner';
-import Message, { MessageType } from 'components/Message';
+import Message from 'components/Message';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
 import { useGlasbey } from 'hooks/useGlasbey';
@@ -269,7 +269,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
   }
 
   if (trials.length === 0) {
-    return <Message title="No data to plot." type={MessageType.Empty} />;
+    return <Message title="No data available." />;
   }
 
   if (!chartData || (selectedExperiments.length !== 0 && metrics.length === 0)) {

@@ -4,12 +4,12 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Empty from 'components/kit/Empty';
 import { XOR } from 'components/kit/internal/types';
 import usePrevious from 'components/kit/internal/usePrevious';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
 import Link from 'components/Link';
+import Message from 'components/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelect from 'components/MetricSelect';
 import useMetricNames from 'hooks/useMetricNames';
@@ -379,10 +379,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
           </table>
         </Spinner>
       ) : (
-        <Empty
-          icon="document"
-          title={`No ${Array.isArray(experiment) ? 'experiments with ' : ''}trials selected`}
-        />
+        <Message title="No data available." />
       )}
     </div>
   );
