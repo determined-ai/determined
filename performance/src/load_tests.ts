@@ -20,7 +20,7 @@ const thresholds: { [name: string]: Threshold[] } = {
     ],
     http_req_failed: [
         {
-            threshold: 'rate<0.01',
+            threshold: 'rate>0.01',
             // If more than one percent of the HTTP requests fail
             // then we abort the test.
             abortOnFail: true,
@@ -54,7 +54,6 @@ export default function (): void {
     const res = http.get(`${clusterURL}${masterEndpoint}`
     );
     check(res, { '200 response': (r) => r.status == 200 });
-    sleep(1)
 }
 
 export function handleSummary(data: JSONObject) {

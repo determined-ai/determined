@@ -16,13 +16,12 @@ var palette = {
     red: 31,
     green: 32,
     cyan: 36,
-    //TODO: add others?
 }
 
-var groupPrefix = 'â–ˆ'
-var detailsPrefix = 'â†³'
-var succMark = 'âœ“'
-var failMark = 'âœ—'
+var groupPrefix = "\u2013"
+var detailsPrefix = "\u2026"
+var succMark = "\u2713"
+var failMark = "\u2715"
 var defaultOptions = {
     indent: ' ',
     enableColors: true,
@@ -86,7 +85,7 @@ function summarizeCheck(indent, check, decorate) {
         detailsPrefix +
         '  ' +
         succPercent +
-        '% â€” ' +
+        "\u0025" +
         succMark +
         ' ' +
         check.passes +
@@ -149,7 +148,7 @@ function humanizeBytes(bytes) {
 var unitMap = {
     s: { unit: 's', coef: 0.001 },
     ms: { unit: 'ms', coef: 1 },
-    us: { unit: 'Âµs', coef: 1000 },
+    us: { unit: 'µs', coef: 1000 },
 }
 
 function toFixedNoTrailingZeros(val, prec) {
@@ -173,7 +172,7 @@ function humanizeGenericDuration(dur) {
     }
     if (dur < 1) {
         // smaller than a millisecond, print microseconds
-        return toFixedNoTrailingZerosTrunc(dur * 1000, 2) + 'Âµs'
+        return toFixedNoTrailingZerosTrunc(dur * 1000, 2) + 'µs'
     }
     if (dur < 1000) {
         // duration is smaller than a second
