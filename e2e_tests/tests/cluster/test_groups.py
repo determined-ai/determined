@@ -26,7 +26,7 @@ def det_cmd_json(cmd: List[str]) -> Any:
 def det_cmd_expect_error(cmd: List[str], expected: str) -> None:
     res = det_cmd(cmd)
     assert res.returncode != 0
-    assert expected in res.stderr.decode()
+    assert expected.lower() in res.stderr.decode().lower()
 
 
 @pytest.mark.e2e_cpu_rbac
