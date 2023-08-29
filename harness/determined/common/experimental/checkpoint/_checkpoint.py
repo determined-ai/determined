@@ -363,7 +363,7 @@ class Checkpoint:
         else:
             logging.info(f"Partial deletion of checkpoint {self.uuid} is in progress.")
 
-    def get_metrics(self, group: str = "") -> Iterable["metrics.TrialMetrics"]:
+    def get_metrics(self, group: Optional[str] = None) -> Iterable["metrics.TrialMetrics"]:
         """
         Gets all metrics for a given metric group associated with this checkpoint.
         The checkpoint can be originally associated by calling

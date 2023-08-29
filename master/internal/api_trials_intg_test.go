@@ -33,7 +33,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
-const inferenceMetricGroup = "inference"
+var inferenceMetricGroup = "inference"
 
 func createTestTrial(
 	t *testing.T, api *apiServer, curUser model.User,
@@ -1186,7 +1186,7 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 	getCkptResp, getErr := api.GetTrialMetricsByCheckpoint(
 		ctx, &apiv1.GetTrialMetricsByCheckpointRequest{
 			CheckpointUuid: checkpointUUID,
-			MetricGroup:    inferenceMetricGroup,
+			MetricGroup:    &inferenceMetricGroup,
 		},
 	)
 	require.NoError(t, getErr)
@@ -1212,7 +1212,7 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 	getCkptResp, getErr = api.GetTrialMetricsByCheckpoint(
 		ctx, &apiv1.GetTrialMetricsByCheckpointRequest{
 			CheckpointUuid: checkpointUUID,
-			MetricGroup:    inferenceMetricGroup,
+			MetricGroup:    &inferenceMetricGroup,
 		},
 	)
 	require.NoError(t, getErr)
@@ -1263,7 +1263,7 @@ func TestTrialSourceInfoModelVersion(t *testing.T) {
 		ctx, &apiv1.GetTrialMetricsByModelVersionRequest{
 			ModelName:       modelVersion.Model.Name,
 			ModelVersionNum: modelVersion.Version,
-			MetricGroup:     inferenceMetricGroup,
+			MetricGroup:     &inferenceMetricGroup,
 		},
 	)
 	require.NoError(t, getMVErr)

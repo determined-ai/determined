@@ -94,13 +94,14 @@ func newMetricsBody(
 
 // BunSelectMetricsQuery sets up a bun select query for based on new metrics table
 // simplifying some weirdness we set up for pg10 support.
-func BunSelectMetricsQuery(metricGroup model.MetricGroup, inclArchived bool) *bun.SelectQuery {
-	pType := customMetricGroupToPartitionType(metricGroup)
+func BunSelectMetricsQuery(mGroup model.MetricGroup, inclArchived bool) *bun.SelectQuery {
+	metricGroup := string(mGroup)
+	pType := customMetricGroupToPartitionType(&metricGroup)
 	q := Bun().NewSelect().
 		Where("partition_type = ?", pType).
 		Where("archived = ?", inclArchived)
 	if pType == GenericMetric {
-		q.Where("metric_group = ?", metricGroup)
+		q.Where("metric_group = ?", mGroup)
 	}
 	return q
 }
@@ -121,7 +122,8 @@ rollbackMetrics ensures old training and validation metrics from a previous run 
 func rollbackMetrics(ctx context.Context, tx *sqlx.Tx, runID, trialID,
 	lastProcessedBatch int32, mGroup model.MetricGroup,
 ) (int, error) {
-	pType := customMetricGroupToPartitionType(mGroup)
+	metricGroup := string(mGroup)
+	pType := customMetricGroupToPartitionType(&metricGroup)
 	res, err := tx.ExecContext(ctx, `
 UPDATE metrics SET archived = true
 WHERE trial_id = $1
@@ -154,6 +156,7 @@ func (db *PgDB) addMetricsWithMerge(ctx context.Context, tx *sqlx.Tx, mBody *met
 	runID, trialID, lastProcessedBatch int32, mGroup model.MetricGroup,
 ) (metricID int, addedMetrics *metricsBody, err error) {
 	var existingBodyJSON model.JSONObj
+	metricGroup := string(mGroup)
 	err = tx.QueryRowContext(ctx, `
 SELECT COALESCE((SELECT metrics FROM metrics
 WHERE archived = false
@@ -163,7 +166,7 @@ AND partition_type = $3
 AND metric_group = $4), NULL)
 FOR UPDATE`,
 		lastProcessedBatch, trialID,
-		customMetricGroupToPartitionType(mGroup), mGroup).Scan(&existingBodyJSON)
+		customMetricGroupToPartitionType(&metricGroup), mGroup).Scan(&existingBodyJSON)
 	if err != nil {
 		return 0, nil, errors.Wrap(err, "getting old metrics")
 	}
@@ -192,7 +195,8 @@ func (db *PgDB) updateRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metric
 	if err := mGroup.Validate(); err != nil {
 		return 0, err
 	}
-	pType := customMetricGroupToPartitionType(mGroup)
+	metricGroup := string(mGroup)
+	pType := customMetricGroupToPartitionType(&metricGroup)
 
 	var metricRowID int
 	//nolint:execinquery // we want to get the id.
@@ -220,7 +224,8 @@ func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metricsBo
 	if err := mGroup.Validate(); err != nil {
 		return 0, err
 	}
-	pType := customMetricGroupToPartitionType(mGroup)
+	metricGroup := string(mGroup)
+	pType := customMetricGroupToPartitionType(&metricGroup)
 
 	var metricRowID int
 	// ON CONFLICT clause is not supported with partitioned tables (SQLSTATE 0A000)
@@ -239,10 +244,13 @@ RETURNING id`,
 	return metricRowID, nil
 }
 
-func customMetricGroupToPartitionType(mGroup model.MetricGroup) MetricPartitionType {
+func customMetricGroupToPartitionType(mGroup *string) MetricPartitionType {
 	// TODO(hamid): remove partition_type once we move away from pg10 and
 	// we can use DEFAULT partitioning.
-	switch mGroup {
+	if mGroup == nil {
+		return GenericMetric
+	}
+	switch model.MetricGroup(*mGroup) {
 	case model.TrainingMetricGroup:
 		return TrainingMetric
 	case model.ValidationMetricGroup:
@@ -280,7 +288,7 @@ func (db *PgDB) AddTrialMetrics(
 
 // GetMetrics returns a subset metrics of the requested type for the given trial ID.
 func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
-	mGroup model.MetricGroup,
+	mGroup *string, // model.MetricGroup,
 ) ([]*trialv1.MetricsReport, error) {
 	var res []*trialv1.MetricsReport
 	pType := customMetricGroupToPartitionType(mGroup)
@@ -292,7 +300,7 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 		Where("total_batches > ?", afterBatches).
 		Where("archived = false")
 
-	if mGroup != "" {
+	if mGroup != nil {
 		query.Where("partition_type = ?", pType)
 		if pType == GenericMetric {
 			// Going off of our current schema were looking for custom types in our legacy

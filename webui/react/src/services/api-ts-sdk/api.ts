@@ -17333,7 +17333,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @summary Gets the metrics for all trials associated with this checkpoint
          * @param {string} checkpointUuid UUID of the checkpoint.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
-         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) ("" means all groups).
+         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -17380,7 +17380,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {string} modelName The name of the model associated with the model version.
          * @param {number} modelVersionNum Sequential model version number.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
-         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) ("" means all groups).
+         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -19314,7 +19314,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @summary Gets the metrics for all trials associated with this checkpoint
          * @param {string} checkpointUuid UUID of the checkpoint.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
-         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) ("" means all groups).
+         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -19336,7 +19336,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @param {string} modelName The name of the model associated with the model version.
          * @param {number} modelVersionNum Sequential model version number.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
-         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) ("" means all groups).
+         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -20238,7 +20238,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @summary Gets the metrics for all trials associated with this checkpoint
          * @param {string} checkpointUuid UUID of the checkpoint.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
-         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) ("" means all groups).
+         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -20251,7 +20251,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {string} modelName The name of the model associated with the model version.
          * @param {number} modelVersionNum Sequential model version number.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
-         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) ("" means all groups).
+         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -20934,7 +20934,7 @@ export class InternalApi extends BaseAPI {
      * @summary Gets the metrics for all trials associated with this checkpoint
      * @param {string} checkpointUuid UUID of the checkpoint.
      * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
-     * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) ("" means all groups).
+     * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
@@ -20949,7 +20949,7 @@ export class InternalApi extends BaseAPI {
      * @param {string} modelName The name of the model associated with the model version.
      * @param {number} modelVersionNum Sequential model version number.
      * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
-     * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) ("" means all groups).
+     * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi

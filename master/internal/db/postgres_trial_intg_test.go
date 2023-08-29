@@ -618,6 +618,7 @@ func TestMetricMerge(t *testing.T) {
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	mGroup := model.TrainingMetricGroup
+	metricGroup := mGroup.ToString()
 
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)
@@ -659,12 +660,12 @@ func TestMetricMerge(t *testing.T) {
 			// query only for the training metrics
 			err = addMetricAt(1, metricReport, trialID, model.ValidationMetricGroup)
 			require.NoError(t, err)
-			metrics, err := GetMetrics(ctx, trialID, 0, 100, mGroup)
+			metrics, err := GetMetrics(ctx, trialID, 0, 100, &metricGroup)
 			require.NoError(t, err)
 			require.Len(t, metrics, 1)
 			require.Equal(t, metrics[0].Group, string(mGroup))
 		}
-		metrics, err := GetMetrics(ctx, trialID, 0, 100, mGroup)
+		metrics, err := GetMetrics(ctx, trialID, 0, 100, &metricGroup)
 		require.NoError(t, err)
 		require.Len(t, metrics, 1)
 		require.Equal(t, metrics[0].Group, string(mGroup))
@@ -721,7 +722,7 @@ func TestGetAllMetrics(t *testing.T) {
 			require.NoError(t, err)
 			err = addMetricAt(1, metricReport, trialID, model.MetricGroup("inference"))
 			require.NoError(t, err)
-			metrics, err := GetMetrics(ctx, trialID, 0, 100, model.MetricGroup(""))
+			metrics, err := GetMetrics(ctx, trialID, 0, 100, nil)
 			require.NoError(t, err)
 			// We added three different metric groups and then queried for an empty group
 			// which should yield all metrics
@@ -1048,7 +1049,8 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 2, archivedValidations, "trial id %d", tr.ID)
 
-	returnedMetrics, err := GetMetrics(ctx, tr.ID, 0, 10, "generic-golabi")
+	metricGroup := "generic-golabi"
+	returnedMetrics, err := GetMetrics(ctx, tr.ID, 0, 10, &metricGroup)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(returnedMetrics))
 }
@@ -1100,7 +1102,9 @@ func TestGenericMetricsIO(t *testing.T) {
 	err = db.AddTrialMetrics(ctx, trialMetrics, "inference")
 	require.NoError(t, err)
 
-	metricReports, err := GetMetrics(ctx, tr.ID, batches-1, 10, "inference")
+	metricGroup := "inference"
+
+	metricReports, err := GetMetrics(ctx, tr.ID, batches-1, 10, &metricGroup)
 	require.NoError(t, err)
 	require.Len(t, metricReports, 1)
 	require.EqualValues(t, trialRunID, metricReports[0].TrialRunId)

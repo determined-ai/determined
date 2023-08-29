@@ -893,8 +893,9 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 
 	trialIDIndex := 0
 	key := -1
+	mGroup := metricGroup.ToString()
 	for {
-		res, err := db.GetMetrics(ctx, int(trialIDs[trialIDIndex]), key, size, metricGroup)
+		res, err := db.GetMetrics(ctx, int(trialIDs[trialIDIndex]), key, size, &mGroup)
 		if err != nil {
 			return err
 		}

@@ -8,7 +8,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
@@ -35,7 +34,7 @@ func (a *TrialSourceInfoAPIServer) ReportTrialSourceInfo(
 // trial_source_infos table, and fetches the metrics for each of the connected trials.
 func GetMetricsForTrialSourceInfoQuery(
 	ctx context.Context, q *bun.SelectQuery,
-	groupName string,
+	groupName *string,
 ) ([]*trialv1.MetricsReport, error) {
 	trialIds := []struct {
 		TrialID             int
@@ -60,7 +59,7 @@ func GetMetricsForTrialSourceInfoQuery(
 			// particular trials.
 			continue
 		}
-		res, err := db.GetMetrics(ctx, val.TrialID, -1, numMetricsLimit, model.MetricGroup(groupName))
+		res, err := db.GetMetrics(ctx, val.TrialID, -1, numMetricsLimit, groupName)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get metrics %w", err)
 		}

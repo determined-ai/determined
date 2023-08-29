@@ -29,7 +29,9 @@ class TrialMetrics:
     batch_metrics: Optional[List[Dict[str, Any]]] = None
 
     @classmethod
-    def _from_bindings(cls, metric_report: bindings.v1MetricsReport, group: str) -> "TrialMetrics":
+    def _from_bindings(
+        cls, metric_report: bindings.v1MetricsReport, group: Optional[str]
+    ) -> "TrialMetrics":
         key = "validation_metrics" if group == util._LEGACY_VALIDATION else "avg_metrics"
         return cls(
             trial_id=metric_report.trialId,

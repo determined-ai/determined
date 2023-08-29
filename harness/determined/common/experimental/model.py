@@ -74,7 +74,7 @@ class ModelVersion:
             self._session, modelName=self.model_name, modelVersionNum=self.model_version
         )
 
-    def get_metrics(self, group: str = "") -> Iterable["metrics.TrialMetrics"]:
+    def get_metrics(self, group: Optional[str] = None) -> Iterable["metrics.TrialMetrics"]:
         """
         Gets all metrics for a given metric group associated with this model version.
         The checkpoint can be originally associated by calling
@@ -83,9 +83,8 @@ class ModelVersion:
 
         Arguments:
             group (str, optional): Group name for the metrics (example: "training", "validation").
-                All metrics will be returned when querying by "".
+                All metrics will be returned when querying by None.
         """
-
         resp = bindings.get_GetTrialMetricsByModelVersion(
             session=self._session,
             modelName=self.model_name,
