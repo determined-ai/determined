@@ -34,6 +34,15 @@ const scenarios: { [name: string]: Scenario } = {
         vus: 5,
         iterations: 250
     },
+    average_load: {
+        executor: 'ramping-vus',
+        stages: [
+            { duration: '1m', target: 20 },
+            { duration: '5m', target: 20 },
+            { duration: '1ms', target: 0 }
+        ],
+        startTime: "5s"
+    },
 }
 
 export const options: Options = {
