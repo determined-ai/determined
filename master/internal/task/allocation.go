@@ -922,7 +922,7 @@ func (a *allocation) kill(reason string) {
 	}
 
 	if len(a.resources.exited()) == 0 {
-		a.syslog.Errorf("setting killed while running: %d", len(a.resources.exited()))
+		a.syslog.Debugf("setting killed while running: %d", len(a.resources.exited()))
 		a.killedWhileRunning = true
 	}
 

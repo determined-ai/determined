@@ -1,20 +1,21 @@
 package kubernetesrm
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -28,40 +29,8 @@ import (
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
-type mockReceiver struct {
-	name      string
-	responses []actor.Message
-}
-
-func newMockReceiver(name string) *mockReceiver {
-	return &mockReceiver{name: name, responses: []actor.Message{}}
-}
-
-func (m *mockReceiver) Receive(ctx *actor.Context) error {
-	m.responses = append(m.responses, ctx.Message())
-	return nil
-}
-
-func (m *mockReceiver) GetLength() int {
-	return len(m.responses)
-}
-
-func (m *mockReceiver) Purge() {
-	m.responses = []actor.Message{}
-}
-
-func (m *mockReceiver) Pop() (actor.Message, error) {
-	if len(m.responses) > 0 {
-		output := m.responses[0]
-		m.responses = m.responses[1:]
-		return output, nil
-	}
-	return nil, fmt.Errorf("nothing left in responses")
-}
-
 func createPod(
 	allocationID model.AllocationID,
-	clusterHandler *actor.Ref,
 	resourceHandler *requestQueue,
 	task tasks.TaskSpec,
 ) *pod {
@@ -93,31 +62,6 @@ func createPod(
 	return newPodHandler
 }
 
-func createReceivers(system *actor.System) (map[string]*mockReceiver, map[string]*actor.Ref) {
-	podMap := make(map[string]*mockReceiver)
-	actorMap := make(map[string]*actor.Ref)
-
-	podMap["task"] = newMockReceiver("task-receiver")
-	actorMap["task"], _ = system.ActorOf(
-		actor.Addr("task-pod"),
-		podMap["task"],
-	)
-
-	podMap["cluster"] = newMockReceiver("cluster-receiver")
-	actorMap["cluster"], _ = system.ActorOf(
-		actor.Addr("cluster-pod"),
-		podMap["cluster"],
-	)
-
-	podMap["resource"] = newMockReceiver("resource-receiver")
-	actorMap["resource"], _ = system.ActorOf(
-		actor.Addr("resource-pod"),
-		podMap["resource"],
-	)
-
-	return podMap, actorMap
-}
-
 func createAgentUserGroup() *model.AgentUserGroup {
 	return &model.AgentUserGroup{
 		ID:     1,
@@ -138,12 +82,10 @@ func createUser() *model.User {
 	}
 }
 
-func createPodWithMockQueue(k8sRequestQueue *requestQueue) (
-	*actor.System,
+func createPodWithMockQueue(t *testing.T, k8sRequestQueue *requestQueue) (
 	*pod,
-	*actor.Ref,
-	map[string]*mockReceiver,
-	map[string]*actor.Ref,
+	model.AllocationID,
+	*sproto.ResourcesSubscription,
 ) {
 	commandSpec := tasks.GenericCommandSpec{
 		Base: tasks.TaskSpec{
@@ -156,42 +98,36 @@ func createPodWithMockQueue(k8sRequestQueue *requestQueue) (
 		},
 		Config: model.CommandConfig{Description: "test-config"},
 	}
-	system := actor.NewSystem("test-sys")
-	podMap, actorMap := createReceivers(system)
 
-	go func() {
-		// HACK: Come back and fix this test to use rmevents directly and not rely on this shim.
-		task := actorMap["task"]
-		sub := rmevents.Subscribe(model.AllocationID(task.Address().String()))
-		for {
-			ev := sub.Get()
-			logrus.Error("ACTUALLY GOT AN EVENT")
-			system.Tell(actorMap["task"], ev)
-		}
-	}()
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
 
+	failures := make(chan resourcesRequestFailure, 1024)
 	if k8sRequestQueue == nil {
 		podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 		configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 		k8sRequestQueue = startRequestQueue(
 			map[string]typedV1.PodInterface{"default": podInterface},
 			map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
+			failures,
 		)
 	}
 
+	aID := model.AllocationID(uuid.NewString())
+	sub := rmevents.Subscribe(aID)
 	newPod := createPod(
-		model.AllocationID(actorMap["task"].Address().String()),
-		actorMap["cluster"],
+		aID,
 		k8sRequestQueue,
 		commandSpec.ToTaskSpec(),
 	)
-	ref, _ := system.ActorOf(
-		actor.Addr("pod-actor-test"),
-		newPod,
-	)
-	time.Sleep(time.Millisecond * 500)
 
-	return system, newPod, ref, podMap, actorMap
+	go consumeResourceRequestFailures(ctx, failures, newPod)
+
+	err := newPod.start()
+	require.NoError(t, err)
+	time.Sleep(500 * time.Millisecond)
+
+	return newPod, aID, sub
 }
 
 var taskContainerFiles = []string{
@@ -231,19 +167,18 @@ func cleanup(t *testing.T) {
 func checkReceiveTermination(
 	t *testing.T,
 	update podStatusUpdate,
-	system *actor.System,
-	ref *actor.Ref,
 	newPod *pod,
-	podMap map[string]*mockReceiver,
+	sub *sproto.ResourcesSubscription,
 ) {
-	system.Ask(ref, update)
+	state, err := newPod.podStatusUpdate(update.updatedPod)
+	switch {
+	case err != nil, state == cproto.Terminated:
+		newPod.finalize()
+	}
 	time.Sleep(time.Second)
 
-	assert.Equal(t, podMap["task"].GetLength(), 1)
-	message, err := podMap["task"].Pop()
-	if err != nil {
-		t.Errorf("Unable to pop message from task receiver queue")
-	}
+	assert.Equal(t, sub.Len(), 1)
+	message := sub.Get()
 	containerMsg, ok := message.(*sproto.ResourcesStateChanged)
 	if !ok {
 		t.Errorf(
@@ -264,21 +199,18 @@ func TestResourceCreationFailed(t *testing.T) {
 
 	const correctMsg = "already exists"
 
-	system, _, ref, podMap, _ := createPodWithMockQueue(nil)
+	ref, aID, sub := createPodWithMockQueue(t, nil)
 
-	podMap["task"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
+	purge(aID, sub)
+	assert.Equal(t, sub.Len(), 0)
 	// Send a second start message to trigger an additional resource creation failure.
-	system.Ask(ref, actor.PreStart{})
+	err := ref.start()
+	require.NoError(t, err)
 	time.Sleep(time.Second)
 
 	// We expect two messages in the queue because the pod actor sends itself a stop message.
-	assert.Equal(t, podMap["task"].GetLength(), 2)
-	message, err := podMap["task"].Pop()
-	if err != nil {
-		t.Errorf("Unable to pop message from task receiver queue")
-	}
-
+	assert.Equal(t, sub.Len(), 2)
+	message := sub.Get()
 	containerMsg, ok := message.(*sproto.ContainerLog)
 	if !ok {
 		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
@@ -290,57 +222,59 @@ func TestReceivePodStatusUpdateTerminated(t *testing.T) {
 	setupEntrypoint(t)
 	defer cleanup(t)
 
-	// Pod deleting, but in pending state.
-	t.Logf("Testing PodPending status")
-	system, newPod, ref, podMap, _ := createPodWithMockQueue(nil)
-	podMap["task"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
-
 	typeMeta := metaV1.TypeMeta{Kind: "rest test"}
 	objectMeta := metaV1.ObjectMeta{
 		Name:              "test meta",
 		DeletionTimestamp: &metaV1.Time{Time: time.Now()},
 	}
-	pod := k8sV1.Pod{
-		TypeMeta:   typeMeta,
-		ObjectMeta: objectMeta,
-		Status:     k8sV1.PodStatus{Phase: k8sV1.PodPending},
-	}
 
-	statusUpdate := podStatusUpdate{updatedPod: &pod}
+	t.Run("pod deleting, but in pending state", func(t *testing.T) {
+		t.Logf("Testing PodPending status")
+		ref, aID, sub := createPodWithMockQueue(t, nil)
+		purge(aID, sub)
+		assert.Equal(t, sub.Len(), 0)
 
-	checkReceiveTermination(t, statusUpdate, system, ref, newPod, podMap)
+		pod := k8sV1.Pod{
+			TypeMeta:   typeMeta,
+			ObjectMeta: objectMeta,
+			Status:     k8sV1.PodStatus{Phase: k8sV1.PodPending},
+		}
+		statusUpdate := podStatusUpdate{updatedPod: &pod}
 
-	// Pod failed.
-	t.Logf("Testing PodFailed status")
-	system, newPod, ref, podMap, _ = createPodWithMockQueue(nil)
-	podMap["task"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
-	pod = k8sV1.Pod{
-		TypeMeta:   typeMeta,
-		ObjectMeta: objectMeta,
-		Status:     k8sV1.PodStatus{Phase: k8sV1.PodFailed},
-	}
-	statusUpdate = podStatusUpdate{updatedPod: &pod}
+		checkReceiveTermination(t, statusUpdate, ref, sub)
+	})
 
-	checkReceiveTermination(t, statusUpdate, system, ref, newPod, podMap)
+	t.Run("pod failed", func(t *testing.T) {
+		t.Logf("Testing PodFailed status")
+		ref, aID, sub := createPodWithMockQueue(t, nil)
+		purge(aID, sub)
+		assert.Equal(t, sub.Len(), 0)
+
+		pod := k8sV1.Pod{
+			TypeMeta:   typeMeta,
+			ObjectMeta: objectMeta,
+			Status:     k8sV1.PodStatus{Phase: k8sV1.PodFailed},
+		}
+		statusUpdate := podStatusUpdate{updatedPod: &pod}
+
+		checkReceiveTermination(t, statusUpdate, ref, sub)
+	})
 
 	// Pod succeeded.
-	system, newPod, ref, podMap, _ = createPodWithMockQueue(nil)
-	podMap["task"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
-	pod = k8sV1.Pod{
-		TypeMeta:   typeMeta,
-		ObjectMeta: objectMeta,
-		Status:     k8sV1.PodStatus{Phase: k8sV1.PodSucceeded},
-	}
-	statusUpdate = podStatusUpdate{updatedPod: &pod}
+	t.Run("pod succeeded", func(t *testing.T) {
+		ref, aID, sub := createPodWithMockQueue(t, nil)
+		purge(aID, sub)
+		assert.Equal(t, sub.Len(), 0)
 
-	checkReceiveTermination(t, statusUpdate, system, ref, newPod, podMap)
+		pod := k8sV1.Pod{
+			TypeMeta:   typeMeta,
+			ObjectMeta: objectMeta,
+			Status:     k8sV1.PodStatus{Phase: k8sV1.PodSucceeded},
+		}
+		statusUpdate := podStatusUpdate{updatedPod: &pod}
 
-	system.Ask(ref, statusUpdate)
-	time.Sleep(time.Second)
-	assert.Equal(t, podMap["task"].GetLength(), 0)
+		checkReceiveTermination(t, statusUpdate, ref, sub)
+	})
 }
 
 func TestMultipleContainerTerminate(t *testing.T) {
@@ -348,9 +282,6 @@ func TestMultipleContainerTerminate(t *testing.T) {
 	setupEntrypoint(t)
 	defer cleanup(t)
 
-	// Pod running with > 1 container, and one terminated.
-	t.Logf("Testing two pods with one in terminated state")
-	system, newPod, ref, podMap, _ := createPodWithMockQueue(nil)
 	containerStatuses := []k8sV1.ContainerStatus{
 		{
 			Name: "test-pod-1",
@@ -365,54 +296,58 @@ func TestMultipleContainerTerminate(t *testing.T) {
 			},
 		},
 	}
-	newPod.containerNames = set.FromSlice([]string{"test-pod-1", "test-pod-2"})
-	podMap["task"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
 
-	pod := k8sV1.Pod{
-		TypeMeta: metaV1.TypeMeta{Kind: "rest test"},
-		ObjectMeta: metaV1.ObjectMeta{
-			Name:              "test meta",
-			DeletionTimestamp: &metaV1.Time{Time: time.Now()},
-		},
-		Status: k8sV1.PodStatus{
-			Phase:             k8sV1.PodRunning,
-			ContainerStatuses: containerStatuses,
-		},
-	}
+	t.Run("pod running with > 1 container, and one terminated", func(t *testing.T) {
+		t.Logf("two pods with one in terminated state")
+		ref, aID, sub := createPodWithMockQueue(t, nil)
+		purge(aID, sub)
+		assert.Equal(t, sub.Len(), 0)
+		ref.containerNames = set.FromSlice([]string{"test-pod-1", "test-pod-2"})
 
-	statusUpdate := podStatusUpdate{updatedPod: &pod}
-	checkReceiveTermination(t, statusUpdate, system, ref, newPod, podMap)
+		pod := k8sV1.Pod{
+			TypeMeta: metaV1.TypeMeta{Kind: "rest test"},
+			ObjectMeta: metaV1.ObjectMeta{
+				Name:              "test meta",
+				DeletionTimestamp: &metaV1.Time{Time: time.Now()},
+			},
+			Status: k8sV1.PodStatus{
+				Phase:             k8sV1.PodRunning,
+				ContainerStatuses: containerStatuses,
+			},
+		}
+		statusUpdate := podStatusUpdate{updatedPod: &pod}
+		checkReceiveTermination(t, statusUpdate, ref, sub)
+	})
 
-	// Multiple pods, 1 termination, no deletion timestamp.
-	// This results in an error, which causes pod termination and the same outcome.
-	t.Logf("Testing two pods with one in terminated state and no deletion timestamp")
-	system, newPod, ref, podMap, _ = createPodWithMockQueue(nil)
-	podMap["task"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
+	t.Run("multiple pods, 1 termination, no deletion timestamp", func(t *testing.T) {
+		// This results in an error, which causes pod termination and the same outcome.
+		t.Logf("two pods with one in terminated state and no deletion timestamp")
+		ref, aID, sub := createPodWithMockQueue(t, nil)
+		purge(aID, sub)
+		assert.Equal(t, sub.Len(), 0)
 
-	pod = k8sV1.Pod{
-		TypeMeta: metaV1.TypeMeta{Kind: "rest test"},
-		ObjectMeta: metaV1.ObjectMeta{
-			Name: "test meta",
-		},
-		Status: k8sV1.PodStatus{
-			Phase:             k8sV1.PodRunning,
-			ContainerStatuses: containerStatuses,
-		},
-	}
-
-	statusUpdate = podStatusUpdate{updatedPod: &pod}
-	checkReceiveTermination(t, statusUpdate, system, ref, newPod, podMap)
+		pod := k8sV1.Pod{
+			TypeMeta: metaV1.TypeMeta{Kind: "rest test"},
+			ObjectMeta: metaV1.ObjectMeta{
+				Name: "test meta",
+			},
+			Status: k8sV1.PodStatus{
+				Phase:             k8sV1.PodRunning,
+				ContainerStatuses: containerStatuses,
+			},
+		}
+		statusUpdate := podStatusUpdate{updatedPod: &pod}
+		checkReceiveTermination(t, statusUpdate, ref, sub)
+	})
 }
 
 func TestReceivePodStatusUpdateAssigned(t *testing.T) {
 	setupEntrypoint(t)
 	defer cleanup(t)
 
-	system, newPod, ref, podMap, _ := createPodWithMockQueue(nil)
-	podMap["task"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
+	ref, aID, sub := createPodWithMockQueue(t, nil)
+	purge(aID, sub)
+	assert.Equal(t, sub.Len(), 0)
 
 	typeMeta := metaV1.TypeMeta{Kind: "rest test"}
 	objectMeta := metaV1.ObjectMeta{
@@ -423,131 +358,144 @@ func TestReceivePodStatusUpdateAssigned(t *testing.T) {
 		ObjectMeta: objectMeta,
 		Status:     k8sV1.PodStatus{Phase: k8sV1.PodPending},
 	}
-
 	statusUpdate := podStatusUpdate{updatedPod: &pod}
 
-	assert.Equal(t, newPod.container.State, cproto.Assigned)
-	system.Ask(ref, statusUpdate)
-	time.Sleep(time.Second)
-	assert.Equal(t, podMap["task"].GetLength(), 0)
+	assert.Equal(t, ref.container.State, cproto.Assigned)
+	_, err := ref.podStatusUpdate(statusUpdate.updatedPod)
+	require.NoError(t, err)
 
-	newPod.container.State = cproto.Starting
-
-	system.Ask(ref, statusUpdate)
 	time.Sleep(time.Second)
-	assert.Equal(t, podMap["task"].GetLength(), 0)
-	assert.Equal(t, newPod.container.State, cproto.Starting)
+	assert.Equal(t, sub.Len(), 0)
+
+	ref.container.State = cproto.Starting
+
+	_, err = ref.podStatusUpdate(statusUpdate.updatedPod)
+	require.NoError(t, err)
+
+	time.Sleep(time.Second)
+	assert.Equal(t, sub.Len(), 0)
+	assert.Equal(t, ref.container.State, cproto.Starting)
 }
 
 func TestReceivePodStatusUpdateStarting(t *testing.T) {
 	setupEntrypoint(t)
 	defer cleanup(t)
 
-	system, newPod, ref, podMap, _ := createPodWithMockQueue(nil)
-	podMap["task"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
-
-	// Pod status Pending, Pod Scheduled.
-	t.Logf("Testing pod scheduled with pending status")
 	typeMeta := metaV1.TypeMeta{Kind: "rest test"}
 	objectMeta := metaV1.ObjectMeta{
 		Name: "test meta",
 	}
-	condition := k8sV1.PodCondition{
-		Type:    k8sV1.PodScheduled,
-		Status:  k8sV1.ConditionTrue,
-		Message: "This doesn't matter :)",
-	}
-	status := k8sV1.PodStatus{
-		Phase:      k8sV1.PodPending,
-		Conditions: []k8sV1.PodCondition{condition},
-	}
-	pod := k8sV1.Pod{
-		TypeMeta:   typeMeta,
-		ObjectMeta: objectMeta,
-		Status:     status,
-	}
-	statusUpdate := podStatusUpdate{updatedPod: &pod}
 
-	system.Ask(ref, statusUpdate)
-	time.Sleep(time.Second)
+	t.Run("pod status pending, pod scheduled", func(t *testing.T) {
+		t.Logf("Testing pod scheduled with pending status")
 
-	assert.Equal(t, podMap["task"].GetLength(), 2)
-	assert.Equal(t, newPod.container.State, cproto.Starting)
-	podMap["task"].Purge()
-	system.Ask(ref, statusUpdate)
-	time.Sleep(time.Second)
-	assert.Equal(t, podMap["task"].GetLength(), 0)
-	assert.Equal(t, newPod.container.State, cproto.Starting)
+		ref, aID, sub := createPodWithMockQueue(t, nil)
+		purge(aID, sub)
+		assert.Equal(t, sub.Len(), 0)
 
-	// Pod status Running, but container status Waiting.
-	t.Logf("Testing pod running with waiting status")
-	system, newPod, ref, podMap, _ = createPodWithMockQueue(nil)
-	podMap["task"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
+		condition := k8sV1.PodCondition{
+			Type:    k8sV1.PodScheduled,
+			Status:  k8sV1.ConditionTrue,
+			Message: "This doesn't matter :)",
+		}
+		status := k8sV1.PodStatus{
+			Phase:      k8sV1.PodPending,
+			Conditions: []k8sV1.PodCondition{condition},
+		}
+		pod := k8sV1.Pod{
+			TypeMeta:   typeMeta,
+			ObjectMeta: objectMeta,
+			Status:     status,
+		}
+		statusUpdate := podStatusUpdate{updatedPod: &pod}
 
-	containerStatuses := []k8sV1.ContainerStatus{
-		{
-			Name:  "determined-container",
-			State: k8sV1.ContainerState{Waiting: &k8sV1.ContainerStateWaiting{}},
-		},
-		{
-			Name:  "determined-fluent-container",
-			State: k8sV1.ContainerState{Waiting: &k8sV1.ContainerStateWaiting{}},
-		},
-	}
-	status = k8sV1.PodStatus{
-		Phase:             k8sV1.PodRunning,
-		ContainerStatuses: containerStatuses,
-	}
-	pod = k8sV1.Pod{
-		TypeMeta:   typeMeta,
-		ObjectMeta: objectMeta,
-		Status:     status,
-	}
-	statusUpdate = podStatusUpdate{updatedPod: &pod}
+		_, err := ref.podStatusUpdate(statusUpdate.updatedPod)
+		require.NoError(t, err)
+		time.Sleep(time.Second)
 
-	system.Ask(ref, statusUpdate)
-	time.Sleep(time.Second)
+		assert.Equal(t, sub.Len(), 2)
+		assert.Equal(t, ref.container.State, cproto.Starting)
+		purge(aID, sub)
+		assert.Equal(t, sub.Len(), 0)
 
-	assert.Equal(t, podMap["task"].GetLength(), 2)
-	assert.Equal(t, newPod.container.State, cproto.Starting)
+		_, err = ref.podStatusUpdate(statusUpdate.updatedPod)
+		require.NoError(t, err)
+		time.Sleep(time.Second)
 
-	// Pod status running, but no Container State inside.
-	t.Logf("Testing pod running with no status")
-	system, newPod, ref, podMap, _ = createPodWithMockQueue(nil)
-	podMap["task"].Purge()
-	status = k8sV1.PodStatus{
-		Phase: k8sV1.PodRunning,
-		ContainerStatuses: []k8sV1.ContainerStatus{
-			{Name: "determined-container"},
-			{Name: "determined-fluent-container"},
-		},
-	}
-	pod = k8sV1.Pod{
-		TypeMeta:   typeMeta,
-		ObjectMeta: objectMeta,
-		Status:     status,
-	}
-	statusUpdate = podStatusUpdate{updatedPod: &pod}
-	system.Ask(ref, statusUpdate)
-	time.Sleep(time.Second)
-	assert.Equal(t, podMap["task"].GetLength(), 2)
-	assert.Equal(t, newPod.container.State, cproto.Starting)
+		purge(aID, sub)
+		assert.Equal(t, sub.Len(), 0)
+		assert.Equal(t, ref.container.State, cproto.Starting)
+	})
+
+	t.Run("pod status Running, but container status waiting", func(t *testing.T) {
+		t.Logf("Testing pod running with waiting status")
+
+		ref, aID, sub := createPodWithMockQueue(t, nil)
+		purge(aID, sub)
+		assert.Equal(t, sub.Len(), 0)
+
+		containerStatuses := []k8sV1.ContainerStatus{
+			{
+				Name:  "determined-container",
+				State: k8sV1.ContainerState{Waiting: &k8sV1.ContainerStateWaiting{}},
+			},
+			{
+				Name:  "determined-fluent-container",
+				State: k8sV1.ContainerState{Waiting: &k8sV1.ContainerStateWaiting{}},
+			},
+		}
+		status := k8sV1.PodStatus{
+			Phase:             k8sV1.PodRunning,
+			ContainerStatuses: containerStatuses,
+		}
+		pod := k8sV1.Pod{
+			TypeMeta:   typeMeta,
+			ObjectMeta: objectMeta,
+			Status:     status,
+		}
+		statusUpdate := podStatusUpdate{updatedPod: &pod}
+
+		_, err := ref.podStatusUpdate(statusUpdate.updatedPod)
+		require.NoError(t, err)
+		time.Sleep(time.Second)
+
+		assert.Equal(t, sub.Len(), 2)
+		assert.Equal(t, ref.container.State, cproto.Starting)
+	})
+
+	t.Run("pod status running, but no container State inside", func(t *testing.T) {
+		t.Logf("Testing pod running with no status")
+
+		ref, aID, sub := createPodWithMockQueue(t, nil)
+		purge(aID, sub)
+		assert.Equal(t, sub.Len(), 0)
+
+		status := k8sV1.PodStatus{
+			Phase: k8sV1.PodRunning,
+			ContainerStatuses: []k8sV1.ContainerStatus{
+				{Name: "determined-container"},
+				{Name: "determined-fluent-container"},
+			},
+		}
+		pod := k8sV1.Pod{
+			TypeMeta:   typeMeta,
+			ObjectMeta: objectMeta,
+			Status:     status,
+		}
+		statusUpdate := podStatusUpdate{updatedPod: &pod}
+		_, err := ref.podStatusUpdate(statusUpdate.updatedPod)
+		require.NoError(t, err)
+		time.Sleep(time.Second)
+
+		assert.Equal(t, sub.Len(), 2)
+		assert.Equal(t, ref.container.State, cproto.Starting)
+	})
 }
 
 func TestMultipleContainersRunning(t *testing.T) {
 	// Status update test involving two containers.
 	setupEntrypoint(t)
 	defer cleanup(t)
-
-	// Testing pod with two containers and one doesn't have running state.
-	t.Logf("Testing two pods and one doesn't have running state")
-	system, newPod, ref, podMap, _ := createPodWithMockQueue(nil)
-	newPod.container.State = cproto.Starting
-
-	podMap["task"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
 
 	typeMeta := metaV1.TypeMeta{Kind: "rest test"}
 	objectMeta := metaV1.ObjectMeta{
@@ -566,72 +514,87 @@ func TestMultipleContainersRunning(t *testing.T) {
 			Name: "test-pod",
 		},
 	}
-	status := k8sV1.PodStatus{
-		Phase:             k8sV1.PodRunning,
-		ContainerStatuses: containerStatuses,
-	}
-	pod := k8sV1.Pod{
-		TypeMeta:   typeMeta,
-		ObjectMeta: objectMeta,
-		Status:     status,
-	}
-	newPod.containerNames = set.FromSlice([]string{
-		"determined-container",
-		"determined-fluent-container",
-		"test-pod",
+
+	t.Run("pod with two containers and one doesn't have running state", func(t *testing.T) {
+		t.Logf("Testing two pods and one doesn't have running state")
+
+		ref, aID, sub := createPodWithMockQueue(t, nil)
+		purge(aID, sub)
+		assert.Equal(t, sub.Len(), 0)
+
+		ref.container.State = cproto.Starting
+		purge(aID, sub)
+		assert.Equal(t, sub.Len(), 0)
+
+		status := k8sV1.PodStatus{
+			Phase:             k8sV1.PodRunning,
+			ContainerStatuses: containerStatuses,
+		}
+		pod := k8sV1.Pod{
+			TypeMeta:   typeMeta,
+			ObjectMeta: objectMeta,
+			Status:     status,
+		}
+		ref.containerNames = set.FromSlice([]string{
+			"determined-container",
+			"determined-fluent-container",
+			"test-pod",
+		})
+		statusUpdate := podStatusUpdate{updatedPod: &pod}
+
+		_, err := ref.podStatusUpdate(statusUpdate.updatedPod)
+		require.NoError(t, err)
+		time.Sleep(time.Second)
+		assert.Equal(t, sub.Len(), 0)
+		assert.Equal(t, ref.container.State, cproto.Starting)
 	})
-	statusUpdate := podStatusUpdate{updatedPod: &pod}
 
-	system.Ask(ref, statusUpdate)
-	time.Sleep(time.Second)
-	assert.Equal(t, podMap["task"].GetLength(), 0)
-	assert.Equal(t, newPod.container.State, cproto.Starting)
+	// .
+	t.Run("multiple containers, all in running state, results in a running state", func(t *testing.T) {
+		t.Logf("Testing two pods with running states")
 
-	// Multiple containers, all in running state, results in a running state.
-	t.Logf("Testing two pods with running states")
-	system, newPod, ref, podMap, _ = createPodWithMockQueue(nil)
+		ref, aID, sub := createPodWithMockQueue(t, nil)
+		purge(aID, sub)
+		assert.Equal(t, sub.Len(), 0)
 
-	podMap["task"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
+		ref.container.State = cproto.Starting
+		containerStatuses[2] = k8sV1.ContainerStatus{
+			Name:  "test-pod-2",
+			State: k8sV1.ContainerState{Running: &k8sV1.ContainerStateRunning{}},
+		}
+		status := k8sV1.PodStatus{
+			Phase:             k8sV1.PodRunning,
+			ContainerStatuses: containerStatuses,
+		}
+		pod := k8sV1.Pod{
+			TypeMeta:   typeMeta,
+			ObjectMeta: objectMeta,
+			Status:     status,
+		}
+		statusUpdate := podStatusUpdate{updatedPod: &pod}
+		_, err := ref.podStatusUpdate(statusUpdate.updatedPod)
+		require.NoError(t, err)
+		time.Sleep(time.Second)
 
-	newPod.container.State = cproto.Starting
-	containerStatuses[2] = k8sV1.ContainerStatus{
-		Name:  "test-pod-2",
-		State: k8sV1.ContainerState{Running: &k8sV1.ContainerStateRunning{}},
-	}
-	status = k8sV1.PodStatus{
-		Phase:             k8sV1.PodRunning,
-		ContainerStatuses: containerStatuses,
-	}
-	pod = k8sV1.Pod{
-		TypeMeta:   typeMeta,
-		ObjectMeta: objectMeta,
-		Status:     status,
-	}
-	statusUpdate = podStatusUpdate{updatedPod: &pod}
-	system.Ask(ref, statusUpdate)
-	time.Sleep(time.Second)
-
-	assert.Equal(t, podMap["task"].GetLength(), 1)
-	message, err := podMap["task"].Pop()
-	if err != nil {
-		t.Errorf("Unable to pop message from task receiver queue")
-	}
-
-	containerMsg, ok := message.(*sproto.ResourcesStateChanged)
-	if !ok {
-		t.Errorf("expected *sproto.ResourcesStateChanged but received %s", reflect.TypeOf(message))
-	}
-	if containerMsg.ResourcesStarted == nil {
-		t.Errorf("container started message not present")
-	}
+		assert.Equal(t, sub.Len(), 1)
+		message := sub.Get()
+		containerMsg, ok := message.(*sproto.ResourcesStateChanged)
+		if !ok {
+			t.Errorf("expected *sproto.ResourcesStateChanged but received %s", reflect.TypeOf(message))
+		}
+		if containerMsg.ResourcesStarted == nil {
+			t.Errorf("container started message not present")
+		}
+	})
 }
 
 func TestReceivePodEventUpdate(t *testing.T) {
 	setupEntrypoint(t)
 	defer cleanup(t)
 
-	system, newPod, ref, podMap, _ := createPodWithMockQueue(nil)
+	ref, aID, sub := createPodWithMockQueue(t, nil)
+	purge(aID, sub)
+	assert.Equal(t, sub.Len(), 0)
 
 	object := k8sV1.ObjectReference{Kind: "mock", Namespace: "test", Name: "MockObject"}
 	newEvent := k8sV1.Event{
@@ -639,18 +602,15 @@ func TestReceivePodEventUpdate(t *testing.T) {
 		Reason:         "testing",
 		Message:        "0/99 nodes are available: 99 Insufficient cpu",
 	}
-	newPod.slots = 99
-	podMap["task"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
+	ref.slots = 99
+	purge(aID, sub)
+	assert.Equal(t, sub.Len(), 0)
 
-	system.Ask(ref, podEventUpdate{event: &newEvent})
-	time.Sleep(time.Second)
+	ref.podEventUpdate(&newEvent)
+	time.Sleep(time.Second) // TODO(DET-9790): Remove sleeps.
 
-	assert.Equal(t, podMap["task"].GetLength(), 1)
-	message, err := podMap["task"].Pop()
-	if err != nil {
-		t.Errorf("Unable to pop message from task receiver queue")
-	}
+	assert.Equal(t, sub.Len(), 1)
+	message := sub.Get()
 	correctMsg := fmt.Sprintf("Pod %s: %s", object.Name,
 		"Waiting for resources. 0 GPUs are available, 99 GPUs required")
 
@@ -661,17 +621,17 @@ func TestReceivePodEventUpdate(t *testing.T) {
 	assert.Equal(t, *containerMsg.AuxMessage, correctMsg)
 
 	// When container is in Running state, pod actor should not forward message.
-	podMap["task"].Purge()
-	newPod.container.State = cproto.Running
-	system.Ask(ref, podEventUpdate{event: &newEvent})
+	purge(aID, sub)
+	ref.container.State = cproto.Running
+	ref.podEventUpdate(&newEvent)
 	time.Sleep(time.Second)
-	assert.Equal(t, podMap["task"].GetLength(), 0)
+	assert.Equal(t, sub.Len(), 0)
 
 	// When container is in Terminated state, pod actor should not forward message.
-	newPod.container.State = cproto.Terminated
-	system.Ask(ref, podEventUpdate{event: &newEvent})
+	ref.container.State = cproto.Terminated
+	ref.podEventUpdate(&newEvent)
 	time.Sleep(time.Second)
-	assert.Equal(t, podMap["task"].GetLength(), 0)
+	assert.Equal(t, sub.Len(), 0)
 }
 
 func TestReceiveContainerLog(t *testing.T) {
@@ -679,21 +639,21 @@ func TestReceiveContainerLog(t *testing.T) {
 	defer cleanup(t)
 
 	mockLogMessage := "mock log message"
-	system, newPod, ref, podMap, _ := createPodWithMockQueue(nil)
-	newPod.restore = true
-	newPod.container.State = cproto.Running
-	newPod.podInterface = &mockPodInterface{logMessage: &mockLogMessage}
-	podMap["task"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
-	system.Ask(ref, actor.PreStart{})
+	ref, aID, sub := createPodWithMockQueue(t, nil)
+	purge(aID, sub)
+	assert.Equal(t, sub.Len(), 0)
+
+	ref.restore = true
+	ref.container.State = cproto.Running
+	ref.podInterface = &mockPodInterface{logMessage: &mockLogMessage}
+	purge(aID, sub)
+	assert.Equal(t, sub.Len(), 0)
+	err := ref.start()
+	require.NoError(t, err)
 	time.Sleep(time.Second)
 
-	assert.Equal(t, podMap["task"].GetLength(), 1)
-	message, err := podMap["task"].Pop()
-	if err != nil {
-		t.Errorf("Unable to pop message from task receiver queue")
-	}
-
+	assert.Equal(t, sub.Len(), 1)
+	message := sub.Get()
 	containerMsg, ok := message.(*sproto.ContainerLog)
 	if !ok {
 		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
@@ -701,7 +661,7 @@ func TestReceiveContainerLog(t *testing.T) {
 	assert.Equal(t, containerMsg.RunMessage.Value, mockLogMessage)
 
 	// reset state to starting
-	newPod.container.State = cproto.Starting
+	ref.container.State = cproto.Starting
 	mockLogMessage = "new mock log message"
 
 	typeMeta := metaV1.TypeMeta{Kind: "running log test"}
@@ -723,30 +683,25 @@ func TestReceiveContainerLog(t *testing.T) {
 		ObjectMeta: objectMeta,
 		Status:     status,
 	}
-	newPod.containerNames = set.FromSlice([]string{
+	ref.containerNames = set.FromSlice([]string{
 		"sample-container",
 	})
 	statusUpdate := podStatusUpdate{updatedPod: &pod}
 
-	system.Ask(ref, statusUpdate)
+	_, err = ref.podStatusUpdate(statusUpdate.updatedPod)
+	require.NoError(t, err)
 	time.Sleep(time.Second)
-	assert.Equal(t, podMap["task"].GetLength(), 2)
-	assert.Equal(t, newPod.container.State, cproto.Running)
+	assert.Equal(t, sub.Len(), 2)
+	assert.Equal(t, ref.container.State, cproto.Running)
 
-	message, err = podMap["task"].Pop()
-	if err != nil {
-		t.Errorf("Unable to pop message from task receiver queue")
-	}
+	message = sub.Get()
 	resourceMsg, ok := message.(*sproto.ResourcesStateChanged)
 	if !ok {
 		t.Errorf("expected sproto.ResourcesStateChanged but received %s", reflect.TypeOf(message))
 	}
 	assert.Equal(t, resourceMsg.Container.State, cproto.Running)
 
-	message, err = podMap["task"].Pop()
-	if err != nil {
-		t.Errorf("Unable to pop message from task receiver queue")
-	}
+	message = sub.Get()
 	containerMsg, ok = message.(*sproto.ContainerLog)
 	if !ok {
 		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
@@ -760,19 +715,21 @@ func TestKillTaskPod(t *testing.T) {
 
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
+	failures := make(chan resourcesRequestFailure, 1024)
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
+		failures,
 	)
-	system, newPod, ref, _, _ := createPodWithMockQueue(k8sRequestQueue)
+	ref, _, _ := createPodWithMockQueue(t, k8sRequestQueue)
 
 	// We take a quick nap immediately so we can purge the start message after it arrives.
 	time.Sleep(time.Second)
-	assert.Check(t, podInterface.pods[newPod.podName] != nil)
-	system.Ask(ref, KillTaskPod{})
+	assert.Check(t, podInterface.hasPod(ref.podName))
+	ref.KillTaskPod()
 	time.Sleep(time.Second)
-	assert.Check(t, podInterface.pods[newPod.podName] == nil)
-	assert.Check(t, newPod.resourcesDeleted.Load())
+	assert.Check(t, !podInterface.hasPod(ref.podName))
+	assert.Check(t, ref.resourcesDeleted.Load())
 }
 
 func TestResourceCreationCancelled(t *testing.T) {
@@ -784,30 +741,32 @@ func TestResourceCreationCancelled(t *testing.T) {
 		operationalDelay: time.Minute * numKubernetesWorkers,
 	}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
+	failures := make(chan resourcesRequestFailure, 1024)
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
+		failures,
 	)
 
 	for i := 0; i < numKubernetesWorkers; i++ {
-		createPodWithMockQueue(k8sRequestQueue)
+		createPodWithMockQueue(t, k8sRequestQueue)
 	}
 	time.Sleep(time.Second)
-	system, _, ref, podMap, _ := createPodWithMockQueue(k8sRequestQueue)
+	ref, aID, sub := createPodWithMockQueue(t, k8sRequestQueue)
 
-	podMap["task"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go consumeResourceRequestFailures(ctx, failures, ref)
 
-	system.Ask(ref, KillTaskPod{})
+	purge(aID, sub)
+	assert.Equal(t, sub.Len(), 0)
+
+	ref.KillTaskPod()
 
 	time.Sleep(time.Second)
-	assert.Equal(t, podMap["task"].GetLength(), 1)
+	assert.Equal(t, sub.Len(), 1)
 
-	message, err := podMap["task"].Pop()
-	if err != nil {
-		t.Errorf("Unable to pop message from task receiver queue")
-	}
-
+	message := sub.Get()
 	containerMsg, ok := message.(*sproto.ResourcesStateChanged)
 	if !ok {
 		t.Errorf("expected *sproto.ResourcesStateChanged but received %s",
@@ -816,7 +775,7 @@ func TestResourceCreationCancelled(t *testing.T) {
 
 	var correctContainerStarted *sproto.ResourcesStarted
 	correctFailType := "task failed without an associated exit code"
-	correctErrMsg := "pod actor exited while pod was running"
+	correctErrMsg := "pod handler exited while pod was running"
 	var correctCode *sproto.ExitCode
 
 	assert.Equal(t, containerMsg.ResourcesStarted, correctContainerStarted)
@@ -832,24 +791,28 @@ func TestResourceDeletionFailed(t *testing.T) {
 
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
+	failures := make(chan resourcesRequestFailure, 1024)
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
+		failures,
 	)
-	system, newPod, ref, podMap, _ := createPodWithMockQueue(k8sRequestQueue)
 
-	podMap["task"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
-	delete(podInterface.pods, newPod.podName)
-	system.Ask(ref, KillTaskPod{})
+	ref, aID, sub := createPodWithMockQueue(t, k8sRequestQueue)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go consumeResourceRequestFailures(ctx, failures, ref)
+
+	purge(aID, sub)
+	assert.Equal(t, sub.Len(), 0)
+	delete(podInterface.pods, ref.podName)
+
+	ref.KillTaskPod()
 	time.Sleep(time.Second)
-	assert.Equal(t, podMap["task"].GetLength(), 1)
+	assert.Equal(t, sub.Len(), 1)
 
-	message, err := podMap["task"].Pop()
-	if err != nil {
-		t.Errorf("Unable to pop message from task receiver queue")
-	}
-
+	message := sub.Get()
 	containerMsg, ok := message.(*sproto.ResourcesStateChanged)
 	if !ok {
 		t.Errorf("expected *sproto.ResourcesStateChanged but received %s",
@@ -863,7 +826,7 @@ func TestResourceDeletionFailed(t *testing.T) {
 	assert.Equal(t, containerMsg.ResourcesStopped.Failure.FailureType,
 		sproto.FailureType("task failed without an associated exit code"))
 	assert.Equal(t, containerMsg.ResourcesStopped.Failure.ErrMsg,
-		"pod actor exited while pod was running")
+		"pod handler exited while pod was running")
 	assert.Equal(t, containerMsg.ResourcesStopped.Failure.ExitCode, correctCode)
 }
 
@@ -871,28 +834,28 @@ func TestGetPodNodeInfo(t *testing.T) {
 	setupEntrypoint(t)
 	defer cleanup(t)
 
-	system, newPod, ref, podMap, _ := createPodWithMockQueue(nil)
-	newPod.slots = 99
+	ref, aID, sub := createPodWithMockQueue(t, nil)
+	ref.slots = 99
 	time.Sleep(time.Second)
 
-	podMap["task"].Purge()
-	podMap["cluster"].Purge()
-	podMap["resource"].Purge()
-	assert.Equal(t, podMap["task"].GetLength(), 0)
-	assert.Equal(t, podMap["cluster"].GetLength(), 0)
-	assert.Equal(t, podMap["resource"].GetLength(), 0)
+	purge(aID, sub)
+	assert.Equal(t, sub.Len(), 0)
 
-	data := system.Ask(ref, getPodNodeInfo{})
+	podInfo := ref.getPodNodeInfo()
 	time.Sleep(time.Second)
-	assert.Equal(t, podMap["task"].GetLength(), 0)
-	assert.Equal(t, podMap["cluster"].GetLength(), 0)
-	assert.Equal(t, podMap["resource"].GetLength(), 0)
 
-	podInfo, ok := data.Get().(podNodeInfo)
-	if !ok {
-		t.Errorf("expected podNodeInfo but received %s", reflect.TypeOf(data))
+	assert.Equal(t, podInfo.nodeName, ref.pod.Spec.NodeName)
+	assert.Equal(t, podInfo.numSlots, ref.slots)
+}
+
+var sentinelEvent = &sproto.ContainerLog{ContainerID: "sentinel"}
+
+func purge(aID model.AllocationID, sub *sproto.ResourcesSubscription) {
+	rmevents.Publish(aID, sentinelEvent)
+	for {
+		event := sub.Get()
+		if event == sentinelEvent {
+			return
+		}
 	}
-
-	assert.Equal(t, podInfo.nodeName, newPod.pod.Spec.NodeName)
-	assert.Equal(t, podInfo.numSlots, newPod.slots)
 }

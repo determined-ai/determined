@@ -35,6 +35,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/set"
+	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
@@ -60,6 +61,9 @@ type podMetadata struct {
 //	  +- requestQueue: queues requests to create / delete kubernetes resources.
 //	     +- requestProcessingWorkers: processes request to create / delete kubernetes resources.
 type pods struct {
+	mu sync.RWMutex
+	wg waitgroupx.Group
+
 	cluster                  *actor.Ref
 	namespace                string
 	namespaceToPoolName      map[string]string
@@ -81,12 +85,12 @@ type pods struct {
 	loggingConfig    model.LoggingConfig
 
 	resourceRequestQueue         *requestQueue
-	podNameToPodHandler          map[string]*actor.Ref
+	podNameToPodHandler          map[string]*pod
 	podNameToResourcePool        map[string]string
 	containerIDToPodName         map[string]string
 	containerIDToSchedulingState map[string]sproto.SchedulingState
 	podNameToContainerID         map[string]string
-	podHandlerToMetadata         map[*actor.Ref]podMetadata
+	podHandlerToMetadata         map[*pod]podMetadata
 	nodeToSystemResourceRequests map[string]int64
 
 	currentNodes map[string]*k8sV1.Node
@@ -94,12 +98,9 @@ type pods struct {
 	podInterfaces       map[string]typedV1.PodInterface
 	configMapInterfaces map[string]typedV1.ConfigMapInterface
 
-	mu                 sync.RWMutex
 	summarizeCacheLock sync.RWMutex
 	summarizeCache     summarizeResult
 	summarizeCacheTime time.Time
-
-	handleResourceError func(ctx *actor.Context) errorCallbackFunc
 
 	syslog *logrus.Entry
 }
@@ -132,6 +133,10 @@ type reattachPodResponse struct {
 	started     *sproto.ResourcesStarted
 }
 
+type refreshPodStates struct {
+	allocationID model.AllocationID
+}
+
 // Initialize creates a new global pods actor.
 func Initialize(
 	s *actor.System,
@@ -158,6 +163,8 @@ func Initialize(
 		loggingTLSConfig = loggingConfig.ElasticLoggingConfig.Security.TLS
 	}
 	p := &pods{
+		wg: waitgroupx.WithContext(context.Background()),
+
 		cluster:                      c,
 		namespace:                    namespace,
 		namespaceToPoolName:          namespaceToPoolName,
@@ -166,12 +173,12 @@ func Initialize(
 		scheduler:                    scheduler,
 		loggingTLSConfig:             loggingTLSConfig,
 		loggingConfig:                loggingConfig,
-		podNameToPodHandler:          make(map[string]*actor.Ref),
+		podNameToPodHandler:          make(map[string]*pod),
 		podNameToResourcePool:        make(map[string]string),
 		containerIDToPodName:         make(map[string]string),
 		containerIDToSchedulingState: make(map[string]sproto.SchedulingState),
 		podNameToContainerID:         make(map[string]string),
-		podHandlerToMetadata:         make(map[*actor.Ref]podMetadata),
+		podHandlerToMetadata:         make(map[*pod]podMetadata),
 		leaveKubernetesResources:     leaveKubernetesResources,
 		slotType:                     slotType,
 		slotResourceRequests:         slotResourceRequests,
@@ -187,11 +194,7 @@ func Initialize(
 		configMapInterfaces:          make(map[string]typedV1.ConfigMapInterface),
 		syslog:                       logrus.WithField("pod-name", namespace),
 	}
-	p.handleResourceError = func(ctx *actor.Context) errorCallbackFunc {
-		return func(err error) {
-			p.resourceErrorCallback(ctx, err)
-		}
-	}
+
 	podsActor, ok := s.ActorOf(actor.Addr("pods"), p)
 	check.Panic(check.True(ok, "pods address already taken"))
 	s.Ask(podsActor, actor.Ping{}).Get()
@@ -271,14 +274,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 			return err
 		}
 
-	case actor.ChildStopped:
-		if err := p.cleanUpPodHandler(ctx, msg.Child); err != nil {
-			return err
-		}
-
-	case actor.ChildFailed:
-		if err := p.cleanUpPodHandler(ctx, msg.Child); err != nil {
-			return err
+	case refreshPodStates:
+		if err := p.refreshPodStates(ctx, msg.allocationID); err != nil {
+			ctx.Respond(err)
 		}
 
 	case echo.Context:
@@ -292,15 +290,6 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
-}
-
-func (p *pods) resourceErrorCallback(ctx *actor.Context, err error) {
-	switch err := err.(type) {
-	case resourceDeletionFailed:
-		ctx.Log().WithError(err).Error("error deleting leftover kubernetes resource")
-	default:
-		panic(fmt.Sprintf("unexpected message %T", err))
-	}
 }
 
 func readClientConfig(credsDir string) (*rest.Config, error) {
@@ -531,7 +520,7 @@ func (p *pods) reattachPod(
 	newPodHandler.configMapName = pod.Name
 	newPodHandler.ports = ports
 
-	state, err := getPodState(ctx, pod, newPodHandler.containerNames)
+	state, err := newPodHandler.getPodState(pod, newPodHandler.containerNames)
 	if err != nil {
 		return reattachPodResponse{}, errors.Wrap(err, "error finding pod state to restore")
 	}
@@ -549,46 +538,55 @@ func (p *pods) reattachPod(
 
 	newPodHandler.pod = pod
 
-	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", containerID), newPodHandler)
-	if !ok {
-		return reattachPodResponse{}, errors.Errorf(
-			"pod actor %s already exists", ref.Address().String())
+	err = newPodHandler.start()
+	if err != nil {
+		return reattachPodResponse{}, fmt.Errorf("reattaching pod: %w", err)
 	}
 
-	p.podNameToPodHandler[pod.Name] = ref
+	p.podNameToPodHandler[pod.Name] = newPodHandler
 	p.podNameToResourcePool[pod.Name] = resourcePool
 	p.containerIDToPodName[containerID] = pod.Name
 	p.podNameToContainerID[pod.Name] = containerID
 	p.containerIDToSchedulingState[containerID] = sproto.SchedulingStateQueued
-	p.podHandlerToMetadata[ref] = podMetadata{
+	p.podHandlerToMetadata[newPodHandler] = podMetadata{
 		podName:     pod.Name,
 		containerID: containerID,
 	}
 
-	// Calls podStatusCallback for any missed updates between master going up
-	// and the pod being reattached.
-	updated, err := p.podInterfaces[pod.Namespace].Get(context.TODO(), pod.Name, metaV1.GetOptions{})
-	if err != nil {
-		return reattachPodResponse{}, errors.Wrap(err, "error getting pod status update in restore")
-	}
-	p.podStatusCallback(ctx.Self().System(), watch.Event{Object: updated})
-
 	return reattachPodResponse{containerID: containerID, started: started}, nil
+}
+
+func (p *pods) refreshPodStates(ctx *actor.Context, allocationID model.AllocationID) error {
+	if allocationID == "" {
+		return fmt.Errorf("invalid call: allocationID missing")
+	}
+
+	pods, err := p.listPodsInAllNamespaces(context.TODO(), metaV1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", determinedLabel, allocationID),
+	})
+	if err != nil {
+		return errors.Wrap(err, "error listing pods checking if they can be restored")
+	}
+
+	for _, pod := range pods.Items {
+		if _, ok := p.namespaceToPoolName[pod.Namespace]; !ok {
+			continue
+		}
+		pod := pod
+		p.podStatusCallback(ctx.Self().System(), watch.Event{Object: &pod})
+	}
+	return nil
 }
 
 func (p *pods) deleteKubernetesResources(
 	ctx *actor.Context, pods *k8sV1.PodList, configMaps *k8sV1.ConfigMapList,
 ) {
 	for _, pod := range pods.Items {
-		p.resourceRequestQueue.deleteKubernetesResources(
-			p.handleResourceError(ctx), pod.Namespace, pod.Name, "",
-		)
+		p.resourceRequestQueue.deleteKubernetesResources(pod.Namespace, pod.Name, "")
 	}
 
 	for _, configMap := range configMaps.Items {
-		p.resourceRequestQueue.deleteKubernetesResources(
-			p.handleResourceError(ctx), configMap.Namespace, "", configMap.Name,
-		)
+		p.resourceRequestQueue.deleteKubernetesResources(configMap.Namespace, "", configMap.Name)
 	}
 }
 
@@ -753,7 +751,46 @@ func (p *pods) startPreemptionListeners(s *actor.System) error {
 }
 
 func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
-	p.resourceRequestQueue = startRequestQueue(p.podInterfaces, p.configMapInterfaces)
+	failures := make(chan resourcesRequestFailure, 16)
+	p.resourceRequestQueue = startRequestQueue(p.podInterfaces, p.configMapInterfaces, failures)
+	p.wg.Go(func(ctx context.Context) {
+		for {
+			select {
+			case failure := <-failures:
+				p.handleResourceRequestFailure(failure)
+			case <-ctx.Done():
+				return
+			}
+		}
+	})
+}
+
+func (p *pods) handleResourceRequestFailure(msg resourcesRequestFailure) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	podName := msg.getPodName()
+	podHandler, ok := p.podNameToPodHandler[podName]
+	if !ok {
+		p.syslog.Warnf("received resource request error for unregistered pod %s", podName)
+		return
+	}
+
+	switch msg := msg.(type) {
+	case resourceCreationFailed:
+		podHandler.receiveResourceCreationFailed(msg)
+	case resourceCreationCancelled:
+		podHandler.receiveResourceCreationCancelled()
+	case resourceDeletionFailed:
+		podHandler.receiveResourceDeletionFailed(msg)
+	default:
+		panic(fmt.Sprintf("unexpected message %T", msg))
+	}
+
+	err := p.cleanUpPodHandler(podHandler)
+	if err != nil {
+		p.syslog.WithError(err).Error("cleaning up pod handler after resource request failure")
+	}
 }
 
 func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
@@ -776,25 +813,23 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 		p.scheduler,
 		p.fluentConfig,
 	)
-	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", msg.Spec.ContainerID), newPodHandler)
-	if !ok {
-		return errors.Errorf("pod actor %s already exists", ref.Address().String())
-	}
-
-	ctx.Log().WithField("pod", newPodHandler.podName).WithField(
-		"handler", ref.Address()).Infof("registering pod handler")
 
 	if _, alreadyExists := p.podNameToPodHandler[newPodHandler.podName]; alreadyExists {
 		return errors.Errorf(
 			"attempting to register same pod name: %s multiple times", newPodHandler.podName)
 	}
 
-	p.podNameToPodHandler[newPodHandler.podName] = ref
+	err := newPodHandler.start()
+	if err != nil {
+		return fmt.Errorf("creating pod: %w", err)
+	}
+
+	p.podNameToPodHandler[newPodHandler.podName] = newPodHandler
 	p.podNameToResourcePool[newPodHandler.podName] = msg.ResourcePool
 	p.containerIDToPodName[msg.Spec.ContainerID] = newPodHandler.podName
 	p.podNameToContainerID[newPodHandler.podName] = msg.Spec.ContainerID
 	p.containerIDToSchedulingState[msg.Spec.ContainerID] = sproto.SchedulingStateQueued
-	p.podHandlerToMetadata[ref] = podMetadata{
+	p.podHandlerToMetadata[newPodHandler] = podMetadata{
 		podName:     newPodHandler.podName,
 		containerID: msg.Spec.ContainerID,
 	}
@@ -810,13 +845,27 @@ func (p *pods) podStatusCallback(s *actor.System, event watch.Event) {
 	}
 	p.syslog.Debugf("informer got new pod event for pod %s: %s ", pod.Name, event.Type)
 
-	ref, ok := p.podNameToPodHandler[pod.Name]
+	podHandler, ok := p.podNameToPodHandler[pod.Name]
 	if !ok {
 		p.syslog.Warn("received pod status update for un-registered pod")
 		return
 	}
 
-	s.Tell(ref, podStatusUpdate{pod})
+	state, err := podHandler.podStatusUpdate(pod)
+	switch {
+	case err != nil:
+		p.syslog.WithError(err).Error("processing pod status update")
+		err := p.cleanUpPodHandler(podHandler)
+		if err != nil {
+			p.syslog.WithError(err).Error("cleaning up pod handler after update error")
+		}
+		return
+	case state == cproto.Terminated:
+		err := p.cleanUpPodHandler(podHandler)
+		if err != nil {
+			p.syslog.WithError(err).Error("cleaning up pod handler after termination")
+		}
+	}
 
 	if containerID, ok := p.podNameToContainerID[pod.Name]; ok {
 		if state, ok := p.containerIDToSchedulingState[containerID]; ok {
@@ -872,7 +921,7 @@ func (p *pods) eventStatusCallback(s *actor.System, event watch.Event) {
 		return
 	}
 
-	s.Tell(ref, podEventUpdate{newEvent})
+	ref.podEventUpdate(newEvent)
 }
 
 func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResources) {
@@ -906,10 +955,10 @@ func (p *pods) preemptionCallback(s *actor.System, event watch.Event) {
 		p.syslog.Debug("received preemption command for unregistered pod")
 		return
 	}
-	s.Tell(ref, PreemptTaskPod{PodName: pod.Name})
+	ref.PreemptTaskPod()
 }
 
-func (p *pods) verifyPodAndGetRef(ctx *actor.Context, podID string) *actor.Ref {
+func (p *pods) verifyPodAndGetRef(ctx *actor.Context, podID string) *pod {
 	podName, ok := p.containerIDToPodName[podID]
 	if !ok {
 		ctx.Log().WithField("pod-id", podID).Debug(
@@ -929,14 +978,14 @@ func (p *pods) verifyPodAndGetRef(ctx *actor.Context, podID string) *actor.Ref {
 func (p *pods) receivePriorityChange(ctx *actor.Context, msg ChangePriority) {
 	ref := p.verifyPodAndGetRef(ctx, msg.PodID.String())
 	if ref != nil {
-		ctx.Tell(ref, msg)
+		ref.ChangePriority()
 	}
 }
 
 func (p *pods) receivePositionChange(ctx *actor.Context, msg ChangePosition) {
 	ref := p.verifyPodAndGetRef(ctx, msg.PodID.String())
 	if ref != nil {
-		ctx.Tell(ref, msg)
+		ref.ChangePosition()
 	}
 }
 
@@ -958,34 +1007,37 @@ func (p *pods) receiveKillPod(ctx *actor.Context, msg KillTaskPod) {
 		return
 	}
 
-	ctx.Tell(ref, msg)
+	ref.KillTaskPod()
 }
 
-func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) error {
+func (p *pods) cleanUpPodHandler(podHandler *pod) error {
+	podHandler.finalize()
+
 	podInfo, ok := p.podHandlerToMetadata[podHandler]
 	if !ok {
-		return errors.Errorf("unknown pod handler being deleted %s", podHandler.Address())
+		return errors.Errorf("unknown pod handler being deleted %s", podHandler.podName)
 	}
 
-	name := fmt.Sprintf("%s-priorityclass", podInfo.containerID)
-	_, exists := p.clientSet.SchedulingV1().PriorityClasses().Get(
-		context.TODO(), name, metaV1.GetOptions{})
-	if exists == nil {
-		err := p.clientSet.SchedulingV1().PriorityClasses().Delete(
-			context.TODO(), name, metaV1.DeleteOptions{})
-		if err != nil {
-			ctx.Log().Warnf("Deletion of PriorityClass %s failed.", name)
-		}
-	}
-
-	ctx.Log().WithField("pod", podInfo.podName).WithField(
-		"handler", podHandler.Address()).Infof("de-registering pod handler")
+	p.syslog.WithField("pod", podInfo.podName).WithField(
+		"handler", podHandler.podName).Infof("de-registering pod handler")
 	delete(p.podNameToPodHandler, podInfo.podName)
 	delete(p.podNameToResourcePool, podInfo.podName)
 	delete(p.podNameToContainerID, podInfo.podName)
 	delete(p.containerIDToPodName, podInfo.containerID)
 	delete(p.containerIDToSchedulingState, podInfo.containerID)
 	delete(p.podHandlerToMetadata, podHandler)
+
+	// launch this work async, since we hold the lock and it does API calls.
+	p.wg.Go(func(ctx context.Context) {
+		name := fmt.Sprintf("%s-priorityclass", podInfo.containerID)
+		err := p.clientSet.
+			SchedulingV1().
+			PriorityClasses().
+			Delete(ctx, name, metaV1.DeleteOptions{})
+		if err != nil && !k8error.IsNotFound(err) {
+			p.syslog.Warnf("Deletion of PriorityClass %s failed.", name)
+		}
+	})
 
 	return nil
 }
@@ -1146,16 +1198,14 @@ func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary
 }
 
 func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.AgentSummary {
-	podHandlers := make([]*actor.Ref, 0, len(p.podNameToPodHandler))
-	for _, podHandler := range p.podNameToPodHandler {
-		podHandlers = append(podHandlers, podHandler)
+	var results []podNodeInfo
+	for _, p := range p.podNameToPodHandler {
+		results = append(results, p.getPodNodeInfo())
 	}
-	results := ctx.AskAll(getPodNodeInfo{}, podHandlers...).GetAll()
 
 	// Separate pods by nodes.
 	podByNode := make(map[string][]podNodeInfo, len(results))
-	for _, result := range results {
-		info := result.(podNodeInfo)
+	for _, info := range results {
 		if len(info.nodeName) == 0 {
 			// If a pod doesn't have a nodeName it means it has not yet
 			// been allocated to a node.
