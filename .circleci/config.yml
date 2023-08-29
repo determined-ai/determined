@@ -9,6 +9,7 @@ orbs:
   gcloud: circleci/gcp-cli@2.1.0
   queue: eddiewebb/queue@volatile
   codecov: codecov/codecov@3.0.0
+  gh: circleci/github-cli@2.0
 
 executors:
   python-37:
