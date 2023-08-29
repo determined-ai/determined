@@ -15,7 +15,6 @@ import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
-import Spinner from 'components/kit/Spinner';
 import Tags from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
@@ -383,20 +382,17 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       onVisibleChange?: ((visible: boolean) => void) | undefined;
       record: ExperimentItem;
     }) => {
-      if (!settings) return <Spinner spinning />;
       return (
         <ExperimentActionDropdown
           experiment={getProjectExperimentForExperimentItem(record, project)}
           isContextMenu
-          settings={settings}
-          updateSettings={updateSettings}
           onComplete={handleActionComplete}
           onVisibleChange={onVisibleChange}>
           {children}
         </ExperimentActionDropdown>
       );
     },
-    [handleActionComplete, project, settings, updateSettings],
+    [handleActionComplete, project],
   );
 
   const columns = useMemo(() => {

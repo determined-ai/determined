@@ -1,6 +1,5 @@
 import DataEditor, {
   CellClickedEventArgs,
-  CompactSelection,
   DataEditorProps,
   DataEditorRef,
   getMiddleCenterBias,
@@ -15,15 +14,8 @@ import DataEditor, {
   Theme,
 } from '@hpe.com/glide-data-grid';
 import { DrawHeaderCallback } from '@hpe.com/glide-data-grid/dist/ts/data-grid/data-grid-types';
-import React, {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { literal, union } from 'io-ts';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
@@ -33,17 +25,22 @@ import {
   Operator,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
-import { MenuItem } from 'components/kit/Dropdown';
+import { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import { PAGE_SIZE } from 'pages/F_ExpList/F_ExperimentList';
-import { RowHeight } from 'pages/F_ExpList/F_ExperimentList.settings';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'stores/contexts/UI';
 import usersStore from 'stores/users';
-import { ExperimentWithTrial, Project, ProjectColumn, ProjectMetricsRange } from 'types';
+import {
+  ExperimentAction,
+  ExperimentWithTrial,
+  Project,
+  ProjectColumn,
+  ProjectMetricsRange,
+} from 'types';
 import { Float, Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
@@ -69,7 +66,7 @@ import { drawArrow, drawTextWithEllipsis } from './custom-renderers/utils';
 import css from './GlideTable.module.scss';
 import { TableActionMenu, TableActionMenuProps } from './menu';
 import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
-import { BatchAction } from './TableActionBar';
+import { RowHeight } from './OptionsMenu';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
 
@@ -79,43 +76,47 @@ export interface GlideTableProps {
   comparisonViewOpen?: boolean;
   data: Loadable<ExperimentWithTrial>[];
   dataTotal: number;
-  handleScroll?: (r: Rectangle) => void;
+  formStore: FilterFormStore;
+  heatmapOn: boolean;
+  heatmapSkipped: string[];
   height: number;
-  scrollPositionSetCount: WritableObservable<number>;
-  sortableColumnIds: string[];
-  setSortableColumnIds: (newColumns: string[]) => void;
+  onColumnResize?: (newColumnWidths: Record<string, number>) => void;
+  onContextMenuComplete?: (action: ExperimentAction, id: number) => void;
+  onHeatmapSelection?: (selection: string[]) => void;
+  onIsOpenFilterChange?: (value: boolean) => void;
+  onPinnedColumnsCountChange?: (count: number) => void;
+  onScroll?: (r: Rectangle) => void;
+  onSelectionChange?: (
+    selectionType: 'add' | 'add-all' | 'remove' | 'remove-all' | 'set',
+    range: [number, number],
+  ) => void;
+  onSortableColumnChange?: (newColumns: string[]) => void;
+  onSortChange?: (sorts: Sort[]) => void;
   page: number;
+  pinnedColumnsCount: number;
   project?: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   projectHeatmap: ProjectMetricsRange[];
-  heatmapSkipped: string[];
-  setHeatmapApplied: (selection: string[]) => void;
   rowHeight: RowHeight;
-  selection: GridSelection;
-  setSelection: Dispatch<SetStateAction<GridSelection>>;
-  setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
+  scrollPositionSetCount: WritableObservable<number>;
   selectAll: boolean;
-  staticColumns: string[];
-  setColumnWidths: (newWidths: Record<string, number>) => void;
-  setSelectAll: (arg0: boolean) => void;
-  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
+  selection: GridSelection;
+  sortableColumnIds: string[];
   sorts: Sort[];
-  onSortChange: (sorts: Sort[]) => void;
-  formStore: FilterFormStore;
-  onIsOpenFilterChange: (value: boolean) => void;
-  onContextMenuComplete?: () => void;
-  pinnedColumnsCount: number;
-  setPinnedColumnsCount: (count: number) => void;
-  heatmapOn: boolean;
+  staticColumns: string[];
 }
+
+export type TableViewMode = 'scroll' | 'paged';
+
+export const ioTableViewMode = union([literal('scroll'), literal('paged')]);
 
 /**
  * Number of renders with gridRef.current !== null
  * needed for the table to be properly initialized.
  * We set the scroll position to the persisted page
  * this many times, and then consider the scroll position to be
- * 'set' for purposes of the `handleScroll` in the parent component.
- * Otherwise handleScroll would erroneously set the page to 0
+ * 'set' for purposes of the `onScroll` in the parent component.
+ * Otherwise `onScroll` would erroneously set the page to 0
  * when the table is first initialized.
  */
 export const SCROLL_SET_COUNT_NEEDED = 3;
@@ -132,41 +133,39 @@ const rowHeightMap: Record<RowHeight, number> = {
 };
 
 export const GlideTable: React.FC<GlideTableProps> = ({
+  colorMap,
+  columnWidths,
+  comparisonViewOpen = false,
   data,
   dataTotal,
-  selection,
-  setSelection,
-  sortableColumnIds,
-  setSortableColumnIds,
-  colorMap,
-  height,
-  rowHeight,
-  selectAll,
-  setSelectAll,
-  setExcludedExperimentIds,
-  handleScroll,
-  scrollPositionSetCount,
-  page,
-  project,
-  handleUpdateExperimentList,
-  onSortChange,
-  sorts,
-  projectColumns,
   formStore,
-  onIsOpenFilterChange,
-  onContextMenuComplete,
-  comparisonViewOpen = false,
-  columnWidths,
-  setColumnWidths,
-  staticColumns,
-  pinnedColumnsCount,
-  setPinnedColumnsCount,
-  projectHeatmap,
-  heatmapSkipped,
-  setHeatmapApplied,
   heatmapOn,
+  heatmapSkipped,
+  height,
+  onColumnResize,
+  onContextMenuComplete,
+  onHeatmapSelection,
+  onIsOpenFilterChange,
+  onPinnedColumnsCountChange,
+  onScroll,
+  onSelectionChange,
+  onSortableColumnChange,
+  onSortChange,
+  page,
+  pinnedColumnsCount,
+  project,
+  projectColumns,
+  projectHeatmap,
+  rowHeight,
+  scrollPositionSetCount,
+  selectAll,
+  selection,
+  sortableColumnIds,
+  sorts,
+  staticColumns,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
+  const clickedCellRef = useRef<{ col: number; row: number } | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number>();
 
   useEffect(() => {
@@ -189,16 +188,19 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     handleClose: () => setMenuIsOpen(false),
   });
 
-  const handleContextMenuComplete = useCallback(() => {
-    onContextMenuComplete?.();
-  }, [onContextMenuComplete]);
+  const handleContextMenuComplete = useCallback(
+    (action: ExperimentAction, id: number) => {
+      onContextMenuComplete?.(action, id);
+    },
+    [onContextMenuComplete],
+  );
 
   const [contextMenuOpen] = useState(observable(false));
   const contextMenuIsOpen = useObservable(contextMenuOpen);
 
   const [contextMenuProps, setContextMenuProps] = useState<null | Omit<
     TableContextMenuProps,
-    'open' | 'handleUpdateExperimentList'
+    'open'
   >>(null);
 
   const {
@@ -217,10 +219,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         : [...staticColumns, ...sortableColumnIds],
     [comparisonViewOpen, pinnedColumnsCount, sortableColumnIds, staticColumns],
   );
-
-  // Detect if user just click a row away from current selected group.
-  // If this stand alone select is set, use it as the base when doing multi select.
-  const [standAloneSelect, setStandAloneSelect] = React.useState<number>();
 
   const columnDefs = useMemo<Record<string, ColumnDef>>(
     () =>
@@ -278,39 +276,23 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [colorMap, data, hoveredRow, selection.rows],
   );
 
-  const onColumnResize: DataEditorProps['onColumnResize'] = useCallback(
+  const handleColumnResize: DataEditorProps['onColumnResize'] = useCallback(
     (column: GridColumn, width: number) => {
       const columnId = column.id;
       if (columnId === undefined || columnId === MULTISELECT) return;
-      setColumnWidths({ ...columnWidths, [columnId]: width });
+      onColumnResize?.({ ...columnWidths, [columnId]: width });
     },
-    [columnWidths, setColumnWidths],
+    [columnWidths, onColumnResize],
   );
 
-  const deselectAllRows = useCallback(() => {
-    setSelection((prev) => ({ ...prev, rows: CompactSelection.empty() }));
-    setSelectAll(false);
-    setExcludedExperimentIds(new Set());
-  }, [setSelectAll, setSelection, setExcludedExperimentIds]);
-
-  const selectAllRows = useCallback(() => {
-    setSelection(({ columns, rows }: GridSelection) => ({
-      columns,
-      rows: rows.add([0, data.length]),
-    }));
-    setExcludedExperimentIds(new Set());
-    setSelectAll(true);
-  }, [setSelectAll, setSelection, data, setExcludedExperimentIds]);
-
   const toggleHeatmap = useCallback(
-    (col: string) => {
-      setHeatmapApplied(
+    (col: string) =>
+      onHeatmapSelection?.(
         heatmapSkipped.includes(col)
           ? heatmapSkipped.filter((p) => p !== col)
           : [...heatmapSkipped, col],
-      );
-    },
-    [setHeatmapApplied, heatmapSkipped],
+      ),
+    [heatmapSkipped, onHeatmapSelection],
   );
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
@@ -325,7 +307,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 key: 'select-none',
                 label: 'Clear selected',
                 onClick: () => {
-                  deselectAllRows();
+                  onSelectionChange?.('remove-all', [0, data.length]);
                   setMenuIsOpen(false);
                 },
               }
@@ -334,11 +316,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             key: `select-${n}`,
             label: `Select first ${n}`,
             onClick: () => {
-              setSelectAll(false);
-              setSelection((s) => ({
-                ...s,
-                rows: CompactSelection.fromSingleSelection([0, n]),
-              }));
+              onSelectionChange?.('set', [0, n]);
               if (gridRef.current) {
                 // scroll first row into view for feedback
                 gridRef.current.scrollTo(0, 0);
@@ -350,7 +328,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             key: 'select-all',
             label: 'Select all',
             onClick: () => {
-              selectAllRows();
+              onSelectionChange?.('add-all', [0, data.length]);
               setMenuIsOpen(false);
             },
           },
@@ -385,7 +363,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             value: null,
           },
         });
-        onIsOpenFilterChange(true);
+        onIsOpenFilterChange?.(true);
         setMenuIsOpen(false);
       };
 
@@ -430,8 +408,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               onClick: () => {
                 const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
                 newSortableColumns.splice(pinnedColumnsCount, 0, column.column);
-                setSortableColumnIds(newSortableColumns);
-                setPinnedColumnsCount(Math.min(pinnedColumnsCount + 1, sortableColumnIds.length));
+                onSortableColumnChange?.(newSortableColumns);
+                onPinnedColumnsCountChange?.(
+                  Math.min(pinnedColumnsCount + 1, sortableColumnIds.length),
+                );
                 setMenuIsOpen(false);
               },
             }
@@ -442,8 +422,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               onClick: () => {
                 const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
                 newSortableColumns.splice(pinnedColumnsCount - 1, 0, column.column);
-                setSortableColumnIds(newSortableColumns);
-                setPinnedColumnsCount(Math.max(pinnedColumnsCount - 1, 0));
+                onSortableColumnChange?.(newSortableColumns);
+                onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
                 setMenuIsOpen(false);
               },
             },
@@ -453,6 +433,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     },
     [
       columnIds,
+      data.length,
       projectColumns,
       formStore,
       sorts,
@@ -461,17 +442,14 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       isMobile,
       pinnedColumnsCount,
       selection.rows.length,
-      deselectAllRows,
-      selectAllRows,
       onIsOpenFilterChange,
+      onPinnedColumnsCountChange,
+      onSelectionChange,
+      onSortableColumnChange,
       sortableColumnIds,
-      setSortableColumnIds,
-      setPinnedColumnsCount,
       heatmapSkipped,
       toggleHeatmap,
       heatmapOn,
-      setSelection,
-      setSelectAll,
     ],
   );
 
@@ -505,29 +483,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
-      const findConsecutiveBefore = (rows: number[], row: number) => {
-        while (row >= 0) {
-          row = row - 1;
-          if (!rows.includes(row)) return row + 1;
-        }
-        return row;
-      };
-      const findConsecutiveAfter = (rows: number[], row: number) => {
-        while (row < data.length) {
-          row = row + 1;
-          if (!rows.includes(row)) return row - 1;
-        }
-        return row;
-      };
-      const isStandAlone = (rows: CompactSelection, row: number) => {
-        if (row === 0) return !rows.hasIndex(row + 1);
-        if (row === data.length - 1) return !rows.hasIndex(row - 1);
-        return !rows.hasIndex(row - 1) && !rows.hasIndex(row + 1);
-      };
-
-      setStandAloneSelect(undefined);
-
       const [col, row] = cell;
+
       Loadable.forEach(data[row], (rowData) => {
         const columnId = columnIds[col];
         const cell = columnDefs[columnId].renderer(rowData, row);
@@ -536,90 +493,34 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           handlePath(event as unknown as AnyMouseEvent, { path: cell.data.link.href });
         } else {
           if (event.shiftKey) {
-            setSelection(({ rows }: GridSelection) => {
-              if (standAloneSelect && standAloneSelect > row) {
-                return {
-                  columns: CompactSelection.empty(),
-                  rows: event.metaKey
-                    ? rows.add([row, standAloneSelect + 1])
-                    : CompactSelection.fromSingleSelection([row, standAloneSelect + 1]),
-                };
-              }
-              const rowsArray = rows.toArray();
-              const smallestClosest = rowsArray.filter((r) => r < row).last();
-              const largestClosest = rowsArray.filter((r) => r > row).first();
-              const smallestLinked = findConsecutiveBefore(rowsArray, smallestClosest);
-              const greatestLinked = findConsecutiveAfter(rowsArray, largestClosest);
-              return {
-                columns: CompactSelection.empty(),
-                rows:
-                  smallestClosest >= 0
-                    ? event.metaKey
-                      ? rows.add([smallestClosest, row + 1])
-                      : CompactSelection.fromSingleSelection([smallestLinked, row + 1])
-                    : largestClosest
-                    ? event.metaKey
-                      ? rows.add([row, largestClosest + 1])
-                      : CompactSelection.fromSingleSelection([row, greatestLinked + 1])
-                    : CompactSelection.fromSingleSelection(row),
-              };
-            });
+            if (clickedCellRef.current !== null) {
+              const previousRow = clickedCellRef.current.row;
+              const selectionType = selection.rows.toArray().includes(row) ? 'remove' : 'add';
+              const range: [number, number] =
+                previousRow < row ? [previousRow, row + 1] : [row, previousRow + 1];
+              onSelectionChange?.(selectionType, range);
+            }
           } else {
-            isStandAlone(selection.rows, row) &&
-              !selection.rows.hasIndex(row) &&
-              setStandAloneSelect(row);
-
             if (selection.rows.hasIndex(row)) {
-              setSelection(({ columns, rows }: GridSelection) => ({
-                columns,
-                rows: rows.remove(row),
-              }));
-              if (selectAll) {
-                const experiment = data[row];
-                if (Loadable.isLoaded(experiment)) {
-                  setExcludedExperimentIds((prev) => {
-                    if (experiment.data.experiment) {
-                      return new Set([...prev, experiment.data.experiment?.id]);
-                    } else {
-                      return prev;
-                    }
-                  });
-                }
-              }
+              onSelectionChange?.('remove', [row, row + 1]);
             } else {
-              setSelection(({ columns, rows }: GridSelection) => ({
-                columns,
-                rows: rows.add(row),
-              }));
-              const experiment = data[row];
-              if (Loadable.isLoaded(experiment)) {
-                setExcludedExperimentIds((prev) => {
-                  return new Set([...prev].filter((id) => id !== experiment.data.experiment?.id));
-                });
-              }
+              onSelectionChange?.('add', [row, row + 1]);
             }
           }
+          clickedCellRef.current = { col, row };
         }
       });
     },
-    [
-      data,
-      columnIds,
-      columnDefs,
-      selection,
-      selectAll,
-      setExcludedExperimentIds,
-      standAloneSelect,
-      setSelection,
-    ],
+    [data, columnIds, columnDefs, onSelectionChange, selection],
   );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
+      const [col, row] = cell;
+
       // Close existing context menu.
       contextMenuOpen.set(false);
 
-      const [col, row] = cell;
       Loadable.forEach(data[row], (rowData) => {
         // Prevent the browser native context menu from showing up.
         event.preventDefault();
@@ -633,12 +534,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           setContextMenuProps({
             cell,
             experiment: getProjectExperimentForExperimentItem(rowData.experiment, project),
-            handleClose: (e?: Event) => {
+            link: isLinkCell(cell) ? cell.data.link.href : undefined,
+            onClose: (e?: DropdownEvent | Event) => {
               // Prevent the context menu closing click from triggering something else.
               if (contextMenuOpen.get()) e?.stopPropagation();
               contextMenuOpen.set(false);
             },
-            link: isLinkCell(cell) ? cell.data.link.href : undefined,
             x: Math.max(0, event.bounds.x + event.localEventX - 4),
             y: Math.max(0, event.bounds.y + event.localEventY - 4),
           });
@@ -661,8 +562,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         columnIdsStartIdx >= pinnedColumnEnd && columnIdsEndIdx < pinnedColumnEnd;
       const isOutOfPinned =
         columnIdsStartIdx < pinnedColumnEnd && columnIdsEndIdx >= pinnedColumnEnd;
-      if (isIntoPinned) setPinnedColumnsCount(pinnedColumnsCount + 1);
-      if (isOutOfPinned) setPinnedColumnsCount(pinnedColumnsCount - 1);
+      if (isIntoPinned) onPinnedColumnsCountChange?.(pinnedColumnsCount + 1);
+      if (isOutOfPinned) onPinnedColumnsCountChange?.(pinnedColumnsCount - 1);
 
       // Update the column list with the updated column.
       const sortableColumnIdsStartIdx = columnIdsStartIdx - staticColumns.length;
@@ -670,12 +571,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       const newCols = [...sortableColumnIds];
       const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
       newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
-      setSortableColumnIds(newCols);
+      onSortableColumnChange?.(newCols);
     },
     [
+      onPinnedColumnsCountChange,
+      onSortableColumnChange,
       pinnedColumnsCount,
-      setPinnedColumnsCount,
-      setSortableColumnIds,
       sortableColumnIds,
       staticColumns.length,
     ],
@@ -865,18 +766,17 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           onCellClicked={onCellClicked}
           onCellContextMenu={onCellContextMenu}
           onColumnMoved={onColumnMoved}
-          onColumnResize={onColumnResize}
+          onColumnResize={handleColumnResize}
           onHeaderClicked={onHeaderClicked}
           onHeaderContextMenu={onHeaderClicked} // right-click
           onItemHovered={onColumnHovered}
-          onVisibleRegionChanged={handleScroll}
+          onVisibleRegionChanged={onScroll}
         />
       </div>
       <TableActionMenu {...menuProps} open={menuIsOpen} />
       {contextMenuProps && (
         <TableContextMenu
           {...contextMenuProps}
-          handleUpdateExperimentList={handleUpdateExperimentList}
           open={contextMenuIsOpen}
           onComplete={handleContextMenuComplete}
         />
