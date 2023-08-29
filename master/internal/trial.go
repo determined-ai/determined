@@ -99,8 +99,6 @@ type trial struct {
 	logCtx logger.Context
 
 	exitCallback trialExitCallback
-
-	exited bool
 }
 
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
@@ -191,15 +189,6 @@ func isNonRetryableError(err error) bool {
 }
 
 func (t *trial) exit(reason *model.ExitedReason) {
-	if t.exited {
-		if reason != nil {
-			t.syslog.WithField("reason", *reason).Error("trial already exited")
-		}
-		return
-		// panic("trial exited twice")
-		// return
-	}
-	t.exited = true
 	if err := t.close(); err != nil {
 		t.syslog.WithError(err).Error("error closing trial")
 	}
