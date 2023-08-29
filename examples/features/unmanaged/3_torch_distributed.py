@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 # To run:
-# python -m torch.distributed.run --nnodes=1 --nproc_per_node=2 \
-#  --master_addr 127.0.0.1 --master_port 29400 --max_restarts 0 \
-#  3_torch_distributed.py
+"""
+python -m torch.distributed.run --nnodes=1 --nproc_per_node=2 \
+--master_addr 127.0.0.1 --master_port 29400 --max_restarts 0 \
+3_torch_distributed.py
+"""
+
 
 import logging
 import random
@@ -33,12 +36,12 @@ def main():
         if i % size == dist.get_rank():
             core_v2.train.report_training_metrics(
                 steps_completed=i,
-                metrics={"loss": random.random(), "rank": dist.get_rank() + 0.01},
+                metrics={"loss": random.random(), "rank": dist.get_rank()},
             )
             if (i + 1) % 10 == 0:
                 core_v2.train.report_validation_metrics(
                     steps_completed=i,
-                    metrics={"loss": random.random(), "rank": dist.get_rank() + 0.01},
+                    metrics={"loss": random.random(), "rank": dist.get_rank()},
                 )
 
         ckpt_metadata = {"steps_completed": i, f"rank_{dist.get_rank()}": "ok"}
