@@ -71,7 +71,7 @@ func (as *allocationService) StartAllocation(
 		as.mu.Lock()
 		defer as.mu.Unlock()
 		delete(as.allocations, req.AllocationID)
-		onExit(ref.exited)
+		go onExit(ref.exited)
 	}()
 	return nil
 }
