@@ -78,7 +78,7 @@ class ModelVersion:
         """
         Gets all metrics for a given metric group associated with this model version.
         The checkpoint can be originally associated by calling
-        ``core_context.utils.report_task_using_model_version(<MODEL_VERSION>)``
+        ``core_context.experimental.report_task_using_model_version(<MODEL_VERSION>)``
         from within a task.
 
         Arguments:

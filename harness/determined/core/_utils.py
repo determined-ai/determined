@@ -9,9 +9,9 @@ if TYPE_CHECKING:
     from determined.experimental import checkpoint, model
 
 
-class UtilsContext:
+class ExperimentalCoreContext:
     """
-    ``UtilsContext`` gives access to various miscellaneous functions in a Determined cluster
+    ``ExperimentalCoreContext`` gives access to experimental functions in a Determined cluster.
     """
 
     def __init__(self, session: api.Session, trial_id: int) -> None:
@@ -19,6 +19,13 @@ class UtilsContext:
         self._trial_id = trial_id
 
     def report_task_using_checkpoint(self, checkpoint: "checkpoint.Checkpoint") -> None:
+        """Associate ``checkpoint`` with the current task. This links together the metrics
+        reporting so that any metrics which are reported to the current task will be
+        visible when querying for metrics associated with this checkpoint
+
+        Args:
+            checkpoint (checkpoint.Checkpoint): The checkpoint to associate with this task
+        """
         req = bindings.v1ReportTrialSourceInfoRequest(
             trialSourceInfo=bindings.v1TrialSourceInfo(
                 checkpointUuid=checkpoint.uuid,
@@ -32,6 +39,13 @@ class UtilsContext:
         )
 
     def report_task_using_model_version(self, model_version: "model.ModelVersion") -> None:
+        """Associate ``model_version`` with the current task. This links together the metrics
+        reporting so that any metrics which are reported to the current task will be
+        visible when querying for metrics associated with this model version
+
+        Args:
+            model_Version (model.ModelVersion): The model version to associate with this task
+        """
         req = bindings.v1ReportTrialSourceInfoRequest(
             trialSourceInfo=bindings.v1TrialSourceInfo(
                 checkpointUuid=model_version.checkpoint.uuid,

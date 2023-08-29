@@ -1,22 +1,9 @@
-import logging
-import os
-import pathlib
-import shutil
-
-import filelock
-
-# import chromadb
 import torch
-import torchvision
-
-# from datasets import load_dataset
-from torchvision import transforms
+from model_def import download_dataset
 
 from determined import pytorch
 from determined.experimental import client
 from determined.pytorch import experimental
-
-from .model_def import download_dataset
 
 FROG_LABEL = 6
 
@@ -32,7 +19,7 @@ class FrogCountingInferenceProcessor(experimental.TorchBatchProcessor):
 
         model = client.get_model(hparams.get("model_name"))
         model_version = model.get_version(hparams.get("model_version"))
-        self.core_context.utils.report_task_using_model_version(model_version)
+        self.core_context.experimental.report_task_using_model_version(model_version)
 
         path = model_version.checkpoint.download()
         training_trial = pytorch.load_trial_from_checkpoint_path(

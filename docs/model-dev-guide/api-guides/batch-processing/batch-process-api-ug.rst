@@ -181,12 +181,12 @@ Connect the :class:`~determined.experimental.checkpoint.Checkpoint` or
 
    # Checkpoint
    ckpt = client.get_checkpoint(hparams.get("checkpoint_uuid"))
-   core_context.utils.report_task_using_checkpoint(ckpt)
+   core_context.experimental.report_task_using_checkpoint(ckpt)
 
    # Or Model Version
    model = client.get_model(hparams.get("model_name"))
    model_version = model.get_version(hparams.get("model_version"))
-   self.core_context.utils.report_task_using_model_version(model_version)
+   self.core_context.experimental.report_task_using_model_version(model_version)
 
 The :class:`~determined.experimental.checkpoint.Checkpoint` and
 :class:`~determined.experimental.model.ModelVersion` used are now available to any query via
