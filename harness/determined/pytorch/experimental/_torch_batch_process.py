@@ -36,6 +36,7 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         if self._hparams is None:
             info = det.get_cluster_info()
             assert info, "Must run TorchBatchProcessor in a cluster to run get_hparams()"
+            assert info.task_type == "TRIAL", "TorchBatchProcessor must be run inside of a Trial"
             self._hparams = info.trial.hparams
         assert self._hparams is not None
         return self._hparams
