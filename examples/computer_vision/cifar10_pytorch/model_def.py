@@ -44,9 +44,6 @@ class CIFARTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
 
-        # self.download_directory = "data"
-        # os.makedirs(self.download_directory, exist_ok=True)
-
         self.model = self.context.wrap_model(
             nn.Sequential(
                 nn.Conv2d(NUM_CHANNELS, IMAGE_SIZE, kernel_size=(3, 3)),
