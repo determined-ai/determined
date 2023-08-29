@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<testsuites tests="2" failures="0">
+<testsuite name="K6 Load Tests" tests="2" failures="0"><testcase name="http_req_duration - p(95)&lt;1000" />
+<testcase name="http_req_failed - rate&lt;0.01" />
+</testsuite >
+</testsuites >

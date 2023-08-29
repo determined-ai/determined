@@ -3,7 +3,12 @@ import { Options, Scenario, Threshold } from 'k6/options';
 import http from "k6/http";
 import { jUnit, textSummary } from 'https://jslib.k6.io/k6-summary/0.0.2/index.js';
 
-const clusterURL = __ENV.DET_MASTER
+const DEFAULT_CLUSTER_URL = "http://localhost:8080";
+
+// Fallback to localhost if a cluster url is not supplied
+const clusterURL = __ENV.DET_MASTER ?? DEFAULT_CLUSTER_URL
+
+
 const masterEndpoint = '/api/v1/master';
 
 const thresholds: { [name: string]: Threshold[] } = {
