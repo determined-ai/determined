@@ -1,7 +1,7 @@
 import { JSONObject, check, sleep } from 'k6';
 import { Options, Scenario, Threshold } from 'k6/options';
 import http from "k6/http";
-import { jUnit, textSummary } from 'https://jslib.k6.io/k6-summary/0.0.2/index.js';
+import { jUnit, textSummary } from './utils/k6-summary';
 
 const DEFAULT_CLUSTER_URL = "http://localhost:8080";
 
