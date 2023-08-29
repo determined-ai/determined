@@ -60,9 +60,7 @@ installation method that best fits your environment and requirements.
  Step 2 - Install the Determined Master
 ****************************************
 
-To Do include https://docs.determined.ai/latest/setup-cluster/basic.html#master
-
-The next step is to decide if you want to deploy the Determined Master on premises or on cloud.
+The next step is to decide if you want to deploy the Determined master on premises or on cloud.
 
 .. tabs::
 
@@ -76,11 +74,11 @@ The next step is to decide if you want to deploy the Determined Master on premis
 
             Docker (Agent-Based)
 
-            If the Determined Agent is your compute resource, you'll install the Determined Agent
-            along with the Determined Master. The preferred method for installing the Agent is to
+            If the Determined agent is your compute resource, you'll install the Determined agent
+            along with the Determined master. The preferred method for installing the agent is to
             use Linux packages. The recommended alternative to Linux packages is Docker.
 
-            To install the Determined Master and Agent on premises, you'll first need to meet the
+            To install the Determined master and agent on premises, you'll first need to meet the
             installation requirements:
 
             -  :ref:`Installation Requirements <requirements>`
@@ -93,11 +91,11 @@ The next step is to decide if you want to deploy the Determined Master on premis
 
             Linux (Agent-Based)
 
-            If the Determined Agent is your compute resource, you'll install the Determined Agent
-            along with the Determined Master. The preferred method for installing the Agent is to
+            If the Determined agent is your compute resource, you'll install the Determined agent
+            along with the Determined master. The preferred method for installing the Agent is to
             use Linux packages. The recommended alternative to Linux packages is Docker.
 
-            To install the Determined Master and Agent on premises, you'll first need to meet the
+            To install the Determined master and agent on premises, you'll first need to meet the
             installation requirements:
 
             -  :ref:`Installation Requirements <requirements>`
@@ -110,7 +108,7 @@ The next step is to decide if you want to deploy the Determined Master on premis
 
             Kubernetes
 
-            To install the Determined Master on premises with Kubernetes, follow the steps below:
+            To install the Determined master on premises with Kubernetes, follow the steps below:
 
             -  :ref:`Deploy on Kubernetes <determined-on-kubernetes>`
             -  :ref:`Install Determined on Kubernetes <install-on-kubernetes>`
@@ -119,7 +117,7 @@ The next step is to decide if you want to deploy the Determined Master on premis
 
             Slurm
 
-            To install the Determined Master on premises with Slurm, follow the steps below:
+            To install the Determined master on premises with Slurm, follow the steps below:
 
             -  :ref:`sysadmin-deploy-on-hpc`
 
@@ -133,7 +131,7 @@ The next step is to decide if you want to deploy the Determined Master on premis
 
             Agent-Based
 
-            To install the Determined Master and Agent on cloud, select one of the following
+            To install the Determined master and agent on cloud, select one of the following
             options:
 
             -  :ref:`AWS <install-aws>`
@@ -141,14 +139,14 @@ The next step is to decide if you want to deploy the Determined Master on premis
 
             .. note::
 
-               When using AWS or GCP, ``det CLI`` manages the installation of the Determined Agent
+               When using AWS or GCP, ``det CLI`` manages the installation of the Determined agent
                for you.
 
          .. tab::
 
             Kubernetes
 
-            To install the Determined Master on cloud using Kubernetes, start here:
+            To install the Determined master on cloud using Kubernetes, start here:
 
             -  :ref:`Install on Kubernetes <install-on-kubernetes>`
 
@@ -158,11 +156,16 @@ The next step is to decide if you want to deploy the Determined Master on premis
             -  :ref:`setup-gke-cluster`
             -  :ref:`setup-aks-cluster`
 
+**Firewall Rules**
+
+The :ref:`firewall rules <firewall-rules>` must satisfy network access requirements.
+
 Configure Your Cluster
 ======================
 
-Once you have set up the necessary components for your chosen environment, you can configure the
-cluster. Visit the cluster configuration resources below or visit :ref:`cluster-configuration`.
+Once you have set up the necessary components for your environment, configure the cluster.
+
+Visit the cluster configuration resources below or visit :ref:`cluster-configuration`.
 
 -  Common configuration reference: :doc:`/reference/deploy/config/common-config-options`
 -  Master configuration reference: :doc:`/reference/deploy/config/master-config-reference`
@@ -175,22 +178,26 @@ cluster. Visit the cluster configuration resources below or visit :ref:`cluster-
 It is recommended to use :ref:`Transport Layer Security (TLS) <tls>`. However, if you do not require
 the secure version of HTTP, you can skip this section.
 
--  Master-Only TLS
+Master-Only TLS
+===============
 
-Add instructions.
+:ref:`Transport Layer Security (TLS) <tls>`
 
--  Mutual TLS
+Mutual TLS
+==========
+
+:ref:`Transport Layer Security (TLS) <tls>`
 
 Agent-Based
+===========
 
-In an agent-based installation, Determined is the resource manager.
+In an agent-based installation, Determined is the resource manager. To set up TLS for Agents, visit
+:ref:`Transport Security Layer--Agent Configuration <tls-agent-config>`.
 
-To set up TLS for Agents, visit :ref:`Transport Security Layer--Agent Configuration
-<tls-agent-config>`.
+Kubernetes TLS
+==============
 
--  Kubernetes TLS
-
-Add instructions.
+:ref:`tls-on-kubernetes`
 
 *************************************
  Step 4 - Set Up Security (Optional)
@@ -214,13 +221,13 @@ you and Determined.
 
          .. tab::
 
-            To Do Kubernetes
+            Kubernetes
 
             To find out how to set up SSO with Kubernetes, visit :ref:`tls-agent-config`. .. _saml:
 
          .. tab::
 
-            To Do Other
+            Other
 
             To set up SSO in any environment other than Kubernetes, visit :ref:`tls-agent-config`.
 
@@ -230,44 +237,31 @@ To validate Step 4, ensure the users can access the Determined cluster.
  Step 5 - Set Up Compute Resources
 ***********************************
 
-(this is agents) maybe link to Internet Access maybe link to Firewall Rules maybe link to
-Transferring the Context Directory
+Set up your compute resources (such as Determined agents) to communicate with the Determined master.
 
-maybe this section does not need to be here since we don't have content yet?
-
-maybe this note doesn't go here?
-
-.. note::
-
-   :ref:`Firewall rules <firewall-rules>` must satisfy network access requirements for the master
-   and agents.
+-  :ref:`Firewall rules <firewall-rules>` must satisfy network access requirements for the master
+      and agents.
+-  :ref:`internet-access`
+-  :ref:`setup-clients`
 
 *********************************************
  Step 6 - Set Up Monitoring Tools (Optional)
 *********************************************
 
-The following monitoring tools are officially supported: Prometheus/Grafana
-
-.. tabs::
-
-   .. tab::
-
-      Prometheus
-
-      Description and link to instructions.
-
-   .. tab::
-
-      Grafana
-
-      Description and link to instructions.
+To set up your monitoring tools, visit :ref:`Configure Determined with Prometheus and Grafana
+<prometheus-grafana>`.
 
 ************
  Next Steps
 ************
 
-Configuring RBAC
-================
+Once you have completed the steps in this checklist, your users should be able to see and connect to
+the Determined master.
+
+Here are some additional steps to consider:
+
+Configure RBAC
+==============
 
 You should configure role-based access control (RBAC) before creating workspaces and projects. To
 configure RBAC, visit :ref:`rbac`.
@@ -276,14 +270,14 @@ configure RBAC, visit :ref:`rbac`.
 
    RBAC is only available on Determined Enterprise Edition.
 
-Creating Workspaces and Projects
-================================
+Create Workspaces and Projects
+==============================
 
 Determined lets you organize and control access to your experiments by team or department. To do
 this, you can create :ref:`workspaces` based on your RBAC groups.
 
-Configuring Checkpoint Storage
-==============================
+Configure Checkpoint Storage
+============================
 
 To configure checkpoint storage, visit :ref:`checkpoint-storage`.
 
@@ -293,3 +287,5 @@ To configure checkpoint storage, visit :ref:`checkpoint-storage`.
    Overview <self>
    PostgreSQL <postgresql>
    Set Up Clients <setup-clients>
+   Internet Access <internet-access>
+   Firewall Rules (Port Reference) <firewall-rules>

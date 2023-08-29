@@ -17,6 +17,8 @@ After the master and agent are configured to use TLS, no additional configuratio
 tasks run in the cluster. In shells and notebooks, the Determined Python libraries automatically
 make connections to the master using TLS with the appropriate certificate.
 
+.. _tls-master-config:
+
 **********************
  Master Configuration
 **********************

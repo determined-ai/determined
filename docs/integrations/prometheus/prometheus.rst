@@ -1,3 +1,5 @@
+.. _prometheus-grafana:
+
 ##################################################
  Configure Determined with Prometheus and Grafana
 ##################################################

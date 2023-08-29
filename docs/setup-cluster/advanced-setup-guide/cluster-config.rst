@@ -7,9 +7,10 @@
 #########################
 
 .. meta::
-   :description: Follow these steps to set up a Determined training environment on-prem or on cloud.
+   :description: Cluster configuration resources.
 
-After setting up your cluster using the advanced setup guide, you can configure it.
+This guide contains cluster configuration resources, and guidelines for basic and advanced cluster
+configurations.
 
 *********************************
  Cluster Configuration Resources

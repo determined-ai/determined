@@ -16,6 +16,10 @@ these instructions to set up clients.
 Set the ``DET_MASTER`` environment variable, which is the network address of the Determined master.
 You can override the value in the command line using the ``-m`` option.
 
+.. note::
+
+   You can skip this step if deploying locally.
+
 *************************************
  Step 2 - Install the Determined CLI
 *************************************
