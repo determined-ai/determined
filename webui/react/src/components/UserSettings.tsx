@@ -26,10 +26,9 @@ import {
   experimentListGlobalSettingsConfig,
   experimentListGlobalSettingsDefaults,
   experimentListGlobalSettingsPath,
-  ExpListView,
-  RowHeight,
 } from 'pages/F_ExpList/F_ExperimentList.settings';
-import { rowHeightItems } from 'pages/F_ExpList/glide-table/OptionsMenu';
+import { TableViewMode } from 'pages/F_ExpList/glide-table/GlideTable';
+import { RowHeight, rowHeightItems } from 'pages/F_ExpList/glide-table/OptionsMenu';
 import { patchUser } from 'services/api';
 import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
@@ -256,18 +255,15 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                     ))}
                   </Select>
                 </InlineForm>
-                <InlineForm<ExpListView>
-                  initialValue={experimentListGlobalSettings.expListView}
+                <InlineForm<TableViewMode>
+                  initialValue={experimentListGlobalSettings.tableViewMode}
                   label="Infinite Scroll"
-                  valueFormatter={(v) => (v === 'scroll' ? 'On' : 'Off')}
-                  onSubmit={(v) => {
+                  valueFormatter={(mode) => (mode === 'scroll' ? 'On' : 'Off')}
+                  onSubmit={(mode) => {
                     userSettings.set(
                       experimentListGlobalSettingsConfig,
                       experimentListGlobalSettingsPath,
-                      {
-                        ...experimentListGlobalSettings,
-                        expListView: v,
-                      },
+                      { ...experimentListGlobalSettings, tableViewMode: mode },
                     );
                   }}>
                   <Select searchable={false}>

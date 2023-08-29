@@ -3,11 +3,11 @@ package command
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 
-	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/pkg/cproto"

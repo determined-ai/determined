@@ -2,10 +2,10 @@ package cproto
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
-	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"

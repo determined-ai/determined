@@ -3,11 +3,11 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/jinzhu/copier"
-	"golang.org/x/exp/slices"
 
 	k8sV1 "k8s.io/api/core/v1"
 

@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"slices"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
-	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"

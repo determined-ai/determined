@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -14,8 +15,6 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/labstack/echo/v4"
 	"github.com/uptrace/bun"

@@ -28,25 +28,25 @@ export type Sort = io.TypeOf<typeof sort>;
 export const EMPTY_SORT: Sort = { column: undefined, direction: undefined };
 
 interface MultiSortProps {
-  sorts: Sort[];
   columns: Loadable<ProjectColumn[]>;
-  onChange: (sorts: Sort[]) => void;
   isMobile?: boolean;
+  onChange?: (sorts: Sort[]) => void;
+  sorts: Sort[];
 }
 interface MultiSortRowProps {
   sort: Sort;
   columns: Loadable<ProjectColumn[]>;
-  onChange: (sort: Sort) => void;
-  onRemove: () => void;
+  onChange?: (sort: Sort) => void;
+  onRemove?: () => void;
 }
 interface DirectionOptionsProps {
-  onChange: (direction: DirectionType) => void;
+  onChange?: (direction: DirectionType) => void;
   type: V1ColumnType;
   value?: DirectionType;
 }
 interface ColumnOptionsProps {
-  onChange: (column: string) => void;
   columns: Loadable<ProjectColumn[]>;
+  onChange?: (column: string) => void;
   value?: string;
 }
 
@@ -104,7 +104,7 @@ const SortButtonIcon = () => (
 export const sortMenuItemsForColumn = (
   column: ProjectColumn,
   sorts: Sort[],
-  onSortChange: (sorts: Sort[]) => void,
+  onSortChange?: (sorts: Sort[]) => void,
 ): MenuItem[] => {
   if (BANNED_SORT_COLUMNS.has(column.column)) {
     return [];
@@ -132,7 +132,7 @@ export const sortMenuItemsForColumn = (
         } else {
           newSort = [{ column: column.column, direction: option.value as DirectionType }];
         }
-        onSortChange(newSort);
+        onSortChange?.(newSort);
       },
     };
   });
@@ -144,7 +144,7 @@ const DirectionOptions: React.FC<DirectionOptionsProps> = ({ onChange, type, val
     placeholder="Select direction"
     value={value}
     width="100%"
-    onChange={(val) => onChange(val as DirectionType)}
+    onChange={(val) => onChange?.(val as DirectionType)}
   />
 );
 
@@ -162,7 +162,7 @@ const ColumnOptions: React.FC<ColumnOptionsProps> = ({ onChange, columns, value 
     placeholder="Select column"
     value={value}
     width="100%"
-    onChange={(val) => onChange(val as string)}
+    onChange={(val) => onChange?.(val as string)}
   />
 );
 
@@ -176,14 +176,14 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, on
         <ColumnOptions
           columns={columns}
           value={sort.column}
-          onChange={(column) => onChange({ ...sort, column })}
+          onChange={(column) => onChange?.({ ...sort, column })}
         />
       </div>
       <div className={css.select}>
         <DirectionOptions
           type={valueType}
           value={sort.direction}
-          onChange={(direction) => onChange({ ...sort, direction })}
+          onChange={(direction) => onChange?.({ ...sort, direction })}
         />
       </div>
       <div>
@@ -205,17 +205,17 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
       ...sort,
       direction: sort.direction || 'asc',
     };
-    onChange(newSorts);
+    onChange?.(newSorts);
   };
   const makeOnRowRemove = (idx: number) => () => {
     const newSorts = sorts.filter((_, cidx) => cidx !== idx);
-    onChange(newSorts.length > 0 ? newSorts : [EMPTY_SORT]);
+    onChange?.(newSorts.length > 0 ? newSorts : [EMPTY_SORT]);
   };
-  const addRow = () => onChange([...sorts, EMPTY_SORT]);
+  const addRow = () => onChange?.([...sorts, EMPTY_SORT]);
   const clearAll = () => {
     // close the popover -- happens before the onchange so the onclose handler fires first
     window.document.body.dispatchEvent(new Event('mousedown', { bubbles: true }));
-    onChange([EMPTY_SORT]);
+    onChange?.([EMPTY_SORT]);
   };
 
   return (
@@ -262,7 +262,7 @@ const MultiSortMenu: React.FC<MultiSortProps> = ({
   const validSorts = sorts.filter(validSort.is);
   const onSortPopoverOpenChange = (open: boolean) => {
     if (!open) {
-      onChange(validSorts.length > 0 ? validSorts : [EMPTY_SORT]);
+      onChange?.(validSorts.length > 0 ? validSorts : [EMPTY_SORT]);
     }
   };
 

@@ -10,9 +10,6 @@ import { copyToClipboard } from 'components/kit/internal/functions';
 import { useModal } from 'components/kit/Modal';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings } from 'hooks/useSettings';
-import { ExperimentListSettings } from 'pages/ExperimentList.settings';
-import { BatchAction } from 'pages/F_ExpList/glide-table/TableActionBar';
 import { handlePath } from 'routes/utils';
 import {
   activateExperiment,
@@ -25,7 +22,7 @@ import {
   unarchiveExperiment,
 } from 'services/api';
 import { ExperimentAction, ProjectExperiment, ValueOf } from 'types';
-import { message, notification } from 'utils/dialogApi';
+import { message } from 'utils/dialogApi';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { capitalize } from 'utils/string';
@@ -40,13 +37,10 @@ interface Props {
   isContextMenu?: boolean;
   link?: string;
   makeOpen?: boolean;
-  onComplete?: (action?: Action) => void | Promise<void>;
+  onComplete?: (action: ExperimentAction, id: number) => void | Promise<void>;
   onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
-  settings?: ExperimentListSettings;
-  updateSettings?: UpdateSettings<ExperimentListSettings>;
   workspaceId?: number;
-  handleUpdateExperimentList?: (action: BatchAction, successfulIds: number[]) => void;
 }
 
 const Action = {
@@ -81,10 +75,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   onComplete,
   onLink,
   onVisibleChange,
-  settings,
-  updateSettings,
   children,
-  handleUpdateExperimentList,
 }: Props) => {
   const id = experiment.id;
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
@@ -92,27 +83,23 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
-  } = useModalHyperparameterSearch({ experiment, onClose: onComplete });
+  } = useModalHyperparameterSearch({
+    experiment,
+    onClose: () => onComplete?.(ExperimentAction.HyperparameterSearch, id),
+  });
 
   const handleHyperparameterSearch = useCallback(() => {
     openModalHyperparameterSearch();
   }, [openModalHyperparameterSearch]);
 
   const handleMoveComplete = useCallback(() => {
-    onComplete?.(Action.Move);
-  }, [onComplete]);
+    onComplete?.(ExperimentAction.Move, id);
+  }, [id, onComplete]);
 
   const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
-    .filter((action) => action !== Action.SwitchPin || settings)
+    .filter((action) => action !== Action.SwitchPin)
     .map((action) => {
-      if (action === Action.SwitchPin) {
-        const label = (settings?.pinned?.[experiment.projectId] ?? []).includes(id)
-          ? 'Unpin'
-          : 'Pin';
-        return { key: action, label };
-      } else {
-        return { danger: action === Action.Delete, key: action, label: action };
-      }
+      return { danger: action === Action.Delete, key: action, label: action };
     });
 
   const dropdownMenu = useMemo(() => {
@@ -145,18 +132,15 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             break;
           case Action.Activate:
             await activateExperiment({ experimentId: id });
-            await onComplete?.(action);
-            handleUpdateExperimentList?.(Action.Activate, [id]);
+            await onComplete?.(action, id);
             break;
           case Action.Archive:
             await archiveExperiment({ experimentId: id });
-            await onComplete?.(action);
-            handleUpdateExperimentList?.(Action.Archive, [id]);
+            await onComplete?.(action, id);
             break;
           case Action.Cancel:
             await cancelExperiment({ experimentId: id });
-            await onComplete?.(action);
-            handleUpdateExperimentList?.(Action.Cancel, [id]);
+            await onComplete?.(action, id);
             break;
           case Action.OpenTensorBoard: {
             const commandResponse = await openOrCreateTensorBoard({
@@ -164,26 +148,27 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               workspaceId: experiment.workspaceId,
             });
             openCommandResponse(commandResponse);
-            handleUpdateExperimentList?.(Action.OpenTensorBoard, [id]);
             break;
           }
           case Action.SwitchPin: {
-            const newPinned = { ...(settings?.pinned ?? {}) };
-            const pinSet = new Set(newPinned[experiment.projectId]);
-            if (pinSet.has(id)) {
-              pinSet.delete(id);
-            } else {
-              if (pinSet.size >= 5) {
-                notification.warning({
-                  description: 'Up to 5 pinned items',
-                  message: 'Unable to pin this item',
-                });
-                break;
-              }
-              pinSet.add(id);
-            }
-            newPinned[experiment.projectId] = Array.from(pinSet);
-            updateSettings?.({ pinned: newPinned });
+            // TODO: leaving old code behind for when we want to enable this for our current experiment list.
+            // const newPinned = { ...(settings?.pinned ?? {}) };
+            // const pinSet = new Set(newPinned[experiment.projectId]);
+            // if (pinSet.has(id)) {
+            //   pinSet.delete(id);
+            // } else {
+            //   if (pinSet.size >= 5) {
+            //     notification.warning({
+            //       description: 'Up to 5 pinned items',
+            //       message: 'Unable to pin this item',
+            //     });
+            //     break;
+            //   }
+            //   pinSet.add(id);
+            // }
+            // newPinned[experiment.projectId] = Array.from(pinSet);
+            // updateSettings?.({ pinned: newPinned });
+            // await onComplete?.(action, id);
             break;
           }
           case Action.Kill:
@@ -193,22 +178,19 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               okText: 'Kill',
               onConfirm: async () => {
                 await killExperiment({ experimentId: id });
-                await onComplete?.(action);
+                await onComplete?.(action, id);
               },
               onError: handleError,
               title: 'Confirm Experiment Kill',
             });
-            handleUpdateExperimentList?.(Action.Kill, [id]);
             break;
           case Action.Pause:
             await pauseExperiment({ experimentId: id });
-            await onComplete?.(action);
-            handleUpdateExperimentList?.(Action.Pause, [id]);
+            await onComplete?.(action, id);
             break;
           case Action.Unarchive:
             await unarchiveExperiment({ experimentId: id });
-            await onComplete?.(action);
-            handleUpdateExperimentList?.(Action.Unarchive, [id]);
+            await onComplete?.(action, id);
             break;
           case Action.Delete:
             confirm({
@@ -217,12 +199,11 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               okText: 'Delete',
               onConfirm: async () => {
                 await deleteExperiment({ experimentId: id });
-                await onComplete?.(action);
+                await onComplete?.(action, id);
               },
               onError: handleError,
               title: 'Confirm Experiment Deletion',
             });
-            handleUpdateExperimentList?.(Action.Delete, [id]);
             break;
           case Action.Move:
             ExperimentMoveModal.open();
@@ -250,7 +231,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     },
     [
       confirm,
-      experiment.projectId,
       ExperimentMoveModal,
       experiment.workspaceId,
       handleHyperparameterSearch,
@@ -259,9 +239,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       onComplete,
       onLink,
       onVisibleChange,
-      settings?.pinned,
-      updateSettings,
-      handleUpdateExperimentList,
       cell,
     ],
   );

@@ -1,20 +1,11 @@
-import { array, boolean, literal, number, partial, record, string, TypeOf, union } from 'io-ts';
+import { array, boolean, number, partial, record, string } from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { SettingsConfig } from 'hooks/useSettings';
-import { valueof } from 'ioTypes';
 
 import { defaultColumnWidths, defaultExperimentColumns } from './glide-table/columns';
-
-export type ExpListView = 'scroll' | 'paged';
-export const RowHeight = {
-  EXTRA_TALL: 'EXTRA_TALL',
-  MEDIUM: 'MEDIUM',
-  SHORT: 'SHORT',
-  TALL: 'TALL',
-} as const;
-const ioRowHeight = valueof(RowHeight);
-export type RowHeight = TypeOf<typeof ioRowHeight>;
+import { ioTableViewMode, TableViewMode } from './glide-table/GlideTable';
+import { ioRowHeight, RowHeight } from './glide-table/OptionsMenu';
 
 export interface F_ExperimentListSettings {
   columns: string[];
@@ -108,37 +99,35 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
 });
 
 export interface F_ExperimentListGlobalSettings {
-  expListView: ExpListView;
   rowHeight: RowHeight;
+  tableViewMode: TableViewMode;
 }
 
-const ioExpListView = union([literal('scroll'), literal('paged')]);
-
 export const experimentListGlobalSettingsConfig = partial({
-  expListView: ioExpListView,
   rowHeight: ioRowHeight,
+  tableViewMode: ioTableViewMode,
 });
 
 export const experimentListGlobalSettingsDefaults = {
-  expListView: 'scroll',
   rowHeight: RowHeight.MEDIUM,
+  tableViewMode: 'scroll',
 } as const;
 
 export const experimentListGlobalSettingsPath = 'globalTableSettings';
 
 export const settingsConfigGlobal: SettingsConfig<F_ExperimentListGlobalSettings> = {
   settings: {
-    expListView: {
-      defaultValue: 'scroll',
-      skipUrlEncoding: true,
-      storageKey: 'expListView',
-      type: ioExpListView,
-    },
     rowHeight: {
       defaultValue: RowHeight.MEDIUM,
       skipUrlEncoding: true,
       storageKey: 'rowHeight',
       type: ioRowHeight,
+    },
+    tableViewMode: {
+      defaultValue: 'scroll',
+      skipUrlEncoding: true,
+      storageKey: 'tableViewMode',
+      type: ioTableViewMode,
     },
   },
   storagePath: experimentListGlobalSettingsPath,

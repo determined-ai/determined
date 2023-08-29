@@ -243,7 +243,7 @@ commands:
   reinstall-go:
     steps:
       - run: sudo rm -rf /usr/local/go # Remove system go.
-      - run: tools/scripts/retry.sh curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.20.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
+      - run: tools/scripts/retry.sh curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.21.0.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
       - run: echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
 

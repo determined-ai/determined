@@ -3,12 +3,12 @@ package container
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"syscall"
 
 	"github.com/pkg/errors"
-	"golang.org/x/exp/slices"
 
 	"github.com/sirupsen/logrus"
 
