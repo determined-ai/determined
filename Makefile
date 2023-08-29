@@ -22,8 +22,8 @@ get-deps-go:
 	$(MAKE) get-deps-agent
 	$(MAKE) get-deps-proto
 
-# Go versions may look like goM, goM.N, or goM.N.P. Only 1.20.* is supported.
-supported_go_minor_version = go1.20
+# Go versions may look like goM, goM.N, or goM.N.P. Only 1.21.* is supported.
+supported_go_minor_version = go1.21
 system_go_version := $(shell go version | sed 's/.*\(go[[:digit:]][[:digit:].]*\).*/\1/')
 .PHONY: go-version-check
 go-version-check:
