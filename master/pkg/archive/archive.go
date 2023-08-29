@@ -19,6 +19,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg"
+	"github.com/determined-ai/determined/master/pkg/constants"
 )
 
 type (
@@ -278,8 +279,7 @@ func Write(dst string, a Archive, p func(level, log string) error) error {
 	for _, i := range a {
 		// TODO(DET-9072): Do something better than this.
 		if strconv.Itoa(i.UserID) != cu.Uid || strconv.Itoa(i.GroupID) != cu.Gid {
-			// TODO(DET-9073): Cannot import model levels due to import cycle.
-			if err := p("WARNING", fmt.Sprintf(
+			if err := p(constants.LogLevelWarning, fmt.Sprintf(
 				"archive file %s has user %d:%d but agent can only write as %s:%s, writing anyway",
 				i.Path, i.UserID, i.GroupID, cu.Uid, cu.Gid,
 			)); err != nil {
