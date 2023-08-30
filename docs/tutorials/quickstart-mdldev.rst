@@ -342,10 +342,10 @@ This example uses a fixed batch size and searches on dropout size, filters, and 
 ************
 
 For detailed information on administrator tasks and how to install Determined on different
-platforms, see :doc:`../setup-cluster/basic`.
+platforms, see :ref:`installation-guide`.
 
-Visit the :doc:`../example-solutions/examples`, where you'll find machine learning models that have
-been converted to the Determined APIs. Each example includes a model definition and one or more
+Visit the :ref:`example-solutions`, where you'll find machine learning models that have been
+converted to the Determined APIs. Each example includes a model definition and one or more
 experiment configuration files, and instructions on how to run the example.
 
 To learn more about the hyperparameter search algorithm, see the :doc:`Hyperparameter Tuning

@@ -16,8 +16,7 @@ other outside of Determined by using tools such as ``ping`` or ``netcat``.
 More rarely, if agents have multiple network interfaces and some of them are not routable,
 Determined may pick one of those interfaces rather than one that allows one agent to contact
 another. In this case, it is possible to explicitly set the network interface used for distributed
-training, as described in :ref:`Basic Setup: Step 7 - Configure the Cluster
-<cluster-configuration>`.
+training, as described in :ref:`cluster-configuration`.
 
 ***************
  Configuration

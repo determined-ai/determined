@@ -36,8 +36,7 @@ Determined model. Follow the nine steps as applicable to your environment:
  Prerequisite
 **************
 
-Successful cluster installation as described in :ref:`Install the Determined cluster
-<install-cluster>`.
+Successful cluster installation.
 
 .. _step1:
 
