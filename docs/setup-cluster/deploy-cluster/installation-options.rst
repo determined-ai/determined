@@ -2,17 +2,19 @@
 
 .. _installation-options:
 
-#####################
+######################
  Installation Options
-#####################
+######################
 
-In this guide, you'll find basic and advanced cluster configuration options, as well as additional installation options include setting up clients, internet access, and firewall rules for the master and agent.
+In this guide, you'll find information about basic and advanced cluster configuration options, as
+well as additional installation options such as setting up clients, internet access, and firewall
+rules.
 
 .. _cluster-configuration:
 
-**********************
+***********************
  Configure the Cluster
-**********************
+***********************
 
 Common configuration reference: :doc:`/reference/deploy/config/common-config-options`
 
@@ -109,9 +111,9 @@ shells can be set using the ``--config`` and ``--config-file`` options. Typical 
 
 .. _setup-clients:
 
-***************
+****************
  Set Up Clients
-***************
+****************
 
 You can set up clients for interacting with the Determined Master through the Determined CLI. Follow
 these instructions to set up clients.
@@ -164,12 +166,11 @@ Examples:
    # Set default Determined master address to example.org, port 8888.
    $ export DET_MASTER="example.org:8888"
 
-
 .. _internet-access:
 
-***********************
+************************
  Set Up Internet Access
-***********************
+************************
 
 -  The Determined Docker images are hosted on Docker Hub. Determined agents need access to Docker
    Hub for such tasks as building new images for user workloads.
@@ -189,12 +190,11 @@ Examples:
       <https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html>`_ should be
       configured for the VPC.
 
-
 .. _firewall-rules:
 
-**********************
+***********************
  Set Up Firewall Rules
-**********************
+***********************
 
 The firewall rules must satisfy the following network access requirements for the master and agents.
 
