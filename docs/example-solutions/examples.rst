@@ -94,22 +94,6 @@ For an introduction to using the training API, please visit the Training APIs se
       -  Enron Email Corpus
       -  :download:`gpt_neox.tgz </examples/gpt_neox.tgz>`
 
-   -  -  DeepSpeed (PyTorch)
-      -  CIFAR-10
-      -  :download:`cifar10_moe.tgz </examples/cifar10_moe.tgz>`
-
-   -  -  DeepSpeed (PyTorch)
-      -  CIFAR-10
-      -  :download:`pipeline_parallelism.tgz </examples/pipeline_parallelism.tgz>`
-
-   -  -  DeepSpeed (PyTorch)
-      -  MNIST / CIFAR-10
-      -  :download:`deepspeed_dcgan.tgz </examples/deepspeed_dcgan.tgz>`
-
-   -  -  DeepSpeed (PyTorch)
-      -  CIFAR-10
-      -  :download:`cifar10_cpu_offloading.tgz </examples/cifar10_cpu_offloading.tgz>`
-
 ********************
  DeepSpeed Autotune
 ********************

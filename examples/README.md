@@ -15,7 +15,6 @@
 | [cifar10\_pytorch\_inference](computer_vision/cifar10_pytorch_inference)     | CIFAR-10                     | PyTorch                                  |
 | [mmdetection\_pytorch](computer_vision/mmdetection_pytorch)                  | COCO                         | PyTorch                                  |
 | [cifar10\_tf\_keras](computer_vision/cifar10_tf_keras)                       | CIFAR-10                     | TensorFlow (tf.keras)                    |
-| [deepspeed\_cifar10_cpu_offloading](deepspeed/cifar10_cpu_offloading)        | CIFAR-10                     | PyTorch (DeepSpeed)                      |
 
 ## HP Search Benchmarks
 
@@ -42,7 +41,6 @@
 |:---------------------------------------------:|:----------------:|:---------------------:|
 | [dc\_gan\_tf\_keras](gan/dcgan_tf_keras)      | MNIST            | TensorFlow (tf.keras) |
 | [gan\_mnist\_pytorch](gan/gan_mnist_pytorch)  | MNIST            | PyTorch               |
-| [deepspeed\_dcgan](deepspeed/deepspeed_dcgan) | MNIST / CIFAR-10 | PyTorch (DeepSpeed)   |
 | [pix2pix\_tf\_keras](gan/pix2pix_tf_keras)    | pix2pix          | TensorFlow (tf.keras) |
 
 ## Custom Reducers
