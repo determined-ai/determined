@@ -15,26 +15,6 @@ official_examples = [
         "tutorials/imagenet_pytorch/const_cifar.yaml",
     ),
     (
-        "computer_vision/cifar10_pytorch",
-        "computer_vision/cifar10_pytorch/const.yaml",
-    ),
-    (
-        "computer_vision/iris_tf_keras",
-        "computer_vision/iris_tf_keras/const.yaml",
-    ),
-    (
-        "gan/gan_mnist_pytorch",
-        "gan/gan_mnist_pytorch/const.yaml",
-    ),
-    (
-        "gan/dcgan_tf_keras",
-        "gan/dcgan_tf_keras/const.yaml",
-    ),
-    (
-        "gan/pix2pix_tf_keras",
-        "gan/pix2pix_tf_keras/const.yaml",
-    ),
-    (
         "features/custom_reducers_mnist_pytorch",
         "features/custom_reducers_mnist_pytorch/const.yaml",
     ),
