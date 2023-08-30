@@ -3336,7 +3336,6 @@ workflows:
               container-run-type: ["podman"]
               context: ["gcp"]
               mark: ["e2e_slurm and not parallel"]
-              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
             - build-go
 
