@@ -290,10 +290,6 @@ func (t *trial) SetUserInitiatedEarlyExit(req userInitiatedEarlyExit) error {
 	}
 }
 
-// TODO(!!!): propagate this via exit codes.
-// case sproto.InvalidResourcesRequestError:
-// 	ctx.Tell(ctx.Self().Parent(), msg)
-
 func (t *trial) create() error {
 	m := model.NewTrial(
 		t.state,

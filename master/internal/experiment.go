@@ -368,25 +368,28 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case userInitiatedEarlyExit:
 		ref, ok := e.trials[msg.requestID]
 		if !ok {
-			ctx.Respond(api.AsErrNotFound("trial not found"))
+			if ctx.ExpectingResponse() {
+				ctx.Respond(api.AsErrNotFound("trial not found"))
+			}
 			return nil
 		}
-
-		err := ref.SetUserInitiatedEarlyExit(msg)
-		if err != nil {
-			ctx.Respond(err)
-			return nil
+		if err := ref.SetUserInitiatedEarlyExit(msg); err != nil {
+			if ctx.ExpectingResponse() {
+				ctx.Respond(err)
+			}
 		}
 	case patchTrialState:
 		ref, ok := e.trials[msg.requestID]
 		if !ok {
-			ctx.Respond(api.AsErrNotFound("trial not found"))
+			if ctx.ExpectingResponse() {
+				ctx.Respond(api.AsErrNotFound("trial not found"))
+			}
 			return nil
 		}
-		err := ref.PatchState(msg.state)
-		if err != nil {
-			ctx.Respond(err)
-			return nil
+		if err := ref.PatchState(msg.state); err != nil {
+			if ctx.ExpectingResponse() {
+				ctx.Respond(err)
+			}
 		}
 	// Patch experiment messages.
 	case model.StateWithReason:
