@@ -138,22 +138,6 @@ For an introduction to using the training API, please visit the Training APIs se
       -  Penn Treebank Dataset
       -  :download:`darts_penntreebank_pytorch.tgz </examples/darts_penntreebank_pytorch.tgz>`
 
-
-***************
- Meta Learning
-***************
-
-.. list-table::
-   :header-rows: 1
-
-   -  -  Framework
-      -  Dataset
-      -  Filename
-
-   -  -  PyTorch
-      -  Omniglot
-      -  :download:`protonet_omniglot_pytorch.tgz </examples/protonet_omniglot_pytorch.tgz>`
-
 ***********
  Diffusion
 ***********

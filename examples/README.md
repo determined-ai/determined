@@ -24,12 +24,6 @@
 | [darts\_cifar10\_pytorch](hp_search_benchmarks/darts_cifar10_pytorch)           | CIFAR-10              | PyTorch   |
 | [darts\_penntreebank\_pytorch](hp_search_benchmarks/darts_penntreebank_pytorch) | Penn Treebank Dataset | PyTorch   |
 
-## Meta Learning
-
-| Example                                                                | Dataset  | Framework |
-|:----------------------------------------------------------------------:|:--------:|:---------:|
-| [protonet\_omniglot\_pytorch](meta_learning/protonet_omniglot_pytorch) | Omniglot | PyTorch   |
-
 ## Diffusion
 
 |                                        Example                                        |  Dataset  | Framework |

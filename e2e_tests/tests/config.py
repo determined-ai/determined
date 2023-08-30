@@ -47,17 +47,8 @@ def tutorials_path(path: str) -> str:
 def cv_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/computer_vision", path)
 
-
-def meta_learning_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/meta_learning", path)
-
-
 def diffusion_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/diffusion", path)
-
-
-def decision_trees_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/decision_trees", path)
 
 
 def features_examples_path(path: str) -> str:
