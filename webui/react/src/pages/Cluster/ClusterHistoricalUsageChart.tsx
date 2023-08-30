@@ -11,7 +11,7 @@ import css from './ClusterHistoricalUsageChart.module.scss';
 
 interface ClusterHistoricalUsageChartProps {
   chartKey?: number;
-  dateRange?: [number, number];
+  dateRange?: [start: number, end: number];
   formatValues?: (self: uPlot, splits: number[]) => string[];
   groupBy?: GroupBy;
   height?: number;
