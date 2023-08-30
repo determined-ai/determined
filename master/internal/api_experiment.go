@@ -196,7 +196,8 @@ func (a *apiServer) getExperimentTx(
 		p.user_id AS project_owner_id,
 		w.id AS workspace_id,
 		w.name AS workspace_name,
-		(w.archived OR p.archived) AS parent_archived
+		(w.archived OR p.archived) AS parent_archived,
+		e.unmanaged as unmanaged
 	FROM
 		experiments e
 	JOIN users u ON e.owner_id = u.id
