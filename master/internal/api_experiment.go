@@ -1421,6 +1421,272 @@ func (a *apiServer) createUnmanagedExperimentTx(
 	}, nil
 }
 
+func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string) ([]byte, error) {
+	if overrideConfig == "" {
+		overrideConfig = "{}"
+	}
+
+	providedConfig, err := expconf.ParseAnyExperimentConfigYAML([]byte(overrideConfig))
+	if err != nil {
+		// Add a helpful error message if a user just submits
+		// searcher.max_length.batches = 2. They would also need
+		// searcher.name = "single", which all experiments will always be here.
+		if strings.Contains(err.Error(), `unknown field "max_length"`) {
+			return nil, status.Errorf(codes.InvalidArgument,
+				`unknown field "max_length", you might also need to specify searcher.name=single`)
+		}
+
+		return nil, status.Errorf(codes.InvalidArgument,
+			fmt.Errorf("parsing override config: %w", err).Error())
+	}
+
+	if providedConfig.RawProject != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "'project' in override config "+
+			"cannot be specified, use `det experiment move` first if you want to change the project")
+	}
+	if providedConfig.RawWorkspace != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "'workspace' in override config "+
+			"cannot be specified, use `det experiment move` first if you want to change the workspace")
+	}
+	// TODO deny list more stuff.
+
+	activeConfig, err := a.m.db.ActiveExperimentConfig(expID)
+	if err != nil {
+		return nil, fmt.Errorf("loading active config for experiment %d: %w", expID, err)
+	}
+	if name := activeConfig.Searcher().AsLegacy().Name; name != "single" { //nolint: goconst
+		return nil, status.Errorf(codes.InvalidArgument,
+			fmt.Sprintf(
+				"cannot continue a '%s' searcher experiment, must be a single searcher experiment",
+				name))
+	}
+
+	mergedConfig := schemas.Merge(providedConfig, activeConfig)
+	if name := mergedConfig.Searcher().AsLegacy().Name; name != "single" { //nolint: goconst
+		return nil, status.Errorf(codes.InvalidArgument,
+			fmt.Sprintf("override config must have single searcher type got '%s' instead", name))
+	}
+
+	bytes, err := mergedConfig.Value()
+	if err != nil {
+		return nil, fmt.Errorf("getting value of merged config: %w", err)
+	}
+
+	return bytes.([]byte), nil
+}
+
+func (a *apiServer) errorIfSearcherIsDone(trialID int, e expconf.ExperimentConfig) error {
+	latestCheckpoint, err := a.m.db.LatestCheckpointForTrial(trialID)
+	if err != nil {
+		return fmt.Errorf("getting latest checkpoint for trialID %d: %w", trialID, err)
+	}
+	if latestCheckpoint == nil || latestCheckpoint.StepsCompleted == 0 {
+		return nil // Can't be done if we don't have a checkpoint.
+	}
+
+	if e.Searcher().RawSingleConfig == nil {
+		return fmt.Errorf("something went wrong searcher single config is nil")
+	}
+
+	var inBatches int
+	units := int(e.Searcher().RawSingleConfig.MaxLength().Units)
+	unit := e.Searcher().Unit()
+	switch unit {
+	case expconf.Unitless, expconf.Unspecified:
+		return nil // Unitless makes us have no idea if the searcher is done.
+	case expconf.Records:
+		hyper, ok := e.Hyperparameters()["global_batch_size"]
+		if !ok {
+			return fmt.Errorf("searcher in records but did not specify global_batch_size")
+		}
+		if hyper.RawConstHyperparameter == nil {
+			return fmt.Errorf("global_batch_size not constant parameter")
+		}
+		globalBatchSize, ok := hyper.RawConstHyperparameter.RawVal.(int)
+		if !ok {
+			return fmt.Errorf("global_batch_size is not an integer got %v",
+				hyper.RawConstHyperparameter.RawVal)
+		}
+
+		inBatches = units / globalBatchSize
+		if inBatches < 1 {
+			inBatches = 1
+		}
+
+	case expconf.Batches:
+		inBatches = units
+
+	case expconf.Epochs:
+		hyper, ok := e.Hyperparameters()["global_batch_size"]
+		if !ok {
+			return fmt.Errorf("searcher in epochs but did not specify global_batch_size")
+		}
+		if hyper.RawConstHyperparameter == nil {
+			return fmt.Errorf("global_batch_size not constant parameter")
+		}
+		globalBatchSize, ok := hyper.RawConstHyperparameter.RawVal.(int)
+		if !ok {
+			return fmt.Errorf("global_batch_size is not an integer got %v",
+				hyper.RawConstHyperparameter.RawVal)
+		}
+
+		if e.RawRecordsPerEpoch == nil {
+			return fmt.Errorf("searcher in epochs but did not specify record_per_epoch")
+		}
+
+		inBatches = (units * *e.RawRecordsPerEpoch) / globalBatchSize
+		if inBatches < 1 {
+			inBatches = 1
+		}
+	}
+
+	if latestCheckpoint.StepsCompleted >= inBatches {
+		return fmt.Errorf("trial has trained for %d batches but searcher.max_length "+
+			"is asking to train for %d batches (specified as %d %s), "+
+			"please increase searcher.max_length if you would like the trial to train longer",
+			latestCheckpoint.StepsCompleted, inBatches, units, unit)
+	}
+	return nil
+}
+
+func (a *apiServer) ContinueExperiment(
+	ctx context.Context, req *apiv1.ContinueExperimentRequest,
+) (*apiv1.ContinueExperimentResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	origExperiment, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.Id),
+		exputil.AuthZProvider.Get().CanEditExperiment)
+	if err != nil {
+		return nil, err
+	}
+
+	trialsResp, err := a.GetExperimentTrials(ctx, &apiv1.GetExperimentTrialsRequest{
+		ExperimentId: req.Id,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("getting experiment trials: %w", err)
+	}
+	if len(trialsResp.Trials) != 1 {
+		return nil, status.Error(codes.FailedPrecondition, fmt.Sprintf(
+			"experiment needs exactly one trial got %d instead", len(trialsResp.Trials)))
+	}
+	trialID := int(trialsResp.Trials[0].Id)
+
+	configBytes, err := a.parseAndMergeContinueConfig(int(req.Id), req.OverrideConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	dbExp, activeConfig, _, taskSpec, err := a.m.parseCreateExperiment(
+		&apiv1.CreateExperimentRequest{
+			Config:   string(configBytes),
+			ParentId: req.Id, // Use parent logic.
+		}, user,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("parsing continue experiment request: %w", err)
+	}
+	dbExp.ParentID = nil // Not actually a parent though.
+	dbExp.ID = int(req.Id)
+	dbExp.JobID = origExperiment.JobID // Revive job.
+
+	if err := a.errorIfSearcherIsDone(trialID, activeConfig); err != nil {
+		return nil, err
+	}
+
+	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec, a.m.system)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
+	}
+
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		// Lock experiment state.
+		var expState model.State
+		if err = tx.
+			NewRaw(`SELECT state FROM experiments WHERE id = ? FOR UPDATE`, req.Id).
+			Scan(ctx, &expState); err != nil {
+			return fmt.Errorf("getting / locking experiment state: %w", err)
+		}
+		if !model.TerminalStates[expState] {
+			return status.Error(codes.FailedPrecondition, fmt.Sprintf(
+				"experiment in non terminal state '%s', try again later", expState))
+		}
+		if _, err := tx.NewUpdate().Model(&model.Experiment{}).
+			Set("state = ?", model.PausedState). // Throw it in paused.
+			Set("progress = ?", 0.0).            // Reset progress.
+			Where("id = ?", req.Id).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("updating experiments config: %w", err)
+		}
+
+		if _, err := db.Bun().NewUpdate().Model(&model.Job{}).
+			Set("owner_id = ?", user.ID).
+			Set("q_position = ?", 0).
+			Where("job_id = ?", dbExp.JobID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("updating experiment's job: %w", err)
+		}
+
+		// Update active config but not original config.
+		// We actually do this in experiment's PreStart in setWeight but relying on that
+		// is a fun regression waiting to happen.
+		activeConfigStr, err := json.Marshal(activeConfig)
+		if err != nil {
+			return fmt.Errorf("unmarshaling exp config %v: %w", activeConfig, err)
+		}
+		if _, err := tx.NewUpdate().Model(&model.Experiment{}).
+			Set("config = ?", string(activeConfigStr)).
+			Where("id = ?", req.Id).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("updating experiments config: %w", err)
+		}
+
+		// Zero out trial restarts. We do somewhat lose information about how many times
+		// the previous failed but likely people care only about current run.
+		if _, err := tx.NewUpdate().Model(&model.Trial{}).
+			Set("restarts = 0").
+			Where("id = ?", trialsResp.Trials[0].Id).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("zeroing out trial restarts: %w", err)
+		}
+
+		// Check at the end to minimize chance of actor already being created somehow.
+		if a.m.system.Get(actor.Addr("experiments", int(req.Id))) != nil {
+			return fmt.Errorf("experiment actor already exists")
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("experiment continue database updates: %w", err)
+	}
+
+	e.continueFromTrialID = ptrs.Ptr(trialID)
+	_, created := a.m.system.ActorOf(exputil.ExperimentsAddr.Child(e.ID), e)
+	if !created {
+		// Is it even possible to fail here? I don't think so from continuing experiment alone.
+		// If we fail here we just messed with the experiment database representation.
+		return nil, status.Errorf(codes.FailedPrecondition, "experiment actor still running")
+	}
+
+	_, err = a.ActivateExperiment(ctx, &apiv1.ActivateExperimentRequest{Id: int32(e.ID)})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to activate experiment: %s", err)
+	}
+
+	protoExp, err := a.getExperiment(ctx, *user, int(req.Id))
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.ContinueExperimentResponse{
+		Experiment: protoExp,
+		Config:     protoutils.ToStruct(activeConfig),
+		Warnings:   command.LaunchWarningToProto(launchWarnings),
+	}, nil
+}
+
 func (a *apiServer) CreateExperiment(
 	ctx context.Context, req *apiv1.CreateExperimentRequest,
 ) (*apiv1.CreateExperimentResponse, error) {

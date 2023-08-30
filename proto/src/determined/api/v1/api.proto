@@ -354,6 +354,18 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Continues an experiment either to make the existing experiment train longer
+  // or to retry it.
+  rpc ContinueExperiment(ContinueExperimentRequest)
+      returns (ContinueExperimentResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/continue"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Get the requested experiment.
   rpc GetExperiment(GetExperimentRequest) returns (GetExperimentResponse) {
     option (google.api.http) = {

@@ -189,6 +189,272 @@ func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 	t.Error("expected experiment to delete after 1 minute and it did not")
 }
 
+func TestErrorIfSearcherIsDone(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	trial, task := createTestTrial(t, api, curUser)
+
+	// No checkpoint no error.
+	err := api.errorIfSearcherIsDone(trial.ID, expconf.ExperimentConfig{})
+	require.NoError(t, err)
+
+	// Create metric / checkpoint combo.
+	aID := model.AllocationID(string(task.TaskID) + "-1")
+	aIn := &model.Allocation{
+		AllocationID: aID,
+		TaskID:       task.TaskID,
+		Slots:        1,
+		ResourcePool: "somethingelse",
+		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
+	}
+	require.NoError(t, api.m.db.AddAllocation(aIn))
+
+	checkpoint := &model.CheckpointV2{
+		ID:           0,
+		UUID:         uuid.New(),
+		TaskID:       task.TaskID,
+		AllocationID: &aID,
+		ReportTime:   time.Now(),
+		State:        model.CompletedState,
+		Resources:    nil,
+		Metadata: map[string]interface{}{
+			"steps_completed": 5,
+		},
+	}
+	require.NoError(t, db.AddCheckpointMetadata(ctx, checkpoint))
+
+	// No panic when not single searcher.
+	err = api.errorIfSearcherIsDone(trial.ID, expconf.ExperimentConfig{
+		RawSearcher: &expconf.SearcherConfig{},
+	})
+	require.ErrorContains(t, err, "something went wrong searcher single config is nil")
+
+	// Unitless / Unspecified is okay.
+	err = api.errorIfSearcherIsDone(trial.ID, expconf.ExperimentConfig{
+		RawSearcher: &expconf.SearcherConfig{
+			RawSingleConfig: &expconf.SingleConfig{
+				RawMaxLength: ptrs.Ptr(expconf.NewLength(expconf.Unitless, 1)),
+			},
+		},
+	})
+	require.NoError(t, err)
+	err = api.errorIfSearcherIsDone(trial.ID, expconf.ExperimentConfig{
+		RawSearcher: &expconf.SearcherConfig{
+			RawSingleConfig: &expconf.SingleConfig{
+				RawMaxLength: ptrs.Ptr(expconf.NewLength(expconf.Unspecified, 1)),
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	// Forgot global_batch_size.
+	err = api.errorIfSearcherIsDone(trial.ID, expconf.ExperimentConfig{
+		RawSearcher: &expconf.SearcherConfig{
+			RawSingleConfig: &expconf.SingleConfig{
+				RawMaxLength: ptrs.Ptr(expconf.NewLength(expconf.Records, 1)),
+			},
+		},
+	})
+	require.ErrorContains(t, err, "searcher in records but did not specify global_batch_size")
+	err = api.errorIfSearcherIsDone(trial.ID, expconf.ExperimentConfig{
+		RawSearcher: &expconf.SearcherConfig{
+			RawSingleConfig: &expconf.SingleConfig{
+				RawMaxLength: ptrs.Ptr(expconf.NewLength(expconf.Epochs, 1)),
+			},
+		},
+	})
+	require.ErrorContains(t, err, "searcher in epochs but did not specify global_batch_size")
+
+	// Batch size not const.
+	err = api.errorIfSearcherIsDone(trial.ID, expconf.ExperimentConfig{
+		RawHyperparameters: expconf.Hyperparameters{
+			"global_batch_size": expconf.Hyperparameter{
+				RawIntHyperparameter: &expconf.IntHyperparameter{},
+			},
+		},
+		RawSearcher: &expconf.SearcherConfig{
+			RawSingleConfig: &expconf.SingleConfig{
+				RawMaxLength: ptrs.Ptr(expconf.NewLength(expconf.Records, 1)),
+			},
+		},
+	})
+	require.ErrorContains(t, err, "global_batch_size not constant parameter")
+	err = api.errorIfSearcherIsDone(trial.ID, expconf.ExperimentConfig{
+		RawHyperparameters: expconf.Hyperparameters{
+			"global_batch_size": expconf.Hyperparameter{
+				RawIntHyperparameter: &expconf.IntHyperparameter{},
+			},
+		},
+		RawSearcher: &expconf.SearcherConfig{
+			RawSingleConfig: &expconf.SingleConfig{
+				RawMaxLength: ptrs.Ptr(expconf.NewLength(expconf.Epochs, 1)),
+			},
+		},
+	})
+	require.ErrorContains(t, err, "global_batch_size not constant parameter")
+
+	// Batch size not integer.
+	err = api.errorIfSearcherIsDone(trial.ID, expconf.ExperimentConfig{
+		RawHyperparameters: expconf.Hyperparameters{
+			"global_batch_size": expconf.Hyperparameter{
+				RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 3.5},
+			},
+		},
+		RawSearcher: &expconf.SearcherConfig{
+			RawSingleConfig: &expconf.SingleConfig{
+				RawMaxLength: ptrs.Ptr(expconf.NewLength(expconf.Records, 1)),
+			},
+		},
+	})
+	require.ErrorContains(t, err, "global_batch_size is not an integer got 3.5")
+	err = api.errorIfSearcherIsDone(trial.ID, expconf.ExperimentConfig{
+		RawHyperparameters: expconf.Hyperparameters{
+			"global_batch_size": expconf.Hyperparameter{
+				RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 3.5},
+			},
+		},
+		RawSearcher: &expconf.SearcherConfig{
+			RawSingleConfig: &expconf.SingleConfig{
+				RawMaxLength: ptrs.Ptr(expconf.NewLength(expconf.Epochs, 1)),
+			},
+		},
+	})
+	require.ErrorContains(t, err, "global_batch_size is not an integer got 3.5")
+
+	// Forgot searcher in epochs.
+	err = api.errorIfSearcherIsDone(trial.ID, expconf.ExperimentConfig{
+		RawHyperparameters: expconf.Hyperparameters{
+			"global_batch_size": expconf.Hyperparameter{
+				RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 3},
+			},
+		},
+		RawSearcher: &expconf.SearcherConfig{
+			RawSingleConfig: &expconf.SingleConfig{
+				RawMaxLength: ptrs.Ptr(expconf.NewLength(expconf.Epochs, 1)),
+			},
+		},
+	})
+	require.ErrorContains(t, err, "searcher in epochs but did not specify record_per_epoch")
+
+	// Records.
+	for i := 12; i <= 18; i += 3 {
+		// Trianed for 5 batches
+		err = api.errorIfSearcherIsDone(trial.ID, expconf.ExperimentConfig{
+			RawHyperparameters: expconf.Hyperparameters{
+				"global_batch_size": expconf.Hyperparameter{
+					RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 3},
+				},
+			},
+			RawSearcher: &expconf.SearcherConfig{
+				RawSingleConfig: &expconf.SingleConfig{
+					RawMaxLength: ptrs.Ptr(expconf.NewLength(expconf.Records, uint64(i))),
+				},
+			},
+		})
+		if i > 15 {
+			require.NoError(t, err)
+		} else {
+			require.ErrorContains(t, err, "trial to train longer")
+		}
+	}
+
+	// Batches.
+	for i := 4; i <= 6; i++ {
+		err := api.errorIfSearcherIsDone(trial.ID, expconf.ExperimentConfig{
+			RawSearcher: &expconf.SearcherConfig{
+				RawSingleConfig: &expconf.SingleConfig{
+					RawMaxLength: ptrs.Ptr(expconf.NewLength(expconf.Batches, uint64(i))),
+				},
+			},
+		})
+		if i > 5 {
+			require.NoError(t, err)
+		} else {
+			require.ErrorContains(t, err, "trial to train longer")
+		}
+	}
+
+	// Epochs.
+	for i := 1; i <= 2; i++ {
+		err = api.errorIfSearcherIsDone(trial.ID, expconf.ExperimentConfig{
+			RawHyperparameters: expconf.Hyperparameters{
+				"global_batch_size": expconf.Hyperparameter{
+					RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 5},
+				},
+			},
+			RawRecordsPerEpoch: ptrs.Ptr(15),
+			RawSearcher: &expconf.SearcherConfig{
+				RawSingleConfig: &expconf.SingleConfig{
+					RawMaxLength: ptrs.Ptr(expconf.NewLength(expconf.Epochs, uint64(i))),
+				},
+			},
+		})
+		if i > 1 {
+			require.NoError(t, err)
+		} else {
+			require.ErrorContains(t, err, "trial to train longer")
+		}
+	}
+}
+
+func TestParseAndMergeContinueConfig(t *testing.T) {
+	// Blank config.
+	api, curUser, ctx := setupAPITest(t, nil)
+	exp := createTestExp(t, api, curUser)
+
+	_, err := api.parseAndMergeContinueConfig(exp.ID, ``)
+	require.NoError(t, err)
+
+	_, err = api.parseAndMergeContinueConfig(exp.ID, `{}`)
+	require.NoError(t, err)
+
+	_, err = api.parseAndMergeContinueConfig(exp.ID, `
+project: test
+`)
+	require.ErrorContains(t, err, "'project' in override config cannot be specified")
+
+	_, err = api.parseAndMergeContinueConfig(exp.ID, `
+workspace: test
+`)
+	require.ErrorContains(t, err, "'workspace' in override config cannot be specified")
+
+	_, err = api.parseAndMergeContinueConfig(exp.ID, `
+searcher:
+    max_length:
+        batches: 10
+`)
+	require.ErrorContains(t, err, "you might also need to specify searcher.name=single")
+
+	_, err = api.parseAndMergeContinueConfig(exp.ID, `
+searcher:
+    max_length:
+        batches: 10
+    name: single
+`)
+	require.NoError(t, err)
+
+	_, err = api.parseAndMergeContinueConfig(exp.ID, `
+searcher:
+  name: random
+  metric: accuracy
+  max_trials: 5
+  max_length:
+    batches: 1000
+`)
+	require.ErrorContains(t, err,
+		"override config must have single searcher type got 'random' instead")
+
+	// Update to non single searcher.
+	_, err = db.Bun().NewUpdate().Table("experiments").
+		Set("config = jsonb_set(config, '{searcher,name}', ?, true)", `"random"`).
+		Where("id = ?", exp.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = api.parseAndMergeContinueConfig(exp.ID, `{}`)
+	require.ErrorContains(t, err,
+		"cannot continue a 'random' searcher experiment, must be a single searcher experiment")
+}
+
 // nolint: exhaustivestruct
 func TestCreateExperimentCheckpointStorage(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
@@ -1025,6 +1291,12 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 	}{
 		{"CanEditExperiment", func(id int) error {
 			_, err := api.ActivateExperiment(ctx, &apiv1.ActivateExperimentRequest{
+				Id: int32(id),
+			})
+			return err
+		}},
+		{"CanEditExperiment", func(id int) error {
+			_, err := api.ContinueExperiment(ctx, &apiv1.ContinueExperimentRequest{
 				Id: int32(id),
 			})
 			return err

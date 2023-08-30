@@ -111,6 +111,7 @@ type (
 		self                *actor.Ref
 		searcher            *searcher.Searcher
 		warmStartCheckpoint *model.Checkpoint
+		continueFromTrialID *int
 
 		taskSpec      *tasks.TaskSpec
 		generatedKeys ssh.PrivateAndPublicKeys
@@ -798,7 +799,29 @@ func (e *experiment) processOperations(
 				e.trialClosed(op.RequestID, ptrs.Ptr(model.Errored))
 				continue
 			}
+
+			if e.continueFromTrialID != nil {
+				t.id = *e.continueFromTrialID
+				t.idSet = true
+
+				count, err := getNumTaskIDsForTrial(t.id)
+				if err != nil {
+					e.trialClosed(op.RequestID, ptrs.Ptr(model.Errored))
+					e.updateState(model.StateWithReason{
+						State: model.StoppingErrorState,
+						InformationalReason: fmt.Sprintf(
+							"can not get number of times trial was continued %v", err),
+					})
+					e.syslog.Error(err)
+					return
+				}
+
+				t.taskID = model.TaskID(fmt.Sprintf("%s-%d", t.taskID, count))
+				t.continued = true
+			}
+
 			e.trialCreated(t)
+
 		case searcher.ValidateAfter:
 			state := e.TrialSearcherState[op.RequestID]
 			state.Op = op
@@ -881,6 +904,18 @@ func experimentIDFromTrialTaskID(taskID model.TaskID) (int, error) {
 	}
 
 	return experimentID, nil
+}
+
+func getNumTaskIDsForTrial(trialID int) (int, error) {
+	count, err := db.Bun().NewSelect().
+		Table("trial_id_task_id").
+		Where("trial_id = ?", trialID).
+		Count(context.TODO())
+	if err != nil {
+		return 0, fmt.Errorf("counting number of task IDs for trial %d: %w", trialID, err)
+	}
+
+	return count, nil
 }
 
 func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint, error) {

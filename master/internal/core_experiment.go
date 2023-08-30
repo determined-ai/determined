@@ -427,6 +427,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 	if owner != nil {
 		dbExp.OwnerID = &owner.ID
 		dbExp.Username = owner.Username
+		return nil, config, nil, nil, fmt.Errorf("error creating model experiment: %w", err)
 	}
 
 	taskSpec.Project = config.Project()

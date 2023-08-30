@@ -65,6 +65,8 @@ type trial struct {
 	idSet             bool
 	experimentID      int
 	restored          bool
+	continued         bool
+	trialCreationSent bool
 
 	// System dependencies.
 	db     db.DB
@@ -110,7 +112,7 @@ func newTrial(
 	initialState model.State,
 	searcher trialSearcherState,
 	rm rm.ResourceManager,
-	db db.DB,
+	pgDB db.DB,
 	config expconf.ExperimentConfig,
 	warmStartCheckpoint *model.Checkpoint,
 	taskSpec *tasks.TaskSpec,
@@ -132,7 +134,7 @@ func newTrial(
 		searcher:          searcher,
 		parent:            parent,
 
-		db:     db,
+		db:     pgDB,
 		rm:     rm,
 		syslog: logrus.WithField("component", "trial"),
 		system: system,
@@ -162,6 +164,20 @@ func newTrial(
 		}
 	}
 
+	if t.continued {
+		// TODO these should be in a transaction eventually.
+		err := t.addTask()
+		if err != nil {
+			return nil, err
+		}
+		if _, err := db.Bun().
+			NewInsert().
+			Model(&model.TrialTaskID{TrialID: t.id, TaskID: t.taskID}).
+			Exec(context.TODO()); err != nil {
+			return nil, fmt.Errorf("adding trial ID task ID relationship: %w", err)
+		}
+	}
+
 	t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{
 		"trial-id":     t.id,
 		"trial-run-id": t.runID,
@@ -182,13 +198,6 @@ func isNonRetryableError(err error) bool {
 		}
 	}
 	return false
-}
-
-func (t *trial) exit(reason *model.ExitedReason) {
-	if err := t.close(); err != nil {
-		t.syslog.WithError(err).Error("error closing trial")
-	}
-	go t.exitCallback(t.searcher.Create.RequestID, reason)
 }
 
 func (t *trial) close() error {
@@ -641,11 +650,13 @@ func (t *trial) transition(s model.StateWithReason) error {
 	case model.TerminalStates[t.state]:
 		switch t.state {
 		case model.ErrorState:
-			t.exit(ptrs.Ptr(model.Errored))
+			fmt.Println(ptrs.Ptr(model.Errored))
+			// TODO?
+			// t.exit(ptrs.Ptr(model.Errored))
 		case model.CanceledState:
-			t.exit(ptrs.Ptr(model.UserCanceled))
+			// t.exit(ptrs.Ptr(model.UserCanceled))
 		default:
-			t.exit(nil)
+			// t.exit(nil)
 		}
 	default:
 		panic(fmt.Errorf("unmatched state in transition %s", t.state))

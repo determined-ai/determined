@@ -3,6 +3,7 @@ package model
 import (
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
@@ -80,6 +81,8 @@ func JobTypeFromProto(t jobv1.Type) JobType {
 
 // Job is the model for a job in the database.
 type Job struct {
+	bun.BaseModel `bun:"table:jobs"`
+
 	JobID   JobID           `db:"job_id" bun:"job_id,pk"`
 	JobType JobType         `db:"job_type"`
 	OwnerID *UserID         `db:"owner_id"`
