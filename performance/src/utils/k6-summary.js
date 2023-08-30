@@ -32,7 +32,6 @@ var defaultOptions = {
 // strWidth tries to return the actual width the string will take up on the
 // screen, without any terminal formatting, unicode ligatures, etc.
 function strWidth(s) {
-    // TODO: determine if NFC or NFKD are not more appropriate? or just give up? https://hsivonen.fi/string-length/
     var data = s.normalize('NFKC') // This used to be NFKD in Go, but this should be better
     var inEscSeq = false
     var inLongEscSeq = false
@@ -152,7 +151,6 @@ var unitMap = {
 }
 
 function toFixedNoTrailingZeros(val, prec) {
-    // TODO: figure out something better?
     return parseFloat(val.toFixed(prec)).toString()
 }
 
@@ -196,7 +194,7 @@ function humanizeGenericDuration(dur) {
 
 function humanizeDuration(dur, timeUnit) {
     if (timeUnit !== '' && unitMap.hasOwnProperty(timeUnit)) {
-        return (dur * unitMap[timeUnit].coef).toFixed(2) + unitMap[timeUnit].unit
+        return (dur * unitMap[timeUnit].coef).toFixed(2) + ' ' + unitMap[timeUnit].unit
     }
 
     return humanizeGenericDuration(dur)
@@ -387,7 +385,7 @@ function generateTextSummary(data, options) {
     var mergedOpts = Object.assign({}, defaultOptions, data.options, options)
     var lines = []
 
-    // TODO: move all of these functions into an object with methods?
+
     var decorate = function (text) {
         return text
     }
@@ -423,10 +421,26 @@ var replacements = {
 }
 
 function escapeHTML(str) {
-    // TODO: something more robust?
     return str.replace(/[&<>'"]/g, function (char) {
         return replacements[char]
     })
+}
+
+function parseGroupName(groupName) {
+    if (groupName.includes("group: ::")) {
+        var groupText = groupName.split("group: ::")[1].slice(0, -1)
+        return groupText + ' - http request duration'
+    }
+    return groupName
+}
+
+function generateProperties(metricName, metric) {
+    if (!metric.type || !metric.type == "trend" || !metricName.includes('http_req_duration')) return;
+    var properties = []
+    for (var metricValue in metric.values) {
+        properties.push('<property name="' + escapeHTML(metricValue.toString()) + '" ' + 'value="' + escapeHTML(humanizeDuration(metric.values[metricValue], "ms")) + '" ' + '/>')
+    }
+    return '<properties>' + properties.join('') + '</properties>'
 }
 
 function generateJUnitXML(data, options) {
@@ -440,16 +454,19 @@ function generateJUnitXML(data, options) {
         forEach(metric.thresholds, function (thresholdName, threshold) {
             if (threshold.ok) {
                 cases.push(
-                    '<testcase name="' + escapeHTML(metricName) + ' - ' + escapeHTML(thresholdName) + '" />'
+                    '<testcase name="' +
+                    escapeHTML(parseGroupName(metricName)) +
+                    ' - ' +
+                    escapeHTML(thresholdName) + '">' + generateProperties(metricName, metric) + '</testcase>'
                 )
             } else {
                 failures++
                 cases.push(
                     '<testcase name="' +
-                    escapeHTML(metricName) +
+                    escapeHTML(parseGroupName(metricName)) +
                     ' - ' +
                     escapeHTML(thresholdName) +
-                    '"><failure message="failed" /></testcase>'
+                    '"><failure message="failed" />' + generateProperties(metricName, metric) + '</testcase>'
                 )
             }
         })
@@ -462,7 +479,7 @@ function generateJUnitXML(data, options) {
         cases.length +
         '" failures="' +
         failures +
-        '">\n' +
+        '" name="K6 API Performance Tests">\n' +
         '<testsuite name="' +
         name +
         '" tests="' +

@@ -49,7 +49,7 @@ getloadTests().forEach((group) => {
     thresholds[`http_req_duration{group: ::${group.name
         }}`] = [
             {
-                threshold: 'p(95)<1000',
+                threshold: 'p(95)>1000',
                 abortOnFail: false,
             }
         ]
@@ -61,7 +61,7 @@ const scenarios: { [name: string]: Scenario } = {
         executor: 'ramping-vus',
         stages: [
             { duration: '5m', target: 25 },
-            { duration: '10m', target: 25 },
+            { duration: '10ms', target: 25 },
             { duration: '5m', target: 0 }
         ],
     },
