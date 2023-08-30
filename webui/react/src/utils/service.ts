@@ -1,8 +1,7 @@
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 import { DetApi, FetchOptions } from 'types';
-
-import { isObject } from './data';
-import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from './error';
+import { isObject } from 'utils/data';
+import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from 'utils/error';
 
 export const isApiResponse = (u: unknown): u is Response => {
   return u instanceof Response;

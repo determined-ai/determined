@@ -2,10 +2,9 @@ import { array, boolean, number, partial, record, string } from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { SettingsConfig } from 'hooks/useSettings';
-
-import { defaultColumnWidths, defaultExperimentColumns } from './glide-table/columns';
-import { ioTableViewMode, TableViewMode } from './glide-table/GlideTable';
-import { ioRowHeight, RowHeight } from './glide-table/OptionsMenu';
+import { defaultColumnWidths, defaultExperimentColumns } from 'pages/F_ExpList/glide-table/columns';
+import { ioTableViewMode, TableViewMode } from 'pages/F_ExpList/glide-table/GlideTable';
+import { ioRowHeight, RowHeight } from 'pages/F_ExpList/glide-table/OptionsMenu';
 
 export interface F_ExperimentListSettings {
   columns: string[];

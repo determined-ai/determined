@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import useTelemetry from './useTelemetry';
+import useTelemetry from 'hooks/useTelemetry';
 
 const useRouteTracker = (): void => {
   const location = useLocation();

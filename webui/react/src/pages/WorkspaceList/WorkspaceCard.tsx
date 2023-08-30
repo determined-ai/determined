@@ -7,15 +7,14 @@ import Card from 'components/kit/Card';
 import { Columns } from 'components/kit/Columns';
 import Spinner from 'components/kit/Spinner';
 import Avatar from 'components/kit/UserAvatar';
+import { useWorkspaceActionMenu } from 'pages/WorkspaceList/WorkspaceActionDropdown';
+import css from 'pages/WorkspaceList/WorkspaceCard.module.scss';
 import { paths } from 'routes/utils';
 import userStore from 'stores/users';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { pluralizer } from 'utils/string';
-
-import { useWorkspaceActionMenu } from './WorkspaceActionDropdown';
-import css from './WorkspaceCard.module.scss';
 
 interface Props {
   fetchWorkspaces?: () => void;

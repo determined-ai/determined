@@ -1,8 +1,7 @@
 import React, { PropsWithChildren, ReactNode, useState } from 'react';
 
 import { ErrorHandler } from 'components/kit/internal/types';
-
-import { Modal, ModalSize, useModal } from './Modal';
+import { Modal, ModalSize, useModal } from 'components/kit/Modal';
 
 export interface ConfirmModalProps {
   cancelText?: string;

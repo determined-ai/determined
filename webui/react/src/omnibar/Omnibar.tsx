@@ -6,14 +6,13 @@ import shortCutSettingsConfig, {
 } from 'components/UserSettings.settings';
 import { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import { useSettings } from 'hooks/useSettings';
+import css from 'omnibar/Omnibar.module.scss';
 import * as Tree from 'omnibar/tree-extension/index';
 import TreeNode from 'omnibar/tree-extension/TreeNode';
 import { BaseNode } from 'omnibar/tree-extension/types';
 import { isTreeNode } from 'omnibar/tree-extension/utils';
 import handleError from 'utils/error';
 import { matchesShortcut } from 'utils/shortcut';
-
-import css from './Omnibar.module.scss';
 
 /**
  * Ideally we wouldn't need to access the element like this.

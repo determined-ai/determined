@@ -6,6 +6,7 @@ import Input from 'components/kit/Input';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
+import css from 'hooks/useModal/Checkpoint/useModalCheckpointRegister.module.scss';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
 import usePermissions from 'hooks/usePermissions';
 import usePrevious from 'hooks/usePrevious';
@@ -17,8 +18,6 @@ import { notification } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
 import { validateDetApiEnum } from 'utils/service';
 import { pluralizer } from 'utils/string';
-
-import css from './useModalCheckpointRegister.module.scss';
 
 interface Props {
   onClose?: (reason?: ModalCloseReason, checkpoints?: string[]) => void;

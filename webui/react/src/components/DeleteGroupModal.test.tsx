@@ -2,13 +2,15 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import DeleteGroupModalComponent, {
+  API_SUCCESS_MESSAGE,
+  MODAL_HEADER,
+} from 'components/DeleteGroupModal';
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
 import { deleteGroup as mockDeleteGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
-
-import DeleteGroupModalComponent, { API_SUCCESS_MESSAGE, MODAL_HEADER } from './DeleteGroupModal';
 
 vi.mock('services/api', () => ({
   deleteGroup: vi.fn(),

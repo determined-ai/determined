@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React, { ReactElement } from 'react';
 
-import { ConditionalWrapper } from './ConditionalWrapper';
+import { ConditionalWrapper } from 'components/ConditionalWrapper';
 
 const WRAPPER_ID = 'wrapper';
 const FALSE_WRAPPER_ID = 'false-wrapper';

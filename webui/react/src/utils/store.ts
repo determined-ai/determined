@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { Reducer } from 'react';
 
-import { LoggerInterface } from './Logger';
+import { LoggerInterface } from 'utils/Logger';
 
 /** has a printable type */
 export interface TypeWise {

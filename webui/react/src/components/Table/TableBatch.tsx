@@ -2,8 +2,7 @@ import { Select } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Button from 'components/kit/Button';
-
-import css from './TableBatch.module.scss';
+import css from 'components/Table/TableBatch.module.scss';
 
 interface Action<T> {
   disabled?: boolean;

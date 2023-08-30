@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import RadioGroup, { RadioGroupOption } from './RadioGroup';
+import RadioGroup, { RadioGroupOption } from 'components/RadioGroup';
 
 const user = userEvent.setup();
 

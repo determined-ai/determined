@@ -2,10 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import Avatar, { Props } from 'components/kit/internal/Avatar/Avatar';
 import { DarkLight } from 'components/kit/internal/types';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
-
-import Avatar, { Props } from './Avatar';
 
 vi.mock('components/kit/Tooltip');
 const user = userEvent.setup();

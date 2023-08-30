@@ -1,6 +1,12 @@
+import {
+  BaseNode,
+  Children,
+  LeafNode,
+  NonLeafNode,
+  TreeNode,
+  TreePath,
+} from 'omnibar/tree-extension/types';
 import { isAsyncFunction } from 'utils/data';
-
-import { BaseNode, Children, LeafNode, NonLeafNode, TreeNode, TreePath } from './types';
 
 export const isBaseNode = (obj: unknown): obj is BaseNode =>
   obj instanceof Object && 'title' in obj;

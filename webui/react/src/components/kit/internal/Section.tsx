@@ -1,9 +1,8 @@
 import React from 'react';
 
 import { generateAlphaNumeric, isString, toHtmlId } from 'components/kit/internal/functions';
+import css from 'components/kit/internal/Section.module.scss';
 import Spinner from 'components/kit/Spinner';
-
-import css from './Section.module.scss';
 
 interface Props {
   bodyBorder?: boolean;

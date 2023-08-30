@@ -5,14 +5,13 @@ import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import ProjectDeleteModalComponent from 'components/ProjectDeleteModal';
+import ProjectEditModalComponent from 'components/ProjectEditModal';
+import ProjectMoveModalComponent from 'components/ProjectMoveModal';
 import usePermissions from 'hooks/usePermissions';
 import { archiveProject, unarchiveProject } from 'services/api';
 import { Project } from 'types';
 import handleError from 'utils/error';
-
-import ProjectDeleteModalComponent from './ProjectDeleteModal';
-import ProjectEditModalComponent from './ProjectEditModal';
-import ProjectMoveModalComponent from './ProjectMoveModal';
 
 interface Props {
   children?: React.ReactNode;

@@ -8,6 +8,7 @@ import ReactCodeMirror from '@uiw/react-codemirror';
 import { Tree } from 'antd';
 import React, { lazy, Suspense, useCallback, useMemo } from 'react';
 
+import css from 'components/kit/CodeEditor/CodeEditor.module.scss';
 import Message, { MessageType } from 'components/kit/internal/Message';
 import Section from 'components/kit/internal/Section';
 import { DarkLight, ErrorHandler, TreeNode, ValueOf } from 'components/kit/internal/types';
@@ -20,9 +21,7 @@ const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
 
 const { DirectoryTree } = Tree;
 
-import css from './CodeEditor/CodeEditor.module.scss';
-
-import './CodeEditor/index.scss';
+import 'components/kit/CodeEditor/index.scss';
 
 const MARKDOWN_CONFIG = {
   autocompletion: false,

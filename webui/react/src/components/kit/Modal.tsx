@@ -13,9 +13,8 @@ import Button from 'components/kit/Button';
 import Icon, { IconName } from 'components/kit/Icon';
 import Link from 'components/kit/internal/Link';
 import { ErrorHandler, ErrorLevel, ErrorType } from 'components/kit/internal/types';
+import css from 'components/kit/Modal.module.scss';
 import Spinner from 'components/kit/Spinner';
-
-import css from './Modal.module.scss';
 
 interface LinkParams {
   text: string;

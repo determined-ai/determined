@@ -8,6 +8,7 @@ import Dropdown, { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { copyToClipboard } from 'components/kit/internal/functions';
 import { useModal } from 'components/kit/Modal';
+import useConfirm from 'components/kit/useConfirm';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath } from 'routes/utils';
@@ -27,8 +28,6 @@ import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { capitalize } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
-
-import useConfirm from './kit/useConfirm';
 
 interface Props {
   children?: React.ReactNode;

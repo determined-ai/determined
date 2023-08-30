@@ -5,6 +5,7 @@ import React, { useCallback, useState } from 'react';
 import Icon from 'components/kit/Icon';
 import { Modal } from 'components/kit/Modal';
 import Link from 'components/Link';
+import css from 'components/ProjectMoveModal.module.scss';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { moveProject } from 'services/api';
@@ -14,8 +15,6 @@ import { notification } from 'utils/dialogApi';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-
-import css from './ProjectMoveModal.module.scss';
 
 const { Option } = Select;
 

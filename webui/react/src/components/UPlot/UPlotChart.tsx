@@ -5,15 +5,14 @@ import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
 import Spinner from 'components/kit/Spinner';
+import { useChartSync } from 'components/UPlot/SyncProvider';
+import { FacetedData } from 'components/UPlot/types';
+import css from 'components/UPlot/UPlotChart.module.scss';
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import useUI from 'stores/contexts/UI';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { DarkLight } from 'utils/themes';
-
-import { useChartSync } from './SyncProvider';
-import { FacetedData } from './types';
-import css from './UPlotChart.module.scss';
 
 export interface Options extends Omit<uPlot.Options, 'width'> {
   key?: number;

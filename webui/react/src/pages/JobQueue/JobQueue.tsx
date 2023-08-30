@@ -17,7 +17,10 @@ import {
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
+import css from 'pages/JobQueue/JobQueue.module.scss';
+import settingsConfig, { Settings } from 'pages/JobQueue/JobQueue.settings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
+import ManageJob from 'pages/JobQueue/ManageJob';
 import { paths } from 'routes/utils';
 import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
@@ -46,10 +49,6 @@ import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
 import { numericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
-
-import css from './JobQueue.module.scss';
-import settingsConfig, { Settings } from './JobQueue.settings';
-import ManageJob from './ManageJob';
 
 interface Props {
   jobState: JobState;

@@ -3,10 +3,9 @@ import React, { useMemo, useState } from 'react';
 
 import Section from 'components/Section';
 import ClusterHistoricalUsageChart from 'pages/Cluster/ClusterHistoricalUsageChart';
+import css from 'pages/Clusters/ClustersQueuedChart.module.scss';
 import { V1RPQueueStat } from 'services/api-ts-sdk';
 import { DURATION_DAY, durationInEnglish } from 'utils/datetime';
-
-import css from './ClustersQueuedChart.module.scss';
 
 interface Props {
   poolStats: V1RPQueueStat | undefined;

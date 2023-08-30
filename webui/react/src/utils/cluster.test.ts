@@ -1,6 +1,5 @@
 import * as Type from 'types';
-
-import * as utils from './cluster';
+import * as utils from 'utils/cluster';
 
 const AGENTS = [
   {

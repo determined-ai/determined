@@ -1,4 +1,4 @@
-import useResize from './useResize';
+import useResize from 'hooks/useResize';
 
 const MOBILE_BREAKPOINT = 480;
 

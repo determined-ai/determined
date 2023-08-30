@@ -1,6 +1,5 @@
 import { DetailedUser } from 'types';
-
-import { getDisplayName } from './user';
+import { getDisplayName } from 'utils/user';
 
 const DISPLAY_NAME_VALUE = 'Display Name';
 const USERNAME_VALUE = 'username_1';

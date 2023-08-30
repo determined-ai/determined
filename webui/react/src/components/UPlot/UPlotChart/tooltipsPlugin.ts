@@ -1,9 +1,8 @@
 import uPlot, { Plugin } from 'uplot';
 
+import css from 'components/UPlot/UPlotChart/tooltipsPlugin.module.scss';
 import { glasbeyColor } from 'utils/color';
 import { humanReadableNumber } from 'utils/number';
-
-import css from './tooltipsPlugin.module.scss';
 
 export type ChartTooltip = string | null;
 

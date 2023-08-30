@@ -1,6 +1,6 @@
 import React, { CSSProperties, ReactNode } from 'react';
 
-import css from './Columns.module.scss';
+import css from 'components/kit/Columns.module.scss';
 
 interface ColumnProps {
   children?: ReactNode;

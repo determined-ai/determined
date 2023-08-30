@@ -16,6 +16,9 @@ import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
+import ModelVersionHeader from 'pages/ModelVersionDetails/ModelVersionHeader';
+import css from 'pages/ModelVersionDetails.module.scss';
+import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import { getModelVersion, patchModelVersion } from 'services/api';
 import workspaceStore from 'stores/workspaces';
@@ -25,10 +28,6 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { isAborted, isNotFound } from 'utils/service';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
-
-import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
-import css from './ModelVersionDetails.module.scss';
-import { WorkspaceDetailsTab } from './WorkspaceDetails';
 
 const TabType = {
   Model: 'model',

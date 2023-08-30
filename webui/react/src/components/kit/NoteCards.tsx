@@ -8,10 +8,9 @@ import Empty from 'components/kit/Empty';
 import Icon from 'components/kit/Icon';
 import { ErrorHandler, Note } from 'components/kit/internal/types';
 import usePrevious from 'components/kit/internal/usePrevious';
+import NoteCard from 'components/kit/NoteCard';
+import css from 'components/kit/NoteCards.module.scss';
 import Select, { Option, SelectValue } from 'components/kit/Select';
-
-import NoteCard from './NoteCard';
-import css from './NoteCards.module.scss';
 
 interface Props {
   disabled?: boolean;

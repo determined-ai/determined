@@ -8,6 +8,11 @@ import ExperimentVisualizationFilters, {
   VisualizationFilters,
 } from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
 import HpParallelCoordinates from 'pages/ExperimentDetails/ExperimentVisualization/HpParallelCoordinates';
+import {
+  ExperimentHyperparametersSettings,
+  settingsConfigForExperimentHyperparameters,
+} from 'pages/TrialDetails/MultiTrialDetailsHyperparameters.settings';
+import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
 import { V1MetricBatchesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
@@ -21,12 +26,6 @@ import {
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';
-
-import {
-  ExperimentHyperparametersSettings,
-  settingsConfigForExperimentHyperparameters,
-} from './MultiTrialDetailsHyperparameters.settings';
-import TrialDetailsHyperparameters from './TrialDetailsHyperparameters';
 
 export interface Props {
   experiment: ExperimentBase;

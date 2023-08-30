@@ -1,6 +1,5 @@
 import { CheckpointState, Step, WorkloadGroup } from 'types';
-
-import * as utils from './workload';
+import * as utils from 'utils/workload';
 
 const WORKLOADS: WorkloadGroup[] = [
   {

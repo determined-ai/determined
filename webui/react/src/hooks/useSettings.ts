@@ -5,14 +5,13 @@ import { useObservable } from 'micro-observables';
 import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { Settings, SettingsProvider, UserSettings } from 'hooks/useSettingsProvider';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { Primitive } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useValueMemoizedObservable } from 'utils/observable';
-
-import { Settings, SettingsProvider, UserSettings } from './useSettingsProvider';
 
 export interface SettingsConfigProp<A> {
   defaultValue: A;

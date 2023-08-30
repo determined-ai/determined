@@ -2,9 +2,8 @@ import React, { useCallback, useMemo } from 'react';
 
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import { UpdateSettings } from 'hooks/useSettings';
+import { Settings } from 'pages/TrialDetails/Profiles/Charts/SystemMetricChart';
 import { AvailableSeriesType } from 'pages/TrialDetails/Profiles/types';
-
-import { Settings } from './SystemMetricChart';
 
 export interface FiltersInterface {
   agentId?: string;

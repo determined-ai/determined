@@ -2,11 +2,10 @@ import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
 import { Select as AntdSelect } from 'antd';
 import React, { useMemo, useState } from 'react';
 
+import Button from 'components/kit/Button';
+import css from 'components/kit/Facepile.module.scss';
 import { User } from 'components/kit/internal/types';
-
-import Button from './Button';
-import css from './Facepile.module.scss';
-import UserAvatar from './UserAvatar';
+import UserAvatar from 'components/kit/UserAvatar';
 
 export interface Props {
   editable?: boolean;

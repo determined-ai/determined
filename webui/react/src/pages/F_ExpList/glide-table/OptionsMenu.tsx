@@ -6,9 +6,8 @@ import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Toggle from 'components/kit/Toggle';
 import { valueof } from 'ioTypes';
-
-import { TableViewMode } from './GlideTable';
-import css from './OptionsMenu.module.scss';
+import { TableViewMode } from 'pages/F_ExpList/glide-table/GlideTable';
+import css from 'pages/F_ExpList/glide-table/OptionsMenu.module.scss';
 
 export const RowHeight = {
   EXTRA_TALL: 'EXTRA_TALL',

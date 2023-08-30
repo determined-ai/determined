@@ -1,6 +1,5 @@
+import * as sorters from 'utils/sort';
 import { stringToVersion } from 'utils/string';
-
-import * as sorters from './sort';
 
 interface SortTest {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */

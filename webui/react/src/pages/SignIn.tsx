@@ -15,6 +15,7 @@ import PageMessage from 'components/PageMessage';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
+import css from 'pages/SignIn.module.scss';
 import { defaultRoute, rbacDefaultRoute } from 'routes';
 import { routeAll } from 'routes/utils';
 import authStore from 'stores/auth';
@@ -24,8 +25,6 @@ import { RecordKey } from 'types';
 import { notification } from 'utils/dialogApi';
 import { locationToPath, routeToReactUrl } from 'utils/routes';
 import { capitalize } from 'utils/string';
-
-import css from './SignIn.module.scss';
 
 const logoConfig: Record<RecordKey, string> = {
   google: LogoGoogle,

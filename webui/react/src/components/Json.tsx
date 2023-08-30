@@ -1,9 +1,8 @@
 import React from 'react';
 
+import css from 'components/Json.module.scss';
 import { Json, JsonObject } from 'types';
 import { isObject } from 'utils/data';
-
-import css from './Json.module.scss';
 
 type TextTransfomer = (key: string) => string;
 

@@ -7,14 +7,13 @@ import LogViewerEntry, {
   MAX_DATETIME_LENGTH,
 } from 'components/kit/LogViewer/LogViewerEntry';
 import Tooltip from 'components/kit/Tooltip';
+import css from 'components/TrialLogPreview.module.scss';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
 import { LogLevel, RunState, TrialDetails } from 'types';
 import { formatDatetime } from 'utils/datetime';
-
-import css from './TrialLogPreview.module.scss';
 
 interface Props {
   children?: React.ReactNode;

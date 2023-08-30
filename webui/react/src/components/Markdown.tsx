@@ -4,11 +4,10 @@ import React, { useMemo } from 'react';
 
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
+import css from 'components/Markdown.module.scss';
 import useResize from 'hooks/useResize';
 import handleError from 'utils/error';
 import { Loaded } from 'utils/loadable';
-
-import css from './Markdown.module.scss';
 
 const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 

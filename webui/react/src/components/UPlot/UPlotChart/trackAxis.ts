@@ -1,6 +1,6 @@
 import uPlot, { Plugin } from 'uplot';
 
-import css from './trackAxis.module.scss';
+import css from 'components/UPlot/UPlotChart/trackAxis.module.scss';
 
 export const trackAxis = (): Plugin => {
   return {

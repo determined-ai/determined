@@ -8,9 +8,8 @@ import { FormListFieldData as AntdFormListFieldData } from 'antd/lib/form/FormLi
 import { FieldData as AntdFieldData, NamePath as AntdNamePath } from 'rc-field-form/lib/interface';
 import React, { FC, ReactNode, Ref } from 'react';
 
+import css from 'components/kit/Form.module.scss';
 import { Primitive } from 'components/kit/internal/types';
-
-import css from './Form.module.scss';
 
 type Rules = AntdFormItemProps['rules']; // https://github.com/ant-design/ant-design/issues/39466
 type GridCol = {

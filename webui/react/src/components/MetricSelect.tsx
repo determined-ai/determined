@@ -1,12 +1,11 @@
 import { RefSelectProps } from 'antd/es/select';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
+import BadgeTag from 'components/BadgeTag';
 import Select, { OptGroup, Option, SelectValue } from 'components/kit/Select';
+import MetricBadgeTag from 'components/MetricBadgeTag';
 import { Metric } from 'types';
 import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
-
-import BadgeTag from './BadgeTag';
-import MetricBadgeTag from './MetricBadgeTag';
 
 const allOptionId = 'ALL_RESULTS';
 const resetOptionId = 'RESET_RESULTS';

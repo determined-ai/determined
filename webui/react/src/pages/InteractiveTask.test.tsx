@@ -5,10 +5,9 @@ import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 
 import { ConfirmationProvider } from 'components/kit/useConfirm';
+import InteractiveTask from 'pages/InteractiveTask';
 import authStore from 'stores/auth';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
-
-import InteractiveTask from './InteractiveTask';
 
 const TASK_NAME = 'JupyterLab (test-task-name)';
 const TASK_RESOURCE_POOL = 'aux-pool';

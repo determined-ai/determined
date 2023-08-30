@@ -13,6 +13,7 @@ import InputNumber from 'components/kit/InputNumber';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
+import css from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch.module.scss';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
@@ -36,8 +37,6 @@ import { roundToPrecision } from 'utils/number';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
 import { validateLength } from 'utils/string';
-
-import css from './useModalHyperparameterSearch.module.scss';
 
 interface Props {
   experiment: ExperimentItem;

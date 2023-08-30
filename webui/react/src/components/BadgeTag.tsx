@@ -1,9 +1,8 @@
 import React from 'react';
 
+import Badge, { BadgeProps } from 'components/Badge';
+import css from 'components/BadgeTag.module.scss';
 import Tooltip from 'components/kit/Tooltip';
-
-import Badge, { BadgeProps } from './Badge';
-import css from './BadgeTag.module.scss';
 
 export interface Props extends BadgeProps {
   children?: React.ReactNode;

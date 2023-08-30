@@ -1,8 +1,7 @@
 import React from 'react';
 
+import BadgeTag from 'components/BadgeTag';
 import { Metric } from 'types';
-
-import BadgeTag from './BadgeTag';
 
 interface Props {
   metric: Metric;

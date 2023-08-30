@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 
-import { setup } from './usePermissions.common';
+import { setup } from 'hooks/usePermissions.common';
 
 vi.mock('stores/determinedInfo', async (importOriginal) => {
   const observable = await import('utils/observable');

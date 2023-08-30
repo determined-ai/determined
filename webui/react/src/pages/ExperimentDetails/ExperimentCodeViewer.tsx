@@ -5,6 +5,7 @@ import { ErrorMessage, LoadableOrError } from 'components/kit/CodeEditor';
 import Icon from 'components/kit/Icon';
 import { TreeNode } from 'components/kit/internal/types';
 import Spinner from 'components/kit/Spinner';
+import css from 'pages/ExperimentDetails/ExperimentCodeViewer.module.scss';
 import { paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { V1FileNode } from 'services/api-ts-sdk';
@@ -12,8 +13,6 @@ import { ExperimentBase, RawJson } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-
-import css from './ExperimentCodeViewer.module.scss';
 
 const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 

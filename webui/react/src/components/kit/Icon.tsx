@@ -1,20 +1,19 @@
 import React, { useMemo } from 'react';
 
+import css from 'components/kit/Icon.module.scss';
+import ColumnsIcon from 'components/kit/icons/ColumnsIcon.svg';
+import FilterIcon from 'components/kit/icons/FilterIcon.svg';
+import FourSquaresIcon from 'components/kit/icons/FourSquaresIcon.svg';
+import HeatmapIcon from 'components/kit/icons/HeatmapIcon.svg';
+import OptionsIcon from 'components/kit/icons/OptionsIcon.svg';
+import PanelIcon from 'components/kit/icons/PanelIcon.svg';
+import PanelOnIcon from 'components/kit/icons/PanelOnIcon.svg';
+import RowIconExtraLarge from 'components/kit/icons/RowIconExtraLarge.svg';
+import RowIconLarge from 'components/kit/icons/RowIconLarge.svg';
+import RowIconMedium from 'components/kit/icons/RowIconMedium.svg';
+import RowIconSmall from 'components/kit/icons/RowIconSmall.svg';
+import ScrollIcon from 'components/kit/icons/ScrollIcon.svg';
 import Tooltip from 'components/kit/Tooltip';
-
-import css from './Icon.module.scss';
-import ColumnsIcon from './icons/ColumnsIcon.svg';
-import FilterIcon from './icons/FilterIcon.svg';
-import FourSquaresIcon from './icons/FourSquaresIcon.svg';
-import HeatmapIcon from './icons/HeatmapIcon.svg';
-import OptionsIcon from './icons/OptionsIcon.svg';
-import PanelIcon from './icons/PanelIcon.svg';
-import PanelOnIcon from './icons/PanelOnIcon.svg';
-import RowIconExtraLarge from './icons/RowIconExtraLarge.svg';
-import RowIconLarge from './icons/RowIconLarge.svg';
-import RowIconMedium from './icons/RowIconMedium.svg';
-import RowIconSmall from './icons/RowIconSmall.svg';
-import ScrollIcon from './icons/ScrollIcon.svg';
 
 export const IconSizeArray = [
   'tiny',

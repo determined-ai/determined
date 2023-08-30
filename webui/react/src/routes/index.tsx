@@ -23,9 +23,8 @@ import Wait from 'pages/Wait';
 import Webhooks from 'pages/WebhookList';
 import WorkspaceDetails from 'pages/WorkspaceDetails';
 import WorkspaceList from 'pages/WorkspaceList';
+import Routes from 'routes/routes';
 import { RouteConfig } from 'types';
-
-import Routes from './routes';
 
 const routeComponentMap: Record<string, React.ReactNode> = {
   admin: <Admin />,

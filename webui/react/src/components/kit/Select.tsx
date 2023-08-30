@@ -4,8 +4,7 @@ import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/kit/Icon';
 import Label, { LabelTypes } from 'components/kit/internal/Label';
-
-import css from './Select.module.scss';
+import css from 'components/kit/Select.module.scss';
 
 const { OptGroup, Option } = AntdSelect;
 

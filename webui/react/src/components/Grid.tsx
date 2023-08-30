@@ -1,10 +1,9 @@
 import React from 'react';
 
+import css from 'components/Grid.module.scss';
 import { ShirtSize } from 'themes';
 import { ValueOf } from 'types';
 import { isNumber } from 'utils/data';
-
-import css from './Grid.module.scss';
 
 export const GridMode = {
   AutoFill: 'auto-fill', // will squeeze as many items into a given space and minimum size

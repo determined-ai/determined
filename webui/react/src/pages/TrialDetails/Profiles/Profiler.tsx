@@ -3,13 +3,12 @@ import React from 'react';
 import uPlot from 'uplot';
 
 import { SyncProvider } from 'components/UPlot/SyncProvider';
+import SystemMetricChart from 'pages/TrialDetails/Profiles/Charts/SystemMetricChart';
+import ThroughputMetricChart from 'pages/TrialDetails/Profiles/Charts/ThroughputMetricChart';
+import TimingMetricChart from 'pages/TrialDetails/Profiles/Charts/TimingMetricChart';
+import css from 'pages/TrialDetails/Profiles/Profiler.module.scss';
 import { TrialDetails } from 'types';
 import { glasbeyColor } from 'utils/color';
-
-import SystemMetricChart from './Charts/SystemMetricChart';
-import ThroughputMetricChart from './Charts/ThroughputMetricChart';
-import TimingMetricChart from './Charts/TimingMetricChart';
-import css from './Profiler.module.scss';
 
 export interface Props {
   trial: TrialDetails;

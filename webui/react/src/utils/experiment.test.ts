@@ -1,7 +1,6 @@
 import { RawJson } from 'types';
 import * as Type from 'types';
-
-import * as utils from './experiment';
+import * as utils from 'utils/experiment';
 
 describe('Experiment Utilities', () => {
   describe('isExperiment', () => {

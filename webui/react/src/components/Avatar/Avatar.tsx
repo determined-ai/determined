@@ -1,12 +1,11 @@
 import React from 'react';
 
+import css from 'components/Avatar/Avatar.module.scss';
 import Tooltip from 'components/kit/Tooltip';
 import { ClassNameProp, ValueOf } from 'types';
 import { hex2hsl, hsl2str } from 'utils/color';
 import md5 from 'utils/md5';
 import { DarkLight } from 'utils/themes';
-
-import css from './Avatar.module.scss';
 
 export const Size = {
   ExtraLarge: 'extra-large',

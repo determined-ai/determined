@@ -2,8 +2,7 @@ import { MaybeMocked } from '@vitest/spy';
 
 import { CommandState, CommandTask, CommandType, RecordKey } from 'types';
 import { generateUUID } from 'utils/string';
-
-import * as utils from './wait';
+import * as utils from 'utils/wait';
 
 const UUID = {
   [CommandType.JupyterLab]: generateUUID(),

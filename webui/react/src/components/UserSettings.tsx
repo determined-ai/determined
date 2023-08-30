@@ -1,21 +1,28 @@
 import { Space } from 'antd';
 import React, { useCallback, useState } from 'react';
 
+import Accordion from 'components/kit/Accordion';
+import Button from 'components/kit/Button';
 import Drawer from 'components/kit/Drawer';
+import Icon from 'components/kit/Icon';
 import InlineForm from 'components/kit/InlineForm';
 import Input from 'components/kit/Input';
 import InputShortcut from 'components/kit/InputShortcut';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
+import Paragraph from 'components/kit/Typography/Paragraph';
+import useConfirm from 'components/kit/useConfirm';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import { ThemeOptions } from 'components/ThemeToggle';
+import css from 'components/UserSettings.module.scss';
 import {
   shortcutSettingsConfig,
   shortcutSettingsDefaults,
   shortcutsSettingsPath,
 } from 'components/UserSettings.settings';
+import UserSettingsModalComponent from 'components/UserSettingsModal';
 import {
   FEATURE_SETTINGS_PATH,
   FEATURES,
@@ -40,14 +47,6 @@ import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { KeyboardShortcut, shortcutToString } from 'utils/shortcut';
 import { Mode } from 'utils/themes';
-
-import Accordion from './kit/Accordion';
-import Button from './kit/Button';
-import Icon from './kit/Icon';
-import Paragraph from './kit/Typography/Paragraph';
-import useConfirm from './kit/useConfirm';
-import css from './UserSettings.module.scss';
-import UserSettingsModalComponent from './UserSettingsModal';
 
 const API_DISPLAYNAME_SUCCESS_MESSAGE = 'Display name updated.';
 const API_USERNAME_ERROR_MESSAGE = 'Could not update username.';

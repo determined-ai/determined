@@ -9,8 +9,8 @@ enum ProtobufNullValue {
   NULLVALUE = <any>'NULL_VALUE',
 }
 
-import { DetError } from './error';
-import * as service from './service';
+import { DetError } from 'utils/error';
+import * as service from 'utils/service';
 
 describe('Service Utilities', () => {
   describe('isAuthFailure', () => {

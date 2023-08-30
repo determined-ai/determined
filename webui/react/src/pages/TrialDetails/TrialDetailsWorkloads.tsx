@@ -11,6 +11,8 @@ import Section from 'components/Section';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import usePolling from 'hooks/usePolling';
+import { Settings } from 'pages/TrialDetails/TrialDetailsOverview.settings';
+import { columns as defaultColumns } from 'pages/TrialDetails/TrialDetailsWorkloads.table';
 import { getTrialWorkloads } from 'services/api';
 import {
   ExperimentBase,
@@ -30,9 +32,6 @@ import {
 } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
-
-import { Settings } from './TrialDetailsOverview.settings';
-import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
 
 export interface Props {
   defaultMetrics: Metric[];

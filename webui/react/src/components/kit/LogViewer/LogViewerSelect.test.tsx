@@ -4,8 +4,11 @@ import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event'
 
 import { generateAlphaNumeric, generateUUID } from 'components/kit/internal/functions';
 import { LogLevelFromApi } from 'components/kit/internal/types';
-
-import LogViewerSelect, { ARIA_LABEL_RESET, Filters, LABELS } from './LogViewerSelect';
+import LogViewerSelect, {
+  ARIA_LABEL_RESET,
+  Filters,
+  LABELS,
+} from 'components/kit/LogViewer/LogViewerSelect';
 
 const DEFAULT_FILTER_OPTIONS: Filters = {
   agentIds: new Array(3).fill('').map(() => `i-${generateAlphaNumeric(17)}`),

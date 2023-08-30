@@ -1,13 +1,13 @@
 import { DataEditorProps } from '@hpe.com/glide-data-grid';
 
-import CheckboxCell from './cells/checkboxCell';
-import ExperimentStateCell from './cells/experimentStateCell';
-import LinkCell from './cells/linkCell';
-import LoadingCell from './cells/loadingCell';
-import ProgressCell from './cells/progressCell';
-import SparklineCell from './cells/sparklineCell';
-import TagsCell from './cells/tagsCell';
-import UserProfileCell from './cells/userAvatarCell';
+import CheckboxCell from 'pages/F_ExpList/glide-table/custom-renderers/cells/checkboxCell';
+import ExperimentStateCell from 'pages/F_ExpList/glide-table/custom-renderers/cells/experimentStateCell';
+import LinkCell from 'pages/F_ExpList/glide-table/custom-renderers/cells/linkCell';
+import LoadingCell from 'pages/F_ExpList/glide-table/custom-renderers/cells/loadingCell';
+import ProgressCell from 'pages/F_ExpList/glide-table/custom-renderers/cells/progressCell';
+import SparklineCell from 'pages/F_ExpList/glide-table/custom-renderers/cells/sparklineCell';
+import TagsCell from 'pages/F_ExpList/glide-table/custom-renderers/cells/tagsCell';
+import UserProfileCell from 'pages/F_ExpList/glide-table/custom-renderers/cells/userAvatarCell';
 
 export const customRenderers: DataEditorProps['customRenderers'] = [
   CheckboxCell,

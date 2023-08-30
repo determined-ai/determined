@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import dayjs from 'dayjs';
 
+import TimeAgo, { TimeAgoCase } from 'components/TimeAgo';
 import {
   DURATION_DAY,
   DURATION_HOUR,
@@ -8,8 +9,6 @@ import {
   DURATION_SECOND,
   DURATION_YEAR,
 } from 'utils/datetime';
-
-import TimeAgo, { TimeAgoCase } from './TimeAgo';
 
 describe('TimeAgo', () => {
   const shared = { now: Date.now() };

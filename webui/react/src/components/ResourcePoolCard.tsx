@@ -5,12 +5,16 @@ import awsLogo from 'assets/images/aws-logo.svg?url';
 import gcpLogo from 'assets/images/gcp-logo.svg?url';
 import k8sLogo from 'assets/images/k8s-logo.svg?url';
 import staticLogo from 'assets/images/on-prem-logo.svg?url';
+import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import Json from 'components/Json';
 import Card from 'components/kit/Card';
 import { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
 import Tooltip from 'components/kit/Tooltip';
+import ResourcePoolBindingModalComponent from 'components/ResourcePoolBindingModal';
+import css from 'components/ResourcePoolCard.module.scss';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
@@ -27,11 +31,6 @@ import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 import { DarkLight } from 'utils/themes';
-
-import { ConditionalWrapper } from './ConditionalWrapper';
-import Json from './Json';
-import ResourcePoolBindingModalComponent from './ResourcePoolBindingModal';
-import css from './ResourcePoolCard.module.scss';
 
 interface Props {
   actionMenu?: MenuItem[];

@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
+import AvatarCard, { Props } from 'components/AvatarCard/AvatarCard';
 import { DarkLight } from 'utils/themes';
-
-import AvatarCard, { Props } from './AvatarCard';
 
 const setup = (props: Props) => {
   const view = render(<AvatarCard {...props} />);

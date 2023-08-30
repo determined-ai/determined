@@ -10,6 +10,7 @@ import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
 import useResize from 'hooks/useResize';
+import css from 'pages/ExperimentDetails/ExperimentVisualization/HpScatterPlots.module.scss';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
@@ -24,8 +25,6 @@ import {
 } from 'types';
 import { flattenObject, isBoolean, isString } from 'utils/data';
 import { metricToStr } from 'utils/metric';
-
-import css from './HpScatterPlots.module.scss';
 
 interface Props {
   experiment: ExperimentBase;

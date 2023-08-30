@@ -9,6 +9,7 @@ import {
 
 import { getColor, getInitials } from 'components/Avatar';
 import { terminalRunStates } from 'constants/states';
+import { getDurationInEnglish, getTimeInEnglish } from 'pages/F_ExpList/glide-table/utils';
 import { paths } from 'routes/utils';
 import { DetailedUser, ExperimentWithTrial, ProjectColumn } from 'types';
 import { getPath, isString } from 'utils/data';
@@ -18,8 +19,6 @@ import { humanReadableNumber } from 'utils/number';
 import { humanReadableBytes } from 'utils/string';
 import { DarkLight, Theme } from 'utils/themes';
 import { getDisplayName } from 'utils/user';
-
-import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
 export const MIN_COLUMN_WIDTH = 40;
 export const NO_PINS_WIDTH = 200;

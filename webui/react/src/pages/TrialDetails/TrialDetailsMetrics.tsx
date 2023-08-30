@@ -8,12 +8,11 @@ import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlug
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { useCheckpointFlow } from 'hooks/useModal/Checkpoint/useCheckpointFlow';
+import { useTrialMetrics } from 'pages/TrialDetails/useTrialMetrics';
 import { CheckpointWorkloadExtended, ExperimentBase, Metric, TrialDetails } from 'types';
 import handleError from 'utils/error';
 import { Loaded, NotLoaded } from 'utils/loadable';
 import { metricSorter, metricToKey } from 'utils/metric';
-
-import { useTrialMetrics } from './useTrialMetrics';
 
 export interface Props {
   experiment: ExperimentBase;

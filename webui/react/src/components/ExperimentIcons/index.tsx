@@ -1,13 +1,12 @@
 import React, { CSSProperties, useMemo } from 'react';
 
+import Active from 'components/ExperimentIcons/Active';
+import Queue from 'components/ExperimentIcons/Queue';
+import Spinner from 'components/ExperimentIcons/Spinner';
 import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import { stateToLabel } from 'constants/states';
 import { CompoundRunState, JobState, RunState } from 'types';
-
-import Active from './Active';
-import Queue from './Queue';
-import Spinner from './Spinner';
 
 interface Props {
   showTooltip?: boolean;
