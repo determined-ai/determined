@@ -273,7 +273,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		}
 
 		podStatusUpdates := make(chan sproto.UpdatePodStatus)
-		pods, err := Initialize(
+		pods, err := newPodsService(
 			k.config.Namespace,
 			poolNamespaces,
 			k.config.MasterServiceName,

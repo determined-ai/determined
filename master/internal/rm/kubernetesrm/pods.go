@@ -25,7 +25,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -109,8 +108,7 @@ type summarizeResult struct {
 	err     error
 }
 
-// Initialize creates a new global pods actor.
-func Initialize(
+func newPodsService(
 	namespace string,
 	namespaceToPoolName map[string]string,
 	masterServiceName string,
@@ -336,7 +334,6 @@ type reattachPodsRequest struct {
 }
 
 type reattachPodResponse struct {
-	podName     string
 	containerID string
 	started     *sproto.ResourcesStarted
 }
@@ -621,7 +618,7 @@ func (p *pods) reattachPod(
 	return reattachPodResponse{containerID: containerID, started: started}, nil
 }
 
-func (p *pods) refreshPodStates(ctx *actor.Context, allocationID model.AllocationID) error {
+func (p *pods) refreshPodStates(allocationID model.AllocationID) error {
 	if allocationID == "" {
 		return fmt.Errorf("invalid call: allocationID missing")
 	}
@@ -632,6 +629,9 @@ func (p *pods) refreshPodStates(ctx *actor.Context, allocationID model.Allocatio
 	if err != nil {
 		return errors.Wrap(err, "error listing pods checking if they can be restored")
 	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
 	for _, pod := range pods.Items {
 		if _, ok := p.namespaceToPoolName[pod.Namespace]; !ok {
