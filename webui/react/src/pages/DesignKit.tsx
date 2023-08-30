@@ -619,6 +619,16 @@ const ChartsSection: React.FC = () => {
     name: 'Alt-Line',
   };
 
+  const zeroline: Serie = {
+    color: '#009BDE',
+    data: {
+      [XAxisDomain.Batches]: [[0, 1]],
+      [XAxisDomain.Time]: [],
+    },
+    metricType: MetricType.Training,
+    name: 'Line',
+  };
+
   const checkpointsDict: CheckpointsDict = {
     2: {
       endTime: '2023-02-02T04:54:41.095204Z',
@@ -669,6 +679,15 @@ const ChartsSection: React.FC = () => {
           height={250}
           series={[line1, line2]}
           title="Sample"
+        />
+      </AntDCard>
+      <AntDCard title="Series with all x=0">
+        <p>When all points have x=0, the x-axis bounds should go from 0 to 1.</p>
+        <LineChart
+          handleError={handleError}
+          height={250}
+          series={[zeroline]}
+          title="Series with all x=0"
         />
       </AntDCard>
       <AntDCard title="States without data">
