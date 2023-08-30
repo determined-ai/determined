@@ -297,6 +297,25 @@ func (r *Ref) AwaitTermination() error {
 	return <-listener
 }
 
+// AwaitTerminationCtx waits for the actor to stop, returning an error if the actor has failed
+// during its lifecycle.
+func (r *Ref) AwaitTerminationCtx(ctx context.Context) error {
+	r.lLock.Lock()
+	if r.shutdown {
+		r.lLock.Unlock()
+		return r.err
+	}
+	listener := make(chan error, 1)
+	r.listeners = append(r.listeners, listener)
+	r.lLock.Unlock()
+	select {
+	case err := <-listener:
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
 // StopAndAwaitTermination synchronously stops the actor, returning an error if the actor fails to
 // close properly.
 func (r *Ref) StopAndAwaitTermination() error {
