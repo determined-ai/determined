@@ -682,3 +682,6 @@ func (k ResourceManager) DisableSlot(
 ) (resp *apiv1.DisableSlotResponse, err error) {
 	return nil, rmerrors.ErrNotSupported
 }
+
+// IsHpc returns true if the RM is controlling an HPC cluster instance.
+func (k ResourceManager) IsHpc() bool { return false }

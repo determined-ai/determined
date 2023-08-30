@@ -550,6 +550,20 @@ func (_m *ResourceManager) GetSlots(_a0 actor.Messenger, _a1 *apiv1.GetSlotsRequ
 	return r0, r1
 }
 
+// IsHpc provides a mock function with given fields:
+func (_m *ResourceManager) IsHpc() bool {
+	ret := _m.Called()
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func() bool); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
 // IsReattachEnabled provides a mock function with given fields: ctx
 func (_m *ResourceManager) IsReattachEnabled(ctx actor.Messenger) bool {
 	ret := _m.Called(ctx)

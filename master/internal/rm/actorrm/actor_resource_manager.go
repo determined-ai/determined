@@ -404,3 +404,6 @@ func (r ResourceManager) DisableSlot(
 ) (resp *apiv1.DisableSlotResponse, err error) {
 	return resp, AskAt(r.Ref().System(), slotAddr(req.AgentId, req.SlotId), req, &resp)
 }
+
+// IsHpc returns true if the RM is controlling an HPC cluster instance.
+func (r ResourceManager) IsHpc() bool { return false }

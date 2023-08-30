@@ -114,6 +114,7 @@ type ResourceManager interface {
 		actor.Messenger,
 		*apiv1.DisableSlotRequest,
 	) (*apiv1.DisableSlotResponse, error)
+	IsHpc() bool
 
 	// Escape hatch, do not use.
 	Ref() *actor.Ref
