@@ -7,6 +7,26 @@
 ###############
 
 **************
+ Version 0.25
+**************
+
+Version 0.25.0
+==============
+
+**Release Date:** August 29, 2023
+
+**Breaking Changes**
+
+-  Remove EstimatorTrial, which has been deprecated since Determined version 0.22.0 (May 2023).
+
+**Bug Fixes**
+
+-  Trials: Fix an issue where trial logs can fail for trials created prior to Determined version
+   0.17.0.
+-  CLI: Fix an issue where template association with workspaces, when listed, was missing. This
+   would prevent templates getting listed for some user and templates on RBAC enabled clusters.
+
+**************
  Version 0.24
 **************
 
