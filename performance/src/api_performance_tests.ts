@@ -49,7 +49,7 @@ getloadTests().forEach((group) => {
     thresholds[`http_req_duration{group: ::${group.name
         }}`] = [
             {
-                threshold: 'p(95)>1000',
+                threshold: 'p(95)<1000',
                 abortOnFail: false,
             }
         ]
