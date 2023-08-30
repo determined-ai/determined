@@ -1,0 +1,22 @@
+{
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/*.tests.{js,jsx,ts,tsx}",
+    "**/*.test.{js,jsx,ts,tsx}",
+    "**/*.spec.{js,jsx,ts,tsx}",
+    "**/tests/**",
+    "**/__tests__/**",
+    "**/assets/images/**/*.svg?url",
+    "**/omnibar/tree-extension/**"
+  ],
+  "ignoreUnimported": [],
+  "ignoreUnused": [],
+  "ignoreUnresolved": [],
+  "rootDir": "./src/",
+  "entry": ["src/index.tsx", "design/index.tsx"],
+  "extensions": [".ts", ".tsx", ".js", ".jsx"],
+  "aliases": {
+    "*": ["./*"]
+  },
+  "pathTransforms": { "(.+).svg\\?url": "$1.svg" }
+}
