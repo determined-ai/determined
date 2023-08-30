@@ -17,7 +17,7 @@ Version 0.25.0
 
 **Breaking Changes**
 
--  Remove EstimatorTrial, which has been deprecated since Determined version 0.22.0 (May 2023).
+-  Remove ``EstimatorTrial``, which has been deprecated since Determined version 0.22.0 (May 2023).
 
 **Bug Fixes**
 
