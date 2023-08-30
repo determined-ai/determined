@@ -31,9 +31,6 @@ DT_EXAMPLES_DIRS := $(patsubst decision_trees/%/., build/%.tgz, $(DT_EXAMPLES))
 FEATURES_EXAMPLES := $(wildcard features/*/.)
 FEATURES_EXAMPLES_DIRS := $(patsubst features/%/., build/%.tgz, $(FEATURES_EXAMPLES))
 
-CUSTOM_SEARCH_METHOD_EXAMPLES := $(wildcard custom_search_method/*/.)
-CUSTOM_SEARCH_METHOD_EXAMPLES_DIRS := $(patsubst custom_search_method/%/., build/%.tgz, $(CUSTOM_SEARCH_METHOD_EXAMPLES))
-
 
 # IGNORE is a `find` subcommand to ignore files that don't affect our outputs.
 IGNORE := \( -path ./build -o -path ./tests -o -name __pycache__ -o -name \*.pyc -o -name .mypy_cache \)
@@ -41,7 +38,7 @@ IGNORE := \( -path ./build -o -path ./tests -o -name __pycache__ -o -name \*.pyc
 # SRCS is a list of all files that could affect our outputs.
 SRCS := $(shell find . $(IGNORE) -prune -o -type f -print | sort)
 
-build/stamp: $(TUTORIAL_EXAMPLES_DIRS) $(CV_EXAMPLES_DIRS) $(NLP_EXAMPLES_DIRS) $(DEEPSPEED_EXAMPLES_DIRS) $(DEEPSPEED_AUTOTUNE_EXAMPLES_DIRS) $(HF_TRAINER_EXAMPLES_DIRS) $(HPSEARCH_EXAMPLES_DIRS) $(META_LEARNING_EXAMPLES_DIRS) $(DIFFUSION_EXAMPLES_DIRS) $(DT_EXAMPLES_DIRS) $(FEATURES_EXAMPLES_DIRS) $(CUSTOM_SEARCH_METHOD_EXAMPLES_DIRS)
+build/stamp: $(TUTORIAL_EXAMPLES_DIRS) $(CV_EXAMPLES_DIRS) $(NLP_EXAMPLES_DIRS) $(DEEPSPEED_EXAMPLES_DIRS) $(DEEPSPEED_AUTOTUNE_EXAMPLES_DIRS) $(HF_TRAINER_EXAMPLES_DIRS) $(HPSEARCH_EXAMPLES_DIRS) $(META_LEARNING_EXAMPLES_DIRS) $(DIFFUSION_EXAMPLES_DIRS) $(DT_EXAMPLES_DIRS) $(FEATURES_EXAMPLES_DIRS)
 	touch $@
 
 .PHONY: build
