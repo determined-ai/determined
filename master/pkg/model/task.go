@@ -10,8 +10,8 @@ import (
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/determined-ai/determined/master/pkg/constants"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/tasklog"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -213,19 +213,19 @@ const (
 	defaultTaskLogTime      = "UNKNOWN TIME"
 
 	// LogLevelTrace is the trace task log level.
-	LogLevelTrace = constants.LogLevelTrace
+	LogLevelTrace = tasklog.LogLevelTrace
 	// LogLevelDebug is the debug task log level.
-	LogLevelDebug = constants.LogLevelDebug
+	LogLevelDebug = tasklog.LogLevelDebug
 	// LogLevelInfo is the info task log level.
-	LogLevelInfo = constants.LogLevelInfo
+	LogLevelInfo = tasklog.LogLevelInfo
 	// LogLevelWarning is the warn task log level.
-	LogLevelWarning = constants.LogLevelWarning
+	LogLevelWarning = tasklog.LogLevelWarning
 	// LogLevelError is the error task log level.
-	LogLevelError = constants.LogLevelError
+	LogLevelError = tasklog.LogLevelError
 	// LogLevelCritical is the critical task log level.
-	LogLevelCritical = constants.LogLevelCritical
+	LogLevelCritical = tasklog.LogLevelCritical
 	// LogLevelUnspecified is the unspecified task log level.
-	LogLevelUnspecified = constants.LogLevelUnspecified
+	LogLevelUnspecified = tasklog.LogLevelUnspecified
 )
 
 // TaskLogLevelFromProto returns a task log level from its protobuf repr.

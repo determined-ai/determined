@@ -1,4 +1,4 @@
-package constants
+package tasklog
 
 const (
 	// LogLevelTrace is the trace task log level.
