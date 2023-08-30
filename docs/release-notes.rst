@@ -21,7 +21,7 @@ Version 0.25.0
 
 **Bug Fixes**
 
--  Trials: Fix an issue where trial logs can fail for trials created prior to Determined version
+-  Trials: Fix an issue where trial logs could fail for trials created prior to Determined version
    0.17.0.
 -  CLI: Fix an issue where template association with workspaces, when listed, was missing. This
    would prevent templates from being listed for some users and templates on RBAC-enabled clusters.
