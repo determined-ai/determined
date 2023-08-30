@@ -48,7 +48,7 @@ type Agent struct {
 	version string
 	opts    options.Options
 	log     *logrus.Entry
-	wg      errgroupx.Group
+	wg      *errgroupx.Group
 }
 
 // NewAgent constructs and runs a new agent according to the provided configuration.

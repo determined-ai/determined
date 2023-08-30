@@ -8,7 +8,7 @@ import (
 
 // Group is a thin wrapper around sync.WaitGroup that associates a cancelable context with it.
 type Group struct {
-	inner errgroupx.Group
+	inner *errgroupx.Group
 }
 
 // WithContext creates a Group as a child of the given context.

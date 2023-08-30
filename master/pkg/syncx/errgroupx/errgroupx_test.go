@@ -51,3 +51,13 @@ func TestErrgroupxCancelingParentCancels(t *testing.T) {
 		cancel()
 	}
 }
+
+func TestErrgroupxRecover(t *testing.T) {
+	eg := WithContext(context.Background()).WithRecover()
+	eg.Go(func(ctx context.Context) error {
+		panic("oh no")
+	})
+	err := eg.Wait()
+	t.Log(err)
+	require.ErrorContains(t, err, "oh no")
+}
