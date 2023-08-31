@@ -2,7 +2,7 @@
   display: grid;
   grid-template:
     'tree title' min-content
-    'tree editor' auto / minmax(15%, auto) minmax(52%, auto);
+    'tree editor' auto / clamp(300px, 25vw, 400px) minmax(0, auto);
   max-width: 100vw;
   min-height: 250px;
 
