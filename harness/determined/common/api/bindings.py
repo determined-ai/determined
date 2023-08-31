@@ -10117,6 +10117,7 @@ class v1ResourcePool(Printable):
         agentDockerImage: str,
         agentDockerNetwork: str,
         agentDockerRuntime: str,
+        agentFluentImage: str,
         auxContainerCapacity: int,
         auxContainerCapacityPerAgent: int,
         auxContainersRunning: int,
@@ -10151,6 +10152,7 @@ class v1ResourcePool(Printable):
         self.agentDockerImage = agentDockerImage
         self.agentDockerNetwork = agentDockerNetwork
         self.agentDockerRuntime = agentDockerRuntime
+        self.agentFluentImage = agentFluentImage
         self.auxContainerCapacity = auxContainerCapacity
         self.auxContainerCapacityPerAgent = auxContainerCapacityPerAgent
         self.auxContainersRunning = auxContainersRunning
@@ -10191,6 +10193,7 @@ class v1ResourcePool(Printable):
             "agentDockerImage": obj["agentDockerImage"],
             "agentDockerNetwork": obj["agentDockerNetwork"],
             "agentDockerRuntime": obj["agentDockerRuntime"],
+            "agentFluentImage": obj["agentFluentImage"],
             "auxContainerCapacity": obj["auxContainerCapacity"],
             "auxContainerCapacityPerAgent": obj["auxContainerCapacityPerAgent"],
             "auxContainersRunning": obj["auxContainersRunning"],
@@ -10232,6 +10235,7 @@ class v1ResourcePool(Printable):
             "agentDockerImage": self.agentDockerImage,
             "agentDockerNetwork": self.agentDockerNetwork,
             "agentDockerRuntime": self.agentDockerRuntime,
+            "agentFluentImage": self.agentFluentImage,
             "auxContainerCapacity": self.auxContainerCapacity,
             "auxContainerCapacityPerAgent": self.auxContainerCapacityPerAgent,
             "auxContainersRunning": self.auxContainersRunning,
