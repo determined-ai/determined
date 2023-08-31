@@ -1,5 +1,5 @@
-import { TrialHParams } from './HpTrialTable';
-import { getCustomSearchVaryingHPs } from './LearningCurve';
+import { TrialHParams } from 'pages/ExperimentDetails/ExperimentVisualization/HpTrialTable';
+import { getCustomSearchVaryingHPs } from 'pages/ExperimentDetails/ExperimentVisualization/LearningCurve';
 
 describe('Custom Search HPs filter out constants across trials', () => {
   it("doesn't show hparams that are the same across trials", () => {

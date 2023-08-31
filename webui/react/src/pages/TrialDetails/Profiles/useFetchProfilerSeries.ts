@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 
+import { AvailableSeries } from 'pages/TrialDetails/Profiles/types';
 import { V1GetTrialProfilerAvailableSeriesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useUI from 'stores/contexts/UI';
-
-import { AvailableSeries } from './types';
 
 export const useFetchProfilerSeries = (trialId: number): AvailableSeries => {
   const { ui } = useUI();

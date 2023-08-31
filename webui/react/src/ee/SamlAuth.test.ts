@@ -1,4 +1,4 @@
-import * as utils from './SamlAuth';
+import * as utils from 'ee/SamlAuth';
 
 describe('SamlAuth', () => {
   describe('samlUrl', () => {

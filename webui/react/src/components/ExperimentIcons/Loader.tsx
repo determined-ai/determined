@@ -1,6 +1,6 @@
 import React from 'react';
 
-import css from './Loader.module.scss';
+import css from 'components/ExperimentIcons/Loader.module.scss';
 
 const Loader: React.FC = () => {
   return (

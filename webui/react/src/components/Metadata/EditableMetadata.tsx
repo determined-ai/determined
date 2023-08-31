@@ -3,10 +3,9 @@ import React, { useCallback, useMemo } from 'react';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Form from 'components/kit/Form';
 import Link from 'components/Link';
+import css from 'components/Metadata/EditableMetadata.module.scss';
+import EditableRow from 'components/Metadata/EditableRow';
 import { Metadata } from 'types';
-
-import css from './EditableMetadata.module.scss';
-import EditableRow from './EditableRow';
 
 export const ADD_ROW_TEXT = '+ Add Row';
 

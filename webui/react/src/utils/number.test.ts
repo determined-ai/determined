@@ -1,4 +1,4 @@
-import * as utils from './number';
+import * as utils from 'utils/number';
 
 describe('Number Utilities', () => {
   describe('clamp', () => {

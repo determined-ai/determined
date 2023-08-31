@@ -2,8 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 
 import { generateAlphaNumeric } from 'components/kit/internal/functions';
-
-import Select, { Option } from './Select';
+import Select, { Option } from 'components/kit/Select';
 
 const LABEL = generateAlphaNumeric();
 const PLACEHOLDER = generateAlphaNumeric();

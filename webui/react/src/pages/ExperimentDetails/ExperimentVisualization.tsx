@@ -9,6 +9,16 @@ import Message, { MessageType } from 'components/Message';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import useStorage from 'hooks/useStorage';
+import ExperimentVisualizationFilters, {
+  MAX_HPARAM_COUNT,
+  ViewType,
+  VisualizationFilters,
+} from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
+import HpHeatMaps from 'pages/ExperimentDetails/ExperimentVisualization/HpHeatMaps';
+import HpParallelCoordinates from 'pages/ExperimentDetails/ExperimentVisualization/HpParallelCoordinates';
+import HpScatterPlots from 'pages/ExperimentDetails/ExperimentVisualization/HpScatterPlots';
+import LearningCurve from 'pages/ExperimentDetails/ExperimentVisualization/LearningCurve';
+import css from 'pages/ExperimentDetails/ExperimentVisualization.module.scss';
 import { paths } from 'routes/utils';
 import { V1MetricBatchesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -26,17 +36,6 @@ import {
 } from 'types';
 import { Loadable } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';
-
-import ExperimentVisualizationFilters, {
-  MAX_HPARAM_COUNT,
-  ViewType,
-  VisualizationFilters,
-} from './ExperimentVisualization/ExperimentVisualizationFilters';
-import HpHeatMaps from './ExperimentVisualization/HpHeatMaps';
-import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
-import HpScatterPlots from './ExperimentVisualization/HpScatterPlots';
-import LearningCurve from './ExperimentVisualization/LearningCurve';
-import css from './ExperimentVisualization.module.scss';
 
 export const ExperimentVisualizationType = {
   HpHeatMap: 'hp-heat-map',

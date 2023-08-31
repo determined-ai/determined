@@ -31,6 +31,14 @@ import {
 import usePermissions from 'hooks/usePermissions';
 import usePrevious from 'hooks/usePrevious';
 import { useSettings } from 'hooks/useSettings';
+import css from 'pages/WorkspaceDetails/WorkspaceProjects.module.scss';
+import {
+  configForWorkspace,
+  DEFAULT_COLUMN_WIDTHS,
+  ProjectColumnName,
+  WhoseProjects,
+  WorkspaceDetailsSettings,
+} from 'pages/WorkspaceDetails/WorkspaceProjects.settings';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
@@ -40,15 +48,6 @@ import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
-
-import css from './WorkspaceProjects.module.scss';
-import {
-  configForWorkspace,
-  DEFAULT_COLUMN_WIDTHS,
-  ProjectColumnName,
-  WhoseProjects,
-  WorkspaceDetailsSettings,
-} from './WorkspaceProjects.settings';
 
 interface Props {
   id: number;

@@ -3,9 +3,8 @@ import React from 'react';
 
 import Logo, { Orientation } from 'components/Logo';
 import Page from 'components/Page';
+import css from 'components/PageMessage.module.scss';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
-
-import css from './PageMessage.module.scss';
 
 interface Props {
   children: React.ReactNode;

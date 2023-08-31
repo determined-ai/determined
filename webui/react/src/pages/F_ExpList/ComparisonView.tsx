@@ -6,12 +6,11 @@ import Pivot, { TabItem } from 'components/kit/Pivot';
 import SplitPane from 'components/SplitPane';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
+import CompareMetrics from 'pages/F_ExpList/CompareMetrics';
+import CompareParallelCoordinates from 'pages/F_ExpList/CompareParallelCoordinates';
+import { MIN_COLUMN_WIDTH } from 'pages/F_ExpList/glide-table/columns';
 import { useTrialMetrics } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
-
-import CompareMetrics from './CompareMetrics';
-import CompareParallelCoordinates from './CompareParallelCoordinates';
-import { MIN_COLUMN_WIDTH } from './glide-table/columns';
 
 interface Props {
   children: React.ReactElement;

@@ -4,6 +4,12 @@ import React, { useCallback, useEffect } from 'react';
 
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
+import PasswordChangeModalComponent, {
+  API_SUCCESS_MESSAGE,
+  CONFIRM_PASSWORD_LABEL,
+  OK_BUTTON_LABEL,
+  OLD_PASSWORD_LABEL,
+} from 'components/PasswordChangeModal';
 import { setUserPassword as mockSetUserPassword } from 'services/api';
 import { V1LoginRequest } from 'services/api-ts-sdk';
 import authStore from 'stores/auth';
@@ -12,13 +18,6 @@ import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 
 vi.useFakeTimers();
-
-import PasswordChangeModalComponent, {
-  API_SUCCESS_MESSAGE,
-  CONFIRM_PASSWORD_LABEL,
-  OK_BUTTON_LABEL,
-  OLD_PASSWORD_LABEL,
-} from './PasswordChangeModal';
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const USERNAME = 'test_username1';

@@ -4,9 +4,8 @@ import Button from 'components/kit/Button';
 import Dropdown, { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
+import css from 'components/PageHeaderFoldable.module.scss';
 import { isMouseEvent } from 'utils/routes';
-
-import css from './PageHeaderFoldable.module.scss';
 
 export interface Option {
   disabled?: boolean;

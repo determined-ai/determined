@@ -4,10 +4,9 @@ import React from 'react';
 import Empty from 'components/kit/Empty';
 import Link from 'components/Link';
 import Profiler from 'pages/TrialDetails/Profiles/Profiler';
+import css from 'pages/TrialDetails/TrialDetailsProfiles.module.scss';
 import { paths } from 'routes/utils';
 import { ExperimentBase, TrialDetails } from 'types';
-
-import css from './TrialDetailsProfiles.module.scss';
 
 export interface Props {
   experiment: ExperimentBase;

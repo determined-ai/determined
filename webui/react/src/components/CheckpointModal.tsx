@@ -1,6 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
 
+import Badge, { BadgeType } from 'components/Badge';
+import css from 'components/CheckpointModal.module.scss';
+import HumanReadableNumber from 'components/HumanReadableNumber';
+import Button from 'components/kit/Button';
 import { Modal } from 'components/kit/Modal';
+import useConfirm from 'components/kit/useConfirm';
+import Link from 'components/Link';
 import { ModalCloseReason } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
@@ -15,13 +21,6 @@ import { formatDatetime } from 'utils/datetime';
 import handleError from 'utils/error';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
-
-import Badge, { BadgeType } from './Badge';
-import css from './CheckpointModal.module.scss';
-import HumanReadableNumber from './HumanReadableNumber';
-import Button from './kit/Button';
-import useConfirm from './kit/useConfirm';
-import Link from './Link';
 
 export interface Props {
   checkpoint?: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;

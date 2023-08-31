@@ -2,6 +2,13 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import CreateGroupModalComponent, {
+  API_SUCCESS_MESSAGE_CREATE,
+  GROUP_NAME_LABEL,
+  MODAL_HEADER_LABEL_CREATE,
+  MODAL_HEADER_LABEL_EDIT,
+  USERS_LABEL,
+} from 'components/CreateGroupModal';
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
 import { createGroup as mockCreateGroup } from 'services/api';
@@ -9,14 +16,6 @@ import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { GetGroupParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import { DetailedUser } from 'types';
-
-import CreateGroupModalComponent, {
-  API_SUCCESS_MESSAGE_CREATE,
-  GROUP_NAME_LABEL,
-  MODAL_HEADER_LABEL_CREATE,
-  MODAL_HEADER_LABEL_EDIT,
-  USERS_LABEL,
-} from './CreateGroupModal';
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const GROUPNAME = 'test_groupname1';

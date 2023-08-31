@@ -1,3 +1,3 @@
 export * from './ExperimentDetails';
-import ExperimentDetails from './ExperimentDetails';
+import ExperimentDetails from 'pages/ExperimentDetails/ExperimentDetails';
 export default ExperimentDetails;

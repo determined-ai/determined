@@ -2,14 +2,13 @@ import { Modal } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import css from 'components/GalleryModal.module.scss';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import useResize from 'hooks/useResize';
 import { isNumber } from 'utils/data';
 import { isPercent, percentToFloat } from 'utils/number';
-
-import css from './GalleryModal.module.scss';
 
 interface Props extends ModalProps {
   children: React.ReactNode;

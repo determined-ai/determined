@@ -1,6 +1,6 @@
 import React from 'react';
 
-import css from './InfoBox.module.scss';
+import css from 'components/InfoBox.module.scss';
 
 export interface InfoRow {
   content?: React.ReactNode | React.ReactNode[];

@@ -3,6 +3,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useCallback, useEffect } from 'react';
 
+import { ConfirmationProvider } from 'components/kit/useConfirm';
+import UserSettings from 'components/UserSettings';
 import { patchUser as mockPatchUser } from 'services/api';
 import { PatchUserParams } from 'services/types';
 import authStore from 'stores/auth';
@@ -10,9 +12,6 @@ import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { DetailedUser } from 'types';
-
-import { ConfirmationProvider } from './kit/useConfirm';
-import UserSettings from './UserSettings';
 
 vi.mock('services/api', () => ({
   getUsers: () =>

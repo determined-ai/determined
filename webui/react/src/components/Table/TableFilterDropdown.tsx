@@ -5,9 +5,8 @@ import { FixedSizeList, ListChildComponentProps } from 'react-window';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 import Input, { InputRef } from 'components/kit/Input';
+import css from 'components/Table/TableFilterDropdown.module.scss';
 import usePrevious from 'hooks/usePrevious';
-
-import css from './TableFilterDropdown.module.scss';
 
 interface Props extends FilterDropdownProps {
   multiple?: boolean;

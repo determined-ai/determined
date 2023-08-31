@@ -5,11 +5,10 @@ import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName } from 'components/Table/Table';
 import { useSettings } from 'hooks/useSettings';
+import { configForTrial, Settings } from 'pages/TrialDetails/TrialDetailsHyperparameters.settings';
 import { TrialDetails } from 'types';
 import { isObject } from 'utils/data';
 import { alphaNumericSorter } from 'utils/sort';
-
-import { configForTrial, Settings } from './TrialDetailsHyperparameters.settings';
 
 export interface Props {
   pageRef: React.RefObject<HTMLElement>;

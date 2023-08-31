@@ -14,6 +14,7 @@ import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelect from 'components/MetricSelect';
 import useMetricNames from 'hooks/useMetricNames';
 import useResize from 'hooks/useResize';
+import css from 'pages/ExperimentDetails/TrialsComparisonModal.module.scss';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
 import { ExperimentItem, Metric, MetricSummary, Primitive, TrialDetails } from 'types';
@@ -21,8 +22,6 @@ import { isNumber } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { humanReadableBytes, pluralizer } from 'utils/string';
-
-import css from './TrialsComparisonModal.module.scss';
 
 interface TablePropsBase {
   experiment: ExperimentItem | ExperimentItem[];

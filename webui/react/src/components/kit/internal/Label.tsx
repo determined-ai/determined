@@ -1,8 +1,7 @@
 import React from 'react';
 
+import css from 'components/kit/internal/Label.module.scss';
 import { ValueOf } from 'components/kit/internal/types';
-
-import css from './Label.module.scss';
 
 export const LabelTypes = {
   TextOnly: 'textOnly',

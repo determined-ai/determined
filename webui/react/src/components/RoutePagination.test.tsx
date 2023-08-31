@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import RoutePagination from './RoutePagination';
+import RoutePagination from 'components/RoutePagination';
 
 vi.mock('components/kit/Tooltip');
 

@@ -13,6 +13,7 @@ import { closestPointPlugin } from 'components/kit/internal/UPlot/UPlotChart/clo
 import { tooltipsPlugin } from 'components/kit/internal/UPlot/UPlotChart/tooltipsPlugin';
 import useResize from 'components/kit/internal/useResize';
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
+import css from 'components/kit/LineChart.module.scss';
 import Spinner from 'components/kit/Spinner';
 import Message from 'components/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
@@ -21,8 +22,6 @@ import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { metricToKey, metricToStr } from 'utils/metric';
-
-import css from './LineChart.module.scss';
 
 export const TRAINING_SERIES_COLOR = '#009BDE';
 export const VALIDATION_SERIES_COLOR = '#F77B21';

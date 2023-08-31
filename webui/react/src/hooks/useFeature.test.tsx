@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import useFeature, { ValidFeature } from './useFeature';
+import useFeature, { ValidFeature } from 'hooks/useFeature';
 
 const FeatureTest: React.FC = () => {
   const feature = useFeature();

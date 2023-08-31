@@ -3,6 +3,7 @@ import { RawValueType } from 'rc-select/lib/BaseSelect';
 import { LabelInValueType } from 'rc-select/lib/Select';
 import React, { useState } from 'react';
 
+import css from 'pages/WorkspaceDetails/RoleRenderer.module.scss';
 import {
   assignRolesToGroup,
   assignRolesToUser,
@@ -13,8 +14,6 @@ import { V1Role } from 'services/api-ts-sdk';
 import { UserOrGroupWithRoleInfo } from 'types';
 import handleError from 'utils/error';
 import { isUserWithRoleInfo } from 'utils/user';
-
-import css from './RoleRenderer.module.scss';
 
 interface Props {
   fetchMembers: () => void;

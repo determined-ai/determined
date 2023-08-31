@@ -1,6 +1,6 @@
 import React from 'react';
 
-import css from './Active.module.scss';
+import css from 'components/ExperimentIcons/Active.module.scss';
 
 const Active: React.FC = () => {
   return (

@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 
+import css from 'components/SplitPane.module.scss';
 import useMobile from 'hooks/useMobile';
 import useResize from 'hooks/useResize';
-
-import css from './SplitPane.module.scss';
 
 interface Props {
   children: [React.ReactElement, React.ReactElement];

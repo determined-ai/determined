@@ -6,12 +6,11 @@ import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 
 import { SettingsProvider } from 'hooks/useSettingsProvider';
+import UserManagement, { CREATE_USER, USER_TITLE } from 'pages/Admin/UserManagement';
 import authStore from 'stores/auth';
 import { StoreProvider } from 'stores/contexts/UI';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
-
-import UserManagement, { CREATE_USER, USER_TITLE } from './UserManagement';
 
 const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';

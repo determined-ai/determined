@@ -1,10 +1,9 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import BadgeTag, { Props } from 'components/BadgeTag';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import { generateAlphaNumeric } from 'utils/string';
-
-import BadgeTag, { Props } from './BadgeTag';
 
 const LABEL = generateAlphaNumeric();
 const CONTENT = generateAlphaNumeric();

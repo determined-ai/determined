@@ -1,6 +1,5 @@
 import { MetricType, WorkloadGroup } from 'types';
-
-import * as utils from './metric';
+import * as utils from 'utils/metric';
 
 const workloads: WorkloadGroup[] = [
   {

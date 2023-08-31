@@ -1,13 +1,12 @@
 import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
+import * as Sdk from 'services/api-ts-sdk'; // API Bindings
 import { BrandingType, DeterminedInfo } from 'stores/determinedInfo';
 import { Pagination, RawJson } from 'types';
 import * as types from 'types';
 import { flattenObject, isNullOrUndefined, isNumber, isObject, isPrimitive } from 'utils/data';
 import { capitalize } from 'utils/string';
-
-import * as Sdk from './api-ts-sdk'; // API Bindings
 
 export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
   return {

@@ -1,10 +1,9 @@
 import React from 'react';
 
+import css from 'components/Bar.module.scss';
 import Tooltip from 'components/kit/Tooltip';
 import { ShirtSize } from 'themes';
 import { floatToPercent } from 'utils/string';
-
-import css from './Bar.module.scss';
 
 export interface BarPart {
   bordered?: string;

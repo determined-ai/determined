@@ -1,10 +1,9 @@
 import React, { useCallback, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
+import css from 'components/ActionSheet.module.scss';
 import Icon, { IconName } from 'components/kit/Icon';
-
-import css from './ActionSheet.module.scss';
-import Link, { Props as LinkProps } from './Link';
+import Link, { Props as LinkProps } from 'components/Link';
 
 export interface ActionItem extends LinkProps {
   icon?: IconName | React.ReactElement;

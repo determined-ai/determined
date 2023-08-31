@@ -2,12 +2,11 @@ import { Divider, Modal } from 'antd';
 import React, { Fragment } from 'react';
 
 import Json from 'components/Json';
+import { PoolLogo } from 'components/ResourcePoolCard';
+import css from 'components/ResourcePoolDetails.module.scss';
 import { V1ResourcePoolDetail } from 'services/api-ts-sdk';
 import { JsonObject, ResourcePool } from 'types';
 import { camelCaseToSentence } from 'utils/string';
-
-import { PoolLogo } from './ResourcePoolCard';
-import css from './ResourcePoolDetails.module.scss';
 
 interface Props {
   finally?: () => void;

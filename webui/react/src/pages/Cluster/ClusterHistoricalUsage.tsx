@@ -6,21 +6,22 @@ import Button from 'components/kit/Button';
 import Section from 'components/Section';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';
+import css from 'pages/Cluster/ClusterHistoricalUsage.module.scss';
+import settingsConfig, { GroupBy, Settings } from 'pages/Cluster/ClusterHistoricalUsage.settings';
+import ClusterHistoricalUsageChart from 'pages/Cluster/ClusterHistoricalUsageChart';
+import ClusterHistoricalUsageCsvModal, {
+  CSVGroupBy,
+} from 'pages/Cluster/ClusterHistoricalUsageCsvModal';
+import ClusterHistoricalUsageFilters, {
+  ClusterHistoricalUsageFiltersInterface,
+} from 'pages/Cluster/ClusterHistoricalUsageFilters';
+import { mapResourceAllocationApiToChartSeries } from 'pages/Cluster/utils';
 import { getResourceAllocationAggregated } from 'services/api';
 import { V1ResourceAllocationAggregatedResponse } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-
-import css from './ClusterHistoricalUsage.module.scss';
-import settingsConfig, { GroupBy, Settings } from './ClusterHistoricalUsage.settings';
-import ClusterHistoricalUsageChart from './ClusterHistoricalUsageChart';
-import ClusterHistoricalUsageCsvModal, { CSVGroupBy } from './ClusterHistoricalUsageCsvModal';
-import ClusterHistoricalUsageFilters, {
-  ClusterHistoricalUsageFiltersInterface,
-} from './ClusterHistoricalUsageFilters';
-import { mapResourceAllocationApiToChartSeries } from './utils';
 
 export const DEFAULT_RANGE_DAY = 14;
 export const DEFAULT_RANGE_MONTH = 6;

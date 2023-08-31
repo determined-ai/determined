@@ -6,6 +6,7 @@ import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
 import Link from 'components/Link';
 import ResourcePoolBindingModalComponent from 'components/ResourcePoolBindingModal';
+import css from 'components/ResourcePoolBindings.module.scss';
 import { ColumnDef } from 'components/Table/InteractiveTable';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import { paths } from 'routes/utils';
@@ -14,8 +15,6 @@ import workspaceStore from 'stores/workspaces';
 import { ResourcePool, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';
-
-import css from './ResourcePoolBindings.module.scss';
 
 interface Props {
   pool: ResourcePool;

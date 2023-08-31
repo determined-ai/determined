@@ -1,4 +1,4 @@
-import { getLogger, Level } from './Logger';
+import { getLogger, Level } from 'utils/Logger';
 /* eslint-disable no-console */
 
 describe('Logger Utilities', () => {

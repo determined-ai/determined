@@ -1,10 +1,9 @@
 import { Button as AntdButton } from 'antd';
 import React, { forwardRef, MouseEvent, ReactNode } from 'react';
 
+import css from 'components/kit/Button.module.scss';
 import { ConditionalWrapper } from 'components/kit/internal/ConditionalWrapper';
 import Tooltip from 'components/kit/Tooltip';
-
-import css from './Button.module.scss';
 
 interface ButtonProps {
   block?: boolean;

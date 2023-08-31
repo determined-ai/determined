@@ -6,15 +6,14 @@ import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import { ColumnDef } from 'components/Table/InteractiveTable';
 import { createOmitableRenderer, relativeTimeRenderer } from 'components/Table/Table';
+import css from 'pages/JobQueue/JobQueue.module.scss';
+import { DEFAULT_COLUMN_WIDTHS } from 'pages/JobQueue/JobQueue.settings';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
 import { CommandTask, FullJob, Job, JobType } from 'types';
 import { jobTypeIconName, jobTypeLabel } from 'utils/job';
 import { floatToPercent, truncate } from 'utils/string';
 import { openCommand } from 'utils/wait';
-
-import css from './JobQueue.module.scss';
-import { DEFAULT_COLUMN_WIDTHS } from './JobQueue.settings';
 
 type Renderer<T> = (_: unknown, record: T) => ReactNode;
 export type JobTypeRenderer = Renderer<Job>;

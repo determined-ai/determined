@@ -4,7 +4,7 @@ import { MenuClickEventHandler } from 'rc-menu/lib/interface';
 import { PropsWithChildren, useMemo } from 'react';
 import * as React from 'react';
 
-import css from './Dropdown.module.scss';
+import css from 'components/kit/Dropdown.module.scss';
 
 export interface MenuDivider {
   type: 'divider';

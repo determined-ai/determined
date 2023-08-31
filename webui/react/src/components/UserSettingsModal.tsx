@@ -3,6 +3,7 @@ import { Map } from 'immutable';
 import { useMemoizedObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import CodeEditor from 'components/kit/CodeEditor';
 import { Modal } from 'components/kit/Modal';
 import useUI from 'stores/contexts/UI';
 import userSettings from 'stores/userSettings';
@@ -11,8 +12,6 @@ import { isJsonObject, isObject } from 'utils/data';
 import handleError from 'utils/error';
 import { Loadable, Loaded } from 'utils/loadable';
 import { Mode } from 'utils/themes';
-
-import CodeEditor from './kit/CodeEditor';
 
 interface Props {
   onSave?: () => void;

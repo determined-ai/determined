@@ -4,10 +4,9 @@ import React, { useMemo } from 'react';
 
 import iconChart from 'assets/images/icon-chart.svg?url';
 import iconLogs from 'assets/images/icon-logs.svg?url';
+import css from 'components/SkeletonSection.module.scss';
 import { ValueOf } from 'types';
 import { isNumber } from 'utils/data';
-
-import css from './SkeletonSection.module.scss';
 
 export const ContentType = {
   Chart: 'Chart',

@@ -5,10 +5,9 @@ import React, { useCallback, useMemo, useState } from 'react';
 import Button from 'components/kit/Button';
 import Spinner from 'components/kit/Spinner';
 import Tooltip from 'components/kit/Tooltip';
+import EditableMetadata from 'components/Metadata/EditableMetadata';
 import { Metadata } from 'types';
 import handleError, { ErrorType } from 'utils/error';
-
-import EditableMetadata from './EditableMetadata';
 
 interface Props {
   disabled?: boolean;

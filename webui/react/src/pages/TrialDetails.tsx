@@ -11,6 +11,7 @@ import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
+import MultiTrialDetailsHyperparameters from 'pages/TrialDetails/MultiTrialDetailsHyperparameters';
 import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
@@ -26,8 +27,6 @@ import { isSingleTrialExperiment } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { isAborted, isNotFound } from 'utils/service';
-
-import MultiTrialDetailsHyperparameters from './TrialDetails/MultiTrialDetailsHyperparameters';
 
 const TabType = {
   Hyperparameters: 'hyperparameters',

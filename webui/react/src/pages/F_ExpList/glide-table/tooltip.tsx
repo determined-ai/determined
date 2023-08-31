@@ -2,10 +2,9 @@ import { DataEditorProps, GridMouseEventArgs } from '@hpe.com/glide-data-grid';
 import { Tooltip } from 'antd';
 import React, { ReactNode, useCallback, useEffect, useMemo } from 'react';
 
+import { ColumnDefs } from 'pages/F_ExpList/glide-table/columns';
+import { GlideTableProps } from 'pages/F_ExpList/glide-table/GlideTable';
 import { Loadable } from 'utils/loadable';
-
-import { ColumnDefs } from './columns';
-import { GlideTableProps } from './GlideTable';
 
 export interface TooltipProps {
   x: number;

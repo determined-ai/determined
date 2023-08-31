@@ -15,6 +15,8 @@ import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
+import ExperimentCheckpoints from 'pages/ExperimentDetails/ExperimentCheckpoints';
+import ExperimentCodeViewer from 'pages/ExperimentDetails/ExperimentCodeViewer';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
 import TrialDetailsMetrics from 'pages/TrialDetails/TrialDetailsMetrics';
@@ -24,9 +26,6 @@ import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import { ExperimentBase, Note, TrialDetails, TrialItem, ValueOf } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-
-import ExperimentCheckpoints from './ExperimentCheckpoints';
-import ExperimentCodeViewer from './ExperimentCodeViewer';
 
 const TabType = {
   Checkpoints: 'checkpoints',

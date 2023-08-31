@@ -1,7 +1,6 @@
 import * as Api from 'services/api-ts-sdk';
 import { CommandType, Job, JobType } from 'types';
-
-import * as utils from './job';
+import * as utils from 'utils/job';
 
 describe('Job Utilities', () => {
   describe('jobTypeIconName', () => {

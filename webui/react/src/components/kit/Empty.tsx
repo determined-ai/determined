@@ -1,8 +1,7 @@
 import React, { ReactNode } from 'react';
 
+import css from 'components/kit/Empty.module.scss';
 import Icon, { IconName } from 'components/kit/Icon';
-
-import css from './Empty.module.scss';
 
 interface EmptyProps {
   description?: ReactNode;

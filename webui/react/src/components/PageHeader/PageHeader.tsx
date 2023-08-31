@@ -5,9 +5,8 @@ import { MenuItem } from 'components/kit/Dropdown';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import { BreadCrumbRoute } from 'components/Page';
+import css from 'components/PageHeader/PageHeader.module.scss';
 import { CommonProps } from 'types';
-
-import css from './PageHeader.module.scss';
 
 export interface Props extends CommonProps {
   breadcrumb: BreadCrumbRoute[];

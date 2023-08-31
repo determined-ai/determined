@@ -4,8 +4,7 @@ import uPlot, { Plugin } from 'uplot';
 
 import { distance, findInsertionIndex } from 'components/kit/internal/functions';
 import { CheckpointsDict } from 'components/kit/internal/types';
-
-import css from './closestPointPlugin.module.scss';
+import css from 'components/kit/internal/UPlot/UPlotChart/closestPointPlugin.module.scss';
 
 interface Point {
   idx: number;

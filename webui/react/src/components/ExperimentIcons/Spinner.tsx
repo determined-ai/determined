@@ -1,6 +1,6 @@
 import React, { CSSProperties } from 'react';
 
-import css from './Spinner.module.scss';
+import css from 'components/ExperimentIcons/Spinner.module.scss';
 
 interface Props {
   style?: CSSProperties;

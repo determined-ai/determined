@@ -1,8 +1,7 @@
 import React from 'react';
 
 import Avatar, { Props as AvatarProps } from 'components/Avatar';
-
-import css from './AvatarCard.module.scss';
+import css from 'components/AvatarCard/AvatarCard.module.scss';
 
 export type Props = Omit<AvatarProps, 'hideTooltip'>;
 

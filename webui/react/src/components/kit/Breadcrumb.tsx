@@ -1,12 +1,12 @@
 import { Breadcrumb as AntdBreadcrumb } from 'antd';
 import React, { ReactNode } from 'react';
 
+import css from 'components/kit/Breadcrumb.module.css';
 import Button from 'components/kit/Button';
 import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 
-import css from './Breadcrumb.module.css';
 interface BreadcrumbProps {
   children?: ReactNode;
   separator?: ReactNode;

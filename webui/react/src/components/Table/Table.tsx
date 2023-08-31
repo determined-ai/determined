@@ -12,6 +12,7 @@ import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
+import css from 'components/Table/Table.module.scss';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import { OMITTED_STR } from 'constants/accessControl';
@@ -35,8 +36,6 @@ import {
 import { getDuration } from 'utils/datetime';
 import { canBeOpened } from 'utils/task';
 import { openCommand } from 'utils/wait';
-
-import css from './Table.module.scss';
 
 type TableRecord = CommandTask | ExperimentItem | TrialItem | Project | Workspace;
 

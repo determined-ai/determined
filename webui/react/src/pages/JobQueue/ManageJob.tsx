@@ -5,6 +5,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { columns } from 'pages/JobQueue/JobQueue.table';
+import css from 'pages/JobQueue/ManageJob.module.scss';
 import { getJobQ, updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
@@ -15,7 +16,6 @@ import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { floatToPercent, truncate } from 'utils/string';
 
-import css from './ManageJob.module.scss';
 const { Option } = Select;
 
 interface Props {

@@ -2,7 +2,7 @@ import React, { CSSProperties } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
-import css from './DraggableListItem.module.scss';
+import css from 'components/DraggableListItem.module.scss';
 
 interface Props {
   children: React.ReactNode;

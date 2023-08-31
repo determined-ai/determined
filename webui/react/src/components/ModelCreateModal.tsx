@@ -8,6 +8,7 @@ import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Select from 'components/kit/Select';
 import Link from 'components/Link';
+import css from 'components/ModelCreateModal.module.scss';
 import { ModalCloseReason } from 'hooks/useModal/useModal';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -17,8 +18,6 @@ import { Metadata } from 'types';
 import { notification } from 'utils/dialogApi';
 import handleError, { DetError, ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
-
-import css from './ModelCreateModal.module.scss';
 
 const FORM_ID = 'create-model-form';
 

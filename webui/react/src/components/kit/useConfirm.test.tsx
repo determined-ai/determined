@@ -3,8 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import Button from 'components/kit/Button';
-
-import useConfirm, { ConfirmationProvider, voidFn } from './useConfirm';
+import useConfirm, { ConfirmationProvider, voidFn } from 'components/kit/useConfirm';
 
 const CONFIRM_TITLE = 'Really?!';
 const CONFIRM_CONTENT = 'Do you really want to do this?!';

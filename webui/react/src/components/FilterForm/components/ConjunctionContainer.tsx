@@ -1,7 +1,6 @@
+import css from 'components/FilterForm/components/ConjunctionContainer.module.scss';
 import { Conjunction } from 'components/FilterForm/components/type';
 import Select, { Option, SelectValue } from 'components/kit/Select';
-
-import css from './ConjunctionContainer.module.scss';
 
 interface Props {
   index: number;

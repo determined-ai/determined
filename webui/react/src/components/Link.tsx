@@ -1,10 +1,9 @@
 import React, { CSSProperties, MouseEvent, useCallback } from 'react';
 
 import Button from 'components/kit/Button';
+import css from 'components/Link.module.scss';
 import { handlePath, linkPath } from 'routes/utils';
 import { AnyMouseEventHandler, windowOpenFeatures } from 'utils/routes';
-
-import css from './Link.module.scss';
 
 export interface Props {
   children?: React.ReactNode;

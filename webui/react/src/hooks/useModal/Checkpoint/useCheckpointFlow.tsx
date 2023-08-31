@@ -3,10 +3,9 @@ import { ReactElement, useCallback, useMemo } from 'react';
 import CheckpointModalComponent from 'components/CheckpointModal';
 import { useModal } from 'components/kit/Modal';
 import ModelCreateModal from 'components/ModelCreateModal';
+import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import { ModalCloseReason } from 'hooks/useModal/useModal';
 import { CheckpointWorkloadExtended, CoreApiGenericCheckpoint, ExperimentConfig } from 'types';
-
-import useModalCheckpointRegister from './useModalCheckpointRegister';
 
 interface Return {
   checkpointModalComponent: React.ReactNode;

@@ -3,12 +3,15 @@ import { useEffect, useState } from 'react';
 import type { Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { terminalRunStates } from 'constants/states';
+import {
+  MetricsAggregateInterface,
+  MetricType,
+  ProfilerMetricsResponse,
+} from 'pages/TrialDetails/Profiles/types';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useUI from 'stores/contexts/UI';
 import { RunState } from 'types';
-
-import { MetricsAggregateInterface, MetricType, ProfilerMetricsResponse } from './types';
 
 const DEFAULT_DATA: MetricsAggregateInterface = {
   data: [],

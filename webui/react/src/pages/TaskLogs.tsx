@@ -11,14 +11,13 @@ import { Settings, settingsConfigForTask } from 'components/kit/LogViewer/LogVie
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
 import { useSettings } from 'hooks/useSettings';
+import css from 'pages/TaskLogs.module.scss';
 import { paths, serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
 import { CommandTask, CommandType } from 'types';
 import handleError from 'utils/error';
-
-import css from './TaskLogs.module.scss';
 
 type Params = {
   taskId: string;

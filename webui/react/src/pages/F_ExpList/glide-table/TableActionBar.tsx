@@ -13,6 +13,11 @@ import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
+import ColumnPickerMenu from 'pages/F_ExpList/glide-table/ColumnPickerMenu';
+import { TableViewMode } from 'pages/F_ExpList/glide-table/GlideTable';
+import MultiSortMenu, { Sort } from 'pages/F_ExpList/glide-table/MultiSortMenu';
+import { OptionsMenu, RowHeight } from 'pages/F_ExpList/glide-table/OptionsMenu';
+import css from 'pages/F_ExpList/glide-table/TableActionBar.module.scss';
 import {
   activateExperiments,
   archiveExperiments,
@@ -43,12 +48,6 @@ import {
 import { Loadable } from 'utils/loadable';
 import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
-
-import ColumnPickerMenu from './ColumnPickerMenu';
-import { TableViewMode } from './GlideTable';
-import MultiSortMenu, { Sort } from './MultiSortMenu';
-import { OptionsMenu, RowHeight } from './OptionsMenu';
-import css from './TableActionBar.module.scss';
 
 const batchActions = [
   ExperimentAction.OpenTensorBoard,

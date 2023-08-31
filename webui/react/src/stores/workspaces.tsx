@@ -14,12 +14,11 @@ import {
 } from 'services/api';
 import { V1PostWorkspaceRequest } from 'services/api-ts-sdk';
 import { GetWorkspacesParams } from 'services/types';
+import PollingStore from 'stores/polling';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { workspaceSorter } from 'utils/sort';
-
-import PollingStore from './polling';
 
 class WorkspaceStore extends PollingStore {
   #loadableWorkspaces: WritableObservable<Loadable<Workspace[]>> = observable(NotLoaded);
