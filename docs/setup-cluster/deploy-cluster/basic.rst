@@ -1,4 +1,4 @@
-.. _basic-installation:
+.. _basic:
 
 ####################
  Quick Installation
@@ -46,5 +46,4 @@ Install the Determined library and start a cluster locally.
 
 Once Determined is installed and Docker is running, you can sign in.
 
--  Go to ``http://localhost:8080/``.
--  Accept the default determined username, leave the password empty, and then click **Sign In**.
+.. include:: ../../_shared/basic-installation.txt

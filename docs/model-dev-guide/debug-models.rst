@@ -36,7 +36,8 @@ Determined model. Follow the nine steps as applicable to your environment:
  Prerequisite
 **************
 
-Successful cluster installation.
+Ensure you have successfully installed a Determined cluster. The cluster can be installed on a local
+development machine, on-prem, or on cloud. For installation guides, visit :ref:`installation-guide`.
 
 .. _step1:
 
