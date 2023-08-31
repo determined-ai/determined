@@ -179,11 +179,13 @@ func (db *PgDB) AllocationByID(aID model.AllocationID) (*model.Allocation, error
 func (db *PgDB) StartAllocationSession(
 	allocationID model.AllocationID, owner *model.User,
 ) (string, error) {
+	if owner == nil {
+		return "", errors.New("owner cannot be nil for allocation session")
+	}
+
 	taskSession := &model.AllocationSession{
 		AllocationID: allocationID,
-	}
-	if owner != nil {
-		taskSession.OwnerID = &owner.ID
+		OwnerID:      &owner.ID,
 	}
 
 	query := `
@@ -194,7 +196,7 @@ INSERT INTO allocation_sessions (allocation_id, owner_id) VALUES
 	}
 
 	v2 := paseto.NewV2()
-	token, err := v2.Sign(db.tokenKeys.PrivateKey, taskSession, nil)
+	token, err := v2.Sign(GetTokenKeys().PrivateKey, taskSession, nil)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to generate task authentication token")
 	}

@@ -149,7 +149,7 @@ func MustMigrateTestPostgres(t *testing.T, db *PgDB, migrationsPath string, acti
 	}
 	err := db.Migrate(migrationsPath, actions)
 	require.NoError(t, err, "failed to migrate postgres")
-	err = db.initAuthKeys()
+	err = InitAuthKeys()
 	require.NoError(t, err, "failed to initAuthKeys")
 }
 
@@ -198,7 +198,8 @@ func RequireMockUser(t *testing.T, db *PgDB) model.User {
 		PasswordHash: null.NewString("", false),
 		Active:       true,
 	}
-	_, err := db.AddUser(&user, nil)
+	// HACK: to get around user/db import cycle, should have a user.Add().
+	_, err := HackAddUser(context.TODO(), &user)
 	require.NoError(t, err, "failed to add user")
 	return user
 }

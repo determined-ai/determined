@@ -89,7 +89,7 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB) (*apiServer, model.User, context.
 	}
 	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "basic"}
 
-	userModel, err := user.UserByUsername("admin")
+	userModel, err := user.ByUsername(context.TODO(), "admin")
 	require.NoError(t, err, "Couldn't get admin user")
 	resp, err := api.Login(context.TODO(), &apiv1.LoginRequest{Username: "admin"})
 	require.NoError(t, err, "Couldn't login")
@@ -102,16 +102,24 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB) (*apiServer, model.User, context.
 func TestGetUsersRemote(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
-	remoteUser, err := api.m.db.AddUser(&model.User{
-		Username: uuid.New().String(),
-		Remote:   true,
-	}, nil)
+	remoteUser, err := user.Add(
+		context.TODO(),
+		&model.User{
+			Username: uuid.New().String(),
+			Remote:   true,
+		},
+		nil,
+	)
 	require.NoError(t, err)
 
-	nonRemoteUser, err := api.m.db.AddUser(&model.User{
-		Username: uuid.New().String(),
-		Remote:   false,
-	}, nil)
+	nonRemoteUser, err := user.Add(
+		context.TODO(),
+		&model.User{
+			Username: uuid.New().String(),
+			Remote:   false,
+		},
+		nil,
+	)
 	require.NoError(t, err)
 
 	resp, err := api.GetUsers(ctx, &apiv1.GetUsersRequest{})
@@ -127,10 +135,13 @@ func TestGetUsersRemote(t *testing.T) {
 
 func TestPatchUser(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
-	userID, err := api.m.db.AddUser(&model.User{
-		Username: uuid.New().String(),
-		Active:   false,
-	}, nil)
+	userID, err := user.Add(ctx,
+		&model.User{
+			Username: uuid.New().String(),
+			Active:   false,
+		},
+		nil,
+	)
 	require.NoError(t, err)
 
 	username := uuid.New().String()
@@ -195,10 +206,13 @@ func TestPatchUser(t *testing.T) {
 	// Verify we can't set a display name similar to another username or display name.
 	similiarName := uuid.New().String()
 	similiarDisplay := uuid.New().String()
-	_, err = api.m.db.AddUser(&model.User{
-		Username:    similiarName + "uPPER",
-		DisplayName: null.StringFrom(similiarDisplay + "lOwEr"),
-	}, nil)
+	_, err = user.Add(ctx,
+		&model.User{
+			Username:    similiarName + "uPPER",
+			DisplayName: null.StringFrom(similiarDisplay + "lOwEr"),
+		},
+		nil,
+	)
 	require.NoError(t, err)
 
 	_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{

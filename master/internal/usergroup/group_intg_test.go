@@ -128,7 +128,7 @@ func TestUserGroups(t *testing.T) {
 		i := usersContain(users, testUser.ID)
 		require.Equal(t, -1, i, "User found in group after removing them from it")
 
-		updatedTestUser, err := user.UserByID(testUser.ID)
+		updatedTestUser, err := user.ByID(ctx, testUser.ID)
 		require.NoError(t, err, "returned error when querying updated user")
 		require.Greater(t, updatedTestUser.ModifiedAt, testStart,
 			"Users.modified_at not updated when removed from group")
@@ -240,9 +240,9 @@ func TestUserGroups(t *testing.T) {
 
 	t.Run("AddGroupWithMembers rolls back transactions", func(t *testing.T) {
 		const tempGroupName = "tempGroupName"
-		g, _, err := AddGroupWithMembers(ctx, Group{Name: tempGroupName}, 1, 2, 3, 1856109534)
+		g, _, err := AddGroupWithMembers(ctx, model.Group{Name: tempGroupName}, 1, 2, 3, 1856109534)
 		// Just in case this fails, clean up.
-		defer func(g Group) {
+		defer func(g model.Group) {
 			if g.ID != 0 {
 				require.NoError(t, DeleteGroup(ctx, g.ID))
 			}
@@ -274,9 +274,9 @@ func TestUserGroups(t *testing.T) {
 			_ = deleteUser(ctx, updateTestUser2.ID)
 		})
 
-		_, err := pgDB.AddUser(&updateTestUser1, nil)
+		_, err := user.Add(ctx, &updateTestUser1, nil)
 		require.NoError(t, err, "failure creating user in setup")
-		_, err = pgDB.AddUser(&updateTestUser2, nil)
+		_, err = user.Add(ctx, &updateTestUser2, nil)
 		require.NoError(t, err, "failure creating user in setup")
 
 		users, name, err := UpdateGroupAndMembers(ctx, testGroup.ID, "newName",
@@ -322,7 +322,7 @@ func TestUserGroups(t *testing.T) {
 		// Get personal group.
 		groups, _, _, err := SearchGroups(ctx, "", testUser.ID, 0, 0)
 		require.NoError(t, err)
-		var personalGroup *Group
+		var personalGroup *model.Group
 		for _, g := range groups {
 			if g.OwnerID != 0 {
 				require.Nil(t, personalGroup, "only one personal group should be returned")
@@ -350,15 +350,15 @@ func TestUserGroups(t *testing.T) {
 }
 
 var (
-	testGroup = Group{
+	testGroup = model.Group{
 		ID:   9001,
 		Name: "testGroup",
 	}
-	testGroupStatic = Group{
+	testGroupStatic = model.Group{
 		ID:   10001,
 		Name: "testGroupStatic",
 	}
-	testGroups = []Group{testGroup, testGroupStatic}
+	testGroups = []model.Group{testGroup, testGroupStatic}
 	testUser   = model.User{
 		ID:       1217651234,
 		Username: fmt.Sprintf("IntegrationTest%d", 1217651234),
@@ -372,7 +372,7 @@ const (
 )
 
 func setUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
-	_, err := pgDB.AddUser(&testUser, nil)
+	_, err := user.Add(ctx, &testUser, nil)
 	require.NoError(t, err, "failure creating user in setup")
 
 	_, _, err = AddGroupWithMembers(ctx, testGroupStatic, testUser.ID)
@@ -402,7 +402,7 @@ func cleanUp(ctx context.Context, t *testing.T) {
 }
 
 // groupsContains returns -1 if group id was not found, else returns the index.
-func groupsContain(groups []Group, id int) int {
+func groupsContain(groups []model.Group, id int) int {
 	if len(groups) < 1 {
 		return -1
 	}

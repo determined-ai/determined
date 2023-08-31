@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -304,7 +305,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 		jobservice.Default.UnregisterJob(c.jobID)
-		if err := c.db.DeleteUserSessionByToken(c.GenericCommandSpec.Base.UserSessionToken); err != nil {
+		if err := user.DeleteSessionByToken(
+			context.TODO(),
+			c.GenericCommandSpec.Base.UserSessionToken,
+		); err != nil {
 			ctx.Log().WithError(err).Errorf(
 				"failure to delete user session for task: %v", c.taskID)
 		}
@@ -313,7 +317,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 			ctx.Log().WithError(err).Error("marking task complete")
 		}
-		if err := c.db.DeleteUserSessionByToken(c.GenericCommandSpec.Base.UserSessionToken); err != nil {
+		if err := user.DeleteSessionByToken(
+			context.TODO(),
+			c.GenericCommandSpec.Base.UserSessionToken,
+		); err != nil {
 			ctx.Log().WithError(err).Errorf(
 				"failure to delete user session for task: %v", c.taskID)
 		}

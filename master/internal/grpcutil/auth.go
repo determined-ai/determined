@@ -135,7 +135,7 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 			return nil, nil, status.Error(codes.InvalidArgument,
 				"allocation session has no associated user")
 		}
-		u, err := user.UserByID(*allocationSession.OwnerID)
+		u, err := user.ByID(ctx, *allocationSession.OwnerID)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -151,7 +151,7 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 	var userModel *model.User
 	var session *model.UserSession
 	var err error
-	userModel, session, err = user.UserByToken(token, &extConfig)
+	userModel, session, err = user.ByToken(ctx, token, &extConfig)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) ||
 			errors.Is(err, db.ErrNotFound) ||
@@ -259,7 +259,7 @@ func userTokenResponse(_ context.Context, w http.ResponseWriter, resp proto.Mess
 		http.SetCookie(w, &http.Cookie{
 			Name:    cookieName,
 			Value:   r.Token,
-			Expires: time.Now().Add(db.SessionDuration),
+			Expires: time.Now().Add(user.SessionDuration),
 			Path:    "/",
 		})
 	case *apiv1.LogoutResponse:
