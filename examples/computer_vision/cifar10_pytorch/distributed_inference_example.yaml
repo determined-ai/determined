@@ -1,7 +1,7 @@
 name: distributed_inference_example
 entrypoint: >-
   python3 -m determined.launch.torch_distributed
-  python3 inference.py
+  python3 inference_example.py
 
 resources:
   slots_per_trial: 2
