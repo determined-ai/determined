@@ -53,7 +53,7 @@ def modules_from_dir(path: str) -> Set[str]:
             continue
 
         # Look for dir containing the module.
-        dirname, basename = os.path.split(v.__file__)
+        dirname, basename = os.path.split(str(v.__file__))
         if basename == "__init__.py":
             dirname, basename = os.path.split(dirname)
 
@@ -118,7 +118,7 @@ def import_from_path(path: os.PathLike) -> Iterator:
     sys.path = [os.path.abspath(path)] + sys.path
     # Include a Finder that prevents found files from creating __pycache__ files.
     old_meta_path = sys.meta_path
-    sys.meta_path = [NoCachePathFinder()] + sys.meta_path  # type: ignore
+    sys.meta_path = [NoCachePathFinder()] + sys.meta_path
     _in_import_from_path = True
     try:
         yield

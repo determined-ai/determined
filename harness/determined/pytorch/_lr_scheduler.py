@@ -75,11 +75,11 @@ class LRScheduler:
     def step(self, *args: Any, **kwargs: Any) -> None:
         self._scheduler.step(*args, **kwargs)
 
-    def get_last_lr(self) -> List:
-        return self._scheduler.get_last_lr()
+    def get_last_lr(self) -> List[float]:
+        return list(self._scheduler.get_last_lr())
 
     def load_state_dict(self, state_dict: Dict[Any, Any]) -> None:
         self._scheduler.load_state_dict(state_dict)
 
     def state_dict(self) -> Dict[Any, Any]:
-        return self._scheduler.state_dict()
+        return dict(self._scheduler.state_dict())
