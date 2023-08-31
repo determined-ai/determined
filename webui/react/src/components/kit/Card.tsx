@@ -1,13 +1,14 @@
 import React, { Children, CSSProperties } from 'react';
 
-import Button from 'components/kit/Button';
-import css from 'components/kit/Card.module.scss';
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { ConditionalWrapper } from 'components/kit/internal/ConditionalWrapper';
 import { isNumber } from 'components/kit/internal/functions';
 import Grid, { GridMode } from 'components/kit/internal/Grid';
 import Link from 'components/kit/internal/Link';
+
+import Button from './Button';
+import css from './Card.module.scss';
+import Dropdown, { MenuItem } from './Dropdown';
 
 type CardPropsBase = {
   actionMenu?: MenuItem[];

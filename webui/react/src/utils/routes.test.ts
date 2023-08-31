@@ -2,8 +2,10 @@ import { Router as RemixRouter } from '@remix-run/router';
 import React from 'react';
 
 import router from 'router';
-import { AnyMouseEvent, reactHostAddress } from 'utils/routes';
-import * as routes from 'utils/routes';
+import { reactHostAddress } from 'utils/routes';
+
+import type { AnyMouseEvent } from './routes';
+import * as routes from './routes';
 
 const setup = (url = '/', base = 'http://www.example.com') => {
   const newUrl = new URL(url, base);

@@ -28,11 +28,12 @@ import {
 } from 'react-draggable';
 
 import Spinner from 'components/kit/Spinner';
-import css from 'components/Table/InteractiveTable.module.scss';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
 import { Primitive } from 'types';
+
+import css from './InteractiveTable.module.scss';
 
 export interface InteractiveTableSettings {
   /**

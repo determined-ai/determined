@@ -3,10 +3,11 @@ import React, { ReactNode } from 'react';
 import { ImageAlert } from 'components/Image';
 import Button from 'components/kit/Button';
 import Link from 'components/Link';
-import css from 'pages/F_ExpList/glide-table/exceptions.module.scss';
 import { paths } from 'routes/utils';
 import useUI from 'stores/contexts/UI';
 import { DarkLight } from 'utils/themes';
+
+import css from './exceptions.module.scss';
 
 interface ExceptionMessageProps {
   ImageComponent?: React.FC<{ darkLight?: DarkLight }>;

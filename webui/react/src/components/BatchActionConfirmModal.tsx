@@ -1,8 +1,9 @@
 import React from 'react';
 
-import { Modal } from 'components/kit/Modal';
 import { ExperimentAction } from 'types';
 import handleError from 'utils/error';
+
+import { Modal } from './kit/Modal';
 
 interface Props {
   batchAction: ExperimentAction;

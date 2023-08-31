@@ -1,7 +1,6 @@
 import { useObservable } from 'micro-observables';
 import { useRef } from 'react';
 
-import css from 'components/FilterForm/components/FilterForm.module.scss';
 import { FilterFormStore, ITEM_LIMIT } from 'components/FilterForm/components/FilterFormStore';
 import FilterGroup from 'components/FilterForm/components/FilterGroup';
 import { FormKind } from 'components/FilterForm/components/type';
@@ -10,6 +9,8 @@ import Spinner from 'components/kit/Spinner';
 import Toggle from 'components/kit/Toggle';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
 import { Loadable } from 'utils/loadable';
+
+import css from './FilterForm.module.scss';
 
 interface Props {
   formStore: FilterFormStore;

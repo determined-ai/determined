@@ -1,8 +1,9 @@
 import Hermes from 'hermes-parallel-coordinates';
 import React, { useEffect, useRef } from 'react';
 
-import css from 'components/ParallelCoordinates.module.scss';
 import useUI from 'stores/contexts/UI';
+
+import css from './ParallelCoordinates.module.scss';
 
 interface Props {
   config?: Hermes.RecursivePartial<Hermes.Config>;

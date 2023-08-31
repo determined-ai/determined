@@ -1,6 +1,5 @@
 import { Dayjs } from 'dayjs';
 
-import * as Api from 'services/api-ts-sdk/api';
 import {
   DetailedUser,
   FetchOptions,
@@ -15,6 +14,7 @@ import {
   TrialWorkloadFilter,
 } from 'types';
 
+import * as Api from './api-ts-sdk/api';
 export interface LoginResponse {
   token: string;
   user: DetailedUser;

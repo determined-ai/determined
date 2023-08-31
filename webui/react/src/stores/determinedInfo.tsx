@@ -1,8 +1,9 @@
 import { getInfo } from 'services/api';
-import PollingStore from 'stores/polling';
 import { ValueOf } from 'types';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { observable, WritableObservable } from 'utils/observable';
+
+import PollingStore from './polling';
 
 export interface SsoProvider {
   name: string;

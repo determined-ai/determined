@@ -3,15 +3,16 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
+import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
+import { postUser as mockCreateUser } from 'services/api';
+
 import CreateUserModalComponent, {
   API_SUCCESS_MESSAGE_CREATE,
   BUTTON_NAME,
   MODAL_HEADER_LABEL_CREATE,
   USER_NAME_LABEL,
-} from 'components/CreateUserModal';
-import Button from 'components/kit/Button';
-import { useModal } from 'components/kit/Modal';
-import { postUser as mockCreateUser } from 'services/api';
+} from './CreateUserModal';
 
 vi.mock('services/api', () => ({
   getUserRoles: () => Promise.resolve([]),

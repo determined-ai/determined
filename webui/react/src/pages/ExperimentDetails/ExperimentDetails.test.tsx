@@ -1,11 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 
-import ExperimentDetails, {
-  ERROR_MESSAGE,
-  INVALID_ID_MESSAGE,
-} from 'pages/ExperimentDetails/ExperimentDetails';
-import RESPONSES from 'pages/ExperimentDetails/ExperimentDetails.test.mock';
 import {
   getExperimentDetails,
   getExpTrials,
@@ -16,6 +11,9 @@ import {
 } from 'services/api';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import {} from 'stores/cluster';
+
+import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
+import RESPONSES from './ExperimentDetails.test.mock';
 
 vi.useFakeTimers();
 /**

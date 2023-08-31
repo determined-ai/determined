@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 
-import Message, { MessageType, Props } from 'components/Message/Message';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
+
+import Message, { MessageType, Props } from './Message';
 
 const setup = (props: Props) => {
   const handleOnChange = vi.fn();

@@ -5,7 +5,6 @@ import { LineChart } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
-import SystemMetricFilter from 'pages/TrialDetails/Profiles/Charts/SystemMetricChartFilters';
 import { ChartProps, MetricType } from 'pages/TrialDetails/Profiles/types';
 import { useFetchProfilerMetrics } from 'pages/TrialDetails/Profiles/useFetchProfilerMetrics';
 import { useFetchProfilerSeries } from 'pages/TrialDetails/Profiles/useFetchProfilerSeries';
@@ -14,6 +13,8 @@ import {
   getUnitForMetricName,
 } from 'pages/TrialDetails/Profiles/utils';
 import handleError from 'utils/error';
+
+import SystemMetricFilter from './SystemMetricChartFilters';
 
 export interface Settings {
   agentId?: string;

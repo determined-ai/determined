@@ -1,4 +1,4 @@
-import { findInsertionIndex, sumArrays } from 'utils/array';
+import { findInsertionIndex, sumArrays } from './array';
 
 const FIBO = [0, 1, 1, 2, 3, 5, 8];
 

@@ -9,8 +9,9 @@ import MetricSelect from 'components/MetricSelect';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelect from 'components/ScaleSelect';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
-import css from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters.module.scss';
 import { Metric, Scale, ValueOf } from 'types';
+
+import css from './ExperimentVisualizationFilters.module.scss';
 
 export interface VisualizationFilters {
   batch?: number;

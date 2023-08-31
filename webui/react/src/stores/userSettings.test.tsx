@@ -3,8 +3,9 @@ import * as t from 'io-ts';
 
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
-import { UserSettingsStore } from 'stores/userSettings';
 import { Loadable, Loaded } from 'utils/loadable';
+
+import { UserSettingsStore } from './userSettings';
 
 const CURRENT_USER = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
 

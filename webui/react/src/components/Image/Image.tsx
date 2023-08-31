@@ -1,7 +1,8 @@
 import React from 'react';
 
-import css from 'components/Image/Image.module.scss';
 import { DarkLight } from 'utils/themes';
+
+import css from './Image.module.scss';
 
 export interface Props {
   darkLight?: DarkLight;

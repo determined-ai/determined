@@ -4,16 +4,17 @@ import { ColumnType } from 'antd/es/table';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import React from 'react';
 
-import ResponsiveTable from 'components/Table/ResponsiveTable';
 import { getFullPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table/Table';
+import { Pagination, RecordKey, UnknownRecord, ValueOf } from 'types';
+import { alphaNumericSorter, numericSorter } from 'utils/sort';
+import { generateAlphaNumeric } from 'utils/string';
+
+import ResponsiveTable from './ResponsiveTable';
 import TableFilterDropdown, {
   ARIA_LABEL_APPLY,
   ARIA_LABEL_CONTAINER,
   ARIA_LABEL_INPUT,
-} from 'components/Table/TableFilterDropdown';
-import { Pagination, RecordKey, UnknownRecord, ValueOf } from 'types';
-import { alphaNumericSorter, numericSorter } from 'utils/sort';
-import { generateAlphaNumeric } from 'utils/string';
+} from './TableFilterDropdown';
 
 const ColumnValueType = {
   Decimal: 'decimal',

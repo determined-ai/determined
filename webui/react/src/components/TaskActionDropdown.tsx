@@ -4,8 +4,6 @@ import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
-import useConfirm from 'components/kit/useConfirm';
-import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { killTask } from 'services/api';
@@ -13,6 +11,9 @@ import { ExperimentAction as Action, AnyTask, CommandTask, DetailedUser } from '
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { capitalize } from 'utils/string';
 import { isTaskKillable } from 'utils/task';
+
+import useConfirm from './kit/useConfirm';
+import Link from './Link';
 
 interface Props {
   children?: React.ReactNode;

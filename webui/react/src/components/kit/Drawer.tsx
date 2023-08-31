@@ -2,8 +2,9 @@ import { Drawer } from 'antd';
 import React from 'react';
 
 import Button from 'components/kit/Button';
-import css from 'components/kit/Drawer.module.scss';
 import Icon from 'components/kit/Icon';
+
+import css from './Drawer.module.scss';
 
 type DrawerPlacement = 'left' | 'right';
 

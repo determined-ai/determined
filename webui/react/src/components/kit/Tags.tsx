@@ -6,9 +6,9 @@ import Input, { InputRef } from 'components/kit/Input';
 import { alphaNumericSorter, toHtmlId, truncate } from 'components/kit/internal/functions';
 import Link from 'components/kit/internal/Link';
 import { ValueOf } from 'components/kit/internal/types';
-import css from 'components/kit/Tags.module.scss';
 import Tooltip from 'components/kit/Tooltip';
 
+import css from './Tags.module.scss';
 export const TagAction = {
   Add: 'Add',
   Remove: 'Remove',

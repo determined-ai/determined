@@ -1,16 +1,17 @@
 import { Typography } from 'antd';
 import React from 'react';
 
-import DynamicIcon from 'components/DynamicIcon';
 import Card from 'components/kit/Card';
 import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
-import { useProjectActionMenu } from 'components/ProjectActionDropdown';
-import css from 'components/ProjectCard.module.scss';
 import TimeAgo from 'components/TimeAgo';
 import { paths } from 'routes/utils';
 import { Project } from 'types';
 import { nearestCardinalNumber } from 'utils/number';
+
+import DynamicIcon from './DynamicIcon';
+import { useProjectActionMenu } from './ProjectActionDropdown';
+import css from './ProjectCard.module.scss';
 
 interface Props {
   fetchProjects?: () => void;

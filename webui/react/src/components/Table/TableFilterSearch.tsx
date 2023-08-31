@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 import Input, { InputRef } from 'components/kit/Input';
-import css from 'components/Table/TableFilterSearch.module.scss';
+
+import css from './TableFilterSearch.module.scss';
 
 interface Props extends FilterDropdownProps {
   onReset?: () => void;

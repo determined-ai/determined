@@ -1,4 +1,4 @@
-import { MemoryStore, StorageManager } from 'utils/storage';
+import { MemoryStore, StorageManager } from './storage';
 
 const testKey = 'testKey';
 const anotherTestKey = 'anotherTestKey';

@@ -30,14 +30,6 @@ import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { useSettings } from 'hooks/useSettings';
-import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
-import WorkspaceCard from 'pages/WorkspaceList/WorkspaceCard';
-import settingsConfig, {
-  DEFAULT_COLUMN_WIDTHS,
-  WhoseWorkspaces,
-  WorkspaceColumnName,
-  WorkspaceListSettings,
-} from 'pages/WorkspaceList.settings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
@@ -46,6 +38,15 @@ import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
+
+import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
+import WorkspaceCard from './WorkspaceList/WorkspaceCard';
+import settingsConfig, {
+  DEFAULT_COLUMN_WIDTHS,
+  WhoseWorkspaces,
+  WorkspaceColumnName,
+  WorkspaceListSettings,
+} from './WorkspaceList.settings';
 
 const WorkspaceList: React.FC = () => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));

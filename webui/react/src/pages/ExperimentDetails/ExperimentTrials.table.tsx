@@ -2,9 +2,10 @@ import { ReactNode } from 'react';
 
 import { ColumnDef } from 'components/Table/InteractiveTable';
 import { durationRenderer, expStateRenderer, relativeTimeRenderer } from 'components/Table/Table';
-import { DEFAULT_COLUMN_WIDTHS } from 'pages/ExperimentDetails/ExperimentTrials.settings';
 import { V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { TrialItem } from 'types';
+
+import { DEFAULT_COLUMN_WIDTHS } from './ExperimentTrials.settings';
 
 export const columns: ColumnDef<TrialItem>[] = [
   {

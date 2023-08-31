@@ -3,12 +3,13 @@ import { ArgsProps, NotificationInstance } from 'antd/lib/notification/interface
 import { telemetryInstance } from 'hooks/useTelemetry';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'types';
-import { isObject, isString } from 'utils/data';
 import { notification as antdNotification } from 'utils/dialogApi';
 import rootLogger, { LoggerInterface } from 'utils/Logger';
 import { routeToReactUrl } from 'utils/routes';
 import { isAborted, isAuthFailure } from 'utils/service';
 import { listToStr } from 'utils/string';
+
+import { isObject, isString } from './data';
 
 export const ERROR_NAMESPACE = 'EH';
 export const DEFAULT_ERROR_MESSAGE = 'Unknown error encountered.';

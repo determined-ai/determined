@@ -1,10 +1,9 @@
 import React, { useMemo } from 'react';
 
-import Badge, { BadgeType } from 'components/Badge';
+import Badge from 'components/Badge';
 import Bar from 'components/Bar';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import Tooltip from 'components/kit/Tooltip';
-import css from 'components/SlotAllocation.module.scss';
 import { resourceStateToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
@@ -12,6 +11,9 @@ import { getStateColorCssVar, ShirtSize } from 'themes';
 import { ResourceState, SlotState } from 'types';
 import { routeToReactUrl } from 'utils/routes';
 import { floatToPercent } from 'utils/string';
+
+import { BadgeType } from './Badge';
+import css from './SlotAllocation.module.scss';
 
 export interface Props {
   barOnly?: boolean;

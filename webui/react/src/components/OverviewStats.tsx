@@ -2,7 +2,8 @@ import { Typography } from 'antd';
 import React from 'react';
 
 import Card from 'components/kit/Card';
-import css from 'components/OverviewStats.module.scss';
+
+import css from './OverviewStats.module.scss';
 
 interface Props {
   children: React.ReactNode;

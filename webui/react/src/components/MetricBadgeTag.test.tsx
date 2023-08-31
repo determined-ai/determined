@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import MetricBadgeTag from 'components/MetricBadgeTag';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import { Metric } from 'types';
+
+import MetricBadgeTag from './MetricBadgeTag';
 
 vi.mock('components/kit/Tooltip');
 

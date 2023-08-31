@@ -2,8 +2,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import Pagination from 'components/kit/Pagination';
 import Tooltip from 'components/kit/Tooltip';
-import css from 'components/RoutePagination.module.scss';
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
+
+import css from './RoutePagination.module.scss';
 
 interface Props {
   currentId: number;

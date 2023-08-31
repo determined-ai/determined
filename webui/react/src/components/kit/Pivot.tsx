@@ -1,7 +1,7 @@
 import { Tabs, TabsProps } from 'antd';
 import React, { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
-import css from 'components/kit/Pivot.module.scss';
+import css from './Pivot.module.scss';
 
 export type TabItem = {
   children?: ReactNode;

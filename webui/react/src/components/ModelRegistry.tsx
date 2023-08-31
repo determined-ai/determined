@@ -23,13 +23,6 @@ import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import ModelCreateModal from 'components/ModelCreateModal';
 import ModelMoveModal from 'components/ModelMoveModal';
-import css from 'components/ModelRegistry.module.scss';
-import settingsConfig, {
-  DEFAULT_COLUMN_WIDTHS,
-  isOfSortKey,
-  ModelColumnName,
-  Settings,
-} from 'components/ModelRegistry.settings';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -60,6 +53,14 @@ import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
 import { alphaNumericSorter } from 'utils/sort';
 import { getDisplayName } from 'utils/user';
+
+import css from './ModelRegistry.module.scss';
+import settingsConfig, {
+  DEFAULT_COLUMN_WIDTHS,
+  isOfSortKey,
+  ModelColumnName,
+  Settings,
+} from './ModelRegistry.settings';
 
 const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description', 'workspace'];
 

@@ -1,9 +1,10 @@
 import React, { useRef, useState } from 'react';
 
 import { Modal } from 'components/kit/Modal';
-import Paragraph from 'components/kit/Typography/Paragraph';
 import Transfer from 'components/Transfer';
 import handleError from 'utils/error';
+
+import Paragraph from './kit/Typography/Paragraph';
 
 interface Props {
   pool: string;

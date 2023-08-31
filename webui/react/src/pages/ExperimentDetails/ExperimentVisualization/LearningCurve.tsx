@@ -10,10 +10,6 @@ import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
 import { UPlotPoint } from 'components/UPlot/types';
 import { terminalRunStates } from 'constants/states';
-import HpTrialTable, {
-  TrialHParams,
-} from 'pages/ExperimentDetails/ExperimentVisualization/HpTrialTable';
-import css from 'pages/ExperimentDetails/ExperimentVisualization/LearningCurve.module.scss';
 import TrialsComparisonModal from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { paths } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
@@ -40,6 +36,9 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { metricToStr } from 'utils/metric';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'utils/routes';
 import { openCommandResponse } from 'utils/wait';
+
+import HpTrialTable, { TrialHParams } from './HpTrialTable';
+import css from './LearningCurve.module.scss';
 
 interface Props {
   experiment: ExperimentBase;

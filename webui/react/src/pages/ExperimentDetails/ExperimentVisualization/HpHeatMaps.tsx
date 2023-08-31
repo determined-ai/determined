@@ -12,8 +12,6 @@ import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
 import useResize from 'hooks/useResize';
-import { ViewType } from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
-import css from 'pages/ExperimentDetails/ExperimentVisualization/HpHeatMaps.module.scss';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
@@ -32,6 +30,9 @@ import { getColorScale } from 'utils/chart';
 import { rgba2str, str2rgba } from 'utils/color';
 import { flattenObject, isBoolean, isObject, isString } from 'utils/data';
 import { metricToStr } from 'utils/metric';
+
+import { ViewType } from './ExperimentVisualizationFilters';
+import css from './HpHeatMaps.module.scss';
 
 interface Props {
   experiment: ExperimentBase;

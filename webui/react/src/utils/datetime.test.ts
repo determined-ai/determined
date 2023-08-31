@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 
-import * as utils from 'utils/datetime';
+import * as utils from './datetime';
 
 describe('Datetime Utilities', () => {
   describe('formatDatetime', () => {

@@ -1,8 +1,9 @@
 import React from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
-import css from 'components/WorkspaceFilter.module.scss';
 import { Workspace } from 'types';
+
+import css from './WorkspaceFilter.module.scss';
 
 interface Props {
   workspace: Workspace;

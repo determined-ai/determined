@@ -1,9 +1,10 @@
 import { observable, WritableObservable } from 'micro-observables';
 
 import { getActiveTasks } from 'services/api';
-import PollingStore from 'stores/polling';
 import { TaskCounts } from 'types';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+
+import PollingStore from './polling';
 
 class TaskStore extends PollingStore {
   #activeTasks: WritableObservable<Loadable<TaskCounts>> = observable(NotLoaded);

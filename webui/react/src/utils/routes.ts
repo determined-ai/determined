@@ -1,7 +1,8 @@
 import React from 'react';
 
 import router from 'router';
-import rootLogger from 'utils/Logger';
+
+import rootLogger from './Logger';
 
 const logger = rootLogger.extend('utils', 'routes');
 

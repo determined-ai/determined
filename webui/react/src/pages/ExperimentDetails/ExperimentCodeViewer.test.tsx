@@ -5,13 +5,14 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import { SettingsProvider } from 'hooks/useSettingsProvider';
-import CodeViewer, { Props } from 'pages/ExperimentDetails/ExperimentCodeViewer';
 import { paths } from 'routes/utils';
 import authStore from 'stores/auth';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 import { generateExperiment } from 'utils/task';
+
+import CodeViewer, { Props } from './ExperimentCodeViewer';
 
 const CURRENT_USER: DetailedUser = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
 

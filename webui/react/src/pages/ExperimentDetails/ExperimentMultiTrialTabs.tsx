@@ -10,11 +10,12 @@ import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import ExperimentCodeViewer from 'pages/ExperimentDetails/ExperimentCodeViewer';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
-import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
 import { ExperimentBase, Note, ValueOf } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+
+import { ExperimentVisualizationType } from './ExperimentVisualization';
 
 const TabType = {
   Code: 'code',

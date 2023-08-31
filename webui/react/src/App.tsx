@@ -6,7 +6,6 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 
-import css from 'App.module.scss';
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Button from 'components/kit/Button';
 import Spinner from 'components/kit/Spinner';
@@ -37,6 +36,8 @@ import workspaceStore from 'stores/workspaces';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
+
+import css from './App.module.scss';
 
 import 'antd/dist/reset.css';
 import '@hpe.com/glide-data-grid/dist/index.css';

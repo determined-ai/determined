@@ -3,8 +3,9 @@ import { PickerProps } from 'antd/es/date-picker/generatePicker';
 import { Dayjs } from 'dayjs';
 import React from 'react';
 
-import css from 'components/DatePicker.module.scss';
 import Label from 'components/Label';
+
+import css from './DatePicker.module.scss';
 
 type Props = PickerProps<Dayjs> & {
   label: string;

@@ -1,13 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 
-import EditableMetadata, { ADD_ROW_TEXT } from 'components/Metadata/EditableMetadata';
+import { Metadata } from 'types';
+
+import EditableMetadata, { ADD_ROW_TEXT } from './EditableMetadata';
 import {
   DELETE_ROW_LABEL,
   METADATA_KEY_PLACEHOLDER,
   METADATA_VALUE_PLACEHOLDER,
-} from 'components/Metadata/EditableRow';
-import { Metadata } from 'types';
+} from './EditableRow';
 
 const initMetadata = { hello: 'world', testing: 'metadata' };
 

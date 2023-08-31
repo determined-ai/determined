@@ -41,14 +41,6 @@ import useExperimentTags from 'hooks/useExperimentTags';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
-import {
-  DEFAULT_COLUMN_WIDTHS,
-  DEFAULT_COLUMNS,
-  ExperimentColumnName,
-  ExperimentListSettings,
-  settingsConfigForProject,
-} from 'pages/ExperimentList.settings';
-import css from 'pages/ProjectDetails.module.scss';
 import { paths } from 'routes/utils';
 import {
   activateExperiment,
@@ -91,6 +83,15 @@ import { alphaNumericSorter } from 'utils/sort';
 import { humanReadableBytes } from 'utils/string';
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
+
+import {
+  DEFAULT_COLUMN_WIDTHS,
+  DEFAULT_COLUMNS,
+  ExperimentColumnName,
+  ExperimentListSettings,
+  settingsConfigForProject,
+} from './ExperimentList.settings';
+import css from './ProjectDetails.module.scss';
 
 const filterKeys: Array<keyof ExperimentListSettings> = ['label', 'search', 'state', 'user'];
 

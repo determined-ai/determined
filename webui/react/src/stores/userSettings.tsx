@@ -5,12 +5,13 @@ import * as t from 'io-ts';
 
 import { getUserSetting, resetUserSetting, updateUserSetting } from 'services/api';
 import { V1GetUserSettingResponse, V1UserWebSetting } from 'services/api-ts-sdk';
-import PollingStore from 'stores/polling';
 import { Json, JsonObject } from 'types';
 import { isJsonObject, isObject } from 'utils/data';
 import handleError, { DetError, ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { observable, Observable, WritableObservable } from 'utils/observable';
+
+import PollingStore from './polling';
 
 type State = Map<string, Json>;
 

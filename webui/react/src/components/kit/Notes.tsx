@@ -1,6 +1,7 @@
 import { ErrorHandler, Note } from 'components/kit/internal/types';
-import NoteCard from 'components/kit/NoteCard';
-import NoteCards from 'components/kit/NoteCards';
+
+import NoteCard from './NoteCard';
+import NoteCards from './NoteCards';
 export type Props =
   | {
       multiple: true;

@@ -1,9 +1,10 @@
 import React from 'react';
 
 import Button from 'components/kit/Button';
-import Link from 'components/Link';
-import css from 'components/PageNotFound.module.scss';
 import { paths } from 'routes/utils';
+
+import Link from './Link';
+import css from './PageNotFound.module.scss';
 
 const PageNotFound: React.FC = () => (
   <div className={css.base}>

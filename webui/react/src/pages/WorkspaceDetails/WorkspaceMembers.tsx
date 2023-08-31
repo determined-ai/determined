@@ -16,19 +16,20 @@ import WorkspaceMemberAddModalComponent from 'components/WorkspaceMemberAddModal
 import WorkspaceMemberRemoveComponent from 'components/WorkspaceMemberRemoveModal';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
-import RoleRenderer from 'pages/WorkspaceDetails/RoleRenderer';
-import css from 'pages/WorkspaceDetails/WorkspaceMembers.module.scss';
-import {
-  configForWorkspace,
-  DEFAULT_COLUMN_WIDTHS,
-  WorkspaceMembersSettings,
-} from 'pages/WorkspaceDetails/WorkspaceMembers.settings';
 import { V1Group, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import { User, UserOrGroup, UserOrGroupWithRoleInfo, Workspace } from 'types';
 import { useObservable } from 'utils/observable';
 import { alphaNumericSorter } from 'utils/sort';
 import { getUserOrGroupWithRoleInfo, isUserWithRoleInfo } from 'utils/user';
+
+import RoleRenderer from './RoleRenderer';
+import css from './WorkspaceMembers.module.scss';
+import {
+  configForWorkspace,
+  DEFAULT_COLUMN_WIDTHS,
+  WorkspaceMembersSettings,
+} from './WorkspaceMembers.settings';
 
 interface Props {
   addableUsersAndGroups: UserOrGroup[];

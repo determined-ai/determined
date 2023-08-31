@@ -18,14 +18,15 @@ import WebhookDeleteModalComponent from 'components/WebhookDeleteModal';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
-import css from 'pages/WebhookList.module.scss';
-import settingsConfig, { DEFAULT_COLUMN_WIDTHS, Settings } from 'pages/WebhookList.settings';
 import { paths } from 'routes/utils';
 import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
 import { Webhook } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
+
+import css from './WebhookList.module.scss';
+import settingsConfig, { DEFAULT_COLUMN_WIDTHS, Settings } from './WebhookList.settings';
 
 const MenuKey = {
   DeleteWebhook: 'delete-webhook',

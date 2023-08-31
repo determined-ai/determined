@@ -15,13 +15,14 @@ import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import ModelVersionEditModal from 'components/ModelVersionEditModal';
 import TimeAgo from 'components/TimeAgo';
 import usePermissions from 'hooks/usePermissions';
-import css from 'pages/ModelVersionDetails/ModelVersionHeader.module.scss';
 import userStore from 'stores/users';
 import { ModelVersion } from 'types';
 import { formatDatetime } from 'utils/datetime';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
+
+import css from './ModelVersionHeader.module.scss';
 
 interface Props {
   modelVersion: ModelVersion;

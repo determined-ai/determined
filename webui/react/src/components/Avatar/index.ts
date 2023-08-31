@@ -1,3 +1,3 @@
 export * from './Avatar';
-import Avatar from 'components/Avatar/Avatar';
+import Avatar from './Avatar';
 export default Avatar;

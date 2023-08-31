@@ -12,14 +12,10 @@ import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
-import css from 'components/NavigationSideBar.module.scss';
-import ThemeToggle from 'components/ThemeToggle';
-import UserBadge from 'components/UserBadge';
 import UserSettings from 'components/UserSettings';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
 } from 'components/UserSettings.settings';
-import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
@@ -35,6 +31,11 @@ import workspaceStore from 'stores/workspaces';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { matchesShortcut, shortcutToString } from 'utils/shortcut';
+
+import css from './NavigationSideBar.module.scss';
+import ThemeToggle from './ThemeToggle';
+import UserBadge from './UserBadge';
+import WorkspaceCreateModalComponent from './WorkspaceCreateModal';
 
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;

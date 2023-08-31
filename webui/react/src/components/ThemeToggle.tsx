@@ -1,8 +1,9 @@
 import React from 'react';
 
-import css from 'components/ThemeToggle.module.scss';
 import useUI from 'stores/contexts/UI';
 import { Mode } from 'utils/themes';
+
+import css from './ThemeToggle.module.scss';
 
 interface Props {
   iconOnly?: boolean;

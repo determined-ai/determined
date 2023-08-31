@@ -2,7 +2,6 @@ import dayjs, { Dayjs } from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
-import css from 'components/TimeAgo.module.scss';
 import { ValueOf } from 'types';
 import { isNumber, isString } from 'utils/data';
 import {
@@ -14,6 +13,8 @@ import {
   durationInEnglish,
 } from 'utils/datetime';
 import { capitalize, capitalizeWord } from 'utils/string';
+
+import css from './TimeAgo.module.scss';
 
 export const TimeAgoCase = {
   Lower: 'lower',

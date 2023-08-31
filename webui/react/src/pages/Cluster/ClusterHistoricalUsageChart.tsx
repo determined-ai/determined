@@ -4,9 +4,10 @@ import uPlot, { AlignedData, Series } from 'uplot';
 
 import Message, { MessageType } from 'components/Message';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
-import { GroupBy } from 'pages/Cluster/ClusterHistoricalUsage.settings';
-import css from 'pages/Cluster/ClusterHistoricalUsageChart.module.scss';
 import { glasbeyColor } from 'utils/color';
+
+import { GroupBy } from './ClusterHistoricalUsage.settings';
+import css from './ClusterHistoricalUsageChart.module.scss';
 
 interface ClusterHistoricalUsageChartProps {
   chartKey?: number;

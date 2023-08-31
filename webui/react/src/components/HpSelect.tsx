@@ -1,10 +1,11 @@
 import { DefaultOptionType, LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import css from 'components/HpSelect.module.scss';
 import Select, { Option, SelectProps } from 'components/kit/Select';
 import { ALL_VALUE } from 'types';
 import { isObject } from 'utils/data';
+
+import css from './HpSelect.module.scss';
 
 interface Props extends SelectProps {
   fullHParams: string[];

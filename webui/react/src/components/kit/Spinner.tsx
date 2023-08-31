@@ -2,8 +2,9 @@ import { Spin } from 'antd';
 import React from 'react';
 
 import Icon, { IconSize } from 'components/kit/Icon';
-import css from 'components/kit/Spinner.module.scss';
 import { Loadable } from 'utils/loadable';
+
+import css from './Spinner.module.scss';
 
 interface PropsBase {
   center?: boolean;

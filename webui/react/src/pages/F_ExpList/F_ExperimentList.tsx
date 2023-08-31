@@ -21,30 +21,6 @@ import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { useSettings } from 'hooks/useSettings';
-import ComparisonView from 'pages/F_ExpList/ComparisonView';
-import css from 'pages/F_ExpList/F_ExperimentList.module.scss';
-import {
-  F_ExperimentListGlobalSettings,
-  F_ExperimentListSettings,
-  settingsConfigForProject,
-  settingsConfigGlobal,
-} from 'pages/F_ExpList/F_ExperimentList.settings';
-import {
-  columnWidthsFallback,
-  ExperimentColumn,
-  experimentColumns,
-  MIN_COLUMN_WIDTH,
-  MULTISELECT,
-  NO_PINS_WIDTH,
-} from 'pages/F_ExpList/glide-table/columns';
-import { Error, NoExperiments } from 'pages/F_ExpList/glide-table/exceptions';
-import GlideTable, {
-  SCROLL_SET_COUNT_NEEDED,
-  TableViewMode,
-} from 'pages/F_ExpList/glide-table/GlideTable';
-import { EMPTY_SORT, Sort, validSort, ValidSort } from 'pages/F_ExpList/glide-table/MultiSortMenu';
-import { RowHeight } from 'pages/F_ExpList/glide-table/OptionsMenu';
-import TableActionBar from 'pages/F_ExpList/glide-table/TableActionBar';
 import { getProjectColumns, getProjectNumericMetricsRange, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import {
@@ -59,6 +35,28 @@ import {
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { getCssVar } from 'utils/themes';
+
+import ComparisonView from './ComparisonView';
+import css from './F_ExperimentList.module.scss';
+import {
+  F_ExperimentListGlobalSettings,
+  F_ExperimentListSettings,
+  settingsConfigForProject,
+  settingsConfigGlobal,
+} from './F_ExperimentList.settings';
+import {
+  columnWidthsFallback,
+  ExperimentColumn,
+  experimentColumns,
+  MIN_COLUMN_WIDTH,
+  MULTISELECT,
+  NO_PINS_WIDTH,
+} from './glide-table/columns';
+import { Error, NoExperiments } from './glide-table/exceptions';
+import GlideTable, { SCROLL_SET_COUNT_NEEDED, TableViewMode } from './glide-table/GlideTable';
+import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
+import { RowHeight } from './glide-table/OptionsMenu';
+import TableActionBar from './glide-table/TableActionBar';
 
 interface Props {
   project: Project;

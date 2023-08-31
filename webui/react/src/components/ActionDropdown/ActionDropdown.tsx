@@ -1,6 +1,5 @@
 import React, { JSXElementConstructor, useCallback } from 'react';
 
-import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
@@ -8,6 +7,8 @@ import useConfirm, { ConfirmModalProps } from 'components/kit/useConfirm';
 import { Eventually } from 'types';
 import handleError, { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'utils/error';
 import { capitalize } from 'utils/string';
+
+import css from './ActionDropdown.module.scss';
 
 // TODO parameterize Action using Enums? https://github.com/microsoft/TypeScript/issues/30611
 export type Triggers<T extends string> = Partial<{ [key in T]: () => Eventually<void> }>;

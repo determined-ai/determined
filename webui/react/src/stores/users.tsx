@@ -3,11 +3,12 @@ import _ from 'lodash';
 
 import { getCurrentUser, getUsers } from 'services/api';
 import type { GetUsersParams } from 'services/types';
-import PollingStore from 'stores/polling';
 import { DetailedUser, DetailedUserList } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { observable, WritableObservable } from 'utils/observable';
+
+import PollingStore from './polling';
 
 function compareUser(a: DetailedUser, b: DetailedUser): number {
   const aName = a.displayName ?? a.username;

@@ -1,6 +1,5 @@
 import React, { CSSProperties, useMemo } from 'react';
 
-import css from 'components/Badge.module.scss';
 import Tooltip from 'components/kit/Tooltip';
 import { stateToLabel } from 'constants/states';
 import useUI from 'stores/contexts/UI';
@@ -8,6 +7,8 @@ import { getStateColorCssVar, StateOfUnion } from 'themes';
 import { ResourceState, RunState, SlotState, ValueOf } from 'types';
 import { hsl2str, str2hsl } from 'utils/color';
 import { DarkLight, getCssVar } from 'utils/themes';
+
+import css from './Badge.module.scss';
 
 export const BadgeType = {
   Default: 'Default',

@@ -1,6 +1,6 @@
 import React, { CSSProperties, useMemo } from 'react';
 
-import css from 'components/ExperimentIcons/Queue.module.scss';
+import css from './Queue.module.scss';
 
 interface Props {
   // only height, width, opacity, and backgroundColor are available

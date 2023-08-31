@@ -1,4 +1,4 @@
-import * as utils from 'utils/set';
+import * as utils from './set';
 
 describe('Set Utilities', () => {
   const one = new Set([1, 2, 3]);

@@ -1,3 +1,3 @@
 export * from './PageHeader';
-import PageHeader from 'components/PageHeader/PageHeader';
+import PageHeader from './PageHeader';
 export default PageHeader;

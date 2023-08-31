@@ -1,4 +1,4 @@
-import { isString } from 'utils/data';
+import { isString } from './data';
 
 const PERCENT_REGEX = /^(\d+\.?\d*|\.\d+)%$/;
 const DEFAULT_PRECISION = 6;

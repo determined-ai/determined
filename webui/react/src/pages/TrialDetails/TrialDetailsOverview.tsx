@@ -5,17 +5,15 @@ import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
-import TrialChart from 'pages/TrialDetails/TrialChart';
-import {
-  Settings,
-  settingsConfigForExperiment,
-} from 'pages/TrialDetails/TrialDetailsOverview.settings';
-import TrialDetailsWorkloads from 'pages/TrialDetails/TrialDetailsWorkloads';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { metricKeyToMetric, metricToKey } from 'utils/metric';
+
+import TrialChart from './TrialChart';
+import { Settings, settingsConfigForExperiment } from './TrialDetailsOverview.settings';
+import TrialDetailsWorkloads from './TrialDetailsWorkloads';
 
 export interface Props {
   experiment: ExperimentBase;

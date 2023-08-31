@@ -1,9 +1,6 @@
 import React, { useEffect } from 'react';
 
 import Spinner from 'components/kit/Spinner';
-import css from 'components/Navigation.module.scss';
-import NavigationSideBar from 'components/NavigationSideBar';
-import NavigationTabbar from 'components/NavigationTabbar';
 import clusterStore from 'stores/cluster';
 import useUI from 'stores/contexts/UI';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
@@ -14,6 +11,10 @@ import { updateFaviconType } from 'utils/browser';
 import { useInitApi } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+
+import css from './Navigation.module.scss';
+import NavigationSideBar from './NavigationSideBar';
+import NavigationTabbar from './NavigationTabbar';
 
 interface Props {
   children?: React.ReactNode;

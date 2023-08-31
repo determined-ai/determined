@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import Section from 'components/Section';
+import Section from './Section';
 
 const setup = ({
   title = '',

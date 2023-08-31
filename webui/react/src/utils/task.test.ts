@@ -1,5 +1,6 @@
 import { CommandState, CommandTask, CommandType, ExperimentTask, RunState, Task } from 'types';
-import { canBeOpened, isExperimentTask } from 'utils/task';
+
+import { canBeOpened, isExperimentTask } from './task';
 
 const SampleTask: Task = { id: '', name: '', resourcePool: '', startTime: '' };
 const SampleExperimentTask: ExperimentTask = {

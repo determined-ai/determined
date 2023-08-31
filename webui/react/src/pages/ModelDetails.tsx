@@ -27,15 +27,6 @@ import {
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
-import settingsConfig, {
-  DEFAULT_COLUMN_WIDTHS,
-  isOfSortKey,
-  Settings,
-} from 'pages/ModelDetails/ModelDetails.settings';
-import ModelHeader from 'pages/ModelDetails/ModelHeader';
-import ModelVersionActionDropdown from 'pages/ModelDetails/ModelVersionActionDropdown';
-import css from 'pages/ModelDetails.module.scss';
-import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import {
   archiveModel,
@@ -52,6 +43,16 @@ import handleError, { ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { isAborted, isNotFound, validateDetApiEnum } from 'utils/service';
+
+import settingsConfig, {
+  DEFAULT_COLUMN_WIDTHS,
+  isOfSortKey,
+  Settings,
+} from './ModelDetails/ModelDetails.settings';
+import ModelHeader from './ModelDetails/ModelHeader';
+import ModelVersionActionDropdown from './ModelDetails/ModelVersionActionDropdown';
+import css from './ModelDetails.module.scss';
+import { WorkspaceDetailsTab } from './WorkspaceDetails';
 
 type Params = {
   modelId: string;

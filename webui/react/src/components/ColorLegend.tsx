@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
 
-import css from 'components/ColorLegend.module.scss';
-import HumanReadableNumber from 'components/HumanReadableNumber';
 import { ColorScale } from 'utils/color';
+
+import css from './ColorLegend.module.scss';
+import HumanReadableNumber from './HumanReadableNumber';
 
 interface Props {
   colorScale: ColorScale[];

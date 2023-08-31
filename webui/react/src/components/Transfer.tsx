@@ -2,10 +2,11 @@ import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
-import DraggableListItem from 'components/DraggableListItem';
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
-import css from 'components/Transfer.module.scss';
+
+import DraggableListItem from './DraggableListItem';
+import css from './Transfer.module.scss';
 
 interface Props {
   defaultTargetEntries: string[];

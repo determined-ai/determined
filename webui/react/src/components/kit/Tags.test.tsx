@@ -2,11 +2,7 @@ import { render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import TagList, {
-  ARIA_LABEL_CONTAINER,
-  ARIA_LABEL_TRIGGER,
-  tagsActionHelper,
-} from 'components/kit/Tags';
+import TagList, { ARIA_LABEL_CONTAINER, ARIA_LABEL_TRIGGER, tagsActionHelper } from './Tags';
 
 const initTags = ['hello', 'world', 'space gap'].sort();
 

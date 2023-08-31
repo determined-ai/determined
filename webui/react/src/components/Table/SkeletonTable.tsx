@@ -2,8 +2,9 @@ import { Skeleton } from 'antd';
 import React, { useMemo } from 'react';
 
 import SkeletonSection, { Props as SkeletonSectionProps } from 'components/SkeletonSection';
-import css from 'components/Table/SkeletonTable.module.scss';
 import { isNumber } from 'utils/data';
+
+import css from './SkeletonTable.module.scss';
 
 interface Props extends SkeletonSectionProps {
   columns?: number | React.CSSProperties[];

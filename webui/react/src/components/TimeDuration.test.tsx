@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import TimeDuration from 'components/TimeDuration';
 import {
   DURATION_DAY,
   DURATION_HOUR,
@@ -11,6 +10,8 @@ import {
   DURATION_WEEK,
   DURATION_YEAR,
 } from 'utils/datetime';
+
+import TimeDuration from './TimeDuration';
 
 describe('TimeDuration', () => {
   it('should render a second', () => {

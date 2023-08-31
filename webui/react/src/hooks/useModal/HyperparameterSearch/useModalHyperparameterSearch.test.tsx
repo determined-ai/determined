@@ -3,9 +3,10 @@ import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event'
 import React from 'react';
 
 import Button from 'components/kit/Button';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import { createExperiment as mockCreateExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
+
+import useModalHyperparameterSearch from './useModalHyperparameterSearch';
 
 const MODAL_TITLE = 'Hyperparameter Search';
 

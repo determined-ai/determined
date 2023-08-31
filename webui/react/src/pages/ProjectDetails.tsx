@@ -12,10 +12,6 @@ import { useProjectActionMenu } from 'components/ProjectActionDropdown';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
-import ExperimentList from 'pages/ExperimentList';
-import F_ExperimentList from 'pages/F_ExpList/F_ExperimentList';
-import css from 'pages/ProjectDetails.module.scss';
-import ProjectNotes from 'pages/ProjectNotes';
 import { paths } from 'routes/utils';
 import { getProject, postUserActivity } from 'services/api';
 import { V1ActivityType, V1EntityType } from 'services/api-ts-sdk';
@@ -25,6 +21,11 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
 import { isNotFound } from 'utils/service';
+
+import ExperimentList from './ExperimentList';
+import F_ExperimentList from './F_ExpList/F_ExperimentList';
+import css from './ProjectDetails.module.scss';
+import ProjectNotes from './ProjectNotes';
 
 type Params = {
   projectId: string;

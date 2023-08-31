@@ -13,10 +13,6 @@ import TaskList from 'components/TaskList';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
-import ResourcePoolsBound from 'pages/WorkspaceDetails/ResourcePoolsBound';
-import WorkspaceMembers from 'pages/WorkspaceDetails/WorkspaceMembers';
-import WorkspaceProjects from 'pages/WorkspaceDetails/WorkspaceProjects';
-import { useWorkspaceActionMenu } from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
 import { getGroups, getWorkspaceMembers, searchRolesAssignableToScope } from 'services/api';
 import { V1Group, V1GroupSearchResult, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
@@ -27,6 +23,11 @@ import { User, ValueOf } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+
+import ResourcePoolsBound from './WorkspaceDetails/ResourcePoolsBound';
+import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
+import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
+import { useWorkspaceActionMenu } from './WorkspaceList/WorkspaceActionDropdown';
 
 type Params = {
   tab: string;

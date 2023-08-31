@@ -5,7 +5,8 @@ import Dropdown from 'components/kit/Dropdown';
 import Form, { FormListFieldData } from 'components/kit/Form';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
-import css from 'components/Metadata/EditableRow.module.scss';
+
+import css from './EditableRow.module.scss';
 
 export const METADATA_KEY_PLACEHOLDER = 'Enter metadata label';
 export const METADATA_VALUE_PLACEHOLDER = 'Enter metadata value';

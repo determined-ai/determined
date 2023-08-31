@@ -15,12 +15,13 @@ import {
   F_ExperimentListSettings,
   settingsConfigForProject,
 } from 'pages/F_ExpList/F_ExperimentList.settings';
-import css from 'pages/F_ExpList/glide-table/ColumnPickerMenu.module.scss';
-import { defaultExperimentColumns } from 'pages/F_ExpList/glide-table/columns';
 import { V1LocationType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
 import { ensureArray } from 'utils/data';
 import { Loadable } from 'utils/loadable';
+
+import css from './ColumnPickerMenu.module.scss';
+import { defaultExperimentColumns } from './columns';
 
 const BANNED_COLUMNS: Set<string> = new Set([]);
 

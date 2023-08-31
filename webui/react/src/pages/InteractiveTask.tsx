@@ -3,12 +3,13 @@ import { Helmet } from 'react-helmet-async';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import TaskBar from 'components/TaskBar';
-import css from 'pages/InteractiveTask.module.scss';
-import TaskLogs from 'pages/TaskLogs';
 import { getTask } from 'services/api';
 import useUI from 'stores/contexts/UI';
 import { CommandState, CommandType, ValueOf } from 'types';
 import handleError, { ErrorLevel, ErrorType, handleWarning } from 'utils/error';
+
+import css from './InteractiveTask.module.scss';
+import TaskLogs from './TaskLogs';
 
 type Params = {
   taskId: string;

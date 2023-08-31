@@ -10,7 +10,6 @@ import {
   overwriteResourcePoolBindings,
 } from 'services/api';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
-import PollingStore from 'stores/polling';
 import { Agent, ClusterOverview, ClusterOverviewResource, ResourcePool, ResourceType } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -18,6 +17,7 @@ import { percent } from 'utils/number';
 import { Observable, observable, WritableObservable } from 'utils/observable';
 
 import 'core-js/actual/structured-clone'; // TODO: investigate why structuredClone is breaking if we remove this import.
+import PollingStore from './polling';
 
 const initResourceTally: ClusterOverviewResource = { allocation: 0, available: 0, total: 0 };
 const initClusterOverview: ClusterOverview = {

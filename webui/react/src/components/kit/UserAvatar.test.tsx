@@ -3,8 +3,9 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { User } from 'components/kit/internal/types';
-import UserAvatar, { Props } from 'components/kit/UserAvatar';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
+
+import UserAvatar, { Props } from './UserAvatar';
 
 const testUsers: User[] = [
   {

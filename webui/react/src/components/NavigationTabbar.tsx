@@ -7,10 +7,7 @@ import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
 import Link, { Props as LinkProps } from 'components/Link';
-import css from 'components/NavigationTabbar.module.scss';
-import UserBadge from 'components/UserBadge';
 import UserSettings from 'components/UserSettings';
-import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
 import authStore from 'stores/auth';
@@ -22,6 +19,10 @@ import workspaceStore from 'stores/workspaces';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { AnyMouseEvent, routeToReactUrl } from 'utils/routes';
+
+import css from './NavigationTabbar.module.scss';
+import UserBadge from './UserBadge';
+import WorkspaceCreateModalComponent from './WorkspaceCreateModal';
 
 interface ToolbarItemProps extends LinkProps {
   badge?: number;

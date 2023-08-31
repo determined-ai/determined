@@ -1,7 +1,8 @@
 import React from 'react';
 
-import css from 'components/kit/internal/Image/Image.module.scss';
 import { DarkLight } from 'components/kit/internal/types';
+
+import css from './Image.module.scss';
 
 export interface Props {
   darkLight?: DarkLight;

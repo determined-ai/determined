@@ -1,10 +1,11 @@
 import { Observable, observable, WritableObservable } from 'micro-observables';
 
 import { getPermissionsSummary } from 'services/api';
-import PollingStore from 'stores/polling';
 import { UserAssignment, UserRole } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+
+import PollingStore from './polling';
 
 class PermissionStore extends PollingStore {
   #myAssignments: WritableObservable<Loadable<UserAssignment[]>> = observable(NotLoaded);

@@ -9,13 +9,11 @@ import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
 import JupyterLabButton from 'components/JupyterLabButton';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
 import Link from 'components/Link';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
@@ -34,14 +32,12 @@ import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
-import css from 'components/TaskList.module.scss';
 import settingsConfig, {
   ALL_SORTKEY,
   DEFAULT_COLUMN_WIDTHS,
   isOfSortKey,
   Settings,
 } from 'components/TaskList.settings';
-import WorkspaceFilter from 'components/WorkspaceFilter';
 import { commandTypeToLabel } from 'constants/states';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
@@ -66,6 +62,11 @@ import { useObservable } from 'utils/observable';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'utils/sort';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
+
+import BatchActionConfirmModalComponent from './BatchActionConfirmModal';
+import { useModal } from './kit/Modal';
+import css from './TaskList.module.scss';
+import WorkspaceFilter from './WorkspaceFilter';
 
 const TensorBoardSourceType = {
   Experiment: 'Experiment',

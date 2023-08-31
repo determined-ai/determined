@@ -22,7 +22,6 @@ import { pausableRunStates, stateToLabel, terminalRunStates } from 'constants/st
 import useExperimentTags from 'hooks/useExperimentTags';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
-import css from 'pages/ExperimentDetails/ExperimentDetailsHeader.module.scss';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
 import { handlePath, paths } from 'routes/utils';
 import {
@@ -45,6 +44,8 @@ import { getDuration } from 'utils/datetime';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
+
+import css from './ExperimentDetailsHeader.module.scss';
 
 // Actionable means that user can take an action, such as pause, stop
 const isActionableIcon = (state: CompoundRunState): boolean => {

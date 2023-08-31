@@ -30,30 +30,6 @@ import Icon from 'components/kit/Icon';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import { PAGE_SIZE } from 'pages/F_ExpList/F_ExperimentList';
-import {
-  ColumnDef,
-  defaultDateColumn,
-  defaultNumberColumn,
-  defaultTextColumn,
-  getColumnDefs,
-  getHeaderIcons,
-  MIN_COLUMN_WIDTH,
-  MULTISELECT,
-  searcherMetricsValColumn,
-} from 'pages/F_ExpList/glide-table/columns';
-import { TableContextMenu, TableContextMenuProps } from 'pages/F_ExpList/glide-table/contextMenu';
-import { customRenderers } from 'pages/F_ExpList/glide-table/custom-renderers';
-import { LinkCell } from 'pages/F_ExpList/glide-table/custom-renderers/cells/linkCell';
-import {
-  drawArrow,
-  drawTextWithEllipsis,
-} from 'pages/F_ExpList/glide-table/custom-renderers/utils';
-import css from 'pages/F_ExpList/glide-table/GlideTable.module.scss';
-import { TableActionMenu, TableActionMenuProps } from 'pages/F_ExpList/glide-table/menu';
-import { Sort, sortMenuItemsForColumn } from 'pages/F_ExpList/glide-table/MultiSortMenu';
-import { RowHeight } from 'pages/F_ExpList/glide-table/OptionsMenu';
-import { useTableTooltip } from 'pages/F_ExpList/glide-table/tooltip';
-import { getTheme } from 'pages/F_ExpList/glide-table/utils';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'stores/contexts/UI';
@@ -71,6 +47,28 @@ import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
 import { getCssVar } from 'utils/themes';
+
+import {
+  ColumnDef,
+  defaultDateColumn,
+  defaultNumberColumn,
+  defaultTextColumn,
+  getColumnDefs,
+  getHeaderIcons,
+  MIN_COLUMN_WIDTH,
+  MULTISELECT,
+  searcherMetricsValColumn,
+} from './columns';
+import { TableContextMenu, TableContextMenuProps } from './contextMenu';
+import { customRenderers } from './custom-renderers';
+import { LinkCell } from './custom-renderers/cells/linkCell';
+import { drawArrow, drawTextWithEllipsis } from './custom-renderers/utils';
+import css from './GlideTable.module.scss';
+import { TableActionMenu, TableActionMenuProps } from './menu';
+import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
+import { RowHeight } from './OptionsMenu';
+import { useTableTooltip } from './tooltip';
+import { getTheme } from './utils';
 
 export interface GlideTableProps {
   colorMap: MapOfIdsToColors;

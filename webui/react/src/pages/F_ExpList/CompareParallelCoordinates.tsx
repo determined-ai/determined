@@ -13,11 +13,6 @@ import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentV
 import ExperimentVisualizationFilters, {
   VisualizationFilters,
 } from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
-import {
-  ExperimentHyperparametersSettings,
-  settingsConfigForExperimentHyperparameters,
-} from 'pages/F_ExpList/CompareParallelCoordinates.settings';
-import css from 'pages/F_ExpList/HpParallelCoordinates.module.scss';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import {
   ExperimentWithTrial,
@@ -33,6 +28,12 @@ import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
 import { flattenObject, isPrimitive } from 'utils/data';
 import { metricToKey, metricToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
+
+import {
+  ExperimentHyperparametersSettings,
+  settingsConfigForExperimentHyperparameters,
+} from './CompareParallelCoordinates.settings';
+import css from './HpParallelCoordinates.module.scss';
 
 interface Props {
   projectId: number;

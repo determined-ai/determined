@@ -1,5 +1,6 @@
 import { GLASBEY } from 'constants/colors';
-import * as utils from 'utils/color';
+
+import * as utils from './color';
 
 describe('Color Utilities', () => {
   const colors = [

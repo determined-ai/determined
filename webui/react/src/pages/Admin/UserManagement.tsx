@@ -24,13 +24,6 @@ import TableFilterSearch from 'components/Table/TableFilterSearch';
 import UserBadge from 'components/UserBadge';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
-import css from 'pages/Admin/UserManagement.module.scss';
-import settingsConfig, {
-  DEFAULT_COLUMN_WIDTHS,
-  DEFAULT_COLUMNS,
-  UserColumnName,
-  UserManagementSettings,
-} from 'pages/Admin/UserManagement.settings';
 import { getGroups, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
@@ -43,6 +36,14 @@ import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
 import { alphaNumericSorter, booleanSorter, numericSorter } from 'utils/sort';
+
+import css from './UserManagement.module.scss';
+import settingsConfig, {
+  DEFAULT_COLUMN_WIDTHS,
+  DEFAULT_COLUMNS,
+  UserColumnName,
+  UserManagementSettings,
+} from './UserManagement.settings';
 
 export const USER_TITLE = 'Users';
 export const CREATE_USER = 'Add User';

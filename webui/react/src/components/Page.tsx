@@ -4,11 +4,12 @@ import { Helmet } from 'react-helmet-async';
 
 import { MenuItem } from 'components/kit/Dropdown';
 import Spinner from 'components/kit/Spinner';
-import css from 'components/Page.module.scss';
 import PageHeader from 'components/PageHeader';
 import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
+
+import css from './Page.module.scss';
 
 export interface BreadCrumbRoute {
   breadcrumbName: string;

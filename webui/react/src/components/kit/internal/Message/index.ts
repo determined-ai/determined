@@ -1,3 +1,3 @@
 export * from './Message';
-import Message from 'components/kit/internal/Message/Message';
+import Message from './Message';
 export default Message;

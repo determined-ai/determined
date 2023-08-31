@@ -1,9 +1,10 @@
 import React from 'react';
 
 import Spinner from 'components/kit/Spinner';
-import css from 'components/Section.module.scss';
 import { isString } from 'utils/data';
 import { generateAlphaNumeric, toHtmlId } from 'utils/string';
+
+import css from './Section.module.scss';
 
 interface Props {
   bodyBorder?: boolean;

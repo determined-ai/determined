@@ -4,7 +4,8 @@ import { killableCommandStates, killableRunStates, terminalCommandStates } from 
 import { LaunchTensorBoardParams } from 'services/types';
 import * as Type from 'types';
 import { CommandState, RunState, State } from 'types';
-import { runStateSortValues } from 'utils/experiment';
+
+import { runStateSortValues } from './experiment';
 
 export const canBeOpened = (task: Type.AnyTask): boolean => {
   if (isExperimentTask(task)) return true;

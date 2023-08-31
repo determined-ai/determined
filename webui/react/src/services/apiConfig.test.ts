@@ -1,4 +1,4 @@
-import * as utils from 'services/apiConfig';
+import * as utils from './apiConfig';
 
 describe('apiConfig', () => {
   describe('getUserIds', () => {

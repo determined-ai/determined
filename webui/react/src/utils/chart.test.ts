@@ -4,7 +4,7 @@ import {
   getNumericRange,
   normalizeRange,
   updateRange,
-} from 'utils/chart';
+} from './chart';
 
 describe('defaultNumericRange', () => {
   it('Default', () => {

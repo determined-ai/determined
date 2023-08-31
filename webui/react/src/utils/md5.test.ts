@@ -1,4 +1,4 @@
-import md5 from 'utils/md5';
+import md5 from './md5';
 
 const LOREM_IPSUM = `
   Lorem ipsum dolor sit amet, consectetur adipiscing elit,

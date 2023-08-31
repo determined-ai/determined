@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 
-import ClipboardButton, { TOOLTIP_LABEL_DEFAULT } from 'components/kit/ClipboardButton';
+import ClipboardButton, { TOOLTIP_LABEL_DEFAULT } from './ClipboardButton';
 
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 

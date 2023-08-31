@@ -5,10 +5,11 @@ import { SorterResult } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
 
 import Spinner from 'components/kit/Spinner';
-import SkeletonTable from 'components/Table/SkeletonTable';
 import useResize from 'hooks/useResize';
 import { TrialItem } from 'types';
 import { hasObjectKeys } from 'utils/data';
+
+import SkeletonTable from './SkeletonTable';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Comparable = any;

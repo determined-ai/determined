@@ -2,14 +2,15 @@ import React, { useCallback, useMemo } from 'react';
 
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
-import useConfirm from 'components/kit/useConfirm';
-import css from 'components/TaskBar.module.scss';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { killTask } from 'services/api';
 import { CommandTask, CommandType } from 'types';
 import handleError from 'utils/error';
 import { routeToReactUrl } from 'utils/routes';
+
+import useConfirm from './kit/useConfirm';
+import css from './TaskBar.module.scss';
 
 interface Props {
   handleViewLogsClick: () => void;

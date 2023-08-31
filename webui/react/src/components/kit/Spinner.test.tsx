@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import React, { useEffect, useState } from 'react';
 import { Mock } from 'vitest';
 
-import Spinner from 'components/kit/Spinner';
+import Spinner from './Spinner';
 
 // vi.useRealTimers(); // This should solve the flakyness around timming out
 

@@ -1,12 +1,8 @@
 import { render, screen } from '@testing-library/react';
 
-import {
-  ImageAlert,
-  ImageEmpty,
-  ImageWarning,
-  type Props,
-} from 'components/kit/internal/Image/Image';
 import { DarkLight } from 'components/kit/internal/types';
+
+import { ImageAlert, ImageEmpty, ImageWarning, type Props } from './Image';
 
 const setupImageAlert = (props?: Props) => {
   const view = render(<ImageAlert {...props} />);

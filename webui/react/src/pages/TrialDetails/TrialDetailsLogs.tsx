@@ -14,7 +14,6 @@ import {
 import Spinner from 'components/kit/Spinner';
 import useConfirm from 'components/kit/useConfirm';
 import { useSettings } from 'hooks/useSettings';
-import css from 'pages/TrialDetails/TrialDetailsLogs.module.scss';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
@@ -23,6 +22,8 @@ import useUI from 'stores/contexts/UI';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 import handleError, { ErrorType } from 'utils/error';
+
+import css from './TrialDetailsLogs.module.scss';
 
 export interface Props {
   experiment: ExperimentBase;

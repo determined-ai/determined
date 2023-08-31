@@ -2,10 +2,11 @@ import _ from 'lodash';
 import { throttle } from 'throttle-debounce';
 import uPlot, { Plugin } from 'uplot';
 
-import css from 'components/UPlot/UPlotChart/closestPointPlugin.module.scss';
 import { CheckpointsDict } from 'pages/TrialDetails/TrialDetailsMetrics';
 import { findInsertionIndex } from 'utils/array';
 import { distance } from 'utils/chart';
+
+import css from './closestPointPlugin.module.scss';
 
 interface Point {
   idx: number;

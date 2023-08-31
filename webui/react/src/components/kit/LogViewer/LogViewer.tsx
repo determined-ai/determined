@@ -33,13 +33,10 @@ import {
 } from 'components/kit/internal/types';
 import useGetCharMeasureInContainer from 'components/kit/internal/useGetCharMeasureInContainer';
 import useResize from 'components/kit/internal/useResize';
-import css from 'components/kit/LogViewer/LogViewer.module.scss';
-import LogViewerEntry, {
-  DATETIME_FORMAT,
-  ICON_WIDTH,
-  MAX_DATETIME_LENGTH,
-} from 'components/kit/LogViewer/LogViewerEntry';
 import Spinner from 'components/kit/Spinner';
+
+import css from './LogViewer.module.scss';
+import LogViewerEntry, { DATETIME_FORMAT, ICON_WIDTH, MAX_DATETIME_LENGTH } from './LogViewerEntry';
 
 export interface Props {
   decoder: (data: unknown) => Log;

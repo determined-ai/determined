@@ -6,8 +6,9 @@ import { throttle } from 'throttle-debounce';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import Icon, { IconName, IconSize } from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
-import css from 'components/RadioGroup.module.scss';
 import useResize from 'hooks/useResize';
+
+import css from './RadioGroup.module.scss';
 
 interface Props {
   className?: string;

@@ -1,7 +1,6 @@
 import { ConfigProvider } from 'antd';
 import React, { useCallback, useState } from 'react';
 
-import css from 'components/DeterminedAuth.module.scss';
 import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
 import Icon from 'components/kit/Icon';
@@ -19,6 +18,8 @@ import userStore from 'stores/users';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 import { StorageManager } from 'utils/storage';
+
+import css from './DeterminedAuth.module.scss';
 
 interface Props {
   canceler: AbortController;

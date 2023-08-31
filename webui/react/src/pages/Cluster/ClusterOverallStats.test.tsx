@@ -1,7 +1,8 @@
 import { render } from '@testing-library/react';
 
-import { ClusterOverallStats } from 'pages/Cluster/ClusterOverallStats';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
+
+import { ClusterOverallStats } from './ClusterOverallStats';
 
 vi.mock('services/api', () => ({
   getActiveTasks: () => Promise.resolve({ commands: 0, notebooks: 0, shells: 0, tensorboards: 0 }),

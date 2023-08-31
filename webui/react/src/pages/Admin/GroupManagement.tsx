@@ -16,11 +16,6 @@ import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
-import css from 'pages/Admin/GroupManagement.module.scss';
-import settingsConfig, {
-  DEFAULT_COLUMN_WIDTHS,
-  DEFAULT_COLUMNS,
-} from 'pages/Admin/GroupManagement.settings';
 import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
@@ -29,6 +24,9 @@ import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
+
+import css from './GroupManagement.module.scss';
+import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS } from './GroupManagement.settings';
 
 interface DropdownProps {
   expanded: boolean;

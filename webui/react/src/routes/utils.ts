@@ -1,7 +1,6 @@
 import { pathToRegexp } from 'path-to-regexp';
 
 import { globalStorage } from 'globalStorage';
-import routes from 'routes/routes';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
 import { BrandingType } from 'stores/determinedInfo';
 import { CommandTask, RouteConfig } from 'types';
@@ -17,6 +16,8 @@ import {
   routeToReactUrl,
 } from 'utils/routes';
 import { waitPageUrl } from 'utils/wait';
+
+import routes from './routes';
 
 // serverAddress returns determined cluster (master) address.
 export function serverAddress(path = ''): string {

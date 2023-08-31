@@ -1,4 +1,4 @@
-import * as utils from 'utils/browser';
+import * as utils from './browser';
 
 describe('Browser Utilities', () => {
   describe('cookies', () => {

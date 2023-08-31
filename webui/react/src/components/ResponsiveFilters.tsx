@@ -3,8 +3,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import Button from 'components/kit/Button';
 import Dropdown from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
-import css from 'components/ResponsiveFilters.module.scss';
 import useResize from 'hooks/useResize';
+
+import css from './ResponsiveFilters.module.scss';
 
 interface Props {
   children: React.ReactNode;

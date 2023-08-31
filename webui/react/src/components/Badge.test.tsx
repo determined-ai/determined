@@ -2,11 +2,12 @@ import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
 
-import Badge, { BadgeProps, BadgeType } from 'components/Badge';
 import { stateToLabel } from 'constants/states';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import { ResourceState, SlotState } from 'types';
 import { generateAlphaNumeric } from 'utils/string';
+
+import Badge, { BadgeProps, BadgeType } from './Badge';
 
 const CONTENT = generateAlphaNumeric();
 const CONTENT_TOOLTIP = generateAlphaNumeric();

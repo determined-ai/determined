@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 
 import ExperimentIcons from 'components/ExperimentIcons';
 import Icon from 'components/kit/Icon';
-import css from 'pages/TrialDetails/Header/TrialHeaderLeft.module.scss';
 import { paths } from 'routes/utils';
 import { ExperimentBase, TrialDetails } from 'types';
+
+import css from './TrialHeaderLeft.module.scss';
 
 interface Props {
   experiment: ExperimentBase;

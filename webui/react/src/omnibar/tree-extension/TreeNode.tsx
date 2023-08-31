@@ -1,7 +1,8 @@
 import * as React from 'react';
 
-import css from 'omnibar/tree-extension/TreeNode.module.scss';
 import { BaseNode } from 'omnibar/tree-extension/types';
+
+import css from './TreeNode.module.scss';
 
 type ResultRenderer<T> = ({
   item,

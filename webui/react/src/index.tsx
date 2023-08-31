@@ -7,7 +7,8 @@ import 'uplot/dist/uPlot.min.css';
 
 import App from 'App';
 import router from 'router';
-import * as serviceWorker from 'serviceWorker';
+
+import * as serviceWorker from './serviceWorker';
 
 import 'utils/prototypes';
 import 'dev';

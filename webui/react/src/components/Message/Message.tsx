@@ -1,9 +1,10 @@
 import React from 'react';
 
 import * as Images from 'components/Image';
-import css from 'components/Message/Message.module.scss';
 import useUI from 'stores/contexts/UI';
 import { ValueOf } from 'types';
+
+import css from './Message.module.scss';
 
 export const MessageType = {
   Alert: 'alert',

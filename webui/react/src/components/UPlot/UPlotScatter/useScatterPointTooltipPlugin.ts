@@ -2,10 +2,11 @@ import { useCallback, useMemo, useRef } from 'react';
 import uPlot, { Plugin } from 'uplot';
 
 import { UPlotData } from 'components/UPlot/types';
-import { X_INDEX, Y_INDEX } from 'components/UPlot/UPlotScatter/UPlotScatter.utils';
-import css from 'components/UPlot/UPlotScatter/useScatterPointTooltipPlugin.module.scss';
 import { humanReadableNumber } from 'utils/number';
 import { generateAlphaNumeric } from 'utils/string';
+
+import { X_INDEX, Y_INDEX } from './UPlotScatter.utils';
+import css from './useScatterPointTooltipPlugin.module.scss';
 
 interface Props {
   labels?: (string | null)[];

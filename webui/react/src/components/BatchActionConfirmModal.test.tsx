@@ -2,10 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import Button from 'components/kit/Button';
 import { DEFAULT_CANCEL_LABEL, useModal } from 'components/kit/Modal';
 import { ExperimentAction as Action, ExperimentAction } from 'types';
+
+import BatchActionConfirmModalComponent from './BatchActionConfirmModal';
 
 interface Props {
   action: ExperimentAction;

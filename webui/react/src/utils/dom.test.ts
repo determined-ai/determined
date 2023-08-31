@@ -1,4 +1,4 @@
-import * as utils from 'utils/dom';
+import * as utils from './dom';
 
 const mockNavigatorClipboard = () => {
   Object.defineProperty(navigator, 'clipboard', {

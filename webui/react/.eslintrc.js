@@ -38,7 +38,14 @@ module.exports = {
     ecmaVersion: 2018,
     sourceType: 'module',
   },
-  plugins: ['import', 'jsdoc', 'react', 'react-hooks', 'sort-keys-fix'],
+  plugins: [
+    'import',
+    'jsdoc',
+    'react',
+    'react-hooks',
+    'sort-keys-fix',
+    'eslint-plugin-absolute-imports',
+  ],
   root: true,
   rules: {
     // Can disagree with @typescript-eslint/member-ordering.
@@ -53,6 +60,7 @@ module.exports = {
       { args: 'after-used', ignoreRestSiblings: true },
     ],
     '@typescript-eslint/prefer-optional-chain': ['error'],
+    'absolute-imports/only-absolute-imports': 1,
     'array-element-newline': ['error', 'consistent'],
     'arrow-parens': ['error', 'always'],
     'arrow-spacing': ['error', { after: true, before: true }],

@@ -20,7 +20,6 @@ import {
 } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
-import css from 'pages/Dashboard.module.scss';
 import { paths } from 'routes/utils';
 import {
   getCommands,
@@ -37,6 +36,8 @@ import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { dateTimeStringSorter } from 'utils/sort';
+
+import css from './Dashboard.module.scss';
 
 const SUBMISSIONS_FETCH_LIMIT = 25;
 const PROJECTS_FETCH_LIMIT = 5;

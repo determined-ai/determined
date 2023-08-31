@@ -8,7 +8,6 @@ import { useDrag, useDrop } from 'react-dnd';
 import { debounce } from 'throttle-debounce';
 
 import ConjunctionContainer from 'components/FilterForm/components/ConjunctionContainer';
-import css from 'components/FilterForm/components/FilterField.module.scss';
 import { FilterFormStore, getInitField } from 'components/FilterForm/components/FilterFormStore';
 import {
   AvailableOperators,
@@ -33,6 +32,8 @@ import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
 import { Loadable } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';
+
+import css from './FilterField.module.scss';
 
 const debounceFunc = debounce(1000, (func: () => void) => {
   func();

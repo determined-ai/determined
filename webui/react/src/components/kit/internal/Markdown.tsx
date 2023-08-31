@@ -2,10 +2,11 @@ import type { TabsProps } from 'antd';
 import { default as MarkdownViewer } from 'markdown-to-jsx';
 import React, { useMemo } from 'react';
 
-import css from 'components/kit/internal/Markdown.module.scss';
 import useResize from 'components/kit/internal/useResize';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
+
+import css from './Markdown.module.scss';
 
 const CodeMirrorEditor = React.lazy(() => import('components/kit/internal/CodeMirrorEditor'));
 

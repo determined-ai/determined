@@ -5,12 +5,13 @@ import LogViewer, {
   FetchDirection,
   FetchType,
 } from 'components/kit/LogViewer/LogViewer';
-import css from 'pages/ClusterLogs.module.scss';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { jsonToClusterLog } from 'services/decoder';
 import { isNumber } from 'utils/data';
 import handleError from 'utils/error';
+
+import css from './ClusterLogs.module.scss';
 
 const ClusterLogs: React.FC = () => {
   const handleFetch = useCallback((config: FetchConfig, type: FetchType) => {

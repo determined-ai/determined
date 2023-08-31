@@ -1,7 +1,8 @@
 import ClipboardButton from 'components/kit/ClipboardButton';
 import { Modal } from 'components/kit/Modal';
-import css from 'components/ModelDownloadModal.module.scss';
 import { ModelVersion } from 'types';
+
+import css from './ModelDownloadModal.module.scss';
 
 interface Props {
   modelVersion: ModelVersion;

@@ -2,11 +2,12 @@ import { CopyOutlined } from '@ant-design/icons';
 import { Result } from 'antd';
 import React, { useCallback } from 'react';
 
-import css from 'components/AuthToken.module.scss';
 import Button from 'components/kit/Button';
 import { globalStorage } from 'globalStorage';
 import { notification } from 'utils/dialogApi';
 import { copyToClipboard } from 'utils/dom';
+
+import css from './AuthToken.module.scss';
 
 const AuthToken: React.FC = () => {
   const token = globalStorage.authToken || 'Auth token not found.';

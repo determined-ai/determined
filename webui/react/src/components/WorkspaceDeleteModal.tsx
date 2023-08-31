@@ -3,12 +3,13 @@ import React, { useCallback } from 'react';
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
-import css from 'components/WorkspaceDeleteModal.module.scss';
 import { paths } from 'routes/utils';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { routeToReactUrl } from 'utils/routes';
+
+import css from './WorkspaceDeleteModal.module.scss';
 
 interface FormInputs {
   workspaceName: string;

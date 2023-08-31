@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
-import css from 'components/kit/InlineForm.module.scss';
+
+import css from './InlineForm.module.scss';
 
 type InlineForm<T> = (props: Props<T>) => JSX.Element;
 

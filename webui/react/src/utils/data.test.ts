@@ -1,6 +1,7 @@
 import testConfig from 'fixtures/old-trial-config-response.json';
 import { RawJson, UnknownRecord } from 'types';
-import * as utils from 'utils/data';
+
+import * as utils from './data';
 
 const Type = {
   AsyncFn: 'async-function',

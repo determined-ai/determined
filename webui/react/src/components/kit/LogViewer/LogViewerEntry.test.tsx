@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react';
 import { CSSProperties } from 'react';
 
 import { LogLevel } from 'components/kit/internal/types';
-import LogViewerEntry, { Props } from 'components/kit/LogViewer/LogViewerEntry';
+
+import LogViewerEntry, { Props } from './LogViewerEntry';
 
 const setup = (props: Props) => {
   return render(<LogViewerEntry {...props} />);

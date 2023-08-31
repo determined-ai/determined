@@ -5,7 +5,6 @@ import Badge, { BadgeType } from 'components/Badge';
 import Spinner from 'components/kit/Spinner';
 import PageMessage from 'components/PageMessage';
 import { terminalCommandStates } from 'constants/states';
-import css from 'pages/Wait.module.scss';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import useUI from 'stores/contexts/UI';
@@ -13,6 +12,8 @@ import { CommandState } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { capitalize } from 'utils/string';
 import { WaitStatus } from 'utils/wait';
+
+import css from './Wait.module.scss';
 
 type Params = {
   taskId: string;

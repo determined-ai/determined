@@ -3,8 +3,9 @@ import React from 'react';
 import Icon from 'components/kit/Icon';
 import { ansiToHtml, capitalize } from 'components/kit/internal/functions';
 import { LogLevel } from 'components/kit/internal/types';
-import css from 'components/kit/LogViewer/LogViewerEntry.module.scss';
 import Tooltip from 'components/kit/Tooltip';
+
+import css from './LogViewerEntry.module.scss';
 
 export interface LogEntry {
   formattedTime: string;

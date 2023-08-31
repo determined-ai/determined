@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 
-import css from 'components/kit/Nameplate.module.scss';
+import css from './Nameplate.module.scss';
 
 export interface Props {
   alias?: string;

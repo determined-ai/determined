@@ -11,7 +11,6 @@ import {
   getPaginationConfig,
   MINIMUM_PAGE_SIZE,
 } from 'components/Table/Table';
-import css from 'pages/ExperimentDetails/ExperimentVisualization/HpTrialTable.module.scss';
 import { paths } from 'routes/utils';
 import {
   HyperparametersFlattened,
@@ -23,6 +22,8 @@ import {
 import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 import { isNumber } from 'utils/data';
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'utils/sort';
+
+import css from './HpTrialTable.module.scss';
 
 interface Props {
   colorScale?: ColorScale[];

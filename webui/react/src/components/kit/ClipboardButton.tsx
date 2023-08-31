@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 import { notification } from 'components/kit/internal/dialogApi';
 import { copyToClipboard } from 'components/kit/internal/functions';
-import Tooltip, { Placement } from 'components/kit/Tooltip';
+
+import Button from './Button';
+import Tooltip, { Placement } from './Tooltip';
 
 type IconName = 'clipboard' | 'checkmark';
 

@@ -5,14 +5,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import usePermissions from 'hooks/usePermissions';
-import ClusterHistoricalUsage from 'pages/Cluster/ClusterHistoricalUsage';
-import ClusterLogs from 'pages/ClusterLogs';
-import ClustersOverview from 'pages/Clusters/ClustersOverview';
 import { paths } from 'routes/utils';
 import clusterStore from 'stores/cluster';
 import determinedStore from 'stores/determinedInfo';
 import { ValueOf } from 'types';
 import { useObservable } from 'utils/observable';
+
+import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
+import ClusterLogs from './ClusterLogs';
+import ClustersOverview from './Clusters/ClustersOverview';
 
 const TabType = {
   HistoricalUsage: 'historical-usage',

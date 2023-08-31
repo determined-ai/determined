@@ -18,14 +18,6 @@ import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/us
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
-import css from 'pages/ExperimentDetails/ExperimentTrials.module.scss';
-import {
-  configForExperiment,
-  isOfSortKey,
-  Settings,
-} from 'pages/ExperimentDetails/ExperimentTrials.settings';
-import { columns as defaultColumns } from 'pages/ExperimentDetails/ExperimentTrials.table';
-import TrialsComparisonModal from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
 import { Experimentv1State, V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
@@ -46,6 +38,11 @@ import { routeToReactUrl } from 'utils/routes';
 import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
 import { humanReadableBytes } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
+
+import css from './ExperimentTrials.module.scss';
+import { configForExperiment, isOfSortKey, Settings } from './ExperimentTrials.settings';
+import { columns as defaultColumns } from './ExperimentTrials.table';
+import TrialsComparisonModal from './TrialsComparisonModal';
 
 interface Props {
   experiment: ExperimentBase;

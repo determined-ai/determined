@@ -1,4 +1,4 @@
-import * as utils from 'utils/string';
+import * as utils from './string';
 
 describe('String Utilities', () => {
   describe('snakeCaseToTitleCase', () => {
