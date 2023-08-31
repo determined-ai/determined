@@ -548,7 +548,7 @@ func TestMultipleContainersRunning(t *testing.T) {
 		assert.Equal(t, sub.Len(), 0)
 
 		ref.container.State = cproto.Starting
-		containerStatuses[2] = k8sV1.ContainerStatus{
+		containerStatuses[1] = k8sV1.ContainerStatus{
 			Name:  "test-pod-2",
 			State: k8sV1.ContainerState{Running: &k8sV1.ContainerStateRunning{}},
 		}
