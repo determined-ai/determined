@@ -2,6 +2,3 @@ agent_id: test-path-agent
 master_host: 127.0.0.1
 master_port: 8080
 label: yaml-conf
-fluent:
-  container_name: test-fluent
-  port: 29876

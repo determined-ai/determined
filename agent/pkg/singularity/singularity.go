@@ -197,7 +197,6 @@ func (s *SingularityClient) RunContainer(
 	}
 	args = append(args, "--env-file", envFilePath)
 
-	req.ContainerConfig.Env = append(req.ContainerConfig.Env, "DET_NO_FLUENT=true")
 	req.ContainerConfig.Env = append(req.ContainerConfig.Env, "DET_SHIPPER_EMIT_STDOUT_LOGS=False")
 
 	var b64EnvVars []string

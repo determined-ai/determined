@@ -4,8 +4,7 @@ import random
 import subprocess
 import time
 from pathlib import Path
-from tempfile import NamedTemporaryFile
-from typing import List, Optional
+from typing import List
 
 import docker
 import pytest
@@ -60,25 +59,13 @@ def master_down(arguments: List) -> None:
     det_deploy(command)
 
 
-def agent_up(arguments: List, fluent_offset: Optional[int] = None) -> None:
+def agent_up(arguments: List) -> None:
     command = ["agent-up", conf.MASTER_IP, "--no-gpu"]
     det_version = conf.DET_VERSION
     if det_version is not None:
         command += ["--det-version", det_version]
     command += arguments
-
-    if fluent_offset is not None:
-        with NamedTemporaryFile() as tf:
-            with open(tf.name, "w") as f:
-                f.write(
-                    f"""
-fluent:
-  port: {24224 + fluent_offset}
-  container_name: fluent-{fluent_offset}"""
-                )
-            det_deploy(command + ["--agent-config-path", tf.name])
-    else:
-        det_deploy(command)
+    det_deploy(command)
 
 
 def agent_down(arguments: List) -> None:
@@ -158,18 +145,6 @@ def test_agent_config_path() -> None:
     assert exit_code == 0
     with open(etc_path) as f:
         assert f.read() == out.decode("utf-8")
-
-    for _ in range(30):
-        try:
-            client.containers.get("test-fluent")
-            break
-        except docker.errors.NotFound:
-            print("Waiting for 'test-fluent' container to be created")
-            time.sleep(10)
-    else:
-        print("agent logs:")
-        print(agent_container.attach(logs=True).decode())
-        pytest.fail("uh-oh, fluent didn't come online")
     agent_down(["--agent-name", agent_name])
 
     # Validate CLI flags overwrite config file options.
@@ -293,7 +268,7 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
     # Start all agents.
     agents_are_up = [True] * num_agents
     for i in range(num_agents):
-        agent_up(["--agent-name", f"agent-{i}"], fluent_offset=i)
+        agent_up(["--agent-name", f"agent-{i}"])
     time.sleep(10)
 
     for step in range(steps):
@@ -307,7 +282,7 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                 if agent_is_up:
                     agent_down(["--agent-name", f"agent-{agent_id}"])
                 else:
-                    agent_up(["--agent-name", f"agent-{agent_id}"], fluent_offset=agent_id)
+                    agent_up(["--agent-name", f"agent-{agent_id}"])
                 agents_are_up[agent_id] = not agents_are_up[agent_id]
             else:
                 if random.choice([True, False]):

@@ -14,7 +14,6 @@ import (
 
 	"github.com/determined-ai/determined/agent/internal/container"
 	"github.com/determined-ai/determined/agent/internal/detect"
-	"github.com/determined-ai/determined/agent/internal/fluent"
 	"github.com/determined-ai/determined/agent/internal/options"
 	"github.com/determined-ai/determined/agent/pkg/docker"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -55,7 +54,7 @@ func overwriteSpec(
 		}
 	}
 
-	spec.RunSpec.HostConfig.LogConfig = generateLoggingConfig(opts.Fluent.Port)
+	spec.RunSpec.HostConfig.LogConfig = dcontainer.LogConfig{}
 
 	return spec, nil
 }
@@ -81,19 +80,6 @@ func addProxyInfo(env []string, opts options.Options) []string {
 		}
 	}
 	return env
-}
-
-func generateLoggingConfig(port int) dcontainer.LogConfig {
-	return dcontainer.LogConfig{
-		Type: "fluentd",
-		Config: map[string]string{
-			"fluentd-address":              "localhost:" + strconv.Itoa(port),
-			"fluentd-sub-second-precision": "true",
-			"mode":                         "non-blocking",
-			"max-buffer-size":              "10m",
-			"env":                          strings.Join(fluent.EnvVarNames, ","),
-		},
-	}
 }
 
 func cudaDeviceRequests(cont cproto.Container) []dcontainer.DeviceRequest {

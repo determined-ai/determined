@@ -114,7 +114,6 @@ func New(
 			AgentDockerRuntime:           config.AgentDockerRuntime,
 			AgentNetwork:                 config.AgentDockerNetwork,
 			AgentDockerImage:             config.AgentDockerImage,
-			AgentFluentImage:             config.AgentFluentImage,
 			AgentReconnectAttempts:       config.AgentReconnectAttempts,
 			AgentReconnectBackoff:        config.AgentReconnectBackoff,
 			AgentID:                      ec2InstanceID,

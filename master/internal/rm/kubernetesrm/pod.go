@@ -75,7 +75,6 @@ type pod struct {
 	scheduler                string
 	slotType                 device.Type
 	slotResourceRequests     config.PodSlotResourceRequests
-	fluentConfig             config.FluentConfig
 
 	pod           *k8sV1.Pod
 	podName       string
@@ -116,7 +115,6 @@ func newPod(
 	slotType device.Type,
 	slotResourceRequests config.PodSlotResourceRequests,
 	scheduler string,
-	fluentConfig config.FluentConfig,
 ) *pod {
 	podContainer := cproto.Container{
 		ID:          cproto.ID(msg.Spec.ContainerID),
@@ -154,7 +152,6 @@ func newPod(
 		scheduler:                scheduler,
 		slotType:                 slotType,
 		slotResourceRequests:     slotResourceRequests,
-		fluentConfig:             fluentConfig,
 		syslog: logrus.New().WithField("component", "pod").WithFields(
 			logger.MergeContexts(msg.LogContext, logger.Context{
 				"pod": uniqueName,

@@ -285,7 +285,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			k.config.DefaultScheduler,
 			k.config.SlotType,
 			config.PodSlotResourceRequests{CPU: k.config.SlotResourceRequests.CPU},
-			k.config.Fluent,
 			k.poolsConfig,
 			k.taskContainerDefaults,
 			k.config.CredsDir,

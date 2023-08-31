@@ -444,8 +444,8 @@ func (db *PgDB) TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsRespon
 }
 
 // MaxTerminationDelay is the max delay before a consumer can be sure all logs have been recevied.
-// For Postgres, we don't need to wait very long at all; this is just a hypothetical cap on fluent
-// to DB latency.
+// For Postgres, we don't need to wait very long at all; this was a hypothetical cap on fluent
+// to DB latency prior to fluent's deprecation.
 func (db *PgDB) MaxTerminationDelay() time.Duration {
 	// TODO: K8s logs can take a bit to get to us, so much so we should investigate.
 	return 5 * time.Second

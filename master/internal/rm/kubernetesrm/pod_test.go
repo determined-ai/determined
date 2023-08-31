@@ -56,7 +56,7 @@ func createPod(
 		model.TLSClientConfig{}, model.TLSClientConfig{},
 		model.LoggingConfig{DefaultLoggingConfig: &model.DefaultLoggingConfig{}},
 		podInterface, configMapInterface, resourceRequestQueue, leaveKubernetesResources,
-		slotType, slotResourceRequests, "default-scheduler", config.DefaultFluentConfig,
+		slotType, slotResourceRequests, "default-scheduler",
 	)
 
 	return newPodHandler
@@ -439,10 +439,6 @@ func TestReceivePodStatusUpdateStarting(t *testing.T) {
 				Name:  "determined-container",
 				State: k8sV1.ContainerState{Waiting: &k8sV1.ContainerStateWaiting{}},
 			},
-			{
-				Name:  "determined-fluent-container",
-				State: k8sV1.ContainerState{Waiting: &k8sV1.ContainerStateWaiting{}},
-			},
 		}
 		status := k8sV1.PodStatus{
 			Phase:             k8sV1.PodRunning,
@@ -474,7 +470,6 @@ func TestReceivePodStatusUpdateStarting(t *testing.T) {
 			Phase: k8sV1.PodRunning,
 			ContainerStatuses: []k8sV1.ContainerStatus{
 				{Name: "determined-container"},
-				{Name: "determined-fluent-container"},
 			},
 		}
 		pod := k8sV1.Pod{
@@ -507,10 +502,6 @@ func TestMultipleContainersRunning(t *testing.T) {
 			State: k8sV1.ContainerState{Running: &k8sV1.ContainerStateRunning{}},
 		},
 		{
-			Name:  "determined-fluent-container",
-			State: k8sV1.ContainerState{Running: &k8sV1.ContainerStateRunning{}},
-		},
-		{
 			Name: "test-pod",
 		},
 	}
@@ -537,7 +528,6 @@ func TestMultipleContainersRunning(t *testing.T) {
 		}
 		ref.containerNames = set.FromSlice([]string{
 			"determined-container",
-			"determined-fluent-container",
 			"test-pod",
 		})
 		statusUpdate := podStatusUpdate{updatedPod: &pod}
@@ -558,7 +548,7 @@ func TestMultipleContainersRunning(t *testing.T) {
 		assert.Equal(t, sub.Len(), 0)
 
 		ref.container.State = cproto.Starting
-		containerStatuses[2] = k8sV1.ContainerStatus{
+		containerStatuses[1] = k8sV1.ContainerStatus{
 			Name:  "test-pod-2",
 			State: k8sV1.ContainerState{Running: &k8sV1.ContainerStateRunning{}},
 		}

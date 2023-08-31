@@ -19,7 +19,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
-	"github.com/determined-ai/determined/master/pkg/fluent"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -32,13 +31,10 @@ import (
 )
 
 const (
-	fluentBaseDir = "/run/determined/fluent/"
-	coscheduler   = "coscheduler"
+	coscheduler = "coscheduler"
 
 	gcTask  = "gc"
 	cmdTask = "cmd"
-
-	rootUserName = "root"
 )
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
@@ -124,7 +120,6 @@ func (p *pod) configureEnvVars(
 
 func (p *pod) configureConfigMapSpec(
 	runArchives []cproto.RunArchive,
-	fluentFiles map[string][]byte,
 ) (*k8sV1.ConfigMap, error) {
 	configMapData := make(map[string][]byte, len(runArchives))
 	// Add additional files as tar.gz archive.
@@ -134,10 +129,6 @@ func (p *pod) configureConfigMapSpec(
 			return nil, errors.Wrap(err, "failed to zip archive")
 		}
 		configMapData[fmt.Sprintf("%d.tar.gz", idx)] = zippedArchive
-	}
-
-	for fn, content := range fluentFiles {
-		configMapData[fn] = content
 	}
 
 	// Add initContainer script.
@@ -154,38 +145,6 @@ func (p *pod) configureConfigMapSpec(
 		},
 		BinaryData: configMapData,
 	}, nil
-}
-
-func (p *pod) configureLoggingVolumes() ([]k8sV1.VolumeMount, []k8sV1.Volume) {
-	logsVolumeName := "det-logs"
-	configVolumeName := "det-fluent"
-	mounts := []k8sV1.VolumeMount{
-		{
-			Name:      logsVolumeName,
-			MountPath: "/run/determined/train/logs",
-		},
-		{
-			Name:      configVolumeName,
-			MountPath: fluentBaseDir,
-		},
-	}
-	volumes := []k8sV1.Volume{
-		{
-			Name: logsVolumeName,
-			VolumeSource: k8sV1.VolumeSource{EmptyDir: &k8sV1.EmptyDirVolumeSource{
-				Medium: k8sV1.StorageMediumMemory,
-			}},
-		},
-		{
-			Name: configVolumeName,
-			VolumeSource: k8sV1.VolumeSource{
-				ConfigMap: &k8sV1.ConfigMapVolumeSource{
-					LocalObjectReference: k8sV1.LocalObjectReference{Name: p.configMapName},
-				},
-			},
-		},
-	}
-	return mounts, volumes
 }
 
 func (p *pod) configureVolumes(
@@ -410,90 +369,8 @@ func (p *pod) createPodSpec(scheduler string) error {
 	)
 
 	var sidecars []k8sV1.Container
-	var fluentFiles map[string][]byte
 
-	p.containerNames.Insert(model.DeterminedK8FluentContainerName)
 	envVars = append(envVars, k8sV1.EnvVar{Name: "DET_K8S_LOG_TO_FILE", Value: "true"})
-
-	loggingMounts, loggingVolumes := p.configureLoggingVolumes()
-
-	volumes = append(volumes, loggingVolumes...)
-	volumeMounts = append(volumeMounts, loggingMounts...)
-
-	//nolint:govet // Allow unkeyed struct fields -- it really looks much better like this.
-	modifyConfig := fluent.ConfigSection{
-		{"Name", "modify"},
-		{"Match", "*"},
-		{"Add", "agent_id k8agent"},
-		{"Add", "container_id " + string(p.container.ID)},
-	}
-	for k, v := range spec.LoggingFields {
-		modifyConfig = append(modifyConfig, fluent.ConfigItem{Name: "Add", Value: k + " " + v})
-	}
-
-	var fluentArgs []string
-	//nolint:govet // Same as above.
-	fluentArgs, fluentFiles = fluent.ContainerConfig(
-		p.masterIP,
-		int(p.masterPort),
-		[]fluent.ConfigSection{
-			{
-				{"Name", "tail"},
-				{"Path", "/run/determined/train/logs/stdout.log-rotate/current"},
-				{"Refresh_Interval", "3"},
-				{"Read_From_Head", "true"},
-				{"Buffer_Max_Size", "1M"},
-				{"Skip_Long_Lines", "On"},
-				{"Tag", "stdout"},
-			},
-			{
-				{"Name", "tail"},
-				{"Path", "/run/determined/train/logs/stderr.log-rotate/current"},
-				{"Refresh_Interval", "3"},
-				{"Read_From_Head", "true"},
-				{"Buffer_Max_Size", "1M"},
-				{"Skip_Long_Lines", "On"},
-				{"Tag", "stderr"},
-			},
-		},
-		[]fluent.ConfigSection{
-			modifyConfig,
-			{
-				{"Name", "modify"},
-				{"Match", "stdout"},
-				{"Add", "stdtype stdout"},
-			},
-			{
-				{"Name", "modify"},
-				{"Match", "stderr"},
-				{"Add", "stdtype stderr"},
-			},
-		},
-		p.loggingConfig,
-		p.loggingTLSConfig,
-	)
-
-	var fluentSecCtx *k8sV1.SecurityContext
-	nonRootTask := p.submissionInfo.taskSpec.AgentUserGroup != nil &&
-		p.submissionInfo.taskSpec.AgentUserGroup.User != rootUserName
-	if p.fluentConfig.UID != 0 || p.fluentConfig.GID != 0 {
-		fluentSecCtx = configureSecurityContext(&model.AgentUserGroup{
-			UID: p.fluentConfig.UID,
-			GID: p.fluentConfig.GID,
-		})
-	} else if nonRootTask {
-		fluentSecCtx = configureSecurityContext(&fluent.NonRootAgentUserGroup)
-	}
-
-	sidecars = append(sidecars, k8sV1.Container{
-		Name:            model.DeterminedK8FluentContainerName,
-		Command:         fluentArgs,
-		Image:           p.fluentConfig.Image,
-		ImagePullPolicy: configureImagePullPolicy(spec.Environment),
-		SecurityContext: fluentSecCtx,
-		VolumeMounts:    loggingMounts,
-		WorkingDir:      fluentBaseDir,
-	})
 
 	container := k8sV1.Container{
 		Name:            model.DeterminedK8ContainerName,
@@ -511,7 +388,7 @@ func (p *pod) createPodSpec(scheduler string) error {
 		Ports:        containerPorts,
 	}
 
-	p.configMap, err = p.configureConfigMapSpec(runArchives, fluentFiles)
+	p.configMap, err = p.configureConfigMapSpec(runArchives)
 	if err != nil {
 		return err
 	}

@@ -72,7 +72,6 @@ type pods struct {
 	scheduler                string
 	slotType                 device.Type
 	slotResourceRequests     config.PodSlotResourceRequests
-	fluentConfig             config.FluentConfig
 	resourcePoolConfigs      []config.ResourcePoolConfig
 	baseContainerDefaults    *model.TaskContainerDefaultsConfig
 	credsDir                 string
@@ -151,7 +150,6 @@ func Initialize(
 	scheduler string,
 	slotType device.Type,
 	slotResourceRequests config.PodSlotResourceRequests,
-	fluentConfig config.FluentConfig,
 	resourcePoolConfigs []config.ResourcePoolConfig,
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
 	credsDir string,
@@ -182,7 +180,6 @@ func Initialize(
 		leaveKubernetesResources:     leaveKubernetesResources,
 		slotType:                     slotType,
 		slotResourceRequests:         slotResourceRequests,
-		fluentConfig:                 fluentConfig,
 		resourcePoolConfigs:          resourcePoolConfigs,
 		baseContainerDefaults:        taskContainerDefaults,
 		credsDir:                     credsDir,
@@ -512,7 +509,6 @@ func (p *pods) reattachPod(
 		p.slotType,
 		p.slotResourceRequests,
 		p.scheduler,
-		p.fluentConfig,
 	)
 
 	newPodHandler.restore = true
@@ -811,7 +807,6 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 		p.slotType,
 		p.slotResourceRequests,
 		p.scheduler,
-		p.fluentConfig,
 	)
 
 	if _, alreadyExists := p.podNameToPodHandler[newPodHandler.podName]; alreadyExists {

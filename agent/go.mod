@@ -24,7 +24,6 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1
-	github.com/determined-ai/determined/proto v0.0.0-00010101000000-000000000000
 	github.com/stretchr/testify v1.8.1
 	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.29.0
 	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
@@ -49,6 +48,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
+	github.com/determined-ai/determined/proto v0.0.0-00010101000000-000000000000 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/docker/libtrust v0.0.0-20150114040149-fa567046d9b1 // indirect
