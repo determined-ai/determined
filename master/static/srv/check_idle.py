@@ -3,6 +3,7 @@ import logging
 import os
 import socket
 import time
+from typing import Tuple
 
 import requests
 
@@ -21,7 +22,7 @@ REPORT_IDLE_INTERVAL = 30
 last_activity = None
 
 
-def wait_for_jupyter(addr):
+def wait_for_jupyter(addr: Tuple[str, int]) -> None:
     """
     Avoid logging enormous stacktraces when the requests library attempts to connect to a server
     that isn't accepting connections yet.  This is expected as jupyter startup time might take
@@ -43,7 +44,7 @@ def wait_for_jupyter(addr):
             i += 1
 
 
-def is_idle(request_address, mode):
+def is_idle(request_address: str, mode: IdleType) -> bool:
     try:
         kernels = requests.get(request_address + "/api/kernels", verify=False).json()
         terminals = requests.get(request_address + "/api/terminals", verify=False).json()
@@ -66,10 +67,11 @@ def is_idle(request_address, mode):
         no_busy_kernels = all(k["execution_state"] != "busy" for k in kernels)
 
         return no_busy_kernels and (last_activity == old_last_activity)
+    return False
 
 
-def main():
-    requests.packages.urllib3.disable_warnings()
+def main() -> None:
+    requests.packages.urllib3.disable_warnings()  # type: ignore
     port = os.environ["NOTEBOOK_PORT"]
     notebook_id = os.environ["DET_TASK_ID"]
     notebook_server = f"https://127.0.0.1:{port}/proxy/{notebook_id}"

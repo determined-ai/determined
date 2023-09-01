@@ -28,7 +28,7 @@ def expand_like(arrays: List[np.ndarray], fill: float = -100) -> np.ndarray:
     """
     full_shape = list(arrays[0].shape)
     if len(full_shape) == 1:
-        return np.concatenate(arrays)
+        return np.ndarray(np.concatenate(arrays))
     full_shape[0] = sum(a.shape[0] for a in arrays)
     full_shape[1] = max(a.shape[1] for a in arrays)
     result = np.full(full_shape, fill)
@@ -36,7 +36,7 @@ def expand_like(arrays: List[np.ndarray], fill: float = -100) -> np.ndarray:
     for a in arrays:
         result[row_offset : row_offset + a.shape[0], : a.shape[1]] = a
         row_offset += a.shape[0]
-    return result
+    return np.ndarray(result)
 
 
 def numpify(x: Union[List, np.ndarray, torch.Tensor]) -> np.ndarray:
@@ -46,9 +46,9 @@ def numpify(x: Union[List, np.ndarray, torch.Tensor]) -> np.ndarray:
     if isinstance(x, np.ndarray):
         return x
     if isinstance(x, List):
-        return np.array(x)
+        return np.ndarray(x)
     if isinstance(x, torch.Tensor):
-        return x.cpu().numpy()  # type: ignore
+        return np.ndarray(x.cpu().numpy())
     raise TypeError("Expected input of type List, np.ndarray, or torch.Tensor.")
 
 

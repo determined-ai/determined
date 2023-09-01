@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 import attrdict
 
 
+@dataclasses.dataclass(init=False, repr=False)
 class FlexibleDataclass:
     """
     A variant of dataclass that allows fields without defaults to be unpopulated for

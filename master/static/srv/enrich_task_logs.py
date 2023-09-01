@@ -9,7 +9,7 @@ import socket
 import sys
 import threading
 import time
-from typing import Any, Dict, Iterator
+from typing import Any, Dict, Iterator, List
 
 from determined.common import api
 from determined.common.api import errors
@@ -74,7 +74,7 @@ class LogCollector(threading.Thread):
 
                     m = level.match(line)
                     if m:
-                        parsed_metadata["level"] = m.group("level")
+                        parsed_metadata["level"] = int(m.group("level"))
                         line = m.group("log")
 
                     self.ship_queue.put(
@@ -102,8 +102,8 @@ class LogShipper(threading.Thread):
         ship_queue: queue.Queue,
         master_url: str,
     ) -> None:
-        self.ship_queue = ship_queue
-        self.logs = []
+        self.ship_queue: queue.Queue = ship_queue
+        self.logs: List[Any] = []
         self.master_url = master_url
         super().__init__()
 
@@ -157,7 +157,7 @@ def main(
     task_logging_metadata: Dict[str, Any],
     emit_stdout_logs: bool,
 ) -> None:
-    ship_queue = queue.Queue(maxsize=SHIP_QUEUE_MAX_SIZE)
+    ship_queue: queue.Queue = queue.Queue(maxsize=SHIP_QUEUE_MAX_SIZE)
     collector = LogCollector(ship_queue, task_logging_metadata, emit_stdout_logs)
     shipper = LogShipper(ship_queue, master_url)
 
@@ -191,8 +191,10 @@ if __name__ == "__main__":
         task_logging_metadata["container_id"] = container_id
     # If trial exists, just drop it since it could mess with de-ser on the API end.
     task_logging_metadata.pop("trial_id", None)
-    emit_stdout_logs = distutils.util.strtobool(
-        os.environ.get("DET_SHIPPER_EMIT_STDOUT_LOGS", "True"),
+    emit_stdout_logs = bool(
+        distutils.util.strtobool(
+            os.environ.get("DET_SHIPPER_EMIT_STDOUT_LOGS", "True"),
+        )
     )
 
     main(master_url, task_logging_metadata, emit_stdout_logs)

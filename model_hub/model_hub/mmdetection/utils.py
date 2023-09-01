@@ -64,7 +64,7 @@ def get_pretrained_ckpt_path(download_directory: str, config_file: str) -> Tuple
         ckpt_path = model_hub.utils.download_url(
             download_directory, CONFIG_TO_PRETRAINED[config_file]
         )
-        return ckpt_path, torch.load(ckpt_path)  # type: ignore
+        return ckpt_path, torch.load(ckpt_path)
     return None, None
 
 

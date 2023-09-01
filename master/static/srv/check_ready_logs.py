@@ -17,7 +17,7 @@ from determined.common.api import certs
 BACKOFF_SECONDS = 5
 
 
-def post_ready(master_url: str, cert: certs.Cert, allocation_id: str, state: str):
+def post_ready(master_url: str, cert: certs.Cert, allocation_id: str, state: str) -> None:
     # Since the service is virtually inaccessible by the user unless
     # the call completes, we may as well try forever or just wait for
     # them to kill us.
@@ -37,7 +37,7 @@ def post_ready(master_url: str, cert: certs.Cert, allocation_id: str, state: str
             time.sleep(BACKOFF_SECONDS)
 
 
-def main(ready: Pattern, waiting: Optional[Pattern] = None):
+def main(ready: Pattern, waiting: Optional[Pattern] = None) -> None:
     master_url = str(os.environ["DET_MASTER"])
     cert = certs.default_load(master_url)
     allocation_id = str(os.environ["DET_ALLOCATION_ID"])

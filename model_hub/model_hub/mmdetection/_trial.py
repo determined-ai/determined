@@ -188,7 +188,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
     def evaluate_batch(self, batch: Any, batch_idx: int) -> Dict[str, Any]:
         batch = self.to_device(batch)
         batch = {key: batch[key][0].data for key in batch}
-        with torch.no_grad():  # type: ignore
+        with torch.no_grad():
             result = self.model(return_loss=False, rescale=True, **batch)
         if isinstance(result[0], tuple):
             result = [

@@ -22,7 +22,7 @@ class WebhookRequestHandler(SimpleHTTPRequestHandler):
     def do_POST(self) -> None:
         global request_to_webhook_endpoint
         global keep_server_running
-        content_length = int(self.headers.get("content-length"))
+        content_length = int(self.headers.get("content-length", 0))
         request_body = self.rfile.read(content_length)
         request_to_webhook_endpoint = json.loads(request_body)
         self.send_response(200, "Success")

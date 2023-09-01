@@ -287,9 +287,9 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=creds.username)
     user.deactivate()
-    assert user.active is not True
+    assert bool(user.active) is not True
     user.activate()
-    assert user.active is True
+    assert bool(user.active) is True
 
     # Now log in again.
     api_utils.configure_token_store(creds)
@@ -876,7 +876,7 @@ def test_non_root_experiment(clean_auth: None, login_admin: None, tmp_path: path
                 tmp_path,
                 {
                     "startup-hook.sh": "det --version || exit 77",
-                    "const.yaml": yaml.dump(config),  # type: ignore
+                    "const.yaml": yaml.dump(config),
                     "model_def.py": model_def_content,
                 },
             ) as tree:

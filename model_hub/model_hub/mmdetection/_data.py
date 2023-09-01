@@ -47,7 +47,7 @@ class GroupSampler(torch.utils.data.Sampler):
         self.num_replicas = num_replicas
 
         assert hasattr(self.dataset, "flag")
-        self.flag = self.dataset.flag  # type: ignore
+        self.flag = self.dataset.flag
         self.group_sizes = np.bincount(self.flag)
 
         self.num_samples = 0
