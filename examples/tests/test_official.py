@@ -14,10 +14,6 @@ official_examples = [
         "tutorials/imagenet_pytorch",
         "tutorials/imagenet_pytorch/const_cifar.yaml",
     ),
-    (
-        "features/custom_reducers_mnist_pytorch",
-        "features/custom_reducers_mnist_pytorch/const.yaml",
-    ),
 ]
 
 
