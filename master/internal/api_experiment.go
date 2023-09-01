@@ -14,8 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"go.opentelemetry.io/otel"
-
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 
 	"github.com/labstack/echo/v4"
@@ -72,9 +70,6 @@ type experimentAllocation struct {
 
 // SummaryMetricStatistics lists values possibly queryable within summary metrics.
 var SummaryMetricStatistics = []string{"last", "max", "mean", "min"}
-
-// Tracer for API experiments
-var tracer = otel.Tracer("experiments")
 
 const maxConcurrentDeletes = 10
 
