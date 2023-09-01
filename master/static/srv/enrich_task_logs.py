@@ -18,9 +18,7 @@ from determined.common.api import certs, errors
 # 2022-05-12 16:32:48,757:gc_checkpoints: [rank=0] INFO: Determined checkpoint GC, version 0.17.16-dev0
 # Below regex is used to extract the rank field from the log message.
 # Excluding empty spaces this regex matches rank in the above example as [rank=0]
-rank = re.compile(
-    "(?P<space1> ?)\[rank=(?P<rank_id>([0-9]+))\](?P<space2> ?)(?P<log>.*)"
-)
+rank = re.compile("(?P<space1> ?)\[rank=(?P<rank_id>([0-9]+))\](?P<space2> ?)(?P<log>.*)")
 # Below regex is used to extract the message severity from the log message.
 # Excluding empty spaces and delimiter(:) this regex matches message severity level in the above example as INFO
 level = re.compile(
@@ -143,7 +141,7 @@ class LogShipper(threading.Thread):
                 tries += 1
                 if tries == max_tries:
                     print(
-                        "failed to ship logs: {e}\nLogs to Ship: {self.logs}}",
+                        f"failed to ship logs: {e}\nLogs to Ship: {len(self.logs)}",
                         file=sys.stderr,
                     )
                 time.sleep(SHIPPER_FAILURE_BACKOFF_SECONDS)
@@ -183,9 +181,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="read a stream and enrich it with the standard logging metadata"
     )
-    parser.add_argument(
-        "--stdtype", type=str, help="the stdtype of this stream", required=True
-    )
+    parser.add_argument("--stdtype", type=str, help="the stdtype of this stream", required=True)
     args = parser.parse_args()
 
     master_url = os.environ.get("DET_MASTER", os.environ.get("DET_MASTER_ADDR"))
