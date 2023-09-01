@@ -2,7 +2,6 @@ import argparse
 import collections
 import inspect
 import json
-import os
 import re
 import shlex
 import shutil
