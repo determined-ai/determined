@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"sync"
 	"time"
@@ -275,6 +276,22 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case *apiv1.GetAgentsRequest:
 		p.handleGetAgentsRequest(ctx)
 
+	case *apiv1.EnableAgentRequest:
+		resp, err := p.enableNode(ctx, msg.AgentId)
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
+		ctx.Respond(resp)
+
+	case *apiv1.DisableAgentRequest:
+		resp, err := p.disableNode(ctx, msg.AgentId, msg.Drain)
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
+		ctx.Respond(resp)
+
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
@@ -446,6 +463,22 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 		ctx.Respond(fmt.Errorf("not enough pods found for allocation expected %d got %d instead",
 			msg.numPods, len(k8sPods)))
 		return nil
+	}
+
+	// This is needed to label pods created before Determined supported k8s agent enable disable.
+	for _, pod := range k8sPods {
+		pod := pod
+		before := pod.DeepCopy()
+		addNodeDisabledAffinityToPodSpec(pod, clusterIDNodeLabel())
+		if !reflect.DeepEqual(pod.Spec, before.Spec) {
+			_, err := p.podInterfaces[pod.Namespace].
+				Update(context.TODO(), pod, metaV1.UpdateOptions{})
+			if err != nil {
+				p.deleteKubernetesResources(ctx, pods, configMaps)
+				ctx.Respond(fmt.Errorf("adding node affinity to restored pod: %w", err))
+				return nil
+			}
+		}
 	}
 
 	var restoreResponses []reattachPodResponse
@@ -864,6 +897,126 @@ func (p *pods) podStatusCallback(s *actor.System, event watch.Event) {
 	}
 }
 
+func (p *pods) enableNode(
+	ctx *actor.Context, nodeName string,
+) (*apiv1.EnableAgentResponse, error) {
+	node, err := p.clientSet.CoreV1().Nodes().Get(context.TODO(), nodeName, metaV1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("getting node %s to enable: %w", nodeName, err)
+	}
+
+	delete(node.Labels, clusterIDNodeLabel())
+
+	_, err = p.clientSet.CoreV1().Nodes().Update(context.TODO(), node, metaV1.UpdateOptions{})
+	if err != nil {
+		return nil, fmt.Errorf(
+			"enabling node %s by updating by removing no schedule label: %w", nodeName, err)
+	}
+
+	p.invalidateSummarizeCache()
+	nodes, err := p.summarize(ctx)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"node enabled without error, error getting node info to return: %w", err)
+	}
+	n, ok := nodes[nodeName]
+	if !ok {
+		return nil, fmt.Errorf("pods actor doesn't know about the node we just disabled")
+	}
+	n.Enabled = true
+	n.Draining = false
+
+	return &apiv1.EnableAgentResponse{
+		Agent: n.ToProto(),
+	}, nil
+}
+
+var clusterID string
+
+func setClusterID(s string) {
+	if clusterID != "" {
+		panic(fmt.Sprintf("set cluster ID again new %s old %s", s, clusterID))
+	}
+	clusterID = s
+}
+
+func clusterIDNodeLabel() string {
+	return fmt.Sprintf("determined.ai/cluster-id=%s", clusterID)
+}
+
+const (
+	noExecuteNodeLabelValue  = "no-execute"
+	noScheduleNodeLabelValue = "no-schedule"
+)
+
+func (p *pods) disableNode(
+	ctx *actor.Context, nodeName string, shouldDrain bool,
+) (*apiv1.DisableAgentResponse, error) {
+	node, err := p.clientSet.CoreV1().Nodes().Get(context.TODO(), nodeName, metaV1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("getting node %s to disable: %w", nodeName, err)
+	}
+
+	labelValue := noExecuteNodeLabelValue
+	if shouldDrain {
+		labelValue = noScheduleNodeLabelValue
+	}
+	node.Labels[clusterIDNodeLabel()] = labelValue
+
+	_, err = p.clientSet.CoreV1().Nodes().Update(context.TODO(), node, metaV1.UpdateOptions{})
+	if err != nil {
+		return nil, fmt.Errorf(
+			"disabling node %s by updating by removing no schedule label: %w", nodeName, err)
+	}
+
+	if !shouldDrain { // See note in spec.go about how we could remove killing all pods here.
+		if err := p.killDetJobsOnNode(ctx, nodeName); err != nil {
+			return nil, fmt.Errorf(
+				"node disabled without error, error killing existing pod on node: %w", err)
+		}
+	}
+
+	p.invalidateSummarizeCache()
+	nodes, err := p.summarize(ctx)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"node disabled without error, error getting node info to return: %w", err)
+	}
+	n, ok := nodes[nodeName]
+	if !ok {
+		return nil, fmt.Errorf("pods actor doesn't know about the node we just disabled")
+	}
+	n.Enabled = false
+	n.Draining = shouldDrain
+
+	return &apiv1.DisableAgentResponse{
+		Agent: n.ToProto(),
+	}, err
+}
+
+func (p *pods) killDetJobsOnNode(ctx *actor.Context, nodeName string) error {
+	listOptions := metaV1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s", determinedLabel),
+		FieldSelector: fmt.Sprintf("spec.nodeName=%s", nodeName),
+	}
+	pods, err := p.listPodsInAllNamespaces(context.TODO(), listOptions)
+	if err != nil {
+		return fmt.Errorf("listing pods on node %s: %w", nodeName, err)
+	}
+
+	for _, pod := range pods.Items {
+		podHandler, ok := p.podNameToPodHandler[pod.Name]
+		if !ok {
+			return fmt.Errorf("unable to find pod %s's actor to kill", pod.Name)
+		}
+		p.syslog.Infof(
+			"stopping pod %s because node %s was disabled without drain option", pod.Name, nodeName)
+		podHandler.kill()
+	}
+
+	return nil
+}
+
 func (p *pods) nodeStatusCallback(event watch.Event) {
 	node, ok := event.Object.(*k8sV1.Node)
 	if !ok {
@@ -1047,6 +1200,13 @@ func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
 		response.Agents = append(response.Agents, summary.ToProto())
 	}
 	ctx.Respond(response)
+}
+
+func (p *pods) invalidateSummarizeCache() {
+	p.summarizeCacheLock.Lock()
+	defer p.summarizeCacheLock.Unlock()
+
+	p.summarizeCacheTime = time.Time{}
 }
 
 // summarize describes pods' available resources. When there's exactly one resource pool, it uses
@@ -1273,6 +1433,8 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 			addrs = append(addrs, addr.Address)
 		}
 
+		disabledLabel, isDisabled := node.Labels[clusterIDNodeLabel()]
+
 		summary[node.Name] = model.AgentSummary{
 			ID:             node.Name,
 			RegisteredTime: node.ObjectMeta.CreationTimestamp.Time,
@@ -1280,6 +1442,12 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 			NumContainers:  len(podByNode[node.Name]) + len(nodeToTasks[node.Name]),
 			ResourcePool:   []string{""},
 			Addresses:      addrs,
+			// TODO is "Draining" defined as
+			// 1. called `det a disable --drain` until `det a enable` is called
+			// 2. or `det a disable --drain` and all tasks finish
+			// Since agents seem to do 1 but the name would imply 2?
+			Draining: isDisabled && disabledLabel == noScheduleNodeLabelValue,
+			Enabled:  !isDisabled,
 		}
 	}
 

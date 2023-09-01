@@ -32,6 +32,9 @@ rules:
   - apiGroups: ["scheduling.k8s.io"]
     resources: ["priorityclasses"]
     verbs: ["create", "get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["nodes/labels"]
+    verbs: ["update"]
 
 
 ---

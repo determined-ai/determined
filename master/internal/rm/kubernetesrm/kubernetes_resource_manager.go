@@ -55,6 +55,14 @@ func New(
 	if err != nil {
 		panic(errors.Wrap(err, "failed to set up TLS config"))
 	}
+
+	// TODO clusterID should just be a `internal/config` package singleton.
+	clusterID, err := db.GetOrCreateClusterID()
+	if err != nil {
+		panic(fmt.Errorf("getting clusterID: %w", err))
+	}
+	setClusterID(clusterID)
+
 	ref, _ := system.ActorOf(
 		sproto.K8sRMAddr,
 		newKubernetesResourceManager(
@@ -67,6 +75,7 @@ func New(
 		),
 	)
 	system.Ask(ref, actor.Ping{}).Get()
+
 	return ResourceManager{ResourceManager: actorrm.Wrap(ref)}
 }
 
@@ -416,6 +425,12 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case *apiv1.GetAgentsRequest:
 		resp := ctx.Ask(k.podsActor, msg)
 		ctx.Respond(resp.Get())
+
+	case *apiv1.EnableAgentRequest:
+		ctx.Respond(ctx.Ask(k.podsActor, msg).Get())
+
+	case *apiv1.DisableAgentRequest:
+		ctx.Respond(ctx.Ask(k.podsActor, msg).Get())
 
 	case sproto.GetExternalJobs:
 		ctx.Respond(rmerrors.ErrNotSupported)
