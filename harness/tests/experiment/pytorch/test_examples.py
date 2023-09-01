@@ -80,7 +80,6 @@ def test_cifar10_parallel(tmp_path: pathlib.Path) -> None:
     launcher.elastic_launch(launch_config, run_cifar10)(tmp_path, outputs[0])
 
 
-
 def run_mnist(tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0) -> None:
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
