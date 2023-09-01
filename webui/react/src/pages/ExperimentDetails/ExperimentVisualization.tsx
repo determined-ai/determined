@@ -141,7 +141,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
   const handleFiltersChange = useCallback(
     (newFilters: Partial<VisualizationFilters>) => {
-      store.set(ioVisualizationFilters, storagePath, { ...newFilters });
+      store.set(ioVisualizationFilters, storagePath, newFilters);
     },
     [storagePath],
   );
