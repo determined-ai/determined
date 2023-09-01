@@ -121,9 +121,12 @@ def list_workspace_projects(args: Namespace) -> None:
     offset = args.offset or 0
     limit = args.limit or 200
 
-    projects = sorted(
-        all_projects, key=lambda p: getattr(p, sort_key), reverse=sort_order == "desc"
-    )[offset : offset + limit]
+    # TODO: Remove typechecking suppression when mypy is upgraded to 1.4.0
+    all_projects.sort(
+        key=lambda p: getattr(p, sort_key),  # type: ignore
+        reverse=sort_order == "desc",
+    )
+    projects = all_projects[offset : offset + limit]
 
     if args.json:
         determined.cli.render.print_json([p.to_json() for p in projects])
