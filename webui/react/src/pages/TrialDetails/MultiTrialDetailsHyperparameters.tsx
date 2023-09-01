@@ -64,6 +64,7 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
       maxTrial: settings.maxTrial,
       metric: settings.metric,
       scale: settings.scale,
+      view: undefined,
     }),
     [
       settings.batch,

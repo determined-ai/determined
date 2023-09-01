@@ -1,4 +1,5 @@
 import { Alert, type TabsProps } from 'antd';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
@@ -8,12 +9,12 @@ import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
-import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
 import { V1MetricBatchesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useUI from 'stores/contexts/UI';
+import store from 'stores/userSettings';
 import {
   ExperimentBase,
   ExperimentSearcherName,
@@ -28,6 +29,7 @@ import { Loadable } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';
 
 import ExperimentVisualizationFilters, {
+  ioVisualizationFilters,
   MAX_HPARAM_COUNT,
   ViewType,
   VisualizationFilters,
@@ -73,11 +75,20 @@ const PAGE_ERROR_MESSAGES = {
   [PageError.MetricNames]: 'Unable to retrieve experiment metric info.',
 };
 
+const defaultFilters: VisualizationFilters = {
+  batch: DEFAULT_BATCH,
+  batchMargin: DEFAULT_BATCH_MARGIN,
+  hParams: [],
+  maxTrial: DEFAULT_MAX_TRIALS,
+  metric: undefined,
+  scale: Scale.Linear,
+  view: DEFAULT_VIEW,
+};
+
 const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Props) => {
   const { ui } = useUI();
   const navigate = useNavigate();
   const location = useLocation();
-  const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
   const searcherMetric = useRef<Metric>({
     group: MetricType.Validation,
     name: experiment.config.searcher.metric,
@@ -91,24 +102,20 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     }),
   );
 
-  const defaultFilters: VisualizationFilters = {
-    batch: DEFAULT_BATCH,
-    batchMargin: DEFAULT_BATCH_MARGIN,
-    hParams: [],
-    maxTrial: DEFAULT_MAX_TRIALS,
-    metric: undefined,
-    scale: Scale.Linear,
-    view: DEFAULT_VIEW,
-  };
-  const initFilters = storage.getWithDefault<VisualizationFilters>(
-    STORAGE_FILTERS_KEY,
-    defaultFilters,
+  const storagePath = useMemo(
+    () => `${STORAGE_PATH}/${experiment.id}/${STORAGE_FILTERS_KEY}`,
+    [experiment],
   );
+  const filtersLoadable = useObservable(store.get(ioVisualizationFilters, storagePath));
+
+  const filters: VisualizationFilters = useMemo(() => {
+    const filters = Loadable.getOrElse(defaultFilters, filtersLoadable);
+    return filters || defaultFilters;
+  }, [filtersLoadable]);
+
   const [typeKey, setTypeKey] = useState(() => {
     return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   });
-  const [filters, setFilters] = useState<VisualizationFilters>(initFilters);
-  const [hasSearcherMetric, setHasSearcherMetric] = useState<boolean>(false);
   const [batches, setBatches] = useState<number[]>();
   const [pageError, setPageError] = useState<PageError>();
 
@@ -134,40 +141,37 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
   const handleFiltersChange = useCallback(
     (newFilters: Partial<VisualizationFilters>) => {
-      setFilters((prevFilters) => {
-        const result = { ...prevFilters, ...newFilters };
-        storage.set(STORAGE_FILTERS_KEY, result);
-        return result;
-      });
+      store.set(ioVisualizationFilters, storagePath, { ...newFilters });
     },
-    [storage],
+    [storagePath],
   );
 
+  const getActiveMetrics = useCallback(() => {
+    const activeMetricFound = metrics.find(
+      (metric) =>
+        metric.group === searcherMetric.current.group &&
+        metric.name === searcherMetric.current.name,
+    );
+    if (activeMetricFound) {
+      return searcherMetric.current;
+    } else if (metrics.length > 0) {
+      return metrics[0];
+    }
+  }, [metrics]);
+
   const handleFiltersReset = useCallback(() => {
-    storage.remove(STORAGE_FILTERS_KEY);
-  }, [storage]);
+    store.set(ioVisualizationFilters, storagePath, {
+      ...defaultFilters,
+      metrics: getActiveMetrics(),
+    });
+  }, [storagePath, getActiveMetrics]);
 
   useEffect(() => {
-    if (!hasSearcherMetric) {
-      const activeMetricFound = metrics.find(
-        (metric) =>
-          metric.group === searcherMetric.current.group &&
-          metric.name === searcherMetric.current.name,
-      );
-      if (activeMetricFound) {
-        setHasSearcherMetric(true);
-        handleFiltersChange({
-          ...filters,
-          metric: searcherMetric.current,
-        });
-      } else if (metrics.length > 0 && !filters.metric) {
-        handleFiltersChange({
-          ...filters,
-          metric: metrics[0],
-        });
-      }
-    }
-  }, [hasSearcherMetric, handleFiltersChange, filters, metrics]);
+    if (filters.metric) return;
+    handleFiltersChange({
+      metric: getActiveMetrics(),
+    });
+  }, [handleFiltersChange, filters, metrics, getActiveMetrics]);
 
   const handleTabChange = useCallback(
     (type: string) => {
@@ -330,22 +334,22 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   // Set the default filter batch.
   useEffect(() => {
     if (!batches || batches.length === 0) return;
-    setFilters((prev) => {
-      if (prev.batch !== DEFAULT_BATCH) return prev;
-      return { ...prev, batch: batches.first() };
+    store.update(ioVisualizationFilters, storagePath, (prev: VisualizationFilters | undefined) => {
+      if (prev && prev.batch !== DEFAULT_BATCH) return prev;
+      return { ...(prev || defaultFilters), batch: batches.first() };
     });
-  }, [batches]);
+  }, [batches, storagePath]);
 
   // Update default filter hParams if not previously set.
   useEffect(() => {
     if (!isSupported) return;
 
-    setFilters((prev) => {
-      if (prev.hParams.length !== 0) return prev;
+    store.update(ioVisualizationFilters, storagePath, (prev: VisualizationFilters | undefined) => {
+      if (prev && prev.hParams.length !== 0) return prev;
       const hParams = fullHParams.current;
-      return { ...prev, hParams: hParams.slice(0, MAX_HPARAM_COUNT) };
+      return { ...(prev || defaultFilters), hParams: hParams.slice(0, MAX_HPARAM_COUNT) };
     });
-  }, [isSupported]);
+  }, [isSupported, storagePath]);
 
   if (!isSupported) {
     const alertMessage = `
