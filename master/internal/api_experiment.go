@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -14,8 +15,6 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/labstack/echo/v4"
 	"github.com/uptrace/bun"
@@ -1619,12 +1618,12 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 			return err
 		}
 
-		numNonTermialExperiments, err := db.GetNonTerminalExperimentCount(resp.Context(), req.Ids)
+		numNonTerminalExperiments, err := db.GetNonTerminalExperimentCount(resp.Context(), req.Ids)
 		if err != nil {
 			return errors.Wrap(err, "error looking up state of experiments")
 		}
 
-		if numNonTermialExperiments == 0 {
+		if numNonTerminalExperiments == 0 {
 			return nil
 		}
 

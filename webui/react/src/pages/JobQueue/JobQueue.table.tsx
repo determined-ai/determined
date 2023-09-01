@@ -111,6 +111,9 @@ export const columns: ColumnDef<Job>[] = [
             </div>
           );
           break;
+        case JobType.EXTERNAL:
+          label = <div>{record.name}</div>;
+          break;
         default:
           label = (
             <span>

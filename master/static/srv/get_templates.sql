@@ -1,4 +1,5 @@
 SELECT
     name,
-    config
+    config,
+    workspace_id
 FROM templates

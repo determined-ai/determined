@@ -150,7 +150,7 @@ def test_experiment_proxy_ray_publish() -> None:
             "resources.slots=1",
             "-f",
             "-p",
-            "8267:8265",
+            "8265",
         ],
         stdout=subprocess.PIPE,
         text=True,
@@ -165,8 +165,8 @@ def test_experiment_proxy_ray_publish() -> None:
 
         try:
             exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
-            _probe_tunnel(proc, port=8267)
-            _ray_job_submit(exp_path, port=8267)
+            _probe_tunnel(proc)
+            _ray_job_submit(exp_path)
         finally:
             sess = api_utils.determined_test_session()
             bindings.post_KillExperiment(sess, id=exp_id)

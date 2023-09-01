@@ -28,7 +28,7 @@ import {
 } from 'types';
 import { getColorScale } from 'utils/chart';
 import { rgba2str, str2rgba } from 'utils/color';
-import { clone, flattenObject, isBoolean, isObject, isString } from 'utils/data';
+import { flattenObject, isBoolean, isObject, isString } from 'utils/data';
 import { metricToStr } from 'utils/metric';
 
 import { ViewType } from './ExperimentVisualizationFilters';
@@ -111,8 +111,8 @@ const HpHeatMaps: React.FC<Props> = ({
     const props: Record<string, UPlotScatterProps> = {};
     const rgbaStroke0 = str2rgba(colorScale[0].color);
     const rgbaStroke1 = str2rgba(colorScale[1].color);
-    const rgbaFill0 = clone(rgbaStroke0);
-    const rgbaFill1 = clone(rgbaStroke1);
+    const rgbaFill0 = structuredClone(rgbaStroke0);
+    const rgbaFill1 = structuredClone(rgbaStroke1);
     rgbaFill0.a = 0.3;
     rgbaFill1.a = 0.3;
     const fill = [rgba2str(rgbaFill0), rgba2str(rgbaFill1)].join(' ');

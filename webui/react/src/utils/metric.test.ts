@@ -28,22 +28,22 @@ const workloads: WorkloadGroup[] = [
 const metrics = [
   {
     metric: { group: MetricType.Training, name: 'accuracy' },
-    str: '[T] accuracy',
+    str: 'training.accuracy',
     value: '{"group":"training","name":"accuracy"}',
   },
   {
     metric: { group: MetricType.Training, name: 'loss' },
-    str: '[T] loss',
+    str: 'training.loss',
     value: '{"group":"training","name":"loss"}',
   },
   {
     metric: { group: MetricType.Validation, name: 'accuracy' },
-    str: '[V] accuracy',
+    str: 'validation.accuracy',
     value: '{"group":"validation","name":"accuracy"}',
   },
   {
     metric: { group: MetricType.Validation, name: 'loss' },
-    str: '[V] loss',
+    str: 'validation.loss',
     value: '{"group":"validation","name":"loss"}',
   },
 ];
@@ -110,7 +110,7 @@ describe('Metric Utilities', () => {
         group: MetricType.Training,
         name: 'very-very-very-very-very-very-long-metric-name',
       };
-      expect(utils.metricToStr(metric, 20)).toBe('[T] very-very-very-very-...');
+      expect(utils.metricToStr(metric, 20)).toBe('training.very-very-v...');
     });
   });
 

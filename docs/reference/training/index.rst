@@ -15,7 +15,6 @@
 -  :doc:`det.pytorch.samplers <api-pytorch-samplers-reference>`
 -  :doc:`det.pytorch.deepspeed <api-deepspeed-reference>`
 -  :doc:`det.keras <api-keras-reference>`
--  :doc:`det.estimator <api-estimator-reference>`
 
 *******************************
  Experiment Configuration File
@@ -33,5 +32,4 @@
    det.pytorch.samplers <api-pytorch-samplers-reference>
    det.pytorch.deepspeed <api-deepspeed-reference>
    det.keras <api-keras-reference>
-   det.estimator <api-estimator-reference>
    Experiment Configuration <experiment-config-reference>

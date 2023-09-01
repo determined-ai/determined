@@ -7,6 +7,30 @@
 ###############
 
 **************
+ Version 0.24
+**************
+
+Version 0.24.0
+==============
+
+**Release Date:** August 18, 2023
+
+**Breaking Changes**
+
+-  API: Remove ``LightningAdapter``, which was deprecated in 0.23.1 (June 2023). We recommend that
+   PyTorch Lightning users migrate to the :ref:`Core API <core-getting-started>`.
+
+**New Features**
+
+-  Environments: Add experimental PyTorch 2.0 images containing PyTorch 2.0.1, Python 3.10.12, and
+   (for the GPU image) CUDA 11.8.
+
+**Bug Fixes**
+
+-  Users: Fix an issue that caused the CLI command ``det user list`` to always show "false" in the
+   "remote" column.
+
+**************
  Version 0.23
 **************
 
@@ -2223,10 +2247,9 @@ Version 0.15.2
    preempt experiments when higher priority ones are submitted.
 
 -  APIs: Promote the custom metric reducer APIs for both :ref:`pytorch <pytorch-custom-reducers>`
-   and :ref:`estimators <estimators-custom-reducers>` from experimental status to general
-   availability.
+   and estimators from experimental status to general availability.
 
--  Resource pools: Support configuring distinct ``task_container_defaults`` for each resource pool
+-  Resource pools: Support =configuring distinct ``task_container_defaults`` for each resource pool
    configured on the cluster. This can allow different resource pools which may have very different
    hardware to configure tasks in each pool with the correct settings.
 

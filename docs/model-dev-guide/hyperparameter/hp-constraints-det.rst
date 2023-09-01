@@ -22,16 +22,16 @@ information to the search method.
    ``determined.InvalidHP`` is raised by the user in accordance with the internal dynamics of each
    searcher, as detailed below.
 
-*********************************************************
- HP Search Constraints in PyTorch vs. TF Keras/Estimator
-*********************************************************
+***********************************************
+ HP Search Constraints in PyTorch vs. TF Keras
+***********************************************
 
-Since the PyTorch and TF Keras/Estimator APIs have different behavior, the timing/placement of
-user-raised InvalidHP exceptions are somewhat different.
+Since the PyTorch and TF Keras APIs have different behavior, the timing/placement of user-raised
+InvalidHP exceptions are somewhat different.
 
 In the case of PyTorch, this exception can be raised in the trial's ``__init__``, ``train_batch``,
-or ``evaluate_batch`` methods. In the case of either TF Keras or TF Estimator, this exception can be
-raised in the ``__init__`` method or in an ``on_checkpoint_end`` callback.
+or ``evaluate_batch`` methods. In the case of TF Keras, this exception can be raised in the
+``__init__`` method or in an ``on_checkpoint_end`` callback.
 
 See the `hp_constraints_mnist_pytorch
 <https://github.com/determined-ai/determined/tree/master/examples/features/hp_constraints_mnist_pytorch>`_

@@ -42,7 +42,13 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     [experiment.id],
   );
 
-  const loadableMetricNames = useMetricNames([experiment.id], handleMetricNamesError);
+  const trialNonTerminal = !terminalRunStates.has(experiment.state ?? RunState.Error);
+
+  const loadableMetricNames = useMetricNames(
+    [experiment.id],
+    handleMetricNamesError,
+    trialNonTerminal,
+  );
   const defaultMetricNames = useMemo(() => [], []);
   const metricNames = Loadable.getOrElse(defaultMetricNames, loadableMetricNames);
 

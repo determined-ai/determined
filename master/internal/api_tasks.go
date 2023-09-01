@@ -3,12 +3,12 @@ package internal
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
-	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 

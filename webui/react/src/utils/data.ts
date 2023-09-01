@@ -40,13 +40,6 @@ export const isSyncFunction = (fn: unknown): boolean => {
   return isFunction(fn) && !isAsyncFunction(fn);
 };
 
-export const clone = (data: any, deep = true): any => {
-  if (isPrimitive(data)) return data;
-  if (isMap(data)) return new Map(data);
-  if (isSet(data)) return new Set(data);
-  return deep ? JSON.parse(JSON.stringify(data)) : { ...data };
-};
-
 export const hasObjectKeys = (data: unknown): boolean => {
   return isObject(data) && Object.keys(data as Record<RecordKey, unknown>).length !== 0;
 };
@@ -137,8 +130,8 @@ export const deletePathList = (obj: RawJson, path: string[]): void => {
 // We avoid exporting this type to discourage/disallow usage of any.
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Mapper = (x: any) => any;
-export const applyMappers = <T>(data: unknown, mappers: Mapper | Mapper[]): T => {
-  let currentData = clone(data);
+export const applyMappers = <T>(data: T, mappers: Mapper | Mapper[]): T => {
+  let currentData = structuredClone(data);
 
   if (Array.isArray(mappers)) {
     currentData = mappers.reduce((acc, mapper) => mapper(acc), currentData);

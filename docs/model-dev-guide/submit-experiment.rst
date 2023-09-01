@@ -254,8 +254,7 @@ When a trial is ready to run, the master communicates with the agent, or distrib
 agents, which create(s) containers that have the configured environment and training code. A set of
 default container images applicable to many deep learning tasks is provided, but you can also
 specify a :ref:`custom image <custom-docker-images>`. If the specified container images do not exist
-locally, the trial container fetches the images from the registry. See
-:doc:`/model-dev-guide/model-management/model-registry-org`.
+locally, the trial container fetches the images from the registry. See :ref:`organizing-models`.
 
 .. include:: ../_shared/note-dtrain-learn-more.txt
 

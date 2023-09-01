@@ -216,6 +216,7 @@ func (a *apiServer) GetWorkspaces(
 	}
 
 	nameFilter := req.Name
+	nameCaseSensitiveFilter := req.NameCaseSensitive
 	archFilterExpr := ""
 	if req.Archived != nil {
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
@@ -265,6 +266,7 @@ func (a *apiServer) GetWorkspaces(
 		archFilterExpr,
 		pinFilterExpr,
 		curUser.ID,
+		nameCaseSensitiveFilter,
 	)
 	if err != nil {
 		return nil, err
@@ -422,15 +424,6 @@ func (a *apiServer) PatchWorkspace(
 		updatedWorkspace.AgentGroup = updateAug.AgentGroup
 
 		insertColumns = append(insertColumns, "uid", "user_", "gid", "group_")
-	}
-
-	if req.Workspace.DefaultComputeResourcePool != nil {
-		updatedWorkspace.DefaultComputePool = *req.Workspace.DefaultComputeResourcePool
-		insertColumns = append(insertColumns, "default_compute_pool")
-	}
-	if req.Workspace.DefaultAuxResourcePool != nil {
-		updatedWorkspace.DefaultAuxPool = *req.Workspace.DefaultAuxResourcePool
-		insertColumns = append(insertColumns, "default_aux_pool")
 	}
 
 	if req.Workspace.DefaultComputeResourcePool != nil ||

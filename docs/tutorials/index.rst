@@ -35,16 +35,15 @@ To get started with your first experiment, visit the :ref:`Quickstart for Model 
  Want to Learn About a Specific Training API?
 **********************************************
 
-:doc:`Training API Guides </model-dev-guide/apis-howto/overview>` describe how to take your existing
-model code and train your model in Determined.
+:ref:`Training API Guides <apis-howto-overview>` describe how to take your existing model code and
+train your model in Determined.
 
 ***********************
  Looking for Examples?
 ***********************
 
 Examples let you build off of an existing model that already runs on Determined. Visit our
-:doc:`Examples </example-solutions/examples>` to see if the model you'd like to train is already
-available.
+:ref:`Examples <example-solutions>` to see if the model you'd like to train is already available.
 
 .. _pytorch mnist example: https://github.com/PyTorch/examples/blob/master/mnist/main.py
 

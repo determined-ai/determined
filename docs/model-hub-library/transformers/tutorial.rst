@@ -25,8 +25,7 @@ The easiest way to get started with **transformers** in Determined is to use one
 the `question answering example`_ to get a better understanding of how to use **model-hub** for
 transformers.
 
-The `question answering example`_ includes two implementations of
-:doc:`/model-dev-guide/apis-howto/api-pytorch-ug`:
+The `question answering example`_ includes two implementations of :ref:`api-pytorch-ug`:
 
 -  qa_trial.py_ uses the :py:class:`model_hub.huggingface.BaseTransformerTrial` parent ``__init__``
    function to build **transformers** config, tokenizer, and model objects; and optimizer and

@@ -43,6 +43,7 @@ def env_get_outdated(app, env, added, changed, removed):
 
 def setup(app):
     app.connect("env-get-outdated", env_get_outdated)
+    app.set_html_assets_policy("always")
 
 
 exclude_patterns = [

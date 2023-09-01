@@ -175,7 +175,7 @@ def do_request(
     if r.status_code == 401:
         raise errors.UnauthenticatedException(username=username)
     elif r.status_code == 404:
-        raise errors.NotFoundException(r.reason)
+        raise errors.NotFoundException(_get_error_str(r))
     elif r.status_code >= 300:
         raise errors.APIException(r)
 

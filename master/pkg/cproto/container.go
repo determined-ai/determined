@@ -1,7 +1,7 @@
 package cproto
 
 import (
-	"golang.org/x/exp/slices"
+	"slices"
 
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/device"

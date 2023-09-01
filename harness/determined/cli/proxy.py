@@ -183,6 +183,10 @@ def http_connect_tunnel(
     c2.join()
 
 
+class ReuseAddrServer(socketserver.ThreadingTCPServer):
+    allow_reuse_address = True
+
+
 def _http_tunnel_listener(
     master_addr: str,
     tunnel: ListenerConfig,
@@ -221,7 +225,13 @@ def _http_tunnel_listener(
             c1.join()
             c2.join()
 
-    return socketserver.ThreadingTCPServer((tunnel.local_addr, tunnel.local_port), TunnelHandler)
+    socket_class = ReuseAddrServer
+    if sys.platform == "win32":
+        # On Windows, SO_REUSEADDR is a security issue:
+        # https://learn.microsoft.com/en-us/windows/win32/winsock/using-so-reuseaddr-and-so-exclusiveaddruse#application-strategies
+        socket_class = socketserver.ThreadingTCPServer
+
+    return socket_class((tunnel.local_addr, tunnel.local_port), TunnelHandler)
 
 
 @contextlib.contextmanager

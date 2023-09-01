@@ -14,6 +14,9 @@ export const unsupportedQPosSchedulers = new Set<Api.V1SchedulerType>([
 ]);
 
 export const jobTypeIconName = (jobType: JobType): IconName => {
+  if (jobType === JobType.EXTERNAL) {
+    return 'external';
+  }
   const type = jobTypeToCommandType(jobType);
   return type ?? 'experiment';
 };

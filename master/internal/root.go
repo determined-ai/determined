@@ -1,12 +1,13 @@
 package internal
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-const clusterCrashMessage = `Detected a resource manager crashed. Please manually restart the
-Determined master. It is recommended you check that stray resources are cleaned up properly.`
+const clusterCrashMessage = `Detected a resource manager crashed.`
 
 // root manages the lifecycle of all actors in the Determined master and
 // defines a supervision strategy specifically for the master.
@@ -17,17 +18,17 @@ func root(ctx *actor.Context) error {
 	case actor.ChildFailed:
 		switch msg.Child.Address() {
 		case sproto.K8sRMAddr, sproto.AgentRMAddr:
-			ctx.Log().WithField("crash", msg).Errorf(clusterCrashMessage)
+			return errors.New(clusterCrashMessage)
 		case sproto.PodsAddr, sproto.AgentsAddr:
-			ctx.Log().WithField("crash", msg).Errorf(clusterCrashMessage)
+			return errors.New(clusterCrashMessage)
 		}
 		return nil
 	case actor.ChildStopped:
 		switch msg.Child.Address() {
 		case sproto.K8sRMAddr, sproto.AgentRMAddr:
-			ctx.Log().WithField("crash", msg).Errorf(clusterCrashMessage)
+			return errors.New(clusterCrashMessage)
 		case sproto.PodsAddr, sproto.AgentsAddr:
-			ctx.Log().WithField("crash", msg).Errorf(clusterCrashMessage)
+			return errors.New(clusterCrashMessage)
 		}
 		return nil
 	}

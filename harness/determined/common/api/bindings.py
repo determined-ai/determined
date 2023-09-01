@@ -8520,6 +8520,7 @@ class v1PermissionType(DetEnum):
     DELETE_WORKSPACE = "PERMISSION_TYPE_DELETE_WORKSPACE"
     SET_WORKSPACE_AGENT_USER_GROUP = "PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP"
     SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG = "PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG"
+    SET_WORKSPACE_DEFAULT_RESOURCE_POOL = "PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL"
     CREATE_PROJECT = "PERMISSION_TYPE_CREATE_PROJECT"
     VIEW_PROJECT = "PERMISSION_TYPE_VIEW_PROJECT"
     UPDATE_PROJECT = "PERMISSION_TYPE_UPDATE_PROJECT"
@@ -8538,6 +8539,7 @@ class v1PermissionType(DetEnum):
     VIEW_SENSITIVE_AGENT_INFO = "PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO"
     VIEW_MASTER_CONFIG = "PERMISSION_TYPE_VIEW_MASTER_CONFIG"
     UPDATE_MASTER_CONFIG = "PERMISSION_TYPE_UPDATE_MASTER_CONFIG"
+    VIEW_EXTERNAL_JOBS = "PERMISSION_TYPE_VIEW_EXTERNAL_JOBS"
     CONTROL_STRICT_JOB_QUEUE = "PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE"
     VIEW_TEMPLATES = "PERMISSION_TYPE_VIEW_TEMPLATES"
     UPDATE_TEMPLATES = "PERMISSION_TYPE_UPDATE_TEMPLATES"
@@ -8545,6 +8547,7 @@ class v1PermissionType(DetEnum):
     DELETE_TEMPLATES = "PERMISSION_TYPE_DELETE_TEMPLATES"
     UPDATE_ROLES = "PERMISSION_TYPE_UPDATE_ROLES"
     EDIT_WEBHOOKS = "PERMISSION_TYPE_EDIT_WEBHOOKS"
+    MODIFY_RP_WORKSPACE_BINDINGS = "PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS"
 
 class v1PolymorphicFilter(Printable):
     doubleRange: "typing.Optional[v1DoubleFieldFilter]" = None
@@ -14447,7 +14450,7 @@ def post_EnableSlot(
 def get_ExpMetricNames(
     session: "api.Session",
     *,
-    ids: "typing.Optional[typing.Sequence[int]]" = None,
+    ids: "typing.Sequence[int]",
     periodSeconds: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1ExpMetricNamesResponse]":
     _params = {
@@ -16239,6 +16242,7 @@ def get_GetWorkspaces(
     archived: "typing.Optional[bool]" = None,
     limit: "typing.Optional[int]" = None,
     name: "typing.Optional[str]" = None,
+    nameCaseSensitive: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     pinned: "typing.Optional[bool]" = None,
@@ -16250,6 +16254,7 @@ def get_GetWorkspaces(
         "archived": str(archived).lower() if archived is not None else None,
         "limit": limit,
         "name": name,
+        "nameCaseSensitive": nameCaseSensitive,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "pinned": str(pinned).lower() if pinned is not None else None,
