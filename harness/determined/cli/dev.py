@@ -68,7 +68,7 @@ def curl(args: Namespace) -> None:
         determined.cli.render.print_json(out)
     except UnicodeDecodeError:
         print(
-            "Failed to decode response as utf8. Redirect output to a file to view it",
+            "Failed to decode response as utf8. Redirect output to capture it.",
             file=sys.stderr,
         )
 
