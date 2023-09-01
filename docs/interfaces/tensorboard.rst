@@ -167,7 +167,7 @@ See :func:`PyTorchTrialContext.get_tensorboard_writer()
 <determined.pytorch.PyTorchTrialContext.get_tensorboard_writer>`
 
 For a full-length example of using TensorBoard with PyTorch, check out the :download:`mnist-GAN
-model </examples/gan_mnist_pytorch.tgz>`.
+model </examples/legacy/gan_mnist_pytorch.tgz>`.
 
 **********************************
  TensorBoard Lifecycle Management
