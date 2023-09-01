@@ -1,5 +1,4 @@
 #!/bin/bash
-source /run/determined/task-logging-setup.sh
 
 container_startup_script="/usr/local/determined/container_startup_script"
 
