@@ -50,7 +50,6 @@ def test_imagenet_pytorch_distributed() -> None:
     exp.run_basic_test_with_temp_config(config, conf.tutorials_path("imagenet_pytorch"), 1)
 
 
-
 @pytest.mark.distributed
 def test_mnist_estimator_distributed() -> None:
     config = conf.load_config(conf.fixtures_path("mnist_estimator/distributed.yaml"))
@@ -87,6 +86,7 @@ def test_gpt_neox_zero1() -> None:
     config["hyperparameters"]["overwrite_values"]["train_batch_size"] = 32
 
     exp.run_basic_test_with_temp_config(config, conf.deepspeed_examples_path("gpt_neox"), 1)
+
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
