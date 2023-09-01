@@ -366,7 +366,7 @@ func (a *allocation) SetResourcesAsDaemon(_ context.Context, rID sproto.Resource
 		// Ignoring request to daemonize resources within an allocation for an allocation
 		// 	with only one manageable set of resources, because this would just kill it. This is
 		// 	expected when using the HPC launcher.
-		a.syslog.Debug(`Ignoring request to daemonize resources.`)
+		a.syslog.Debug(`ignoring request to daemonize resources`)
 		return nil
 	}
 
