@@ -1,3 +1,4 @@
+import * as t from 'io-ts';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
@@ -8,20 +9,28 @@ import Select, { Option, SelectValue } from 'components/kit/Select';
 import MetricSelect from 'components/MetricSelect';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelect from 'components/ScaleSelect';
+import { optional } from 'ioTypes';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
 import { Metric, Scale, ValueOf } from 'types';
 
 import css from './ExperimentVisualizationFilters.module.scss';
 
-export interface VisualizationFilters {
-  batch?: number;
-  batchMargin?: number;
-  hParams: string[];
-  maxTrial?: number;
-  metric?: Metric;
-  scale: Scale;
-  view?: ViewType;
-}
+const ioMetric = t.type({
+  group: t.string,
+  name: t.string,
+});
+
+export const ioVisualizationFilters = t.type({
+  batch: optional(t.number),
+  batchMargin: optional(t.number),
+  hParams: t.array(t.string),
+  maxTrial: optional(t.number),
+  metric: optional(ioMetric),
+  scale: t.union([t.literal('linear'), t.literal('log')]),
+  view: optional(t.union([t.literal('grid'), t.literal('list')])),
+});
+
+export type VisualizationFilters = t.TypeOf<typeof ioVisualizationFilters>;
 
 export const FilterError = {
   MetricBatches: 'MetricBatches',
