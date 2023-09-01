@@ -152,7 +152,7 @@ func setup(t *testing.T) (
 	// instantiate the trial
 	rID := model.NewRequestID(rand.Reader)
 	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, rID))
-	var done chan bool
+	done := make(chan bool)
 	tr, err := newTrial(
 		detLogger.Context{},
 		taskID,

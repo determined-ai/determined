@@ -8,12 +8,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/atomic"
 	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -126,7 +126,7 @@ func TestShipper(t *testing.T) {
 	}()
 
 	schedule := []int{0, 0, 1, 1, 0, 0, 2, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 1, 0}
-	progress := atomic.NewInt64(0)
+	var progress atomic.Int64
 
 	expected := map[int]int{} // Sent IDs to count of expected hits, access protected by waitgroup.
 	var wg sync.WaitGroup
@@ -185,8 +185,6 @@ func TestShipper(t *testing.T) {
 	t.Log("recreating shipper")
 	singletonShipper = newShipper()
 
-	ctx, cancel = context.WithTimeout(ctx, 10*time.Second) // Turn this up to debug.
-	defer cancel()
 	select {
 	case <-done:
 		t.Log("waitgroup closed, checking results")
@@ -199,6 +197,8 @@ func TestShipper(t *testing.T) {
 			}
 		}
 	case <-ctx.Done():
+		t.Errorf("context exited early")
+	case <-time.After(10 * time.Second):
 		t.Errorf("did not receive all events in time")
 	}
 }

@@ -375,7 +375,7 @@ func TestStreamTrainingMetrics(t *testing.T) {
 					return nil, err
 				}
 				var out []*trialv1.MetricsReport
-				for _, d := range res.data {
+				for _, d := range res.getData() {
 					out = append(out, d.Metrics...)
 				}
 				return out, nil
@@ -391,7 +391,7 @@ func TestStreamTrainingMetrics(t *testing.T) {
 					return nil, err
 				}
 				var out []*trialv1.MetricsReport
-				for _, d := range res.data {
+				for _, d := range res.getData() {
 					out = append(out, d.Metrics...)
 				}
 				return out, nil
@@ -501,7 +501,7 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 			resp := &mockStream[*apiv1.TrialsSampleResponse]{ctx: childCtx}
 			go func() {
 				for i := 0; i < 100; i++ {
-					if len(resp.data) > 0 {
+					if len(resp.getData()) > 0 {
 						cancel()
 					}
 					time.Sleep(50 * time.Millisecond)
@@ -517,12 +517,12 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 			}, resp)
 			require.NoError(t, err)
 
-			require.Greater(t, len(resp.data), 0)
-			require.Len(t, resp.data[0].Trials, 1)
-			require.Len(t, resp.data[0].Trials[0].Data, 1)
+			require.Greater(t, len(resp.getData()), 0)
+			require.Len(t, resp.getData()[0].Trials, 1)
+			require.Len(t, resp.getData()[0].Trials[0].Data, 1)
 			require.Equal(t, map[string]any{
 				metricName: expectedMetricsMap[metricName],
-			}, resp.data[0].Trials[0].Data[0].Values.AsMap())
+			}, resp.getData()[0].Trials[0].Data[0].Values.AsMap())
 		}
 	})
 }
@@ -865,9 +865,9 @@ func TestTrialLogsBackported(t *testing.T) {
 	}, stream)
 	require.NoError(t, err)
 
-	require.Equal(t, len(expected), len(stream.data))
+	require.Equal(t, len(expected), len(stream.getData()))
 	for i, expected := range expected {
-		require.Equal(t, expected.Log, *stream.data[i].Log)
+		require.Equal(t, expected.Log, *stream.getData()[i].Log)
 	}
 }
 
@@ -916,9 +916,9 @@ func TestTrialLogs(t *testing.T) {
 	}, stream)
 	require.NoError(t, err)
 
-	require.Equal(t, len(expected), len(stream.data))
+	require.Equal(t, len(expected), len(stream.getData()))
 	for i, expected := range expected {
-		require.Equal(t, expected, *stream.data[i].Log)
+		require.Equal(t, expected, *stream.getData()[i].Log)
 	}
 
 	// Retry with follow.
@@ -960,9 +960,9 @@ func TestTrialLogs(t *testing.T) {
 		t.Fatal("follow is following too long task logs")
 	}
 
-	require.Equal(t, len(expected), len(newStream.data))
+	require.Equal(t, len(expected), len(newStream.getData()))
 	for i, expected := range expected {
-		require.Equal(t, expected, *newStream.data[i].Log)
+		require.Equal(t, expected, *newStream.getData()[i].Log)
 	}
 }
 
@@ -1014,7 +1014,7 @@ func TestTrialLogFields(t *testing.T) {
 	require.NoError(t, err)
 
 	actualContainerIDs := make(map[string]bool)
-	for _, s := range stream.data {
+	for _, s := range stream.getData() {
 		for _, containerID := range s.ContainerIds {
 			actualContainerIDs[containerID] = true
 		}
@@ -1065,7 +1065,7 @@ func TestTrialLogFields(t *testing.T) {
 	}
 
 	actualContainerIDs = make(map[string]bool)
-	for _, s := range newStream.data {
+	for _, s := range newStream.getData() {
 		for _, containerID := range s.ContainerIds {
 			actualContainerIDs[containerID] = true
 		}

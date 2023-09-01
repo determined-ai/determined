@@ -80,8 +80,10 @@ func RunMaster(ctx context.Context, c *config.Config) (
 	m := internal.New(logs, c)
 	logrus.AddHook(logs)
 	logrus.SetLevel(logrus.DebugLevel)
+
+	ready := make(chan bool)
 	go func() {
-		err := m.Run(ctx)
+		err := m.Run(ctx, ready)
 		switch {
 		case err == context.Canceled:
 			log.Println("master stopped")
@@ -89,6 +91,12 @@ func RunMaster(ctx context.Context, c *config.Config) (
 			log.Println("error running master: ", err)
 		}
 	}()
+
+	select {
+	case <-ready:
+	case <-time.After(60 * time.Second):
+		return nil, nil, nil, nil, errors.New("timed out waiting for master to start")
+	}
 
 	cl, err := ConnectMaster(c)
 	if err != nil {

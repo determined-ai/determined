@@ -796,7 +796,7 @@ func TestResourceDeletionFailed(t *testing.T) {
 
 	purge(aID, sub)
 	assert.Equal(t, sub.Len(), 0)
-	delete(podInterface.pods, ref.podName)
+	podInterface.delete(ref.podName)
 
 	ref.KillTaskPod()
 	time.Sleep(time.Second)

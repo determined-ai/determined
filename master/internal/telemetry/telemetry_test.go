@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -22,33 +23,30 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
-var queue []string
-
 func TestTelemetry(t *testing.T) {
 	// Mock out the telemetry actor & client interface.
-	InitTelemetryWithMocks()
+	client := initTelemetryWithMocks()
 	assert.NotNil(t, DefaultTelemeter)
-	DefaultTelemeter.client = mockClient{}
 
 	// Should receive one master_tick event during Init(), reset queue after check.
 	time.Sleep(time.Second)
-	assert.Equal(t, []string{"master_tick"},
-		queue, "queue didn't receive initial master tick")
-	queue = []string{}
+	assert.Equal(t, []string{"identify", "master_tick"},
+		client.getQueue(), "queue didn't receive initial master tick")
+	client.resetQueue()
 
 	// Test out Tick & reset the queue.
 	go DefaultTelemeter.tick(actor.NewSystem("Testing"))
 	time.Sleep(time.Second)
-	assert.Equal(t, []string{"master_tick"}, queue,
+	assert.Equal(t, []string{"master_tick"}, client.getQueue(),
 		"queue didn't receive test tick")
-	queue = []string{}
+	client.resetQueue()
 
 	// Test out Track & reset the queue.
 	DefaultTelemeter.track(analytics.Track{Event: "manual_call"})
 	time.Sleep(time.Second)
-	assert.Equal(t, []string{"manual_call"}, queue,
+	assert.Equal(t, []string{"manual_call"}, client.getQueue(),
 		"queue didn't receive correct track call")
-	queue = []string{}
+	client.resetQueue()
 
 	// Test out all Reports.
 	ReportMasterTick(&apiv1.GetResourcePoolsResponse{}, DefaultTelemeter.db)
@@ -68,21 +66,27 @@ func TestTelemetry(t *testing.T) {
 		"user_created",
 		"user_created",
 	}
-	assert.Equal(t, expected, queue, "queue didn't receive track calls in the right order")
+	assert.Equal(t, expected, client.getQueue(), "queue didn't receive track calls in the right order")
 }
 
-type mockClient struct{}
+type mockClient struct {
+	mu    sync.Mutex
+	queue []string
+}
 
-func (m mockClient) Close() error {
+func (m *mockClient) Close() error {
 	return nil
 }
 
-func (m mockClient) Enqueue(msg analytics.Message) error {
+func (m *mockClient) Enqueue(msg analytics.Message) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	switch ms := msg.(type) {
 	case analytics.Identify:
-		queue = append(queue, "identify")
+		m.queue = append(m.queue, "identify")
 	case analytics.Track:
-		queue = append(queue, ms.Event)
+		m.queue = append(m.queue, ms.Event)
 	default:
 		err := fmt.Errorf("messages with custom types cannot be enqueued: %T", msg)
 		return err
@@ -90,8 +94,22 @@ func (m mockClient) Enqueue(msg analytics.Message) error {
 	return nil
 }
 
-// InitTelemetryWithMocks() calls Init(), which calls New().
-func InitTelemetryWithMocks() {
+func (m *mockClient) getQueue() []string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return m.queue
+}
+
+func (m *mockClient) resetQueue() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.queue = []string{}
+}
+
+// initTelemetryWithMocks() calls Init(), which calls New().
+func initTelemetryWithMocks() *mockClient {
 	mockRM := &mocks.ResourceManager{}
 	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).Return(
 		&apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{}},
@@ -100,9 +118,12 @@ func InitTelemetryWithMocks() {
 	mockDB := &mocks.DB{}
 	mockDB.On("PeriodicTelemetryInfo").Return([]byte(`{"master_version": 1}`), nil)
 	mockDB.On("CompleteAllocationTelemetry", mock.Anything).Return([]byte(`{"allocation_id": 1}`), nil)
+	client := &mockClient{}
 	Init(actor.NewSystem("Testing"), mockDB, mockRM, "1",
 		config.TelemetryConfig{Enabled: true, SegmentMasterKey: "Test"},
+		client,
 	)
+	return client
 }
 
 // Helper function for ReportExperimentCreated.

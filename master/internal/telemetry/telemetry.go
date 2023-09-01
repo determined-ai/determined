@@ -2,7 +2,6 @@ package telemetry
 
 import (
 	"crypto/rand"
-	"fmt"
 	"math/big"
 	"time"
 
@@ -47,13 +46,17 @@ func New(
 	rm telemetryRPFetcher,
 	clusterID string,
 	segmentKey string,
+	client analytics.Client,
 ) (*Telemeter, error) {
-	client, err := analytics.NewWithConfig(
-		segmentKey,
-		analytics.Config{Logger: debugLogger{}},
-	)
-	if err != nil {
-		return nil, err
+	if client == nil {
+		c, err := analytics.NewWithConfig(
+			segmentKey,
+			analytics.Config{Logger: debugLogger{}},
+		)
+		if err != nil {
+			return nil, err
+		}
+		client = c
 	}
 
 	if err := client.Enqueue(analytics.Identify{
@@ -66,7 +69,7 @@ func New(
 	}
 
 	syslog := logrus.WithFields(logrus.Fields{
-		"component":  fmt.Sprintf("telemetry"),
+		"component":  "telemetry",
 		"clusterID":  clusterID,
 		"segmentKey": segmentKey,
 	})
@@ -87,6 +90,7 @@ func Init(
 	rm telemetryRPFetcher,
 	clusterID string,
 	conf config.TelemetryConfig,
+	client analytics.Client,
 ) {
 	if DefaultTelemeter != nil {
 		logrus.Warn(`detected re-initialization of Telemetry singleton `,
@@ -104,6 +108,7 @@ func Init(
 		rm,
 		clusterID,
 		conf.SegmentMasterKey,
+		client,
 	)
 	if err != nil {
 		logrus.WithError(err).Errorf("failed to initialize telemetry")

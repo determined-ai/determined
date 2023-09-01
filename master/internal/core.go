@@ -608,7 +608,7 @@ func (m *Master) findListeningPort(listener net.Listener) (uint16, error) {
 	return 0, errors.New("listener not found")
 }
 
-func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error {
+func (m *Master) startServers(ctx context.Context, cert *tls.Certificate, ready chan bool) error {
 	// Create the base socket listener by either fetching one passed to us from systemd or creating a
 	// TCP listener manually.
 	var baseListener net.Listener
@@ -713,6 +713,12 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 		log.Infof("accepting incoming connections on a socket inherited from systemd")
 	} else {
 		log.Infof("accepting incoming connections on port %d", m.config.Port)
+	}
+	if ready != nil {
+		go func() {
+			ready <- true
+			close(ready)
+		}()
 	}
 	select {
 	case err := <-errs:
@@ -852,7 +858,7 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 }
 
 // Run causes the Determined master to connect the database and begin listening for HTTP requests.
-func (m *Master) Run(ctx context.Context) error {
+func (m *Master) Run(ctx context.Context, ready chan bool) error {
 	log.Infof("Determined master %s (built with %s)", version.Version, runtime.Version())
 
 	var err error
@@ -1209,6 +1215,7 @@ func (m *Master) Run(ctx context.Context) error {
 		m.rm,
 		m.ClusterID,
 		m.config.Telemetry,
+		nil,
 	)
 
 	if err := sso.RegisterAPIHandlers(m.config, m.db, m.echo); err != nil {
@@ -1218,5 +1225,5 @@ func (m *Master) Run(ctx context.Context) error {
 	webhooks.Init()
 	defer webhooks.Deinit()
 
-	return m.startServers(ctx, cert)
+	return m.startServers(ctx, cert, ready)
 }
