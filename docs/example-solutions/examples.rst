@@ -188,7 +188,8 @@ For an introduction to using the training API, please visit the Training APIs se
 
    -  -  PyTorch
       -  MNIST
-      -  :download:`custom_reducers_mnist_pytorch.tgz </examples/legacy/custom_reducers_mnist_pytorch.tgz>`
+      -  :download:`custom_reducers_mnist_pytorch.tgz
+         </examples/legacy/custom_reducers_mnist_pytorch.tgz>`
 
 *********************************
  Features: HP Search Constraints
@@ -203,4 +204,5 @@ For an introduction to using the training API, please visit the Training APIs se
 
    -  -  PyTorch
       -  MNIST
-      -  :download:`hp_constraints_mnist_pytorch.tgz </examples/legacy/hp_constraints_mnist_pytorch.tgz>`
+      -  :download:`hp_constraints_mnist_pytorch.tgz
+         </examples/legacy/hp_constraints_mnist_pytorch.tgz>`
