@@ -83,6 +83,7 @@ def test_cifar10_tf_keras_accuracy(client: _client.Determined) -> None:
         " full validation accuracy history: {}".format(target_accuracy, validation_accuracies)
     )
 
+
 @pytest.mark.nightly
 def test_hf_trainer_api_accuracy(client: _client.Determined) -> None:
     test_dir = "hf_image_classification"
