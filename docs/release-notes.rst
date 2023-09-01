@@ -2592,8 +2592,9 @@ Version 0.13.11
    :meth:`determined.pytorch.PyTorchExperimentalContext.wrap_reducer()` for detailed documentation
    and code snippets.
 
-   See ``determined/examples/features/legacy/custom_reducers_mnist_pytorch`` for a complete example of how
-   to use custom reducers. The example emits a per-class F1 score using the new custom reducer API.
+   See ``determined/examples/features/legacy/custom_reducers_mnist_pytorch`` for a complete example
+   of how to use custom reducers. The example emits a per-class F1 score using the new custom
+   reducer API.
 
 -  Trials: Support more than 1 backward pass per optimizer step for distributed training in
    PyTorchTrial.
