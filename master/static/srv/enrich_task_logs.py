@@ -79,9 +79,7 @@ class LogCollector(threading.Thread):
 
                     self.ship_queue.put(
                         {
-                            "timestamp": datetime.datetime.now(
-                                datetime.timezone.utc
-                            ).isoformat(),
+                            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                             "log": line if line.endswith("\n") else line + "\n",
                             **self.task_logging_metadata,
                             **parsed_metadata,
