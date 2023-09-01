@@ -17,13 +17,6 @@
 | [mmdetection\_pytorch](computer_vision/mmdetection_pytorch)                  | COCO                         | PyTorch                                  |
 | [cifar10\_tf\_keras](computer_vision/cifar10_tf_keras)                       | CIFAR-10                     | TensorFlow (tf.keras)                    |
 
-## HP Search Benchmarks
-
-| Example                                                                         | Dataset               | Framework |
-|:-------------------------------------------------------------------------------:|:---------------------:|:---------:|
-| [darts\_cifar10\_pytorch](hp_search_benchmarks/darts_cifar10_pytorch)           | CIFAR-10              | PyTorch   |
-| [darts\_penntreebank\_pytorch](hp_search_benchmarks/darts_penntreebank_pytorch) | Penn Treebank Dataset | PyTorch   |
-
 ## Diffusion
 
 |                                        Example                                        |  Dataset  | Framework |
@@ -37,15 +30,3 @@
 | [dc\_gan\_tf\_keras](gan/dcgan_tf_keras)      | MNIST            | TensorFlow (tf.keras) |
 | [gan\_mnist\_pytorch](gan/gan_mnist_pytorch)  | MNIST            | PyTorch               |
 | [pix2pix\_tf\_keras](gan/pix2pix_tf_keras)    | pix2pix          | TensorFlow (tf.keras) |
-
-## Custom Reducers
-
-| Example                                                                    | Dataset | Framework  |
-|:--------------------------------------------------------------------------:|:-------:|:----------:|
-| [custom\_reducers\_mnist\_pytorch](features/custom_reducers_mnist_pytorch) | MNIST   | PyTorch    |
-
-## HP Search Constraints
-
-| Example                                                                  | Dataset | Framework  |
-|:------------------------------------------------------------------------:|:-------:|:----------:|
-| [hp\_constraints\_mnist\_pytorch](features/hp_constraints_mnist_pytorch) | MNIST   | PyTorch    |
