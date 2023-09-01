@@ -8,10 +8,6 @@ official_examples = [
         "tutorials/fashion_mnist_tf_keras",
         "tutorials/fashion_mnist_tf_keras/const.yaml",
     ),
-    (
-        "features/custom_reducers_mnist_pytorch",
-        "features/custom_reducers_mnist_pytorch/const.yaml",
-    ),
 ]
 
 
