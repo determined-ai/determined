@@ -87,6 +87,8 @@ class Experiment:
             is 100% completion.
         description: (Mutable, string) Description of the experiment.
         notes: (Mutable, str) Notes for the experiment.
+        project_id: (Mutable, int) ID of the project the experiment is a part of.
+        workspace_id: (Mutable, int) ID of the workspace the experiment runs in.
 
     Note:
         All attributes are cached by default.
@@ -111,6 +113,8 @@ class Experiment:
         self.progress: Optional[float] = None
         self.description: Optional[str] = None
         self.notes: Optional[str] = None
+        self.project_id: Optional[int] = None
+        self.workspace_id: Optional[int] = None
 
     @property
     def id(self) -> int:
@@ -124,6 +128,8 @@ class Experiment:
         self.progress = exp.progress
         self.description = exp.description
         self.notes = exp.notes
+        self.project_id = exp.projectId
+        self.workspace_id = exp.workspaceId
 
     def reload(self) -> None:
         """
@@ -277,6 +283,8 @@ class Experiment:
     def move_to_project(self, workspace_name: str, project_name: str) -> None:
         """Move an experiment to a different project.
 
+        Updates both the local object and the master database with the new project and workspace.
+
         Args:
             project_name: The name of the project to move the experiment to.
             workspace_name: The name of the workspace with the project.
@@ -287,6 +295,9 @@ class Experiment:
 
         req = bindings.v1MoveExperimentRequest(experimentId=self._id, destinationProjectId=proj.id)
         bindings.post_MoveExperiment(self._session, body=req, experimentId=self._id)
+
+        self.project_id = proj.id
+        self.workspace_id = proj.workspace_id
 
     def wait(self, interval: float = 5.0) -> ExperimentState:
         """

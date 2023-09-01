@@ -25,7 +25,7 @@ class Project:
     def __init__(
         self,
         session: api.Session,
-        id: int,
+        project_id: int,
     ):
         """Create a Project object.
 
@@ -34,7 +34,7 @@ class Project:
             project_id: ID of the project.
         """
         self._session = session
-        self.id = id
+        self.id = project_id
 
         # These properties may be mutable and will be set by _hydrate()
         self.archived: Optional[bool] = None
@@ -50,7 +50,7 @@ class Project:
     def _from_bindings(
         cls, project_bindings: bindings.v1Project, session: api.Session
     ) -> "Project":
-        project = cls(session, id=project_bindings.id)
+        project = cls(session, project_id=project_bindings.id)
         project._hydrate(project_bindings)
         return project
 
