@@ -146,7 +146,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     [storagePath],
   );
 
-  const getActiveMetrics = useCallback(() => {
+  const getDefaultMetrics = useCallback(() => {
     const activeMetricFound = metrics.find(
       (metric) =>
         metric.group === searcherMetric.current.group &&
@@ -162,16 +162,15 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   const handleFiltersReset = useCallback(() => {
     store.set(ioVisualizationFilters, storagePath, {
       ...defaultFilters,
-      metrics: getActiveMetrics(),
+      batch: batches?.first() || DEFAULT_BATCH,
+      hParams: fullHParams.current.slice(0, MAX_HPARAM_COUNT),
+      metric: getDefaultMetrics(),
     });
-  }, [storagePath, getActiveMetrics]);
+  }, [storagePath, getDefaultMetrics, batches]);
 
   useEffect(() => {
-    if (filters.metric) return;
-    handleFiltersChange({
-      metric: getActiveMetrics(),
-    });
-  }, [handleFiltersChange, filters, metrics, getActiveMetrics]);
+    if (!Loadable.isLoaded(filtersLoadable) || !filters.metric) handleFiltersReset();
+  }, [filtersLoadable, handleFiltersReset, filters.metric]);
 
   const handleTabChange = useCallback(
     (type: string) => {
@@ -331,25 +330,33 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     return () => canceler.abort();
   }, [filters.metric, experiment.id, filters.batch, isSupported, ui.isPageHidden]);
 
-  // Set the default filter batch.
-  useEffect(() => {
-    if (!batches || batches.length === 0) return;
-    store.update(ioVisualizationFilters, storagePath, (prev: VisualizationFilters | undefined) => {
-      if (prev && prev.batch !== DEFAULT_BATCH) return prev;
-      return { ...(prev || defaultFilters), batch: batches.first() };
-    });
-  }, [batches, storagePath]);
+  // // Set the default metric.
+  // useEffect(() => {
+  //   if (filters.metric) return;
+  //   store.update(ioVisualizationFilters, storagePath, (prev: VisualizationFilters | undefined) => {
+  //     return prev?.metric ? prev : { ...(prev || defaultFilters), metric: getDefaultMetrics() };
+  //   });
+  // }, [handleFiltersChange, filters, metrics, getDefaultMetrics, storagePath]);
 
-  // Update default filter hParams if not previously set.
-  useEffect(() => {
-    if (!isSupported) return;
+  // // Set the default filter batch.
+  // useEffect(() => {
+  //   if (!batches || batches.length === 0) return;
+  //   store.update(ioVisualizationFilters, storagePath, (prev: VisualizationFilters | undefined) => {
+  //     if (prev && prev.batch !== DEFAULT_BATCH) return prev;
+  //     return { ...(prev || defaultFilters), batch: batches.first() };
+  //   });
+  // }, [batches, storagePath]);
 
-    store.update(ioVisualizationFilters, storagePath, (prev: VisualizationFilters | undefined) => {
-      if (prev && prev.hParams.length !== 0) return prev;
-      const hParams = fullHParams.current;
-      return { ...(prev || defaultFilters), hParams: hParams.slice(0, MAX_HPARAM_COUNT) };
-    });
-  }, [isSupported, storagePath]);
+  // // Update default filter hParams if not previously set.
+  // useEffect(() => {
+  //   if (!isSupported) return;
+
+  //   store.update(ioVisualizationFilters, storagePath, (prev: VisualizationFilters | undefined) => {
+  //     if (prev && prev.hParams.length !== 0) return prev;
+  //     const hParams = fullHParams.current;
+  //     return { ...(prev || defaultFilters), hParams: hParams.slice(0, MAX_HPARAM_COUNT) };
+  //   });
+  // }, [isSupported, storagePath]);
 
   if (!isSupported) {
     const alertMessage = `
