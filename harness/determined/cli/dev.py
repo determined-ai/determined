@@ -2,6 +2,7 @@ import argparse
 import collections
 import inspect
 import json
+import os
 import re
 import shlex
 import shutil
@@ -56,13 +57,20 @@ def curl(args: Namespace) -> None:
             print(shlex.join(cmd))  # type: ignore
         else:
             print(" ".join(shlex.quote(arg) for arg in cmd))
-    output = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    if output.stderr:
-        print(output.stderr.decode("utf8"), file=sys.stderr)
+    if not sys.stdout.isatty():
+        output = subprocess.run(cmd)
+        sys.exit(output.returncode)
 
-    out = output.stdout.decode("utf8")
-    determined.cli.render.print_json(out)
+    output = subprocess.run(cmd, stdout=subprocess.PIPE)
+    try:
+        out = output.stdout.decode("utf8")
+        determined.cli.render.print_json(out)
+    except UnicodeDecodeError:
+        print(
+            "Failed to decode response as utf8. Redirect output to a file to view it",
+            file=sys.stderr,
+        )
 
     sys.exit(output.returncode)
 
