@@ -23,6 +23,7 @@ check: check-gen
 	# flake8-import-restrictions plugin to fail to import the code.
 	# https://github.com/atollk/flake8-import-restrictions/issues/13
 	python -m flake8
+	mypy --version
 	mypy .
 
 .PHONY: test-cpu
