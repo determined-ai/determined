@@ -28,7 +28,7 @@ def get_library_version_analytics() -> Dict[str, Any]:
     for m in sys.modules:
         if m in modules:
             try:
-                versions[m] = sys.modules[m].__version__
+                versions[m] = sys.modules[m].__version__  # type: ignore
             except Exception:
                 pass
     return versions

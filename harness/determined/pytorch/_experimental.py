@@ -30,7 +30,7 @@ class PyTorchExperimentalContext:
         PyTorch 1.6 or greater is required for this feature.
         """
         if HAVE_AMP:
-            self._parent.wrap_scaler(amp.GradScaler())
+            self._parent.wrap_scaler(amp.GradScaler())  # type: ignore
             self._auto_amp = True
 
     def disable_dataset_reproducibility_checks(self) -> None:
