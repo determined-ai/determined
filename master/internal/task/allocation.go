@@ -363,12 +363,10 @@ func (a *allocation) SetResourcesAsDaemon(_ context.Context, rID sproto.Resource
 	if _, ok := a.resources[rID]; !ok {
 		return ErrStaleResources{ID: rID}
 	} else if len(a.resources) <= 1 {
-		a.sendTaskLog(&model.TaskLog{
-			Log: `Ignoring request to daemonize resources within an allocation for an allocation
-			with only one manageable set of resources, because this would just kill it. This is
-			expected in when using the HPC launcher.`,
-			Level: ptrs.Ptr(model.LogLevelInfo),
-		})
+		// Ignoring request to daemonize resources within an allocation for an allocation
+		// 	with only one manageable set of resources, because this would just kill it. This is
+		// 	expected when using the HPC launcher.
+		a.syslog.Debug(`Ignoring request to daemonize resources.`)
 		return nil
 	}
 
