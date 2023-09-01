@@ -1,5 +1,4 @@
 import itertools
-import json
 from typing import Any, Dict, List, Optional
 
 from determined.common import api
@@ -14,9 +13,12 @@ class Project:
         id: (int) The ID of the project.
         archived: (Mutable, bool) True if experiment is archived, else false.
         description: (Mutable, str) The description of the project.
+        n_active_experiments: (int) The number of active experiments in the project.
+        n_experiments: (Mutable, int) The number of experiments in the project.
         name: (Mutable, str) Human-friendly name of the project.
         notes: (Mutable, List[Dict[str,str]) Notes about the project. As determined upstream,
             each note is a dict with exactly the keys "name" and "contents".
+        username: (Mutable, str) The username of the project owner.
         workspace_id: (int) The ID of the workspace this project belongs to.
     """
 
@@ -37,9 +39,12 @@ class Project:
         # These properties may be mutable and will be set by _hydrate()
         self.archived: Optional[bool] = None
         self.description: Optional[str] = None
+        self.n_active_experiments: Optional[int] = None
+        self.n_experiments: Optional[int] = None
         self.name: Optional[str] = None
         self.notes: Optional[List[Dict[str, str]]] = None
         self.workspace_id: Optional[int] = None
+        self.username: Optional[str] = None
 
     @classmethod
     def _from_bindings(
@@ -53,9 +58,12 @@ class Project:
         """Set this object's mutable attributes from those in a bindings object."""
         self.archived = project_bindings.archived
         self.description = project_bindings.description
+        self.n_active_experiments = project_bindings.numActiveExperiments
+        self.n_experiments = project_bindings.numExperiments
         self.name = project_bindings.name
         self.notes = [note.to_json() for note in project_bindings.notes]
         self.workspace_id = project_bindings.workspaceId
+        self.username = project_bindings.username
 
     def reload(self) -> None:
         resp = bindings.get_GetProject(session=self._session, id=self.id)
@@ -117,15 +125,20 @@ class Project:
         self.archived = False
 
     def to_json(self) -> Dict[str, Any]:
-        """Dump this item as a json-shaped string.
+        """Return this object as a dict.
 
-        Emulates the bindings to_json() method.
+        Attributes may be renamed to accord with the database they're stored in.
+
+        This methods is called `to_json` for historical consistency.
         """
         return {
             "archived": self.archived,
             "description": self.description,
             "id": self.id,
             "name": self.name,
-            "notes": json.dumps(self.notes),
-            "workspace_id": self.workspace_id,
+            "notes": self.notes,
+            "numActiveExperiments": self.n_active_experiments,
+            "numExperiments": self.n_experiments,
+            "workspaceId": self.workspace_id,
+            "username": self.username,
         }

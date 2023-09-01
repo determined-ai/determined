@@ -10,6 +10,7 @@ from determined.cli.user import AGENT_USER_GROUP_ARGS
 from determined.common import api, util
 from determined.common.api import authentication, bindings, errors
 from determined.common.declarative_argparse import Arg, Cmd
+from determined.common.experimental import workspace
 
 PROJECT_HEADERS = ["ID", "Name", "Description", "# Experiments", "# Active Experiments"]
 WORKSPACE_HEADERS = [
@@ -111,39 +112,31 @@ def list_workspaces(args: Namespace) -> None:
 @authentication.required
 def list_workspace_projects(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    w = workspace_by_name(sess, args.workspace_name)
-    orderArg = bindings.v1OrderBy[args.order_by.upper()]
-    sortArg = bindings.v1GetWorkspaceProjectsRequestSortBy[args.sort_by.upper()]
-    internal_offset = args.offset if ("offset" in args and args.offset) else 0
-    limit = args.limit if "limit" in args else 200
-    all_projects: List[bindings.v1Project] = []
+    all_projects = workspace.Workspace(
+        session=sess, workspace_name=args.workspace_name
+    ).list_projects()
 
-    while True:
-        projects = bindings.get_GetWorkspaceProjects(
-            sess,
-            id=w.id,
-            limit=limit,
-            offset=internal_offset,
-            orderBy=orderArg,
-            sortBy=sortArg,
-        ).projects
-        all_projects += projects
-        internal_offset += len(projects)
-        if ("offset" in args and args.offset) or len(projects) < limit:
-            break
+    sort_key = args.sort_by.lower()
+    sort_order = args.order_by.lower()
+    offset = args.offset or 0
+    limit = args.limit or 200
+
+    projects = sorted(
+        all_projects, key=lambda p: getattr(p, sort_key), reverse=sort_order == "desc"
+    )[offset : offset + limit]
 
     if args.json:
-        determined.cli.render.print_json([p.to_json() for p in all_projects])
+        determined.cli.render.print_json([p.to_json() for p in projects])
     else:
         values = [
             [
                 p.id,
                 p.name,
                 p.description,
-                p.numExperiments,
-                p.numActiveExperiments,
+                p.n_experiments,
+                p.n_active_experiments,
             ]
-            for p in all_projects
+            for p in projects
         ]
         render.tabulate_or_csv(PROJECT_HEADERS, values, False)
 
