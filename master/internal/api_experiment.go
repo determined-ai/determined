@@ -642,10 +642,7 @@ func (a *apiServer) GetExperiments(
 	orderExpr := ""
 	switch _, ok := orderColMap[req.SortBy]; {
 	case !ok:
-		err := fmt.Errorf("unsupported sort by %s", req.SortBy)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return nil, err
+		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
 	case orderColMap[req.SortBy] != "id": //nolint:goconst // Not actually the same constant.
 		orderExpr = fmt.Sprintf(
 			"%s %s, id %s",
