@@ -577,12 +577,11 @@ func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Join("JOIN workspaces w ON p.workspace_id = w.id")
 }
 
-// TODO CAROLINA
 func (a *apiServer) GetExperiments(
 	ctx context.Context, req *apiv1.GetExperimentsRequest,
 ) (*apiv1.GetExperimentsResponse, error) {
-	tracerCtx, span := tracer.Start(ctx, "insert-user")
-	defer span.End()
+	// TODO CAROLINA
+	TraceCall(ctx, req)
 
 	resp := &apiv1.GetExperimentsResponse{Experiments: []*experimentv1.Experiment{}}
 	query := db.Bun().NewSelect().
@@ -699,24 +698,18 @@ func (a *apiServer) GetExperiments(
 		var err error
 		query, err = db.ApplyInt32FieldFilter(query, bun.Ident("e.id"), req.ExperimentIdFilter)
 		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
 			return nil, err
 		}
 	}
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 	var proj *projectv1.Project
 	if req.ProjectId != 0 {
 		proj, err = a.GetProjectByID(ctx, req.ProjectId, *curUser)
 		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
 			return nil, err
 		}
 
@@ -726,21 +719,15 @@ func (a *apiServer) GetExperiments(
 		FilterExperimentsQuery(ctx, *curUser, proj, query,
 			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
 		); err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
 	resp.Pagination, err = runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
 	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
 	if err = a.enrichExperimentState(resp.Experiments...); err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
