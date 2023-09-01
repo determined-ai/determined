@@ -2,16 +2,16 @@
 
 .. _setup-clients:
 
-###################
+####################
  Setting Up Clients
-###################
+####################
 
 You can set up clients for interacting with the Determined Master through the Determined CLI. Follow
 these instructions to set up clients.
 
-*************************************************
+**************************************************
  Step 1 - Set ``DET_MASTER`` Environment Variable
-*************************************************
+**************************************************
 
 Set the ``DET_MASTER`` environment variable, which is the network address of the Determined master.
 You can override the value in the command line using the ``-m`` option.
@@ -20,10 +20,9 @@ You can override the value in the command line using the ``-m`` option.
 
    You can skip this step when deploying locally.
 
-
-************************************
+*************************************
  Step 2 - Install the Determined CLI
-************************************
+*************************************
 
 The Determined CLI is a command-line tool that lets you launch new experiments and interact with a
 Determined cluster. The CLI can be installed on any machine you want to use to access Determined. To

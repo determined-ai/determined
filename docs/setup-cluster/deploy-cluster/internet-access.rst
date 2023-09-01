@@ -2,9 +2,9 @@
 
 .. _internet-access:
 
-###########################
+############################
  Setting Up Internet Access
-###########################
+############################
 
 -  The Determined Docker images are hosted on Docker Hub. Determined agents need access to Docker
    Hub for such tasks as building new images for user workloads.
@@ -23,3 +23,5 @@
    -  On AWS, the instances need to have a public IP address, and a `VPC Internet Gateway
       <https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html>`_ should be
       configured for the VPC.
+
+See also: :ref:`firewall-rules`.

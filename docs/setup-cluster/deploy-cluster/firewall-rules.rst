@@ -2,15 +2,15 @@
 
 .. _firewall-rules:
 
-######################
+################
  Firewall Rules
-######################
+################
 
 The firewall rules must satisfy the following network access requirements for the master and agents.
 
-*******
+********
  Master
-*******
+********
 
 -  Inbound TCP to the master's network port from the Determined agent instances, as well as all
    machines where developers want to use the Determined CLI or WebUI. The default port is ``8443``
@@ -18,9 +18,9 @@ The firewall rules must satisfy the following network access requirements for th
 
 -  Outbound TCP to all ports on the Determined agents.
 
-*******
+********
  Agents
-*******
+********
 
 -  Inbound TCP from all ports on the master to all ports on the agent.
 
@@ -51,3 +51,5 @@ The firewall rules must satisfy the following network access requirements for th
    -  Each TensorBoard uses a port in the range 2600–2899
    -  Each notebook uses a port in the range 2900–3199
    -  Each shell uses a port in the range 3200–3599
+
+See also: :ref:`internet-access`.
