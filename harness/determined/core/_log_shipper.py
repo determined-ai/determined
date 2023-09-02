@@ -6,7 +6,7 @@ import sys
 import threading
 import time
 import types
-from typing import Any, Callable, Dict, Iterator, List, Optional, TextIO, Union
+from typing import Any, Callable, Deque, Dict, Iterator, List, Optional, TextIO, Union
 
 from determined import core
 from determined.common import api
@@ -89,7 +89,7 @@ _QueueElement = Union[str, _ShutdownMessage]
 class _LogSender(threading.Thread):
     def __init__(self, session: api.Session, logs_metadata: Dict) -> None:
         self._queue = queue.Queue(maxsize=SHIP_QUEUE_MAX_SIZE)  # type: queue.Queue[_QueueElement]
-        self._logs = collections.deque()  # type: collections.deque[str]
+        self._logs = collections.deque()  # type: Deque[str]
         self._session = session
         self._logs_metadata = logs_metadata
         self._buf = ""

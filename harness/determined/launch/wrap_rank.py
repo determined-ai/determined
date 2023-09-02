@@ -99,8 +99,8 @@ def main() -> int:
                 stdout = exit_stack.enter_context(open(constants.CONTAINER_STDOUT, "w"))
                 stderr = exit_stack.enter_context(open(constants.CONTAINER_STDERR, "w"))
             else:
-                stdout = sys.stdout
-                stderr = sys.stderr
+                stdout = sys.stdout  # type: ignore
+                stderr = sys.stderr  # type: ignore
             run_all(
                 [
                     threading.Thread(target=forward_stream, args=(proc.stdout, stdout, rank)),

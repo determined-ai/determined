@@ -1060,7 +1060,7 @@ class DummyProfilerAgent(ProfilerAgent):
         pass
 
     def __enter__(self) -> "DummyProfilerAgent":
-        pass
+        return self
 
     def __exit__(self, *_: Any) -> None:
         pass

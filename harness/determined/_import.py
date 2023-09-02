@@ -118,7 +118,7 @@ def import_from_path(path: os.PathLike) -> Iterator:
     sys.path = [os.path.abspath(path)] + sys.path
     # Include a Finder that prevents found files from creating __pycache__ files.
     old_meta_path = sys.meta_path
-    sys.meta_path = [NoCachePathFinder()] + sys.meta_path  # type: ignore
+    sys.meta_path = [NoCachePathFinder()] + sys.meta_path
     _in_import_from_path = True
     try:
         yield
