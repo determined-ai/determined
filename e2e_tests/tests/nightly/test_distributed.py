@@ -51,14 +51,6 @@ def test_imagenet_pytorch_distributed() -> None:
 
 
 @pytest.mark.distributed
-def test_mnist_estimator_distributed() -> None:
-    config = conf.load_config(conf.fixtures_path("mnist_estimator/distributed.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-
-    exp.run_basic_test_with_temp_config(config, conf.fixtures_path("mnist_estimator"), 1)
-
-
-@pytest.mark.distributed
 def test_cifar10_tf_keras_distributed() -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})

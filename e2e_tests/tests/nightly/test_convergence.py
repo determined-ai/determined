@@ -66,6 +66,7 @@ def test_mnist_estimator_accuracy(client: _client.Determined) -> None:
     )
 
 
+@pytest.mark.nightly
 def test_cifar10_tf_keras_accuracy(client: _client.Determined) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_random_seed(config, 1591110586)
