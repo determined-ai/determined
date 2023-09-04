@@ -575,7 +575,8 @@ func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 func (a *apiServer) GetExperiments(
 	ctx context.Context, req *apiv1.GetExperimentsRequest,
 ) (*apiv1.GetExperimentsResponse, error) {
-	// TODO CAROLINA
+	// TODO CAROLINA -- stream interceptors/unary interceptors in grpc
+	// look at adding interceptor on any req that doesn't have trace, start it
 	TraceCall(ctx, req)
 
 	resp := &apiv1.GetExperimentsResponse{Experiments: []*experimentv1.Experiment{}}

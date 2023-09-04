@@ -43,6 +43,9 @@ func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer, enablePrometheus boo
 		grpclogrus.WithLevels(grpcCodeToLogrusLevel),
 	}
 
+	// TODO CAROLINA: add an interceptor here for desired endpoints
+	// look up sourcegraph/grep.app
+	// jaeger ui port: 16686
 	streamInterceptors := []grpc.StreamServerInterceptor{
 		grpclogrus.StreamServerInterceptor(logEntry, opts...),
 		grpcrecovery.StreamServerInterceptor(),
