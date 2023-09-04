@@ -1,6 +1,7 @@
 package agentrm
 
 import (
+	"net"
 	"net/http"
 	"reflect"
 	"sort"
@@ -139,6 +140,21 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			a.address = msg.Ctx.Request().RemoteAddr
 		} else {
 			a.address = msg.Ctx.Request().RemoteAddr[0:lastColonIndex]
+		}
+
+		// When the dev cluster is started with "tools/slurmcluster.sh", an SSH
+		// tunnel is created between the local host and the HPC cluster. Due to
+		// the way the reverse tunnel is created, all the nodes will report a
+		// loopback address of "[::1]". This will cause distributed experiments
+		// to fail. To work around this, use the agent ID, which will be the
+		// node name. As long as the cluster has been configured to resolve the
+		// node names to their respective IP addresses via "/etc/hosts", DNS,
+		// or some other mechanism, this will work.
+		if addr := net.ParseIP(strings.Trim(a.address, "[]")); addr != nil && addr.IsLoopback() {
+			id := strings.TrimSpace(msg.Ctx.QueryParam("id"))
+			ctx.Log().Infof("Received loopback address '%s' from agent. Using agent ID '%s' as address.",
+				a.address, id)
+			a.address = id
 		}
 
 		var masterSetAgentOptions aproto.AgentMessage
