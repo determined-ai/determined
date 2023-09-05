@@ -9,6 +9,7 @@ orbs:
   gcloud: circleci/gcp-cli@2.1.0
   queue: eddiewebb/queue@volatile
   codecov: codecov/codecov@3.0.0
+  gh: circleci/github-cli@2.0
 
 executors:
   python-37:
@@ -1113,6 +1114,77 @@ commands:
           background: true
 
 jobs:
+  # Allows jobs in the "nightly" workflow to run if either of the following
+  # conditions are true:
+  #
+  # 1. A scheduled pipeline is run with the "nightly_tests" trigger name.
+  #
+  #    See "https://circleci.com/docs/schedule-pipelines-with-multiple-workflows/".
+  #
+  #    The CircleCI Admin will set up a trigger for when the nightly scheduled
+  #    pipeline is to be run. Typically, the nightly scheduled pipeline will
+  #    only be configured to run on the "main" branch or a release branch.
+  #
+  #    See "https://circleci.com/docs/set-a-nightly-scheduled-pipeline/".
+  #
+  #    The "pipeline.trigger_source" and "pipeline.schedule.name" are built-in
+  #    pipeline values and, therefore, do not need to be declared in the
+  #    "parameters:" section.
+  #
+  #    See "https://circleci.com/docs/variables/#pipeline-values".
+  #
+  # 2. The developer requests that the nightly tests be run on demand at the
+  #    gate by adding the 'ci-run-nightly' label to their pull request.
+  #    pull request.
+  #
+  # If neither condition is true, the "nightly" workflow is cancelled.
+  #
+  # For this mechanism to work, all jobs in the "nightly" workflow must have
+  # a "requires" statement listing "check-if-nightly-tests-should-run".
+  check-if-nightly-tests-should-run:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      # Install the GitHub CLI. Requires the 'gh' orb.
+      - gh/install
+      - checkout
+      - run:
+          name: Check if nightly tests should run
+          command: |
+            # Check if the nightly workflow was triggered by the scheduled
+            # pipeline.
+            if [ "scheduled_pipeline" == "<<pipeline.trigger_source>>" ] &&
+               [ "nightly_tests" == "<<pipeline.schedule.name>>" ]
+            then
+                echo "Nightly workflow triggered from scheduled pipeline"
+                circleci-agent step halt
+                exit 0
+            fi
+
+            # Check if the 'ci-run-nightly' label was set on the pull request,
+            # which indicates that we want the nightly tests to run on demand.
+            if gh pr view | grep "^labels:" | grep -w ci-run-nightly
+            then
+                echo "Nightly workflow triggered from 'ci-run-nightly' label on pull request"
+                circleci-agent step halt
+                exit 0
+            fi
+
+            echo "Canceling the nightly workflow, as it was not requested from either a scheduled pipeline or 'ci-run-nightly' label."
+
+            # Cancel the workflow.
+            OUTPUT=$(curl -s -w "\nHTTP_CODE=%{http_code}" -X POST "https://circleci.com/api/v2/workflow/${CIRCLE_WORKFLOW_ID}/cancel?circle-token=${CIRCLECI_API_KEY}")
+
+            echo "CircleCI API response: ${OUTPUT}"
+
+            # An HTTP code other than one of the "2XX" success codes in indicates
+            # that an error occured and we were not able to cancel the workflow.
+            if [[ ! "${OUTPUT}" =~ "HTTP_CODE=2" ]]
+            then
+                echo "Unable to cancel the nightly workflow"
+                exit 1
+            fi
+
   build-helm:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -3302,16 +3374,16 @@ workflows:
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
 
+  # ATTENTION: When adding jobs to the "nightly" workflow, make sure you have a
+  # "requires" that lists "check-if-nightly-tests-should-run", so that the job
+  # only runs if "check-if-nightly-tests-should-run" allows it to.
   nightly:
-    triggers:
-      - schedule:
-          cron: "0 5 * * *"
-          filters:
-            branches:
-              only:
-                - main
-                - /release-(\d)+(\.(\d)+)+(-ee)?/
     jobs:
+      - check-if-nightly-tests-should-run:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-write
       - test-e2e-aws:
           name: test-e2e-gpu-nightly
           context: aws
@@ -3320,6 +3392,8 @@ workflows:
               parallelism: [2]
               cluster-id-prefix: ["nightly"]
               mark: ["nightly"]
+          requires:
+            - check-if-nightly-tests-should-run
       - test-e2e-aws:
           name: test-e2e-gpu-distributed
           context: aws
@@ -3330,6 +3404,8 @@ workflows:
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
+          requires:
+            - check-if-nightly-tests-should-run
       - test-e2e-aws:
           name: test-e2e-gpu-transformers
           context: aws
@@ -3340,6 +3416,8 @@ workflows:
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
+          requires:
+            - check-if-nightly-tests-should-run
       - test-e2e-aws:
           name: test-e2e-gpu-transformers-amp
           context: aws
@@ -3350,6 +3428,8 @@ workflows:
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
+          requires:
+            - check-if-nightly-tests-should-run
       - test-e2e-aws:
           name: test-e2e-gpu-mmdetection
           context: aws
@@ -3360,6 +3440,8 @@ workflows:
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
+          requires:
+            - check-if-nightly-tests-should-run
       - test-e2e-aws:
           name: test-e2e-gpu-mmdetection-quarantine
           context: aws
@@ -3370,6 +3452,8 @@ workflows:
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
+          requires:
+            - check-if-nightly-tests-should-run
         # DeepSpeed tests do not work on K80s, so we need V100 instances.
       - test-e2e-aws:
           name: test-e2e-gpu-deepspeed
@@ -3381,6 +3465,8 @@ workflows:
               compute-agent-instance-type: ["g4dn.12xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
+          requires:
+            - check-if-nightly-tests-should-run
       - test-e2e-aws:
           name: test-e2e-cpu-distributed
           context: aws
@@ -3392,12 +3478,16 @@ workflows:
               environment-gpu-enabled: ["0"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [16]
+          requires:
+            - check-if-nightly-tests-should-run
       - test-aws-fs:
           name: test-aws-fs-fsx
           context: aws
           cluster-id-prefix: aws-fs-fsx
           deployment-type: fsx
           slack-mentions: "${SLACK_USER_ID}"
+          requires:
+            - check-if-nightly-tests-should-run
 
       - test-aws-fs:
           name: test-aws-fs-efs
@@ -3405,6 +3495,8 @@ workflows:
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
+          requires:
+            - check-if-nightly-tests-should-run
 
   release:
     jobs:
