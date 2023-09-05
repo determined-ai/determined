@@ -31,7 +31,7 @@ jobs:
         # the env context is only available on the runner, so can only be used
         # in parts of the job which are on the runner. :/
         if: github.repository != env.EE_REPO
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # fetch-depth: 1  # we only need the default branch
           fetch-depth: 0
@@ -63,7 +63,7 @@ jobs:
         # the env context is only available on the runner, so can only be used
         # in parts of the job which are on the runner. :/
         if: github.repository != env.EE_REPO
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # fetch-depth: 1  # we only need the default branch
           fetch-depth: 0
