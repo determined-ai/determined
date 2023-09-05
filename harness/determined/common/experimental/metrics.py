@@ -14,7 +14,7 @@ class TrialMetrics:
     Attributes:
         trial_id
         trial_run_id
-        total_batches
+        steps_completed
         end_time
         metrics
         batch_metrics
@@ -22,7 +22,7 @@ class TrialMetrics:
 
     trial_id: int
     trial_run_id: int
-    total_batches: int
+    steps_completed: int
     end_time: datetime.datetime
     metrics: Dict[str, Any]
     group: str
@@ -36,7 +36,7 @@ class TrialMetrics:
         return cls(
             trial_id=metric_report.trialId,
             trial_run_id=metric_report.trialRunId,
-            total_batches=metric_report.totalBatches,
+            steps_completed=metric_report.totalBatches,
             end_time=util.parse_protobuf_timestamp(metric_report.endTime),
             metrics=metric_report.metrics[key],
             batch_metrics=metric_report.metrics.get("batch_metrics", None),
@@ -44,23 +44,26 @@ class TrialMetrics:
         )
 
     @property
-    def steps_completed(self) -> int:
-        """@deprecated: Use total_batches instead."""
-        return self.total_batches
+    def total_batches(self) -> int:
+        """@deprecated: Use steps_completed instead."""
+        return self.steps_completed
 
-    @steps_completed.setter
-    def steps_completed(self, value: int) -> None:
-        self.total_batches = value
+    @total_batches.setter
+    def total_batches(self, value: int) -> None:
+        """@deprecated: Use steps_completed instead."""
+        self.steps_completed = value
 
 
 class TrainingMetrics(TrialMetrics):
     """
+    @deprecated: Use TrialMetrics instead.
+
     Specifies a training metric report that the trial reported.
     """
 
-    def __init__(self, steps_completed: Optional[int] = None, **kwargs: Any):
-        if steps_completed is not None:
-            kwargs["total_batches"] = steps_completed
+    def __init__(self, total_batches: Optional[int] = None, **kwargs: Any):
+        if total_batches is not None:
+            kwargs["steps_completed"] = total_batches
         kwargs["group"] = util._LEGACY_TRAINING
         super().__init__(**kwargs)
 
@@ -74,12 +77,14 @@ class TrainingMetrics(TrialMetrics):
 
 class ValidationMetrics(TrialMetrics):
     """
+    @deprecated: Use TrialMetrics instead.
+
     Specifies a validation metric report that the trial reported.
     """
 
-    def __init__(self, steps_completed: Optional[int] = None, **kwargs: Any):
-        if steps_completed is not None:
-            kwargs["total_batches"] = steps_completed
+    def __init__(self, total_batches: Optional[int] = None, **kwargs: Any):
+        if total_batches is not None:
+            kwargs["steps_completed"] = total_batches
         kwargs["group"] = util._LEGACY_VALIDATION
         super().__init__(**kwargs)
 

@@ -297,6 +297,8 @@ class TrialReference:
 
     def stream_training_metrics(self) -> Iterable[metrics.TrainingMetrics]:
         """
+        @deprecated: Use stream_metrics instead with `group` set to "training"
+
         Streams training metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.
         """
@@ -304,6 +306,8 @@ class TrialReference:
 
     def stream_validation_metrics(self) -> Iterable[metrics.ValidationMetrics]:
         """
+        @deprecated: Use stream_metrics instead with `group` set to "validation"
+
         Streams validation metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.
         """
