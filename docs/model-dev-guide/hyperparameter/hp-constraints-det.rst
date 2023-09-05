@@ -33,10 +33,6 @@ In the case of PyTorch, this exception can be raised in the trial's ``__init__``
 or ``evaluate_batch`` methods. In the case of TF Keras, this exception can be raised in the
 ``__init__`` method or in an ``on_checkpoint_end`` callback.
 
-See the `hp_constraints_mnist_pytorch
-<https://github.com/determined-ai/determined/tree/master/examples/features/hp_constraints_mnist_pytorch>`_
-example for a demonstration of HP Search Constraints with PyTorch.
-
 ******************************************************
  Searcher-Specific Behavior for HP Search Constraints
 ******************************************************
