@@ -447,13 +447,13 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 // mechanism, this will work.
 func (a *agent) adjustAgentIPAddrIfRunningDevClusterOnHpcUsingAnSSHTunnel(
 	ctx *actor.Context,
-	msg ws.WebSocketConnected) {
+	msg ws.WebSocketConnected,
+) {
 	// Check if the address is a loopback address.
 	if addr := net.ParseIP(strings.Trim(a.address, "[]")); addr != nil && addr.IsLoopback() {
 		agentHostname := strings.TrimSpace(msg.Ctx.QueryParam("hostname"))
 
 		masterHostname, err := os.Hostname()
-
 		if err != nil {
 			ctx.Log().Warnf("Unable to get hostname : %v", err)
 		}
@@ -465,7 +465,7 @@ func (a *agent) adjustAgentIPAddrIfRunningDevClusterOnHpcUsingAnSSHTunnel(
 		// Use the "hostname" parameter that the agent sent us as the address.
 		if agentHostname != masterHostname {
 			ctx.Log().Infof(
-				"Received loopback address '%s' from agent. Using agent hostname '%s' as address.",
+				"remote address for agent is loopback ('%s'), using provided hostname '%s' instead",
 				a.address, agentHostname)
 			a.address = agentHostname
 		}
