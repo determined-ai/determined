@@ -143,7 +143,13 @@ func (r *ResourceManager) GetDefaultComputeResourcePool(
 	ctx actor.Messenger,
 	msg sproto.GetDefaultComputeResourcePoolRequest,
 ) (resp sproto.GetDefaultComputeResourcePoolResponse, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
+	err = r.Ask(ctx, msg, &resp)
+	if err != nil {
+		return resp, err
+	} else if resp.PoolName == "" {
+		return resp, fmt.Errorf("404: no default compute pool set")
+	}
+	return resp, err
 }
 
 // GetDefaultAuxResourcePool requests the default aux resource pool.
@@ -151,7 +157,13 @@ func (r *ResourceManager) GetDefaultAuxResourcePool(
 	ctx actor.Messenger,
 	msg sproto.GetDefaultAuxResourcePoolRequest,
 ) (resp sproto.GetDefaultAuxResourcePoolResponse, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
+	err = r.Ask(ctx, msg, &resp)
+	if err != nil {
+		return resp, err
+	} else if resp.PoolName == "" {
+		return resp, fmt.Errorf("404: no default aux pool set")
+	}
+	return resp, err
 }
 
 // GetJobQ gets the state of the job queue.

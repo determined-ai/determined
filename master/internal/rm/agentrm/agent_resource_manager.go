@@ -116,8 +116,6 @@ func (a ResourceManager) ResolveResourcePool(
 			resp, err := a.GetDefaultAuxResourcePool(actorCtx, req)
 			if err != nil {
 				return "", fmt.Errorf("defaulting to aux pool: %w", err)
-			} else if resp.PoolName == "" {
-				return "", fmt.Errorf("no resource pool specified and no default pool set")
 			}
 			return resp.PoolName, nil
 		}
@@ -130,8 +128,6 @@ func (a ResourceManager) ResolveResourcePool(
 			resp, err := a.GetDefaultComputeResourcePool(actorCtx, req)
 			if err != nil {
 				return "", fmt.Errorf("defaulting to compute pool: %w", err)
-			} else if resp.PoolName == "" {
-				return "", fmt.Errorf("no resource pool specified and no default pool set")
 			}
 			return resp.PoolName, nil
 		}
