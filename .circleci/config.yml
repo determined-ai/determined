@@ -3513,7 +3513,7 @@ workflows:
           context: aws
           matrix:
             parameters:
-              parallelism: [2]
+              parallelism: [1]
               cluster-id-prefix: ["nightly-quarantine"]
               mark: ["nightly_quarantine"]
           requires:
