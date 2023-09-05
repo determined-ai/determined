@@ -6,7 +6,7 @@ import os
 import pathlib
 import uuid
 import warnings
-from typing import Any, ContextManager, Dict, Optional, Set, Sized, Type
+from typing import TYPE_CHECKING, Any, ContextManager, Dict, Optional, Set, Sized, Type
 
 import torch
 import torch.distributed as dist
@@ -16,6 +16,11 @@ from torch.utils import data
 import determined as det
 from determined import common, core, pytorch
 
+if TYPE_CHECKING:
+    # These modules are only needed for type checking and
+    # cause a circular dependency issue. This bypasses it.
+    from determined.experimental import checkpoint, model
+
 common.set_logger(False)
 
 DEFAULT_BATCH_SIZE = 1
@@ -24,8 +29,7 @@ DEFAULT_BATCH_SIZE = 1
 class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
     def __init__(self, core_context: core.Context, storage_path: str) -> None:
         super().__init__()
-        self.core_context = core_context
-        self.distributed = self.core_context.distributed
+        self._core_context = core_context
         self.device = get_default_device(core_context)
         self._tensorboard_path = core_context.train.get_tensorboard_path()
         self._storage_path = storage_path
@@ -86,7 +90,61 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         Returns a context that uploads files to default storage path on exit.
         """
         self._use_default_storage = True
-        return self.core_context.checkpoint._storage_manager.store_path(self._storage_path)
+        return self._core_context.checkpoint._storage_manager.store_path(self._storage_path)
+
+    def report_metrics(self, group: str, steps_completed: int, metrics: Dict[str, Any]) -> None:
+        """
+        Report metrics data to the master.
+
+        Arguments:
+            group (string): metrics group name. Can be used to partition metrics
+                into different logical groups or time series.
+                "training" and "validation" group names map to built-in training
+                and validation time series. Note: Group cannot contain ``.`` character.
+            steps_completed (int): global step number, e.g. the number of batches processed.
+            metrics (Dict[str, Any]): metrics data dictionary. Must be JSON-serializable.
+                When reporting metrics with the same ``group`` and ``steps_completed`` values,
+                the dictionary keys must not overlap.
+        """
+        self._core_context.train.report_metrics(
+            group=group,
+            steps_completed=steps_completed,
+            metrics=metrics,
+        )
+
+    def report_task_using_model_version(self, model_version: "model.ModelVersion") -> None:
+        """
+        Associate ``model_version`` with the current task. This links together the metrics
+        reporting so that any metrics which are reported to the current task will be
+        visible when querying for metrics associated with this model version
+
+        Args:
+            model_Version (model.ModelVersion): The model version to associate with this task
+        """
+        self._core_context.experimental.report_task_using_model_version(model_version)
+
+    def report_task_using_checkpoint(self, checkpoint: "checkpoint.Checkpoint") -> None:
+        """
+        Associate ``checkpoint`` with the current task. This links together the metrics
+        reporting so that any metrics which are reported to the current task will be
+        visible when querying for metrics associated with this checkpoint
+
+        Args:
+            checkpoint (checkpoint.Checkpoint): The checkpoint to associate with this task
+        """
+        self._core_context.experimental.report_task_using_checkpoint(checkpoint)
+
+    def get_distributed_rank(self) -> int:
+        """
+        The rank of this current process in a trial
+        """
+        return self._core_context.distributed.get_rank()
+
+    def get_distributed_size(self) -> int:
+        """
+        The number of slots this trial is running on
+        """
+        return self._core_context.distributed.get_size()
 
 
 def get_default_device(core_context: core.Context) -> torch.device:

@@ -19,7 +19,8 @@ class ExperimentalCoreContext:
         self._trial_id = trial_id
 
     def report_task_using_checkpoint(self, checkpoint: "checkpoint.Checkpoint") -> None:
-        """Associate ``checkpoint`` with the current task. This links together the metrics
+        """
+        Associate ``checkpoint`` with the current task. This links together the metrics
         reporting so that any metrics which are reported to the current task will be
         visible when querying for metrics associated with this checkpoint
 
@@ -39,7 +40,8 @@ class ExperimentalCoreContext:
         )
 
     def report_task_using_model_version(self, model_version: "model.ModelVersion") -> None:
-        """Associate ``model_version`` with the current task. This links together the metrics
+        """
+        Associate ``model_version`` with the current task. This links together the metrics
         reporting so that any metrics which are reported to the current task will be
         visible when querying for metrics associated with this model version
 

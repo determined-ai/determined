@@ -25,7 +25,7 @@ from determined.core._preempt import (
     _PreemptionWatcher,
     PreemptMode,
 )
-from determined.core._utils import (
+from determined.core._experimental import (
     ExperimentalCoreContext,
 )
 from determined.core._heartbeat import (

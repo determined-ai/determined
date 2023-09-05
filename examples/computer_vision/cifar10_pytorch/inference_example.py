@@ -13,13 +13,13 @@ FROG_LABEL = 6
 class FrogCountingInferenceProcessor(experimental.TorchBatchProcessor):
     def __init__(self, context):
         self.context = context
-        self.core_context = context.core_context
+        # self.core_context = context.core_context
 
         hparams = self.context.get_hparams()
 
         model = client.get_model(hparams.get("model_name"))
         model_version = model.get_version(hparams.get("model_version"))
-        self.core_context.experimental.report_task_using_model_version(model_version)
+        self.context.report_task_using_model_version(model_version)
 
         path = model_version.checkpoint.download()
         training_trial = pytorch.load_trial_from_checkpoint_path(
@@ -28,10 +28,10 @@ class FrogCountingInferenceProcessor(experimental.TorchBatchProcessor):
         self.model = context.prepare_model_for_inference(training_trial.model)
 
         self.device = context.device
-        self.rank = self.context.distributed.get_rank()
+        self.rank = self.context.get_distributed_rank()
 
         self.total_frogs = {}
-        for rank in range(self.context.distributed.get_size()):
+        for rank in range(self.context.get_distributed_size()):
             self.total_frogs[rank] = 0
 
     def process_batch(self, batch, batch_idx) -> None:
@@ -46,7 +46,7 @@ class FrogCountingInferenceProcessor(experimental.TorchBatchProcessor):
         self.last_index = batch_idx
 
     def on_finish(self):
-        self.core_context.train.report_metrics(
+        self.context.report_metrics(
             group="inference",
             steps_completed=self.rank,
             metrics={
