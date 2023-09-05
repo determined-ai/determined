@@ -12,7 +12,7 @@ import time
 from typing import Any, Dict, Iterator
 
 from determined.common import api
-from determined.common.api import errors
+from determined.common.api import certs, errors
 
 # Example log message given below.
 # 2022-05-12 16:32:48,757:gc_checkpoints: [rank=0] INFO: Determined checkpoint GC, version 0.17.16-dev0
@@ -101,10 +101,12 @@ class LogShipper(threading.Thread):
         self,
         ship_queue: queue.Queue,
         master_url: str,
+        cert: certs.Cert,
     ) -> None:
         self.ship_queue = ship_queue
         self.logs = []
         self.master_url = master_url
+        self.cert = cert
         super().__init__()
 
     def run(self) -> None:
@@ -130,13 +132,16 @@ class LogShipper(threading.Thread):
         tries = 0
         while tries < max_tries:
             try:
-                api.post(self.master_url, "task-logs", self.logs)
+                api.post(self.master_url, "task-logs", self.logs, cert=self.cert)
                 self.logs = []
                 return
-            except errors.APIException as e:
+            except Exception as e:
                 tries += 1
                 if tries == max_tries:
-                    raise e
+                    print(
+                        f"failed to ship logs: {e}\nLogs to Ship: {len(self.logs)}",
+                        file=sys.stderr,
+                    )
                 time.sleep(SHIPPER_FAILURE_BACKOFF_SECONDS)
 
 
@@ -154,12 +159,13 @@ def pop_until_deadline(q: queue.Queue, deadline: float) -> Iterator[Any]:
 
 def main(
     master_url: str,
+    cert: certs.Cert,
     task_logging_metadata: Dict[str, Any],
     emit_stdout_logs: bool,
 ) -> None:
     ship_queue = queue.Queue(maxsize=SHIP_QUEUE_MAX_SIZE)
     collector = LogCollector(ship_queue, task_logging_metadata, emit_stdout_logs)
-    shipper = LogShipper(ship_queue, master_url)
+    shipper = LogShipper(ship_queue, master_url, cert)
 
     collector.start()
     shipper.start()
@@ -182,6 +188,8 @@ if __name__ == "__main__":
     task_logging_metadata_json = os.environ.get("DET_TASK_LOGGING_METADATA")
     assert task_logging_metadata_json is not None, "DET_TASK_LOGGING_METADATA unset"
 
+    cert = certs.default_load(master_url)
+
     task_logging_metadata = json.loads(task_logging_metadata_json)
     task_logging_metadata["stdtype"] = args.stdtype
     task_logging_metadata["agent_id"] = socket.gethostname()
@@ -195,4 +203,4 @@ if __name__ == "__main__":
         os.environ.get("DET_SHIPPER_EMIT_STDOUT_LOGS", "True"),
     )
 
-    main(master_url, task_logging_metadata, emit_stdout_logs)
+    main(master_url, cert, task_logging_metadata, emit_stdout_logs)
