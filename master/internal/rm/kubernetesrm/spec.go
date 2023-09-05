@@ -231,7 +231,7 @@ func addNodeDisabledAffinityToPodSpec(pod *k8sV1.Pod, clusterID string) {
 	nodeSelector.NodeSelectorTerms = append(nodeSelector.NodeSelectorTerms, k8sV1.NodeSelectorTerm{
 		MatchExpressions: []k8sV1.NodeSelectorRequirement{
 			{
-				Key:      clusterID, // TODO label
+				Key:      clusterID,
 				Operator: k8sV1.NodeSelectorOpDoesNotExist,
 			},
 		},

@@ -75,7 +75,6 @@ func New(
 		),
 	)
 	system.Ask(ref, actor.Ping{}).Get()
-
 	return ResourceManager{ResourceManager: actorrm.Wrap(ref)}
 }
 
