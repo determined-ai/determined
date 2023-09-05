@@ -259,11 +259,17 @@ func (a *Agent) connect(ctx context.Context, reconnect bool) (*MasterWebsocket, 
 		TLSClientConfig:  tlsConfig,
 	}
 
-	masterAddr := fmt.Sprintf(
-		"%s://%s:%d/agents?id=%s&version=%s&resource_pool=%s&reconnect=%v",
-		masterProto, a.opts.MasterHost, a.opts.MasterPort, a.opts.AgentID, a.version,
-		a.opts.ResourcePool, reconnect,
-	)
+        hostname, err := os.Hostname()
+
+        if err != nil {
+                a.log.Warnf("Unable to get hostname : %v", err)
+        }
+
+        masterAddr := fmt.Sprintf(
+                "%s://%s:%d/agents?id=%s&version=%s&resource_pool=%s&reconnect=%v&hostname=%s",
+                masterProto, a.opts.MasterHost, a.opts.MasterPort, a.opts.AgentID, a.version,
+                a.opts.ResourcePool, reconnect, hostname,
+        )
 	a.log.Infof("connecting to master at: %s", masterAddr)
 	conn, resp, err := dialer.DialContext(ctx, masterAddr, nil)
 	if resp != nil {
