@@ -518,7 +518,7 @@ def test_torch_batch_process_reduce_metrics(
         index_dataset = IndexData(10)
         # Mock core context as we are asserting call count on train.report_validation_metrics
         mock_core_context = _get_core_context(rank=0)
-        mock_core_context.__enter__().distributed.gather.return_value = [[10], [35]]
+        mock_core_context.__enter__()._distributed.gather.return_value = [[10], [35]]
         mock_initialize_default_inference_context.return_value = mock_core_context
 
         experimental.torch_batch_process(
@@ -529,7 +529,7 @@ def test_torch_batch_process_reduce_metrics(
         )
 
         # Assert gather was first called with worker 0's sum amount: 10
-        assert mock_core_context.__enter__().distributed.gather.call_args_list[
+        assert mock_core_context.__enter__()._distributed.gather.call_args_list[
             0
         ] == unittest.mock.call([10])
         # Assert that we report metrics with the sum across workers: 45

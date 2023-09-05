@@ -30,6 +30,7 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
     def __init__(self, core_context: core.Context, storage_path: str) -> None:
         super().__init__()
         self._core_context = core_context
+        self._distributed = core_context.distributed
         self.device = get_default_device(core_context)
         self._tensorboard_path = core_context.train.get_tensorboard_path()
         self._storage_path = storage_path
