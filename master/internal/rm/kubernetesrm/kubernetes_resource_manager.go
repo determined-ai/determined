@@ -652,6 +652,20 @@ func (k *kubernetesResourceManager) getTaskContainerDefaults(
 	return result
 }
 
+func (k ResourceManager) EnableAgent(
+	ctx actor.Messenger,
+	req *apiv1.EnableAgentRequest,
+) (resp *apiv1.EnableAgentResponse, err error) {
+	return resp, k.Ask(ctx, req, &resp)
+}
+
+func (k ResourceManager) DisableAgent(
+	ctx actor.Messenger,
+	req *apiv1.DisableAgentRequest,
+) (resp *apiv1.DisableAgentResponse, err error) {
+	return resp, k.Ask(ctx, req, &resp)
+}
+
 // EnableSlot implements 'det slot enable...' functionality.
 func (k ResourceManager) EnableSlot(
 	m actor.Messenger,

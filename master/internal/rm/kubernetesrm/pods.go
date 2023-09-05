@@ -20,6 +20,7 @@ import (
 	k8error "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -472,7 +473,7 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 		addNodeDisabledAffinityToPodSpec(pod, clusterIDNodeLabel())
 		if !reflect.DeepEqual(pod.Spec, before.Spec) {
 			_, err := p.podInterfaces[pod.Namespace].
-				Update(context.TODO(), pod, metaV1.UpdateOptions{})
+				Update(context.TODO(), pod, metaV1.UpdateOptions{}) // TODO switch to patch
 			if err != nil {
 				p.deleteKubernetesResources(ctx, pods, configMaps)
 				ctx.Respond(fmt.Errorf("adding node affinity to restored pod: %w", err))
@@ -897,29 +898,44 @@ func (p *pods) podStatusCallback(s *actor.System, event watch.Event) {
 	}
 }
 
+var clusterID string
+
+func setClusterID(s string) {
+	if clusterID != "" {
+		panic(fmt.Sprintf("set cluster ID again new %s old %s", s, clusterID))
+	}
+	clusterID = s
+}
+
+func clusterIDNodeLabel() string {
+	return fmt.Sprintf("determined.ai/cluster-id-%s", clusterID)
+}
+
+const (
+	noExecuteNodeLabelValue  = "no-execute"
+	noScheduleNodeLabelValue = "no-schedule"
+)
+
 func (p *pods) enableNode(
 	ctx *actor.Context, nodeName string,
 ) (*apiv1.EnableAgentResponse, error) {
-	node, err := p.clientSet.CoreV1().Nodes().Get(context.TODO(), nodeName, metaV1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("getting node %s to enable: %w", nodeName, err)
-	}
+	patch := []byte(fmt.Sprintf(`{
+		"metadata": {
+			"labels": {
+				"%s": null
+			}
+		}
+	}`, clusterIDNodeLabel()))
 
-	delete(node.Labels, clusterIDNodeLabel())
-
-	_, err = p.clientSet.CoreV1().Nodes().Update(context.TODO(), node, metaV1.UpdateOptions{})
-	if err != nil {
-		return nil, fmt.Errorf(
-			"enabling node %s by updating by removing no schedule label: %w", nodeName, err)
-	}
-
-	p.invalidateSummarizeCache()
-	nodes, err := p.summarize(ctx)
+	_, err := p.clientSet.CoreV1().Nodes().
+		Patch(context.TODO(), nodeName, types.StrategicMergePatchType, patch, metaV1.PatchOptions{})
 	if err != nil {
 		return nil, fmt.Errorf(
-			"node enabled without error, error getting node info to return: %w", err)
+			"disabling node %s by updating by adding no schedule label: %w", nodeName, err)
 	}
-	n, ok := nodes[nodeName]
+	p.syslog.Infof("node %s enabled by an user", nodeName)
+
+	n, ok := p.summarizeClusterByNodes(ctx)[nodeName]
 	if !ok {
 		return nil, fmt.Errorf("pods actor doesn't know about the node we just disabled")
 	}
@@ -931,43 +947,29 @@ func (p *pods) enableNode(
 	}, nil
 }
 
-var clusterID string
-
-func setClusterID(s string) {
-	if clusterID != "" {
-		panic(fmt.Sprintf("set cluster ID again new %s old %s", s, clusterID))
-	}
-	clusterID = s
-}
-
-func clusterIDNodeLabel() string {
-	return fmt.Sprintf("determined.ai/cluster-id=%s", clusterID)
-}
-
-const (
-	noExecuteNodeLabelValue  = "no-execute"
-	noScheduleNodeLabelValue = "no-schedule"
-)
-
 func (p *pods) disableNode(
 	ctx *actor.Context, nodeName string, shouldDrain bool,
 ) (*apiv1.DisableAgentResponse, error) {
-	node, err := p.clientSet.CoreV1().Nodes().Get(context.TODO(), nodeName, metaV1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("getting node %s to disable: %w", nodeName, err)
-	}
-
 	labelValue := noExecuteNodeLabelValue
 	if shouldDrain {
 		labelValue = noScheduleNodeLabelValue
 	}
-	node.Labels[clusterIDNodeLabel()] = labelValue
 
-	_, err = p.clientSet.CoreV1().Nodes().Update(context.TODO(), node, metaV1.UpdateOptions{})
+	patch := []byte(fmt.Sprintf(`{
+		"metadata": {
+			"labels": {
+				"%s": "%s"
+			}
+		}
+	}`, clusterIDNodeLabel(), labelValue))
+
+	_, err := p.clientSet.CoreV1().Nodes().
+		Patch(context.TODO(), nodeName, types.StrategicMergePatchType, patch, metaV1.PatchOptions{})
 	if err != nil {
 		return nil, fmt.Errorf(
 			"disabling node %s by updating by removing no schedule label: %w", nodeName, err)
 	}
+	p.syslog.Infof("node %s disabled by an user", nodeName)
 
 	if !shouldDrain { // See note in spec.go about how we could remove killing all pods here.
 		if err := p.killDetJobsOnNode(ctx, nodeName); err != nil {
@@ -976,13 +978,7 @@ func (p *pods) disableNode(
 		}
 	}
 
-	p.invalidateSummarizeCache()
-	nodes, err := p.summarize(ctx)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"node disabled without error, error getting node info to return: %w", err)
-	}
-	n, ok := nodes[nodeName]
+	n, ok := p.summarizeClusterByNodes(ctx)[nodeName]
 	if !ok {
 		return nil, fmt.Errorf("pods actor doesn't know about the node we just disabled")
 	}
@@ -1007,7 +1003,9 @@ func (p *pods) killDetJobsOnNode(ctx *actor.Context, nodeName string) error {
 	for _, pod := range pods.Items {
 		podHandler, ok := p.podNameToPodHandler[pod.Name]
 		if !ok {
-			return fmt.Errorf("unable to find pod %s's actor to kill", pod.Name)
+			p.syslog.Warnf(
+				"during node disable couldn't find pod %s's actor to kill", pod.Name)
+			continue
 		}
 		p.syslog.Infof(
 			"stopping pod %s because node %s was disabled without drain option", pod.Name, nodeName)
@@ -1200,13 +1198,6 @@ func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
 		response.Agents = append(response.Agents, summary.ToProto())
 	}
 	ctx.Respond(response)
-}
-
-func (p *pods) invalidateSummarizeCache() {
-	p.summarizeCacheLock.Lock()
-	defer p.summarizeCacheLock.Unlock()
-
-	p.summarizeCacheTime = time.Time{}
 }
 
 // summarize describes pods' available resources. When there's exactly one resource pool, it uses
