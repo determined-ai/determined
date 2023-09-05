@@ -50,7 +50,7 @@ func newPodInformer(
 		"namespace": namespace,
 	})
 	for i := range pods.Items {
-		syslog.Debugf("informer added %s: %s", name, pods.Items[i].Name)
+		syslog.Debugf("initial inform added %s: %s", name, pods.Items[i].Name)
 		cb(watch.Event{Object: &pods.Items[i]})
 	}
 

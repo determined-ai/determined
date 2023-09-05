@@ -16,19 +16,14 @@ const (
 	deletionGracePeriod  = 15
 )
 
-// callback type used by requestQueue.
-type errorCallbackFunc func(error)
-
 // message types that are sent to the requestProcessingWorkers channel.
 type (
 	createKubernetesResources struct {
-		errorHandler  errorCallbackFunc
 		podSpec       *k8sV1.Pod
 		configMapSpec *k8sV1.ConfigMap
 	}
 
 	deleteKubernetesResources struct {
-		errorHandler  errorCallbackFunc
 		namespace     string
 		podName       string
 		configMapName string
@@ -38,10 +33,31 @@ type (
 // error types that are sent by requestQueue and requestProcessingWorkers as responses
 // to creation or deletion requests.
 type (
-	resourceCreationFailed    struct{ error }
-	resourceDeletionFailed    struct{ error }
-	resourceCreationCancelled struct{ error }
+	resourceCreationFailed struct {
+		podName string
+		err     error
+	}
+	resourceDeletionFailed struct {
+		podName string
+		err     error
+	}
+	resourceCreationCancelled struct {
+		podName string
+	}
 )
+
+type resourcesRequestFailure interface {
+	getPodName() string
+	resourcesRequestFailure()
+}
+
+func (e resourceCreationFailed) getPodName() string    { return e.podName }
+func (e resourceDeletionFailed) getPodName() string    { return e.podName }
+func (e resourceCreationCancelled) getPodName() string { return e.podName }
+
+func (resourceCreationFailed) resourcesRequestFailure()    {}
+func (resourceDeletionFailed) resourcesRequestFailure()    {}
+func (resourceCreationCancelled) resourcesRequestFailure() {}
 
 // queuedResourceRequest is used to represent requests that are being buffered by requestQueue.
 type queuedResourceRequest struct {
@@ -87,6 +103,7 @@ type queuedResourceRequest struct {
 type requestQueue struct {
 	podInterfaces       map[string]typedV1.PodInterface
 	configMapInterfaces map[string]typedV1.ConfigMapInterface
+	failures            chan<- resourcesRequestFailure
 
 	mu         sync.Mutex
 	workerChan chan interface{}
@@ -105,10 +122,12 @@ type requestID string
 func startRequestQueue(
 	podInterfaces map[string]typedV1.PodInterface,
 	configMapInterfaces map[string]typedV1.ConfigMapInterface,
+	failures chan<- resourcesRequestFailure,
 ) *requestQueue {
 	r := &requestQueue{
 		podInterfaces:       podInterfaces,
 		configMapInterfaces: configMapInterfaces,
+		failures:            failures,
 
 		workerChan: make(chan interface{}),
 
@@ -132,6 +151,7 @@ func (r *requestQueue) startWorkers() {
 			strconv.Itoa(i),
 			r.workerChan,
 			r.workerReady,
+			r.failures,
 		)
 	}
 }
@@ -157,14 +177,13 @@ func keyForDelete(msg deleteKubernetesResources) requestID {
 }
 
 func (r *requestQueue) createKubernetesResources(
-	errorHandler errorCallbackFunc,
 	podSpec *k8sV1.Pod,
 	configMapSpec *k8sV1.ConfigMap,
 ) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	msg := createKubernetesResources{errorHandler, podSpec, configMapSpec}
+	msg := createKubernetesResources{podSpec, configMapSpec}
 	ref := keyForCreate(msg)
 
 	if _, requestAlreadyExists := r.pendingResourceCreations[ref]; requestAlreadyExists {
@@ -183,7 +202,6 @@ func (r *requestQueue) createKubernetesResources(
 }
 
 func (r *requestQueue) deleteKubernetesResources(
-	errorHandler errorCallbackFunc,
 	namespace string,
 	podName string,
 	configMapName string,
@@ -191,14 +209,16 @@ func (r *requestQueue) deleteKubernetesResources(
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	msg := deleteKubernetesResources{errorHandler, namespace, podName, configMapName}
+	msg := deleteKubernetesResources{namespace, podName, configMapName}
 	ref := keyForDelete(msg)
 
 	// If the request has not been processed yet, cancel it and inform the handler.
 	if _, creationPending := r.pendingResourceCreations[ref]; creationPending {
 		r.pendingResourceCreations[ref].createResources = nil
 		delete(r.pendingResourceCreations, ref)
-		go errorHandler(resourceCreationCancelled{})
+		r.failures <- resourceCreationCancelled{
+			podName: podName,
+		}
 		r.syslog.Warnf("delete issued with pending create request for %s", ref)
 		return
 	}

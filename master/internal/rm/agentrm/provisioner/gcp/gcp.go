@@ -91,7 +91,6 @@ func New(
 		AgentNetwork:                 config.AgentDockerNetwork,
 		AgentDockerRuntime:           config.AgentDockerRuntime,
 		AgentDockerImage:             config.AgentDockerImage,
-		AgentFluentImage:             config.AgentFluentImage,
 		AgentReconnectAttempts:       config.AgentReconnectAttempts,
 		AgentReconnectBackoff:        config.AgentReconnectBackoff,
 		StartupScriptBase64:          startupScriptBase64,

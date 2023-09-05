@@ -83,7 +83,11 @@ class SyncService {
       const margin = 0.02 * width;
 
       const unzoomedMin = width > 0 ? dataMin - margin : Math.min(dataMin, 0);
-      const unzoomedMax = width > 0 ? dataMax + margin : 2 * dataMax;
+      let unzoomedMax = width > 0 ? dataMax + margin : 2 * dataMax;
+      if (unzoomedMin === unzoomedMax) {
+        // for single point at x=0
+        unzoomedMax = 1;
+      }
 
       return {
         ...b,

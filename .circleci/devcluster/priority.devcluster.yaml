@@ -51,6 +51,4 @@ stages:
         agent_reconnect_attempts: 24
         agent_reconnect_backoff: 5
         container_auto_remove_disabled: true
-        fluent:
-          port: 24226  # default value is 24224
-          container_name: determined-fluent-priority-scheduler
+        

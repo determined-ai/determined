@@ -3,8 +3,6 @@ package config
 import (
 	"encoding/json"
 
-	"github.com/determined-ai/determined/master/pkg/aproto"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -106,10 +104,11 @@ type KubernetesResourceManagerConfig struct {
 	DefaultScheduler         string                  `json:"default_scheduler"`
 	SlotType                 device.Type             `json:"slot_type"`
 	SlotResourceRequests     PodSlotResourceRequests `json:"slot_resource_requests"`
-	Fluent                   FluentConfig            `json:"fluent"`
-	CredsDir                 string                  `json:"_creds_dir,omitempty"`
-	MasterIP                 string                  `json:"_master_ip,omitempty"`
-	MasterPort               int32                   `json:"_master_port,omitempty"`
+	// deprecated, no longer in use.
+	Fluent     FluentConfig `json:"fluent"`
+	CredsDir   string       `json:"_creds_dir,omitempty"`
+	MasterIP   string       `json:"_master_ip,omitempty"`
+	MasterPort int32        `json:"_master_port,omitempty"`
 
 	DefaultAuxResourcePool     string `json:"default_aux_resource_pool"`
 	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
@@ -117,7 +116,6 @@ type KubernetesResourceManagerConfig struct {
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
 	SlotType: device.CUDA, // default to CUDA-backed slots.
-	Fluent:   DefaultFluentConfig,
 }
 
 // GetPreemption returns whether the RM is set to preempt.
@@ -178,11 +176,6 @@ type FluentConfig struct {
 	Image string `json:"image"`
 	UID   int    `json:"uid"`
 	GID   int    `json:"gid"`
-}
-
-// DefaultFluentConfig stores defaults for k8s-configurable Fluent Bit-related options.
-var DefaultFluentConfig = FluentConfig{
-	Image: aproto.FluentImage,
 }
 
 // PreemptionScheduler is the name of the preemption scheduler for k8.

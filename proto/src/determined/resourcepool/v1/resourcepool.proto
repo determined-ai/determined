@@ -171,8 +171,8 @@ message ResourcePool {
   string agent_docker_runtime = 26;
   // The docker image to use for the agent when using dynamic agents
   string agent_docker_image = 27;
-  // The Fluent docker image to use
-  string agent_fluent_image = 28;
+  // the Fluent docker image to use
+  string agent_fluent_image = 28 [deprecated = true];
   // The maximum idle period of agents in seconds. The master waits for this
   // period of time before shutting down idle agents.
   float max_idle_agent_period = 29;

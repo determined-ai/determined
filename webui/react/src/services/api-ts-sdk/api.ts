@@ -7990,7 +7990,7 @@ export interface V1ResourcePool {
      */
     agentDockerImage: string;
     /**
-     * The Fluent docker image to use
+     * the Fluent docker image to use
      * @type {string}
      * @memberof V1ResourcePool
      */

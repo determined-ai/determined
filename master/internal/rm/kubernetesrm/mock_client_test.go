@@ -105,6 +105,12 @@ type mockPodInterface struct {
 	mux              sync.Mutex
 }
 
+func (m *mockPodInterface) hasPod(name string) bool {
+	m.mux.Lock()
+	defer m.mux.Unlock()
+	return m.pods[name] != nil
+}
+
 func (m *mockPodInterface) Create(
 	ctx context.Context, pod *k8sV1.Pod, opts metaV1.CreateOptions,
 ) (*k8sV1.Pod, error) {

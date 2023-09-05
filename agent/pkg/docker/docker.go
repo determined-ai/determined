@@ -101,6 +101,8 @@ func NewClient(cl *client.Client) *Client {
 	}
 	d.credentialStores, d.authConfigs = stores, auths
 
+	// hack: docker client library is not thread-safe when negotiating API Version
+	d.cl.NegotiateAPIVersion(context.TODO())
 	return d
 }
 
@@ -167,7 +169,6 @@ func (d *Client) PullImage(ctx context.Context, req PullImage, p events.Publishe
 		return fmt.Errorf("error parsing image name %s: %w", req.Name, err)
 	}
 	ref = reference.TagNameOnly(ref)
-
 	switch _, _, err = d.cl.ImageInspectWithRaw(ctx, ref.String()); {
 	case req.ForcePull:
 		if err != nil {
@@ -336,7 +337,7 @@ func (d *Client) ListRunningContainers(ctx context.Context, fs filters.Args) (
 	map[cproto.ID]types.Container, error,
 ) {
 	// List "our" running containers, based on `dockerAgentLabel`.
-	// This doesn't include Fluent Bit or containers spawned by other agents.
+	// This doesn't include containers spawned by other agents.
 	containers, err := d.cl.ContainerList(ctx, types.ContainerListOptions{All: false, Filters: fs})
 	if err != nil {
 		return nil, err

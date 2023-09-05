@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -49,15 +49,12 @@ type podStatusUpdate struct {
 	updatedPod *k8sV1.Pod
 }
 
-// podEventUpdate are messages that are sent by the event listener.
-type podEventUpdate struct {
-	event *k8sV1.Event
-}
-
 // pod manages the lifecycle of a Kubernetes pod that executes a
 // Determined task. The lifecycle of the pod is managed based on
 // the status of the specified set of containers.
 type pod struct {
+	mu sync.Mutex
+
 	clusterID    string
 	allocationID model.AllocationID
 	clientSet    *k8sClient.Clientset
@@ -78,7 +75,6 @@ type pod struct {
 	scheduler                string
 	slotType                 device.Type
 	slotResourceRequests     config.PodSlotResourceRequests
-	fluentConfig             config.FluentConfig
 
 	pod           *k8sV1.Pod
 	podName       string
@@ -92,11 +88,8 @@ type pod struct {
 
 	restore bool
 
-	syslog              *logrus.Entry
-	handleResourceError func(ctx *actor.Context) errorCallbackFunc
+	syslog *logrus.Entry
 }
-
-type getPodNodeInfo struct{}
 
 type podNodeInfo struct {
 	nodeName  string
@@ -122,7 +115,6 @@ func newPod(
 	slotType device.Type,
 	slotResourceRequests config.PodSlotResourceRequests,
 	scheduler string,
-	fluentConfig config.FluentConfig,
 ) *pod {
 	podContainer := cproto.Container{
 		ID:          cproto.ID(msg.Spec.ContainerID),
@@ -160,129 +152,55 @@ func newPod(
 		scheduler:                scheduler,
 		slotType:                 slotType,
 		slotResourceRequests:     slotResourceRequests,
-		fluentConfig:             fluentConfig,
 		syslog: logrus.New().WithField("component", "pod").WithFields(
 			logger.MergeContexts(msg.LogContext, logger.Context{
 				"pod": uniqueName,
 			}).Fields(),
 		),
 	}
-	p.handleResourceError = func(ctx *actor.Context) errorCallbackFunc {
-		return func(err error) {
-			p.resourceErrorCallback(ctx, err)
-		}
-	}
 	return p
 }
 
-func (p *pod) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		if p.restore {
-			if p.container.State == cproto.Running {
-				err := p.startPodLogStreamer(ctx)
-				if err != nil {
-					return err
-				}
-			}
-		} else {
-			if err := p.createPodSpecAndSubmit(ctx); err != nil {
-				return errors.Wrap(err, "error creating pod spec")
+func (p *pod) start() error {
+	if p.restore {
+		if p.container.State == cproto.Running {
+			err := p.startPodLogStreamer()
+			if err != nil {
+				return err
 			}
 		}
-
-	case podStatusUpdate:
-		if err := p.receivePodStatusUpdate(ctx, msg); err != nil {
-			return err
+	} else {
+		if err := p.createPodSpecAndSubmit(); err != nil {
+			return fmt.Errorf("creating pod spec: %w", err)
 		}
-
-	case podEventUpdate:
-		p.receivePodEventUpdate(ctx, msg)
-
-	case PreemptTaskPod:
-		ctx.Log().Info("received preemption command")
-		rmevents.Publish(p.allocationID, &sproto.ReleaseResources{Reason: "preempted by the scheduler"})
-
-	case ChangePriority:
-		ctx.Log().Info("interrupting pod to change priorities")
-		rmevents.Publish(p.allocationID, &sproto.ReleaseResources{Reason: "priority changed"})
-
-	case ChangePosition:
-		ctx.Log().Info("interrupting pod to change positions")
-		rmevents.Publish(p.allocationID, &sproto.ReleaseResources{Reason: "queue position changed"})
-
-	case KillTaskPod:
-		ctx.Log().Info("received request to stop pod")
-		p.deleteKubernetesResources(ctx)
-
-	case getPodNodeInfo:
-		p.receiveGetPodNodeInfo(ctx)
-
-	case actor.PostStop:
-		defer p.finalizeTaskState(ctx)
-
-		if !p.leaveKubernetesResources {
-			p.deleteKubernetesResources(ctx)
-		}
-
-	case actor.ChildStopped:
-		if !p.resourcesDeleted.Load() {
-			ctx.Log().Errorf("pod logger exited unexpectedly")
-		}
-
-	default:
-		ctx.Log().Errorf("unexpected message %T", msg)
-		return actor.ErrUnexpectedMessage(ctx)
 	}
-
 	return nil
 }
 
-func (p *pod) resourceErrorCallback(ctx *actor.Context, err error) {
-	defer ctx.Self().Stop()
-	switch err := err.(type) {
-	case resourceCreationFailed:
-		p.receiveResourceCreationFailed(ctx, err)
-	case resourceCreationCancelled:
-		p.receiveResourceCreationCancelled()
-	case resourceDeletionFailed:
-		p.receiveResourceDeletionFailed(err)
-	default:
-		panic(fmt.Sprintf("unexpected message %T", err))
+func (p *pod) finalize() {
+	if !p.leaveKubernetesResources {
+		p.kill()
 	}
+	p.finalizeTaskState()
 }
 
-func (p *pod) startPodLogStreamer(ctx *actor.Context) error {
-	return startPodLogStreamer(p.podInterface, p.podName, func(log []byte) {
-		p.receiveContainerLog(ctx, sproto.ContainerLog{
-			Timestamp: time.Now().UTC(),
-			RunMessage: &aproto.RunMessage{
-				Value:   string(log),
-				StdType: stdcopy.Stdout,
-			},
-		})
-	})
-}
+func (p *pod) podStatusUpdate(updatedPod *k8sV1.Pod) (cproto.State, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
-func (p *pod) createPodSpecAndSubmit(ctx *actor.Context) error {
-	if err := p.createPodSpec(p.scheduler); err != nil {
-		return err
+	if p.container.State == cproto.Terminated {
+		return p.container.State, nil
 	}
 
-	p.resourceRequestQueue.createKubernetesResources(p.handleResourceError(ctx), p.pod, p.configMap)
-	return nil
-}
+	p.pod = updatedPod
 
-func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) error {
-	p.pod = msg.updatedPod
-
-	containerState, err := getPodState(ctx, p.pod, p.containerNames)
+	containerState, err := p.getPodState(p.pod, p.containerNames)
 	if err != nil {
-		return err
+		return p.container.State, err
 	}
 
 	if containerState == p.container.State {
-		return nil
+		return p.container.State, nil
 	}
 
 	switch containerState {
@@ -292,22 +210,22 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 	case cproto.Starting:
 		// Kubernetes does not have an explicit state for pulling container images.
 		// We insert it here because our  current implementation of the trial actor requires it.
-		ctx.Log().Infof(
+		p.syslog.Infof(
 			"transitioning pod state from %s to %s", p.container.State, cproto.Pulling)
 		p.container = p.container.Transition(cproto.Pulling)
-		p.informTaskResourcesState(ctx)
+		p.informTaskResourcesState()
 
-		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
+		p.syslog.Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Starting)
-		p.informTaskResourcesState(ctx)
+		p.informTaskResourcesState()
 
 	case cproto.Running:
-		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
+		p.syslog.Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Running)
-		p.informTaskResourcesStarted(ctx, getResourcesStartedForPod(p.pod, p.ports))
-		err := p.startPodLogStreamer(ctx)
+		p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports))
+		err := p.startPodLogStreamer()
 		if err != nil {
-			return err
+			return p.container.State, err
 		}
 
 	case cproto.Terminated:
@@ -317,55 +235,124 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			// determined containers generates an exit code. To check if this is
 			// the case we check if a deletion timestamp has been set.
 			if p.pod.ObjectMeta.DeletionTimestamp != nil {
-				ctx.Log().Info("unable to get exit code for pod, setting exit code to 1025")
+				p.syslog.Info("unable to get exit code for pod, setting exit code to 1025")
 				exitCode = 1025
 				exitMessage = "unable to get exit code or exit message from pod"
 			} else {
-				return err
+				return p.container.State, err
 			}
 		}
 
-		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
+		p.syslog.Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Terminated)
 
 		var resourcesStopped sproto.ResourcesStopped
 		switch exitCode {
 		case aproto.SuccessExitCode:
-			ctx.Log().Infof("pod exited successfully")
+			p.syslog.Infof("pod exited successfully")
 		default:
-			ctx.Log().Infof("pod failed with exit code: %d %s", exitCode, exitMessage)
+			p.syslog.Infof("pod failed with exit code: %d %s", exitCode, exitMessage)
 			resourcesStopped.Failure = sproto.NewResourcesFailure(
 				sproto.ResourcesFailed,
 				exitMessage,
 				ptrs.Ptr(sproto.ExitCode(exitCode)))
 		}
-		p.informTaskResourcesStopped(ctx, resourcesStopped)
-		ctx.Self().Stop()
+		p.informTaskResourcesStopped(resourcesStopped)
+		return p.container.State, nil
 
 	default:
 		panic(fmt.Sprintf("unexpected container state %s", containerState))
 	}
 
-	return nil
+	return p.container.State, nil
 }
 
-func (p *pod) deleteKubernetesResources(ctx *actor.Context) {
+func (p *pod) podEventUpdate(event *k8sV1.Event) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	// We only forward messages while pods are starting up.
+	switch p.container.State {
+	case cproto.Running, cproto.Terminated:
+		return
+	}
+
+	msgText := p.preparePodUpdateMessage(event.Message)
+	event.Message = msgText
+
+	message := fmt.Sprintf("Pod %s: %s", event.InvolvedObject.Name, msgText)
+	p.insertLog(event.CreationTimestamp.Time, message)
+}
+
+func (p *pod) PreemptTaskPod() {
+	p.syslog.Info("received preemption command")
+	rmevents.Publish(p.allocationID, &sproto.ReleaseResources{Reason: "preempted by the scheduler"})
+}
+
+func (p *pod) ChangePriority() {
+	p.syslog.Info("interrupting pod to change priorities")
+	rmevents.Publish(p.allocationID, &sproto.ReleaseResources{Reason: "priority changed"})
+}
+
+func (p *pod) ChangePosition() {
+	p.syslog.Info("interrupting pod to change positions")
+	rmevents.Publish(p.allocationID, &sproto.ReleaseResources{Reason: "queue position changed"})
+}
+
+func (p *pod) KillTaskPod() {
+	p.syslog.Info("received request to stop pod")
+	p.kill()
+}
+
+func (p *pod) kill() {
 	if !p.resourcesDeleted.CompareAndSwap(false, true) {
 		return
 	}
 
-	ctx.Log().Infof("requesting to delete kubernetes resources")
+	p.syslog.Infof("requesting to delete kubernetes resources")
 	p.resourceRequestQueue.deleteKubernetesResources(
-		p.handleResourceError(ctx),
 		p.namespace,
 		p.podName,
 		p.configMapName,
 	)
 }
 
-func (p *pod) receiveResourceCreationFailed(ctx *actor.Context, err resourceCreationFailed) {
-	p.syslog.WithError(err).Error("pod actor notified that resource creation failed")
-	p.insertLog(ctx, time.Now().UTC(), err.Error())
+func (p *pod) getPodNodeInfo() podNodeInfo {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	return podNodeInfo{
+		nodeName:  p.pod.Spec.NodeName,
+		numSlots:  p.slots,
+		slotType:  p.slotType,
+		container: p.container.DeepCopy(),
+	}
+}
+
+func (p *pod) startPodLogStreamer() error {
+	return startPodLogStreamer(p.podInterface, p.podName, func(log []byte) {
+		p.receiveContainerLog(sproto.ContainerLog{
+			Timestamp: time.Now().UTC(),
+			RunMessage: &aproto.RunMessage{
+				Value:   string(log),
+				StdType: stdcopy.Stdout,
+			},
+		})
+	})
+}
+
+func (p *pod) createPodSpecAndSubmit() error {
+	if err := p.createPodSpec(p.scheduler); err != nil {
+		return err
+	}
+
+	p.resourceRequestQueue.createKubernetesResources(p.pod, p.configMap)
+	return nil
+}
+
+func (p *pod) receiveResourceCreationFailed(msg resourceCreationFailed) {
+	p.syslog.WithError(msg.err).Error("pod handler notified that resource creation failed")
+	p.insertLog(time.Now().UTC(), msg.err.Error())
 }
 
 func (p *pod) receiveResourceCreationCancelled() {
@@ -374,31 +361,27 @@ func (p *pod) receiveResourceCreationCancelled() {
 }
 
 func (p *pod) receiveResourceDeletionFailed(err resourceDeletionFailed) {
-	p.syslog.WithError(err).Error("pod actor notified that resource deletion failed")
+	p.syslog.WithError(err.err).Error("pod handler notified that resource deletion failed")
 }
 
-func (p *pod) receiveGetPodNodeInfo(ctx *actor.Context) {
-	ctx.Respond(podNodeInfo{
-		nodeName:  p.pod.Spec.NodeName,
-		numSlots:  p.slots,
-		slotType:  p.slotType,
-		container: &p.container,
-	})
-}
+func (p *pod) finalizeTaskState() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
-func (p *pod) finalizeTaskState(ctx *actor.Context) {
 	// If an error occurred during the lifecycle of the pods, we need to update the scheduler
 	// and the task handler with new state.
 	if p.container.State != cproto.Terminated {
-		ctx.Log().Warnf("updating container state after pod actor exited unexpectedly")
+		p.syslog.Warnf("updating container state after pod exited unexpectedly")
 		p.container = p.container.Transition(cproto.Terminated)
 
-		p.informTaskResourcesStopped(ctx, sproto.ResourcesError(
-			sproto.TaskError, errors.New("pod actor exited while pod was running")))
+		p.informTaskResourcesStopped(sproto.ResourcesError(
+			sproto.TaskError,
+			errors.New("pod handler exited while pod was running"),
+		))
 	}
 }
 
-func (p *pod) informTaskResourcesState(ctx *actor.Context) {
+func (p *pod) informTaskResourcesState() {
 	rmevents.Publish(p.allocationID, &sproto.ResourcesStateChanged{
 		ResourcesID:    sproto.FromContainerID(p.container.ID),
 		ResourcesState: sproto.FromContainerState(p.container.State),
@@ -406,10 +389,7 @@ func (p *pod) informTaskResourcesState(ctx *actor.Context) {
 	})
 }
 
-func (p *pod) informTaskResourcesStarted(
-	ctx *actor.Context,
-	rs sproto.ResourcesStarted,
-) {
+func (p *pod) informTaskResourcesStarted(rs sproto.ResourcesStarted) {
 	rmevents.Publish(p.allocationID, &sproto.ResourcesStateChanged{
 		ResourcesID:      sproto.FromContainerID(p.container.ID),
 		ResourcesState:   sproto.FromContainerState(p.container.State),
@@ -418,10 +398,7 @@ func (p *pod) informTaskResourcesStarted(
 	})
 }
 
-func (p *pod) informTaskResourcesStopped(
-	ctx *actor.Context,
-	rs sproto.ResourcesStopped,
-) {
+func (p *pod) informTaskResourcesStopped(rs sproto.ResourcesStopped) {
 	rmevents.Publish(p.allocationID, &sproto.ResourcesStateChanged{
 		ResourcesID:      sproto.FromContainerID(p.container.ID),
 		ResourcesState:   sproto.FromContainerState(p.container.State),
@@ -430,13 +407,13 @@ func (p *pod) informTaskResourcesStopped(
 	})
 }
 
-func (p *pod) receiveContainerLog(ctx *actor.Context, msg sproto.ContainerLog) {
+func (p *pod) receiveContainerLog(msg sproto.ContainerLog) {
 	msg.ContainerID = p.container.ID
 	rmevents.Publish(p.allocationID, &msg)
 }
 
-func (p *pod) insertLog(ctx *actor.Context, timestamp time.Time, msg string) {
-	p.receiveContainerLog(ctx, sproto.ContainerLog{
+func (p *pod) insertLog(timestamp time.Time, msg string) {
+	p.receiveContainerLog(sproto.ContainerLog{
 		Timestamp:  timestamp,
 		AuxMessage: &msg,
 	})
@@ -485,22 +462,7 @@ func (p *pod) preparePodUpdateMessage(msgText string) string {
 	return msgText
 }
 
-func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
-	// We only forward messages while pods are starting up.
-	switch p.container.State {
-	case cproto.Running, cproto.Terminated:
-		return
-	}
-
-	msgText := p.preparePodUpdateMessage(msg.event.Message)
-	msg.event.Message = msgText
-
-	message := fmt.Sprintf("Pod %s: %s", msg.event.InvolvedObject.Name, msgText)
-	p.insertLog(ctx, msg.event.CreationTimestamp.Time, message)
-}
-
-func getPodState(
-	ctx *actor.Context,
+func (p *pod) getPodState(
 	pod *k8sV1.Pod,
 	containerNames set.Set[string],
 ) (cproto.State, error) {
@@ -511,7 +473,7 @@ func getPodState(
 		// receive a PodFailed or a PodSucceeded message. We check if pods have a set pod
 		// deletion timestamp to see if this is the case.
 		if pod.ObjectMeta.DeletionTimestamp != nil {
-			ctx.Log().Warn("marking pod as terminated due to deletion timestamp")
+			p.syslog.Warn("marking pod as terminated due to deletion timestamp")
 			return cproto.Terminated, nil
 		}
 
