@@ -666,7 +666,7 @@ func (t *trial) enrichTaskLog(log *model.TaskLog) (*model.TaskLog, error) {
 }
 
 func (t *trial) maybeRestoreAllocation(ctx *actor.Context) (*model.Allocation, error) {
-	if !t.restored || !t.rm.IsReattachEnabled(ctx) {
+	if !t.restored {
 		return nil, nil
 	}
 
