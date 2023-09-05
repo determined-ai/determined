@@ -19,7 +19,8 @@ For example, here is how to train the ``mnist_pytorch`` example with a fixed set
    cd mnist_pytorch
    det experiment create const.yaml .
 
-For an introduction to using the training API, please visit the Training APIs section.
+For an introduction to using the training APIs, please visit :ref:`Training APIs
+<apis-howto-overview>`.
 
 *****************
  Computer Vision

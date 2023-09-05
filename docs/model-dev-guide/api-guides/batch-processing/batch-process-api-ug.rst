@@ -119,10 +119,7 @@ logic.
 You can optionally implement
 :meth:`~determined.pytorch.experimental.TorchBatchProcessor.on_checkpoint_start` and
 :meth:`~determined.pytorch.experimental.TorchBatchProcessor.on_finish` to be run before every
-checkpoint and after all the data has been processed, respectively. For an example of how to
-accomplish this, visit our `Torch Batch Process Embeddings
-<https://github.com/determined-ai/determined/tree/main/examples/features/torch_batch_process_embeddings>`__
-example.
+checkpoint and after all the data has been processed, respectively.
 
 .. code:: python
 
