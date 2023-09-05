@@ -28,8 +28,7 @@
     "test": "vitest",
     "e2e": "playwright test",
     "test:coverage": "vitest --run --coverage --silent",
-    "analyze": "source-map-explorer --no-border-checks 'build/assets/*.js'",
-    "unimported": "unimported"
+    "analyze": "source-map-explorer --no-border-checks 'build/assets/*.js'"
   },
   "dependencies": {
     "@codemirror/lang-markdown": "^6.1.1",
@@ -145,7 +144,6 @@
     "stylelint-scss": "^4.5.0",
     "svgo": "^3.0.2",
     "typescript": "^5.0.4",
-    "unimported": "^1.29.2",
     "vite": "^4.3.5",
     "vite-plugin-checker": "^0.6.0",
     "vite-tsconfig-paths": "^4.2.0",

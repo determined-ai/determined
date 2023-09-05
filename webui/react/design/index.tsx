@@ -3,18 +3,16 @@ import { observable } from 'micro-observables';
 import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-
 import 'uplot/dist/uPlot.min.css';
 
-import { ConfirmationProvider } from 'components/kit/useConfirm';
-import ThemeProvider from 'components/ThemeProvider';
-import { Settings, UserSettings } from 'hooks/useSettingsProvider';
-import DesignKit from 'pages/DesignKit';
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import { Loaded } from 'utils/loadable';
 
-// eslint-disable-next-line no-restricted-imports
 import css from '../src/App.module.scss';
+import { ConfirmationProvider } from '../src/components/kit/useConfirm';
+import ThemeProvider from '../src/components/ThemeProvider';
+import { Settings, UserSettings } from '../src/hooks/useSettingsProvider';
+import DesignKit from '../src/pages/DesignKit';
+import { StoreProvider as UIProvider } from '../src/stores/contexts/UI';
 
 import 'antd/dist/reset.css';
 
