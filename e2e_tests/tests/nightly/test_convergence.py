@@ -164,7 +164,7 @@ def test_cifar10_byol_pytorch_accuracy(client: _client.Determined) -> None:
     )
 
 
-@pytest.mark.nightly_quarantine
+@pytest.mark.nightly
 def test_hf_trainer_api_accuracy(client: _client.Determined) -> None:
     test_dir = "hf_image_classification"
     config = conf.load_config(conf.hf_trainer_examples_path(f"{test_dir}/const.yaml"))
