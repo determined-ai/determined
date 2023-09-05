@@ -9,48 +9,53 @@
 
 To install and set up Determined, follow the cluster deployment guide for your environment.
 
-+--------------------------------------------------------+
-| Local                                                  |
-+========================================================+
-| -  :doc:`basic`                                        |
-| -  :doc:`on-prem/deploy`                               |
-| -  :doc:`on-prem/homebrew`                             |
-| -  :doc:`on-prem/wsl`                                  |
-+--------------------------------------------------------+
-
-+--------------------------------------------------------+
-| Determined Agent                                       |
-+========================================================+
-| :doc:`on-prem/overview`                                |
-|                                                        |
-| -  :doc:`on-prem/linux-packages`                       |
-| -  :doc:`on-prem/docker`                               |
-+--------------------------------------------------------+
-| :doc:`aws/overview`                                    |
-+--------------------------------------------------------+
-| :doc:`gcp/overview`                                    |
-+--------------------------------------------------------+
-
-+--------------------------------------------------------+
-| Kubernetes                                             |
-+========================================================+
-| :doc:`k8s/overview`                                    |
-|                                                        |
-| -  :doc:`k8s/install-on-kubernetes`                    |
-| -  :doc:`k8s/setup-aks-cluster`                        |
-| -  :doc:`k8s/setup-eks-cluster`                        |
-| -  :doc:`k8s/setup-gke-cluster`                        |
-+--------------------------------------------------------+
-
-+--------------------------------------------------------+
-| Slurm                                                  |
-+========================================================+
-| :doc:`slurm/overview`                                  |
-+--------------------------------------------------------+
-
 .. note::
 
    To configure your cluster, visit :ref:`cluster-configuration`.
+
+*******
+ Local
+*******
+
+Run Determined on your own machine for development or testing purposes.
+
+-  :ref:`basic`
+-  :ref:`install-using-deploy`
+-  :ref:`install-using-homebrew`
+-  :ref:`install-using-wsl`
+
+******************
+ Determined Agent
+******************
+
+Manage compute resources and oversee training tasks through Determined agents for scalability in
+diverse environments.
+
+-  :ref:`deploy-on-prem-overview`
+
+   -  :ref:`install-using-linux-packages`
+   -  :ref:`install-using-docker`
+
+-  :ref:`topic_guide_aws`
+
+-  :ref:`topic_guide_gcp`
+
+************
+ Kubernetes
+************
+
+-  :ref:`determined-on-kubernetes`
+
+   -  :ref:`install-on-kubernetes`
+   -  :ref:`setup-aks-cluster`
+   -  :ref:`setup-eks-cluster`
+   -  :ref:`setup-gke-cluster`
+
+*******
+ Slurm
+*******
+
+-  :ref:`sysadmin-deploy-on-hpc`
 
 .. toctree::
    :hidden:

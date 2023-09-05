@@ -1,3 +1,3 @@
 -  Go to ``http://localhost:8080/``.
--  Accept ``determined`` as the default username and leave the password empty.
+-  Accept the default username of ``determined`` and leave the password empty.
 -  Click **Sign In**.

@@ -6,9 +6,9 @@
 
 This guide contains basic cluster configuration information and links to reference information.
 
--  Common configuration reference: :doc:`/reference/deploy/config/common-config-options`
--  Master configuration reference: :doc:`/reference/deploy/config/master-config-reference`
--  Agent configuration reference: :doc:`/reference/deploy/config/agent-config-reference`
+-  :ref:`common-configuration-options`
+-  :ref:`master-config-reference`
+-  :ref:`agent-config-reference`
 
 *********************
  Basic Configuration
@@ -29,7 +29,7 @@ bind mount). For example, this command starts the agent using a configuration fi
      determinedai/determined-agent
      --config-file /etc/determined/agent-config.yaml
 
-The ``agent-config.yaml`` file might contain
+The ``agent.yaml`` file might contain
 
 .. code:: yaml
 
@@ -73,8 +73,4 @@ host where the Postgres database is running can be done via a configuration file
 Equivalent behavior can be achieved by setting the ``DET_DB_HOST=the-db-host`` environment variable
 or ``--db-host the-db-host`` command-line option.
 
-In the rest of this document, we will refer to options using their names in the configuration file.
-Periods (``.``) will be used to indicate nested options; for example, the option above would be
-indicated by ``db.host``.
-
-See also: :ref:`job-configuration-reference`
+See also: :ref:`job-configuration-reference`.

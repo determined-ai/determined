@@ -182,7 +182,7 @@ schedules to run.
 
 #. Enter the cluster address in the browser address bar to view experiment progress in the WebUI. If
    you installed locally using the ``det deploy local`` command, the URL is
-   ``http://localhost:8080/``. Accept ``determined`` as the default username and click **Sign In**.
+   ``http://localhost:8080/``. Accept the default username of ``determined`` and click **Sign In**.
    A password is not required.
 
    .. image:: /assets/images/qs01c.png
@@ -320,8 +320,8 @@ This example uses a fixed batch size and searches on dropout size, filters, and 
 
       det experiment create adaptive.yaml .
 
-#. To view the WebUI dashboard, enter your cluster address in the browser address bar, accept
-   ``Determined`` as the default username, and click **Sign In**. A password is not required.
+#. To view the WebUI dashboard, enter your cluster address in the browser address bar, accept the
+   default username of ``determined``, and click **Sign In**. A password is not required.
 
 #. The experiment can take some time to complete. You can monitor progress in the WebUI Dashboard by
    clicking the **Experiment** name. Notice that more trials have started:
