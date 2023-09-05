@@ -1,7 +1,7 @@
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { Key, useCallback, useEffect, useMemo, useState } from 'react';
 
-import ActionDropdown from 'components/ActionDropdown';
+import ActionDropdown from 'components/ActionDropdown/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import { useModal } from 'components/kit/Modal';
