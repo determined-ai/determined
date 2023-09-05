@@ -54,7 +54,7 @@ class Context:
         self.train = train or core.DummyTrainContext()
         self.searcher = searcher or core.DummySearcherContext(self.distributed)
         self.info = info
-        self.experimental = experimental
+        self.experimental = experimental or core.DummyExperimentalCoreContext()
         self._tensorboard_manager = _tensorboard_manager
         self._heartbeat = _heartbeat
         self._log_shipper = _log_shipper

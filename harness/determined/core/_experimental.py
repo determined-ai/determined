@@ -61,3 +61,16 @@ class ExperimentalCoreContext:
             session=self._session,
             body=req,
         )
+
+
+class DummyExperimentalCoreContext(ExperimentalCoreContext):
+    """Yield a Dummy Experimental Context for mypy"""
+
+    def __init__(self) -> None:
+        pass
+
+    def report_task_using_checkpoint(self, checkpoint: "checkpoint.Checkpoint") -> None:
+        pass
+
+    def report_task_using_model_version(self, model_version: "model.ModelVersion") -> None:
+        pass

@@ -37,7 +37,7 @@ class MyProcessor(experimental.TorchBatchProcessor):
     def __init__(self, context: experimental.TorchBatchProcessorContext) -> None:
         self.context = context
         self.reducer_sum = context.wrap_reducer(reducer=MySumMetricReducer(), name="sum_metric")
-        self.rank = context.distributed.get_rank()
+        self.rank = context.get_distributed_rank()
 
     def process_batch(self, batch: Any, batch_idx: int) -> None:
         self.reducer_sum.update(batch)
