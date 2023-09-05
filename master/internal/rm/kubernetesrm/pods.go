@@ -61,22 +61,9 @@ type podMetadata struct {
 //	  +- requestQueue: queues requests to create / delete kubernetes resources.
 //	     +- requestProcessingWorkers: processes request to create / delete kubernetes resources.
 type pods struct {
-<<<<<<< HEAD
 	mu sync.RWMutex
 	wg waitgroupx.Group
 
-	cluster                  *actor.Ref
-	namespace                string
-	namespaceToPoolName      map[string]string
-	masterServiceName        string
-	leaveKubernetesResources bool
-	scheduler                string
-	slotType                 device.Type
-	slotResourceRequests     config.PodSlotResourceRequests
-	resourcePoolConfigs      []config.ResourcePoolConfig
-	baseContainerDefaults    *model.TaskContainerDefaultsConfig
-	credsDir                 string
-=======
 	cluster               *actor.Ref
 	namespace             string
 	namespaceToPoolName   map[string]string
@@ -84,11 +71,9 @@ type pods struct {
 	scheduler             string
 	slotType              device.Type
 	slotResourceRequests  config.PodSlotResourceRequests
-	fluentConfig          config.FluentConfig
 	resourcePoolConfigs   []config.ResourcePoolConfig
 	baseContainerDefaults *model.TaskContainerDefaultsConfig
 	credsDir              string
->>>>>>> 223056185a (refactor: flipped k8's enable reattach to always true [DET-9726])
 
 	clientSet        *k8sClient.Clientset
 	masterIP         string
@@ -189,12 +174,7 @@ func Initialize(
 		containerIDToPodName:         make(map[string]string),
 		containerIDToSchedulingState: make(map[string]sproto.SchedulingState),
 		podNameToContainerID:         make(map[string]string),
-<<<<<<< HEAD
 		podHandlerToMetadata:         make(map[*pod]podMetadata),
-		leaveKubernetesResources:     leaveKubernetesResources,
-=======
-		podHandlerToMetadata:         make(map[*actor.Ref]podMetadata),
->>>>>>> 223056185a (refactor: flipped k8's enable reattach to always true [DET-9726])
 		slotType:                     slotType,
 		slotResourceRequests:         slotResourceRequests,
 		resourcePoolConfigs:          resourcePoolConfigs,

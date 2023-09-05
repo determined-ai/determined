@@ -63,20 +63,6 @@ type pod struct {
 	masterPort   int32
 	// submissionInfo will be nil when the pod is restored.
 	// These fields can not be relied on after a pod is submitted.
-<<<<<<< HEAD
-	submissionInfo           *podSubmissionInfo
-	masterTLSConfig          model.TLSClientConfig
-	loggingTLSConfig         model.TLSClientConfig
-	loggingConfig            model.LoggingConfig
-	slots                    int
-	podInterface             typedV1.PodInterface
-	configMapInterface       typedV1.ConfigMapInterface
-	resourceRequestQueue     *requestQueue
-	leaveKubernetesResources bool
-	scheduler                string
-	slotType                 device.Type
-	slotResourceRequests     config.PodSlotResourceRequests
-=======
 	submissionInfo       *podSubmissionInfo
 	masterTLSConfig      model.TLSClientConfig
 	loggingTLSConfig     model.TLSClientConfig
@@ -88,8 +74,6 @@ type pod struct {
 	scheduler            string
 	slotType             device.Type
 	slotResourceRequests config.PodSlotResourceRequests
-	fluentConfig         config.FluentConfig
->>>>>>> 9655479e27 (refactor: flipped k8's enable reattach to always true [DET-9726])
 
 	pod           *k8sV1.Pod
 	podName       string
@@ -145,29 +129,6 @@ func newPod(
 		submissionInfo: &podSubmissionInfo{
 			taskSpec: msg.Spec,
 		},
-<<<<<<< HEAD
-		clusterID:                clusterID,
-		allocationID:             msg.AllocationID,
-		clientSet:                clientSet,
-		namespace:                namespace,
-		masterIP:                 masterIP,
-		masterPort:               masterPort,
-		masterTLSConfig:          masterTLSConfig,
-		loggingTLSConfig:         loggingTLSConfig,
-		loggingConfig:            loggingConfig,
-		slots:                    msg.Slots,
-		podInterface:             podInterface,
-		configMapInterface:       configMapInterface,
-		resourceRequestQueue:     resourceRequestQueue,
-		leaveKubernetesResources: leaveKubernetesResources,
-		podName:                  uniqueName,
-		configMapName:            uniqueName,
-		container:                podContainer,
-		containerNames:           containerNames,
-		scheduler:                scheduler,
-		slotType:                 slotType,
-		slotResourceRequests:     slotResourceRequests,
-=======
 		clusterID:            clusterID,
 		allocationID:         msg.AllocationID,
 		clientSet:            clientSet,
@@ -188,8 +149,6 @@ func newPod(
 		scheduler:            scheduler,
 		slotType:             slotType,
 		slotResourceRequests: slotResourceRequests,
-		fluentConfig:         fluentConfig,
->>>>>>> 9655479e27 (refactor: flipped k8's enable reattach to always true [DET-9726])
 		syslog: logrus.New().WithField("component", "pod").WithFields(
 			logger.MergeContexts(msg.LogContext, logger.Context{
 				"pod": uniqueName,
