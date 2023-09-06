@@ -25,6 +25,7 @@ import {
   Operator,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
+import useUI from 'components/kit/contexts/UI';
 import { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
@@ -32,7 +33,6 @@ import useMobile from 'hooks/useMobile';
 import { PAGE_SIZE } from 'pages/F_ExpList/F_ExperimentList';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
-import useUI from 'stores/contexts/UI';
 import usersStore from 'stores/users';
 import {
   ExperimentAction,

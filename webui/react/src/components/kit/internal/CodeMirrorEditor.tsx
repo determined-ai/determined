@@ -5,8 +5,8 @@ import { yaml } from '@codemirror/legacy-modes/mode/yaml';
 import ReactCodeMirror, { ReactCodeMirrorProps } from '@uiw/react-codemirror';
 import React from 'react';
 
+import useUI from 'components/kit/contexts/UI';
 import { DarkLight } from 'components/kit/internal/types';
-import useUI from 'stores/contexts/UI';
 
 interface Props extends ReactCodeMirrorProps {
   syntax: 'python' | 'markdown' | 'yaml';

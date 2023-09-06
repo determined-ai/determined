@@ -6,6 +6,7 @@ import { CSSTransition } from 'react-transition-group';
 
 import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
+import useUI from 'components/kit/contexts/UI';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName, IconSize } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
@@ -24,7 +25,6 @@ import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown
 import { paths } from 'routes/utils';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
-import useUI from 'stores/contexts/UI';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';

@@ -1,8 +1,8 @@
 import React, { CSSProperties, useMemo } from 'react';
 
+import useUI from 'components/kit/contexts/UI';
 import Tooltip from 'components/kit/Tooltip';
 import { stateToLabel } from 'constants/states';
-import useUI from 'stores/contexts/UI';
 import { getStateColorCssVar, StateOfUnion } from 'themes';
 import { ResourceState, RunState, SlotState, ValueOf } from 'types';
 import { hsl2str, str2hsl } from 'utils/color';

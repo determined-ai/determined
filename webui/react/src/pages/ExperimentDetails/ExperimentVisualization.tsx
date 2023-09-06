@@ -2,6 +2,7 @@ import { Alert, type TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import useUI from 'components/kit/contexts/UI';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import Link from 'components/Link';
@@ -13,7 +14,6 @@ import { paths } from 'routes/utils';
 import { V1MetricBatchesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import useUI from 'stores/contexts/UI';
 import {
   ExperimentBase,
   ExperimentSearcherName,

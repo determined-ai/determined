@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event';
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
+import { StoreProvider as UIProvider } from 'components/kit/contexts/UI';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import authStore from 'stores/auth';
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 import { generateExperiment } from 'utils/task';

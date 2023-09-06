@@ -3,11 +3,11 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import Button from 'components/kit/Button';
+import { StoreProvider as UIProvider } from 'components/kit/contexts/UI';
 import { useModal } from 'components/kit/Modal';
 import { createGroup as mockCreateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { GetGroupParams } from 'services/types';
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import { DetailedUser } from 'types';
 
 import CreateGroupModalComponent, {

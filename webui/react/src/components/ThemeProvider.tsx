@@ -3,9 +3,9 @@ import { ThemeConfig } from 'antd/es/config-provider/context';
 import { useObservable } from 'micro-observables';
 import React, { ReactNode, useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
+import useUI from 'components/kit/contexts/UI';
 import { useSettings } from 'hooks/useSettings';
 import { config, Settings } from 'hooks/useTheme.settings';
-import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
 import themes from 'themes';
 import { RecordKey } from 'types';

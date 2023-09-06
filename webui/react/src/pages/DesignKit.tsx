@@ -13,6 +13,7 @@ import Checkbox from 'components/kit/Checkbox';
 import ClipboardButton from 'components/kit/ClipboardButton';
 import CodeEditor from 'components/kit/CodeEditor';
 import { Column, Columns } from 'components/kit/Columns';
+import useUI from 'components/kit/contexts/UI';
 import Drawer from 'components/kit/Drawer';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
@@ -54,7 +55,6 @@ import { CheckpointsDict } from 'pages/TrialDetails/TrialDetailsMetrics';
 import { serverAddress } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
-import useUI from 'stores/contexts/UI';
 import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, Note, User, ValueOf } from 'types';
 import {

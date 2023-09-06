@@ -2,6 +2,7 @@ import { Alert } from 'antd';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import useUI from 'components/kit/contexts/UI';
 import { LineChart, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Spinner from 'components/kit/Spinner';
@@ -16,7 +17,6 @@ import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import useUI from 'stores/contexts/UI';
 import {
   ExperimentAction as Action,
   CommandResponse,

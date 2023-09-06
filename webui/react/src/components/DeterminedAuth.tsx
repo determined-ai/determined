@@ -2,6 +2,7 @@ import { ConfigProvider } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import useUI from 'components/kit/contexts/UI';
 import Form from 'components/kit/Form';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
@@ -11,7 +12,6 @@ import { login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { isLoginFailure } from 'services/utils';
 import authStore from 'stores/auth';
-import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import userStore from 'stores/users';

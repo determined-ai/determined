@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
+import useUI from 'components/kit/contexts/UI';
 import Spinner from 'components/kit/Spinner';
 import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
@@ -13,7 +14,6 @@ import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import useUI from 'stores/contexts/UI';
 import {
   ExperimentBase,
   HyperparameterType,

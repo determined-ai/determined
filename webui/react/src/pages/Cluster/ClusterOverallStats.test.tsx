@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
+import { StoreProvider as UIProvider } from 'components/kit/contexts/UI';
 
 import { ClusterOverallStats } from './ClusterOverallStats';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import useUI from 'stores/contexts/UI';
+import useUI from 'components/kit/contexts/UI';
 import { Mode } from 'utils/themes';
 
 import css from './ThemeToggle.module.scss';

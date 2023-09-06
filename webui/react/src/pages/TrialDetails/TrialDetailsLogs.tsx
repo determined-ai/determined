@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ClipboardButton from 'components/kit/ClipboardButton';
+import useUI from 'components/kit/contexts/UI';
 import LogViewer, {
   FetchConfig,
   FetchDirection,
@@ -18,7 +19,6 @@ import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
-import useUI from 'stores/contexts/UI';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 import handleError, { ErrorType } from 'utils/error';

@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useSearchParams } from 'react-router-dom';
 
+import useUI from 'components/kit/contexts/UI';
 import TaskBar from 'components/TaskBar';
 import { getTask } from 'services/api';
-import useUI from 'stores/contexts/UI';
 import { CommandState, CommandType, ValueOf } from 'types';
 import handleError, { ErrorLevel, ErrorType, handleWarning } from 'utils/error';
 

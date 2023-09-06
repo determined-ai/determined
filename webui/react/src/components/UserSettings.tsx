@@ -1,6 +1,7 @@
 import { Space } from 'antd';
 import React, { useCallback, useState } from 'react';
 
+import useUI from 'components/kit/contexts/UI';
 import Drawer from 'components/kit/Drawer';
 import InlineForm from 'components/kit/InlineForm';
 import Input from 'components/kit/Input';
@@ -30,7 +31,6 @@ import {
 import { TableViewMode } from 'pages/F_ExpList/glide-table/GlideTable';
 import { RowHeight, rowHeightItems } from 'pages/F_ExpList/glide-table/OptionsMenu';
 import { patchUser } from 'services/api';
-import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';

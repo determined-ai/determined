@@ -2,9 +2,9 @@ import React, { ReactNode } from 'react';
 
 import { ImageAlert } from 'components/Image';
 import Button from 'components/kit/Button';
+import useUI from 'components/kit/contexts/UI';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
-import useUI from 'stores/contexts/UI';
 import { DarkLight } from 'utils/themes';
 
 import css from './exceptions.module.scss';

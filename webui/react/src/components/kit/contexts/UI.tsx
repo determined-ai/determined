@@ -1,10 +1,6 @@
 import React, { Dispatch, useContext, useMemo, useReducer } from 'react';
 
-import rootLogger from 'utils/Logger';
-import { checkDeepEquality } from 'utils/store';
-import { DarkLight, Mode, Theme } from 'utils/themes';
-
-const logger = rootLogger.extend('stores/ui');
+import { DarkLight, Mode, Theme } from 'components/kit/utils/themes';
 
 interface StateUI {
   chromeCollapsed: boolean;
@@ -132,7 +128,7 @@ const useUI = (): { actions: UIActions; ui: StateUI } => {
 };
 
 export const StoreProvider: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(checkDeepEquality(reducer, logger), initUI);
+  const [state, dispatch] = useReducer(reducer, initUI);
   return (
     <StateContext.Provider value={state}>
       <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>

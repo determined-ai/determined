@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import Button from 'components/kit/Button';
+import { StoreProvider as UIProvider } from 'components/kit/contexts/UI';
 import { useModal } from 'components/kit/Modal';
 import { deleteGroup as mockDeleteGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 
 import DeleteGroupModalComponent, { API_SUCCESS_MESSAGE, MODAL_HEADER } from './DeleteGroupModal';
 

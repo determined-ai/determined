@@ -2,6 +2,7 @@ import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import useUI from 'components/kit/contexts/UI';
 import Empty from 'components/kit/Empty';
 import Spinner from 'components/kit/Spinner';
 import ParallelCoordinates from 'components/ParallelCoordinates';
@@ -13,7 +14,6 @@ import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import useUI from 'stores/contexts/UI';
 import {
   ExperimentAction as Action,
   CommandResponse,

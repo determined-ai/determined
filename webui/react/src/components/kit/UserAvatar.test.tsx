@@ -2,8 +2,8 @@ import { waitFor } from '@testing-library/dom';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { StoreProvider as UIProvider } from 'components/kit/contexts/UI';
 import { User } from 'components/kit/internal/types';
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 
 import UserAvatar, { Props } from './UserAvatar';
 

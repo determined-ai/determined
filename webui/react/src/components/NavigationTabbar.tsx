@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 import ActionSheet, { ActionItem } from 'components/ActionSheet';
 import DynamicIcon from 'components/DynamicIcon';
+import useUI from 'components/kit/contexts/UI';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
@@ -12,7 +13,6 @@ import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
-import useUI from 'stores/contexts/UI';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
