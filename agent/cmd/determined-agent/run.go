@@ -112,8 +112,10 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&opts.SlotType, "slot-type", "auto", "slot type to expose")
 	defaultVisibleGPUs := visibleGPUsFromEnvironment()
 	cmd.Flags().StringVar(
-		&opts.VisibleGPUs, "visible-gpus",
-		defaultVisibleGPUs, "GPUs to expose as slots")
+		&opts.VisibleGPUs,
+		"visible-gpus",
+		defaultVisibleGPUs,
+		"GPUs to expose as slots")
 
 	// Security flags.
 	cmd.Flags().BoolVar(
@@ -171,6 +173,8 @@ func newRunCmd() *cobra.Command {
 	return cmd
 }
 
+// visibleGPUsFromEnvironment returns GPU allocation information from the environment
+// if any, else "".
 func visibleGPUsFromEnvironment() (visDevices string) {
 	visDevices, defined := os.LookupEnv(rocrVisibleDevices)
 	if !defined {
