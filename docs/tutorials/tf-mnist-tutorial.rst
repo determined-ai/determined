@@ -48,7 +48,7 @@ We suggest you follow along with the code as you read through this tutorial.
 ***************
 
 -  Access to a Determined cluster. If you have not yet installed Determined, refer to the
-   :ref:`installation instructions <install-cluster>`.
+   :ref:`installation-guide`.
 
 -  The Determined CLI should be installed on your local machine. For installation instructions, see
    :ref:`here <install-cli>`. After installing the CLI, configure it to connect to your Determined
