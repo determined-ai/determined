@@ -4,8 +4,8 @@
  Upgrade Determined on Slurm/PBS
 #################################
 
-This procedure describes how to deploy an upgraded Determined on an HPC cluster managed by the Slurm
-or PBS workload managers. Use this procedure when an earlier version of Determined is installed,
+This procedure describes how to upgrade Determined on an HPC cluster managed by the Slurm or PBS
+workload managers. Use this procedure when an earlier version of Determined is installed,
 configured, and functioning properly.
 
 #. Review the latest :doc:`/setup-cluster/deploy-cluster/slurm/slurm-requirements` and ensure all

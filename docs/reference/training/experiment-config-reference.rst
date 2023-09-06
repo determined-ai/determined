@@ -1223,12 +1223,13 @@ When the cluster is configured with :ref:`resource_manager.type: slurm
 the Singularity container runtime which provides additional options for specifying the container
 image. The image can be:
 
--  A full path to a local Singulary image (beginning with a / character).
+-  A full path to a local Singularity image (beginning with a / character).
 
 -  Any of the other supported Singularity container formats identified by prefix (e.g.
-   ``instance://``, ``library://``, ``shub://``, ``oras://``, or ``docker://``). See the
-   `Singularity run <https://docs.sylabs.io/guides/3.7/user-guide/cli/singularity_run.html>`__
-   command documentation for a full description of the capabilities.
+   ``instance://``, ``library://``, ``shub://``, ``oras://``, ``docker-archive://`` or
+   ``docker://``). See the `Singularity run
+   <https://docs.sylabs.io/guides/3.7/user-guide/cli/singularity_run.html>`__ command documentation
+   for a full description of the capabilities.
 
 -  A Singularity image provided via the ``singularity_image_root`` configured for the cluster as
    described in :ref:`slurm-image-config`.
