@@ -17,7 +17,8 @@ To install and set up Determined, follow the cluster deployment guide for your e
  Local
 *******
 
-Run Determined on your own machine for development or testing purposes.
+Install Determined on a single machine, for your own use. Compatible with Windows, Mac, and Linux.
+Ideal for getting started with Determined.
 
 -  :ref:`basic`
 -  :ref:`install-using-deploy`
@@ -28,8 +29,9 @@ Run Determined on your own machine for development or testing purposes.
  Determined Agent
 ******************
 
-Manage compute resources and oversee training tasks through Determined agents for scalability in
-diverse environments.
+Use Determined’s built-in resource management. This is an easier alternative to installing and
+administering via Kubernetes or Slurm. Ideal for teams of any size to share dedicated compute
+resources. Compatible with on-prem clusters and cloud auto-scaling (AWS and GCP).
 
 -  :ref:`deploy-on-prem-overview`
 
@@ -44,6 +46,9 @@ diverse environments.
  Kubernetes
 ************
 
+Allow Determined to submit jobs to a Kubernetes cluster. Compatible with on-prem, GKE, and EKS
+clusters.
+
 -  :ref:`determined-on-kubernetes`
 
    -  :ref:`install-on-kubernetes`
@@ -54,6 +59,12 @@ diverse environments.
 *******
  Slurm
 *******
+
+Enable Determined to submit jobs to a Slurm cluster.
+
+.. attention::
+
+   This method is only available on Determined Enterprise Edition.
 
 -  :ref:`sysadmin-deploy-on-hpc`
 
