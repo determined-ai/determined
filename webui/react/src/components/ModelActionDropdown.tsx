@@ -16,10 +16,15 @@ export const ModelActionMenuKey = {
 
 interface Props {
   children: React.ReactNode;
+  onVisibleChange: (visible: boolean) => void;
   record: ModelItem;
 }
 
-export const ModelActionDropdown: React.FC<Props> = ({ children, record: model }: Props) => {
+export const ModelActionDropdown: React.FC<Props> = ({
+  children,
+  onVisibleChange,
+  record: model,
+}: Props) => {
   const deleteModelModal = useModal(DeleteModelModal);
   const modelMoveModal = useModal(ModelMoveModal);
 
@@ -33,7 +38,8 @@ export const ModelActionDropdown: React.FC<Props> = ({ children, record: model }
     } else {
       await archiveModel({ modelName: model.name });
     }
-  }, [model.archived, model.name]);
+    onVisibleChange(true);
+  }, [model.archived, model.name, onVisibleChange]);
 
   const handleDropdown = (key: string) => {
     switch (key) {
