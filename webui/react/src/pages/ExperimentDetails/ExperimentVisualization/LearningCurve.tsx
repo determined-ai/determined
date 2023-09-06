@@ -242,6 +242,7 @@ const LearningCurve: React.FC<Props> = ({
             color: glasbeyColor(trialId),
             data: { [XAxisDomain.Batches]: metricsMap[trialId] },
             key: trialId,
+            metricType: '',
             name: `trial ${trialId}`,
           }));
         setChartData(Loaded(newChartData));
