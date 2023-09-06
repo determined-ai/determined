@@ -48,8 +48,9 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
   }, [editedMetadata, onSave]);
 
   const cancelEditMetadata = useCallback(() => {
+    setEditedMetadata(metadata);
     setIsEditing(false);
-  }, []);
+  }, [setEditedMetadata, metadata]);
 
   const showPlaceholder = useMemo(() => {
     return metadataArray.length === 0 && !isEditing;

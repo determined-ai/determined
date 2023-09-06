@@ -71,7 +71,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
                     }
                     key={field.key}
                     name={field.name}
-                    onDelete={fields.length > 1 ? () => remove(field.name) : undefined}
+                    onDelete={() => remove(field.name)}
                   />
                 ))}
                 <Link onClick={() => add({ key: '', value: '' })}>{ADD_ROW_TEXT}</Link>
