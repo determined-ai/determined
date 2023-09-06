@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -87,6 +88,14 @@ func (a *JobAuthZRBAC) FilterJobs(
 		}
 	}
 
+	userCanViewExternalJobs := false
+	permErr, err := cluster.AuthZProvider.Get().CanViewExternalJobs(ctx, &curUser)
+	if err != nil {
+		log.Warnf("Failed to check VIEW_EXTERNAL_JOBS permission for user %s: %s",
+			curUser.Username, err.Error())
+	} else if permErr == nil {
+		userCanViewExternalJobs = true
+	}
 	viewableJobs = make([]*jobv1.Job, 0)
 	for _, job := range jobs {
 		switch job.Type {
@@ -101,6 +110,11 @@ func (a *JobAuthZRBAC) FilterJobs(
 			if userHasGlobalNTSCViewPerm || viewable {
 				viewableJobs = append(viewableJobs, job)
 			}
+		case jobv1.Type_TYPE_EXTERNAL:
+			if userCanViewExternalJobs {
+				viewableJobs = append(viewableJobs, job)
+			}
+			continue
 			// TODO: special case for tensorboard.
 		default:
 			log.Warnf("ignoring job type: %s", job.Type)

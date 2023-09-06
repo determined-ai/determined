@@ -333,11 +333,11 @@ func (m *DispatcherResourceManager) GetDefaultComputeResourcePool(
 }
 
 // GetExternalJobs implements rm.ResourceManager.
-func (*DispatcherResourceManager) GetExternalJobs(
-	actor.Messenger,
-	sproto.GetExternalJobs,
+func (m *DispatcherResourceManager) GetExternalJobs(
+	_ actor.Messenger,
+	msg sproto.GetExternalJobs,
 ) ([]*jobv1.Job, error) {
-	return nil, rmerrors.ErrNotSupported
+	return m.jobWatcher.fetchExternalJobs(msg.ResourcePool), nil
 }
 
 // GetJobQ implements rm.ResourceManager.
@@ -347,9 +347,11 @@ func (m *DispatcherResourceManager) GetJobQ(
 ) (map[model.JobID]*sproto.RMJobInfo, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-
-	// TODO(HAL-2863): Get the job Q info from slurm, for the proper pool as per the message.
-	m.syslog.Debugf("GetJobQ for resource pool %s", msg.ResourcePool)
+	if len(strings.TrimSpace(msg.ResourcePool)) == 0 {
+		msg.ResourcePool = *m.rmConfig.DefaultComputeResourcePool
+		m.syslog.Debugf("No resource pool name provided. Selected the default compute pool %s",
+			msg.ResourcePool)
+	}
 	var reqs []*sproto.AllocateRequest
 	for it := m.reqList.Iterator(); it.Next(); {
 		if it.Value().ResourcePool == msg.ResourcePool {

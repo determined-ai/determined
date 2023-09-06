@@ -5,12 +5,14 @@ import (
 	"time"
 
 	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gotest.tools/assert"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/pkg/syncx/mapx"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
 const (
@@ -588,4 +590,157 @@ func assertConditionWithin(t *testing.T, timeout time.Duration, condition func()
 		time.Sleep(time.Millisecond)
 	}
 	require.Fail(t, msg)
+}
+
+func TestConvertHpcStatus(t *testing.T) {
+	jobWatcher, _ := getJobWatcher()
+	assert.Equal(t, jobWatcher.convertHpcStatus("PENDING"), jobv1.State_STATE_QUEUED)
+	assert.Equal(t, jobWatcher.convertHpcStatus("RUNNING"), jobv1.State_STATE_SCHEDULED)
+	assert.Equal(t, jobWatcher.convertHpcStatus(""), jobv1.State_STATE_UNSPECIFIED)
+}
+
+func TestConvertExternalJobs(t *testing.T) {
+	// External job with no job details
+	jobDetails1 := map[string]string{
+		"jobID": "1234",
+	}
+
+	jobWatcher, _ := getJobWatcher()
+
+	assert.Assert(t, jobWatcher.convertExternalJobs("", nil) == nil)
+	assert.Assert(t, jobWatcher.convertExternalJobs("asdf", nil) == nil)
+	assert.Assert(t, jobWatcher.convertExternalJobs("", jobDetails1) == nil)
+
+	jobWatcher.externalJobs.Store(jobDetails1["jobID"], jobDetails1)
+	assert.Equal(t, jobWatcher.externalJobs.Len(), 1)
+	actualJobDetails := jobWatcher.fetchExternalJobs("")
+	assert.Equal(t, actualJobDetails[0].JobId, jobDetails1["jobID"])
+	assert.Equal(t, actualJobDetails[0].Type, jobv1.Type_TYPE_EXTERNAL)
+	assert.Equal(t, actualJobDetails[0].Summary.State, jobv1.State_STATE_UNSPECIFIED)
+	assert.Equal(t, actualJobDetails[0].Name, "Not Available")
+	assert.Equal(t, actualJobDetails[0].Username, "Not Available")
+	assert.Equal(t, actualJobDetails[0].ResourcePool, "Not Available")
+	assert.Equal(t, actualJobDetails[0].RequestedSlots, int32(0))
+	assert.Equal(t, actualJobDetails[0].AllocatedSlots, int32(0))
+	assert.Equal(t, actualJobDetails[0].SubmissionTime.Seconds, timestamppb.New(time.Time{}).Seconds)
+	jobWatcher.externalJobs.Delete(jobDetails1["jobID"])
+
+	// External job with all job details
+	jobDetails2 := map[string]string{
+		"jobID":      "1234",
+		"state":      "RUNNING",
+		"name":       "hello_world",
+		"partition":  "defq",
+		"submitTime": "2023-05-10T02:35:12Z",
+		"userName":   "testuser1",
+		"gpuSlots":   "0",
+		"cpuSlots":   "1",
+		"reasonCode": "None",
+		"reasonDesc": "",
+	}
+	expectedSubmitTime, _ := time.Parse(time.RFC3339, jobDetails2["submitTime"])
+	jobWatcher.externalJobs.Store(jobDetails2["jobID"], jobDetails2)
+	assert.Equal(t, jobWatcher.externalJobs.Len(), 1)
+	actualJobDetails = jobWatcher.fetchExternalJobs("")
+	assert.Equal(t, actualJobDetails[0].JobId, jobDetails2["jobID"])
+	assert.Equal(t, actualJobDetails[0].Type, jobv1.Type_TYPE_EXTERNAL)
+	assert.Equal(t, actualJobDetails[0].Summary.State, jobv1.State_STATE_SCHEDULED)
+	assert.Equal(t, actualJobDetails[0].Name, jobDetails2["name"])
+	assert.Equal(t, actualJobDetails[0].Username, jobDetails2["userName"])
+	assert.Equal(t, actualJobDetails[0].ResourcePool, jobDetails2["partition"])
+	assert.Equal(t, actualJobDetails[0].RequestedSlots, int32(1))
+	assert.Equal(t, actualJobDetails[0].AllocatedSlots, int32(1))
+	assert.Equal(t, actualJobDetails[0].SubmissionTime.Seconds,
+		timestamppb.New(expectedSubmitTime).Seconds)
+	jobWatcher.externalJobs.Delete(jobDetails2["jobID"])
+
+	// External job with invalid job details
+	jobDetails3 := map[string]string{
+		"jobID":      "1234",
+		"state":      "RUNNING",
+		"name":       "hello_world",
+		"partition":  "defq",
+		"submitTime": "2023-05-10 02:35:12Z",
+		"userName":   "testuser1",
+		"gpuSlots":   "S",
+		"cpuSlots":   "T",
+		"reasonCode": "None",
+		"reasonDesc": "",
+	}
+	jobWatcher.externalJobs.Store(jobDetails3["jobID"], jobDetails3)
+	assert.Equal(t, jobWatcher.externalJobs.Len(), 1)
+	actualJobDetails = jobWatcher.fetchExternalJobs("")
+	assert.Equal(t, actualJobDetails[0].JobId, jobDetails3["jobID"])
+	assert.Equal(t, actualJobDetails[0].Type, jobv1.Type_TYPE_EXTERNAL)
+	assert.Equal(t, actualJobDetails[0].Summary.State, jobv1.State_STATE_SCHEDULED)
+	assert.Equal(t, actualJobDetails[0].Name, jobDetails3["name"])
+	assert.Equal(t, actualJobDetails[0].Username, jobDetails3["userName"])
+	assert.Equal(t, actualJobDetails[0].ResourcePool, jobDetails3["partition"])
+	assert.Equal(t, actualJobDetails[0].RequestedSlots, int32(0))
+	assert.Equal(t, actualJobDetails[0].AllocatedSlots, int32(0))
+	assert.Equal(t, actualJobDetails[0].SubmissionTime.Seconds, timestamppb.New(time.Time{}).Seconds)
+	jobWatcher.externalJobs.Delete(jobDetails3["jobID"])
+}
+
+func TestAddAndFetchExternalJobs(t *testing.T) {
+	jobWatcher, _ := getJobWatcher()
+	jobDetails1 := map[string]string{
+		"jobID":      "1234",
+		"state":      "RUNNING",
+		"name":       "hello_world",
+		"partition":  "defq",
+		"submitTime": "2023-05-10T02:35:12Z",
+		"userName":   "testuser1",
+		"gpuSlots":   "0",
+		"cpuSlots":   "1",
+		"reasonCode": "None",
+		"reasonDesc": "",
+	}
+	jobDetails2 := map[string]string{
+		"jobID":      "1235",
+		"state":      "PENDING",
+		"name":       "hello_world_gpu",
+		"partition":  "defq_GPU",
+		"submitTime": "2023-05-10T02:35:12Z",
+		"userName":   "testuser1",
+		"gpuSlots":   "1",
+		"cpuSlots":   "0",
+		"reasonCode": "None",
+		"reasonDesc": "",
+	}
+	jobWatcher.externalJobs.Store(jobDetails1["jobID"], jobDetails1)
+	assert.Equal(t, jobWatcher.externalJobs.Len(), 1)
+	_, jobFound := jobWatcher.externalJobs.Load(jobDetails1["jobID"])
+	assert.Assert(t, jobFound)
+	_, jobFound = jobWatcher.externalJobs.Load("asdf")
+	assert.Equal(t, jobFound, false)
+	externalJobs := jobWatcher.fetchExternalJobs("defq")
+	assert.Equal(t, len(externalJobs), 1)
+	assert.Equal(t, externalJobs[0].JobId, jobDetails1["jobID"])
+	// We should get all external jobs when the resource pool value is empty.
+	externalJobs = jobWatcher.fetchExternalJobs("")
+	assert.Equal(t, len(externalJobs), 1)
+	assert.Equal(t, externalJobs[0].JobId, jobDetails1["jobID"])
+	jobWatcher.externalJobs.Store(jobDetails2["jobID"], jobDetails1)
+	externalJobs = jobWatcher.fetchExternalJobs("")
+	assert.Equal(t, len(externalJobs), 2)
+}
+
+func TestAddAndFetchExternalJobsInvalidInputs(t *testing.T) {
+	jobWatcher, _ := getJobWatcher()
+	jobDetails := map[string]string{
+		"jobID":      "1234",
+		"state":      "RUNNING",
+		"name":       "hello_world",
+		"partition":  "defq",
+		"userName":   "testuser1",
+		"reasonCode": "None",
+		"reasonDesc": "",
+	}
+	jobWatcher.externalJobs.Store(jobDetails["jobID"], jobDetails)
+	assert.Equal(t, jobWatcher.externalJobs.Len(), 1)
+	actualJobDetails := jobWatcher.fetchExternalJobs("")
+	assert.Equal(t, actualJobDetails[0].RequestedSlots, int32(0))
+	assert.Equal(t, actualJobDetails[0].AllocatedSlots, int32(0))
+	assert.Equal(t, actualJobDetails[0].SubmissionTime.Seconds, timestamppb.New(time.Time{}).Seconds)
 }
