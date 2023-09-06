@@ -180,7 +180,7 @@ const GroupManagement: React.FC = () => {
       if (!groupId || !userId) return;
       try {
         await updateGroup({ groupId, removeUsers: [userId] });
-        message.success('User has been deleted.');
+        message.success('User has been removed from group.');
         onExpand(true, record);
         fetchGroups();
       } catch (e) {
