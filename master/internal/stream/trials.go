@@ -19,6 +19,7 @@ import (
 const TrialsDeleteKey = "trials_deleted"
 
 // TrialMsg is a stream.Msg.
+// determined:streamable
 type TrialMsg struct {
 	bun.BaseModel `bun:"table:trials"`
 
@@ -66,6 +67,7 @@ func (tm *TrialMsg) DeleteMsg() *websocket.PreparedMessage {
 }
 
 // TrialSubscriptionSpec is what a user submits to define a trial subscription.
+// determined:streamable
 type TrialSubscriptionSpec struct {
 	TrialIds      []int  `json:"trial_ids"`
 	ExperimentIds []int  `json:"experiment_ids"`
