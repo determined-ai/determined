@@ -2,38 +2,34 @@ package dispatcherrm
 
 import (
 	"context"
-	"time"
+	"fmt"
 
 	semvar "github.com/Masterminds/semver/v3"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
-const versionCheckPeriod = 60 * time.Second
-
 var launcherMinimumVersion = semvar.MustParse("3.3.1")
 
-// periodicallyCheckLauncherVersion checks the launcher version every 60s, logging warnings while
-// it is out of date and exiting if it finds it is ok.
-func periodicallyCheckLauncherVersion(
-	ctx context.Context,
+// Do a single check of the version.  Return an error
+// if version cannot be obtained, or is below minimum.
+func checkVersionNow(ctx context.Context,
 	log *logrus.Entry,
 	cl *launcherAPIClient,
-) {
-	for range time.NewTicker(versionCheckPeriod).C {
-		v, err := cl.getVersion(ctx)
-		if err != nil {
-			log.WithError(err).Error("could not get launcher API version")
-			continue
-		}
+) error {
+	v, err := cl.getVersion(ctx)
+	if err != nil {
+		return errors.Wrap(err, "cannot get launcher version")
+	}
 
-		if checkLauncherVersion(v) {
-			return
-		}
-
-		log.Errorf("Launcher version %s does not meet the required minimum. "+
-			"Upgrade to hpe-hpc-launcher version %s",
+	if !checkLauncherVersion(v) {
+		return fmt.Errorf("launcher version %s does not meet the required minimum. "+
+			"Upgrade to hpe-hpc-launcher version %s or greater",
 			v, launcherMinimumVersion)
 	}
+
+	log.Infof("HPC Launcher version %s", v)
+	return nil
 }
 
 func checkLauncherVersion(v *semvar.Version) bool {

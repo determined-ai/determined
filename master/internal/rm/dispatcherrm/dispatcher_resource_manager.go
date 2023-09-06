@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -186,8 +187,11 @@ func New(
 	}
 
 	m.syslog.Info("Starting dispatcher resource manager")
+	if err := checkVersionNow(context.TODO(), m.syslog, m.apiClient); err != nil {
+		log.Fatal(err)
+	}
+
 	go m.killAllInactiveDispatches()
-	go periodicallyCheckLauncherVersion(context.TODO(), m.syslog, m.apiClient)
 	go gcOrphanedDispatches(context.TODO(), m.syslog, m.apiClient)
 	go m.jobWatcher.watch()
 	go m.handleLauncherMonitorEvents(monitorEvents)
