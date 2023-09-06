@@ -21,6 +21,7 @@ import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
+import { ModelActionMenuKey as MenuKey, ModelActionDropdown } from 'components/ModelActionDropdown';
 import ModelCreateModal from 'components/ModelCreateModal';
 import ModelMoveModal from 'components/ModelMoveModal';
 import InteractiveTable, {
@@ -67,12 +68,6 @@ const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description
 interface Props {
   workspace?: Workspace;
 }
-
-const MenuKey = {
-  DeleteModel: 'delete-model',
-  MoveModel: 'move-model',
-  SwitchArchived: 'switch-archived',
-} as const;
 
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const canceler = useRef(new AbortController());
@@ -673,36 +668,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       });
     },
     [settings, updateSettings],
-  );
-
-  const ModelActionDropdown = useCallback(
-    ({ record, children }: { children: React.ReactNode; record: ModelItem }) => {
-      const handleDropdown = (key: string, record: ModelItem) => {
-        switch (key) {
-          case MenuKey.DeleteModel:
-            setModel(record);
-            deleteModelModal.open();
-            break;
-          case MenuKey.MoveModel:
-            setModel(record);
-            modelMoveModal.open();
-            break;
-          case MenuKey.SwitchArchived:
-            switchArchived(record);
-            break;
-        }
-      };
-
-      return (
-        <Dropdown
-          isContextMenu
-          menu={ModelActionMenu(record)}
-          onClick={(key) => handleDropdown(key, record)}>
-          {children}
-        </Dropdown>
-      );
-    },
-    [ModelActionMenu, deleteModelModal, modelMoveModal, switchArchived],
   );
 
   return (
