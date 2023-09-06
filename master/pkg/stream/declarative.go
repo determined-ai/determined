@@ -15,6 +15,11 @@ type keySetIter struct {
 }
 
 func newKeySetIter(keyset string) *keySetIter {
+	vals := strings.Split(keyset, ",")
+	// handle empty string case
+	if len(vals) == 1 && len(vals[0]) == 0 {
+		return &keySetIter{vals: nil}
+	}
 	return &keySetIter{vals: strings.Split(keyset, ",")}
 }
 

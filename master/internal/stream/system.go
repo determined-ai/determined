@@ -459,7 +459,7 @@ func prepareMessageWithCache(
 		log.Errorf("error marshaling message for streaming: %v", err.Error())
 		return nil
 	}
-	*cache, err = websocket.NewPreparedMessage(websocket.BinaryMessage, jbytes)
+	*cache, err = websocket.NewPreparedMessage(websocket.TextMessage, jbytes)
 	if err != nil {
 		log.Errorf("error preparing message for streaming: %v", err.Error())
 		return nil
@@ -469,7 +469,7 @@ func prepareMessageWithCache(
 
 func newDeletedMsg(key string, deleted string) *websocket.PreparedMessage {
 	strMsg := fmt.Sprintf("{\"%v\": \"%v\"}", key, deleted)
-	msg, err := websocket.NewPreparedMessage(websocket.BinaryMessage, []byte(strMsg))
+	msg, err := websocket.NewPreparedMessage(websocket.TextMessage, []byte(strMsg))
 	if err != nil {
 		log.Errorf("error marshaling deletion message for streaming: %v", err.Error())
 		return nil
