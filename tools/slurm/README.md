@@ -134,14 +134,9 @@ This invocation specifies that all tests are to be run via the remote launcher r
 
 # Notes on `make slurmcluster` tests on CircleCI 
 
-By default, the `test-e2e-*-gcp` jobs are not run within the `test-e2e` workflow on a **developer branch**. If you would like to invoke these jobs on a certain commit, you must add the "[ALLGCP]" keyword to the commit message. For example,
-```
-git add --all
-git commit -m "[ALLGCP] This is my commit where all hpc-gcp jobs will run."
-git push
-```
-will invoke the slurm-gcp jobs within the `test-e2e` workflow.
-**On branch `main` and `release/rc` branches, these jobs always run, regardless of commit message.**
+By default, the `test-e2e-*-gcp` jobs are not run within the `test-e2e` workflow on a **developer branch**. If you would like to invoke these jobs on a certain commit, you must add the `ci-run-allgcp` label to your pull request on github.
+
+**On branch `main` and `release/rc` branches, these jobs always run without needing to set the `ci-run-allgcp` label.**
 
 The following test suites currently run only on hardware. They do not run successfully with `make slurmcluster` and thus are not executed via GCP as part of the CI/CD gate:
   - `test-e2e-slurm-gpu`: Test is skipped because the compute instance that the tests run on do not have any GPUs.
