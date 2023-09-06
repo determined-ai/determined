@@ -63,9 +63,9 @@ Docker
 Install Docker to run containerized workloads. If you do not already have Docker installed, visit
 :ref:`Install Docker <install-docker>` to learn how to install and run Docker on Linux or macOS.
 
-******************************
- Quickstart Training Examples
-******************************
+**************************************
+ Get the Quickstart Training Examples
+**************************************
 
 Download and extract the files used in this quickstart to a local directory:
 
@@ -77,7 +77,7 @@ Download and extract the files used in this quickstart to a local directory:
 
       tar xzvf mnist_pytorch.tgz
 
-You should see the following files in the ``mnist_pytorch`` directory:
+You should see the following files in your local directory:
 
 .. code::
 
@@ -89,11 +89,10 @@ You should see the following files in the ``mnist_pytorch`` directory:
    model_def.py
    README.md
 
-Configuration
-=============
+Description of the Configuration Files
+======================================
 
-Each of the YAML-formatted configuration files corresponds to one of the following example
-experiments:
+Each YAML-formatted configuration file corresponds an example experiment.
 
 +------------------------+------------------------------------------------------+
 | Configuration Filename | Example Experiment                                   |
@@ -108,11 +107,11 @@ experiments:
 |                        | adaptive hyperparameter tuning algorithm.            |
 +------------------------+------------------------------------------------------+
 
-Model and Pipeline Definition
-=============================
+Description of Model and Pipeline Definition Files
+==================================================
 
 Although the Python model and data pipeline definition files are not explained in this quickstart,
-you might want to review them to see how to call the Determined API from your code:
+you can review them to find out how to call the Determined API from your own code:
 
 +------------------+------------------------------------------------------------------------+
 | Filename         | Experiment Type                                                        |
@@ -124,21 +123,21 @@ you might want to review them to see how to call the Determined API from your co
 | ``model_def.py`` | Model definition and training/validation loops.                        |
 +------------------+------------------------------------------------------------------------+
 
-After gaining basic familiarity with Determined tools and operations, you can replacing these files
-with your model data and code, and setting configuration parameters for the kind of experiments you
-want to run.
+After gaining basic familiarity with Determined tools and operations, you can replace these files
+with your model data and code, and set configuration parameters for the kind of experiments you want
+to run.
 
 .. _quickstart-submit-experiment:
 
-*****************************************
- Run a Local Single CPU/GPU Training Job
-*****************************************
+****************************************************************
+ Install Determined and Run a Local Single CPU/GPU Training Job
+****************************************************************
 
 This exercise trains a single model for a fixed number of batches, using constant values for all
 hyperparameters on a single *slot*. A slot is a CPU or GPU computing device, which the master
 schedules to run.
 
-#. To install the Determined library and start a cluster locally, enter:
+#. To install the Determined library and start a cluster locally, run the following commands:
 
    .. code:: bash
 
@@ -183,8 +182,8 @@ schedules to run.
 
 #. Enter the cluster address in the browser address bar to view experiment progress in the WebUI. If
    you installed locally using the ``det deploy local`` command, the URL is
-   ``http://localhost:8080/``. Accept the default ``determined`` username and click **Sign In**. No
-   password is required.
+   ``http://localhost:8080/``. Accept the default username of ``determined`` and click **Sign In**.
+   A password is not required.
 
    .. image:: /assets/images/qs01c.png
       :width: 704px
@@ -212,8 +211,8 @@ schedules to run.
       :align: center
       :alt: Trial page
 
-With this fundamental understanding of Determined, you are ready to scale to distributed training in
-the next example.
+Now that you have a fundamental understanding of Determined, follow the next example to learn how to
+scale to distributed training.
 
 ***************************************
  Run a Remote Distributed Training Job
@@ -257,8 +256,8 @@ the number of GPUs per machine. You can change the value to match your hardware 
 
       det -m http://<ipAddress>:8080 experiment create distributed.yaml .
 
-#. To view the WebUI dashboard, enter the cluster address in your browser address bar, accept the
-   default ``determined`` username, and click **Sign In**. A password is not required.
+#. To view the WebUI dashboard, enter the cluster address in your browser address bar, accept
+   ``determined`` as the default username, and click **Sign In**. A password is not required.
 
 #. Click the **Experiment** name to view the experiment’s trial display. The loss curve is similar
    to the single-GPU experiment in the previous exercise but the time to complete the trial is
@@ -322,7 +321,7 @@ This example uses a fixed batch size and searches on dropout size, filters, and 
       det experiment create adaptive.yaml .
 
 #. To view the WebUI dashboard, enter your cluster address in the browser address bar, accept the
-   default determined username, and click **Sign In**. No password is required.
+   default username of ``determined``, and click **Sign In**. A password is not required.
 
 #. The experiment can take some time to complete. You can monitor progress in the WebUI Dashboard by
    clicking the **Experiment** name. Notice that more trials have started:
@@ -341,12 +340,12 @@ This example uses a fixed batch size and searches on dropout size, filters, and 
  Learn More
 ************
 
-For detailed information on administrator tasks and how to install Determined on different
-platforms, see :doc:`../setup-cluster/basic`.
+For installation guides including how to :ref:`quickly install Determined locally <basic>`, visit
+:ref:`installation-guide`.
 
-Visit the :doc:`../example-solutions/examples`, where you'll find machine learning models that have
-been converted to the Determined APIs. Each example includes a model definition and one or more
-experiment configuration files, and instructions on how to run the example.
+The :ref:`example-solutions` contain machine learning models that have been converted to the
+Determined APIs. Each example includes a model definition and one or more experiment configuration
+files, and instructions on how to run the example.
 
 To learn more about the hyperparameter search algorithm, see the :doc:`Hyperparameter Tuning
 </model-dev-guide/hyperparameter/overview>` section.

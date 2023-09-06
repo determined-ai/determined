@@ -3498,6 +3498,39 @@ workflows:
           requires:
             - check-if-nightly-tests-should-run
 
+  # ATTENTION: When adding jobs to the "nightly-quarantine" workflow, make sure you have a
+  # "requires" that lists "check-if-nightly-tests-should-run", so that the job
+  # only runs if "check-if-nightly-tests-should-run" allows it to.
+  nightly-quarantine:
+    jobs:
+      - check-if-nightly-tests-should-run:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-write
+      - test-e2e-aws:
+          name: test-e2e-gpu-nightly-quarantine
+          context: aws
+          matrix:
+            parameters:
+              parallelism: [1]
+              cluster-id-prefix: ["nightly-quarantine"]
+              mark: ["nightly_quarantine"]
+          requires:
+            - check-if-nightly-tests-should-run
+      - test-e2e-aws:
+          name: test-e2e-gpu-distributed-quarantine
+          context: aws
+          matrix:
+            parameters:
+              cluster-id-prefix: ["distributed-quarantine"]
+              mark: ["distributed_quarantine"]
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [2]
+          requires:
+            - check-if-nightly-tests-should-run
+
   release:
     jobs:
       - build-helm:
