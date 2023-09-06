@@ -8,10 +8,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/stream"
+	"github.com/determined-ai/determined/master/test/streamdata"
 )
 
 func TestStartupTrial(t *testing.T) {
@@ -19,21 +20,40 @@ func TestStartupTrial(t *testing.T) {
 
 	defer cleanup()
 
+	trials := streamdata.GenerateStreamTrials()
+	trials.MustMigrate(t, pgDB, "file://../../static/migrations")
+
 	startupMessage := StartupMsg{
 		Known: KnownKeySet{
-			Trials: "1, 2, 3",
+			Trials: "1,2",
 		},
-		Subscribe: SubscriptionSpecSet{},
+		Subscribe: SubscriptionSpecSet{
+			Trials: &TrialSubscriptionSpec{
+				TrialIds: []int{1, 2},
+				Since:    0,
+			},
+		},
 	}
-	testStartup(t, startupMessage)
+	testStartup(t, startupMessage, []int{})
 }
 
-func testStartup(t *testing.T, startupMessage StartupMsg) {
+func testStartup(t *testing.T, startupMessage StartupMsg, expectedIDs []int) {
 	ctx := context.TODO()
 	streamer := stream.NewStreamer()
 	publisherSet := NewPublisherSet()
 	subSet := NewSubscriptionSet(streamer, publisherSet)
 	messages, err := subSet.Startup(startupMessage, ctx)
 	require.NoError(t, err, "error running startup")
-	fmt.Println(messages)
+
+	//expectedIDsMap := make(map[int]bool, len(expectedIDs))
+	//for _, id := range messages {
+	//	expectedIDsMap[id] = false
+	//}
+
+	fmt.Println(len(messages))
+	for _, msg := range messages {
+		fmt.Println(msg)
+	}
+	// messages[0]
+	fmt.Println(messages[0])
 }
