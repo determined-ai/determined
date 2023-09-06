@@ -101,10 +101,10 @@ class TrainContext:
         # Also sync tensorboard (all metrics, not just json-serializable ones).
         if self._tensorboard_mode == core.TensorboardMode.AUTO:
             if self._tbd_writer:
-                if group == util._LEGACY_VALIDATION:
-                    self._tbd_writer.on_validation_step_end(steps_completed, metrics)
-                elif group == util._LEGACY_TRAINING:
+                if group == util._LEGACY_TRAINING:
                     self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
+                elif group == util._LEGACY_VALIDATION:
+                    self._tbd_writer.on_validation_step_end(steps_completed, metrics)
             assert self._tensorboard_manager is not None
             self._tensorboard_manager.sync()
 
