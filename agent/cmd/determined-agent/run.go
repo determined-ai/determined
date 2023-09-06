@@ -16,7 +16,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 )
 
-const defaultConfigPath = "/etc/determined/agent.yaml"
+const (
+	defaultConfigPath  = "/etc/determined/agent.yaml"
+	rocrVisibleDevices = "ROCR_VISIBLE_DEVICES"
+	cudaVisibleDevices = "CUDA_VISIBLE_DEVICES"
+)
 
 func readConfigFile(configPath string) ([]byte, error) {
 	isDefault := configPath == ""
@@ -103,7 +107,10 @@ func newRunCmd() *cobra.Command {
 
 	// Device flags.
 	cmd.Flags().StringVar(&opts.SlotType, "slot-type", "auto", "slot type to expose")
-	cmd.Flags().StringVar(&opts.VisibleGPUs, "visible-gpus", "", "GPUs to expose as slots")
+	defaultVisibleGPUs := visibleGPUsFromEnvironment()
+	cmd.Flags().StringVar(
+		&opts.VisibleGPUs, "visible-gpus",
+		defaultVisibleGPUs, "GPUs to expose as slots")
 
 	// Security flags.
 	cmd.Flags().BoolVar(
@@ -167,4 +174,12 @@ func newRunCmd() *cobra.Command {
 		options.DockerContainerRuntime, "The container runtime to use")
 
 	return cmd
+}
+
+func visibleGPUsFromEnvironment() (visDevices string) {
+	visDevices, defined := os.LookupEnv(rocrVisibleDevices)
+	if !defined {
+		visDevices, _ = os.LookupEnv(cudaVisibleDevices)
+	}
+	return
 }
