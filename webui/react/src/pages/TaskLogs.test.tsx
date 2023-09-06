@@ -26,7 +26,7 @@ const LEVELS = Object.values(LogLevelFromApi) as string[];
 const NOW = Date.now();
 
 /**
- * This is based on the window height, which is determined by `DEFAUL_SIZE`,
+ * This is based on the window height, which is determined by `DEFAULT_SIZE`,
  * returned by the `useResize` mocked hook.
  * The generated messages are intentionally kept short to ensure that
  * the log entries don't wrap with the given window width.
@@ -138,10 +138,16 @@ const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
   return logs.findIndex((log) => log.message.includes(timestamp));
 };
 
-vi.mock('components/kit/internal/useResize', () => ({
-  __esModule: true,
-  default: () => ({ height: 1824, width: 1280, x: 0, y: 0 }),
-}));
+vi.mock('components/kit/internal/useResize', () => {
+  const elementRef = { current: null };
+  return {
+    __esModule: true,
+    default: () => ({
+      elementRef,
+      size: { height: 1824, width: 1280, x: 0, y: 0 },
+    }),
+  };
+});
 
 vi.mock('components/kit/internal/useGetCharMeasureInContainer', () => ({
   __esModule: true,
