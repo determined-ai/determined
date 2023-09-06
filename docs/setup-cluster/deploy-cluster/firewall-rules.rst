@@ -42,12 +42,7 @@ The firewall rules must satisfy the following network access requirements for th
       for rendezvous between trial containers
    -  For all other distributed training modes, inbound and outbound TCP port 12355 is used for GLOO
       rendezvous between trial containers.
-   -  Inbound and outbound ephemeral TCP ports in the range 1024-65536 are used for communication
-      between trials via GLOO.
-   -  For every GPU on each agent machine, an inbound and outbound ephemeral TCP port in the range
-      1024-65536 is used for communication between trials via NCCL.
-   -  Two additional ephemeral TCP ports in the range 1024-65536 are used for additional intra-trial
-      communication between trial containers.
+   -  Trials use OS-selected ephemeral ports for communication via GLOO and NCCL.
    -  Each TensorBoard uses a port in the range 2600–2899
    -  Each notebook uses a port in the range 2900–3199
    -  Each shell uses a port in the range 3200–3599
