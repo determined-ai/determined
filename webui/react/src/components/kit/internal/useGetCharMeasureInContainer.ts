@@ -5,7 +5,7 @@ export interface CharMeasure {
   width: number;
 }
 
-const useGetCharMeasureInContainer = (container: RefObject<HTMLDivElement>): CharMeasure => {
+const useGetCharMeasureInContainer = (container: RefObject<HTMLElement>): CharMeasure => {
   const containerInner = container.current;
 
   return useMemo(() => {
