@@ -188,7 +188,8 @@ const FilterField = ({
         <Select
           autoFocus
           dropdownMatchSelectWidth={300}
-          options={columns.map((col) => ({
+          options={columns.map((col, idx) => ({
+            key: `${col.column} ${idx}`,
             label: col.displayName || col.column,
             value: col.column,
           }))}
