@@ -344,12 +344,11 @@ def test_stream_metrics(client: _client.Determined) -> None:
     trial = trials[0]
 
     for metrics in [
-        list(trial.stream_training_metrics()),
-        list(client.stream_trials_training_metrics([trial.id])),
+        list(trial.stream_metrics("training")),
+        list(client.stream_trials_metrics([trial.id], "training")),
     ]:
         assert len(metrics) == config["searcher"]["max_length"]["batches"]
         for i, actual in enumerate(metrics):
-            # assert actual == TrainingMetrics(
             assert actual == TrialMetrics(
                 trial_id=trial.id,
                 trial_run_id=1,
@@ -361,11 +360,10 @@ def test_stream_metrics(client: _client.Determined) -> None:
             )
 
     for val_metrics in [
-        list(trial.stream_validation_metrics()),
-        list(client.stream_trials_validation_metrics([trial.id])),
+        list(trial.stream_metrics("training")),
+        list(client.stream_trials_metrics([trial.id], "validation")),
     ]:
         assert len(val_metrics) == 1
-        # assert val_metrics[0] == ValidationMetrics(
         assert val_metrics[0] == TrialMetrics(
             trial_id=trial.id,
             trial_run_id=1,
