@@ -55,35 +55,40 @@ def getMasterAddress(
     target_service = f"determined-master-service-{service_name}"
 
     if node_port != "true":
-        while True:
+        n=300 # 5 minutes
+        while n > 0: 
             services = requests.get(
                 url=f"https://{service_host}:{service_port}/api/v1/namespaces/{namespace}/services",
                 headers={"Authorization": f"Bearer {token}"},
                 verify=False,
             ).json()
+
             for svc in services["items"]:
                 if target_service in svc["metadata"]["name"]:
                     status = svc["status"]["loadBalancer"]
                     if "ingress" not in svc["status"]["loadBalancer"] or status["ingress"] is None:
-                        time.sleep(1)
+                        n = n - 1
+                        time.sleep(1) # 1 second
                         break
                     if status["ingress"][0].get("hostname"):
                         # use hostname over ip address, if available
                         return f"{status['ingress'][0]['hostname']}:{master_port}"
                     else:
                         return f"{status['ingress'][0]['ip']}:{master_port}"
+    else:
+        services = requests.get(
+            url=f"https://{service_host}:{service_port}/api/v1/namespaces/{namespace}/services",
+            headers={"Authorization": f"Bearer {token}"},
+            verify=False,
+        ).json()
+        
+        for svc in services["items"]:
+            if target_service in svc["metadata"]["name"]:
+                #entrypoint = f"{svc['spec']['cluster_ip']}:{master_port}"
+                entrypoint = f"{svc['spec']['clusterIP']}:{master_port}"
+                checkPortAlive(entrypoint)
 
-    services = requests.get(
-        url=f"https://{service_host}:{service_port}/api/v1/namespaces/{namespace}/services",
-        headers={"Authorization": f"Bearer {token}"},
-        verify=False,
-    ).json()
-    for svc in services["items"]:
-        if target_service in svc["metadata"]["name"]:
-            entrypoint = f"{svc['spec']['cluster_ip']}:{master_port}"
-            checkPortAlive(entrypoint)
-
-            return entrypoint
+                return entrypoint
     return ""
 
 

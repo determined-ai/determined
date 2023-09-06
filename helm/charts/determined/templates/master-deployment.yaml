@@ -61,13 +61,13 @@ spec:
             mountPath: {{ include "determined.secretPath" . }}
             readOnly: true
           {{- end }}
-          ## ISP CUSTOM - additional volume mount for ca.crt or boundle to perform the ca cert injection
+          # Additional volume mount for ca.crt or boundle to perform the ca cert injection
           {{- if .Values.externalCaCertSecretName }}
           - name: etc-ssl-certs
             mountPath: /etc/ssl/certs
             readOnly: true
           {{- end }}
-          ## ISP CUSTOM - END
+          # end - Additional volume mount
         resources:
           requests:
             {{- if .Values.masterCpuRequest }}
@@ -86,7 +86,7 @@ spec:
             memory: {{ .Values.masterMemLimit  | quote }}
             {{- end}}
           {{- end}}
-      ## ISP CUSTOM - init container to update ca.crt or ca bundle into the master image
+      # Init container to update ca.crt or ca bundle into the master image
       {{- if .Values.externalCaCertSecretName }}
       initContainers:
       - name: update-ca-certificates
@@ -104,7 +104,7 @@ spec:
           - mountPath: /etc/ssl/certs
             name: etc-ssl-certs
       {{- end }}
-      ## ISP CUSTOM - END
+      # end - Init container
       {{- if .Values.imagePullSecretName}}
       imagePullSecrets:
         - name: {{ .Values.imagePullSecretName }}
@@ -129,7 +129,7 @@ spec:
             secretName: {{ required  "A valid Values.db.certResourceName entry is required!" .Values.db.certResourceName }}
           {{- end }}
         {{- end }}
-        ## ISP CUSTOM - additional volumes to manage ca.crt or ca boundle injection
+        # Additional volumes for ca.crt or ca boundle injection
         {{- if .Values.externalCaCertSecretName }}
         - name: usr-local-share-ca-certificates
           secret:
@@ -138,5 +138,5 @@ spec:
         - name: etc-ssl-certs
           emptyDir: {}
         {{- end }}
-        ## ISP CUSTOM - END
+        # end - Additional volumes 
 
