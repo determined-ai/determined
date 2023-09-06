@@ -93,7 +93,7 @@ const UPlotChart: React.FC<Props> = ({
 }: Props) => {
   const chartRef = useRef<uPlot>();
   const [divHeight, setDivHeight] = useState((options?.height ?? 300) + 20);
-  const chartDivRef = useRef<HTMLDivElement>(null);
+  const { elementRef, ref, size } = useResize();
   const classes = [css.base];
 
   const { ui } = useUI();
@@ -114,7 +114,7 @@ const UPlotChart: React.FC<Props> = ({
   const extendedOptions = useMemo(() => {
     const extended: Partial<uPlot.Options> = uPlot.assign(
       {
-        width: chartDivRef.current?.offsetWidth,
+        width: size.width,
       },
       chartType === 'Line' ? syncOptions : {},
       options ?? {},
@@ -148,7 +148,7 @@ const UPlotChart: React.FC<Props> = ({
     }
 
     return extended as uPlot.Options;
-  }, [options, ui.theme, chartType, syncOptions, syncService]);
+  }, [options, ui.theme, chartType, size.width, syncOptions, syncService]);
 
   const previousOptions = usePrevious(extendedOptions, undefined);
 
@@ -160,7 +160,7 @@ const UPlotChart: React.FC<Props> = ({
   }, []);
 
   useEffect(() => {
-    if (!chartDivRef.current) return;
+    if (!elementRef.current) return;
     if (!hasData) {
       chartRef.current?.destroy();
       chartRef.current = undefined;
@@ -171,7 +171,7 @@ const UPlotChart: React.FC<Props> = ({
       chartRef.current = undefined;
       try {
         if (chartType === 'Scatter' || extendedOptions.series.length === data?.length) {
-          chartRef.current = new uPlot(extendedOptions, data as AlignedData, chartDivRef.current);
+          chartRef.current = new uPlot(extendedOptions, data as AlignedData, elementRef.current);
         }
       } catch (e) {
         chartRef.current?.destroy();
@@ -199,7 +199,7 @@ const UPlotChart: React.FC<Props> = ({
         });
       }
     }
-  }, [data, hasData, extendedOptions, previousOptions, handleError, chartType]);
+  }, [data, elementRef, hasData, extendedOptions, previousOptions, handleError, chartType]);
 
   useEffect(() => {
     extendedOptions.series.forEach((ser, i) => {
@@ -209,18 +209,17 @@ const UPlotChart: React.FC<Props> = ({
     });
   }, [extendedOptions.series]);
 
-  /*
+  /**
    * Resize the chart when resize events happen.
    */
-  const resize = useResize(chartDivRef);
   useEffect(() => {
     if (!chartRef.current) return;
-    const [width, height] = [resize.width, options?.height || chartRef.current.height];
+    const [width, height] = [size.width, options?.height || chartRef.current.height];
     if (chartRef.current.width === width && chartRef.current.height === height) return;
     chartRef.current.setSize({ height, width });
-    const container = chartDivRef.current;
+    const container = elementRef.current;
     if (container && height) setDivHeight(height);
-  }, [options?.height, resize]);
+  }, [elementRef, options?.height, size]);
 
   /*
    * Resync the chart when scroll events happen to correct the cursor position upon
@@ -246,8 +245,8 @@ const UPlotChart: React.FC<Props> = ({
   }, []);
 
   return (
-    <div className={classes.join(' ')} ref={chartDivRef} style={{ ...style, height: divHeight }}>
-      {allowDownload && <DownloadButton containerRef={chartDivRef} experimentId={experimentId} />}
+    <div className={classes.join(' ')} ref={ref} style={{ ...style, height: divHeight }}>
+      {allowDownload && <DownloadButton containerRef={elementRef} experimentId={experimentId} />}
       {!hasData && !isLoading && (
         <div className={css.chartEmpty}>
           <span>No data to plot.</span>
@@ -264,7 +263,7 @@ const DownloadButton = ({
   containerRef,
   experimentId,
 }: {
-  containerRef: RefObject<HTMLDivElement>;
+  containerRef: RefObject<HTMLElement>;
   experimentId?: number;
 }) => {
   const downloadUrl = useRef<string>();
