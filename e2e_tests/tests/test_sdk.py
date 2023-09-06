@@ -360,7 +360,7 @@ def test_stream_metrics(client: _client.Determined) -> None:
             )
 
     for val_metrics in [
-        list(trial.stream_metrics("training")),
+        list(trial.stream_metrics("validation")),
         list(client.stream_trials_metrics([trial.id], "validation")),
     ]:
         assert len(val_metrics) == 1
