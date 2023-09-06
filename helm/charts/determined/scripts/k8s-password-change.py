@@ -22,7 +22,7 @@ def pwChange(user: str, password: str, entrypoint: str) -> None:
                 headers={"Authorization": f"Bearer {data['token']}"},
                 verify=False,
             )
-            print(f"Sucessfully changed {user}'s password", flush=True)
+            print(f"Successfully changed {user}'s password", flush=True)
             return
         except Exception as e:
             print(f"Encountered exception: {e}", flush=True)
@@ -68,7 +68,7 @@ def getMasterAddress(
                     status = svc["status"]["loadBalancer"]
                     if "ingress" not in svc["status"]["loadBalancer"] or status["ingress"] is None:
                         n = n - 1
-                        time.sleep(1) # 1 second
+                        time.sleep(1) # 1 second and loop
                         break
                     if status["ingress"][0].get("hostname"):
                         # use hostname over ip address, if available
