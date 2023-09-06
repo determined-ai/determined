@@ -29,6 +29,8 @@ const (
 type JSONB map[string]interface{}
 
 // ProjectMsg is a stream.Msg.
+//
+// determined:stream-gen source=server delete_msg=ProjectsDeleted
 type ProjectMsg struct {
 	bun.BaseModel `bun:"table:projects"`
 
@@ -73,6 +75,8 @@ func (pm *ProjectMsg) DeleteMsg() stream.DeleteMsg {
 }
 
 // ProjectSubscriptionSpec is what a user submits to define a project subscription.
+//
+// determined:stream-gen source=client
 type ProjectSubscriptionSpec struct {
 	WorkspaceIDs []int `json:"workspace_ids"`
 	ProjectIDs   []int `json:"project_ids"`

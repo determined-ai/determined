@@ -88,6 +88,9 @@ check-gen: force-gen gen build/mock_gen.stamp
 get-deps:
 	./get-deps.sh
 
+build/stream-gen: cmd/stream-gen/main.go
+	go build -o build/stream-gen ./cmd/stream-gen
+
 .PHONY: build
 build: export DET_SEGMENT_MASTER_KEY ?=
 build: export DET_SEGMENT_WEBUI_KEY ?=

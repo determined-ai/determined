@@ -8,6 +8,7 @@ exclude =
     build,
     dist,
     _gen.py,
+    wire.py,
     tests/experiment/fixtures/ancient-checkpoints/
 
 # We ignore F401 in __init__.py because it is expected for there to be
