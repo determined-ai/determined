@@ -33,7 +33,7 @@ type TrialMsg struct {
 	// warmstart checkpoint id?
 
 	// mutable attributes
-	State model.State           `bun:"state" bun:"state"`
+	State model.State           `bun:"state" json:"state"`
 	StartTime time.Time         `bun:"start_time" json:"start_time"`
 	EndTime *time.Time          `bun:"end_time" json:"end_time"`
 	RunnerState string          `bun:"runner_state" json:"runner_state"`
