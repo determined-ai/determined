@@ -200,27 +200,21 @@ commands:
 
   skip-on-dev-branch:
     steps:
+      # Install the GitHub CLI.
+      - gh/install
       - run:
           name: Check if extra GCP tests specfied
           command: |
-            echo "Not on main, release, or rc branch. Checking for [ALLGCP] tag..."
-            if [[ "$COMMIT_MESSAGE" != *"[ALLGCP]"* ]] ; then
-              echo "[ALLGCP] tag not found. Skipping job."
-              circleci-agent step halt
+            # Check if the 'ci-run-allgcp' label was set on the pull request,
+            # which indicates that we want the GCP tests to run on demand.
+            if gh pr view --json labels -q '.labels.[] | .name' | grep -w ci-run-allgcp
+            then
+              echo "The 'ci-run-allgcp' label was found in github pull request. Proceeding to run test-e2e-slurm-*-gcp tests."
             else
-              echo "Found [ALLGCP] tag. Proceeding to run test-e2e-slurm-*-gcp tests"
+              echo "The 'ci-run-allgcp' label was not found in github pull request. Skipping job."
+              circleci-agent step halt
             fi
-
-
-  set-commit-message:
-    steps:
-      - run:
-          name: Set git commit message to environment variable
-          command: |
-            COMMIT_MESSAGE=$(git log --format=%B -n 1 $CIRCLE_SHA1)
-            echo "COMMIT_MESSAGE=$(printf "%q" "$COMMIT_MESSAGE")" >> $BASH_ENV
-            echo "Commit message: $COMMIT_MESSAGE"
-
+            
   set-slack-user-id:
     steps:
       - run:
@@ -2067,9 +2061,9 @@ jobs:
     steps:
       - run: echo "Test suite disabled."
 
-  # By default, this job only runs on the main branch unless 
-  # oterhwise specified. To invoke this job on a developer branch, the
-  # "[ALLGCP]" keyword must be included in the commit message.
+  # By default, this job only runs on the main branch unless otherwise
+  # specified. To invoke this job on a developer branch, add the 'ci-run-allgcp'
+  # label to your pull request on github.
   test-e2e-hpc-gcp:
     parameters:
       mark:
@@ -2135,7 +2129,6 @@ jobs:
               - equal: [ "main", <<pipeline.git.branch>> ]
               - matches: { pattern: "^release-.*$", value: <<pipeline.git.branch>> }
           steps:
-            - set-commit-message
             - skip-on-dev-branch
 
       - skip-if-docs-only
@@ -3319,10 +3312,14 @@ workflows:
 
     # Singularity over SLURM test on GCP
       - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
           matrix:
             parameters:
               name: [test-e2e-slurm-singularity-gcp]
-              context: ["gcp"]
               always-run: [true]
               mark: ["e2e_slurm and not parallel"]
           requires:
@@ -3330,32 +3327,44 @@ workflows:
 
     # Podman over SLURM test on GCP
       - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
           matrix:
             parameters:
               name: [test-e2e-slurm-podman-gcp]
               container-run-type: ["podman"]
-              context: ["gcp"]
               mark: ["e2e_slurm and not parallel"]
           requires:
             - build-go
 
     # Enroot over SLURM test on GCP
       - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
           matrix:
             parameters:
               name: [test-e2e-slurm-enroot-gcp]
               container-run-type: ["enroot"]
-              context: ["gcp"]
               mark: ["e2e_slurm and not parallel"]
           requires:
             - build-go
 
     # Singularity over PBS test on GCP
       - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
           matrix:
             parameters:
               name: [test-e2e-pbs-singularity-gcp]
-              context: ["gcp"]
               workload-manager: ["pbs"]
               always-run: [true]
               mark: ["e2e_pbs and not parallel"]
@@ -3364,12 +3373,16 @@ workflows:
 
     # Podman over PBS test on GCP
       - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
           matrix:
             parameters:
               name: [test-e2e-pbs-podman-gcp]
               container-run-type: ["podman"]
               workload-manager: ["pbs"]
-              context: ["gcp"]
               mark: ["e2e_pbs and not parallel"]
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
@@ -3377,22 +3390,30 @@ workflows:
 
     # Enroot over PBS test on GCP
       - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
           matrix:
             parameters:
               name: [test-e2e-pbs-enroot-gcp]
               container-run-type: ["enroot"]
               workload-manager: ["pbs"]
-              context: ["gcp"]
               mark: ["e2e_pbs and not parallel"]
           requires:
             - build-go
 
     # Podman over SLURM test using Agent on GCP
       - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
           matrix:
             parameters:
               name: [test-e2e-slurm-agent-podman-gcp]
-              context: ["gcp"]
               agent-use: ["-A"]
               container-run-type: ["podman"]
               mark: ["e2e_slurm and not parallel"]
@@ -4106,15 +4127,23 @@ workflows:
             - check-if-nightly-tests-should-run
       
           
-      - build-proto
-      - build-helm
+      - build-proto:
+          requires:
+            - check-if-nightly-tests-should-run
+      - build-helm:
+          requires:
+            - check-if-nightly-tests-should-run
       - build-docs:
           requires:
+            - check-if-nightly-tests-should-run
             - build-proto
             - build-helm
-      - build-react
+      - build-react:
+          requires:
+            - check-if-nightly-tests-should-run
       - package-and-push-system-local:
           requires:
+            - check-if-nightly-tests-should-run
             - build-docs
             - build-react
       - test-e2e-slurm:
@@ -4122,6 +4151,7 @@ workflows:
           mark: "e2e_slurm_restart"
           slack-mentions: "${SLACK_USER_ID}"
           requires:
+            - check-if-nightly-tests-should-run
             - package-and-push-system-local
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
@@ -4129,18 +4159,21 @@ workflows:
           mark: "e2e_slurm_preemption"
           slack-mentions: "${SLACK_USER_ID}"
           requires:
+            - check-if-nightly-tests-should-run
             - package-and-push-system-local
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-znode
           slack-mentions: "${SLACK_USER_ID}"
           requires:
+            - check-if-nightly-tests-should-run
             - package-and-push-system-local
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-enroot-znode
           slack-mentions: "${SLACK_USER_ID}"
           requires:
+            - check-if-nightly-tests-should-run
             - package-and-push-system-local
           master_config: |
             task_container_defaults:
@@ -4190,6 +4223,7 @@ workflows:
             name: test-e2e-slurm-agent-singularity-znode
             slack-mentions: "${SLACK_USER_ID}"
             requires:
+              - check-if-nightly-tests-should-run
               - package-and-push-system-local
             agent-use: "-A"
             extra-pytest-flags: "-k 'not node_not_available'"
