@@ -19,16 +19,6 @@ const ioMetric = t.type({
   name: t.string,
 });
 
-// export const VisualizationFilters = t.type({
-//   batch: optional(t.number),
-//   batchMargin: optional(t.number),
-//   hParams: t.array(t.string),
-//   maxTrial: optional(t.number),
-//   metric: optional(ioMetric),
-//   scale: t.union([t.literal('linear'), t.literal('log')]),
-//   view: optional(t.union([t.literal('grid'), t.literal('list')])),
-// });
-
 export const VisualizationFilters = t.intersection([
   t.type({
     hParams: t.array(t.string),

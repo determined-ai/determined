@@ -21,6 +21,14 @@ function isTypeC(codec: t.Encoder<any, any>): codec is t.TypeC<t.Props> {
   return (codec as any)._tag === 'InterfaceType';
 }
 
+function isIntersectionType(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  codec: t.Encoder<any, any>,
+): codec is t.IntersectionC<[t.Mixed, t.Mixed, ...t.Mixed[]]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (codec as any)._tag === 'IntersectionType';
+}
+
 /**
  * This stores per-user settings. These are values that affect how the UI functions
  * and are limited in scope to the logged-in user.
@@ -121,9 +129,12 @@ export class UserSettingsStore extends PollingStore {
   ): void;
   public set<T>(type: t.Encoder<T, Json>, key: string, value: T): void;
   public set<T>(type: t.Encoder<T, Json> | t.TypeC<t.Props>, key: string, value: T): void {
-    if (isTypeC(type)) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const encodedValue = t.partial(type.props).encode(value as any);
+    // If a setting is partial required (intersection of typeC and partialC), we decode it as partialC, but merge the result as typeC.
+    if (isTypeC(type) || isIntersectionType(type)) {
+      const encodedValue = isTypeC(type)
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          t.partial(type.props).encode(value as any)
+        : type.encode(value);
       // This is non-blocking. If the API call fails we don't want to block
       // the user from interacting, just let them know that their settings
       // are not persisting. It's also important to update the value immediately
@@ -134,7 +145,9 @@ export class UserSettingsStore extends PollingStore {
           return settings.update(key, (oldValue) => {
             const old: JsonObject =
               oldValue && isJsonObject(oldValue) ? oldValue : ({} as JsonObject);
-            return { ...old, ...encodedValue };
+            const newValue: JsonObject =
+              encodedValue && isJsonObject(encodedValue) ? encodedValue : ({} as JsonObject);
+            return { ...old, ...newValue };
           });
         });
       });
