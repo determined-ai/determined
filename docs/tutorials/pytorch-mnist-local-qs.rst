@@ -91,7 +91,7 @@ To view the experiment progress in your browser:
 
 This is the cluster address for your local training environment.
 
--  Accept the default ``determined`` username, leave the password empty, and click **Sign In**.
+-  Accept the default username of ``determined``, and click **Sign In**. A password is not required.
 
 ************
  Next Steps
