@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
+	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -134,7 +136,7 @@ WHERE trial_id = $1
 		(
 			partition_type = $4 AND total_batches >= $3
 		)
-		
+
 	);
 	`, trialID, runID, lastProcessedBatch, pType)
 	if err != nil {
@@ -324,7 +326,10 @@ func shallowUnionMetrics(oldBody, newBody *metricsBody) (*metricsBody, error) {
 	for key, newValue := range newAvgMetrics.GetFields() {
 		// we cannot calculate min/max efficiently for replaced metric values
 		// so we disallow it.
-		if _, ok := oldAvgMetrics.GetFields()[key]; ok {
+		if oldValue, ok := oldAvgMetrics.GetFields()[key]; ok {
+			if cmp.Equal(newValue, oldValue, protocmp.Transform()) {
+				continue
+			}
 			return nil, fmt.Errorf("overwriting existing metric keys is not supported,"+
 				" conflicting key: %s", key)
 		}
