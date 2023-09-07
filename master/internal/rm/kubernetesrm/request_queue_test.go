@@ -19,35 +19,66 @@ import (
 type mockPod struct {
 	requestQueue *requestQueue
 	name         string
-	errorHandler errorCallbackFunc
 	syslog       *logrus.Entry
 }
 
-func startMockPod(requestQueue *requestQueue, errorHandler *errorCallbackFunc) *mockPod {
+func startMockPod(requestQueue *requestQueue) *mockPod {
 	m := &mockPod{
 		requestQueue: requestQueue,
 		name:         petName.Generate(3, "-"),
-	}
-	if errorHandler == nil {
-		m.errorHandler = m.defaultErrorHandler
-	} else {
-		m.errorHandler = *errorHandler
 	}
 	m.syslog = logrus.New().WithField("component", "kubernetesrm-mock-pod").WithField("name", m.name)
 	m.create()
 	return m
 }
 
-func (m *mockPod) defaultErrorHandler(e error) {
-	switch e := e.(type) {
-	case resourceCreationFailed:
-		m.syslog.Errorf("defaultErrorHandler resource creation failed: %v", e)
-	case resourceDeletionFailed:
-		m.syslog.Errorf("defaultErrorHandler resource deletion failed: %v", e)
-	case resourceCreationCancelled:
-		m.syslog.Infof("defaultErrorHandler resource deletion failed: %v", e)
-	default:
-		panic(fmt.Sprintf("unexpected error %T", e))
+func runDefaultErrorHandler(ctx context.Context, failures <-chan resourcesRequestFailure) {
+	for {
+		select {
+		case failure := <-failures:
+			switch e := failure.(type) {
+			case resourceCreationFailed:
+				logrus.Errorf("defaultErrorHandler resource creation failed: %v", e)
+			case resourceDeletionFailed:
+				logrus.Errorf("defaultErrorHandler resource deletion failed: %v", e)
+			case resourceCreationCancelled:
+				logrus.Infof("defaultErrorHandler resource deletion failed: %v", e)
+			default:
+				panic(fmt.Sprintf("unexpected error %T", e))
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func consumeResourceRequestFailures(
+	ctx context.Context,
+	failures <-chan resourcesRequestFailure,
+	ref *pod,
+) {
+	for {
+		select {
+		case failure := <-failures:
+			switch e := failure.(type) {
+			case resourceCreationFailed:
+				logrus.Errorf("defaultErrorHandler resource creation failed: %v", e)
+				ref.receiveResourceCreationFailed(e)
+				ref.finalize()
+			case resourceDeletionFailed:
+				logrus.Errorf("defaultErrorHandler resource deletion failed: %v", e)
+				ref.receiveResourceDeletionFailed(e)
+				ref.finalize()
+			case resourceCreationCancelled:
+				logrus.Infof("defaultErrorHandler resource deletion failed: %v", e)
+				ref.receiveResourceCreationCancelled()
+				ref.finalize()
+			default:
+				panic(fmt.Sprintf("unexpected error %T", e))
+			}
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
@@ -60,11 +91,11 @@ func (m *mockPod) create() {
 		Name:      m.name,
 		Namespace: "default",
 	}}
-	m.requestQueue.createKubernetesResources(m.errorHandler, &podSpec, &cmSpec)
+	m.requestQueue.createKubernetesResources(&podSpec, &cmSpec)
 }
 
 func (m *mockPod) delete() {
-	m.requestQueue.deleteKubernetesResources(m.errorHandler, "default", m.name, m.name)
+	m.requestQueue.deleteKubernetesResources("default", m.name, m.name)
 }
 
 func getNumberOfActivePods(podInterface typedV1.PodInterface) int {
@@ -104,14 +135,20 @@ func TestRequestQueueCreatingManyPod(t *testing.T) {
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
+	failures := make(chan resourcesRequestFailure, 64)
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
+		failures,
 	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go runDefaultErrorHandler(ctx, failures)
 
 	numPods := 15
 	for i := 0; i < numPods; i++ {
-		startMockPod(k8sRequestQueue, nil)
+		startMockPod(k8sRequestQueue)
 	}
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
@@ -122,15 +159,21 @@ func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
+	failures := make(chan resourcesRequestFailure, 64)
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
+		failures,
 	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go runDefaultErrorHandler(ctx, failures)
 
 	numPods := 15
 	pods := make([]*mockPod, 0)
 	for i := 0; i < numPods; i++ {
-		pods = append(pods, startMockPod(k8sRequestQueue, nil))
+		pods = append(pods, startMockPod(k8sRequestQueue))
 	}
 	deleteAll(pods)
 
@@ -142,15 +185,21 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
+	failures := make(chan resourcesRequestFailure, 64)
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
+		failures,
 	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go runDefaultErrorHandler(ctx, failures)
 
 	numPods := 15
 	pods := make([]*mockPod, 0)
 	for i := 0; i < numPods; i++ {
-		pods = append(pods, startMockPod(k8sRequestQueue, nil))
+		pods = append(pods, startMockPod(k8sRequestQueue))
 	}
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
@@ -169,15 +218,21 @@ func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 	}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
+	failures := make(chan resourcesRequestFailure, 64)
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
+		failures,
 	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go runDefaultErrorHandler(ctx, failures)
 
 	numPods := 15
 	pods := make([]*mockPod, 0)
 	for i := 0; i < numPods; i++ {
-		pods = append(pods, startMockPod(k8sRequestQueue, nil))
+		pods = append(pods, startMockPod(k8sRequestQueue))
 	}
 	deleteAll(pods)
 
@@ -192,29 +247,35 @@ func TestRequestQueueCreationCancelled(t *testing.T) {
 	}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
+	failures := make(chan resourcesRequestFailure, 64)
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
+		failures,
 	)
 
 	for i := 0; i < numKubernetesWorkers; i++ {
-		startMockPod(k8sRequestQueue, nil)
+		startMockPod(k8sRequestQueue)
 	}
 	time.Sleep(time.Millisecond * 100)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 	createCancelled := false
-	errorHandler := (errorCallbackFunc)(func(e error) {
+	go func() {
 		defer wg.Done()
-		switch e := e.(type) {
-		case resourceCreationCancelled:
-			createCancelled = true
-		default:
-			panic(fmt.Sprintf("unexpected error %T", e))
+		for failure := range failures {
+			switch e := failure.(type) {
+			case resourceCreationCancelled:
+				createCancelled = true
+				return
+			default:
+				panic(fmt.Sprintf("unexpected error %T", e))
+			}
 		}
-	})
-	pod := startMockPod(k8sRequestQueue, &errorHandler)
+	}()
+
+	pod := startMockPod(k8sRequestQueue)
 	assert.Equal(t, createCancelled, false)
 	pod.delete()
 	wg.Wait()
@@ -225,24 +286,30 @@ func TestRequestQueueCreationFailed(t *testing.T) {
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
+	failures := make(chan resourcesRequestFailure, 64)
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
+		failures,
 	)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 	createFailed := false
-	errorHandler := (errorCallbackFunc)(func(e error) {
+	go func() {
 		defer wg.Done()
-		switch e := e.(type) {
-		case resourceCreationFailed:
-			createFailed = true
-		default:
-			panic(fmt.Sprintf("unexpected error %T", e))
+		for failure := range failures {
+			switch e := failure.(type) {
+			case resourceCreationFailed:
+				createFailed = true
+				return
+			default:
+				panic(fmt.Sprintf("unexpected error %T", e))
+			}
 		}
-	})
-	pod := startMockPod(k8sRequestQueue, &errorHandler)
+	}()
+
+	pod := startMockPod(k8sRequestQueue)
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, createFailed, false)
 
@@ -255,24 +322,30 @@ func TestRequestQueueDeletionFailed(t *testing.T) {
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
+	failures := make(chan resourcesRequestFailure, 64)
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
+		failures,
 	)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 	deleteFailed := false
-	errorHandler := (errorCallbackFunc)(func(e error) {
+	go func() {
 		defer wg.Done()
-		switch e := e.(type) {
-		case resourceDeletionFailed:
-			deleteFailed = true
-		default:
-			panic(fmt.Sprintf("unexpected error %T", e))
+		for failure := range failures {
+			switch e := failure.(type) {
+			case resourceDeletionFailed:
+				deleteFailed = true
+				return
+			default:
+				panic(fmt.Sprintf("unexpected error %T", e))
+			}
 		}
-	})
-	pod := startMockPod(k8sRequestQueue, &errorHandler)
+	}()
+
+	pod := startMockPod(k8sRequestQueue)
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, deleteFailed, false)
 

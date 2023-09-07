@@ -54,7 +54,7 @@ func TestContainer(t *testing.T) {
 	}{
 		{
 			name:       "successful command",
-			image:      "ubuntu",
+			image:      "python:3.8.16",
 			entrypoint: []string{"echo", "hello"},
 			failure:    nil,
 		},
@@ -69,7 +69,7 @@ func TestContainer(t *testing.T) {
 		},
 		{
 			name:       "non-existent command",
-			image:      "ubuntu",
+			image:      "python:3.8.16",
 			entrypoint: []string{"badcommandthatdoesntexit"},
 			failure: &aproto.ContainerFailure{
 				FailureType: aproto.TaskError,
@@ -78,7 +78,7 @@ func TestContainer(t *testing.T) {
 		},
 		{
 			name:       "failed command",
-			image:      "ubuntu",
+			image:      "python:3.8.16",
 			entrypoint: []string{"ls", "badfile"},
 			failure: &aproto.ContainerFailure{
 				FailureType: aproto.ContainerFailed,
@@ -98,7 +98,7 @@ func TestContainer(t *testing.T) {
 		},
 		{
 			name:          "canceled during run, reattaches and exits ok",
-			image:         "ubuntu",
+			image:         "python:3.8.16",
 			entrypoint:    []string{"sleep", "1"},
 			detachAtState: cproto.Running,
 		},
@@ -115,7 +115,7 @@ func TestContainer(t *testing.T) {
 		},
 		{
 			name:          "killed during run",
-			image:         "ubuntu",
+			image:         "python:3.8.16",
 			entrypoint:    []string{"sleep", "60"},
 			signalAtState: cproto.Running,
 			signal:        syscall.SIGKILL,
@@ -225,7 +225,7 @@ func TestContainerStatus(t *testing.T) {
 	testName := "killed after start and before run"
 	dockerEntrypoint := []string{"echo", "hello"}
 	dockerID := cproto.NewID()
-	dockerImage := "ubuntu"
+	dockerImage := "python:3.8.16"
 	dockerEventAction := "create"
 	timeoutDuration := 10 * time.Second
 	signalToSend := syscall.SIGKILL

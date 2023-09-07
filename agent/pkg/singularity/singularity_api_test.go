@@ -55,7 +55,7 @@ func TestSingularity(t *testing.T) {
 			ContainerConfig: container.Config{
 				Image: image,
 				Cmd:   strslice.StrSlice{"/run/determined/train/entrypoint.sh"},
-				Env:   []string{"DET_NO_FLUENT=true"},
+				Env:   []string{},
 				User:  fmt.Sprintf("%s:%s", u.Uid, u.Gid),
 			},
 			HostConfig: container.HostConfig{
@@ -63,7 +63,6 @@ func TestSingularity(t *testing.T) {
 			},
 			NetworkingConfig: network.NetworkingConfig{},
 			Archives:         []cproto.RunArchive{},
-			UseFluentLogging: false,
 		},
 		pub,
 	)

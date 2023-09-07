@@ -616,7 +616,6 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		resp.AgentDockerNetwork = pool.Provider.AgentDockerNetwork
 		resp.AgentDockerRuntime = pool.Provider.AgentDockerRuntime
 		resp.AgentDockerImage = pool.Provider.AgentDockerImage
-		resp.AgentFluentImage = pool.Provider.AgentFluentImage
 		resp.MaxIdleAgentPeriod = float32(time.Duration(pool.Provider.MaxIdleAgentPeriod).Seconds())
 		startingPeriodSecs := time.Duration(pool.Provider.MaxAgentStartingPeriod).Seconds()
 		resp.MaxAgentStartingPeriod = float32(startingPeriodSecs)

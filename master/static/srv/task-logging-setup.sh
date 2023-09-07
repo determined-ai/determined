@@ -30,10 +30,10 @@ if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
     # layer on some rotation. multilog is a tool that automatically writes its
     # stdin to rotated log files; the following line pipes stdout and stderr of
     # this process to separate multilog invocations. "n2" means to only store
-    # one old log file -- the logs are being streamed out by Fluent Bit, so we
+    # one old log file -- the logs are being streamed out, so we
     # don't need to keep any more old ones around. Create the dirs ahead of time
     # so they are 0755 (when they don't exist, multilog makes them 0700 and
-    # Fluent Bit can't access them with the non-root user).
+    # they can't accessed with the non-root user).
     STDOUT_ROTATE_DIR="$STDOUT_FILE-rotate"
     STDERR_ROTATE_DIR="$STDERR_FILE-rotate"
     mkdir -p -m 755 $STDOUT_ROTATE_DIR
@@ -51,41 +51,39 @@ if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
     ((DET_LOG_WAIT_COUNT += 2))
 fi
 
-if [ "$DET_RESOURCES_TYPE" == "slurm-job" ] || [ "$DET_NO_FLUENT" == "true" ]; then
-    export PATH="/run/determined/pythonuserbase/bin:$PATH"
-    if [ -z "$DET_PYTHON_EXECUTABLE" ]; then
-        export DET_PYTHON_EXECUTABLE="python3"
-    fi
+export PATH="/run/determined/pythonuserbase/bin:$PATH"
+if [ -z "$DET_PYTHON_EXECUTABLE" ]; then
+    export DET_PYTHON_EXECUTABLE="python3"
+fi
 
-    if ! /bin/which "$DET_PYTHON_EXECUTABLE" >/dev/null 2>&1; then
-        echo "{\"log\": \"error: unable to find python3 as '$DET_PYTHON_EXECUTABLE'\n\", \"timestamp\": \"$(date --rfc-3339=seconds)\"}" >&2
-        echo "{\"log\": \"please install python3 or set the environment variable DET_PYTHON_EXECUTABLE=/path/to/python3\n\", \"timestamp\": "$(date --rfc-3339=seconds)"}" >&2
+if ! "$DET_PYTHON_EXECUTABLE" --version >/dev/null 2>&1; then
+    echo "{\"log\": \"error: unable to find python3 as '$DET_PYTHON_EXECUTABLE'\n\", \"timestamp\": \"$(date --rfc-3339=seconds)\"}" >&2
+    echo "{\"log\": \"please install python3 or set the environment variable DET_PYTHON_EXECUTABLE=/path/to/python3\n\", \"timestamp\": "$(date --rfc-3339=seconds)"}" >&2
+    exit 1
+fi
+
+if [ -z "$DET_SKIP_PIP_INSTALL" ]; then
+    "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
+else
+    if ! "$DET_PYTHON_EXECUTABLE" -c "import determined" >/dev/null 2>&1; then
+        echo "{\"log\": \"error: unable run without determined package\n\", \"timestamp\": \"$(date --rfc-3339=seconds)\"}" >&2
         exit 1
     fi
-
-    if [ -z "$DET_SKIP_PIP_INSTALL" ]; then
-        "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
-    else
-        if ! "$DET_PYTHON_EXECUTABLE" -c "import determined" >/dev/null 2>&1; then
-            echo "{\"log\": \"error: unable run without determined package\n\", \"timestamp\": \"$(date --rfc-3339=seconds)\"}" >&2
-            exit 1
-        fi
-    fi
-
-    # Intercept stdout/stderr and send content to DET_MASTER via the log API.
-    # When completed, write a single character to the DET_LOG_WAIT_FIFO to signal
-    # completion of one procesor.
-    exec 1> >(
-        "$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stdout >&1
-        printf x >$DET_LOG_WAIT_FIFO
-    ) \
-    2> >(
-        "$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stderr >&2
-        printf x >$DET_LOG_WAIT_FIFO
-    )
-
-    ((DET_LOG_WAIT_COUNT += 2))
 fi
+
+# Intercept stdout/stderr and send content to DET_MASTER via the log API.
+# When completed, write a single character to the DET_LOG_WAIT_FIFO to signal
+# completion of one procesor.
+exec 1> >(
+    "$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stdout >&1
+    printf x >$DET_LOG_WAIT_FIFO
+) \
+2> >(
+    "$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stderr >&2
+    printf x >$DET_LOG_WAIT_FIFO
+)
+
+((DET_LOG_WAIT_COUNT += 2))
 
 if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
     # Each container sends the Determined Master a notification that it's

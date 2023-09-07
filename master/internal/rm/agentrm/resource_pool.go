@@ -123,7 +123,7 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 		msg.Name = "Unnamed Task"
 	}
 
-	log.Infof(
+	log.WithField("restore", msg.Restore).Infof(
 		"resources are requested by %s (Allocation ID: %s)",
 		msg.Name, msg.AllocationID,
 	)
@@ -519,7 +519,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 			}
 		}
 		if rp.reschedule {
-			ctx.Log().Debug("scheduling")
+			ctx.Log().Trace("scheduling")
 			rp.agentStatesCache = rp.fetchAgentStates(ctx)
 			defer func() {
 				rp.agentStatesCache = nil

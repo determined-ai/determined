@@ -1,12 +1,25 @@
+import { TypeOf } from 'io-ts';
 import { useMemo } from 'react';
 
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Toggle from 'components/kit/Toggle';
-import { ExpListView, RowHeight } from 'pages/F_ExpList/F_ExperimentList.settings';
+import { valueof } from 'ioTypes';
 
+import { TableViewMode } from './GlideTable';
 import css from './OptionsMenu.module.scss';
+
+export const RowHeight = {
+  EXTRA_TALL: 'EXTRA_TALL',
+  MEDIUM: 'MEDIUM',
+  SHORT: 'SHORT',
+  TALL: 'TALL',
+} as const;
+
+export const ioRowHeight = valueof(RowHeight);
+
+export type RowHeight = TypeOf<typeof ioRowHeight>;
 
 export const rowHeightItems = [
   {
@@ -32,17 +45,17 @@ export const rowHeightItems = [
 ];
 
 interface OptionProps {
-  expListView: ExpListView;
-  onRowHeightChange: (r: RowHeight) => void;
+  onRowHeightChange?: (r: RowHeight) => void;
+  onTableViewModeChange?: (view: TableViewMode) => void;
   rowHeight: RowHeight;
-  setExpListView: (v: ExpListView) => void;
+  tableViewMode: TableViewMode;
 }
 
 export const OptionsMenu: React.FC<OptionProps> = ({
   rowHeight,
+  tableViewMode,
   onRowHeightChange,
-  expListView,
-  setExpListView,
+  onTableViewModeChange,
 }) => {
   const dropdownItems: MenuItem[] = useMemo(
     () => [
@@ -50,7 +63,7 @@ export const OptionsMenu: React.FC<OptionProps> = ({
         children: rowHeightItems.map(({ rowHeight, ...itemProps }) => ({
           ...itemProps,
           key: `rowHeight-${rowHeight}`,
-          onClick: () => onRowHeightChange(rowHeight),
+          onClick: () => onRowHeightChange?.(rowHeight),
         })),
         label: 'Row height',
         type: 'group',
@@ -63,17 +76,17 @@ export const OptionsMenu: React.FC<OptionProps> = ({
             label: (
               <div className={css.scrollSettingsRow}>
                 <span>Infinite scroll</span>
-                <Toggle checked={expListView === 'scroll'} />
+                <Toggle checked={tableViewMode === 'scroll'} />
               </div>
             ),
-            onClick: () => setExpListView(expListView === 'scroll' ? 'paged' : 'scroll'),
+            onClick: () => onTableViewModeChange?.(tableViewMode === 'scroll' ? 'paged' : 'scroll'),
           },
         ],
         label: 'Data',
         type: 'group',
       },
     ],
-    [onRowHeightChange, expListView, setExpListView],
+    [tableViewMode, onRowHeightChange, onTableViewModeChange],
   );
   const icon = (
     <span className="anticon">

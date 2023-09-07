@@ -71,6 +71,10 @@ class SyncService {
         max = max + margin;
         min = min - margin;
       }
+      if (min === max) {
+        max = 1;
+      }
+
       return {
         ...b,
         dataBounds: { max: dataMax, min: dataMin },

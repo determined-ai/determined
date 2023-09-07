@@ -24,7 +24,6 @@ vi.mock('stores/cluster', async (importOriginal) => {
           agentDockerImage: '',
           agentDockerNetwork: '',
           agentDockerRuntime: '',
-          agentFluentImage: '',
           auxContainerCapacity: 0,
           auxContainerCapacityPerAgent: 0,
           auxContainersRunning: 0,

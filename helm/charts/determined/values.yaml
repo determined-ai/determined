@@ -292,12 +292,6 @@ telemetry:
 ## scheduling with preemption
 # defaultScheduler: preemption
 
-## Configure settings about how Determined launches the Fluent Bit sidecar.
-# fluent:
-#   image: fluent/fluent-bit:1.6
-#   uid: 0
-#   gid: 0
-
 ## Configure the resource pools in the Determined cluster.
 resourcePools:
   - pool_name: default

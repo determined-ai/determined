@@ -27,27 +27,6 @@ stages:
         - logcheck:
             regex: successfully fetched initial token
 
-  # We'll run the coscheduler in a docker container.  In real life, if you are
-  # not actually developing a custom sheduler, you might choose to run the
-  # coscheduler via a k8s deployment, rather than here in devcluster.  But this
-  # also works and it illustrates how to combine fetch-creds.sh with a k8s
-  # application packaged as a docker image.
-  - custom_docker:
-      name: coscheduler
-      container_name: coscheduler
-      run_args:
-        # options for docker run
-        - "-v=/tmp/det-creds:/var/run/secrets/kubernetes.io/serviceaccount"
-        - "--env-file=/tmp/det-creds/docker-env-file"
-        - "--network=host"
-        # image name
-        - "k8s.gcr.io/scheduler-plugins/kube-scheduler:v0.21.6"
-        # command + args
-        - "kube-scheduler"
-        - "-v=7"
-        - "--scheduler-name=coscheduler"
-        - "--leader-elect=false"
-
   - master:
       pre:
         - sh: make -C proto build
@@ -86,8 +65,29 @@ stages:
           slot_type: "cpu"
           slot_resource_requests:
             cpu: 1
-          default_scheduler: "coscheduler"
           # Special settings for running determined-master outside of k8s:
           _creds_dir: /tmp/det-creds
           _master_ip: $DOCKER_LOCALHOST
           _master_port: 8080
+
+# Example custom stage running the coscheduler in a docker container.  In real
+# life, if you are not actually developing a custom scheduler, you might choose
+# to run the coscheduler via a k8s deployment, rather than here in devcluster.
+# But this also works and it illustrates how to combine fetch-creds.sh with a
+# k8s application packaged as a docker image.
+#
+# - custom_docker:
+#     name: coscheduler
+#     container_name: coscheduler
+#     run_args:
+#       # options for docker run
+#       - "-v=/tmp/det-creds:/var/run/secrets/kubernetes.io/serviceaccount"
+#       - "--env-file=/tmp/det-creds/docker-env-file"
+#       - "--network=host"
+#       # image name
+#       - "k8s.gcr.io/scheduler-plugins/kube-scheduler:v0.21.6"
+#       # command + args
+#       - "kube-scheduler"
+#       - "-v=7"
+#       - "--scheduler-name=coscheduler"
+#       - "--leader-elect=false"

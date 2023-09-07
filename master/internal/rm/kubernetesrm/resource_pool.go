@@ -233,7 +233,7 @@ func (k *kubernetesResourcePool) addTask(ctx *actor.Context, msg sproto.Allocate
 		msg.Name = "Unnamed-k8-Task"
 	}
 
-	ctx.Log().Infof(
+	ctx.Log().WithField("restore", msg.Restore).Infof(
 		"resources are requested by %s (Allocation ID: %s)",
 		msg.Name, msg.AllocationID,
 	)
@@ -522,6 +522,16 @@ func (k *kubernetesResourcePool) assignResources(
 			WithField("allocation-id", req.AllocationID).
 			WithField("task-handler", req.Name).
 			Infof("resources assigned with %d pods", numPods)
+	}
+
+	if req.Restore {
+		// This call must happen after we publish ResourcesAllocated, otherwise the allocation will
+		// receive an update for resources it does not know about, ignore it, then hang if it missed
+		// the termination.
+		resp := ctx.Ask(k.podsActor, refreshPodStates{allocationID: req.AllocationID})
+		if err := resp.Error(); err != nil {
+			ctx.Log().WithError(err).Error("failed to refresh pod states after reattach")
+		}
 	}
 }
 

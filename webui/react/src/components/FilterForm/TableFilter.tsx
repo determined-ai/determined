@@ -13,9 +13,9 @@ import { Loadable } from 'utils/loadable';
 interface Props {
   loadableColumns: Loadable<V1ProjectColumn[]>;
   formStore: FilterFormStore;
-  setIsOpenFilter: (value: boolean) => void;
   isMobile?: boolean;
   isOpenFilter: boolean;
+  onIsOpenFilterChange?: (value: boolean) => void;
 }
 
 const TableFilter = ({
@@ -23,13 +23,13 @@ const TableFilter = ({
   formStore,
   isMobile = false,
   isOpenFilter,
-  setIsOpenFilter,
+  onIsOpenFilterChange,
 }: Props): JSX.Element => {
   const columns: V1ProjectColumn[] = Loadable.getOrElse([], loadableColumns);
   const fieldCount = useObservable(formStore.fieldCount);
   const formset = useObservable(formStore.formset);
 
-  const onIsOpenFilterChange = useCallback(
+  const handleIsOpenFilterChange = useCallback(
     (newOpen: boolean) => {
       if (newOpen) {
         Loadable.match(formset, {
@@ -44,14 +44,12 @@ const TableFilter = ({
           },
         });
       }
-      setIsOpenFilter(newOpen);
+      onIsOpenFilterChange?.(newOpen);
     },
-    [formStore, formset, setIsOpenFilter],
+    [formStore, formset, onIsOpenFilterChange],
   );
 
-  const onHidePopOver = () => {
-    setIsOpenFilter(false);
-  };
+  const onHidePopOver = () => onIsOpenFilterChange?.(false);
 
   return (
     <div>
@@ -67,7 +65,7 @@ const TableFilter = ({
           </div>
         }
         open={isOpenFilter}
-        onOpenChange={onIsOpenFilterChange}>
+        onOpenChange={handleIsOpenFilterChange}>
         <Button hideChildren={isMobile} icon={<Icon decorative name="filter" />}>
           Filter {fieldCount > 0 && `(${fieldCount})`}
         </Button>

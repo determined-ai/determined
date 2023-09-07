@@ -49,6 +49,8 @@ The Docker network to use for the Determined task containers. If this is set to 
 host-mode networking <https://docs.docker.com/network/host/>`__ will be used instead. Defaults to
 ``bridge``.
 
+.. _master-config-reference-dtrain-network-interface:
+
 ``dtrain_network_interface``
 ============================
 

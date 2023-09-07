@@ -18,7 +18,6 @@ import (
 	"github.com/determined-ai/determined/agent/internal/container"
 	"github.com/determined-ai/determined/agent/internal/containers"
 	"github.com/determined-ai/determined/agent/internal/detect"
-	"github.com/determined-ai/determined/agent/internal/fluent"
 	"github.com/determined-ai/determined/agent/internal/options"
 	"github.com/determined-ai/determined/agent/pkg/docker"
 	"github.com/determined-ai/determined/agent/pkg/events"
@@ -35,15 +34,13 @@ const (
 	wsInsecureScheme = "ws"
 	wsSecureScheme   = "wss"
 	eventChanSize    = 64 // same size as the websocket outbox
-	fluentRetries    = 5
-	fluentBackoff    = 5 * time.Second
 	logSourceAgent   = "agent"
 )
 
 // MasterWebsocket is the type for a websocket which communicates with the master.
 type MasterWebsocket = ws.WebSocket[*aproto.AgentMessage, *aproto.MasterMessage]
 
-// Agent is the manager for all other routines in the agent. It launches Fluent Bit, the container
+// Agent is the manager for all other routines in the agent. It launches the container
 // manager, and all external connections, to Docker and the master. Once launched, it takes actions
 // directed by the master and monitors the subroutines for failure. The agent fails and enters the
 // recovery flow on the failure of any component.
@@ -125,9 +122,6 @@ func (a *Agent) run(ctx context.Context) error {
 
 	a.log.Tracef("setting up %s runtime", a.opts.ContainerRuntime)
 	var cruntime container.ContainerRuntime
-	var logShipper *fluent.Fluent
-	var logShipperDone chan struct{}
-
 	switch a.opts.ContainerRuntime {
 	case options.PodmanContainerRuntime:
 		acl, sErr := podman.New(a.opts)
@@ -166,23 +160,8 @@ func (a *Agent) run(ctx context.Context) error {
 		}()
 		cl := docker.NewClient(dcl)
 		cruntime = cl
-
-		a.log.Trace("setting up fluentbit daemon")
-		fl, fErr := fluent.Start(ctx, a.opts, mopts, cl)
-		if fErr != nil {
-			return fmt.Errorf("setting up fluentbit failed: %w", fErr)
-		}
-		defer func() {
-			a.log.Trace("cleaning up fluent client")
-			if cErr := fl.Close(); cErr != nil {
-				a.log.WithError(cErr).Error("failed to close fluentbit")
-			}
-		}()
-		logShipper = fl
-		logShipperDone = fl.Done
-	default:
-		return fmt.Errorf("not a valid value for container runtime: '%s'", a.opts.ContainerRuntime)
 	}
+
 	a.log.Trace("setting up container manager")
 	outbox := make(chan *aproto.MasterMessage, eventChanSize) // covers many from socket lifetimes
 	manager, err := containers.New(a.opts, mopts, devices, cruntime, a.sender(outbox))
@@ -255,20 +234,7 @@ func (a *Agent) run(ctx context.Context) error {
 			}
 			socket = newSocket
 			inbox = socket.Inbox
-			mopts = *newMopts // TODO: Reload fluent with new mopts.
-
-		case <-logShipperDone:
-			a.log.Trace("fluent exited")
-			if err := logShipper.Error(); err != nil {
-				a.log.Errorf("restarting fluent due to failure: %s", err)
-			}
-
-			newLogShipper, err := a.restartFluent(ctx, mopts, cruntime.(*docker.Client))
-			if err != nil {
-				return fmt.Errorf("crashing due to fluent failure: %w", err)
-			}
-			logShipper = newLogShipper
-			logShipperDone = newLogShipper.Done
+			mopts = *newMopts
 
 		case <-ctx.Done():
 			a.log.Trace("context canceled")
@@ -293,10 +259,15 @@ func (a *Agent) connect(ctx context.Context, reconnect bool) (*MasterWebsocket, 
 		TLSClientConfig:  tlsConfig,
 	}
 
+	hostname, err := os.Hostname()
+	if err != nil {
+		a.log.Warnf("Unable to get hostname : %v", err)
+	}
+
 	masterAddr := fmt.Sprintf(
-		"%s://%s:%d/agents?id=%s&version=%s&resource_pool=%s&reconnect=%v",
+		"%s://%s:%d/agents?id=%s&version=%s&resource_pool=%s&reconnect=%v&hostname=%s",
 		masterProto, a.opts.MasterHost, a.opts.MasterPort, a.opts.AgentID, a.version,
-		a.opts.ResourcePool, reconnect,
+		a.opts.ResourcePool, reconnect, hostname,
 	)
 	a.log.Infof("connecting to master at: %s", masterAddr)
 	conn, resp, err := dialer.DialContext(ctx, masterAddr, nil)
@@ -468,31 +439,6 @@ func (a *Agent) reconnect(ctx context.Context) (*MasterWebsocket, error) {
 
 		select {
 		case <-time.After(time.Duration(a.opts.AgentReconnectBackoff) * time.Second):
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		}
-	}
-}
-
-func (a *Agent) restartFluent(
-	ctx context.Context,
-	mopts aproto.MasterSetAgentOptions,
-	docker *docker.Client,
-) (*fluent.Fluent, error) {
-	a.log.Trace("restarting up fluentbit daemon...")
-	for i := 1; ; i++ {
-		fluent, err := fluent.Start(ctx, a.opts, mopts, docker)
-		if err == nil {
-			return fluent, nil
-		}
-
-		a.log.WithError(err).Error("error restarting fluentbit")
-		if i >= fluentRetries {
-			return nil, err
-		}
-
-		select {
-		case <-time.After(fluentBackoff):
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		}

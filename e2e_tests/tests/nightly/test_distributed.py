@@ -50,7 +50,7 @@ def test_imagenet_pytorch_distributed() -> None:
     exp.run_basic_test_with_temp_config(config, conf.tutorials_path("imagenet_pytorch"), 1)
 
 
-@pytest.mark.distributed
+@pytest.mark.distributed_quarantine
 def test_cifar10_tf_keras_distributed() -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})

@@ -16,7 +16,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 )
 
-const defaultConfigPath = "/etc/determined/agent.yaml"
+const (
+	defaultConfigPath  = "/etc/determined/agent.yaml"
+	rocrVisibleDevices = "ROCR_VISIBLE_DEVICES"
+	cudaVisibleDevices = "CUDA_VISIBLE_DEVICES"
+)
 
 func readConfigFile(configPath string) ([]byte, error) {
 	isDefault := configPath == ""
@@ -73,6 +77,9 @@ func newRunCmd() *cobra.Command {
 		}
 
 		opts.Resolve()
+		for _, deprecation := range opts.Deprecations() {
+			log.Warn(deprecation.Error())
+		}
 
 		if err := internal.Run(context.Background(), version, opts); err != nil {
 			log.Fatal(err)
@@ -103,7 +110,12 @@ func newRunCmd() *cobra.Command {
 
 	// Device flags.
 	cmd.Flags().StringVar(&opts.SlotType, "slot-type", "auto", "slot type to expose")
-	cmd.Flags().StringVar(&opts.VisibleGPUs, "visible-gpus", "", "GPUs to expose as slots")
+	defaultVisibleGPUs := visibleGPUsFromEnvironment()
+	cmd.Flags().StringVar(
+		&opts.VisibleGPUs,
+		"visible-gpus",
+		defaultVisibleGPUs,
+		"GPUs to expose as slots")
 
 	// Security flags.
 	cmd.Flags().BoolVar(
@@ -149,14 +161,6 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&opts.NoProxy, "no-proxy", "",
 		"Addresses that the agent's containers should not proxy")
 
-	// Logging flags.
-	cmd.Flags().StringVar(&opts.Fluent.Image, "fluent-image", aproto.FluentImage,
-		"Docker image to use for the managed Fluent Bit daemon")
-	cmd.Flags().IntVar(&opts.Fluent.Port, "fluent-port", 24224,
-		"TCP port for the Fluent Bit daemon to listen on")
-	cmd.Flags().StringVar(&opts.Fluent.ContainerName, "fluent-container-name", "determined-fluent",
-		"Name for the Fluent Bit container")
-
 	// Fault-tolerance flags.
 	cmd.Flags().IntVar(&opts.AgentReconnectAttempts, "agent-reconnect-attempts",
 		aproto.AgentReconnectAttempts, "Max attempts agent has to reconnect")
@@ -167,4 +171,14 @@ func newRunCmd() *cobra.Command {
 		options.DockerContainerRuntime, "The container runtime to use")
 
 	return cmd
+}
+
+// visibleGPUsFromEnvironment returns GPU visibility information from the environment
+// if any, else "".
+func visibleGPUsFromEnvironment() (visDevices string) {
+	visDevices, defined := os.LookupEnv(rocrVisibleDevices)
+	if !defined {
+		visDevices, _ = os.LookupEnv(cudaVisibleDevices)
+	}
+	return
 }
