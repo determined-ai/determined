@@ -868,7 +868,7 @@ def test_non_root_experiment(clean_auth: None, login_admin: None, tmp_path: path
         with non_tmp_shared_fs_path() as host_path:
             config["checkpoint_storage"] = {
                 "type": "shared_fs",
-                "host_path": host_path,
+                "host_path": str(host_path),
             }
 
             # Call `det --version` in a startup hook to ensure that det is on the PATH.
