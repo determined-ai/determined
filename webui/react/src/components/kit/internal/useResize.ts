@@ -21,38 +21,47 @@ const DEFAULT_SIZE = {
 };
 
 const useResize = (): ResizeHook => {
-  const elementRef = useRef(document.body);
-  const [, setObserver] = useState<ResizeObserver>();
+  const elementRef = useRef<HTMLElement>(document.body);
+  const isMeasured = useRef(false);
+  const observer = useRef<ResizeObserver>();
   const [resizeInfo, setResizeInfo] = useState<SizeInfo>({ ...DEFAULT_SIZE });
 
   const measureRef = useCallback((node: HTMLElement) => {
+    isMeasured.current = true;
+
+    // Tear down previous resize observer.
+    observer.current?.unobserve(elementRef.current);
+
     if (node) elementRef.current = node;
 
-    setObserver((prev) => {
-      if (prev) prev.unobserve(elementRef.current);
+    // Set up resize observer.
+    const handleResize: ResizeObserverCallback = (entries: ResizeObserverEntry[]) => {
+      // Check to make sure the ref container is being observed for resize.
+      const elements = entries.map((entry: ResizeObserverEntry) => entry.target);
+      if (!elementRef.current || elements.indexOf(elementRef.current) === -1) return;
 
-      const handleResize: ResizeObserverCallback = (entries: ResizeObserverEntry[]) => {
-        // Check to make sure the ref container is being observed for resize.
-        const elements = entries.map((entry: ResizeObserverEntry) => entry.target);
-        if (!elementRef.current || elements.indexOf(elementRef.current) === -1) return;
-
-        const rect = elementRef.current.getBoundingClientRect();
-        setResizeInfo(rect);
-      };
-      const resizeObserver = new ResizeObserver(handleResize);
-      resizeObserver.observe(elementRef.current);
-
-      return resizeObserver;
-    });
+      const rect = elementRef.current.getBoundingClientRect();
+      setResizeInfo(rect);
+    };
+    observer.current = new ResizeObserver(handleResize);
+    observer.current?.observe(elementRef.current);
 
     const rect = elementRef.current.getBoundingClientRect();
     setResizeInfo(rect);
   }, []);
 
-  // Default resize target element to be document.body.
+  // If the `refCallback` is not applied, run measure against `document.body`
   useEffect(() => {
-    measureRef(document.body);
+    if (!isMeasured.current) measureRef(document.body);
   }, [measureRef]);
+
+  // When hook unmounts clean up observer if applicable.
+  useEffect(() => {
+    return () => {
+      observer.current?.unobserve(elementRef.current);
+      observer.current = undefined;
+    };
+  }, []);
 
   return { refCallback: measureRef, refObject: elementRef, size: resizeInfo };
 };
