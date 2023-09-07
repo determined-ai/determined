@@ -388,7 +388,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     setScale,
     handleError,
   }: GroupProps) => {
-    const { ref, size } = useResize();
+    const { refCallback, size } = useResize();
     const height = size.height ?? 0;
     const width = size.width ?? 0;
     const columnCount = Math.max(1, Math.floor(width / 540));
@@ -429,7 +429,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
 
     return (
       <div className={css.scrollContainer}>
-        <div className={css.chartgridContainer} ref={ref}>
+        <div className={css.chartgridContainer} ref={refCallback}>
           <Spinner center spinning={isLoading} tip="Loading chart data...">
             {chartsProps.length > 0 && (
               <>

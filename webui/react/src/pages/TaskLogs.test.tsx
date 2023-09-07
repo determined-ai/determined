@@ -139,11 +139,11 @@ const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
 };
 
 vi.mock('components/kit/internal/useResize', () => {
-  const elementRef = { current: null };
+  const refObject = { current: null };
   return {
     __esModule: true,
     default: () => ({
-      elementRef,
+      refObject,
       size: { height: 1824, width: 1280, x: 0, y: 0 },
     }),
   };

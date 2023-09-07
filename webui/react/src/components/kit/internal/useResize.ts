@@ -1,6 +1,6 @@
 import { RefCallback, RefObject, useCallback, useEffect, useRef, useState } from 'react';
 
-interface ResizeInfo {
+interface SizeInfo {
   height: number;
   width: number;
   x: number;
@@ -8,9 +8,9 @@ interface ResizeInfo {
 }
 
 interface ResizeHook {
-  elementRef: RefObject<HTMLElement>;
-  ref: RefCallback<HTMLElement>;
-  size: ResizeInfo;
+  refObject: RefObject<HTMLElement>;
+  refCallback: RefCallback<HTMLElement>;
+  size: SizeInfo;
 }
 
 const DEFAULT_SIZE = {
@@ -23,7 +23,7 @@ const DEFAULT_SIZE = {
 const useResize = (): ResizeHook => {
   const elementRef = useRef(document.body);
   const [, setObserver] = useState<ResizeObserver>();
-  const [resizeInfo, setResizeInfo] = useState<ResizeInfo>({ ...DEFAULT_SIZE });
+  const [resizeInfo, setResizeInfo] = useState<SizeInfo>({ ...DEFAULT_SIZE });
 
   const measureRef = useCallback((node: HTMLElement) => {
     if (node) elementRef.current = node;
@@ -54,7 +54,7 @@ const useResize = (): ResizeHook => {
     measureRef(document.body);
   }, [measureRef]);
 
-  return { elementRef, ref: measureRef, size: resizeInfo };
+  return { refCallback: measureRef, refObject: elementRef, size: resizeInfo };
 };
 
 export default useResize;
