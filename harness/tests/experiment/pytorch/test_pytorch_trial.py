@@ -1050,6 +1050,29 @@ class TestPyTorchTrial:
 
         utils.assert_patterns_in_logs(log_output, patterns)
 
+    @pytest.mark.parametrize(
+        "max_batches,steps_completed",
+        [
+            (5, 5),
+            (5, 10),
+            (6, 10),
+        ],
+    )
+    def test_max_batches_leq_steps_completed(self, max_batches: int, steps_completed: int):
+        trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
+            trial_class=pytorch_onevar_model.OneVarTrial,
+            hparams=self.hparams,
+            trial_seed=self.trial_seed,
+            max_batches=max_batches,
+            min_validation_batches=1,
+            min_checkpoint_batches=1,
+            steps_completed=steps_completed,
+        )
+        trial_controller.run()
+
+        assert len(trial.metrics_callback.validation_metrics) == 0
+        assert len(trial.metrics_callback.training_metrics) == 0
+
     def checkpoint_and_check_metrics(
         self,
         trial_class: pytorch_onevar_model.OneVarTrial,
