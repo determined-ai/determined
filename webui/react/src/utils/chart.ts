@@ -3,7 +3,6 @@ import uPlot from 'uplot';
 
 import { Primitive, Range } from 'types';
 import { ColorScale } from 'utils/color';
-import { clone } from 'utils/data';
 import { primitiveSorter } from 'utils/sort';
 import { Theme } from 'utils/themes';
 
@@ -15,7 +14,7 @@ export const getColorScale = (
   smallerIsBetter?: boolean,
 ): ColorScale[] => {
   const defaultScale = [theme.statusCriticalWeak, theme.statusActive];
-  const reverseScale = clone(defaultScale).reverse();
+  const reverseScale = structuredClone(defaultScale).reverse();
   let colors = [theme.statusWarningStrong, theme.statusActive];
 
   if (smallerIsBetter != null) {

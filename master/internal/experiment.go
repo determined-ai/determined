@@ -5,13 +5,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -229,16 +228,17 @@ func newExperiment(
 }
 
 func newUnmanagedExperiment(
+	ctx context.Context,
+	idb bun.IDB,
 	m *Master,
 	expModel *model.Experiment,
 	activeConfig expconf.ExperimentConfig,
 	taskSpec *tasks.TaskSpec,
 ) (*experiment, []command.LaunchWarning, error) {
-	// TODO(DET-9477): Experiment state management.
-	expModel.State = model.CompletedState
+	expModel.State = model.PausedState
 	expModel.Unmanaged = true
 
-	if err := m.db.AddExperiment(expModel, activeConfig); err != nil {
+	if err := db.AddExperimentTx(ctx, idb, expModel, activeConfig, true); err != nil {
 		return nil, nil, err
 	}
 	telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
@@ -753,20 +753,21 @@ func trialTaskID(eID int, rID model.RequestID) model.TaskID {
 
 var errIsNotTrialTaskID = fmt.Errorf("taskID is not a trial task ID")
 
-// Hack to associate allocations to experiments for RBAC.
-// Currently unable to go through the database since trials are not necessarily persisted when
-// we return allocation information.
 func experimentIDFromTrialTaskID(taskID model.TaskID) (int, error) {
-	expID, _, found := strings.Cut(string(taskID), ".")
-	if !found {
-		return 0, errors.Wrapf(errIsNotTrialTaskID, "error on task ID %s", taskID)
+	var experimentID int
+	err := db.Bun().NewSelect().
+		Table("trial_id_task_id").
+		Column("experiment_id").
+		Join("LEFT JOIN trials ON trials.id = trial_id_task_id.trial_id").
+		Where("task_id = ?", taskID).
+		Scan(context.TODO(), &experimentID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, errIsNotTrialTaskID
+	} else if err != nil {
+		return 0, fmt.Errorf("getting experiment ID from trial task ID: %w", err)
 	}
 
-	id, err := strconv.Atoi(expID)
-	if err != nil {
-		return 0, errors.Wrapf(err, "error parsing experiment ID for task ID %s", taskID)
-	}
-	return id, nil
+	return experimentID, nil
 }
 
 func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint, error) {

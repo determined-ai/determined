@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.24.0-dev0
+    default: 0.25.0-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -215,17 +215,10 @@ commands:
 
   pull-task-images:
     parameters:
-      tf1:
-        type: boolean
-        default: false
       tf2:
         type: boolean
         default: false
     steps:
-      - when:
-          condition: <<parameters.tf1>>
-          steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6eceaca
       - when:
           condition: <<parameters.tf2>>
           steps:
@@ -250,7 +243,7 @@ commands:
   reinstall-go:
     steps:
       - run: sudo rm -rf /usr/local/go # Remove system go.
-      - run: tools/scripts/retry.sh curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.20.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
+      - run: tools/scripts/retry.sh curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.21.0.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
       - run: echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
 
@@ -1823,27 +1816,6 @@ jobs:
           paths:
             - test-unit-harness-cpu-pycov
 
-  test-unit-harness-cpu-tf1:
-    docker:
-      - image: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6eceaca
-    resource_class: determined-ai/container-runner-gpu
-    steps:
-      - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
-      - checkout
-      - run: pip install mypy pytest coverage
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
-      - install-codecov
-      - setup-paths
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-cpu-tf1-pycov make -C harness test-cpu-tf1
-      - run: coverage xml -i --data-file=./test-unit-harness-cpu-tf1-pycov
-      - run: codecov -v -t $CODECOV_TOKEN -F harness
-
-      - persist_to_workspace:
-          root: .
-          paths:
-            - test-unit-harness-cpu-tf1-pycov
 
   test-unit-harness-gpu:
     docker:
@@ -2090,9 +2062,6 @@ jobs:
 
   test-e2e:
     parameters:
-      tf1:
-        type: boolean
-        default: false
       tf2:
         type: boolean
         default: false
@@ -2156,7 +2125,6 @@ jobs:
                 target-stage: <<parameters.target-stage>>
 
       - pull-task-images:
-          tf1: <<parameters.tf1>>
           tf2: <<parameters.tf2>>
 
       - run-e2e-tests:
@@ -2401,7 +2369,6 @@ jobs:
           steps:
             - run:
                 command: |
-                  echo 'export TF1_GPU_IMAGE="<<parameters.environment-image>>"' >> "$BASH_ENV"
                   echo 'export TF2_GPU_IMAGE="<<parameters.environment-image>>"' >> "$BASH_ENV"
                 name: override test env images.
       - run-e2e-tests:
@@ -2445,9 +2412,6 @@ jobs:
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
 
-      - pull-task-images:
-          tf1: True
-
       - run-det-deploy-tests:
           mark: <<parameters.mark>>
           det-version: <<parameters.det-version>>
@@ -2480,8 +2444,6 @@ jobs:
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
 
-      - pull-task-images:
-          tf1: True
 
       - run-det-deploy-tests:
           mark: <<parameters.mark>>
@@ -2614,8 +2576,6 @@ workflows:
       - test-unit-harness-pytorch2-cpu
       - test-unit-harness-pytorch2-gpu
 
-      - test-unit-harness-cpu-tf1:
-          filters: *any-upstream
       - test-unit-harness-gpu:
           filters: *any-upstream
       - test-unit-harness-gpu-deepspeed:
@@ -2626,9 +2586,6 @@ workflows:
       # allows forks to request run approval instead of failing
       - request-gpu-unit-tests:
           type: approval
-          filters: *any-fork
-      - test-unit-harness-cpu-tf1:
-          name: f-test-unit-harness-cpu-tf1
           filters: *any-fork
       - test-unit-harness-gpu:
           name: f-test-unit-harness-gpu
@@ -2711,7 +2668,6 @@ workflows:
           requires:
             - build-go
           parallelism: 4
-          tf1: true
           tf2: true
           mark: e2e_cpu
 
@@ -2720,7 +2676,6 @@ workflows:
           requires:
             - build-go
           parallelism: 1
-          tf1: false
           tf2: true
           mark: e2e_cpu_2a
           target-stage: agent2
@@ -2731,7 +2686,6 @@ workflows:
           requires:
             - build-go
           parallelism: 2
-          tf1: false
           tf2: true
           mark: managed_devcluster
           managed-devcluster: true
@@ -3356,6 +3310,7 @@ workflows:
             branches:
               only:
                 - main
+                - /release-(\d)+(\.(\d)+)+(-ee)?/
     jobs:
       - test-e2e-aws:
           name: test-e2e-gpu-nightly

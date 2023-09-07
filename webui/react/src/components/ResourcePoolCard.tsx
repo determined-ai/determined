@@ -16,18 +16,19 @@ import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/sta
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
+import { V1ResourcePoolType, V1RPQueueStat } from 'services/api-ts-sdk';
 import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
 import useUI from 'stores/contexts/UI';
 import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
 import { isDeviceType, JsonObject, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
-import { clone } from 'utils/data';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { pluralizer } from 'utils/string';
 import { DarkLight } from 'utils/themes';
 
+import { ConditionalWrapper } from './ConditionalWrapper';
 import Json from './Json';
 import ResourcePoolBindingModalComponent from './ResourcePoolBindingModal';
 import css from './ResourcePoolCard.module.scss';
@@ -37,7 +38,8 @@ interface Props {
   poolStats?: V1RPQueueStat | undefined;
   resourcePool: ResourcePool;
   size?: ShirtSize;
-  descriptiveLabel?: string;
+  defaultAux?: boolean;
+  defaultCompute?: boolean;
 }
 
 const poolAttributes = [
@@ -94,42 +96,44 @@ export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
 const ResourcePoolCard: React.FC<Props> = ({
   resourcePool: pool,
   actionMenu,
-  descriptiveLabel,
+  defaultAux,
+  defaultCompute,
 }: Props) => {
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const { canManageResourcePoolBindings } = usePermissions();
   const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
-  const isDefaultPool = pool.defaultAuxPool || pool.defaultComputePool;
-  const descriptionClasses = [css.description];
-  const showDescriptiveLabel = !(canManageResourcePoolBindings && rpBindingFlagOn) ?? isDefaultPool;
   const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
   const resourcePoolBindings: number[] = resourcePoolBindingMap.get(pool.name, []);
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
 
+  const defaultLabel = useMemo(() => {
+    if (defaultAux && defaultCompute) return 'Default';
+    if (defaultAux) return 'Default Aux';
+    if (defaultCompute) return 'Default Compute';
+  }, [defaultAux, defaultCompute]);
+
   useEffect(() => {
     return clusterStore.fetchResourcePoolBindings(pool.name);
   }, [pool.name]);
-
-  if (!pool.description) descriptionClasses.push(css.empty);
 
   const isAux = useMemo(() => {
     return pool.auxContainerCapacityPerAgent > 0;
   }, [pool]);
 
   const processedPool = useMemo(() => {
-    const newPool = clone(pool);
-    Object.keys(newPool).forEach((key) => {
-      const value = pool[key as keyof ResourcePool];
-      if (key === 'slotsPerAgent' && value === -1) newPool[key] = 'Unknown';
-      if (key === 'schedulerType') newPool[key] = V1SchedulerTypeToLabel[value as V1SchedulerType];
-    });
-    return newPool;
+    const { slotsPerAgent, schedulerType, details } = pool;
+    return {
+      ...pool,
+      details: JSON.parse(JSON.stringify(details)),
+      schedulerType: V1SchedulerTypeToLabel[schedulerType],
+      slotsPerAgent: slotsPerAgent === -1 ? 'Unknown' : slotsPerAgent,
+    };
   }, [pool]);
 
   const shortDetails = useMemo(() => {
     return poolAttributes.reduce((acc, attribute) => {
       const value = attribute.render
-        ? attribute.render(processedPool)
+        ? attribute.render(processedPool as ResourcePool)
         : processedPool[attribute.key as keyof ResourcePool];
       acc[attribute.label] = value;
       if (!isAux && attribute.key === 'auxContainerCapacityPerAgent') delete acc[attribute.label];
@@ -166,20 +170,19 @@ const ResourcePoolCard: React.FC<Props> = ({
         onDropdown={onDropdown}>
         <div className={css.base}>
           <div className={css.header}>
-            <div className={css.info}>
-              <div className={css.name}>{pool.name}</div>
-            </div>
-            <div className={css.default}>
-              {showDescriptiveLabel && <span>{descriptiveLabel}</span>}
+            <div className={css.name}>{pool.name}</div>
+            <div className={css.details}>
+              <ConditionalWrapper
+                condition={!!defaultLabel && canManageResourcePoolBindings}
+                wrapper={(children) => (
+                  <Tooltip content="You cannot bind your default resource pool to a workspace.">
+                    {children}
+                  </Tooltip>
+                )}>
+                <span>{defaultLabel}</span>
+              </ConditionalWrapper>
               {pool.description && <Icon name="info" showTooltip title={pool.description} />}
             </div>
-            {!showDescriptiveLabel && (
-              <div className={css.defaultPoolTooltip}>
-                <Tooltip content="You cannot bind your default resource pool to a workspace.">
-                  <span>Default</span>
-                </Tooltip>
-              </div>
-            )}
           </div>
           <Suspense fallback={<Spinner center spinning />}>
             <div className={css.body}>
@@ -189,13 +192,12 @@ const ResourcePoolCard: React.FC<Props> = ({
                   <div>Bound to:</div>
                   <div className={css.resoucePoolBoundCount}>
                     <Icon name="lock" title="Bound Workspaces" />
-                    {resourcePoolBindings.length} workspace
+                    {resourcePoolBindings.length}{' '}
+                    {pluralizer(resourcePoolBindings.length, 'workspace')}
                   </div>
                 </section>
               )}
-              <section className={css.details}>
-                <Json hideDivider json={shortDetails} />
-              </section>
+              <Json hideDivider json={shortDetails} />
               <div />
             </div>
           </Suspense>

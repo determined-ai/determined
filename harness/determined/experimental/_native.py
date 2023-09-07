@@ -38,23 +38,26 @@ def test_one_batch(
 
     try:
         from determined import pytorch
-
-        if issubclass(trial_class, pytorch.PyTorchTrial):
-            with pytorch.init(hparams=config.get("hyperparameters", {})) as pytorch_trial_context:
-                pytorch_trial_context._exp_conf = config
-                pytorch_trial_inst = trial_class(pytorch_trial_context)
-                trainer = pytorch.Trainer(pytorch_trial_inst, pytorch_trial_context)
-                trainer.fit(
-                    max_length=pytorch.Batch(1),
-                    test_mode=True,
-                )
-                logging.info("The test experiment passed.")
-                logging.info(
-                    "Note: to submit an experiment to the cluster, change local parameter to False"
-                )
-            return
     except ImportError:
+        pytorch = None  # type: ignore
         pass
+
+    if pytorch and issubclass(trial_class, pytorch.PyTorchTrial):
+        with pytorch.init(
+            hparams=config.get("hyperparameters", {}), enable_tensorboard_logging=False
+        ) as pytorch_trial_context:
+            pytorch_trial_context._exp_conf = config
+            pytorch_trial_inst = trial_class(pytorch_trial_context)
+            trainer = pytorch.Trainer(pytorch_trial_inst, pytorch_trial_context)
+            trainer.fit(
+                max_length=pytorch.Batch(1),
+                test_mode=True,
+            )
+            logging.info("The test experiment passed.")
+            logging.info(
+                "Note: to submit an experiment to the cluster, change local parameter to False"
+            )
+        return
 
     with tempfile.TemporaryDirectory() as checkpoint_dir:
         core_context, env = det._make_local_execution_env(

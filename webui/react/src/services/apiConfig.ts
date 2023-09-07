@@ -874,7 +874,7 @@ export const getExpTrials: DetApi<
   postProcess: (response) => {
     return {
       pagination: response.pagination,
-      trials: response.trials.map(decoder.decodeV1TrialToTrialItem),
+      trials: response.trials.map((t) => decoder.decodeV1TrialToTrialItem(t)),
     };
   },
   request: (params, options) => {
@@ -1294,6 +1294,7 @@ export const getWorkspaces: DetApi<
       undefined,
       getUserIds(params.users),
       params.pinned,
+      undefined,
       options,
     );
   },

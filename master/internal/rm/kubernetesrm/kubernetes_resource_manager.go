@@ -104,10 +104,7 @@ func (k ResourceManager) ResolveResourcePool(
 			}
 			return resp.PoolName, nil
 		}
-		if err := k.ValidateResourcePool(actorCtx, defaultAuxPool); err != nil {
-			return "", fmt.Errorf("validating default aux pool: %w", err)
-		}
-		return defaultAuxPool, nil
+		name = defaultAuxPool
 	}
 
 	if name == "" && slots >= 0 {
@@ -119,10 +116,7 @@ func (k ResourceManager) ResolveResourcePool(
 			}
 			return resp.PoolName, nil
 		}
-		if err := k.ValidateResourcePool(actorCtx, defaultComputePool); err != nil {
-			return "", fmt.Errorf("validating default compute pool: %w", err)
-		}
-		return defaultComputePool, nil
+		name = defaultComputePool
 	}
 
 	resp, err := k.GetResourcePools(actorCtx, &apiv1.GetResourcePoolsRequest{})

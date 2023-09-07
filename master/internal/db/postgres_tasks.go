@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
@@ -50,17 +52,29 @@ EXISTS(
 }
 
 // AddTask UPSERT's the existence of a task.
+//
+// TODO(ilia): deprecate and use module function instead.
 func (db *PgDB) AddTask(t *model.Task) error {
-	if _, err := db.sql.NamedExec(`
-INSERT INTO tasks (task_id, task_type, start_time, job_id, log_version)
-VALUES (:task_id, :task_type, :start_time, :job_id, :log_version)
-ON CONFLICT (task_id) DO UPDATE SET
-task_type=EXCLUDED.task_type, start_time=EXCLUDED.start_time,
-job_id=EXCLUDED.job_id, log_version=EXCLUDED.log_version
-`, t); err != nil {
-		return errors.Wrap(err, "adding task")
-	}
-	return nil
+	return AddTask(context.TODO(), t)
+}
+
+// AddTask UPSERT's the existence of a task.
+func AddTask(ctx context.Context, t *model.Task) error {
+	// Since AddTaskTx is a single query, RunInTx is an overkill.
+	return AddTaskTx(ctx, Bun(), t)
+}
+
+// AddTaskTx UPSERT's the existence of a task in a tx.
+func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
+	_, err := idb.NewInsert().Model(t).
+		Column("task_id", "task_type", "start_time", "job_id", "log_version").
+		On("CONFLICT (task_id) DO UPDATE").
+		Set("task_type=EXCLUDED.task_type").
+		Set("start_time=EXCLUDED.start_time").
+		Set("job_id=EXCLUDED.job_id").
+		Set("log_version=EXCLUDED.log_version").
+		Exec(ctx)
+	return MatchSentinelError(err)
 }
 
 // TaskByID returns a task by its ID.

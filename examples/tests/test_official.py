@@ -2,8 +2,6 @@ import pathlib
 import subprocess
 
 import pytest
-import tensorflow as tf
-from packaging import version
 
 official_examples = [
     (
@@ -39,11 +37,6 @@ official_examples = [
 
 @pytest.mark.parametrize("model_def,config_file", official_examples)
 def test_official(model_def: str, config_file: str) -> None:
-    if (
-        version.parse(tf.__version__) >= version.parse("2.11.0")
-        and "gbt_titanic_estimator" in model_def
-    ):
-        pytest.skip("requires tensorflow<2.11")
     examples_dir = pathlib.Path(__file__).parent.parent
     model_def_absolute = examples_dir.joinpath(model_def)
     config_file_absolute = examples_dir.joinpath(config_file)

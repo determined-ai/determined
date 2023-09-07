@@ -113,7 +113,7 @@ message GetWorkspacesRequest {
   // Limit the number of workspaces. A value of 0 denotes no limit.
   int32 limit = 4;
 
-  // Limit the workspaces to those matching the name.
+  // Limit the workspaces to those matching the name (case insensitive).
   string name = 5;
   // Limit the workspaces to those with an archived status.
   google.protobuf.BoolValue archived = 6;
@@ -123,6 +123,8 @@ message GetWorkspacesRequest {
   repeated int32 user_ids = 9;
   // Limit the workspaces to those with pinned status by the current user.
   google.protobuf.BoolValue pinned = 8;
+  // Limit the workspaces to those matching the name (case sensitive).
+  string name_case_sensitive = 10;
 }
 
 // Response to GetWorkspacesRequest.

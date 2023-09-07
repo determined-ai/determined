@@ -38,6 +38,7 @@
     "@uiw/react-codemirror": "^4.20.2",
     "ansi-to-html": "^0.7.2",
     "antd": "^5.1.7",
+    "core-js": "3.32",
     "dayjs": "^1.11.7",
     "debug": "^4.3.4",
     "events": "^3.3.0",

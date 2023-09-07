@@ -1,6 +1,7 @@
 import os
 import pathlib
-from typing import Any, Dict, Optional
+import urllib
+from typing import Any, Dict, Optional, Union
 
 from determined.common.storage.shared import _full_storage_path
 from determined.tensorboard import azure, base, gcs, s3, shared
@@ -39,11 +40,28 @@ def get_base_path(checkpoint_config: Dict[str, Any]) -> pathlib.Path:
     return base_path.joinpath(f"tensorboard-{allocation_id}-{rank}")
 
 
+def _shortcut_to_config(shortcut: str) -> Dict[str, Any]:
+    p: urllib.parse.ParseResult = urllib.parse.urlparse(shortcut)
+    if any((p.params, p.query, p.fragment)):
+        raise ValueError(f'Malformed checkpoint_storage string "{shortcut}"')
+
+    scheme = p.scheme.lower()
+
+    if scheme in ["", "file"]:
+        return {
+            "type": "shared_fs",
+            "host_path": p.path,
+        }
+    else:
+        # TODO(ilia): add gs, s3 support.
+        raise NotImplementedError("tensorboard only supports shared_fs shortcuts at the moment")
+
+
 def build(
     cluster_id: str,
     experiment_id: str,
     trial_id: Optional[str],
-    checkpoint_config: Dict[str, Any],
+    checkpoint_config: Union[Dict[str, Any], str],
     container_path: Optional[str] = None,
     async_upload: bool = True,
 ) -> base.TensorboardManager:
@@ -55,6 +73,9 @@ def build(
     container_path, if set, will replace the host_path when determining the storage_path for the
     SharedFSTensorboardManager.
     """
+    if isinstance(checkpoint_config, str):
+        checkpoint_config = _shortcut_to_config(checkpoint_config)
+
     type_name = checkpoint_config.get("type")
 
     if not type_name:

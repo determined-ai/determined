@@ -6,7 +6,12 @@ from tests import config as conf
 from tests import experiment as exp
 
 from .managed_cluster import ManagedCluster
-from .utils import command_succeeded, run_command, run_command_set_priority, wait_for_command_state
+from .utils import (
+    assert_command_succeeded,
+    run_command,
+    run_command_set_priority,
+    wait_for_command_state,
+)
 
 
 @pytest.mark.managed_devcluster
@@ -32,15 +37,15 @@ def test_priortity_scheduler_noop_command(
     # without slots (and default priority)
     command_id = run_command(slots=0)
     wait_for_command_state(command_id, "TERMINATED", 40)
-    assert command_succeeded(command_id)
+    assert_command_succeeded(command_id)
     # with slots (and default priority)
     command_id = run_command(slots=1)
     wait_for_command_state(command_id, "TERMINATED", 60)
-    assert command_succeeded(command_id)
+    assert_command_succeeded(command_id)
     # explicity priority
     command_id = run_command_set_priority(slots=0, priority=60)
     wait_for_command_state(command_id, "TERMINATED", 60)
-    assert command_succeeded(command_id)
+    assert_command_succeeded(command_id)
 
 
 @pytest.mark.managed_devcluster

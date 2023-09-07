@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/set"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -215,6 +216,7 @@ func (a *apiServer) GetWorkspaces(
 	}
 
 	nameFilter := req.Name
+	nameCaseSensitiveFilter := req.NameCaseSensitive
 	archFilterExpr := ""
 	if req.Archived != nil {
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
@@ -264,6 +266,7 @@ func (a *apiServer) GetWorkspaces(
 		archFilterExpr,
 		pinFilterExpr,
 		curUser.ID,
+		nameCaseSensitiveFilter,
 	)
 	if err != nil {
 		return nil, err
@@ -423,13 +426,42 @@ func (a *apiServer) PatchWorkspace(
 		insertColumns = append(insertColumns, "uid", "user_", "gid", "group_")
 	}
 
-	if req.Workspace.DefaultComputeResourcePool != nil {
-		updatedWorkspace.DefaultComputePool = *req.Workspace.DefaultComputeResourcePool
-		insertColumns = append(insertColumns, "default_compute_pool")
-	}
-	if req.Workspace.DefaultAuxResourcePool != nil {
-		updatedWorkspace.DefaultAuxPool = *req.Workspace.DefaultAuxResourcePool
-		insertColumns = append(insertColumns, "default_aux_pool")
+	if req.Workspace.DefaultComputeResourcePool != nil ||
+		req.Workspace.DefaultAuxResourcePool != nil {
+		if err = workspace.AuthZProvider.Get().
+			CanSetWorkspacesDefaultPools(ctx, currUser, currWorkspace); err != nil {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+
+		rpConfigs, err := a.resourcePoolsAsConfigs()
+		if err != nil {
+			return nil, err
+		}
+		rpNamesSlice, _, err := db.ReadRPsAvailableToWorkspace(
+			ctx, currWorkspace.Id, 0, -1, rpConfigs,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		rpNames := set.FromSlice(append(rpNamesSlice, ""))
+
+		if req.Workspace.DefaultComputeResourcePool != nil {
+			if !rpNames.Contains(*req.Workspace.DefaultComputeResourcePool) {
+				return nil, status.Error(codes.FailedPrecondition, "unable to bind a resource "+
+					"pool that does not exist or is not available to the workspace")
+			}
+			updatedWorkspace.DefaultComputePool = *req.Workspace.DefaultComputeResourcePool
+			insertColumns = append(insertColumns, "default_compute_pool")
+		}
+		if req.Workspace.DefaultAuxResourcePool != nil {
+			if !rpNames.Contains(*req.Workspace.DefaultAuxResourcePool) {
+				return nil, status.Error(codes.FailedPrecondition, "unable to bind a resource "+
+					"pool that does not exist or is not available to the workspace")
+			}
+			updatedWorkspace.DefaultAuxPool = *req.Workspace.DefaultAuxResourcePool
+			insertColumns = append(insertColumns, "default_aux_pool")
+		}
 	}
 
 	if req.Workspace.CheckpointStorageConfig != nil {

@@ -181,7 +181,7 @@ class CheckpointContext:
         task_id: str,
         allocation_id: Optional[str],
         tbd_sync_mode: core.TensorboardMode,
-        tensorboard_manager: tensorboard.TensorboardManager,
+        tensorboard_manager: Optional[tensorboard.TensorboardManager],
     ) -> None:
         self._dist = dist
         self._storage_manager = storage_manager
@@ -189,6 +189,8 @@ class CheckpointContext:
         self._task_id = task_id
         self._allocation_id = allocation_id
         self._tensorboard_mode = tbd_sync_mode
+        if tbd_sync_mode != core.TensorboardMode.MANUAL and tensorboard_manager is None:
+            raise ValueError("either set TensorboardMode.MANUAL, or pass a tensorboard manager.")
         self._tensorboard_manager = tensorboard_manager
 
     def upload(
@@ -706,6 +708,7 @@ class CheckpointContext:
 
         # Also sync tensorboard.
         if self._tensorboard_mode == core.TensorboardMode.AUTO:
+            assert self._tensorboard_manager is not None
             self._tensorboard_manager.sync()
 
 

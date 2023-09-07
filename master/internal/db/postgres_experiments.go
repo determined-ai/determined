@@ -137,7 +137,7 @@ func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 	}
 	rows := []MetricNamesRow{}
 
-	metricNames := BunSelectMetricGroupNames().
+	metricNames := BunSelectMetricGroupNames().Distinct().
 		Where("experiment_id IN (?)", bun.In(experimentIDs))
 
 	err := Bun().NewSelect().TableExpr("(?) as metric_names", metricNames).
@@ -479,8 +479,28 @@ WHERE id = $1`, id)
 }
 
 // AddExperiment adds the experiment to the database and sets its ID.
+//
+// TODO(ilia): deprecate and use module function instead.
 func (db *PgDB) AddExperiment(
 	experiment *model.Experiment, activeConfig expconf.ExperimentConfig,
+) (err error) {
+	return AddExperiment(context.TODO(), experiment, activeConfig)
+}
+
+// AddExperiment adds the experiment to the database and sets its ID.
+func AddExperiment(
+	ctx context.Context, experiment *model.Experiment, activeConfig expconf.ExperimentConfig,
+) (err error) {
+	return Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		return AddExperimentTx(ctx, tx, experiment, activeConfig, false)
+	})
+}
+
+// AddExperimentTx adds the experiment to the database and sets its ID.
+func AddExperimentTx(
+	ctx context.Context, idb bun.IDB,
+	experiment *model.Experiment, activeConfig expconf.ExperimentConfig,
+	upsert bool,
 ) (err error) {
 	if experiment.ID != 0 {
 		return errors.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
@@ -491,56 +511,43 @@ func (db *PgDB) AddExperiment(
 		return errors.Wrapf(err, "error handling experiment config %v", activeConfig)
 	}
 
-	ctx := context.TODO()
-	tx, err := Bun().BeginTx(ctx, nil)
-	defer func() {
-		txErr := tx.Rollback()
-		if txErr != nil && txErr != sql.ErrTxDone {
-			log.WithError(txErr).Error("error rolling back transaction in AddExperiment")
-		}
-	}()
 	job := model.Job{
 		JobID:   experiment.JobID,
 		JobType: model.JobTypeExperiment,
 		OwnerID: experiment.OwnerID,
 	}
-	_, err = tx.NewInsert().Model(&job).Exec(ctx)
-	if err != nil {
+	if _, err = idb.NewInsert().Model(&job).Exec(ctx); err != nil {
 		return errors.Wrapf(err, "error inserting job %v", job)
 	}
-	err = tx.NewRaw(`INSERT INTO experiments
-	(state, config, model_definition, start_time, end_time, archived, parent_id, progress,
-	 git_remote, git_commit, git_committer, git_commit_date,
-	 owner_id, original_config, notes, job_id, project_id, unmanaged)
-	VALUES (?, ?, ?, ?, ?, ?, ?, 0,
-		    ?, ?, ?, ?,
-	        ?, ?, ?, ?, ?, ?)
-	RETURNING id`,
-		experiment.State,
-		string(activeConfigStr),
-		experiment.ModelDefinitionBytes,
-		experiment.StartTime,
-		experiment.EndTime,
-		experiment.Archived,
-		experiment.ParentID,
-		experiment.GitRemote,
-		experiment.GitCommit,
-		experiment.GitCommitter,
-		experiment.GitCommitDate,
-		experiment.OwnerID,
-		experiment.OriginalConfig,
-		experiment.Notes,
-		experiment.JobID,
-		experiment.ProjectID,
-		experiment.Unmanaged).Scan(ctx, &experiment.ID)
+
+	q := idb.NewInsert().Model(experiment).
+		ExcludeColumn("id", "username").
+		Value("progress", "?", 0).
+		Value("config", "?", string(activeConfigStr)).
+		Returning("id")
+
+	if upsert {
+		// TODO(ilia): are there any fields user will expect us to update here?
+		// `config` field will cover the metadata: name, data, description, labels, etc.
+		// No-op SET for external_experiment_id is required for `RETURNING` clause to work.
+		q = q.On("CONFLICT (external_experiment_id) DO UPDATE").
+			Set("external_experiment_id = EXCLUDED.external_experiment_id").
+			Set("config = EXCLUDED.config")
+		// TODO(ilia): do something with the job we've already created.
+		// Option A) make jobs nullable/optional for unmanaged experiments.
+		// Option B) just delete it.
+	}
+
+	_, err = q.Exec(ctx)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting experiment %v", experiment)
 	}
 	if err = AddProjectHyperparameters(
-		ctx, tx, int32(experiment.ProjectID), []int32{int32(experiment.ID)}); err != nil {
+		ctx, idb, int32(experiment.ProjectID), []int32{int32(experiment.ID)}); err != nil {
 		return errors.Wrapf(err, "error updating hyperparameters")
 	}
-	return tx.Commit()
+
+	return nil
 }
 
 // RemoveProjectHyperparameters take a list of experiment ids,
@@ -674,6 +681,25 @@ WHERE trial_id_task_id.task_id = ?`, taskID).Scan(ctx, &experiment); err != nil 
 	return &experiment, nil
 }
 
+// ExperimentByExternalIDTx looks up an experiment by a given external experiment id.
+func ExperimentByExternalIDTx(ctx context.Context, idb bun.IDB, externalExperimentID string) (
+	*model.Experiment, error,
+) {
+	var experiment model.Experiment
+
+	if err := idb.NewRaw(`
+	SELECT e.id, state, config, model_definition, start_time, end_time, archived,
+	git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
+		job_id, u.username as username, project_id, unmanaged
+	FROM experiments e
+	JOIN users u ON (e.owner_id = u.id)
+	WHERE e.external_experiment_id = ?`, externalExperimentID).Scan(ctx, &experiment); err != nil {
+		return nil, MatchSentinelError(err)
+	}
+
+	return &experiment, nil
+}
+
 // LegacyExperimentConfigByID parses very old configs, returning a LegacyConfig which
 // exposes a select subset of fields in a type-safe way.
 func (db *PgDB) LegacyExperimentConfigByID(
@@ -712,7 +738,7 @@ SELECT e.id, state, config, model_definition, start_time, end_time, archived,
        u.username as username, project_id, unmanaged
 FROM experiments e
 JOIN users u ON e.owner_id = u.id
-WHERE state IN (
+WHERE unmanaged = false AND state IN (
 	'ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', 'STOPPING_ERROR',
 	'STOPPING_KILLED'
 )`)
@@ -1135,21 +1161,22 @@ WITH const AS (
 		rank() OVER (
 			PARTITION BY v.trial_id
 			ORDER BY (c.metadata->>'steps_completed')::int DESC
-		) AS trial_order_rank
+		) AS trial_order_rank,
+		v.metrics->'validation_metrics'->>const.metric_name as val_metric
 	FROM checkpoints_v2 c
-	NATURAL JOIN const
+	JOIN const ON true
 	JOIN trial_id_task_id ON c.task_id = trial_id_task_id.task_id
     JOIN trials t ON trial_id_task_id.trial_id = t.id
 	LEFT JOIN validations v ON v.total_batches = (c.metadata->>'steps_completed')::int AND 
 		v.trial_id = t.id
 	WHERE c.report_time IS NOT NULL
-		AND v.metrics->'validation_metrics'->>const.metric_name IS NOT NULL
 		AND (SELECT COUNT(*) FROM trials t WHERE t.warm_start_checkpoint_id = c.id) = 0
 		AND t.experiment_id = $1
 )
 SELECT sc.uuid AS ID
 FROM selected_checkpoints sc
-WHERE trial_order_rank > $4 AND experiment_rank > $2 AND trial_rank > $3;`
+WHERE ((experiment_rank > $2 AND trial_rank > $3) OR (val_metric IS NULL))
+	AND trial_order_rank > $4;`
 
 	var checkpointIDRows []struct {
 		ID uuid.UUID

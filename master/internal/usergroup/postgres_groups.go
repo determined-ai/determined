@@ -3,11 +3,12 @@ package usergroup
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"slices"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
-	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -252,6 +253,11 @@ func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.
 			len(uids), gid)
 	}
 
+	err = UpdateUsersTimestampTx(ctx, idb, uids)
+	if err != nil {
+		return fmt.Errorf("error when updating users timestamps: %w", err)
+	}
+
 	return nil
 }
 
@@ -284,6 +290,11 @@ func RemoveUsersFromGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...m
 		}
 		return errors.Wrapf(sError, "Error when removing %d user(s) from group %d",
 			len(uids), gid)
+	}
+
+	err = UpdateUsersTimestampTx(ctx, idb, uids)
+	if err != nil {
+		return fmt.Errorf("error when updating users timestamps: %w", err)
 	}
 
 	return nil
@@ -354,6 +365,21 @@ func UpdateGroupAndMembers(
 	}
 
 	return users, newName, nil
+}
+
+// UpdateUsersTimestampTx updates the user modified_at field to the present time.
+func UpdateUsersTimestampTx(ctx context.Context, idb bun.IDB,
+	uids []model.UserID,
+) error {
+	_, err := idb.NewUpdate().Table("users").
+		Set("modified_at = NOW()").
+		Where("id IN (?)", bun.In(uids)).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("updating modified_at timestamp for users: %w",
+			db.MatchSentinelError(err))
+	}
+	return nil
 }
 
 // UsersInGroupTx searches for users that belong to a group and returns them.

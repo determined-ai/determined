@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := build
 SHELL := bash
 GENERATED := packaging/LICENSE
-GENERATION_INPUTS = ../schemas/gen.py $(shell find ./pkg/schemas/ -name '*.go') $(shell find ../schemas/expconf -name '*.json')
+GENERATION_INPUTS = ../schemas/gen.py $(shell find ./pkg/schemas/ -name 'zgen_*.go' -prune -o -name '*.go' -print) $(shell find ../schemas/expconf -name '*.json')
 MOCK_GENERATION_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go ./go.mod ./go.sum ./internal/rm/resource_manager_iface.go ./internal/task/allocation_service_iface.go
 GORELEASER = goreleaser
 
@@ -68,6 +68,7 @@ build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	mockery --name=NodeInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename node_iface.go 
 	mockery --name=ResourceManager --dir=internal/rm --output internal/mocks --filename rm.go
 	mockery --name=AllocationService --dir=internal/task --output internal/mocks/allocationmocks --filename allocation_service.go --outpkg allocationmocks
+	mockery --name=ResourceManagerAuthZ --dir=internal/rm --output internal/mocks --filename rm_authz_iface.go
 
 	# fmt once since the mocks are not generated formatted.
 	goimports -l -local github.com/determined-ai -w ./internal/mocks ./internal/mocks/allocationmocks

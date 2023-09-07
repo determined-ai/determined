@@ -7,6 +7,7 @@ import uPlot, { AlignedData } from 'uplot';
 import { DarkLight, ErrorHandler, ErrorLevel, ErrorType } from 'components/kit/internal/types';
 import usePrevious from 'components/kit/internal/usePrevious';
 import useResize from 'components/kit/internal/useResize';
+import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'stores/contexts/UI';
 
@@ -27,6 +28,7 @@ interface Props {
   options?: Partial<Options>;
   style?: React.CSSProperties;
   handleError?: ErrorHandler;
+  xAxis?: XAxisDomain;
 }
 
 const SCROLL_THROTTLE_TIME = 500;
@@ -87,6 +89,7 @@ const UPlotChart: React.FC<Props> = ({
   style,
   handleError,
   experimentId,
+  xAxis,
 }: Props) => {
   const chartRef = useRef<uPlot>();
   const [divHeight, setDivHeight] = useState((options?.height ?? 300) + 20);
@@ -105,8 +108,8 @@ const UPlotChart: React.FC<Props> = ({
 
   useEffect(() => {
     if (data !== undefined && chartType === 'Line')
-      syncService.updateDataBounds(data as AlignedData);
-  }, [syncService, chartType, data]);
+      syncService.updateDataBounds(data as AlignedData, xAxis);
+  }, [syncService, chartType, data, xAxis]);
 
   const extendedOptions = useMemo(() => {
     const extended: Partial<uPlot.Options> = uPlot.assign(

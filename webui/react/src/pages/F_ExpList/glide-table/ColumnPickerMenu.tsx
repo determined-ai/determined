@@ -32,6 +32,7 @@ const locationLabelMap = {
   [V1LocationType.EXPERIMENT]: 'General',
   [V1LocationType.VALIDATIONS]: 'Metrics',
   [V1LocationType.TRAINING]: 'Metrics',
+  [V1LocationType.CUSTOMMETRIC]: 'Metrics',
   [V1LocationType.HYPERPARAMETERS]: 'Hyperparameters',
 } as const;
 
@@ -239,7 +240,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
           <Pivot
             items={[
               V1LocationType.EXPERIMENT,
-              [V1LocationType.VALIDATIONS, V1LocationType.TRAINING],
+              [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
               V1LocationType.HYPERPARAMETERS,
             ].map((tab) => {
               const canonicalTab = Array.isArray(tab) ? tab[0] : tab;

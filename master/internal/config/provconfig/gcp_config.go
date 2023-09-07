@@ -270,6 +270,9 @@ var gceMachineTypes = []string{
 	"c2-standard",
 	"a2-highgpu",
 	"a2-megagpu",
+	"a2-ultragpu",
+	"g2-standard",
+	"n2-standard",
 	"custom",
 }
 
@@ -280,6 +283,8 @@ var gceGPUTypes = map[string][]int{
 	"nvidia-tesla-p4":   {0, 1, 2, 4},
 	"nvidia-tesla-v100": {0, 1, 2, 4, 8},
 	"nvidia-tesla-a100": {0, 1, 2, 4, 8, 16},
+	"nvidia-a100-80gb":  {0, 1, 2, 4, 8},
+	"nvidia-l4":         {0, 1, 2, 4, 8},
 }
 
 // GetCPUPlatform returns CPU platform.
@@ -297,8 +302,11 @@ func GetCPUPlatform(machineType string) string {
 
 // First prefix match found is applied.
 var gceCPUPlatforms = map[string]string{
-	"a2-highgpu": "Intel Cascade Lake",
-	"a2-megagpu": "Intel Cascade Lake",
+	"a2-highgpu":  "Intel Cascade Lake",
+	"a2-megagpu":  "Intel Cascade Lake",
+	"a2-ultragpu": "Intel Cascade Lake",
+	"g2-standard": "Intel Cascade Lake",
+	"n2-standard": "Intel Cascade Lake",
 }
 
 type gceInstanceType struct {

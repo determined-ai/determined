@@ -2,11 +2,10 @@ package job
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"

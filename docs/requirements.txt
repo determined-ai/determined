@@ -27,6 +27,7 @@ algoliasearch>=2.0,<3.0
 boto3>=1.24.4<2.0
 
 # build requirements
-tensorflow==2.12.0
+tensorflow==2.12.0; sys_platform != 'darwin' or platform_machine != 'arm64'
+tensorflow-macos==2.11.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 torch==1.11.0
 torchvision==0.12.0

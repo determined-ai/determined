@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/pkg/set"
 
@@ -40,7 +41,8 @@ func AddRPWorkspaceBindings(ctx context.Context, workspaceIds []int32, poolName 
 	}
 
 	if !poolExists {
-		return errors.Errorf("pool with name %v doesn't exist in config", poolName)
+		return errors.Errorf("pool with name %v doesn't exist",
+			poolName)
 	}
 
 	var bindings []RPWorkspaceBinding
@@ -102,7 +104,7 @@ func ReadWorkspacesBoundToRP(
 		}
 	}
 	if !poolExists {
-		return nil, nil, errors.Errorf("pool with name %v doesn't exist in config", poolName)
+		return nil, nil, errors.Errorf("pool with name %v doesn't exist or is not available", poolName)
 	}
 	var rpWorkspaceBindings []*RPWorkspaceBinding
 	query := Bun().NewSelect().Model(&rpWorkspaceBindings).Where("pool_name = ?",
@@ -189,7 +191,8 @@ func OverwriteRPWorkspaceBindings(ctx context.Context,
 	}
 
 	if !poolExists {
-		return errors.Errorf("pool with name %v doesn't exist in config", poolName)
+		return errors.Errorf("pool with name %v doesn't exist",
+			poolName)
 	}
 	// Remove existing ones with this pool name
 	_, err := Bun().NewDelete().Table("rp_workspace_bindings").
@@ -322,4 +325,18 @@ func GetDefaultPoolsForWorkspace(ctx context.Context, workspaceID int,
 	}
 
 	return target.DefaultComputePool, target.DefaultAuxPool, nil
+}
+
+// CheckIfRPUnbound checks to make sure the specified resource pools is not bound to any workspace
+// and returns an error if it is.
+func CheckIfRPUnbound(poolName string) error {
+	exists, err := Bun().NewSelect().Table("rp_workspace_bindings").
+		Where("pool_name = ?", poolName).
+		Exists(context.TODO())
+	if err != nil {
+		return err
+	} else if exists {
+		return fmt.Errorf("default resource pool %s can not be bound to any workspaces", poolName)
+	}
+	return nil
 }

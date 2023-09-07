@@ -130,47 +130,6 @@ describe('Data Utilities', () => {
     });
   });
 
-  describe('clone', () => {
-    it('should preserve primitives', () => {
-      expect(utils.clone(-1.23e-8)).toBe(-1.23e-8);
-      expect(utils.clone(0)).toBe(0);
-      expect(utils.clone('Jalapeño')).toBe('Jalapeño');
-      expect(utils.clone(false)).toBe(false);
-      expect(utils.clone(false)).toBe(false);
-      expect(utils.clone(null)).toBeNull();
-      expect(utils.clone(undefined)).toBeUndefined();
-    });
-
-    it('should clone maps', () => {
-      const map = new Map([
-        ['x', -1],
-        ['y', 1.5],
-      ]);
-      expect(utils.clone(map)).not.toBe(map);
-      expect(utils.clone(map)).toMatchObject(map);
-    });
-
-    it('should clone sets', () => {
-      const set = new Set([-1.5, Number.MAX_VALUE, null, undefined]);
-      expect(utils.clone(set)).not.toBe(set);
-      expect(utils.clone(set)).toMatchObject(set);
-    });
-
-    it('should clone shallow objects', () => {
-      const shallowClone = utils.clone(object, false);
-      expect(shallowClone).not.toBe(object);
-      expect(shallowClone.c).toBe(object.c);
-      expect(shallowClone.c.x).toBe(object.c.x);
-    });
-
-    it('should clone deep objects', () => {
-      const deepClone = utils.clone(object);
-      expect(deepClone).not.toBe(object);
-      expect(deepClone.c).not.toBe(object.c);
-      expect(deepClone.c.x).not.toBe(object.c.x);
-    });
-  });
-
   describe('flattenObject and unflattenObject', () => {
     const continueFn = (value: unknown) => !(value as { type: string }).type;
     const tests = [
@@ -286,10 +245,10 @@ describe('Data Utilities', () => {
     });
 
     describe('chained object manipulators', () => {
-      let config = utils.clone(testConfig);
+      let config = structuredClone(testConfig);
 
       beforeAll(() => {
-        config = utils.clone(testConfig);
+        config = structuredClone(testConfig);
       });
 
       describe('getPathList', () => {

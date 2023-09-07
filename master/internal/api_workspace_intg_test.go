@@ -74,6 +74,8 @@ func TestPostWorkspace(t *testing.T) {
 			"bucket":     "bucketofrain",
 			"secret_key": "thisisasecret",
 		}),
+		DefaultComputePool: "testRP",
+		DefaultAuxPool:     "testRP",
 	})
 	require.NoError(t, err)
 
@@ -102,6 +104,8 @@ func TestPostWorkspace(t *testing.T) {
 			"save_trial_best":      nil,
 			"save_trial_latest":    nil,
 		}),
+		DefaultComputePool: "testRP",
+		DefaultAuxPool:     "testRP",
 	}
 	proto.Equal(expected, resp.Workspace)
 	require.Equal(t, expected, resp.Workspace)

@@ -7,7 +7,8 @@ from typing import IO, Any, Iterator, Optional
 import requests
 
 from determined.common import api
-from determined.common.api import authentication, certs
+from determined.common.api import authentication, certs, task_logs
+from tests import api_utils
 from tests import config as conf
 
 
@@ -120,3 +121,9 @@ def get_command_config(command_type: str, task_id: str) -> str:
         completed_process.stdout, completed_process.stderr
     )
     return str(completed_process.stdout)
+
+
+def print_command_logs(task_id: str) -> bool:
+    for tl in task_logs(api_utils.determined_test_session(), task_id):
+        print(tl.message)
+    return True

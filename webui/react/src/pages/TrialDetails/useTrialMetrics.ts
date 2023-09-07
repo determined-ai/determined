@@ -44,21 +44,19 @@ const summarizedMetricToSeries = (
   allDownsampledMetrics.forEach((summMetric) => {
     summMetric.data.forEach((avgMetrics) => {
       selectedMetrics.forEach((metric) => {
+        if (summMetric.group !== metric.group) return;
+
+        const metricKey = metricToKey(metric);
         const value = avgMetrics.values[metric.name];
-        if (!rawBatchValuesMap[metric.name]) rawBatchValuesMap[metric.name] = [];
-
-        if (!rawBatchTimesMap[metric.name]) rawBatchTimesMap[metric.name] = [];
-
-        if (!rawBatchEpochMap[metric.name]) rawBatchEpochMap[metric.name] = [];
+        if (!rawBatchValuesMap[metricKey]) rawBatchValuesMap[metricKey] = [];
+        if (!rawBatchTimesMap[metricKey]) rawBatchTimesMap[metricKey] = [];
+        if (!rawBatchEpochMap[metricKey]) rawBatchEpochMap[metricKey] = [];
 
         if (value || value === 0) {
-          rawBatchValuesMap[metric.name]?.push([avgMetrics.batches, value]);
+          rawBatchValuesMap[metricKey]?.push([avgMetrics.batches, value]);
           if (avgMetrics.time)
-            rawBatchTimesMap[metric.name]?.push([
-              new Date(avgMetrics.time).getTime() / 1000,
-              value,
-            ]);
-          if (avgMetrics.epoch) rawBatchEpochMap[metric.name]?.push([avgMetrics.epoch, value]);
+            rawBatchTimesMap[metricKey]?.push([new Date(avgMetrics.time).getTime() / 1000, value]);
+          if (avgMetrics.epoch) rawBatchEpochMap[metricKey]?.push([avgMetrics.epoch, value]);
         }
       });
     });
@@ -66,10 +64,11 @@ const summarizedMetricToSeries = (
   const trialData: Record<string, Serie> = {};
   const metricHasData: Record<string, boolean> = {};
   selectedMetrics.forEach((metric) => {
+    const metricKey = metricToKey(metric);
     const data: Partial<Record<XAxisDomain, [number, number][]>> = {};
-    if (rawBatchValuesMap[metric.name]) data[XAxisDomain.Batches] = rawBatchValuesMap[metric.name];
-    if (rawBatchTimesMap[metric.name]) data[XAxisDomain.Time] = rawBatchTimesMap[metric.name];
-    if (rawBatchEpochMap[metric.name]) data[XAxisDomain.Epochs] = rawBatchEpochMap[metric.name];
+    if (rawBatchValuesMap[metricKey]) data[XAxisDomain.Batches] = rawBatchValuesMap[metricKey];
+    if (rawBatchTimesMap[metricKey]) data[XAxisDomain.Time] = rawBatchTimesMap[metricKey];
+    if (rawBatchEpochMap[metricKey]) data[XAxisDomain.Epochs] = rawBatchEpochMap[metricKey];
 
     const series: Serie = {
       color:
@@ -92,8 +91,11 @@ const summarizedMetricToSeries = (
 };
 
 export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetricData => {
-  const trialTerminated = trials?.every((trial) =>
+  const trialsAllTerminated = trials?.every((trial) =>
     terminalRunStates.has(trial?.state ?? RunState.Active),
+  );
+  const trialsAllNonTerminal = !trials?.find((trial) =>
+    terminalRunStates.has(trial?.state ?? RunState.Error),
   );
   const experimentIds = useMemo(
     () => trials?.map((t) => t?.experimentId || 0).filter((i) => i > 0),
@@ -112,7 +114,11 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
     [trials],
   );
 
-  const loadableMetrics = useMetricNames(experimentIds, handleMetricNamesError);
+  const loadableMetrics = useMetricNames(
+    experimentIds,
+    handleMetricNamesError,
+    trialsAllNonTerminal,
+  );
   const metricNamesLoaded = Loadable.isLoaded(loadableMetrics);
   const metrics = useMemo(() => {
     return Loadable.getOrElse([], loadableMetrics);
@@ -180,12 +186,12 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
   const { stopPolling } = usePolling(fetchAll, { interval: 2000, rerunOnNewFn: true });
 
   useEffect(() => {
-    if (trialTerminated) {
+    if (trialsAllTerminated) {
       stopPolling();
     }
-  }, [trialTerminated, stopPolling]);
+  }, [trialsAllTerminated, stopPolling]);
 
-  if (trialTerminated) {
+  if (trialsAllTerminated) {
     stopPolling();
   }
 

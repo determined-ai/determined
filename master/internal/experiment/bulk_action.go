@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
-	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -721,14 +721,6 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 			}
 		}()
 
-		_, err = tx.NewUpdate().
-			ModelTableExpr("exp_metrics_name as e").
-			Set("project_id = ?", destinationProjectID).
-			Where("e.experiment_id IN (?)", bun.In(validIDs)).
-			Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
 		err = db.RemoveProjectHyperparameters(ctx, tx, validIDs)
 		if err != nil {
 			return nil, err

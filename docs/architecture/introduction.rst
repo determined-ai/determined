@@ -153,6 +153,8 @@ experiment or to compare multiple experiments.
 TensorBoard instances can be launched via the WebUI or the CLI. To launch TensorBoard instances from
 the CLI, first :ref:`install the CLI <install-cli>` on your development machine.
 
+.. _benefits:
+
 **********
  Benefits
 **********
@@ -170,12 +172,11 @@ following benefits:
 |                                                | hyperparameters or macro- architectures, using a variety  |
 |                                                | of search algorithms. Hyperparameter searches are         |
 |                                                | automatically parallelized across the accelerators in the |
-|                                                | cluster. See                                              |
-|                                                | :doc:`/model-dev-guide/hyperparameter/overview`.          |
+|                                                | cluster. See :ref:`hyperparameter-tuning`.                |
 +------------------------------------------------+-----------------------------------------------------------+
 | Cluster-backed notebooks, commands, and shells | Leverage your shared cluster computing devices in a more  |
-|                                                | versatile environment. See :doc:`/interfaces/notebooks`   |
-|                                                | and :doc:`/interfaces/commands-and-shells`.               |
+|                                                | versatile environment. See :ref:`notebooks` and           |
+|                                                | :ref:`commands-and-shells`.                               |
 +------------------------------------------------+-----------------------------------------------------------+
 | Cluster management                             | Automatically manage ML accelerators, such as GPUs,       |
 |                                                | on-premise or in cloud VMs using your own environment,    |
@@ -189,19 +190,18 @@ following benefits:
 | Containerization                               | Develop and train models in customizable containers that  |
 |                                                | enable simple, consistent dependency management           |
 |                                                | throughout the model development lifecycle. See           |
-|                                                | :doc:`/model-dev-guide/prepare-container/custom-env`.     |
+|                                                | :ref:`custom-env`.                                        |
 +------------------------------------------------+-----------------------------------------------------------+
 | Distributed training                           | Easily distribute a single training job across multiple   |
 |                                                | accelerators to speed up model training and reduce model  |
 |                                                | development iteration time. Determined uses synchronous,  |
 |                                                | data-parallel distributed training, with key performance  |
 |                                                | optimizations over other available options. See           |
-|                                                | :doc:`/model-dev-guide/dtrain/dtrain-introduction`.       |
+|                                                | :ref:`multi-gpu-training-concept`.                        |
 +------------------------------------------------+-----------------------------------------------------------+
 | Experiment collaboration                       | Automatically track your experiment configuration and     |
 |                                                | environment to facilitate reproducibility and             |
-|                                                | collaboration among teams. See                            |
-|                                                | :doc:`/model-dev-guide/submit-experiment`.                |
+|                                                | collaboration among teams. See :ref:`experiments`.        |
 +------------------------------------------------+-----------------------------------------------------------+
 | Fault tolerance                                | Models are checkpointed throughout the training process   |
 |                                                | and can be restarted from the latest checkpoint,          |
@@ -214,7 +214,7 @@ following benefits:
 |                                                | without needing to manage a different cluster for each.   |
 |                                                | Different frameworks for different models can be used     |
 |                                                | without risking future lock-in. See                       |
-|                                                | :doc:`/model-dev-guide/apis-howto/overview`.              |
+|                                                | :ref:`apis-howto-overview`.                               |
 +------------------------------------------------+-----------------------------------------------------------+
 | Profiling                                      | Out-of-the-box system metrics (measurements of hardware   |
 |                                                | usage) and timings (durations of actions taken during     |
@@ -222,7 +222,7 @@ following benefits:
 +------------------------------------------------+-----------------------------------------------------------+
 | Visualization                                  | Visualize your model and training procedure by using The  |
 |                                                | built-in WebUI and by launching managed                   |
-|                                                | :doc:`/interfaces/tensorboard` instances.                 |
+|                                                | :ref:`tensorboards` instances.                            |
 +------------------------------------------------+-----------------------------------------------------------+
 
 **********
@@ -273,13 +273,12 @@ with learning rates of .001, .01, and .1.
 
 To run experiments, you need to write your model training code. A *model definition* represents a
 specification of a deep learning model and its training procedure. It contains training code that
-implements training APIs. Visit the :doc:`Training API Guides
-</model-dev-guide/apis-howto/overview>` for more information.
+implements training APIs. Visit the :ref:`Training API Guides <apis-howto-overview>` for more
+information.
 
 For each experiment, you can configure a *searcher*, also known as a *search algorithm*. The search
 algorithm determines how many trials will be run for a particular experiment and how the
-hyperparameters will be set. More information can be found at
-:doc:`/model-dev-guide/hyperparameter/overview`.
+hyperparameters will be set. More information can be found at :ref:`hyperparameter-tuning`.
 
 .. _resource-pools:
 
@@ -711,14 +710,14 @@ Workspaces and Projects
 
 **Workspaces** and **projects** provide a way to organize experiments. A project is a collection of
 experiments, and a workspace is a collection of projects. Learn more about workspaces and projects
-at :doc:`/setup-cluster/workspaces`.
+at :ref:`workspaces`.
 
 RBAC and User Groups
 ====================
 
 **Role Based Access Control (RBAC)** enables administrators to control user access to various
 actions and data within Determined. RBAC feature requires Determined Enterprise Edition. Learn more
-about RBAC and User Group usage at :doc:`/setup-cluster/security/rbac`.
+about RBAC and User Group usage at :ref:`rbac`.
 
 .. _topic-guides_yaml:
 

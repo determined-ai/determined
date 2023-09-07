@@ -55,6 +55,10 @@ type WorkspaceAuthZ interface {
 	CanSetWorkspacesCheckpointStorageConfig(
 		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 	) error
+	CanSetWorkspacesDefaultPools(
+		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
+	) error
+	// TODO: we should consider userID as an arg instead of model.User
 
 	// DELETE /api/v1/workspaces/:workspace_id
 	CanDeleteWorkspace(

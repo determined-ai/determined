@@ -767,6 +767,68 @@ message CreateTrialResponse {
   determined.trial.v1.Trial trial = 1;
 }
 
+// Put a trial.
+message PutTrialRequest {
+  // CreateTrialRequest payload.
+  CreateTrialRequest create_trial_request = 1;
+
+  // External trial id.
+  string external_trial_id = 41;
+}
+
+// Response to PutTrialRequest.
+message PutTrialResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial" ] }
+  };
+  // The requested trial.
+  determined.trial.v1.Trial trial = 1;
+}
+
+// Patch a trial.
+message PatchTrialRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id" ] }
+  };
+  // Trial id.
+  int32 trial_id = 1;
+  // The state of the trial.
+  optional determined.trial.v1.State state = 2;
+}
+
+// Response to PatchTrialRequest.
+message PatchTrialResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial" ] }
+  };
+  // The requested trial.
+  determined.trial.v1.Trial trial = 1;
+}
+
+// Start a trial.
+message StartTrialRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id" ] }
+  };
+  // Trial id.
+  int32 trial_id = 1;
+  // Whether resume is allowed.
+  bool resume = 2;
+}
+
+// Response to StartTrialRequest.
+message StartTrialResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_run_id", "steps_completed" ] }
+  };
+  // Trial run id.
+  int32 trial_run_id = 1;
+  // Latest checkpoint.
+  optional string latest_checkpoint = 2;
+  // Steps completed.
+  int32 steps_completed = 3;
+}
+
 // Create a TrialSourceInfo
 message ReportTrialSourceInfoRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

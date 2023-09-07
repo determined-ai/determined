@@ -38,12 +38,11 @@
    Distributed Training <model-dev-guide/dtrain/index>
    Prepare Container Environment <model-dev-guide/prepare-container/overview>
    Prepare Data <model-dev-guide/load-model-data>
-   Training API Guides <model-dev-guide/apis-howto/overview>
+   API Guides <model-dev-guide/api-guides/index>
    Hyperparameter Tuning <model-dev-guide/hyperparameter/overview>
    Submit Experiment <model-dev-guide/submit-experiment>
    How to Debug Models <model-dev-guide/debug-models>
    Model Management <model-dev-guide/model-management/overview>
-   Batch Inference <model-dev-guide/batch-processing/batch-process-api-ug>
    Best Practices <model-dev-guide/best-practices/overview>
 
 .. toctree::
@@ -79,6 +78,7 @@
 
    Works with Determined <integrations/ecosystem/ecosystem-integration>
    IDE Integration <interfaces/ide-integration>
+   Pachyderm <integrations/pachyderm/pachyderm>
    Prometheus and Grafana <integrations/prometheus/prometheus>
    attributions
 
