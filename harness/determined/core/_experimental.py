@@ -64,7 +64,7 @@ class ExperimentalCoreContext:
 
 
 class DummyExperimentalCoreContext(ExperimentalCoreContext):
-    """Yield a Dummy Experimental Context for mypy"""
+    """A Dummy Experimental Context for mypy"""
 
     def __init__(self) -> None:
         pass
