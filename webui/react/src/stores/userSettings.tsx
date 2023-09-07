@@ -269,14 +269,16 @@ export class UserSettingsStore extends PollingStore {
       const settings = value as unknown as { [key: string]: unknown };
       dbUpdates.push(
         ...Object.keys(settings).reduce<V1UserWebSetting[]>((acc, setting) => {
-          return [
-            ...acc,
-            {
-              key: setting,
-              storagePath: key,
-              value: JSON.stringify(settings[setting]),
-            },
-          ];
+          return settings[setting]
+            ? [
+                ...acc,
+                {
+                  key: setting,
+                  storagePath: key,
+                  value: JSON.stringify(settings[setting]),
+                },
+              ]
+            : acc;
         }, []),
       );
     } else {

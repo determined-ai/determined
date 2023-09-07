@@ -29,9 +29,9 @@ import { Loadable } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';
 
 import ExperimentVisualizationFilters, {
-  VisualizationFilters,
   MAX_HPARAM_COUNT,
-  ViewType
+  ViewType,
+  VisualizationFilters,
 } from './ExperimentVisualization/ExperimentVisualizationFilters';
 import HpHeatMaps from './ExperimentVisualization/HpHeatMaps';
 import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
