@@ -51,7 +51,7 @@ jobs:
         continue-on-error: true
         run: |
           git rebase proposed_base 1>&2
-          printf 'rebase_exit=%s' $? >> "$GITHUB_OUTPUT"
+          printf 'rebase_exit=%s\n' $? >> "$GITHUB_OUTPUT"
 
 
   check-rebaseable:
