@@ -195,7 +195,7 @@ func (e *experiment) restoreTrial(
 	t, err := newTrial(
 		e.logCtx, trialTaskID(e.ID, searcher.Create.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 		searcher, e.rm, e.db, config, ckpt, e.taskSpec, e.generatedKeys, true, trialID,
-		e.searcher.Created(searcher.Create.RequestID), e.system, e.self, e.TrialClosed,
+		e.system, e.self, e.TrialClosed,
 	)
 	if err != nil {
 		l.WithError(err).Error("failed restoring trial, aborting restore")

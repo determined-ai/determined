@@ -717,8 +717,10 @@ func (e *experiment) trialReportEarlyExit(requestID model.RequestID, reason mode
 
 func (e *experiment) trialCreated(t *trial) {
 	requestID := t.searcher.Create.RequestID
-	ops, err := e.searcher.TrialCreated(requestID)
-	e.processOperations(ops, err)
+	if !e.searcher.Created(requestID) {
+		ops, err := e.searcher.TrialCreated(requestID)
+		e.processOperations(ops, err)
+	}
 	e.trials[requestID] = t
 }
 
@@ -785,7 +787,7 @@ func (e *experiment) processOperations(
 			t, err := newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
-				nil, false, e.system, e.self, e.TrialClosed,
+				nil, e.system, e.self, e.TrialClosed,
 			)
 			if err != nil {
 				e.syslog.WithError(err).Error("failed to create trial")

@@ -65,7 +65,6 @@ type trial struct {
 	idSet             bool
 	experimentID      int
 	restored          bool
-	trialCreationSent bool
 
 	// System dependencies.
 	db     db.DB
@@ -118,7 +117,6 @@ func newTrial(
 	generatedKeys ssh.PrivateAndPublicKeys,
 	restored bool,
 	id *int,
-	createSent bool,
 	system *actor.System,
 	parent *actor.Ref,
 	exitCallback trialExitCallback,
@@ -155,7 +153,6 @@ func newTrial(
 	if id != nil {
 		t.id = *id
 		t.idSet = true
-		t.trialCreationSent = createSent
 		if err := t.recover(); err != nil {
 			return nil, fmt.Errorf("recovering trial in prestart: %w", err)
 		}
