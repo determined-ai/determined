@@ -4,24 +4,25 @@
  Elasticsearch-backed logging
 ##############################
 
-This guide covers the limitations of the default logging backend, as a guideline on when to migrate
-to Elasticsearch, and some tips for how to tune Elasticsearch to work best with Determined.
+It is possible to use Elasticsearch as an alternative to the default logging backend. In the past,
+such configuration was recommended for larger installations, but it's no longer the case.
 
-`Elasticsearch <https://www.elastic.co/what-is/elasticsearch>`__ is a search engine commonly used
-for storing application logs for search and analytics. Determined supports using Elasticsearch as
-the storage backend for task logs. Configuring Determined to use Elasticsearch is simple; however,
-managing an Elasticsearch cluster at scale is an involved task, so this guide is recommended for
-users who have hit the limitations of the default logging backend.
+Example configuration:
 
-Using the default logging backend, with a standard deployment using ``det deploy``, the cluster can
-ingest logs about as fast as Postgres can persist them. For example, with ``det deploy aws`` using
-Aurora Serverless with 2 capacity units, ingestion speed maxes out around 10-15 MB/s (where the
-database's CPU hits ~90%). To get a little more mileage from the default, we recommend increasing
-the capacity of the database. At a certain point, the master instance itself will become the
-bottleneck, since it has limited incoming network bandwidth for HTTP requests delivering logs and
-limited resources to process them. The master instance size can be increased, but vertical scaling
-is likely to be limited to a log throughput of around hundreds of megabytes per second; we recommend
-moving to Elasticsearch to get past that limit.
+.. code:: yaml
+
+   logging:
+   type: elastic
+   host: "elastic.example.com"
+   port: 443
+   security:
+      username: "elastic-user"
+      password: "mypassword"
+      tls:
+      enabled: true
+
+The configuration settings to enable Elasticsearch as the task log backend are described in the
+:ref:`cluster configuration <cluster-configuration>` reference.
 
 Determined offers some additional recommendations for the Elasticsearch cluster configuration based
 on how the cluster will be used:
@@ -64,5 +65,3 @@ on how the cluster will be used:
      }
    }
 
-The configuration settings to enable Elasticsearch as the task log backend are described in the
-:ref:`cluster configuration <cluster-configuration>` reference.
