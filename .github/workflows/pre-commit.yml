@@ -16,7 +16,7 @@ jobs:
       # consider repackaging them in a container in the future
       SKIP: "web-js-lint-check,web-css-lint-check,web-misc-lint-check,black,golangci-lint"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1  # full repo for tag comparisons, etc
       - uses: actions/setup-python@v4
