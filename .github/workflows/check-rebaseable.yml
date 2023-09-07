@@ -50,8 +50,10 @@ jobs:
         if: github.repository != env.EE_REPO
         continue-on-error: true
         run: |
+          set +e  # GHA runs `bash -e` if shell is undefined or 'bash'
           git rebase proposed_base 1>&2
           printf 'rebase_exit=%s\n' $? >> "$GITHUB_OUTPUT"
+          exit $?
 
 
   check-rebaseable:
