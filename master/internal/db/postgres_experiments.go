@@ -396,7 +396,7 @@ type MetricMeasurements struct {
 	Values  map[string]interface{}
 	Batches uint
 	Time    time.Time
-	Epoch   *int32 `json:"epoch,omitempty"`
+	Epoch   *float64 `json:"epoch,omitempty"`
 	TrialID int32
 }
 
@@ -1155,7 +1155,7 @@ WITH const AS (
 		) AS experiment_rank,
 		rank() OVER (
 			PARTITION BY v.trial_id
-			ORDER BY const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8 
+			ORDER BY const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8
 			ASC NULLS LAST, v.id ASC
 		) AS trial_rank,
 		rank() OVER (
@@ -1167,7 +1167,7 @@ WITH const AS (
 	JOIN const ON true
 	JOIN trial_id_task_id ON c.task_id = trial_id_task_id.task_id
     JOIN trials t ON trial_id_task_id.trial_id = t.id
-	LEFT JOIN validations v ON v.total_batches = (c.metadata->>'steps_completed')::int AND 
+	LEFT JOIN validations v ON v.total_batches = (c.metadata->>'steps_completed')::int AND
 		v.trial_id = t.id
 	WHERE c.report_time IS NOT NULL
 		AND (SELECT COUNT(*) FROM trials t WHERE t.warm_start_checkpoint_id = c.id) = 0
