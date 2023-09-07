@@ -19,7 +19,7 @@ def test_test_one_batch(monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.
 
     with det._local_execution_manager(pathlib.Path(pytorch_onevar_model.__file__).parent):
         experimental.test_one_batch(
-            trial_class=pytorch_onevar_model.OneVarTrial,
+            trial_class=pytorch_onevar_model.OneVarTrial,  # type: ignore
             config={
                 "hyperparameters": {
                     "hidden_size": 2,
@@ -42,7 +42,7 @@ def test_keras_from_config() -> None:
         "searcher": {"metric": "val_loss"},
     }
     context = keras.TFKerasTrialContext.from_config(config)
-    trial = tf_keras_one_var_model.OneVarTrial(context)
+    trial = tf_keras_one_var_model.OneVarTrial(context)  # type: ignore
 
     model = trial.build_model()
     model.fit(trial.build_training_data_loader(), verbose=0)

@@ -186,7 +186,9 @@ def _log_tb_metrics(
     elif metric_type == "train":
         logging.debug("Write training metrics for TensorBoard")
     else:
-        logging.warning("Unrecognized tensorboard metric type: " + metric_type, stacklevel=2)
+        logging.warning(
+            "Unrecognized tensorboard metric type: " + metric_type, stacklevel=2  # type: ignore
+        )
 
     metrics_seen = set()
 
