@@ -101,8 +101,8 @@ func (s *Searcher) TrialCreated(requestID model.RequestID) ([]Operation, error) 
 	return operations, nil
 }
 
-// Created return true if the trial has been created as a result of a TrialCreated operation.
-func (s *Searcher) Created(requestID model.RequestID) bool {
+// TrialIsCreated returns true if the creation has been recorded with a TrialCreated call.
+func (s *Searcher) TrialIsCreated(requestID model.RequestID) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -207,8 +207,8 @@ func (s *Searcher) TrialClosed(requestID model.RequestID) ([]Operation, error) {
 	return operations, nil
 }
 
-// Closed return true if the trial has been closed as a result of a TrialClosed operation.
-func (s *Searcher) Closed(requestID model.RequestID) bool {
+// TrialIsClosed returns true if the close has been recorded with a TrialClosed call.
+func (s *Searcher) TrialIsClosed(requestID model.RequestID) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

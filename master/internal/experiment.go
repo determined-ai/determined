@@ -715,7 +715,7 @@ func (e *experiment) trialReportEarlyExit(requestID model.RequestID, reason mode
 
 func (e *experiment) trialCreated(t *trial) {
 	requestID := t.searcher.Create.RequestID
-	if !e.searcher.Created(requestID) {
+	if !e.searcher.TrialIsCreated(requestID) {
 		ops, err := e.searcher.TrialCreated(requestID)
 		e.processOperations(ops, err)
 	}
