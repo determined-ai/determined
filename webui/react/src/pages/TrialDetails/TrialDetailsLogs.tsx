@@ -164,12 +164,16 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
     const fieldCanceler = new AbortController();
 
+    const newCanceler = new AbortController();
+    canceler.current = newCanceler;
+
     readStream(
       detApi.StreamingExperiments.trialLogsFields(trial.id, true, { signal: fieldCanceler.signal }),
       (event) => setFilterOptions(event as Filters),
     );
 
     return () => {
+      canceler.current.abort();
       fieldCanceler.abort();
     };
   }, [trial?.id, ui.isPageHidden]);
