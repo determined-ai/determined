@@ -898,7 +898,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         if scaler:
 
             def step_fn() -> None:
-                scaler.step(optimizer)  # type: ignore
+                scaler.step(optimizer)
 
         else:
             step_fn = optimizer.step  # type: ignore

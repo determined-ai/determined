@@ -242,7 +242,7 @@ def make_trial_controller_from_trial_implementation(
         assert hasattr(
             trial_class, "_searcher_metric"
         ), "Trial classes for unit tests should be annotated with a _searcher_metric attribute"
-        searcher_metric = trial_class._searcher_metric  # type: ignore
+        searcher_metric = trial_class._searcher_metric
         exp_config = make_default_exp_config(
             hparams, scheduling_unit, searcher_metric, checkpoint_dir=checkpoint_dir
         )

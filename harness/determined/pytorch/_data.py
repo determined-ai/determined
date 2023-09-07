@@ -372,8 +372,8 @@ def to_device(
         # Do not attempt to convert any other kinds to tensors.
         if data.dtype.kind in "fciub":
             return torch.from_numpy(data).to(device)
-    elif hasattr(data, "to") and callable(data.to):  # type: ignore
-        return data.to(device)  # type: ignore
+    elif hasattr(data, "to") and callable(data.to):
+        return data.to(device)
 
     if type(data) not in warned_types:
         warned_types.add(type(data))

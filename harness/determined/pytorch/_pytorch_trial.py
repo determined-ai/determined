@@ -1573,7 +1573,7 @@ class PyTorchTrial(det.Trial):
             batch_idx (integer): index of the current batch among all the epochs processed
                 per device (slot) since the start of training.
         """
-        pass
+        return {}
 
     def evaluation_reducer(self) -> Union[pytorch.Reducer, Dict[str, pytorch.Reducer]]:
         """
@@ -1599,7 +1599,7 @@ class PyTorchTrial(det.Trial):
         Arguments:
             data_loader (torch.utils.data.DataLoader): data loader for evaluating.
         """
-        pass
+        return {}
 
     def get_batch_length(self, batch: Any) -> int:
         """Count the number of records in a given batch.
