@@ -173,7 +173,7 @@ func newRunCmd() *cobra.Command {
 	return cmd
 }
 
-// visibleGPUsFromEnvironment returns GPU allocation information from the environment
+// visibleGPUsFromEnvironment returns GPU visibility information from the environment
 // if any, else "".
 func visibleGPUsFromEnvironment() (visDevices string) {
 	visDevices, defined := os.LookupEnv(rocrVisibleDevices)
