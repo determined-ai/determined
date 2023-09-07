@@ -121,7 +121,7 @@ export default defineConfig(({ mode }) => ({
       (mode !== 'test' && publicUrl) || '',
     ),
     'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
-    'process.env.VERSION': '"0.25.1-rc0"',
+    'process.env.VERSION': '"0.25.1-rc1"',
   },
   optimizeDeps: {
     include: ['notebook'],
