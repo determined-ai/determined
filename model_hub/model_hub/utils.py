@@ -36,7 +36,7 @@ def expand_like(arrays: List[np.ndarray], fill: float = -100) -> np.ndarray:
     for a in arrays:
         result[row_offset : row_offset + a.shape[0], : a.shape[1]] = a
         row_offset += a.shape[0]
-    return result
+    return result  # type: ignore
 
 
 def numpify(x: Union[List, np.ndarray, torch.Tensor]) -> np.ndarray:
