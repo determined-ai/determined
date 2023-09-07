@@ -370,7 +370,7 @@ func (a *allocation) SetResourcesAsDaemon(_ context.Context, rID sproto.Resource
 		return nil
 	}
 
-	a.syslog.Errorf("setting resources as daemon %s", rID)
+	a.syslog.Debugf("setting resources as daemon %s", rID)
 	a.resources[rID].Daemon = true
 	if err := a.resources[rID].Persist(); err != nil {
 		a.crash(err)
