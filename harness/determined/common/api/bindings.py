@@ -2384,7 +2384,7 @@ class v1CurrentUserResponse(Printable):
         return out
 
 class v1DataPoint(Printable):
-    epoch: "typing.Optional[int]" = None
+    epoch: "typing.Optional[float]" = None
     values: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
@@ -2392,7 +2392,7 @@ class v1DataPoint(Printable):
         *,
         batches: int,
         time: str,
-        epoch: "typing.Union[int, None, Unset]" = _unset,
+        epoch: "typing.Union[float, None, Unset]" = _unset,
         values: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
     ):
         self.batches = batches
@@ -2409,7 +2409,7 @@ class v1DataPoint(Printable):
             "time": obj["time"],
         }
         if "epoch" in obj:
-            kwargs["epoch"] = obj["epoch"]
+            kwargs["epoch"] = float(obj["epoch"]) if obj["epoch"] is not None else None
         if "values" in obj:
             kwargs["values"] = obj["values"]
         return cls(**kwargs)
@@ -2420,7 +2420,7 @@ class v1DataPoint(Printable):
             "time": self.time,
         }
         if not omit_unset or "epoch" in vars(self):
-            out["epoch"] = self.epoch
+            out["epoch"] = None if self.epoch is None else dump_float(self.epoch)
         if not omit_unset or "values" in vars(self):
             out["values"] = self.values
         return out
