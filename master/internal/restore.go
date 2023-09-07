@@ -190,7 +190,6 @@ func (e *experiment) restoreTrial(
 		return
 	}
 
-	l.Debug("new trial for restoring trial")
 	config := schemas.Copy(e.activeConfig)
 	t, err := newTrial(
 		e.logCtx, trialTaskID(e.ID, searcher.Create.RequestID), e.JobID, e.StartTime, e.ID, e.State,
@@ -206,7 +205,7 @@ func (e *experiment) restoreTrial(
 	}
 	e.trialCreated(t)
 
-	l.Debug("finished restoring trial")
+	l.Debug("restored trial")
 }
 
 // retrieveExperimentSnapshot retrieves a snapshot in from database if it exists.

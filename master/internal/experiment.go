@@ -43,9 +43,9 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// const (
-// 	maxConcurrentTrialOps = 16
-// )
+const (
+	maxConcurrentTrialOps = 16
+)
 
 // Experiment-specific actor messages.
 type (
@@ -310,9 +310,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				})
 			}
 
-			e.syslog.Info("restoring trials")
 			e.restoreTrials()
-			e.syslog.Info("trials restored")
 			return nil
 		}
 
@@ -908,7 +906,7 @@ func (e *experiment) updateState(state model.StateWithReason) bool {
 	e.syslog.Infof("updateState changed to %s", state.State)
 
 	var g errgroup.Group
-	// g.SetLimit(maxConcurrentTrialOps)
+	g.SetLimit(maxConcurrentTrialOps)
 	for _, t := range e.trials {
 		t := t
 		g.Go(func() error {
@@ -1085,7 +1083,7 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 	}
 
 	var g errgroup.Group
-	// g.SetLimit(maxConcurrentTrialOps)
+	g.SetLimit(maxConcurrentTrialOps)
 	for _, t := range e.trials {
 		t := t
 		g.Go(func() error {
