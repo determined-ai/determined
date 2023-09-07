@@ -7,6 +7,8 @@ import {
   measureTextCached,
 } from '@hpe.com/glide-data-grid';
 
+import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
+
 interface LinkCellProps {
   readonly kind: 'link-cell';
   /**
@@ -19,10 +21,14 @@ interface LinkCellProps {
   readonly link: {
     readonly title: string;
     readonly href: string;
+    readonly unmanaged?: boolean;
   };
 }
 
 export type LinkCell = CustomCell<LinkCellProps>;
+
+const TAG_HEIGHT = 20;
+const TAG_CONTENT = 'unmanaged';
 
 function onClickSelect(e: Parameters<NonNullable<CustomRenderer<LinkCell>['onSelect']>>[0]) {
   const useCtrl = e.cell.data.navigateOn !== 'click';
@@ -87,6 +93,30 @@ const renderer: CustomRenderer<LinkCell> = {
     }
     ctx.fillStyle = theme.linkColor;
     ctx.fillText(link.title, drawX, drawY);
+    if (link.unmanaged) {
+      const x = drawX + commaMetrics.width + 8;
+      const y = drawY - TAG_HEIGHT / 2;
+      ctx.fillStyle = theme.bgBubble;
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = theme.textBubble;
+      ctx.beginPath();
+      roundedRect(
+        ctx,
+        x,
+        y,
+        measureTextCached(TAG_CONTENT, ctx).width + 8,
+        TAG_HEIGHT,
+        TAG_HEIGHT / 2,
+      );
+      ctx.stroke();
+      ctx.fill();
+      ctx.fillStyle = theme.textDark;
+      ctx.fillText(
+        TAG_CONTENT,
+        x + 4,
+        y + TAG_HEIGHT / 2 + getMiddleCenterBias(ctx, `12px ${theme.fontFamily}`),
+      );
+    }
 
     drawX += commaMetrics.width + 4;
 

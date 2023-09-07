@@ -664,6 +664,7 @@ export interface ExperimentItem {
   userId: number;
   workspaceId?: number;
   workspaceName?: string;
+  unmanaged?: boolean;
 }
 
 export interface ExperimentWithTrial {

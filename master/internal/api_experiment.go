@@ -567,6 +567,7 @@ func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("e.config").
 		Column("e.checkpoint_size").
 		Column("e.checkpoint_count").
+		Column("e.unmanaged").
 		Join("JOIN users u ON e.owner_id = u.id").
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id")

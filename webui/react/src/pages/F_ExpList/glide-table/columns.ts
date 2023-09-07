@@ -228,6 +228,7 @@ export const getColumnDefs = ({
         link: {
           href: paths.experimentDetails(record.experiment.id),
           title: String(record.experiment.name),
+          unmanaged: record.experiment.unmanaged,
         },
         navigateOn: 'click',
         underlineOffset: 6,
