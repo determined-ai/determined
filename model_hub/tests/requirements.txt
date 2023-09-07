@@ -1,6 +1,6 @@
 # pytest 6.0 has linter-breaking changes
 pytest>=6.0.1
-mypy==1.5.1
+mypy==1.4.1
 coverage
 
 # install transformers and datasets

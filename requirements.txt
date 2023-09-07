@@ -21,7 +21,7 @@ flake8-quotes>=2.1.0
 flake8-tuple>=0.4.0
 isort==5.11.5 # Note: this should be kept in sync with the version in `.pre-commit-config.yaml`.
 jax==0.3.15  # Versions 0.4.* use self-documenting f-strings, which are incompatible with Python 3.7, which mypy is configured for. Later patches of 0.3.* cause other mypy errors.
-mypy==1.5.1
+mypy==1.4.1
 bump2version>=1.0.1
 pre-commit~=2.20
 # Earlier versions had different type annotations
