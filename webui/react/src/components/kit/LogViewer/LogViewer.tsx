@@ -134,7 +134,6 @@ const LogViewer: React.FC<Props> = ({
   ...props
 }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
-  const logsRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<VariableSizeList>(null);
   const [isFetching, setIsFetching] = useState(false);
   const local = useRef(clone(defaultLocal));
@@ -143,8 +142,8 @@ const LogViewer: React.FC<Props> = ({
   const [isTailing, setIsTailing] = useState<boolean>(true);
   const [showButtons, setShowButtons] = useState<boolean>(false);
   const [logs, setLogs] = useState<ViewerLog[]>([]);
-  const containerSize = useResize(logsRef);
-  const pageSize = useResize();
+  const { refObject: logsRef, refCallback, size: containerSize } = useResize();
+  const { size: pageSize } = useResize();
   const charMeasures = useGetCharMeasureInContainer(logsRef);
 
   const { dateTimeWidth, maxCharPerLine } = useMemo(() => {
@@ -313,7 +312,7 @@ const LogViewer: React.FC<Props> = ({
       // Store last scrollOffset.
       local.current.scrollOffset = scrollOffset;
     },
-    [],
+    [logsRef],
   );
 
   const handleScrollToOldest = useCallback(() => {
@@ -474,7 +473,7 @@ const LogViewer: React.FC<Props> = ({
       const parentHeight = listParent?.clientHeight ?? 0;
       return scrollHeight > parentHeight;
     });
-  }, [logs.length]);
+  }, [logs.length, logsRef]);
 
   /*
    * This overwrites the copy to clipboard event handler for the purpose of modifying the user
@@ -519,7 +518,7 @@ const LogViewer: React.FC<Props> = ({
     target.addEventListener('copy', handleCopy);
 
     return (): void => target?.removeEventListener('copy', handleCopy);
-  }, []);
+  }, [logsRef]);
 
   const logViewerOptions = (
     <div className={css.options}>
@@ -574,7 +573,7 @@ const LogViewer: React.FC<Props> = ({
       <Spinner center spinning={isFetching} tip={logs.length === 0 ? 'No logs to show.' : ''}>
         <div className={css.base} ref={baseRef}>
           <div className={css.container}>
-            <div className={css.logs} ref={logsRef}>
+            <div className={css.logs} ref={refCallback}>
               <VariableSizeList
                 height={pageSize.height - 250}
                 itemCount={logs.length}

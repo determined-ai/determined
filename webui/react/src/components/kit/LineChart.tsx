@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import React, { ReactNode, useMemo, useRef } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
@@ -388,8 +388,9 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     setScale,
     handleError,
   }: GroupProps) => {
-    const chartGridRef = useRef<HTMLDivElement | null>(null);
-    const { width, height } = useResize(chartGridRef);
+    const { refCallback, size } = useResize();
+    const height = size.height ?? 0;
+    const width = size.width ?? 0;
     const columnCount = Math.max(1, Math.floor(width / 540));
     const chartsProps = (
       Loadable.isLoadable(propChartsProps)
@@ -428,7 +429,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
 
     return (
       <div className={css.scrollContainer}>
-        <div className={css.chartgridContainer} ref={chartGridRef}>
+        <div className={css.chartgridContainer} ref={refCallback}>
           <Spinner center spinning={isLoading} tip="Loading chart data...">
             {chartsProps.length > 0 && (
               <>
