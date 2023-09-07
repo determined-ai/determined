@@ -76,9 +76,13 @@ const CompareParallelCoordinates: React.FC<Props> = ({
 
   const filters: VisualizationFilters = useMemo(
     () => ({
+      batch: undefined,
+      batchMargin: undefined,
       hParams: settings.hParams,
+      maxTrial: undefined,
       metric: settings.metric,
       scale: settings.scale,
+      view: undefined,
     }),
     [settings.hParams, settings.metric, settings.scale],
   );

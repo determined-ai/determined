@@ -114,11 +114,6 @@ export class UserSettingsStore extends PollingStore {
     key: string,
     value: t.TypeOfPartialProps<T>,
   ): void;
-  public set<T extends t.Props, U extends t.Props>(
-    type: t.IntersectionC<[t.TypeC<T>, t.PartialC<U>]>,
-    key: string,
-    value: t.TypeOfPartialProps<T>,
-  ): void;
   public set<T>(type: t.Encoder<T, Json>, key: string, value: T): void;
   public set<T>(type: t.Encoder<T, Json> | t.TypeC<t.Props>, key: string, value: T): void {
     if (isTypeC(type)) {
