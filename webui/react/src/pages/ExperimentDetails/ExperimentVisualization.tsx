@@ -29,10 +29,9 @@ import { Loadable } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';
 
 import ExperimentVisualizationFilters, {
-  ioVisualizationFilters,
-  MAX_HPARAM_COUNT,
-  ViewType,
   VisualizationFilters,
+  MAX_HPARAM_COUNT,
+  ViewType
 } from './ExperimentVisualization/ExperimentVisualizationFilters';
 import HpHeatMaps from './ExperimentVisualization/HpHeatMaps';
 import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
@@ -106,7 +105,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     () => `${STORAGE_PATH}/${experiment.id}/${STORAGE_FILTERS_KEY}`,
     [experiment],
   );
-  const filtersLoadable = useObservable(store.get(ioVisualizationFilters, storagePath));
+  const filtersLoadable = useObservable(store.get(VisualizationFilters, storagePath));
 
   const filters: VisualizationFilters = useMemo(() => {
     const filters = Loadable.getOrElse(defaultFilters, filtersLoadable);
@@ -141,7 +140,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
   const handleFiltersChange = useCallback(
     (newFilters: Partial<VisualizationFilters>) => {
-      store.set(ioVisualizationFilters, storagePath, newFilters);
+      store.set(VisualizationFilters, storagePath, newFilters);
     },
     [storagePath],
   );
@@ -160,7 +159,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   }, [metrics]);
 
   const handleFiltersReset = useCallback(() => {
-    store.set(ioVisualizationFilters, storagePath, {
+    store.set(VisualizationFilters, storagePath, {
       ...defaultFilters,
       batch: batches?.first() || DEFAULT_BATCH,
       hParams: fullHParams.current.slice(0, MAX_HPARAM_COUNT),

@@ -20,7 +20,7 @@ const ioMetric = t.type({
   name: t.string,
 });
 
-export const ioVisualizationFilters = t.type({
+export const VisualizationFilters = t.type({
   batch: optional(t.number),
   batchMargin: optional(t.number),
   hParams: t.array(t.string),
@@ -30,7 +30,7 @@ export const ioVisualizationFilters = t.type({
   view: optional(t.union([t.literal('grid'), t.literal('list')])),
 });
 
-export type VisualizationFilters = t.TypeOf<typeof ioVisualizationFilters>;
+export type VisualizationFilters = t.TypeOf<typeof VisualizationFilters>;
 
 export const FilterError = {
   MetricBatches: 'MetricBatches',
