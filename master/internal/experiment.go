@@ -43,9 +43,9 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-const (
-	maxConcurrentTrialOps = 16
-)
+// const (
+// 	maxConcurrentTrialOps = 16
+// )
 
 // Experiment-specific actor messages.
 type (
@@ -725,24 +725,18 @@ func (e *experiment) trialCreated(t *trial) {
 // restoreTrialsFromStates from the operations that were snapshotted with the
 // last experiment checkpoint.
 func (e *experiment) restoreTrials() {
-	g := new(errgroup.Group)
 	for _, state := range e.TrialSearcherState {
-		state := state
-		g.Go(func() error {
-			checkpoint, err := e.checkpointForCreate(state.Create)
-			if err != nil {
-				e.updateState(model.StateWithReason{
-					State:               model.StoppingErrorState,
-					InformationalReason: fmt.Sprintf("failed getting checkpoint to restore with error %v", err),
-				})
-				e.syslog.Error(err)
-				return nil
-			}
-			e.restoreTrial(checkpoint, state)
-			return nil
-		})
+		checkpoint, err := e.checkpointForCreate(state.Create)
+		if err != nil {
+			e.updateState(model.StateWithReason{
+				State:               model.StoppingErrorState,
+				InformationalReason: fmt.Sprintf("failed getting checkpoint to restore with error %v", err),
+			})
+			e.syslog.Error(err)
+			return
+		}
+		e.restoreTrial(checkpoint, state)
 	}
-	_ = g.Wait()
 }
 
 func (e *experiment) processOperations(
@@ -912,7 +906,7 @@ func (e *experiment) updateState(state model.StateWithReason) bool {
 	e.syslog.Infof("updateState changed to %s", state.State)
 
 	var g errgroup.Group
-	g.SetLimit(maxConcurrentTrialOps)
+	// g.SetLimit(maxConcurrentTrialOps)
 	for _, t := range e.trials {
 		t := t
 		g.Go(func() error {
@@ -1089,7 +1083,7 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 	}
 
 	var g errgroup.Group
-	g.SetLimit(maxConcurrentTrialOps)
+	// g.SetLimit(maxConcurrentTrialOps)
 	for _, t := range e.trials {
 		t := t
 		g.Go(func() error {
