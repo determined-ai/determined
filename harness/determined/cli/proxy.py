@@ -46,7 +46,7 @@ class CustomSSLWebsocketSession(lomond.session.WebsocketSession):  # type: ignor
         self.cert_name = cert_name
 
     def _wrap_socket(self, sock: socket.SocketType, host: str) -> socket.SocketType:
-        return self.ctx.wrap_socket(sock, server_hostname=self.cert_name or host)
+        return self.ctx.wrap_socket(sock, server_hostname=self.cert_name or host)  # type: ignore
 
 
 def copy_to_websocket(

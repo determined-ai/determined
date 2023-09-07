@@ -48,7 +48,7 @@ def launch(experiment_config: det.ExperimentConfig) -> int:
         # SLURM sends SIGTERM to notify of pending preemption, so we register a custom
         # handler to intercept it in the chief rank, and ignore in others.   We invoke
         # trigger_preemption to cause a checkpoint and clean exit (given enough time).
-        signal.signal(signal.SIGTERM, trigger_preemption)
+        signal.signal(signal.SIGTERM, trigger_preemption)  # type: ignore
         # Drop SIGTERM from forwarding so that we handle it in trigger_preemption
         sig_names.remove("SIGTERM")
 

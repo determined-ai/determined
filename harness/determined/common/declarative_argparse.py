@@ -194,7 +194,7 @@ def add_args(parser: ArgumentParser, description: ArgsDescription, depth: int = 
                         thing.deprecation_message, color=False
                     )
                 subparser_kwargs["help"] = thing.help_str
-            subparser = subparsers.add_parser(main_name, **subparser_kwargs)
+            subparser = subparsers.add_parser(main_name, **subparser_kwargs)  # type: ignore
 
             subparser.set_defaults(func=thing.func)
             subparser.set_defaults(**{("_" + "sub" * depth + "command"): thing.name})

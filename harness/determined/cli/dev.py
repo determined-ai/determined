@@ -53,7 +53,7 @@ def curl(args: Namespace) -> None:
 
     if args.x:
         if hasattr(shlex, "join"):  # added in py 3.8
-            print(shlex.join(cmd))  # type: ignore
+            print(shlex.join(cmd))
         else:
             print(" ".join(shlex.quote(arg) for arg in cmd))
     output = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

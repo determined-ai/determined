@@ -24,6 +24,7 @@ check: check-gen
 	# https://github.com/atollk/flake8-import-restrictions/issues/13
 	python -m flake8
 	mypy --version
+	pip freeze
 	mypy .
 
 .PHONY: test-cpu

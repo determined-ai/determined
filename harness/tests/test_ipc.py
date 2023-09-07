@@ -146,7 +146,7 @@ def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) 
             )
 
         # Perform a broadcast.
-        results = pex.run(lambda: contexts[pex.rank].broadcast(pex.rank))  # type: ignore
+        results = pex.run(lambda: contexts[pex.rank].broadcast(pex.rank))
         assert results == [0] * size, "not all threads ran broadcast correctly"
 
         # Perform a local broadcast.
