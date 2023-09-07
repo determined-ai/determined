@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 )
 
@@ -157,4 +158,15 @@ func (p *BatchStreamProcessor) Run(ctx context.Context, res chan BatchResult) {
 			time.Sleep(*p.batchWaitTime)
 		}
 	}
+}
+
+// Sender represents something that can send data
+type Sender interface {
+	Send(interface{}) error
+}
+
+// SocketLike is a struct that can send data to a websocket or another destination, if set.
+type SocketLike struct {
+	*websocket.Conn
+	Target Sender
 }

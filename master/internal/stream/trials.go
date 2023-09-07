@@ -3,9 +3,9 @@ package stream
 import (
 	"context"
 	"database/sql"
-	"time"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
@@ -24,25 +24,24 @@ type TrialMsg struct {
 	bun.BaseModel `bun:"table:trials"`
 
 	// immutable attributes
-	ID int                      `bun:"id,pk" json:"id"`
-	TaskID model.TaskID         `bun:"task_id" json:"task_id"`
-	ExperimentID int            `bun:"experiment_id" json:"experiment_id"`
-	RequestID *model.RequestID  `bun:"request_id" json:"request_id"`
-	Seed int64                  `bun:"seed" json:"seed"`
-	HParams JsonB               `bun:"hparams" json:"hparams"`
+	ID           int              `bun:"id,pk" json:"id"`
+	ExperimentID int              `bun:"experiment_id" json:"experiment_id"`
+	RequestID    *model.RequestID `bun:"request_id" json:"request_id"`
+	Seed         int64            `bun:"seed" json:"seed"`
+	HParams      JsonB            `bun:"hparams" json:"hparams"`
 
 	// warmstart checkpoint id?
 
 	// mutable attributes
-	State model.State           `bun:"state" json:"state"`
-	StartTime time.Time         `bun:"start_time" json:"start_time"`
-	EndTime *time.Time          `bun:"end_time" json:"end_time"`
-	RunnerState string          `bun:"runner_state" json:"runner_state"`
-	Restarts int                `bun:"restarts" json:"restarts"`
-	Tags JsonB                  `bun:"tags" json:"tags"`
+	State       model.State `bun:"state" json:"state"`
+	StartTime   time.Time   `bun:"start_time" json:"start_time"`
+	EndTime     *time.Time  `bun:"end_time" json:"end_time"`
+	RunnerState string      `bun:"runner_state" json:"runner_state"`
+	Restarts    int         `bun:"restarts" json:"restarts"`
+	Tags        JsonB       `bun:"tags" json:"tags"`
 
 	// metadata
-	Seq int64                   `bun:"seq" json:"seq"`
+	Seq int64 `bun:"seq" json:"seq"`
 
 	// total batches?
 
@@ -54,39 +53,48 @@ func (tm *TrialMsg) SeqNum() int64 {
 	return tm.Seq
 }
 
-func (tm *TrialMsg) UpsertMsg() *websocket.PreparedMessage {
+func (tm *TrialMsg) UpsertMsg(upsertFunc stream.UpsertFunc) interface{} {
 	wrapper := struct {
 		Trial *TrialMsg `json:"trial"`
 	}{tm}
+
+	if upsertFunc != nil {
+		return upsertFunc(tm)
+	}
 	return prepareMessageWithCache(wrapper, &tm.upsertCache)
 }
 
-func (tm *TrialMsg) DeleteMsg() *websocket.PreparedMessage {
+func (tm *TrialMsg) DeleteMsg(deleteFunc stream.DeleteFunc) interface{} {
 	deleted := strconv.FormatInt(int64(tm.ID), 10)
+
+	if deleteFunc != nil {
+		return deleteFunc(TrialsDeleteKey, deleted)
+	}
 	return newDeletedMsgWithCache(TrialsDeleteKey, deleted, &tm.deleteCache)
 }
 
 // TrialSubscriptionSpec is what a user submits to define a trial subscription.
 // determined:streamable
 type TrialSubscriptionSpec struct {
-	TrialIds      []int  `json:"trial_ids"`
-	ExperimentIds []int  `json:"experiment_ids"`
-	Since         int64  `json:"since"`
+	TrialIds      []int `json:"trial_ids"`
+	ExperimentIds []int `json:"experiment_ids"`
+	Since         int64 `json:"since"`
 }
 
-func TrialCollectStartupMsgs(known string, spec TrialSubscriptionSpec, ctx context.Context) (
-	[]*websocket.PreparedMessage, error,
+// TODO: refactor pls
+func TrialCollectStartupMsgs(known string, spec TrialSubscriptionSpec, ctx context.Context, upsertFunc stream.UpsertFunc, deleteFunc stream.DeleteFunc) (
+	[]interface{}, error,
 ) {
-	var out []*websocket.PreparedMessage
+	var out []interface{}
 
 	if len(spec.TrialIds) == 0 && len(spec.ExperimentIds) == 0 {
 		// empty subscription: everything known should be returned as deleted
-		out = append(out, newDeletedMsg(TrialsDeleteKey, known))
+		out = append(out, newDeletedInterface(TrialsDeleteKey, known, deleteFunc))
 		return out, nil
 	}
 
 	// step 1: calculate all ids matching this subscription
-	q := db.Bun().NewSelect().Table("trials").Column("id")
+	q := db.Bun().NewSelect().Table("trials").Column("id").OrderExpr("id ASC")
 
 	// Ignore tmf.Since, because we want appearances, which might not be have seq > spec.Since.
 	ws := stream.WhereSince{Since: 0}
@@ -121,17 +129,17 @@ func TrialCollectStartupMsgs(known string, spec TrialSubscriptionSpec, ctx conte
 		}
 	}
 
-	// step 4: emit deletions and udpates to the client
-	out = append(out, newDeletedMsg(TrialsDeleteKey, missing))
+	// step 4: emit deletions and updates to the client
+	out = append(out, newDeletedInterface(TrialsDeleteKey, missing, deleteFunc))
 	for _, msg := range trialMsgs {
-		out = append(out, msg.UpsertMsg())
+		out = append(out, msg.UpsertMsg(upsertFunc))
 	}
 	return out, nil
 }
 
 // When a user submits a new TrialSubscriptionSpec, we scrape the database for initial matches.
-func TrialCollectSubscriptionModMsgs(addSpec TrialSubscriptionSpec, ctx context.Context) (
-	[]*websocket.PreparedMessage, error,
+func TrialCollectSubscriptionModMsgs(addSpec TrialSubscriptionSpec, ctx context.Context, upsertFunc stream.UpsertFunc, deleteFunc stream.DeleteFunc) (
+	[]interface{}, error,
 ) {
 	if len(addSpec.TrialIds) == 0 && len(addSpec.ExperimentIds) == 0 {
 		return nil, nil
@@ -155,9 +163,9 @@ func TrialCollectSubscriptionModMsgs(addSpec TrialSubscriptionSpec, ctx context.
 		return nil, err
 	}
 
-	var out []*websocket.PreparedMessage
+	var out []interface{}
 	for _, msg := range trialMsgs {
-		out = append(out, msg.UpsertMsg())
+		out = append(out, msg.UpsertMsg(nil))
 	}
 	return out, nil
 }
@@ -198,10 +206,10 @@ func (ts *TrialFilterMaker) MakeFilter() func(*TrialMsg) bool {
 	// Make a copy of the maps, because the filter must run safely off-thread.
 	trialIds := make(map[int]bool)
 	experimentIds := make(map[int]bool)
-	for id, _ := range ts.TrialIds {
+	for id := range ts.TrialIds {
 		trialIds[id] = true
 	}
-	for id, _ := range ts.ExperimentIds {
+	for id := range ts.ExperimentIds {
 		experimentIds[id] = true
 	}
 

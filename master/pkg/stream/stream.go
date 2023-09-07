@@ -2,22 +2,27 @@ package stream
 
 import (
 	"sync"
-
-	"github.com/gorilla/websocket"
 )
+
+// UpsertFunc is a function that overrides the default upsert
+type UpsertFunc func(interface{}) interface{}
+
+// DeleteFunc is a function that overrides the default deletion
+type DeleteFunc func(string, string) interface{}
 
 // Msg is an object with a message and a sequence number and json marshal caching.
 type Msg interface {
 	SeqNum() int64
-	UpsertMsg() *websocket.PreparedMessage
-	DeleteMsg() *websocket.PreparedMessage
+	UpsertMsg(prepare UpsertFunc) interface{} // cache aversion of yourself for the purpose of upsert on the wire. This would have to take this prep function and pass the prep function to the upsert pmsg fn
+	// publisher stream in internal, pass each publisher object the prep function. Know it works if you don't have to import websockets into the pkg stream object. When testing, just write in whatever is most useful for the test. Could be the full object.
+	DeleteMsg(prepare DeleteFunc) interface{}
 }
 
 // Event contains the old and new version a Msg.  Inserts will have Before==nil, deletions will
 // have After==nil.
 type Event[T Msg] struct {
 	Before *T `json:"before"`
-	After *T `json:"after"`
+	After  *T `json:"after"`
 }
 
 // Streamer aggregates many events and wakeups into a single slice of pre-marshaled messages.
@@ -26,7 +31,7 @@ type Event[T Msg] struct {
 type Streamer struct {
 	Cond *sync.Cond
 	// Msgs are pre-marshalled messages to send to the streaming client.
-	Msgs []*websocket.PreparedMessage
+	Msgs []interface{}
 	// Closed is set externally, and noticed eventually.
 	Closed bool
 }
@@ -34,7 +39,7 @@ type Streamer struct {
 func NewStreamer() *Streamer {
 	var lock sync.Mutex
 	cond := sync.NewCond(&lock)
-	return &Streamer{ Cond: cond }
+	return &Streamer{Cond: cond}
 }
 
 func (s *Streamer) Close() {
@@ -48,15 +53,17 @@ type Subscription[T Msg] struct {
 	// Which streamer is collecting messages from this Subscription?
 	Streamer *Streamer
 	// Which publisher should we connect to when active?
-	Publisher *Publisher[T]
+	Publisher  *Publisher[T]
+	UpsertFunc UpsertFunc
+	DeleteFunc DeleteFunc
 	// Decide if the streamer wants this message.
 	filter func(T) bool
 	// wakeupID prevent duplicate wakeups if multiple events in a single Broadcast are relevant
 	wakeupID int64
 }
 
-func NewSubscription[T Msg](streamer *Streamer, publisher *Publisher[T]) Subscription[T] {
-	return Subscription[T]{Streamer: streamer, Publisher: publisher}
+func NewSubscription[T Msg](streamer *Streamer, publisher *Publisher[T], upsertFunc UpsertFunc, deleteFunc DeleteFunc) Subscription[T] {
+	return Subscription[T]{Streamer: streamer, Publisher: publisher, UpsertFunc: upsertFunc, DeleteFunc: deleteFunc}
 }
 
 func (s *Subscription[T]) Configure(filter func(T) bool) {
@@ -90,12 +97,12 @@ func (s *Subscription[T]) Configure(filter func(T) bool) {
 }
 
 type Publisher[T Msg] struct {
-	Lock sync.Mutex
+	Lock          sync.Mutex
 	Subscriptions []*Subscription[T]
-	WakeupID int64
+	WakeupID      int64
 }
 
-func NewPublisher[T Msg]() *Publisher[T]{
+func NewPublisher[T Msg]() *Publisher[T] {
 	return &Publisher[T]{}
 }
 
@@ -109,15 +116,15 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 
 	// check each event against each subscription
 	for _, sub := range p.Subscriptions {
-		func(){
+		func() {
 			for _, ev := range events {
-				var msg *websocket.PreparedMessage
+				var msg interface{}
 				if ev.After != nil && sub.filter(*ev.After) {
 					// update, insert, or fallin: send the record to the client.
-					msg = (*ev.After).UpsertMsg()
+					msg = (*ev.After).UpsertMsg(sub.UpsertFunc)
 				} else if ev.Before != nil && sub.filter(*ev.Before) {
 					// deletion or fallout: tell the client the record is deleted.
-					msg = (*ev.Before).DeleteMsg()
+					msg = (*ev.Before).DeleteMsg(sub.DeleteFunc)
 				} else {
 					// ignore this message
 					continue

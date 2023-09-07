@@ -2,16 +2,17 @@ package stream
 
 import (
 	"context"
-	"time"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 	"github.com/lib/pq"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/stream"
 )
 
@@ -38,22 +39,22 @@ type SubscriptionSet struct {
 
 // subscriptionState contains per-type subscription state
 type subscriptionState[T stream.Msg, S any] struct {
-	Subscription stream.Subscription[T]
-	FilterMaker FilterMaker[T, S]
-	CollectStartupMsgs CollectStartupMsgsFunc[S]
+	Subscription               stream.Subscription[T]
+	FilterMaker                FilterMaker[T, S]
+	CollectStartupMsgs         CollectStartupMsgsFunc[S]
 	CollectSubscriptionModMsgs CollectSubscriptionModMsgsFunc[S]
 }
 
-type CollectStartupMsgsFunc[S any] func(known string, spec S, ctx context.Context) (
-	[]*websocket.PreparedMessage, error,
+type CollectStartupMsgsFunc[S any] func(known string, spec S, ctx context.Context, upsertFunc stream.UpsertFunc, deleteFunc stream.DeleteFunc) (
+	[]interface{}, error,
 )
 
-type CollectSubscriptionModMsgsFunc[S any] func(addSpec S, ctx context.Context) (
-	[]*websocket.PreparedMessage, error,
+type CollectSubscriptionModMsgsFunc[S any] func(addSpec S, ctx context.Context, upsertFunc stream.UpsertFunc, deleteFunc stream.DeleteFunc) (
+	[]interface{}, error,
 )
 
 func NewPublisherSet() PublisherSet {
-	return PublisherSet {
+	return PublisherSet{
 		Trials: stream.NewPublisher[*TrialMsg](),
 	}
 }
@@ -62,7 +63,7 @@ func NewPublisherSet() PublisherSet {
 //
 // It declares initially known keys and also configures the initial subscriptions for the stream.
 type StartupMsg struct {
-	Known KnownKeySet `json:"known"`
+	Known     KnownKeySet         `json:"known"`
 	Subscribe SubscriptionSpecSet `json:"subscribe"`
 }
 
@@ -70,7 +71,7 @@ type StartupMsg struct {
 //
 // It allows removing old subscriptions and adding new ones.
 type SubscriptionModMsg struct {
-	Add SubscriptionSpecSet `json:"add"`
+	Add  SubscriptionSpecSet `json:"add"`
 	Drop SubscriptionSpecSet `json:"drop"`
 }
 
@@ -109,22 +110,38 @@ func (ps PublisherSet) Start(ctx context.Context) {
 	// go publishLoop(ctx, "stream_experiment_chan", ps.Experiments)
 }
 
-func writeAll(socket *websocket.Conn, msgs []*websocket.PreparedMessage) error {
+func writeAll(socketLike api.SocketLike, msgs []interface{}) error {
 	for _, msg := range msgs {
-		err := socket.WritePreparedMessage(msg)
-		if err != nil {
-			return err
+		if socketLike.Target != nil {
+			err := socketLike.Target.Send(msg)
+			if err != nil {
+				return err
+			}
+		} else {
+			pm, ok := msg.(*websocket.PreparedMessage)
+			if !ok {
+				return fmt.Errorf("received message that is not a prepared message")
+			}
+			err := socketLike.WritePreparedMessage(pm)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
+//type FakePreparedMessage struct {
+//	websocket.PreparedMessage
+//	Data []byte
+//}
+
 // Websocket is an Echo websocket endpoint.
-func (ps PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
+func (ps PublisherSet) Websocket(socket api.SocketLike, c echo.Context) error {
 	ctx := c.Request().Context()
 	streamer := stream.NewStreamer()
 
-	ss := NewSubscriptionSet(streamer, ps)
+	ss := NewSubscriptionSet(streamer, ps, nil, nil)
 	defer ss.UnsubscribeAll()
 
 	// First read the startup message.
@@ -186,7 +203,7 @@ func (ps PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
 				break
 			}
 			// wake up streamer goroutine with the newly-read SubscriptionModMsg
-			func(){
+			func() {
 				streamer.Cond.L.Lock()
 				defer streamer.Cond.L.Unlock()
 				streamer.Cond.Signal()
@@ -196,7 +213,7 @@ func (ps PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
 	}()
 
 	// waitForSomething returns a tuple of (mods, msgs, closed)
-	waitForSomething := func() ([]SubscriptionModMsg, []*websocket.PreparedMessage, bool) {
+	waitForSomething := func() ([]SubscriptionModMsg, []interface{}, bool) {
 		streamer.Cond.L.Lock()
 		defer streamer.Cond.L.Unlock()
 		streamer.Cond.Wait()
@@ -248,7 +265,7 @@ func publishLoop[T stream.Msg](
 	// XXX: at least boot all the connected streamers, they'll all be invalid now
 	for {
 		err := doPublishLoop(ctx, channelName, publisher)
-		if err != nil{
+		if err != nil {
 			log.Errorf("publishLoop failed (will restart): %v", err.Error())
 			continue
 		}
@@ -310,7 +327,7 @@ func doPublishLoop[T stream.Msg](
 			keepGoing := true
 			for keepGoing {
 				select {
-				case notification = <- listener.Notify:
+				case notification = <-listener.Notify:
 					// fmt.Printf("More Notify: %v\n", notification.Extra)
 					var event stream.Event[T]
 					err = json.Unmarshal([]byte(notification.Extra), &event)
@@ -331,10 +348,10 @@ func doPublishLoop[T stream.Msg](
 	return nil
 }
 
-func NewSubscriptionSet(streamer *stream.Streamer, ps PublisherSet) SubscriptionSet {
+func NewSubscriptionSet(streamer *stream.Streamer, ps PublisherSet, upsertFunc stream.UpsertFunc, deleteFunc stream.DeleteFunc) SubscriptionSet {
 	return SubscriptionSet{
 		Trials: &subscriptionState[*TrialMsg, TrialSubscriptionSpec]{
-			stream.NewSubscription(streamer, ps.Trials),
+			stream.NewSubscription(streamer, ps.Trials, upsertFunc, deleteFunc),
 			NewTrialFilterMaker(),
 			TrialCollectStartupMsgs,
 			TrialCollectSubscriptionModMsgs,
@@ -343,13 +360,13 @@ func NewSubscriptionSet(streamer *stream.Streamer, ps PublisherSet) Subscription
 }
 
 func startup[T stream.Msg, S any](
-	msgs []*websocket.PreparedMessage,
+	msgs []interface{},
 	err error,
 	ctx context.Context,
 	state *subscriptionState[T, S],
 	known string,
 	spec *S,
-) ([]*websocket.PreparedMessage, error) {
+) ([]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
@@ -367,8 +384,8 @@ func startup[T stream.Msg, S any](
 	state.Subscription.Configure(filter)
 
 	// Scan for historical msgs matching newly-added subscriptions.
-	var newmsgs []*websocket.PreparedMessage
-	newmsgs, err = state.CollectStartupMsgs(known, *spec, ctx)
+	var newmsgs []interface{}
+	newmsgs, err = state.CollectStartupMsgs(known, *spec, ctx, state.Subscription.UpsertFunc, state.Subscription.DeleteFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -376,13 +393,14 @@ func startup[T stream.Msg, S any](
 	return msgs, nil
 }
 
+// is startup a verb or noun?
 func (ss *SubscriptionSet) Startup(startupMsg StartupMsg, ctx context.Context) (
-	[]*websocket.PreparedMessage, error,
+	[]interface{}, error,
 ) {
 	known := startupMsg.Known
 	sub := startupMsg.Subscribe
 
-	var msgs []*websocket.PreparedMessage
+	var msgs []interface{}
 	var err error
 	msgs, err = startup(msgs, err, ctx, ss.Trials, known.Trials, sub.Trials)
 	// msgs, err = startup(msgs, err, ctx, ss.Experiments, known.Experiments, sub.Experiments)
@@ -390,13 +408,13 @@ func (ss *SubscriptionSet) Startup(startupMsg StartupMsg, ctx context.Context) (
 }
 
 func subMod[T stream.Msg, S any](
-	msgs []*websocket.PreparedMessage,
+	msgs []interface{},
 	err error,
 	ctx context.Context,
 	state *subscriptionState[T, S],
 	addSpec *S,
 	dropSpec *S,
-) ([]*websocket.PreparedMessage, error) {
+) ([]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
@@ -420,8 +438,8 @@ func subMod[T stream.Msg, S any](
 
 	if addSpec != nil {
 		// Scan for historical msgs matching newly-added subscriptions.
-		var newmsgs []*websocket.PreparedMessage
-		newmsgs, err = state.CollectSubscriptionModMsgs(*addSpec, ctx)
+		var newmsgs []interface{}
+		newmsgs, err = state.CollectSubscriptionModMsgs(*addSpec, ctx, state.Subscription.UpsertFunc, state.Subscription.DeleteFunc)
 		if err != nil {
 			return nil, err
 		}
@@ -431,12 +449,12 @@ func subMod[T stream.Msg, S any](
 }
 
 func (ss *SubscriptionSet) SubscriptionMod(msg SubscriptionModMsg, ctx context.Context) (
-	[]*websocket.PreparedMessage, error,
+	[]interface{}, error,
 ) {
 	add := msg.Add
 	drop := msg.Drop
 
-	var msgs []*websocket.PreparedMessage
+	var msgs []interface{}
 	var err error
 	msgs, err = subMod(msgs, err, ctx, ss.Trials, add.Trials, drop.Trials)
 	// msgs, err = subMod(msgs, err, ctx, ss.Experiments, add.Experiments, drop.Experiments)
@@ -454,7 +472,7 @@ func prepareMessageWithCache(
 	if *cache != nil {
 		return *cache
 	}
-	jbytes, err := json.Marshal(obj)
+	jbytes, err := json.Marshal(obj) // maybe json.RawMessage
 	if err != nil {
 		log.Errorf("error marshaling message for streaming: %v", err.Error())
 		return nil
@@ -465,6 +483,13 @@ func prepareMessageWithCache(
 		return nil
 	}
 	return *cache
+}
+
+func newDeletedInterface(key, deleted string, deleteFunc stream.DeleteFunc) interface{} {
+	if deleteFunc == nil {
+		return newDeletedMsg(key, deleted)
+	}
+	return deleteFunc(key, deleted)
 }
 
 func newDeletedMsg(key string, deleted string) *websocket.PreparedMessage {

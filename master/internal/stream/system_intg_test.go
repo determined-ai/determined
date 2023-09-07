@@ -25,12 +25,13 @@ func TestStartupTrial(t *testing.T) {
 
 	startupMessage := StartupMsg{
 		Known: KnownKeySet{
-			Trials: "1,2",
+			Trials: "1,2,3,4",
 		},
 		Subscribe: SubscriptionSpecSet{
 			Trials: &TrialSubscriptionSpec{
-				TrialIds: []int{1, 2},
-				Since:    0,
+				// TrialIds: []int{1, 2, 3},
+				ExperimentIds: []int{1}, // trials 1,2,3
+				Since:         0,
 			},
 		},
 	}
@@ -54,6 +55,7 @@ func testStartup(t *testing.T, startupMessage StartupMsg, expectedIDs []int) {
 	for _, msg := range messages {
 		fmt.Println(msg)
 	}
+
 	// messages[0]
 	fmt.Println(messages[0])
 }
