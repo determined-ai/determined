@@ -5,24 +5,21 @@
 ##############################
 
 It is possible to use Elasticsearch as an alternative to the default logging backend. In the past,
-such configuration was recommended for larger installations, but it's no longer the case.
+such configuration was recommended for larger installations, but it is no longer the case.
 
-Example configuration:
+Example configuration
 
 .. code:: yaml
 
    logging:
-   type: elastic
-   host: "elastic.example.com"
-   port: 443
-   security:
-      username: "elastic-user"
-      password: "mypassword"
-      tls:
-      enabled: true
-
-The configuration settings to enable Elasticsearch as the task log backend are described in the
-:ref:`cluster configuration <cluster-configuration>` reference.
+      type: elastic
+      host: "elastic.example.com"
+      port: 443    
+      security:
+         username: "elastic-user"
+         password: "mypassword"
+         tls:
+            enabled: true
 
 Determined offers some additional recommendations for the Elasticsearch cluster configuration based
 on how the cluster will be used:
