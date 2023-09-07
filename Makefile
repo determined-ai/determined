@@ -2,7 +2,6 @@
 all:
 	$(MAKE) get-deps
 	$(MAKE) build
-	$(MAKE) set-config-dev
 
 .PHONY: get-deps
 get-deps: get-deps-pip get-deps-go get-deps-webui
