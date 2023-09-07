@@ -876,7 +876,7 @@ def test_non_root_experiment(clean_auth: None, login_admin: None, tmp_path: path
                 tmp_path,
                 {
                     "startup-hook.sh": "det --version || exit 77",
-                    "const.yaml": yaml.dump(config),
+                    "const.yaml": yaml.dump(config),  # type: ignore
                     "model_def.py": model_def_content,
                 },
             ) as tree:
