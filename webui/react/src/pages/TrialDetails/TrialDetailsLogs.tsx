@@ -171,7 +171,6 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
     return () => {
       fieldCanceler.abort();
-      canceler.current.abort();
     };
   }, [trial?.id, ui.isPageHidden]);
 
