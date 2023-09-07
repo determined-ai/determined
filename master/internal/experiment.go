@@ -310,7 +310,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				})
 			}
 
+			e.syslog.Info("restoring trials")
 			e.restoreTrials()
+			e.syslog.Info("trials restored")
 			return nil
 		}
 
@@ -723,18 +725,24 @@ func (e *experiment) trialCreated(t *trial) {
 // restoreTrialsFromStates from the operations that were snapshotted with the
 // last experiment checkpoint.
 func (e *experiment) restoreTrials() {
+	g := new(errgroup.Group)
 	for _, state := range e.TrialSearcherState {
-		checkpoint, err := e.checkpointForCreate(state.Create)
-		if err != nil {
-			e.updateState(model.StateWithReason{
-				State:               model.StoppingErrorState,
-				InformationalReason: fmt.Sprintf("failed getting checkpoint to restore with error %v", err),
-			})
-			e.syslog.Error(err)
-			return
-		}
-		e.restoreTrial(checkpoint, state)
+		state := state
+		g.Go(func() error {
+			checkpoint, err := e.checkpointForCreate(state.Create)
+			if err != nil {
+				e.updateState(model.StateWithReason{
+					State:               model.StoppingErrorState,
+					InformationalReason: fmt.Sprintf("failed getting checkpoint to restore with error %v", err),
+				})
+				e.syslog.Error(err)
+				return nil
+			}
+			e.restoreTrial(checkpoint, state)
+			return nil
+		})
 	}
+	_ = g.Wait()
 }
 
 func (e *experiment) processOperations(
