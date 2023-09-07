@@ -55,8 +55,7 @@ def getMasterAddress(
     target_service = f"determined-master-service-{service_name}"
 
     if node_port != "true":
-        n=300 # 5 minutes
-        while n > 0: 
+        for i in range(300): # 5 minutes
             services = requests.get(
                 url=f"https://{service_host}:{service_port}/api/v1/namespaces/{namespace}/services",
                 headers={"Authorization": f"Bearer {token}"},
@@ -67,7 +66,6 @@ def getMasterAddress(
                 if target_service in svc["metadata"]["name"]:
                     status = svc["status"]["loadBalancer"]
                     if "ingress" not in svc["status"]["loadBalancer"] or status["ingress"] is None:
-                        n = n - 1
                         time.sleep(1) # 1 second and loop
                         break
                     if status["ingress"][0].get("hostname"):
