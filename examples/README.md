@@ -5,9 +5,7 @@
 | Example                                                       | Dataset          | Framework             |
 |:-------------------------------------------------------------:|:----------------:|:---------------------:|
 | [mnist\_pytorch](tutorials/mnist_pytorch)                     | MNIST            | PyTorch               |
-| [fashion\_mnist\_tf\_keras](tutorials/fashion_mnist_tf_keras) | Fashion MNIST    | TensorFlow (tf.keras) |
 | [imagenet\_pytorch](tutorials/imagenet_pytorch)               | ImageNet PyTorch | PyTorch               |
-| [core\_api](tutorials/core_api)                               | Core API         | -                     |
 
 ## Computer Vision
 
