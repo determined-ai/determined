@@ -2,5 +2,5 @@
 
 **Improvements**
 
--  API: It is now allowed to report duplicate metrics across multiple ``report_metrics`` with the
-   same ``steps_completed`` if their value is the same.
+-  API: Allow the reporting of duplicate metrics across multiple ``report_metrics`` with the same
+   ``steps_completed``, provided they have identical values.
