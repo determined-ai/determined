@@ -69,10 +69,6 @@ For an introduction to using the training API, please visit the Training APIs se
       -  :download:`detectron2_coco_pytorch.tgz </examples/detectron2_coco_pytorch.tgz>`
 
    -  -  TensorFlow (tf.keras)
-      -  Fashion MNIST
-      -  :download:`fashion_mnist_tf_keras.tgz </examples/fashion_mnist_tf_keras.tgz>`
-
-   -  -  TensorFlow (tf.keras)
       -  CIFAR-10
       -  :download:`cifar10_tf_keras.tgz </examples/cifar10_tf_keras.tgz>`
 
