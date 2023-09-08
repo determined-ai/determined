@@ -893,17 +893,13 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 
 	trialIDIndex := 0
 	key := -1
+	mGroup := metricGroup.ToString()
 	for {
-		res, err := db.GetMetrics(ctx, int(trialIDs[trialIDIndex]), key, size, metricGroup)
+		res, err := db.GetMetrics(ctx, int(trialIDs[trialIDIndex]), key, size, &mGroup)
 		if err != nil {
 			return err
 		}
 		if len(res) > 0 {
-			for i := 0; i < len(res); i++ {
-				// TODO we are giving too precise timestamps for our Python parsing code somehow.
-				res[i].EndTime = timestamppb.New(res[i].EndTime.AsTime().Truncate(time.Millisecond))
-			}
-
 			if err := ctx.Err(); err != nil {
 				return err
 			}

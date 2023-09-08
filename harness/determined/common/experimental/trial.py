@@ -1,11 +1,9 @@
-import dataclasses
-import datetime
 import enum
-from typing import Any, Dict, Iterable, List, Optional, Union, cast
+from typing import Any, Iterable, List, Optional, Union
 
-from determined.common import api, util
+from determined.common import api
 from determined.common.api import bindings, logs
-from determined.common.experimental import checkpoint
+from determined.common.experimental import checkpoint, metrics
 
 
 class LogLevel(enum.Enum):
@@ -48,88 +46,6 @@ class CheckpointOrderBy(enum.Enum):
 
     def _to_bindings(self) -> bindings.v1OrderBy:
         return bindings.v1OrderBy(self.value)
-
-
-@dataclasses.dataclass
-class _TrialMetrics:
-    """
-    Specifies a metric that the trial reported.
-
-    Attributes:
-        trial_id
-        trial_run_id
-        total_batches
-        end_time
-        metrics
-        batch_metrics
-    """
-
-    trial_id: int
-    trial_run_id: int
-    total_batches: int
-    end_time: datetime.datetime
-    metrics: Dict[str, Any]
-    batch_metrics: Optional[List[Dict[str, Any]]] = None
-
-    @classmethod
-    def _from_bindings(cls, metric_report: bindings.v1MetricsReport, group: str) -> "_TrialMetrics":
-        key = "validation_metrics" if group == util._LEGACY_VALIDATION else "avg_metrics"
-        return cls(
-            trial_id=metric_report.trialId,
-            trial_run_id=metric_report.trialRunId,
-            total_batches=metric_report.totalBatches,
-            end_time=util.parse_protobuf_timestamp(metric_report.endTime),
-            metrics=metric_report.metrics[key],
-            batch_metrics=metric_report.metrics.get("batch_metrics", None),
-        )
-
-
-class StepsBackwardCompat:
-    @property
-    def steps_completed(self) -> int:
-        """@deprecated: Use total_batches instead."""
-        return self.total_batches
-
-    @steps_completed.setter
-    def steps_completed(self, value: int) -> None:
-        self.total_batches = value
-
-
-class TrainingMetrics(_TrialMetrics, StepsBackwardCompat):
-    """
-    Specifies a training metric report that the trial reported.
-    """
-
-    def __init__(self, steps_completed: Optional[int] = None, **kwargs: Any):
-        if steps_completed is not None:
-            kwargs["total_batches"] = steps_completed
-        super().__init__(**kwargs)
-
-    @classmethod
-    def _from_bindings(  # type: ignore
-        cls,
-        metric_report: bindings.v1MetricsReport,
-    ) -> "TrainingMetrics":
-        return cast("TrainingMetrics", super()._from_bindings(metric_report, util._LEGACY_TRAINING))
-
-
-class ValidationMetrics(_TrialMetrics, StepsBackwardCompat):
-    """
-    Specifies a validation metric report that the trial reported.
-    """
-
-    def __init__(self, steps_completed: Optional[int] = None, **kwargs: Any):
-        if steps_completed is not None:
-            kwargs["total_batches"] = steps_completed
-        super().__init__(**kwargs)
-
-    @classmethod
-    def _from_bindings(  # type: ignore
-        cls, metric_report: bindings.v1MetricsReport
-    ) -> "ValidationMetrics":
-        return cast(
-            "ValidationMetrics", super()._from_bindings(metric_report, util._LEGACY_VALIDATION)
-        )
 
 
 class TrialReference:
@@ -372,22 +288,26 @@ class TrialReference:
     def __repr__(self) -> str:
         return "Trial(id={})".format(self.id)
 
-    def _stream_metrics(self, group: str) -> Iterable[_TrialMetrics]:
+    def stream_metrics(self, group: str) -> Iterable[metrics.TrialMetrics]:
         """
         Streams metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.
         """
         return _stream_trials_metrics(self._session, [self.id], group=group)
 
-    def stream_training_metrics(self) -> Iterable[TrainingMetrics]:
+    def stream_training_metrics(self) -> Iterable[metrics.TrainingMetrics]:
         """
+        @deprecated: Use stream_metrics instead with `group` set to "training"
+
         Streams training metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.
         """
         return _stream_training_metrics(self._session, [self.id])
 
-    def stream_validation_metrics(self) -> Iterable[ValidationMetrics]:
+    def stream_validation_metrics(self) -> Iterable[metrics.ValidationMetrics]:
         """
+        @deprecated: Use stream_metrics instead with `group` set to "validation"
+
         Streams validation metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.
         """
@@ -436,25 +356,25 @@ class TrialOrderBy(enum.Enum):
 
 def _stream_trials_metrics(
     session: api.Session, trial_ids: List[int], group: str
-) -> Iterable[_TrialMetrics]:
+) -> Iterable[metrics.TrialMetrics]:
     for i in bindings.get_GetMetrics(session, trialIds=trial_ids, group=group):
         for m in i.metrics:
-            yield _TrialMetrics._from_bindings(m, group=group)
+            yield metrics.TrialMetrics._from_bindings(m, group=group)
 
 
 def _stream_training_metrics(
     session: api.Session, trial_ids: List[int]
-) -> Iterable[TrainingMetrics]:
+) -> Iterable[metrics.TrainingMetrics]:
     """@deprecated"""
     for i in bindings.get_GetTrainingMetrics(session, trialIds=trial_ids):
         for m in i.metrics:
-            yield TrainingMetrics._from_bindings(m)
+            yield metrics.TrainingMetrics._from_bindings(m)
 
 
 def _stream_validation_metrics(
     session: api.Session, trial_ids: List[int]
-) -> Iterable[ValidationMetrics]:
+) -> Iterable[metrics.ValidationMetrics]:
     """@deprecated"""
     for i in bindings.get_GetValidationMetrics(session, trialIds=trial_ids):
         for m in i.metrics:
-            yield ValidationMetrics._from_bindings(m)
+            yield metrics.ValidationMetrics._from_bindings(m)

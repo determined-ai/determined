@@ -44,9 +44,6 @@ class CIFARTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
 
-        self.download_directory = "data"
-        os.makedirs(self.download_directory, exist_ok=True)
-
         self.model = self.context.wrap_model(
             nn.Sequential(
                 nn.Conv2d(NUM_CHANNELS, IMAGE_SIZE, kernel_size=(3, 3)),
@@ -104,22 +101,25 @@ class CIFARTrial(PyTorchTrial):
         accuracy = accuracy_rate(output, labels)
         return {"validation_accuracy": accuracy, "validation_error": 1.0 - accuracy}
 
-    def _download_dataset(self, train: bool) -> Any:
-        transform = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
-        )
-        # Use a file lock so that workers on the same node attempt the download one at a time.
-        # The first worker will actually perform the download, while the subsequent workers will
-        # see that the dataset is downloaded and skip.
-        with filelock.FileLock(os.path.join(self.download_directory, "lock")):
-            return torchvision.datasets.CIFAR10(
-                root=self.download_directory, train=train, download=True, transform=transform
-            )
-
     def build_training_data_loader(self) -> Any:
-        trainset = self._download_dataset(train=True)
+        trainset = download_dataset(train=True)
         return DataLoader(trainset, batch_size=self.context.get_per_slot_batch_size())
 
     def build_validation_data_loader(self) -> Any:
-        valset = self._download_dataset(train=False)
+        valset = download_dataset(train=False)
         return DataLoader(valset, batch_size=self.context.get_per_slot_batch_size())
+
+
+def download_dataset(train: bool) -> Any:
+    download_directory = "data"
+    os.makedirs(download_directory, exist_ok=True)
+    transform = transforms.Compose(
+        [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+    )
+    # Use a file lock so that workers on the same node attempt the download one at a time.
+    # The first worker will actually perform the download, while the subsequent workers will
+    # see that the dataset is downloaded and skip.
+    with filelock.FileLock(os.path.join(download_directory, "lock")):
+        return torchvision.datasets.CIFAR10(
+            root=download_directory, train=train, download=True, transform=transform
+        )

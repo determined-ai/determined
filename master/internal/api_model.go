@@ -816,9 +816,9 @@ func (a *apiServer) DeleteModelVersion(
 }
 
 // Query for all trials that use a given model_version and return their metrics.
-func (a *apiServer) GetTrialSourceInfoMetricsByModelVersion(
-	ctx context.Context, req *apiv1.GetTrialSourceInfoMetricsByModelVersionRequest,
-) (*apiv1.GetTrialSourceInfoMetricsByModelVersionResponse, error) {
+func (a *apiServer) GetTrialMetricsByModelVersion(
+	ctx context.Context, req *apiv1.GetTrialMetricsByModelVersionRequest,
+) (*apiv1.GetTrialMetricsByModelVersionResponse, error) {
 	modelVersionResp, err := a.ModelVersionFromID(
 		req.ModelName, req.ModelVersionNum,
 	)
@@ -833,7 +833,7 @@ func (a *apiServer) GetTrialSourceInfoMetricsByModelVersion(
 		modelVersionResp.Model.WorkspaceId); err != nil {
 		return nil, err
 	}
-	resp := &apiv1.GetTrialSourceInfoMetricsByModelVersionResponse{}
+	resp := &apiv1.GetTrialMetricsByModelVersionResponse{}
 	trialIDsQuery := db.Bun().NewSelect().Table("trial_source_infos").
 		Where("model_id = ?", modelVersionResp.Model.Id).
 		Where("model_version = ?", modelVersionResp.Version)
@@ -842,11 +842,11 @@ func (a *apiServer) GetTrialSourceInfoMetricsByModelVersion(
 		trialIDsQuery.Where("trial_source_info_type = ?", req.TrialSourceInfoType.String())
 	}
 
-	trialSourceMetrics, err := trials.GetMetricsForTrialSourceInfoQuery(ctx, trialIDsQuery)
+	metrics, err := trials.GetMetricsForTrialSourceInfoQuery(ctx, trialIDsQuery, req.MetricGroup)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get trial source info %w", err)
 	}
 
-	resp.Data = append(resp.Data, trialSourceMetrics...)
+	resp.Metrics = append(resp.Metrics, metrics...)
 	return resp, nil
 }

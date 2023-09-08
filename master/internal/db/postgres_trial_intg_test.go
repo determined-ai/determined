@@ -618,11 +618,17 @@ func TestMetricMerge(t *testing.T) {
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	mGroup := model.TrainingMetricGroup
+	metricGroup := mGroup.ToString()
 
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)
 
-	addMetricAt := func(batchNumber int, metricsJSON string, trialID int) error {
+	addMetricAt := func(
+		batchNumber int,
+		metricsJSON string,
+		trialID int,
+		groupName model.MetricGroup,
+	) error {
 		trialRunID := 0
 		return db.AddTrialMetrics(ctx, &trialv1.TrialMetrics{
 			TrialId:        int32(trialID),
@@ -631,7 +637,7 @@ func TestMetricMerge(t *testing.T) {
 			Metrics: &commonv1.Metrics{
 				AvgMetrics: jsonToStruct(t, metricsJSON),
 			},
-		}, mGroup)
+		}, groupName)
 	}
 
 	cases := []struct {
@@ -652,18 +658,80 @@ func TestMetricMerge(t *testing.T) {
 		t.Log(c)
 		trialID := RequireMockTrialID(t, db, exp)
 		for _, metricReport := range c.reports {
-			err := addMetricAt(1, metricReport, trialID)
+			err := addMetricAt(1, metricReport, trialID, mGroup)
 			require.NoError(t, err)
-			metrics, err := GetMetrics(ctx, trialID, 0, 100, mGroup)
+			// Also add some validation metrics, we shouldn't see them when we
+			// query only for the training metrics
+			err = addMetricAt(1, metricReport, trialID, model.ValidationMetricGroup)
+			require.NoError(t, err)
+			metrics, err := GetMetrics(ctx, trialID, 0, 100, &metricGroup)
 			require.NoError(t, err)
 			require.Len(t, metrics, 1)
+			require.Equal(t, metrics[0].Group, string(mGroup))
 		}
-		metrics, err := GetMetrics(ctx, trialID, 0, 100, mGroup)
+		metrics, err := GetMetrics(ctx, trialID, 0, 100, &metricGroup)
 		require.NoError(t, err)
 		require.Len(t, metrics, 1)
+		require.Equal(t, metrics[0].Group, string(mGroup))
 		deserializedMetrics := map[string]any{}
 		require.NoError(t, json.Unmarshal([]byte(c.merged), &deserializedMetrics))
 		require.EqualValues(t, deserializedMetrics, metrics[0].Metrics.AsMap()["avg_metrics"])
+	}
+}
+
+func TestGetAllMetrics(t *testing.T) {
+	// Test that any type of MetricGroup (training, validation, anything else)
+	// will be returned when you ask for a blank MetricGroup ("")
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
+
+	addMetricAt := func(
+		batchNumber int,
+		metricsJSON string,
+		trialID int,
+		groupName model.MetricGroup,
+	) error {
+		trialRunID := 0
+		require.NoError(t, db.AddTrialMetrics(ctx, &trialv1.TrialMetrics{
+			TrialId:        int32(trialID),
+			TrialRunId:     int32(trialRunID),
+			StepsCompleted: int32(batchNumber),
+			Metrics: &commonv1.Metrics{
+				AvgMetrics: jsonToStruct(t, metricsJSON),
+			},
+		}, groupName))
+		return nil
+	}
+
+	cases := []struct {
+		reports []string
+	}{
+		{[]string{`{"a":1.0}`}},
+		{[]string{`{"a":1.0}`, `{"b":2.0}`}},
+		{[]string{`{"a":1.0}`, `{"b":2.0}`, `{"c":2.0}`}},
+	}
+
+	for _, c := range cases {
+		t.Log(c)
+		trialID := RequireMockTrialID(t, db, exp)
+		for _, metricReport := range c.reports {
+			err := addMetricAt(1, metricReport, trialID, model.TrainingMetricGroup)
+			require.NoError(t, err)
+			err = addMetricAt(1, metricReport, trialID, model.ValidationMetricGroup)
+			require.NoError(t, err)
+			err = addMetricAt(1, metricReport, trialID, model.MetricGroup("inference"))
+			require.NoError(t, err)
+			metrics, err := GetMetrics(ctx, trialID, 0, 100, nil)
+			require.NoError(t, err)
+			// We added three different metric groups and then queried for an empty group
+			// which should yield all metrics
+			require.Len(t, metrics, 3)
+		}
 	}
 }
 
@@ -1029,7 +1097,8 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 2, archivedValidations, "trial id %d", tr.ID)
 
-	returnedMetrics, err := GetMetrics(ctx, tr.ID, 0, 10, "generic-golabi")
+	metricGroup := "generic-golabi"
+	returnedMetrics, err := GetMetrics(ctx, tr.ID, 0, 10, &metricGroup)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(returnedMetrics))
 }
@@ -1081,7 +1150,9 @@ func TestGenericMetricsIO(t *testing.T) {
 	err = db.AddTrialMetrics(ctx, trialMetrics, "inference")
 	require.NoError(t, err)
 
-	metricReports, err := GetMetrics(ctx, tr.ID, batches-1, 10, "inference")
+	metricGroup := "inference"
+
+	metricReports, err := GetMetrics(ctx, tr.ID, batches-1, 10, &metricGroup)
 	require.NoError(t, err)
 	require.Len(t, metricReports, 1)
 	require.EqualValues(t, trialRunID, metricReports[0].TrialRunId)
