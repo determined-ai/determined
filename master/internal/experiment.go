@@ -833,19 +833,25 @@ func (e *experiment) processOperations(
 		}
 	}
 
+	var g errgroup.Group
+	g.SetLimit(maxConcurrentTrialOps)
 	for requestID := range updatedTrials {
+		requestID := requestID
+		syslog := e.syslog.WithField("requestID", requestID)
 		t, ok := e.trials[requestID]
 		if !ok {
-			e.syslog.Errorf("invalid request ID: %v", requestID)
+			syslog.Errorf("processOperations invalid requestID")
 			continue
 		}
-
-		err := t.PatchSearcherState(e.TrialSearcherState[requestID])
-		if err != nil {
-			e.syslog.WithError(err).Error("updating trial search state")
-			continue
-		}
+		g.Go(func() error {
+			err := t.PatchSearcherState(e.TrialSearcherState[requestID])
+			if err != nil {
+				syslog.WithError(err).Error("processOperations updating trial search state")
+			}
+			return nil
+		})
 	}
+	_ = g.Wait() // Errors are handled in g.Go.
 }
 
 func trialTaskID(eID int, rID model.RequestID) model.TaskID {

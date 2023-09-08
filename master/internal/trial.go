@@ -328,7 +328,11 @@ func (t *trial) maybeAllocateTask() error {
 	if !(t.allocationID == nil &&
 		!t.searcher.Complete &&
 		t.state == model.ActiveState) {
-		t.syslog.Debug("decided not to allocate trial")
+		t.syslog.WithFields(logrus.Fields{
+			"allocation-id":    t.allocationID,
+			"sercher-complete": t.searcher.Complete,
+			"trial-state":      t.state,
+		}).Trace("decided not to allocate trial")
 		return nil
 	}
 
