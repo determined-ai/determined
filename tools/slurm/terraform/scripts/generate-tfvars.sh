@@ -1,22 +1,53 @@
 #!/usr/bin/env bash
+# This script displays terraform variable assignments intended
+# to be written to default.tfvars based upon the CLI arguments.
 set -e
 
-export VMTIME=7200
-export OPT_WORKLOAD_MANAGER="slurm"
+VMTIME=7200
+OPT_WORKLOAD_MANAGER="slurm"
+# No default machine type
+MACHINE_TYPE=
+# Type of GPU
+GPU_TYPE=
+# Number of GPUs
+GPU_COUNT=
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         -t)
             shift
             if [[ -n $1 && $1 != -* ]]; then
-                export VMTIME=$1
+                VMTIME=$1
                 shift
             fi
             ;;
         -w)
             shift
             if [[ -n $1 && $1 != -* ]]; then
-                export OPT_WORKLOAD_MANAGER=$1
+                OPT_WORKLOAD_MANAGER=$1
+                shift
+            fi
+            ;;
+        -c)
+            # Handled by slurmcluster.sh
+            shift 2
+            ;;
+        -m)
+            shift
+            if [[ -n $1 && $1 != -* ]]; then
+                MACHINE_TYPE=$1
+                shift
+            fi
+            ;;
+        -g)
+            shift
+            if [[ -n $1 && $1 != -* ]]; then
+                GPU_TYPE=$(echo $1 | cut -d : -f 1)
+                GPU_COUNT=$(echo $1 | cut -d : -f 2)
+                if [[ -z $GPU_COUNT ]]; then
+                    echo "Bad option format -g {gcp_name}:{count}" >&2
+                    echo "  Example: -g nvidia-tesla-t4:4" >&2
+                fi
                 shift
             fi
             ;;
@@ -53,3 +84,13 @@ vmLifetimeSeconds = "$VMTIME"
 workload_manager  = "$OPT_WORKLOAD_MANAGER"
 boot_disk         = "projects/determined-ai/global/images/$BOOT_DISK"
 EOF
+if [[ -n $MACHINE_TYPE ]]; then
+    echo "machine_type      = \"$MACHINE_TYPE\""
+fi
+if [[ -n $GPU_TYPE ]]; then
+    echo "gpus   = {"
+    echo "   type: \"$GPU_TYPE\""
+    echo "   count: $GPU_COUNT"
+    echo "}"
+    echo "allow_stopping_for_update        = true"
+fi

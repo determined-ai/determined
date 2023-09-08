@@ -46,6 +46,26 @@ variable "machine_type" {
   default = "n1-standard-8"
 }
 
+variable "gpu_enabled" {
+  type = bool
+  default = false
+}
+
+variable "gpus" {
+  description = "GPU information. Type and count of GPU to attach to the instance template. See https://cloud.google.com/compute/docs/gpus more details"
+  type = object({
+    type  = string
+    count = number
+  })
+  default = null
+}
+
+
+variable "allow_stopping_for_update" {
+  type    = bool
+  default = false
+}
+
 variable "boot_disk" {
   type    = string
 }

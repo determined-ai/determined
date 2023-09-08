@@ -18,6 +18,7 @@ variables {
   image_family           = ""
   launcher_deb_name      = ""
   cpu_image_name         = ""
+  cuda_image_name        = ""
 }
 
 locals {
@@ -36,6 +37,10 @@ locals {
   slurm_conf_tmp_path  = "${local.static_dest_path}/${local.slurm_conf_name}"
   slurm_conf_dest_path = "${local.slurm_sysconfdir}/${local.slurm_conf_name}"
 
+  slurm_gres_name      = "gres.conf"
+  slurm_gres_tmp_path  = "${local.static_dest_path}/${local.slurm_gres_name}"
+  slurm_gres_dest_path = "${local.slurm_sysconfdir}/${local.slurm_gres_name}"
+
   slurm_cgroup_conf_name      = "cgroup.conf"
   slurm_cgroup_conf_tmp_path  = "${local.static_dest_path}/${local.slurm_cgroup_conf_name}"
   slurm_cgroup_conf_dest_path = "${local.slurm_sysconfdir}/${local.slurm_cgroup_conf_name}"
@@ -51,6 +56,10 @@ locals {
   container_registries_name      = "registries.conf"
   container_registries_tmp_path  = "${local.static_dest_path}/${local.container_registries_name}"
   container_registries_dest_path = "${local.reg_conf_dir}/${local.container_registries_name}"
+
+  shell_vars_name      = "shell_vars.sh"
+  shell_vars_tmp_path  = "${local.static_dest_path}/${local.shell_vars_name}"
+  shell_vars_dest_path = "/etc/profile.d/${local.shell_vars_name}"
 }
 
 source "googlecompute" "determined-hpc-image" {
@@ -62,7 +71,7 @@ source "googlecompute" "determined-hpc-image" {
   image_name        = "det-environments-${var.workload_manager}-ci-{{timestamp}}"
   image_description = "HPC ${var.workload_manager} testing VM ${var.launcher_deb_name}"
 
-  machine_type = "n1-standard-1"
+  machine_type = "n1-standard-8"
   disk_size    = "100"
   // us-central1-c seems to be much faster/more reliable. had intermittent failures in us-west1-b
   // with IAP Tunnels being slow to come up.
@@ -98,13 +107,15 @@ build {
   provisioner "shell" {
     inline = [
       "bash -c 'if [[ ${var.workload_manager} == slurm  ]]; then sudo mv ${local.slurm_conf_tmp_path} ${local.slurm_conf_dest_path}; fi'",
+      "bash -c 'if [[ ${var.workload_manager} == slurm  ]]; then sudo mv ${local.slurm_gres_tmp_path} ${local.slurm_gres_dest_path}; fi'",
       "bash -c 'if [[ ${var.workload_manager} == slurm  ]]; then sudo mv ${local.slurm_cgroup_conf_tmp_path} ${local.slurm_cgroup_conf_dest_path}; fi'",
       "bash -c 'if [[ ${var.workload_manager} == pbs ]]; then sudo mv ${local.pbs_motd_tmp_path} ${local.pbs_motd_dest_path}; fi'",
       "sudo mkdir -p ${local.det_conf_dir}",
       "sudo mv ${local.det_master_conf_tmp_path} ${local.det_master_conf_dest_path}",
       "sudo mkdir -p ${local.launcher_job_root}",
       "sudo mkdir -p ${local.reg_conf_dir}",
-      "sudo mv -f ${local.container_registries_tmp_path} ${local.container_registries_dest_path}"
+      "sudo mv -f ${local.container_registries_tmp_path} ${local.container_registries_dest_path}",
+      "sudo mv -f ${local.shell_vars_tmp_path} ${local.shell_vars_dest_path}"
     ]
   }
 
@@ -119,6 +130,10 @@ build {
 
   provisioner "ansible-local" {
     playbook_file   = "ansible-playbook.yml"
-    extra_arguments = ["--verbose", "-e \"launcher_deb=${local.launcher_deb_dest_path}\"", "-e \"workload_manager=${var.workload_manager}\"", "-e \"cpu_image_name=${var.cpu_image_name}\""]
+    extra_arguments = ["--verbose", 
+      "-e \"launcher_deb=${local.launcher_deb_dest_path}\"", 
+      "-e \"workload_manager=${var.workload_manager}\"", 
+      "-e \"cpu_image_name=${var.cpu_image_name}\"", 
+      "-e \"cuda_image_name=${var.cuda_image_name}\""]
   }
 }

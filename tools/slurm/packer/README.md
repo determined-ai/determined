@@ -22,14 +22,20 @@ This process builds images named `det-environments-slurm-ci-###` or `det-environ
 
 These images need to be periodically pruned.   The launcher version included in the image can be seen in the description field.
 
+*NOTE:* Packer uses a vm to build the image.  If the packer build is interrupted without cleaning up it may be left running forever.   Consider checking for any orphaned packer VMs occasionally with
+    ```
+    gcloud compute instances list |grep packer
+    ```
+Packer does not yet have support for GCP [max_run_duration](https://github.com/hashicorp/packer-plugin-googlecompute/issues/173) configuration which would solve this issue.
+
 
 ## 'Publishing' Updated Images
 
 When building a new image for `make slurmcluster WORKLOAD_MANAGER=[type]` the build will use the `hpe-hpc-launcher-*.deb` debian located in `tools/slurm/packer/build`. If there is none present, a script will download and build with the latest launcher version. The value for the generated image (either SLURM or PBS) in `../terraform/images.conf` is automatically updated with the newly built image after the build finishes (depending on the workload manager specified). The workflow for building and updating the image with the latest released launcher should be as follows:
 
 1. Checkout clean branch
-2. `make -C tools/slurm/packer clean build`  
-3. `make -C tools/slurm/packer build WORKLOAD_MANAGER=pbs`
+2. `make -C tools/slurm/packer clean build WORKLOAD_MANAGER=slurm`  
+3. `make -C tools/slurm/packer clean build WORKLOAD_MANAGER=pbs`
 4. `git add  tools/slurm/terraform/images.conf`
 5. `git commit`
 6. Post PR to update the default images.
@@ -46,4 +52,7 @@ by committing it and someone picks up your change, by default, `make slurmcluste
 
 # When to do this
 
-This should also be done as part of the standard release process for each new HPC Launcher version published so that we are always testing with the latest released HPC launcher. Running `packer build` uses the `scripts/generate-pkr-vars.sh` script to automatically detect if the local Launcher version is out of date and prompts the developer if they would like to replace the local outdated version with the newest version.   Always publish both Slurm & PBS versions.
+This should be done as part of the standard release process for each new HPC Launcher version published, and when the default CPU/CUDA task environments are changed so that we are always testing with the latest HPC Launcher and task environments.  Running `packer build` uses the `scripts/generate-pkr-vars.sh` script to automatically detect if the local Launcher version is out of date and prompts the developer if they would like to replace the local outdated version with the newest version.   Always publish both Slurm & PBS versions.
+
+
+
