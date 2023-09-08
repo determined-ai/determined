@@ -1172,18 +1172,11 @@ jobs:
 
             echo "Canceling the nightly workflow, as it was not requested from either a scheduled pipeline or 'ci-run-nightly' label."
 
-            # Cancel the workflow.
-            OUTPUT=$(curl -s -w "\nHTTP_CODE=%{http_code}" -X POST "https://circleci.com/api/v2/workflow/${CIRCLE_WORKFLOW_ID}/cancel?circle-token=${CIRCLECI_API_KEY}")
-
-            echo "CircleCI API response: ${OUTPUT}"
-
-            # An HTTP code other than one of the "2XX" success codes in indicates
-            # that an error occured and we were not able to cancel the workflow.
-            if [[ ! "${OUTPUT}" =~ "HTTP_CODE=2" ]]
-            then
-                echo "Unable to cancel the nightly workflow"
-                exit 1
-            fi
+            # Cancel the workflow or die trying
+            curl -s --fail-with-body \
+              -w "\nHTTP_CODE=%{http_code}" \
+              -X POST \
+              "https://circleci.com/api/v2/workflow/${CIRCLE_WORKFLOW_ID}/cancel?circle-token=${CIRCLECI_API_KEY}"
 
   build-helm:
     docker:
