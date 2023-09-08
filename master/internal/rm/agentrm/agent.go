@@ -1,7 +1,9 @@
 package agentrm
 
 import (
+	"net"
 	"net/http"
+	"os"
 	"reflect"
 	"sort"
 	"strings"
@@ -140,6 +142,8 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		} else {
 			a.address = msg.Ctx.Request().RemoteAddr[0:lastColonIndex]
 		}
+
+		a.adjustAgentIPAddrIfRunningDevClusterOnHpcUsingAnSSHTunnel(ctx, msg)
 
 		var masterSetAgentOptions aproto.AgentMessage
 		if a.awaitingReconnect {
@@ -430,6 +434,42 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+// On the Determined Enterprise Edition, when the dev cluster is started with
+// "tools/slurmcluster.sh", an SSH tunnel is created between the local host and
+// the HPC cluster. Due to the way the reverse tunnel is created, all the nodes
+// will report a loopback address of "[::1]". This will cause distributed
+// experiments to fail. To work around this, use the agent's "hostname"
+// parameter, which will be the node name that the agent is running on, as the
+// IP address. As long as the cluster has been configured to resolve the node
+// names to their respective IP addresses via "/etc/hosts", DNS, or some other
+// mechanism, this will work.
+func (a *agent) adjustAgentIPAddrIfRunningDevClusterOnHpcUsingAnSSHTunnel(
+	ctx *actor.Context,
+	msg ws.WebSocketConnected,
+) {
+	// Check if the address is a loopback address.
+	if addr := net.ParseIP(strings.Trim(a.address, "[]")); addr != nil && addr.IsLoopback() {
+		agentHostname := strings.TrimSpace(msg.Ctx.QueryParam("hostname"))
+
+		masterHostname, err := os.Hostname()
+		if err != nil {
+			ctx.Log().Warnf("Unable to get hostname : %v", err)
+		}
+
+		// We're not running on a local cluster. In other words, the agent and
+		// master are on not the same host. Therefore, the assumption is that
+		// we received a loopback address (i.e., "[::1]") from the agent due
+		// to the reverse tunnel that was set up by "tools/slurmcluster.sh".
+		// Use the "hostname" parameter that the agent sent us as the address.
+		if agentHostname != masterHostname {
+			ctx.Log().Infof(
+				"remote address for agent is loopback ('%s'), using provided hostname '%s' instead",
+				a.address, agentHostname)
+			a.address = agentHostname
+		}
+	}
 }
 
 func (a *agent) bufferForRecovery(ctx *actor.Context, msg interface{}) {

@@ -25,7 +25,7 @@ install and configure the Determined master:
 
 #. Install the launcher.
 
-   For an example RPM-based installation, run:
+   For an RPM-based installation, run:
 
    .. code:: bash
 
@@ -43,6 +43,9 @@ install and configure the Determined master:
    If launcher dependencies are not satisfied, warning messages are displayed. Install or update
    missing dependencies or adjust the ``path`` and ``ld_library_path`` in the next step to locate
    the dependencies.
+
+#. You may verify the installation integrity using the appropriate package manager command. See
+   :ref:`hpc_package_verification`.
 
 .. _using_slurm:
 

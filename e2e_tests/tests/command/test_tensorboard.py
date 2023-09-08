@@ -174,7 +174,7 @@ def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
         "--no-browser",
         "--detach",
         "--config",
-        "environment.image=alpine",
+        "environment.image=python:3.8.16",
     ]
     res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
     t_id = res.stdout.strip("\n")
@@ -182,9 +182,9 @@ def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
     res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
     config = yaml.safe_load(res.stdout)
     assert (
-        config["environment"]["image"]["cpu"] == "alpine"
-        and config["environment"]["image"]["cuda"] == "alpine"
-        and config["environment"]["image"]["rocm"] == "alpine"
+        config["environment"]["image"]["cpu"] == "python:3.8.16"
+        and config["environment"]["image"]["cuda"] == "python:3.8.16"
+        and config["environment"]["image"]["rocm"] == "python:3.8.16"
     ), config
 
 

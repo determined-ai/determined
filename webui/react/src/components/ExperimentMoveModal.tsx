@@ -26,19 +26,19 @@ type FormInputs = {
 };
 
 interface Props {
-  onSubmit?: (successfulIds?: number[]) => void;
-  experimentIds: number[];
   excludedExperimentIds?: Set<number>;
+  experimentIds: number[];
   filters?: V1BulkExperimentFilters;
+  onSubmit?: (successfulIds?: number[]) => void;
   sourceProjectId?: number;
   sourceWorkspaceId?: number;
 }
 
 const ExperimentMoveModalComponent: React.FC<Props> = ({
-  onSubmit,
-  experimentIds,
   excludedExperimentIds,
+  experimentIds,
   filters,
+  onSubmit,
   sourceProjectId,
   sourceWorkspaceId,
 }: Props) => {

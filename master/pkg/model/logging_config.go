@@ -46,17 +46,14 @@ func (c *LoggingConfig) UnmarshalJSON(data []byte) error {
 	return errors.Wrap(json.Unmarshal(data, DefaultParser(c)), "failed to parse logging options")
 }
 
-// DefaultLoggingConfig configures logging for tasks using Fluent+HTTP to the master.
-type DefaultLoggingConfig struct {
-	AdditionalFluentOutputs *string `json:"additional_fluent_outputs,omitempty"`
-}
+// DefaultLoggingConfig configures logging for tasks using HTTP to the master.
+type DefaultLoggingConfig struct{}
 
-// ElasticLoggingConfig configures logging for tasks using Fluent+Elastic.
+// ElasticLoggingConfig configures logging for tasks using Elastic.
 type ElasticLoggingConfig struct {
-	Host                    string                `json:"host"`
-	Port                    int                   `json:"port"`
-	Security                ElasticSecurityConfig `json:"security"`
-	AdditionalFluentOutputs *string               `json:"additional_fluent_outputs,omitempty"`
+	Host     string                `json:"host"`
+	Port     int                   `json:"port"`
+	Security ElasticSecurityConfig `json:"security"`
 }
 
 // Resolve resolves the configuration.

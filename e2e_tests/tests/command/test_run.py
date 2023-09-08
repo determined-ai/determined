@@ -410,7 +410,7 @@ def test_image_pull_after_remove() -> None:
     """
     client = docker.from_env()
     try:
-        client.images.remove("archlinux:base-20211010.0.36274")
+        client.images.remove("python:3.8.16")
     except docker.errors.ImageNotFound:
         pass
 
@@ -422,7 +422,7 @@ def test_image_pull_after_remove() -> None:
             "cmd",
             "run",
             "--config",
-            "environment.image=archlinux:base-20211010.0.36274",
+            "environment.image=python:3.8.16",
             "sleep 3; echo hello world",
         ]
     )

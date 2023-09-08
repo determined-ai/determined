@@ -567,3 +567,51 @@ allocation on each node. Your ``slots_per_trial`` configuration should then be a
    commands will print an error message.
 
 -  ``det slot list`` will not display the name of any active Determined tasks.
+
+.. _hpc_package_verification:
+
+**********************
+ Package Verification
+**********************
+
+The launcher installation package supports the verification of both RPM and DEB packages. There will
+be several configuration files that the package manager will identify as modified, and with
+RPM-based installs, some files will show user/group modifications.
+
+For an RPM-based installation, run ``sudo rpm -V hpe-hpc-launcher`` which should produce output
+similar to that shown below:
+
+.. code::
+
+   S.5....T.  c /etc/launcher/launcher.conf
+   S.5....T.    /etc/launcher/suid.conf
+   S.5....T.    /etc/sudoers.d/zz_launcher
+   .....U...    /opt/launcher/bin/capsules-dev-keytool.jar
+   .....U...    /opt/launcher/bin/dev-keytool
+   .....U...    /opt/launcher/bin/user-keytool
+   .....U...    /opt/launcher/jetty/base/etc/keystore
+   S.5....T.    /opt/launcher/jetty/base/resources/dispatcher.properties
+   .....U...    /opt/launcher/sbin
+   ......G..    /opt/launcher/sbin/suid
+
+   INFO: The following file modifications are expected:
+         /etc/launcher/launcher.conf
+         /etc/launcher/suid.conf
+         /etc/sudoers.d/zz_launcher
+         /opt/launcher/jetty/base/resources/dispatcher.properties
+   INFO: The following file owner/group changes are expected:
+         /opt/launcher/bin/capsules-dev-keytool.jar
+         /opt/launcher/bin/dev-keytool
+         /opt/launcher/bin/user-keytool
+         /opt/launcher/sbin
+         /opt/launcher/sbin/suid
+
+On Debian distributions, run ``sudo dpkg -V hpe-hpc-launcher`` which should produce output similar
+to that shown below:
+
+.. code::
+
+   ??5?????? c /etc/launcher/launcher.conf
+   ??5?????? c /etc/launcher/suid.conf
+   ??5?????? c /etc/sudoers.d/zz_launcher
+   ??5??????   /opt/launcher/jetty/base/resources/dispatcher.properties

@@ -102,7 +102,7 @@ func expColumnNameToSQL(columnName string) (string, error) {
 		"duration":        "extract(epoch FROM coalesce(e.end_time, now()) - e.start_time)",
 		"state":           "e.state",
 		"numTrials":       "(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id)",
-		"progress":        "COALESCE(progress, 0)",
+		"progress":        "ROUND(COALESCE(progress, 0) * 100)::INTEGER", // multiply by 100 for percent
 		"user":            "e.owner_id",
 		"forkedFrom":      "e.parent_id",
 		"resourcePool":    "e.config->'resources'->>'resource_pool'",

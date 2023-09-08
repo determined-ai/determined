@@ -28,13 +28,9 @@ type RunSpec struct {
 	HostConfig       container.HostConfig
 	NetworkingConfig network.NetworkingConfig
 
-	Archives []RunArchive
-	// TODO(ilia): UseFluentLogging is always `true`. It is present to ensure compatibility
-	// with older version agents. Remove it the next major version.
-	// UseFluentLogging is whether to use Fluent Bit logging (as opposed to directly streaming).
-	UseFluentLogging bool
-	DeviceType       device.Type
-	Registry         *types.AuthConfig
+	Archives   []RunArchive
+	DeviceType device.Type
+	Registry   *types.AuthConfig
 }
 
 // ChecksConfig describes the configuration for multiple readiness checks.
