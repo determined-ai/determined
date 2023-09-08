@@ -850,6 +850,49 @@ export interface Trialv1Trial {
     searcherMetricValue?: number;
 }
 /**
+ * 
+ * @export
+ * @interface V1AcceleratorData
+ */
+export interface V1AcceleratorData {
+    /**
+     * The id of the container.
+     * @type {string}
+     * @memberof V1AcceleratorData
+     */
+    containerId?: string;
+    /**
+     * The id of the allocation.
+     * @type {string}
+     * @memberof V1AcceleratorData
+     */
+    allocationId?: string;
+    /**
+     * The name of the node the allocation is on.
+     * @type {string}
+     * @memberof V1AcceleratorData
+     */
+    nodeName?: string;
+    /**
+     * The id of the agent associated with the allocation.
+     * @type {string}
+     * @memberof V1AcceleratorData
+     */
+    taskId?: string;
+    /**
+     * The type of accelerator.
+     * @type {string}
+     * @memberof V1AcceleratorData
+     */
+    acceleratorType?: string;
+    /**
+     * An array of IDs of the accelerators associated with the allocation.
+     * @type {Array<string>}
+     * @memberof V1AcceleratorData
+     */
+    accelerators?: Array<string>;
+}
+/**
  * Acknowledge the receipt of some stop signal.
  * @export
  * @interface V1AckAllocationPreemptionSignalRequest
@@ -3964,6 +4007,19 @@ export interface V1GetSlotsResponse {
     slots?: Array<V1Slot>;
 }
 /**
+ * 
+ * @export
+ * @interface V1GetTaskAcceleratorDataResponse
+ */
+export interface V1GetTaskAcceleratorDataResponse {
+    /**
+     * The accelerator data for each allocation associated with the task.
+     * @type {Array<V1AcceleratorData>}
+     * @memberof V1GetTaskAcceleratorDataResponse
+     */
+    acceleratorData: Array<V1AcceleratorData>;
+}
+/**
  * Response to GetTaskRequest.
  * @export
  * @interface V1GetTaskResponse
@@ -6709,6 +6765,32 @@ export interface V1PolymorphicFilter {
      * @memberof V1PolymorphicFilter
      */
     timeRange?: V1TimestampFieldFilter;
+}
+/**
+ * Set the accelerator data for some allocation.
+ * @export
+ * @interface V1PostAllocationAcceleratorDataRequest
+ */
+export interface V1PostAllocationAcceleratorDataRequest {
+    /**
+     * The id of the allocation.
+     * @type {string}
+     * @memberof V1PostAllocationAcceleratorDataRequest
+     */
+    allocationId: string;
+    /**
+     * The accelerator data used by the allocation.
+     * @type {V1AcceleratorData}
+     * @memberof V1PostAllocationAcceleratorDataRequest
+     */
+    acceleratorData: V1AcceleratorData;
+}
+/**
+ * 
+ * @export
+ * @interface V1PostAllocationAcceleratorDataResponse
+ */
+export interface V1PostAllocationAcceleratorDataResponse {
 }
 /**
  * Set the proxy address for some allocation.
@@ -17308,6 +17390,42 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary GetTaskAcceleratorData gets the accelerator data for each allocation associated with a task.
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskAcceleratorData(taskId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'taskId' is not null or undefined
+            if (taskId === null || taskId === undefined) {
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling getTaskAcceleratorData.');
+            }
+            const localVarPath = `/api/v1/tasks/{taskId}/acceleratorData`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get telemetry information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -17900,6 +18018,50 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
+         * @param {string} allocationId The id of the allocation.
+         * @param {V1PostAllocationAcceleratorDataRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postAllocationAcceleratorData(allocationId: string, body: V1PostAllocationAcceleratorDataRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'allocationId' is not null or undefined
+            if (allocationId === null || allocationId === undefined) {
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling postAllocationAcceleratorData.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postAllocationAcceleratorData.');
+            }
+            const localVarPath = `/api/v1/allocations/{allocationId}/acceleratorData`
+                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
@@ -19293,6 +19455,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary GetTaskAcceleratorData gets the accelerator data for each allocation associated with a task.
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskAcceleratorData(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTaskAcceleratorDataResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTaskAcceleratorData(taskId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get telemetry information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -19555,6 +19736,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         patchTrial(trialId: number, body: V1PatchTrialRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).patchTrial(trialId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
+         * @param {string} allocationId The id of the allocation.
+         * @param {V1PostAllocationAcceleratorDataRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postAllocationAcceleratorData(allocationId: string, body: V1PostAllocationAcceleratorDataRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostAllocationAcceleratorDataResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postAllocationAcceleratorData(allocationId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20226,6 +20427,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary GetTaskAcceleratorData gets the accelerator data for each allocation associated with a task.
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskAcceleratorData(taskId: string, options?: any) {
+            return InternalApiFp(configuration).getTaskAcceleratorData(taskId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get telemetry information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -20380,6 +20591,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         patchTrial(trialId: number, body: V1PatchTrialRequest, options?: any) {
             return InternalApiFp(configuration).patchTrial(trialId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
+         * @param {string} allocationId The id of the allocation.
+         * @param {V1PostAllocationAcceleratorDataRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postAllocationAcceleratorData(allocationId: string, body: V1PostAllocationAcceleratorDataRequest, options?: any) {
+            return InternalApiFp(configuration).postAllocationAcceleratorData(allocationId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -20920,6 +21142,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary GetTaskAcceleratorData gets the accelerator data for each allocation associated with a task.
+     * @param {string} taskId The id of the task.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getTaskAcceleratorData(taskId: string, options?: any) {
+        return InternalApiFp(this.configuration).getTaskAcceleratorData(taskId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Get telemetry information.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -21099,6 +21333,19 @@ export class InternalApi extends BaseAPI {
      */
     public patchTrial(trialId: number, body: V1PatchTrialRequest, options?: any) {
         return InternalApiFp(this.configuration).patchTrial(trialId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
+     * @param {string} allocationId The id of the allocation.
+     * @param {V1PostAllocationAcceleratorDataRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public postAllocationAcceleratorData(allocationId: string, body: V1PostAllocationAcceleratorDataRequest, options?: any) {
+        return InternalApiFp(this.configuration).postAllocationAcceleratorData(allocationId, body, options)(this.fetch, this.basePath)
     }
     
     /**
