@@ -219,13 +219,17 @@ func (a *apiServer) getProjectColumnsByID(
 		}
 	}
 
-	for _, stats := range summaryMetrics {
-		// If there are multiple metrics with the same group and name, report the type as unspecified.
+	for idx, stats := range summaryMetrics {
+		// If there are multiple metrics with the same group and name, report one unspecified column.
 		if stats.Count > 1 {
-			columns[len(columns)-1].Type = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+			continue
 		}
 
 		columnType := parseMetricsType(stats.MetricType)
+		if len(summaryMetrics) > idx+1 && summaryMetrics[idx+1].Count > 1 {
+			columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+		}
+
 		columnPrefix := stats.JSONPath
 		columnLocation := projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC
 		if stats.JSONPath == metricGroupTraining {

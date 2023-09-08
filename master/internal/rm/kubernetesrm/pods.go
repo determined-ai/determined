@@ -64,17 +64,16 @@ type pods struct {
 	mu sync.RWMutex
 	wg waitgroupx.Group
 
-	cluster                  *actor.Ref
-	namespace                string
-	namespaceToPoolName      map[string]string
-	masterServiceName        string
-	leaveKubernetesResources bool
-	scheduler                string
-	slotType                 device.Type
-	slotResourceRequests     config.PodSlotResourceRequests
-	resourcePoolConfigs      []config.ResourcePoolConfig
-	baseContainerDefaults    *model.TaskContainerDefaultsConfig
-	credsDir                 string
+	cluster               *actor.Ref
+	namespace             string
+	namespaceToPoolName   map[string]string
+	masterServiceName     string
+	scheduler             string
+	slotType              device.Type
+	slotResourceRequests  config.PodSlotResourceRequests
+	resourcePoolConfigs   []config.ResourcePoolConfig
+	baseContainerDefaults *model.TaskContainerDefaultsConfig
+	credsDir              string
 
 	clientSet        *k8sClient.Clientset
 	masterIP         string
@@ -146,7 +145,6 @@ func Initialize(
 	masterServiceName string,
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
-	leaveKubernetesResources bool,
 	scheduler string,
 	slotType device.Type,
 	slotResourceRequests config.PodSlotResourceRequests,
@@ -177,7 +175,6 @@ func Initialize(
 		containerIDToSchedulingState: make(map[string]sproto.SchedulingState),
 		podNameToContainerID:         make(map[string]string),
 		podHandlerToMetadata:         make(map[*pod]podMetadata),
-		leaveKubernetesResources:     leaveKubernetesResources,
 		slotType:                     slotType,
 		slotResourceRequests:         slotResourceRequests,
 		resourcePoolConfigs:          resourcePoolConfigs,
@@ -240,13 +237,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 			return err
 		}
 		p.startResourceRequestQueue(ctx)
-
-		if !p.leaveKubernetesResources {
-			if err := p.deleteDoomedKubernetesResources(ctx); err != nil {
-				return err
-			}
+		if err := p.deleteDoomedKubernetesResources(ctx); err != nil {
+			return err
 		}
-
 	case actor.PostStop:
 
 	case StartTaskPod:
@@ -505,7 +498,6 @@ func (p *pods) reattachPod(
 		p.podInterfaces[pod.Namespace],
 		p.configMapInterfaces[pod.Namespace],
 		p.resourceRequestQueue,
-		p.leaveKubernetesResources,
 		p.slotType,
 		p.slotResourceRequests,
 		p.scheduler,
@@ -624,12 +616,6 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 		if resourcePool == "" {
 			ctx.Log().Debugf("deleting pod '%s' without environment variable '%s'",
 				pod.Name, resourcePoolEnvVar)
-			toKillPods.Items = append(toKillPods.Items, pod)
-			continue
-		}
-		if !isReattachEnabledForRP(resourcePool) {
-			ctx.Log().Debugf("deleting pod '%s' in resource pool '%s' since "+
-				"agent_reattach_enabled is disabled", pod.Name, resourcePool)
 			toKillPods.Items = append(toKillPods.Items, pod)
 			continue
 		}
@@ -803,7 +789,6 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 		p.podInterfaces[msg.Namespace],
 		p.configMapInterfaces[msg.Namespace],
 		p.resourceRequestQueue,
-		p.leaveKubernetesResources,
 		p.slotType,
 		p.slotResourceRequests,
 		p.scheduler,

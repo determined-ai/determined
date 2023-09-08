@@ -8,14 +8,13 @@ import {
 } from '@hpe.com/glide-data-grid';
 
 import { getColor, getInitials } from 'components/Avatar';
-import { terminalRunStates } from 'constants/states';
 import { paths } from 'routes/utils';
 import { DetailedUser, ExperimentWithTrial, ProjectColumn } from 'types';
 import { getPath, isString } from 'utils/data';
 import { formatDatetime } from 'utils/datetime';
 import { Loadable } from 'utils/loadable';
 import { humanReadableNumber } from 'utils/number';
-import { humanReadableBytes } from 'utils/string';
+import { floatToPercent, humanReadableBytes } from 'utils/string';
 import { DarkLight, Theme } from 'utils/themes';
 import { getDisplayName } from 'utils/user';
 
@@ -255,10 +254,7 @@ export const getColumnDefs = ({
   progress: {
     id: 'progress',
     renderer: (record: ExperimentWithTrial) => {
-      const progress = [...terminalRunStates.keys()].includes(record.experiment.state)
-        ? 1
-        : record.experiment.progress ?? 0;
-      const percentage = `${(progress * 100).toFixed()}%`;
+      const percentage = floatToPercent(record.experiment.progress ?? 0, 0);
 
       return {
         allowOverlay: false,

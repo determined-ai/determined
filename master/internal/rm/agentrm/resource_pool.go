@@ -519,7 +519,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 			}
 		}
 		if rp.reschedule {
-			ctx.Log().Debug("scheduling")
+			ctx.Log().Trace("scheduling")
 			rp.agentStatesCache = rp.fetchAgentStates(ctx)
 			defer func() {
 				rp.agentStatesCache = nil

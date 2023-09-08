@@ -16,8 +16,7 @@ other outside of Determined by using tools such as ``ping`` or ``netcat``.
 More rarely, if agents have multiple network interfaces and some of them are not routable,
 Determined may pick one of those interfaces rather than one that allows one agent to contact
 another. In this case, it is possible to explicitly set the network interface used for distributed
-training, as described in :ref:`Basic Setup: Step 7 - Configure the Cluster
-<cluster-configuration>`.
+training, as described in :ref:`master-config-reference-dtrain-network-interface`.
 
 ***************
  Configuration
@@ -52,8 +51,9 @@ a model:
 
 For distributed multi-machine training, Determined will automatically detect a common network
 interface that is shared by the agent machines. If your cluster has multiple common network
-interfaces, we advise specifying the fastest one in :ref:`cluster-configuration` under
-``task_container_defaults.dtrain_network_interface``.
+interfaces, specify the fastest one. To do this, configure the :ref:`dtrain_network_interface
+<master-config-reference-dtrain-network-interface>` in the :ref:`master configuration file
+<master-config-reference>`.
 
 When the ``slots_per_trial`` field is set, the per-slot (i.e., per-GPU) batch size is set to
 ``global_batch_size // slots_per_trial``. The per-slot and global batch sizes can be accessed
