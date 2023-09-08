@@ -28,7 +28,7 @@ interface LinkCellProps {
 export type LinkCell = CustomCell<LinkCellProps>;
 
 const TAG_HEIGHT = 20;
-const TAG_CONTENT = 'unmanaged';
+const TAG_CONTENT = 'Unmanaged';
 
 function onClickSelect(e: Parameters<NonNullable<CustomRenderer<LinkCell>['onSelect']>>[0]) {
   const useCtrl = e.cell.data.navigateOn !== 'click';
