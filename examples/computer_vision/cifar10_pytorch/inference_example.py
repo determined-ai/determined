@@ -13,7 +13,6 @@ FROG_LABEL = 6
 class FrogCountingInferenceProcessor(experimental.TorchBatchProcessor):
     def __init__(self, context):
         self.context = context
-        # self.core_context = context.core_context
 
         hparams = self.context.get_hparams()
 
