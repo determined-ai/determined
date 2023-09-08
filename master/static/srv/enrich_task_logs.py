@@ -9,7 +9,7 @@ import socket
 import sys
 import threading
 import time
-from typing import Any, Dict, Iterator, List
+from typing import Any, Dict, Iterator
 
 from determined.common import api
 from determined.common.api import certs, errors
@@ -18,7 +18,9 @@ from determined.common.api import certs, errors
 # 2022-05-12 16:32:48,757:gc_checkpoints: [rank=0] INFO: Determined checkpoint GC, version 0.17.16-dev0
 # Below regex is used to extract the rank field from the log message.
 # Excluding empty spaces this regex matches rank in the above example as [rank=0]
-rank = re.compile("(?P<space1> ?)\[rank=(?P<rank_id>([0-9]+))\](?P<space2> ?)(?P<log>.*)")
+rank = re.compile(
+    "(?P<space1> ?)\[rank=(?P<rank_id>([0-9]+))\](?P<space2> ?)(?P<log>.*)"
+)
 # Below regex is used to extract the message severity from the log message.
 # Excluding empty spaces and delimiter(:) this regex matches message severity level in the above example as INFO
 level = re.compile(
@@ -74,12 +76,14 @@ class LogCollector(threading.Thread):
 
                     m = level.match(line)
                     if m:
-                        parsed_metadata["level"] = int(m.group("level"))
+                        parsed_metadata["level"] = m.group("level")
                         line = m.group("log")
 
                     self.ship_queue.put(
                         {
-                            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                            "timestamp": datetime.datetime.now(
+                                datetime.timezone.utc
+                            ).isoformat(),
                             "log": line if line.endswith("\n") else line + "\n",
                             **self.task_logging_metadata,
                             **parsed_metadata,
@@ -103,8 +107,8 @@ class LogShipper(threading.Thread):
         master_url: str,
         cert: certs.Cert,
     ) -> None:
-        self.ship_queue: queue.Queue = ship_queue
-        self.logs: List[Any] = []
+        self.ship_queue = ship_queue
+        self.logs = []
         self.master_url = master_url
         self.cert = cert
         super().__init__()
@@ -163,7 +167,7 @@ def main(
     task_logging_metadata: Dict[str, Any],
     emit_stdout_logs: bool,
 ) -> None:
-    ship_queue: queue.Queue = queue.Queue(maxsize=SHIP_QUEUE_MAX_SIZE)
+    ship_queue = queue.Queue(maxsize=SHIP_QUEUE_MAX_SIZE)
     collector = LogCollector(ship_queue, task_logging_metadata, emit_stdout_logs)
     shipper = LogShipper(ship_queue, master_url, cert)
 
@@ -179,7 +183,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="read a stream and enrich it with the standard logging metadata"
     )
-    parser.add_argument("--stdtype", type=str, help="the stdtype of this stream", required=True)
+    parser.add_argument(
+        "--stdtype", type=str, help="the stdtype of this stream", required=True
+    )
     args = parser.parse_args()
 
     master_url = os.environ.get("DET_MASTER", os.environ.get("DET_MASTER_ADDR"))
@@ -199,10 +205,8 @@ if __name__ == "__main__":
         task_logging_metadata["container_id"] = container_id
     # If trial exists, just drop it since it could mess with de-ser on the API end.
     task_logging_metadata.pop("trial_id", None)
-    emit_stdout_logs = bool(
-        distutils.util.strtobool(
-            os.environ.get("DET_SHIPPER_EMIT_STDOUT_LOGS", "True"),
-        )
+    emit_stdout_logs = distutils.util.strtobool(
+        os.environ.get("DET_SHIPPER_EMIT_STDOUT_LOGS", "True"),
     )
 
     main(master_url, cert, task_logging_metadata, emit_stdout_logs)
