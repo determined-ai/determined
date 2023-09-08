@@ -26,7 +26,7 @@ jobs:
           - tools
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: set VERSION env var
         shell: bash
         run: echo "VERSION=$(< ./VERSION )" >> $GITHUB_ENV

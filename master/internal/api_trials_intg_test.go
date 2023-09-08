@@ -246,7 +246,7 @@ func isMultiTrialSampleCorrect(expectedMetrics []*commonv1.Metrics,
 			case float64:
 				expectedVal := expectedAvgMetrics[metricName].(float64)
 				if metricName == "epoch" {
-					if expectedVal != float64(*allActualAvgMetrics[i].Epoch) {
+					if expectedVal != *allActualAvgMetrics[i].Epoch {
 						return false
 					}
 					continue

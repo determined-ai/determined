@@ -67,13 +67,41 @@ describe('userSettings', () => {
       const newSettings = store.get(t.string, configPath).get();
       expect(newSettings).toStrictEqual(Loaded(expectedValue));
     });
+  });
 
+  describe('setPartial', () => {
     it('should accept partial updates', async () => {
       const store = await setup({ [configPath]: expectedSettings });
 
-      store.set(Config, configPath, { string: expectedValue });
+      store.setPartial(Config, configPath, { string: expectedValue });
       const result = store.get(Config, configPath).get();
       expect(Loadable.map(result, (r) => r?.string)).toStrictEqual(Loaded(expectedValue));
+    });
+    it('should work on semipartial types', async () => {
+      const Semi = t.intersection([
+        t.type({
+          bar: t.string,
+          foo: t.number,
+        }),
+        t.partial({
+          baz: t.boolean,
+          qux: t.array(t.number),
+        }),
+      ]);
+      const path = 'semi';
+      const init = { bar: 'one', baz: true, foo: 1 };
+      const expected = 'two';
+      const expected2 = [1];
+
+      const store = await setup({ [path]: init });
+
+      store.setPartial(Semi, path, { bar: expected });
+      const result = store.get(Semi, path).get();
+      expect(Loadable.map(result, (r) => r?.bar)).toStrictEqual(Loaded(expected));
+
+      store.setPartial(Semi, path, { qux: expected2 });
+      const result2 = store.get(Semi, path).get();
+      expect(Loadable.map(result2, (r) => r?.qux)).toStrictEqual(Loaded(expected2));
     });
   });
 

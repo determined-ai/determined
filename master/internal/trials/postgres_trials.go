@@ -117,10 +117,10 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 				valuesMap[selectMetrics[mName]] = mVal
 			}
 		}
-		epoch := new(int32)
+		var epoch *float64
 		if results[i]["epoch"] != nil {
 			if e, ok := results[i]["epoch"].(float64); ok {
-				*epoch = int32(e)
+				epoch = &e
 			} else {
 				return nil, fmt.Errorf(
 					"metric 'epoch' has nonnumeric value reported value='%v'", results[i]["epoch"])

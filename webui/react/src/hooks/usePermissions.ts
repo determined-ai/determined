@@ -623,7 +623,8 @@ const canManageResourcePoolBindings = ({
 }: RbacOptsProps): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
   return rbacEnabled
-    ? permitted.has(V1PermissionType.UPDATEMASTERCONFIG)
+    ? permitted.has(V1PermissionType.UPDATEMASTERCONFIG) ||
+        permitted.has(V1PermissionType.UPDATEWORKSPACE)
     : !!currentUser && currentUser.isAdmin;
 };
 

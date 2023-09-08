@@ -25,7 +25,7 @@ jobs:
     if: github.event.action == 'closed' && github.event.pull_request.merged
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.base_ref }}
@@ -46,7 +46,7 @@ jobs:
     if: github.event.action == 'labeled' || github.event.action == 'unlabeled'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.base_ref }}

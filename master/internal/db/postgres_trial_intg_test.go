@@ -630,15 +630,14 @@ func TestMetricMerge(t *testing.T) {
 		groupName model.MetricGroup,
 	) error {
 		trialRunID := 0
-		require.NoError(t, db.AddTrialMetrics(ctx, &trialv1.TrialMetrics{
+		return db.AddTrialMetrics(ctx, &trialv1.TrialMetrics{
 			TrialId:        int32(trialID),
 			TrialRunId:     int32(trialRunID),
 			StepsCompleted: int32(batchNumber),
 			Metrics: &commonv1.Metrics{
 				AvgMetrics: jsonToStruct(t, metricsJSON),
 			},
-		}, groupName))
-		return nil
+		}, groupName)
 	}
 
 	cases := []struct {
@@ -648,6 +647,11 @@ func TestMetricMerge(t *testing.T) {
 		{[]string{`{"a":1.0}`}, `{"a":1.0}`},
 		{[]string{`{"a":1.0}`, `{"b":2.0}`}, `{"a":1.0,"b":2.0}`},
 		{[]string{`{"a":1.0}`, `{"b":2.0}`, `{"c":2.0}`}, `{"a":1.0,"b":2.0,"c":2.0}`},
+		{[]string{`{"a":1.0,"epoch":10}`, `{"b":2.0,"epoch":10}`}, `{"a":1.0,"b":2.0,"epoch":10}`},
+		{
+			[]string{`{"a":1.0,"list":[1.0,2.0]}`, `{"b":2.0,"list":[1.0,2.0]}`},
+			`{"a":1.0,"b":2.0,"list":[1.0,2.0]}`,
+		},
 	}
 
 	for _, c := range cases {
@@ -727,6 +731,50 @@ func TestGetAllMetrics(t *testing.T) {
 			// We added three different metric groups and then queried for an empty group
 			// which should yield all metrics
 			require.Len(t, metrics, 3)
+		}
+	}
+}
+
+func TestMetricMergeFail(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	mGroup := model.TrainingMetricGroup
+
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
+
+	addMetricAt := func(batchNumber int, metricsJSON string, trialID int) error {
+		trialRunID := 0
+		return db.AddTrialMetrics(ctx, &trialv1.TrialMetrics{
+			TrialId:        int32(trialID),
+			TrialRunId:     int32(trialRunID),
+			StepsCompleted: int32(batchNumber),
+			Metrics: &commonv1.Metrics{
+				AvgMetrics: jsonToStruct(t, metricsJSON),
+			},
+		}, mGroup)
+	}
+
+	cases := []struct {
+		reports []string
+	}{
+		{[]string{`{"a":1.0,"epoch":10}`, `{"b":1.0,"epoch":10}`, `{"c":2.0,"epoch":11}`}},
+		{[]string{`{"a":1.0,"list":[1.0,2.0]}`, `{"b":2.0,"list":[1.0,2.0,3.0]}`}},
+	}
+
+	for _, c := range cases {
+		t.Log(c)
+		trialID := RequireMockTrialID(t, db, exp)
+		for i, metricReport := range c.reports {
+			err := addMetricAt(1, metricReport, trialID)
+			isLast := i == len(c.reports)-1
+			if isLast {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
 		}
 	}
 }

@@ -38,7 +38,7 @@ jobs:
 
       # get the artifact for the chart and the branch for the chart repo
       - name: check out chart repo branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: helm-chart-repository
           token: ${{ secrets.DETERMINED_TOKEN }}

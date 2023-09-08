@@ -11,7 +11,7 @@ jobs:
     outputs:
       images: ${{ steps.get-images.outputs.result }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Parse image list
         id: get-images
         uses: mikefarah/yq@v4
@@ -33,7 +33,7 @@ jobs:
         uses: jlumbroso/free-disk-space@main
         with:
           tool-cache: true
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Scan ${{ matrix.image }}
         id: scan
         continue-on-error: true
