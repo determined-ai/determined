@@ -173,13 +173,14 @@ func TestCheckpointsOnArchivedSteps(t *testing.T) {
 			State:        checkpointv1.State_STATE_COMPLETED,
 		},
 	})
+	require.NoError(t, err)
 
 	// We should only have one checkpoint.
 	checkpoints, err := api.GetExperimentCheckpoints(ctx, &apiv1.GetExperimentCheckpointsRequest{
 		Id: int32(trial.ExperimentID),
 	})
 	require.NoError(t, err)
-	require.Len(t, checkpoints.Checkpoints, 2)
+	require.Len(t, checkpoints.Checkpoints, 1)
 
 	actual := checkpoints.Checkpoints[0]
 	require.Equal(t, map[string]any{"expected": expected},
