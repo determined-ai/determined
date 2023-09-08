@@ -466,6 +466,7 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 		return nil
 	}
 
+	// TODO this update cna't happen. Maybe the design isn't right.
 	// This is needed to label pods created before Determined supported k8s agent enable disable.
 	for _, pod := range k8sPods {
 		pod := pod
