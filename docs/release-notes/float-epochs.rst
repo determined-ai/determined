@@ -2,4 +2,4 @@
 
 **Improvements**
 
--  Enable metrics reporting & display with floating point epoch values.
+-  Enable reporting & display of metrics with floating point epoch values.
