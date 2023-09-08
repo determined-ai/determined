@@ -179,14 +179,18 @@ Connect the :class:`~determined.experimental.checkpoint.Checkpoint` or
 
 .. code:: python
 
-   # Checkpoint
-   ckpt = client.get_checkpoint(hparams.get("checkpoint_uuid"))
-   core_context.experimental.report_task_using_checkpoint(ckpt)
+   def __init__(self, context):
+       self.context = context
+       hparams = self.context.get_hparams()
 
-   # Or Model Version
-   model = client.get_model(hparams.get("model_name"))
-   model_version = model.get_version(hparams.get("model_version"))
-   core_context.experimental.report_task_using_model_version(model_version)
+       # Model Version
+       model = client.get_model(hparams.get("model_name"))
+       model_version = model.get_version(hparams.get("model_version"))
+       self.context.report_task_using_model_version(model_version)
+
+       # Or Checkpoint
+       ckpt = client.get_checkpoint(hparams.get("checkpoint_uuid"))
+       self.context.report_task_using_checkpoint(ckpt)
 
 The :class:`~determined.experimental.checkpoint.Checkpoint` and
 :class:`~determined.experimental.model.ModelVersion` used are now available to any query via
@@ -213,7 +217,7 @@ Initialize the dataset you want to process.
 Step 4: Pass the InferenceProcessor Class and Dataset
 =====================================================
 
-Pass the InferenceProcessor class and the dataset to ``torch_batch_process``.
+Pass the ``InferenceProcessor`` class and the dataset to ``torch_batch_process``.
 
 .. code:: python
 
@@ -234,12 +238,13 @@ Report metrics anywhere in the trial to have them aggregated for the
 :class:`~determined.experimental.checkpoint.Checkpoint` or
 :class:`~determined.experimental.model.ModelVersion` in question.
 
-For example, inside the trial, you could use:
+For example, you could send metrics in
+:meth:`~determined.pytorch.experimental.TorchBatchProcessor.on_finish`.
 
 .. code:: python
 
    def on_finish(self):
-       self.core_context.train.report_metrics(
+       self.context.report_metrics(
            group="inference",
            steps_completed=self.rank,
            metrics={
