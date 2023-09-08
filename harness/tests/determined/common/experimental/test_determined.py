@@ -1,45 +1,25 @@
 import math
-from typing import Callable, List
+from typing import List
 from unittest import mock
 
 import pytest
 import responses
 
 from determined.common.api import authentication, errors
-from determined.common.experimental import determined, experiment
+from determined.experimental import client as _client
 from tests.fixtures import api_responses
 
 _MASTER = "http://localhost:8080"
 
-Determined = determined.Determined
 
-
-@pytest.fixture
-@mock.patch("determined.common.api.authentication.Authentication")
-def mock_default_auth(auth_mock: mock.MagicMock) -> None:
-    responses.get(f"{_MASTER}/api/v1/me", status=200, json={"username": api_responses.USERNAME})
-    responses.post(
-        f"{_MASTER}/api/v1/auth/login",
-        status=200,
-        json=api_responses.sample_login(username=api_responses.USERNAME).to_json(),
-    )
-    auth_mock.return_value = authentication.Authentication(
-        master_address=_MASTER,
-        requested_user=api_responses.USERNAME,
-        password=api_responses.PASSWORD,
-    )
-
-
-@pytest.fixture
-def make_client(mock_default_auth: Callable) -> Callable[[], Determined]:
-    def _make_client() -> Determined:
-        return Determined(master=_MASTER)
-
-    return _make_client
+def make_client() -> _client.Determined:
+    with mock.patch("determined.common.api.authentication.login_with_cache") as mock_login:
+        mock_login.return_value = authentication.UsernameTokenPair("username", "token")
+        return _client.Determined(_MASTER)
 
 
 @responses.activate
-def test_default_retry_retries_transient_failures(make_client: Callable[[], Determined]) -> None:
+def test_default_retry_retries_transient_failures() -> None:
     client = make_client()
 
     model_resp = api_responses.sample_get_model()
@@ -55,7 +35,7 @@ def test_default_retry_retries_transient_failures(make_client: Callable[[], Dete
 
 
 @responses.activate
-def test_default_retry_retries_until_max(make_client: Callable[[], Determined]) -> None:
+def test_default_retry_retries_until_max() -> None:
     client = make_client()
     model_resp = api_responses.sample_get_model()
     get_model_url = f"{_MASTER}/api/v1/models/{model_resp.model.name}"
@@ -69,7 +49,7 @@ def test_default_retry_retries_until_max(make_client: Callable[[], Determined]) 
 
 
 @responses.activate
-def test_default_retry_fails_after_max_retries(make_client: Callable[[], Determined]) -> None:
+def test_default_retry_fails_after_max_retries() -> None:
     client = make_client()
     model_resp = api_responses.sample_get_model()
     get_model_url = f"{_MASTER}/api/v1/models/{model_resp.model.name}"
@@ -80,7 +60,7 @@ def test_default_retry_fails_after_max_retries(make_client: Callable[[], Determi
 
 
 @responses.activate
-def test_default_retry_doesnt_retry_post(make_client: Callable[[], Determined]) -> None:
+def test_default_retry_doesnt_retry_post() -> None:
     client = make_client()
     model_resp = api_responses.sample_get_model()
     create_model_url = f"{_MASTER}/api/v1/models"
@@ -95,10 +75,7 @@ def test_default_retry_doesnt_retry_post(make_client: Callable[[], Determined]) 
     [502, 503, 504],
 )
 @responses.activate
-def test_default_retry_retries_status_forcelist(
-    make_client: Callable[[], Determined],
-    status: List[int],
-) -> None:
+def test_default_retry_retries_status_forcelist(status: List[int]) -> None:
     client = make_client()
     model_resp = api_responses.sample_get_model()
     get_model_url = f"{_MASTER}/api/v1/models/{model_resp.model.name}"
@@ -114,10 +91,7 @@ def test_default_retry_retries_status_forcelist(
     [400, 404, 500],
 )
 @responses.activate
-def test_default_retry_doesnt_retry_allowed_status(
-    make_client: Callable[[], Determined],
-    status: List[int],
-) -> None:
+def test_default_retry_doesnt_retry_allowed_status(status: List[int]) -> None:
     client = make_client()
     model_resp = api_responses.sample_get_model()
     get_model_url = f"{_MASTER}/api/v1/models/{model_resp.model.name}"
@@ -130,9 +104,7 @@ def test_default_retry_doesnt_retry_allowed_status(
 
 @pytest.mark.parametrize("attribute", ["summary_metrics", "state"])
 @responses.activate
-def test_get_trial_populates_attribute(
-    make_client: Callable[[], Determined], attribute: str
-) -> None:
+def test_get_trial_populates_attribute(attribute: str) -> None:
     client = make_client()
     trial_id = 1
     tr_resp = api_responses.sample_get_trial(id=trial_id)
@@ -146,20 +118,17 @@ def test_get_trial_populates_attribute(
 
 @responses.activate
 @mock.patch("determined.common.api.bindings.get_GetExperiments")
-def test_list_experiments_calls_bindings_with_params(
-    mock_bindings: mock.MagicMock,
-    make_client: Callable[[], Determined],
-) -> None:
+def test_list_experiments_calls_bindings_with_params(mock_bindings: mock.MagicMock) -> None:
     client = make_client()
     exps_resp = api_responses.sample_get_experiments()
 
     params = {
-        "sort_by": experiment.ExperimentSortBy.ID,
-        "order_by": determined.OrderBy.ASCENDING,
+        "sort_by": _client.ExperimentSortBy.ID,
+        "order_by": _client.OrderBy.ASCENDING,
         "experiment_ids": list(range(10)),
         "labels": ["label1", "label2"],
         "users": ["user1", "user2"],
-        "states": [experiment.ExperimentState.COMPLETED, experiment.ExperimentState.ACTIVE],
+        "states": [_client.ExperimentState.COMPLETED, _client.ExperimentState.ACTIVE],
         "name": "exp name",
         "project_id": 1,
     }
@@ -187,10 +156,7 @@ def test_list_experiments_calls_bindings_with_params(
 
 @responses.activate
 @mock.patch("determined.common.api.bindings.get_GetExperiments")
-def test_list_experiments_returns_all_response_pages(
-    mock_bindings: mock.MagicMock,
-    make_client: Callable[[], Determined],
-) -> None:
+def test_list_experiments_returns_all_response_pages(mock_bindings: mock.MagicMock) -> None:
     client = make_client()
     exps_resp = api_responses.sample_get_experiments()
     total_exps = len(exps_resp.experiments)

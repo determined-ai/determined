@@ -1,9 +1,8 @@
 import os
-from pathlib import Path
+import pathlib
 from typing import Any, Dict, List, Union
 
 from determined.common import api, util
-from determined.common.api import authentication
 
 MASTER_SCHEME = "http"
 MASTER_IP = "localhost"
@@ -33,10 +32,8 @@ PT2_CPU_IMAGE = os.environ.get("PT2_CPU_IMAGE") or DEFAULT_PT2_CPU_IMAGE
 PT2_GPU_IMAGE = os.environ.get("PT2_GPU_IMAGE") or DEFAULT_PT2_GPU_IMAGE
 GPU_ENABLED = os.environ.get("DET_TEST_GPU_ENABLED", "1") not in ("0", "false")
 
-PROJECT_ROOT_PATH = Path(__file__).resolve().parents[2]
+PROJECT_ROOT_PATH = pathlib.Path(__file__).resolve().parents[2]
 EXAMPLES_PATH = PROJECT_ROOT_PATH / "examples"
-
-ADMIN_CREDENTIALS = authentication.Credentials("admin", "")
 
 SCIM_USERNAME = "determined"
 SCIM_PASSWORD = "password"
@@ -84,7 +81,7 @@ def load_config(config_path: str) -> Any:
 
 
 def make_master_url(suffix: str = "") -> str:
-    return "{}://{}:{}/{}".format(MASTER_SCHEME, MASTER_IP, MASTER_PORT, suffix)
+    return f"{MASTER_SCHEME}://{MASTER_IP}:{MASTER_PORT}/{suffix}"
 
 
 def set_global_batch_size(config: Dict[Any, Any], batch_size: int) -> Dict[Any, Any]:

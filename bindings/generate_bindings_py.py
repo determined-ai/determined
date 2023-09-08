@@ -205,7 +205,7 @@ def gen_function(func: swagger_parser.Function) -> Code:
     out = [f"def {func.operation_name_sc()}("]
 
     # Function parameters.
-    out += ['    session: "api.Session",']
+    out += ['    session: "api.BaseSession",']
     if func.params:
         out += ["    *,"]
 

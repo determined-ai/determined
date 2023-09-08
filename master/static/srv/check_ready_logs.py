@@ -12,42 +12,40 @@ from typing import Optional, Pattern
 from requests.exceptions import RequestException
 
 from determined.common import api
-from determined.common.api import certs
+from determined.common.api import authentication, certs
 
 BACKOFF_SECONDS = 5
 
 
-def post_ready(master_url: str, cert: certs.Cert, allocation_id: str, state: str):
+def post_ready(sess: api.Session, allocation_id: str, state: str):
     # Since the service is virtually inaccessible by the user unless
     # the call completes, we may as well try forever or just wait for
     # them to kill us.
     while True:
         try:
-            api.post(
-                master_url,
-                f"/api/v1/allocations/{allocation_id}/{state}",
-                {},
-                cert=cert,
-            )
+            sess.post(f"/api/v1/allocations/{allocation_id}/{state}")
             return
         except RequestException as e:
             if e.response is not None and e.response.status_code < 500:
                 raise e
-
             time.sleep(BACKOFF_SECONDS)
 
 
 def main(ready: Pattern, waiting: Optional[Pattern] = None):
     master_url = str(os.environ["DET_MASTER"])
     cert = certs.default_load(master_url)
+    # This only runs on-cluster, so it is expected the username and session token are present in the
+    # environment.
+    utp = authentication.login_with_cache(master_url, cert=cert)
+    sess = api.Session(master_url, utp, cert)
     allocation_id = str(os.environ["DET_ALLOCATION_ID"])
     for line in sys.stdin:
         if ready.match(line):
-            post_ready(master_url, cert, allocation_id, "ready")
+            post_ready(sess, allocation_id, "ready")
             return
         if waiting and waiting.match(line):
-            post_ready(master_url, cert, allocation_id, "waiting")
-
+            post_ready(sess, allocation_id, "waiting")
+            return
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Read STDIN for a match and mark a task as ready")

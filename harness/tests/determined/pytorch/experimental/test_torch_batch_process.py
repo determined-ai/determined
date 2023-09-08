@@ -75,6 +75,7 @@ def _get_dist_context(
 ) -> unittest.mock.MagicMock:
     mock_distributed_context = unittest.mock.MagicMock()
     mock_distributed_context.get_rank.return_value = rank
+    mock_distributed_context.local_rank = rank
     mock_distributed_context.broadcast.return_value = "mock_checkpoint_uuid"
     mock_distributed_context.allgather.return_value = all_gather_return_value
     mock_distributed_context.gather.return_value = gather_return_value

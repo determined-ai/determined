@@ -1,35 +1,32 @@
-import subprocess
+import http
 import uuid
-from http import HTTPStatus
 
 import pytest
 
-from determined.common.api.errors import APIException
-from determined.experimental import Determined, ModelSortBy
+from determined.common.api import errors
+from determined.experimental import client
 from tests import api_utils
 from tests import config as conf
+from tests import detproc
 from tests import experiment as exp
-from tests.cluster.test_users import log_out_user
-
-from .test_workspace_org import setup_workspaces
+from tests.cluster import test_workspace_org
 
 
 @pytest.mark.e2e_cpu
 def test_model_registry() -> None:
+    sess = api_utils.user_session()
     exp_id = exp.run_basic_test(
+        sess,
         conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"),
         conf.tutorials_path("mnist_pytorch"),
         None,
     )
-
-    log_out_user()  # Ensure that we use determined credentials.
-
-    d = Determined(conf.make_master_url())
+    d = client.Determined._from_session(sess)
     mnist = None
     objectdetect = None
     tform = None
 
-    existing_models = [m.name for m in d.get_models(sort_by=ModelSortBy.NAME)]
+    existing_models = [m.name for m in d.get_models(sort_by=client.ModelSortBy.NAME)]
 
     try:
         # Create a model and validate twiddling the metadata.
@@ -37,12 +34,12 @@ def test_model_registry() -> None:
         assert mnist.metadata == {}
 
         # Attempt to create model with a duplicate name
-        with pytest.raises(APIException) as e:
+        with pytest.raises(errors.APIException) as e:
             duplicate_model = d.create_model(
                 "mnist", "simple computer vision model", labels=["a", "b"]
             )
             assert duplicate_model is None
-        assert e.value.status_code == HTTPStatus.CONFLICT
+        assert e.value.status_code == http.HTTPStatus.CONFLICT
 
         mnist.add_metadata({"testing": "metadata"})
         db_model = d.get_model(mnist.name)
@@ -123,6 +120,7 @@ def test_model_registry() -> None:
         # Run another basic test and register its checkpoint as a version as well.
         # Validate the latest has been updated.
         exp_id = exp.run_basic_test(
+            sess,
             conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"),
             conf.tutorials_path("mnist_pytorch"),
             None,
@@ -154,7 +152,7 @@ def test_model_registry() -> None:
         tform = d.create_model("transformer", "all you need is attention")
         objectdetect = d.create_model("ac - Dc", "a test name model")
 
-        models = d.get_models(sort_by=ModelSortBy.NAME)
+        models = d.get_models(sort_by=client.ModelSortBy.NAME)
         model_names = [m.name for m in models if m.name not in existing_models]
         assert model_names == ["ac - Dc", "mnist", "transformer"]
 
@@ -167,7 +165,7 @@ def test_model_registry() -> None:
         # Test deletion of model
         tform.delete()
         tform = None
-        models = d.get_models(sort_by=ModelSortBy.NAME)
+        models = d.get_models(sort_by=client.ModelSortBy.NAME)
         model_names = [m.name for m in models if m.name not in existing_models]
         assert model_names == ["ac - Dc", "mnist"]
     finally:
@@ -183,45 +181,43 @@ def get_random_string() -> str:
 
 @pytest.mark.e2e_cpu
 def test_model_cli() -> None:
+    sess = api_utils.user_session()
     test_model_1_name = get_random_string()
-    master_url = conf.make_master_url()
-    command = ["det", "-m", master_url, "model", "create", test_model_1_name]
-    subprocess.run(command, check=True)
-    d = Determined(master_url)
+    command = ["det", "model", "create", test_model_1_name]
+    detproc.check_call(sess, command)
+    d = client.Determined._from_session(sess)
     model_1 = d.get_model(identifier=test_model_1_name)
     assert model_1.workspace_id == 1
     # Test det model list and det model describe
-    command = ["det", "-m", master_url, "model", "list"]
-    output = str(subprocess.check_output(command))
+    command = ["det", "model", "list"]
+    output = detproc.check_output(sess, command)
     assert "Workspace ID" in output and "1" in output
 
-    command = ["det", "-m", master_url, "model", "describe", test_model_1_name]
-    output = str(subprocess.check_output(command))
+    command = ["det", "model", "describe", test_model_1_name]
+    output = detproc.check_output(sess, command)
     assert "Workspace ID" in output and "1" in output
 
     # add a test workspace.
-    admin_session = api_utils.determined_test_session(admin=True)
-    with setup_workspaces(admin_session) as [test_workspace]:
+    admin = api_utils.admin_session()
+    with test_workspace_org.setup_workspaces(admin) as [test_workspace]:
         test_workspace_name = test_workspace.name
         # create model in test_workspace
         test_model_2_name = get_random_string()
         command = [
             "det",
-            "-m",
-            master_url,
             "model",
             "create",
             test_model_2_name,
             "-w",
             test_workspace_name,
         ]
-        subprocess.run(command, check=True)
+        detproc.check_call(sess, command)
         model_2 = d.get_model(identifier=test_model_2_name)
         assert model_2.workspace_id == test_workspace.id
 
         # Test det model list -w workspace_name and det model describe
-        command = ["det", "-m", master_url, "model", "list", "-w", test_workspace.name]
-        output = str(subprocess.check_output(command))
+        command = ["det", "model", "list", "-w", test_workspace.name]
+        output = detproc.check_output(sess, command)
         assert (
             "Workspace ID" in output
             and str(test_workspace.id) in output
@@ -232,15 +228,13 @@ def test_model_cli() -> None:
         # move test_model_1 to test_workspace
         command = [
             "det",
-            "-m",
-            master_url,
             "model",
             "move",
             test_model_1_name,
             "-w",
             test_workspace_name,
         ]
-        subprocess.run(command, check=True)
+        detproc.check_call(sess, command)
         model_1 = d.get_model(test_model_1_name)
         assert model_1.workspace_id == test_workspace.id
         # Delete test models (workspace deleted in setup_workspace)

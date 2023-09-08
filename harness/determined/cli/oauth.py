@@ -1,14 +1,16 @@
-from argparse import Namespace
+import argparse
 from typing import Any, List
 
-from determined.cli import login_sdk_client, render
+from determined import cli
+from determined.cli import render
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.experimental import client
 
 
-@login_sdk_client
-def list_clients(parsed_args: Namespace) -> None:
-    oauth_clients = client.list_oauth_clients()
+def list_clients(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+    d = client.Determined._from_session(sess)
+    oauth_clients = d.list_oauth_clients()
     headers = ["Name", "Client ID", "Domain"]
     keys = ["name", "id", "domain"]
     oauth_clients_dict = [
@@ -20,17 +22,19 @@ def list_clients(parsed_args: Namespace) -> None:
     )
 
 
-@login_sdk_client
-def add_client(parsed_args: Namespace) -> None:
-    oauth_client = client.add_oauth_client(domain=parsed_args.domain, name=parsed_args.name)
+def add_client(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+    d = client.Determined._from_session(sess)
+    oauth_client = d.add_oauth_client(domain=args.domain, name=args.name)
 
-    print("Client ID:     {}".format(oauth_client.id))
-    print("Client secret: {}".format(oauth_client.secret))
+    print(f"Client ID:     {oauth_client.id}")
+    print(f"Client secret: {oauth_client.secret}")
 
 
-@login_sdk_client
-def remove_client(parsed_args: Namespace) -> None:
-    client.remove_oauth_client(client_id=parsed_args.client_id)
+def remove_client(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+    d = client.Determined._from_session(sess)
+    d.remove_oauth_client(client_id=args.client_id)
 
 
 # fmt: off

@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Callable, List
 from urllib.parse import parse_qs, urlparse
 
+from determined import cli
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
@@ -14,9 +15,9 @@ from determined.errors import EnterpriseOnlyError
 CLI_REDIRECT_PORT = 49176
 
 
-def handle_token(master_url: str, token: str) -> None:
+def handle_token(sess: api.BaseSession, master_url: str, token: str) -> None:
     tmp_auth = {"Cookie": "auth={token}".format(token=token)}
-    me = api.get(master_url, "/users/me", headers=tmp_auth, authenticated=False).json()
+    me = sess.get("/users/me", headers=tmp_auth).json()
 
     token_store = authentication.TokenStore(master_url)
     token_store.set_token(me["username"], token)
@@ -25,13 +26,13 @@ def handle_token(master_url: str, token: str) -> None:
     print("Authenticated as {}.".format(me["username"]))
 
 
-def make_handler(master_url: str, close_cb: Callable[[int], None]) -> Any:
+def make_handler(sess: api.BaseSession, master_url: str, close_cb: Callable[[int], None]) -> Any:
     class TokenAcceptHandler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:
             try:
                 """Serve a GET request."""
                 token = parse_qs(urlparse(self.path).query)["token"][0]
-                handle_token(master_url, token)
+                handle_token(sess, master_url, token)
 
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")
@@ -49,8 +50,9 @@ def make_handler(master_url: str, close_cb: Callable[[int], None]) -> Any:
     return TokenAcceptHandler
 
 
-def sso(parsed_args: Namespace) -> None:
-    master_info = api.get(parsed_args.master, "info", authenticated=False).json()
+def sso(args: Namespace) -> None:
+    sess = cli.unauth_session(args)
+    master_info = sess.get("info").json()
     try:
         sso_providers = master_info["sso_providers"]
     except KeyError:
@@ -58,27 +60,27 @@ def sso(parsed_args: Namespace) -> None:
     if not sso_providers:
         print("No SSO providers found.")
         return
-    elif not parsed_args.provider:
+    elif not args.provider:
         if len(sso_providers) > 1:
             print("Provider must be specified when multiple are available.")
             return
         matched_provider = sso_providers[0]
     else:
         matching_providers = [
-            p for p in sso_providers if p["name"].lower() == parsed_args.provider.lower()
+            p for p in sso_providers if p["name"].lower() == args.provider.lower()
         ]
         if not matching_providers:
             ps = ", ".join(p["name"].lower() for p in sso_providers)
-            print("Provider {} unsupported. (Providers found: {})".format(parsed_args.provider, ps))
+            print("Provider {} unsupported. (Providers found: {})".format(args.provider, ps))
             return
         elif len(matching_providers) > 1:
-            print("Multiple SSO providers found with name {}.".format(parsed_args.provider))
+            print("Multiple SSO providers found with name {}.".format(args.provider))
             return
         matched_provider = matching_providers[0]
 
     sso_url = matched_provider["sso_url"] + "?relayState=cli"
 
-    if not parsed_args.headless:
+    if not args.headless:
         if webbrowser.open(sso_url):
             print(
                 "Your browser should open and prompt you to sign on;"
@@ -87,7 +89,7 @@ def sso(parsed_args: Namespace) -> None:
             print("Killing this process before signing on will cancel authentication.")
             with HTTPServer(
                 ("localhost", CLI_REDIRECT_PORT),
-                make_handler(parsed_args.master, lambda code: sys.exit(code)),
+                make_handler(sess, args.master, lambda code: sys.exit(code)),
             ) as httpd:
                 return httpd.serve_forever()
 
@@ -105,13 +107,14 @@ def sso(parsed_args: Namespace) -> None:
         user_input_url = getpass(prompt="\n(hidden) localhost URL? ")
         try:
             token = parse_qs(urlparse(user_input_url).query)["token"][0]
-            handle_token(parsed_args.master, token)
+            handle_token(sess, args.master, token)
         except (KeyError, IndexError):
             print(f"Could not extract token from localhost URL. {example_url}")
 
 
-def list_providers(parsed_args: Namespace) -> None:
-    master_info = api.get(parsed_args.master, "info", authenticated=False).json()
+def list_providers(args: Namespace) -> None:
+    sess = cli.unauth_session(args)
+    master_info = sess.get("info").json()
 
     try:
         sso_providers = master_info["sso_providers"]

@@ -1,14 +1,13 @@
 import argparse
-import functools
 import sys
 from typing import Any, Callable, Dict, List, Sequence
 
 import termcolor
 
+from determined import cli
 from determined.cli import errors, render
 from determined.common import api, declarative_argparse, util
-from determined.common.api import authentication, bindings, certs
-from determined.experimental import client
+from determined.common.api import authentication, bindings
 
 output_format_args: Dict[str, declarative_argparse.Arg] = {
     "json": declarative_argparse.Arg(
@@ -85,28 +84,27 @@ def make_pagination_args(
 default_pagination_args = make_pagination_args()
 
 
-def login_sdk_client(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
-    @functools.wraps(func)
-    def f(namespace: argparse.Namespace) -> Any:
-        client.login(master=namespace.master, user=namespace.user)
-        return func(namespace)
-
-    return f
+def unauth_session(args: argparse.Namespace) -> api.UnauthSession:
+    master_url = args.master or util.get_default_master_address()
+    return api.UnauthSession(master=master_url, cert=cli.cert)
 
 
 def setup_session(args: argparse.Namespace) -> api.Session:
     master_url = args.master or util.get_default_master_address()
-    cert = certs.default_load(master_url)
-    retry = api.default_retry()
-
-    return api.Session(master_url, args.user, authentication.cli_auth, cert, retry)
+    utp = authentication.login_with_cache(
+        master_address=master_url,
+        requested_user=args.user,
+        password=None,
+        cert=cli.cert,
+    )
+    return api.Session(master_url, utp, cli.cert, api.default_retry())
 
 
 def require_feature_flag(feature_flag: str, error_message: str) -> Callable[..., Any]:
     def decorator(function: Callable[..., Any]) -> Callable[..., Any]:
         def wrapper(args: argparse.Namespace) -> None:
-            resp = bindings.get_GetMaster(setup_session(args))
-            if not resp.to_json().get("rbacEnabled"):
+            resp = bindings.get_GetMaster(unauth_session(args))
+            if not resp.rbacEnabled:
                 raise errors.FeatureFlagDisabled(error_message)
             function(args)
 
@@ -126,7 +124,7 @@ def wait_ntsc_ready(session: api.Session, ntsc_type: api.NTSC_Kind, eid: str) ->
     """
     name = ntsc_type.value
     loading_animator = render.Animator(f"Waiting for {name} to become ready")
-    err_msg = api.task_is_ready(
+    err_msg = api.wait_for_task_ready(
         session=session,
         task_id=eid,
         progress_report=loading_animator.next,

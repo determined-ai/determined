@@ -1,19 +1,28 @@
-import json
 import os
+import pathlib
 import random
 import subprocess
 import time
-from pathlib import Path
 from typing import List
 
 import docker
 import pytest
 
-from determined.common.api import bindings
+from determined.common import api
+from determined.common.api import authentication, bindings
 from tests import config as conf
+from tests import detproc
 from tests import experiment as exp
 
-from ..cluster.test_users import logged_in_user
+
+def mksess(host: str, port: int, username: str = "determined", password: str = "") -> api.Session:
+    """
+    Since this file frequently creates new masters, always create a fresh Session.
+    """
+
+    master_url = f"http://{host}:{port}"
+    utp = authentication.login(master_url, username=username, password=password)
+    return api.Session(master_url, utp, cert=None)
 
 
 def det_deploy(subcommand: List) -> None:
@@ -74,23 +83,17 @@ def agent_down(arguments: List) -> None:
     det_deploy(command)
 
 
-def agent_enable(arguments: List) -> None:
-    with logged_in_user(conf.ADMIN_CREDENTIALS):
-        subprocess.run(["det", "-m", conf.make_master_url(), "agent", "enable"] + arguments)
+def agent_enable(sess: api.Session, arguments: List) -> None:
+    detproc.check_output(sess, ["det", "agent", "enable"] + arguments)
 
 
-def agent_disable(arguments: List) -> None:
-    with logged_in_user(conf.ADMIN_CREDENTIALS):
-        subprocess.run(["det", "-m", conf.make_master_url(), "agent", "disable"] + arguments)
+def agent_disable(sess: api.Session, arguments: List) -> None:
+    detproc.check_output(sess, ["det", "agent", "disable"] + arguments)
 
 
 @pytest.mark.det_deploy_local
 def test_cluster_down() -> None:
-    master_host = "localhost"
-    master_port = "8080"
     name = "test_cluster_down"
-    conf.MASTER_IP = master_host
-    conf.MASTER_PORT = master_port
 
     cluster_up(["--cluster-name", name])
 
@@ -108,14 +111,12 @@ def test_cluster_down() -> None:
 
 @pytest.mark.det_deploy_local
 def test_custom_etc() -> None:
-    master_host = "localhost"
-    master_port = "8080"
     name = "test_custom_etc"
-    conf.MASTER_IP = master_host
-    conf.MASTER_PORT = master_port
-    etc_path = str(Path(__file__).parent.joinpath("etc/master.yaml").resolve())
+    etc_path = str(pathlib.Path(__file__).parent.joinpath("etc/master.yaml").resolve())
     cluster_up(["--master-config-path", etc_path, "--cluster-name", name])
+    sess = mksess("localhost", 8080)
     exp.run_basic_test(
+        sess,
         conf.fixtures_path("no_op/single-default-ckpt.yaml"),
         conf.fixtures_path("no_op"),
         1,
@@ -126,16 +127,12 @@ def test_custom_etc() -> None:
 
 @pytest.mark.det_deploy_local
 def test_agent_config_path() -> None:
-    master_host = "localhost"
-    master_port = "8080"
     cluster_name = "test_agent_config_path"
     master_name = f"{cluster_name}_determined-master_1"
-    conf.MASTER_IP = master_host
-    conf.MASTER_PORT = master_port
     master_up(["--master-name", master_name])
 
     # Config makes it unmodified.
-    etc_path = str(Path(__file__).parent.joinpath("etc/agent.yaml").resolve())
+    etc_path = str(pathlib.Path(__file__).parent.joinpath("etc/agent.yaml").resolve())
     agent_name = "test-path-agent"
     agent_up(["--agent-config-path", etc_path])
 
@@ -150,7 +147,8 @@ def test_agent_config_path() -> None:
     # Validate CLI flags overwrite config file options.
     agent_name += "-2"
     agent_up(["--agent-name", agent_name, "--agent-config-path", etc_path])
-    agent_list = json.loads(subprocess.check_output(["det", "a", "list", "--json"]).decode())
+    sess = mksess("localhost", 8080)
+    agent_list = detproc.check_json(sess, ["det", "a", "list", "--json"])
     agent_list = [el for el in agent_list if el["id"] == agent_name]
     assert len(agent_list) == 1
     agent_down(["--agent-name", agent_name])
@@ -161,18 +159,19 @@ def test_agent_config_path() -> None:
 @pytest.mark.det_deploy_local
 def test_custom_port() -> None:
     name = "port_test"
-    master_host = "localhost"
-    master_port = "12321"
-    conf.MASTER_IP = master_host
-    conf.MASTER_PORT = master_port
+    custom_port = 12321
     arguments = [
         "--cluster-name",
         name,
         "--master-port",
-        f"{master_port}",
+        f"{custom_port}",
     ]
     cluster_up(arguments)
+
+    sess = mksess("localhost", custom_port)
+
     exp.run_basic_test(
+        sess,
         conf.fixtures_path("no_op/single-one-short-step.yaml"),
         conf.fixtures_path("no_op"),
         1,
@@ -182,12 +181,8 @@ def test_custom_port() -> None:
 
 @pytest.mark.det_deploy_local
 def test_agents_made() -> None:
-    master_host = "localhost"
-    master_port = "8080"
     name = "agents_test"
     num_agents = 2
-    conf.MASTER_IP = master_host
-    conf.MASTER_PORT = master_port
     arguments = [
         "--cluster-name",
         name,
@@ -207,12 +202,8 @@ def test_agents_made() -> None:
 
 @pytest.mark.det_deploy_local
 def test_master_up_down() -> None:
-    master_host = "localhost"
-    master_port = "8080"
     cluster_name = "test_master_up_down"
     master_name = f"{cluster_name}_determined-master_1"
-    conf.MASTER_IP = master_host
-    conf.MASTER_PORT = master_port
 
     master_up(["--master-name", master_name])
 
@@ -229,11 +220,7 @@ def test_master_up_down() -> None:
 
 @pytest.mark.det_deploy_local
 def test_agent_up_down() -> None:
-    master_host = "localhost"
-    master_port = "8080"
     agent_name = "test_agent-determined-agent"
-    conf.MASTER_IP = master_host
-    conf.MASTER_PORT = master_port
     cluster_name = "test_agent_up_down"
     master_name = f"{cluster_name}_determined-master_1"
 
@@ -257,13 +244,11 @@ def test_agent_up_down() -> None:
 @pytest.mark.stress_test
 def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect: bool) -> None:
     random.seed(42)
-    master_host = "localhost"
-    master_port = "8080"
     cluster_name = "test_stress_agents_reconnect"
     master_name = f"{cluster_name}_determined-master_1"
-    conf.MASTER_IP = master_host
-    conf.MASTER_PORT = master_port
     master_up(["--master-name", master_name])
+
+    sess = mksess("localhost", 8080, "admin")
 
     # Start all agents.
     agents_are_up = [True] * num_agents
@@ -286,53 +271,37 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                 agents_are_up[agent_id] = not agents_are_up[agent_id]
             else:
                 if random.choice([True, False]):
-                    agent_disable([f"agent-{agent_id}"])
+                    agent_disable(sess, [f"agent-{agent_id}"])
                     agents_are_up[agent_id] = False
                 else:
-                    agent_enable([f"agent-{agent_id}"])
+                    agent_enable(sess, [f"agent-{agent_id}"])
                     agents_are_up[agent_id] = True
         print("agents_are_up:", agents_are_up)
         time.sleep(10)
 
         # Validate that our master kept track of the agent reconnect spam.
-        agent_list = json.loads(
-            subprocess.check_output(
-                [
-                    "det",
-                    "agent",
-                    "list",
-                    "--json",
-                ]
-            ).decode()
-        )
+        agent_list = detproc.check_json(sess, ["det", "agent", "list", "--json"])
         print("agent_list:", agent_list)
         assert sum(agents_are_up) <= len(agent_list)
         for agent in agent_list:
             print("agent:", agent)
             agent_id = int(agent["id"].replace("agent-", ""))
             if agents_are_up[agent_id] != agent["enabled"]:
-                p = subprocess.run(
-                    [
-                        "det",
-                        "deploy",
-                        "local",
-                        "logs",
-                    ]
-                )
-                print(p.stdout)
-                print(p.stderr)
+                subprocess.check_call(["det", "deploy", "local", "logs"])
             assert (
                 agents_are_up[agent_id] == agent["enabled"]
             ), f"agent is up: {agents_are_up[agent_id]}, agent status: {agent}"
 
         # Can we still schedule something?
         if any(agents_are_up):
+            mksess("localhost", 8080)
             experiment_id = exp.create_experiment(
+                sess,
                 conf.fixtures_path("no_op/single-one-short-step.yaml"),
                 conf.fixtures_path("no_op"),
                 None,
             )
-            exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.COMPLETED)
+            exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.COMPLETED)
 
     for agent_id in range(num_agents):
         agent_down(["--agent-name", f"agent-{agent_id}"])

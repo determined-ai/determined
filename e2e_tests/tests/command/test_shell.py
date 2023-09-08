@@ -1,18 +1,20 @@
-from pathlib import Path
+import pathlib
 
 import pytest
 
 import determined as det
+from tests import api_utils
 from tests import command as cmd
-from tests.cluster import test_users
+from tests import detproc
 
 
 @pytest.mark.slow
 @pytest.mark.e2e_gpu
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
-def test_start_and_write_to_shell(tmp_path: Path) -> None:
-    with cmd.interactive_command("shell", "start") as shell:
+def test_start_and_write_to_shell(tmp_path: pathlib.Path) -> None:
+    sess = api_utils.user_session()
+    with cmd.interactive_command(sess, ["shell", "start"]) as shell:
         # Call our cli to ensure that PATH and PYTHONUSERBASE are properly set.
         shell.stdin.write(b"COLUMNS=80 det --version\n")
         # Exit the shell, so we can read output below until EOF instead of timeout
@@ -32,16 +34,9 @@ def test_start_and_write_to_shell(tmp_path: Path) -> None:
 
 @pytest.mark.e2e_cpu
 def test_open_shell() -> None:
-    with cmd.interactive_command("shell", "start", "--detach") as shell:
-        task_id = shell.task_id
-        assert task_id is not None
-
-        child = test_users.det_spawn(["shell", "open", task_id])
-        child.setecho(True)
-        child.expect(r".*Permanently added.+([0-9a-f-]{36}).+known hosts\.", timeout=180)
-        child.sendline("det user whoami")
-        child.expect("You are logged in as user \\'(.*)\\'", timeout=10)
-        child.sendline("exit")
-        child.read()
-        child.wait()
-        assert child.exitstatus == 0
+    sess = api_utils.user_session()
+    with cmd.interactive_command(sess, ["shell", "start", "--detach"]) as shell:
+        assert shell.task_id
+        command = ["det", "shell", "open", shell.task_id, "det", "user", "whoami"]
+        output = detproc.check_output(sess, command)
+        assert "You are logged in as user" in output

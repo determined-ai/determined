@@ -19,8 +19,8 @@ import tabulate
 from OpenSSL import SSL, crypto
 from termcolor import colored
 
-import determined
-import determined.cli
+import determined as det
+from determined import cli
 from determined.cli import render
 from determined.cli.agent import args_description as agent_args_description
 from determined.cli.checkpoint import args_description as checkpoint_args_description
@@ -49,7 +49,7 @@ from determined.cli.version import args_description as version_args_description
 from determined.cli.version import check_version
 from determined.cli.workspace import args_description as workspace_args_description
 from determined.common import api, yaml
-from determined.common.api import authentication, bindings, certs
+from determined.common.api import bindings, certs
 from determined.common.check import check_not_none
 from determined.common.declarative_argparse import (
     Arg,
@@ -69,15 +69,15 @@ from determined.errors import EnterpriseOnlyError
 from .errors import CliError, FeatureFlagDisabled
 
 
-@authentication.required
 def preview_search(args: Namespace) -> None:
+    sess = cli.setup_session(args)
     experiment_config = safe_load_yaml_with_exceptions(args.config_file)
     args.config_file.close()
 
     if "searcher" not in experiment_config:
         print("Experiment configuration must have 'searcher' section")
         sys.exit(1)
-    r = api.post(args.master, "searcher/preview", json=experiment_config)
+    r = sess.post("searcher/preview", json=experiment_config)
     j = r.json()
 
     def to_full_name(kind: str) -> str:
@@ -141,7 +141,7 @@ args_description = [
         "--version",
         action="version",
         help="print CLI version and exit",
-        version="%(prog)s {}".format(determined.__version__),
+        version="%(prog)s {}".format(det.__version__),
     ),
     Cmd(
         "preview-search",
@@ -233,10 +233,10 @@ def main(
                 return
 
             # Configure the CLI's Cert singleton.
-            certs.cli_cert = certs.default_load(parsed_args.master)
+            cli.cert = certs.default_load(parsed_args.master)
 
             try:
-                check_version(parsed_args)
+                check_version(cli.unauth_session(parsed_args), parsed_args)
             except requests.exceptions.SSLError:
                 # An SSLError usually means that we queried a master over HTTPS and got an untrusted
                 # cert, so allow the user to store and trust the current cert. (It could also mean
@@ -282,10 +282,10 @@ def main(
                 joined_certs = "".join(cert_pem_data)
                 certs.CertStore(certs.default_store()).set_cert(parsed_args.master, joined_certs)
                 # Reconfigure the CLI's Cert singleton, but preserve the certificate name.
-                old_cert_name = certs.cli_cert.name
-                certs.cli_cert = certs.Cert(cert_pem=joined_certs, name=old_cert_name)
+                old_cert_name = cli.cert.name
+                cli.cert = certs.Cert(cert_pem=joined_certs, name=old_cert_name)
 
-                check_version(parsed_args)
+                check_version(cli.unauth_session(parsed_args), parsed_args)
 
             parsed_args.func(parsed_args)
         except KeyboardInterrupt as e:

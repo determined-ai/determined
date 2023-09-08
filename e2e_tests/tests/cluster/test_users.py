@@ -1,144 +1,36 @@
 import contextlib
-import json
 import logging
 import os
 import pathlib
-import re
 import shutil
 import subprocess
 import time
-import uuid
-from typing import Dict, Generator, Iterator, List, Optional, Tuple, cast
+from typing import Generator, List, Tuple
 
 import appdirs
-import pexpect
 import pytest
-from pexpect import spawn
 
-from determined.common import api, constants, util
-from determined.common.api import authentication, bindings, certs, errors
-from determined.experimental import Determined
+from determined.common import api, util
+from determined.common.api import bindings, errors
+from determined.experimental import client
 from tests import api_utils, command
 from tests import config as conf
+from tests import detproc
 from tests import experiment as exp
-from tests.filetree import FileTree
+from tests import filetree
 
 EXPECT_TIMEOUT = 5
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture()
-def clean_auth() -> Iterator[None]:
-    """
-    clean_auth is a session-level fixture that ensures that we run tests with no preconfigured
-    authentication, and that any settings we save during tests are cleaned up afterwards.
-    """
-    authentication.TokenStore(conf.make_master_url()).delete_token_cache()
-    yield None
-    authentication.TokenStore(conf.make_master_url()).delete_token_cache()
-
-
-@pytest.fixture()
-def login_admin() -> None:
-    a_username, a_password = conf.ADMIN_CREDENTIALS
-    child = det_spawn(["user", "login", a_username])
-    child.setecho(True)
-    expected = f"Password for user '{a_username}':"
-    child.expect(expected, timeout=EXPECT_TIMEOUT)
-    child.sendline(a_password)
-    child.read()
-    child.wait()
-    child.close()
-    assert child.exitstatus == 0
-
-
-@contextlib.contextmanager
-def logged_in_user(credentials: authentication.Credentials) -> Generator:
-    api_utils.configure_token_store(credentials)
-    yield
-    log_out_user()
-
-
-@pytest.mark.e2e_cpu
-def test_logged_in_user() -> None:
-    with logged_in_user(conf.ADMIN_CREDENTIALS):
-        output = det_run(["user", "whoami"])
-        assert f"You are logged in as user '{conf.ADMIN_CREDENTIALS.username}'" in output
-
-
-def get_random_string() -> str:
-    return str(uuid.uuid4())
-
-
-def det_spawn(args: List[str], env: Optional[Dict[str, str]] = None) -> spawn:
-    args = ["-m", conf.make_master_url()] + args
-    return pexpect.spawn("det", args, env=env)
-
-
-def det_run(args: List[str]) -> str:
-    return cast(str, pexpect.run(f"det -m {conf.make_master_url()} {' '.join(args)}").decode())
-
-
-def log_in_user_cli(credentials: authentication.Credentials, expectedStatus: int = 0) -> None:
-    username, password = credentials
-    child = det_spawn(["user", "login", username])
-    child.setecho(True)
-    expected = re.escape(f"Password for user '{username}': ")
-
-    child.expect(expected, EXPECT_TIMEOUT)
-    child.sendline(password)
-    child.read()
-    child.wait()
-    child.close()
-    assert child.exitstatus == expectedStatus
-
-
-def change_user_password(
-    target_username: str,
-    target_password: str,
-    own: bool = False,
-) -> int:
-    cmd = ["user", "change-password"]
-    if not own:
-        cmd.append(target_username)
-
-    child = det_spawn(cmd)
-    expected_new_pword_prompt = f"New password for user '{target_username}':"
-    confirm_pword_prompt = "Confirm password:"
-    child.expect(expected_new_pword_prompt, timeout=EXPECT_TIMEOUT)
-
-    child.sendline(target_password)
-    child.expect(confirm_pword_prompt, timeout=EXPECT_TIMEOUT)
-    child.sendline(target_password)
-    child.read()
-    child.wait()
-    child.close()
-    return cast(int, child.exitstatus)
-
-
-def log_out_user(username: Optional[str] = None) -> None:
-    if username is not None:
-        args = ["-u", username, "user", "logout"]
-    else:
-        args = ["user", "logout"]
-
-    child = det_spawn(args)
-    child.read()
-    child.wait()
-    child.close()
-    assert child.exitstatus == 0
-
-
-def activate_deactivate_user(active: bool, target_user: str) -> None:
+def activate_deactivate_user(sess: api.Session, active: bool, target_user: str) -> None:
     command = [
         "det",
-        "-m",
-        conf.make_master_url(),
         "user",
         "activate" if active else "deactivate",
         target_user,
     ]
-    subprocess.run(command, check=True)
+    detproc.check_output(sess, command)
 
 
 def extract_columns(output: str, column_indices: List[int]) -> List[Tuple[str, ...]]:
@@ -161,10 +53,10 @@ def extract_id_and_owner_from_exp_list(output: str) -> List[Tuple[int, str]]:
 
 
 @pytest.mark.e2e_cpu
-def test_post_user_api(clean_auth: None, login_admin: None) -> None:
-    new_username = get_random_string()
+def test_post_user_api() -> None:
+    new_username = api_utils.get_random_string()
 
-    sess = api_utils.determined_test_session(admin=True)
+    sess = api_utils.admin_session()
 
     user = bindings.v1User(active=True, admin=False, username=new_username)
     body = bindings.v1PostUserRequest(password="", user=user)
@@ -176,7 +68,7 @@ def test_post_user_api(clean_auth: None, login_admin: None) -> None:
     user = bindings.v1User(
         active=True,
         admin=False,
-        username=get_random_string(),
+        username=api_utils.get_random_string(),
         agentUserGroup=bindings.v1AgentUserGroup(
             agentUid=1000, agentGid=1001, agentUser="username", agentGroup="groupname"
         ),
@@ -191,7 +83,7 @@ def test_post_user_api(clean_auth: None, login_admin: None) -> None:
     user = bindings.v1User(
         active=True,
         admin=False,
-        username=get_random_string(),
+        username=api_utils.get_random_string(),
         agentUserGroup=bindings.v1AgentUserGroup(
             agentUid=1000,
             agentGid=1001,
@@ -203,346 +95,199 @@ def test_post_user_api(clean_auth: None, login_admin: None) -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_create_user_sdk(clean_auth: None, login_admin: None) -> None:
-    username = get_random_string()
-    password = get_random_string()
-    det_obj = Determined(master=conf.make_master_url())
+def test_create_user_sdk() -> None:
+    username = api_utils.get_random_string()
+    password = api_utils.get_random_string()
+    det_obj = client.Determined._from_session(api_utils.admin_session())
     user = det_obj.create_user(username=username, admin=False, password=password)
     assert user.user_id is not None and user.username == username
 
 
 @pytest.mark.e2e_cpu
-def test_logout(clean_auth: None, login_admin: None) -> None:
-    # Tests fallback to default determined user
-    creds = api_utils.create_test_user(True)
+def test_logout() -> None:
+    # Make sure that a logged out session cannot be reused.
+    sess = api_utils.make_session("determined", "")
 
-    # Set Determined password to something in order to disable auto-login.
-    password = get_random_string()
-    assert change_user_password(constants.DEFAULT_DETERMINED_USER, password) == 0
-
-    # Log in as new user.
-    api_utils.configure_token_store(creds)
-    # Now we should be able to list experiments.
-    child = det_spawn(["e", "list"])
-    child.read()
-    child.wait()
-    child.close()
-    assert child.status == 0
-
-    # Exiting the logged_in_user context logs out and asserts that the exit code is 0.
-    log_out_user()
-    # Now trying to list experiments should result in an error.
-    child = det_spawn(["e", "list"])
-    expected = "Unauthenticated"
-    assert expected in str(child.read())
-    child.wait()
-    child.close()
-    assert child.status != 0
-
-    # Log in as determined.
-    api_utils.configure_token_store(
-        authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password)
-    )
-
-    # Log back in as new user.
-    api_utils.configure_token_store(creds)
-
-    # Now log out as determined.
-    log_out_user(constants.DEFAULT_DETERMINED_USER)
-
-    # Should still be able to list experiments because new user is logged in.
-    child = det_spawn(["e", "list"])
-    child.read()
-    child.wait()
-    child.close()
-    assert child.status == 0
-
-    # Change Determined password back to "".
-    change_user_password(constants.DEFAULT_DETERMINED_USER, "")
-    # Clean up.
+    bindings.post_Logout(sess)
+    with pytest.raises(errors.UnauthenticatedException):
+        bindings.get_GetMe(sess)
 
 
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_postgres
-def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
-    creds = api_utils.create_test_user(True)
-
-    # Make sure we can log in as the user.
-    api_utils.configure_token_store(creds)
-
-    # Log out.
-    log_out_user()
-
-    # login admin again.
-    api_utils.configure_token_store(conf.ADMIN_CREDENTIALS)
+def test_activate_deactivate() -> None:
+    sess, password = api_utils.create_test_user()
 
     # Deactivate user.
-    activate_deactivate_user(False, creds.username)
+    admin = api_utils.admin_session()
+    activate_deactivate_user(admin, False, sess.username)
 
-    # Attempt to log in again. It should have a non-zero exit status.
-    log_in_user_cli(creds, 1)
+    # Attempt to log in again.
+    with pytest.raises(errors.ForbiddenException):
+        api_utils.make_session(sess.username, password)
 
     # Activate user.
-    activate_deactivate_user(True, creds.username)
-
-    # Now log in again. It should have a non-zero exit status.
-    api_utils.configure_token_store(creds)
-
-    # SDK testing for activating and deactivating.
-    api_utils.configure_token_store(conf.ADMIN_CREDENTIALS)
-    det_obj = Determined(master=conf.make_master_url())
-    user = det_obj.get_user_by_name(user_name=creds.username)
-    user.deactivate()
-    assert user.active is not True
-    user.activate()
-    assert user.active is True
+    activate_deactivate_user(admin, True, sess.username)
 
     # Now log in again.
-    api_utils.configure_token_store(creds)
+    api_utils.make_session(sess.username, password)
+
+    # SDK testing for activating and deactivating.
+    det_obj = client.Determined._from_session(admin)
+    user = det_obj.get_user_by_name(user_name=sess.username)
+    user.deactivate()
+    assert user.active is not True
+    with pytest.raises(errors.ForbiddenException):
+        api_utils.make_session(sess.username, password)
+
+    user.activate()
+    assert user.active is True
+    api_utils.make_session(sess.username, password)
 
 
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_postgres
-def test_change_password(clean_auth: None, login_admin: None) -> None:
-    # Create a user without a password.
-    creds = api_utils.create_test_user(False)
+def test_change_password() -> None:
+    sess, old_password = api_utils.create_test_user()
+    d = client.Determined._from_session(api_utils.admin_session())
+    userobj = d.get_user_by_name(sess.username)
+    userobj.change_password("newpass")
 
-    # Attempt to log in.
-    api_utils.configure_token_store(creds)
+    # Old password does not work anymore.
+    with pytest.raises(errors.UnauthenticatedException):
+        api_utils.make_session(sess.username, old_password)
 
-    # Log out.
-    log_out_user()
-
-    # login admin
-    api_utils.configure_token_store(conf.ADMIN_CREDENTIALS)
-
-    new_password = get_random_string()
-    assert change_user_password(creds.username, new_password) == 0
-    api_utils.configure_token_store(authentication.Credentials(creds.username, new_password))
-
-    new_password_sdk = get_random_string()
-    det_obj = Determined(master=conf.make_master_url())
-    user = det_obj.get_user_by_name(user_name=creds.username)
-    user.change_password(new_password=new_password_sdk)
-    api_utils.configure_token_store(authentication.Credentials(creds.username, new_password_sdk))
+    # New password does work.
+    api_utils.make_session(sess.username, "newpass")
 
 
 @pytest.mark.e2e_cpu
-def test_change_own_password(clean_auth: None, login_admin: None) -> None:
+def test_change_own_password() -> None:
     # Create a user without a password.
-    creds = api_utils.create_test_user(False)
-    log_in_user_cli(creds)
-    assert change_user_password(creds.username, creds.password, own=True) == 0
+    sess, old_password = api_utils.create_test_user()
+
+    d = client.Determined._from_session(sess)
+    userobj = d.get_user_by_name(sess.username)
+    userobj.change_password("newpass")
+
+    with pytest.raises(errors.UnauthenticatedException):
+        api_utils.make_session(sess.username, old_password)
+
+    api_utils.make_session(sess.username, "newpass")
 
 
 @pytest.mark.e2e_cpu
-def test_change_username(clean_auth: None, login_admin: None) -> None:
-    creds = api_utils.create_test_user()
+def test_change_username() -> None:
+    admin = api_utils.admin_session()
+    sess, _ = api_utils.create_test_user()
+    old_username = sess.username
     new_username = "rename-user-64"
-    command = ["det", "-m", conf.make_master_url(), "user", "rename", creds.username, new_username]
-    subprocess.run(command, check=True)
-    det_obj = Determined(master=conf.make_master_url())
-    user = det_obj.get_user_by_name(user_name=new_username)
+    command = ["det", "user", "rename", old_username, new_username]
+    detproc.check_call(admin, command)
+    d = client.Determined._from_session(admin)
+    user = d.get_user_by_name(user_name=new_username)
     assert user.username == new_username
-    api_utils.configure_token_store(authentication.Credentials(new_username, ""))
 
     # Test SDK
     new_username = "rename-user-$64"
     user.rename(new_username)
-    user = det_obj.get_user_by_name(user_name=new_username)
+    user = d.get_user_by_name(user_name=new_username)
     assert user.username == new_username
-    api_utils.configure_token_store(authentication.Credentials(new_username, ""))
 
 
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_postgres
 @pytest.mark.e2e_cpu_cross_version
-def test_experiment_creation_and_listing(clean_auth: None, login_admin: None) -> None:
+def test_experiment_creation_and_listing() -> None:
     # Create 2 users.
-    creds1 = api_utils.create_test_user(True)
-
-    creds2 = api_utils.create_test_user(True)
-
-    # Ensure determined creds are the default values.
-    change_user_password("determined", "")
+    sess1, _ = api_utils.create_test_user()
+    sess2, _ = api_utils.create_test_user()
 
     # Create an experiment as first user.
-    with logged_in_user(creds1):
-        experiment_id1 = exp.run_basic_test(
-            conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
-        )
+    experiment_id1 = exp.run_basic_test(
+        sess1, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
+    )
 
     # Create another experiment, this time as second user.
-    with logged_in_user(creds2):
-        experiment_id2 = exp.run_basic_test(
-            conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
-        )
+    experiment_id2 = exp.run_basic_test(
+        sess2, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
+    )
 
-    with logged_in_user(creds1):
-        # Now it should be the other way around.
-        output = extract_id_and_owner_from_exp_list(det_run(["e", "list"]))
-        assert (experiment_id1, creds1.username) in output
-        assert (experiment_id2, creds2.username) not in output
+    # user 1 can only see user 1 experiment
+    output = extract_id_and_owner_from_exp_list(detproc.check_output(sess1, ["det", "e", "list"]))
+    assert (experiment_id1, sess1.username) in output, output
+    assert (experiment_id2, sess2.username) not in output, output
 
-        # Now use the -a flag to list all experiments.  The output should include both experiments.
-        output = extract_id_and_owner_from_exp_list(det_run(["e", "list", "-a"]))
-        assert (experiment_id1, creds1.username) in output
-        assert (experiment_id2, creds2.username) in output
+    # Now use the -a flag to list all experiments.  The output should include both experiments.
+    output = extract_id_and_owner_from_exp_list(
+        detproc.check_output(sess1, ["det", "e", "list", "-a"])
+    )
+    assert (experiment_id1, sess1.username) in output, output
+    assert (experiment_id2, sess2.username) in output, output
 
-    with logged_in_user(conf.ADMIN_CREDENTIALS):
-        # Clean up.
-        delete_experiments(experiment_id1, experiment_id2)
-
-
-@pytest.mark.e2e_cpu
-def test_login_wrong_password(clean_auth: None, login_admin: None) -> None:
-    creds = api_utils.create_test_user(True)
-
-    passwd_prompt = f"Password for user '{creds.username}':"
-    child = det_spawn(["user", "login", creds.username])
-    child.setecho(True)
-    child.expect(passwd_prompt, timeout=EXPECT_TIMEOUT)
-    child.sendline("this is the wrong password")
-    unauth_error = "Unauthenticated"
-    assert unauth_error in str(child.read())
-    child.wait()
-    child.close()
-
-    assert child.exitstatus != 0
+    # Clean up.
+    delete_experiments(api_utils.admin_session(), experiment_id1, experiment_id2)
 
 
 @pytest.mark.e2e_cpu
-def test_login_as_non_existent_user(clean_auth: None, login_admin: None) -> None:
-    username = "doesNotExist"
-
-    passwd_prompt = f"Password for user '{username}':"
-    unauth_error = "Unauthenticated"
-
-    child = det_spawn(["user", "login", username])
-    child.setecho(True)
-    child.expect(passwd_prompt, timeout=EXPECT_TIMEOUT)
-    child.sendline("secret")
-
-    assert unauth_error in str(child.read())
-    child.wait()
-    child.close()
-
-    assert child.exitstatus != 0
+def test_login_wrong_password() -> None:
+    sess, password = api_utils.create_test_user()
+    with pytest.raises(errors.UnauthenticatedException):
+        api_utils.make_session(sess.username, "wrong" + password)
 
 
 @pytest.mark.e2e_cpu
-def test_auth_inside_shell(clean_auth: None, login_admin: None) -> None:
-    creds = api_utils.create_test_user(True)
-
-    with logged_in_user(creds):
-        # start a shell
-        child = det_spawn(["shell", "start"])
-        child.setecho(True)
-        # shells take time to start; use the default timeout which is longer
-        child.expect(r".*Permanently added.+([0-9a-f-]{36}).+known hosts\.")
-
-        shell_id = child.match.group(1).decode("utf-8")
-
-        def check_whoami(expected_username: str) -> None:
-            child.sendline("det user whoami")
-            child.expect("You are logged in as user \\'(.*)\\'", timeout=EXPECT_TIMEOUT)
-            username = child.match.group(1).decode("utf-8")
-            logger.debug(f"They are logged in as user {username}")
-            assert username == expected_username
-
-        # check the current user
-        check_whoami(creds.username)
-
-        # log in as admin
-        child.sendline(f"det user login {conf.ADMIN_CREDENTIALS.username}")
-        child.expect(
-            f"Password for user '{conf.ADMIN_CREDENTIALS.username}'", timeout=EXPECT_TIMEOUT
-        )
-        child.sendline(conf.ADMIN_CREDENTIALS.password)
-
-        # check that whoami responds with the new user
-        check_whoami(conf.ADMIN_CREDENTIALS.username)
-
-        # log out
-        child.sendline("det user logout")
-        child.expect("#", timeout=EXPECT_TIMEOUT)
-
-        # check that we are back to who we were
-        check_whoami(creds.username)
-
-        child.sendline("exit")
-
-        child = det_spawn(["shell", "kill", shell_id])
-        child.read()
-        child.wait()
-        assert child.exitstatus == 0
+def test_login_as_non_existent_user() -> None:
+    with pytest.raises(errors.UnauthenticatedException):
+        api_utils.make_session("nOtArEaLuSeR", "password")
 
 
 @pytest.mark.e2e_cpu
-def test_login_as_non_active_user(clean_auth: None, login_admin: None) -> None:
-    creds = api_utils.create_test_user(True)
+def test_login_as_non_active_user() -> None:
+    sess, password = api_utils.create_test_user()
+    admin = api_utils.admin_session()
+    d = client.Determined._from_session(admin)
+    userobj = d.get_user_by_name(sess.username)
+    userobj.deactivate()
 
-    passwd_prompt = f"Password for user '{creds.username}':"
-    unauth_error = "user is not active"
-    command = ["det", "-m", conf.make_master_url(), "user", "deactivate", creds.username]
-    subprocess.run(command, check=True)
-
-    child = det_spawn(["user", "login", creds.username])
-    child.setecho(True)
-    child.expect(passwd_prompt, timeout=EXPECT_TIMEOUT)
-    child.sendline(creds.password)
-    assert unauth_error in str(child.read())
-    child.wait()
-    child.close()
-
-    assert child.exitstatus != 0
+    with pytest.raises(errors.ForbiddenException, match="user is not active"):
+        api_utils.make_session(sess.username, password)
 
 
 @pytest.mark.e2e_cpu
-def test_non_admin_user_link_with_agent_user(clean_auth: None, login_admin: None) -> None:
-    creds = api_utils.create_test_user(True)
-    unauth_error = r".*Forbidden.*"
+def test_non_admin_user_link_with_agent_user() -> None:
+    sess1 = api_utils.user_session()
+    sess2, _ = api_utils.create_test_user()
 
-    with logged_in_user(creds):
-        child = det_spawn(
-            [
-                "user",
-                "link-with-agent-user",
-                creds.username,
-                "--agent-uid",
-                str(1),
-                "--agent-gid",
-                str(1),
-                "--agent-user",
-                creds.username,
-                "--agent-group",
-                creds.username,
-            ]
-        )
-        child.expect(unauth_error, timeout=EXPECT_TIMEOUT)
-        child.read()
-        child.wait()
-        child.close()
+    cmd = [
+        "det",
+        "user",
+        "link-with-agent-user",
+        sess2.username,
+        "--agent-uid",
+        "1",
+        "--agent-gid",
+        "1",
+        "--agent-user",
+        sess2.username,
+        "--agent-group",
+        sess2.username,
+    ]
 
-        assert child.exitstatus != 0
+    detproc.check_error(sess1, cmd, "forbidden")
 
 
 @pytest.mark.e2e_cpu
-def test_non_admin_commands(clean_auth: None, login_admin: None) -> None:
-    creds = api_utils.create_test_user()
-    api_utils.configure_token_store(creds)
+def test_non_admin_commands() -> None:
+    sess = api_utils.user_session()
     command = [
         "det",
-        "-m",
-        conf.make_master_url(),
         "slot",
         "list",
         "--json",
     ]
-    output = subprocess.check_output(command).decode()
+    slots = detproc.check_json(sess, command)
 
-    slots = json.loads(output)
-    assert len(slots) == 1
     slot_id = slots[0]["slot_id"]
     agent_id = slots[0]["agent_id"]
 
@@ -552,12 +297,7 @@ def test_non_admin_commands(clean_auth: None, login_admin: None) -> None:
     disable_agents = ["agent", "disable", agent_id]
     config = ["master", "config"]
     for cmd in [disable_slots, disable_agents, enable_slots, enable_agents, config]:
-        child = det_spawn(["-u", constants.DEFAULT_DETERMINED_USER] + cmd)
-        not_allowed = "Forbidden"
-        assert not_allowed in str(child.read())
-        child.wait()
-        child.close()
-        assert child.exitstatus != 0
+        detproc.check_error(sess, ["det", *cmd], "forbidden")
 
 
 def run_command(session: api.Session) -> str:
@@ -566,29 +306,19 @@ def run_command(session: api.Session) -> str:
     return cmd.id
 
 
-def start_notebook() -> str:
-    child = det_spawn(["notebook", "start", "-d"])
-    notebook_id = cast(str, child.readline().decode().rstrip())
-    child.read()
-    child.wait()
-    assert child.exitstatus == 0
-
-    return notebook_id
+def start_notebook(sess: api.Session) -> str:
+    return detproc.check_output(sess, ["det", "notebook", "start", "-d"]).strip()
 
 
-def start_tensorboard(experiment_id: int) -> str:
-    child = det_spawn(["tensorboard", "start", "-d", str(experiment_id)])
-    tensorboard_id = cast(str, child.readline().decode().rstrip())
-    child.read()
-    child.wait()
-    assert child.exitstatus == 0
-    return tensorboard_id
+def start_tensorboard(sess: api.Session, experiment_id: int) -> str:
+    cmd = ["det", "tensorboard", "start", "-d", str(experiment_id)]
+    return detproc.check_output(sess, cmd).strip()
 
 
-def delete_experiments(*experiment_ids: int) -> None:
+def delete_experiments(sess: api.Session, *experiment_ids: int) -> None:
     eids = set(experiment_ids)
     while eids:
-        output = extract_columns(det_run(["e", "list", "-a"]), [0, 4])
+        output = extract_columns(detproc.check_output(sess, ["det", "e", "list", "-a"]), [0, 4])
 
         running_ids = {int(o[0]) for o in output if o[1] == "COMPLETED"}
         intersection = eids & running_ids
@@ -597,17 +327,16 @@ def delete_experiments(*experiment_ids: int) -> None:
             continue
 
         experiment_id = intersection.pop()
-        child = det_spawn(["e", "delete", "--yes", str(experiment_id)])
-        child.read()
-        child.wait()
-        assert child.exitstatus == 0
+        detproc.check_output(sess, ["det", "e", "delete", "--yes", str(experiment_id)])
         eids.remove(experiment_id)
 
 
-def kill_notebooks(*notebook_ids: str) -> None:
+def kill_notebooks(sess: api.Session, *notebook_ids: str) -> None:
     nids = set(notebook_ids)
     while nids:
-        output = extract_columns(det_run(["notebook", "list", "-a"]), [0, 3])  # id, state
+        output = extract_columns(
+            detproc.check_output(sess, ["det", "notebook", "list", "-a"]), [0, 3]
+        )  # id, state
 
         # Get set of running IDs.
         running_ids = {task_id for task_id, state in output if state == "RUNNING"}
@@ -618,17 +347,16 @@ def kill_notebooks(*notebook_ids: str) -> None:
             continue
 
         notebook_id = intersection.pop()
-        child = det_spawn(["notebook", "kill", notebook_id])
-        child.read()
-        child.wait()
-        assert child.exitstatus == 0
+        detproc.check_output(sess, ["det", "notebook", "kill", notebook_id])
         nids.remove(notebook_id)
 
 
-def kill_tensorboards(*tensorboard_ids: str) -> None:
+def kill_tensorboards(sess: api.Session, *tensorboard_ids: str) -> None:
     tids = set(tensorboard_ids)
     while tids:
-        output = extract_columns(det_run(["tensorboard", "list", "-a"]), [0, 3])
+        output = extract_columns(
+            detproc.check_output(sess, ["det", "tensorboard", "list", "-a"]), [0, 3]
+        )
 
         running_ids = {task_id for task_id, state in output if state == "RUNNING"}
 
@@ -638,173 +366,157 @@ def kill_tensorboards(*tensorboard_ids: str) -> None:
             continue
 
         tensorboard_id = intersection.pop()
-        child = det_spawn(["tensorboard", "kill", tensorboard_id])
-        child.read()
-        child.wait()
-        assert child.exitstatus == 0
+        detproc.check_output(sess, ["det", "tensorboard", "kill", tensorboard_id])
         tids.remove(tensorboard_id)
 
 
 @pytest.mark.e2e_cpu
-def test_notebook_creation_and_listing(clean_auth: None, login_admin: None) -> None:
-    creds1 = api_utils.create_test_user(True)
-    creds2 = api_utils.create_test_user(True)
+def test_notebook_creation_and_listing() -> None:
+    sess1, _ = api_utils.create_test_user()
+    sess2, _ = api_utils.create_test_user()
 
-    with logged_in_user(creds1):
-        notebook_id1 = start_notebook()
+    notebook_id1 = start_notebook(sess1)
 
-    with logged_in_user(creds2):
-        notebook_id2 = start_notebook()
+    notebook_id2 = start_notebook(sess2)
 
-        # Listing should only give us user 2's experiment.
-        output = extract_columns(det_run(["notebook", "list"]), [0, 1])
+    # Listing should only give us user 2's experiment.
+    output = extract_columns(detproc.check_output(sess2, ["det", "notebook", "list"]), [0, 1])
 
-    with logged_in_user(creds1):
-        output = extract_columns(det_run(["notebook", "list"]), [0, 1])
-        assert (notebook_id1, creds1.username) in output
-        assert (notebook_id2, creds2.username) not in output
+    output = extract_columns(detproc.check_output(sess1, ["det", "notebook", "list"]), [0, 1])
+    assert (notebook_id1, sess1.username) in output
+    assert (notebook_id2, sess2.username) not in output
 
-        # Now test listing all.
-        output = extract_columns(det_run(["notebook", "list", "-a"]), [0, 1])
-        assert (notebook_id1, creds1.username) in output
-        assert (notebook_id2, creds2.username) in output
+    # Now test listing all.
+    output = extract_columns(detproc.check_output(sess1, ["det", "notebook", "list", "-a"]), [0, 1])
+    assert (notebook_id1, sess1.username) in output
+    assert (notebook_id2, sess2.username) in output
 
     # Clean up, killing experiments.
-    kill_notebooks(notebook_id1, notebook_id2)
+    kill_notebooks(api_utils.admin_session(), notebook_id1, notebook_id2)
 
 
 @pytest.mark.e2e_cpu
-def test_tensorboard_creation_and_listing(clean_auth: None, login_admin: None) -> None:
-    creds1 = api_utils.create_test_user(True)
-    creds2 = api_utils.create_test_user(True)
+def test_tensorboard_creation_and_listing() -> None:
+    sess1, _ = api_utils.create_test_user()
+    sess2, _ = api_utils.create_test_user()
 
-    with logged_in_user(creds1):
-        # Create an experiment.
-        experiment_id1 = exp.run_basic_test(
-            conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
-        )
-
-    with logged_in_user(creds1):
-        tensorboard_id1 = start_tensorboard(experiment_id1)
-
-    with logged_in_user(creds2):
-        experiment_id2 = exp.run_basic_test(
-            conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
-        )
-
-    with logged_in_user(creds2):
-        tensorboard_id2 = start_tensorboard(experiment_id2)
-
-    with logged_in_user(creds1):
-        output = extract_columns(det_run(["tensorboard", "list"]), [0, 1])
-        assert (tensorboard_id1, creds1.username) in output
-        assert (tensorboard_id2, creds2.username) not in output
-
-        output = extract_columns(det_run(["tensorboard", "list", "-a"]), [0, 1])
-        assert (tensorboard_id1, creds1.username) in output
-        assert (tensorboard_id2, creds2.username) in output
-
-    kill_tensorboards(tensorboard_id1, tensorboard_id2)
-
-    with logged_in_user(conf.ADMIN_CREDENTIALS):
-        delete_experiments(experiment_id1, experiment_id2)
-
-
-@pytest.mark.e2e_cpu
-def test_command_creation_and_listing(clean_auth: None) -> None:
-    creds1 = api_utils.create_test_user(True)
-    creds2 = api_utils.create_test_user(True)
-    session1 = api_utils.determined_test_session(credentials=creds1)
-    session2 = api_utils.determined_test_session(credentials=creds2)
-
-    command_id1 = run_command(session=session1)
-
-    command_id2 = run_command(session=session2)
-
-    cmds = bindings.get_GetCommands(session1, users=[creds1.username]).commands
-    output = [(cmd.id, cmd.username) for cmd in cmds]
-    assert (command_id1, creds1.username) in output
-    assert (command_id2, creds2.username) not in output
-
-    cmds = bindings.get_GetCommands(session1).commands
-    output = [(cmd.id, cmd.username) for cmd in cmds]
-    assert (command_id1, creds1.username) in output
-    assert (command_id2, creds2.username) in output
-
-
-def create_linked_user(uid: int, user: str, gid: int, group: str) -> authentication.Credentials:
-    user_creds = api_utils.create_test_user(False)
-
-    child = det_spawn(
-        [
-            "user",
-            "link-with-agent-user",
-            user_creds.username,
-            "--agent-uid",
-            str(uid),
-            "--agent-gid",
-            str(gid),
-            "--agent-user",
-            user,
-            "--agent-group",
-            group,
-        ]
+    # Create an experiment.
+    experiment_id1 = exp.run_basic_test(
+        sess1,
+        conf.fixtures_path("no_op/single-one-short-step.yaml"),
+        conf.fixtures_path("no_op"),
+        1,
     )
-    child.read()
-    child.wait()
-    child.close()
-    assert child.exitstatus == 0
 
-    return user_creds
+    tensorboard_id1 = start_tensorboard(sess1, experiment_id1)
+
+    experiment_id2 = exp.run_basic_test(
+        sess2,
+        conf.fixtures_path("no_op/single-one-short-step.yaml"),
+        conf.fixtures_path("no_op"),
+        1,
+    )
+
+    tensorboard_id2 = start_tensorboard(sess2, experiment_id2)
+
+    output = extract_columns(detproc.check_output(sess1, ["det", "tensorboard", "list"]), [0, 1])
+    assert (tensorboard_id1, sess1.username) in output
+    assert (tensorboard_id2, sess2.username) not in output
+
+    output = extract_columns(
+        detproc.check_output(sess1, ["det", "tensorboard", "list", "-a"]), [0, 1]
+    )
+    assert (tensorboard_id1, sess1.username) in output
+    assert (tensorboard_id2, sess2.username) in output
+
+    admin = api_utils.admin_session()
+    kill_tensorboards(admin, tensorboard_id1, tensorboard_id2)
+    delete_experiments(admin, experiment_id1, experiment_id2)
 
 
-def create_linked_user_sdk(
-    uid: int, agent_user: str, gid: int, group: str
-) -> authentication.Credentials:
-    creds = api_utils.create_test_user(False)
-    det_obj = Determined(master=conf.make_master_url())
-    user = det_obj.get_user_by_name(user_name=creds.username)
+@pytest.mark.e2e_cpu
+def test_command_creation_and_listing() -> None:
+    sess1, _ = api_utils.create_test_user()
+    sess2, _ = api_utils.create_test_user()
+
+    command_id1 = run_command(session=sess1)
+    command_id2 = run_command(session=sess2)
+
+    cmds = bindings.get_GetCommands(sess1, users=[sess1.username]).commands
+    output = [(cmd.id, cmd.username) for cmd in cmds]
+    assert (command_id1, sess1.username) in output
+    assert (command_id2, sess2.username) not in output
+
+    cmds = bindings.get_GetCommands(sess1).commands
+    output = [(cmd.id, cmd.username) for cmd in cmds]
+    assert (command_id1, sess1.username) in output
+    assert (command_id2, sess2.username) in output
+
+
+def create_linked_user(uid: int, user: str, gid: int, group: str) -> api.Session:
+    admin = api_utils.admin_session()
+    sess, _ = api_utils.create_test_user()
+
+    cmd = [
+        "det",
+        "user",
+        "link-with-agent-user",
+        sess.username,
+        "--agent-uid",
+        str(uid),
+        "--agent-gid",
+        str(gid),
+        "--agent-user",
+        user,
+        "--agent-group",
+        group,
+    ]
+
+    detproc.check_call(admin, cmd)
+
+    return sess
+
+
+def create_linked_user_sdk(uid: int, agent_user: str, gid: int, group: str) -> api.Session:
+    sess, _ = api_utils.create_test_user()
+    det_obj = client.Determined._from_session(api_utils.admin_session())
+    user = det_obj.get_user_by_name(user_name=sess.username)
     user.link_with_agent(agent_gid=gid, agent_uid=uid, agent_group=group, agent_user=agent_user)
-    return creds
+    return sess
 
 
-def check_link_with_agent_output(user: authentication.Credentials, expected_output: str) -> None:
-    with logged_in_user(user), command.interactive_command(
-        "cmd", "run", "bash", "-c", "echo $(id -u -n):$(id -u):$(id -g -n):$(id -g)"
-    ) as cmd:
-        for line in cmd.stdout:
-            if expected_output in line:
-                break
-        else:
-            raise AssertionError(f"Did not find {expected_output} in output")
+def check_link_with_agent_output(sess: api.Session, expected_output: str) -> None:
+    assert expected_output in detproc.check_output(
+        sess,
+        ["det", "cmd", "run", "bash", "-c", "echo $(id -u -n):$(id -u):$(id -g -n):$(id -g)"],
+    )
 
 
 @pytest.mark.e2e_cpu
-def test_link_with_agent_user(clean_auth: None, login_admin: None) -> None:
-    user = create_linked_user(200, "someuser", 300, "somegroup")
+def test_link_with_agent_user() -> None:
+    sess = create_linked_user(200, "someuser", 300, "somegroup")
     expected_output = "someuser:200:somegroup:300"
-    check_link_with_agent_output(user, expected_output)
+    check_link_with_agent_output(sess, expected_output)
 
-    with logged_in_user(conf.ADMIN_CREDENTIALS):
-        user_sdk = create_linked_user_sdk(210, "anyuser", 310, "anygroup")
-        expected_output = "anyuser:210:anygroup:310"
-        check_link_with_agent_output(user_sdk, expected_output)
+    sess = create_linked_user_sdk(210, "anyuser", 310, "anygroup")
+    expected_output = "anyuser:210:anygroup:310"
+    check_link_with_agent_output(sess, expected_output)
 
 
 @pytest.mark.e2e_cpu
-def test_link_with_large_uid(clean_auth: None, login_admin: None) -> None:
-    user = create_linked_user(2000000000, "someuser", 2000000000, "somegroup")
+def test_link_with_large_uid() -> None:
+    sess = create_linked_user(2000000000, "someuser", 2000000000, "somegroup")
 
     expected_output = "someuser:2000000000:somegroup:2000000000"
-    check_link_with_agent_output(user, expected_output)
+    check_link_with_agent_output(sess, expected_output)
 
 
 @pytest.mark.e2e_cpu
-def test_link_with_existing_agent_user(clean_auth: None, login_admin: None) -> None:
-    user = create_linked_user(65534, "nobody", 65534, "nogroup")
+def test_link_with_existing_agent_user() -> None:
+    sess = create_linked_user(65533, "det-nobody", 65533, "det-nobody")
 
-    expected_output = "nobody:65534:nogroup:65534"
-    check_link_with_agent_output(user, expected_output)
+    expected_output = "det-nobody:65533:det-nobody:65533"
+    check_link_with_agent_output(sess, expected_output)
 
 
 @contextlib.contextmanager
@@ -835,177 +547,144 @@ def non_tmp_shared_fs_path() -> Generator:
 
 
 @pytest.mark.e2e_cpu
-def test_non_root_experiment(clean_auth: None, login_admin: None, tmp_path: pathlib.Path) -> None:
-    user = create_linked_user(65534, "nobody", 65534, "nogroup")
+def test_non_root_experiment(tmp_path: pathlib.Path) -> None:
+    sess = create_linked_user(65533, "det-nobody", 65533, "det-nobody")
 
-    with logged_in_user(user):
-        with open(conf.fixtures_path("no_op/model_def.py")) as f:
-            model_def_content = f.read()
+    with open(conf.fixtures_path("no_op/model_def.py")) as f:
+        model_def_content = f.read()
 
-        with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
-            config = util.yaml_safe_load(f)
+    with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
+        config = util.yaml_safe_load(f)
 
-        # Use a user-owned path to ensure shared_fs uses the container_path and not host_path.
-        with non_tmp_shared_fs_path() as host_path:
-            config["checkpoint_storage"] = {
-                "type": "shared_fs",
-                "host_path": host_path,
-            }
+    # Use a user-owned path to ensure shared_fs uses the container_path and not host_path.
+    with non_tmp_shared_fs_path() as host_path:
+        config["checkpoint_storage"] = {
+            "type": "shared_fs",
+            "host_path": host_path,
+        }
 
-            # Call `det --version` in a startup hook to ensure that det is on the PATH.
-            with FileTree(
-                tmp_path,
-                {
-                    "startup-hook.sh": "det --version || exit 77",
-                    "const.yaml": util.yaml_safe_dump(config),
-                    "model_def.py": model_def_content,
-                },
-            ) as tree:
-                exp.run_basic_test(str(tree.joinpath("const.yaml")), str(tree), None)
-
-
-@pytest.mark.e2e_cpu
-def test_link_without_agent_user(clean_auth: None, login_admin: None) -> None:
-    user = api_utils.create_test_user(False)
-
-    expected_output = "root:0:root:0"
-    with logged_in_user(user), command.interactive_command(
-        "cmd", "run", "bash", "-c", "echo $(id -u -n):$(id -u):$(id -g -n):$(id -g)"
-    ) as cmd:
-        recvd = []
-        for line in cmd.stdout:
-            if expected_output in line:
-                break
-            recvd.append(line)
-        else:
-            output = "".join(recvd)
-            raise AssertionError(f"Did not find {expected_output} in output:\n{output}")
+        # Call `det --version` in a startup hook to ensure that det is on the PATH.
+        with filetree.FileTree(
+            tmp_path,
+            {
+                "startup-hook.sh": "det --version || exit 77",
+                "const.yaml": util.yaml_safe_dump(config),
+                "model_def.py": model_def_content,
+            },
+        ) as tree:
+            exp.run_basic_test(sess, str(tree.joinpath("const.yaml")), str(tree), None)
 
 
 @pytest.mark.e2e_cpu
-def test_non_root_shell(clean_auth: None, login_admin: None, tmp_path: pathlib.Path) -> None:
-    user = create_linked_user(1234, "someuser", 1234, "somegroup")
+def test_link_without_agent_user() -> None:
+    sess, _ = api_utils.create_test_user()
 
-    expected_output = "someuser:1234:somegroup:1234"
-
-    with logged_in_user(user), command.interactive_command("shell", "start") as shell:
-        shell.stdin.write(b"echo $(id -u -n):$(id -u):$(id -g -n):$(id -g)\n")
-        shell.stdin.close()
-
-        for line in shell.stdout:
-            if expected_output in line:
-                break
-        else:
-            raise AssertionError(f"Did not find {expected_output} in output")
+    check_link_with_agent_output(sess, "root:0:root:0")
 
 
 @pytest.mark.e2e_cpu
-def test_experiment_delete(clean_auth: None, login_admin: None) -> None:
-    user = api_utils.create_test_user()
-    non_owner_user = api_utils.create_test_user()
-
-    with logged_in_user(user):
-        experiment_id = exp.run_basic_test(
-            conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
+def test_non_root_shell(tmp_path: pathlib.Path) -> None:
+    # XXX: failing because prep_conatiner has login_with_cache(), which fails reading /.config
+    sess = create_linked_user(1234, "someuser", 1234, "somegroup")
+    exp = "someuser:1234:somegroup:1234"
+    cmd = "echo; echo $(id -u -n):$(id -u):$(id -g -n):$(id -g)"
+    with command.interactive_command(sess, ["shell", "start", "--detach"]) as shell:
+        assert shell.task_id
+        assert exp in detproc.check_output(
+            sess, ["det", "shell", "open", shell.task_id, "--", "bash", "-c", cmd]
         )
 
-    with logged_in_user(non_owner_user):
-        # "det experiment delete" call should fail, because the user is not an admin and
-        # doesn't own the experiment.
-        child = det_spawn(["experiment", "delete", str(experiment_id), "--yes"])
-        child.read()
-        child.wait()
-        assert child.exitstatus > 0
 
-    with logged_in_user(user):
-        child = det_spawn(["experiment", "delete", str(experiment_id), "--yes"])
-        child.read()
-        child.wait()
-        assert child.exitstatus == 0
+@pytest.mark.e2e_cpu
+def test_experiment_delete() -> None:
+    sess = api_utils.user_session()
+    other, _ = api_utils.create_test_user()
 
-        experiment_delete_deadline = time.time() + 5 * 60
-        while 1:
-            child = det_spawn(["experiment", "describe", str(experiment_id)])
-            child.read()
-            child.wait()
-            # "det experiment describe" call should fail, because the
-            # experiment is no longer in the database.
-            if child.exitstatus > 0:
-                return
-            elif time.time() > experiment_delete_deadline:
-                pytest.fail("experiment didn't delete after timeout")
+    experiment_id = exp.run_basic_test(
+        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
+    )
 
+    # "det experiment delete" call should fail, because the other user is not an admin and
+    # doesn't own the experiment.
+    cmd = ["det", "experiment", "delete", str(experiment_id), "--yes"]
+    detproc.check_error(other, cmd, "forbidden")
 
-def _fetch_user_by_username(sess: api.Session, username: str) -> bindings.v1User:
-    # Get API bindings object for the created test user
-    all_users = bindings.get_GetUsers(sess).users
-    assert all_users is not None
-    return next(u for u in all_users if u.username == username)
+    # but the owner can delete it
+    detproc.check_output(sess, cmd)
+
+    experiment_delete_deadline = time.time() + 5 * 60
+    while True:
+        # "det experiment describe" call should fail, because the
+        # experiment is no longer in the database.
+        p = detproc.run(
+            sess,
+            ["det", "experiment", "describe", str(experiment_id)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if p.returncode != 0:
+            assert p.stderr and b"not found" in p.stderr, p.stderr
+            return
+        elif time.time() > experiment_delete_deadline:
+            pytest.fail("experiment didn't delete after timeout")
 
 
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_postgres
-def test_change_displayname(clean_auth: None, login_admin: None) -> None:
-    u_patch = api_utils.create_test_user(False)
-    original_name = u_patch.username
+def test_change_displayname() -> None:
+    sess, _ = api_utils.create_test_user()
+    original_name = sess.username
 
-    master_url = conf.make_master_url()
-    certs.cli_cert = certs.default_load(master_url)
-    authentication.cli_auth = authentication.Authentication(
-        conf.make_master_url(), requested_user=original_name, password=""
-    )
-    sess = api.Session(master_url, original_name, authentication.cli_auth, certs.cli_cert)
-
-    current_user = _fetch_user_by_username(sess, original_name)
-    assert current_user is not None and current_user.id
+    det_obj = client.Determined._from_session(api_utils.admin_session())
+    current_user = det_obj.get_user_by_name(original_name)
+    assert current_user is not None and current_user.user_id
 
     # Rename user using display name
     patch_user = bindings.v1PatchUser(displayName="renamed display-name")
-    bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
+    bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.user_id)
 
-    modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
+    modded_user = bindings.get_GetUser(sess, userId=current_user.user_id).user
     assert modded_user is not None
     assert modded_user.displayName == "renamed display-name"
 
     # Rename user display name using SDK
-    det_obj = Determined(master=conf.make_master_url())
-    user = det_obj.get_user_by_id(user_id=current_user.id)
+    user = det_obj.get_user_by_id(user_id=current_user.user_id)
     user.change_display_name(display_name="renamedSDK")
 
-    modded_user_sdk = det_obj.get_user_by_id(user_id=current_user.id)
+    modded_user_sdk = det_obj.get_user_by_id(user_id=current_user.user_id)
     assert modded_user_sdk is not None
     assert modded_user_sdk.display_name == "renamedSDK"
 
     # Avoid display name of 'admin'
     patch_user.displayName = "Admin"
     with pytest.raises(errors.APIException):
-        bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
+        bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.user_id)
 
     # Clear display name (UI will show username)
     patch_user.displayName = ""
-    bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
+    bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.user_id)
 
-    modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
+    modded_user = bindings.get_GetUser(sess, userId=current_user.user_id).user
     assert modded_user is not None
     assert modded_user.displayName == ""
 
 
 @pytest.mark.e2e_cpu
-def test_patch_agentusergroup(clean_auth: None, login_admin: None) -> None:
-    test_user_credentials = api_utils.create_test_user(False)
-    test_username = test_user_credentials.username
+def test_patch_agentusergroup() -> None:
+    sess, _ = api_utils.create_test_user()
 
     # Patch - normal.
-    sess = api_utils.determined_test_session(admin=True)
+    admin = api_utils.admin_session()
+    det_obj = client.Determined._from_session(admin)
     patch_user = bindings.v1PatchUser(
         agentUserGroup=bindings.v1AgentUserGroup(
             agentGid=1000, agentUid=1000, agentUser="username", agentGroup="groupname"
         )
     )
-    test_user = _fetch_user_by_username(sess, test_username)
-    assert test_user.id
-    bindings.patch_PatchUser(sess, body=patch_user, userId=test_user.id)
-    patched_user = bindings.get_GetUser(sess, userId=test_user.id).user
+    test_user = det_obj.get_user_by_name(sess.username)
+    assert test_user.user_id
+    bindings.patch_PatchUser(admin, body=patch_user, userId=test_user.user_id)
+    patched_user = bindings.get_GetUser(admin, userId=test_user.user_id).user
     assert patched_user is not None and patched_user.agentUserGroup is not None
     assert patched_user.agentUserGroup.agentUser == "username"
     assert patched_user.agentUserGroup.agentGroup == "groupname"
@@ -1014,71 +693,27 @@ def test_patch_agentusergroup(clean_auth: None, login_admin: None) -> None:
     patch_user = bindings.v1PatchUser(
         agentUserGroup=bindings.v1AgentUserGroup(agentGid=1000, agentUid=1000)
     )
-    test_user = _fetch_user_by_username(sess, test_username)
-    assert test_user.id
+    test_user = det_obj.get_user_by_name(sess.username)
+    assert test_user.user_id
     with pytest.raises(errors.APIException):
-        bindings.patch_PatchUser(sess, body=patch_user, userId=test_user.id)
+        bindings.patch_PatchUser(admin, body=patch_user, userId=test_user.user_id)
 
 
 @pytest.mark.e2e_cpu
-def test_logout_all(clean_auth: None, login_admin: None) -> None:
-    creds = api_utils.create_test_user(True)
+def test_user_edit() -> None:
+    admin = api_utils.admin_session()
+    sess, _ = api_utils.create_test_user()
+    original_name = sess.username
 
-    # Set Determined password to something in order to disable auto-login.
-    password = get_random_string()
-    assert change_user_password(constants.DEFAULT_DETERMINED_USER, password) == 0
+    det_obj = client.Determined._from_session(admin)
+    current_user = det_obj.get_user_by_name(original_name)
 
-    # Log in as determined.
-    api_utils.configure_token_store(
-        authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password)
-    )
-    # login test user.
-    api_utils.configure_token_store(creds)
-    child = det_spawn(["user", "logout", "--all"])
-    child.wait()
-    child.close()
-    assert child.status == 0
-    # Trying to list experiments should result in an error.
-    child = det_spawn(["e", "list"])
-    expected = "Unauthenticated"
-    assert expected in str(child.read())
-    child.wait()
-    child.close()
-    assert child.status != 0
+    new_display_name = api_utils.get_random_string()
+    new_username = api_utils.get_random_string()
 
-    # Log in as determined.
-    api_utils.configure_token_store(
-        authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password)
-    )
-    # Change Determined password back to "".
-    change_user_password(constants.DEFAULT_DETERMINED_USER, "")
-
-
-@pytest.mark.e2e_cpu
-def test_user_edit(clean_auth: None, login_admin: None) -> None:
-    u_patch = api_utils.create_test_user(False)
-    original_name = u_patch.username
-
-    master_url = conf.make_master_url()
-    certs.cli_cert = certs.default_load(master_url)
-    authentication.cli_auth = authentication.Authentication(
-        master_url, requested_user=original_name, password=""
-    )
-    sess = api.Session(master_url, original_name, authentication.cli_auth, certs.cli_cert)
-
-    current_user = _fetch_user_by_username(sess, original_name)
-
-    # Log out.
-    log_out_user()
-
-    # login admin again.
-    api_utils.configure_token_store(conf.ADMIN_CREDENTIALS)
-
-    new_display_name = get_random_string()
-    new_username = get_random_string()
-
-    assert current_user is not None and current_user.id
+    assert current_user is not None and current_user.user_id
     command = [
+        "det",
         "user",
         "edit",
         original_name,
@@ -1090,13 +725,9 @@ def test_user_edit(clean_auth: None, login_admin: None) -> None:
         "--remote=false",
         "--admin=true",
     ]
+    detproc.check_output(admin, command)
 
-    child = det_spawn(command)
-    child.wait()
-    child.close()
-    assert child.status == 0
-
-    modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
+    modded_user = bindings.get_GetUser(admin, userId=current_user.user_id).user
     assert modded_user is not None
     assert modded_user.displayName == new_display_name
     assert modded_user.username == new_username
@@ -1106,73 +737,19 @@ def test_user_edit(clean_auth: None, login_admin: None) -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_user_edit_no_fields(clean_auth: None, login_admin: None) -> None:
-    u_patch = api_utils.create_test_user(False)
-    original_name = u_patch.username
+def test_user_list() -> None:
+    admin = api_utils.admin_session()
+    sess, _ = api_utils.create_test_user()
+    output = detproc.check_output(admin, ["det", "user", "ls"])
+    assert sess.username in output
 
-    master_url = conf.make_master_url()
-    certs.cli_cert = certs.default_load(master_url)
-    authentication.cli_auth = authentication.Authentication(
-        master_url, requested_user=original_name, password=""
-    )
-    sess = api.Session(master_url, original_name, authentication.cli_auth, certs.cli_cert)
-
-    current_user = _fetch_user_by_username(sess, original_name)
-
-    # Log out.
-    log_out_user()
-
-    # login admin again.
-    api_utils.configure_token_store(conf.ADMIN_CREDENTIALS)
-
-    assert current_user is not None and current_user.id
-    command = [
-        "user",
-        "edit",
-        original_name,
-    ]
-
-    # No edited field should result in error
-    child = det_spawn(command)
-    assert "No field provided" in str(child.read())
-    child.wait()
-    child.close()
-    assert child.status != 0
-
-
-@pytest.mark.e2e_cpu
-def test_user_list(clean_auth: None, login_admin: None) -> None:
-    u_patch = api_utils.create_test_user(False)
-    command = [
-        "user",
-        "ls",
-    ]
-
-    child = det_spawn(command)
-    assert u_patch.username in str(child.read())
     # Deactivate user
-    activate_deactivate_user(active=False, target_user=u_patch.username)
-    command = [
-        "user",
-        "ls",
-    ]
+    activate_deactivate_user(admin, active=False, target_user=sess.username)
 
     # User should no longer appear in list
-    child = det_spawn(command)
-    assert u_patch.username not in str(child.read())
+    output = detproc.check_output(admin, ["det", "user", "ls"])
+    assert sess.username not in output
 
-
-@pytest.mark.e2e_cpu
-def test_user_list_with_inactive(clean_auth: None, login_admin: None) -> None:
-    u_patch = api_utils.create_test_user(False)
-    command = ["user", "ls", "--all"]
-
-    child = det_spawn(command)
-    assert u_patch.username in str(child.read())
-    # Deactivate user
-    activate_deactivate_user(active=False, target_user=u_patch.username)
-    command = ["user", "ls", "--all"]
-
-    # User should still appear in list
-    child = det_spawn(command)
-    assert u_patch.username in str(child.read())
+    # User still appears with --all
+    output = detproc.check_output(admin, ["det", "user", "ls", "--all"])
+    assert sess.username in output

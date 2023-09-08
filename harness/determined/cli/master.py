@@ -5,21 +5,21 @@ from typing import Any, List, Optional
 from determined import cli
 from determined.cli import render
 from determined.common import util
-from determined.common.api import authentication, bindings
+from determined.common.api import bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
-@authentication.required
 def show_config(args: Namespace) -> None:
-    resp = bindings.get_GetMasterConfig(cli.setup_session(args)).config
+    sess = cli.setup_session(args)
+    resp = bindings.get_GetMasterConfig(sess).config
     if args.json:
         render.print_json(resp)
     else:
         print(util.yaml_safe_dump(resp, default_flow_style=False))
 
 
-@authentication.required
 def set_master_config(args: Namespace) -> None:
+    sess = cli.setup_session(args)
     log_config = bindings.v1LogConfig()
     field_masks = []
     if "log_color" in args:
@@ -39,7 +39,7 @@ def set_master_config(args: Namespace) -> None:
     req = bindings.v1PatchMasterConfigRequest(
         config=master_config, fieldMask=bindings.protobufFieldMask(paths=field_masks)
     )
-    bindings.patch_PatchMasterConfig(cli.setup_session(args), body=req)
+    bindings.patch_PatchMasterConfig(sess, body=req)
     cli.warn(
         "This will only make ephermeral changes to the master config, "
         + "that will be lost if the user restarts the cluster."
@@ -48,7 +48,8 @@ def set_master_config(args: Namespace) -> None:
 
 
 def get_master(args: Namespace) -> None:
-    resp = bindings.get_GetMaster(cli.setup_session(args))
+    sess = cli.setup_session(args)
+    resp = bindings.get_GetMaster(sess)
     if args.json:
         render.print_json(resp.to_json())
     else:
@@ -61,12 +62,12 @@ def format_log_entry(log: bindings.v1LogEntry) -> str:
     return f"{log.timestamp} [{log_level}]: {log.message}"
 
 
-@authentication.required
 def logs(args: Namespace) -> None:
+    sess = cli.setup_session(args)
     offset: Optional[int] = None
     if args.tail:
         offset = -args.tail
-    responses = bindings.get_MasterLogs(cli.setup_session(args), follow=args.follow, offset=offset)
+    responses = bindings.get_MasterLogs(sess, follow=args.follow, offset=offset)
     for response in responses:
         print(format_log_entry(response.logEntry))
 

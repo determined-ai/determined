@@ -1,17 +1,18 @@
 from argparse import ONE_OR_MORE, Namespace
 from typing import Any, List
 
-from determined.cli import render, setup_session
-from determined.common.api import authentication, bindings
+from determined import cli
+from determined.cli import render
+from determined.common.api import bindings
 from determined.common.declarative_argparse import Arg, Cmd
 
 
-@authentication.required
 def add_binding(args: Namespace) -> None:
+    sess = cli.setup_session(args)
     body = bindings.v1BindRPToWorkspaceRequest(
         resourcePoolName=args.pool_name, workspaceNames=args.workspace_names
     )
-    bindings.post_BindRPToWorkspace(setup_session(args), body=body, resourcePoolName=args.pool_name)
+    bindings.post_BindRPToWorkspace(sess, body=body, resourcePoolName=args.pool_name)
 
     print(
         f'added bindings between the resource pool "{args.pool_name}" '
@@ -20,15 +21,13 @@ def add_binding(args: Namespace) -> None:
     return
 
 
-@authentication.required
 def remove_binding(args: Namespace) -> None:
+    sess = cli.setup_session(args)
     body = bindings.v1UnbindRPFromWorkspaceRequest(
         resourcePoolName=args.pool_name,
         workspaceNames=args.workspace_names,
     )
-    bindings.delete_UnbindRPFromWorkspace(
-        setup_session(args), body=body, resourcePoolName=args.pool_name
-    )
+    bindings.delete_UnbindRPFromWorkspace(sess, body=body, resourcePoolName=args.pool_name)
 
     print(
         f'removed bindings between the resource pool "{args.pool_name}" '
@@ -37,15 +36,13 @@ def remove_binding(args: Namespace) -> None:
     return
 
 
-@authentication.required
 def replace_bindings(args: Namespace) -> None:
+    sess = cli.setup_session(args)
     body = bindings.v1OverwriteRPWorkspaceBindingsRequest(
         resourcePoolName=args.pool_name,
         workspaceNames=args.workspace_names,
     )
-    bindings.put_OverwriteRPWorkspaceBindings(
-        setup_session(args), body=body, resourcePoolName=args.pool_name
-    )
+    bindings.put_OverwriteRPWorkspaceBindings(sess, body=body, resourcePoolName=args.pool_name)
 
     print(
         f'replaced bindings of the resource pool "{args.pool_name}" '
@@ -54,17 +51,16 @@ def replace_bindings(args: Namespace) -> None:
     return
 
 
-@authentication.required
 def list_workspaces(args: Namespace) -> None:
-    session = setup_session(args)
-    resp = bindings.get_ListWorkspacesBoundToRP(session, resourcePoolName=args.pool_name)
+    sess = cli.setup_session(args)
+    resp = bindings.get_ListWorkspacesBoundToRP(sess, resourcePoolName=args.pool_name)
     workspace_names = ""
 
     if resp.workspaceIds:
         workspace_names = ", ".join(
             [
                 workspace.name
-                for workspace in bindings.get_GetWorkspaces(session).workspaces
+                for workspace in bindings.get_GetWorkspaces(sess).workspaces
                 if workspace.id in set(resp.workspaceIds)
             ]
         )

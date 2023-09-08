@@ -119,6 +119,12 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	}
 	taskSpec.Owner = owner
 
+	token, err := user.StartSession(context.Background(), owner)
+	if err != nil {
+		return fmt.Errorf("unable to create user session inside task: %w", err)
+	}
+	taskSpec.UserSessionToken = token
+
 	log.WithField("experiment", expModel.ID).Debug("restoring experiment")
 	snapshot, err := m.retrieveExperimentSnapshot(expModel)
 	if err != nil {

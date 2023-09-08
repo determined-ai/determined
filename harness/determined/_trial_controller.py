@@ -5,6 +5,7 @@ from typing import Any, Optional, Type
 
 import determined as det
 from determined import profiler, tensorboard, workload
+from determined.common import api
 
 
 class _DistributedBackend:
@@ -27,6 +28,31 @@ class _DistributedBackend:
         return bool(os.environ.get(self.DEEPSPEED, None))
 
 
+def _profiler_agent_from_env(
+    session: api.Session, env: det.EnvContext, global_rank: int, local_rank: int
+) -> profiler.ProfilerAgent:
+    """
+    This used to be ProfilerAgent.from_env(), but it was demoted to being a helper function here.
+
+    The purpose of demoting it is isolating the EnvContext object to the smallest footprint
+    possible.  As EnvContext was part of the legacy Trial-centric harness architecture, and as this
+    functionality was only required in this legacy file, this is a good home for it.
+    """
+
+    begin_on_batch, end_after_batch = env.experiment_config.profiling_interval()
+    return profiler.ProfilerAgent(
+        session=session,
+        trial_id=env.det_trial_id,
+        agent_id=env.det_agent_id,
+        profiling_is_enabled=env.experiment_config.profiling_enabled(),
+        global_rank=global_rank,
+        local_rank=local_rank,
+        begin_on_batch=begin_on_batch,
+        end_after_batch=end_after_batch,
+        sync_timings=env.experiment_config.profiling_sync_timings(),
+    )
+
+
 class TrialController(metaclass=abc.ABCMeta):
     """
     TrialController is the legacy class that represented the Determined-owned logic to interact with
@@ -44,11 +70,14 @@ class TrialController(metaclass=abc.ABCMeta):
         # The only time that workloads should be non-None here is unit tests or test mode.
         self.workloads = workloads
 
-        self.prof = profiler.ProfilerAgent.from_env(
-            env,
-            global_rank=context.distributed.rank,
-            local_rank=context.distributed.local_rank,
-        )
+        if hasattr(context._core.train, "_session"):
+            # XXX: stealing this session feels _horrible_
+            sess = context._core.train._session
+            self.prof = _profiler_agent_from_env(
+                sess, env, context.distributed.rank, context.distributed.local_rank
+            )
+        else:
+            self.prof = profiler.DummyProfilerAgent()
 
         distributed_backend = _DistributedBackend()
         self.use_horovod = distributed_backend.use_horovod()

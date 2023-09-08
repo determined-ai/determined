@@ -1,7 +1,7 @@
 import abc
-from pathlib import Path
+import pathlib
 
-DEVCLUSTER_LOG_PATH = Path("/tmp/devcluster")
+DEVCLUSTER_LOG_PATH = pathlib.Path("/tmp/devcluster")
 
 
 class Cluster(metaclass=abc.ABCMeta):

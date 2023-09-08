@@ -2,6 +2,7 @@ import pytest
 
 from determined.common import util
 from determined.experimental import client
+from tests import api_utils
 from tests import config as conf
 
 
@@ -14,8 +15,8 @@ def test_default_pool_task_container_defaults() -> None:
     #    task_container_defaults:
     #    environment_variables:
     #      - SOMEVAR=SOMEVAL
-    determined_master = conf.make_master_url()
-    d = client.Determined(determined_master)
+    sess = api_utils.user_session()
+    d = client.Determined._from_session(sess)
     config_path = conf.fixtures_path("no_op/single-medium-train-step.yaml")
     e1 = d.create_experiment(
         config=config_path,
