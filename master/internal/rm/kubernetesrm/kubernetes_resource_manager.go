@@ -197,34 +197,6 @@ func (k ResourceManager) IsReattachableOnlyAfterStarted(ctx actor.Messenger) boo
 	return false
 }
 
-// IsReattachEnabled is true if any RP is configured to support it.
-func (k ResourceManager) IsReattachEnabled(ctx actor.Messenger) bool {
-	config := config.GetMasterConfig()
-
-	for _, rpConfig := range config.ResourcePools {
-		if rpConfig.AgentReattachEnabled {
-			return true
-		}
-	}
-	return false
-}
-
-// IsReattachEnabledForRP returns true, if the specified RP has AgentReattachEnabled.
-func (k ResourceManager) IsReattachEnabledForRP(ctx actor.Messenger, rp string) bool {
-	return isReattachEnabledForRP(rp)
-}
-
-func isReattachEnabledForRP(rp string) bool {
-	config := config.GetMasterConfig()
-
-	for _, rpConfig := range config.ResourcePools {
-		if rpConfig.PoolName == rp && rpConfig.AgentReattachEnabled {
-			return true
-		}
-	}
-	return false
-}
-
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
 	config                *config.KubernetesResourceManagerConfig
@@ -281,7 +253,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			k.config.MasterServiceName,
 			k.masterTLSConfig,
 			k.loggingConfig,
-			k.config.LeaveKubernetesResources,
 			k.config.DefaultScheduler,
 			k.config.SlotType,
 			config.PodSlotResourceRequests{CPU: k.config.SlotResourceRequests.CPU},

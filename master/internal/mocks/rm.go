@@ -550,34 +550,6 @@ func (_m *ResourceManager) GetSlots(_a0 actor.Messenger, _a1 *apiv1.GetSlotsRequ
 	return r0, r1
 }
 
-// IsReattachEnabled provides a mock function with given fields: ctx
-func (_m *ResourceManager) IsReattachEnabled(ctx actor.Messenger) bool {
-	ret := _m.Called(ctx)
-
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(actor.Messenger) bool); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	return r0
-}
-
-// IsReattachEnabledForRP provides a mock function with given fields: ctx, rpName
-func (_m *ResourceManager) IsReattachEnabledForRP(ctx actor.Messenger, rpName string) bool {
-	ret := _m.Called(ctx, rpName)
-
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(actor.Messenger, string) bool); ok {
-		r0 = rf(ctx, rpName)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	return r0
-}
-
 // IsReattachableOnlyAfterStarted provides a mock function with given fields: ctx
 func (_m *ResourceManager) IsReattachableOnlyAfterStarted(ctx actor.Messenger) bool {
 	ret := _m.Called(ctx)
