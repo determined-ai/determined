@@ -9,6 +9,10 @@ terraform {
   }
 }
 
+locals {
+    gpu_enabled            = var.gpus != null
+}
+
 provider "google" {
   project = var.project
   region  = var.region
@@ -64,6 +68,17 @@ resource "google_compute_instance" "vm_instance" {
     }
   }
 
+  allow_stopping_for_update = var.allow_stopping_for_update
+
+  dynamic "guest_accelerator" {
+    for_each = local.gpu_enabled ? [var.gpus] : []
+    content {
+      type  = guest_accelerator.value.type
+      count = guest_accelerator.value.count
+    }
+  }
+
+
   scheduling {
     max_run_duration {
       // Gives two hours (by default) of runtime before the box closes
@@ -71,7 +86,10 @@ resource "google_compute_instance" "vm_instance" {
       seconds = var.vmLifetimeSeconds
     }
     instance_termination_action = "DELETE"
+    on_host_maintenance = "TERMINATE"
   }
+
+  
 
   metadata_startup_script = templatefile("${path.module}/scripts/startup-script.sh", { WORKLOAD_MANAGER = var.workload_manager })
 }

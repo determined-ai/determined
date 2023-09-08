@@ -7,7 +7,8 @@
 3. Run `make slurmcluster` from the root of the repo and wait (up to 10 minutes) for it to start.
    - To specify which container runtime environment to use, pass in `FLAGS="-c {container_run_type}"` to `make slurmcluster`. Choose from either `singularity` (default), `podman`, or `enroot`.
    - To specify which workload manager to use, pass in `FLAGS="-w {workload_manager}"` to `make slurmcluster`. Choose from either `slurm` (default) or `pbs`. Note: in specifying the workload manager, `make slurmcluster` will automatically load the appropriate boot disk image (found in `terraform/images.conf`).
-   - By default, all VMs created with `make slurmcluster` will be destroyed after 7200 seconds (2 hours). To sepcify a different amount of time, pass in `FLAGS="-t {time_seconds}"` to `make slurmcluster`.
+   - The default configuration yields a Slurm cluster with a single compute node and 8 CPUs (`n1-standard-8`).   You can control the machine_type, and gpus of the compute node using `FLAGS="-m {machine_type} -g {gpu_type}:{count}"`.  See below.
+   - By default, all VMs created with `make slurmcluster` will be destroyed after 7200 seconds (2 hours). To specify a different amount of time, pass in `FLAGS="-t {time_seconds}"` to `make slurmcluster`.
 4. Step 2 will ultimately launch a local devcluster. Use this as you typically would [1].
 5. Release the resources with `make unslurmcluster` when you are done.
 
@@ -25,6 +26,32 @@ gcloud compute ssh --zone us-west1-b phillipgaisford-dev-box --project determine
 
 To see usage of the `make slurmcluster` target, run `make -C tools/slurm usage`.
 
+## GPU Configuration (Slurm Only)
+
+The configuration of GPUs on GCP requires matching specific `machine_type`, gpu type, and gpu count combinations.
+See the [GCP GPU platforms](https://cloud.google.com/compute/docs/gpus) documentation page for specifics.
+Additionally, the `NodeName` definition in `/etc/slurm/slurm.conf` must be configured to properly reflect the number and type of gpus available
+for them to be visible in Slurm.   This is currently handled by the custom `terraform/scripts/startup-script.sh` which dynamically discovers the GPU count and
+type for the local dev-box using `nvidia-smi` and injects the Gres attribute for all `NodeName` definitions in `slurm.conf`.
+
+The default `machine_type` is `n1-standard-8` and can support 1, 2 or 4 gpus of type `nvidia-tesla-t4`, `nvidia-tesla-p4`, `nvidia-tesla-v100`, or `nvidia-tesla-p100`.
+
+### Example GPU Configuration recipes for `n1-standard-8`
+ - `FLAGS="-g nvidia-tesla-t4:2"`
+ - `FLAGS="-g nvidia-tesla-t4:4"`
+ - `FLAGS="-g nvidia-tesla-p4:4"`
+ - `FLAGS="-g nvidia-tesla-v100:2"`
+ - `FLAGS="-g nvidia-tesla-v100:2"`
+
+### Example GPU Configuration recipes for `g2-standard-8`
+ - `FLAGS="-m g2-standard-8 -g nvidia-l4:1"`
+ - `FLAGS="-m g2-standard-48 -g nvidia-l4:4"`
+
+Other GPU types require that you select a proper `machine_type` and gpu type and count as per [GCP GPU platforms](https://cloud.google.com/compute/docs/gpus).
+GPUs are charged per-hour.  `nvidia-tesla-4` model are the cheapest to use.
+
+
+
 ## Alternatives
 
 The `make slurmcluster` flow is fast and convenient. Alternatively, if you use
@@ -37,7 +64,7 @@ setup (though this somewhat is a matter of preference).
 To run Determined + Slurm, you have a few options:
 
 - Spin up a Linux development machine, install all the prerequisite software and run a cluster as a
-  customer would, following our publically available documentation.
+  customer would, following our publicly available documentation.
 - Use `tools/slurmcluster.sh` by following the usage documentation for the script after getting
   access to one of the systems it supports.
 - Or use `make slurmcluster` (the code contained within this directory and its children).
@@ -155,4 +182,16 @@ There are different aspects to the issue which are addressed in various ways, as
 3. This deleted instance mentioned above will have acquired a state lock on the terraform states, but now it is deleted and will never give up the lock. Thus, the final step of this workaround is to pass in the `tf_lock=false` environment variable to `make slurmcluster` which runs `terraform apply/destroy` with the flag `-lock=false`. This tells terraform to ignore the status of the lock which allows us to `make/unmake slurmcluster`. Keep in mind that this would normally be dangerous, however since the instance is deleted in the previous step, there will never be any contention in changing the terraform states.
 
 The issue of CircleCI not having a way to gracefully terminate a workflow upon cancellation is a [known issue](https://discuss.circleci.com/t/cancel-workflow-job-with-graceful-termination/39172). If CircleCI ever provides this feature, this workaround can be deprecated and one could simply add `make unslurmcluster` to a cleanup script that runs upon cancellation.
+
+# Base Image Updates
+The `make slurmcluster` tool uses a base image `det-environments-slurm-ci-###` or `det-environments-pbs-ci-###` for Slurm or PBS respectively.   These images are referenced by
+the configuration file `tools/slurm/terraform/images.conf`.  The images contain:
+
+- Pre-configured Slurm or PBS
+- Nvidia drivers
+- The HPC launcher
+- A singularity cache loaded with the current default CPU and CUDA task environments at the time the image was created
+- A enroot sqsh file cache `/svc/enroot` with the current default CPU and CUDA task environments at the time the image was created
+
+These images must be updated periodically with a new launcher, and task environments.   See [packer](packer/README.md)
 

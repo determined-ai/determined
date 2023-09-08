@@ -44,7 +44,7 @@ fi
 
 WORKLOAD_MANAGER="slurm"
 SOURCE_IMAGE_PROJECT_ID="schedmd-slurm-public"
-SOURCE_IMAGE_FAMILY="schedmd-v5-slurm-22-05-8-ubuntu-2204-lts"
+SOURCE_IMAGE_FAMILY="slurm-gcp-6-1-ubuntu-2004-lts"
 
 # Only one argument (predefined) will ever be passed in so this should be okay
 if [[ $1 == "pbs" ]]; then
@@ -61,6 +61,7 @@ echo >&2 "INFO: Using image from family ${SOURCE_IMAGE_FAMILY}"
 
 SSH_USERNAME="packer2"
 CPU_IMAGE_NAME=$(grep "CPUImage" ../../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
+CUDA_IMAGE_NAME=$(grep "CUDAImage" ../../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
 
 cat <<EOF
 ssh_username           = "${SSH_USERNAME}"
@@ -69,4 +70,5 @@ image_project_id       = "${SOURCE_IMAGE_PROJECT_ID}"
 image_family           = "${SOURCE_IMAGE_FAMILY}"
 launcher_deb_name      = "${CURRENT_VERSION}"
 cpu_image_name         = "${CPU_IMAGE_NAME}"
+cuda_image_name        = "${CUDA_IMAGE_NAME}"
 EOF

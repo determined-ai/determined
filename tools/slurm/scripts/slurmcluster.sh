@@ -13,6 +13,8 @@ export OPT_CONTAINER_RUN_TYPE="singularity"
 export OPT_WORKLOAD_MANAGER="slurm"
 export OPT_LAUNCHER_PORT=8081
 DETERMINED_AGENT=
+MACHINE_TYPE=
+GPUS=
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -36,6 +38,16 @@ while [[ $# -gt 0 ]]; do
             DETERMINED_AGENT=1
             shift
             ;;
+        -m)
+            # This is processed already by generate-tfvars.sh
+            MACHINE_TYPE=$2
+            shift 2
+            ;;
+        -g)
+            # This is processed already by generate-tfvars.sh
+            GPUS=$2
+            shift 2
+            ;;
         -d)
             # Fixed, default Launcher port
             export OPT_LAUNCHER_PORT=18080
@@ -58,20 +70,26 @@ while [[ $# -gt 0 ]]; do
             echo "as always."
             echo ""
             echo "flags:"
-            echo '  -A: '
+            echo '  -A '
             echo "           Description: Invokes a slurmcluster that uses agents instead of the launcher."
             echo "           Example: $0 -A"
-            echo '  -c: '
+            echo '  -c {enroot|podman|singularity}'
             echo "           Description: Invokes a slurmcluster using the specified container run type."
             echo "           Options are 'enroot', 'podman', or 'singularity'. Default is 'singularity'."
             echo "           Example: $0 -c podman"
-            echo '  -w: '
+            echo '  -w {slurm|pbs} '
             echo "           Description: Invokes a slurmcluster using the specified workload manager."
             echo "           Options are 'slurm' or 'pbs'. Default is 'slurm'."
             echo "           Example: $0 -w pbs"
-            echo '  -d: '
+            echo '  -d'
             echo "           Description: Connect to a dev launcher manually deployed to the GCP VM using"
             echo "           'loadDevlauncher.sh -g'."
+            echo '  -m {machine_type} '
+            echo "           Description: Specify a GCP machine_type value (default is n1-standard-8)"
+            echo "           Example: $0 -m g2-standard-4"
+            echo '  -g {name}:{count}'
+            echo "           Description: Specify a GCP accelerator name and count"
+            echo "           Example: $0 -g nvidia-tesla-t4:2"
             echo ""
             echo "You can also combine the flags."
             echo "Example: $0 -A -c enroot"
@@ -142,24 +160,30 @@ export OPT_AUTHFILE=$LOCAL_TOKEN_DEST
 
 LOCAL_CPU_IMAGE_STRING=$(grep "CPUImage" ../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
 LOCAL_CPU_IMAGE_SQSH=${LOCAL_CPU_IMAGE_STRING//[\/:]/+}.sqsh
+LOCAL_CUDA_IMAGE_STRING=$(grep "CUDAImage" ../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
+LOCAL_CUDA_IMAGE_SQSH=${LOCAL_CUDA_IMAGE_STRING//[\/:]/+}.sqsh
 
-# Configuration needed for PBS + Enroot
+# Enroot container creation
 if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
-    # Find the file and assign its name to CPU_IMAGE_SQSH
-    CPU_IMAGE_SQSH=$(gcloud_ssh "ls /srv/enroot/ | grep '^determinedai+environments'")
+    # Find the file and assign its name to CPU_IMAGE_SQSH & CUDA_IMAGE_SQSH
+    CPU_IMAGE_SQSH=$(gcloud_ssh "ls /srv/enroot/ | grep '^determinedai+environments+py'")
+    CUDA_IMAGE_SQSH=$(gcloud_ssh "ls /srv/enroot/ | grep '^determinedai+environments+cuda'")
 
     if [[ $CPU_IMAGE_SQSH != "$LOCAL_CPU_IMAGE_SQSH" ]]; then
-        echo "WARNING: Local CPU Image specified in ../../master/pkg/schemas/expconf/const.go does not match the CPU Image found on existing ${OPT_WORKLOAD_MANAGER} image. Consider re-building the image and pushing to main"
-        echo "Manually pulling updated image and creating container"
-        gcloud_ssh "sudo ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CPU_IMAGE_STRING}"
-        gcloud_ssh "enroot create --force /srv/enroot/${LOCAL_CPU_IMAGE_SQSH}"
+        echo "WARNING: Local CPUImage specified in ../../master/pkg/schemas/expconf/const.go does not match the CPU Image found on existing ${OPT_WORKLOAD_MANAGER} image."
+        echo "   Regenerate base image with: make -C tools/slurm/packer build WORKLOAD_MANAGER=${OPT_WORKLOAD_MANAGER}"
+    fi
+    if [[ $CUDA_IMAGE_SQSH != "$LOCAL_CUDA_IMAGE_SQSH" ]]; then
+        echo "WARNING: Local CUDAImage specified in ../../master/pkg/schemas/expconf/const.go does not match the CUDA Image found on existing ${OPT_WORKLOAD_MANAGER} image."
+        echo "   Regenerate base image with: make -C tools/slurm/packer build WORKLOAD_MANAGER=${OPT_WORKLOAD_MANAGER}"
+    fi
+
+    # If the image has to download during circleci jobs it may cause a timeout waiting for make slurmcluster
+    # particilarly if we add GPU tests that need the CUDA image which is larger.
+    if [[ -z $GPUS ]]; then
+        gcloud_ssh "ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CPU_IMAGE_STRING}"
     else
-        echo "Found up-to-date CPU Image on /srv/enroot/ ... creating container"
-        if [[ -n $CPU_IMAGE_SQSH ]]; then
-            gcloud_ssh "enroot create --force /srv/enroot/${CPU_IMAGE_SQSH}"
-        else
-            echo "No file starting with 'determinedai+environments' found in /srv/enroot/"
-        fi
+        gcloud_ssh "ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CUDA_IMAGE_STRING}"
     fi
 fi
 
