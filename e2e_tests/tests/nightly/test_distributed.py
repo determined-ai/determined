@@ -33,6 +33,7 @@ def test_mnist_pytorch_set_stop_requested_distributed() -> None:
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/distributed-stop-requested.yaml"))
     exp.run_basic_test_with_temp_config(config, conf.fixtures_path("mnist_pytorch"), 1)
 
+
 @pytest.mark.distributed
 def test_imagenet_pytorch_distributed() -> None:
     config = conf.load_config(conf.tutorials_path("imagenet_pytorch/distributed_cifar.yaml"))
