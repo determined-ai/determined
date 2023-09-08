@@ -31,7 +31,7 @@ message DataPoint {
   // The time the measurement is taken.
   google.protobuf.Timestamp time = 3;
   // The epoch this measurement is taken.
-  optional int32 epoch = 4;
+  optional double epoch = 4;
 }
 
 // Get a single experiment.
