@@ -6,10 +6,11 @@ import determined as det
 from determined import core, util, workload
 from determined.common import check
 
+import os
+
 WorkloadStreamElem = Tuple[workload.Workload, workload.ResponseFunc]
 
 WorkloadGenerator = Generator[WorkloadStreamElem, None, None]
-
 
 def yield_and_await_response(
     wkld: workload.Workload,
@@ -153,6 +154,7 @@ class WorkloadSequencer(workload.Source):
         if state.get("trial_id") != self._trial_id:
             return
 
+        print("STATE!?!?", state)
         self.state = self.SavableState(**state)
 
         # Detect the case where the final validation we made was against this exact checkpoint.  In
@@ -387,6 +389,14 @@ class WorkloadSequencer(workload.Source):
                 yield from self.validate(None)
 
             for op in self.core_context.searcher.operations(core.SearcherMode.ChiefOnly):
+                # This can occur when we have already trained more than our trial
+                # will train for. For example, if we are provided a steps_completed
+                # larger than our searcher max length.
+                print("BATCHES until op complete?", self.batches_until_op_complete(op), self.state.steps_completed, os.environ)
+                if self.batches_until_op_complete(op) <= 0:
+                    logging.info("trial has already completed training")
+                    raise ShouldExit(skip_exit_checkpoint=True)
+
                 while self.batches_until_op_complete(op) > 0:
                     # Do some training.
                     yield from self.train(
