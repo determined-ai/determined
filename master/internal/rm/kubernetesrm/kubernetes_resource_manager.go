@@ -364,6 +364,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 				// But best to handle it anyway in case the implementation changes in the future.
 				ctx.Log().WithError(err).Error("")
 				ctx.Respond(err)
+				return nil
 			}
 
 			jobStats, err := k.getPoolJobStats(ctx, pool)
