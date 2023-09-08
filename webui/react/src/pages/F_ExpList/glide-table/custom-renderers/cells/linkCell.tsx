@@ -96,21 +96,14 @@ const renderer: CustomRenderer<LinkCell> = {
     if (link.unmanaged) {
       const x = drawX + commaMetrics.width + 8;
       const y = drawY - TAG_HEIGHT / 2;
-      ctx.fillStyle = theme.bgBubble;
+      ctx.fillStyle = '#132231';
       ctx.lineWidth = 2;
       ctx.strokeStyle = theme.textBubble;
       ctx.beginPath();
-      roundedRect(
-        ctx,
-        x,
-        y,
-        measureTextCached(TAG_CONTENT, ctx).width + 8,
-        TAG_HEIGHT,
-        TAG_HEIGHT / 2,
-      );
+      roundedRect(ctx, x, y, measureTextCached(TAG_CONTENT, ctx).width + 8, TAG_HEIGHT, 4);
       ctx.stroke();
       ctx.fill();
-      ctx.fillStyle = theme.textDark;
+      ctx.fillStyle = '#fff';
       ctx.fillText(
         TAG_CONTENT,
         x + 4,
