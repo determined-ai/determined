@@ -4,17 +4,16 @@
  Elasticsearch-backed logging
 ##############################
 
-It is possible to use Elasticsearch as an alternative to the default logging backend. In the past,
-such configuration was recommended for larger installations, but it is no longer the case.
+It is possible to use Elasticsearch as an alternative to the default logging backend.
 
-Example configuration
+Example configuration:
 
 .. code:: yaml
 
    logging:
       type: elastic
       host: "elastic.example.com"
-      port: 443    
+      port: 443
       security:
          username: "elastic-user"
          password: "mypassword"
@@ -61,4 +60,3 @@ on how the cluster will be used:
        }
      }
    }
-
