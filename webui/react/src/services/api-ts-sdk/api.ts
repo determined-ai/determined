@@ -2689,6 +2689,18 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     duration?: number;
+    /**
+     * The id of external experiment
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    externalExperimentId?: string;
+    /**
+     * The id of external trial
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    externalTrialId?: string;
 }
 /**
  * Message for results of individual experiments in a multi-experiment action.

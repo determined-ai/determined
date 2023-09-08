@@ -121,6 +121,8 @@ func expColumnNameToSQL(columnName string) (string, error) {
 			END) ASC
 			LIMIT 1
 		) `,
+		"externalExperimentId": "e.external_experiment_id",
+		"externalTrialId":      "trials.external_trial_id",
 	}
 	var exists bool
 	col, exists := filterExperimentColMap[columnName]

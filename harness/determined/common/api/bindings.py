@@ -2916,6 +2916,8 @@ class v1Experiment(Printable):
     displayName: "typing.Optional[str]" = None
     duration: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
+    externalExperimentId: "typing.Optional[str]" = None
+    externalTrialId: "typing.Optional[str]" = None
     forkedFrom: "typing.Optional[int]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     notes: "typing.Optional[str]" = None
@@ -2954,6 +2956,8 @@ class v1Experiment(Printable):
         displayName: "typing.Union[str, None, Unset]" = _unset,
         duration: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
+        externalExperimentId: "typing.Union[str, None, Unset]" = _unset,
+        externalTrialId: "typing.Union[str, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
@@ -2997,6 +3001,10 @@ class v1Experiment(Printable):
             self.duration = duration
         if not isinstance(endTime, Unset):
             self.endTime = endTime
+        if not isinstance(externalExperimentId, Unset):
+            self.externalExperimentId = externalExperimentId
+        if not isinstance(externalTrialId, Unset):
+            self.externalTrialId = externalTrialId
         if not isinstance(forkedFrom, Unset):
             self.forkedFrom = forkedFrom
         if not isinstance(labels, Unset):
@@ -3057,6 +3065,10 @@ class v1Experiment(Printable):
             kwargs["duration"] = obj["duration"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
+        if "externalExperimentId" in obj:
+            kwargs["externalExperimentId"] = obj["externalExperimentId"]
+        if "externalTrialId" in obj:
+            kwargs["externalTrialId"] = obj["externalTrialId"]
         if "forkedFrom" in obj:
             kwargs["forkedFrom"] = obj["forkedFrom"]
         if "labels" in obj:
@@ -3117,6 +3129,10 @@ class v1Experiment(Printable):
             out["duration"] = self.duration
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
+        if not omit_unset or "externalExperimentId" in vars(self):
+            out["externalExperimentId"] = self.externalExperimentId
+        if not omit_unset or "externalTrialId" in vars(self):
+            out["externalTrialId"] = self.externalTrialId
         if not omit_unset or "forkedFrom" in vars(self):
             out["forkedFrom"] = self.forkedFrom
         if not omit_unset or "labels" in vars(self):
