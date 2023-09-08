@@ -937,6 +937,30 @@ service Determined {
     };
   }
 
+  // GetTaskAcceleratorData gets the accelerator data for each allocation
+  // associated with a task.
+  rpc GetTaskAcceleratorData(GetTaskAcceleratorDataRequest)
+      returns (GetTaskAcceleratorDataResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/tasks/{task_id}/acceleratorData"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // PostAllocationAcceleratorData sets the accelerator for a given allocation.
+  rpc PostAllocationAcceleratorData(PostAllocationAcceleratorDataRequest)
+      returns (PostAllocationAcceleratorDataResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/allocations/{allocation_id}/acceleratorData"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // AllocationAllGather performs an all gather through the master. An
   // allocation can only perform once all gather at a time.
   rpc AllocationAllGather(AllocationAllGatherRequest)

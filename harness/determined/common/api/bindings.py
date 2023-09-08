@@ -641,6 +641,72 @@ class trialv1Trial(Printable):
             out["warmStartCheckpointUuid"] = self.warmStartCheckpointUuid
         return out
 
+class v1AcceleratorData(Printable):
+    acceleratorType: "typing.Optional[str]" = None
+    accelerators: "typing.Optional[typing.Sequence[str]]" = None
+    allocationId: "typing.Optional[str]" = None
+    containerId: "typing.Optional[str]" = None
+    nodeName: "typing.Optional[str]" = None
+    taskId: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        acceleratorType: "typing.Union[str, None, Unset]" = _unset,
+        accelerators: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        allocationId: "typing.Union[str, None, Unset]" = _unset,
+        containerId: "typing.Union[str, None, Unset]" = _unset,
+        nodeName: "typing.Union[str, None, Unset]" = _unset,
+        taskId: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(acceleratorType, Unset):
+            self.acceleratorType = acceleratorType
+        if not isinstance(accelerators, Unset):
+            self.accelerators = accelerators
+        if not isinstance(allocationId, Unset):
+            self.allocationId = allocationId
+        if not isinstance(containerId, Unset):
+            self.containerId = containerId
+        if not isinstance(nodeName, Unset):
+            self.nodeName = nodeName
+        if not isinstance(taskId, Unset):
+            self.taskId = taskId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AcceleratorData":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "acceleratorType" in obj:
+            kwargs["acceleratorType"] = obj["acceleratorType"]
+        if "accelerators" in obj:
+            kwargs["accelerators"] = obj["accelerators"]
+        if "allocationId" in obj:
+            kwargs["allocationId"] = obj["allocationId"]
+        if "containerId" in obj:
+            kwargs["containerId"] = obj["containerId"]
+        if "nodeName" in obj:
+            kwargs["nodeName"] = obj["nodeName"]
+        if "taskId" in obj:
+            kwargs["taskId"] = obj["taskId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "acceleratorType" in vars(self):
+            out["acceleratorType"] = self.acceleratorType
+        if not omit_unset or "accelerators" in vars(self):
+            out["accelerators"] = self.accelerators
+        if not omit_unset or "allocationId" in vars(self):
+            out["allocationId"] = self.allocationId
+        if not omit_unset or "containerId" in vars(self):
+            out["containerId"] = self.containerId
+        if not omit_unset or "nodeName" in vars(self):
+            out["nodeName"] = self.nodeName
+        if not omit_unset or "taskId" in vars(self):
+            out["taskId"] = self.taskId
+        return out
+
 class v1AckAllocationPreemptionSignalRequest(Printable):
 
     def __init__(
@@ -4897,6 +4963,28 @@ class v1GetSlotsResponse(Printable):
             out["slots"] = None if self.slots is None else [x.to_json(omit_unset) for x in self.slots]
         return out
 
+class v1GetTaskAcceleratorDataResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        acceleratorData: "typing.Sequence[v1AcceleratorData]",
+    ):
+        self.acceleratorData = acceleratorData
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTaskAcceleratorDataResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "acceleratorData": [v1AcceleratorData.from_json(x) for x in obj["acceleratorData"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "acceleratorData": [x.to_json(omit_unset) for x in self.acceleratorData],
+        }
+        return out
+
 class v1GetTaskResponse(Printable):
 
     def __init__(
@@ -8597,6 +8685,32 @@ class v1PolymorphicFilter(Printable):
             out["name"] = self.name
         if not omit_unset or "timeRange" in vars(self):
             out["timeRange"] = None if self.timeRange is None else self.timeRange.to_json(omit_unset)
+        return out
+
+class v1PostAllocationAcceleratorDataRequest(Printable):
+
+    def __init__(
+        self,
+        *,
+        acceleratorData: "v1AcceleratorData",
+        allocationId: str,
+    ):
+        self.acceleratorData = acceleratorData
+        self.allocationId = allocationId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostAllocationAcceleratorDataRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "acceleratorData": v1AcceleratorData.from_json(obj["acceleratorData"]),
+            "allocationId": obj["allocationId"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "acceleratorData": self.acceleratorData.to_json(omit_unset),
+            "allocationId": self.allocationId,
+        }
         return out
 
 class v1PostAllocationProxyAddressRequest(Printable):
@@ -15654,6 +15768,26 @@ def get_GetTask(
         return v1GetTaskResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTask", _resp)
 
+def get_GetTaskAcceleratorData(
+    session: "api.Session",
+    *,
+    taskId: str,
+) -> "v1GetTaskAcceleratorDataResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/tasks/{taskId}/acceleratorData",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetTaskAcceleratorDataResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTaskAcceleratorData", _resp)
+
 def get_GetTasks(
     session: "api.Session",
 ) -> "v1GetTasksResponse":
@@ -17117,6 +17251,27 @@ def post_PinWorkspace(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PinWorkspace", _resp)
+
+def post_PostAllocationAcceleratorData(
+    session: "api.Session",
+    *,
+    allocationId: str,
+    body: "v1PostAllocationAcceleratorDataRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/acceleratorData",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PostAllocationAcceleratorData", _resp)
 
 def post_PostAllocationProxyAddress(
     session: "api.Session",
