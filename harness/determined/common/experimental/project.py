@@ -124,6 +124,76 @@ class Project:
         bindings.post_UnarchiveProject(session=self._session, id=self.id)
         self.archived = False
 
+    def add_note(self, name: str, contents: str) -> None:
+        """Add a note to the project.
+
+        Because there is not yet functionality on the backend to add a single note, this method:
+        1. fetches current notes for this project from the master.
+        2. adds the new note to the list of notes.
+        3. sends the updated list of notes to the master.
+
+        WARNING:
+        When it exits, the notes attribute of this object will be the same notes updated on master.
+        This set of notes might reflect changes to the project that have happened since the project
+        was last hydrated from master.
+
+        Args:
+            name: The name of the note.
+            contents: The contents of the note.
+        """
+        master_notes = bindings.get_GetProject(session=self._session, id=self.id).project.notes
+        combined_notes = list(master_notes) + [bindings.v1Note(name=name, contents=contents)]
+
+        request_body = bindings.v1PutProjectNotesRequest(notes=combined_notes, projectId=self.id)
+        resp = bindings.put_PutProjectNotes(
+            session=self._session, body=request_body, projectId=self.id
+        )
+
+        self.notes = [note.to_json() for note in resp.notes]
+
+    def remove_note(self, name: str) -> None:
+        """Remove a note from the project.
+
+        Because there is not yet functionality on the backend to remove a single note, this method:
+        1. fetches current notes for this project from the master.
+        2. removes the note with the passed name from the list of notes.
+        3. sends the updated list of notes to the master.
+
+        WARNING:
+        When it exits, the notes attribute of this object will be the same notes updated on master.
+        This set of notes might reflect changes to the project that have happened since the project
+        was last hydrated from master.
+
+        Args:
+            name: The name of the note to remove.
+
+        Raises:
+            ValueError: If no note with the passed name is found
+            NotImplementedError: If multiple notes with the passed name are found
+
+        It is possible to for a project to have multiple notes with the same name. This method's
+        interface doesn't make it possible to choose which of them to remove.
+        """
+        master_notes = bindings.get_GetProject(session=self._session, id=self.id).project.notes
+        n_matching_notes = len([i for i, note in enumerate(master_notes) if note.name == name])
+        if n_matching_notes == 0:
+            raise ValueError(f"No note with name {name} found to remove.")
+
+        if n_matching_notes > 1:
+            raise NotImplementedError(
+                f"Multiple notes with name {name} found. "
+                "Please use the web UI to remove a specific one of them."
+            )
+
+        filtered_notes = [note for note in master_notes if note.name != name]
+
+        request_body = bindings.v1PutProjectNotesRequest(notes=filtered_notes, projectId=self.id)
+        resp = bindings.put_PutProjectNotes(
+            session=self._session, body=request_body, projectId=self.id
+        )
+
+        self.notes = [note.to_json() for note in resp.notes]
+
     def to_json(self) -> Dict[str, Any]:
         """Return this object as a dict.
 
