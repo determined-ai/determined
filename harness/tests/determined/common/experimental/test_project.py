@@ -6,6 +6,7 @@ import pytest
 import responses
 
 from determined.common import api
+from determined.common.api import bindings
 from determined.common.experimental import project
 from tests.fixtures import api_responses
 
@@ -54,3 +55,31 @@ def test_to_json_encapsulates_hydrated_attributes(sample_project: project.Projec
         accessed_attrs_to_json = {call[0][0] for call in mock_getattr.call_args_list}
 
     assert hydrated_attrs.issubset(accessed_attrs_to_json)
+
+
+@mock.patch("determined.common.api.bindings.get_GetProject")
+def test_remove_note_raises_error_when_name_not_found(
+    mock_get_project: mock.MagicMock, sample_project: project.Project
+) -> None:
+    bindings_project = api_responses.sample_get_project()
+    bindings_project.project.notes = [bindings.v1Note(name="sample_name", contents="")]
+    mock_get_project.return_value = bindings_project
+
+    with pytest.raises(ValueError):
+        sample_project.remove_note("nonexistent_note_name")
+
+
+@mock.patch("determined.common.api.bindings.get_GetProject")
+def test_remove_note_raises_exception_when_multiple_names_found(
+    mock_get_project: mock.MagicMock, sample_project: project.Project
+) -> None:
+    bindings_project = api_responses.sample_get_project()
+    bindings_project.project.notes = [
+        bindings.v1Note(name="repeated_note_name", contents=""),
+        bindings.v1Note(name="repeated_note_name", contents=""),
+        bindings.v1Note(name="repeated_note_name", contents=""),
+    ]
+    mock_get_project.return_value = bindings_project
+
+    with pytest.raises(NotImplementedError):
+        sample_project.remove_note("repeated_note_name")
