@@ -27,7 +27,7 @@ interface LinkCellProps {
 
 export type LinkCell = CustomCell<LinkCellProps>;
 
-const TAG_HEIGHT = 20;
+const TAG_HEIGHT = 18;
 const TAG_CONTENT = 'Unmanaged';
 
 function onClickSelect(e: Parameters<NonNullable<CustomRenderer<LinkCell>['onSelect']>>[0]) {
@@ -67,7 +67,7 @@ const renderer: CustomRenderer<LinkCell> = {
     const rectHoverX = rect.x + hoverX;
 
     const font = `${theme.baseFontStyle} ${theme.fontFamily}`;
-
+    ctx.font = font;
     const middleCenterBias = getMiddleCenterBias(ctx, font);
     const drawY = rect.y + rect.height / 2 + middleCenterBias;
 
@@ -100,15 +100,21 @@ const renderer: CustomRenderer<LinkCell> = {
       ctx.lineWidth = 2;
       ctx.strokeStyle = theme.textBubble;
       ctx.beginPath();
-      roundedRect(ctx, x, y, measureTextCached(TAG_CONTENT, ctx).width + 8, TAG_HEIGHT, 4);
+      const tagFont = `600 11px ${theme.fontFamily}`;
+      ctx.font = tagFont;
+      roundedRect(
+        ctx,
+        x,
+        y,
+        measureTextCached(TAG_CONTENT, ctx, tagFont).width + 10,
+        TAG_HEIGHT,
+        4,
+      );
       ctx.stroke();
       ctx.fill();
       ctx.fillStyle = '#fff';
-      ctx.fillText(
-        TAG_CONTENT,
-        x + 4,
-        y + TAG_HEIGHT / 2 + getMiddleCenterBias(ctx, `12px ${theme.fontFamily}`),
-      );
+
+      ctx.fillText(TAG_CONTENT, x + 4, y + TAG_HEIGHT / 2 + getMiddleCenterBias(ctx, tagFont));
     }
 
     drawX += commaMetrics.width + 4;
