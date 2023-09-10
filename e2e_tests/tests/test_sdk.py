@@ -9,7 +9,7 @@ import pytest
 from determined.common import yaml
 from determined.common.api import bindings, errors
 from determined.common.experimental import resource_pool
-from determined.common.experimental.trial import TrainingMetrics, ValidationMetrics
+from determined.common.experimental.metrics import TrialMetrics
 from determined.experimental import client as _client
 from tests import config as conf
 
@@ -344,26 +344,27 @@ def test_stream_metrics(client: _client.Determined) -> None:
     trial = trials[0]
 
     for metrics in [
-        list(trial.stream_training_metrics()),
-        list(client.stream_trials_training_metrics([trial.id])),
+        list(trial.stream_metrics("training")),
+        list(client.stream_trials_metrics([trial.id], "training")),
     ]:
         assert len(metrics) == config["searcher"]["max_length"]["batches"]
         for i, actual in enumerate(metrics):
-            assert actual == TrainingMetrics(
+            assert actual == TrialMetrics(
                 trial_id=trial.id,
                 trial_run_id=1,
                 steps_completed=i + 1,
                 end_time=actual.end_time,
                 metrics={"loss": config["hyperparameters"]["metrics_base"] ** (i + 1)},
                 batch_metrics=[{"loss": config["hyperparameters"]["metrics_base"] ** (i + 1)}],
+                group="training",
             )
 
     for val_metrics in [
-        list(trial.stream_validation_metrics()),
-        list(client.stream_trials_validation_metrics([trial.id])),
+        list(trial.stream_metrics("validation")),
+        list(client.stream_trials_metrics([trial.id], "validation")),
     ]:
         assert len(val_metrics) == 1
-        assert val_metrics[0] == ValidationMetrics(
+        assert val_metrics[0] == TrialMetrics(
             trial_id=trial.id,
             trial_run_id=1,
             steps_completed=100,
@@ -372,6 +373,7 @@ def test_stream_metrics(client: _client.Determined) -> None:
                 "validation_error": config["hyperparameters"]["metrics_base"] ** 100,
                 "validation_metric_1": config["hyperparameters"]["metrics_base"] ** 100,
             },
+            group="validation",
         )
 
 

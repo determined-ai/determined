@@ -117,10 +117,10 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 				valuesMap[selectMetrics[mName]] = mVal
 			}
 		}
-		epoch := new(int32)
+		var epoch *float64
 		if results[i]["epoch"] != nil {
 			if e, ok := results[i]["epoch"].(float64); ok {
-				*epoch = int32(e)
+				epoch = &e
 			} else {
 				return nil, fmt.Errorf(
 					"metric 'epoch' has nonnumeric value reported value='%v'", results[i]["epoch"])
@@ -152,7 +152,8 @@ func CreateTrialSourceInfo(ctx context.Context, tsi *trialv1.TrialSourceInfo,
 	resp := &apiv1.ReportTrialSourceInfoResponse{}
 	query := db.Bun().NewInsert().Model(tsi).
 		Value("trial_source_info_type", "?", tsi.TrialSourceInfoType.String()).
-		Returning("trial_id").Returning("checkpoint_uuid")
+		Returning("trial_id").Returning("checkpoint_uuid").
+		On("CONFLICT (trial_id, checkpoint_uuid) DO UPDATE")
 	if tsi.ModelId == nil {
 		query.ExcludeColumn("model_id")
 	}

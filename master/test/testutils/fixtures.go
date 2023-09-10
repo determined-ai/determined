@@ -79,7 +79,6 @@ func RunMaster(ctx context.Context, c *config.Config) (
 	logs := logger.NewLogBuffer(100)
 	m := internal.New(logs, c)
 	logrus.AddHook(logs)
-	logrus.SetLevel(logrus.DebugLevel)
 	go func() {
 		err := m.Run(ctx)
 		switch {

@@ -76,8 +76,3 @@ func (a *MockActor) AssertExpectations() error {
 	}
 	return nil
 }
-
-// String implements fmt.Stringer.
-func (a *MockActor) String() string {
-	return fmt.Sprintf("MockActor(%p)", a)
-}

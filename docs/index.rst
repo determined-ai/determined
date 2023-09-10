@@ -19,8 +19,7 @@
    :caption: Set Up
    :hidden:
 
-   Basic Setup <setup-cluster/basic>
-   Setup Guides <setup-cluster/deploy-cluster/index>
+   Installation Guide <setup-cluster/deploy-cluster/index>
    Security <setup-cluster/security/overview>
    User Accounts <setup-cluster/users>
    Workspaces and Projects <setup-cluster/workspaces>

@@ -33,6 +33,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
+var inferenceMetricGroup = "inference"
+
 func createTestTrial(
 	t *testing.T, api *apiServer, curUser model.User,
 ) (*model.Trial, *model.Task) {
@@ -244,7 +246,7 @@ func isMultiTrialSampleCorrect(expectedMetrics []*commonv1.Metrics,
 			case float64:
 				expectedVal := expectedAvgMetrics[metricName].(float64)
 				if metricName == "epoch" {
-					if expectedVal != float64(*allActualAvgMetrics[i].Epoch) {
+					if expectedVal != *allActualAvgMetrics[i].Epoch {
 						return false
 					}
 					continue
@@ -1147,6 +1149,7 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 	infTrial, _ := createTestTrial(t, api, curUser)
 	infTrial2, _ := createTestTrial(t, api, curUser)
 	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial.ID))
+	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial2.ID))
 
 	// Create a checkpoint to index with
 	checkpointUUID := createVersionTwoCheckpoint(ctx, t, api, curUser, map[string]int64{"a": 1})
@@ -1180,21 +1183,14 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 		Return(nil).Times(3)
 
 	// If there are no restrictions, we should see all the trials
-	getCkptResp, getErr := api.GetTrialMetricsBySourceInfoCheckpoint(
-		ctx, &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID},
+	getCkptResp, getErr := api.GetTrialMetricsByCheckpoint(
+		ctx, &apiv1.GetTrialMetricsByCheckpointRequest{
+			CheckpointUuid: checkpointUUID,
+			MetricGroup:    &inferenceMetricGroup,
+		},
 	)
 	require.NoError(t, getErr)
-	require.Equal(t, len(getCkptResp.Data), 2)
-
-	// Only infTrial should have generic metrics attached.
-	for _, tsim := range getCkptResp.Data {
-		if tsim.TrialId == int32(infTrial.ID) {
-			// One aggregated MetricsReport
-			require.Equal(t, len(tsim.MetricReports), 1)
-		} else {
-			require.Empty(t, tsim.MetricReports)
-		}
-	}
+	require.Equal(t, len(getCkptResp.Metrics), 2)
 
 	infTrialExp, err := db.ExperimentByID(ctx, infTrial.ExperimentID)
 	require.NoError(t, err)
@@ -1213,13 +1209,16 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 	// We can see the experiment for infTrial2
 	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, infTrial2Exp).
 		Return(nil).Once()
-	getCkptResp, getErr = api.GetTrialMetricsBySourceInfoCheckpoint(
-		ctx, &apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: checkpointUUID},
+	getCkptResp, getErr = api.GetTrialMetricsByCheckpoint(
+		ctx, &apiv1.GetTrialMetricsByCheckpointRequest{
+			CheckpointUuid: checkpointUUID,
+			MetricGroup:    &inferenceMetricGroup,
+		},
 	)
 	require.NoError(t, getErr)
-	// Only infTrial2 should be visible
-	require.Equal(t, len(getCkptResp.Data), 1)
-	require.Equal(t, getCkptResp.Data[0].TrialId, int32(infTrial2.ID))
+	// Only infTrial2 should be visible, but it doesn't have metrics
+	require.Equal(t, 1, len(getCkptResp.Metrics))
+	require.Equal(t, int32(infTrial2.ID), getCkptResp.Metrics[0].TrialId)
 }
 
 func TestTrialSourceInfoModelVersion(t *testing.T) {
@@ -1260,14 +1259,15 @@ func TestTrialSourceInfoModelVersion(t *testing.T) {
 	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
 	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
 
-	getMVResp, getMVErr := api.GetTrialSourceInfoMetricsByModelVersion(
-		ctx, &apiv1.GetTrialSourceInfoMetricsByModelVersionRequest{
+	getMVResp, getMVErr := api.GetTrialMetricsByModelVersion(
+		ctx, &apiv1.GetTrialMetricsByModelVersionRequest{
 			ModelName:       modelVersion.Model.Name,
 			ModelVersionNum: modelVersion.Version,
+			MetricGroup:     &inferenceMetricGroup,
 		},
 	)
 	require.NoError(t, getMVErr)
 	// One trial is valid and it has one aggregated MetricsReport
-	require.Equal(t, len(getMVResp.Data), 1)
-	require.Equal(t, len(getMVResp.Data[0].MetricReports), 1)
+	require.Equal(t, 1, len(getMVResp.Metrics))
+	require.Equal(t, int32(infTrial.ID), getMVResp.Metrics[0].TrialId)
 }

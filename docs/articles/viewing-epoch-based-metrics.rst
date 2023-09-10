@@ -65,10 +65,9 @@ configuration file.
 We don't have any data to plot yet, but we'll open the Determined WebUI to see that our experiment
 is running.
 
--  To do this, we'll go to ``http://localhost:8080/``.
--  To sign in, we'll accept the default determined username, leave the password empty, and then
-   click **Sign In**.
--  In the WebUI, we'll select our experiment, and then go to the **Logs** tab.
+.. include:: ../_shared/basic-installation.txt
+
+In the WebUI, we can select our experiment and visit the **Logs** tab.
 
 ************************************
  Step 2: Report Epoch-Based Metrics

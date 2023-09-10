@@ -11,7 +11,6 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -518,21 +517,17 @@ func (a *apiServer) KillTrial(
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
-	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.Id))
+	t, err := db.TrialByID(ctx, int(req.Id))
 	if err != nil {
 		return nil, err
 	}
-	exp := actor.Addr("experiments", eID)
 
-	s := patchTrialState{
-		requestID: rID,
-		state: model.StateWithReason{
-			State:               model.StoppingKilledState,
-			InformationalReason: "user requested kill",
-		},
+	tr := actor.Addr("experiments", t.ExperimentID, t.RequestID)
+	s := model.StateWithReason{
+		State:               model.StoppingKilledState,
+		InformationalReason: "user requested kill",
 	}
-	if err = a.ask(exp, s, nil); err != nil {
-		log.WithError(err).Error("error killing trial")
+	if err = a.ask(tr, s, nil); err != nil {
 		return nil, err
 	}
 	return &apiv1.KillTrialResponse{}, nil
@@ -898,17 +893,13 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 
 	trialIDIndex := 0
 	key := -1
+	mGroup := metricGroup.ToString()
 	for {
-		res, err := db.GetMetrics(ctx, int(trialIDs[trialIDIndex]), key, size, metricGroup)
+		res, err := db.GetMetrics(ctx, int(trialIDs[trialIDIndex]), key, size, &mGroup)
 		if err != nil {
 			return err
 		}
 		if len(res) > 0 {
-			for i := 0; i < len(res); i++ {
-				// TODO we are giving too precise timestamps for our Python parsing code somehow.
-				res[i].EndTime = timestamppb.New(res[i].EndTime.AsTime().Truncate(time.Millisecond))
-			}
-
 			if err := ctx.Err(); err != nil {
 				return err
 			}
@@ -1270,9 +1261,9 @@ func (a *apiServer) ReportTrialSearcherEarlyExit(
 	if err != nil {
 		return nil, err
 	}
-	exp := actor.Addr("experiments", eID)
+	trial := actor.Addr("experiments", eID, rID)
 
-	if err = a.ask(exp, userInitiatedEarlyExit{
+	if err = a.ask(trial, userInitiatedEarlyExit{
 		requestID: rID,
 		reason:    model.ExitedReasonFromProto(req.EarlyExit.Reason),
 	}, nil); err != nil {

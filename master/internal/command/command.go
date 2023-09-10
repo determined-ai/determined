@@ -155,11 +155,8 @@ func remakeCommandsByType(
 
 	results := []*command{}
 	for i := range snapshots {
-		if rm.IsReattachEnabledForRP(ctx,
-			snapshots[i].GenericCommandSpec.Config.Resources.ResourcePool) {
-			cmd := commandFromSnapshot(ctx, pgDB, rm, &snapshots[i])
-			results = append(results, cmd)
-		}
+		cmd := commandFromSnapshot(ctx, pgDB, rm, &snapshots[i])
+		results = append(results, cmd)
 	}
 
 	return results, nil
@@ -195,11 +192,9 @@ func tryRestoreCommandsByType(
 	rm rm.ResourceManager,
 	taskType model.TaskType,
 ) {
-	if rm.IsReattachEnabled(ctx) {
-		err := restoreCommandsByType(ctx, pgDB, rm, taskType)
-		if err != nil {
-			ctx.Log().WithError(err).Warnf("failed to restoreCommandsByType: %s", taskType)
-		}
+	err := restoreCommandsByType(ctx, pgDB, rm, taskType)
+	if err != nil {
+		ctx.Log().WithError(err).Warnf("failed to restoreCommandsByType: %s", taskType)
 	}
 }
 

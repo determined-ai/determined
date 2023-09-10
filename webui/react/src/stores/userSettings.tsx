@@ -102,50 +102,70 @@ export class UserSettingsStore extends PollingStore {
 
   /**
    * This sets the value of a setting and persists it for future sessions.
-   * If the setting value is an object you can pass a partial value and
-   * if will be merged with the previous value.
    * @param type The type of the value or an encoder of the value to JSON.
    * @param key Unique key to store and retrieve the settings
    * @param value New value of the setting
    */
   public set<T>(type: t.Type<T>, key: string, value: T): void;
-  public set<T extends t.Props>(
+  public set<T>(type: t.Encoder<T, Json>, key: string, value: T): void;
+  public set<T>(type: t.Encoder<T, Json>, key: string, value: T): void {
+    const encodedValue: Json = type.encode(value);
+    // This is non-blocking. If the API call fails we don't want to block
+    // the user from interacting, just let them know that their settings
+    // are not persisting. It's also important to update the value immediately
+    // for good rendering performance.
+    this.updateUserSetting(key, encodedValue);
+    this.#settings.update((settings) => {
+      return Loadable.map(settings, (settings) => {
+        return settings.set(key, encodedValue);
+      });
+    });
+  }
+
+  /**
+   * Like set but allows you to pass a partial value and
+   * if will be merged with the previous value.
+   * @param type The type of the value or an encoder of the value to JSON.
+   * @param key Unique key to store and retrieve the settings
+   * @param value New value of the setting
+   */
+  public setPartial<T extends t.Props>(
     type: t.TypeC<T>,
     key: string,
     value: t.TypeOfPartialProps<T>,
   ): void;
-  public set<T>(type: t.Encoder<T, Json>, key: string, value: T): void;
-  public set<T>(type: t.Encoder<T, Json> | t.TypeC<t.Props>, key: string, value: T): void {
-    if (isTypeC(type)) {
+  public setPartial<T extends t.Props, U extends t.Props>(
+    type: t.IntersectionType<[t.TypeC<T>, t.PartialC<U>]>,
+    key: string,
+    value: t.TypeOfPartialProps<T> & t.TypeOfPartialProps<U>,
+  ): void;
+  public setPartial<T>(type: t.Type<T>, key: string, value: T): void {
+    const encodedValue = (() => {
+      if (isTypeC(type)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return t.partial(type.props).encode(value as any);
+      }
+      // by exclusion the type must be this specific intersection
+      // if any new overloads are added this next line is no longer valid
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const encodedValue = t.partial(type.props).encode(value as any);
-      // This is non-blocking. If the API call fails we don't want to block
-      // the user from interacting, just let them know that their settings
-      // are not persisting. It's also important to update the value immediately
-      // for good rendering performance.
-      this.updateUserSetting(key, encodedValue);
-      this.#settings.update((settings) => {
-        return Loadable.map(settings, (settings) => {
-          return settings.update(key, (oldValue) => {
-            const old: JsonObject =
-              oldValue && isJsonObject(oldValue) ? oldValue : ({} as JsonObject);
-            return { ...old, ...encodedValue };
-          });
+      const i = type as t.IntersectionType<[t.TypeC<any>, t.PartialC<any>]>;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return t.intersection([t.partial(i.types[0].props), i.types[1]]).encode(value as any);
+    })();
+    // This is non-blocking. If the API call fails we don't want to block
+    // the user from interacting, just let them know that their settings
+    // are not persisting. It's also important to update the value immediately
+    // for good rendering performance.
+    this.updateUserSetting(key, encodedValue);
+    this.#settings.update((settings) => {
+      return Loadable.map(settings, (settings) => {
+        return settings.update(key, (oldValue) => {
+          const old: JsonObject =
+            oldValue && isJsonObject(oldValue) ? oldValue : ({} as JsonObject);
+          return { ...old, ...encodedValue };
         });
       });
-    } else {
-      const encodedValue: Json = type.encode(value);
-      // This is non-blocking. If the API call fails we don't want to block
-      // the user from interacting, just let them know that their settings
-      // are not persisting. It's also important to update the value immediately
-      // for good rendering performance.
-      this.updateUserSetting(key, encodedValue);
-      this.#settings.update((settings) => {
-        return Loadable.map(settings, (settings) => {
-          return settings.set(key, encodedValue);
-        });
-      });
-    }
+    });
   }
 
   /**

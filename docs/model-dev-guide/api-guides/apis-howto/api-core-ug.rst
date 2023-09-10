@@ -80,8 +80,8 @@ CD into the directory and run this command:
    from the logs of the first trial as it progresses.
 
 Open the Determined WebUI by navigating to the master URL. One way to do this is to navigate to
-``http://localhost:8080/``, accept the default Determined username, leave the password empty, and
-then click **Sign In**.
+``http://localhost:8080/``, accept the default username of ``determined``, and click **Sign In**. A
+password is not required.
 
 .. include:: ../../../_shared/note-local-dtrain-job.txt
 

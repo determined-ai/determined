@@ -360,7 +360,7 @@ message DeleteModelVersionRequest {
 message DeleteModelVersionResponse {}
 
 // Request for all metrics related to a given model version
-message GetTrialSourceInfoMetricsByModelVersionRequest {
+message GetTrialMetricsByModelVersionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "model_name", "model_version_num" ] }
   };
@@ -370,13 +370,16 @@ message GetTrialSourceInfoMetricsByModelVersionRequest {
   int32 model_version_num = 2;
   // Type of the TrialSourceInfo
   optional determined.trial.v1.TrialSourceInfoType trial_source_info_type = 3;
+  // Metric Group string ("training", "validation", or anything else) (nil means
+  // all groups)
+  optional string metric_group = 4;
 }
 
 // Response for all metrics related to a given checkpoint
-message GetTrialSourceInfoMetricsByModelVersionResponse {
+message GetTrialMetricsByModelVersionResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "data" ] }
+    json_schema: { required: [ "metrics" ] }
   };
   // All the related trials and their metrics
-  repeated determined.trial.v1.TrialSourceInfoMetric data = 1;
+  repeated determined.trial.v1.MetricsReport metrics = 1;
 }

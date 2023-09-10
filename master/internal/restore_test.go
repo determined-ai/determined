@@ -26,13 +26,13 @@ func TestDeserExperimentSnapshotIntoCurrent(t *testing.T) {
 	// received a shim. Please ensure there is a shim and fix this test for the next time.
 	tests := []struct {
 		name       string
-		experiment func() *experiment
+		experiment func() experiment
 		snapshot   []byte
 	}{
 		{
 			name: "single",
-			experiment: func() *experiment {
-				e := &experiment{}
+			experiment: func() experiment {
+				e := experiment{}
 				//nolint:exhaustivestruct
 				single := expconf.SearcherConfig{
 					//nolint:exhaustivestruct
@@ -52,8 +52,8 @@ func TestDeserExperimentSnapshotIntoCurrent(t *testing.T) {
 		},
 		{
 			name: "asha",
-			experiment: func() *experiment {
-				e := &experiment{}
+			experiment: func() experiment {
+				e := experiment{}
 				//nolint:exhaustivestruct
 				asha := expconf.SearcherConfig{
 					//nolint:exhaustivestruct
