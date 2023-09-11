@@ -402,7 +402,7 @@ func startup[T stream.Msg, S any](
 	return msgs, nil
 }
 
-// Startup handles starting up the Subscription's in the SubscriptionSet.
+// Startup handles starting up the Subscription objects in the SubscriptionSet.
 func (ss *SubscriptionSet) Startup(ctx context.Context, startupMsg StartupMsg) (
 	[]*websocket.PreparedMessage, error,
 ) {
