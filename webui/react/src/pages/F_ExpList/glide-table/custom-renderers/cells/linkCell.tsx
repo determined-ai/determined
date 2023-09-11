@@ -96,11 +96,12 @@ const renderer: CustomRenderer<LinkCell> = {
     if (link.unmanaged) {
       const x = drawX + commaMetrics.width + 8;
       const y = drawY - TAG_HEIGHT / 2;
+      const tagFont = `600 11px ${theme.fontFamily}`;
+
       ctx.fillStyle = '#132231';
       ctx.lineWidth = 2;
       ctx.strokeStyle = theme.textBubble;
       ctx.beginPath();
-      const tagFont = `600 11px ${theme.fontFamily}`;
       ctx.font = tagFont;
       roundedRect(
         ctx,
@@ -113,10 +114,9 @@ const renderer: CustomRenderer<LinkCell> = {
       ctx.stroke();
       ctx.fill();
       ctx.fillStyle = '#fff';
-
       ctx.fillText(TAG_CONTENT, x + 4, y + TAG_HEIGHT / 2 + getMiddleCenterBias(ctx, tagFont));
     }
-
+    ctx.closePath();
     drawX += commaMetrics.width + 4;
 
     return true;
