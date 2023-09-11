@@ -210,7 +210,14 @@ export const experimentNameRenderer = (
   record: ExperimentItem,
 ): React.ReactNode => (
   <Typography.Text ellipsis={{ tooltip: true }}>
-    <Link path={paths.experimentDetails(record.id)}>{value === undefined ? '' : value}</Link>
+    <Link path={paths.experimentDetails(record.id)}>
+      {value === undefined ? '' : value}&nbsp;&nbsp;
+      {record.unmanaged && (
+        <Badge tooltip="Workload not managed by Determined" type="Header">
+          Unmanaged
+        </Badge>
+      )}
+    </Link>
   </Typography.Text>
 );
 
