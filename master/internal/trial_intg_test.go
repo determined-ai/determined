@@ -11,20 +11,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/rm/actorrm"
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	"github.com/determined-ai/determined/master/pkg/ssh"
-
 	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/internal/task"
-
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks/allocationmocks"
+	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -32,16 +28,17 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 func TestTrial(t *testing.T) {
-	system, _, rID, tr, self, alloc := setup(t)
+	_, _, rID, tr, alloc, done := setup(t)
 
 	// Pre-scheduled stage.
-	require.NoError(t, system.Ask(self,
-		model.StateWithReason{State: model.ActiveState}).Error())
-	require.NoError(t, system.Ask(self, trialSearcherState{
+	require.NoError(t, tr.PatchState(
+		model.StateWithReason{State: model.ActiveState}))
+	require.NoError(t, tr.PatchSearcherState(trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
@@ -49,12 +46,12 @@ func TestTrial(t *testing.T) {
 		},
 		Complete: false,
 		Closed:   true,
-	}).Error())
+	}))
 	require.True(t, alloc.AssertExpectations(t))
 	require.NotNil(t, tr.allocationID)
 
 	// Running stage.
-	require.NoError(t, system.Ask(self, trialSearcherState{
+	require.NoError(t, tr.PatchSearcherState(trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
@@ -62,15 +59,19 @@ func TestTrial(t *testing.T) {
 		},
 		Complete: true,
 		Closed:   true,
-	}).Error())
+	}))
 
 	dbTrial, err := db.TrialByID(context.TODO(), tr.id)
 	require.NoError(t, err)
 	require.Equal(t, dbTrial.State, model.StoppingCompletedState)
 
 	// Terminating stage.
-	system.Tell(self, &task.AllocationExited{})
-	require.NoError(t, self.AwaitTermination())
+	tr.AllocationExitedCallback(&task.AllocationExited{})
+	select {
+	case <-done: // success
+	case <-time.After(5 * time.Second):
+		require.Error(t, errors.New("timed out waiting for trial to terminate"))
+	}
 	require.True(t, model.TerminalStates[tr.state])
 
 	dbTrial, err = db.TrialByID(context.TODO(), tr.id)
@@ -79,12 +80,11 @@ func TestTrial(t *testing.T) {
 }
 
 func TestTrialRestarts(t *testing.T) {
-	system, pgDB, rID, tr, self, _ := setup(t)
-
+	_, pgDB, rID, tr, _, done := setup(t)
 	// Pre-scheduled stage.
-	require.NoError(t, system.Ask(self,
-		model.StateWithReason{State: model.ActiveState}).Error())
-	require.NoError(t, system.Ask(self, trialSearcherState{
+	require.NoError(t, tr.PatchState(
+		model.StateWithReason{State: model.ActiveState}))
+	require.NoError(t, tr.PatchSearcherState(trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
@@ -92,14 +92,13 @@ func TestTrialRestarts(t *testing.T) {
 		},
 		Complete: false,
 		Closed:   true,
-	}).Error())
+	}))
 
 	for i := 0; i <= tr.config.MaxRestarts(); i++ {
 		require.NotNil(t, tr.allocationID)
 		require.Equal(t, i, tr.restarts)
 
-		system.Tell(self, &task.AllocationExited{Err: errors.New("bad stuff went down")})
-		system.Ask(self, actor.Ping{}).Get() // sync
+		tr.AllocationExitedCallback(&task.AllocationExited{Err: errors.New("bad stuff went down")})
 
 		if i == tr.config.MaxRestarts() {
 			dbTrial, err := db.TrialByID(context.TODO(), tr.id)
@@ -112,7 +111,11 @@ func TestTrialRestarts(t *testing.T) {
 			require.Equal(t, i+2, runID)
 		}
 	}
-	require.NoError(t, self.AwaitTermination())
+	select {
+	case <-done: // success
+	case <-time.After(5 * time.Second):
+		require.Error(t, errors.New("timed out waiting for trial to terminate"))
+	}
 	require.True(t, model.TerminalStates[tr.state])
 }
 
@@ -121,8 +124,8 @@ func setup(t *testing.T) (
 	*db.PgDB,
 	model.RequestID,
 	*trial,
-	*actor.Ref,
 	*allocationmocks.AllocationService,
+	chan bool,
 ) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
@@ -130,6 +133,9 @@ func setup(t *testing.T) (
 	// mock resource manager.
 	rmActor := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
 	rmImpl := actorrm.Wrap(system.MustActorOf(actor.Addr("rm"), &rmActor))
+
+	expActor := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
+	expRef := system.MustActorOf(actor.Addr("experiment"), &expActor)
 
 	// mock allocation service
 	var as allocationmocks.AllocationService
@@ -146,7 +152,8 @@ func setup(t *testing.T) (
 	// instantiate the trial
 	rID := model.NewRequestID(rand.Reader)
 	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, rID))
-	tr := newTrial(
+	done := make(chan bool)
+	tr, err := newTrial(
 		detLogger.Context{},
 		taskID,
 		j.JobID,
@@ -171,7 +178,12 @@ func setup(t *testing.T) (
 		},
 		ssh.PrivateAndPublicKeys{},
 		false,
+		nil, system, expRef, func(ri model.RequestID, reason *model.ExitedReason) {
+			require.Equal(t, rID, ri)
+			done <- true
+			close(done)
+		},
 	)
-	self := system.MustActorOf(actor.Addr("trial"), tr)
-	return system, a.m.db, rID, tr, self, &as
+	require.NoError(t, err)
+	return system, a.m.db, rID, tr, &as, done
 }
