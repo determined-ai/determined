@@ -1,17 +1,17 @@
 package stream
 
 import (
-	"strings"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 )
 
 type keySetIter struct {
-	vals []string
-	idx int
+	vals  []string
+	idx   int
 	start int64
-	end int64
+	end   int64
 }
 
 func newKeySetIter(keyset string) *keySetIter {
@@ -60,7 +60,7 @@ func (ksi *keySetIter) Next() (bool, int64, error) {
 			return false, 0, errors.Errorf("invalid range (%v)", val)
 		}
 		ksi.start = start + 1 // plus one because we emit start right now
-		ksi.end = end + 1  // plus one to save an exclusive endpoint
+		ksi.end = end + 1     // plus one to save an exclusive endpoint
 		return true, start, nil
 	}
 	// any other number of splits around "-"
@@ -68,11 +68,11 @@ func (ksi *keySetIter) Next() (bool, int64, error) {
 }
 
 type keySetBuilder struct {
-	out strings.Builder
+	out     strings.Builder
 	started bool
-	comma bool
-	start int64
-	last int64
+	comma   bool
+	start   int64
+	last    int64
 }
 
 func (ksb *keySetBuilder) emit() {
@@ -99,7 +99,7 @@ func (ksb *keySetBuilder) Add(n int64) {
 		ksb.last = n
 		return
 	}
-	if n == ksb.last + 1 {
+	if n == ksb.last+1 {
 		// extend the current range
 		ksb.last++
 		return
@@ -146,16 +146,17 @@ func ProcessKnown(known string, exist []int64) (string, []int64, error) {
 	kok, k, err := ksi.Next()
 	xok, x := existNext()
 	for kok && xok && err == nil {
-		if k == x {
-			// ignore matched values; advance x and k
+		switch {
+		// ignore matched values; advance x and k
+		case k == x:
 			kok, k, err = ksi.Next()
 			xok, x = existNext()
-		} else if k < x {
-			// x is ahead, k must have been removed
+		// x is ahead, k must have been removed
+		case k < x:
 			removed.Add(k)
 			kok, k, err = ksi.Next()
-		} else {
-			// k is ahead, x must have been added
+		// k is ahead, x must have been added
+		default:
 			added = append(added, x)
 			xok, x = existNext()
 		}

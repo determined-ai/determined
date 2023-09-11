@@ -6,7 +6,7 @@ import (
 
 type whereCall struct {
 	query string
-	args []interface{}
+	args  []interface{}
 }
 
 // WhereSince makes it easier to write WHERE clauses of the following forms, which come up
@@ -14,7 +14,7 @@ type whereCall struct {
 // - WHERE seq > N AND <predicate>
 // - WHERE seq > N AND (<predicate> OR <predicate> ...)
 // - WHERE <predicate>
-// - WHERE <predicate> OR <predicate>
+// - WHERE <predicate> OR <predicate>.
 type WhereSince struct {
 	// A filter on the seq column.  AND'ed with remaining predicates if nonzero.
 	Since int64
@@ -22,6 +22,7 @@ type WhereSince struct {
 	Includes []whereCall
 }
 
+// Include adds additional predicates to be appended together using ORs.
 func (w *WhereSince) Include(query string, args ...interface{}) {
 	w.Includes = append(w.Includes, whereCall{query, args})
 }
@@ -35,6 +36,7 @@ func (w *WhereSince) chainIncludes(q *bun.SelectQuery) *bun.SelectQuery {
 	return q
 }
 
+// Apply applies the WhereSince caluse to the provided bun query.
 func (w *WhereSince) Apply(q *bun.SelectQuery) *bun.SelectQuery {
 	// Simple case first: either there's no sequence or only one predicate.
 	// In those cases, no WhereGroup is needed.
