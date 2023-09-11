@@ -17,9 +17,9 @@ Version 0.25.1
 
 **Breaking Changes**
 
--  Fluentbit is no longer used for logshipping and configs associated with fluentbit are now no
-   longer in use. Fluentbit has been replaced with an internal log shipper (the same one that is
-   used for slurm).
+-  Fluent Bit is no longer used for log shipping and configs associated with Fluent Bit are now no
+   longer in use. Fluent Bit has been replaced with an internal log shipper (the same one that is
+   used for Slurm).
 
 **Bug Fixes**
 
