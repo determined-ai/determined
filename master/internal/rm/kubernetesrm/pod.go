@@ -294,8 +294,6 @@ func (p *pod) ChangePosition() {
 	rmevents.Publish(p.allocationID, &sproto.ReleaseResources{Reason: "queue position changed"})
 }
 
-// TODO should we give this the allocation treatment
-// where this becomes KillTaskPod(informationalReason string)?
 func (p *pod) KillTaskPod() {
 	p.syslog.Info("received request to stop pod")
 	p.kill()

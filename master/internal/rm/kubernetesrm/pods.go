@@ -28,6 +28,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -1008,6 +1009,7 @@ func (p *pods) killDetJobsOnNode(ctx *actor.Context, nodeName string) error {
 		return fmt.Errorf("listing pods on node %s: %w", nodeName, err)
 	}
 
+	allocIDs := make(map[model.AllocationID]bool)
 	for _, pod := range pods.Items {
 		podHandler, ok := p.podNameToPodHandler[pod.Name]
 		if !ok {
@@ -1015,9 +1017,18 @@ func (p *pods) killDetJobsOnNode(ctx *actor.Context, nodeName string) error {
 				"during node disable couldn't find pod %s's actor to kill", pod.Name)
 			continue
 		}
+
 		p.syslog.Infof(
 			"stopping pod %s because node %s was disabled without drain option", pod.Name, nodeName)
-		podHandler.kill()
+		// Only send disabled event once per allocationID.
+		if !allocIDs[podHandler.allocationID] {
+			rmevents.Publish(podHandler.allocationID, &sproto.ReleaseResources{
+				Reason:    "node disabled without drain",
+				ForceKill: true,
+			})
+		}
+
+		allocIDs[podHandler.allocationID] = true
 	}
 
 	return nil
@@ -1356,6 +1367,9 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 	nodeToTasks, taskSlots := p.getNonDetSlots(p.slotType)
 	summary := make(map[string]model.AgentSummary, len(p.currentNodes))
 	for _, node := range p.currentNodes {
+		disabledLabel, isDisabled := node.Labels[clusterIDNodeLabel()]
+		isDraining := isDisabled && disabledLabel == noScheduleNodeLabelValue
+
 		var numSlots int64
 		var deviceType device.Type
 		switch p.slotType {
@@ -1390,7 +1404,8 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
 					ID:        strconv.Itoa(i),
 					Device:    device.Device{Type: deviceType},
-					Enabled:   true,
+					Draining:  isDraining,
+					Enabled:   !isDisabled,
 					Container: podInfo.container,
 				}
 				curSlot++
@@ -1405,9 +1420,10 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 				}
 
 				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
-					ID:      strconv.FormatInt(i, 10),
-					Device:  device.Device{Type: deviceType},
-					Enabled: true,
+					ID:       strconv.FormatInt(i, 10),
+					Device:   device.Device{Type: deviceType},
+					Draining: isDraining,
+					Enabled:  !isDisabled,
 					Container: &cproto.Container{
 						ID:          cproto.ID(taskName),
 						State:       "RUNNING",
@@ -1421,9 +1437,10 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 
 		for i := curSlot; i < int(numSlots); i++ {
 			slotsSummary[strconv.Itoa(i)] = model.SlotSummary{
-				ID:      strconv.Itoa(i),
-				Device:  device.Device{Type: deviceType},
-				Enabled: true,
+				ID:       strconv.Itoa(i),
+				Device:   device.Device{Type: deviceType},
+				Draining: isDraining,
+				Enabled:  !isDisabled,
 			}
 		}
 
@@ -1431,8 +1448,6 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 		for _, addr := range node.Status.Addresses {
 			addrs = append(addrs, addr.Address)
 		}
-
-		disabledLabel, isDisabled := node.Labels[clusterIDNodeLabel()]
 
 		summary[node.Name] = model.AgentSummary{
 			ID:             node.Name,
@@ -1445,7 +1460,7 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 			// 1. called `det a disable --drain` until `det a enable` is called
 			// 2. or `det a disable --drain` and all tasks finish
 			// Since agents seem to do 1 but the name would imply 2?
-			Draining: isDisabled && disabledLabel == noScheduleNodeLabelValue,
+			Draining: isDraining,
 			Enabled:  !isDisabled,
 		}
 	}

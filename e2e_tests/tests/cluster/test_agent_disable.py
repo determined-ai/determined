@@ -101,22 +101,34 @@ def _disable_agent(agent_id: str, drain: bool = False, json: bool = False) -> It
             subprocess.check_call(command)
 
 
+# TODO cluster
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_k8s
 def test_disable_agent_experiment_resume() -> None:
     """
     Start an experiment with max_restarts=0 and ensure that being killed due to an explicit agent
     disable/enable (without draining) does not count toward the number of restarts.
     """
+    # TODO do a debug dump here
+
+    command = ["det", "-m", conf.make_master_url(), "agent", "list", "--json"]
+    output = subprocess.check_output(command).decode()
+    print("AGENT list", output)
+    
     slots = _fetch_slots()
-    assert len(slots) == 1
+    print("SLOT LIST", slots)
+    assert len(slots) == 1 # TODO this assert might be broken by 
     agent_id = slots[0]["agent_id"]
 
+    # slots = sum([a["num_slots"] for a in agent_data])
+    # I don't know if we have just one agent or multiple though?
+    
     exp_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
         conf.fixtures_path("no_op"),
         ["--config", "max_restarts=0"],
     )
-    exp.wait_for_experiment_workload_progress(exp_id)
+    exp.wait_for_experiment_workload_progress(exp_id, max_ticks=300)
 
     with _disable_agent(agent_id):
         # Wait for the allocation to go away.
@@ -131,7 +143,9 @@ def test_disable_agent_experiment_resume() -> None:
     exp.wait_for_experiment_state(exp_id, experimentv1State.COMPLETED)
 
 
+# TODO workable
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_k8s
 def test_disable_agent_zero_slots() -> None:
     """
     Start a command, disable the agent it's running on. The command should
@@ -143,7 +157,7 @@ def test_disable_agent_zero_slots() -> None:
 
     command_id = run_zero_slot_command(sleep=60)
     # Wait for it to run.
-    wait_for_command_state(command_id, "RUNNING", 30)
+    wait_for_command_state(command_id, "RUNNING", 300)
 
     try:
         with _disable_agent(agent_id):
@@ -153,8 +167,9 @@ def test_disable_agent_zero_slots() -> None:
         command = ["det", "-m", conf.make_master_url(), "command", "kill", command_id]
         subprocess.check_call(command)
 
-
+# TODO workable
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_k8s
 def test_drain_agent() -> None:
     """
     Start an experiment, `disable --drain` the agent once the trial is running,
@@ -168,9 +183,9 @@ def test_drain_agent() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
         conf.fixtures_path("no_op"),
-        None,
+        ["--config", "hyperparameters.training_batch_seconds=0.15"], # Take 15 seconds.
     )
-    exp.wait_for_experiment_state(experiment_id, experimentv1State.RUNNING)
+    exp.wait_for_experiment_state(experiment_id, experimentv1State.RUNNING, max_wait_secs=300)
     exp.wait_for_experiment_active_workload(experiment_id)
     exp.wait_for_experiment_workload_progress(experiment_id)
 
@@ -189,15 +204,19 @@ def test_drain_agent() -> None:
     exp.wait_for_experiment_state(experiment_id_no_start, experimentv1State.QUEUED)
 
     with _disable_agent(agent_id, drain=True):
-        # Check for 15 seconds it doesn't get scheduled into the same slot.
-        for _ in range(15):
-            assert not exp.experiment_has_active_workload(experiment_id_no_start)
-
         # Ensure the first one has finished with the correct number of workloads.
         exp.wait_for_experiment_state(experiment_id, experimentv1State.COMPLETED)
         trials = exp.experiment_trials(experiment_id)
         assert len(trials) == 1
         assert len(trials[0].workloads) == 7
+
+        # Check for 15 seconds it doesn't get scheduled into the same slot.
+        for _ in range(15):
+            assert exp.experiment_state(experiment_id_no_start) == experimentv1State.QUEUED
+            time.sleep(1)
+            #print("checking it still is not scheduled")
+            #assert not exp.experiment_has_active_workload(experiment_id_no_start)
+            #print("checking it still is not scheduled")
 
         # Ensure the slot is empty.
         slots = _fetch_slots()

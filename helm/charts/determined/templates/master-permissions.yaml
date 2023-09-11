@@ -33,7 +33,7 @@ rules:
     resources: ["priorityclasses"]
     verbs: ["create", "get", "list", "delete"]
   - apiGroups: [""]
-    resources: ["nodes"] # /labels TODO narrow this down.
+    resources: ["nodes"]
     verbs: ["patch"]
 
 

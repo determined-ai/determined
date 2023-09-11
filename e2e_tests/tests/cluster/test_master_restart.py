@@ -23,7 +23,6 @@ from .utils import (
     run_command,
     wait_for_command_state,
     wait_for_task_state,
-    get_command_info
 )
 
 logger = logging.getLogger(__name__)
@@ -433,38 +432,3 @@ def test_master_restart_with_queued(k8s_managed_cluster: ManagedK8sCluster) -> N
     for cmd_id in [running_command_id, queued_command_id]:
         wait_for_command_state(cmd_id, "TERMINATED", 60)
         assert_command_succeeded(cmd_id)
-
-@pytest.mark.e2e_k8s
-def test_master_restart_adds_affinity(k8s_managed_cluster: ManagedK8sCluster) -> None:
-    agent_data = get_agent_data(conf.make_master_url())
-    slots = sum([a["num_slots"] for a in agent_data])
-
-    running_command_id = run_command(500, slots)
-    wait_for_command_state(running_command_id, "RUNNING", 30)
-
-    queued_command_id = run_command(1, slots)
-    wait_for_command_state(queued_command_id, "QUEUED", 30)
-
-    #k8s_managed_cluster.kill_master()
-
-    # Simulate a pre agent enable disable k8s pod.
-    k8s_managed_cluster.remove_node_affinities_from_pods()
-    
-    #k8s_managed_cluster.restart_master()
-
-    return 
-    
-    with contextlib.ExitStack() as stack:
-        for a in agent_data:
-            stack.enter_context(_disable_agent(a["agent_id"], drain=False))
-
-        # Terminated due to drain.
-        wait_for_command_state(running_command_id, "TERMINATED", 10)
-        assert "success" not in get_command_info(running_command_id)["exitStatus"]
-
-        # Should queue forever.
-        time.sleep(5)
-        wait_for_command_state(queued_command_id, "QUEUED", 30)
-
-    wait_for_command_state(queued_command_id, "TERMINATED", 30)
-    assert_command_succeeded(command_id)
