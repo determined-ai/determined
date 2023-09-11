@@ -234,13 +234,13 @@ func (ps PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
 				return errors.Wrapf(err, "error modifying subscriptions")
 			}
 			msgs = append(msgs, temp...)
-			// TODO: also append a sync message (or one sync per SubscriptionModMsg)
+			// XXX: also append a sync message (or one sync per SubscriptionModMsg)
 		}
 
 		// write msgs to the websocket
 		err = writeAll(socket, msgs)
 		if err != nil {
-			// TODO: don't log broken pipe errors.
+			// XXX: don't log broken pipe errors.
 			if err != nil {
 				return errors.Wrapf(err, "error writing to socket")
 			}
@@ -253,7 +253,7 @@ func publishLoop[T stream.Msg](
 	channelName string,
 	publisher *stream.Publisher[T],
 ) {
-	// TODO: is there a better recovery technique than this?
+	// XXX: is there a better recovery technique than this?
 	// XXX: at least boot all the connected streamers, they'll all be invalid now
 	for {
 		err := doPublishLoop(ctx, channelName, publisher)
@@ -281,7 +281,7 @@ func doPublishLoop[T stream.Msg](
 	}
 
 	listener := pq.NewListener(
-		// TODO: update this to use master config rather than hardcoded for a local db
+		// XXX: update this to use master config rather than hardcoded for a local db
 		"postgresql://postgres:postgres@localhost/determined?sslmode=disable",
 		minReconn,
 		maxReconn,
@@ -305,7 +305,7 @@ func doPublishLoop[T stream.Msg](
 		// The pq listener example includes a timeout case, so we do too.
 		// (https://pkg.go.dev/github.com/lib/pq/example/listen)
 		case <-time.After(30 * time.Second):
-			// TODO: look into handling return value of Ping()
+			// XXX: look into handling return value of Ping()
 			//nolint
 			go listener.Ping()
 
@@ -336,7 +336,7 @@ func doPublishLoop[T stream.Msg](
 			}
 			// Broadcast all the events.
 			publisher.Broadcast(events)
-			// TODO: look into why this is potentially an ineffective break statement
+			// XXX: look into why this is potentially an ineffective break statement
 			//nolint
 			break
 		}
