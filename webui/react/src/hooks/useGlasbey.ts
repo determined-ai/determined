@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { glasbeyColor } from 'utils/color';
+import { glasbeyColor } from 'components/kit/utils/color';
 
 export type MapOfIdsToColors = Record<string, string>;
 

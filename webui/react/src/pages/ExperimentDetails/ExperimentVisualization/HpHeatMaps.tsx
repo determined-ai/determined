@@ -6,6 +6,7 @@ import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
 import useUI from 'components/kit/contexts/UI';
 import Spinner from 'components/kit/Spinner';
+import { rgba2str, str2rgba } from 'components/kit/utils/color';
 import Message, { MessageType } from 'components/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import Section from 'components/Section';
@@ -27,7 +28,6 @@ import {
   Scale,
 } from 'types';
 import { getColorScale } from 'utils/chart';
-import { rgba2str, str2rgba } from 'utils/color';
 import { flattenObject, isBoolean, isObject, isString } from 'utils/data';
 import { metricToStr } from 'utils/metric';
 

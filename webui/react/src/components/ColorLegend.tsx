@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { ColorScale } from 'utils/color';
+import { ColorScale } from 'components/kit/utils/color';
 
 import css from './ColorLegend.module.scss';
 import HumanReadableNumber from './HumanReadableNumber';

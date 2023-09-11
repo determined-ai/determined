@@ -1,7 +1,7 @@
 import { CustomCell, CustomRenderer, GridCellKind } from '@hpe.com/glide-data-grid';
 
+import { rgba2str, rgbaFromGradient, str2rgba } from 'components/kit/utils/color';
 import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
-import { rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 import { Theme } from 'utils/themes';
 
 interface LoadingCellProps {

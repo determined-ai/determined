@@ -1,8 +1,8 @@
 import dayjs from 'dayjs';
 import uPlot from 'uplot';
 
+import { ColorScale } from 'components/kit/utils/color';
 import { Primitive, Range } from 'types';
-import { ColorScale } from 'utils/color';
 import { primitiveSorter } from 'utils/sort';
 import { Theme } from 'utils/themes';
 

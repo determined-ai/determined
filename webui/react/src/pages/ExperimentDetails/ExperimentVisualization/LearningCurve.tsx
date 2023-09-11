@@ -6,6 +6,7 @@ import useUI from 'components/kit/contexts/UI';
 import { LineChart, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Spinner from 'components/kit/Spinner';
+import { glasbeyColor } from 'components/kit/utils/color';
 import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
@@ -29,7 +30,6 @@ import {
   RunState,
   Scale,
 } from 'types';
-import { glasbeyColor } from 'utils/color';
 import { flattenObject, isPrimitive } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';

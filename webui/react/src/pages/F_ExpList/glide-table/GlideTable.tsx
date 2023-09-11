@@ -28,6 +28,7 @@ import {
 import useUI from 'components/kit/contexts/UI';
 import { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
+import { Float, Surface } from 'components/kit/utils/colors';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import { PAGE_SIZE } from 'pages/F_ExpList/F_ExperimentList';
@@ -41,7 +42,6 @@ import {
   ProjectColumn,
   ProjectMetricsRange,
 } from 'types';
-import { Float, Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';

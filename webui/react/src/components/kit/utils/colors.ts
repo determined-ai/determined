@@ -1,5 +1,5 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
-import { ValueOf } from 'types';
+import { ValueOf } from 'components/kit/internal/types';
 
 export const Status = {
   Active: 'var(--theme-status-active)',

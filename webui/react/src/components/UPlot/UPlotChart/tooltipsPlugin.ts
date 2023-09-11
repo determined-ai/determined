@@ -1,6 +1,6 @@
 import uPlot, { Plugin } from 'uplot';
 
-import { glasbeyColor } from 'utils/color';
+import { glasbeyColor } from 'components/kit/utils/color';
 import { humanReadableNumber } from 'utils/number';
 
 import css from './tooltipsPlugin.module.scss';
