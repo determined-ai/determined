@@ -1214,7 +1214,6 @@ jobs:
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C examples build
-      - run: make -C model_hub examples
       - run: make -C helm build
       - attach_workspace:
           at: .
