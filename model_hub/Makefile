@@ -23,11 +23,6 @@ MMCV_VERSION := 1.7.1 # Needs to support the above Torch version
 MMDETECTION_VERSION := 2.27.0
 MMDETECTION_ENVIRONMENT_ROOT := determinedai/model-hub-mmdetection
 
-# Example dirs
-HF_EXAMPLES := $(wildcard examples/huggingface/*/.)
-HF_EXAMPLES_DIRS := $(patsubst examples/huggingface/%/., build-examples/%.tgz, $(HF_EXAMPLES))
-MMDET_EXAMPLE_DIR := build-examples/mmdetection.tgz
-
 .PHONY: clean
 clean:
 	rm -rf .pytest_cache/
@@ -36,7 +31,6 @@ clean:
 	rm -rf pip-wheel-metadata/
 	rm -rf dist/
 	rm -rf build/
-	rm -rf build-examples/
 	rm -f .coverage
 	find . \( -name __pycache__ -o -name \*.pyc \) -delete
 	find . -type d -name .mypy_cache -prune -exec rm -rf {} \;
@@ -45,23 +39,6 @@ clean:
 build:
 	PYTHONWARNINGS=ignore:Normalizing:UserWarning:setuptools.dist \
 		python -m build -nxw >/dev/null
-
-build-examples/stamp: $(HF_EXAMPLES_DIRS) $(MMDET_EXAMPLE_DIR)
-	touch $@
-
-.PHONY: examples
-examples: build-examples/stamp
-
-# the first `examples/*/%` defines `$<` and the second sets file dependencies
-build-examples/%.tgz: examples/*/% examples/*/%/*
-	find "$<" \( -name __pycache__ -o -name \*.pyc \) -delete
-	mkdir -p $$(dirname "$@")
-	tar -czf "$@" -C $$(dirname "$<") $$(basename "$<")
-
-build-examples/%.tgz: examples/%/ examples/%/*
-	find "$<" \( -name __pycache__ -o -name \*.pyc \) -delete
-	mkdir -p $$(dirname "$@")
-	tar -czf "$@" -C $$(dirname "$<") $$(basename "$<")
 
 .PHONY: publish
 publish:

@@ -75,11 +75,6 @@ def decision_trees_examples_path(path: str) -> str:
 def features_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/features", path)
 
-
-def model_hub_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../model_hub/examples", path)
-
-
 def graphs_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/graphs", path)
 
