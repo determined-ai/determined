@@ -105,15 +105,12 @@ BEGIN
     -- return value for AFTER triggers is ignored
     return NULL;
 END;
-
 $$ LANGUAGE plpgsql;
 --
 DROP TRIGGER IF EXISTS stream_trial_trigger_ownership ON experiments;
 CREATE TRIGGER stream_trial_trigger_ownership
 AFTER UPDATE OF project_id ON EXPERIMENTS
 FOR EACH ROW EXECUTE PROCEDURE stream_trial_ownership();
-
-
 
 -- Trigger for detecting trial permission scope changes derived from projects.workspace_id.
 CREATE OR REPLACE FUNCTION stream_trial_permission() RETURNS TRIGGER AS $$
@@ -139,7 +136,6 @@ BEGIN
     -- return value for AFTER triggers is ignored
     return NULL;
 END;
-
 $$ LANGUAGE plpgsql;
 --
 DROP TRIGGER IF EXISTS stream_trial_trigger_permission ON projects;
