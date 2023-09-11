@@ -46,7 +46,7 @@ type TrialMsg struct {
 	Seq int64 `bun:"seq" json:"seq"`
 
 	// permission scope
-	WorkspaceID int `bun:"workspace_id" json:"workspace_id"`
+	WorkspaceID int `bun:"workspace_id" json:"-"`
 
 	upsertCache *websocket.PreparedMessage
 	deleteCache *websocket.PreparedMessage
