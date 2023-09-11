@@ -147,16 +147,16 @@ func ProcessKnown(known string, exist []int64) (string, []int64, error) {
 	xok, x := existNext()
 	for kok && xok && err == nil {
 		switch {
-		// ignore matched values; advance x and k
 		case k == x:
+			// ignore matched values; advance x and k
 			kok, k, err = ksi.Next()
 			xok, x = existNext()
-		// x is ahead, k must have been removed
 		case k < x:
+			// x is ahead, k must have been removed
 			removed.Add(k)
 			kok, k, err = ksi.Next()
-		// k is ahead, x must have been added
 		default:
+			// k is ahead, x must have been added
 			added = append(added, x)
 			xok, x = existNext()
 		}

@@ -97,10 +97,8 @@ func (s *Subscription[T]) Configure(filter func(T) bool) {
 			s.Publisher.Subscriptions = s.Publisher.Subscriptions[:last]
 			break
 		}
-	} // else {
-	// Modify an existing registraiton.
-	// (just save filter, below)
-	// }
+	} // else modify an existing registration, update subscription filter
+
 	// Remember the new filter.
 	s.filter = filter
 }
@@ -135,14 +133,14 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 			for _, ev := range events {
 				var msg *websocket.PreparedMessage
 				switch {
-				// update, insert, or fallin: send the record to the client.
 				case ev.After != nil && sub.filter(*ev.After) && sub.permissionFilter(*ev.After):
+					// update, insert, or fallin: send the record to the client.
 					msg = (*ev.After).UpsertMsg()
-				// deletion or fallout: tell the client the record is deleted.
 				case ev.Before != nil && sub.filter(*ev.Before) && sub.permissionFilter(*ev.Before):
+					// deletion or fallout: tell the client the record is deleted.
 					msg = (*ev.Before).DeleteMsg()
-				// ignore this message
 				default:
+					// ignore this message
 					continue
 				}
 				// is this the first match for this Subscription during this Broadcast?
