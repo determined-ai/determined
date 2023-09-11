@@ -186,7 +186,7 @@ const ExperimentCreateModalComponent = ({
       };
     });
     // avoid calling form.setFields inside setModalState:
-    if (modalState.isAdvancedMode && form) {
+    if (form) {
       try {
         const newConfig = (yaml.load(modalState.configString) || {}) as RawJson;
         const isFork = modalState.type === CreateExperimentType.Fork;
