@@ -568,10 +568,11 @@ func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("e.checkpoint_size").
 		Column("e.checkpoint_count").
 		Column("e.external_experiment_id").
-		Column("trials.external_trial_id").
+		Column(`t.external_trial_id`).
 		Join("JOIN users u ON e.owner_id = u.id").
 		Join("JOIN projects p ON e.project_id = p.id").
-		Join("JOIN workspaces w ON p.workspace_id = w.id")
+		Join("JOIN workspaces w ON p.workspace_id = w.id").
+		Join("LEFT JOIN trials AS t ON t.id = e.best_trial_id")
 }
 
 func (a *apiServer) GetExperiments(
