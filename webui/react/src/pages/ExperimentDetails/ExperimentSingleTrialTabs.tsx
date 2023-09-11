@@ -269,17 +269,19 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         key: TabType.Checkpoints,
         label: 'Checkpoints',
       });
-      items.push({
-        children: (
-          <ExperimentCodeViewer
-            experiment={experiment}
-            selectedFilePath={settings.filePath}
-            onSelectFile={handleSelectFile}
-          />
-        ),
-        key: TabType.Code,
-        label: 'Code',
-      });
+      if (experiment.modelDefinitionSize !== 0) {
+        items.push({
+          children: (
+            <ExperimentCodeViewer
+              experiment={experiment}
+              selectedFilePath={settings.filePath}
+              onSelectFile={handleSelectFile}
+            />
+          ),
+          key: TabType.Code,
+          label: 'Code',
+        });
+      }
     }
 
     items.push({

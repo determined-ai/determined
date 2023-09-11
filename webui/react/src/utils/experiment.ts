@@ -139,7 +139,7 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.Delete]: (experiment) => deletableRunStates.has(experiment.state),
 
-  [ExperimentAction.DownloadCode]: alwaysTrueExperimentChecker,
+  [ExperimentAction.DownloadCode]: (experiment) => experiment.modelDefinitionSize !== 0,
 
   [ExperimentAction.Edit]: (experiment) => !experiment?.parentArchived && !experiment?.archived,
 
