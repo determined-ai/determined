@@ -338,6 +338,7 @@ const ExperimentCreateModalComponent = ({
       const newModalState = {
         ...prev,
         config: publicConfig,
+        configString: prev.configString || yaml.dump(publicConfig),
         experiment,
         open: true,
         trial,
