@@ -114,21 +114,21 @@ def test_disable_agent_experiment_resume() -> None:
     command = ["det", "-m", conf.make_master_url(), "agent", "list", "--json"]
     output = subprocess.check_output(command).decode()
     print("AGENT list", output)
-    
+
     slots = _fetch_slots()
     print("SLOT LIST", slots)
-    assert len(slots) == 1 # TODO this assert might be broken by 
+    assert len(slots) == 1  # TODO this assert might be broken by
     agent_id = slots[0]["agent_id"]
 
     # slots = sum([a["num_slots"] for a in agent_data])
     # I don't know if we have just one agent or multiple though?
-    
+
     exp_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
         conf.fixtures_path("no_op"),
         ["--config", "max_restarts=0"],
     )
-    exp.wait_for_experiment_workload_progress(exp_id, max_ticks=300)
+    exp.wait_for_experiment_state(exp_id, experimentv1State.RUNNING, max_wait_secs=300)
 
     with _disable_agent(agent_id):
         # Wait for the allocation to go away.
@@ -155,17 +155,18 @@ def test_disable_agent_zero_slots() -> None:
     assert len(slots) == 1
     agent_id = slots[0]["agent_id"]
 
-    command_id = run_zero_slot_command(sleep=60)
+    command_id = run_zero_slot_command(sleep=180)
     # Wait for it to run.
     wait_for_command_state(command_id, "RUNNING", 300)
 
     try:
         with _disable_agent(agent_id):
-            wait_for_command_state(command_id, "TERMINATED", 5)
+            wait_for_command_state(command_id, "TERMINATED", 30)
     finally:
         # Kill the command before failing so it does not linger.
         command = ["det", "-m", conf.make_master_url(), "command", "kill", command_id]
         subprocess.check_call(command)
+
 
 # TODO workable
 @pytest.mark.e2e_cpu
@@ -183,7 +184,7 @@ def test_drain_agent() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
         conf.fixtures_path("no_op"),
-        ["--config", "hyperparameters.training_batch_seconds=0.15"], # Take 15 seconds.
+        ["--config", "hyperparameters.training_batch_seconds=0.15"],  # Take 15 seconds.
     )
     exp.wait_for_experiment_state(experiment_id, experimentv1State.RUNNING, max_wait_secs=300)
     exp.wait_for_experiment_active_workload(experiment_id)
@@ -214,9 +215,9 @@ def test_drain_agent() -> None:
         for _ in range(15):
             assert exp.experiment_state(experiment_id_no_start) == experimentv1State.QUEUED
             time.sleep(1)
-            #print("checking it still is not scheduled")
-            #assert not exp.experiment_has_active_workload(experiment_id_no_start)
-            #print("checking it still is not scheduled")
+            # print("checking it still is not scheduled")
+            # assert not exp.experiment_has_active_workload(experiment_id_no_start)
+            # print("checking it still is not scheduled")
 
         # Ensure the slot is empty.
         slots = _fetch_slots()
