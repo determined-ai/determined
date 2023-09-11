@@ -10,6 +10,21 @@
  Version 0.25
 **************
 
+Version 0.25.1
+==============
+
+**Release Date:** September 11, 2023
+
+**Breaking Changes**
+
+-  Fluentbit is no longer used for logshipping and configs associated with fluentbit are now no
+   longer in use. Fluentbit has been replaced with an internal log shipper (the same one that is
+   used for slurm).
+
+**Bug Fixes**
+
+-  Reduce the time before seeing the first metrics of a new experiment.
+
 Version 0.25.0
 ==============
 
