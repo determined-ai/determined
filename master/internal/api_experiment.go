@@ -197,7 +197,8 @@ func (a *apiServer) getExperimentTx(
 		w.id AS workspace_id,
 		w.name AS workspace_name,
 		(w.archived OR p.archived) AS parent_archived,
-		e.unmanaged as unmanaged
+		e.unmanaged AS unmanaged,
+		length(e.model_definition) AS model_definition_size
 	FROM
 		experiments e
 	JOIN users u ON e.owner_id = u.id

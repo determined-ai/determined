@@ -2984,6 +2984,7 @@ class v1Experiment(Printable):
     endTime: "typing.Optional[str]" = None
     forkedFrom: "typing.Optional[int]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
+    modelDefinitionSize: "typing.Optional[int]" = None
     notes: "typing.Optional[str]" = None
     parentArchived: "typing.Optional[bool]" = None
     progress: "typing.Optional[float]" = None
@@ -3022,6 +3023,7 @@ class v1Experiment(Printable):
         endTime: "typing.Union[str, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        modelDefinitionSize: "typing.Union[int, None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
         parentArchived: "typing.Union[bool, None, Unset]" = _unset,
         progress: "typing.Union[float, None, Unset]" = _unset,
@@ -3067,6 +3069,8 @@ class v1Experiment(Printable):
             self.forkedFrom = forkedFrom
         if not isinstance(labels, Unset):
             self.labels = labels
+        if not isinstance(modelDefinitionSize, Unset):
+            self.modelDefinitionSize = modelDefinitionSize
         if not isinstance(notes, Unset):
             self.notes = notes
         if not isinstance(parentArchived, Unset):
@@ -3127,6 +3131,8 @@ class v1Experiment(Printable):
             kwargs["forkedFrom"] = obj["forkedFrom"]
         if "labels" in obj:
             kwargs["labels"] = obj["labels"]
+        if "modelDefinitionSize" in obj:
+            kwargs["modelDefinitionSize"] = obj["modelDefinitionSize"]
         if "notes" in obj:
             kwargs["notes"] = obj["notes"]
         if "parentArchived" in obj:
@@ -3187,6 +3193,8 @@ class v1Experiment(Printable):
             out["forkedFrom"] = self.forkedFrom
         if not omit_unset or "labels" in vars(self):
             out["labels"] = self.labels
+        if not omit_unset or "modelDefinitionSize" in vars(self):
+            out["modelDefinitionSize"] = self.modelDefinitionSize
         if not omit_unset or "notes" in vars(self):
             out["notes"] = self.notes
         if not omit_unset or "parentArchived" in vars(self):

@@ -151,6 +151,8 @@ message Experiment {
   bool unmanaged = 40;
   // Time in seconds which experiment ran or has been running.
   optional int32 duration = 41;
+  // Size of model definition file, for unmanaged experiments this should be 0.
+  optional int32 model_definition_size = 45;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.

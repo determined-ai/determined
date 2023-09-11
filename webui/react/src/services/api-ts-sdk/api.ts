@@ -2732,6 +2732,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     duration?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1Experiment
+     */
+    modelDefinitionSize?: number;
 }
 /**
  * Message for results of individual experiments in a multi-experiment action.
