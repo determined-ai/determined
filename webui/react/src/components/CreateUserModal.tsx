@@ -41,6 +41,7 @@ const ROLE_LABEL = 'Global Roles';
 const ROLE_NAME = 'roles';
 export const BUTTON_NAME = 'Save';
 const ACTIVE_NAME = 'active';
+const FORM_ID = 'create-user-form';
 
 interface Props {
   user?: DetailedUser;
@@ -145,6 +146,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
       size="small"
       submit={{
         disabled: !username,
+        form: FORM_ID,
         handleError,
         handler: handleSubmit,
         text: viewOnly ? 'Close' : BUTTON_NAME,
@@ -160,7 +162,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
       <Spinner
         spinning={user !== undefined && userRoles === null && rbacEnabled && canAssignRoles({})}
         tip="Loading roles...">
-        <Form form={form}>
+        <Form form={form} id={FORM_ID}>
           <Form.Item
             initialValue={user?.username}
             label={USER_NAME_LABEL}

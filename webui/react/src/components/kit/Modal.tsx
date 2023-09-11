@@ -136,6 +136,7 @@ export const Modal: React.FC<ModalProps> = ({
               danger={danger}
               disabled={!!submit?.disabled}
               form={submit?.form}
+              htmlType={submit?.form ? 'submit' : 'button'}
               key="submit"
               loading={isSubmitting}
               tooltip={submit?.disabled ? 'Address validation errors before proceeding' : undefined}

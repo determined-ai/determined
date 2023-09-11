@@ -26,6 +26,7 @@ import { routeToReactUrl } from 'utils/routes';
 
 export const FULL_CONFIG_BUTTON_TEXT = 'Show Full Config';
 export const SIMPLE_CONFIG_BUTTON_TEXT = 'Show Simple Config';
+const FORM_ID = 'create-experiment-form';
 
 export const CreateExperimentType = {
   ContinueTrial: 'Continue Trial',
@@ -358,6 +359,7 @@ const ExperimentCreateModalComponent = ({
       size={modalState.isAdvancedMode ? (isFork ? 'medium' : 'large') : 'small'}
       submit={{
         disabled,
+        form: FORM_ID,
         handleError,
         handler: handleSubmit,
         text: type,
@@ -383,6 +385,7 @@ const ExperimentCreateModalComponent = ({
         <Form
           form={form}
           hidden={modalState.isAdvancedMode}
+          id={FORM_ID}
           labelCol={{ span: 8 }}
           name="basic"
           onFieldsChange={handleFieldsChange}>

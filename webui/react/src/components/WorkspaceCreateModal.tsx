@@ -18,7 +18,7 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
 
-const FORM_ID = 'new-workspace-form';
+const FORM_ID = 'create-workspace-form';
 
 interface FormInputs {
   agentGid?: number;
@@ -277,6 +277,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
       cancel
       size="medium"
       submit={{
+        form: FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Save Workspace',

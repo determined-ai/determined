@@ -13,6 +13,7 @@ import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 
 const GROUPS_NAME = 'groups';
+const FORM_ID = 'manage-groups-form';
 
 interface Props {
   groupOptions: V1GroupSearchResult[];
@@ -80,13 +81,14 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
       size="small"
       submit={{
         disabled: !groupsValue?.length,
+        form: FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Save',
       }}
       title="Manage Groups">
       <Spinner spinning={!groupOptions}>
-        <Form form={form}>
+        <Form form={form} id={FORM_ID}>
           <Form.Item name={GROUPS_NAME}>
             <Select
               mode="multiple"

@@ -13,6 +13,8 @@ import { message } from 'utils/dialogApi';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
+const FORM_ID = 'add-workspace-member-form';
+
 interface Props {
   addableUsersAndGroups: UserOrGroup[];
   onClose?: () => void;
@@ -115,12 +117,13 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
       cancel
       size="small"
       submit={{
+        form: FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Add Member',
       }}
       title="Add Member">
-      <Form autoComplete="off" form={form} layout="vertical">
+      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
         <Form.Item
           label="User or Group"
           name="userOrGroupId"

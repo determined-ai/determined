@@ -14,6 +14,8 @@ import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
+const FORM_ID = 'move-model-form';
+
 type FormInputs = {
   workspaceId: number;
 };
@@ -62,10 +64,10 @@ const ModelMoveModal = ({ model }: Props): JSX.Element => {
   return (
     <Modal
       size="small"
-      submit={{ handleError, handler: handleOk, text: 'Move' }}
+      submit={{ form: FORM_ID, handleError, handler: handleOk, text: 'Move' }}
       title={`Move a Model (${model.name})`}
       onClose={handleClose}>
-      <Form autoComplete="off" form={form} layout="vertical">
+      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
         <Form.Item
           label="Workspace"
           name="workspaceId"

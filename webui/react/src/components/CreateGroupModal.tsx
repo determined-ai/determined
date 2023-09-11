@@ -40,6 +40,7 @@ const ADD_USERS = 'addUsers';
 const REMOVE_USERS = 'removeUsers';
 export const API_SUCCESS_MESSAGE_CREATE = 'New group has been created.';
 const API_SUCCESS_MESSAGE_EDIT = 'Group has been updated.';
+const FORM_ID = 'create-group-form';
 
 interface Props {
   group?: V1GroupSearchResult;
@@ -176,6 +177,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
       size="small"
       submit={{
         disabled: !groupName,
+        form: FORM_ID,
         handleError,
         handler: handleSubmit,
         text: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
@@ -183,7 +185,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
       title={group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}
       onClose={form.resetFields}>
       <Spinner spinning={isLoading}>
-        <Form form={form}>
+        <Form form={form} id={FORM_ID}>
           <Form.Item
             label={GROUP_NAME_LABEL}
             name={GROUP_NAME_NAME}

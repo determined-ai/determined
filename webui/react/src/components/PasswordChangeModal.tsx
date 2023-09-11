@@ -23,6 +23,8 @@ const PASSWORDS_NOT_MATCHING_MESSAGE = 'Passwords do not match.';
 export const API_SUCCESS_MESSAGE = 'Password updated.';
 const API_ERROR_MESSAGE = 'Could not update password.';
 
+const FORM_ID = 'edit-password-form';
+
 interface FormInputs {
   [OLD_PASSWORD_NAME]: string;
   [NEW_PASSWORD_NAME]: string;
@@ -82,6 +84,7 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
       size="small"
       submit={{
         disabled,
+        form: FORM_ID,
         handleError,
         handler: handleSubmit,
         text: OK_BUTTON_LABEL,
@@ -89,7 +92,7 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
       title={MODAL_HEADER_LABEL}
       onClose={handleClose}>
       <p>Please confirm your password change</p>
-      <Form form={form} onFieldsChange={handleFieldsChange}>
+      <Form form={form} id={FORM_ID} onFieldsChange={handleFieldsChange}>
         <Form.Item
           label={OLD_PASSWORD_LABEL}
           name={OLD_PASSWORD_NAME}

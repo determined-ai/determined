@@ -39,6 +39,8 @@ import { validateLength } from 'utils/string';
 
 import css from './useModalHyperparameterSearch.module.scss';
 
+const FORM_ID = 'create-hp-search-form';
+
 interface Props {
   experiment: ExperimentItem;
   onClose?: () => void;
@@ -606,7 +608,7 @@ const useModalHyperparameterSearch = ({
       className: css.modal,
       closable: true,
       content: (
-        <Form form={form} layout="vertical">
+        <Form form={form} id={FORM_ID} layout="vertical">
           {pages[currentPage]}
           {footer}
         </Form>

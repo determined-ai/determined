@@ -20,6 +20,8 @@ import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { pluralizer } from 'utils/string';
 
+const FORM_ID = 'move-experiment-form';
+
 type FormInputs = {
   projectId?: number;
   workspaceId?: number;
@@ -147,6 +149,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
       size="small"
       submit={{
         disabled,
+        form: FORM_ID,
         handleError,
         handler: handleSubmit,
         text:
@@ -159,7 +162,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
           ? 'Move Experiments'
           : `Move ${pluralizer(experimentIds.length, 'Experiment')}`
       }>
-      <Form form={form} layout="vertical">
+      <Form form={form} id={FORM_ID} layout="vertical">
         <Form.Item
           label="Workspace"
           name="workspaceId"

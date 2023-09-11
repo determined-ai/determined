@@ -11,6 +11,8 @@ import { RunState } from 'types';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { routeToReactUrl } from 'utils/routes';
 
+const FORM_ID = 'create-webhook-form';
+
 interface FormInputs {
   triggerEvents: RunState[];
   url: string;
@@ -70,12 +72,13 @@ const WebhookCreateModalComponent: React.FC = () => {
       size="small"
       submit={{
         disabled,
+        form: FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Create Webhook',
       }}
       title="New Webhook">
-      <Form autoComplete="off" form={form} layout="vertical" onFieldsChange={onChange}>
+      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical" onFieldsChange={onChange}>
         <Form.Item
           label="URL"
           name="url"

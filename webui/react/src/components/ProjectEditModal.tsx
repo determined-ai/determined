@@ -48,6 +48,7 @@ const ProjectEditModalComponent: React.FC<Props> = ({ onEdit, project }: Props) 
       size="small"
       submit={{
         disabled: !projectName,
+        form: FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Save Changes',

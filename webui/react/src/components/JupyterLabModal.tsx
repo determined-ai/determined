@@ -25,6 +25,7 @@ const { Option } = Select;
 
 const STORAGE_PATH = 'jupyter-lab';
 const DEFAULT_SLOT_COUNT = 1;
+const BASE_FORM_ID = 'jupyter-form';
 
 const settingsConfig: SettingsConfig<JupyterLabOptions> = {
   settings: {
@@ -191,6 +192,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
       size={showFullConfig ? 'large' : 'small'}
       submit={{
         disabled: showFullConfig ? fullConfigFormInvalid : !currentWorkspace?.id,
+        form: (showFullConfig ? 'full-' : 'simple-') + BASE_FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Launch',
@@ -278,7 +280,11 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   };
 
   return (
-    <Form fields={field} form={form} onFieldsChange={handleConfigChange}>
+    <Form
+      fields={field}
+      form={form}
+      id={'full-' + BASE_FORM_ID}
+      onFieldsChange={handleConfigChange}>
       <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>
         <Form.Item
           initialValue={currentWorkspace?.id}
@@ -403,7 +409,7 @@ const JupyterLabForm: React.FC<{
   };
 
   return (
-    <Form form={form}>
+    <Form form={form} id={'simple-' + BASE_FORM_ID}>
       <Form.Item
         initialValue={currentWorkspace?.id}
         label="Workspace"

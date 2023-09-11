@@ -7,6 +7,8 @@ import { deleteProject } from 'services/api';
 import { Project } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
+const FORM_ID = 'delete-project-form';
+
 interface FormInputs {
   projectName: string;
 }
@@ -43,13 +45,14 @@ const ProjectDeleteModalComponent: React.FC<Props> = ({ onClose, project, onDele
       size="small"
       submit={{
         disabled: projectNameValue !== project.name,
+        form: FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Delete Project',
       }}
       title="Delete Project"
       onClose={onClose}>
-      <Form autoComplete="off" form={form} layout="vertical">
+      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
         <p>
           Are you sure you want to delete <strong>&quot;{project.name}&quot;</strong>?
         </p>

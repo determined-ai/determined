@@ -11,6 +11,8 @@ import { routeToReactUrl } from 'utils/routes';
 
 import css from './WorkspaceDeleteModal.module.scss';
 
+const FORM_ID = 'delete-workspace-form';
+
 interface FormInputs {
   workspaceName: string;
 }
@@ -53,13 +55,14 @@ const WorkspaceDeleteModalComponent: React.FC<Props> = ({
       size="small"
       submit={{
         disabled: workspaceNameValue !== workspace.name,
+        form: FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Delete Workspace',
       }}
       title="Delete Workspace"
       onClose={onClose}>
-      <Form autoComplete="off" form={form} layout="vertical">
+      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
         <p>
           Are you sure you want to delete{' '}
           <strong className={css.workspaceName}>&quot;{workspace.name}&quot;</strong>?

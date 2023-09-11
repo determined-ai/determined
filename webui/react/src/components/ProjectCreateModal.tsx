@@ -8,7 +8,7 @@ import { createProject } from 'services/api';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { routeToReactUrl } from 'utils/routes';
 
-const FORM_ID = 'new-project-form';
+const FORM_ID = 'create-project-form';
 
 interface FormInputs {
   description?: string;
@@ -64,6 +64,7 @@ const ProjectCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: 
       size="small"
       submit={{
         disabled: !projectName,
+        form: FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Create Project',

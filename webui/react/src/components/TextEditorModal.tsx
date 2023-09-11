@@ -7,6 +7,8 @@ import Input from 'components/kit/Input';
 
 import css from './TextEditorModal.module.scss';
 
+const FORM_ID = 'edit-text-form';
+
 interface Props {
   disabled: boolean;
   onSave: (newValue: string) => Promise<Error | void>;
@@ -54,7 +56,7 @@ const TextEditorModal: React.FC<Props> = ({ disabled, onSave, title, placeholder
         title={title}
         onCancel={onHideModal}
         onOk={onSubmit}>
-        <Form form={form} layout="vertical">
+        <Form form={form} id={FORM_ID} layout="vertical">
           <Form.Item initialValue={value} name="text">
             <Input.TextArea placeholder={placeholder} rows={8} />
           </Form.Item>

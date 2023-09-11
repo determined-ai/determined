@@ -11,6 +11,8 @@ import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
 
+const FORM_ID = 'configure-agent-form';
+
 interface Props {
   user: DetailedUser;
   onClose?: () => void;
@@ -64,6 +66,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
       size="small"
       submit={{
         disabled,
+        form: FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Save',
@@ -73,6 +76,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
       <Spinner spinning={!user}>
         <Form
           form={form}
+          id={FORM_ID}
           initialValues={
             user?.agentUserGroup
               ? {
