@@ -10,6 +10,21 @@
  Version 0.25
 **************
 
+Version 0.25.1
+==============
+
+**Release Date:** September 11, 2023
+
+**Breaking Changes**
+
+-  Fluent Bit is no longer used for log shipping and configs associated with Fluent Bit are now no
+   longer in use. Fluent Bit has been replaced with an internal log shipper (the same one that is
+   used for Slurm).
+
+**Bug Fixes**
+
+-  Reduce the time before seeing the first metrics of a new experiment.
+
 Version 0.25.0
 ==============
 
