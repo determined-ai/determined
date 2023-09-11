@@ -30,7 +30,7 @@ type TrialMsg struct {
 	ExperimentID int              `bun:"experiment_id" json:"experiment_id"`
 	RequestID    *model.RequestID `bun:"request_id" json:"request_id"`
 	Seed         int64            `bun:"seed" json:"seed"`
-	HParams      JsonB            `bun:"hparams" json:"hparams"`
+	HParams      JSONB            `bun:"hparams" json:"hparams"`
 
 	// warmstart checkpoint id?
 
@@ -40,7 +40,7 @@ type TrialMsg struct {
 	EndTime     *time.Time  `bun:"end_time" json:"end_time"`
 	RunnerState string      `bun:"runner_state" json:"runner_state"`
 	Restarts    int         `bun:"restarts" json:"restarts"`
-	Tags        JsonB       `bun:"tags" json:"tags"`
+	Tags        JSONB       `bun:"tags" json:"tags"`
 
 	// metadata
 	Seq int64 `bun:"seq" json:"seq"`

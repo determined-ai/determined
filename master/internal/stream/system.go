@@ -17,9 +17,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/stream"
 )
 
-// JsonB is the golang equivalent of the postgres jsonb column type.
-// nolint
-type JsonB interface{}
+// JSONB is the golang equivalent of the postgres jsonb column type.
+type JSONB interface{}
 
 // PublisherSet contains all publishers, and handles all websockets.  It will connect each websocket
 // with the appropriate set of publishers, based on that websocket's subscriptions.
