@@ -48,10 +48,6 @@ For an introduction to using the training API, please visit the Training APIs se
       -  Penn-Fudan Dataset
       -  :download:`fasterrcnn_coco_pytorch.tgz </examples/fasterrcnn_coco_pytorch.tgz>`
 
-   -  -  PyTorch (:ref:`Model Hub MMDetection <model-hub-mmdetection>`)
-      -  COCO
-      -  :download:`mmdetection.tgz </examples/mmdetection.tgz>`
-
    -  -  PyTorch
       -  COCO
       -  :download:`detr_coco_pytorch.tgz </examples/detr_coco_pytorch.tgz>`
@@ -106,26 +102,6 @@ For an introduction to using the training API, please visit the Training APIs se
    -  -  PyTorch
       -  WikiText-2
       -  :download:`word_language_model.tgz </examples/word_language_model.tgz>`
-
-   -  -  PyTorch (:ref:`Model Hub Transformers <model-hub-transformers>`)
-      -  WikiText-2
-      -  :download:`language-modeling.tgz </examples/language-modeling.tgz>`
-
-   -  -  PyTorch (:ref:`Model Hub Transformers <model-hub-transformers>`)
-      -  SWAG
-      -  :download:`multiple-choice.tgz </examples/multiple-choice.tgz>`
-
-   -  -  PyTorch (:ref:`Model Hub Transformers <model-hub-transformers>`)
-      -  SQuAD v1 and v2
-      -  :download:`question-answering.tgz </examples/question-answering.tgz>`
-
-   -  -  PyTorch (:ref:`Model Hub Transformers <model-hub-transformers>`)
-      -  GLUE and XNLI
-      -  :download:`text-classification.tgz </examples/text-classification.tgz>`
-
-   -  -  PyTorch (:ref:`Model Hub Transformers <model-hub-transformers>`)
-      -  CoNLL-2003
-      -  :download:`token-classification.tgz </examples/token-classification.tgz>`
 
 ***********
  DeepSpeed
