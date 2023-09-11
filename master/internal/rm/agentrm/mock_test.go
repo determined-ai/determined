@@ -55,11 +55,11 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 			Preemptible:       !t.NonPreemptible,
 			ResourcePool:      t.ResourcePool,
 		}
-		if t.Group == nil {
-			task.Group = ctx.Self()
-		} else {
-			task.Group = ctx.Self().System().Get(actor.Addr(t.Group.ID))
-		}
+		// if t.Group == nil {
+		// 	task.Group = ctx.Self().Address().String()
+		// } else {
+		// 	task.Group = t.Group.ID
+		// }
 		if ctx.ExpectingResponse() {
 			ctx.Respond(ctx.Ask(t.RMRef, task).Get())
 		} else {
@@ -127,11 +127,11 @@ func (g *MockGroup) Receive(ctx *actor.Context) error {
 func MockTaskToAllocateRequest(
 	mockTask *MockTask, allocationRef *actor.Ref,
 ) *sproto.AllocateRequest {
-	jobID := mockTask.JobID
+	jobID := model.JobID(mockTask.JobID)
 	jobSubmissionTime := mockTask.JobSubmissionTime
 
 	if jobID == "" {
-		jobID = string(mockTask.ID)
+		jobID = model.JobID(mockTask.ID)
 	}
 	if jobSubmissionTime.IsZero() {
 		jobSubmissionTime = allocationRef.RegisteredTime()
@@ -139,7 +139,7 @@ func MockTaskToAllocateRequest(
 
 	req := &sproto.AllocateRequest{
 		AllocationID:      mockTask.ID,
-		JobID:             model.JobID(jobID),
+		JobID:             jobID,
 		SlotsNeeded:       mockTask.SlotsNeeded,
 		IsUserVisible:     true,
 		Preemptible:       !mockTask.NonPreemptible,

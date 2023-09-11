@@ -2,6 +2,7 @@ package agentrm
 
 import (
 	"sort"
+	"time"
 
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 
@@ -38,7 +39,7 @@ func (p *roundRobinScheduler) JobQInfo(rp *resourcePool) map[model.JobID]*sproto
 
 func roundRobinSchedule(
 	taskList *tasklist.TaskList,
-	groups map[*actor.Ref]*tasklist.Group,
+	groups map[model.JobID]*tasklist.Group,
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
 	allowHeterogeneousFits bool,
@@ -47,10 +48,17 @@ func roundRobinSchedule(
 	groupMapping := make(map[*tasklist.Group]*groupState)
 	for it := taskList.Iterator(); it.Next(); {
 		req := it.Value()
-		group := groups[req.Group]
+		group := groups[req.JobID]
 		state, ok := groupMapping[group]
 		if !ok {
-			state = &groupState{Group: group}
+			createTime, ok := tasklist.GroupPriorityChangeRegistry.RegisteredTime(req.JobID)
+			if !ok {
+				createTime = time.Now()
+			}
+			state = &groupState{
+				Group:      group,
+				createTime: createTime,
+			}
 			states = append(states, state)
 			groupMapping[group] = state
 		}
@@ -67,7 +75,7 @@ func roundRobinSchedule(
 		if first.activeSlots != second.activeSlots {
 			return first.activeSlots < second.activeSlots
 		}
-		return first.Handler.RegisteredTime().Before(second.Handler.RegisteredTime())
+		return first.RegisteredTime().Before(second.RegisteredTime())
 	})
 
 	toAllocate := make([]*sproto.AllocateRequest, 0)

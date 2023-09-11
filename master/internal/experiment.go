@@ -23,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -271,10 +272,16 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		e.self = ctx.Self()
 		ctx.AddLabels(e.logCtx)
+		priorityChange := func(priority int) error {
+			return e.SetPriority(ctx, &priority, false)
+		}
+		if err := tasklist.GroupPriorityChangeRegistry.Add(e.JobID, priorityChange); err != nil {
+			return err
+		}
 
 		e.rm.SetGroupMaxSlots(ctx, sproto.SetGroupMaxSlots{
 			MaxSlots: e.activeConfig.Resources().MaxSlots(),
-			Handler:  e.self,
+			JobID:    e.JobID,
 		})
 		if err := e.setWeight(ctx, e.activeConfig.Resources().Weight()); err != nil {
 			e.updateState(model.StateWithReason{
@@ -408,7 +415,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		resources := e.activeConfig.Resources()
 		resources.SetMaxSlots(msg.MaxSlots)
 		e.activeConfig.SetResources(resources)
-		msg.Handler = e.self
+		msg.JobID = e.JobID
 		e.rm.SetGroupMaxSlots(ctx, msg)
 	case sproto.NotifyRMPriorityChange:
 		err := e.setPriority(ctx, &msg.Priority, false)
@@ -446,12 +453,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case sproto.SetResourcePool:
 		if err := e.setRP(ctx, msg); err != nil {
 			ctx.Respond(err)
-		}
-
-	case sproto.RegisterJobPosition:
-		err := e.db.UpdateJobPosition(msg.JobID, msg.JobPosition)
-		if err != nil {
-			e.syslog.WithError(err).Errorf("persisting position for job %s failed", msg.JobID)
 		}
 
 	// Experiment shutdown logic.
@@ -521,6 +522,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		); err != nil {
 			e.syslog.WithError(err).Errorf(
 				"failure to delete user session for experiment: %d", e.Experiment.ID)
+		}
+
+		if err := tasklist.GroupPriorityChangeRegistry.Delete(e.JobID); err != nil {
+			e.syslog.WithError(err).Error("failed to remove priority change registry")
 		}
 
 		e.syslog.Info("experiment shut down successfully")
@@ -997,6 +1002,13 @@ func checkpointFromTrialIDOrUUID(
 	return checkpoint, nil
 }
 
+func (e *experiment) SetPriority(ctx *actor.Context, priority *int, forward bool) (err error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.setPriority(ctx, priority, forward)
+}
+
 func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool) (err error) {
 	if priority == nil {
 		return nil
@@ -1029,7 +1041,7 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool
 	if forward {
 		switch err := e.rm.SetGroupPriority(ctx, sproto.SetGroupPriority{
 			Priority: *priority,
-			Handler:  e.self,
+			JobID:    e.JobID,
 		}).(type) {
 		case nil:
 		case rmerrors.ErrUnsupported:
@@ -1054,8 +1066,8 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 	}
 
 	switch err := e.rm.SetGroupWeight(ctx, sproto.SetGroupWeight{
-		Weight:  weight,
-		Handler: e.self,
+		Weight: weight,
+		JobID:  e.JobID,
 	}).(type) {
 	case nil:
 	case rmerrors.ErrUnsupported:

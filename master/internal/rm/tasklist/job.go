@@ -9,7 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
@@ -215,7 +214,7 @@ func FindAnchor(
 	anchorID model.JobID,
 	aheadOf bool,
 	taskList *TaskList,
-	groups map[*actor.Ref]*Group,
+	groups map[model.JobID]*Group,
 	queuePositions JobSortState,
 	k8s bool,
 ) (bool, model.JobID, int) {
@@ -229,9 +228,9 @@ func FindAnchor(
 
 	for i, req := range sortedReqs {
 		if req.JobID == jobID {
-			targetPriority = *groups[req.Group].Priority
+			targetPriority = *groups[req.JobID].Priority
 		} else if req.JobID == anchorID {
-			anchorPriority = *groups[req.Group].Priority
+			anchorPriority = *groups[req.JobID].Priority
 			anchorIdx = i
 		}
 	}
@@ -282,25 +281,33 @@ func NeedMove(
 // the TaskList, sorted in priority order.
 func SortTasksWithPosition(
 	taskList *TaskList,
-	groups map[*actor.Ref]*Group,
+	groups map[model.JobID]*Group,
 	jobPositions JobSortState,
 	k8s bool,
 ) []*sproto.AllocateRequest {
 	var reqs []*sproto.AllocateRequest
 	for it := taskList.Iterator(); it.Next(); {
 		req := it.Value()
-		if groups[req.Group] == nil {
+		group, ok := groups[req.JobID]
+		if !ok {
 			log.Errorf(
 				`found an allocation (%s) without a group (%s) when trying to sort by priority; ignoring it`,
-				req.Name, req.Group.Address(),
+				req.Name, req.JobID,
+			)
+			continue
+		}
+		if group.Priority == nil {
+			log.Errorf(
+				`found an allocation (%s) without a priority (%s) when trying to sort by priority; ignoring it`,
+				req.Name, req.JobID,
 			)
 			continue
 		}
 		reqs = append(reqs, req)
 	}
 	sort.Slice(reqs, func(i, j int) bool {
-		p1 := *groups[reqs[i].Group].Priority
-		p2 := *groups[reqs[j].Group].Priority
+		p1 := *groups[reqs[i].JobID].Priority
+		p2 := *groups[reqs[j].JobID].Priority
 		if k8s { // in k8s, higher priority == more prioritized
 			switch {
 			case p1 > p2:

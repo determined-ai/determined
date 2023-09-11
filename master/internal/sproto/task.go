@@ -34,8 +34,6 @@ type (
 		IsUserVisible bool
 		State         SchedulingState
 		Name          string
-		// Allocation actor
-		Group *actor.Ref
 
 		// Resource configuration.
 		SlotsNeeded         int

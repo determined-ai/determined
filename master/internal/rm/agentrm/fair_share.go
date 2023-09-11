@@ -3,6 +3,7 @@ package agentrm
 import (
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 
@@ -35,6 +36,8 @@ type groupState struct {
 	presubscribedSlots int
 	// offered is the number of slots that were offered to the group for scheduling.
 	offered int
+	// createTime is the time when the group was created.
+	createTime time.Time
 
 	// reqs contains the contents of both pendingReqs and allocatedReqs.
 	reqs          []*sproto.AllocateRequest
@@ -42,13 +45,18 @@ type groupState struct {
 	allocatedReqs []*sproto.AllocateRequest
 }
 
-func (g groupState) String() string {
+func (g *groupState) String() string {
 	address := ""
-	if g.Handler != nil {
-		address = fmt.Sprint("", g.Handler.Address())
-	}
+	// if g.Handler != nil {
+	// 	address = fmt.Sprint("", g.Handler.Address())
+	// }
 	return fmt.Sprintf("Group %s: disabled %v, slotDemand %v, activeSlots %v, offered %v",
 		address, g.disabled, g.slotDemand, g.activeSlots, g.offered)
+}
+
+// RegisteredTime returns the time when the group was created.
+func (g *groupState) RegisteredTime() time.Time {
+	return g.createTime
 }
 
 func (f *fairShare) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []model.AllocationID) {
@@ -83,7 +91,7 @@ func (f *fairShare) JobQInfo(rp *resourcePool) map[model.JobID]*sproto.RMJobInfo
 
 func fairshareSchedule(
 	taskList *tasklist.TaskList,
-	groups map[*actor.Ref]*tasklist.Group,
+	groups map[model.JobID]*tasklist.Group,
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
 	allowHeterogeneousAgentFits bool,
@@ -145,7 +153,7 @@ func totalCapacity(agents map[*actor.Ref]*agentState) int {
 }
 
 func calculateGroupStates(
-	taskList *tasklist.TaskList, groups map[*actor.Ref]*tasklist.Group, capacity int,
+	taskList *tasklist.TaskList, groups map[model.JobID]*tasklist.Group, capacity int,
 ) []*groupState {
 	// Group all tasks by their respective task group and calculate the slot demand of each group.
 	// Demand is calculated by summing the slots needed for each schedulable task.
@@ -156,12 +164,17 @@ func calculateGroupStates(
 		if req.SlotsNeeded == 0 || req.SlotsNeeded > capacity {
 			continue
 		}
-		group := groups[req.Group]
+		group := groups[req.JobID]
 		state, ok := groupMapping[group]
 		if !ok {
+			createTime, ok := tasklist.GroupPriorityChangeRegistry.RegisteredTime(req.JobID)
+			if !ok {
+				createTime = time.Now()
+			}
 			state = &groupState{
-				Group:    group,
-				disabled: false,
+				Group:      group,
+				disabled:   false,
+				createTime: createTime,
 			}
 			states = append(states, state)
 			groupMapping[group] = state
@@ -256,13 +269,14 @@ func allocateSlotOffers(states []*groupState, capacity int) {
 		if first.slotDemand != second.slotDemand {
 			return first.slotDemand < second.slotDemand
 		}
-		return first.Handler.RegisteredTime().Before(second.Handler.RegisteredTime())
+		return first.RegisteredTime().Before(second.RegisteredTime())
 	})
 
 	byTime := make([]*groupState, len(states))
 	copy(byTime, states)
 	sort.Slice(byTime, func(i, j int) bool {
-		return states[i].Handler.RegisteredTime().After(states[j].Handler.RegisteredTime())
+		first, second := states[i], states[j]
+		return first.RegisteredTime().After(second.RegisteredTime())
 	})
 
 	// To avoid any precision issues that could arise from weights of widely differing magnitudes, we

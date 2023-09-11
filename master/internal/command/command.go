@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
@@ -22,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -204,6 +206,8 @@ func tryRestoreCommandsByType(
 
 // command is executed in a containerized environment on a Determined cluster.
 type command struct {
+	mu sync.Mutex
+
 	db *db.PgDB
 	rm rm.ResourceManager
 
@@ -226,8 +230,17 @@ type command struct {
 
 // Receive implements the actor.Actor interface.
 func (c *command) Receive(ctx *actor.Context) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		priorityChange := func(priority int) error {
+			return c.SetPriority(ctx, priority, false)
+		}
+		if err := tasklist.GroupPriorityChangeRegistry.Add(c.jobID, priorityChange); err != nil {
+			return err
+		}
 		ctx.AddLabels(c.logCtx)
 		c.allocationID = model.AllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 		if !c.restored {
@@ -281,7 +294,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			JobSubmissionTime: c.registeredTime,
 			IsUserVisible:     true,
 			Name:              c.Config.Description,
-			Group:             ctx.Self(),
+			// Group:             ctx.Self().Address().String(),
 
 			SlotsNeeded:  c.Config.Resources.Slots,
 			ResourcePool: c.Config.Resources.ResourcePool,
@@ -334,6 +347,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Errorf(
 				"failure to delete user session for task: %v", c.taskID)
 		}
+		if err := tasklist.GroupPriorityChangeRegistry.Delete(c.jobID); err != nil {
+			ctx.Log().WithError(err).Error("deleting command from GroupPriorityChangeRegistry")
+		}
+		// TODO: discuss GC & termination
 		actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 	case getSummary:
 		if msg.userFilter == "" || c.Base.Owner.Username == msg.userFilter {
@@ -473,12 +490,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		}
 
-	case sproto.RegisterJobPosition:
-		err := c.db.UpdateJobPosition(msg.JobID, msg.JobPosition)
-		if err != nil {
-			ctx.Log().WithError(err).Errorf("persisting position for job %s failed", msg.JobID)
-		}
-
 	case sproto.SetResourcePool:
 		ctx.Respond(fmt.Errorf("setting resource pool for job type %s is not supported", c.jobType))
 
@@ -488,11 +499,18 @@ func (c *command) Receive(ctx *actor.Context) error {
 	return nil
 }
 
+func (c *command) SetPriority(ctx *actor.Context, priority int, forward bool) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.setPriority(ctx, priority, forward)
+}
+
 func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) error {
 	if forward {
 		switch err := c.rm.SetGroupPriority(ctx, sproto.SetGroupPriority{
 			Priority: priority,
-			Handler:  ctx.Self(),
+			JobID:    c.jobID,
 		}).(type) {
 		case nil:
 		case rmerrors.ErrUnsupported:
@@ -509,8 +527,8 @@ func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) er
 
 func (c *command) setWeight(ctx *actor.Context, weight float64) error {
 	switch err := c.rm.SetGroupWeight(ctx, sproto.SetGroupWeight{
-		Weight:  weight,
-		Handler: ctx.Self(),
+		Weight: weight,
+		JobID:  c.jobID,
 	}).(type) {
 	case nil:
 	case rmerrors.ErrUnsupported:

@@ -8,7 +8,6 @@ import (
 	"github.com/emirpasic/gods/sets/treeset"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 // TaskList maintains all tasks in time order, and stores their allocation actor,
@@ -121,7 +120,7 @@ func (l *TaskList) ForResourcePool(name string) *TaskList {
 // TaskSummary returns a summary for an allocation in the TaskList.
 func (l *TaskList) TaskSummary(
 	id model.AllocationID,
-	groups map[*actor.Ref]*Group,
+	groups map[model.JobID]*Group,
 	schedulerType string,
 ) *sproto.AllocationSummary {
 	if req, ok := l.TaskByID(id); ok {
@@ -134,7 +133,7 @@ func (l *TaskList) TaskSummary(
 
 // TaskSummaries returns a summary of allocations for tasks in the TaskList.
 func (l *TaskList) TaskSummaries(
-	groups map[*actor.Ref]*Group,
+	groups map[model.JobID]*Group,
 	schedulerType string,
 ) map[model.AllocationID]sproto.AllocationSummary {
 	ret := make(map[model.AllocationID]sproto.AllocationSummary)
@@ -162,7 +161,7 @@ func (i *TaskIterator) Value() *sproto.AllocateRequest {
 func newTaskSummary(
 	request *sproto.AllocateRequest,
 	allocated *sproto.ResourcesAllocated,
-	groups map[*actor.Ref]*Group,
+	groups map[model.JobID]*Group,
 	schedulerType string,
 ) sproto.AllocationSummary {
 	// Summary returns a new immutable view of the task state.
@@ -184,7 +183,7 @@ func newTaskSummary(
 		ProxyPorts:     request.ProxyPorts,
 	}
 
-	if group, ok := groups[request.Group]; ok {
+	if group, ok := groups[request.JobID]; ok {
 		summary.Priority = group.Priority
 	}
 	return summary

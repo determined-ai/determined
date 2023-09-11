@@ -50,7 +50,7 @@ func (p priorityScheduler) JobQInfo(rp *resourcePool) map[model.JobID]*sproto.RM
 
 func (p priorityScheduler) prioritySchedule(
 	taskList *tasklist.TaskList,
-	groups map[*actor.Ref]*tasklist.Group,
+	groups map[model.JobID]*tasklist.Group,
 	jobPositions tasklist.JobSortState,
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
@@ -83,7 +83,7 @@ func (p priorityScheduler) prioritySchedule(
 // 3. Back-fill lower-priority pending tasks if there are no tasks to preempt.
 func (p priorityScheduler) prioritySchedulerWithFilter(
 	taskList *tasklist.TaskList,
-	groups map[*actor.Ref]*tasklist.Group,
+	groups map[model.JobID]*tasklist.Group,
 	jobPositions tasklist.JobSortState,
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
@@ -278,7 +278,7 @@ func (p priorityScheduler) trySchedulingPendingTasksInPriority(
 // based on their queue position and then creation time.
 func sortTasksByPriorityAndPositionAndTimestamp(
 	taskList *tasklist.TaskList,
-	groups map[*actor.Ref]*tasklist.Group,
+	groups map[model.JobID]*tasklist.Group,
 	jobPositions tasklist.JobSortState,
 	filter func(*sproto.AllocateRequest) bool,
 ) (map[int][]*sproto.AllocateRequest, map[int][]*sproto.AllocateRequest) {
@@ -291,7 +291,7 @@ func sortTasksByPriorityAndPositionAndTimestamp(
 			continue
 		}
 
-		priority := groups[req.Group].Priority
+		priority := groups[req.JobID].Priority
 		if priority == nil {
 			panic(fmt.Sprintf("priority not set for task %s", req.Name))
 		}

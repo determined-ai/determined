@@ -396,7 +396,6 @@ func (t *trial) maybeAllocateTask() error {
 			RequestTime:       time.Now().UTC(),
 			IsUserVisible:     true,
 			Name:              name,
-			Group:             t.parent,
 			SlotsNeeded:       t.config.Resources().SlotsPerTrial(),
 			ResourcePool:      t.config.Resources().ResourcePool(),
 			FittingRequirements: sproto.FittingRequirements{
@@ -439,7 +438,6 @@ func (t *trial) maybeAllocateTask() error {
 		JobSubmissionTime: t.jobSubmissionTime,
 		IsUserVisible:     true,
 		Name:              name,
-		Group:             t.parent,
 
 		SlotsNeeded:  t.config.Resources().SlotsPerTrial(),
 		ResourcePool: t.config.Resources().ResourcePool(),

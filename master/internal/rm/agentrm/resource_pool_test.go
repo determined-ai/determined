@@ -2,6 +2,7 @@ package agentrm
 
 import (
 	"testing"
+	"time"
 
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 
@@ -216,17 +217,22 @@ func TestSettingGroupPriority(t *testing.T) {
 	rp, ref := setupResourcePool(t, nil, system, &config, nil, nil, nil)
 
 	// Test setting a non-default priority for a group.
-	groupRefOne, created := system.ActorOf(actor.Addr("group1"), &MockGroup{})
-	assert.Assert(t, created)
 	updatedPriority := 22
-	system.Ask(ref, sproto.SetGroupPriority{Priority: updatedPriority, Handler: groupRefOne})
+	jobID := model.NewJobID()
+	assert.Equal(t, tasklist.GroupPriorityChangeRegistry.Add(jobID, nil), nil)
+	system.Ask(ref, sproto.SetGroupPriority{Priority: updatedPriority, JobID: jobID}).Get()
 
 	for _, n := range rp.notifications {
 		<-n
 	}
 
 	assert.NilError(t, ref.StopAndAwaitTermination())
-	assert.Equal(t, *rp.groups[groupRefOne].Priority, updatedPriority)
+	assert.Equal(t, rp.groups[jobID] == nil, false)
+	assert.Equal(t, rp.groups[jobID].Priority == nil, false)
+	assert.Equal(t, *rp.groups[jobID].Priority, updatedPriority)
+	assert.Equal(t, tasklist.GroupPriorityChangeRegistry.Delete(jobID), nil)
+	time.Sleep(time.Second)
+	assert.Equal(t, rp.groups[jobID] == nil, true)
 }
 
 func TestAddRemoveAgent(t *testing.T) {
@@ -256,39 +262,33 @@ func setupRPSamePriority(t *testing.T) *resourcePool {
 
 	rp, _ := setupResourcePool(t, nil, system, &config, nil, nil, nil)
 
-	groupRefOne, created := system.ActorOf(actor.Addr("group1"), &MockGroup{})
-	assert.Assert(t, created)
-	groupRefTwo, created := system.ActorOf(actor.Addr("group2"), &MockGroup{})
-	assert.Assert(t, created)
-	groupRefThree, created := system.ActorOf(actor.Addr("group3"), &MockGroup{})
-	assert.Assert(t, created)
+	jobOne := model.JobID("job1")
+	jobTwo := model.JobID("job2")
+	jobThree := model.JobID("job3")
 
 	rp.queuePositions = map[model.JobID]decimal.Decimal{
-		"job1": decimal.New(100, 1000),
-		"job2": decimal.New(200, 1000),
-		"job3": decimal.New(300, 1000),
+		jobOne:   decimal.New(100, 1000),
+		jobTwo:   decimal.New(200, 1000),
+		jobThree: decimal.New(300, 1000),
 	}
 
-	rp.groups = map[*actor.Ref]*tasklist.Group{
-		groupRefOne:   {Priority: &defaultPriority},
-		groupRefTwo:   {Priority: &defaultPriority},
-		groupRefThree: {Priority: &defaultPriority},
+	rp.groups = map[model.JobID]*tasklist.Group{
+		jobOne:   {Priority: &defaultPriority},
+		jobTwo:   {Priority: &defaultPriority},
+		jobThree: {Priority: &defaultPriority},
 	}
 
 	rp.taskList.AddTask(&sproto.AllocateRequest{
 		AllocationID: "allocation1",
-		JobID:        "job1",
-		Group:        groupRefOne,
+		JobID:        jobOne,
 	})
 	rp.taskList.AddTask(&sproto.AllocateRequest{
 		AllocationID: "allocation2",
-		JobID:        "job2",
-		Group:        groupRefTwo,
+		JobID:        jobTwo,
 	})
 	rp.taskList.AddTask(&sproto.AllocateRequest{
 		AllocationID: "allocation3",
-		JobID:        "job3",
-		Group:        groupRefThree,
+		JobID:        jobThree,
 	})
 
 	return rp
@@ -384,42 +384,36 @@ func TestMoveMessagesAcrossPrioLanes(t *testing.T) {
 
 	rp, _ := setupResourcePool(t, nil, system, &config, nil, nil, nil)
 
-	groupRefOne, created := system.ActorOf(actor.Addr("group1"), &MockGroup{})
-	assert.Assert(t, created)
-	groupRefTwo, created := system.ActorOf(actor.Addr("group2"), &MockGroup{})
-	assert.Assert(t, created)
-	groupRefThree, created := system.ActorOf(actor.Addr("group3"), &MockGroup{})
-	assert.Assert(t, created)
+	jobOne := model.JobID("job1")
+	jobTwo := model.JobID("job2")
+	jobThree := model.JobID("job3")
 
 	rp.queuePositions = map[model.JobID]decimal.Decimal{
-		"job1": decimal.New(100, 1000),
-		"job2": decimal.New(100, 1000),
-		"job3": decimal.New(100, 1000),
+		jobOne:   decimal.New(100, 1000),
+		jobTwo:   decimal.New(100, 1000),
+		jobThree: decimal.New(100, 1000),
 	}
 
 	lowPriority := 60
 	highPriority := 40
 
-	rp.groups = map[*actor.Ref]*tasklist.Group{
-		groupRefOne:   {Priority: &highPriority},
-		groupRefTwo:   {Priority: &defaultPriority},
-		groupRefThree: {Priority: &lowPriority},
+	rp.groups = map[model.JobID]*tasklist.Group{
+		jobOne:   {Priority: &highPriority},
+		jobTwo:   {Priority: &defaultPriority},
+		jobThree: {Priority: &lowPriority},
 	}
 
 	rp.taskList.AddTask(&sproto.AllocateRequest{
 		AllocationID: "allocation1",
-		JobID:        "job1",
-		Group:        groupRefOne,
+		JobID:        jobOne,
 	})
 	rp.taskList.AddTask(&sproto.AllocateRequest{
 		AllocationID: "allocation2",
-		JobID:        "job2",
-		Group:        groupRefTwo,
+		JobID:        jobTwo,
 	})
 	rp.taskList.AddTask(&sproto.AllocateRequest{
 		AllocationID: "allocation3",
-		JobID:        "job3",
-		Group:        groupRefThree,
+		JobID:        jobThree,
 	})
 
 	// move job2 ahead of job1
@@ -452,42 +446,36 @@ func TestMoveMessagesAcrossPrioLanesBehind(t *testing.T) {
 
 	rp, _ := setupResourcePool(t, nil, system, &config, nil, nil, nil)
 
-	groupRefOne, created := system.ActorOf(actor.Addr("group1"), &MockGroup{})
-	assert.Assert(t, created)
-	groupRefTwo, created := system.ActorOf(actor.Addr("group2"), &MockGroup{})
-	assert.Assert(t, created)
-	groupRefThree, created := system.ActorOf(actor.Addr("group3"), &MockGroup{})
-	assert.Assert(t, created)
+	jobOne := model.JobID("job1")
+	jobTwo := model.JobID("job2")
+	jobThree := model.JobID("job3")
 
 	rp.queuePositions = map[model.JobID]decimal.Decimal{
-		"job1": decimal.New(100, 1000),
-		"job2": decimal.New(100, 1000),
-		"job3": decimal.New(100, 1000),
+		jobOne:   decimal.New(100, 1000),
+		jobTwo:   decimal.New(100, 1000),
+		jobThree: decimal.New(100, 1000),
 	}
 
 	lowPriority := 60
 	highPriority := 40
 
-	rp.groups = map[*actor.Ref]*tasklist.Group{
-		groupRefOne:   {Priority: &highPriority},
-		groupRefTwo:   {Priority: &defaultPriority},
-		groupRefThree: {Priority: &lowPriority},
+	rp.groups = map[model.JobID]*tasklist.Group{
+		jobOne:   {Priority: &highPriority},
+		jobTwo:   {Priority: &defaultPriority},
+		jobThree: {Priority: &lowPriority},
 	}
 
 	rp.taskList.AddTask(&sproto.AllocateRequest{
 		AllocationID: "allocation1",
-		JobID:        "job1",
-		Group:        groupRefOne,
+		JobID:        jobOne,
 	})
 	rp.taskList.AddTask(&sproto.AllocateRequest{
 		AllocationID: "allocation2",
-		JobID:        "job2",
-		Group:        groupRefTwo,
+		JobID:        jobTwo,
 	})
 	rp.taskList.AddTask(&sproto.AllocateRequest{
 		AllocationID: "allocation3",
-		JobID:        "job3",
-		Group:        groupRefThree,
+		JobID:        jobThree,
 	})
 
 	// move job1 behind job2

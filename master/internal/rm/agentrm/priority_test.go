@@ -663,9 +663,9 @@ func TestPrioritySchedulingPreemptOneByPosition(t *testing.T) {
 		{ID: "agent2", Slots: 4},
 	}
 	groups := []*MockGroup{
-		{ID: "group1", Priority: &priority},
-		{ID: "group2", Priority: &priority},
-		{ID: "group3", Priority: &priority},
+		{ID: "1", Priority: &priority},
+		{ID: "2", Priority: &priority},
+		{ID: "3", Priority: &priority},
 	}
 	tasks := []*MockTask{
 		{
@@ -696,8 +696,7 @@ func TestPrioritySchedulingPreemptOneByPosition(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
 	p := &priorityScheduler{preemptionEnabled: true}
-	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap,
-		jobsList, agentMap, BestFit)
+	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, jobsList, agentMap, BestFit)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 
@@ -802,8 +801,9 @@ func AddUnallocatedTasks(
 		assert.Assert(t, created)
 		req := MockTaskToAllocateRequest(mockTask, ref)
 		if mockTask.Group != nil {
-			groupRef, _ := system.ActorOf(actor.Addr(mockTask.Group.ID), mockTask.Group)
-			req.Group = groupRef
+			// groupRef, _ := system.ActorOf(actor.Addr(mockTask.Group.ID), mockTask.Group)
+			// req.Group = groupRef.Address().String()
+			req.JobID = model.JobID(mockTask.Group.ID)
 		}
 
 		taskList.AddTask(req)

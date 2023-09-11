@@ -9,7 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -44,6 +43,8 @@ func runCheckpointGCTask(
 	owner *model.User,
 	logCtx logger.Context,
 ) error {
+	// TODO: discuss
+	// jobID += "-gc"
 	conv := &protoconverter.ProtoConverter{}
 	checkpointStrIDs := conv.ToStringList(toDeleteCheckpoints)
 	deleteCheckpointsStr := strings.Join(checkpointStrIDs, ",")
@@ -87,6 +88,10 @@ func runCheckpointGCTask(
 	})
 	syslog := logrus.WithField("component", "checkpointgc").WithFields(logCtx.Fields())
 
+	// if err := tasklist.GroupPriorityChangeRegistry.Add(jobID, nil); err != nil {
+	// 	return err
+	// }
+
 	if err := db.AddTask(&model.Task{
 		TaskID:     taskID,
 		TaskType:   model.TaskTypeCheckpointGC,
@@ -98,25 +103,15 @@ func runCheckpointGCTask(
 	}
 
 	allocationID := model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1))
-	groupAddr := fmt.Sprintf("checkpoint_gc-%s", allocationID)
-	// HACK: Just to get a valid group ID. Refactor groups to not be actors.
-	group, ok := system.ActorOf(actor.Addr(groupAddr), &actors.Nothing)
-	if !ok {
-		return fmt.Errorf("creating unique fake group actor %s", groupAddr)
-	}
-	defer func() {
-		// Without this, we leak these fake group actors.
-		if err := group.StopAndAwaitTermination(); err != nil {
-			syslog.WithError(err).Error("cleaning up fake group actor")
-		}
-	}()
 
 	resultChan := make(chan error, 1)
 	onExit := func(ae *task.AllocationExited) {
-		err := db.CompleteTask(taskID, time.Now().UTC())
-		if err != nil {
+		if err := db.CompleteTask(taskID, time.Now().UTC()); err != nil {
 			syslog.WithError(err).Error("marking GC task complete")
 		}
+		// if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
+		// 	syslog.WithError(err).Error("removing GC task from group manager registry")
+		// }
 		resultChan <- ae.Err
 	}
 
@@ -129,7 +124,7 @@ func runCheckpointGCTask(
 		FittingRequirements: sproto.FittingRequirements{
 			SingleAgent: true,
 		},
-		Group:        group,
+		// Group:        group.Address().String(),
 		ResourcePool: rp,
 	}, db, rm, gcSpec, system, onExit)
 	if err != nil {

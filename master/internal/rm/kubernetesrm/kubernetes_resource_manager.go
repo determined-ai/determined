@@ -72,6 +72,7 @@ func New(
 			echo,
 			tlsConfig,
 			opts.LoggingOptions,
+			db,
 		),
 	)
 	system.Ask(ref, actor.Ping{}).Get()
@@ -217,6 +218,8 @@ type kubernetesResourceManager struct {
 	echoRef         *echo.Echo
 	masterTLSConfig model.TLSClientConfig
 	loggingConfig   model.LoggingConfig
+
+	db *db.PgDB
 }
 
 func newKubernetesResourceManager(
@@ -226,6 +229,7 @@ func newKubernetesResourceManager(
 	echoRef *echo.Echo,
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
+	db *db.PgDB,
 ) actor.Actor {
 	return &kubernetesResourceManager{
 		config:                config,
@@ -237,6 +241,8 @@ func newKubernetesResourceManager(
 		echoRef:         echoRef,
 		masterTLSConfig: masterTLSConfig,
 		loggingConfig:   loggingConfig,
+
+		db: db,
 	}
 }
 
@@ -284,7 +290,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 
 			poolConfig := poolConfig
 			k.pools[poolConfig.PoolName] = ctx.MustActorOf(
-				poolConfig.PoolName, newResourcePool(maxSlotsPerPod, &poolConfig, k.podsActor),
+				poolConfig.PoolName, newResourcePool(maxSlotsPerPod, &poolConfig, k.podsActor, k.db),
 			)
 		}
 

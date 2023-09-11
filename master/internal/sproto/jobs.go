@@ -5,7 +5,6 @@ import (
 
 	"github.com/shopspring/decimal"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
@@ -77,18 +76,18 @@ type (
 	SetGroupWeight struct {
 		Weight       float64
 		ResourcePool string
-		Handler      *actor.Ref
+		JobID        model.JobID
 	}
 	// SetGroupPriority sets the priority of the group in the priority scheduler.
 	SetGroupPriority struct {
 		Priority     int
 		ResourcePool string
-		Handler      *actor.Ref
+		JobID        model.JobID
 	}
 	// SetResourcePool switches the resource pool that the job belongs to.
 	SetResourcePool struct {
 		ResourcePool string
-		Handler      *actor.Ref
+		JobID        model.JobID
 	}
 	// MoveJob requests the job to be moved within a priority queue relative to another job.
 	MoveJob struct {
