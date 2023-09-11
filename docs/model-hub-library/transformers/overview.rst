@@ -35,17 +35,6 @@ Given the above benefits, this library can be particularly useful if any of the 
 -  You are a **transformers** user looking for a single platform to manage experiments, handle
    checkpoints with automated fault tolerance, and perform hyperparameter search/visualization.
 
-*****************
- Getting Started
-*****************
-
-The easiest way to use Model Hub Transformers is to start with an existing example Trial. Model Hub
-Transformers includes thoroughly tested :ref:`implementations of all core transformers tasks
-<model-hub-transformers-examples>`.
-
-Model Hub Transformers Trials are infinitely customizable. See the :ref:`Model Hub Transformers
-Tutorial <model-hub-transformers-tutorial>` to learn how to customize or build a Trial.
-
 *************
  Limitations
 *************
@@ -55,10 +44,3 @@ The following HuggingFace **transformers** features are currently not supported:
 -  TensorFlow version of transformers
 -  Support for fairscale
 -  Running on TPUs
-
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-
-   tutorial
-   examples

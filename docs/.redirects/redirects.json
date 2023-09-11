@@ -1,4 +1,6 @@
 {
+    "model-hub-library/transformers/examples": "overview.html",
+    "model-hub-library/transformers/tutorial": "overview.html",
     "setup-cluster/basic": "deploy-cluster/basic.html",
     "model-dev-guide/batch-processing/batch-process-api-ug": "../api-guides/batch-processing/batch-process-api-ug.html",
     "model-dev-guide/apis-howto/deepspeed/advanced": "../../api-guides/apis-howto/deepspeed/advanced.html",
@@ -182,9 +184,9 @@
     "model-hub/mmdetection/api": "../../reference/model-hub/modelhub/mmdetection-api.html",
     "model-hub/mmdetection/index": "../../model-hub-library/mmdetection/overview.html",
     "model-hub/transformers/api": "../../reference/model-hub/modelhub/transformers-api.html",
-    "model-hub/transformers/examples": "../../model-hub-library/transformers/examples.html",
+    "model-hub/transformers/examples": "../../model-hub-library/transformers/overview.html",
     "model-hub/transformers/index": "../../model-hub-library/transformers/overview.html",
-    "model-hub/transformers/tutorial": "../../model-hub-library/transformers/tutorial.html",
+    "model-hub/transformers/tutorial": "../../model-hub-library/transformers/overview.html",
     "post-training/index": "../model-dev-guide/model-management/overview.html",
     "post-training/model-registry": "../model-dev-guide/model-management/model-registry-org.html",
     "post-training/use-trained-models": "../model-dev-guide/model-management/overview.html",
