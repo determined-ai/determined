@@ -2199,7 +2199,7 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 			LIMIT 1
 		) `,
 		"externalExperimentId": "e.external_experiment_id",
-		"externalTrialId":      "t.external_trial_id",
+		"externalTrialId":      "trials.external_trial_id",
 	}
 	sortByMap := map[string]string{
 		"asc":  "ASC",
