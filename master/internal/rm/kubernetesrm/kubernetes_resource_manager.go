@@ -56,7 +56,7 @@ func New(
 		panic(errors.Wrap(err, "failed to set up TLS config"))
 	}
 
-	// TODO clusterID should just be a `internal/config` package singleton.
+	// TODO(DET-9833) clusterID should just be a `internal/config` package singleton.
 	clusterID, err := db.GetOrCreateClusterID()
 	if err != nil {
 		panic(fmt.Errorf("getting clusterID: %w", err))

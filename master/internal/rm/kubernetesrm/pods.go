@@ -3,6 +3,7 @@ package kubernetesrm
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -938,7 +939,13 @@ func (p *pods) enableNode(
 
 	_, err := p.clientSet.CoreV1().Nodes().
 		Patch(context.TODO(), nodeName, types.StrategicMergePatchType, patch, metaV1.PatchOptions{})
-	if err != nil {
+	if k8error.IsForbidden(err) {
+		return nil, fmt.Errorf("the Determined master Kubernetes service account " +
+			"is missing permissions to patch nodes. " +
+			"Enabling or disabling nodes requires this permission, " +
+			"however Determined will otherwise still function correctly without " +
+			"these Kubernetes permissions")
+	} else if err != nil {
 		return nil, fmt.Errorf(
 			"disabling node %s by updating by adding no schedule label: %w", nodeName, err)
 	}
@@ -946,10 +953,16 @@ func (p *pods) enableNode(
 
 	n, ok := p.summarizeClusterByNodes(ctx)[nodeName]
 	if !ok {
-		return nil, fmt.Errorf("pods actor doesn't know about the node we just disabled")
+		return nil, fmt.Errorf("node %s enabled without error, error getting node summary", nodeName)
 	}
 	n.Enabled = true
 	n.Draining = false
+	for slotKey := range n.Slots {
+		s := n.Slots[slotKey]
+		s.Enabled = n.Enabled
+		s.Draining = n.Draining
+		n.Slots[slotKey] = s
+	}
 
 	return &apiv1.EnableAgentResponse{
 		Agent: n.ToProto(),
@@ -964,17 +977,23 @@ func (p *pods) disableNode(
 		labelValue = noScheduleNodeLabelValue
 	}
 
-	patch := []byte(fmt.Sprintf(`{
-		"metadata": {
-			"labels": {
-				"%s": "%s"
-			}
-		}
-	}`, clusterIDNodeLabel(), labelValue))
-
-	_, err := p.clientSet.CoreV1().Nodes().
-		Patch(context.TODO(), nodeName, types.StrategicMergePatchType, patch, metaV1.PatchOptions{})
+	patchStruct := metaV1.ObjectMeta{
+		Labels: map[string]string{clusterIDNodeLabel(): labelValue},
+	}
+	patch, err := json.Marshal(map[string]any{"metadata": patchStruct})
 	if err != nil {
+		return nil, fmt.Errorf("marshaling JSON patch %v: %s", patchStruct, err)
+	}
+
+	_, err = p.clientSet.CoreV1().Nodes().
+		Patch(context.TODO(), nodeName, types.StrategicMergePatchType, patch, metaV1.PatchOptions{})
+	if k8error.IsForbidden(err) {
+		return nil, fmt.Errorf("the Determined master Kubernetes service account " +
+			"is missing permissions to patch nodes. " +
+			"Enabling or disabling nodes requires this permission, " +
+			"however Determined will otherwise still function correctly without " +
+			"these Kubernetes permissions")
+	} else if err != nil {
 		return nil, fmt.Errorf(
 			"disabling node %s by updating by removing no schedule label: %w", nodeName, err)
 	}
@@ -989,10 +1008,16 @@ func (p *pods) disableNode(
 
 	n, ok := p.summarizeClusterByNodes(ctx)[nodeName]
 	if !ok {
-		return nil, fmt.Errorf("pods actor doesn't know about the node we just disabled")
+		return nil, fmt.Errorf("node %s disabled without error, error getting node summary", nodeName)
 	}
 	n.Enabled = false
 	n.Draining = shouldDrain
+	for slotKey := range n.Slots {
+		s := n.Slots[slotKey]
+		s.Enabled = n.Enabled
+		s.Draining = n.Draining
+		n.Slots[slotKey] = s
+	}
 
 	return &apiv1.DisableAgentResponse{
 		Agent: n.ToProto(),
