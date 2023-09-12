@@ -35,6 +35,15 @@ if [[ ${WORKLOAD_MANAGER} == pbs ]]; then
     echo "set server job_history_enable = true" | sudo /opt/pbs/bin/qmgr
     echo "Set job_history_enable to true"
 
+    # Configure PBS accel_type if GPUs available
+    nvidia-smi
+    STATUS=$?
+    if [[ $${STATUS} == 0 ]]; then
+        sudo /opt/pbs/bin/qmgr -c "create resource accel_type type=string"
+        GRES_TYPE=$(nvidia-smi -i 0 --query-gpu=name --format=csv,noheader | cut -f 1 -d ' ' | tr '[:upper:]' '[:lower:]')
+        sudo /opt/pbs/bin/qmgr -c "set node $(hostname) resources_available.accel_type=$${GRES_TYPE}"
+    fi
+
     # Restart to apply GPU changes
     sudo systemctl restart pbs
 else

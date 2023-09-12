@@ -59,17 +59,17 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         -h | --help)
-            echo "Usage: $0 [flags=\"options\"]"
+            echo "Usage: $0 [-Acwdmg]"
             echo ""
-            echo "Launches a compute instance with Slurm, Singularity (Apptainer), the Cray"
+            echo "Launches a compute instance with Slurm, Singularity (Apptainer), the HPC"
             echo "Launcher component, and many other dependencies pre-installed. Then, SSH tunnels"
             echo "are opened so that localhost:8081 on your machine points at port 8081 on"
             echo "the compute instance and port 8080 on the compute instance points at"
-            echo "localhost:8080 on your machine. Lastly, devcluster is started with the Slurm"
+            echo "localhost:8080 on your machine. Lastly, devcluster is started with the Dispatcher"
             echo "RM pointed at the remote instance, and local development with devcluster works"
             echo "as always."
             echo ""
-            echo "flags:"
+            echo "FLAGS:"
             echo '  -A '
             echo "           Description: Invokes a slurmcluster that uses agents instead of the launcher."
             echo "           Example: $0 -A"
@@ -91,8 +91,10 @@ while [[ $# -gt 0 ]]; do
             echo "           Description: Specify a GCP accelerator name and count"
             echo "           Example: $0 -g nvidia-tesla-t4:2"
             echo ""
-            echo "You can also combine the flags."
-            echo "Example: $0 -A -c enroot"
+            echo "You can also combine the flags.  When invoked via 'make slurmcluster' flags are passed"
+            echo 'via the FLAGS="options" argument.'
+            echo ""
+            echo '   Example: FLAGS="-A -c enroot -w pbs -g nvidia-tesla-t4:2"'
             echo ""
             exit 0
             ;;
