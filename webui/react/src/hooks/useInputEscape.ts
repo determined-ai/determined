@@ -16,12 +16,13 @@ const getOverlayAndMenuBodyElement = () => {
     ...document.getElementsByClassName(DRAWER_MASK_CLASSNAME),
   ];
 
-  const overlay = overlays[0] as HTMLElement;
+  const overlay = overlays?.[0] as HTMLElement;
 
   const menuBody =
-    overlay.className === MODAL_WRAP_CLASSNAME
+    overlay?.className === MODAL_WRAP_CLASSNAME
       ? overlay
-      : (document.getElementsByClassName(DRAWER_BODY_CLASSNAME)[0] as HTMLElement);
+      : (document.getElementsByClassName(DRAWER_BODY_CLASSNAME)?.[0] as HTMLElement);
+
   return {
     menuBody,
     overlay,
@@ -67,7 +68,7 @@ const onEsc = (
   if (focused && event.key === 'Escape') {
     event.stopPropagation();
     inputRef.current?.blur();
-    getOverlayAndMenuBodyElement().menuBody.focus();
+    getOverlayAndMenuBodyElement()?.menuBody?.focus();
     handleFocused(false);
   }
 };
@@ -84,7 +85,7 @@ const onClick = (
     handleFocused(false);
   } else if (
     focused &&
-    (event.target as HTMLElement).className === getOverlayAndMenuBodyElement().overlay.className
+    (event.target as HTMLElement).className === getOverlayAndMenuBodyElement()?.overlay?.className
   ) {
     event.stopPropagation();
     inputRef.current?.blur();
@@ -98,7 +99,7 @@ const onClickSelect = (
   hasOpened: boolean,
   setHasOpened: (hasOpened: boolean) => void,
 ) => {
-  const overlayClassname = getOverlayAndMenuBodyElement().overlay.className;
+  const overlayClassname = getOverlayAndMenuBodyElement()?.overlay?.className;
   if (isOpen && (event.target as HTMLElement).className === overlayClassname) {
     event.stopPropagation();
   }
