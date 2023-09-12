@@ -652,7 +652,7 @@ func (k *kubernetesResourceManager) getTaskContainerDefaults(
 	return result
 }
 
-// EnableAgent implements 'det slot enable...' functionality.
+// EnableAgent implements 'det agent enable...' functionality.
 func (k ResourceManager) EnableAgent(
 	ctx actor.Messenger,
 	req *apiv1.EnableAgentRequest,
@@ -660,7 +660,7 @@ func (k ResourceManager) EnableAgent(
 	return resp, k.Ask(ctx, req, &resp)
 }
 
-// DisableAgent implements 'det slot disable...' functionality.
+// DisableAgent implements 'det agent disable...' functionality.
 func (k ResourceManager) DisableAgent(
 	ctx actor.Messenger,
 	req *apiv1.DisableAgentRequest,

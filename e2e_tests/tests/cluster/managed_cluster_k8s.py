@@ -16,7 +16,6 @@ class ManagedK8sCluster(Cluster):
     def __init__(self) -> None:
         config.load_kube_config()
         self.v1 = client.AppsV1Api()
-        self.core = client.CoreV1Api()
         self._scale_master(up=True)
 
         # Verify we have pulled our image.
@@ -35,23 +34,6 @@ class ManagedK8sCluster(Cluster):
 
     def ensure_agent_ok(self) -> None:
         pass
-
-    def remove_node_affinities_from_pods(self) -> None:
-        pods = self.core.list_pod_for_all_namespaces(label_selector="determined")
-        for p in pods.items:
-            patch_body = [
-                {
-                    "op": "remove",
-                    "path": "/spec/affinity/nodeAffinity",
-                }
-            ]
-
-            # Patch the pod
-            self.core.patch_namespaced_pod(
-                name=p.metadata.name,
-                namespace=p.metadata.namespace,
-                body=patch_body,
-            )
 
     def _scale_master(self, up: bool) -> None:
         desired_pods = 0

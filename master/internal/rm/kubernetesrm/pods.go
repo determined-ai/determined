@@ -981,7 +981,7 @@ func (p *pods) disableNode(
 	p.syslog.Infof("node %s disabled by an user", nodeName)
 
 	if !shouldDrain { // See note in spec.go about how we could remove killing all pods here.
-		if err := p.killDetJobsOnNode(ctx, nodeName); err != nil {
+		if err := p.releaseAllocationsOnDisabledNode(ctx, nodeName); err != nil {
 			return nil, fmt.Errorf(
 				"node disabled without error, error killing existing pod on node: %w", err)
 		}
@@ -999,7 +999,7 @@ func (p *pods) disableNode(
 	}, err
 }
 
-func (p *pods) killDetJobsOnNode(ctx *actor.Context, nodeName string) error {
+func (p *pods) releaseAllocationsOnDisabledNode(ctx *actor.Context, nodeName string) error {
 	listOptions := metaV1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s", determinedLabel),
 		FieldSelector: fmt.Sprintf("spec.nodeName=%s", nodeName),
@@ -1020,14 +1020,14 @@ func (p *pods) killDetJobsOnNode(ctx *actor.Context, nodeName string) error {
 
 		p.syslog.Infof(
 			"stopping pod %s because node %s was disabled without drain option", pod.Name, nodeName)
-		// Only send disabled event once per allocationID.
-		if !allocIDs[podHandler.allocationID] {
-			rmevents.Publish(podHandler.allocationID, &sproto.ReleaseResources{
-				Reason:    "node disabled without drain",
-				ForceKill: true,
-			})
+		if allocIDs[podHandler.allocationID] { // Only send disabled event once per allocationID.
+			continue
 		}
 
+		rmevents.Publish(podHandler.allocationID, &sproto.ReleaseResources{
+			Reason:    "node disabled without drain",
+			ForceKill: true,
+		})
 		allocIDs[podHandler.allocationID] = true
 	}
 
@@ -1456,12 +1456,8 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 			NumContainers:  len(podByNode[node.Name]) + len(nodeToTasks[node.Name]),
 			ResourcePool:   []string{""},
 			Addresses:      addrs,
-			// TODO is "Draining" defined as
-			// 1. called `det a disable --drain` until `det a enable` is called
-			// 2. or `det a disable --drain` and all tasks finish
-			// Since agents seem to do 1 but the name would imply 2?
-			Draining: isDraining,
-			Enabled:  !isDisabled,
+			Draining:       isDraining,
+			Enabled:        !isDisabled,
 		}
 	}
 

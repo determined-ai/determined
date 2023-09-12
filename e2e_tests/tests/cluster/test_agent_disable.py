@@ -101,7 +101,6 @@ def _disable_agent(agent_id: str, drain: bool = False, json: bool = False) -> It
             subprocess.check_call(command)
 
 
-# TODO cluster
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_k8s
 def test_disable_agent_experiment_resume() -> None:
@@ -109,19 +108,9 @@ def test_disable_agent_experiment_resume() -> None:
     Start an experiment with max_restarts=0 and ensure that being killed due to an explicit agent
     disable/enable (without draining) does not count toward the number of restarts.
     """
-    # TODO do a debug dump here
-
-    command = ["det", "-m", conf.make_master_url(), "agent", "list", "--json"]
-    output = subprocess.check_output(command).decode()
-    print("AGENT list", output)
-
     slots = _fetch_slots()
-    print("SLOT LIST", slots)
-    assert len(slots) == 1  # TODO this assert might be broken by
+    assert len(slots) == 1
     agent_id = slots[0]["agent_id"]
-
-    # slots = sum([a["num_slots"] for a in agent_data])
-    # I don't know if we have just one agent or multiple though?
 
     exp_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
@@ -143,7 +132,6 @@ def test_disable_agent_experiment_resume() -> None:
     exp.wait_for_experiment_state(exp_id, experimentv1State.COMPLETED)
 
 
-# TODO workable
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_k8s
 def test_disable_agent_zero_slots() -> None:
@@ -168,7 +156,6 @@ def test_disable_agent_zero_slots() -> None:
         subprocess.check_call(command)
 
 
-# TODO workable
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_k8s
 def test_drain_agent() -> None:
@@ -215,9 +202,6 @@ def test_drain_agent() -> None:
         for _ in range(15):
             assert exp.experiment_state(experiment_id_no_start) == experimentv1State.QUEUED
             time.sleep(1)
-            # print("checking it still is not scheduled")
-            # assert not exp.experiment_has_active_workload(experiment_id_no_start)
-            # print("checking it still is not scheduled")
 
         # Ensure the slot is empty.
         slots = _fetch_slots()
