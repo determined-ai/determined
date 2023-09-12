@@ -568,9 +568,12 @@ func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("e.config").
 		Column("e.checkpoint_size").
 		Column("e.checkpoint_count").
+		Column("e.external_experiment_id").
+		Column(`t.external_trial_id`).
 		Join("JOIN users u ON e.owner_id = u.id").
 		Join("JOIN projects p ON e.project_id = p.id").
-		Join("JOIN workspaces w ON p.workspace_id = w.id")
+		Join("JOIN workspaces w ON p.workspace_id = w.id").
+		Join("LEFT JOIN trials AS t ON t.id = e.best_trial_id")
 }
 
 func (a *apiServer) GetExperiments(
@@ -594,7 +597,7 @@ func (a *apiServer) GetExperiments(
 					ELSE -1.0 * searcher_metric_value
 			END) ASC
 			LIMIT 1
-		 ) AS best_trial_searcher_metric`)
+		) AS best_trial_searcher_metric`)
 	}
 
 	// Construct the ordering expression.
@@ -625,7 +628,7 @@ func (a *apiServer) GetExperiments(
 					ELSE -1.0 * searcher_metric_value
 			END) ASC
 			LIMIT 1
-		 ) `,
+		) `,
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -1459,7 +1462,7 @@ func (a *apiServer) CreateExperiment(
 		}
 	}
 
-	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec)
+	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec, a.m.system)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
@@ -2196,7 +2199,9 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 			WHERE t.experiment_id = e.id
 			ORDER BY searcher_metric_value_signed ASC
 			LIMIT 1
-		 ) `,
+		) `,
+		"externalExperimentId": "e.external_experiment_id",
+		"externalTrialId":      "trials.external_trial_id",
 	}
 	sortByMap := map[string]string{
 		"asc":  "ASC",
@@ -2376,6 +2381,7 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("null::jsonb AS best_checkpoint").
 		ColumnExpr("null::jsonb AS wall_clock_time").
 		ColumnExpr("searcher_metric_value_signed AS searcher_metric_value").
+		Column("trials.external_trial_id").
 		Join("LEFT JOIN validations bv ON trials.best_validation_id = bv.id").
 		Join("LEFT JOIN validations lv ON trials.latest_validation_id = lv.id").
 		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").

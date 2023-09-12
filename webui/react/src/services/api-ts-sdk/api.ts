@@ -2733,7 +2733,19 @@ export interface V1Experiment {
      */
     duration?: number;
     /**
-     * 
+     * The id of external experiment
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    externalExperimentId?: string;
+    /**
+     * The id of external trial
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    externalTrialId?: string;
+    /**
+     * Size of model definition file, for unmanaged experiments this should be 0.
      * @type {number}
      * @memberof V1Experiment
      */

@@ -45,6 +45,8 @@ export const experimentColumns = [
   'resourcePool',
   'checkpointCount',
   'checkpointSize',
+  'externalExperimentId',
+  'externalTrialId',
   'archived',
 ] as const;
 
@@ -165,6 +167,30 @@ export const getColumnDefs = ({
     title: 'Duration',
     tooltip: () => undefined,
     width: columnWidths.duration,
+  },
+  externalExperimentId: {
+    id: 'externalExperimentId',
+    renderer: (record: ExperimentWithTrial) => ({
+      allowOverlay: false,
+      data: record.experiment.externalExperimentId ?? '',
+      displayData: record.experiment.externalExperimentId ?? '',
+      kind: GridCellKind.Text,
+    }),
+    title: 'External Experiment ID',
+    tooltip: () => undefined,
+    width: columnWidths.externalExperimentId,
+  },
+  externalTrialId: {
+    id: 'externalTrialId',
+    renderer: (record: ExperimentWithTrial) => ({
+      allowOverlay: false,
+      data: record.experiment.externalTrialId ?? '',
+      displayData: record.experiment.externalTrialId ?? '',
+      kind: GridCellKind.Text,
+    }),
+    title: 'External Trial ID',
+    tooltip: () => undefined,
+    width: columnWidths.externalTrialId,
   },
   forkedFrom: {
     id: 'forkedFrom',
@@ -541,6 +567,8 @@ export const defaultColumnWidths: Record<ExperimentColumn, number> = {
   checkpointSize: 110,
   description: 148,
   duration: 86,
+  externalExperimentId: 160,
+  externalTrialId: 130,
   forkedFrom: 86,
   id: 50,
   name: 290,
