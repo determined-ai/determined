@@ -102,19 +102,17 @@ export const useInputNumberEscape = (
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
-      if (focused && event.key === 'Escape') {
-        onEsc(focused, inputRef, event, setFocused);
-      }
+      onEsc(focused, inputRef, event, setFocused);
     };
 
     const handleClick = (event: MouseEvent) => {
       onClick(blurred, focused, inputRef, event, setFocused);
     };
 
-    input?.addEventListener('keydown', handleEsc);
+    window.addEventListener('keydown', handleEsc, true);
     window.addEventListener('click', handleClick, true);
     return () => {
-      input?.removeEventListener('keydown', handleEsc);
+      window.removeEventListener('keydown', handleEsc, true);
       window.removeEventListener('click', handleClick, true);
     };
   }, [blurred, focused, input, inputRef]);
@@ -150,9 +148,7 @@ export const useInputEscape = <T>(
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
-      if (focused && event.key === 'Escape') {
-        onEsc(focused, inputRef, event, setFocused);
-      }
+      onEsc(focused, inputRef, event, setFocused);
     };
     const handleClick = (event: MouseEvent) => {
       onClick(blurred, focused, inputRef, event, setFocused);
@@ -211,17 +207,16 @@ export const useSelectEscape = (
     };
 
     const handleEsc = (event: KeyboardEvent) => {
-      if (focused && event.key === 'Escape') {
-        onEsc(focused, inputRef, event, setFocused);
-      }
+      onEsc(focused, inputRef, event, setFocused);
     };
-    input?.addEventListener('keydown', handleEsc, true);
+
+    input?.addEventListener('keydown', handleEsc);
     window.addEventListener('click', handleClick, true);
     return () => {
-      input?.addEventListener('keydown', handleEsc, true);
+      input?.addEventListener('keydown', handleEsc);
       window.removeEventListener('click', handleClick, true);
     };
-  }, [blurred, focused, input, inputRef, containerRef, setFocused, isOpen, hasOpened]);
+  }, [blurred, focused, inputRef, input, setFocused, isOpen, hasOpened]);
 
   const handleBlur = (
     e: React.FocusEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>,
