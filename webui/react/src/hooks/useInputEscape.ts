@@ -3,10 +3,6 @@ import React, { Ref, RefObject, useEffect, useImperativeHandle, useState } from 
 
 const MODAL_WRAP_CLASSNAME = 'ant-modal-wrap';
 
-const getModalContainer = () => {
-  return document.getElementsByClassName(MODAL_WRAP_CLASSNAME)?.[0] as HTMLElement;
-};
-
 interface InputEscape {
   onBlur?: <T extends HTMLInputElement | HTMLTextAreaElement>(
     e: React.FocusEvent<T> | React.KeyboardEvent<T>,
@@ -46,7 +42,7 @@ const onEsc = (
   if (focused && event.key === 'Escape') {
     event.stopPropagation();
     inputRef.current?.blur();
-    getModalContainer().focus();
+    (document.getElementsByClassName(MODAL_WRAP_CLASSNAME)?.[0] as HTMLElement)?.focus();
     handleFocused(false);
   }
 };
