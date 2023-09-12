@@ -27,14 +27,14 @@ rules:
     resources: ["pods"]
     verbs: ["watch", "patch"]
   - apiGroups: [""]
-    resources: ["nodes", "events"]
+    resources: ["events"]
     verbs: ["list", "watch"]
   - apiGroups: ["scheduling.k8s.io"]
     resources: ["priorityclasses"]
     verbs: ["create", "get", "list", "delete"]
   - apiGroups: [""]
     resources: ["nodes"]
-    verbs: ["patch"]
+    verbs: ["list", "watch", "patch"]
 
 
 ---

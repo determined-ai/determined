@@ -947,7 +947,7 @@ func (p *pods) enableNode(
 			"these Kubernetes permissions")
 	} else if err != nil {
 		return nil, fmt.Errorf(
-			"disabling node %s by updating by adding no schedule label: %w", nodeName, err)
+			"enabling node %s by removing the Determined no schedule label: %w", nodeName, err)
 	}
 	p.syslog.Infof("node %s enabled by an user", nodeName)
 
@@ -995,7 +995,7 @@ func (p *pods) disableNode(
 			"these Kubernetes permissions")
 	} else if err != nil {
 		return nil, fmt.Errorf(
-			"disabling node %s by updating by removing no schedule label: %w", nodeName, err)
+			"disabling node %s by adding the Determined no schedule label: %w", nodeName, err)
 	}
 	p.syslog.Infof("node %s disabled by an user", nodeName)
 

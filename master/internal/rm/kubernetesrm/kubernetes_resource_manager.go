@@ -652,7 +652,7 @@ func (k *kubernetesResourceManager) getTaskContainerDefaults(
 	return result
 }
 
-// EnableAgent implements 'det agent enable...' functionality.
+// EnableAgent allows scheduling on a node that has been disabled.
 func (k ResourceManager) EnableAgent(
 	ctx actor.Messenger,
 	req *apiv1.EnableAgentRequest,
@@ -660,7 +660,7 @@ func (k ResourceManager) EnableAgent(
 	return resp, k.Ask(ctx, req, &resp)
 }
 
-// DisableAgent implements 'det agent disable...' functionality.
+// DisableAgent prevents scheduling on a node and has the option to kill running jobs.
 func (k ResourceManager) DisableAgent(
 	ctx actor.Messenger,
 	req *apiv1.DisableAgentRequest,
