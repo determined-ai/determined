@@ -11,6 +11,7 @@ import { Modal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
+import { paths } from 'routes/utils';
 import { getTaskTemplates } from 'services/api';
 import clusterStore from 'stores/cluster';
 import workspaceStore from 'stores/workspaces';
@@ -181,8 +182,9 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
       footerLink={
         showFullConfig
           ? {
+              external: true,
               text: 'Read about JupyterLab settings',
-              url: '/docs/reference/api/command-notebook-config.html',
+              url: paths.docs('/architecture/introduction.html#interactive-job-configuration'),
             }
           : undefined
       }
