@@ -182,7 +182,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
         showFullConfig
           ? {
               text: 'Read about JupyterLab settings',
-              url: '/docs/reference/api/command-notebook-config.html',
+              url: '/docs/architecture/introduction.html#interactive-job-configuration',
             }
           : undefined
       }
