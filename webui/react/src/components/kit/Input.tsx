@@ -6,8 +6,10 @@ import React, {
   ForwardRefExoticComponent,
   ReactNode,
   RefAttributes,
+  RefObject,
 } from 'react';
 
+import { useModalTextEscape } from 'hooks/useModalEscape';
 interface InputProps {
   addonAfter?: ReactNode;
   allowClear?: boolean | { clearIcon: ReactNode };
@@ -21,8 +23,8 @@ interface InputProps {
   max?: number;
   maxLength?: number;
   min?: number;
-  onBlur?: (
-    e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>,
+  onBlur?: <T extends HTMLInputElement | HTMLTextAreaElement>(
+    e: React.FocusEvent<T> | React.KeyboardEvent<T>,
     previousValue?: string,
   ) => void;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -57,7 +59,11 @@ interface GroupProps {
 }
 
 const Input: Input = forwardRef<AntdInputRef, InputProps>((props: InputProps, ref) => {
-  return <AntdInput {...props} ref={ref} />;
+  const { onFocus, onBlur, inputRef } = useModalTextEscape(ref, props.onBlur);
+
+  return (
+    <AntdInput {...props} ref={inputRef as RefObject<InputRef>} onBlur={onBlur} onFocus={onFocus} />
+  );
 }) as Input;
 
 type Input = ForwardRefExoticComponent<InputProps & RefAttributes<AntdInputRef>> & {
@@ -69,11 +75,20 @@ type Input = ForwardRefExoticComponent<InputProps & RefAttributes<AntdInputRef>>
 Input.Group = AntdInput.Group;
 
 Input.Password = forwardRef<AntdInputRef, PasswordProps>((props: PasswordProps, ref) => {
-  return <AntdInput.Password {...props} ref={ref} />;
+  const { onFocus, onBlur, inputRef } = useModalTextEscape(ref);
+  return (
+    <AntdInput.Password
+      {...props}
+      ref={inputRef as RefObject<InputRef>}
+      onBlur={onBlur}
+      onFocus={onFocus}
+    />
+  );
 });
 
 Input.TextArea = forwardRef<AntdInputRef, TextAreaProps>((props: TextAreaProps, ref) => {
-  return <AntdInput.TextArea {...props} ref={ref} />;
+  const { onFocus, onBlur, inputRef } = useModalTextEscape(ref);
+  return <AntdInput.TextArea {...props} ref={inputRef} onBlur={onBlur} onFocus={onFocus} />;
 });
 
 export type InputRef = AntdInputRef;
