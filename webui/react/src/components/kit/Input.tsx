@@ -9,7 +9,7 @@ import React, {
   RefObject,
 } from 'react';
 
-import { useModalTextEscape } from 'hooks/useModalEscape';
+import { useModalTextEscape } from 'hooks/useInputEscape';
 interface InputProps {
   addonAfter?: ReactNode;
   allowClear?: boolean | { clearIcon: ReactNode };

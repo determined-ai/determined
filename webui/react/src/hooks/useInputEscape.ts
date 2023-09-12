@@ -7,7 +7,7 @@ const getModalContainer = () => {
   return document.getElementsByClassName(MODAL_WRAP_CLASSNAME)?.[0] as HTMLElement;
 };
 
-interface ModalEscapeHandlers {
+interface InputEscape {
   onBlur?: <T extends HTMLInputElement | HTMLTextAreaElement>(
     e: React.FocusEvent<T> | React.KeyboardEvent<T>,
     previousValue?: string,
@@ -15,19 +15,19 @@ interface ModalEscapeHandlers {
   ) => void;
 }
 
-interface ModalTextEscape extends ModalEscapeHandlers {
+interface InputTextEscape extends InputEscape {
   inputRef?: React.RefObject<HTMLInputElement | InputRef>;
   onFocus: <T extends HTMLInputElement | HTMLTextAreaElement>(
     e: React.FocusEvent<T & EventTarget, Element>,
   ) => void;
 }
 
-interface ModalNumberEscape extends ModalEscapeHandlers {
+interface InputNumberEscape extends InputEscape {
   onFocus: (e: React.FocusEvent<HTMLInputElement & EventTarget, Element>) => void;
   inputRef?: Ref<HTMLInputElement>;
 }
 
-interface ModalSelectEscape {
+interface SelectEscape {
   inputRef?: React.RefObject<RefSelectProps>;
   onFocus: <T extends HTMLInputElement>(e: React.FocusEvent<T & EventTarget, Element>) => void;
   onBlur?: (
@@ -84,14 +84,14 @@ const onClickSelect = (
   }
 };
 
-export const useModalNumberEscape = (
+export const useInputNumberEscape = (
   ref: React.ForwardedRef<HTMLInputElement>,
   onBlur?: <HTMLInputElement>(
     e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>,
     previousValue?: string,
     tagID?: string,
   ) => void,
-): ModalNumberEscape => {
+): InputNumberEscape => {
   const inputRef = React.createRef<HTMLInputElement>();
   useImperativeHandle(ref, () => inputRef?.current as HTMLInputElement);
 
@@ -134,14 +134,14 @@ export const useModalNumberEscape = (
   return { inputRef, onBlur: handleBlur, onFocus };
 };
 
-export const useModalTextEscape = <T>(
+export const useInputEscape = <T>(
   ref?: React.ForwardedRef<T>,
   onBlur?: <T extends HTMLInputElement | HTMLTextAreaElement>(
     e: React.FocusEvent<T> | React.KeyboardEvent<T>,
     previousValue?: string,
     tagID?: string,
   ) => void,
-): ModalTextEscape => {
+): InputTextEscape => {
   const inputRef = React.createRef<AntdInputRef>();
   const [focused, setFocused] = useState(false);
   const [blurred, setBlurred] = useState(false);
@@ -180,7 +180,7 @@ export const useModalTextEscape = <T>(
   return { inputRef, onBlur: handleBlur, onFocus };
 };
 
-export const useModalSelectEscape = (
+export const useSelectEscape = (
   containerRef: RefObject<HTMLDivElement>,
   isOpen: boolean,
   ref?: React.ForwardedRef<RefSelectProps>,
@@ -189,7 +189,7 @@ export const useModalSelectEscape = (
     previousValue?: string,
     tagID?: string,
   ) => void,
-): ModalSelectEscape => {
+): SelectEscape => {
   const inputRef = React.createRef<RefSelectProps>();
   const [focused, setFocused] = useState(false);
   const [blurred, setBlurred] = useState(false);
@@ -234,5 +234,6 @@ export const useModalSelectEscape = (
   const onFocus = () => {
     setFocused(true);
   };
+
   return { inputRef, onBlur: handleBlur, onFocus };
 };

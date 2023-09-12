@@ -1,7 +1,7 @@
 import { InputNumber as AntdInputNumber } from 'antd';
 import React, { forwardRef } from 'react';
 
-import { useModalNumberEscape } from 'hooks/useModalEscape';
+import { useModalNumberEscape } from 'hooks/useInputEscape';
 interface InputNumberProps {
   className?: string;
   defaultValue?: number;
