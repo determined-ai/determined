@@ -1,7 +1,32 @@
 import { InputRef as AntdInputRef, InputRef, RefSelectProps } from 'antd';
 import React, { Ref, RefObject, useEffect, useImperativeHandle, useState } from 'react';
 
+const DRAWER_BODY_CLASSNAME = 'ant-drawer-open';
+const DRAWER_MASK_CLASSNAME = 'ant-drawer-mask';
 const MODAL_WRAP_CLASSNAME = 'ant-modal-wrap';
+
+const getOverlayAndMenuBodyElement = () => {
+  // In order for the Escape button to be able to
+  // close a menu after an input is unfocused
+  // we need to be able to re-focus the window
+  // to the body of the current menu.
+
+  const overlays = [
+    ...document.getElementsByClassName(MODAL_WRAP_CLASSNAME),
+    ...document.getElementsByClassName(DRAWER_MASK_CLASSNAME),
+  ];
+
+  const overlay = overlays[0] as HTMLElement;
+
+  const menuBody =
+    overlay.className === MODAL_WRAP_CLASSNAME
+      ? overlay
+      : (document.getElementsByClassName(DRAWER_BODY_CLASSNAME)[0] as HTMLElement);
+  return {
+    menuBody,
+    overlay,
+  };
+};
 
 interface InputEscape {
   onBlur?: <T extends HTMLInputElement | HTMLTextAreaElement>(
@@ -42,7 +67,7 @@ const onEsc = (
   if (focused && event.key === 'Escape') {
     event.stopPropagation();
     inputRef.current?.blur();
-    (document.getElementsByClassName(MODAL_WRAP_CLASSNAME)?.[0] as HTMLElement)?.focus();
+    getOverlayAndMenuBodyElement().menuBody.focus();
     handleFocused(false);
   }
 };
@@ -57,7 +82,10 @@ const onClick = (
   if (blurred && focused) {
     event.stopPropagation();
     handleFocused(false);
-  } else if (focused && (event.target as HTMLElement).className === MODAL_WRAP_CLASSNAME) {
+  } else if (
+    focused &&
+    (event.target as HTMLElement).className === getOverlayAndMenuBodyElement().overlay.className
+  ) {
     event.stopPropagation();
     inputRef.current?.blur();
     handleFocused(false);
@@ -70,11 +98,12 @@ const onClickSelect = (
   hasOpened: boolean,
   setHasOpened: (hasOpened: boolean) => void,
 ) => {
-  if (isOpen && (event.target as HTMLElement).className === MODAL_WRAP_CLASSNAME) {
+  const overlayClassname = getOverlayAndMenuBodyElement().overlay.className;
+  if (isOpen && (event.target as HTMLElement).className === overlayClassname) {
     event.stopPropagation();
   }
 
-  if (hasOpened && !isOpen && (event.target as HTMLElement).className === MODAL_WRAP_CLASSNAME) {
+  if (hasOpened && !isOpen && (event.target as HTMLElement).className === overlayClassname) {
     event.stopPropagation();
     // If hasOpened is true in this instance
     // then the event above will close the
