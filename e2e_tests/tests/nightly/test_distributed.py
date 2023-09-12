@@ -274,6 +274,18 @@ def test_remote_search_runner() -> None:
     exp.run_basic_test(config, conf.custom_search_method_examples_path("asha_search_method"), 1)
 
 
+HUGGINGFACE_CONTEXT_ERR_MSG = """
+HF_READ_ONLY_TOKEN environment variable is missing!
+
+If this error was raised in CircleCI, verify that the test was run using the
+`hugging-face` context. This context should be injecting the expected
+`HF_READ_ONLY_TOKEN`variable.
+
+If this error was raised in another context, set the HF_READ_ONLY_TOKEN env var manually with its
+value a valid HF authorization token.
+"""
+
+
 @pytest.mark.distributed
 @pytest.mark.gpu_required
 @pytest.mark.huggingface
@@ -302,8 +314,9 @@ def test_textual_inversion_stable_diffusion_finetune() -> None:
         )
     except KeyError as k:
         if str(k) == "'HF_READ_ONLY_TOKEN'":
-            print("HF_READ_ONLY_TOKEN CircleCI environment variable missing")
-        raise k
+            raise KeyError(HUGGINGFACE_CONTEXT_ERR_MSG)
+        else:
+            raise k
 
 
 @pytest.mark.distributed
@@ -338,8 +351,9 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
         )
     except KeyError as k:
         if str(k) == "'HF_READ_ONLY_TOKEN'":
-            print("HF_READ_ONLY_TOKEN CircleCI environment variable missing")
-        raise k
+            raise KeyError(HUGGINGFACE_CONTEXT_ERR_MSG)
+        else:
+            raise k
 
 
 @pytest.mark.distributed
