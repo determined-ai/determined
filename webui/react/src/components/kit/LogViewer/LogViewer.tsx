@@ -148,9 +148,10 @@ const LogViewer: React.FC<Props> = ({
 
   const { dateTimeWidth, maxCharPerLine } = useMemo(() => {
     const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
-    const maxCharPerLine = Math.floor(
-      (containerSize.width - ICON_WIDTH - dateTimeWidth - 2 * PADDING) / charMeasures.width,
-    );
+    const maxCharPerLine =
+      Math.floor(
+        (containerSize.width - ICON_WIDTH - dateTimeWidth - 2 * PADDING) / charMeasures.width,
+      ) - 2;
     return { dateTimeWidth, maxCharPerLine };
   }, [charMeasures.width, containerSize.width]);
 

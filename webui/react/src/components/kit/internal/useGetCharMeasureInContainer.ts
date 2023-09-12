@@ -8,6 +8,16 @@ export interface CharMeasure {
 const useGetCharMeasureInContainer = (container: RefObject<HTMLElement>): CharMeasure => {
   const containerInner = container.current;
 
+  const elem = document.createElement('div');
+  elem.style.display = 'inline';
+  elem.style.opacity = '0';
+  elem.style.position = 'fixed';
+  elem.style.top = '0';
+  elem.style.width = 'auto';
+  elem.style.visibility = 'hidden';
+  elem.textContent = 'W';
+  containerInner?.appendChild?.(elem);
+
   return useMemo(() => {
     if (!containerInner) {
       return {
@@ -16,24 +26,13 @@ const useGetCharMeasureInContainer = (container: RefObject<HTMLElement>): CharMe
       };
     }
 
-    const elem = document.createElement('div');
-    elem.style.display = 'inline';
-    elem.style.opacity = '0';
-    elem.style.position = 'fixed';
-    elem.style.top = '0';
-    elem.style.width = 'auto';
-    elem.textContent = 'W';
-    containerInner.appendChild(elem);
-
     const charRect = elem.getBoundingClientRect();
-
-    elem.remove();
 
     return {
       height: charRect.height,
       width: charRect.width,
     };
-  }, [containerInner]);
+  }, [containerInner, elem]);
 };
 
 export default useGetCharMeasureInContainer;
