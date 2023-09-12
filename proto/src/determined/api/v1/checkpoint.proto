@@ -76,7 +76,7 @@ message DeleteCheckpointsRequest {
 message DeleteCheckpointsResponse {}
 
 // Request for all metrics related to a given checkpoint
-message GetTrialMetricsBySourceInfoCheckpointRequest {
+message GetTrialMetricsByCheckpointRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "checkpoint_uuid" ] }
   };
@@ -84,13 +84,16 @@ message GetTrialMetricsBySourceInfoCheckpointRequest {
   string checkpoint_uuid = 1;
   // Type of the TrialSourceInfo
   optional determined.trial.v1.TrialSourceInfoType trial_source_info_type = 2;
+  // Metric Group string ("training", "validation", or anything else) (nil means
+  // all groups)
+  optional string metric_group = 3;
 }
 
 // Response for all metrics related to a given checkpoint
-message GetTrialMetricsBySourceInfoCheckpointResponse {
+message GetTrialMetricsByCheckpointResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "data" ] }
+    json_schema: { required: [ "metrics" ] }
   };
   // All the related trials and their metrics
-  repeated determined.trial.v1.TrialSourceInfoMetric data = 1;
+  repeated determined.trial.v1.MetricsReport metrics = 1;
 }

@@ -49,6 +49,23 @@ logColor: true
 # masterPort configures the port at which the Determined master listens for connections on.
 masterPort: 8080
 
+# Enables the creation of non-namespaced objects - Default: true
+# Non-namespaced object are cluster-wide resources, such as the PriorityClasses.
+# In multiple installation on a single cluster (using different namespaces), 
+# this flag set to false avoids to recreate non-namespaced objects. In some cases (e.g., GitOps w/ArgoCD) 
+# creating existing cluster-wide resources could stop/hang automatic deployments.
+#
+# WARNING 
+# The first installation must run with the createNonNamespacedObjects flag set to true to ensure 
+# the non-namespaced objects are created.
+createNonNamespacedObjects: true
+
+# External ca.crt injection certificate/s secret name
+# Command to create the ca cert secret: 
+#     kubectl create secret generic <external ca cert secret name, e.g., ext-ca-cert> --from-file=<ca.crt or ca bundle filename> -n <namespace>
+#
+# externalCaCertSecretName: <external ca cert secret name, e.g., ext-ca-cert>
+
 # When useNodePortForMaster is set to false (default), a LoadBalancer service is deployed to make
 # the Determined master reachable from outside the cluster. When useNodePortForMaster is set to
 # true, the master will instead be exposed behind a NodePort service. When using a NodePort service

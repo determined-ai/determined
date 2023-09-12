@@ -15,6 +15,8 @@ import (
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
@@ -23,6 +25,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 func createVersionTwoCheckpoint(
@@ -107,6 +111,82 @@ func getExperimentSizeFromUUID(ctx context.Context, t *testing.T, uuid string) i
 	require.NoError(t, err)
 
 	return out.CheckpointSize
+}
+
+func TestCheckpointsOnArchivedSteps(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	// Create steps and validation so that we have steps / validations on 0 and 1
+	// archived and unarchived.
+	trialRunID := 0
+	trial, task := createTestTrial(t, api, curUser)
+	for _, shouldArchive := range []bool{false, true} {
+		if shouldArchive {
+			_, err := db.Bun().NewUpdate().Table("trials").
+				Set("run_id = 1").
+				Where("id = ?", trial.ID).
+				Exec(ctx)
+			require.NoError(t, err)
+			trialRunID++
+		}
+
+		for i := 0; i < 3; i++ {
+			expectedMetrics, err := structpb.NewStruct(map[string]any{
+				"expected": fmt.Sprintf("%t-%d", shouldArchive, i),
+			})
+			require.NoError(t, err)
+
+			for _, group := range []string{
+				model.ValidationMetricGroup.ToString(),
+				model.TrainingMetricGroup.ToString(),
+			} {
+				_, err = api.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
+					Metrics: &trialv1.TrialMetrics{
+						TrialId:        int32(trial.ID),
+						TrialRunId:     int32(trialRunID),
+						StepsCompleted: int32(i),
+						Metrics: &commonv1.Metrics{
+							AvgMetrics: expectedMetrics,
+						},
+					},
+					Group: group,
+				})
+				require.NoError(t, err)
+			}
+		}
+	}
+	expected := "true-1"
+
+	// Checkpoint on the 1.
+	checkpointMeta, err := structpb.NewStruct(map[string]any{
+		"steps_completed": 1,
+	})
+	require.NoError(t, err)
+	_, err = api.ReportCheckpoint(ctx, &apiv1.ReportCheckpointRequest{
+		Checkpoint: &checkpointv1.Checkpoint{
+			TaskId:       string(task.TaskID),
+			AllocationId: nil,
+			Uuid:         uuid.New().String(),
+			ReportTime:   timestamppb.New(time.Now()),
+			Resources:    nil,
+			Metadata:     checkpointMeta,
+			State:        checkpointv1.State_STATE_COMPLETED,
+		},
+	})
+	require.NoError(t, err)
+
+	// We should only have one checkpoint.
+	checkpoints, err := api.GetExperimentCheckpoints(ctx, &apiv1.GetExperimentCheckpointsRequest{
+		Id: int32(trial.ExperimentID),
+	})
+	require.NoError(t, err)
+	require.Len(t, checkpoints.Checkpoints, 1)
+
+	actual := checkpoints.Checkpoints[0]
+	require.Equal(t, map[string]any{"expected": expected},
+		actual.Training.TrainingMetrics.AvgMetrics.AsMap())
+	require.Equal(t, map[string]any{"expected": expected},
+		actual.Training.ValidationMetrics.AvgMetrics.AsMap())
 }
 
 func TestCheckpointRemoveFilesPrefixAndEmpty(t *testing.T) {
@@ -282,8 +362,8 @@ func TestCheckpointAuthZ(t *testing.T) {
 			return err
 		}, false},
 		{"CanGetExperimentArtifacts", func(id string) error {
-			_, err := api.GetTrialMetricsBySourceInfoCheckpoint(ctx,
-				&apiv1.GetTrialMetricsBySourceInfoCheckpointRequest{CheckpointUuid: id})
+			_, err := api.GetTrialMetricsByCheckpoint(ctx,
+				&apiv1.GetTrialMetricsByCheckpointRequest{CheckpointUuid: id})
 			return err
 		}, false},
 	}

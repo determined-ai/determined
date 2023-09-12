@@ -8,15 +8,19 @@
    :description: Using a simple image classification model for the MNIST dataset, you'll Learn how to port an existing PyTorch model to Determined.
    :keywords: PyTorch API,MNIST,model developer,quickstart
 
-This tutorial describes how to port an existing PyTorch model to Determined. We will port a simple
-image classification model for the MNIST dataset. This tutorial is based on the official `PyTorch
-MNIST example <https://github.com/PyTorch/examples/blob/master/mnist/main.py>`_.
+In this tutorial, you'll learn how to port an existing PyTorch model to Determined. We will port a
+simple image classification model for the MNIST dataset. This tutorial is based on the official
+`PyTorch MNIST example <https://github.com/PyTorch/examples/blob/master/mnist/main.py>`_.
+
+*********************
+ About Model Porting
+*********************
 
 To use a PyTorch model in Determined, you need to port the model to Determined's API. For most
 models, this porting process is straightforward, and once the model has been ported, all of the
-features of Determined will then be available: for example, you can do :ref:`distributed training
-<multi-gpu-training>` or :ref:`hyperparameter search <hyperparameter-tuning>` without changing your
-model code, and Determined will store and visualize your model metrics automatically.
+features of Determined will then be available. For example, you can perform :ref:`distributed
+training <multi-gpu-training>` and :ref:`hyperparameter search <hyperparameter-tuning>` without
+changing your model code. Determined will store and visualize your model metrics automatically.
 
 When training a PyTorch model, Determined provides a built-in training loop that feeds each batch of
 training data into your ``train_batch`` function, which should perform the forward pass,
@@ -24,45 +28,56 @@ backpropagation, and compute training metrics for the batch. Determined also han
 log management, and device initialization. To plug your model code into the Determined training
 loop, you define methods to perform the following tasks:
 
--  initialize the models, optimizers, and LR schedulers
--  define the training function for forward and backward passes
--  define the evaluation function to compute the loss and other metrics on the validation data set
--  load the training data set
--  load the validation data set
+-  Initialize the models, optimizers, and LR schedulers.
+-  Define the training function for forward and backward passes.
+-  Define the evaluation function to compute the loss and other metrics on the validation data set.
+-  Load the training data set.
+-  Load the validation data set.
 
 The Determined training loop will then invoke these functions automatically. These methods should be
 organized into a **trial class**, which is a user-defined Python class that inherits from
 :class:`determined.pytorch.PyTorchTrial`. The following sections walk through how to write your
 first trial class and then how to run a training job with Determined.
 
-The complete code for this tutorial can be downloaded here: :download:`mnist_pytorch.tgz
-</examples/mnist_pytorch.tgz>`. After downloading this file, open a terminal window, extract the
-file, and ``cd`` into the ``mnist_pytorch`` directory:
-
-.. code::
-
-   tar xzvf mnist_pytorch.tgz
-   cd mnist_pytorch
-
-We suggest you follow along with the code as you read through this tutorial.
-
 ***************
  Prerequisites
 ***************
 
 -  Access to a Determined cluster. If you have not yet installed Determined, refer to the
-   :ref:`installation-guide`.
+   :ref:`installation instructions <installation-guide>`.
 
 -  Access to the Determined CLI on your local machine. See :ref:`the installation instructions
    <install-cli>` if you do not already have it installed. After installing the CLI, configure it to
    connect to your Determined cluster by setting the ``DET_MASTER`` environment variable to the
    hostname or IP address where Determined is running.
 
-********************************
- Build a ``PyTorchTrial`` Class
-********************************
+.. note::
 
-Here is what the skeleton of our trial class looks like:
+   For basic instructions on how to start a Determined cluster locally and run an experiment using
+   the ``mnist_pytorch`` example, visit :ref:`Run Your First Experiment in Determined
+   <pytorch_mnist_quickstart>`.
+
+****************************
+ Getting the Tutorial Files
+****************************
+
+-  Download the complete code for this tutorial from :download:`mnist_pytorch.tgz
+   </examples/mnist_pytorch.tgz>`.
+-  After downloading the file, open a terminal window, extract the file, and ``cd`` into the
+   ``mnist_pytorch`` directory:
+
+.. code::
+
+   tar xzvf mnist_pytorch.tgz
+   cd mnist_pytorch
+
+-  Follow along with the code as you complete the tutorial.
+
+*************************************
+ Creating the ``PyTorchTrial`` Class
+*************************************
+
+Outlined below is a basic structure for our trial class:
 
 .. code:: python
 
@@ -94,7 +109,7 @@ Here is what the skeleton of our trial class looks like:
            # This should return a determined.pytorch.Dataset.
            pass
 
-We now discuss how to implement each of these methods in more detail.
+Let's dive deeper into the implementation of each of these methods.
 
 Initialization
 ==============
@@ -311,3 +326,10 @@ in your web browser.
 
 Once you are on the Determined landing page, you can find your experiment using the experiment's ID
 (``xxx`` in the example above) or description.
+
+************
+ Next Steps
+************
+
+Now that you are familiar with porting model code to Determined, you can keep working with the
+PyTorch MNIST model and learn how to :ref:`get up and running with the Core API <api-core-ug>`.

@@ -7,6 +7,7 @@ import "google/protobuf/timestamp.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/task/v1/task.proto";
+import "determined/api/v1/trial.proto";
 import "determined/log/v1/log.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
@@ -183,4 +184,21 @@ message GetTasksResponse {
   // Information about a task for external display.
   map<string, determined.task.v1.AllocationSummary> allocation_id_to_summary =
       1;
+}
+
+// Get the accelerator data for each allocation associated with a task.
+message GetTaskAcceleratorDataRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The id of the task.
+  string task_id = 1;
+}
+// Response to GetTaskAcceleratorDataResponse
+message GetTaskAcceleratorDataResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "accelerator_data" ] }
+  };
+  // The accelerator data for each allocation associated with the task.
+  repeated AcceleratorData accelerator_data = 1;
 }

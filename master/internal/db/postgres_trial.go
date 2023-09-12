@@ -234,13 +234,14 @@ SELECT DISTINCT metric_group FROM metrics WHERE partition_type = 'GENERIC' AND t
 }
 
 func (db *PgDB) calculateFullTrialSummaryMetrics(
-	ctx context.Context, tx *sqlx.Tx, trialID int, metricGroup model.MetricGroup,
+	ctx context.Context, tx *sqlx.Tx, trialID int, mGroup model.MetricGroup,
 ) (model.JSONObj, error) {
-	partition := customMetricGroupToPartitionType(metricGroup)
+	metricGroup := string(mGroup)
+	partition := customMetricGroupToPartitionType(&metricGroup)
 	jsonPath := model.TrialMetricsJSONPath(partition == ValidationMetric)
 	//nolint: execinquery
 	rows, err := tx.QueryContext(ctx, db.queries.GetOrLoad("calculate-full-trial-summary-metrics"),
-		trialID, jsonPath, partition, metricGroup)
+		trialID, jsonPath, partition, mGroup)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getting full compute trial %d summary metrics", trialID)
 	}

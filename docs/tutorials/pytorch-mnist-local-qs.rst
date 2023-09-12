@@ -100,6 +100,9 @@ This is the cluster address for your local training environment.
 In four simple steps, we've successfully configured our training environment in Determined to start
 training the PyTorch MNIST example.
 
-In this article, we learned how to run an experiment on a local, single CPU or GPU. To learn how to
-change your configuration settings, including how to run a distributed training job on multiple
-GPUs, visit the :ref:`Quickstart for Model Developers <qs-mdldev>`.
+In this article, we learned how to run an experiment on a local, single CPU or GPU. If you want to
+learn more details about the basic structure shown in the trial class, visit the
+:ref:`pytorch-mnist-tutorial`.
+
+To learn how to change your configuration settings, including how to run a distributed training job
+on multiple GPUs, visit the :ref:`Quickstart for Model Developers <qs-mdldev>`.

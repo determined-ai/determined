@@ -14,6 +14,11 @@ with warnings.catch_warnings(record=True):
         TrialOrderBy,
         TrialSortBy,
     )
+    from determined.common.experimental import (
+        checkpoint,
+        metrics,
+        model,
+    )
 
 from determined.experimental._native import test_one_batch
 

@@ -156,9 +156,13 @@ def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
     @authentication.required
     def patch(args: argparse.Namespace) -> None:
         check.check_false(args.all and args.agent_id)
+        action = "enable" if enabled else "disable"
 
         if not (args.all or args.agent_id):
-            raise errors.CliError("Must specify exactly on of --all or --agent-id")
+            raise errors.CliError(
+                "Please pass agent id or --all option. "
+                f"See `det agent {action} --help` for details."
+            )
 
         if args.agent_id:
             agent_ids = [args.agent_id]
@@ -169,7 +173,6 @@ def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
         drain_mode = None if enabled else args.drain
 
         for agent_id in agent_ids:
-            action = "enable" if enabled else "disable"
             path = f"api/v1/agents/{agent_id}/{action}"
 
             payload = None

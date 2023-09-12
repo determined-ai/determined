@@ -6,11 +6,12 @@ import pathlib
 import shutil
 import sys
 import tarfile
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from determined import errors
 from determined.common import api, constants, storage
 from determined.common.api import bindings
+from determined.common.experimental import metrics
 from determined.common.storage import shared
 
 
@@ -361,6 +362,28 @@ class Checkpoint:
             logging.info(f"Refresh of checkpoint {self.uuid} is in progress.")
         else:
             logging.info(f"Partial deletion of checkpoint {self.uuid} is in progress.")
+
+    def get_metrics(self, group: Optional[str] = None) -> Iterable["metrics.TrialMetrics"]:
+        """
+        Gets all metrics for a given metric group associated with this checkpoint.
+        The checkpoint can be originally associated by calling
+        ``core_context.experimental.report_task_using_checkpoint(<CHECKPOINT>)``
+        from within a task.
+
+        Arguments:
+            group (str, optional): Group name for the metrics (example: "training", "validation").
+                All metrics will be returned when querying by "".
+        """
+        from determined.experimental import metrics
+
+        resp = bindings.get_GetTrialMetricsByCheckpoint(
+            session=self._session,
+            checkpointUuid=self.uuid,
+            trialSourceInfoType=bindings.v1TrialSourceInfoType.INFERENCE,
+            metricGroup=group,
+        )
+        for d in resp.metrics:
+            yield metrics.TrialMetrics._from_bindings(d, group)
 
     def __repr__(self) -> str:
         if self.training is not None:

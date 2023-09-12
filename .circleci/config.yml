@@ -25,7 +25,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.25.1-dev0
+    default: 0.25.2-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -2698,6 +2698,11 @@ workflows:
             - test-intg-agent
 
   test-e2e:
+    # temporarily only run e2e nightly
+    when:
+      and:
+        - equal: [ scheduled_pipeline, <<pipeline.trigger_source>> ]
+        - equal: [ nightly_tests, <<pipeline.schedule.name>> ]
     jobs:
       - build-proto
       - build-helm

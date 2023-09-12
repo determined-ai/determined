@@ -71,7 +71,7 @@ class TrainContext:
     def _report_trial_metrics(
         self,
         group: str,
-        total_batches: int,
+        steps_completed: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
@@ -91,7 +91,7 @@ class TrainContext:
         v1metrics = bindings.v1Metrics(avgMetrics=reportable_metrics, batchMetrics=batch_metrics)
         v1TrialMetrics = bindings.v1TrialMetrics(
             metrics=v1metrics,
-            stepsCompleted=total_batches,
+            stepsCompleted=steps_completed,
             trialId=self._trial_id,
             trialRunId=self._run_id,
         )
@@ -102,9 +102,9 @@ class TrainContext:
         if self._tensorboard_mode == core.TensorboardMode.AUTO:
             if self._tbd_writer:
                 if group == util._LEGACY_VALIDATION:
-                    self._tbd_writer.on_validation_step_end(total_batches, metrics)
+                    self._tbd_writer.on_validation_step_end(steps_completed, metrics)
                 elif group == util._LEGACY_TRAINING:
-                    self._tbd_writer.on_train_step_end(total_batches, metrics, batch_metrics)
+                    self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
             assert self._tensorboard_manager is not None
             self._tensorboard_manager.sync()
 
@@ -122,6 +122,40 @@ class TrainContext:
         """
 
         self._report_trial_metrics(util._LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
+
+    def report_validation_metrics(
+        self,
+        steps_completed: int,
+        metrics: Dict[str, Any],
+    ) -> None:
+        """
+        Report validation metrics to the master.
+        Note that for hyperparameter search, this is independent of the need to report the searcher
+        metric using ``SearcherOperation.report_completed()`` in the Searcher API.
+        """
+
+        self._report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
+
+    def report_metrics(
+        self,
+        group: str,
+        steps_completed: int,
+        metrics: Dict[str, Any],
+    ) -> None:
+        """
+        Report metrics data to the master.
+
+        Arguments:
+            group (string): metrics group name. Can be used to partition metrics
+                into different logical groups or time series.
+                "training" and "validation" group names map to built-in training
+                and validation time series. Note: Group cannot contain ``.`` character.
+            steps_completed (int): global step number, e.g. the number of batches processed.
+            metrics (Dict[str, Any]): metrics data dictionary. Must be JSON-serializable.
+                When reporting metrics with the same ``group`` and ``steps_completed`` values,
+                the dictionary keys must not overlap.
+        """
+        self._report_trial_metrics(group, steps_completed, metrics)
 
     def get_tensorboard_path(self) -> pathlib.Path:
         """
@@ -177,20 +211,6 @@ class TrainContext:
 
         return serializable_metrics
 
-    def report_validation_metrics(
-        self,
-        steps_completed: int,
-        metrics: Dict[str, Any],
-    ) -> None:
-        """
-        Report validation metrics to the master.
-
-        Note that for hyperparameter search, this is independent of the need to report the searcher
-        metric using ``SearcherOperation.report_completed()`` in the Searcher API.
-        """
-
-        self._report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
-
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         """
         Report an early exit reason to the Determined master.
@@ -242,7 +262,7 @@ class DummyTrainContext(TrainContext):
     def _report_trial_metrics(
         self,
         group: str,
-        total_batches: int,
+        steps_completed: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
@@ -253,11 +273,11 @@ class DummyTrainContext(TrainContext):
         but may be accessed from the master using the CLI for post-processing.
         """
         logger.info(
-            f"_report_trial_metrics(group={group}, total_batches={total_batches},"
+            f"_report_trial_metrics(group={group}, steps_completed={steps_completed},"
             f"metrics={metrics})"
         )
         logger.debug(
-            f"_report_trial_metrics(group={group}, total_batches={total_batches},"
+            f"_report_trial_metrics(group={group}, steps_completed={steps_completed},"
             f" batch_metrics={batch_metrics})"
         )
 
@@ -271,6 +291,9 @@ class DummyTrainContext(TrainContext):
 
     def report_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
         self._report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
+
+    def report_metrics(self, group: str, steps_completed: int, metrics: Dict[str, Any]) -> None:
+        self._report_trial_metrics(group, steps_completed, metrics)
 
     def upload_tensorboard_files(
         self,

@@ -49,6 +49,8 @@ spec:
             value: {{ .Values.db.user | quote }}
           - name: POSTGRES_PASSWORD
             value: {{ .Values.db.password | quote }}
+          - name: PGPORT
+            value: {{ .Values.db.port | quote }}
           - name: PGDATA
             value: /var/lib/postgresql/data/pgdata
         args: ["--max_connections=96", "--shared_buffers=512MB"]

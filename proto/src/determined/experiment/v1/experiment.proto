@@ -151,6 +151,10 @@ message Experiment {
   bool unmanaged = 40;
   // Time in seconds which experiment ran or has been running.
   optional int32 duration = 41;
+  // The id of external experiment
+  optional string external_experiment_id = 43;
+  // The id of external trial
+  optional string external_trial_id = 44;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.

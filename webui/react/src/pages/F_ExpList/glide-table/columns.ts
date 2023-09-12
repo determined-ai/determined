@@ -8,14 +8,13 @@ import {
 } from '@hpe.com/glide-data-grid';
 
 import { getColor, getInitials } from 'components/Avatar';
-import { terminalRunStates } from 'constants/states';
 import { paths } from 'routes/utils';
 import { DetailedUser, ExperimentWithTrial, ProjectColumn } from 'types';
 import { getPath, isString } from 'utils/data';
 import { formatDatetime } from 'utils/datetime';
 import { Loadable } from 'utils/loadable';
 import { humanReadableNumber } from 'utils/number';
-import { humanReadableBytes } from 'utils/string';
+import { floatToPercent, humanReadableBytes } from 'utils/string';
 import { DarkLight, Theme } from 'utils/themes';
 import { getDisplayName } from 'utils/user';
 
@@ -46,6 +45,8 @@ export const experimentColumns = [
   'resourcePool',
   'checkpointCount',
   'checkpointSize',
+  'externalExperimentId',
+  'externalTrialId',
   'archived',
 ] as const;
 
@@ -167,6 +168,30 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.duration,
   },
+  externalExperimentId: {
+    id: 'externalExperimentId',
+    renderer: (record: ExperimentWithTrial) => ({
+      allowOverlay: false,
+      data: record.experiment.externalExperimentId ?? '',
+      displayData: record.experiment.externalExperimentId ?? '',
+      kind: GridCellKind.Text,
+    }),
+    title: 'External Experiment ID',
+    tooltip: () => undefined,
+    width: columnWidths.externalExperimentId,
+  },
+  externalTrialId: {
+    id: 'externalTrialId',
+    renderer: (record: ExperimentWithTrial) => ({
+      allowOverlay: false,
+      data: record.experiment.externalTrialId ?? '',
+      displayData: record.experiment.externalTrialId ?? '',
+      kind: GridCellKind.Text,
+    }),
+    title: 'External Trial ID',
+    tooltip: () => undefined,
+    width: columnWidths.externalTrialId,
+  },
   forkedFrom: {
     id: 'forkedFrom',
     renderer: (record: ExperimentWithTrial) => ({
@@ -256,10 +281,7 @@ export const getColumnDefs = ({
   progress: {
     id: 'progress',
     renderer: (record: ExperimentWithTrial) => {
-      const progress = [...terminalRunStates.keys()].includes(record.experiment.state)
-        ? 1
-        : record.experiment.progress ?? 0;
-      const percentage = `${(progress * 100).toFixed()}%`;
+      const percentage = floatToPercent(record.experiment.progress ?? 0, 0);
 
       return {
         allowOverlay: false,
@@ -546,6 +568,8 @@ export const defaultColumnWidths: Record<ExperimentColumn, number> = {
   checkpointSize: 110,
   description: 148,
   duration: 86,
+  externalExperimentId: 160,
+  externalTrialId: 130,
   forkedFrom: 86,
   id: 50,
   name: 290,

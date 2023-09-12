@@ -481,6 +481,8 @@ export const mapV1Experiment = (
     description: data.description,
     duration: data.duration,
     endTime: data.endTime as unknown as string,
+    externalExperimentId: data.externalExperimentId,
+    externalTrialId: data.externalTrialId,
     forkedFrom: data.forkedFrom,
     hyperparameters,
     id: data.id,
