@@ -20,6 +20,15 @@ import (
 // JSONB is the golang equivalent of the postgres jsonb column type.
 type JSONB interface{}
 
+const (
+	minReconn = 1 * time.Second
+	maxReconn = 10 * time.Second
+
+	// Name of notify queue for permission changes.
+	permissionChannelName       = "permission_change_chan"
+	permissionChangeErrorString = "permission change detected while streaming updates"
+)
+
 // PublisherSet contains all publishers, and handles all websockets.  It will connect each websocket
 // with the appropriate set of publishers, based on that websocket's subscriptions.
 //
@@ -178,6 +187,33 @@ func (ps PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
 		streamer.Close()
 	}()
 
+	// detect permission changes
+	go func() {
+		reportProblem := func(ev pq.ListenerEventType, err error) {
+			if err != nil {
+				log.Errorf("reportProblem: %v\n", err.Error())
+			}
+		}
+		permListener := pq.NewListener(
+			// XXX: update this to use master config rather than hardcoded for a local db
+			"postgresql://postgres:postgres@localhost/determined?sslmode=disable",
+			minReconn,
+			maxReconn,
+			reportProblem,
+		)
+		// start listening for permission changes
+		err = permListener.Listen(permissionChannelName)
+		if err != nil {
+			log.Error(errors.Wrapf(err, "failed to listen: %v", permissionChannelName))
+		}
+		<-permListener.Notify
+		streamer.Close()
+		err = socket.Close()
+		if err != nil {
+			log.Error(errors.Wrap(err, "failed to close websocket connection"))
+		}
+	}()
+
 	// reads is where we collect SubscriptionModMsg messages we read from the websocket until
 	// waitForSomething() delivers those messages to the websocket goroutine.
 	var reads []SubscriptionModMsg
@@ -271,9 +307,6 @@ func doPublishLoop[T stream.Msg](
 	channelName string,
 	publisher *stream.Publisher[T],
 ) error {
-	minReconn := 1 * time.Second
-	maxReconn := 10 * time.Second
-
 	reportProblem := func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			log.Errorf("reportProblem: %v\n", err.Error())
@@ -287,7 +320,6 @@ func doPublishLoop[T stream.Msg](
 		maxReconn,
 		reportProblem,
 	)
-
 	// start listening
 	err := listener.Listen(channelName)
 	if err != nil {
