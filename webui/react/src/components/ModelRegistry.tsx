@@ -96,6 +96,20 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     resetSettings,
   } = useSettings<Settings>(settingConfig);
 
+  const [permissionsByModel, setPermissionsByModel] = useState<
+    Record<number, { canDelete: boolean; canModify: boolean }>
+  >({});
+  useEffect(() => {
+    const allPerm: Record<number, { canDelete: boolean; canModify: boolean }> = {};
+    models.forEach((model) => {
+      allPerm[model.id] = {
+        canDelete: canDeleteModel({ model }),
+        canModify: canModifyModel({ model }),
+      };
+    });
+    setPermissionsByModel((prev) => (_.isEqual(prev, allPerm) ? prev : allPerm));
+  }, [models, canDeleteModel, canModifyModel]);
+
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
   const isTableLoading = useMemo(
     () => isLoading || isLoadingSettings,
@@ -137,20 +151,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       setIsLoading(false);
     }
   }, [settings, workspace?.id]);
-
-  const [permissionsByModel, setPermissionsByModel] = useState<
-    Record<number, { canDelete: boolean; canModify: boolean }>
-  >({});
-  useEffect(() => {
-    const allPerm: Record<number, { canDelete: boolean; canModify: boolean }> = {};
-    models.forEach((model) => {
-      allPerm[model.id] = {
-        canDelete: canDeleteModel({ model }),
-        canModify: canModifyModel({ model }),
-      };
-    });
-    setPermissionsByModel((prev) => (_.isEqual(prev, allPerm) ? prev : allPerm));
-  }, [models, canDeleteModel, canModifyModel]);
 
   const fetchTags = useCallback(async () => {
     try {
