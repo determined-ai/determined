@@ -1,6 +1,7 @@
 import { Button, Space, Typography } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Badge from 'components/Badge';
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
 } from 'components/ExperimentCreateModal';
@@ -517,6 +518,11 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             <div className={css.name} role="experimentName">
               {experiment.name}
             </div>
+            {experiment.unmanaged && (
+              <Badge tooltip="Workload not managed by Determined" type="Header">
+                Unmanaged
+              </Badge>
+            )}
             {trial ? (
               <>
                 <Icon name="arrow-right" size="tiny" title="Trial" />

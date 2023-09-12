@@ -7,6 +7,8 @@ import {
   measureTextCached,
 } from '@hpe.com/glide-data-grid';
 
+import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
+
 interface LinkCellProps {
   readonly kind: 'link-cell';
   /**
@@ -19,10 +21,14 @@ interface LinkCellProps {
   readonly link: {
     readonly title: string;
     readonly href: string;
+    readonly unmanaged?: boolean;
   };
 }
 
 export type LinkCell = CustomCell<LinkCellProps>;
+
+const TAG_HEIGHT = 18;
+const TAG_CONTENT = 'Unmanaged';
 
 function onClickSelect(e: Parameters<NonNullable<CustomRenderer<LinkCell>['onSelect']>>[0]) {
   const useCtrl = e.cell.data.navigateOn !== 'click';
@@ -61,7 +67,7 @@ const renderer: CustomRenderer<LinkCell> = {
     const rectHoverX = rect.x + hoverX;
 
     const font = `${theme.baseFontStyle} ${theme.fontFamily}`;
-
+    ctx.font = font;
     const middleCenterBias = getMiddleCenterBias(ctx, font);
     const drawY = rect.y + rect.height / 2 + middleCenterBias;
 
@@ -87,7 +93,30 @@ const renderer: CustomRenderer<LinkCell> = {
     }
     ctx.fillStyle = theme.linkColor;
     ctx.fillText(link.title, drawX, drawY);
+    if (link.unmanaged) {
+      const x = drawX + commaMetrics.width + 8;
+      const y = drawY - TAG_HEIGHT / 2;
+      const tagFont = `600 11px ${theme.fontFamily}`;
 
+      ctx.fillStyle = '#132231';
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = theme.textBubble;
+      ctx.beginPath();
+      ctx.font = tagFont;
+      roundedRect(
+        ctx,
+        x,
+        y,
+        measureTextCached(TAG_CONTENT, ctx, tagFont).width + 10,
+        TAG_HEIGHT,
+        4,
+      );
+      ctx.stroke();
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.fillText(TAG_CONTENT, x + 4, y + TAG_HEIGHT / 2 + getMiddleCenterBias(ctx, tagFont));
+    }
+    ctx.closePath();
     drawX += commaMetrics.width + 4;
 
     return true;
