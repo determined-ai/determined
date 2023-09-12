@@ -7,6 +7,7 @@ import Button from 'components/kit/Button';
 import Notes from 'components/kit/Notes';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
+import Tooltip from 'components/kit/Tooltip';
 import Message, { MessageType } from 'components/Message';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
@@ -269,19 +270,23 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         key: TabType.Checkpoints,
         label: 'Checkpoints',
       });
-      if (experiment.modelDefinitionSize !== 0) {
-        items.push({
-          children: (
-            <ExperimentCodeViewer
-              experiment={experiment}
-              selectedFilePath={settings.filePath}
-              onSelectFile={handleSelectFile}
-            />
+      items.push({
+        children: (
+          <ExperimentCodeViewer
+            experiment={experiment}
+            selectedFilePath={settings.filePath}
+            onSelectFile={handleSelectFile}
+          />
+        ),
+        disabled: experiment.modelDefinitionSize === 0,
+        key: TabType.Code,
+        label:
+          experiment.modelDefinitionSize !== 0 ? (
+            'Code'
+          ) : (
+            <Tooltip content="Code file non-exist.">Code</Tooltip>
           ),
-          key: TabType.Code,
-          label: 'Code',
-        });
-      }
+      });
     }
 
     items.push({
