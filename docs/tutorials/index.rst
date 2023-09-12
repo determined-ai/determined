@@ -23,10 +23,6 @@ To get started with your first experiment, visit the :ref:`Quickstart for Model 
 |                                 | you how to port a simple image classification model for the  |
 |                                 | MNIST dataset.                                               |
 +---------------------------------+--------------------------------------------------------------+
-| :doc:`pytorch-porting-tutorial` | The PyTorch porting tutorial provides helpful hints to       |
-|                                 | successfully integrate PyTorch code with the Determined      |
-|                                 | PyTorchTrial API.                                            |
-+---------------------------------+--------------------------------------------------------------+
 | :doc:`tf-mnist-tutorial`        | The TensorFlow Keras Fashion MNIST tutorial describes how to |
 |                                 | port a ``tf.keras`` model to Determined.                     |
 +---------------------------------+--------------------------------------------------------------+
@@ -52,5 +48,4 @@ Examples let you build off of an existing model that already runs on Determined.
 
    Run Your First Experiment <pytorch-mnist-local-qs>
    PyTorch MNIST Tutorial <pytorch-mnist-tutorial>
-   PyTorch Porting Tutorial <pytorch-porting-tutorial>
    TensorFlow Keras Fashion MNIST Tutorial <tf-mnist-tutorial>
