@@ -20,6 +20,7 @@ import css from './Modal.module.scss';
 interface LinkParams {
   text: string;
   url: string;
+  external?: boolean;
 }
 
 export type ModalSize = 'small' | 'medium' | 'large';
@@ -120,7 +121,7 @@ export const Modal: React.FC<ModalProps> = ({
         <div className={css.footer}>
           <div className={css.footerLink}>
             {footerLink && (
-              <Link path={footerLink.url} popout>
+              <Link external={footerLink.external ?? false} path={footerLink.url} popout>
                 {footerLink.text}
               </Link>
             )}
@@ -160,7 +161,7 @@ export const Modal: React.FC<ModalProps> = ({
           <div className={css.headerTitle}>{title}</div>
           <div className={css.headerLink}>
             {headerLink && (
-              <Link path={headerLink.url} popout>
+              <Link external={headerLink.external ?? false} path={headerLink.url} popout>
                 {headerLink.text}
               </Link>
             )}
