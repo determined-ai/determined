@@ -387,13 +387,6 @@ class WorkloadSequencer(workload.Source):
                 yield from self.validate(None)
 
             for op in self.core_context.searcher.operations(core.SearcherMode.ChiefOnly):
-                # This can occur when we have already trained more than our trial
-                # will train for. For example, if we are provided a steps_completed
-                # larger than our searcher max length.
-                if self.batches_until_op_complete(op) <= 0:
-                    logging.info("trial has already completed training")
-                    raise ShouldExit(skip_exit_checkpoint=True)
-
                 while self.batches_until_op_complete(op) > 0:
                     # Do some training.
                     yield from self.train(
