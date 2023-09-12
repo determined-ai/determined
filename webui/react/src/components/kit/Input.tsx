@@ -9,7 +9,7 @@ import React, {
   RefObject,
 } from 'react';
 
-import { useModalTextEscape } from 'hooks/useInputEscape';
+import { useInputEscape } from 'hooks/useInputEscape';
 interface InputProps {
   addonAfter?: ReactNode;
   allowClear?: boolean | { clearIcon: ReactNode };
@@ -59,7 +59,7 @@ interface GroupProps {
 }
 
 const Input: Input = forwardRef<AntdInputRef, InputProps>((props: InputProps, ref) => {
-  const { onFocus, onBlur, inputRef } = useModalTextEscape(ref, props.onBlur);
+  const { onFocus, onBlur, inputRef } = useInputEscape(ref, props.onBlur);
 
   return (
     <AntdInput {...props} ref={inputRef as RefObject<InputRef>} onBlur={onBlur} onFocus={onFocus} />
@@ -75,7 +75,7 @@ type Input = ForwardRefExoticComponent<InputProps & RefAttributes<AntdInputRef>>
 Input.Group = AntdInput.Group;
 
 Input.Password = forwardRef<AntdInputRef, PasswordProps>((props: PasswordProps, ref) => {
-  const { onFocus, onBlur, inputRef } = useModalTextEscape(ref);
+  const { onFocus, onBlur, inputRef } = useInputEscape(ref);
   return (
     <AntdInput.Password
       {...props}
@@ -87,7 +87,7 @@ Input.Password = forwardRef<AntdInputRef, PasswordProps>((props: PasswordProps, 
 });
 
 Input.TextArea = forwardRef<AntdInputRef, TextAreaProps>((props: TextAreaProps, ref) => {
-  const { onFocus, onBlur, inputRef } = useModalTextEscape(ref);
+  const { onFocus, onBlur, inputRef } = useInputEscape(ref);
   return <AntdInput.TextArea {...props} ref={inputRef} onBlur={onBlur} onFocus={onFocus} />;
 });
 

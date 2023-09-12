@@ -4,7 +4,7 @@ import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/kit/Icon';
 import Label, { LabelTypes } from 'components/kit/internal/Label';
-import { useModalSelectEscape } from 'hooks/useInputEscape';
+import { useSelectEscape } from 'hooks/useInputEscape';
 
 import css from './Select.module.scss';
 
@@ -84,7 +84,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
   const classes = [css.base];
 
   const divRef = React.createRef<HTMLDivElement>();
-  const { onBlur, onFocus, inputRef } = useModalSelectEscape(divRef, isOpen, ref);
+  const { onBlur, onFocus, inputRef } = useSelectEscape(divRef, isOpen, ref);
 
   if (disableTags) classes.push(css.disableTags);
 

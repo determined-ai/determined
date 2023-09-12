@@ -1,7 +1,7 @@
 import { InputNumber as AntdInputNumber } from 'antd';
 import React, { forwardRef } from 'react';
 
-import { useModalNumberEscape } from 'hooks/useInputEscape';
+import { useInputNumberEscape } from 'hooks/useInputEscape';
 interface InputNumberProps {
   className?: string;
   defaultValue?: number;
@@ -18,7 +18,7 @@ interface InputNumberProps {
 
 const InputNumber: React.FC<InputNumberProps> = forwardRef(
   ({ ...props }: InputNumberProps, ref: React.ForwardedRef<HTMLInputElement>) => {
-    const { onFocus, onBlur, inputRef } = useModalNumberEscape(ref);
+    const { onFocus, onBlur, inputRef } = useInputNumberEscape(ref);
     return <AntdInputNumber {...props} ref={inputRef} onBlur={onBlur} onFocus={onFocus} />;
   },
 );
