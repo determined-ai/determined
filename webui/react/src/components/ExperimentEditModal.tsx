@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -30,6 +30,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
   description,
   fetchExperimentDetails,
 }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const [disabled, setDisabled] = useState<boolean>(true);
 
@@ -61,7 +62,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
       size="small"
       submit={{
         disabled,
-        form: FORM_ID,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: BUTTON_TEXT,
@@ -71,7 +72,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
       <Form
         autoComplete="off"
         form={form}
-        id={FORM_ID}
+        id={idPrefix + FORM_ID}
         layout="vertical"
         onFieldsChange={handleChange}>
         <Form.Item

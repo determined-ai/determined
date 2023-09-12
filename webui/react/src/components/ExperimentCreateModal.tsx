@@ -1,7 +1,7 @@
 import { Alert } from 'antd';
 import yaml from 'js-yaml';
 import _ from 'lodash';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
@@ -112,6 +112,7 @@ const ExperimentCreateModalComponent = ({
   trial,
   type,
 }: Props): JSX.Element => {
+  const idPrefix = useId();
   const [registryCredentials, setRegistryCredentials] = useState<RawJson>();
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const [disabled, setDisabled] = useState<boolean>(true);
@@ -359,7 +360,7 @@ const ExperimentCreateModalComponent = ({
       size={modalState.isAdvancedMode ? (isFork ? 'medium' : 'large') : 'small'}
       submit={{
         disabled,
-        form: FORM_ID,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: type,
@@ -385,7 +386,7 @@ const ExperimentCreateModalComponent = ({
         <Form
           form={form}
           hidden={modalState.isAdvancedMode}
-          id={FORM_ID}
+          id={idPrefix + FORM_ID}
           labelCol={{ span: 8 }}
           name="basic"
           onFieldsChange={handleFieldsChange}>

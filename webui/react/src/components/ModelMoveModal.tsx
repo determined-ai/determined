@@ -1,4 +1,5 @@
 import { useObservable } from 'micro-observables';
+import { useId } from 'react';
 
 import Form from 'components/kit/Form';
 import { Modal } from 'components/kit/Modal';
@@ -25,6 +26,7 @@ interface Props {
 }
 
 const ModelMoveModal = ({ model }: Props): JSX.Element => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const { canMoveModel } = usePermissions();
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
@@ -64,10 +66,10 @@ const ModelMoveModal = ({ model }: Props): JSX.Element => {
   return (
     <Modal
       size="small"
-      submit={{ form: FORM_ID, handleError, handler: handleOk, text: 'Move' }}
+      submit={{ form: idPrefix + FORM_ID, handleError, handler: handleOk, text: 'Move' }}
       title={`Move a Model (${model.name})`}
       onClose={handleClose}>
-      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
+      <Form autoComplete="off" form={form} id={idPrefix + FORM_ID} layout="vertical">
         <Form.Item
           label="Workspace"
           name="workspaceId"

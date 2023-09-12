@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import React, { useEffect } from 'react';
+import React, { useEffect, useId } from 'react';
 
 import Form from 'components/kit/Form';
 import { Modal } from 'components/kit/Modal';
@@ -26,6 +26,7 @@ interface FormInputs {
 }
 
 const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userGroups }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
 
   const groupsValue = Form.useWatch(GROUPS_NAME, form);
@@ -81,14 +82,14 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
       size="small"
       submit={{
         disabled: !groupsValue?.length,
-        form: FORM_ID,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Save',
       }}
       title="Manage Groups">
       <Spinner spinning={!groupOptions}>
-        <Form form={form} id={FORM_ID}>
+        <Form form={form} id={idPrefix + FORM_ID}>
           <Form.Item name={GROUPS_NAME}>
             <Select
               mode="multiple"

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useId } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -20,6 +20,7 @@ interface Props {
 }
 
 const ProjectDeleteModalComponent: React.FC<Props> = ({ onClose, project, onDelete }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const projectNameValue = Form.useWatch('projectName', form);
 
@@ -45,14 +46,14 @@ const ProjectDeleteModalComponent: React.FC<Props> = ({ onClose, project, onDele
       size="small"
       submit={{
         disabled: projectNameValue !== project.name,
-        form: FORM_ID,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Delete Project',
       }}
       title="Delete Project"
       onClose={onClose}>
-      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
+      <Form autoComplete="off" form={form} id={idPrefix + FORM_ID} layout="vertical">
         <p>
           Are you sure you want to delete <strong>&quot;{project.name}&quot;</strong>?
         </p>

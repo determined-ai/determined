@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useId, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Icon from 'components/kit/Icon';
@@ -41,6 +41,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
   onClose,
   workspaceId,
 }: Props) => {
+  const idPrefix = useId();
   const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
   const [form] = Form.useForm<FormInputs>();
 
@@ -117,13 +118,13 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
       cancel
       size="small"
       submit={{
-        form: FORM_ID,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Add Member',
       }}
       title="Add Member">
-      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
+      <Form autoComplete="off" form={form} id={idPrefix + FORM_ID} layout="vertical">
         <Form.Item
           label="User or Group"
           name="userOrGroupId"

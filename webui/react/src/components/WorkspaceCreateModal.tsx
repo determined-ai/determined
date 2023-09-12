@@ -1,6 +1,6 @@
 import { Divider, Switch } from 'antd';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useId, useMemo } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -40,6 +40,7 @@ interface Props {
 const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 
 const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: Props = {}) => {
+  const idPrefix = useId();
   const { canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage } =
     usePermissions();
   const [form] = Form.useForm<FormInputs>();
@@ -90,7 +91,12 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
   const modalContent = useMemo(() => {
     if (workspaceId && loadableWorkspace === NotLoaded) return <Spinner spinning />;
     return (
-      <Form autoComplete="off" form={form} id={FORM_ID} labelCol={{ span: 10 }} layout="vertical">
+      <Form
+        autoComplete="off"
+        form={form}
+        id={idPrefix + FORM_ID}
+        labelCol={{ span: 10 }}
+        layout="vertical">
         <Form.Item
           label="Workspace Name"
           name="workspaceName"
@@ -194,14 +200,15 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
       </Form>
     );
   }, [
+    workspaceId,
+    loadableWorkspace,
     form,
+    idPrefix,
+    canModifyAUG,
     useAgentUser,
     useAgentGroup,
-    useCheckpointStorage,
-    loadableWorkspace,
-    workspaceId,
-    canModifyAUG,
     canModifyCPS,
+    useCheckpointStorage,
   ]);
 
   const handleSubmit = useCallback(async () => {
@@ -277,7 +284,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
       cancel
       size="medium"
       submit={{
-        form: FORM_ID,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Save Workspace',

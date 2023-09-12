@@ -2,7 +2,7 @@ import { Select, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -49,6 +49,7 @@ interface Props {
 }
 
 const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm();
   const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyPermissions } = usePermissions();
@@ -177,7 +178,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
       size="small"
       submit={{
         disabled: !groupName,
-        form: FORM_ID,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
@@ -185,7 +186,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
       title={group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}
       onClose={form.resetFields}>
       <Spinner spinning={isLoading}>
-        <Form form={form} id={FORM_ID}>
+        <Form form={form} id={idPrefix + FORM_ID}>
           <Form.Item
             label={GROUP_NAME_LABEL}
             name={GROUP_NAME_NAME}

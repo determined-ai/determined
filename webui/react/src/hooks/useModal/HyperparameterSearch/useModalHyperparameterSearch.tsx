@@ -2,7 +2,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { Alert, Select as AntdSelect, ModalFuncProps, Radio, Space, Typography } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
@@ -95,6 +95,7 @@ const useModalHyperparameterSearch = ({
   onClose,
   trial: trialIn,
 }: Props): ModalHooks => {
+  const idPrefix = useId();
   const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
   const [trial, setTrial] = useState(trialIn);
   const [modalError, setModalError] = useState<string>();
@@ -608,7 +609,7 @@ const useModalHyperparameterSearch = ({
       className: css.modal,
       closable: true,
       content: (
-        <Form form={form} id={FORM_ID} layout="vertical">
+        <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
           {pages[currentPage]}
           {footer}
         </Form>
@@ -618,7 +619,7 @@ const useModalHyperparameterSearch = ({
       title: 'Hyperparameter Search',
       width: 700,
     };
-  }, [form, pages, currentPage, footer]);
+  }, [form, idPrefix, pages, currentPage, footer]);
 
   const modalOpen = useCallback(
     (props?: ShowModalProps) => {

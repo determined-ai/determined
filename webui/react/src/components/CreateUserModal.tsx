@@ -1,6 +1,6 @@
 import { Select, Switch, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -58,6 +58,7 @@ interface FormInputs {
 }
 
 const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const { rbacEnabled } = useObservable(determinedStore.info);
   // Null means the roles have not yet loaded
@@ -146,7 +147,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
       size="small"
       submit={{
         disabled: !username,
-        form: FORM_ID,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: viewOnly ? 'Close' : BUTTON_NAME,
@@ -162,7 +163,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
       <Spinner
         spinning={user !== undefined && userRoles === null && rbacEnabled && canAssignRoles({})}
         tip="Loading roles...">
-        <Form form={form} id={FORM_ID}>
+        <Form form={form} id={idPrefix + FORM_ID}>
           <Form.Item
             initialValue={user?.username}
             label={USER_NAME_LABEL}

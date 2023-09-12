@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -37,6 +37,7 @@ interface Props {
 }
 
 const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const [disabled, setDisabled] = useState<boolean>(true);
@@ -84,7 +85,7 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
       size="small"
       submit={{
         disabled,
-        form: FORM_ID,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: OK_BUTTON_LABEL,
@@ -92,7 +93,7 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
       title={MODAL_HEADER_LABEL}
       onClose={handleClose}>
       <p>Please confirm your password change</p>
-      <Form form={form} id={FORM_ID} onFieldsChange={handleFieldsChange}>
+      <Form form={form} id={idPrefix + FORM_ID} onFieldsChange={handleFieldsChange}>
         <Form.Item
           label={OLD_PASSWORD_LABEL}
           name={OLD_PASSWORD_NAME}

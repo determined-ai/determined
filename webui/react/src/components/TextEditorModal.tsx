@@ -1,5 +1,5 @@
 import { Modal } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useId, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
@@ -22,6 +22,7 @@ interface FormInputs {
 }
 
 const TextEditorModal: React.FC<Props> = ({ disabled, onSave, title, placeholder, value }) => {
+  const idPrefix = useId();
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isConfirmLoading, setIsConfirmLoading] = useState<boolean>(false);
   const [form] = Form.useForm<FormInputs>();
@@ -56,7 +57,7 @@ const TextEditorModal: React.FC<Props> = ({ disabled, onSave, title, placeholder
         title={title}
         onCancel={onHideModal}
         onOk={onSubmit}>
-        <Form form={form} id={FORM_ID} layout="vertical">
+        <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
           <Form.Item initialValue={value} name="text">
             <Input.TextArea placeholder={placeholder} rows={8} />
           </Form.Item>

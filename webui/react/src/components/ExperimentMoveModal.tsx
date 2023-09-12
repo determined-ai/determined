@@ -1,6 +1,6 @@
 import { Typography } from 'antd';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Icon from 'components/kit/Icon';
@@ -44,6 +44,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   sourceProjectId,
   sourceWorkspaceId,
 }: Props) => {
+  const idPrefix = useId();
   const [disabled, setDisabled] = useState<boolean>(true);
   const [form] = Form.useForm<FormInputs>();
   const workspaceId = Form.useWatch('workspaceId', form);
@@ -149,7 +150,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
       size="small"
       submit={{
         disabled,
-        form: FORM_ID,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text:
@@ -162,7 +163,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
           ? 'Move Experiments'
           : `Move ${pluralizer(experimentIds.length, 'Experiment')}`
       }>
-      <Form form={form} id={FORM_ID} layout="vertical">
+      <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
         <Form.Item
           label="Workspace"
           name="workspaceId"
