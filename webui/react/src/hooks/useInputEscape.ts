@@ -76,6 +76,10 @@ const onClickSelect = (
 
   if (hasOpened && !isOpen && (event.target as HTMLElement).className === MODAL_WRAP_CLASSNAME) {
     event.stopPropagation();
+    // If hasOpened is true in this instance
+    // then the event above will close the
+    // currently open Modal or Menu so we must stop the
+    // event.
     setHasOpened(false);
   }
 };
@@ -190,6 +194,12 @@ export const useSelectEscape = (
   useImperativeHandle(ref, () => inputRef.current as RefSelectProps);
 
   useEffect(() => {
+    // By the time a click event is captured in an
+    // event handler the Select will have otherwise already
+    // become unfocused and isOpen will be false.
+    // hasOpened is used in place of "isOpen" to check
+    // if the select is still open at the time of the click
+    // event.
     if (isOpen) {
       setHasOpened(true);
     }
@@ -209,6 +219,7 @@ export const useSelectEscape = (
     return () => {
       // eslint-disable-next-line react-hooks/exhaustive-deps
       containerRef.current?.removeEventListener('keydown', handleEsc);
+
       window.removeEventListener('click', handleClick, true);
     };
   }, [blurred, containerRef, focused, inputRef, setFocused, isOpen, hasOpened]);
