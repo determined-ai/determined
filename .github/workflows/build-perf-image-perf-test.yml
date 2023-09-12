@@ -1,6 +1,9 @@
 ---
 name: Create and publish a Docker image for performance tests
 on:
+  pull_request:
+    paths:
+      - 'performance/**'
   push:
     branches:
       - 'main'
