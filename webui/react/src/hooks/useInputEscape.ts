@@ -80,13 +80,13 @@ const onClick = (
   event: MouseEvent,
   handleFocused: (focused: boolean) => void,
 ) => {
-  if (blurred && focused) {
+  const overlayClicked =
+    (event.target as HTMLElement).className === getOverlayAndMenuBodyElement()?.overlay?.className;
+
+  if (blurred && focused && overlayClicked) {
     event.stopPropagation();
     handleFocused(false);
-  } else if (
-    focused &&
-    (event.target as HTMLElement).className === getOverlayAndMenuBodyElement()?.overlay?.className
-  ) {
+  } else if (focused && overlayClicked) {
     event.stopPropagation();
     inputRef.current?.blur();
     handleFocused(false);
