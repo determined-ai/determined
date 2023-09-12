@@ -50,7 +50,7 @@ SOURCE_IMAGE_FAMILY="slurm-gcp-6-1-ubuntu-2004-lts"
 if [[ $1 == "pbs" ]]; then
     WORKLOAD_MANAGER="pbs"
     SOURCE_IMAGE_PROJECT_ID="ubuntu-os-cloud"
-    SOURCE_IMAGE_FAMILY="ubuntu-2204-lts"
+    SOURCE_IMAGE_FAMILY="ubuntu-2004-lts"
 fi
 
 echo >&2 "INFO: Using ${WORKLOAD_MANAGER} as a workload manager"

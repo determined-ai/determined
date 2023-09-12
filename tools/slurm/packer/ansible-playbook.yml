@@ -160,17 +160,11 @@
       command: chmod 4755 /opt/pbs/sbin/pbs_iff /opt/pbs/sbin/pbs_rcp
       when: workload_manager == "pbs"
 
-    - name: Install ubuntu-drivers-common (to enable PBS nvidia install)
-      apt:
-        name: ubuntu-drivers-common
-        state: latest
-        update_cache: true
-      when: workload_manager == "pbs"
-
     - name: Install nvidia drivers on PBS base image
       # The base image for PBS doesn't have nvidia drivers, like the Slurm base image
-      shell: |
-        ubuntu-drivers autoinstall
+      apt:
+        name: nvidia-driver-525
+        update_cache: true
       when: workload_manager == "pbs"
     # End PBS Installation
 
@@ -198,6 +192,24 @@
       apt:
         deb: "https://github.com/NVIDIA/enroot/releases/download/v3.4.1/enroot_3.4.1-1_amd64.deb"
 
+    - name: Add enroot dependency key and repo for nvidia-container-toolkit
+      # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+      shell: |
+        curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+          && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+          sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+          sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+    - name: Install enroot nvidia dependency nvidia-container-toolkit
+      apt:
+        name: nvidia-container-toolkit
+        state: latest
+        update_cache: true
+
+    - name: Configure nvidia-container-runtime no-cgroups=true for podman
+      # https://forums.developer.nvidia.com/t/help-with-rootless-podman-or-rootless-docker-and-nvidia-gpu/205644
+      command: sed -i 's/^#no-cgroups = false/no-cgroups = true/;' /etc/nvidia-container-runtime/config.toml
+
     - name: Update enroot runtime path in /etc/enroot/enroot.conf
       command: sed -i '/^#ENROOT_RUNTIME_PATH/c\ENROOT_RUNTIME_PATH        /tmp/\$\(whoami\)' /etc/enroot/enroot.conf
 
@@ -224,6 +236,9 @@
       command: /usr/bin/manage-singularity-cache  {{ cuda_image_name }}
       when: cuda_image_name != ""
 
+    - name: Cleanup root's .apptainer cache to save space
+      command: rm -rf ~/.apptainer
+
     - name: Create /srv/enroot directory
       command: mkdir -p /srv/enroot
     
@@ -243,6 +258,9 @@
       environment:
         ENROOT_RUNTIME_PATH: /srv/enroot
         ENROOT_TEMP_PATH: /srv/enroot
+
+    - name: Cleanup root's .cache & .local used by enroot to save space
+      command: rm -rf ~/.cache ~/.local
 
     - name: Reinstall Munge (uninstall)
       apt:
