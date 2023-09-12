@@ -25,6 +25,7 @@ locals {
   static_source_path = "static"
   static_dest_path   = "/tmp/static"
   reg_conf_dir       = "/etc/containers"
+  oci_conf_dir       = "/usr/share/containers/oci"
   det_conf_dir       = "/etc/determined"
   slurm_sysconfdir   = "/usr/local/etc/slurm"
   launcher_job_root  = "/var/tmp/launcher"
@@ -60,6 +61,10 @@ locals {
   shell_vars_name      = "shell_vars.sh"
   shell_vars_tmp_path  = "${local.static_dest_path}/${local.shell_vars_name}"
   shell_vars_dest_path = "/etc/profile.d/${local.shell_vars_name}"
+
+  oci_config_name      = "oci-nvidia-hook.json"
+  oci_config_tmp_path  = "${local.static_dest_path}/${local.oci_config_name}"
+  oci_config_dest_path = "${local.oci_conf_dir}/${local.oci_config_name}"
 }
 
 source "googlecompute" "determined-hpc-image" {
@@ -72,7 +77,7 @@ source "googlecompute" "determined-hpc-image" {
   image_description = "HPC ${var.workload_manager} testing VM ${var.launcher_deb_name}"
 
   machine_type = "n1-standard-8"
-  disk_size    = "100"
+  disk_size    = "110"
   // us-central1-c seems to be much faster/more reliable. had intermittent failures in us-west1-b
   // with IAP Tunnels being slow to come up.
   zone             = "us-central1-c"
@@ -115,7 +120,9 @@ build {
       "sudo mkdir -p ${local.launcher_job_root}",
       "sudo mkdir -p ${local.reg_conf_dir}",
       "sudo mv -f ${local.container_registries_tmp_path} ${local.container_registries_dest_path}",
-      "sudo mv -f ${local.shell_vars_tmp_path} ${local.shell_vars_dest_path}"
+      "sudo mv -f ${local.shell_vars_tmp_path} ${local.shell_vars_dest_path}",
+      "sudo mkdir -p ${local.oci_conf_dir}",
+      "sudo mv -f ${local.oci_config_tmp_path} ${local.oci_config_dest_path}"
     ]
   }
 

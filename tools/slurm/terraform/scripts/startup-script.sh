@@ -17,9 +17,26 @@ if [[ ${WORKLOAD_MANAGER} == pbs ]]; then
     done
     echo "PBS service started"
 
+    # enable ngpus resource https://rndwiki-pro.its.hpecorp.net/display/AT/casablanca-login2%3A+configuring+GPUs+with+PBS
+    sudo sed -i 's/^resources: "ncpus/resources: "ngpus, ncpus/' /var/spool/pbs/sched_priv/sched_config
+    sudo /opt/pbs/bin/qmgr -c "create resource ngpus type=long,flag=nh"
+    sudo /opt/pbs/bin/qmgr -c "export hook pbs_cgroups application/x-config default" >/tmp/old_pbs_cgroups.json
+    sudo cat /tmp/old_pbs_cgroups.json \
+        | jq '. += {"nvidia-smi":"/usr/bin/nvidia-smi"}' \
+        | jq '.cgroup.devices += {"enabled":"true"}' \
+        | jq '.cgroup.devices.allow += ["c *:* rwm", ["nvidiactl","rwm","*"]]' \
+        | jq '.cgroup.cpuset += {"enabled":"true"}' >/tmp/pbs_cgroups.json
+    sudo /opt/pbs/bin/qmgr -c "import hook pbs_cgroups application/x-config default /tmp/pbs_cgroups.json"
+    echo INFO: Updated pbs_cgroups.json
+    sudo cat /tmp/pbs_cgroups.json
+    sudo /opt/pbs/bin/qmgr -c "set hook pbs_cgroups enabled=True"
+
     # Enable job history
     echo "set server job_history_enable = true" | sudo /opt/pbs/bin/qmgr
     echo "Set job_history_enable to true"
+
+    # Restart to apply GPU changes
+    sudo systemctl restart pbs
 else
     # Update the Gres expression for the local node in slurm.conf
     echo "Updating the Gres configuration in /etc/slurm/slurm.conf from nvidia-smi information..."
