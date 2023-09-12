@@ -87,9 +87,9 @@ Determined.
 
 .. _singularity-image-cache:
 
-***********************************************************
- Configuring a Apptainer/Singularity Image Cache Directory
-***********************************************************
+************************************************************
+ Configuring an Apptainer/Singularity Image Cache Directory
+************************************************************
 
 When using Apptainer/Singularity, you may use :ref:`referencing-local-image-paths` as described
 above, or you may instead configure a directory tree of images to be searched. To utilize this
