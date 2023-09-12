@@ -193,8 +193,6 @@ export const useSelectEscape = (
 
   useImperativeHandle(ref, () => inputRef.current as RefSelectProps);
 
-  const input = containerRef.current;
-
   useEffect(() => {
     if (isOpen) {
       setHasOpened(true);
@@ -210,13 +208,14 @@ export const useSelectEscape = (
       onEsc(focused, inputRef, event, setFocused);
     };
 
-    input?.addEventListener('keydown', handleEsc);
+    containerRef.current?.addEventListener('keydown', handleEsc);
     window.addEventListener('click', handleClick, true);
     return () => {
-      input?.addEventListener('keydown', handleEsc);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      containerRef.current?.removeEventListener('keydown', handleEsc);
       window.removeEventListener('click', handleClick, true);
     };
-  }, [blurred, focused, inputRef, input, setFocused, isOpen, hasOpened]);
+  }, [blurred, containerRef, focused, inputRef, setFocused, isOpen, hasOpened]);
 
   const handleBlur = (
     e: React.FocusEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>,
