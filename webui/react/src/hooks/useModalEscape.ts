@@ -22,6 +22,11 @@ interface ModalTextEscape extends ModalEscapeHandlers {
   ) => void;
 }
 
+interface ModalNumberEscape extends ModalEscapeHandlers {
+  onFocus: (e: React.FocusEvent<HTMLInputElement & EventTarget, Element>) => void;
+  inputRef?: Ref<HTMLInputElement>;
+}
+
 interface ModalSelectEscape {
   inputRef?: React.RefObject<RefSelectProps>;
   onFocus: <T extends HTMLInputElement>(e: React.FocusEvent<T & EventTarget, Element>) => void;
@@ -30,11 +35,6 @@ interface ModalSelectEscape {
     previousValue?: string,
     tagID?: number,
   ) => void;
-}
-
-interface ModalNumberEscape extends ModalEscapeHandlers {
-  onFocus: (e: React.FocusEvent<HTMLInputElement & EventTarget, Element>) => void;
-  inputRef?: Ref<HTMLInputElement>;
 }
 
 const onEsc = (
@@ -80,7 +80,6 @@ const onClickSelect = (
 
   if (hasOpened && !isOpen && (event.target as HTMLElement).className === MODAL_WRAP_CLASSNAME) {
     event.stopPropagation();
-    event.preventDefault();
     setHasOpened(false);
   }
 };
