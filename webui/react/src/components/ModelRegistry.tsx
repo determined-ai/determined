@@ -21,6 +21,7 @@ import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
+import { ModelActionMenuKey as MenuKey, ModelActionDropdown } from 'components/ModelActionDropdown';
 import ModelCreateModal from 'components/ModelCreateModal';
 import ModelMoveModal from 'components/ModelMoveModal';
 import InteractiveTable, {
@@ -68,12 +69,6 @@ interface Props {
   workspace?: Workspace;
 }
 
-const MenuKey = {
-  DeleteModel: 'delete-model',
-  MoveModel: 'move-model',
-  SwitchArchived: 'switch-archived',
-} as const;
-
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const canceler = useRef(new AbortController());
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
@@ -100,6 +95,20 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     updateSettings,
     resetSettings,
   } = useSettings<Settings>(settingConfig);
+
+  const [permissionsByModel, setPermissionsByModel] = useState<
+    Record<number, { canDelete: boolean; canModify: boolean }>
+  >({});
+  useEffect(() => {
+    const allPerm: Record<number, { canDelete: boolean; canModify: boolean }> = {};
+    models.forEach((model) => {
+      allPerm[model.id] = {
+        canDelete: canDeleteModel({ model }),
+        canModify: canModifyModel({ model }),
+      };
+    });
+    setPermissionsByModel((prev) => (_.isEqual(prev, allPerm) ? prev : allPerm));
+  }, [models, canDeleteModel, canModifyModel]);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
   const isTableLoading = useMemo(
@@ -128,6 +137,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       );
       setTotal(response.pagination.total || 0);
       setModels((prev) => {
+        response.models.map((m) => m.labels?.sort?.());
         if (_.isEqual(prev, response.models)) return prev;
         return response.models;
       });
@@ -386,10 +396,8 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   const ModelActionMenu = useCallback(
     (record: ModelItem) => {
-      const canDeleteModelFlag = canDeleteModel({ model: record });
-      const canModifyModelFlag = canModifyModel({ model: record });
       const menuItems: MenuItem[] = [];
-      if (canModifyModelFlag) {
+      if (permissionsByModel[record.id]?.canModify) {
         menuItems.push({
           key: MenuKey.SwitchArchived,
           label: record.archived ? 'Unarchive' : 'Archive',
@@ -398,32 +406,13 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           menuItems.push({ key: MenuKey.MoveModel, label: 'Move' });
         }
       }
-      if (canDeleteModelFlag) {
+      if (permissionsByModel[record.id]?.canDelete) {
         menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete Model' });
       }
 
       return menuItems;
     },
-    [canDeleteModel, canModifyModel],
-  );
-
-  const handleDropdown = useCallback(
-    (key: string, record: ModelItem) => {
-      switch (key) {
-        case MenuKey.DeleteModel:
-          setModel(record);
-          deleteModelModal.open();
-          break;
-        case MenuKey.MoveModel:
-          setModel(record);
-          modelMoveModal.open();
-          break;
-        case MenuKey.SwitchArchived:
-          switchArchived(record);
-          break;
-      }
-    },
-    [deleteModelModal, modelMoveModal, switchArchived],
+    [permissionsByModel],
   );
 
   const columns = useMemo(() => {
@@ -436,7 +425,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           <div>
             <Tags
               compact
-              disabled={record.archived || !canModifyModel({ model: record })}
+              disabled={record.archived || !permissionsByModel[record.id]?.canModify}
               tags={record.labels ?? []}
               onAction={tagsActionHelper(record.labels ?? [], (tags) =>
                 setModelTags(record.name, tags),
@@ -448,8 +437,25 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     );
 
     const actionRenderer = (_: string, record: ModelItem) => {
-      const canDeleteModelFlag = canDeleteModel({ model: record });
-      const canModifyModelFlag = canModifyModel({ model: record });
+      const canDeleteModelFlag = permissionsByModel[record.id]?.canDelete;
+      const canModifyModelFlag = permissionsByModel[record.id]?.canModify;
+
+      const handleDropdown = (key: string, record: ModelItem) => {
+        switch (key) {
+          case MenuKey.DeleteModel:
+            setModel(record);
+            deleteModelModal.open();
+            break;
+          case MenuKey.MoveModel:
+            setModel(record);
+            modelMoveModal.open();
+            break;
+          case MenuKey.SwitchArchived:
+            switchArchived(record);
+            break;
+        }
+      };
+
       return (
         <Dropdown
           disabled={!canDeleteModelFlag && !canModifyModelFlag}
@@ -465,7 +471,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       <Input
         className={css.descriptionRenderer}
         defaultValue={value}
-        disabled={record.archived || !canModifyModel({ model: record })}
+        disabled={record.archived || !permissionsByModel[record.id]?.canModify}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
         title={record.archived ? 'Archived description' : 'Edit description'}
         onBlur={(e) => {
@@ -587,13 +593,14 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     labelFilterDropdown,
     tags,
     userFilterDropdown,
-    canModifyModel,
     setModelTags,
-    canDeleteModel,
     ModelActionMenu,
-    handleDropdown,
     saveModelDescription,
     workspaceRenderer,
+    deleteModelModal,
+    modelMoveModal,
+    switchArchived,
+    permissionsByModel,
   ]);
 
   const handleTableChange = useCallback(
@@ -661,20 +668,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       });
     },
     [settings, updateSettings],
-  );
-
-  const ModelActionDropdown = useCallback(
-    ({ record, children }: { children: React.ReactNode; record: ModelItem }) => {
-      return (
-        <Dropdown
-          isContextMenu
-          menu={ModelActionMenu(record)}
-          onClick={(key) => handleDropdown(key, record)}>
-          {children}
-        </Dropdown>
-      );
-    },
-    [ModelActionMenu, handleDropdown],
   );
 
   return (
