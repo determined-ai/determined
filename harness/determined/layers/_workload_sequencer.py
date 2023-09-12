@@ -431,7 +431,11 @@ class WorkloadSequencer(workload.Source):
                 if not self.validation_is_current():
                     yield from self.validate(op)
 
-                assert op._completed, "logic error; op was never completed"
+                if not op._completed:
+                    # The only case where op isn't reported as completed is if we restarted but
+                    # op.length was already trained for and validated on; in that case just break
+                    # out of the operations loop; we have nothing to do.
+                    break
 
         except ShouldExit as e:
             # Checkpoint unsaved work and exit.
