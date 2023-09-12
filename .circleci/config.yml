@@ -248,7 +248,6 @@ commands:
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
       - run: echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
 
-
   install-protoc:
     steps:
       - run: curl --retry-connrefused --retry 10 -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip
@@ -667,8 +666,7 @@ commands:
                 name: Enable CORS
                 command: "echo --enable-cors >> /tmp/det-deploy-extra-args"
       - when:
-          condition:
-            << parameters.extra-tags >>
+          condition: << parameters.extra-tags >>
           steps:
             - run:
                 name: Add extra tags
@@ -1097,7 +1095,6 @@ commands:
       - run:
           no_output_timeout: 30m
           command: make package
-
 
   install-devcluster:
     steps:
@@ -1896,7 +1893,6 @@ jobs:
           paths:
             - test-unit-harness-cpu-pycov
 
-
   test-unit-harness-gpu:
     docker:
       - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.24.0
@@ -1958,7 +1954,6 @@ jobs:
           root: .
           paths:
             - test-unit-harness-pytorch2-cpu-pycov
-
 
   test-unit-harness-gpu-parallel:
     docker:
@@ -2524,7 +2519,6 @@ jobs:
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
 
-
       - run-det-deploy-tests:
           mark: <<parameters.mark>>
           det-version: <<parameters.det-version>>
@@ -2706,6 +2700,11 @@ workflows:
             - test-intg-agent
 
   test-e2e:
+    # temporarily only run e2e nightly
+    when:
+      and:
+        - equal: [scheduled_pipeline, <<pipeline.trigger_source>>]
+        - equal: [nightly_tests, <<pipeline.schedule.name>>]
     jobs:
       - build-proto
       - build-helm
@@ -3470,6 +3469,21 @@ workflows:
             parameters:
               cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
+              compute-agent-instance-type: ["g4dn.12xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [2]
+          requires:
+            - check-if-nightly-tests-should-run
+      - test-e2e-aws:
+          # Run on 4xT4 instances.
+          name: test-e2e-gpu-huggingface
+          context:
+            - aws
+            - hugging-face
+          matrix:
+            parameters:
+              cluster-id-prefix: ["huggingface"]
+              mark: ["huggingface"]
               compute-agent-instance-type: ["g4dn.12xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]

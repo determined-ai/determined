@@ -276,6 +276,7 @@ def test_remote_search_runner() -> None:
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
+@pytest.mark.huggingface
 def test_textual_inversion_stable_diffusion_finetune() -> None:
     """Requires downloading weights from Hugging Face via an authorization token. The experiment
     expects the token to be stored in the HF_AUTH_TOKEN environment variable.
@@ -301,13 +302,13 @@ def test_textual_inversion_stable_diffusion_finetune() -> None:
         )
     except KeyError as k:
         if str(k) == "'HF_READ_ONLY_TOKEN'":
-            pytest.skip("HF_READ_ONLY_TOKEN CircleCI environment variable missing, skipping test")
-        else:
-            raise k
+            print("HF_READ_ONLY_TOKEN CircleCI environment variable missing")
+        raise k
 
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
+@pytest.mark.huggingface
 def test_textual_inversion_stable_diffusion_generate() -> None:
     """Requires downloading weights from Hugging Face via an authorization token. The experiment
     expects the token to be stored in the HF_AUTH_TOKEN environment variable.
@@ -337,9 +338,8 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
         )
     except KeyError as k:
         if str(k) == "'HF_READ_ONLY_TOKEN'":
-            pytest.skip("HF_READ_ONLY_TOKEN CircleCI environment variable missing, skipping test")
-        else:
-            raise k
+            print("HF_READ_ONLY_TOKEN CircleCI environment variable missing")
+        raise k
 
 
 @pytest.mark.distributed
