@@ -3,10 +3,9 @@ import { ThemeConfig } from 'antd/es/config-provider/context';
 import React, { ReactNode, useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
 import useUI from 'components/kit/contexts/UI';
+import { BrandingType, RecordKey } from 'components/kit/internal/types';
 import themes from 'components/kit/themes';
 import { DarkLight, globalCssVars, Mode } from 'components/kit/utils/themes';
-
-import { BrandingType, RecordKey } from './internal/types';
 
 const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
 const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
