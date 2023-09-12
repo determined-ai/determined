@@ -1,6 +1,6 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
-import { BrandingType } from 'stores/determinedInfo';
 import {
+  BrandingType,
   CheckpointState,
   CommandState,
   JobState,
@@ -9,7 +9,7 @@ import {
   SlotState,
   ValueOf,
   WorkspaceState,
-} from 'types';
+} from 'components/kit/internal/types';
 import {
   DarkLight,
   getCssVar,
@@ -17,7 +17,7 @@ import {
   themeDarkHpe,
   themeLightDetermined,
   themeLightHpe,
-} from 'utils/themes';
+} from 'components/kit/utils/themes';
 
 /*
  * Where did we get our sizes from?

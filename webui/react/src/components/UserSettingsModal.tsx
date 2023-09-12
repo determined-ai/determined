@@ -5,12 +5,12 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import useUI from 'components/kit/contexts/UI';
 import { Modal } from 'components/kit/Modal';
+import { Mode } from 'components/kit/utils/themes';
 import userSettings from 'stores/userSettings';
 import { Json } from 'types';
 import { isJsonObject, isObject } from 'utils/data';
 import handleError from 'utils/error';
 import { Loadable, Loaded } from 'utils/loadable';
-import { Mode } from 'utils/themes';
 
 import CodeEditor from './kit/CodeEditor';
 

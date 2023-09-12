@@ -1,16 +1,12 @@
 import { ConfigProvider, theme } from 'antd';
 import { ThemeConfig } from 'antd/es/config-provider/context';
-import { useObservable } from 'micro-observables';
 import React, { ReactNode, useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
 import useUI from 'components/kit/contexts/UI';
-import { useSettings } from 'hooks/useSettings';
-import { config, Settings } from 'hooks/useTheme.settings';
-import determinedStore from 'stores/determinedInfo';
-import themes from 'themes';
-import { RecordKey } from 'types';
-import { camelCaseToKebab } from 'utils/string';
-import { DarkLight, globalCssVars, Mode } from 'utils/themes';
+import themes from 'components/kit/themes';
+import { DarkLight, globalCssVars, Mode } from 'components/kit/utils/themes';
+
+import { BrandingType, RecordKey } from './internal/types';
 
 const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
 const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
@@ -98,15 +94,25 @@ const getSystemMode = (): Mode => {
   return Mode.System;
 };
 
+const camelCaseToKebab = (text: string): string => {
+  return text
+    .trim()
+    .split('')
+    .map((char, index) => {
+      return char === char.toUpperCase() ? `${index !== 0 ? '-' : ''}${char.toLowerCase()}` : char;
+    })
+    .join('');
+};
+
 /**
  * Wraps various theme settings together
  */
-export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const info = useObservable(determinedStore.info);
+export const ThemeProvider: React.FC<{ children: ReactNode; branding?: BrandingType }> = ({
+  children,
+  branding,
+}) => {
   const { ui, actions: uiActions } = useUI();
   const [systemMode, setSystemMode] = useState<Mode>(() => getSystemMode());
-  const [isSettingsReady, setIsSettingsReady] = useState(false);
-  const { settings, isLoading: isSettingsLoading, updateSettings } = useSettings<Settings>(config);
 
   const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
     if (!event.matches) setSystemMode(getSystemMode());
@@ -139,25 +145,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // Update darkLight and theme when branding, system mode, or mode changes.
   useLayoutEffect(() => {
-    const branding = info.branding || 'determined';
-
     const darkLight = getDarkLight(ui.mode, systemMode);
-    uiActions.setTheme(darkLight, themes[branding][darkLight]);
-  }, [info.branding, uiActions, systemMode, ui.mode]);
+    uiActions.setTheme(darkLight, themes[branding || 'determined'][darkLight]);
+  }, [branding, uiActions, systemMode, ui.mode]);
 
-  // Update setting mode when mode changes.
-  useLayoutEffect(() => {
-    if (isSettingsLoading) return;
-
-    if (isSettingsReady) {
-      // We have read from the settings, going forward any mode difference requires an update.
-      if (settings.mode !== ui.mode) updateSettings({ mode: ui.mode });
-    } else {
-      // Initially set the mode from settings.
-      uiActions.setMode(settings.mode);
-      setIsSettingsReady(true);
-    }
-  }, [isSettingsReady, settings, uiActions, ui.mode, isSettingsLoading, updateSettings]);
   const antdTheme = ANTD_THEMES[ui.darkLight];
 
   return <ConfigProvider theme={antdTheme}>{children}</ConfigProvider>;

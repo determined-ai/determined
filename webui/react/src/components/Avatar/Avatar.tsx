@@ -2,9 +2,9 @@ import React from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
 import { hex2hsl, hsl2str } from 'components/kit/utils/color';
+import { DarkLight } from 'components/kit/utils/themes';
 import { ClassNameProp, ValueOf } from 'types';
 import md5 from 'utils/md5';
-import { DarkLight } from 'utils/themes';
 
 import css from './Avatar.module.scss';
 

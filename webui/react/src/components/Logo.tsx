@@ -7,11 +7,11 @@ import logoDeterminedOnLightVertical from 'assets/images/logo-determined-on-ligh
 import logoHpeOnDarkHorizontal from 'assets/images/logo-hpe-on-dark-horizontal.svg?url';
 import logoHpeOnLightHorizontal from 'assets/images/logo-hpe-on-light-horizontal.svg?url';
 import useUI from 'components/kit/contexts/UI';
+import { DarkLight } from 'components/kit/utils/themes';
 import { serverAddress } from 'routes/utils';
 import { BrandingType } from 'stores/determinedInfo';
 import { ValueOf } from 'types';
 import { reactHostAddress } from 'utils/routes';
-import { DarkLight } from 'utils/themes';
 
 import css from './Logo.module.scss';
 

@@ -9,6 +9,7 @@ import InputShortcut from 'components/kit/InputShortcut';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
+import { Mode } from 'components/kit/utils/themes';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import { ThemeOptions } from 'components/ThemeToggle';
@@ -39,7 +40,6 @@ import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { KeyboardShortcut, shortcutToString } from 'utils/shortcut';
-import { Mode } from 'utils/themes';
 
 import Accordion from './kit/Accordion';
 import Button from './kit/Button';

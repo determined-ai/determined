@@ -1,6 +1,6 @@
 import { App as AntdApp } from 'antd';
 import { useObservable } from 'micro-observables';
-import React, { useEffect, useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
@@ -8,21 +8,24 @@ import { useParams } from 'react-router-dom';
 
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Button from 'components/kit/Button';
+import useUI from 'components/kit/contexts/UI';
 import Spinner from 'components/kit/Spinner';
+import { ThemeProvider } from 'components/kit/ThemeProvider';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
-import { ThemeProvider } from 'components/ThemeProvider';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useKeyTracker from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
 import usePermissions from 'hooks/usePermissions';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
+import { useSettings } from 'hooks/useSettings';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import useTelemetry from 'hooks/useTelemetry';
+import { config as themeConfig, Settings as themeSettings } from 'hooks/useTheme.settings';
 import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
 import { paths, serverAddress } from 'routes/utils';
@@ -51,8 +54,16 @@ const AppView: React.FC = () => {
   const loadableUser = useObservable(userStore.currentUser);
   const loadableInfo = useObservable(determinedStore.loadableInfo);
   const isServerReachable = useObservable(determinedStore.isServerReachable);
+  const info = useObservable(determinedStore.info);
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck();
+  const {
+    settings,
+    isLoading: isSettingsLoading,
+    updateSettings,
+  } = useSettings<themeSettings>(themeConfig);
+  const [isSettingsReady, setIsSettingsReady] = useState(false);
+  const { ui, actions: uiActions } = useUI();
 
   useEffect(() => {
     if (isServerReachable) checkAuth();
@@ -124,6 +135,20 @@ const AppView: React.FC = () => {
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [resize]);
 
+  // Update setting mode when mode changes.
+  useLayoutEffect(() => {
+    if (isSettingsLoading) return;
+
+    if (isSettingsReady) {
+      // We have read from the settings, going forward any mode difference requires an update.
+      if (settings.mode !== ui.mode) updateSettings({ mode: ui.mode });
+    } else {
+      // Initially set the mode from settings.
+      uiActions.setMode(settings.mode);
+      setIsSettingsReady(true);
+    }
+  }, [isSettingsReady, settings, uiActions, ui.mode, isSettingsLoading, updateSettings]);
+
   // Check permissions and params for JupyterLabGlobal.
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
   const { workspaceId } = useParams<{
@@ -139,7 +164,7 @@ const AppView: React.FC = () => {
           <>
             {isServerReachable ? (
               <SettingsProvider>
-                <ThemeProvider>
+                <ThemeProvider branding={info.branding}>
                   <AntdApp>
                     <ConfirmationProvider>
                       <Navigation>

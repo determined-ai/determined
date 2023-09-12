@@ -8,6 +8,7 @@ import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Icon from 'components/kit/Icon';
 import Spinner from 'components/kit/Spinner';
+import { StateOfUnion } from 'components/kit/themes';
 import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
@@ -17,7 +18,6 @@ import TimeDuration from 'components/TimeDuration';
 import { OMITTED_STR } from 'constants/accessControl';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
-import { StateOfUnion } from 'themes';
 import {
   CommandTask,
   CommandType,

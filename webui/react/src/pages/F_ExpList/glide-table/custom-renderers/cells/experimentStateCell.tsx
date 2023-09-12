@@ -1,8 +1,8 @@
 import { CustomCell, CustomRenderer, GridCellKind } from '@hpe.com/glide-data-grid';
 
+import { Theme } from 'components/kit/utils/themes';
 import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 import { CompoundRunState, JobState, RunState } from 'types';
-import { Theme } from 'utils/themes';
 
 interface ExperimentStateCellProps {
   readonly appTheme: Theme;

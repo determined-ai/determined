@@ -15,6 +15,7 @@ import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
 import Tags from 'components/kit/Tags';
+import { getStateColorCssVar } from 'components/kit/themes';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TimeAgo from 'components/TimeAgo';
@@ -32,7 +33,6 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import { getStateColorCssVar } from 'themes';
 import {
   ExperimentAction as Action,
   CompoundRunState,

@@ -3,9 +3,9 @@ import React, { ReactNode } from 'react';
 import { ImageAlert } from 'components/Image';
 import Button from 'components/kit/Button';
 import useUI from 'components/kit/contexts/UI';
+import { DarkLight } from 'components/kit/utils/themes';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
-import { DarkLight } from 'utils/themes';
 
 import css from './exceptions.module.scss';
 
