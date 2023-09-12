@@ -1021,7 +1021,7 @@ func (p *pods) disableNode(
 
 	return &apiv1.DisableAgentResponse{
 		Agent: n.ToProto(),
-	}, err
+	}, nil
 }
 
 func (p *pods) releaseAllocationsOnDisabledNode(ctx *actor.Context, nodeName string) error {
