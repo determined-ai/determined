@@ -42,6 +42,14 @@ type AllocationService interface {
 		id model.AllocationID,
 		addr string,
 	) error
+	SetAcceleratorData(
+		ctx context.Context,
+		containerID string,
+		id model.AllocationID,
+		nodeName string,
+		acceleratorType string,
+		accelerators []string,
+	) error
 	WatchRendezvous(
 		ctx context.Context,
 		id model.AllocationID,

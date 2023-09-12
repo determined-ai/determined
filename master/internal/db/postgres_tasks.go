@@ -259,6 +259,19 @@ func (db *PgDB) UpdateAllocationProxyAddress(a model.Allocation) error {
 	return err
 }
 
+// AddAllocationAcceleratorData stores acceleration data for an allocation.
+func (db *PgDB) AddAllocationAcceleratorData(containerID string, a model.Allocation,
+	nodeName string, acceleratorType string, accelerators []string,
+) error {
+	_, err := db.sql.Exec(`
+		INSERT INTO allocation_accelerators (container_id, allocation_id, node_name, 
+			accelerator_type, accelerators)
+		VALUES
+		($1, $2, $3, $4, $5)
+	`, containerID, a.AllocationID, nodeName, acceleratorType, accelerators)
+	return err
+}
+
 // CloseOpenAllocations finds all allocations that were open when the master crashed
 // and adds an end time.
 func (db *PgDB) CloseOpenAllocations(exclude []model.AllocationID) error {

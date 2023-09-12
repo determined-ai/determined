@@ -140,6 +140,22 @@ func (as *allocationService) SetProxyAddress(
 	return ref.SetProxyAddress(ctx, addr)
 }
 
+// SetAcceleratorData sets the accleration data of the allocation.
+func (as *allocationService) SetAcceleratorData(
+	ctx context.Context,
+	containerID string,
+	id model.AllocationID,
+	nodeName string,
+	acceleratorType string,
+	accelerators []string,
+) error {
+	ref, err := as.waitForRestore(ctx, id)
+	if err != nil {
+		return err
+	}
+	return ref.SetAcceleratorData(ctx, containerID, nodeName, acceleratorType, accelerators)
+}
+
 // WatchRendezvous returns a watcher for the caller to wait for rendezvous to complete. When a
 // process from each resource in the allocation connects and the resource manager sends each
 // resource's state, each watcher will receive a copy of the rendezvous info for communicating

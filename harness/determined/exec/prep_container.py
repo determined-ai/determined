@@ -9,7 +9,7 @@ import sys
 import tarfile
 import uuid
 import warnings
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import psutil
 import urllib3
@@ -292,6 +292,64 @@ def do_proxy(sess: api.Session, allocation_id: str) -> None:
         raise ValueError(f"unsupported resources type: {r_type}")
 
 
+def device_type_string(deviceType: Optional[bindings.devicev1Type]) -> str:
+    if deviceType == bindings.devicev1Type.CUDA:
+        return "cuda"
+    if deviceType == bindings.devicev1Type.ROCM:
+        return "rocm"
+    if deviceType == bindings.devicev1Type.CPU:
+        return "cpu"
+    return "unknown"
+
+
+def get_agent_id_device_type(sess: api.Session, allocation_id: str) -> Tuple[str, str]:
+    agent_resp = bindings.get_GetAgents(sess)
+    task_res = bindings.get_GetTasks(sess)
+    if task_res.allocationIdToSummary is None:
+        return "unknown", "unknown"
+    allocations = task_res.allocationIdToSummary.values()
+
+    c_allocation = {
+        r.containerId: a.allocationId
+        for a in allocations
+        if a.resources is not None
+        for r in a.resources
+        if r.containerId
+    }
+
+    for agent in agent_resp.agents or []:
+        for _key, slot in (agent.slots or {}).items():
+            if slot.container and slot.container.id in c_allocation:
+                if c_allocation[slot.container.id] == allocation_id:
+                    return agent.id, device_type_string((slot.device or bindings.v1Device()).type)
+
+    return "unknown", "unknown"
+
+
+def get_device_type(sess: api.Session, allocation_id: str, agent_id: str) -> str:
+    task_res = bindings.get_GetTasks(sess)
+    if task_res.allocationIdToSummary is None:
+        return "unknown"
+    allocations = task_res.allocationIdToSummary.values()
+    agent_resp = bindings.get_GetAgent(sess, agentId=agent_id)
+    agent = agent_resp.agent
+
+    c_allocation = {
+        r.containerId: a.allocationId
+        for a in allocations
+        if a.resources is not None
+        for r in a.resources
+        if r.containerId
+    }
+
+    for _key, slot in (agent.slots or {}).items():
+        if slot.container and slot.container.id in c_allocation:
+            if c_allocation[slot.container.id] == allocation_id:
+                return device_type_string((slot.device or bindings.v1Device()).type)
+
+    return "unknown"
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--trial", action="store_true")
@@ -365,9 +423,31 @@ if __name__ == "__main__":
         # based only on task logs.
         hostname = os.environ.get("HOSTNAME", "")
         agent_id = os.environ.get("DET_AGENT_ID", "")
+        container_id = os.environ.get("DET_CONTAINER_ID", "")
+        if agent_id == "k8agent":
+            agent_id, accelerator_type = get_agent_id_device_type(sess, info.allocation_id)
+        else:
+            accelerator_type = get_device_type(
+                sess, allocation_id=info.allocation_id, agent_id=info.agent_id
+            )
         logging.info(
             f"Running task container on agent_id={agent_id}, hostname={hostname} "
             f"with visible GPUs {resources.gpu_uuids}"
+        )
+        bindings.post_PostAllocationAcceleratorData(
+            sess,
+            allocationId=info.allocation_id,
+            body=bindings.v1PostAllocationAcceleratorDataRequest(
+                allocationId=info.allocation_id,
+                acceleratorData=bindings.v1AcceleratorData(
+                    containerId=container_id,
+                    acceleratorType=accelerator_type,
+                    accelerators=resources.gpu_uuids,
+                    allocationId=info.allocation_id,
+                    nodeName=agent_id,
+                    taskId=info.task_id,
+                ),
+            ),
         )
         for process in gpu.get_gpu_processes():
             logging.warning(

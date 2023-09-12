@@ -66,6 +66,20 @@ func (_m *DB) AddAllocation(a *model.Allocation) error {
 	return r0
 }
 
+// AddAllocationAcceleratorData provides a mock function with given fields: containerID, a, nodeName, acceleratorType, accelerators
+func (_m *DB) AddAllocationAcceleratorData(containerID string, a model.Allocation, nodeName string, acceleratorType string, accelerators []string) error {
+	ret := _m.Called(containerID, a, nodeName, acceleratorType, accelerators)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, model.Allocation, string, string, []string) error); ok {
+		r0 = rf(containerID, a, nodeName, acceleratorType, accelerators)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AddExperiment provides a mock function with given fields: experiment, activeConfig
 func (_m *DB) AddExperiment(experiment *model.Experiment, activeConfig expconf.ExperimentConfigV0) error {
 	ret := _m.Called(experiment, activeConfig)
