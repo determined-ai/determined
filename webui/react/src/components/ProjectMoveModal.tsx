@@ -20,11 +20,11 @@ import css from './ProjectMoveModal.module.scss';
 const { Option } = Select;
 
 interface Props {
-  onClose?: () => void;
+  onMove?: () => void;
   project: Project;
 }
 
-const ProjectMoveModalComponent: React.FC<Props> = ({ onClose, project }: Props) => {
+const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) => {
   const [destinationWorkspaceId, setDestinationWorkspaceId] = useState<number>();
   const { canMoveProjectsTo } = usePermissions();
   const workspaces = Loadable.match(useObservable(workspaceStore.unarchived), {
@@ -51,7 +51,7 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onClose, project }: Props)
         ),
         message: 'Move Success',
       });
-      onClose?.();
+      onMove?.();
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -61,7 +61,7 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onClose, project }: Props)
         type: ErrorType.Server,
       });
     }
-  }, [destinationWorkspaceId, onClose, project.id, project.name, workspaces]);
+  }, [destinationWorkspaceId, onMove, project.id, project.name, workspaces]);
 
   const handleWorkspaceSelect = useCallback(
     (selectedWorkspaceId: SelectValue) => {
@@ -85,8 +85,7 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onClose, project }: Props)
         handler: handleSubmit,
         text: 'Move Project',
       }}
-      title="Move Project"
-      onClose={onClose}>
+      title="Move Project">
       <label htmlFor="workspace">Workspace</label>
       <Select
         id="workspace"

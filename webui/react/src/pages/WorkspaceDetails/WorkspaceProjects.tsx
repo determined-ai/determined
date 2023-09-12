@@ -180,7 +180,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       <ProjectActionDropdown
         project={record}
         workspaceArchived={workspace?.archived}
-        onComplete={fetchProjects}
+        onDelete={fetchProjects}
       />
     );
 
@@ -318,7 +318,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         isContextMenu
         project={record}
         workspaceArchived={workspace?.archived}
-        onComplete={fetchProjects}
+        onDelete={fetchProjects}
         onVisibleChange={onVisibleChange}>
         {children}
       </ProjectActionDropdown>
@@ -336,8 +336,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           <Card.Group size="small">
             {projects.map((project) => (
               <ProjectCard
-                fetchProjects={fetchProjects}
                 key={project.id}
+                onRemove={() => onProjectRemove(project.id)}
                 project={project}
                 workspaceArchived={workspace?.archived}
               />

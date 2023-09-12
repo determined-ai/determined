@@ -198,7 +198,7 @@ const Dashboard: React.FC = () => {
           <Card.Group size="small" wrap={false}>
             {projects.map((project) => (
               <ProjectCard
-                fetchProjects={fetchProjects}
+                hideActionMenu
                 key={project.id}
                 project={project}
                 showWorkspace

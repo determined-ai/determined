@@ -15,11 +15,11 @@ interface FormInputs {
 }
 
 interface Props {
-  onClose?: () => void;
+  onEdit?: () => void;
   project: Project;
 }
 
-const ProjectEditModalComponent: React.FC<Props> = ({ onClose, project }: Props) => {
+const ProjectEditModalComponent: React.FC<Props> = ({ onEdit, project }: Props) => {
   const [form] = Form.useForm<FormInputs>();
   const projectName = Form.useWatch('projectName', form);
 
@@ -54,7 +54,7 @@ const ProjectEditModalComponent: React.FC<Props> = ({ onClose, project }: Props)
       title="Edit Project"
       onClose={() => {
         form.resetFields();
-        onClose?.();
+        onEdit?.();
       }}>
       <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
         <Form.Item
