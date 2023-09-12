@@ -1,8 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG NODE_VERSION=16
-ARG K6_VERSION=0.46.0
-
-FROM node:${NODE_VERSION}-alpine as builder
+FROM node:16-alpine as builder
 
 WORKDIR /build
 
@@ -15,7 +12,7 @@ RUN npm install
 # Run build scripts for test scripts
 RUN npm start
 
-FROM grafana/k6:${K6_VERSION} as base
+FROM grafana/k6:0.46.0 as base
 
 WORKDIR /app
 
