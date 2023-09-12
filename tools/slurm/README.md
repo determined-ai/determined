@@ -26,7 +26,7 @@ gcloud compute ssh --zone us-west1-b phillipgaisford-dev-box --project determine
 
 To see usage of the `make slurmcluster` target, run `make -C tools/slurm usage`.
 
-## GPU Configuration (Slurm Only)
+## GPU Configuration
 
 The configuration of GPUs on GCP requires matching specific `machine_type`, gpu type, and gpu count combinations.
 See the [GCP GPU platforms](https://cloud.google.com/compute/docs/gpus) documentation page for specifics.
@@ -35,6 +35,8 @@ for them to be visible in Slurm.   This is currently handled by the custom `terr
 type for the local dev-box using `nvidia-smi` and injects the Gres attribute for all `NodeName` definitions in `slurm.conf`.
 
 The default `machine_type` is `n1-standard-8` and can support 1, 2 or 4 gpus of type `nvidia-tesla-t4`, `nvidia-tesla-p4`, `nvidia-tesla-v100`, or `nvidia-tesla-p100`.
+
+Some example GPU configuration that work are listed below.   Optionally combine with `-c {container_run_type}` and `-w {workload_manager}` for your desired testing configuration.
 
 ### Example GPU Configuration recipes for `n1-standard-8`
  - `FLAGS="-g nvidia-tesla-t4:2"`
