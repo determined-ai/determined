@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package olddata
+package testutils
 
 import (
 	"sort"
@@ -13,7 +13,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 )
 
-type migrationExtra struct {
+// MigrationExtra contains some migration metadata
+type MigrationExtra struct {
 	// When in the migration process the SQL should be executed.
 	When int64
 	// SQL to inject the old data.
@@ -24,7 +25,7 @@ type migrationExtra struct {
 // any necessary pauses and data injections.
 type MustMigrateFn func(t *testing.T, pgdb *db.PgDB, migrationsPath string)
 
-// mustMigrateWithExtras migrates a database, with extra sql statements to inject data at arbitrary
+// MustMigrateWithExtras migrates a database, with extra sql statements to inject data at arbitrary
 // points in the migration process.
 //
 // It would be neat if mustMigrateWithExtras were useful directly in tests, and test could pick and
@@ -32,8 +33,8 @@ type MustMigrateFn func(t *testing.T, pgdb *db.PgDB, migrationsPath string)
 // are disjoint enough to be combined arbitrarily is really hard.  So instead, it is expected that
 // mustMigrateWithExtras is only used inside the olddata module to create curated collections of old
 // data.
-func mustMigrateWithExtras(
-	t *testing.T, pgdb *db.PgDB, migrationsPath string, extras ...migrationExtra,
+func MustMigrateWithExtras(
+	t *testing.T, pgdb *db.PgDB, migrationsPath string, extras ...MigrationExtra,
 ) {
 	// Require extras to be pre-sorted to improve readability of calling code.
 	lessFn := func(i, j int) bool {
