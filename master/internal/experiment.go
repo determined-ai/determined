@@ -194,7 +194,7 @@ func newExperiment(
 		telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
 	}
 
-	agentUserGroup, err := user.GetAgentUserGroup(*expModel.OwnerID, workspaceID)
+	agentUserGroup, err := user.GetAgentUserGroup(context.TODO(), *expModel.OwnerID, workspaceID)
 	if err != nil {
 		return nil, launchWarnings, err
 	}
