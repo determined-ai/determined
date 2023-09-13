@@ -324,20 +324,12 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		k.forwardToAllPools(ctx, msg)
 
 	case sproto.GetDefaultComputeResourcePoolRequest:
-		if k.config.DefaultComputeResourcePool == "" {
-			ctx.Respond(rmerrors.ErrNoDefaultResourcePool)
-		} else {
-			ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
-				PoolName: k.config.DefaultComputeResourcePool,
-			})
-		}
+		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
+			PoolName: k.config.DefaultComputeResourcePool,
+		})
 
 	case sproto.GetDefaultAuxResourcePoolRequest:
-		if k.config.DefaultComputeResourcePool == "" {
-			ctx.Respond(rmerrors.ErrNoDefaultResourcePool)
-		} else {
-			ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: k.config.DefaultAuxResourcePool})
-		}
+		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: k.config.DefaultAuxResourcePool})
 
 	case sproto.ValidateCommandResourcesRequest:
 		k.forwardToPool(ctx, msg.ResourcePool, msg)
