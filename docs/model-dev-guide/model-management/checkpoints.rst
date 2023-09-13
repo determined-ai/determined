@@ -27,11 +27,11 @@ The Checkpoint Export API is a subset of the features found in the
 
 The :class:`~determined.experimental.client.Experiment` class is a reference to an experiment.
 Within this class, there is a :meth:`~determined.experimental.client.Experiment.list_checkpoints`
-method. When called without arguments, this method looks at the experiment configuration's searcher
-field for the `metric` and `smaller_is_better` values. These values are used to sort the
-experiment's checkpoints by validation performance. As an example, the searcher settings in the
-following experiment configuration file snippet will result in checkpoints being sorted by the loss
-metric in ascending order.
+method. When called without arguments, this returns the experiment's checkpoints in sorted order
+using the `metric` and `smaller_is_better` values from the experiment configuration’s searcher
+field. These values are used to sort the experiment's checkpoints by validation performance. As an
+example, the searcher settings in the following experiment configuration file snippet will result in
+checkpoints being sorted by the loss metric in ascending order.
 
 .. code:: yaml
 
@@ -47,7 +47,7 @@ associated with the experiment and selects the one with the best validation metr
 
    from determined.experimental import client
 
-   checkpoint = client.list_checkpoints(id)[0]
+   checkpoint = client.get_experiment(id).list_checkpoints()[0]
 
 Checkpoints can be sorted by any metric using the ``sort_by`` keyword argument, which defines which
 metric to use, and ``order_by``, which defines whether to sort the checkpoints in ascending or
@@ -58,7 +58,10 @@ descending order with respect to the specified metric.
    from determined.experimental import checkpoint, client
 
    checkpoint = (
-       client.get_experiment(id).list_checkpoints(sort_by="accuracy", order_by=checkpoint.CheckpointOrderBy.DESC)
+       client.get_experiment(id).list_checkpoints(
+           sort_by="accuracy",
+           order_by=checkpoint.CheckpointOrderBy.DESC
+       )
    )
 
 You may also query checkpoints by preset checkpoint parameters, as defined by
@@ -70,8 +73,8 @@ all checkpoints for the experiment sorted by the checkpoint's trial ID in descen
    from determined.experimental import checkpoint, client
 
    checkpoints = client.get_experiment(id).list_checkpoints(
-      sort_by=checkpoint.CheckpointSortBy.TRIAL_ID,
-      order_by=checkpoint.CheckpointOrderBy.DESC
+       sort_by=checkpoint.CheckpointSortBy.TRIAL_ID,
+       order_by=checkpoint.CheckpointOrderBy.DESC
    )
 
 :class:`~determined.experimental.client.Trial` is used for fine-grained control over checkpoint
@@ -88,12 +91,10 @@ The following snippet showcases how to select the latest checkpoint for a trial.
    trial = client.get_trial(id)
 
    latest_checkpoint = trial.list_checkpoints(
-      sort_by=checkpoint.CheckpointSortBy.END_TIME,
-      order_by=checkpoint.CheckpointOrderBy.DESC,
-      limit=1
+       sort_by=checkpoint.CheckpointSortBy.END_TIME,
+       order_by=checkpoint.CheckpointOrderBy.DESC,
+       limit=1
    )[0]
-
-   specific_checkpoint = client.get_checkpoint(uuid="uuid-for-checkpoint")
 
 ********************************
  Using the ``Checkpoint`` Class
