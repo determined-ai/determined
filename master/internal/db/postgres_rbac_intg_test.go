@@ -27,7 +27,7 @@ var userModel model.User
 
 func setup(t *testing.T, pgDB *PgDB) {
 	userModel = model.User{Username: uuid.New().String(), Active: true}
-	_, err := pgDB.AddUser(&userModel, nil)
+	_, err := HackAddUser(context.TODO(), &userModel)
 	require.NoError(t, err)
 
 	ctx := context.TODO()

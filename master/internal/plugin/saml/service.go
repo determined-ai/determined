@@ -1,6 +1,7 @@
 package saml
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -96,7 +97,7 @@ func (s *Service) consumeAssertion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "SAML attribute identifier userName missing")
 	}
 
-	u, err := user.UserByUsername(uid)
+	u, err := user.ByUsername(context.TODO(), uid)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "user has not been provisioned")
 	}
@@ -105,7 +106,7 @@ func (s *Service) consumeAssertion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "user is inactive")
 	}
 
-	token, err := s.db.StartUserSession(u)
+	token, err := user.StartSession(context.TODO(), u)
 	if err != nil {
 		return err
 	}

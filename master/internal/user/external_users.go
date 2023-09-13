@@ -84,7 +84,7 @@ func ByExternalToken(ctx context.Context, tokenText string,
 		}
 
 		// Check for the temporary case where their email exists in users but no SCIM user exists
-		user, err = UserByUsername(claims.Email)
+		user, err = ByUsername(context.TODO(), claims.Email)
 		if err != nil {
 			if err != db.ErrNotFound {
 				return nil, nil, err
@@ -127,7 +127,7 @@ func ByExternalToken(ctx context.Context, tokenText string,
 		user.Admin = isAdmin
 		user.Active = true
 
-		err = db.SingleDB().UpdateUser(user, []string{"username", "admin", "active"}, nil)
+		err = Update(context.TODO(), user, []string{"username", "admin", "active"}, nil)
 		if err != nil {
 			return nil, nil, errors.WithStack(err)
 		}

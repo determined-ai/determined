@@ -11,7 +11,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
-	"github.com/determined-ai/determined/master/internal/usergroup"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 )
@@ -160,7 +159,7 @@ type RoleAssignment struct {
 	ScopeID int `bun:"scope_id,pk" json:"scope_id"`
 
 	Role  *Role                `bun:"rel:belongs-to,join:role_id=id"`
-	Group *usergroup.Group     `bun:"rel:has-one,join:group_id=id"`
+	Group *model.Group         `bun:"rel:has-one,join:group_id=id"`
 	Scope *RoleAssignmentScope `bun:"rel:has-one,join:scope_id=id"`
 }
 
