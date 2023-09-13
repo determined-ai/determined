@@ -242,4 +242,7 @@ def iter_pages(
             limit=max_page_size,
         )
         yield page
-        offset = page.pagination.endIndex  # type: ignore
+
+        assert page.pagination is not None
+        assert page.pagination.endIndex is not None
+        offset = page.pagination.endIndex

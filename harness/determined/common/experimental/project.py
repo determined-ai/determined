@@ -151,7 +151,7 @@ class Project:
 
         self.notes = [note.to_json() for note in resp.notes]
 
-    def remove_note(self, name: str) -> None:
+    def remove_note(self, name: str, contents: Optional[str] = None) -> None:
         """Remove a note from the project.
 
         Because there is not yet functionality on the backend to remove a single note, this method:
@@ -168,26 +168,36 @@ class Project:
             name: The name of the note to remove.
 
         Raises:
-            ValueError: If no note with the passed name is found
-            NotImplementedError: If multiple notes with the passed name are found
+            ValueError: If one of
+                - no note with the passed name and contents is found
+                - multiple notes with the passed name are found and contents is not passed
 
         It is possible to for a project to have multiple notes with the same name. This method's
         interface doesn't make it possible to choose which of them to remove.
         """
-        master_notes = bindings.get_GetProject(session=self._session, id=self.id).project.notes
-        n_matching_notes = len([i for i, note in enumerate(master_notes) if note.name == name])
-        if n_matching_notes == 0:
-            raise ValueError(f"No note with name {name} found to remove.")
+        fresh_notes = list(bindings.get_GetProject(session=self._session, id=self.id).project.notes)
+        matching_indexes = []
+        for i, note in enumerate(fresh_notes):
+            if note.name == name and note.contents == contents:
+                matching_indexes.append(i)
 
-        if n_matching_notes > 1:
-            raise NotImplementedError(
-                f"Multiple notes with name {name} found. "
-                "Please use the web UI to remove a specific one of them."
+        if len(matching_indexes) == 0:
+            if contents is None:
+                raise ValueError(f"No note with name '{name}' found to remove.")
+            else:
+                raise ValueError(
+                    f"No note with name '{name}' and contents '{contents}' found to remove."
+                )
+
+        if len(matching_indexes) > 1 and contents is None:
+            raise ValueError(
+                f"Multiple notes with name '{name}' found. "
+                "To choose one of them to delete, pass its contents as well."
             )
 
-        filtered_notes = [note for note in master_notes if note.name != name]
+        fresh_notes.pop(matching_indexes[0])  # remove the first matching note
 
-        request_body = bindings.v1PutProjectNotesRequest(notes=filtered_notes, projectId=self.id)
+        request_body = bindings.v1PutProjectNotesRequest(notes=fresh_notes, projectId=self.id)
         resp = bindings.put_PutProjectNotes(
             session=self._session, body=request_body, projectId=self.id
         )
