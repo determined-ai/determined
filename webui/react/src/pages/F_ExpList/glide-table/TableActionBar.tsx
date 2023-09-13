@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
+import ExperimentTensorBoardModal from 'components/ExperimentTensorBoardModal';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import TableFilter from 'components/FilterForm/TableFilter';
 import Button from 'components/kit/Button';
@@ -31,7 +32,6 @@ import {
   Project,
   ProjectColumn,
   ProjectExperiment,
-  RecordKey,
 } from 'types';
 import { notification } from 'utils/dialogApi';
 import handleError, { ErrorLevel } from 'utils/error';
@@ -137,6 +137,8 @@ const TableActionBar: React.FC<Props> = ({
   const [batchAction, setBatchAction] = useState<BatchAction>();
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const { Component: ExperimentTensorBoardModalComponent, open: openExperimentTensorBoardModal } =
+    useModal(ExperimentTensorBoardModal);
   const totalExperiments = Loadable.getOrElse(0, total);
   const isMobile = useMobile();
 
@@ -149,7 +151,7 @@ const TableActionBar: React.FC<Props> = ({
         project,
       );
       return acc;
-    }, {} as Record<RecordKey, ProjectExperiment>);
+    }, {} as Record<number, ProjectExperiment>);
   }, [experiments, project]);
 
   const availableBatchActions = useMemo(() => {
@@ -170,10 +172,19 @@ const TableActionBar: React.FC<Props> = ({
         params.filters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds) };
       }
       switch (action) {
-        case ExperimentAction.OpenTensorBoard:
-          return openCommandResponse(
-            await openOrCreateTensorBoard({ ...params, workspaceId: project?.workspaceId }),
+        case ExperimentAction.OpenTensorBoard: {
+          const isUnmanagedIncluded: boolean = Array.from(selectedExperimentIds).some(
+            (id) => experimentMap[id].unmanaged,
           );
+          if (isUnmanagedIncluded) {
+            openExperimentTensorBoardModal();
+          } else {
+            openCommandResponse(
+              await openOrCreateTensorBoard({ ...params, workspaceId: project?.workspaceId }),
+            );
+          }
+          return;
+        }
         case ExperimentAction.Move:
           return ExperimentMoveModal.open();
         case ExperimentAction.Activate:
@@ -193,12 +204,14 @@ const TableActionBar: React.FC<Props> = ({
       }
     },
     [
+      selectedExperimentIds,
+      selectAll,
+      filters,
       excludedExperimentIds,
       ExperimentMoveModal,
-      filters,
+      experimentMap,
+      openExperimentTensorBoardModal,
       project?.workspaceId,
-      selectAll,
-      selectedExperimentIds,
     ],
   );
 
@@ -413,6 +426,11 @@ const TableActionBar: React.FC<Props> = ({
         sourceProjectId={project.id}
         sourceWorkspaceId={project.workspaceId}
         onSubmit={handleSubmitMove}
+      />
+      <ExperimentTensorBoardModalComponent
+        experimentIds={Array.from(selectedExperimentIds)}
+        filters={selectAll ? filters : undefined}
+        workspaceId={project?.workspaceId}
       />
     </Columns>
   );
