@@ -1,0 +1,39 @@
+---
+name: Create and publish a Docker image for performance tests
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'performance/**'
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Dockerhub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PUBLISH_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: determinedai/perf-test
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: performance/.
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
