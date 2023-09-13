@@ -93,7 +93,7 @@ WHERE task_id = $1
 // NonExperimentTasksModelDef returns a non experiment's tasks model def.
 func NonExperimentTasksModelDef(ctx context.Context, tID model.TaskID) ([]byte, error) {
 	res := &model.NTSCModelDef{}
-	if _, err := Bun().NewSelect().Model(res).Where("task_id = ?", tID).Exec(ctx); err != nil {
+	if err := Bun().NewSelect().Model(res).Where("task_id = ?", tID).Scan(ctx, res); err != nil {
 		return nil, fmt.Errorf("querying task ID %s context directory files: %w", tID, err)
 	}
 

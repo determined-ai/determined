@@ -2271,6 +2271,7 @@ func (a *apiServer) GetModelDef(
 func (a *apiServer) GetTaskModelDef(
 	ctx context.Context, req *apiv1.GetTaskModelDefRequest,
 ) (*apiv1.GetTaskModelDefResponse, error) {
+	fmt.Println(req.TaskId)
 	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId),
 		exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -2280,6 +2281,7 @@ func (a *apiServer) GetTaskModelDef(
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("is Exp", isExp, exp)
 
 	var tgz []byte
 	if isExp {
@@ -2290,12 +2292,15 @@ func (a *apiServer) GetTaskModelDef(
 				req.TaskId, err)
 		}
 	} else {
+		fmt.Println("called here")
 		tgz, err = db.NonExperimentTasksModelDef(ctx, model.TaskID(req.TaskId))
 		if err != nil {
 			return nil, fmt.Errorf(
 				"fetching taskID %s context directory from database: %s", req.TaskId, err)
 		}
 	}
+
+	fmt.Println("len", len(tgz))
 
 	return &apiv1.GetTaskModelDefResponse{
 		B64Tgz: base64.StdEncoding.EncodeToString(tgz),
