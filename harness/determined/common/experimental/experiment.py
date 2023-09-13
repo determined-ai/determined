@@ -215,9 +215,9 @@ class Experiment:
         sort_by: trial.TrialSortBy = trial.TrialSortBy.ID,
         order_by: trial.TrialOrderBy = trial.TrialOrderBy.ASCENDING,
         limit: Optional[int] = None,
-    ) -> List[trial.Trial]:
+    ) -> Iterator[trial.Trial]:
         """
-        Get the list of :class:`~determined.experimental.Trial` instances
+        Get an iterator of :class:`~determined.experimental.Trial` instances
         representing trials for an experiment.
 
         Arguments:
@@ -245,7 +245,9 @@ class Experiment:
 
         resps = api.read_paginated(get_with_offset)
 
-        return [trial.Trial._from_bindings(t, self._session) for r in resps for t in r.trials]
+        for r in resps:
+            for t in r.trials:
+                yield trial.Trial._from_bindings(t, self._session)
 
     def await_first_trial(self, interval: float = 0.1) -> trial.Trial:
         """
