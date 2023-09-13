@@ -23,25 +23,30 @@ if [[ ${WORKLOAD_MANAGER} == pbs ]]; then
     sudo /opt/pbs/bin/qmgr -c "export hook pbs_cgroups application/x-config default" >/tmp/old_pbs_cgroups.json
     sudo cat /tmp/old_pbs_cgroups.json \
         | jq '. += {"nvidia-smi":"/usr/bin/nvidia-smi"}' \
-        | jq '.cgroup.devices += {"enabled":"true"}' \
+        | jq '.cgroup.devices += {"enabled":true}' \
+        | jq '.cgroup.memory += {"enabled":false}' \
         | jq '.cgroup.devices.allow += ["c *:* rwm", ["nvidiactl","rwm","*"]]' \
-        | jq '.cgroup.cpuset += {"enabled":"true"}' >/tmp/pbs_cgroups.json
+        | jq '.cgroup.cpuset += {"enabled":true}' >/tmp/pbs_cgroups.json
     sudo /opt/pbs/bin/qmgr -c "import hook pbs_cgroups application/x-config default /tmp/pbs_cgroups.json"
-    echo INFO: Updated pbs_cgroups.json
+    echo INFO: Updated pbs_cgroups.json - pbs_cgroups hook enbled if GPUs available below
     sudo cat /tmp/pbs_cgroups.json
-    sudo /opt/pbs/bin/qmgr -c "set hook pbs_cgroups enabled=True"
 
     # Enable job history
     echo "set server job_history_enable = true" | sudo /opt/pbs/bin/qmgr
     echo "Set job_history_enable to true"
 
-    # Configure PBS accel_type if GPUs available
+    # Enable cgroups & configure PBS accel_type if GPUs available
     nvidia-smi
     STATUS=$?
-    if [[ $${STATUS} == 0 ]]; then
+    GPU_COUNT=$(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l)
+    if [[ $${STATUS} == 0 && $${GPU_COUNT} -gt 0 ]]; then
         sudo /opt/pbs/bin/qmgr -c "create resource accel_type type=string"
         GRES_TYPE=$(nvidia-smi -i 0 --query-gpu=name --format=csv,noheader | cut -f 1 -d ' ' | tr '[:upper:]' '[:lower:]')
         sudo /opt/pbs/bin/qmgr -c "set node $(hostname) resources_available.accel_type=$${GRES_TYPE}"
+        echo "Configured accel_type $${GRES_TYPE}"
+        sudo /opt/pbs/bin/qmgr -c "set hook pbs_cgroups enabled=True"
+    else
+        echo "No GPUs available.  Leaving pbs_cgroups disabled."
     fi
 
     # Restart to apply GPU changes
