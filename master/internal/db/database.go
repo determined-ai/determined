@@ -97,8 +97,6 @@ type DB interface {
 	UpdateAllocationState(allocation model.Allocation) error
 	UpdateAllocationStartTime(allocation model.Allocation) error
 	UpdateAllocationProxyAddress(allocation model.Allocation) error
-	AddAllocationAcceleratorData(containerID string, a model.Allocation, nodeName string,
-		acceleratorType string, accelerators []string) error
 	ExperimentSnapshot(experimentID int) ([]byte, int, error)
 	SaveSnapshot(
 		experimentID int, version int, experimentSnapshot []byte,

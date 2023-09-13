@@ -143,17 +143,13 @@ func (as *allocationService) SetProxyAddress(
 // SetAcceleratorData sets the accleration data of the allocation.
 func (as *allocationService) SetAcceleratorData(
 	ctx context.Context,
-	containerID string,
-	id model.AllocationID,
-	nodeName string,
-	acceleratorType string,
-	accelerators []string,
+	accData model.AcceleratorData,
 ) error {
-	ref, err := as.waitForRestore(ctx, id)
+	ref, err := as.waitForRestore(ctx, accData.AllocationID)
 	if err != nil {
 		return err
 	}
-	return ref.SetAcceleratorData(ctx, containerID, nodeName, acceleratorType, accelerators)
+	return ref.SetAcceleratorData(ctx, accData)
 }
 
 // WatchRendezvous returns a watcher for the caller to wait for rendezvous to complete. When a

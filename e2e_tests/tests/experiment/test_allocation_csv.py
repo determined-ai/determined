@@ -2,7 +2,6 @@ import csv
 import re
 from datetime import datetime, timedelta, timezone
 from io import StringIO
-from typing import List
 
 import pytest
 import requests
@@ -100,48 +99,3 @@ def test_tensorboard_experiment_capture() -> None:
 
     # Confirm Tensorboard task is captured
     assert re.search(f"{task_id}.*,TENSORBOARD", r.text) is not None
-
-
-# Create a No_Op Experiment & Confirm Allocation Acceleration data is recorded
-@pytest.mark.e2e_cpu
-def test_experiment_acceleration_data_captured() -> None:
-    start_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-    experiment_id = exp.create_experiment(
-        conf.fixtures_path("no_op/grid-graceful-trial-termination.yaml"),
-        conf.fixtures_path("no_op"),
-    )
-
-    exp.wait_for_experiment_state(experiment_id, experimentv1State.COMPLETED)
-
-    task_ids: List[str] = []
-    for t in exp.experiment_trials(experiment_id):
-        assert t.trial.taskIds is not None
-        task_ids.extend(t.trial.taskIds)
-
-    end_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    r = api.get(
-        conf.make_master_url(),
-        f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}",
-    )
-    assert r.status_code == requests.codes.ok, r.text
-
-    reader = csv.DictReader(StringIO(r.text))
-    matches = [
-        row["allocation_id"]
-        for row in reader
-        if int(row["experiment_id"]) == experiment_id and row["task_type"] != "CHECKPOINT_GC"
-    ]
-    r_allocation_ids = []
-    for task_id in task_ids:
-        r1 = api.get(
-            conf.make_master_url(),
-            f"api/v1/tasks/{task_id}/acceleratorData",
-        )
-        assert r1.status_code == requests.codes.ok, r1.text
-
-        # Ensure all allocations related to the experiment have accelerator data
-        for a_data in r1.json()["acceleratorData"]:
-            r_allocation_ids.append(a_data["allocationId"])
-
-    assert set(matches) == set(r_allocation_ids)

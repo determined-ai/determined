@@ -318,12 +318,10 @@ func (a *allocation) SetProxyAddress(_ context.Context, address string) error {
 }
 
 // SetAcceleratorData adds the accelerator data of the allocation.
-func (a *allocation) SetAcceleratorData(_ context.Context, containerID string,
-	nodeName string, acceleratorType string, accelerators []string,
+func (a *allocation) SetAcceleratorData(ctx context.Context, accData model.AcceleratorData,
 ) error {
-	if err := a.db.AddAllocationAcceleratorData(containerID, a.model, nodeName, acceleratorType,
-		accelerators); err != nil {
-		a.crash(err)
+	if err := db.AddAllocationAcceleratorData(ctx, accData); err != nil {
+		logrus.WithError(err)
 		return err
 	}
 	return nil

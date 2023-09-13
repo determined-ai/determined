@@ -117,6 +117,17 @@ type Allocation struct {
 	ProxyAddress *string `db:"proxy_address" bun:"proxy_address"`
 }
 
+// AcceleratorData is the model for an allocation accelerator data in the database.
+type AcceleratorData struct {
+	bun.BaseModel `bun:"table:allocation_accelerators"`
+
+	ContainerID      string       `db:"container_id" bun:"container_id,pk"`
+	AllocationID     AllocationID `db:"allocation_id" bun:"allocation_id,notnull"`
+	NodeName         string       `db:"node_name" bun:"node_name,notnull"`
+	AcceleratorType  string       `db:"accelerator_type" bun:"accelerator_type,notnull"`
+	AcceleratorUuids []string     `db:"accelerator_uuids" bun:"accelerator_uuids,array"`
+}
+
 // AllocationState represents the current state of the task. Value indicates a partial ordering.
 type AllocationState string
 

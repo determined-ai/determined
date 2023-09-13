@@ -99,13 +99,13 @@ func (_m *AllocationService) SendLog(ctx context.Context, id model.AllocationID,
 	_m.Called(ctx, id, log)
 }
 
-// SetAcceleratorData provides a mock function with given fields: ctx, containerID, id, nodeName, acceleratorType, accelerators
-func (_m *AllocationService) SetAcceleratorData(ctx context.Context, containerID string, id model.AllocationID, nodeName string, acceleratorType string, accelerators []string) error {
-	ret := _m.Called(ctx, containerID, id, nodeName, acceleratorType, accelerators)
+// SetAcceleratorData provides a mock function with given fields: ctx, accData
+func (_m *AllocationService) SetAcceleratorData(ctx context.Context, accData model.AcceleratorData) error {
+	ret := _m.Called(ctx, accData)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, model.AllocationID, string, string, []string) error); ok {
-		r0 = rf(ctx, containerID, id, nodeName, acceleratorType, accelerators)
+	if rf, ok := ret.Get(0).(func(context.Context, model.AcceleratorData) error); ok {
+		r0 = rf(ctx, accData)
 	} else {
 		r0 = ret.Error(0)
 	}

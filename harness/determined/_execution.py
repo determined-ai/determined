@@ -23,7 +23,7 @@ class InvalidHP(Exception):
 
 
 def _get_gpus(limit_gpus: Optional[int]) -> Tuple[bool, List[str], List[int]]:
-    gpus = gpu.get_gpus()
+    gpus, _ = gpu.get_gpus()
 
     if limit_gpus is not None:
         gpus = gpus[:limit_gpus]

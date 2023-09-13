@@ -555,8 +555,8 @@ message AcceleratorData {
   string task_id = 4;
   // The type of accelerator.
   string accelerator_type = 5;
-  // An array of IDs of the accelerators associated with the allocation.
-  repeated string accelerators = 6;
+  // An array of UUIDs of the accelerators associated with the allocation.
+  repeated string accelerator_uuids = 6;
 }
 
 // Arguments to an all gather.

@@ -250,15 +250,25 @@ func (a *apiServer) GetTaskAcceleratorData(
 	if req.TaskId == "" {
 		return nil, status.Error(codes.InvalidArgument, "task ID missing")
 	}
+	res := []model.AcceleratorData{}
 	var accelerationData []*apiv1.AcceleratorData
-	err := db.Bun().NewRaw(`
-	select alloc_a.* 
-	from allocation_accelerators as alloc_a, allocations as alloc
-	where alloc.task_id = ?
-	and alloc_a.allocation_id = alloc.allocation_id
-	`, req.TaskId).Scan(ctx, &accelerationData)
+	err := db.Bun().NewSelect().
+		ColumnExpr("a1.*").
+		TableExpr("allocation_accelerators a1").
+		Join("LEFT JOIN allocations a2 ON a1.allocation_id = a2.allocation_id").
+		Where("a2.task_id = ?", req.TaskId).Scan(ctx, &res)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("querying allocation accelerators: %w", err)
+	}
+	for _, r := range res {
+		row := apiv1.AcceleratorData{
+			ContainerId:      r.ContainerID,
+			AllocationId:     string(r.AllocationID),
+			NodeName:         r.NodeName,
+			AcceleratorType:  r.AcceleratorType,
+			AcceleratorUuids: r.AcceleratorUuids,
+		}
+		accelerationData = append(accelerationData, &row)
 	}
 
 	resp := apiv1.GetTaskAcceleratorDataResponse{AcceleratorData: accelerationData}
@@ -277,13 +287,16 @@ func (a *apiServer) PostAllocationAcceleratorData(
 		return nil, err
 	}
 
+	accData := &model.AcceleratorData{
+		ContainerID:      req.AcceleratorData.ContainerId,
+		AllocationID:     model.AllocationID(req.AllocationId),
+		NodeName:         req.AcceleratorData.NodeName,
+		AcceleratorType:  req.AcceleratorData.AcceleratorType,
+		AcceleratorUuids: req.AcceleratorData.AcceleratorUuids,
+	}
 	err := task.DefaultService.SetAcceleratorData(
 		ctx,
-		req.AcceleratorData.ContainerId,
-		model.AllocationID(req.AllocationId),
-		req.AcceleratorData.NodeName,
-		req.AcceleratorData.AcceleratorType,
-		req.AcceleratorData.Accelerators,
+		*accData,
 	)
 	if err != nil {
 		return nil, err

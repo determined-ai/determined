@@ -99,7 +99,6 @@ func (p *pod) configureEnvVars(
 	envVarsMap["DET_MASTER_HOST"] = p.masterIP
 	envVarsMap["DET_MASTER_ADDR"] = p.masterIP
 	envVarsMap["DET_MASTER_PORT"] = fmt.Sprintf("%d", p.masterPort)
-	envVarsMap["DET_AGENT_ID"] = "k8agent"
 	envVarsMap["DET_SLOT_IDS"] = fmt.Sprintf("[%s]", strings.Join(slotIds, ","))
 	if p.masterTLSConfig.CertificateName != "" {
 		envVarsMap["DET_MASTER_CERT_NAME"] = p.masterTLSConfig.CertificateName
@@ -115,7 +114,10 @@ func (p *pod) configureEnvVars(
 	for envVarKey, envVarValue := range envVarsMap {
 		envVars = append(envVars, k8sV1.EnvVar{Name: envVarKey, Value: envVarValue})
 	}
-
+	envVars = append(envVars, k8sV1.EnvVar{
+		Name:      "DET_AGENT_ID",
+		ValueFrom: &k8sV1.EnvVarSource{FieldRef: &k8sV1.ObjectFieldSelector{FieldPath: "spec.nodeName"}},
+	})
 	return envVars, nil
 }
 
