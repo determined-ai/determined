@@ -183,7 +183,7 @@ func (a *apiServer) LaunchShell(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
+	launchReq, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		WorkspaceID:  req.WorkspaceId,
 		Config:       req.Config,
@@ -193,6 +193,7 @@ func (a *apiServer) LaunchShell(
 		return nil, api.WrapWithFallbackCode(err, codes.InvalidArgument,
 			"failed to prepare launch params")
 	}
+	spec := launchReq.Spec
 
 	if err = a.isNTSCPermittedToLaunch(ctx, spec, user); err != nil {
 		return nil, err
@@ -265,7 +266,7 @@ func (a *apiServer) LaunchShell(
 
 	// Launch a Shell actor.
 	var shellID model.TaskID
-	if err := a.ask(shellsAddr, *spec, &shellID); err != nil {
+	if err := a.ask(shellsAddr, launchReq, &shellID); err != nil {
 		return nil, err
 	}
 

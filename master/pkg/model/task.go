@@ -406,6 +406,14 @@ func (t TaskLogBatch) ForEach(f func(interface{}) error) error {
 	return nil
 }
 
+// NTSCModelDef represents a row in database for non experiment's model def.
+type NTSCModelDef struct {
+	bun.BaseModel `bun:"table:ntsc_model_definition"`
+
+	TaskID          TaskID `bun:"task_id"`
+	ModelDefinition []byte `bun:"model_definition"`
+}
+
 // AccessScopeID is an identifier for an access scope.
 type AccessScopeID int
 

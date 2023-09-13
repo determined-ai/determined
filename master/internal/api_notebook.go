@@ -223,7 +223,7 @@ func (a *apiServer) LaunchNotebook(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
+	launchReq, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		WorkspaceID:  req.WorkspaceId,
 		Config:       req.Config,
@@ -233,6 +233,7 @@ func (a *apiServer) LaunchNotebook(
 		return nil, api.WrapWithFallbackCode(err, codes.InvalidArgument,
 			"failed to prepare launch params")
 	}
+	spec := launchReq.Spec
 
 	if err = a.isNTSCPermittedToLaunch(ctx, spec, user); err != nil {
 		return nil, err
@@ -332,7 +333,7 @@ func (a *apiServer) LaunchNotebook(
 
 	// Launch a Notebook actor.
 	var notebookID model.TaskID
-	if err = a.ask(notebooksAddr, *spec, &notebookID); err != nil {
+	if err = a.ask(notebooksAddr, launchReq, &notebookID); err != nil {
 		return nil, err
 	}
 

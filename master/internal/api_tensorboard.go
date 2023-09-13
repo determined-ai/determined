@@ -209,7 +209,7 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
+	launchReq, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		WorkspaceID:  req.WorkspaceId,
 		Config:       req.Config,
@@ -220,6 +220,7 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, api.WrapWithFallbackCode(err, codes.InvalidArgument,
 			"failed to prepare launch params")
 	}
+	spec := launchReq.Spec
 	spec.TaskType = model.TaskTypeTensorboard
 	spec.Metadata.ExperimentIDs = req.ExperimentIds
 	spec.Metadata.TrialIDs = req.TrialIds
@@ -433,7 +434,7 @@ func (a *apiServer) LaunchTensorboard(
 
 	// Launch a TensorBoard actor.
 	var tbID model.TaskID
-	if err = a.ask(tensorboardsAddr, *spec, &tbID); err != nil {
+	if err = a.ask(tensorboardsAddr, spec, &tbID); err != nil {
 		return nil, err
 	}
 

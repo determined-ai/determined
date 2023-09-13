@@ -46,7 +46,9 @@ type GenericCommandSpec struct {
 
 	CommandID string
 
-	Config          model.CommandConfig
+	Config model.CommandConfig
+	// Deprecated: kept so we can still marshal to this.
+	// Please use command.CreateGenericCommand.modelDef instead.
 	UserFiles       archive.Archive
 	AdditionalFiles archive.Archive
 	Metadata        genericCommandSpecMetadata

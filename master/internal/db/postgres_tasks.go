@@ -90,6 +90,16 @@ WHERE task_id = $1
 	return &t, nil
 }
 
+// NonExperimentTasksModelDef returns a non experiment's tasks model def.
+func NonExperimentTasksModelDef(ctx context.Context, tID model.TaskID) ([]byte, error) {
+	res := &model.NTSCModelDef{}
+	if _, err := Bun().NewSelect().Model(res).Where("task_id = ?", tID).Exec(ctx); err != nil {
+		return nil, fmt.Errorf("querying task ID %s context directory files: %w", tID, err)
+	}
+
+	return res.ModelDefinition, nil
+}
+
 // CompleteTask persists the completion of a task.
 func (db *PgDB) CompleteTask(tID model.TaskID, endTime time.Time) error {
 	return completeTask(db.sql, tID, endTime)

@@ -747,10 +747,12 @@ message TrialsSampleResponse {
   repeated int32 demoted_trials = 3;
 }
 
-// Request for an experiment model definition.
+// Request for a task's files.
 message GetModelDefRequest {
-  // The id of the experiment.
-  int32 experiment_id = 1;
+  // The id of the experiment. Use task_id instead.
+  int32 experiment_id = 1 [deprecated = true];
+  // The requested task's id.
+  string task_id = 2;
 }
 
 // Response to GetModelDefRequest.

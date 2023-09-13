@@ -165,6 +165,10 @@ func TestGetExperimentLabels(t *testing.T) {
 	require.Subset(t, resp.Labels, labels)
 }
 
+func TestGetModelDef(t *testing.T) {
+	// TODO(nick)
+}
+
 func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	exp := createTestExp(t, api, curUser)

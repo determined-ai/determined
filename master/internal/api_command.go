@@ -64,7 +64,7 @@ type protoCommandParams struct {
 
 func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoCommandParams,
 	aUser *model.User) (
-	*tasks.GenericCommandSpec, []pkgCommand.LaunchWarning, error,
+	*command.CreateGeneric, []pkgCommand.LaunchWarning, error,
 ) {
 	var err error
 	cmdSpec := tasks.GenericCommandSpec{}
@@ -174,9 +174,9 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		(*expconf.PodSpec)(taskContainerPodSpec),
 	))
 
-	var userFiles archive.Archive
+	var modelDef []byte
 	if len(req.Files) > 0 {
-		userFiles = filesToArchive(req.Files)
+		userFiles := filesToArchive(req.Files)
 
 		workdirSetInReq := config.WorkDir != nil &&
 			(workDirInDefaults == nil || *workDirInDefaults != *config.WorkDir)
@@ -185,6 +185,13 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 				"cannot set work_dir and context directory at the same time")
 		}
 		config.WorkDir = nil
+
+		// TODO(nick) do we need a path like ToRelocatedTarGz?
+		modelDef, err = archive.ToTarGz(userFiles)
+		if err != nil {
+			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
+				fmt.Errorf("compressing files context files: %w", err).Error())
+		}
 	}
 
 	extConfig := mconfig.GetMasterConfig().InternalConfig.ExternalSessions
@@ -209,8 +216,11 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 
 	cmdSpec.Base = taskSpec
 	cmdSpec.Config = config
-	cmdSpec.UserFiles = userFiles
-	return &cmdSpec, launchWarnings, nil
+
+	return &command.CreateGeneric{
+		Spec:     &cmdSpec,
+		ModelDef: modelDef,
+	}, launchWarnings, nil
 }
 
 func (a *apiServer) GetCommands(
@@ -343,7 +353,7 @@ func (a *apiServer) LaunchCommand(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
+	launchReq, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		WorkspaceID:  req.WorkspaceId,
 		Config:       req.Config,
@@ -353,6 +363,7 @@ func (a *apiServer) LaunchCommand(
 		return nil, api.WrapWithFallbackCode(err, codes.InvalidArgument,
 			"failed to prepare launch params")
 	}
+	spec := launchReq.Spec
 
 	if err = a.isNTSCPermittedToLaunch(ctx, spec, user); err != nil {
 		return nil, err
@@ -387,7 +398,7 @@ func (a *apiServer) LaunchCommand(
 
 	// Launch a command actor.
 	var cmdID model.TaskID
-	if err = a.ask(commandsAddr, *spec, &cmdID); err != nil {
+	if err = a.ask(commandsAddr, launchReq, &cmdID); err != nil {
 		return nil, err
 	}
 

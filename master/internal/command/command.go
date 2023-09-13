@@ -67,14 +67,15 @@ func createGenericCommandActor(
 	taskType model.TaskType,
 	jobID model.JobID,
 	jobType model.JobType,
-	spec tasks.GenericCommandSpec,
+	spec *tasks.GenericCommandSpec,
+	modelDef []byte,
 ) error {
 	spec.TaskType = taskType
 	cmd := &command{
 		db: db,
 		rm: rm,
 
-		GenericCommandSpec: spec,
+		GenericCommandSpec: *spec,
 
 		taskID:   taskID,
 		taskType: taskType,
@@ -86,6 +87,8 @@ func createGenericCommandActor(
 			"task-id":   taskID,
 			"task-type": taskType,
 		},
+
+		modelDef: modelDef,
 	}
 
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
@@ -216,6 +219,8 @@ type command struct {
 	exitStatus     *task.AllocationExited
 	restored       bool
 
+	modelDef []byte // Don't rely on this being set outsides of PreStart non restore case.
+
 	logCtx logger.Context
 }
 
@@ -226,6 +231,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.AddLabels(c.logCtx)
 		c.allocationID = model.AllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 		if !c.restored {
+			// TODO all this stuff should be in transactions.
 			c.registeredTime = ctx.Self().RegisteredTime().Truncate(time.Millisecond)
 			if err := c.db.AddJob(&model.Job{
 				JobID:   c.jobID,
@@ -243,6 +249,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 				LogVersion: model.CurrentTaskLogVersion,
 			}); err != nil {
 				return errors.Wrapf(err, "persisting task %v", c.taskID)
+			}
+
+			if err := c.persistAndEvictModelDefFromMemory(); err != nil {
+				return err
 			}
 		}
 
@@ -652,6 +662,23 @@ func (c *command) toV1Job() *jobv1.Job {
 	j.ResourcePool = c.Config.Resources.ResourcePool
 
 	return &j
+}
+
+func (c *command) persistAndEvictModelDefFromMemory() error {
+	if c.modelDef == nil {
+		// TODO(nick) -> must it?
+		return fmt.Errorf("command must have non nil model def?")
+	}
+
+	if _, err := db.Bun().NewInsert().Model(&model.NTSCModelDef{
+		TaskID:          c.taskID,
+		ModelDefinition: c.modelDef,
+	}).Exec(context.TODO()); err != nil {
+		return fmt.Errorf("persisting context directory files: %w", err)
+	}
+
+	c.modelDef = nil
+	return nil
 }
 
 func (c *command) snapshot() *CommandSnapshot {

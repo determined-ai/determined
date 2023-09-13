@@ -18,6 +18,12 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
 )
 
+// CreateGeneric is a request to managers to create a generic command.
+type CreateGeneric struct {
+	ModelDef []byte
+	Spec     *tasks.GenericCommandSpec
+}
+
 type commandManager struct {
 	db *db.PgDB
 	rm rm.ResourceManager
@@ -51,13 +57,13 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 	case *apiv1.DeleteWorkspaceRequest:
 		ctx.TellAll(msg, ctx.Children()...)
 
-	case tasks.GenericCommandSpec:
+	case CreateGeneric:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
-		msg.CommandID = string(taskID)
+		msg.Spec.CommandID = string(taskID)
 		if err := createGenericCommandActor(
 			ctx, c.db, c.rm, taskID, model.TaskTypeCommand, jobID,
-			model.JobTypeCommand, msg,
+			model.JobTypeCommand, msg.Spec, msg.ModelDef,
 		); err != nil {
 			ctx.Log().WithError(err).Error("failed to launch command")
 			ctx.Respond(err)
