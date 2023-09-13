@@ -104,7 +104,8 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
 
   const handleSubmit = async () => {
     try {
-      const formData = await form.validateFields();
+      setTimeout(() => form.validateFields()); // setTimeout required due to antd form update lifecycle
+      const formData = form.getFieldsValue();
 
       if (group) {
         const nameUpdated = !_.isEqual(formData.name, groupDetail?.name);

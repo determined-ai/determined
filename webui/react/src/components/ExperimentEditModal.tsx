@@ -35,10 +35,11 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
   const [disabled, setDisabled] = useState<boolean>(true);
 
   const handleSubmit = async () => {
-    const values = await form.validateFields();
+    setTimeout(() => form.validateFields()); // setTimeout required due to antd form update lifecycle
+    const formData = form.getFieldsValue();
     try {
       await patchExperiment({
-        body: { description: values.description, name: values.experimentName },
+        body: { description: formData.description, name: formData.experimentName },
         experimentId,
       });
       fetchExperimentDetails();

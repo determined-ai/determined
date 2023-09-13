@@ -285,7 +285,7 @@ const ExperimentCreateModalComponent = ({
     if (isAdvancedMode) {
       userConfig = (yaml.load(modalState.configString) || {}) as RawJson;
     } else {
-      await form?.validateFields();
+      setTimeout(() => form.validateFields()); // setTimeout required due to antd form update lifecycle
       userConfig = modalState.config;
     }
 

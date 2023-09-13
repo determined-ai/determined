@@ -91,7 +91,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
       form.resetFields();
       return;
     }
-    await form.validateFields();
+    setTimeout(() => form.validateFields()); // setTimeout required due to antd form update lifecycle
 
     const formData = form.getFieldsValue();
 
