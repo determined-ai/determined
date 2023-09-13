@@ -15,6 +15,7 @@ import css from './ProjectCard.module.scss';
 
 interface Props {
   hideActionMenu?: boolean;
+  onEdit?: (name: string, archived: boolean) => void;
   onRemove?: () => void;
   project: Project;
   showWorkspace?: boolean;
@@ -24,12 +25,14 @@ interface Props {
 const ProjectCard: React.FC<Props> = ({
   hideActionMenu,
   onRemove,
+  onEdit,
   project,
   showWorkspace,
   workspaceArchived,
 }: Props) => {
   const { contextHolders, menu, onClick } = useProjectActionMenu({
     onDelete: onRemove,
+    onEdit,
     onMove: onRemove,
     project,
     workspaceArchived,

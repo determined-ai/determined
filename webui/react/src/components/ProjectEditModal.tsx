@@ -15,7 +15,7 @@ interface FormInputs {
 }
 
 interface Props {
-  onEdit?: () => void;
+  onEdit?: (name: string, archived: boolean) => void;
   project: Project;
 }
 
@@ -30,6 +30,7 @@ const ProjectEditModalComponent: React.FC<Props> = ({ onEdit, project }: Props) 
 
     try {
       await patchProject({ description, id: project.id, name });
+      onEdit?.(name, project.archived);
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -39,7 +40,7 @@ const ProjectEditModalComponent: React.FC<Props> = ({ onEdit, project }: Props) 
         type: ErrorType.Server,
       });
     }
-  }, [form, project.id]);
+  }, [onEdit, form, project.id, project.archived]);
 
   return (
     <Modal
@@ -54,7 +55,6 @@ const ProjectEditModalComponent: React.FC<Props> = ({ onEdit, project }: Props) 
       title="Edit Project"
       onClose={() => {
         form.resetFields();
-        onEdit?.();
       }}>
       <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
         <Form.Item

@@ -20,8 +20,8 @@ interface Props {
   direction?: 'vertical' | 'horizontal';
   isContextMenu?: boolean;
   onDelete?: () => void;
-  onEdit?: () => void;
-  onVisibleChange?: (visible: boolean) => void;
+  onEdit?: (name: string, archived: boolean) => void;
+  onMove?: () => void;
   project: Project;
   showChildrenIfEmpty?: boolean;
   workspaceArchived?: boolean;
@@ -29,7 +29,7 @@ interface Props {
 
 interface ProjectMenuPropsIn {
   onDelete?: () => void;
-  onEdit?: () => void;
+  onEdit?: (name: string, archived: boolean) => void;
   onMove?: () => void;
   project?: Project;
   workspaceArchived?: boolean;
@@ -74,14 +74,14 @@ export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPro
     if (project.archived) {
       try {
         await unarchiveProject({ id: project.id });
-        onEdit?.();
+        onEdit?.(project.name, false);
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to unarchive project.' });
       }
     } else {
       try {
         await archiveProject({ id: project.id });
-        onEdit?.();
+        onEdit?.(project.name, true);
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to archive project.' });
       }
@@ -151,11 +151,13 @@ const ProjectActionDropdown: React.FC<Props> = ({
   direction = 'vertical',
   onEdit,
   onDelete,
+  onMove,
   workspaceArchived = false,
 }: Props) => {
   const { contextHolders, menu, onClick } = useProjectActionMenu({
     onDelete,
     onEdit,
+    onMove,
     project,
     workspaceArchived,
   });
