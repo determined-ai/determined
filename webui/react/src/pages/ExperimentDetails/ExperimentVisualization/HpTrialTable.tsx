@@ -3,13 +3,6 @@ import { TablePaginationConfig } from 'antd/es/table/interface';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import {
-  ColorScale,
-  glasbeyColor,
-  rgba2str,
-  rgbaFromGradient,
-  str2rgba,
-} from 'components/kit/utils/color';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
@@ -26,6 +19,7 @@ import {
   Primitive,
   UnknownRecord,
 } from 'types';
+import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 import { isNumber } from 'utils/data';
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'utils/sort';
 

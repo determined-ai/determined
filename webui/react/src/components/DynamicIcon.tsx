@@ -1,8 +1,8 @@
 import React, { CSSProperties, useMemo } from 'react';
 
 import useUI from 'components/kit/contexts/UI';
-import { hex2hsl, hsl2str } from 'components/kit/utils/color';
 import { DarkLight } from 'components/kit/utils/themes';
+import { hex2hsl, hsl2str } from 'utils/color';
 import md5 from 'utils/md5';
 
 import css from './DynamicIcon.module.scss';

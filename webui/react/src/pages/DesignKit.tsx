@@ -44,16 +44,6 @@ import Paragraph from 'components/kit/Typography/Paragraph';
 import useConfirm, { voidPromiseFn } from 'components/kit/useConfirm';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
-import {
-  Background,
-  Brand,
-  Float,
-  Interactive,
-  Overlay,
-  Stage,
-  Status,
-  Surface,
-} from 'components/kit/utils/colors';
 import Label from 'components/Label';
 import Logo from 'components/Logo';
 import Page from 'components/Page';
@@ -67,6 +57,16 @@ import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, Note, User, ValueOf } from 'types';
+import {
+  Background,
+  Brand,
+  Float,
+  Interactive,
+  Overlay,
+  Stage,
+  Status,
+  Surface,
+} from 'utils/colors';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum, { loremIpsumSentence } from 'utils/loremIpsum';

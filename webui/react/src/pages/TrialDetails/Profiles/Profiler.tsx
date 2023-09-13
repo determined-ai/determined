@@ -2,9 +2,9 @@ import dayjs from 'dayjs';
 import React from 'react';
 import uPlot from 'uplot';
 
-import { glasbeyColor } from 'components/kit/utils/color';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { TrialDetails } from 'types';
+import { glasbeyColor } from 'utils/color';
 
 import SystemMetricChart from './Charts/SystemMetricChart';
 import ThroughputMetricChart from './Charts/ThroughputMetricChart';
