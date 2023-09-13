@@ -342,7 +342,7 @@ func GetGroupsFromUsersTx(ctx context.Context, idb bun.IDB, users []*rbacv1.User
 
 	var groups []*rbacv1.GroupRoleAssignment
 	for _, user := range users {
-		var g usergroup.Group
+		var g model.Group
 		err := idb.NewSelect().Model(&g).Where("user_id = ?", user.UserId).Scan(ctx)
 		if err != nil {
 			return nil, errors.Wrapf(db.MatchSentinelError(err),
@@ -506,7 +506,7 @@ func GetRolesWithAssignmentsOnWorkspace(ctx context.Context, workspaceID int) ([
 // and what groups they are in that are assigned to the workspace.
 func GetUsersAndGroupMembershipOnWorkspace(
 	ctx context.Context, workspaceID int,
-) ([]model.User, []usergroup.GroupMembership, error) {
+) ([]model.User, []model.GroupMembership, error) {
 	var users []model.User
 	if err := db.Bun().NewSelect().Model(&users).
 		Distinct().
@@ -519,7 +519,7 @@ func GetUsersAndGroupMembershipOnWorkspace(
 		return nil, nil, err
 	}
 
-	var membership []usergroup.GroupMembership
+	var membership []model.GroupMembership
 	if err := db.Bun().NewSelect().Model(&membership).
 		Join(`INNER JOIN groups ON "group_membership".group_id = groups.id`).
 		Where("groups.user_id IS NULL").

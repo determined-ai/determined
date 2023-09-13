@@ -29,15 +29,15 @@ const (
 )
 
 var (
-	testGroupStatic = usergroup.Group{
+	testGroupStatic = model.Group{
 		ID:   10001,
 		Name: "testGroupStatic",
 	}
-	testGroupStatic2 = usergroup.Group{
+	testGroupStatic2 = model.Group{
 		ID:   10002,
 		Name: "testGroupStatic2",
 	}
-	testGroupOwnedByUser = usergroup.Group{} // Auto created upon user creation.
+	testGroupOwnedByUser = model.Group{} // Auto created upon user creation.
 	testUser             = model.User{
 		ID:       1217651234,
 		Username: fmt.Sprintf("IntegrationTest%d", 1217651234),
@@ -210,7 +210,7 @@ func TestRbac(t *testing.T) {
 		require.Equal(t, testRole.ID, assignment.RoleID, "incorrect role ID was assigned")
 		require.Equal(t, assignmentScope.ID, assignment.ScopeID, "incorrect scope ID was assigned")
 
-		updatedTestUser, err := user.UserByID(testUser.ID)
+		updatedTestUser, err := user.ByID(context.TODO(), testUser.ID)
 		require.NoError(t, err, "returned error when querying updated user")
 		require.Greater(t, updatedTestUser.ModifiedAt, testStart,
 			"Users.modified_at not updated when role is assigned")
@@ -231,7 +231,7 @@ func TestRbac(t *testing.T) {
 		require.Errorf(t, err, "assignment should not exist after removal")
 		require.True(t, errors.Is(db.MatchSentinelError(err), db.ErrNotFound), "incorrect error returned")
 
-		updatedTestUser, err := user.UserByID(testUser.ID)
+		updatedTestUser, err := user.ByID(context.TODO(), testUser.ID)
 		require.NoError(t, err, "returned error when querying updated user")
 		require.Greater(t, updatedTestUser.ModifiedAt, testStart,
 			"Users.modified_at not updated when role is removed")
@@ -597,7 +597,7 @@ func TestRbac(t *testing.T) {
 }
 
 func setUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
-	_, err := pgDB.AddUser(&testUser, nil)
+	_, err := db.HackAddUser(context.TODO(), &testUser)
 	require.NoError(t, err, "failure creating user in setup")
 
 	_, _, err = usergroup.AddGroupWithMembers(ctx, testGroupStatic, testUser.ID)
@@ -747,13 +747,13 @@ func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
 
 	// Add users and assignments.
 	user0 := model.User{Username: uuid.New().String()}
-	_, err = pgDB.AddUser(&user0, nil)
+	_, err = db.HackAddUser(context.TODO(), &user0)
 	require.NoError(t, err)
 	user1 := model.User{Username: uuid.New().String()}
-	_, err = pgDB.AddUser(&user1, nil)
+	_, err = db.HackAddUser(context.TODO(), &user1)
 	require.NoError(t, err)
 	user2 := model.User{Username: uuid.New().String()}
-	_, err = pgDB.AddUser(&user2, nil)
+	_, err = db.HackAddUser(context.TODO(), &user2)
 	require.NoError(t, err)
 	require.NoError(t, AddRoleAssignments(ctx, nil,
 		[]*rbacv1.UserRoleAssignment{
@@ -813,15 +813,15 @@ func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
 	require.Len(t, membership, 0) // Personal groups don't show.
 
 	// Add groups and group assignments.
-	group0, _, err := usergroup.AddGroupWithMembers(ctx, usergroup.Group{Name: uuid.New().String()},
+	group0, _, err := usergroup.AddGroupWithMembers(ctx, model.Group{Name: uuid.New().String()},
 		user0.ID)
 	require.NoError(t, err)
-	group1, _, err := usergroup.AddGroupWithMembers(ctx, usergroup.Group{Name: uuid.New().String()},
+	group1, _, err := usergroup.AddGroupWithMembers(ctx, model.Group{Name: uuid.New().String()},
 		user0.ID, user1.ID)
 	require.NoError(t, err)
-	group2, _, err := usergroup.AddGroupWithMembers(ctx, usergroup.Group{Name: uuid.New().String()})
+	group2, _, err := usergroup.AddGroupWithMembers(ctx, model.Group{Name: uuid.New().String()})
 	require.NoError(t, err)
-	group3, _, err := usergroup.AddGroupWithMembers(ctx, usergroup.Group{Name: uuid.New().String()},
+	group3, _, err := usergroup.AddGroupWithMembers(ctx, model.Group{Name: uuid.New().String()},
 		user2.ID)
 	require.NoError(t, err)
 	require.NoError(t, AddRoleAssignments(ctx, []*rbacv1.GroupRoleAssignment{
@@ -905,7 +905,7 @@ func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
 	sort.Slice(users, func(i, j int) bool { return users[i].ID < users[j].ID })
 	require.Equal(t, user0.ID, users[0].ID)
 	require.Equal(t, user1.ID, users[1].ID)
-	require.ElementsMatch(t, membership, []usergroup.GroupMembership{
+	require.ElementsMatch(t, membership, []model.GroupMembership{
 		{UserID: user0.ID, GroupID: group0.ID},
 		{UserID: user0.ID, GroupID: group1.ID},
 		{UserID: user1.ID, GroupID: group1.ID},

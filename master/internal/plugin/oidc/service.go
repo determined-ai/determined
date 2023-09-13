@@ -141,7 +141,7 @@ func (s *Service) callback(c echo.Context) error {
 			return errNotProvisioned
 		}
 
-		u, err = user.UserByUsername(claimValue)
+		u, err = user.ByUsername(context.TODO(), claimValue)
 		if errors.Is(err, db.ErrNotFound) {
 			return errNotProvisioned
 		} else if err != nil {
@@ -160,7 +160,7 @@ func (s *Service) callback(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "user is inactive")
 	}
 
-	token, err := s.db.StartUserSession(u)
+	token, err := user.StartSession(context.TODO(), u)
 	if err != nil {
 		return err
 	}

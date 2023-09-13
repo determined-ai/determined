@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"sort"
@@ -101,7 +102,7 @@ func (db *PgDB) AddSCIMUser(suser *model.SCIMUser) (*model.SCIMUser, error) {
 		}
 	}()
 
-	userID, err := addUser(tx, user)
+	userID, err := HackAddUser(context.TODO(), user)
 	if err != nil {
 		return nil, err
 	}
@@ -366,7 +367,7 @@ func (db *PgDB) updateSCIMUser(tx *sqlx.Tx, user *model.SCIMUser, fields []strin
 		stmt, err := tx.PrepareNamed(fmt.Sprintf(`
 UPDATE users
 %v
-WHERE id = (SELECT user_id FROM scim.users s WHERE s.id = :id)`, setClause(fs)))
+WHERE id = (SELECT user_id FROM scim.users s WHERE s.id = :id)`, SetClause(fs)))
 		if err == sql.ErrNoRows {
 			return errors.WithStack(ErrNotFound)
 		} else if err != nil {
@@ -384,7 +385,7 @@ WHERE id = (SELECT user_id FROM scim.users s WHERE s.id = :id)`, setClause(fs)))
 		stmt, err := tx.PrepareNamed(fmt.Sprintf(`
 UPDATE scim.users
 %v
-WHERE id = :id`, setClause(fs)))
+WHERE id = :id`, SetClause(fs)))
 		if err == sql.ErrNoRows {
 			return errors.WithStack(ErrNotFound)
 		} else if err != nil {
