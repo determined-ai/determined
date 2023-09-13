@@ -398,7 +398,11 @@ def test_cmd_kill() -> None:
         assert command.task_id is not None
         for line in command.stdout:
             if "hello world" in line:
-                assert cmd.get_num_running_commands() == 1
+                # For HPC job, dispatcher does the polling of the job state happens
+                # every 10 seconds. For example, it is very likely the current job state is
+                # STATE_PULLING when job is actually running on HPC. So instead of checking
+                # for STATE_RUNNING, we check for other active states as well.
+                assert cmd.get_num_active_commands() == 1
                 break
 
 
