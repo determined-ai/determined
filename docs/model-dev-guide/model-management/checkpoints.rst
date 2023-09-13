@@ -82,7 +82,7 @@ selection within a trial. It contains a
 :meth:`~determined.experimental.client.Trial.list_checkpoints` method, which mirrors
 :meth:`~determined.experimental.client.Experiment.list_checkpoints` for an experiment.
 
-The following snippet showcases how to select the latest checkpoint for a trial.
+The snippet below demonstrates how to select the most recent checkpoint for a trial.
 
 .. code:: python
 
