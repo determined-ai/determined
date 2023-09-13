@@ -272,7 +272,7 @@ def auto_complete_binding(available_calls: List[str], fn_name: str) -> str:
             f"no exact matches for '{fn_name}'. Did you mean:" + "\n{}".format("\n".join(matches))
         )
     indexed_matches = [f"{idx}: {match}" for idx, match in list(enumerate(matches))]
-    user_idx = (
+    selected_idx = (
         input(
             f"{len(matches)} call(s) matched '{fn_name}'."
             + " Pick one by index.\n"
@@ -281,7 +281,7 @@ def auto_complete_binding(available_calls: List[str], fn_name: str) -> str:
         )
         or "0"
     )
-    fn_name = matches[int(user_idx.strip())]
+    fn_name = matches[int(selected_idx.strip())]
     return fn_name
 
 
