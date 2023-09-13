@@ -3003,6 +3003,11 @@ workflows:
               accel-node-taints: ["accel=truth:NoSchedule"]
 
   test-e2e-quarantined:
+    # temporarily only run e2e nightly
+    when:
+      and:
+        - equal: [ scheduled_pipeline, <<pipeline.trigger_source>> ]
+        - equal: [ nightly_tests, <<pipeline.schedule.name>> ]
     jobs:
       - build-proto
       - build-helm
