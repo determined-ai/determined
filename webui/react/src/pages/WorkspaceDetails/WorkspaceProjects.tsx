@@ -327,6 +327,13 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     [workspace?.archived],
   );
 
+  const onProjectRemove = useCallback(
+    (id: number) => {
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+    },
+    [setProjects],
+  );
+
   const projectsList = useMemo(() => {
     if (!settings) return <Spinner spinning />;
 
@@ -337,9 +344,9 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             {projects.map((project) => (
               <ProjectCard
                 key={project.id}
-                onRemove={() => onProjectRemove(project.id)}
                 project={project}
                 workspaceArchived={workspace?.archived}
+                onRemove={() => onProjectRemove(project.id)}
               />
             ))}
           </Card.Group>
@@ -369,9 +376,9 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   }, [
     actionDropdown,
     columns,
-    fetchProjects,
     isLoading,
     loadableUsers,
+    onProjectRemove,
     pageRef,
     projects,
     settings,

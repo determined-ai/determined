@@ -58,10 +58,7 @@ export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPro
         {project && (
           <>
             <ProjectMoveModal.Component project={project} onMove={onMove} />
-            <ProjectDeleteModal.Component
-              project={project}
-              onDelete={onDelete}
-            />
+            <ProjectDeleteModal.Component project={project} onDelete={onDelete} />
             <ProjectEditModal.Component project={project} onEdit={onEdit} />
           </>
         )}
@@ -157,8 +154,8 @@ const ProjectActionDropdown: React.FC<Props> = ({
   workspaceArchived = false,
 }: Props) => {
   const { contextHolders, menu, onClick } = useProjectActionMenu({
-    onEdit,
     onDelete,
+    onEdit,
     project,
     workspaceArchived,
   });
