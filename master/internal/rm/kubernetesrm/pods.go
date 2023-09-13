@@ -468,28 +468,9 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 		return nil
 	}
 
-	// This is needed to label pods created before Determined supported k8s agent enable disable.
-	// We will not reattach pods that are queued and don't have the affinity that respects
-	// agent disabling. Not many people should be relying on this feature when this will be released
-	// since it was behind _agent_reattach_enabled until the version this is also released on.
-	// We can't patch the pods with the needed field, as a limitation of Kubernetes.
-	for _, pod := range k8sPods {
-		pod := pod
-		if pod.Spec.NodeName == "" { // Only do this for pods not assigned to a node yet.
-			before := pod.DeepCopy()
-			addNodeDisabledAffinityToPodSpec(pod, clusterIDNodeLabel())
-
-			if !reflect.DeepEqual(pod.Spec, before.Spec) {
-				p.deleteKubernetesResources(ctx, pods, configMaps)
-				ctx.Respond(fmt.Errorf(
-					"unable to restore pod %s since it was queued and does not have "+
-						"Determined's affinity to prevent scheduling on disabled nodes. "+
-						"This is expected to happen on allocations with queued pods "+
-						"when upgrading from before or equal to 0.25.1 "+
-						"to after or equal to 0.26.0", pod.Name))
-				return nil
-			}
-		}
+	if err := p.dontReattachQueuedPreAgentDisabledPods(ctx, pods, configMaps); err != nil {
+		ctx.Respond(err)
+		return nil
 	}
 
 	var restoreResponses []reattachPodResponse
@@ -506,6 +487,35 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 	}
 
 	ctx.Respond(restoreResponses)
+	return nil
+}
+
+func (p *pods) dontReattachQueuedPreAgentDisabledPods(
+	ctx *actor.Context, pods *k8sV1.PodList, configMaps *k8sV1.ConfigMapList,
+) error {
+	// This is needed to label pods created before Determined supported k8s agent enable disable.
+	// We will not reattach pods that are queued and don't have the affinity that respects
+	// agent disabling. Not many people should be relying on this feature when this will be released
+	// since it was behind _agent_reattach_enabled until the version this is also released on.
+	// We can't patch the pods with the needed field, as a limitation of Kubernetes.
+	for _, pod := range pods.Items {
+		pod := pod
+		if pod.Spec.NodeName == "" { // Only do this for pods not assigned to a node yet.
+			before := pod.DeepCopy()
+			addNodeDisabledAffinityToPodSpec(&pod, clusterIDNodeLabel())
+
+			if !reflect.DeepEqual(pod.Spec, before.Spec) {
+				p.deleteKubernetesResources(ctx, pods, configMaps)
+				return fmt.Errorf(
+					"unable to restore pod %s since it was queued and does not have "+
+						"Determined's affinity to prevent scheduling on disabled nodes. "+
+						"This is expected to happen on allocations with queued pods "+
+						"when upgrading from before or equal to 0.25.1 "+
+						"to after or equal to 0.26.0", pod.Name)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -1034,7 +1044,7 @@ func (p *pods) releaseAllocationsOnDisabledNode(ctx *actor.Context, nodeName str
 		return fmt.Errorf("listing pods on node %s: %w", nodeName, err)
 	}
 
-	allocIDs := make(map[model.AllocationID]bool)
+	notifiedAllocations := make(map[model.AllocationID]bool)
 	for _, pod := range pods.Items {
 		podHandler, ok := p.podNameToPodHandler[pod.Name]
 		if !ok {
@@ -1045,7 +1055,7 @@ func (p *pods) releaseAllocationsOnDisabledNode(ctx *actor.Context, nodeName str
 
 		p.syslog.Infof(
 			"stopping pod %s because node %s was disabled without drain option", pod.Name, nodeName)
-		if allocIDs[podHandler.allocationID] { // Only send disabled event once per allocationID.
+		if notifiedAllocations[podHandler.allocationID] {
 			continue
 		}
 
@@ -1053,7 +1063,7 @@ func (p *pods) releaseAllocationsOnDisabledNode(ctx *actor.Context, nodeName str
 			Reason:    "node disabled without drain",
 			ForceKill: true,
 		})
-		allocIDs[podHandler.allocationID] = true
+		notifiedAllocations[podHandler.allocationID] = true
 	}
 
 	return nil
