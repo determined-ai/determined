@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 
 	"github.com/determined-ai/determined/master/internal/authz"
@@ -40,7 +41,7 @@ func (a *apiServer) GetJobs(
 		req.Limit = 100
 	}
 
-	return resp, a.paginate(&resp.Pagination, &resp.Jobs, req.Offset, req.Limit)
+	return resp, api.Paginate(&resp.Pagination, &resp.Jobs, req.Offset, req.Limit)
 }
 
 // GetJobsV2 retrieves a list of jobs for a resource pool.
@@ -89,7 +90,7 @@ func (a *apiServer) GetJobsV2(
 		req.Limit = 100
 	}
 
-	return resp, a.paginate(&resp.Pagination, &resp.Jobs, req.Offset, req.Limit)
+	return resp, api.Paginate(&resp.Pagination, &resp.Jobs, req.Offset, req.Limit)
 }
 
 // GetJobQueueStats retrieves job queue stats for a set of resource pools.

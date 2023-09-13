@@ -107,8 +107,8 @@ func (a *apiServer) GetTensorboards(
 
 	resp.Tensorboards = filteredTensorboards
 
-	a.sort(resp.Tensorboards, req.OrderBy, req.SortBy, apiv1.GetTensorboardsRequest_SORT_BY_ID)
-	return resp, a.paginate(&resp.Pagination, &resp.Tensorboards, req.Offset, req.Limit)
+	api.Sort(resp.Tensorboards, req.OrderBy, req.SortBy, apiv1.GetTensorboardsRequest_SORT_BY_ID)
+	return resp, api.Paginate(&resp.Pagination, &resp.Tensorboards, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetTensorboard(

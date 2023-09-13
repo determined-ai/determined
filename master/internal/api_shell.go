@@ -84,7 +84,7 @@ func (a *apiServer) GetShells(
 		return nil, workspaceNotFoundErr
 	}
 
-	a.filter(&resp.Shells, func(i int) bool {
+	api.Where(&resp.Shells, func(i int) bool {
 		return limitedScopes[model.AccessScopeID(resp.Shells[i].WorkspaceId)]
 	})
 
@@ -92,8 +92,8 @@ func (a *apiServer) GetShells(
 		return nil, err
 	}
 
-	a.sort(resp.Shells, req.OrderBy, req.SortBy, apiv1.GetShellsRequest_SORT_BY_ID)
-	return resp, a.paginate(&resp.Pagination, &resp.Shells, req.Offset, req.Limit)
+	api.Sort(resp.Shells, req.OrderBy, req.SortBy, apiv1.GetShellsRequest_SORT_BY_ID)
+	return resp, api.Paginate(&resp.Pagination, &resp.Shells, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetShell(

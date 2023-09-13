@@ -1350,7 +1350,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 			errors.Wrapf(err, "error fetching checkpoints for experiment %d from database", req.Id)
 	}
 
-	a.filter(&resp.Checkpoints, func(i int) bool {
+	api.Where(&resp.Checkpoints, func(i int) bool {
 		v := resp.Checkpoints[i]
 
 		found := false
@@ -1399,7 +1399,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 			return protoless.CheckpointTrialIDLess(ai, aj)
 		}
 	})
-	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
+	return resp, api.Paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 
 func (a *apiServer) createUnmanagedExperimentTx(

@@ -8,13 +8,9 @@ import (
 	"regexp"
 	"time"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 
-	"github.com/ghodss/yaml"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
@@ -24,7 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/project"
-	pkgTemplate "github.com/determined-ai/determined/master/internal/template"
+	"github.com/determined-ai/determined/master/internal/templates"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -267,35 +263,6 @@ func getCreateExperimentsProject(
 	return p, nil
 }
 
-// unmarshalTemplateConfig unmarshals the template config into `o` and returns api-ready errors.
-func (m *Master) unmarshalTemplateConfig(ctx context.Context, templateName string,
-	user *model.User, out interface{}, disallowUnknownFields bool,
-) error {
-	notFoundErr := status.Errorf(codes.InvalidArgument,
-		api.NotFoundErrMsg("temlpate", fmt.Sprint(templateName)))
-	template, err := m.db.TemplateByName(templateName)
-	if err != nil {
-		return notFoundErr
-	}
-	permErr, err := pkgTemplate.AuthZProvider.Get().CanViewTemplate(ctx,
-		user, model.AccessScopeID(template.WorkspaceID))
-	if err != nil {
-		return err
-	}
-	if permErr != nil {
-		return notFoundErr
-	}
-	if disallowUnknownFields {
-		err = yaml.Unmarshal(template.Config, out, yaml.DisallowUnknownFields)
-	} else {
-		err = yaml.Unmarshal(template.Config, out)
-	}
-	if err != nil {
-		return errors.Wrapf(err, "yaml.Unmarshal(template=%s)", templateName)
-	}
-	return nil
-}
-
 func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner *model.User) (
 	*model.Experiment, expconf.ExperimentConfig, *projectv1.Project, *tasks.TaskSpec, error,
 ) {
@@ -309,7 +276,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 	// Apply the template that the user specified.
 	if req.Template != nil {
 		var tc expconf.ExperimentConfig
-		err := m.unmarshalTemplateConfig(ctx, *req.Template, owner, &tc, true)
+		err := templates.UnmarshalTemplateConfig(ctx, *req.Template, owner, &tc, true)
 		if err != nil {
 			return nil, config, nil, nil, err
 		}
