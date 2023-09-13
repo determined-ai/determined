@@ -313,7 +313,7 @@ def test_textual_inversion_stable_diffusion_finetune() -> None:
         )
     except KeyError as k:
         if str(k) == "'HF_READ_ONLY_TOKEN'":
-            raise KeyError(HUGGINGFACE_CONTEXT_ERR_MSG)
+            raise RuntimeError(HUGGINGFACE_CONTEXT_ERR_MSG)
         else:
             raise k
 
@@ -349,7 +349,7 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
         )
     except KeyError as k:
         if str(k) == "'HF_READ_ONLY_TOKEN'":
-            raise KeyError(HUGGINGFACE_CONTEXT_ERR_MSG)
+            raise RuntimeError(HUGGINGFACE_CONTEXT_ERR_MSG)
         else:
             raise k
 
