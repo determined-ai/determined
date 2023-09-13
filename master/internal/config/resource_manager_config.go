@@ -5,7 +5,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/union"
@@ -53,7 +52,6 @@ type AgentResourceManagerConfig struct {
 	Scheduler                  *SchedulerConfig `json:"scheduler"`
 	DefaultAuxResourcePool     string           `json:"default_aux_resource_pool"`
 	DefaultComputeResourcePool string           `json:"default_compute_resource_pool"`
-	NoDefaultResourcePools     bool             `json:"no_default_resource_pools"`
 	// Deprecated: use DefaultAuxResourcePool instead.
 	DefaultCPUResourcePool string `json:"default_cpu_resource_pool,omitempty"`
 	// Deprecated: use DefaultComputeResourcePool instead.
@@ -70,24 +68,19 @@ func (a *AgentResourceManagerConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if a.NoDefaultResourcePools {
-		a.DefaultComputeResourcePool = ""
-		a.DefaultAuxResourcePool = ""
-	} else {
-		if a.DefaultAuxResourcePool == "" && a.DefaultCPUResourcePool != "" {
-			a.DefaultAuxResourcePool = a.DefaultCPUResourcePool
-		}
-		if a.DefaultComputeResourcePool == "" && a.DefaultGPUResourcePool != "" {
-			a.DefaultComputeResourcePool = a.DefaultGPUResourcePool
-		}
-		if a.DefaultComputeResourcePool == "" {
-			a.DefaultComputeResourcePool = defaultResourcePoolName
-		}
-		if a.DefaultAuxResourcePool == "" {
-			a.DefaultAuxResourcePool = defaultResourcePoolName
-		}
+	if a.DefaultAuxResourcePool == "" && a.DefaultCPUResourcePool != "" {
+		a.DefaultAuxResourcePool = a.DefaultCPUResourcePool
+	}
+	if a.DefaultComputeResourcePool == "" && a.DefaultGPUResourcePool != "" {
+		a.DefaultComputeResourcePool = a.DefaultGPUResourcePool
 	}
 
+	if a.DefaultComputeResourcePool == "" {
+		a.DefaultComputeResourcePool = defaultResourcePoolName
+	}
+	if a.DefaultAuxResourcePool == "" {
+		a.DefaultAuxResourcePool = defaultResourcePoolName
+	}
 	a.DefaultCPUResourcePool = ""
 	a.DefaultGPUResourcePool = ""
 
@@ -96,15 +89,6 @@ func (a *AgentResourceManagerConfig) UnmarshalJSON(data []byte) error {
 
 // Validate implements the check.Validatable interface.
 func (a AgentResourceManagerConfig) Validate() []error {
-	if a.NoDefaultResourcePools {
-		return []error{
-			check.Equal("", a.DefaultAuxResourcePool,
-				"default_aux_resource_pool should be empty if no_default_resource_pools is set"),
-			check.Equal("", a.DefaultComputeResourcePool,
-				"default_compute_resource_pool should be empty if no_default_resource_pools is "+
-					"set"),
-		}
-	}
 	return []error{
 		check.NotEmpty(a.DefaultAuxResourcePool, "default_aux_resource_pool should be non-empty"),
 		check.NotEmpty(a.DefaultComputeResourcePool, "default_compute_resource_pool should be non-empty"),
@@ -128,7 +112,6 @@ type KubernetesResourceManagerConfig struct {
 
 	DefaultAuxResourcePool     string `json:"default_aux_resource_pool"`
 	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
-	NoDefaultResourcePools     bool   `json:"no_default_resource_pools"`
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
@@ -146,16 +129,11 @@ func (k *KubernetesResourceManagerConfig) UnmarshalJSON(data []byte) error {
 	type DefaultParser *KubernetesResourceManagerConfig
 	err := json.Unmarshal(data, DefaultParser(k))
 
-	if k.NoDefaultResourcePools {
-		k.DefaultComputeResourcePool = ""
-		k.DefaultAuxResourcePool = ""
-	} else {
-		if k.DefaultComputeResourcePool == "" {
-			k.DefaultComputeResourcePool = defaultResourcePoolName
-		}
-		if k.DefaultAuxResourcePool == "" {
-			k.DefaultAuxResourcePool = defaultResourcePoolName
-		}
+	if k.DefaultComputeResourcePool == "" {
+		k.DefaultComputeResourcePool = defaultResourcePoolName
+	}
+	if k.DefaultAuxResourcePool == "" {
+		k.DefaultAuxResourcePool = defaultResourcePoolName
 	}
 
 	if err == nil && k.SlotType == "gpu" {

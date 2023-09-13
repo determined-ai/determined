@@ -279,20 +279,12 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		a.forwardToAllPools(ctx, msg)
 
 	case sproto.GetDefaultComputeResourcePoolRequest:
-		if a.config.DefaultComputeResourcePool == "" {
-			ctx.Respond(rmerrors.ErrNoDefaultResourcePool)
-		} else {
-			ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
-				PoolName: a.config.DefaultComputeResourcePool,
-			})
-		}
+		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
+			PoolName: a.config.DefaultComputeResourcePool,
+		})
 
 	case sproto.GetDefaultAuxResourcePoolRequest:
-		if a.config.DefaultAuxResourcePool == "" {
-			ctx.Respond(rmerrors.ErrNoDefaultResourcePool)
-		} else {
-			ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: a.config.DefaultAuxResourcePool})
-		}
+		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: a.config.DefaultAuxResourcePool})
 
 	case sproto.ValidateCommandResourcesRequest:
 		a.forwardToPool(ctx, msg.ResourcePool, msg)
