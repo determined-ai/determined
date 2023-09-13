@@ -9,6 +9,13 @@
  Quickstart
 ************
 
+To get started with your first experiment, visit the :ref:`Quickstart for Model Developers
+<qs-mldev>`.
+
+******************************
+ Get Started with a Trial API
+******************************
+
 To get started with a :ref:`Trial API <high-level-apis>`, visit the :ref:`pytorch-mnist-tutorial`.
 This tutorial shows you how to port a simple image classification model for the MNIST dataset.
 
