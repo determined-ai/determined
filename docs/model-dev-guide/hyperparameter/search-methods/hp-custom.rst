@@ -38,8 +38,8 @@ To run the custom hyperparameter tuning algorithm, you can use:
 Both search runners execute the custom hyperparameter tuning algorithm and start a multi-trial
 experiment on a Determined cluster.
 
-The following sections explain the steps to take in order to implement and use a custom
-hyperparameter search algorithm.
+The following sections describe the steps needed to implement and use a custom hyperparameter search
+algorithm.
 
 **********************************************
  Experiment Configuration for Custom Searcher
