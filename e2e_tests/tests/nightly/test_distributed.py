@@ -288,7 +288,6 @@ value a valid HF authorization token.
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
-@pytest.mark.huggingface
 def test_textual_inversion_stable_diffusion_finetune() -> None:
     """Requires downloading weights from Hugging Face via an authorization token. The experiment
     expects the token to be stored in the HF_AUTH_TOKEN environment variable.
@@ -321,7 +320,6 @@ def test_textual_inversion_stable_diffusion_finetune() -> None:
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
-@pytest.mark.huggingface
 def test_textual_inversion_stable_diffusion_generate() -> None:
     """Requires downloading weights from Hugging Face via an authorization token. The experiment
     expects the token to be stored in the HF_AUTH_TOKEN environment variable.

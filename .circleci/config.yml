@@ -3403,7 +3403,9 @@ workflows:
             - check-if-nightly-tests-should-run
       - test-e2e-aws:
           name: test-e2e-gpu-distributed
-          context: aws
+          context:
+            - aws
+            - hugging-face
           matrix:
             parameters:
               cluster-id-prefix: ["distributed"]
@@ -3469,21 +3471,6 @@ workflows:
             parameters:
               cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
-              compute-agent-instance-type: ["g4dn.12xlarge"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [2]
-          requires:
-            - check-if-nightly-tests-should-run
-      - test-e2e-aws:
-          # Run on 4xT4 instances.
-          name: test-e2e-gpu-huggingface
-          context:
-            - aws
-            - hugging-face
-          matrix:
-            parameters:
-              cluster-id-prefix: ["huggingface"]
-              mark: ["huggingface"]
               compute-agent-instance-type: ["g4dn.12xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
