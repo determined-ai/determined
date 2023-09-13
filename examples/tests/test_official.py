@@ -9,10 +9,6 @@ official_examples = [
         "tutorials/fashion_mnist_tf_keras/const.yaml",
     ),
     (
-        "tutorials/imagenet_pytorch",
-        "tutorials/imagenet_pytorch/const_cifar.yaml",
-    ),
-    (
         "computer_vision/cifar10_pytorch",
         "computer_vision/cifar10_pytorch/const.yaml",
     ),

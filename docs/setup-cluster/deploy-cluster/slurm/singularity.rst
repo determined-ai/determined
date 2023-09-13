@@ -87,9 +87,9 @@ Determined.
 
 .. _singularity-image-cache:
 
-***********************************************************
- Configuring a Apptainer/Singularity Image Cache Directory
-***********************************************************
+************************************************************
+ Configuring an Apptainer/Singularity Image Cache Directory
+************************************************************
 
 When using Apptainer/Singularity, you may use :ref:`referencing-local-image-paths` as described
 above, or you may instead configure a directory tree of images to be searched. To utilize this
@@ -222,6 +222,13 @@ a container from it for the current user (``enroot create``) use the following c
 .. code:: bash
 
    manage-enroot-cache -s /shared/enroot determinedai/environments:cuda-10.2-base-gpu-mpi-0.19.4
+
+If you only want the sharable .sqsh file without the overhead of container creation, use the
+``--nocreate`` option:
+
+.. code:: bash
+
+   manage-enroot-cache -s /shared/enroot --nocreate determinedai/environments:cuda-10.2-base-gpu-mpi-0.19.4
 
 You can view the current set of Docker image names in the cache with the ``-l`` option.
 

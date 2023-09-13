@@ -667,6 +667,7 @@ export interface ExperimentItem {
   workspaceId?: number;
   workspaceName?: string;
   modelDefinitionSize?: number;
+  unmanaged?: boolean;
 }
 
 export interface ExperimentWithTrial {

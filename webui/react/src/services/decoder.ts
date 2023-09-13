@@ -502,6 +502,7 @@ export const mapV1Experiment = (
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     trialIds: data.trialIds || [],
+    unmanaged: data.unmanaged,
     userId: data.userId ?? 0,
     workspaceId: data.workspaceId,
     workspaceName: data.workspaceName,
