@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/test/testutils"
+	"github.com/determined-ai/determined/master/test/migrationutils"
 )
 
 //go:embed pre_remove_steps.sql
@@ -20,7 +20,7 @@ const migration001213 = 20200630141158
 
 // PreRemoveStepsExperimentsData holds the migration and useful constants for pre_remove_steps.sql.
 type PreRemoveStepsExperimentsData struct {
-	MustMigrate                  testutils.MustMigrateFn
+	MustMigrate                  migrationutils.MustMigrateFn
 	CompletedSingleExpID         int32
 	CompletedAdaptiveSimpleExpID int32
 	CompletedPBTExpID            int32
@@ -31,11 +31,11 @@ type PreRemoveStepsExperimentsData struct {
 // PreRemoveStepsExperiments returns a PreRemoveStepsExperimentsData.
 func PreRemoveStepsExperiments() PreRemoveStepsExperimentsData {
 	mustMigrate := func(t *testing.T, pgdb *db.PgDB, migrationsPath string) {
-		extra := testutils.MigrationExtra{
+		extra := migrationutils.MigrationExtra{
 			When: migration001213,
 			SQL:  preRemoveStepsSQL,
 		}
-		testutils.MustMigrateWithExtras(t, pgdb, migrationsPath, extra)
+		migrationutils.MustMigrateWithExtras(t, pgdb, migrationsPath, extra)
 	}
 	return PreRemoveStepsExperimentsData{
 		MustMigrate:                  mustMigrate,

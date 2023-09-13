@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package testutils
+package migrationutils
 
 import (
 	"sort"

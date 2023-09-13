@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/test/testutils"
+	"github.com/determined-ai/determined/master/test/migrationutils"
 )
 
 //go:embed stream_trials.sql
@@ -19,7 +19,7 @@ const latestMigration = 20230830174810
 
 // StreamTrialsData holds the migration function and relevant information
 type StreamTrialsData struct {
-	MustMigrate testutils.MustMigrateFn
+	MustMigrate migrationutils.MustMigrateFn
 	ExpID       int
 	JobID       string
 	TaskIDs     []string
@@ -29,11 +29,11 @@ type StreamTrialsData struct {
 // GenerateStreamTrials fills the database with dummy experiment, trials, jobs, and tasks.
 func GenerateStreamTrials() StreamTrialsData {
 	mustMigrate := func(t *testing.T, pgdb *db.PgDB, migrationsPath string) {
-		extra := testutils.MigrationExtra{
+		extra := migrationutils.MigrationExtra{
 			When: latestMigration,
 			SQL:  streamTrialsSQL,
 		}
-		testutils.MustMigrateWithExtras(t, pgdb, migrationsPath, extra)
+		migrationutils.MustMigrateWithExtras(t, pgdb, migrationsPath, extra)
 	}
 	return StreamTrialsData{
 		MustMigrate: mustMigrate,
