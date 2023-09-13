@@ -59,6 +59,81 @@ func TestGetDetContainerSecurityContext(t *testing.T) {
 	require.Equal(t, expectedCaps, secContext.Capabilities.Add)
 }
 
+func TestAddNodeDisabledAffinityToPodSpec(t *testing.T) {
+	hasDisabledLabel := func(p *k8sV1.Pod) {
+		actualList := p.Spec.Affinity.
+			NodeAffinity.
+			RequiredDuringSchedulingIgnoredDuringExecution.
+			NodeSelectorTerms
+		expectedItem := k8sV1.NodeSelectorTerm{
+			MatchExpressions: []k8sV1.NodeSelectorRequirement{
+				{
+					Key:      "cluster-id",
+					Operator: k8sV1.NodeSelectorOpDoesNotExist,
+				},
+			},
+		}
+		require.Contains(t, actualList, expectedItem)
+	}
+
+	p := &k8sV1.Pod{}
+	addNodeDisabledAffinityToPodSpec(p, "cluster-id")
+	hasDisabledLabel(p)
+
+	p = &k8sV1.Pod{
+		Spec: k8sV1.PodSpec{
+			Affinity: &k8sV1.Affinity{
+				PodAffinity: &k8sV1.PodAffinity{},
+			},
+		},
+	}
+	addNodeDisabledAffinityToPodSpec(p, "cluster-id")
+	hasDisabledLabel(p)
+	require.NotNil(t, p.Spec.Affinity.PodAffinity) // Didn't overwrite.
+
+	pref := make([]k8sV1.PreferredSchedulingTerm, 7)
+	p = &k8sV1.Pod{
+		Spec: k8sV1.PodSpec{
+			Affinity: &k8sV1.Affinity{
+				NodeAffinity: &k8sV1.NodeAffinity{
+					PreferredDuringSchedulingIgnoredDuringExecution: pref,
+				},
+			},
+		},
+	}
+	addNodeDisabledAffinityToPodSpec(p, "cluster-id")
+	hasDisabledLabel(p)
+	require.Len(t, p.Spec.Affinity.NodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution, 7)
+
+	nodeSelectorTerm := k8sV1.NodeSelectorTerm{
+		MatchExpressions: []k8sV1.NodeSelectorRequirement{
+			{
+				Key:      "other-id",
+				Operator: k8sV1.NodeSelectorOpDoesNotExist,
+			},
+		},
+	}
+	p = &k8sV1.Pod{
+		Spec: k8sV1.PodSpec{
+			Affinity: &k8sV1.Affinity{
+				NodeAffinity: &k8sV1.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &k8sV1.NodeSelector{
+						NodeSelectorTerms: []k8sV1.NodeSelectorTerm{
+							nodeSelectorTerm,
+						},
+					},
+				},
+			},
+		},
+	}
+	addNodeDisabledAffinityToPodSpec(p, "cluster-id")
+	hasDisabledLabel(p)
+	require.Contains(t, p.Spec.Affinity.
+		NodeAffinity.
+		RequiredDuringSchedulingIgnoredDuringExecution.
+		NodeSelectorTerms, nodeSelectorTerm)
+}
+
 func TestLaterEnvironmentVariablesGetSet(t *testing.T) {
 	dontBe := k8sV1.EnvVar{Name: "var", Value: "dontbe"}
 	shouldBe := k8sV1.EnvVar{Name: "var", Value: "shouldbe"}

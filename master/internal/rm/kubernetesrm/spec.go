@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"path"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -214,6 +215,44 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 	}
 }
 
+func addNodeDisabledAffinityToPodSpec(pod *k8sV1.Pod, clusterID string) {
+	if pod.Spec.Affinity == nil {
+		pod.Spec.Affinity = &k8sV1.Affinity{}
+	}
+	if pod.Spec.Affinity.NodeAffinity == nil {
+		pod.Spec.Affinity.NodeAffinity = &k8sV1.NodeAffinity{}
+	}
+	nodeAffinity := pod.Spec.Affinity.NodeAffinity
+
+	if nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution == nil {
+		nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = &k8sV1.NodeSelector{}
+	}
+	nodeSelector := nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution
+
+	term := k8sV1.NodeSelectorTerm{
+		MatchExpressions: []k8sV1.NodeSelectorRequirement{
+			{
+				Key:      clusterID,
+				Operator: k8sV1.NodeSelectorOpDoesNotExist,
+			},
+		},
+	}
+
+	// Make function idempotent.
+	for _, n := range nodeSelector.NodeSelectorTerms {
+		if reflect.DeepEqual(n, term) {
+			return
+		}
+	}
+
+	nodeSelector.NodeSelectorTerms = append(nodeSelector.NodeSelectorTerms, term)
+
+	// TODO once k8s supports
+	// RequiredDuringSchedulingRequiredDuringExecution
+	// we can add two node affininties for noExecuteNodeLabel and noScheduleNodeLabel
+	// so we can skip the step in k8s disable where we kill everything in non drain.
+}
+
 func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 	if newPod.Spec.SchedulerName != scheduler {
 		return
@@ -287,6 +326,8 @@ func (p *pod) configurePodSpec(
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.submissionInfo.taskSpec.AllocationID
 
 	p.modifyPodSpec(podSpec, scheduler)
+
+	addNodeDisabledAffinityToPodSpec(podSpec, clusterIDNodeLabel())
 
 	nonDeterminedContainers := make([]k8sV1.Container, 0)
 	for idx, container := range podSpec.Spec.Containers {
