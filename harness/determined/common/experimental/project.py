@@ -83,12 +83,10 @@ class Project:
         return [experiment.Experiment._from_bindings(exp, self._session) for exp in exp_bindings]
 
     def set_description(self, description: str) -> None:
-        """Set the description of the project.
-
-        The attribute will be changed both on master and this local object.
+        """Set the project's description locally and on master.
 
         Args:
-            description: The description to set.
+            description: The new description to set.
         """
         patch_body = bindings.v1PatchProject(description=description)
         resp = bindings.patch_PatchProject(session=self._session, id=self.id, body=patch_body)
@@ -96,12 +94,10 @@ class Project:
         self.description = resp.project.description
 
     def set_name(self, name: str) -> None:
-        """Set the name of the project.
-
-        The attribute will be changed both on master and this local object.
+        """Set the project's name locally and on master.
 
         Args:
-            name: The name to set.
+            name: The new name to set.
         """
         patch_body = bindings.v1PatchProject(name=name)
         resp = bindings.patch_PatchProject(session=self._session, id=self.id, body=patch_body)
@@ -109,18 +105,12 @@ class Project:
         self.name = resp.project.name
 
     def archive(self) -> None:
-        """Set the project to archived (archived = True).
-
-        As with other setters, this will change the attribute both on master and this local object.
-        """
+        """Set the project to archived (archived = True) locally and on the master."""
         bindings.post_ArchiveProject(session=self._session, id=self.id)
         self.archived = True
 
     def unarchive(self) -> None:
-        """Set the project to unarchived (archived = False).
-
-        As with other setters, this will change the attribute both on master and this local object.
-        """
+        """Set the project to unarchived (archived = False) locally and on the master."""
         bindings.post_UnarchiveProject(session=self._session, id=self.id)
         self.archived = False
 
@@ -133,9 +123,9 @@ class Project:
         3. sends the updated list of notes to the master.
 
         WARNING:
-        When it exits, the notes attribute of this object will be the same notes updated on master.
-        This set of notes might reflect changes to the project that have happened since the project
-        was last hydrated from master.
+        On exit, the object's notes attribute matches the updated master's notes, possibly
+        reflecting changes to the project that have happened since the project was last hydrated
+        from master.
 
         Args:
             name: The name of the note.
@@ -160,20 +150,19 @@ class Project:
         3. sends the updated list of notes to the master.
 
         WARNING:
-        When it exits, the notes attribute of this object will be the same notes updated on master.
-        This set of notes might reflect changes to the project that have happened since the project
-        was last hydrated from master.
+        On exit, the object's notes attribute matches the updated master's notes, possibly
+        reflecting changes to the project that have happened since the project was last hydrated
+        from master.
 
         Args:
             name: The name of the note to remove.
+            contents: The contents of the note to remove. If None or not passed, this method will
+                only perform the removal if exactly one note with the passed name is found.
 
         Raises:
             ValueError: If one of
                 - no note with the passed name and contents is found
                 - multiple notes with the passed name are found and contents is not passed
-
-        It is possible to for a project to have multiple notes with the same name. This method's
-        interface doesn't make it possible to choose which of them to remove.
         """
         fresh_notes = list(bindings.get_GetProject(session=self._session, id=self.id).project.notes)
         matching_indexes = []
@@ -209,7 +198,7 @@ class Project:
 
         Attributes may be renamed to accord with the database they're stored in.
 
-        This methods is called `to_json` for historical consistency.
+        Named `to_json` for historical consistency.
         """
         return {
             "archived": self.archived,

@@ -87,8 +87,8 @@ class Experiment:
             is 100% completion.
         description: (Mutable, string) Description of the experiment.
         notes: (Mutable, str) Notes for the experiment.
-        project_id: (Mutable, int) ID of the project the experiment is a part of.
-        workspace_id: (Mutable, int) ID of the workspace the experiment runs in.
+        project_id: (Mutable, int) The ID of the project associated with the experiment.
+        workspace_id: (Mutable, int) The ID of the workspace associated with the experiment.
 
     Note:
         All attributes are cached by default.
@@ -286,8 +286,8 @@ class Experiment:
         Updates both the local object and the master database with the new project and workspace.
 
         Args:
-            project_name: The name of the project to move the experiment to.
-            workspace_name: The name of the workspace with the project.
+            project_name: The name of the destination project for the experiment.
+            workspace_name: The name of the workspace containing the project.
         """
         proj = workspace.Workspace(
             session=self._session, workspace_name=workspace_name
