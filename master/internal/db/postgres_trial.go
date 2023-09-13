@@ -134,7 +134,7 @@ func (db *PgDB) UpdateTrial(id int, newState model.State) error {
 		if err := namedExecOne(tx, fmt.Sprintf(`
 UPDATE trials
 %v
-WHERE id = :id`, setClause(toUpdate)), trial); err != nil {
+WHERE id = :id`, SetClause(toUpdate)), trial); err != nil {
 			return errors.Wrapf(err, "error updating (%v) in trial %v",
 				strings.Join(toUpdate, ", "), id)
 		}

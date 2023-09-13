@@ -197,7 +197,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		}
 		err = nil
 	} else {
-		token, err = a.m.db.StartUserSession(userModel)
+		token, err = user.StartSession(ctx, userModel)
 		if err != nil {
 			return nil, launchWarnings, status.Errorf(codes.Internal,
 				errors.Wrapf(err,

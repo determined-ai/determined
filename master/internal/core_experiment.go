@@ -25,6 +25,7 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/project"
 	pkgTemplate "github.com/determined-ai/determined/master/internal/template"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -295,7 +296,7 @@ func (m *Master) unmarshalTemplateConfig(ctx context.Context, templateName strin
 	return nil
 }
 
-func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user *model.User) (
+func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner *model.User) (
 	*model.Experiment, expconf.ExperimentConfig, *projectv1.Project, *tasks.TaskSpec, error,
 ) {
 	ctx := context.TODO()
@@ -308,7 +309,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 	// Apply the template that the user specified.
 	if req.Template != nil {
 		var tc expconf.ExperimentConfig
-		err := m.unmarshalTemplateConfig(ctx, *req.Template, user, &tc, true)
+		err := m.unmarshalTemplateConfig(ctx, *req.Template, owner, &tc, true)
 		if err != nil {
 			return nil, config, nil, nil, err
 		}
@@ -318,7 +319,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 	defaulted := schemas.WithDefaults(config)
 	resources := defaulted.Resources()
 
-	p, err := getCreateExperimentsProject(m, req, user, defaulted)
+	p, err := getCreateExperimentsProject(m, req, owner, defaulted)
 	if err != nil {
 		return nil, config, nil, nil, err
 	}
@@ -398,13 +399,13 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 		}
 	}
 
-	token, createSessionErr := m.db.StartUserSession(user)
+	token, createSessionErr := user.StartSession(ctx, owner)
 	if createSessionErr != nil {
 		return nil, config, nil, nil, errors.Wrapf(
 			createSessionErr, "unable to create user session inside task")
 	}
 	taskSpec.UserSessionToken = token
-	taskSpec.Owner = user
+	taskSpec.Owner = owner
 
 	var commitDate *time.Time
 	pt, err := protoutils.ToTime(req.GitCommitDate)
@@ -417,9 +418,9 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 		req.GitRemote, req.GitCommit, req.GitCommitter, commitDate,
 		int(p.Id),
 	)
-	if user != nil {
-		dbExp.OwnerID = &user.ID
-		dbExp.Username = user.Username
+	if owner != nil {
+		dbExp.OwnerID = &owner.ID
+		dbExp.Username = owner.Username
 	}
 
 	taskSpec.Project = config.Project()

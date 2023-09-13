@@ -86,25 +86,35 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 	}
 }
 
-func getFullModelUserByUsername(username string) (*model.FullUser, error) {
-	userModel, err := user.UserByUsername(username)
+func getFullModelUserByUsername(
+	ctx context.Context,
+	username string,
+) (*model.FullUser, error) {
+	userModel, err := user.ByUsername(ctx, username)
 	if errors.Is(err, db.ErrNotFound) {
 		return nil, api.NotFoundErrs("user", "", true)
 	}
-	fullUser, err := user.UserByID(userModel.ID)
+	fullUser, err := user.ByID(ctx, userModel.ID)
 	return fullUser, err
 }
 
-func getFullModelUser(userID model.UserID) (*model.FullUser, error) {
-	userModel, err := user.UserByID(userID)
+func getFullModelUser(
+	ctx context.Context,
+	userID model.UserID,
+) (*model.FullUser, error) {
+	userModel, err := user.ByID(ctx, userID)
 	if errors.Is(err, db.ErrNotFound) {
 		return nil, api.NotFoundErrs("user", "", true)
 	}
 	return userModel, err
 }
 
-func getUser(d *db.PgDB, userID model.UserID) (*userv1.User, error) {
-	user, err := getFullModelUser(userID)
+func getUser(
+	ctx context.Context,
+	d *db.PgDB,
+	userID model.UserID,
+) (*userv1.User, error) {
+	user, err := getFullModelUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +192,7 @@ func (a *apiServer) GetUser(
 	if err != nil {
 		return nil, err
 	}
-	targetFullUser, err := getFullModelUser(model.UserID(req.UserId))
+	targetFullUser, err := getFullModelUser(ctx, model.UserID(req.UserId))
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +210,7 @@ func (a *apiServer) GetMe(
 	if err != nil {
 		return nil, err
 	}
-	curFullUser, err := getFullModelUser(curUser.ID)
+	curFullUser, err := getFullModelUser(ctx, curUser.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +224,7 @@ func (a *apiServer) GetUserByUsername(
 	if err != nil {
 		return nil, err
 	}
-	targetFullUser, err := getFullModelUserByUsername(req.Username)
+	targetFullUser, err := getFullModelUserByUsername(ctx, req.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -300,14 +310,14 @@ func (a *apiServer) PostUser(
 		}
 	}
 
-	userID, err := a.m.db.AddUser(userToAdd, agentUserGroup)
+	userID, err := user.Add(ctx, userToAdd, agentUserGroup)
 	switch {
 	case err == db.ErrDuplicateRecord:
 		return nil, status.Error(codes.InvalidArgument, "user already exists")
 	case err != nil:
 		return nil, err
 	}
-	fullUser, err := getUser(a.m.db, userID)
+	fullUser, err := getUser(ctx, a.m.db, userID)
 	return &apiv1.PostUserResponse{User: fullUser}, err
 }
 
@@ -322,7 +332,7 @@ func (a *apiServer) SetUserPassword(
 		return nil, err
 	}
 
-	targetFullUser, err := getFullModelUser(model.UserID(req.UserId))
+	targetFullUser, err := getFullModelUser(ctx, model.UserID(req.UserId))
 	if err != nil {
 		return nil, err
 	}
@@ -338,13 +348,13 @@ func (a *apiServer) SetUserPassword(
 	if err = targetUser.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
 		return nil, err
 	}
-	switch err = a.m.db.UpdateUser(&targetUser, []string{"password_hash"}, nil); {
+	switch err = user.Update(ctx, &targetUser, []string{"password_hash"}, nil); {
 	case err == db.ErrNotFound:
 		return nil, api.NotFoundErrs("user", "", true)
 	case err != nil:
 		return nil, err
 	}
-	fullUser, err := getUser(a.m.db, model.UserID(req.UserId))
+	fullUser, err := getUser(ctx, a.m.db, model.UserID(req.UserId))
 	return &apiv1.SetUserPasswordResponse{User: fullUser}, err
 }
 
@@ -363,7 +373,7 @@ func (a *apiServer) PatchUser(
 		return nil, err
 	}
 
-	targetFullUser, err := getFullModelUser(model.UserID(req.UserId))
+	targetFullUser, err := getFullModelUser(ctx, model.UserID(req.UserId))
 	if err != nil {
 		return nil, err
 	}
@@ -486,11 +496,11 @@ func (a *apiServer) PatchUser(
 		}
 	}
 
-	if err := a.m.db.UpdateUser(updatedUser, insertColumns, ug); err != nil {
+	if err := user.Update(ctx, updatedUser, insertColumns, ug); err != nil {
 		return nil, err
 	}
 
-	fullUser, err := getUser(a.m.db, model.UserID(req.UserId))
+	fullUser, err := getUser(ctx, a.m.db, model.UserID(req.UserId))
 	return &apiv1.PatchUserResponse{User: fullUser}, err
 }
 
@@ -505,7 +515,7 @@ func (a *apiServer) GetUserSetting(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	settings, err := db.GetUserSetting(curUser.ID)
+	settings, err := user.GetUserSetting(ctx, curUser.ID)
 	return &apiv1.GetUserSettingResponse{Settings: settings}, err
 }
 
@@ -537,7 +547,7 @@ func (a *apiServer) PostUserSetting(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	err = db.UpdateUserSetting(settingsModel)
+	err = user.UpdateUserSetting(ctx, settingsModel)
 	return &apiv1.PostUserSettingResponse{}, err
 }
 
@@ -552,7 +562,7 @@ func (a *apiServer) ResetUserSetting(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	err = db.ResetUserSetting(curUser.ID)
+	err = user.ResetUserSetting(ctx, curUser.ID)
 	return &apiv1.ResetUserSettingResponse{}, err
 }
 

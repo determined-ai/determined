@@ -34,7 +34,7 @@ type SessionID int
 // User corresponds to a row in the "users" DB table.
 type User struct {
 	bun.BaseModel `bun:"table:users"`
-	ID            UserID      `db:"id" bun:"id,pk" json:"id"`
+	ID            UserID      `db:"id" bun:"id,pk,autoincrement" json:"id"`
 	Username      string      `db:"username" json:"username"`
 	PasswordHash  null.String `db:"password_hash" json:"-"`
 	DisplayName   null.String `db:"display_name" json:"display_name"`
