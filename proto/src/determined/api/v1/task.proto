@@ -30,6 +30,22 @@ message GetTaskResponse {
   determined.task.v1.Task task = 1;
 }
 
+// Request for an task's files.
+message GetTaskModelDefRequest {
+  // The id of the experiment.
+  string task_id = 1;
+}
+
+// Response to GetTaskModelDefRequest.
+message GetTaskModelDefResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "b64_tgz" ] }
+  };
+  // The base64-encoded, gzipped, tarball.
+  string b64_tgz = 1;
+}
+
+
 // Request a count of active tasks by type.
 message GetActiveTasksCountRequest {}
 

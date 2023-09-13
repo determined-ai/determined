@@ -174,7 +174,8 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		(*expconf.PodSpec)(taskContainerPodSpec),
 	))
 
-	var modelDef []byte
+	modelDef := make([]byte, 0) // Non nil for database persistance.
+	fmt.Println("REQ FILES", len(req.Files))
 	if len(req.Files) > 0 {
 		userFiles := filesToArchive(req.Files)
 
@@ -193,6 +194,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 				fmt.Errorf("compressing files context files: %w", err).Error())
 		}
 	}
+	fmt.Println("LEN MODEL DEF", len(modelDef))
 
 	extConfig := mconfig.GetMasterConfig().InternalConfig.ExternalSessions
 	var token string

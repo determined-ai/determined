@@ -52,7 +52,7 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 	case *apiv1.DeleteWorkspaceRequest:
 		ctx.TellAll(msg, ctx.Children()...)
 
-	case CreateGeneric:
+	case *CreateGeneric:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
 		msg.Spec.CommandID = string(taskID)

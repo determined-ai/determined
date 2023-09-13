@@ -20,13 +20,18 @@ from determined.common import api, util
 from determined.common.api import bindings, certs
 
 
-def trial_prep(sess: api.Session, info: det.ClusterInfo) -> None:
-    trial_info = det.TrialInfo._from_env()
-    trial_info._to_file()
+def download_model_def(sess: api.Session, info: det.ClusterInfo) -> None:
+    cluster_info = det.ClusterInfo._from_env()
+    is_trial = cluster_info.task_type == "TRIAL"
+    if is_trial:
+        trial_info = det.TrialInfo._from_env()
+        trial_info._to_file()
+    else:
+        cluster_info._to_file()
 
     model_def_resp = None
     try:
-        model_def_resp = bindings.get_GetModelDef(sess, experimentId=trial_info.experiment_id)
+        model_def_resp = bindings.get_GetTaskModelDef(sess, taskId=cluster_info.task_id)
     except Exception as e:
         # Since this is the very first api call in the entrypoint script, and the call is made
         # before you can debug with a startup hook, we offer an overly-detailed explanation to help
@@ -43,7 +48,7 @@ def trial_prep(sess: api.Session, info: det.ClusterInfo) -> None:
             "networking error.\n"
             "Debug information:\n"
             f"    master_url: {info.master_url}\n"
-            f"    endpoint: api/v1/experiments/{trial_info.experiment_id}/model_def\n"
+            f"    endpoint: api/v1/tasks/{cluster_info.task_id}/model_def\n" # This is a lie.
             f"    tls_verify_name: {info.master_cert_name}\n"
             f"    tls_noverify: {noverify}\n"
             f"    tls_cert: {cert_content}\n"
@@ -52,8 +57,12 @@ def trial_prep(sess: api.Session, info: det.ClusterInfo) -> None:
         )
         raise
 
-    tgz = base64.b64decode(model_def_resp.to_json()["b64Tgz"])
+    b64_tgz = model_def_resp.to_json()["b64Tgz"]
+    if not is_trial and len(b64_tgz) == 0:
+        return # Non trials can have empty model defs.
+    assert len(b64_tgz) > 0
 
+    tgz = base64.b64decode(b64_tgz)
     with tarfile.open(fileobj=io.BytesIO(tgz), mode="r:gz") as model_def:
         # Ensure all members of the tarball resolve to subdirectories.
         for path in model_def.getnames():
@@ -290,6 +299,7 @@ if __name__ == "__main__":
     parser.add_argument("--rendezvous", action="store_true")
     parser.add_argument("--proxy", action="store_true")
     parser.add_argument("--notify_container_running", action="store_true")
+    parser.add_argument("--download_model_def", action="store_true")
     args = parser.parse_args()
 
     # Avoid reading det.get_cluster_info(), which might (wrongly) set a singleton to None.
@@ -327,8 +337,8 @@ if __name__ == "__main__":
     if args.notify_container_running:
         send_container_running_notification(sess, info.allocation_id)
 
-    if args.trial:
-        trial_prep(sess, info)
+    if args.download_model_def or args.trial:
+        download_model_def(sess, info)
 
     if args.resources:
         resources = det.ResourcesInfo._by_inspection()

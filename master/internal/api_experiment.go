@@ -2252,46 +2252,42 @@ func (a *apiServer) GetBestSearcherValidationMetric(
 func (a *apiServer) GetModelDef(
 	ctx context.Context, req *apiv1.GetModelDefRequest,
 ) (*apiv1.GetModelDefResponse, error) {
-	requestedExpID := int(req.ExperimentId) //nolint:staticcheck // req.ExperimentId is deprecated.
-	if (requestedExpID != 0) != (req.TaskId != "") {
-		return nil, status.Error(codes.InvalidArgument,
-			"must specify only exactly one of experimentId and taskId")
+	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
+		exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		return nil, err
 	}
 
-	// RBAC based upon what they passed in, its important if they pass a taskID in
-	// we return an error message as the taskID to not leak experimentID <> taskID relationship.
-	if requestedExpID != 0 {
-		if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, requestedExpID,
-			exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-			return nil, err
-		}
-	} else {
-		if err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId),
-			exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-			return nil, err
-		}
+	tgz, err := a.m.db.ExperimentModelDefinitionRaw(int(req.ExperimentId))
+	if err != nil {
+		return nil, errors.Wrapf(err,
+			"error fetching model definition from database: %d", req.ExperimentId)
 	}
 
-	// Are we an experiment?
-	experimentID := ptrs.Ptr(requestedExpID)
-	if req.TaskId != "" {
-		isExp, exp, err := expFromTaskID(ctx, model.TaskID(req.TaskId))
-		if err != nil {
-			return nil, err
-		}
+	b64Tgz := base64.StdEncoding.EncodeToString(tgz)
 
-		if isExp {
-			experimentID = &exp.ID
-		}
+	return &apiv1.GetModelDefResponse{B64Tgz: b64Tgz}, nil
+}
+
+func (a *apiServer) GetTaskModelDef(
+	ctx context.Context, req *apiv1.GetTaskModelDefRequest,
+) (*apiv1.GetTaskModelDefResponse, error) {
+	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId),
+		exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		return nil, err
+	}
+
+	isExp, exp, err := expFromTaskID(ctx, model.TaskID(req.TaskId))
+	if err != nil {
+		return nil, err
 	}
 
 	var tgz []byte
-	var err error
-	if experimentID != nil {
-		tgz, err = a.m.db.ExperimentModelDefinitionRaw(*experimentID)
+	if isExp {
+		tgz, err = a.m.db.ExperimentModelDefinitionRaw(exp.ID)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"fetching model definition for experiment %d from database: %w", experimentID, err)
+				"fetching experiment's taskID %s model definition from database: %w",
+				req.TaskId, err)
 		}
 	} else {
 		tgz, err = db.NonExperimentTasksModelDef(ctx, model.TaskID(req.TaskId))
@@ -2301,7 +2297,7 @@ func (a *apiServer) GetModelDef(
 		}
 	}
 
-	return &apiv1.GetModelDefResponse{
+	return &apiv1.GetTaskModelDefResponse{
 		B64Tgz: base64.StdEncoding.EncodeToString(tgz),
 	}, nil
 }

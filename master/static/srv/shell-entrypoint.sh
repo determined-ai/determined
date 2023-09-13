@@ -15,7 +15,7 @@ fi
 # modified in this entrypoint because the HOME in the user's ssh session is set
 # by sshd at a later time.
 
-"$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --resources --proxy
+"$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --resources --proxy --download_model_def
 
 set -x
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"

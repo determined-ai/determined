@@ -392,6 +392,16 @@ service Determined {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Experiments"
     };
+    option deprecated = true; // Use GetTaskModelDef instead.
+  }
+  // Get the model definition of a task.
+  rpc GetTaskModelDef(GetTaskModelDefRequest) returns (GetTaskModelDefResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/tasks/{task_id}/model_def"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Tasks"
+    };
   }
   // Get the model definition file tree of an experiment.
   rpc GetModelDefTree(GetModelDefTreeRequest)
