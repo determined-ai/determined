@@ -197,7 +197,7 @@ const Dashboard: React.FC = () => {
         <Section title="Recently Viewed Projects">
           <Card.Group size="small" wrap={false}>
             {projects.map((project) => (
-              <ProjectCard hideActionMenu key={project.id} project={project} showWorkspace />
+              <ProjectCard key={project.id} project={project} showWorkspace />
             ))}
           </Card.Group>
         </Section>
