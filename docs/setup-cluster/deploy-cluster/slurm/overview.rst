@@ -58,3 +58,4 @@ To install Determined on the HPC cluster, ensure that the
    upgrade-on-hpc
    singularity
    slurm-known-issues
+   hpc-with-agent
