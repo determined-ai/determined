@@ -51,7 +51,7 @@ def sample_get_experiment_trials() -> bindings.v1GetExperimentTrialsResponse:
 
 
 def sample_get_experiment_checkpoints() -> bindings.v1GetExperimentCheckpointsResponse:
-    with open(FIXTURES_DIR / "experiment_checkpoints.json") as f:
+    with open(FIXTURES_DIR / "checkpoints.json") as f:
         resp = bindings.v1GetExperimentCheckpointsResponse.from_json(json.load(f))
         return resp
 

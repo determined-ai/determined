@@ -260,14 +260,19 @@ def test_list_checkpoints_calls_bindings_with_params(
         assert call_kwargs["sortByMetric"] == sort_by if isinstance(sort_by, str) else None
 
 
-def test_list_checkpoints_errors_on_invalid_argument_set(
+def test_list_checkpoints_errors_on_only_order_by_set(
     make_expref: Callable[[int], experiment.Experiment],
 ) -> None:
     expref = make_expref(1)
 
-    # Expect exception if only one of sort_by and order_by is set.
     with pytest.raises(AssertionError):
         expref.list_checkpoints(sort_by=None, order_by=checkpoint.CheckpointOrderBy.ASC, limit=5)
+
+
+def test_list_checkpoints_errors_on_only_sort_by_set(
+    make_expref: Callable[[int], experiment.Experiment],
+) -> None:
+    expref = make_expref(1)
 
     with pytest.raises(AssertionError):
         expref.list_checkpoints(sort_by=checkpoint.CheckpointSortBy.UUID, order_by=None, limit=5)
