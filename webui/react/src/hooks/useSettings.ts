@@ -263,7 +263,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
               }
             });
             const type = t.type(props);
-            setTimeout(() => userSettings.set(type, config.storagePath, updates), 0);
+            setTimeout(() => userSettings.setPartial(type, config.storagePath, updates), 0);
 
             if (
               (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
