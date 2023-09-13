@@ -223,6 +223,13 @@ a container from it for the current user (``enroot create``) use the following c
 
    manage-enroot-cache -s /shared/enroot determinedai/environments:cuda-10.2-base-gpu-mpi-0.19.4
 
+If you only want the sharable .sqsh file without the overhead of container creation, use the
+``--nocreate`` option:
+
+.. code:: bash
+
+   manage-enroot-cache -s /shared/enroot --nocreate determinedai/environments:cuda-10.2-base-gpu-mpi-0.19.4
+
 You can view the current set of Docker image names in the cache with the ``-l`` option.
 
 .. code:: bash
