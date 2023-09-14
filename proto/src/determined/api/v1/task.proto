@@ -45,7 +45,6 @@ message GetTaskModelDefResponse {
   string b64_tgz = 1;
 }
 
-
 // Request a count of active tasks by type.
 message GetActiveTasksCountRequest {}
 

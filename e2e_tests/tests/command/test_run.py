@@ -154,6 +154,7 @@ def test_basic_workflows(tmp_path: Path) -> None:
 
 
 @pytest.mark.slow
+@pytest.mark.e2e_k8s
 @pytest.mark.e2e_cpu
 def test_large_uploads(tmp_path: Path) -> None:
     with pytest.raises(subprocess.CalledProcessError):
@@ -184,6 +185,28 @@ def test_large_uploads(tmp_path: Path) -> None:
         large.touch()
         f = large.open(mode="w")
         f.seek(1024 * 1024 * 120)
+        f.write("\0")
+        f.close()
+
+        _run_and_verify_exit_code_zero(
+            [
+                "det",
+                "-m",
+                conf.make_master_url(),
+                "cmd",
+                "run",
+                "--context",
+                str(tree),
+                "python",
+                "hello.py",
+            ]
+        )
+
+    with FileTree(tmp_path, {"hello.py": "print('hello world')"}) as tree:
+        large = tree.joinpath("large-file.bin")
+        large.touch()
+        f = large.open(mode="w")
+        f.seek(1024 * 1024 * 10)
         f.write("\0")
         f.close()
 

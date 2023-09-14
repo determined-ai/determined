@@ -747,7 +747,7 @@ message TrialsSampleResponse {
   repeated int32 demoted_trials = 3;
 }
 
-// Request for an experiment's files.
+// Request for an experiment model definition.
 message GetModelDefRequest {
   // The id of the experiment.
   int32 experiment_id = 1;
