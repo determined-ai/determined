@@ -75,7 +75,7 @@ func (ps *PublisherSet) addSocket(socket *websocket.Conn) {
 	ps.activeSockets = append(ps.activeSockets, socket)
 }
 
-// Restart restarts this PublisherSet and closes all active websocket connections.
+// Restart restarts underlying publishers and closes all active websocket connections.
 func (ps *PublisherSet) Restart() (errs []error) {
 	ps.socketLock.Lock()
 	defer ps.socketLock.Unlock()
