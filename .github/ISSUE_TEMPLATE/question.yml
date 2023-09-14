@@ -17,3 +17,13 @@ body:
       placeholder: Ex. I have a question about...
     validations:
       required: true
+
+  - type: checkboxes
+    id: docs
+    attributes:
+      label: Checklist
+      options:
+        - label: Did you search [the docs](https://docs.determined.ai/latest/) for a solution?
+          required: true
+        - label: Did you search github issues to find if somebody asked this question before?
+          required: true
