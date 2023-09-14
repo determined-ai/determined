@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
+import ExperimentTensorBoardModal from 'components/ExperimentTensorBoardModal';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import TableFilter from 'components/FilterForm/TableFilter';
 import Button from 'components/kit/Button';
@@ -31,7 +32,6 @@ import {
   Project,
   ProjectColumn,
   ProjectExperiment,
-  RecordKey,
 } from 'types';
 import { notification } from 'utils/dialogApi';
 import handleError, { ErrorLevel } from 'utils/error';
@@ -137,6 +137,8 @@ const TableActionBar: React.FC<Props> = ({
   const [batchAction, setBatchAction] = useState<BatchAction>();
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const { Component: ExperimentTensorBoardModalComponent, open: openExperimentTensorBoardModal } =
+    useModal(ExperimentTensorBoardModal);
   const totalExperiments = Loadable.getOrElse(0, total);
   const isMobile = useMobile();
 
@@ -149,8 +151,13 @@ const TableActionBar: React.FC<Props> = ({
         project,
       );
       return acc;
-    }, {} as Record<RecordKey, ProjectExperiment>);
+    }, {} as Record<number, ProjectExperiment>);
   }, [experiments, project]);
+
+  const selectedExperiments = useMemo(
+    () => Array.from(selectedExperimentIds).map((id) => experimentMap[id]),
+    [experimentMap, selectedExperimentIds],
+  );
 
   const availableBatchActions = useMemo(() => {
     if (selectAll)
@@ -162,18 +169,28 @@ const TableActionBar: React.FC<Props> = ({
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
+      const managedExperimentIds = selectedExperiments
+        .filter((exp) => !exp.unmanaged)
+        .map((exp) => exp.id);
       const params = {
-        experimentIds: Array.from(selectedExperimentIds),
+        experimentIds: managedExperimentIds,
         filters: selectAll ? filters : undefined,
       };
       if (excludedExperimentIds?.size) {
         params.filters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds) };
       }
       switch (action) {
-        case ExperimentAction.OpenTensorBoard:
-          return openCommandResponse(
-            await openOrCreateTensorBoard({ ...params, workspaceId: project?.workspaceId }),
-          );
+        case ExperimentAction.OpenTensorBoard: {
+          if (managedExperimentIds.length !== selectedExperiments.length) {
+            // if unmanaged experiments are selected, open experimentTensorBoardModal
+            openExperimentTensorBoardModal();
+          } else {
+            openCommandResponse(
+              await openOrCreateTensorBoard({ ...params, workspaceId: project?.workspaceId }),
+            );
+          }
+          return;
+        }
         case ExperimentAction.Move:
           return ExperimentMoveModal.open();
         case ExperimentAction.Activate:
@@ -193,12 +210,13 @@ const TableActionBar: React.FC<Props> = ({
       }
     },
     [
+      selectedExperiments,
+      selectAll,
+      filters,
       excludedExperimentIds,
       ExperimentMoveModal,
-      filters,
+      openExperimentTensorBoardModal,
       project?.workspaceId,
-      selectAll,
-      selectedExperimentIds,
     ],
   );
 
@@ -399,6 +417,7 @@ const TableActionBar: React.FC<Props> = ({
       {batchAction && (
         <BatchActionConfirmModal.Component
           batchAction={batchAction}
+          isUnmanagedIncluded={selectedExperiments.some((exp) => exp.unmanaged)}
           onConfirm={() => submitBatchAction(batchAction)}
         />
       )}
@@ -413,6 +432,11 @@ const TableActionBar: React.FC<Props> = ({
         sourceProjectId={project.id}
         sourceWorkspaceId={project.workspaceId}
         onSubmit={handleSubmitMove}
+      />
+      <ExperimentTensorBoardModalComponent
+        filters={selectAll ? filters : undefined}
+        selectedExperiments={selectedExperiments}
+        workspaceId={project?.workspaceId}
       />
     </Columns>
   );

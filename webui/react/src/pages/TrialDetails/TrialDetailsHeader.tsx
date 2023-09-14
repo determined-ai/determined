@@ -6,6 +6,7 @@ import ExperimentCreateModalComponent, {
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
+import { UNMANAGED_MESSAGE } from 'constant';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
@@ -81,13 +82,16 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
     if (canActionExperiment(ExperimentAction.ContinueTrial, experiment, trial)) {
       if (trial.bestAvailableCheckpoint !== undefined) {
         options.push({
+          disabled: experiment.unmanaged,
           icon: <Icon decorative name="fork" size="small" />,
           key: Action.ContinueTrial,
           label: 'Continue Trial',
           onClick: ExperimentCreateModal.open,
+          tooltip: experiment.unmanaged ? UNMANAGED_MESSAGE : undefined,
         });
       } else {
         options.push({
+          disabled: experiment.unmanaged,
           icon: <Icon decorative name="fork" size="small" />,
           key: Action.ContinueTrial,
           label: 'Continue Trial',

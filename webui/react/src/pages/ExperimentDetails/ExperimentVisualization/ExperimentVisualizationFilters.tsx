@@ -1,3 +1,4 @@
+import * as t from 'io-ts';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
@@ -13,15 +14,26 @@ import { Metric, Scale, ValueOf } from 'types';
 
 import css from './ExperimentVisualizationFilters.module.scss';
 
-export interface VisualizationFilters {
-  batch?: number;
-  batchMargin?: number;
-  hParams: string[];
-  maxTrial?: number;
-  metric?: Metric;
-  scale: Scale;
-  view?: ViewType;
-}
+const ioMetric = t.type({
+  group: t.string,
+  name: t.string,
+});
+
+export const VisualizationFilters = t.intersection([
+  t.type({
+    hParams: t.array(t.string),
+    scale: t.union([t.literal('linear'), t.literal('log')]),
+  }),
+  t.partial({
+    batch: t.number,
+    batchMargin: t.number,
+    maxTrial: t.number,
+    metric: ioMetric,
+    view: t.union([t.literal('grid'), t.literal('list')]),
+  }),
+]);
+
+export type VisualizationFilters = t.TypeOf<typeof VisualizationFilters>;
 
 export const FilterError = {
   MetricBatches: 'MetricBatches',
