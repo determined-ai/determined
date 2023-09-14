@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -36,6 +37,9 @@ const (
 type PublisherSet struct {
 	Trials *stream.Publisher[*TrialMsg]
 	// Experiments *stream.Publisher[*ExperimentMsg]
+	socketLock               sync.Mutex
+	activeSockets            []*websocket.Conn
+	permissionChangeListener *pq.Listener
 }
 
 // SubscriptionSet is a set of all subscribers for this PublisherSet.
@@ -65,11 +69,66 @@ type CollectSubscriptionModMsgsFunc[S any] func(ctx context.Context, addSpec S) 
 	[]*websocket.PreparedMessage, error,
 )
 
+func (ps *PublisherSet) addSocket(socket *websocket.Conn) {
+	ps.socketLock.Lock()
+	defer ps.socketLock.Unlock()
+	log.Infof("Publisher Set (in add socket): %v", ps)
+	log.Infof("Active Sockets (Before Add): %v", ps.activeSockets)
+	ps.activeSockets = append(ps.activeSockets, socket)
+	log.Infof("Active Sockets (After Add): %v", ps.activeSockets)
+}
+
+// Restart restarts this PublisherSet and closes all active websocket connections.
+func (ps *PublisherSet) Restart() (errs []error) {
+	ps.socketLock.Lock()
+	defer ps.socketLock.Unlock()
+	ps.Trials.Restart()
+	// ps.Experiments.Restart()
+	log.Infof("Active Sockets (Before Restart): %v", ps.activeSockets)
+	// close active websocket connections
+	var remainingSockets []*websocket.Conn
+	for _, socket := range ps.activeSockets {
+		if err := socket.Close(); err != nil {
+			errs = append(errs, err)
+			remainingSockets = append(remainingSockets, socket)
+		}
+	}
+	ps.activeSockets = remainingSockets
+	log.Infof("Active Sockets (After Restart): %v", ps.activeSockets)
+	return errs
+}
+
+func newDBListener(channel string) (*pq.Listener, error) {
+	reportProblem := func(ev pq.ListenerEventType, err error) {
+		if err != nil {
+			log.Errorf("reportProblem: %v\n", err.Error())
+		}
+	}
+	listener := pq.NewListener(
+		// XXX: update this to use master config rather than hardcoded for a local db
+		"postgresql://postgres:postgres@localhost/determined?sslmode=disable",
+		minReconn,
+		maxReconn,
+		reportProblem,
+	)
+	err := listener.Listen(channel)
+	if err != nil {
+		return nil, err
+	}
+	return listener, nil
+}
+
 // NewPublisherSet constructor for PublisherSet.
-func NewPublisherSet() PublisherSet {
+func NewPublisherSet() (PublisherSet, error) {
+	listener, err := newDBListener(permissionChannelName)
+	if err != nil {
+		return PublisherSet{}, errors.Wrap(err, "creating listener for publisher set")
+	}
 	return PublisherSet{
 		Trials: stream.NewPublisher[*TrialMsg](),
-	}
+		// Experiments: stream.NewPublisher[*ExperimentMsg](),
+		permissionChangeListener: listener,
+	}, nil
 }
 
 // StartupMsg is the first message a streaming client sends.
@@ -119,7 +178,7 @@ type FilterMaker[T stream.Msg, S any] interface {
 }
 
 // Start starts each Publisher in the PublisherSet.
-func (ps PublisherSet) Start(ctx context.Context) {
+func (ps *PublisherSet) Start(ctx context.Context) {
 	// start each publisher
 	go publishLoop(ctx, "stream_trial_chan", ps.Trials)
 	// go publishLoop(ctx, "stream_experiment_chan", ps.Experiments)
@@ -136,7 +195,9 @@ func writeAll(socket *websocket.Conn, msgs []*websocket.PreparedMessage) error {
 }
 
 // Websocket is an Echo websocket endpoint.
-func (ps PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
+func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
+	ps.addSocket(socket)
+
 	ctx := c.Request().Context()
 	streamer := stream.NewStreamer()
 	user := c.(*detContext.DetContext).MustGetUser()
@@ -189,28 +250,12 @@ func (ps PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
 
 	// detect permission changes
 	go func() {
-		reportProblem := func(ev pq.ListenerEventType, err error) {
-			if err != nil {
-				log.Errorf("reportProblem: %v\n", err.Error())
-			}
-		}
-		permListener := pq.NewListener(
-			// XXX: update this to use master config rather than hardcoded for a local db
-			"postgresql://postgres:postgres@localhost/determined?sslmode=disable",
-			minReconn,
-			maxReconn,
-			reportProblem,
-		)
 		// start listening for permission changes
-		err = permListener.Listen(permissionChannelName)
-		if err != nil {
-			log.Error(errors.Wrapf(err, "failed to listen: %v", permissionChannelName))
-		}
-		<-permListener.Notify
-		streamer.Close()
-		err = socket.Close()
-		if err != nil {
-			log.Error(errors.Wrap(err, "failed to close websocket connection"))
+		<-ps.permissionChangeListener.Notify
+		for _, err := range ps.Restart() {
+			if err != nil {
+				log.Errorf("error restarting publisher set: %v", err)
+			}
 		}
 	}()
 
@@ -379,7 +424,7 @@ func doPublishLoop[T stream.Msg](
 func NewSubscriptionSet(
 	ctx context.Context,
 	streamer *stream.Streamer,
-	ps PublisherSet,
+	ps *PublisherSet,
 	user model.User,
 ) (SubscriptionSet, error) {
 	trialPermissionFilter, err := TrialMakePermissionFilter(ctx, user)

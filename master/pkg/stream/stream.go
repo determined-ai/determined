@@ -116,6 +116,16 @@ func NewPublisher[T Msg]() *Publisher[T] {
 	return &Publisher[T]{}
 }
 
+// Restart closes all streamers associated with this Publisher.
+func (p *Publisher[T]) Restart() {
+	p.Lock.Lock()
+	defer p.Lock.Unlock()
+	for _, sub := range p.Subscriptions {
+		sub.Streamer.Close()
+	}
+	p.Subscriptions = nil
+}
+
 // Broadcast receives a list of events, determines if they are
 // applicable to the publisher's subscriptions, and sends
 // appropriate messages to corresponding streamers.
