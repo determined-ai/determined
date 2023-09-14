@@ -352,21 +352,7 @@ func doPublishLoop[T stream.Msg](
 	channelName string,
 	publisher *stream.Publisher[T],
 ) error {
-	reportProblem := func(ev pq.ListenerEventType, err error) {
-		if err != nil {
-			log.Errorf("reportProblem: %v\n", err.Error())
-		}
-	}
-
-	listener := pq.NewListener(
-		// XXX: update this to use master config rather than hardcoded for a local db
-		"postgresql://postgres:postgres@localhost/determined?sslmode=disable",
-		minReconn,
-		maxReconn,
-		reportProblem,
-	)
-	// start listening
-	err := listener.Listen(channelName)
+	listener, err := newDBListener(channelName)
 	if err != nil {
 		return errors.Wrapf(err, "failed to listen: %v", channelName)
 	}
@@ -382,9 +368,12 @@ func doPublishLoop[T stream.Msg](
 		// The pq listener example includes a timeout case, so we do too.
 		// (https://pkg.go.dev/github.com/lib/pq/example/listen)
 		case <-time.After(30 * time.Second):
-			// XXX: look into handling return value of Ping()
-			//nolint
-			go listener.Ping()
+			go func() {
+				err = listener.Ping()
+				if err != nil {
+					log.Error(errors.Wrap(err, "no active connection"))
+				}
+			}()
 
 		// Did we get a notification?
 		case notification := <-listener.Notify:
