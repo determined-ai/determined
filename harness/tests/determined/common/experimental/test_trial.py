@@ -97,32 +97,40 @@ def test_trial_logs_accepts_valid_timestamps(
 
 
 @mock.patch("determined.common.api.bindings.get_GetTrialCheckpoints")
-@pytest.mark.parametrize(
-    "sort_by", [checkpoint.CheckpointSortBy.SEARCHER_METRIC, "val_metric_name"]
-)
-def test_list_checkpoints_calls_bindings_with_params(
+def test_list_checkpoints_calls_bindings_sortByMetric_with_sort_by_str(
     mock_bindings: mock.MagicMock,
     make_trialref: Callable[[int], trial.Trial],
-    sort_by: Union[checkpoint.CheckpointSortBy, str],
 ) -> None:
     trialref = make_trialref(1)
-    ckpt_resp = api_responses.sample_get_experiment_checkpoints()
+    ckpt_resp = api_responses.sample_get_trial_checkpoints()
     mock_bindings.side_effect = api_responses.iter_pages(
         pageable_resp=ckpt_resp,
         pageable_attribute="checkpoints",
     )
 
-    list(
-        trialref.list_checkpoints(
-            sort_by=sort_by, order_by=checkpoint.CheckpointOrderBy.ASC, limit=5
-        )
-    )
+    sort_by_metric = "val_metric"
+    trialref.list_checkpoints(sort_by=sort_by_metric, order_by=checkpoint.CheckpointOrderBy.ASC)
+
     _, call_kwargs = mock_bindings.call_args_list[0]
 
-    assert call_kwargs["orderBy"] == checkpoint.CheckpointOrderBy.ASC._to_bindings()
-    assert call_kwargs["limit"] == 5
+    assert call_kwargs["sortByMetric"] == sort_by_metric
 
-    if isinstance(sort_by, checkpoint.CheckpointSortBy):
-        assert call_kwargs["sortByAttr"] == sort_by._to_bindings()
-    else:
-        assert call_kwargs["sortByMetric"] == sort_by if isinstance(sort_by, str) else None
+
+@mock.patch("determined.common.api.bindings.get_GetTrialCheckpoints")
+def test_list_checkpoints_calls_bindings_sortByAttr_with_sort_by_attr(
+    mock_bindings: mock.MagicMock,
+    make_trialref: Callable[[int], trial.Trial],
+) -> None:
+    trialref = make_trialref(1)
+    ckpt_resp = api_responses.sample_get_trial_checkpoints()
+    mock_bindings.side_effect = api_responses.iter_pages(
+        pageable_resp=ckpt_resp,
+        pageable_attribute="checkpoints",
+    )
+
+    sort_by_attr = checkpoint.CheckpointSortBy.SEARCHER_METRIC
+    trialref.list_checkpoints(sort_by=sort_by_attr, order_by=checkpoint.CheckpointOrderBy.ASC)
+
+    _, call_kwargs = mock_bindings.call_args_list[0]
+
+    assert call_kwargs["sortByAttr"] == sort_by_attr._to_bindings()

@@ -232,7 +232,7 @@ def test_download_code_writes_output_to_file(
 
 
 @mock.patch("determined.common.api.bindings.get_GetExperimentCheckpoints")
-def test_list_checkpoints_calls_bindings_with_sort_by_metric(
+def test_list_checkpoints_calls_bindings_sortByMetric_with_sort_by_str(
     mock_bindings: mock.MagicMock,
     make_expref: Callable[[int], experiment.Experiment],
 ) -> None:
@@ -252,7 +252,7 @@ def test_list_checkpoints_calls_bindings_with_sort_by_metric(
 
 
 @mock.patch("determined.common.api.bindings.get_GetExperimentCheckpoints")
-def test_list_checkpoints_calls_bindings_with_sort_by_attr(
+def test_list_checkpoints_calls_bindings_sortByAttr_with_sort_by_attr(
     mock_bindings: mock.MagicMock,
     make_expref: Callable[[int], experiment.Experiment],
 ) -> None:

@@ -28,7 +28,7 @@ The Checkpoint Export API is a subset of the features found in the
 The :class:`~determined.experimental.client.Experiment` class is a reference to an experiment.
 Within this class, there is a :meth:`~determined.experimental.client.Experiment.list_checkpoints`
 method. When called without arguments, this returns the experiment's checkpoints in sorted order
-using the `metric` and `smaller_is_better` values from the experiment configuration’s searcher
+using the ``metric`` and ``smaller_is_better`` values from the experiment configuration’s searcher
 field. These values are used to sort the experiment's checkpoints by validation performance. As an
 example, the searcher settings in the following experiment configuration file snippet will result in
 checkpoints being sorted by the loss metric in ascending order.
@@ -48,6 +48,7 @@ associated with the experiment and selects the one with the best validation metr
    from determined.experimental import client
 
    checkpoint = client.get_experiment(id).list_checkpoints()[0]
+   specific_checkpoint = client.get_checkpoint(uuid="uuid-for-checkpoint")
 
 Checkpoints can be sorted by any metric using the ``sort_by`` keyword argument, which defines which
 metric to use, and ``order_by``, which defines whether to sort the checkpoints in ascending or
@@ -57,7 +58,7 @@ descending order with respect to the specified metric.
 
    from determined.experimental import checkpoint, client
 
-   checkpoint = (
+   checkpoints = (
        client.get_experiment(id).list_checkpoints(
            sort_by="accuracy",
            order_by=checkpoint.CheckpointOrderBy.DESC
@@ -113,7 +114,7 @@ parameter, which changes the checkpoint download location.
 
    from determined.experimental import client
 
-   checkpoint = client.get_experiment(id).top_checkpoint()
+   checkpoint = client.get_experiment(id).list_checkpoints()[0]
    checkpoint_path = checkpoint.download()
 
    specific_path = checkpoint.download(path="specific-checkpoint-path")
@@ -135,7 +136,7 @@ the ``model`` attribute of the ``Trial`` object, as shown in the following snipp
    from determined.experimental import client
    from determined import pytorch
 
-   checkpoint = client.get_experiment(id).top_checkpoint()
+   checkpoint = client.get_experiment(id).list_checkpoints()[0]
    path = checkpoint.download()
    trial = pytorch.load_trial_from_checkpoint_path(path)
    model = trial.model
@@ -160,7 +161,7 @@ predictions as shown in the following snippet.
    from determined.experimental import client
    from determined import keras
 
-   checkpoint = client.get_experiment(id).top_checkpoint()
+   checkpoint = client.get_experiment(id).list_checkpoints()[0]
    path = checkpoint.download()
    model = keras.load_model_from_checkpoint_path(path)
 
@@ -183,7 +184,7 @@ useful for storing post-training metrics, labels, information related to deploym
 
    from determined.experimental import client
 
-   checkpoint = client.get_experiment(id).top_checkpoint()
+   checkpoint = client.get_experiment(id).list_checkpoints()[0]
    checkpoint.add_metadata({"environment": "production"})
 
    # Metadata will be stored in Determined and accessible on the checkpoint object.
@@ -197,7 +198,7 @@ exists the entire tree beneath it will be overwritten.
 
    from determined.experimental import client
 
-   checkpoint = client.get_experiment(id).top_checkpoint()
+   checkpoint = client.get_experiment(id).list_checkpoints()[0]
    checkpoint.add_metadata({"metrics": {"loss": 0.12}})
    checkpoint.add_metadata({"metrics": {"acc": 0.92}})
 
@@ -211,7 +212,7 @@ deleted.
 
    from determined.experimental import client
 
-   checkpoint = client.get_experiment(id).top_checkpoint()
+   checkpoint = client.get_experiment(id).list_checkpoints()[0]
    checkpoint.remove_metadata(["metrics"])
 
 ***************************************
