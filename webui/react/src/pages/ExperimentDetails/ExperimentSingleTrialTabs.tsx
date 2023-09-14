@@ -251,13 +251,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         ) : (
           <TrialDetailsHyperparameters pageRef={pageRef} trial={trialDetails as TrialDetails} />
         ),
-        disabled: experiment.unmanaged,
         key: TabType.Hyperparameters,
-        label: experiment.unmanaged ? (
-          <Tooltip content={UNMANAGED_MESSAGE}>Hyperparameters</Tooltip>
-        ) : (
-          'Hyperparameters'
-        ),
+        label: 'Hyperparameters',
       },
     ];
 
@@ -351,8 +346,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         activeKey={tabKey}
         items={tabItems}
         tabBarExtraContent={
-          tabKey === TabType.Hyperparameters && showCreateExperiment ? (
-            <div style={{ padding: 8 }}>
+          tabKey === TabType.Hyperparameters && showCreateExperiment && !experiment.unmanaged ? (
+            <div style={{ padding: 4 }}>
               <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
             </div>
           ) : undefined
