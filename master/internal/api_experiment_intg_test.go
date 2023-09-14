@@ -993,8 +993,9 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canCreateExperimentError")).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
-		ProjectId: int32(projectID),
-		Config:    minExpConfToYaml(t),
+		ProjectId:       int32(projectID),
+		Config:          minExpConfToYaml(t),
+		ModelDefinition: []*utilv1.File{{Content: []byte{1, 2, 3}}},
 	})
 	require.Equal(t, expectedErr, err)
 
@@ -1006,8 +1007,9 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	authZExp.On("CanEditExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		fmt.Errorf("canActivateExperimentError")).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
-		Activate: true,
-		Config:   minExpConfToYaml(t),
+		Activate:        true,
+		Config:          minExpConfToYaml(t),
+		ModelDefinition: []*utilv1.File{{Content: []byte{1, 2, 3}}},
 	})
 	require.Equal(t, expectedErr, err)
 }
