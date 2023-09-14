@@ -58,7 +58,7 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
   };
 
   const handleSubmit = async () => {
-    setTimeout(() => form.validateFields()); // setTimeout required due to antd form update lifecycle
+    form.validateFields();
 
     try {
       const password = newPassword;

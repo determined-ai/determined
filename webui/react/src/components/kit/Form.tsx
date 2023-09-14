@@ -82,6 +82,7 @@ interface FormProps {
   labelCol?: GridCol;
   layout?: 'horizontal' | 'vertical' | 'inline';
   name?: string;
+  noValidate?: boolean;
   onFieldsChange?: AntdFormProps['onFieldsChange'];
   onFinish?: AntdFormProps['onFinish'];
   onValuesChange?: AntdFormProps['onValuesChange'];
@@ -95,8 +96,8 @@ type Form = JSX.Element & {
   useForm?: typeof AntdForm.useForm;
 };
 
-const Form = (props: FormProps): JSX.Element => {
-  return <AntdForm {...props} />;
+const Form = ({ noValidate = true, ...props }: FormProps): JSX.Element => {
+  return <AntdForm noValidate={noValidate} {...props} />;
 };
 
 Form.Item = FormItem;
@@ -104,6 +105,10 @@ Form.List = AntdForm.List;
 Form.ErrorList = AntdForm.ErrorList;
 Form.useForm = AntdForm.useForm;
 Form.useWatch = AntdForm.useWatch;
+
+export const hasErrors = (form: FormInstance): boolean => {
+  return form.getFieldsError().some(({ errors }) => errors.length);
+};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type FormInstance<Values = any> = AntdFormInstance<Values>;

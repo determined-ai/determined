@@ -1,6 +1,6 @@
 import React, { useId, useState } from 'react';
 
-import Form from 'components/kit/Form';
+import Form, { hasErrors } from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import { patchExperiment } from 'services/api';
@@ -35,8 +35,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
   const [disabled, setDisabled] = useState<boolean>(true);
 
   const handleSubmit = async () => {
-    setTimeout(() => form.validateFields()); // setTimeout required due to antd form update lifecycle
-    const formData = form.getFieldsValue();
+    const formData = await form.validateFields();
     try {
       await patchExperiment({
         body: { description: formData.description, name: formData.experimentName },
@@ -45,16 +44,14 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
       fetchExperimentDetails();
     } catch (e) {
       handleError(e, {
-        publicMessage: 'Unable to update name',
+        publicMessage: 'Unable to update experiment',
         silent: false,
       });
     }
   };
 
   const handleChange = () => {
-    const fields = form.getFieldsError();
-    const hasError = fields.some((f) => f.errors.length);
-    setDisabled(hasError);
+    setDisabled(hasErrors(form));
   };
 
   return (

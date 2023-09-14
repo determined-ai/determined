@@ -4,7 +4,7 @@ import _ from 'lodash';
 import React, { useCallback, useEffect, useId, useState } from 'react';
 
 import Button from 'components/kit/Button';
-import Form from 'components/kit/Form';
+import Form, { hasErrors } from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
@@ -147,8 +147,7 @@ const ExperimentCreateModalComponent = ({
       return prev;
     });
 
-    const fields = form.getFieldsError();
-    const hasError = fields.some((f) => f.errors.length);
+    const hasError = hasErrors(form);
     const values = form.getFieldsValue();
     const missingRequiredFields = Object.entries(values).some(([key, value]) => {
       return requiredFields.includes(key) && !value;
@@ -285,7 +284,7 @@ const ExperimentCreateModalComponent = ({
     if (isAdvancedMode) {
       userConfig = (yaml.load(modalState.configString) || {}) as RawJson;
     } else {
-      setTimeout(() => form.validateFields()); // setTimeout required due to antd form update lifecycle
+      await form.validateFields();
       userConfig = modalState.config;
     }
 

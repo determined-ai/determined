@@ -32,9 +32,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
   };
 
   const handleSubmit = async () => {
-    await form.validateFields();
-
-    const formData = form.getFieldsValue();
+    const formData = await form.validateFields();
     const { agentUid, agentUser, agentGid, agentGroup } = formData;
     const agentUserGroup: V1AgentUserGroup = { agentGid, agentGroup, agentUid, agentUser };
     formData.agentUserGroup = agentUserGroup;
