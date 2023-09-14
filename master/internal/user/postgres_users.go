@@ -73,11 +73,13 @@ func Update(
 	ug *model.AgentUserGroup,
 ) error {
 	return db.Bun().RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewUpdate().
-			Model(updated).
-			Column(toUpdate...).
-			Where("id = ?", updated.ID).Exec(ctx); err != nil {
-			return fmt.Errorf("error updating %q: %s", updated.Username, err)
+		for _, col := range toUpdate {
+			if _, err := tx.NewUpdate().
+				Model(updated).
+				Column(col).
+				Where("id = ?", updated.ID).Exec(ctx); err != nil {
+				return fmt.Errorf("error updating %q: %s", updated.Username, err)
+			}
 		}
 
 		if slices.Contains(toUpdate, "password_hash") {
