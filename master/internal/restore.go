@@ -116,7 +116,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	}
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
-	owner, err := user.UserByUsername(expModel.Username)
+	owner, err := user.ByUsername(context.TODO(), expModel.Username)
 	if err != nil {
 		return errors.Wrapf(err, "retrieving full user on restart")
 	}

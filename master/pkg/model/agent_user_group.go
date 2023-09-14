@@ -13,7 +13,7 @@ import (
 type AgentUserGroup struct {
 	bun.BaseModel `bun:"table:agent_user_groups"`
 
-	ID int `db:"id" json:"id"`
+	ID int `db:"id" bun:"id,pk,autoincrement" json:"id"`
 
 	UserID UserID `db:"user_id" json:"user_id"`
 

@@ -3,10 +3,12 @@ package kubernetesrm
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"sync"
 	"time"
@@ -19,6 +21,7 @@ import (
 	k8error "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -26,6 +29,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -275,6 +279,22 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case *apiv1.GetAgentsRequest:
 		p.handleGetAgentsRequest(ctx)
 
+	case *apiv1.EnableAgentRequest:
+		resp, err := p.enableNode(ctx, msg.AgentId)
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
+		ctx.Respond(resp)
+
+	case *apiv1.DisableAgentRequest:
+		resp, err := p.disableNode(ctx, msg.AgentId, msg.Drain)
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
+		ctx.Respond(resp)
+
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
@@ -448,6 +468,11 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 		return nil
 	}
 
+	if err := p.dontReattachQueuedPreAgentDisabledPods(ctx, pods, configMaps); err != nil {
+		ctx.Respond(err)
+		return nil
+	}
+
 	var restoreResponses []reattachPodResponse
 	for i, containerID := range containerIDs {
 		resp, err := p.reattachPod(ctx, msg.allocationID, resourcePool, containerID,
@@ -462,6 +487,35 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 	}
 
 	ctx.Respond(restoreResponses)
+	return nil
+}
+
+func (p *pods) dontReattachQueuedPreAgentDisabledPods(
+	ctx *actor.Context, pods *k8sV1.PodList, configMaps *k8sV1.ConfigMapList,
+) error {
+	// This is needed to label pods created before Determined supported k8s agent enable disable.
+	// We will not reattach pods that are queued and don't have the affinity that respects
+	// agent disabling. Not many people should be relying on this feature when this will be released
+	// since it was behind _agent_reattach_enabled until the version this is also released on.
+	// We can't patch the pods with the needed field, as a limitation of Kubernetes.
+	for _, pod := range pods.Items {
+		pod := pod
+		if pod.Spec.NodeName == "" { // Only do this for pods not assigned to a node yet.
+			before := pod.DeepCopy()
+			addNodeDisabledAffinityToPodSpec(&pod, clusterIDNodeLabel())
+
+			if !reflect.DeepEqual(pod.Spec, before.Spec) {
+				p.deleteKubernetesResources(ctx, pods, configMaps)
+				return fmt.Errorf(
+					"unable to restore pod %s since it was queued and does not have "+
+						"Determined's affinity to prevent scheduling on disabled nodes. "+
+						"This is expected to happen on allocations with queued pods "+
+						"when upgrading from before or equal to 0.25.1 "+
+						"to after or equal to 0.26.0", pod.Name)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -864,6 +918,157 @@ func (p *pods) podStatusCallback(s *actor.System, event watch.Event) {
 	}
 }
 
+var clusterID string
+
+func setClusterID(s string) {
+	if clusterID != "" {
+		panic(fmt.Sprintf("set cluster ID again new %s old %s", s, clusterID))
+	}
+	clusterID = s
+}
+
+func clusterIDNodeLabel() string {
+	return fmt.Sprintf("determined.ai/cluster-id-%s", clusterID)
+}
+
+const (
+	noExecuteNodeLabelValue  = "no-execute"
+	noScheduleNodeLabelValue = "no-schedule"
+)
+
+func (p *pods) enableNode(
+	ctx *actor.Context, nodeName string,
+) (*apiv1.EnableAgentResponse, error) {
+	patch := []byte(fmt.Sprintf(`{
+		"metadata": {
+			"labels": {
+				"%s": null
+			}
+		}
+	}`, clusterIDNodeLabel()))
+
+	_, err := p.clientSet.CoreV1().Nodes().
+		Patch(context.TODO(), nodeName, types.StrategicMergePatchType, patch, metaV1.PatchOptions{})
+	if k8error.IsForbidden(err) {
+		return nil, fmt.Errorf("the Determined master Kubernetes service account " +
+			"is missing permissions to patch nodes. " +
+			"Enabling or disabling nodes requires this permission, " +
+			"however Determined will otherwise still function correctly without " +
+			"these Kubernetes permissions")
+	} else if err != nil {
+		return nil, fmt.Errorf(
+			"enabling node %s by removing the Determined no schedule label: %w", nodeName, err)
+	}
+	p.syslog.Infof("node %s enabled by an user", nodeName)
+
+	n, ok := p.summarizeClusterByNodes(ctx)[nodeName]
+	if !ok {
+		return nil, fmt.Errorf("node %s enabled without error, error getting node summary", nodeName)
+	}
+	n.Enabled = true
+	n.Draining = false
+	for slotKey := range n.Slots {
+		s := n.Slots[slotKey]
+		s.Enabled = n.Enabled
+		s.Draining = n.Draining
+		n.Slots[slotKey] = s
+	}
+
+	return &apiv1.EnableAgentResponse{
+		Agent: n.ToProto(),
+	}, nil
+}
+
+func (p *pods) disableNode(
+	ctx *actor.Context, nodeName string, shouldDrain bool,
+) (*apiv1.DisableAgentResponse, error) {
+	labelValue := noExecuteNodeLabelValue
+	if shouldDrain {
+		labelValue = noScheduleNodeLabelValue
+	}
+
+	patchStruct := metaV1.ObjectMeta{
+		Labels: map[string]string{clusterIDNodeLabel(): labelValue},
+	}
+	patch, err := json.Marshal(map[string]any{"metadata": patchStruct})
+	if err != nil {
+		return nil, fmt.Errorf("marshaling JSON patch %v: %s", patchStruct, err)
+	}
+
+	_, err = p.clientSet.CoreV1().Nodes().
+		Patch(context.TODO(), nodeName, types.StrategicMergePatchType, patch, metaV1.PatchOptions{})
+	if k8error.IsForbidden(err) {
+		return nil, fmt.Errorf("the Determined master Kubernetes service account " +
+			"is missing permissions to patch nodes. " +
+			"Enabling or disabling nodes requires this permission, " +
+			"however Determined will otherwise still function correctly without " +
+			"these Kubernetes permissions")
+	} else if err != nil {
+		return nil, fmt.Errorf(
+			"disabling node %s by adding the Determined no schedule label: %w", nodeName, err)
+	}
+	p.syslog.Infof("node %s disabled by an user", nodeName)
+
+	if !shouldDrain { // See note in spec.go about how we could remove killing all pods here.
+		if err := p.releaseAllocationsOnDisabledNode(ctx, nodeName); err != nil {
+			return nil, fmt.Errorf(
+				"node disabled without error, error killing existing pod on node: %w", err)
+		}
+	}
+
+	n, ok := p.summarizeClusterByNodes(ctx)[nodeName]
+	if !ok {
+		return nil, fmt.Errorf("node %s disabled without error, error getting node summary", nodeName)
+	}
+	n.Enabled = false
+	n.Draining = shouldDrain
+	for slotKey := range n.Slots {
+		s := n.Slots[slotKey]
+		s.Enabled = n.Enabled
+		s.Draining = n.Draining
+		n.Slots[slotKey] = s
+	}
+
+	return &apiv1.DisableAgentResponse{
+		Agent: n.ToProto(),
+	}, nil
+}
+
+func (p *pods) releaseAllocationsOnDisabledNode(ctx *actor.Context, nodeName string) error {
+	listOptions := metaV1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s", determinedLabel),
+		FieldSelector: fmt.Sprintf("spec.nodeName=%s", nodeName),
+	}
+	pods, err := p.listPodsInAllNamespaces(context.TODO(), listOptions)
+	if err != nil {
+		return fmt.Errorf("listing pods on node %s: %w", nodeName, err)
+	}
+
+	notifiedAllocations := make(map[model.AllocationID]bool)
+	for _, pod := range pods.Items {
+		podHandler, ok := p.podNameToPodHandler[pod.Name]
+		if !ok {
+			p.syslog.Warnf(
+				"during node disable couldn't find pod %s's actor to kill", pod.Name)
+			continue
+		}
+
+		p.syslog.Infof(
+			"stopping pod %s because node %s was disabled without drain option", pod.Name, nodeName)
+		if notifiedAllocations[podHandler.allocationID] {
+			continue
+		}
+
+		rmevents.Publish(podHandler.allocationID, &sproto.ReleaseResources{
+			Reason:    "node disabled without drain",
+			ForceKill: true,
+		})
+		notifiedAllocations[podHandler.allocationID] = true
+	}
+
+	return nil
+}
+
 func (p *pods) nodeStatusCallback(event watch.Event) {
 	node, ok := event.Object.(*k8sV1.Node)
 	if !ok {
@@ -1197,6 +1402,9 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 	nodeToTasks, taskSlots := p.getNonDetSlots(p.slotType)
 	summary := make(map[string]model.AgentSummary, len(p.currentNodes))
 	for _, node := range p.currentNodes {
+		disabledLabel, isDisabled := node.Labels[clusterIDNodeLabel()]
+		isDraining := isDisabled && disabledLabel == noScheduleNodeLabelValue
+
 		var numSlots int64
 		var deviceType device.Type
 		switch p.slotType {
@@ -1231,7 +1439,8 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
 					ID:        strconv.Itoa(i),
 					Device:    device.Device{Type: deviceType},
-					Enabled:   true,
+					Draining:  isDraining,
+					Enabled:   !isDisabled,
 					Container: podInfo.container,
 				}
 				curSlot++
@@ -1246,9 +1455,10 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 				}
 
 				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
-					ID:      strconv.FormatInt(i, 10),
-					Device:  device.Device{Type: deviceType},
-					Enabled: true,
+					ID:       strconv.FormatInt(i, 10),
+					Device:   device.Device{Type: deviceType},
+					Draining: isDraining,
+					Enabled:  !isDisabled,
 					Container: &cproto.Container{
 						ID:          cproto.ID(taskName),
 						State:       "RUNNING",
@@ -1262,9 +1472,10 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 
 		for i := curSlot; i < int(numSlots); i++ {
 			slotsSummary[strconv.Itoa(i)] = model.SlotSummary{
-				ID:      strconv.Itoa(i),
-				Device:  device.Device{Type: deviceType},
-				Enabled: true,
+				ID:       strconv.Itoa(i),
+				Device:   device.Device{Type: deviceType},
+				Draining: isDraining,
+				Enabled:  !isDisabled,
 			}
 		}
 
@@ -1280,6 +1491,8 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 			NumContainers:  len(podByNode[node.Name]) + len(nodeToTasks[node.Name]),
 			ResourcePool:   []string{""},
 			Addresses:      addrs,
+			Draining:       isDraining,
+			Enabled:        !isDisabled,
 		}
 	}
 

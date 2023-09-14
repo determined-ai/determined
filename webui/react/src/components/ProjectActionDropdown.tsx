@@ -19,17 +19,18 @@ interface Props {
   className?: string;
   direction?: 'vertical' | 'horizontal';
   isContextMenu?: boolean;
-  onComplete?: () => void;
   onDelete?: () => void;
-  onVisibleChange?: (visible: boolean) => void;
+  onEdit?: (name: string, archived: boolean) => void;
+  onMove?: () => void;
   project: Project;
   showChildrenIfEmpty?: boolean;
   workspaceArchived?: boolean;
 }
 
 interface ProjectMenuPropsIn {
-  onComplete?: () => void;
   onDelete?: () => void;
+  onEdit?: (name: string, archived: boolean) => void;
+  onMove?: () => void;
   project?: Project;
   workspaceArchived?: boolean;
 }
@@ -41,8 +42,9 @@ interface ProjectMenuPropsOut {
 }
 
 export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPropsOut = ({
-  onComplete,
   onDelete,
+  onEdit,
+  onMove,
   project,
   workspaceArchived = false,
 }: ProjectMenuPropsIn) => {
@@ -55,18 +57,14 @@ export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPro
       <>
         {project && (
           <>
-            <ProjectMoveModal.Component project={project} onClose={onComplete} />
-            <ProjectDeleteModal.Component
-              project={project}
-              onClose={onComplete}
-              onDelete={onDelete}
-            />
-            <ProjectEditModal.Component project={project} onClose={onComplete} />
+            <ProjectMoveModal.Component project={project} onMove={onMove} />
+            <ProjectDeleteModal.Component project={project} onDelete={onDelete} />
+            <ProjectEditModal.Component project={project} onEdit={onEdit} />
           </>
         )}
       </>
     );
-  }, [ProjectMoveModal, ProjectEditModal, ProjectDeleteModal, onComplete, onDelete, project]);
+  }, [ProjectMoveModal, ProjectEditModal, ProjectDeleteModal, onDelete, onEdit, onMove, project]);
 
   const { canDeleteProjects, canModifyProjects, canMoveProjects } = usePermissions();
 
@@ -76,19 +74,19 @@ export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPro
     if (project.archived) {
       try {
         await unarchiveProject({ id: project.id });
-        onComplete?.();
+        onEdit?.(project.name, false);
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to unarchive project.' });
       }
     } else {
       try {
         await archiveProject({ id: project.id });
-        onComplete?.();
+        onEdit?.(project.name, true);
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to archive project.' });
       }
     }
-  }, [onComplete, project]);
+  }, [onEdit, project]);
 
   const MenuKey = {
     Delete: 'delete',
@@ -151,13 +149,15 @@ const ProjectActionDropdown: React.FC<Props> = ({
   showChildrenIfEmpty = true,
   className,
   direction = 'vertical',
-  onComplete,
+  onEdit,
   onDelete,
+  onMove,
   workspaceArchived = false,
 }: Props) => {
   const { contextHolders, menu, onClick } = useProjectActionMenu({
-    onComplete,
     onDelete,
+    onEdit,
+    onMove,
     project,
     workspaceArchived,
   });

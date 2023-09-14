@@ -18,7 +18,7 @@ import (
 // addGroup adds a group to the database. Returns ErrDuplicateRow if a
 // group already exists with the same name or ID. Will use db.Bun() if
 // passed nil for idb.
-func addGroup(ctx context.Context, idb bun.IDB, group Group) (Group, error) {
+func addGroup(ctx context.Context, idb bun.IDB, group model.Group) (model.Group, error) {
 	if idb == nil {
 		idb = db.Bun()
 	}
@@ -29,7 +29,7 @@ func addGroup(ctx context.Context, idb bun.IDB, group Group) (Group, error) {
 
 // AddGroupWithMembers creates a group and adds members to it all in one transaction.
 // If an empty user set is passed in, no transaction is used for performance reasons.
-func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID) (Group,
+func AddGroupWithMembers(ctx context.Context, group model.Group, uids ...model.UserID) (model.Group,
 	[]model.User, error,
 ) {
 	if len(uids) == 0 {
@@ -38,7 +38,7 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 	}
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
-		return Group{}, nil, errors.Wrapf(
+		return model.Group{}, nil, errors.Wrapf(
 			db.MatchSentinelError(err),
 			"Error starting transaction for group %d creation",
 			group.ID)
@@ -52,7 +52,7 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 
 	group, err = addGroup(ctx, tx, group)
 	if err != nil {
-		return Group{}, nil, err
+		return model.Group{}, nil, err
 	}
 
 	idsToAdd := make([]model.UserID, 0, len(uids)+1)
@@ -63,18 +63,18 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 	if len(idsToAdd) > 0 {
 		err = AddUsersToGroupTx(ctx, tx, group.ID, idsToAdd...)
 		if err != nil {
-			return Group{}, nil, err
+			return model.Group{}, nil, err
 		}
 	}
 
 	users, err := UsersInGroupTx(ctx, tx, group.ID)
 	if err != nil {
-		return Group{}, nil, err
+		return model.Group{}, nil, err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return Group{}, nil, errors.Wrapf(
+		return model.Group{}, nil, errors.Wrapf(
 			db.MatchSentinelError(err),
 			"Error committing changes to group %d",
 			group.ID)
@@ -84,14 +84,14 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 }
 
 // GroupByIDTx looks for a group by id. Returns ErrNotFound if the group isn't found.
-func GroupByIDTx(ctx context.Context, idb bun.IDB, gid int) (Group, error) {
+func GroupByIDTx(ctx context.Context, idb bun.IDB, gid int) (model.Group, error) {
 	if idb == nil {
 		idb = db.Bun()
 	}
-	var g Group
+	var g model.Group
 	err := idb.NewSelect().Model(&g).Where("id = ?", gid).Scan(ctx)
 	if g.OwnerID != 0 {
-		return Group{}, errors.Wrap(db.ErrNotFound, "cannot get a personal group")
+		return model.Group{}, errors.Wrap(db.ErrNotFound, "cannot get a personal group")
 	}
 
 	return g, errors.Wrapf(db.MatchSentinelError(err), "Error getting group %d", gid)
@@ -104,7 +104,7 @@ func GroupByIDTx(ctx context.Context, idb bun.IDB, gid int) (Group, error) {
 // be exposed to an end user.
 func SearchGroups(
 	ctx context.Context, name string, userBelongsTo model.UserID, offset, limit int,
-) (groups []Group, memberCounts []int32, tableRows int, err error) {
+) (groups []model.Group, memberCounts []int32, tableRows int, err error) {
 	query := SearchGroupsQuery(name, userBelongsTo, true)
 	return SearchGroupsPaginated(ctx, query, offset, limit)
 }
@@ -115,7 +115,7 @@ func SearchGroups(
 // are found, as that is considered a successful search.
 func SearchGroupsWithoutPersonalGroups(
 	ctx context.Context, name string, userBelongsTo model.UserID, offset, limit int,
-) (groups []Group, memberCounts []int32, tableRows int, err error) {
+) (groups []model.Group, memberCounts []int32, tableRows int, err error) {
 	query := SearchGroupsQuery(name, userBelongsTo, false)
 	return SearchGroupsPaginated(ctx, query, offset, limit)
 }
@@ -125,7 +125,7 @@ func SearchGroupsWithoutPersonalGroups(
 func SearchGroupsQuery(name string, userBelongsTo model.UserID,
 	includePersonal bool,
 ) *bun.SelectQuery {
-	var groups []Group
+	var groups []model.Group
 	query := db.Bun().NewSelect().Model(&groups)
 	if !includePersonal {
 		query = query.Where("groups.user_id IS NULL")
@@ -150,7 +150,7 @@ func SearchGroupsQuery(name string, userBelongsTo model.UserID,
 // are found (that is a successful search).
 func SearchGroupsPaginated(ctx context.Context,
 	query *bun.SelectQuery, offset, limit int,
-) (groups []Group, memberCounts []int32, tableRows int, err error) {
+) (groups []model.Group, memberCounts []int32, tableRows int, err error) {
 	paginatedQuery := db.PaginateBun(query, "id", db.SortDirectionAsc, offset, limit)
 
 	err = paginatedQuery.Scan(ctx, &groups)
@@ -188,7 +188,7 @@ func SearchGroupsPaginated(ctx context.Context,
 // group doesn't exist.
 func DeleteGroup(ctx context.Context, gid int) error {
 	res, err := db.Bun().NewDelete().
-		Model(&Group{ID: gid}).
+		Model(&model.Group{ID: gid}).
 		WherePK().
 		Where("user_id IS NULL"). // Cannot delete personal group.
 		Exec(ctx)
@@ -201,7 +201,7 @@ func DeleteGroup(ctx context.Context, gid int) error {
 
 // UpdateGroupTx updates a group in the database. Returns ErrNotFound if the
 // group isn't found.
-func UpdateGroupTx(ctx context.Context, idb bun.IDB, group Group) error {
+func UpdateGroupTx(ctx context.Context, idb bun.IDB, group model.Group) error {
 	if idb == nil {
 		idb = db.Bun()
 	}
@@ -233,9 +233,9 @@ func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.
 		return nil
 	}
 
-	groupMem := make([]GroupMembership, 0, len(uids))
+	groupMem := make([]model.GroupMembership, 0, len(uids))
 	for _, uid := range uids {
-		groupMem = append(groupMem, GroupMembership{
+		groupMem = append(groupMem, model.GroupMembership{
 			UserID:  uid,
 			GroupID: gid,
 		})
@@ -330,7 +330,7 @@ func UpdateGroupAndMembers(
 	if name != "" {
 		newName = name
 	}
-	err = UpdateGroupTx(ctx, tx, Group{
+	err = UpdateGroupTx(ctx, tx, model.Group{
 		ID:      gid,
 		Name:    newName,
 		OwnerID: oldGroup.OwnerID,

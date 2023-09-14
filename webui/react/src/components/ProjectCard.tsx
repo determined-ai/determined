@@ -14,21 +14,26 @@ import { useProjectActionMenu } from './ProjectActionDropdown';
 import css from './ProjectCard.module.scss';
 
 interface Props {
-  fetchProjects?: () => void;
+  hideActionMenu?: boolean;
+  onEdit?: (name: string, archived: boolean) => void;
+  onRemove?: () => void;
   project: Project;
   showWorkspace?: boolean;
   workspaceArchived?: boolean;
 }
 
 const ProjectCard: React.FC<Props> = ({
+  hideActionMenu,
+  onRemove,
+  onEdit,
   project,
-  fetchProjects,
-  workspaceArchived,
   showWorkspace,
+  workspaceArchived,
 }: Props) => {
   const { contextHolders, menu, onClick } = useProjectActionMenu({
-    onComplete: fetchProjects,
-    onDelete: fetchProjects,
+    onDelete: onRemove,
+    onEdit,
+    onMove: onRemove,
     project,
     workspaceArchived,
   });
@@ -39,7 +44,7 @@ const ProjectCard: React.FC<Props> = ({
   return (
     <>
       <Card
-        actionMenu={!project.immutable ? menu : undefined}
+        actionMenu={!project.immutable && !hideActionMenu ? menu : undefined}
         href={paths.projectDetails(project.id)}
         onDropdown={onClick}>
         <div className={classnames.join(' ')}>

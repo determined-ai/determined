@@ -66,20 +66,6 @@ func (_m *DB) AddAllocation(a *model.Allocation) error {
 	return r0
 }
 
-// AddAuthTokenKeypair provides a mock function with given fields: tokenKeypair
-func (_m *DB) AddAuthTokenKeypair(tokenKeypair *model.AuthTokenKeypair) error {
-	ret := _m.Called(tokenKeypair)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.AuthTokenKeypair) error); ok {
-		r0 = rf(tokenKeypair)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // AddExperiment provides a mock function with given fields: experiment, activeConfig
 func (_m *DB) AddExperiment(experiment *model.Experiment, activeConfig expconf.ExperimentConfigV0) error {
 	ret := _m.Called(experiment, activeConfig)
@@ -122,30 +108,6 @@ func (_m *DB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) e
 	return r0
 }
 
-// AddUser provides a mock function with given fields: user, ug
-func (_m *DB) AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserID, error) {
-	ret := _m.Called(user, ug)
-
-	var r0 model.UserID
-	var r1 error
-	if rf, ok := ret.Get(0).(func(*model.User, *model.AgentUserGroup) (model.UserID, error)); ok {
-		return rf(user, ug)
-	}
-	if rf, ok := ret.Get(0).(func(*model.User, *model.AgentUserGroup) model.UserID); ok {
-		r0 = rf(user, ug)
-	} else {
-		r0 = ret.Get(0).(model.UserID)
-	}
-
-	if rf, ok := ret.Get(1).(func(*model.User, *model.AgentUserGroup) error); ok {
-		r1 = rf(user, ug)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // AddValidationMetrics provides a mock function with given fields: ctx, m
 func (_m *DB) AddValidationMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
 	ret := _m.Called(ctx, m)
@@ -158,58 +120,6 @@ func (_m *DB) AddValidationMetrics(ctx context.Context, m *trialv1.TrialMetrics)
 	}
 
 	return r0
-}
-
-// AgentUserGroup provides a mock function with given fields: userID
-func (_m *DB) AgentUserGroup(userID model.UserID) (*model.AgentUserGroup, error) {
-	ret := _m.Called(userID)
-
-	var r0 *model.AgentUserGroup
-	var r1 error
-	if rf, ok := ret.Get(0).(func(model.UserID) (*model.AgentUserGroup, error)); ok {
-		return rf(userID)
-	}
-	if rf, ok := ret.Get(0).(func(model.UserID) *model.AgentUserGroup); ok {
-		r0 = rf(userID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.AgentUserGroup)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(model.UserID) error); ok {
-		r1 = rf(userID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// AuthTokenKeypair provides a mock function with given fields:
-func (_m *DB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
-	ret := _m.Called()
-
-	var r0 *model.AuthTokenKeypair
-	var r1 error
-	if rf, ok := ret.Get(0).(func() (*model.AuthTokenKeypair, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() *model.AuthTokenKeypair); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.AuthTokenKeypair)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // CheckExperimentExists provides a mock function with given fields: id
@@ -459,34 +369,6 @@ func (_m *DB) DeleteTrialLogs(ids []int) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func([]int) error); ok {
 		r0 = rf(ids)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DeleteUserSessionByID provides a mock function with given fields: sessionID
-func (_m *DB) DeleteUserSessionByID(sessionID model.SessionID) error {
-	ret := _m.Called(sessionID)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.SessionID) error); ok {
-		r0 = rf(sessionID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DeleteUserSessionByToken provides a mock function with given fields: userSessionToken
-func (_m *DB) DeleteUserSessionByToken(userSessionToken string) error {
-	ret := _m.Called(userSessionToken)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(userSessionToken)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1291,30 +1173,6 @@ func (_m *DB) StartAllocationSession(allocationID model.AllocationID, owner *mod
 	return r0, r1
 }
 
-// StartUserSession provides a mock function with given fields: user
-func (_m *DB) StartUserSession(user *model.User) (string, error) {
-	ret := _m.Called(user)
-
-	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(*model.User) (string, error)); ok {
-		return rf(user)
-	}
-	if rf, ok := ret.Get(0).(func(*model.User) string); ok {
-		r0 = rf(user)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	if rf, ok := ret.Get(1).(func(*model.User) error); ok {
-		r1 = rf(user)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // TemplateByName provides a mock function with given fields: name
 func (_m *DB) TemplateByName(name string) (model.Template, error) {
 	ret := _m.Called(name)
@@ -1775,60 +1633,6 @@ func (_m *DB) UpdateTrialRunnerState(id int, state string) error {
 	}
 
 	return r0
-}
-
-// UpdateUser provides a mock function with given fields: updated, toUpdate, ug
-func (_m *DB) UpdateUser(updated *model.User, toUpdate []string, ug *model.AgentUserGroup) error {
-	ret := _m.Called(updated, toUpdate, ug)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.User, []string, *model.AgentUserGroup) error); ok {
-		r0 = rf(updated, toUpdate, ug)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// UpdateUsername provides a mock function with given fields: userID, newUsername
-func (_m *DB) UpdateUsername(userID *model.UserID, newUsername string) error {
-	ret := _m.Called(userID, newUsername)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.UserID, string) error); ok {
-		r0 = rf(userID, newUsername)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// UserList provides a mock function with given fields:
-func (_m *DB) UserList() ([]model.FullUser, error) {
-	ret := _m.Called()
-
-	var r0 []model.FullUser
-	var r1 error
-	if rf, ok := ret.Get(0).(func() ([]model.FullUser, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() []model.FullUser); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.FullUser)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // ValidationByTotalBatches provides a mock function with given fields: trialID, totalBatches

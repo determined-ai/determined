@@ -8,31 +8,33 @@ import (
 	"testing"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/portregistry"
-	"github.com/determined-ai/determined/master/internal/task/preemptible"
-	"github.com/determined-ai/determined/master/internal/task/tasklogger"
-
-	"github.com/determined-ai/determined/master/pkg/aproto"
-	"github.com/determined-ai/determined/master/pkg/device"
-	"github.com/determined-ai/determined/master/pkg/syncx/queue"
-	"github.com/determined-ai/determined/master/pkg/tasks"
-
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task/preemptible"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/syncx/queue"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 type mockTaskSpecifier struct{}
 
-func (m mockTaskSpecifier) ToTaskSpec() (t tasks.TaskSpec) { return t }
+func (m mockTaskSpecifier) ToTaskSpec() (t tasks.TaskSpec) {
+	t.Owner = &model.User{Username: uuid.NewString(), ID: model.UserID(1)}
+	return t
+}
 
 func TestAllocation(t *testing.T) {
 	cases := []struct {
@@ -210,7 +212,6 @@ func setup(t *testing.T) (
 	require.True(t, rm.AssertExpectations(t))
 
 	tasklogger.SetDefaultLogger(tasklogger.New(&nullWriter{}))
-
 	return &rm, pgDB, a
 }
 

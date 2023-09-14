@@ -1,9 +1,8 @@
-package usergroup
+package model
 
 import (
 	"github.com/uptrace/bun"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
 )
 
@@ -11,9 +10,9 @@ import (
 type Group struct {
 	bun.BaseModel `bun:"table:groups,alias:groups"`
 
-	ID      int          `bun:"id,pk,autoincrement" json:"id"`
-	Name    string       `bun:"group_name,notnull"  json:"name"`
-	OwnerID model.UserID `bun:"user_id,nullzero"    json:"userId,omitempty"`
+	ID      int    `bun:"id,pk,autoincrement" json:"id"`
+	Name    string `bun:"group_name,notnull"  json:"name"`
+	OwnerID UserID `bun:"user_id,nullzero"    json:"userId,omitempty"`
 }
 
 // Proto converts a group to its protobuf representation.
@@ -40,6 +39,6 @@ func (gs Groups) Proto() []*groupv1.Group {
 type GroupMembership struct {
 	bun.BaseModel `bun:"table:user_group_membership"`
 
-	UserID  model.UserID `bun:"user_id,notnull"`
-	GroupID int          `bun:"group_id,notnull"`
+	UserID  UserID `bun:"user_id,notnull"`
+	GroupID int    `bun:"group_id,notnull"`
 }

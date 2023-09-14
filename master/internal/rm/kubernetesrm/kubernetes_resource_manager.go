@@ -55,6 +55,14 @@ func New(
 	if err != nil {
 		panic(errors.Wrap(err, "failed to set up TLS config"))
 	}
+
+	// TODO(DET-9833) clusterID should just be a `internal/config` package singleton.
+	clusterID, err := db.GetOrCreateClusterID()
+	if err != nil {
+		panic(fmt.Errorf("getting clusterID: %w", err))
+	}
+	setClusterID(clusterID)
+
 	ref, _ := system.ActorOf(
 		sproto.K8sRMAddr,
 		newKubernetesResourceManager(
@@ -417,6 +425,12 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		resp := ctx.Ask(k.podsActor, msg)
 		ctx.Respond(resp.Get())
 
+	case *apiv1.EnableAgentRequest:
+		ctx.Respond(ctx.Ask(k.podsActor, msg).Get())
+
+	case *apiv1.DisableAgentRequest:
+		ctx.Respond(ctx.Ask(k.podsActor, msg).Get())
+
 	case sproto.GetExternalJobs:
 		ctx.Respond(rmerrors.ErrNotSupported)
 
@@ -636,6 +650,22 @@ func (k *kubernetesResourceManager) getTaskContainerDefaults(
 		}
 	}
 	return result
+}
+
+// EnableAgent allows scheduling on a node that has been disabled.
+func (k ResourceManager) EnableAgent(
+	ctx actor.Messenger,
+	req *apiv1.EnableAgentRequest,
+) (resp *apiv1.EnableAgentResponse, err error) {
+	return resp, k.Ask(ctx, req, &resp)
+}
+
+// DisableAgent prevents scheduling on a node and has the option to kill running jobs.
+func (k ResourceManager) DisableAgent(
+	ctx actor.Messenger,
+	req *apiv1.DisableAgentRequest,
+) (resp *apiv1.DisableAgentResponse, err error) {
+	return resp, k.Ask(ctx, req, &resp)
 }
 
 // EnableSlot implements 'det slot enable...' functionality.

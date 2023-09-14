@@ -24,7 +24,7 @@ const ProjectDeleteModalComponent: React.FC<Props> = ({ onClose, project, onDele
   const handleSubmit = useCallback(async () => {
     try {
       await deleteProject({ id: project.id });
-      if (onDelete) onDelete();
+      onDelete?.();
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,

@@ -344,7 +344,6 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
-@pytest.mark.deepspeed
 def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
     test_dir = "hf_image_classification"
     config_path = conf.hf_trainer_examples_path(f"{test_dir}/deepspeed.yaml")
@@ -362,7 +361,6 @@ def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
-@pytest.mark.deepspeed
 def test_hf_trainer_language_modeling_deepspeed_autotuning() -> None:
     test_dir = "hf_language_modeling"
     config_path = conf.hf_trainer_examples_path(f"{test_dir}/deepspeed.yaml")
@@ -380,7 +378,6 @@ def test_hf_trainer_language_modeling_deepspeed_autotuning() -> None:
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
-@pytest.mark.deepspeed
 def test_torchvision_core_api_deepspeed_autotuning() -> None:
     test_dir = "torchvision/core_api"
     config_path = conf.deepspeed_autotune_examples_path(f"{test_dir}/deepspeed.yaml")
@@ -398,7 +395,6 @@ def test_torchvision_core_api_deepspeed_autotuning() -> None:
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
-@pytest.mark.deepspeed
 def test_torchvision_deepspeed_trial_deepspeed_autotuning() -> None:
     test_dir = "torchvision/deepspeed_trial"
     config_path = conf.deepspeed_autotune_examples_path(f"{test_dir}/deepspeed.yaml")

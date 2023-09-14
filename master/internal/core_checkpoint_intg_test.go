@@ -157,7 +157,7 @@ func setupCheckpointTestEcho(t *testing.T) (
 	rec := httptest.NewRecorder()
 	ctx := &detContext.DetContext{Context: e.NewContext(nil, rec)}
 
-	admin, err := user.UserByUsername("admin")
+	admin, err := user.ByUsername(context.TODO(), "admin")
 	require.NoError(t, err)
 	ctx.SetUser(*admin)
 

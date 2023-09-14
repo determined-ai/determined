@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"reflect"
@@ -64,7 +65,8 @@ func initTheOneBun(db *PgDB) {
 	theOneBun.AddQueryHook(bundebug.NewQueryHook())
 }
 
-func setTokenKeys(tk *model.AuthTokenKeypair) {
+// SetTokenKeys sets tokenKeys.
+func SetTokenKeys(tk *model.AuthTokenKeypair) {
 	bunMutex.Lock()
 	defer bunMutex.Unlock()
 
@@ -168,10 +170,9 @@ func PaginateBunUnsafe(
 
 // PgDB represents a Postgres database connection.  The type definition is needed to define methods.
 type PgDB struct {
-	tokenKeys *model.AuthTokenKeypair
-	sql       *sqlx.DB
-	queries   *StaticQueryMap
-	url       string
+	sql     *sqlx.DB
+	queries *StaticQueryMap
+	url     string
 }
 
 // ConnectPostgres connects to a Postgres database.
@@ -275,7 +276,8 @@ func queryBinds(fields []string) []string {
 	return binds
 }
 
-func setClause(fields []string) string {
+// SetClause returns a SET subquery.
+func SetClause(fields []string) string {
 	sets := make([]string, 0, len(fields))
 	binds := queryBinds(fields)
 	for i, field := range fields {
@@ -416,4 +418,39 @@ func (db *PgDB) withTransaction(name string, exec func(tx *sqlx.Tx) error) error
 
 	tx = nil
 	return nil
+}
+
+// HackAddUser is used to prevent an import cycle in postgres_test_utils & postgres_scim (EE).
+func HackAddUser(
+	ctx context.Context,
+	user *model.User,
+) (model.UserID, error) {
+	var userID model.UserID
+	return userID, Bun().RunInTx(ctx, &sql.TxOptions{},
+		func(ctx context.Context, tx bun.Tx) error {
+			if _, err := tx.NewInsert().Model(user).Returning("id").Exec(ctx); err != nil {
+				return errors.Wrap(err, "error inserting user")
+			}
+
+			personalGroup := model.Group{
+				Name:    fmt.Sprintf("%d", user.ID),
+				OwnerID: user.ID,
+			}
+			if _, err := tx.NewInsert().Model(&personalGroup).Exec(ctx); err != nil {
+				return errors.Wrap(err, "error inserting personal group")
+			}
+
+			groupMembership := model.GroupMembership{
+				UserID:  user.ID,
+				GroupID: personalGroup.ID,
+			}
+			if _, err := tx.NewInsert().Model(&groupMembership).Returning("user_id").Exec(ctx); err != nil {
+				return errors.Wrap(err, "error adding user to personal group")
+			}
+
+			userID = user.ID
+			// The HACK version of this function doesn't include addAgentUserGroup because
+			// in all its use cases, we never feed in a AgentUserGroup to start with.
+			return nil
+		})
 }

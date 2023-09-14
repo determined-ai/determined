@@ -1270,7 +1270,7 @@ func (a *apiServer) PatchExperiment(
 				return nil, err
 			}
 
-			ownerFullUser, err := user.UserByID(*modelExp.OwnerID)
+			ownerFullUser, err := user.ByID(ctx, *modelExp.OwnerID)
 			if err != nil {
 				return nil, errors.Errorf("cannot find user %v who owns experiment", modelExp.OwnerID)
 			}
@@ -2585,7 +2585,11 @@ func (a *apiServer) PatchTrial(ctx context.Context, req *apiv1.PatchTrialRequest
 	}
 
 	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := db.Bun().NewUpdate().Model(&obj).Column(columns...).WherePK().Exec(ctx)
+		_, err := tx.NewUpdate().
+			Model(&obj).
+			Column(columns...).
+			WherePK().
+			Exec(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to update trial state: %w", err)
 		}
