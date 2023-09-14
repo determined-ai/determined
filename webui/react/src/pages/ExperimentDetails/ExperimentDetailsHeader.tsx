@@ -15,10 +15,12 @@ import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
 import Tags from 'components/kit/Tags';
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
+import { UNMANAGED_MESSAGE } from 'constant';
 import { pausableRunStates, stateToLabel, terminalRunStates } from 'constants/states';
 import useExperimentTags from 'hooks/useExperimentTags';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
@@ -248,8 +250,13 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         },
       },
       [Action.ContinueTrial]: {
+        disabled: experiment.unmanaged,
         key: 'continue-trial',
-        label: 'Continue Trial',
+        label: experiment.unmanaged ? (
+          <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
+        ) : (
+          'Continue Trial'
+        ),
         onClick: ContinueTrialModal.open,
       },
       [Action.Delete]: {
@@ -259,8 +266,13 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         onClick: ExperimentDeleteModal.open,
       },
       [Action.HyperparameterSearch]: {
+        disabled: experiment.unmanaged,
         key: 'hyperparameter-search',
-        label: 'Hyperparameter Search',
+        label: experiment.unmanaged ? (
+          <Tooltip content={UNMANAGED_MESSAGE}>Hyperparameter Search</Tooltip>
+        ) : (
+          'Hyperparameter Search'
+        ),
         onClick: handleHyperparameterSearch,
       },
       [Action.DownloadCode]: {
@@ -272,9 +284,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         },
       },
       [Action.Fork]: {
+        disabled: experiment.unmanaged,
         icon: <Icon name="fork" size="small" title={Action.Fork} />,
         key: 'fork',
-        label: 'Fork',
+        label: experiment.unmanaged ? <Tooltip content={UNMANAGED_MESSAGE}>Fork</Tooltip> : 'Fork',
         onClick: ForkModal.open,
       },
       [Action.Edit]: {
@@ -288,10 +301,15 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         onClick: ExperimentMoveModal.open,
       },
       [Action.OpenTensorBoard]: {
+        disabled: experiment.unmanaged,
         icon: <Icon name="tensor-board" size="small" title={Action.OpenTensorBoard} />,
         isLoading: isRunningTensorBoard,
         key: 'tensorboard',
-        label: 'TensorBoard',
+        label: experiment.unmanaged ? (
+          <Tooltip content={UNMANAGED_MESSAGE}>TensorBoard</Tooltip>
+        ) : (
+          'TensorBoard'
+        ),
         onClick: async () => {
           setIsRunningTensorBoard(true);
           try {

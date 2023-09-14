@@ -13,7 +13,7 @@ export interface Option {
   icon?: React.ReactNode;
   isLoading?: boolean;
   key: string;
-  label: string;
+  label: React.ReactNode;
   onClick?: (ev: React.MouseEvent) => void;
   tooltip?: string;
 }
