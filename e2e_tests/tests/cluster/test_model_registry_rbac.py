@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Tuple
 
 import pytest
 
-from determined import cli
 from determined.common import util
 from determined.common.api import Session, authentication, bindings, errors
 from determined.common.api.bindings import experimentv1State
@@ -12,7 +11,7 @@ from determined.experimental import Checkpoint, Determined
 from determined.experimental import client as _client
 from tests import api_utils
 from tests import config as conf
-from tests import experiment, utils
+from tests import experiment
 from tests.cluster.test_rbac import create_workspaces_with_users
 from tests.cluster.test_users import log_in_user_cli, logged_in_user
 
@@ -352,12 +351,11 @@ def test_model_rbac_deletes() -> None:
             add_password=True,
             user=bindings.v1User(username=get_random_string(), active=True, admin=False),
         )
-        api_utils.configure_token_store(conf.ADMIN_CREDENTIALS)
-        cli.rbac.assign_role(
-            utils.CliArgsMock(
-                username_to_assign=cluster_admin_creds.username,
-                role_name="ClusterAdmin",
-            )
+        api_utils.assign_user_role(
+            session=editor_session,
+            user=cluster_admin_creds.username,
+            role="ClusterAdmin",
+            workspace=None,
         )
         cluster_admin_session = api_utils.determined_test_session(cluster_admin_creds)
 

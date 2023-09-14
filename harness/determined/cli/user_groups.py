@@ -1,13 +1,12 @@
 from argparse import Namespace
 from collections import namedtuple
-from typing import Any, Dict, List, Optional
+from typing import Any, List
 
 import determined.cli.render
 from determined.cli import default_pagination_args, render, require_feature_flag, setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.experimental import Session
 
 v1UserHeaders = namedtuple(
     "v1UserHeaders",
@@ -29,7 +28,7 @@ rbac_flag_disabled_message = (
 @require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def create_group(args: Namespace) -> None:
     session = setup_session(args)
-    add_users = usernames_to_user_ids(session, args.add_user)
+    add_users = api.usernames_to_user_ids(session, args.add_user)
     body = bindings.v1CreateGroupRequest(name=args.group_name, addUsers=add_users)
     resp = bindings.post_CreateGroup(session, body=body)
     group = resp.group
@@ -45,7 +44,7 @@ def list_groups(args: Namespace) -> None:
     sess = setup_session(args)
     user_id = None
     if args.groups_user_belongs_to:
-        user_id = usernames_to_user_ids(sess, [args.groups_user_belongs_to])[0]
+        user_id = api.usernames_to_user_ids(sess, [args.groups_user_belongs_to])[0]
 
     body = bindings.v1GetGroupsRequest(offset=args.offset, limit=args.limit, userId=user_id)
     resp = bindings.post_GetGroups(sess, body=body)
@@ -69,7 +68,7 @@ def list_groups(args: Namespace) -> None:
 @require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def describe_group(args: Namespace) -> None:
     session = setup_session(args)
-    group_id = group_name_to_group_id(session, args.group_name)
+    group_id = api.group_name_to_group_id(session, args.group_name)
     resp = bindings.get_GetGroup(session, groupId=group_id)
     group_details = resp.group
 
@@ -90,8 +89,8 @@ def describe_group(args: Namespace) -> None:
 def add_user_to_group(args: Namespace) -> None:
     session = setup_session(args)
     usernames = args.usernames.split(",")
-    group_id = group_name_to_group_id(session, args.group_name)
-    user_ids = usernames_to_user_ids(session, usernames)
+    group_id = api.group_name_to_group_id(session, args.group_name)
+    user_ids = api.usernames_to_user_ids(session, usernames)
 
     body = bindings.v1UpdateGroupRequest(groupId=group_id, addUsers=user_ids)
     resp = bindings.put_UpdateGroup(session, groupId=group_id, body=body)
@@ -106,8 +105,8 @@ def add_user_to_group(args: Namespace) -> None:
 def remove_user_from_group(args: Namespace) -> None:
     session = setup_session(args)
     usernames = args.usernames.split(",")
-    group_id = group_name_to_group_id(session, args.group_name)
-    user_ids = usernames_to_user_ids(session, usernames)
+    group_id = api.group_name_to_group_id(session, args.group_name)
+    user_ids = api.usernames_to_user_ids(session, usernames)
 
     body = bindings.v1UpdateGroupRequest(groupId=group_id, removeUsers=user_ids)
     resp = bindings.put_UpdateGroup(setup_session(args), groupId=group_id, body=body)
@@ -121,7 +120,7 @@ def remove_user_from_group(args: Namespace) -> None:
 @require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def change_group_name(args: Namespace) -> None:
     session = setup_session(args)
-    group_id = group_name_to_group_id(session, args.old_group_name)
+    group_id = api.group_name_to_group_id(session, args.old_group_name)
     body = bindings.v1UpdateGroupRequest(groupId=group_id, name=args.new_group_name)
     resp = bindings.put_UpdateGroup(session, groupId=group_id, body=body)
     g = resp.group
@@ -138,42 +137,11 @@ def delete_group(args: Namespace) -> None:
         "information of the group. Do you still wish to proceed? \n"
     ):
         session = setup_session(args)
-        group_id = group_name_to_group_id(session, args.group_name)
+        group_id = api.group_name_to_group_id(session, args.group_name)
         bindings.delete_DeleteGroup(session, groupId=group_id)
         print(f"user group with name {args.group_name} and ID {group_id} deleted")
     else:
         print("Skipping group deletion.")
-
-
-def usernames_to_user_ids(session: Session, usernames: List[str]) -> List[int]:
-    usernames_to_ids: Dict[str, Optional[int]] = {u: None for u in usernames}
-    users = bindings.get_GetUsers(session).users or []
-    for user in users:
-        if user.username in usernames_to_ids:
-            usernames_to_ids[user.username] = user.id
-
-    missing_users = []
-    user_ids = []
-    for username, user_id in usernames_to_ids.items():
-        if user_id is None:
-            missing_users.append(username)
-        else:
-            user_ids.append(user_id)
-
-    if missing_users:
-        raise api.errors.BadRequestException(
-            f"could not find users for usernames {', '.join(missing_users)}"
-        )
-    return user_ids
-
-
-def group_name_to_group_id(session: Session, group_name: str) -> int:
-    body = bindings.v1GetGroupsRequest(name=group_name, limit=1, offset=0)
-    resp = bindings.post_GetGroups(session, body=body)
-    groups = resp.groups
-    if groups is None or len(groups) != 1 or groups[0].group.groupId is None:
-        raise api.errors.BadRequestException(f"could not find user group name {group_name}")
-    return groups[0].group.groupId
 
 
 args_description = [

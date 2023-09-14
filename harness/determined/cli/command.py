@@ -197,7 +197,7 @@ def list_tasks(args: Namespace) -> None:
     params: Dict[str, Any] = {}
 
     if "workspace_name" in args and args.workspace_name is not None:
-        workspace = cli.workspace.workspace_by_name(cli.setup_session(args), args.workspace_name)
+        workspace = api.workspace_by_name(cli.setup_session(args), args.workspace_name)
 
         params["workspaceId"] = workspace.id
 
