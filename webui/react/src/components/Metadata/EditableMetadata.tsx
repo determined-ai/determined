@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Form from 'components/kit/Form';
@@ -51,8 +51,13 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
     [updateMetadata],
   );
 
+  const [form] = Form.useForm();
+  useEffect(() => {
+    form.resetFields();
+  }, [form, editing]);
+
   return (
-    <Form initialValues={{ metadata: metadataList }} onValuesChange={onValuesChange}>
+    <Form form={form} initialValues={{ metadata: metadataList }} onValuesChange={onValuesChange}>
       {editing ? (
         <>
           <div className={css.titleRow}>
