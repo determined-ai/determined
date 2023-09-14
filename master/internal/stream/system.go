@@ -72,10 +72,7 @@ type CollectSubscriptionModMsgsFunc[S any] func(ctx context.Context, addSpec S) 
 func (ps *PublisherSet) addSocket(socket *websocket.Conn) {
 	ps.socketLock.Lock()
 	defer ps.socketLock.Unlock()
-	log.Infof("Publisher Set (in add socket): %v", ps)
-	log.Infof("Active Sockets (Before Add): %v", ps.activeSockets)
 	ps.activeSockets = append(ps.activeSockets, socket)
-	log.Infof("Active Sockets (After Add): %v", ps.activeSockets)
 }
 
 // Restart restarts this PublisherSet and closes all active websocket connections.
@@ -84,7 +81,7 @@ func (ps *PublisherSet) Restart() (errs []error) {
 	defer ps.socketLock.Unlock()
 	ps.Trials.Restart()
 	// ps.Experiments.Restart()
-	log.Infof("Active Sockets (Before Restart): %v", ps.activeSockets)
+
 	// close active websocket connections
 	var remainingSockets []*websocket.Conn
 	for _, socket := range ps.activeSockets {
@@ -94,7 +91,6 @@ func (ps *PublisherSet) Restart() (errs []error) {
 		}
 	}
 	ps.activeSockets = remainingSockets
-	log.Infof("Active Sockets (After Restart): %v", ps.activeSockets)
 	return errs
 }
 
