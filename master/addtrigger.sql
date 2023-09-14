@@ -142,3 +142,12 @@ DROP TRIGGER IF EXISTS stream_trial_trigger_permission ON projects;
 CREATE TRIGGER stream_trial_trigger_permission
 AFTER UPDATE OF workspace_id ON projects
 FOR EACH ROW EXECUTE PROCEDURE stream_trial_permission();
+
+-- trigger function to notify when permission changes are detected.
+CREATE OR REPLACE FUNCTION permission_change_notify() RETURNS TRIGGER AS $$
+DECLARE
+BEGIN
+    PERFORM pg_notify('permission_change_chan', '');
+    return NULL;
+END;
+$$ LANGUAGE plpgsql;
