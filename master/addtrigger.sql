@@ -21,20 +21,18 @@ FOR EACH ROW EXECUTE PROCEDURE stream_trial_seq_modify();
 
 -- helper function to create trial jsonb object for streaming
 CREATE OR REPLACE FUNCTION stream_trial_notify(
-    before jsonb, beforeproj integer, beforework integer, after jsonb, afterproj integer, afterwork integer
+    before jsonb, beforework integer, after jsonb, afterwork integer
 ) RETURNS integer AS $$
 DECLARE
     output jsonb = NULL;
     temp jsonb = NULL;
 BEGIN
     IF before IS NOT NULL THEN
-        temp = before || jsonb_object_agg('project_id', beforeproj);
-        temp = temp || jsonb_object_agg('workspace_id', beforework);
+        temp = before || jsonb_object_agg('workspace_id', beforework);
         output = jsonb_object_agg('before', temp);
     END IF;
     IF after IS NOT NULL THEN
-        temp = after || jsonb_object_agg('project_id', afterproj);
-        temp = temp || jsonb_object_agg('workspace_id', afterwork);
+        temp = after || jsonb_object_agg('workspace_id', afterwork);
         IF output IS NULL THEN
             output = jsonb_object_agg('after', temp);
         ELSE
@@ -56,15 +54,15 @@ BEGIN
     IF (TG_OP = 'INSERT') THEN
         proj = project_id from experiments where experiments.id = NEW.experiment_id;
         work = workspace_id from projects where projects.id = proj;
-        PERFORM stream_trial_notify(NULL, NULL, NULL, to_jsonb(NEW), proj, work);
+        PERFORM stream_trial_notify(NULL, NULL, to_jsonb(NEW), work);
     ELSEIF (TG_OP = 'UPDATE') THEN
         proj = project_id from experiments where experiments.id = NEW.experiment_id;
         work = workspace_id from projects where projects.id = proj;
-        PERFORM stream_trial_notify(to_jsonb(OLD), proj, work, to_jsonb(NEW), proj, work);
+        PERFORM stream_trial_notify(to_jsonb(OLD), work, to_jsonb(NEW), work);
     ELSEIF (TG_OP = 'DELETE') THEN
         proj = project_id from experiments where experiments.id = OLD.experiment_id;
         work = workspace_id from projects where projects.id = proj;
-        PERFORM stream_trial_notify(to_jsonb(OLD), proj, work, NULL, NULL, NULL);
+        PERFORM stream_trial_notify(to_jsonb(OLD), work, NULL, NULL);
         -- DELETEs trigger BEFORE, and must return a non-NULL value.
         return OLD;
     END IF;
@@ -78,39 +76,11 @@ AFTER INSERT OR UPDATE OF
     state, start_time, end_time, runner_state, restarts, tags
 ON trials
 FOR EACH ROW EXECUTE PROCEDURE stream_trial_change();
--- DELETE should fire BEFORE to guarantee the experiment still exists to grab the project_id.
+-- DELETE should fire BEFORE to guarantee the experiment still exists to grab the workspace_id.
 DROP TRIGGER IF EXISTS stream_trial_trigger_d ON trials;
 CREATE TRIGGER stream_trial_trigger_d
 BEFORE DELETE ON trials
 FOR EACH ROW EXECUTE PROCEDURE stream_trial_change();
-
--- Trigger for detecting trial ownership changes derived from experiments.project_id.
-CREATE OR REPLACE FUNCTION stream_trial_ownership() RETURNS TRIGGER AS $$
-DECLARE
-    trial RECORD;
-    jtrial jsonb;
-    oldwork integer;
-    newwork integer;
-BEGIN
-    FOR trial IN
-        SELECT * from trials where experiment_id = NEW.id
-    LOOP
-        trial.seq = nextval('stream_trial_seq');
-        UPDATE trials SET seq = trial.seq where id = trial.id;
-        jtrial = to_jsonb(trial);
-        oldwork = workspace_id from projects where projects.id = OLD.project_id;
-        newwork = workspace_id from projects where projects.id = NEW.project_id;
-        PERFORM stream_trial_notify(jtrial, OLD.project_id, oldwork, jtrial, NEW.project_id, newwork);
-    END LOOP;
-    -- return value for AFTER triggers is ignored
-    return NULL;
-END;
-$$ LANGUAGE plpgsql;
---
-DROP TRIGGER IF EXISTS stream_trial_trigger_ownership ON experiments;
-CREATE TRIGGER stream_trial_trigger_ownership
-AFTER UPDATE OF project_id ON EXPERIMENTS
-FOR EACH ROW EXECUTE PROCEDURE stream_trial_ownership();
 
 -- Trigger for detecting trial permission scope changes derived from projects.workspace_id.
 CREATE OR REPLACE FUNCTION stream_trial_permission() RETURNS TRIGGER AS $$
