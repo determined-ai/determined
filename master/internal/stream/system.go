@@ -60,7 +60,12 @@ type subscriptionState[T stream.Msg, S any] struct {
 }
 
 // CollectStartupMsgsFunc collects messages that were missed prior to startup.
-type CollectStartupMsgsFunc[S any] func(ctx context.Context, known string, spec S) (
+type CollectStartupMsgsFunc[S any] func(
+	ctx context.Context,
+	user model.User,
+	known string,
+	spec S,
+) (
 	[]*websocket.PreparedMessage, error,
 )
 
@@ -219,7 +224,7 @@ func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error 
 	//   - disappearances
 	//   - fallin
 	//   - fallout
-	msgs, err := ss.Startup(ctx, startupMsg)
+	msgs, err := ss.Startup(ctx, user, startupMsg)
 	if err != nil {
 		return errors.Wrapf(err, "gathering startup messages")
 	}
@@ -429,6 +434,7 @@ func NewSubscriptionSet(
 
 func startup[T stream.Msg, S any](
 	ctx context.Context,
+	user model.User,
 	msgs []*websocket.PreparedMessage,
 	err error,
 	state *subscriptionState[T, S],
@@ -453,7 +459,7 @@ func startup[T stream.Msg, S any](
 
 	// Scan for historical msgs matching newly-added subscriptions.
 	var newmsgs []*websocket.PreparedMessage
-	newmsgs, err = state.CollectStartupMsgs(ctx, known, *spec)
+	newmsgs, err = state.CollectStartupMsgs(ctx, user, known, *spec)
 	if err != nil {
 		return nil, err
 	}
@@ -462,7 +468,7 @@ func startup[T stream.Msg, S any](
 }
 
 // Startup handles starting up the Subscription objects in the SubscriptionSet.
-func (ss *SubscriptionSet) Startup(ctx context.Context, startupMsg StartupMsg) (
+func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startupMsg StartupMsg) (
 	[]*websocket.PreparedMessage, error,
 ) {
 	known := startupMsg.Known
@@ -470,7 +476,7 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, startupMsg StartupMsg) (
 
 	var msgs []*websocket.PreparedMessage
 	var err error
-	msgs, err = startup(ctx, msgs, err, ss.Trials, known.Trials, sub.Trials)
+	msgs, err = startup(ctx, user, msgs, err, ss.Trials, known.Trials, sub.Trials)
 	// msgs, err = startup(msgs, err, ctx, ss.Experiments, known.Experiments, sub.Experiments)
 	return msgs, err
 }

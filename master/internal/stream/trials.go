@@ -86,7 +86,12 @@ func getTrialMsgsWithWorkspaceID(trialMsgs []*TrialMsg) *bun.SelectQuery {
 }
 
 // TrialCollectStartupMsgs collects TrialMsg's that were missed prior to startup.
-func TrialCollectStartupMsgs(ctx context.Context, known string, spec TrialSubscriptionSpec) (
+func TrialCollectStartupMsgs(
+	ctx context.Context,
+	user model.User,
+	known string,
+	spec TrialSubscriptionSpec,
+) (
 	[]*websocket.PreparedMessage, error,
 ) {
 	var out []*websocket.PreparedMessage
@@ -96,14 +101,38 @@ func TrialCollectStartupMsgs(ctx context.Context, known string, spec TrialSubscr
 		out = append(out, newDeletedMsg(TrialsDeleteKey, known))
 		return out, nil
 	}
+	// step 0: get user's permitted access scopes
+	accessMap, err := AuthZProvider.Get().GetTrialStreamableScopes(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	var accessScopes []model.AccessScopeID
+	for id, isPermitted := range accessMap {
+		if isPermitted {
+			accessScopes = append(accessScopes, id)
+		}
+	}
+
+	permFilter := func(q *bun.SelectQuery) *bun.SelectQuery {
+		if accessMap[model.GlobalAccessScopeID] {
+			return q
+		}
+		return q.Where("workspace_id in (?)", bun.In(accessScopes))
+	}
 
 	// step 1: calculate all ids matching this subscription
-	q := db.Bun().NewSelect().Table("trials").Column("id")
+	q := db.Bun().
+		NewSelect().
+		Table("trials").
+		Column("trials.id").
+		Join("JOIN experiments e ON trials.experiment_id = e.id").
+		Join("JOIN projects p ON e.project_id = p.id")
+	q = permFilter(q)
 
 	// Ignore tmf.Since, because we want appearances, which might not be have seq > spec.Since.
 	ws := stream.WhereSince{Since: 0}
 	if len(spec.TrialIds) > 0 {
-		ws.Include("id in (?)", bun.In(spec.TrialIds))
+		ws.Include("trials.id in (?)", bun.In(spec.TrialIds))
 	}
 	if len(spec.ExperimentIds) > 0 {
 		ws.Include("experiment_id in (?)", bun.In(spec.ExperimentIds))
@@ -111,7 +140,7 @@ func TrialCollectStartupMsgs(ctx context.Context, known string, spec TrialSubscr
 	q = ws.Apply(q)
 
 	var exist []int64
-	err := q.Scan(ctx, &exist)
+	err = q.Scan(ctx, &exist)
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		log.Errorf("error: %v\n", err)
 		return nil, err
@@ -126,16 +155,17 @@ func TrialCollectStartupMsgs(ctx context.Context, known string, spec TrialSubscr
 	// step 3: hydrate appeared IDs into full TrialMsgs
 	var trialMsgs []*TrialMsg
 	if len(appeared) > 0 {
-		err = getTrialMsgsWithWorkspaceID(trialMsgs).
-			Where("id in (?)", bun.In(appeared)).
-			Scan(ctx)
+		query := getTrialMsgsWithWorkspaceID(trialMsgs).
+			Where("trial_msg.id in (?)", bun.In(appeared))
+		query = permFilter(query)
+		err := query.Scan(ctx)
 		if err != nil && errors.Cause(err) != sql.ErrNoRows {
 			log.Errorf("error: %v\n", err)
 			return nil, err
 		}
 	}
 
-	// step 4: emit deletions and udpates to the client
+	// step 4: emit deletions and updates to the client
 	out = append(out, newDeletedMsg(TrialsDeleteKey, missing))
 	for _, msg := range trialMsgs {
 		out = append(out, msg.UpsertMsg())
