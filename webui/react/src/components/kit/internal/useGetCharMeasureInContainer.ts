@@ -1,38 +1,51 @@
-import { RefObject, useMemo } from 'react';
+import { RefObject, useEffect, useMemo, useState } from 'react';
 
 export interface CharMeasure {
   height: number;
   width: number;
 }
 
-const useGetCharMeasureInContainer = (container: RefObject<HTMLElement>): CharMeasure => {
-  const containerInner = container.current;
+const useEffectInEvent = (set?: () => void) => {
+  useEffect(() => {
+    set?.();
+    if (set) {
+      window.addEventListener("resize", set);
+      return () => window.removeEventListener("resize", set);
+    }
+  }, []);
+};
 
-  const elem = document.createElement('div');
-  elem.style.display = 'inline';
-  elem.style.opacity = '0';
-  elem.style.position = 'fixed';
-  elem.style.top = '0';
-  elem.style.width = 'auto';
-  elem.style.visibility = 'hidden';
-  elem.textContent = 'W';
-  containerInner?.appendChild?.(elem);
+const useGetCharMeasureInContainer = (container: RefObject<HTMLElement>): CharMeasure => {
+  const [rect, setRect] = useState<DOMRect>();
+  const set = () => setRect(container.current?.getBoundingClientRect());
+  useEffectInEvent(set);
 
   return useMemo(() => {
-    if (!containerInner) {
+    if (!rect) {
       return {
         height: 0,
         width: 0,
       };
     }
 
+    const elem = document.createElement('div');
+    elem.style.display = 'inline';
+    elem.style.opacity = '0';
+    elem.style.position = 'fixed';
+    elem.style.top = '0';
+    elem.style.width = 'auto';
+    elem.style.visibility = 'hidden';
+    elem.textContent = 'W';
+    container.current?.appendChild?.(elem);
+
     const charRect = elem.getBoundingClientRect();
+    elem.remove();
 
     return {
       height: charRect.height,
       width: charRect.width,
     };
-  }, [containerInner, elem]);
+  }, [rect]);
 };
 
 export default useGetCharMeasureInContainer;
