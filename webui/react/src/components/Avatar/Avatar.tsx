@@ -1,7 +1,7 @@
 import React from 'react';
 
+import { DarkLight } from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
-import { DarkLight } from 'components/kit/utils/themes';
 import { ClassNameProp, ValueOf } from 'types';
 import { hex2hsl, hsl2str } from 'utils/color';
 import md5 from 'utils/md5';

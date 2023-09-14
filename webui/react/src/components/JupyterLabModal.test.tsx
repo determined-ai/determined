@@ -5,8 +5,8 @@ import { BrowserRouter } from 'react-router-dom';
 
 import JupyterLabModalComponent from 'components/JupyterLabModal';
 import Button from 'components/kit/Button';
-import { StoreProvider as UIProvider } from 'components/kit/contexts/UI';
 import { useModal } from 'components/kit/Modal';
+import { StoreProvider as UIProvider } from 'components/kit/Theme';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import authStore from 'stores/auth';
 import { WorkspaceState } from 'types';

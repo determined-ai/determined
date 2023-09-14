@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { StoreProvider as UIProvider } from 'components/kit/contexts/UI';
+import { StoreProvider as UIProvider } from 'components/kit/Theme';
 
 import Message, { MessageType, Props } from './Message';
 

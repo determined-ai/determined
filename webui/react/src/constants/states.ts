@@ -1,4 +1,4 @@
-import { StateOfUnion } from 'components/kit/themes';
+import { StateOfUnion } from 'components/kit/Theme';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import {
   CheckpointState,

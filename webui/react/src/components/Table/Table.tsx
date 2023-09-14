@@ -8,7 +8,7 @@ import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Icon from 'components/kit/Icon';
 import Spinner from 'components/kit/Spinner';
-import { StateOfUnion } from 'components/kit/themes';
+import { StateOfUnion } from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';

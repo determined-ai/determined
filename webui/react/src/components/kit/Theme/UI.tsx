@@ -12,8 +12,9 @@ import React, {
 } from 'react';
 
 import { BrandingType, RecordKey } from 'components/kit/internal/types';
-import themes from 'components/kit/themes';
-import { DarkLight, globalCssVars, Mode, Theme } from 'components/kit/utils/themes';
+
+import { themes } from './themes';
+import { DarkLight, globalCssVars, Mode, Theme } from './themeUtils';
 
 interface StateUI {
   chromeCollapsed: boolean;

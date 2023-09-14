@@ -3,9 +3,8 @@ import { Map } from 'immutable';
 import { useMemoizedObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import useUI from 'components/kit/contexts/UI';
 import { Modal } from 'components/kit/Modal';
-import { Mode } from 'components/kit/utils/themes';
+import useUI, { Mode } from 'components/kit/Theme';
 import userSettings from 'stores/userSettings';
 import { Json } from 'types';
 import { isJsonObject, isObject } from 'utils/data';

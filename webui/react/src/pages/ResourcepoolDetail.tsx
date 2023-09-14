@@ -6,7 +6,7 @@ import Json from 'components/Json';
 import Empty from 'components/kit/Empty';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
-import { ShirtSize } from 'components/kit/themes';
+import { ShirtSize } from 'components/kit/Theme';
 import Page from 'components/Page';
 import ResourcePoolBindings from 'components/ResourcePoolBindings';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';

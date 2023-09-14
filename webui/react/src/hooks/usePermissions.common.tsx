@@ -1,7 +1,7 @@
 import { render, RenderResult } from '@testing-library/react';
 import React from 'react';
 
-import { StoreProvider as UIProvider } from 'components/kit/contexts/UI';
+import { StoreProvider as UIProvider } from 'components/kit/Theme';
 import usePermissions from 'hooks/usePermissions';
 import { ActionWorkspaceParams } from 'services/types';
 

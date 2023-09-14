@@ -1,7 +1,7 @@
 import { Progress } from 'antd';
 import React from 'react';
 
-import { getStateColorCssVar } from 'components/kit/themes';
+import { getStateColorCssVar } from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
 import { ExperimentBase, JobState, RunState } from 'types';
 

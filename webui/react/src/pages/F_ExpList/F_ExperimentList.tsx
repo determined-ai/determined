@@ -15,7 +15,7 @@ import {
 import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
 import Pagination from 'components/kit/Pagination';
-import { getCssVar } from 'components/kit/utils/themes';
+import { getCssVar } from 'components/kit/Theme';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';

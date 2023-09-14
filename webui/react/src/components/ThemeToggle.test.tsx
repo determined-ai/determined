@@ -3,8 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-import { StoreProvider as UIProvider } from 'components/kit/contexts/UI';
-import { Mode } from 'components/kit/utils/themes';
+import { Mode, StoreProvider as UIProvider } from 'components/kit/Theme';
 
 import ThemeToggle, { ThemeOptions } from './ThemeToggle';
 

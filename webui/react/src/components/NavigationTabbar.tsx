@@ -3,10 +3,10 @@ import { useLocation } from 'react-router-dom';
 
 import ActionSheet, { ActionItem } from 'components/ActionSheet';
 import DynamicIcon from 'components/DynamicIcon';
-import useUI from 'components/kit/contexts/UI';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
+import useUI from 'components/kit/Theme';
 import Link, { Props as LinkProps } from 'components/Link';
 import UserSettings from 'components/UserSettings';
 import usePermissions from 'hooks/usePermissions';

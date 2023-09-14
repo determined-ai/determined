@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 
 import Spinner from 'components/kit/Spinner';
-import { ShirtSize } from 'components/kit/themes';
+import { ShirtSize } from 'components/kit/Theme';
 import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ClipboardButton from 'components/kit/ClipboardButton';
-import useUI from 'components/kit/contexts/UI';
 import LogViewer, {
   FetchConfig,
   FetchDirection,
@@ -13,6 +12,7 @@ import {
   settingsConfigForTrial,
 } from 'components/kit/LogViewer/LogViewerSelect.settings';
 import Spinner from 'components/kit/Spinner';
+import useUI from 'components/kit/Theme';
 import useConfirm from 'components/kit/useConfirm';
 import { useSettings } from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';

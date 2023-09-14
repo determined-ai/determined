@@ -1,6 +1,5 @@
-import { isColor, labDistance, rgb2lab, str2rgba } from 'components/kit/utils/color';
-
-import * as themes from './themes';
+import { isColor, labDistance, rgb2lab, str2rgba } from './color';
+import * as themes from './themeUtils';
 
 const supportedThemes = {
   darkDet: themes.themeDarkDetermined,

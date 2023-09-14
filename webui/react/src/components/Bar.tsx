@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ShirtSize } from 'components/kit/themes';
+import { ShirtSize } from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
 import { floatToPercent } from 'utils/string';
 

@@ -10,6 +10,7 @@ import {
   ValueOf,
   WorkspaceState,
 } from 'components/kit/internal/types';
+
 import {
   DarkLight,
   getCssVar,
@@ -17,7 +18,7 @@ import {
   themeDarkHpe,
   themeLightDetermined,
   themeLightHpe,
-} from 'components/kit/utils/themes';
+} from './themeUtils';
 
 /*
  * Where did we get our sizes from?
@@ -95,7 +96,7 @@ export const getStateColor = (state: StateOfUnion | undefined): string => {
   return getCssVar(getStateColorCssVar(state));
 };
 
-export default {
+export const themes = {
   [BrandingType.Determined]: {
     [DarkLight.Dark]: themeDarkDetermined,
     [DarkLight.Light]: themeLightDetermined,

@@ -2,9 +2,9 @@ import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import useUI from 'components/kit/contexts/UI';
 import Empty from 'components/kit/Empty';
 import Spinner from 'components/kit/Spinner';
+import useUI from 'components/kit/Theme';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';

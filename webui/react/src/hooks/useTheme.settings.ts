@@ -1,6 +1,6 @@
 import { literal, union } from 'io-ts';
 
-import { Mode } from 'components/kit/utils/themes';
+import { Mode } from 'components/kit/Theme';
 import { SettingsConfig } from 'hooks/useSettings';
 
 export interface Settings {

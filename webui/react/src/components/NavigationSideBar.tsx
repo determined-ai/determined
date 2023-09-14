@@ -6,11 +6,11 @@ import { CSSTransition } from 'react-transition-group';
 
 import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
-import useUI from 'components/kit/contexts/UI';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName, IconSize } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
+import useUI from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
 import UserSettings from 'components/UserSettings';

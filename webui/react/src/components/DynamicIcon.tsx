@@ -1,7 +1,6 @@
 import React, { CSSProperties, useMemo } from 'react';
 
-import useUI from 'components/kit/contexts/UI';
-import { DarkLight } from 'components/kit/utils/themes';
+import useUI, { DarkLight } from 'components/kit/Theme';
 import { hex2hsl, hsl2str } from 'utils/color';
 import md5 from 'utils/md5';
 

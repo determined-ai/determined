@@ -14,7 +14,7 @@ import Grid from 'components/Grid';
 import JupyterLabButton from 'components/JupyterLabButton';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
-import { ShirtSize } from 'components/kit/themes';
+import { ShirtSize } from 'components/kit/Theme';
 import Link from 'components/Link';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {

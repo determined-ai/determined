@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
-import useUI from 'components/kit/contexts/UI';
 import Spinner from 'components/kit/Spinner';
+import useUI from 'components/kit/Theme';
 import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';

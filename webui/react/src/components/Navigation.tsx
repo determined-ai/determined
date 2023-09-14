@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 
-import useUI from 'components/kit/contexts/UI';
 import Spinner from 'components/kit/Spinner';
+import useUI from 'components/kit/Theme';
 import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';

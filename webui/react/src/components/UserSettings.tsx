@@ -1,7 +1,6 @@
 import { Space } from 'antd';
 import React, { useCallback, useState } from 'react';
 
-import useUI from 'components/kit/contexts/UI';
 import Drawer from 'components/kit/Drawer';
 import InlineForm from 'components/kit/InlineForm';
 import Input from 'components/kit/Input';
@@ -9,7 +8,7 @@ import InputShortcut from 'components/kit/InputShortcut';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
-import { Mode } from 'components/kit/utils/themes';
+import useUI, { Mode } from 'components/kit/Theme';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import { ThemeOptions } from 'components/ThemeToggle';

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { DarkLight } from 'components/kit/utils/themes';
+import { DarkLight } from 'components/kit/Theme';
 
 import AvatarCard, { Props } from './AvatarCard';
 

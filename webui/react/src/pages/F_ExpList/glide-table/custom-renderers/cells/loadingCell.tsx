@@ -1,6 +1,6 @@
 import { CustomCell, CustomRenderer, GridCellKind } from '@hpe.com/glide-data-grid';
 
-import { Theme } from 'components/kit/utils/themes';
+import { Theme } from 'components/kit/Theme';
 import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 import { rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 
