@@ -9,9 +9,10 @@ const useEffectInEvent = (set?: () => void) => {
   useEffect(() => {
     set?.();
     if (set) {
-      window.addEventListener("resize", set);
-      return () => window.removeEventListener("resize", set);
+      window.addEventListener('resize', set);
+      return () => window.removeEventListener('resize', set);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 };
 
@@ -45,7 +46,7 @@ const useGetCharMeasureInContainer = (container: RefObject<HTMLElement>): CharMe
       height: charRect.height,
       width: charRect.width,
     };
-  }, [rect]);
+  }, [rect, container]);
 };
 
 export default useGetCharMeasureInContainer;
