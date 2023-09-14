@@ -1,28 +1,17 @@
-import { RefObject, useEffect, useMemo, useState } from 'react';
+import { RefObject, useMemo } from 'react';
+
+import useResize from 'components/kit/internal/useResize';
 
 export interface CharMeasure {
   height: number;
   width: number;
 }
 
-const useEffectInEvent = (set?: () => void) => {
-  useEffect(() => {
-    set?.();
-    if (set) {
-      window.addEventListener('resize', set);
-      return () => window.removeEventListener('resize', set);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-};
-
 const useGetCharMeasureInContainer = (container: RefObject<HTMLElement>): CharMeasure => {
-  const [rect, setRect] = useState<DOMRect>();
-  const set = () => setRect(container.current?.getBoundingClientRect());
-  useEffectInEvent(set);
+  const { size } = useResize(container);
 
   return useMemo(() => {
-    if (!rect) {
+    if (!container.current) {
       return {
         height: 0,
         width: 0,
@@ -46,7 +35,8 @@ const useGetCharMeasureInContainer = (container: RefObject<HTMLElement>): CharMe
       height: charRect.height,
       width: charRect.width,
     };
-  }, [rect, container]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [size, container]);
 };
 
 export default useGetCharMeasureInContainer;
