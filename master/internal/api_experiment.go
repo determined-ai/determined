@@ -38,6 +38,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	command "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -450,14 +451,25 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 	wg := sync.WaitGroup{}
 	successfulExpIDs := make(chan int, len(exps))
 
+	var expIDs []int
 	for _, e := range exps {
+		expIDs = append(expIDs, e.ID)
+	}
+	workspaceIDs, err := workspace.WorkspacesIDsByExperimentIDs(context.TODO(), expIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, e := range exps {
+		i := i
+
 		wg.Add(1)
 		go func(exp *model.Experiment) {
 			sema <- struct{}{}
 			defer func() { <-sema }()
 			defer wg.Done()
 
-			agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
+			agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, workspaceIDs[i])
 			if err != nil {
 				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
 				return
@@ -1265,7 +1277,11 @@ func (a *apiServer) PatchExperiment(
 				return nil, err
 			}
 
-			agentUserGroup, err := user.GetAgentUserGroup(*modelExp.OwnerID, modelExp)
+			workspaceID, err := workspace.WorkspacesIDsByExperimentIDs(ctx, []int{modelExp.ID})
+			if err != nil {
+				return nil, err
+			}
+			agentUserGroup, err := user.GetAgentUserGroup(*modelExp.OwnerID, workspaceID[0])
 			if err != nil {
 				return nil, err
 			}

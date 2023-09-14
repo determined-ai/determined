@@ -24,6 +24,7 @@ import (
 	modelauth "github.com/determined-ai/determined/master/internal/model"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
+	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -335,6 +336,15 @@ func (a *apiServer) CheckpointsRemoveFiles(
 
 	taskSpec := *a.m.taskSpec
 
+	var expIDs []int
+	for _, g := range groupCUUIDsByEIDs {
+		expIDs = append(expIDs, g.ExperimentID)
+	}
+	workspaceIDs, err := workspace.WorkspacesIDsByExperimentIDs(ctx, expIDs)
+	if err != nil {
+		return nil, err
+	}
+
 	jobID := model.NewJobID()
 	if err = a.m.db.AddJob(&model.Job{
 		JobID:   jobID,
@@ -347,7 +357,7 @@ func (a *apiServer) CheckpointsRemoveFiles(
 	// Submit checkpoint GC tasks for all checkpoints.
 	for i, expIDcUUIDs := range groupCUUIDsByEIDs {
 		i := i
-		agentUserGroup, err := user.GetAgentUserGroup(curUser.ID, exps[i])
+		agentUserGroup, err := user.GetAgentUserGroup(curUser.ID, workspaceIDs[i])
 		if err != nil {
 			return nil, err
 		}

@@ -81,8 +81,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 			status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
 	}
 
-	// TODO(ilia): When commands are workspaced, also use workspace AgentUserGroup here.
-	agentUserGroup, err := user.GetAgentUserGroup(userModel.ID, nil)
+	agentUserGroup, err := user.GetAgentUserGroup(userModel.ID, int(cmdSpec.Metadata.WorkspaceID))
 	if err != nil {
 		return nil, nil, err
 	}

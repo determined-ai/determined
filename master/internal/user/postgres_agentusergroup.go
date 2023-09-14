@@ -38,25 +38,19 @@ type optionalAgentUserGroup struct {
 }
 
 // TODO(ilia): Bun me.
-func getAgentUserGroupFromExperiment(e *model.Experiment) (*optionalAgentUserGroup, error) {
+func getAgentUserGroupFromWorkspaceID(workspaceID int) (*optionalAgentUserGroup, error) {
 	aug := optionalAgentUserGroup{}
-
-	if e == nil {
-		return &aug, nil
-	}
-
 	err := db.Bun().NewRaw(`
 SELECT
 	uid, user_ as user, gid, group_ as group
-FROM workspaces JOIN projects ON workspaces.id = projects.workspace_id
-WHERE projects.id = ?`,
-		e.ProjectID).Scan(context.TODO(), &aug)
+FROM workspaces WHERE id = ?`,
+		workspaceID).Scan(context.TODO(), &aug)
 	return &aug, err
 }
 
-// GetAgentUserGroup returns AgentUserGroup for a user + (optional) experiment.
-func GetAgentUserGroup(userID model.UserID, e *model.Experiment) (*model.AgentUserGroup, error) {
-	expAug, err := getAgentUserGroupFromExperiment(e)
+// GetAgentUserGroup returns AgentUserGroup for a user + a workspace ID.
+func GetAgentUserGroup(userID model.UserID, workspaceID int) (*model.AgentUserGroup, error) {
+	workspaceAug, err := getAgentUserGroupFromWorkspaceID(workspaceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get agent user group from experiment: %w", err)
 	}
@@ -77,17 +71,17 @@ func GetAgentUserGroup(userID model.UserID, e *model.Experiment) (*model.AgentUs
 		GID:   userAug.GID,
 		Group: userAug.Group,
 	}
-	if expAug.UID != nil {
-		result.UID = *expAug.UID
+	if workspaceAug.UID != nil {
+		result.UID = *workspaceAug.UID
 	}
-	if expAug.User != nil {
-		result.User = *expAug.User
+	if workspaceAug.User != nil {
+		result.User = *workspaceAug.User
 	}
-	if expAug.GID != nil {
-		result.GID = *expAug.GID
+	if workspaceAug.GID != nil {
+		result.GID = *workspaceAug.GID
 	}
-	if expAug.Group != nil {
-		result.Group = *expAug.Group
+	if workspaceAug.Group != nil {
+		result.Group = *workspaceAug.Group
 	}
 
 	return &result, nil
