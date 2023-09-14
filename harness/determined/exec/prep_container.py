@@ -48,7 +48,7 @@ def download_model_def(sess: api.Session, info: det.ClusterInfo) -> None:
             "networking error.\n"
             "Debug information:\n"
             f"    master_url: {info.master_url}\n"
-            f"    endpoint: api/v1/tasks/{cluster_info.task_id}/model_def\n" # This is a lie.
+            f"    endpoint: api/v1/tasks/{cluster_info.task_id}/model_def\n"
             f"    tls_verify_name: {info.master_cert_name}\n"
             f"    tls_noverify: {noverify}\n"
             f"    tls_cert: {cert_content}\n"
@@ -59,7 +59,7 @@ def download_model_def(sess: api.Session, info: det.ClusterInfo) -> None:
 
     b64_tgz = model_def_resp.to_json()["b64Tgz"]
     if not is_trial and len(b64_tgz) == 0:
-        return # Non trials can have empty model defs.
+        return  # Non trials can have empty model defs.
     assert len(b64_tgz) > 0
 
     tgz = base64.b64decode(b64_tgz)

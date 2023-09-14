@@ -665,6 +665,10 @@ func (c *command) toV1Job() *jobv1.Job {
 }
 
 func (c *command) persistAndEvictModelDefFromMemory() error {
+	if c.modelDef == nil {
+		c.modelDef = make([]byte, 0)
+	}
+
 	if _, err := db.Bun().NewInsert().Model(&model.NTSCModelDef{
 		TaskID:          c.taskID,
 		ModelDefinition: c.modelDef,

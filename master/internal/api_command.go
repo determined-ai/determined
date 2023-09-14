@@ -174,8 +174,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		(*expconf.PodSpec)(taskContainerPodSpec),
 	))
 
-	modelDef := make([]byte, 0) // Non nil for database persistance.
-	fmt.Println("REQ FILES", len(req.Files))
+	var modelDef []byte
 	if len(req.Files) > 0 {
 		userFiles := filesToArchive(req.Files)
 
@@ -187,14 +186,12 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		}
 		config.WorkDir = nil
 
-		// TODO(nick) do we need a path like ToRelocatedTarGz?
 		modelDef, err = archive.ToTarGz(userFiles)
 		if err != nil {
 			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
 				fmt.Errorf("compressing files context files: %w", err).Error())
 		}
 	}
-	fmt.Println("LEN MODEL DEF", len(modelDef))
 
 	extConfig := mconfig.GetMasterConfig().InternalConfig.ExternalSessions
 	var token string

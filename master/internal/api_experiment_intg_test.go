@@ -5,6 +5,7 @@ package internal
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -165,8 +166,43 @@ func TestGetExperimentLabels(t *testing.T) {
 	require.Subset(t, resp.Labels, labels)
 }
 
-func TestGetModelDef(t *testing.T) {
-	// TODO(nick)
+func TestGetTaskModelDefExperiment(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	trial, task := createTestTrial(t, api, curUser)
+
+	expected, err := api.GetModelDef(ctx, &apiv1.GetModelDefRequest{
+		ExperimentId: int32(trial.ExperimentID),
+	})
+	require.NoError(t, err)
+
+	actual, err := api.GetTaskModelDef(ctx, &apiv1.GetTaskModelDefRequest{
+		TaskId: string(task.TaskID),
+	})
+	require.NoError(t, err)
+	require.Equal(t, expected.B64Tgz, actual.B64Tgz)
+}
+
+func TestGetTaskModelDefTask(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	task := &model.Task{TaskType: model.TaskTypeNotebook, TaskID: model.NewTaskID()}
+	require.NoError(t, api.m.db.AddTask(task))
+
+	expectedModelDef := []byte("expectedModelDef")
+	_, err := db.Bun().NewInsert().Model(&model.NTSCModelDef{
+		TaskID:          task.TaskID,
+		ModelDefinition: expectedModelDef,
+	}).Exec(context.TODO())
+	require.NoError(t, err)
+
+	actual, err := api.GetTaskModelDef(ctx, &apiv1.GetTaskModelDefRequest{
+		TaskId: string(task.TaskID),
+	})
+	require.NoError(t, err)
+
+	actualString, err := base64.StdEncoding.DecodeString(actual.B64Tgz)
+	require.NoError(t, err)
+	require.Equal(t, string(expectedModelDef), string(actualString))
 }
 
 func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
