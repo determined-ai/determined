@@ -7,7 +7,6 @@ import 'uplot/dist/uPlot.min.css';
 
 import css from 'App.module.scss';
 import { StoreProvider as UIProvider } from 'components/kit/contexts/UI';
-import ThemeProvider from 'components/kit/ThemeProvider';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import { Settings, UserSettings } from 'hooks/useSettingsProvider';
 import DesignKit from 'pages/DesignKit';
@@ -28,13 +27,11 @@ const router = createBrowserRouter([
       <HelmetProvider>
         <UIProvider>
           <UserSettings.Provider value={fakeSettingsContext}>
-            <ThemeProvider>
-              <ConfirmationProvider>
-                <div className={css.base}>
-                  <DesignKit />
-                </div>
-              </ConfirmationProvider>
-            </ThemeProvider>
+            <ConfirmationProvider>
+              <div className={css.base}>
+                <DesignKit />
+              </div>
+            </ConfirmationProvider>
           </UserSettings.Provider>
         </UIProvider>
       </HelmetProvider>

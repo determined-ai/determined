@@ -8,9 +8,8 @@ import { useParams } from 'react-router-dom';
 
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Button from 'components/kit/Button';
-import useUI from 'components/kit/contexts/UI';
+import useUI, { StoreProvider as UIProvider } from 'components/kit/contexts/UI';
 import Spinner from 'components/kit/Spinner';
-import { ThemeProvider } from 'components/kit/ThemeProvider';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
@@ -164,7 +163,7 @@ const AppView: React.FC = () => {
           <>
             {isServerReachable ? (
               <SettingsProvider>
-                <ThemeProvider branding={info.branding}>
+                <UIProvider branding={info.branding}>
                   <AntdApp>
                     <ConfirmationProvider>
                       <Navigation>
@@ -182,7 +181,7 @@ const AppView: React.FC = () => {
                       </Navigation>
                     </ConfirmationProvider>
                   </AntdApp>
-                </ThemeProvider>
+                </UIProvider>
               </SettingsProvider>
             ) : (
               <PageMessage title="Server is Unreachable">
