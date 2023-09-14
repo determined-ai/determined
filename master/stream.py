@@ -1,16 +1,30 @@
-from string import Template
-
+import time
+import uuid
 import lomond
 from lomond import events
+from string import Template
 
 from determined.experimental import client
 
 url = "localhost:8080"
 
-payload_template = Template(
-    """
-{
-    "subscribe": {
+# steal determined token
+client.login(url)
+print(f"Logged in as: {client._determined._session._auth.session.username}")
+token = client._determined._session._auth.session.token
+
+
+def create_payload(
+    trials=input("Submit trial ids to subscribe to (default: 1,2,3): "),
+    metrics=input("Submit metric ids to subscribe to (default: 1,2,3): "),
+    experiments=input("Submit experiment ids to subscribe to (default: 1,2,3): ")
+):
+    sync_id = uuid.uuid4()
+    payload_template = Template(
+        """
+    {
+        "sync_id": "$sync_id",
+        "subscribe": {
         "trials": {
             "trial_ids": [$trial_ids],
             "experiment_ids": [$experiment_ids],
@@ -27,28 +41,16 @@ payload_template = Template(
         "trials": "$trial_ids",
         "metrics": "$metric_ids"
     }
-}
-"""
-)
-
-# steal determined token
-client.login(url)
-print(f"Logged in as: {client._determined._session._auth.session.username}")
-token = client._determined._session._auth.session.token
-
-trials = input("Submit array of trial_id values to subscribe to (default: 1,2,3): ")
-if trials == "":
-    trials = "1,2,3"
-
-metrics = input("Submit array of metric id values to subscribe to (default: 1,2,3): ")
-if metrics == "":
-    metrics = "1,2,3"
-
-experiments = input(
-    "Submit array of experiment id values to subscribe to (default: 1,2,3): "
-)
-if experiments == "":
-    experiments = "1,2,3"
+    """
+    )
+    inputs = [trials, metrics, experiments]
+    for i, s in enumerate(inputs):
+        if s == "":
+            inputs[i] = "1,2,3"
+    
+    startupMsg = payload_template.substitute(sync_id=sync_id, trial_ids=trials, metric_ids=metrics, experiment_ids=experiments)
+    print(f"startupMsg ({sync_id}) created")
+    return startupMsg.encode()
 
 
 def stream_loop():
@@ -65,10 +67,7 @@ def stream_loop():
                 print(event.text.strip())
             elif isinstance(event, events.Ready):
                 print("ready")
-                payload = payload_template.substitute(
-                    trial_ids=trials, metric_ids=metrics, experiment_ids=experiments
-                )
-                ws.send_binary(payload.encode())
+                ws.send_binary(create_payload())
             elif isinstance(
                 event, (events.ConnectFail, events.Rejected, events.ProtocolError)
             ):

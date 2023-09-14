@@ -3,6 +3,7 @@ package stream
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -189,92 +190,34 @@ func TrialCollectStartupMsgs(
 		Deleted: missing,
 	})
 	for _, msg := range trialMsgs {
-		out = append(out, stream.UpsertMsg{JSONKey: TrialsUpsertKey, Msg: msg})
-	}
-	return out, nil
-}
-
-// TrialCollectSubscriptionModMsgs scrapes the database when a
-// user submits a new TrialSubscriptionSpec for initial matches.
-func TrialCollectSubscriptionModMsgs(ctx context.Context, addSpec TrialSubscriptionSpec) (
-	[]interface{}, error,
-) {
-	if len(addSpec.TrialIds) == 0 && len(addSpec.ExperimentIds) == 0 {
-		return nil, nil
-	}
-	var trialMsgs []*TrialMsg
-	q := getTrialMsgsWithWorkspaceID(trialMsgs)
-
-	// Use WhereSince to build a complex WHERE clause.
-	ws := stream.WhereSince{Since: addSpec.Since}
-	if len(addSpec.TrialIds) > 0 {
-		ws.Include("id in (?)", bun.In(addSpec.TrialIds))
-	}
-	if len(addSpec.ExperimentIds) > 0 {
-		ws.Include("experiment_id in (?)", bun.In(addSpec.ExperimentIds))
-	}
-	q = ws.Apply(q)
-
-	err := q.Scan(ctx)
-	if err != nil && errors.Cause(err) != sql.ErrNoRows {
-		log.Errorf("error: %v\n", err)
-		return nil, err
-	}
-
-	var out []interface{}
-	for _, msg := range trialMsgs {
 		out = append(out, msg.UpsertMsg())
 	}
 	return out, nil
 }
 
-// TrialFilterMaker tracks the trial and experiment id's that are to be filtered for.
-type TrialFilterMaker struct {
-	TrialIds      map[int]bool
-	ExperimentIds map[int]bool
-}
 
-// NewTrialFilterMaker creates a new FilterMaker.
-func NewTrialFilterMaker() FilterMaker[*TrialMsg, TrialSubscriptionSpec] {
-	return &TrialFilterMaker{make(map[int]bool), make(map[int]bool)}
-}
 
-// AddSpec adds TrialIds and ExperimentIds specified in TrialSubscriptionSpec.
-func (ts *TrialFilterMaker) AddSpec(spec TrialSubscriptionSpec) {
+// TrialMakeFilter creates a TrialMsg filter based on the given TrialSubscriptionSpec.
+func TrialMakeFilter(spec *TrialSubscriptionSpec) (func(*TrialMsg) bool, error) {
+	// create sets based on subscription spec
+	trialIds := make(map[int]struct{})
 	for _, id := range spec.TrialIds {
-		ts.TrialIds[id] = true
+		if id <= 0 {
+			return nil, fmt.Errorf("invalid trial id: %d", id)
+		}
+		trialIds[id] = struct{}{}
 	}
+	experimentIds := make(map[int]struct{})
 	for _, id := range spec.ExperimentIds {
-		ts.ExperimentIds[id] = true
-	}
-}
-
-// DropSpec removes TrialIds and ExperimentIds specified in TrialSubscriptionSpec.
-func (ts *TrialFilterMaker) DropSpec(spec TrialSubscriptionSpec) {
-	for _, id := range spec.TrialIds {
-		delete(ts.TrialIds, id)
-	}
-	for _, id := range spec.ExperimentIds {
-		delete(ts.ExperimentIds, id)
-	}
-}
-
-// MakeFilter returns a function that determines if a TrialMsg based on
-// the TrialFilterMaker's spec.
-func (ts *TrialFilterMaker) MakeFilter() func(*TrialMsg) bool {
-	// Should this filter even run?
-	if len(ts.TrialIds) == 0 && len(ts.ExperimentIds) == 0 {
-		return nil
+		if id <= 0 {
+			return nil, fmt.Errorf("invalid experiment id: %d", id)
+		}
+		experimentIds[id] = struct{}{}
 	}
 
-	// Make a copy of the maps, because the filter must run safely off-thread.
-	trialIds := make(map[int]bool)
-	experimentIds := make(map[int]bool)
-	for id := range ts.TrialIds {
-		trialIds[id] = true
-	}
-	for id := range ts.ExperimentIds {
-		experimentIds[id] = true
+	// should this filter even run?
+	if len(trialIds) == 0 && len(experimentIds) == 0 {
+		return nil, errors.New("subscription spec cannot be empty")
 	}
 
 	// return a closure around our copied maps
@@ -286,7 +229,7 @@ func (ts *TrialFilterMaker) MakeFilter() func(*TrialMsg) bool {
 			return true
 		}
 		return false
-	}
+	}, nil
 }
 
 // TrialMakePermissionFilter returns a function that checks if a TrialMsg

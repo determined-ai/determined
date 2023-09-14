@@ -105,42 +105,37 @@ func NewSubscription[T Msg](
 	streamer *Streamer,
 	publisher *Publisher[T],
 	permFilter func(T) bool,
+	filterFn func(T) bool,
 ) Subscription[T] {
 	return Subscription[T]{
 		Streamer:         streamer,
 		Publisher:        publisher,
 		permissionFilter: permFilter,
+		filter:           filterFn,
 	}
 }
 
-// Configure updates a Subscription's filters and updates the associated Publisher
-// in the event of creating or deleting a Subscription.
-func (s *Subscription[T]) Configure(filter func(T) bool) {
-	if filter == nil && s.filter == nil {
-		// no change, no synchronization needed
-		return
-	}
-	// Changes must be synchronized with our respective publisher.
+// Unsubscribe removes the subscription from its Publisher.
+func (s *Subscription[T]) Unsubscribe() {
 	s.Publisher.Lock.Lock()
 	defer s.Publisher.Lock.Unlock()
-	if s.filter == nil {
-		// We weren't connected to the publisher before, but now we are.
-		s.Publisher.Subscriptions = append(s.Publisher.Subscriptions, s)
-	} else if filter == nil {
-		// Delete an existing registration.
-		for i, sub := range s.Publisher.Subscriptions {
-			if sub != s {
-				continue
-			}
-			last := len(s.Publisher.Subscriptions) - 1
-			s.Publisher.Subscriptions[i] = s.Publisher.Subscriptions[last]
-			s.Publisher.Subscriptions = s.Publisher.Subscriptions[:last]
-			break
+	for i, sub := range s.Publisher.Subscriptions {
+		if sub != s {
+			continue
 		}
-	} // else modify an existing registration, update subscription filter
+		last := len(s.Publisher.Subscriptions) - 1
+		s.Publisher.Subscriptions[i] = s.Publisher.Subscriptions[last]
+		s.Publisher.Subscriptions = s.Publisher.Subscriptions[:last]
+		break
+	}
+	s.filter = nil
+}
 
-	// Remember the new filter.
-	s.filter = filter
+// Register a Subscription with it's Publisher.
+func (s *Subscription[T]) Register() {
+	s.Publisher.Lock.Lock()
+	defer s.Publisher.Lock.Unlock()
+	s.Publisher.Subscriptions = append(s.Publisher.Subscriptions, s)
 }
 
 // Publisher is responsible for publishing messages of type T
