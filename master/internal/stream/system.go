@@ -413,9 +413,6 @@ func doPublishLoop[T stream.Msg](
 			}
 			// Broadcast all the events.
 			publisher.Broadcast(events)
-			// XXX: look into why this is potentially an ineffective break statement
-			//nolint
-			break
 		}
 	}
 }
