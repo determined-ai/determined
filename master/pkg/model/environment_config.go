@@ -61,9 +61,31 @@ func (r *RuntimeItem) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &jsonItem); err != nil {
 		return errors.Wrapf(err, "failed to parse runtime item")
 	}
-	r.CPU = jsonItem.CPU
-	r.ROCM = jsonItem.ROCM
-	r.CUDA = jsonItem.CUDA
+
+	// A map to hold the decoded the JSON structure.
+	imagesMap := make(map[string]json.RawMessage)
+
+	// Decode the JSON data into our map.
+	if err := json.Unmarshal(data, &imagesMap); err != nil {
+		return errors.Wrapf(err, "failed to decode JSON runtime item into map")
+	}
+
+	// Overwrite the images only if the device type (i.e., "CPU", "CUDA",
+	// "ROCM") is contained in the JSON. We don't want to unconditionally copy
+	// the device type from the "jsonItem" because it will be an empty string
+	// if the device type is not contained in the JSON, and we would overwrite
+	// the original value with an empty string.
+	if _, ok := imagesMap["cpu"]; ok {
+		r.CPU = jsonItem.CPU
+	}
+
+	if _, ok := imagesMap["rocm"]; ok {
+		r.ROCM = jsonItem.ROCM
+	}
+
+	if _, ok := imagesMap["cuda"]; ok {
+		r.CUDA = jsonItem.CUDA
+	}
 
 	if r.CUDA == "" {
 		type RuntimeItemCompat struct {
