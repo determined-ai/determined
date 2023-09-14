@@ -227,17 +227,17 @@ const reducer = (state: StateUI, action: ActionUI): StateUI => {
 const useUI = (): { actions: UIActions; ui: StateUI } => {
   const context = useContext(StateContext);
   if (context === undefined) {
-    throw new Error('useStore(UI) must be used within a StoreProvider');
+    throw new Error('useStore(UI) must be used within a UIProvider');
   }
   const dispatchContext = useContext(DispatchContext);
   if (dispatchContext === undefined) {
-    throw new Error('useStoreDispatch must be used within a StoreProvider');
+    throw new Error('useStoreDispatch must be used within a UIProvider');
   }
   const uiActions = useMemo(() => new UIActions(dispatchContext), [dispatchContext]);
   return { actions: uiActions, ui: context };
 };
 
-export const StoreProvider: React.FC<{ children?: React.ReactNode; branding?: BrandingType }> = ({
+export const UIProvider: React.FC<{ children?: React.ReactNode; branding?: BrandingType }> = ({
   children,
   branding,
 }) => {

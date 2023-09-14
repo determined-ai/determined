@@ -3,7 +3,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { User } from 'components/kit/internal/types';
-import { StoreProvider as UIProvider } from 'components/kit/Theme';
+import { UIProvider } from 'components/kit/Theme';
 
 import UserAvatar, { Props } from './UserAvatar';
 

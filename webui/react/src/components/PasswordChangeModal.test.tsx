@@ -4,7 +4,7 @@ import React, { useCallback, useEffect } from 'react';
 
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
-import { StoreProvider as UIProvider } from 'components/kit/Theme';
+import { UIProvider } from 'components/kit/Theme';
 import { setUserPassword as mockSetUserPassword } from 'services/api';
 import { V1LoginRequest } from 'services/api-ts-sdk';
 import authStore from 'stores/auth';

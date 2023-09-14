@@ -6,7 +6,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import 'uplot/dist/uPlot.min.css';
 
 import css from 'App.module.scss';
-import { StoreProvider as UIProvider } from 'components/kit/Theme';
+import { UIProvider } from 'components/kit/Theme';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import { Settings, UserSettings } from 'hooks/useSettingsProvider';
 import DesignKit from 'pages/DesignKit';

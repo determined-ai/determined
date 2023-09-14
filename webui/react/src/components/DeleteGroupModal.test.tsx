@@ -4,7 +4,7 @@ import React from 'react';
 
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
-import { StoreProvider as UIProvider } from 'components/kit/Theme';
+import { UIProvider } from 'components/kit/Theme';
 import { deleteGroup as mockDeleteGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 

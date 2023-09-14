@@ -9,7 +9,7 @@ import { useParams } from 'react-router-dom';
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Button from 'components/kit/Button';
 import Spinner from 'components/kit/Spinner';
-import useUI, { StoreProvider as UIProvider } from 'components/kit/Theme';
+import useUI, { UIProvider } from 'components/kit/Theme';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';

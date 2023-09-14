@@ -4,7 +4,7 @@ import { array, boolean, number, string, undefined as undefinedType, union } fro
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-import { StoreProvider as UIProvider } from 'components/kit/Theme';
+import { UIProvider } from 'components/kit/Theme';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';

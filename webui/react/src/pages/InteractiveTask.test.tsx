@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 
-import { StoreProvider as UIProvider } from 'components/kit/Theme';
+import { UIProvider } from 'components/kit/Theme';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import authStore from 'stores/auth';
 
