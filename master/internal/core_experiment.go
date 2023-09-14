@@ -398,7 +398,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 				return nil, config, nil, nil, errors.Wrapf(
 					compressErr, "unable to find compress model definition")
 			}
-		} 
+		}
 	}
 
 	token, createSessionErr := user.StartSession(ctx, owner)
