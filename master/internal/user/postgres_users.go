@@ -73,10 +73,10 @@ func Update(
 	ug *model.AgentUserGroup,
 ) error {
 	return db.Bun().RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		for _, col := range toUpdate {
+		if len(toUpdate) > 0 {
 			if _, err := tx.NewUpdate().
 				Model(updated).
-				Column(col).
+				Column(toUpdate...).
 				Where("id = ?", updated.ID).Exec(ctx); err != nil {
 				return fmt.Errorf("error updating %q: %s", updated.Username, err)
 			}
