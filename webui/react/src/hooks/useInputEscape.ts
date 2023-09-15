@@ -1,5 +1,5 @@
 import { InputRef as AntdInputRef, InputRef, RefSelectProps } from 'antd';
-import React, { Ref, RefObject, useEffect, useImperativeHandle, useState } from 'react';
+import React, { Ref, RefObject, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 const DRAWER_BODY_CLASSNAME = 'ant-drawer-open';
 const DRAWER_MASK_CLASSNAME = 'ant-drawer-mask';
@@ -131,7 +131,7 @@ export const useInputNumberEscape = (
     tagID?: string,
   ) => void,
 ): InputNumberEscape => {
-  const inputRef = React.createRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement>(null);
   useImperativeHandle(ref, () => inputRef?.current as HTMLInputElement);
 
   const input = inputRef?.current;
@@ -179,7 +179,7 @@ export const useInputEscape = <T>(
     tagID?: string,
   ) => void,
 ): InputTextEscape => {
-  const inputRef = React.createRef<AntdInputRef>();
+  const inputRef = useRef<AntdInputRef>(null);
   const [focused, setFocused] = useState(false);
   const [blurred, setBlurred] = useState(false);
 
@@ -225,7 +225,7 @@ export const useSelectEscape = (
     tagID?: string,
   ) => void,
 ): SelectEscape => {
-  const inputRef = React.createRef<RefSelectProps>();
+  const inputRef = useRef<RefSelectProps>(null);
   const [focused, setFocused] = useState(false);
   const [blurred, setBlurred] = useState(false);
   const [hasOpened, setHasOpened] = useState(false);
