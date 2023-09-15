@@ -84,8 +84,8 @@ func (ps *PublisherSet) addSocket(socket *websocket.Conn) {
 func (ps *PublisherSet) Restart() (errs []error) {
 	ps.socketLock.Lock()
 	defer ps.socketLock.Unlock()
-	ps.Trials.Restart()
-	// ps.Experiments.Restart()
+	ps.Trials.CloseAllStreamers()
+	// ps.Experiments.CloseAllStreamers()
 
 	// close active websocket connections
 	var remainingSockets []*websocket.Conn
@@ -369,12 +369,14 @@ func doPublishLoop[T stream.Msg](
 		// The pq listener example includes a timeout case, so we do too.
 		// (https://pkg.go.dev/github.com/lib/pq/example/listen)
 		case <-time.After(30 * time.Second):
+			pingErrChan := make(chan error)
 			go func() {
 				err = listener.Ping()
-				if err != nil {
-					log.Error(errors.Wrap(err, "no active connection"))
-				}
+				pingErrChan <- errors.Wrap(err, "no active connection")
 			}()
+			if err := <-pingErrChan; err != nil {
+				return err
+			}
 
 		// Did we get a notification?
 		case notification := <-listener.Notify:
