@@ -16,6 +16,9 @@ const getOverlayAndMenuBodyElement = () => {
     ...document.getElementsByClassName(DRAWER_MASK_CLASSNAME),
   ];
 
+  // Only one overlay will exist when a menu is open
+  // the overlay that we want will be the first item
+  // in the list.
   const overlay = overlays?.[0] as HTMLElement;
 
   const menuBody =
