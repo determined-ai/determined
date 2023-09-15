@@ -1,4 +1,3 @@
-import functools
 from unittest import mock
 
 import pytest
@@ -36,24 +35,6 @@ def test_set_name_doesnt_update_local_on_rest_failure(
         raise AssertionError("Server's 400 should raise an exception")
     except api.errors.BadRequestException:
         assert sample_project.name == "test_project_name"
-
-
-def test_to_json_encapsulates_hydrated_attributes(sample_project: project.Project) -> None:
-    # We're going to patch some __dunder__ methods of Project in order to patch them in
-    # sample_project. This is safe so long as the overridden block doesn't use any other Projects
-    with mock.patch("determined.common.experimental.project.Project.__setattr__") as mock_setattr:
-        mock_setattr.side_effect = functools.partial(object.__setattr__, sample_project)
-        sample_project._hydrate(api_responses.sample_get_project().project)
-        hydrated_attrs = {call[0][0] for call in mock_setattr.call_args_list}
-
-    with mock.patch(
-        "determined.common.experimental.project.Project.__getattribute__"
-    ) as mock_getattr:
-        mock_getattr.side_effect = functools.partial(object.__getattribute__, sample_project)
-        sample_project.to_json()
-        accessed_attrs_to_json = {call[0][0] for call in mock_getattr.call_args_list}
-
-    assert hydrated_attrs.issubset(accessed_attrs_to_json)
 
 
 @mock.patch("determined.common.api.bindings.get_GetProject")

@@ -193,12 +193,14 @@ class Project:
 
         self.notes = [note.to_json() for note in resp.notes]
 
-    def to_json(self) -> Dict[str, Any]:
+    def _to_json(self) -> Dict[str, Any]:
         """Return this object as a dict.
 
-        Attributes may be renamed to accord with the database they're stored in.
+        This helps the CLI serialize a Project by providing an interface similar to that in
+        bindings.py.
 
-        Named `to_json` for historical consistency.
+        #TODO: move this actually into the CLI when controller and view are properly separated
+        in that codebase.
         """
         return {
             "archived": self.archived,
