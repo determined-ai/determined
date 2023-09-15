@@ -20,8 +20,8 @@ const DEFAULT_SIZE = {
   y: 0,
 };
 
-const useResize = (ref?: RefObject<HTMLElement>): ResizeHook => {
-  const elementRef = useRef<HTMLElement>(ref?.current ?? document.body);
+const useResize = (): ResizeHook => {
+  const elementRef = useRef<HTMLElement>(document.body);
   const isMeasured = useRef(false);
   const observer = useRef<ResizeObserver>();
   const [resizeInfo, setResizeInfo] = useState<SizeInfo>({ ...DEFAULT_SIZE });
