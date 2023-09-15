@@ -36,7 +36,7 @@ func (w *WhereSince) chainIncludes(q *bun.SelectQuery) *bun.SelectQuery {
 	return q
 }
 
-// Apply applies the WhereSince caluse to the provided bun query.
+// Apply applies the WhereSince clause to the provided bun query.
 func (w *WhereSince) Apply(q *bun.SelectQuery) *bun.SelectQuery {
 	// Simple case first: either there's no sequence or only one predicate.
 	// In those cases, no WhereGroup is needed.
