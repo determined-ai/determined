@@ -31,3 +31,9 @@
 # Owned by @determined-ai/web except for generated files
 /webui    @determined-ai/web
 /webui/react/src/services/api-ts-sdk/
+
+# EE only files in their own section to ease rebases
+/master/internal/rm/dispatcherrm @determined-ai/backend @determined-ai/fe-pad
+/master/internal/config/dispatcher* @determined-ai/backend  @determined-ai/fe-pad
+/master/pkg/tasks/dispatcher* @determined-ai/backend @determined-ai/fe-pad
+/master/static/srv/dispatcher* @determined-ai/backend @determined-ai/fe-pad
