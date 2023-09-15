@@ -1,5 +1,5 @@
+import { StateOfUnion } from 'components/kit/Theme';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
-import { StateOfUnion } from 'themes';
 import {
   CheckpointState,
   CommandState,

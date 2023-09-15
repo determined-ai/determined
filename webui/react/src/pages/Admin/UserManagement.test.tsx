@@ -5,9 +5,9 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 
+import { UIProvider } from 'components/kit/Theme';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import authStore from 'stores/auth';
-import { StoreProvider } from 'stores/contexts/UI';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -66,11 +66,11 @@ const Container: React.FC = () => {
 
 const setup = () =>
   render(
-    <StoreProvider>
+    <UIProvider>
       <DndProvider backend={HTML5Backend}>
         <Container />
       </DndProvider>
-    </StoreProvider>,
+    </UIProvider>,
   );
 
 describe('UserManagement', () => {

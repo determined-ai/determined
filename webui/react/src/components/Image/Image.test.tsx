@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { DarkLight } from 'utils/themes';
+import { DarkLight } from 'components/kit/Theme';
 
 import { ImageAlert, ImageEmpty, ImageWarning, type Props } from './Image';
 

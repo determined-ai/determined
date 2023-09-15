@@ -1,7 +1,7 @@
 import React from 'react';
 
+import { ShirtSize } from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
-import { ShirtSize } from 'themes';
 import { floatToPercent } from 'utils/string';
 
 import css from './Bar.module.scss';

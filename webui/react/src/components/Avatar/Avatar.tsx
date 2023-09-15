@@ -1,10 +1,10 @@
 import React from 'react';
 
+import { DarkLight } from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
 import { ClassNameProp, ValueOf } from 'types';
 import { hex2hsl, hsl2str } from 'utils/color';
 import md5 from 'utils/md5';
-import { DarkLight } from 'utils/themes';
 
 import css from './Avatar.module.scss';
 

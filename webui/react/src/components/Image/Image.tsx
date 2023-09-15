@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { DarkLight } from 'utils/themes';
+import { DarkLight } from 'components/kit/Theme';
 
 import css from './Image.module.scss';
 

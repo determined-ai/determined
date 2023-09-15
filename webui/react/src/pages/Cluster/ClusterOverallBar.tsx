@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
 
 import Spinner from 'components/kit/Spinner';
+import { ShirtSize } from 'components/kit/Theme';
 import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import clusterStore from 'stores/cluster';
-import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { Loadable } from 'utils/loadable';

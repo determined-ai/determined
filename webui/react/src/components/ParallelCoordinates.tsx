@@ -1,7 +1,7 @@
 import Hermes from 'hermes-parallel-coordinates';
 import React, { useEffect, useRef } from 'react';
 
-import useUI from 'stores/contexts/UI';
+import useUI from 'components/kit/Theme';
 
 import css from './ParallelCoordinates.module.scss';
 

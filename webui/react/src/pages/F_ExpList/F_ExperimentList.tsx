@@ -15,6 +15,7 @@ import {
 import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
 import Pagination from 'components/kit/Pagination';
+import { getCssVar } from 'components/kit/Theme';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
@@ -34,7 +35,6 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { getCssVar } from 'utils/themes';
 
 import ComparisonView from './ComparisonView';
 import css from './F_ExperimentList.module.scss';

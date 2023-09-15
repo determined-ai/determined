@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 
 import Spinner from 'components/kit/Spinner';
+import useUI from 'components/kit/Theme';
 import clusterStore from 'stores/cluster';
-import useUI from 'stores/contexts/UI';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import userStore from 'stores/users';

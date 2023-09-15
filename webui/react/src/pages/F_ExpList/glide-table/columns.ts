@@ -8,6 +8,7 @@ import {
 } from '@hpe.com/glide-data-grid';
 
 import { getColor, getInitials } from 'components/Avatar';
+import { DarkLight, Theme } from 'components/kit/Theme';
 import { paths } from 'routes/utils';
 import { DetailedUser, ExperimentWithTrial, ProjectColumn } from 'types';
 import { getPath, isString } from 'utils/data';
@@ -15,7 +16,6 @@ import { formatDatetime } from 'utils/datetime';
 import { Loadable } from 'utils/loadable';
 import { humanReadableNumber } from 'utils/number';
 import { floatToPercent, humanReadableBytes } from 'utils/string';
-import { DarkLight, Theme } from 'utils/themes';
 import { getDisplayName } from 'utils/user';
 
 import { getDurationInEnglish, getTimeInEnglish } from './utils';

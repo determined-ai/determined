@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { LineChart, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Spinner from 'components/kit/Spinner';
+import useUI from 'components/kit/Theme';
 import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
@@ -16,7 +17,6 @@ import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import useUI from 'stores/contexts/UI';
 import {
   ExperimentAction as Action,
   CommandResponse,

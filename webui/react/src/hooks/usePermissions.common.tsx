@@ -1,9 +1,9 @@
 import { render, RenderResult } from '@testing-library/react';
 import React from 'react';
 
+import { UIProvider } from 'components/kit/Theme';
 import usePermissions from 'hooks/usePermissions';
 import { ActionWorkspaceParams } from 'services/types';
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 
 export const workspace = {
   id: 10,

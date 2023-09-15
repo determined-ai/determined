@@ -10,6 +10,7 @@ import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName, IconSize } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
+import useUI from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
 import UserSettings from 'components/UserSettings';
@@ -24,7 +25,6 @@ import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown
 import { paths } from 'routes/utils';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
-import useUI from 'stores/contexts/UI';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';

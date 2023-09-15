@@ -25,14 +25,16 @@ interface EndTimes {
   endTime?: string;
 }
 
-const CheckpointState = {
+export const CheckpointState = {
   Active: 'ACTIVE',
   Completed: 'COMPLETED',
   Deleted: 'DELETED',
   Error: 'ERROR',
+  PartiallyDeleted: 'PARTIALLY_DELETED',
   Unspecified: 'UNSPECIFIED',
 } as const;
-type CheckpointState = ValueOf<typeof CheckpointState>;
+
+export type CheckpointState = ValueOf<typeof CheckpointState>;
 
 interface BaseWorkload extends EndTimes {
   totalBatches: number;
@@ -257,3 +259,93 @@ export interface Log {
   meta?: string;
   time: string;
 }
+
+export interface SsoProvider {
+  name: string;
+  ssoUrl: string;
+}
+
+export const BrandingType = {
+  Determined: 'determined',
+  HPE: 'hpe',
+} as const;
+
+export type BrandingType = ValueOf<typeof BrandingType>;
+
+export const RunState = {
+  Active: 'ACTIVE',
+  Canceled: 'CANCELED',
+  Completed: 'COMPLETED',
+  Deleted: 'DELETED',
+  DeleteFailed: 'DELETE_FAILED',
+  Deleting: 'DELETING',
+  Error: 'ERROR',
+  Paused: 'PAUSED',
+  Pulling: 'PULLING',
+  Queued: 'QUEUED',
+  Running: 'RUNNING',
+  Starting: 'STARTING',
+  StoppingCanceled: 'STOPPING_CANCELED',
+  StoppingCompleted: 'STOPPING_COMPLETED',
+  StoppingError: 'STOPPING_ERROR',
+  StoppingKilled: 'STOPPING_KILLED',
+  Unspecified: 'UNSPECIFIED',
+} as const;
+
+export type RunState = ValueOf<typeof RunState>;
+
+/* Command */
+export const CommandState = {
+  Pulling: 'PULLING',
+  Queued: 'QUEUED',
+  Running: 'RUNNING',
+  Starting: 'STARTING',
+  Terminated: 'TERMINATED',
+  Terminating: 'TERMINATING',
+  Waiting: 'WAITING',
+} as const;
+
+export type CommandState = ValueOf<typeof CommandState>;
+
+// TODO: we might have to keep updaing it as the Api.Jobv1State changes...
+export const JobState = {
+  QUEUED: 'STATE_QUEUED',
+  SCHEDULED: 'STATE_SCHEDULED',
+  SCHEDULEDBACKFILLED: 'STATE_SCHEDULED_BACKFILLED',
+  UNSPECIFIED: 'STATE_UNSPECIFIED',
+} as const;
+
+export type JobState = ValueOf<typeof JobState>;
+
+export const ResourceState = {
+  // This is almost CommandState
+  Assigned: 'ASSIGNED',
+  Potential: 'POTENTIAL',
+  Pulling: 'PULLING',
+  Running: 'RUNNING',
+  Starting: 'STARTING',
+  Terminated: 'TERMINATED',
+  Unspecified: 'UNSPECIFIED',
+  Warm: 'WARM',
+} as const;
+
+export type ResourceState = ValueOf<typeof ResourceState>;
+
+// High level Slot state
+export const SlotState = {
+  Free: 'FREE',
+  Pending: 'PENDING',
+  Potential: 'POTENTIAL',
+  Running: 'RUNNING',
+} as const;
+
+export type SlotState = ValueOf<typeof SlotState>;
+
+export const WorkspaceState = {
+  Deleted: 'DELETED',
+  DeleteFailed: 'DELETE_FAILED',
+  Deleting: 'DELETING',
+  Unspecified: 'UNSPECIFIED',
+} as const;
+
+export type WorkspaceState = ValueOf<typeof WorkspaceState>;

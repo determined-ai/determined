@@ -36,6 +36,7 @@ import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
+import useUI from 'components/kit/Theme';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
@@ -54,7 +55,6 @@ import { CheckpointsDict } from 'pages/TrialDetails/TrialDetailsMetrics';
 import { serverAddress } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
-import useUI from 'stores/contexts/UI';
 import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, Note, User, ValueOf } from 'types';
 import {
@@ -107,6 +107,7 @@ const ComponentTitles = {
   Select: 'Select',
   Spinner: 'Spinner',
   Tags: 'Tags',
+  Theme: 'Theme',
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
   Typography: 'Typography',
@@ -522,6 +523,34 @@ const SelectSection: React.FC = () => {
     </ComponentSection>
   );
 };
+
+const ThemeSection: React.FC = () => (
+  <ComponentSection id="Theme" title="Theme">
+    <AntDCard>
+      <p>
+        <code>{'<UIProvider>'}</code> is part of the UI kit, it is responsible for handling all
+        UI/theme related state, such as dark/light theme setup. It takes an optional{' '}
+        <code>{'branding'}</code> prop for adjusting branding specific theme/colors.
+      </p>
+      <p>
+        Besides the <code>{'<UIProvider>'}</code>, there are a few other helpers that can be used
+        from withing the UI kit.
+        <ul>
+          <li>
+            <code>{'useUI'}</code>, a custom hook for setting th new state for theme, mode and other
+            UI-related functionalities.
+          </li>
+          <li>
+            helper types, such as <code>{'DarkLight'}</code>.
+          </li>
+          <li>
+            helper functions, such as <code>{'getCssVar'}</code>.
+          </li>
+        </ul>
+      </p>
+    </AntDCard>
+  </ComponentSection>
+);
 
 const ChartsSection: React.FC = () => {
   const [line1Data, setLine1Data] = useState<[number, number][]>([
@@ -3058,6 +3087,7 @@ const Components = {
   Select: <SelectSection />,
   Spinner: <SpinnerSection />,
   Tags: <TagsSection />,
+  Theme: <ThemeSection />,
   Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
   Typography: <TypographySection />,

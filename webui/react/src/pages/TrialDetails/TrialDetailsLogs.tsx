@@ -12,13 +12,13 @@ import {
   settingsConfigForTrial,
 } from 'components/kit/LogViewer/LogViewerSelect.settings';
 import Spinner from 'components/kit/Spinner';
+import useUI from 'components/kit/Theme';
 import useConfirm from 'components/kit/useConfirm';
 import { useSettings } from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
-import useUI from 'stores/contexts/UI';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 import handleError, { ErrorType } from 'utils/error';

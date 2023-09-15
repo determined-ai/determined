@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
+import { UIProvider } from 'components/kit/Theme';
 import { Metric } from 'types';
 
 import MetricBadgeTag from './MetricBadgeTag';

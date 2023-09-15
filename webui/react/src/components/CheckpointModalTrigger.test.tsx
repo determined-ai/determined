@@ -4,8 +4,8 @@ import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
+import { UIProvider } from 'components/kit/Theme';
 import authStore from 'stores/auth';
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
 import { ConfirmationProvider } from './kit/useConfirm';

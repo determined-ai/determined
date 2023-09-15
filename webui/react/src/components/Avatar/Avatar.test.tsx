@@ -2,8 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
-import { DarkLight } from 'utils/themes';
+import { DarkLight, UIProvider } from 'components/kit/Theme';
 
 import Avatar, { Props } from './Avatar';
 

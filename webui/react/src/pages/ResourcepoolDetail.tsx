@@ -6,6 +6,7 @@ import Json from 'components/Json';
 import Empty from 'components/kit/Empty';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
+import { ShirtSize } from 'components/kit/Theme';
 import Page from 'components/Page';
 import ResourcePoolBindings from 'components/ResourcePoolBindings';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
@@ -22,7 +23,6 @@ import {
   V1SchedulerType,
 } from 'services/api-ts-sdk';
 import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
-import { ShirtSize } from 'themes';
 import { JobState, JsonObject, ResourceState, ValueOf } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';

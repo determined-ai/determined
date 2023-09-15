@@ -1,5 +1,96 @@
-@import '../../../globalCssVar.css';
+/* stylelint-disable custom-property-pattern */
 
+:root {
+  /* font-size */
+  --header-size-xl: 28px;
+
+  /* line-height */
+  --header-ln-xl: 36px;
+
+  /* font-size */
+  --header-size-l: 24px;
+
+  /* line-height */
+  --header-ln-l: 32px;
+
+  /* font-size */
+  --header-size-default: 22px;
+
+  /* line-height */
+  --header-ln-default: 28px;
+
+  /* font-size */
+  --header-size-s: 18px;
+
+  /* line-height */
+  --header-ln-s: 23px;
+
+  /* font-size */
+  --header-size-xs: 16px;
+
+  /* line-height */
+  --header-ln-xs: 21px;
+
+  /* font-size */
+  --multi-line-size-xl: 16px;
+
+  /* line-height */
+  --multi-line-ln-xl: 26px;
+
+  /* font-size */
+  --multi-line-size-l: 14px;
+
+  /* line-height */
+  --multi-line-ln-l: 22px;
+
+  /* font-size */
+  --multi-line-size-default: 12px;
+
+  /* line-height */
+  --multi-line-ln-default: 20px;
+
+  /* font-size */
+  --multi-line-size-s: 11px;
+
+  /* line-height */
+  --multi-line-ln-s: 18px;
+
+  /* font-size */
+  --multi-line-size-xs: 10px;
+
+  /* line-height */
+  --multi-line-ln-xs: 16px;
+
+  /* font-size */
+  --single-line-size-xl: 16px;
+
+  /* line-height */
+  --single-line-ln-xl: 20px;
+
+  /* font-size */
+  --single-line-size-l: 14px;
+
+  /* line-height */
+  --single-line-ln-l: 18px;
+
+  /* font-size */
+  --single-line-size-default: 12px;
+
+  /* line-height */
+  --single-line-ln-default: 16px;
+
+  /* font-size */
+  --single-line-size-s: 11px;
+
+  /* line-height */
+  --single-line-ln-s: 14px;
+
+  /* font-size */
+  --single-line-size-xs: 10px;
+
+  /* line-height */
+  --single-line-ln-xs: 12px;
+}
 .header {
   color: var(--theme-colors-monochrome-3);
   font-size: 16px;

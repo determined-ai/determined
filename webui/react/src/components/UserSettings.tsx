@@ -8,6 +8,7 @@ import InputShortcut from 'components/kit/InputShortcut';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
+import useUI, { Mode } from 'components/kit/Theme';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import { ThemeOptions } from 'components/ThemeToggle';
@@ -30,7 +31,6 @@ import {
 import { TableViewMode } from 'pages/F_ExpList/glide-table/GlideTable';
 import { RowHeight, rowHeightItems } from 'pages/F_ExpList/glide-table/OptionsMenu';
 import { patchUser } from 'services/api';
-import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
@@ -39,7 +39,6 @@ import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { KeyboardShortcut, shortcutToString } from 'utils/shortcut';
-import { Mode } from 'utils/themes';
 
 import Accordion from './kit/Accordion';
 import Button from './kit/Button';
