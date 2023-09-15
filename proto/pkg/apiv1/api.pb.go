@@ -76,7 +76,7 @@ var file_determined_api_v1_api_proto_rawDesc = []byte{
 	0x2f, 0x76, 0x31, 0x2f, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x2e, 0x70, 0x72,
 	0x6f, 0x74, 0x6f, 0x1a, 0x24, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f,
 	0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x70,
-	0x6f, 0x6f, 0x6c, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x32, 0xd5, 0x95, 0x02, 0x0a, 0x0a, 0x44,
+	0x6f, 0x6f, 0x6c, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x32, 0xf5, 0x95, 0x02, 0x0a, 0x0a, 0x44,
 	0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x12, 0x7e, 0x0a, 0x05, 0x4c, 0x6f, 0x67,
 	0x69, 0x6e, 0x12, 0x1f, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e,
 	0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x71, 0x75,
@@ -371,16 +371,18 @@ var file_determined_api_v1_api_proto_rawDesc = []byte{
 	0x69, 0x2f, 0x76, 0x31, 0x2f, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73,
 	0x2f, 0x7b, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x7d,
 	0x2f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x5f, 0x64, 0x65, 0x66, 0x92, 0x41, 0x0d, 0x0a, 0x0b, 0x45,
-	0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x12, 0x9d, 0x01, 0x0a, 0x0f, 0x47,
-	0x65, 0x74, 0x54, 0x61, 0x73, 0x6b, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x44, 0x65, 0x66, 0x12, 0x29,
-	0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e,
-	0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x54, 0x61, 0x73, 0x6b, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x44,
-	0x65, 0x66, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2a, 0x2e, 0x64, 0x65, 0x74, 0x65,
+	0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x12, 0xbd, 0x01, 0x0a, 0x17, 0x47,
+	0x65, 0x74, 0x54, 0x61, 0x73, 0x6b, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x44, 0x69, 0x72,
+	0x65, 0x63, 0x74, 0x6f, 0x72, 0x79, 0x12, 0x31, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69,
+	0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x54, 0x61,
+	0x73, 0x6b, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x44, 0x69, 0x72, 0x65, 0x63, 0x74, 0x6f,
+	0x72, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x32, 0x2e, 0x64, 0x65, 0x74, 0x65,
 	0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65,
-	0x74, 0x54, 0x61, 0x73, 0x6b, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x44, 0x65, 0x66, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x33, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x23, 0x12, 0x21, 0x2f,
-	0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x74, 0x61, 0x73, 0x6b, 0x73, 0x2f, 0x7b, 0x74, 0x61,
-	0x73, 0x6b, 0x5f, 0x69, 0x64, 0x7d, 0x2f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x5f, 0x64, 0x65, 0x66,
+	0x74, 0x54, 0x61, 0x73, 0x6b, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x44, 0x69, 0x72, 0x65,
+	0x63, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x3b, 0x82,
+	0xd3, 0xe4, 0x93, 0x02, 0x2b, 0x12, 0x29, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x74,
+	0x61, 0x73, 0x6b, 0x73, 0x2f, 0x7b, 0x74, 0x61, 0x73, 0x6b, 0x5f, 0x69, 0x64, 0x7d, 0x2f, 0x63,
+	0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x5f, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x79,
 	0x92, 0x41, 0x07, 0x0a, 0x05, 0x54, 0x61, 0x73, 0x6b, 0x73, 0x12, 0xaf, 0x01, 0x0a, 0x0f, 0x47,
 	0x65, 0x74, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x44, 0x65, 0x66, 0x54, 0x72, 0x65, 0x65, 0x12, 0x29,
 	0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e,
@@ -2396,7 +2398,7 @@ var file_determined_api_v1_api_proto_goTypes = []interface{}{
 	(*GetExperimentRequest)(nil),                         // 29: determined.api.v1.GetExperimentRequest
 	(*GetExperimentsRequest)(nil),                        // 30: determined.api.v1.GetExperimentsRequest
 	(*GetModelDefRequest)(nil),                           // 31: determined.api.v1.GetModelDefRequest
-	(*GetTaskModelDefRequest)(nil),                       // 32: determined.api.v1.GetTaskModelDefRequest
+	(*GetTaskContextDirectoryRequest)(nil),               // 32: determined.api.v1.GetTaskContextDirectoryRequest
 	(*GetModelDefTreeRequest)(nil),                       // 33: determined.api.v1.GetModelDefTreeRequest
 	(*GetModelDefFileRequest)(nil),                       // 34: determined.api.v1.GetModelDefFileRequest
 	(*GetExperimentLabelsRequest)(nil),                   // 35: determined.api.v1.GetExperimentLabelsRequest
@@ -2607,7 +2609,7 @@ var file_determined_api_v1_api_proto_goTypes = []interface{}{
 	(*GetExperimentResponse)(nil),                        // 240: determined.api.v1.GetExperimentResponse
 	(*GetExperimentsResponse)(nil),                       // 241: determined.api.v1.GetExperimentsResponse
 	(*GetModelDefResponse)(nil),                          // 242: determined.api.v1.GetModelDefResponse
-	(*GetTaskModelDefResponse)(nil),                      // 243: determined.api.v1.GetTaskModelDefResponse
+	(*GetTaskContextDirectoryResponse)(nil),              // 243: determined.api.v1.GetTaskContextDirectoryResponse
 	(*GetModelDefTreeResponse)(nil),                      // 244: determined.api.v1.GetModelDefTreeResponse
 	(*GetModelDefFileResponse)(nil),                      // 245: determined.api.v1.GetModelDefFileResponse
 	(*GetExperimentLabelsResponse)(nil),                  // 246: determined.api.v1.GetExperimentLabelsResponse
@@ -2820,7 +2822,7 @@ var file_determined_api_v1_api_proto_depIdxs = []int32{
 	29,  // 29: determined.api.v1.Determined.GetExperiment:input_type -> determined.api.v1.GetExperimentRequest
 	30,  // 30: determined.api.v1.Determined.GetExperiments:input_type -> determined.api.v1.GetExperimentsRequest
 	31,  // 31: determined.api.v1.Determined.GetModelDef:input_type -> determined.api.v1.GetModelDefRequest
-	32,  // 32: determined.api.v1.Determined.GetTaskModelDef:input_type -> determined.api.v1.GetTaskModelDefRequest
+	32,  // 32: determined.api.v1.Determined.GetTaskContextDirectory:input_type -> determined.api.v1.GetTaskContextDirectoryRequest
 	33,  // 33: determined.api.v1.Determined.GetModelDefTree:input_type -> determined.api.v1.GetModelDefTreeRequest
 	34,  // 34: determined.api.v1.Determined.GetModelDefFile:input_type -> determined.api.v1.GetModelDefFileRequest
 	35,  // 35: determined.api.v1.Determined.GetExperimentLabels:input_type -> determined.api.v1.GetExperimentLabelsRequest
@@ -3031,7 +3033,7 @@ var file_determined_api_v1_api_proto_depIdxs = []int32{
 	240, // 240: determined.api.v1.Determined.GetExperiment:output_type -> determined.api.v1.GetExperimentResponse
 	241, // 241: determined.api.v1.Determined.GetExperiments:output_type -> determined.api.v1.GetExperimentsResponse
 	242, // 242: determined.api.v1.Determined.GetModelDef:output_type -> determined.api.v1.GetModelDefResponse
-	243, // 243: determined.api.v1.Determined.GetTaskModelDef:output_type -> determined.api.v1.GetTaskModelDefResponse
+	243, // 243: determined.api.v1.Determined.GetTaskContextDirectory:output_type -> determined.api.v1.GetTaskContextDirectoryResponse
 	244, // 244: determined.api.v1.Determined.GetModelDefTree:output_type -> determined.api.v1.GetModelDefTreeResponse
 	245, // 245: determined.api.v1.Determined.GetModelDefFile:output_type -> determined.api.v1.GetModelDefFileResponse
 	246, // 246: determined.api.v1.Determined.GetExperimentLabels:output_type -> determined.api.v1.GetExperimentLabelsResponse
@@ -3341,7 +3343,7 @@ type DeterminedClient interface {
 	// Get the model definition of an experiment.
 	GetModelDef(ctx context.Context, in *GetModelDefRequest, opts ...grpc.CallOption) (*GetModelDefResponse, error)
 	// Get the model definition of a task.
-	GetTaskModelDef(ctx context.Context, in *GetTaskModelDefRequest, opts ...grpc.CallOption) (*GetTaskModelDefResponse, error)
+	GetTaskContextDirectory(ctx context.Context, in *GetTaskContextDirectoryRequest, opts ...grpc.CallOption) (*GetTaskContextDirectoryResponse, error)
 	// Get the model definition file tree of an experiment.
 	GetModelDefTree(ctx context.Context, in *GetModelDefTreeRequest, opts ...grpc.CallOption) (*GetModelDefTreeResponse, error)
 	// Get one file content of model definition of an experiment.
@@ -4060,9 +4062,9 @@ func (c *determinedClient) GetModelDef(ctx context.Context, in *GetModelDefReque
 	return out, nil
 }
 
-func (c *determinedClient) GetTaskModelDef(ctx context.Context, in *GetTaskModelDefRequest, opts ...grpc.CallOption) (*GetTaskModelDefResponse, error) {
-	out := new(GetTaskModelDefResponse)
-	err := c.cc.Invoke(ctx, "/determined.api.v1.Determined/GetTaskModelDef", in, out, opts...)
+func (c *determinedClient) GetTaskContextDirectory(ctx context.Context, in *GetTaskContextDirectoryRequest, opts ...grpc.CallOption) (*GetTaskContextDirectoryResponse, error) {
+	out := new(GetTaskContextDirectoryResponse)
+	err := c.cc.Invoke(ctx, "/determined.api.v1.Determined/GetTaskContextDirectory", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -6045,7 +6047,7 @@ type DeterminedServer interface {
 	// Get the model definition of an experiment.
 	GetModelDef(context.Context, *GetModelDefRequest) (*GetModelDefResponse, error)
 	// Get the model definition of a task.
-	GetTaskModelDef(context.Context, *GetTaskModelDefRequest) (*GetTaskModelDefResponse, error)
+	GetTaskContextDirectory(context.Context, *GetTaskContextDirectoryRequest) (*GetTaskContextDirectoryResponse, error)
 	// Get the model definition file tree of an experiment.
 	GetModelDefTree(context.Context, *GetModelDefTreeRequest) (*GetModelDefTreeResponse, error)
 	// Get one file content of model definition of an experiment.
@@ -6544,8 +6546,8 @@ func (*UnimplementedDeterminedServer) GetExperiments(context.Context, *GetExperi
 func (*UnimplementedDeterminedServer) GetModelDef(context.Context, *GetModelDefRequest) (*GetModelDefResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetModelDef not implemented")
 }
-func (*UnimplementedDeterminedServer) GetTaskModelDef(context.Context, *GetTaskModelDefRequest) (*GetTaskModelDefResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTaskModelDef not implemented")
+func (*UnimplementedDeterminedServer) GetTaskContextDirectory(context.Context, *GetTaskContextDirectoryRequest) (*GetTaskContextDirectoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTaskContextDirectory not implemented")
 }
 func (*UnimplementedDeterminedServer) GetModelDefTree(context.Context, *GetModelDefTreeRequest) (*GetModelDefTreeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetModelDefTree not implemented")
@@ -7665,20 +7667,20 @@ func _Determined_GetModelDef_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Determined_GetTaskModelDef_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTaskModelDefRequest)
+func _Determined_GetTaskContextDirectory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTaskContextDirectoryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeterminedServer).GetTaskModelDef(ctx, in)
+		return srv.(DeterminedServer).GetTaskContextDirectory(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/determined.api.v1.Determined/GetTaskModelDef",
+		FullMethod: "/determined.api.v1.Determined/GetTaskContextDirectory",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeterminedServer).GetTaskModelDef(ctx, req.(*GetTaskModelDefRequest))
+		return srv.(DeterminedServer).GetTaskContextDirectory(ctx, req.(*GetTaskContextDirectoryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -11055,8 +11057,8 @@ var _Determined_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Determined_GetModelDef_Handler,
 		},
 		{
-			MethodName: "GetTaskModelDef",
-			Handler:    _Determined_GetTaskModelDef_Handler,
+			MethodName: "GetTaskContextDirectory",
+			Handler:    _Determined_GetTaskContextDirectory_Handler,
 		},
 		{
 			MethodName: "GetModelDefTree",

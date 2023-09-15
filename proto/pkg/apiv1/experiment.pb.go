@@ -3940,7 +3940,7 @@ func (x *TrialsSampleResponse) GetDemotedTrials() []int32 {
 	return nil
 }
 
-// Request for an experiment's files.
+// Request for an experiment model definition.
 type GetModelDefRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

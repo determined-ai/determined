@@ -5498,6 +5498,29 @@ class v1GetTaskAcceleratorDataResponse(Printable):
         }
         return out
 
+class v1GetTaskContextDirectoryResponse(Printable):
+    """Response to GetTaskContextDirectoryRequest."""
+
+    def __init__(
+        self,
+        *,
+        b64Tgz: str,
+    ):
+        self.b64Tgz = b64Tgz
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTaskContextDirectoryResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "b64Tgz": obj["b64Tgz"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "b64Tgz": self.b64Tgz,
+        }
+        return out
+
 class v1GetTaskResponse(Printable):
     """Response to GetTaskRequest."""
 
@@ -17444,6 +17467,30 @@ def get_GetTaskAcceleratorData(
     if _resp.status_code == 200:
         return v1GetTaskAcceleratorDataResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTaskAcceleratorData", _resp)
+
+def get_GetTaskContextDirectory(
+    session: "api.Session",
+    *,
+    taskId: str,
+) -> "v1GetTaskContextDirectoryResponse":
+    """Get the model definition of a task.
+
+    - taskId: The id of the experiment.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/tasks/{taskId}/context_directory",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetTaskContextDirectoryResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTaskContextDirectory", _resp)
 
 def get_GetTasks(
     session: "api.Session",
