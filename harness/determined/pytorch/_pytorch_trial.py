@@ -701,22 +701,6 @@ class _PyTorchTrialController:
         for batch_idx, batch in training_enumerator:
             epoch_idx, batch_in_epoch_idx = divmod(batch_idx, epoch_len)
 
-            # This can occur when we have already trained more than our trial
-            # will train for. For example, if we are provided a steps_completed
-            # larger than our searcher max length.
-            #
-            # TODO this is really ugly, I think this is the earliest this can be
-            # since we need the dataloader to be initialized to tell us what batch we are on?
-            # It also seems we should do the check before we actually train any batches? So the
-            # natural place where we check `should_stop` feels too late?
-            for step in train_boundaries:
-                if step.step_type == _TrainBoundaryType.TRAIN and (
-                    (isinstance(step.unit, Batch) and batch_idx >= step.unit.value)
-                    or (isinstance(step.unit, Epoch) and epoch_idx >= step.unit.value)
-                ):
-                    logging.info("trial has already completed training")
-                    raise ShouldExit(skip_exit_checkpoint=True)
-
             # Set the batch index on the trial context used by step_optimizer.
             self.context._current_batch_idx = batch_idx
 
@@ -757,7 +741,24 @@ class _PyTorchTrialController:
     ) -> None:
         searcher_complete = op._completed
 
-        while not searcher_complete:
+        epoch_len = self.context._epoch_len
+        assert epoch_len, "Training dataloader uninitialized."
+        epoch_idx = divmod(self.start_from_batch, epoch_len)
+
+        # This can occur when we have already trained more than our trial
+        # will train for. For example, if we are provided a steps_completed
+        # larger than our searcher max length.
+        already_done = False
+        for step in train_boundaries:
+            if step.step_type == _TrainBoundaryType.TRAIN and (
+                (isinstance(step.unit, Batch) and self.start_from_batch >= step.unit.value)
+                or (isinstance(step.unit, Epoch) and epoch_idx >= step.unit.value)
+            ):
+                already_done = True
+                op._completed = True
+                break
+
+        while not searcher_complete and not already_done:
             train_boundaries, training_metrics = self._train_with_boundaries(
                 self.training_enumerator, train_boundaries
             )
