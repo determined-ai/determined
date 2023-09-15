@@ -380,7 +380,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 		return nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
-	var modelBytes []byte
+	modelBytes := []byte{}
 	var parentID *int
 	if req.ParentId != 0 {
 		parentID = ptrs.Ptr(int(req.ParentId))
@@ -392,10 +392,12 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 		}
 	} else {
 		var compressErr error
-		modelBytes, compressErr = archive.ToTarGz(filesToArchive(req.ModelDefinition))
-		if compressErr != nil {
-			return nil, config, nil, nil, errors.Wrapf(
-				compressErr, "unable to find compress model definition")
+		if req.ModelDefinition != nil {
+			modelBytes, compressErr = archive.ToTarGz(filesToArchive(req.ModelDefinition))
+			if compressErr != nil {
+				return nil, config, nil, nil, errors.Wrapf(
+					compressErr, "unable to find compress model definition")
+			}
 		}
 	}
 
@@ -416,8 +418,12 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 	dbExp, err := model.NewExperiment(
 		config, req.Config, modelBytes, parentID, false,
 		req.GitRemote, req.GitCommit, req.GitCommitter, commitDate,
-		int(p.Id),
+		int(p.Id), req.Unmanaged != nil && *req.Unmanaged,
 	)
+	if err != nil {
+		return nil, config, nil, nil, err
+	}
+
 	if owner != nil {
 		dbExp.OwnerID = &owner.ID
 		dbExp.Username = owner.Username

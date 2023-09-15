@@ -279,8 +279,14 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
             onSelectFile={handleSelectFile}
           />
         ),
+        disabled: experiment.modelDefinitionSize === 0,
         key: TabType.Code,
-        label: 'Code',
+        label:
+          experiment.modelDefinitionSize !== 0 ? (
+            'Code'
+          ) : (
+            <Tooltip content="Code file non-exist.">Code</Tooltip>
+          ),
       });
     }
 

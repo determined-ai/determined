@@ -2744,6 +2744,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     externalTrialId?: string;
+    /**
+     * Size of model definition file, for unmanaged experiments this should be 0.
+     * @type {number}
+     * @memberof V1Experiment
+     */
+    modelDefinitionSize?: number;
 }
 /**
  * Message for results of individual experiments in a multi-experiment action.
