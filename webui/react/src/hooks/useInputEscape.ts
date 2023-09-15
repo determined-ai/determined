@@ -82,10 +82,10 @@ const onEsc = (
   }
 };
 
-const onClick = (
+const onInputNumberClick = (
   blurred: boolean,
   focused: boolean,
-  inputRef: React.RefObject<HTMLInputElement | AntdInputRef>,
+  inputRef: React.RefObject<HTMLInputElement>,
   event: MouseEvent,
   handleFocused: (focused: boolean) => void,
 ) => {
@@ -93,7 +93,26 @@ const onClick = (
   if (!overlayExists) return;
   const overlayClicked = (event.target as HTMLElement).className === overlayClassname;
 
-  if (focused && overlayClicked) {
+  if (focused && (overlayClicked || event.target !== inputRef.current)) {
+    event.stopPropagation();
+    handleFocused(false);
+    // If the input is not already blurred then perform the blur
+    if (!blurred) inputRef.current?.blur();
+  }
+};
+
+const onInputClick = (
+  blurred: boolean,
+  focused: boolean,
+  inputRef: React.RefObject<AntdInputRef>,
+  event: MouseEvent,
+  handleFocused: (focused: boolean) => void,
+) => {
+  const { overlayClassname, overlayExists } = getOverlayAndMenuBodyElement();
+  if (!overlayExists) return;
+  const overlayClicked = (event.target as HTMLElement).className === overlayClassname;
+
+  if (focused && (overlayClicked || event.target !== inputRef.current?.input)) {
     event.stopPropagation();
     handleFocused(false);
     // If the input is not already blurred then perform the blur
@@ -168,7 +187,7 @@ export const useInputNumberEscape = (
     };
 
     const handleClick = (event: MouseEvent) => {
-      onClick(blurred, focused, inputRef, event, setFocused);
+      onInputNumberClick(blurred, focused, inputRef, event, setFocused);
     };
 
     window.addEventListener('keydown', handleEsc, true);
@@ -213,7 +232,7 @@ export const useInputEscape = <T>(
       onEsc(focused, inputRef, event, setFocused);
     };
     const handleClick = (event: MouseEvent) => {
-      onClick(blurred, focused, inputRef, event, setFocused);
+      onInputClick(blurred, focused, inputRef, event, setFocused);
     };
     document.addEventListener('keydown', handleEsc, true);
     document.addEventListener('click', handleClick, true);
