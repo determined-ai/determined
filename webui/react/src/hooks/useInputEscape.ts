@@ -27,8 +27,12 @@ const getOverlayAndMenuBodyElement = () => {
       : (document.getElementsByClassName(DRAWER_BODY_CLASSNAME)?.[0] as HTMLElement);
 
   return {
-    focusMenu: () => menuBody.focus(),
+    focusMenu: () => menuBody?.focus(),
     overlayClassname: overlay?.className,
+    // If an overlay does not exist then the input is not
+    // inside of a menu or modal and we do not want to
+    // alter any event behavior
+    overlayExists: !!overlay,
   };
 };
 
@@ -68,6 +72,8 @@ const onEsc = (
   event: KeyboardEvent,
   handleFocused: (focused: boolean) => void,
 ) => {
+  const { overlayExists } = getOverlayAndMenuBodyElement();
+  if (!overlayExists) return;
   if (focused && event.key === 'Escape') {
     event.stopPropagation();
     inputRef.current?.blur();
@@ -83,8 +89,9 @@ const onClick = (
   event: MouseEvent,
   handleFocused: (focused: boolean) => void,
 ) => {
-  const overlayClicked =
-    (event.target as HTMLElement).className === getOverlayAndMenuBodyElement()?.overlayClassname;
+  const { overlayClassname, overlayExists } = getOverlayAndMenuBodyElement();
+  if (!overlayExists) return;
+  const overlayClicked = (event.target as HTMLElement).className === overlayClassname;
 
   if (focused && overlayClicked) {
     event.stopPropagation();
@@ -102,7 +109,8 @@ const onClickSelect = (
   setHasOpened: (hasOpened: boolean) => void,
 ) => {
   const targetClassname = (event.target as HTMLElement).className;
-  const overlayClassname = getOverlayAndMenuBodyElement()?.overlayClassname;
+  const { overlayClassname, overlayExists } = getOverlayAndMenuBodyElement();
+  if (!overlayExists) return;
   if (isOpen && targetClassname === overlayClassname) {
     event.stopPropagation();
   }
@@ -129,10 +137,12 @@ const onEscSelect = (
   handleFocused: (focused: boolean) => void,
   setHasOpened: (hasOpened: boolean) => void,
 ) => {
+  const { overlayExists, focusMenu } = getOverlayAndMenuBodyElement();
+  if (!overlayExists) return;
   if (focused && event.key === 'Escape') {
     event.stopPropagation();
     inputRef.current?.blur();
-    getOverlayAndMenuBodyElement()?.focusMenu();
+    focusMenu();
     handleFocused(false);
     setHasOpened(false);
   }
