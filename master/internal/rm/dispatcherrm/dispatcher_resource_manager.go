@@ -1179,7 +1179,8 @@ func (m *DispatcherResourceManager) DispatchStateChange(msg DispatchStateChange)
 
 	alloc := m.reqList.Allocation(task.AllocationID)
 	if len(alloc.Resources) != 1 {
-		log.Warnf("allocation has malformed resources: %v", alloc)
+		log.WithField("allocation-id", task.AllocationID).
+			Warnf("allocation has malformed resources: %v", alloc)
 		return
 	}
 
@@ -1737,7 +1738,7 @@ func (m *DispatcherResourceManager) terminateDispatcherJob(
 
 	_, _, err := m.apiClient.terminateDispatch(owner, dispatchID) //nolint:bodyclose
 	if err != nil {
-		m.syslog.Error(err)
+		m.syslog.WithError(err).Errorf("failed to terminate job with DispatchID %s", dispatchID)
 		return false
 	}
 
@@ -1770,7 +1771,7 @@ func (m *DispatcherResourceManager) removeDispatchEnvironment(
 ) {
 	_, err := m.apiClient.deleteDispatch(owner, dispatchID) //nolint:bodyclose
 	if err != nil {
-		m.syslog.Error(err)
+		m.syslog.WithError(err).Errorf("Failed to delete dispatch with DispatchID %s", dispatchID)
 		return
 	}
 
