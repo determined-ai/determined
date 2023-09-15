@@ -434,7 +434,7 @@ func (a *apiServer) LaunchTensorboard(
 
 	// Launch a TensorBoard actor.
 	var tbID model.TaskID
-	if err = a.ask(tensorboardsAddr, spec, &tbID); err != nil {
+	if err = a.ask(tensorboardsAddr, launchReq, &tbID); err != nil {
 		return nil, err
 	}
 

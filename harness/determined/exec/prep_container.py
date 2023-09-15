@@ -31,7 +31,9 @@ def download_context_directory(sess: api.Session, info: det.ClusterInfo) -> None
 
     context_directory_resp = None
     try:
-        context_directory_resp = bindings.get_GetTaskContextDirectory(sess, taskId=cluster_info.task_id)
+        context_directory_resp = bindings.get_GetTaskContextDirectory(
+            sess, taskId=cluster_info.task_id
+        )
     except Exception as e:
         # Since this is the very first api call in the entrypoint script, and the call is made
         # before you can debug with a startup hook, we offer an overly-detailed explanation to help
