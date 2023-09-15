@@ -98,7 +98,7 @@ type podNodeInfo struct {
 }
 
 func newPod(
-	msg StartTaskPodRequest,
+	msg StartTaskPod,
 	clusterID string,
 	clientSet *k8sClient.Clientset,
 	namespace string,
@@ -312,8 +312,6 @@ func (p *pod) kill() {
 	)
 }
 
-// Note to developers: this is called very frequently by the UI so it must be very fast (no locks,
-// except over caches, no direct kubeapi calls).
 func (p *pod) getPodNodeInfo() podNodeInfo {
 	p.mu.Lock()
 	defer p.mu.Unlock()
