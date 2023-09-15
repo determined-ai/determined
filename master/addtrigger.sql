@@ -82,37 +82,6 @@ CREATE TRIGGER stream_trial_trigger_d
 BEFORE DELETE ON trials
 FOR EACH ROW EXECUTE PROCEDURE stream_trial_change();
 
--- Trigger for detecting trial permission scope changes derived from projects.workspace_id.
-CREATE OR REPLACE FUNCTION stream_trial_permission() RETURNS TRIGGER AS $$
-DECLARE
-    trial RECORD;
-    jtrial jsonb;
-BEGIN
-    FOR trial IN
-        SELECT
-            t.*
-        FROM
-            experiments e
-            INNER JOIN 
-                trials t ON t.experiment_id = e.id 
-            WHERE
-                project_id = NEW.id
-    LOOP
-        trial.seq = nextval('stream_trial_seq');
-        UPDATE trials SET seq = trial.seq where id = trial.id;
-        jtrial = to_jsonb(trial);
-        PERFORM stream_trial_notify(jtrial, OLD.id, OLD.workspace_id, jtrial, NEW.id,  NEW.workspace_id);
-    END LOOP;
-    -- return value for AFTER triggers is ignored
-    return NULL;
-END;
-$$ LANGUAGE plpgsql;
---
-DROP TRIGGER IF EXISTS stream_trial_trigger_permission ON projects;
-CREATE TRIGGER stream_trial_trigger_permission
-AFTER UPDATE OF workspace_id ON projects
-FOR EACH ROW EXECUTE PROCEDURE stream_trial_permission();
-
 -- trigger function to notify when permission changes are detected.
 CREATE OR REPLACE FUNCTION permission_change_notify() RETURNS TRIGGER AS $$
 DECLARE
