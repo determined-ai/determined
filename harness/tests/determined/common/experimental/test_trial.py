@@ -103,10 +103,7 @@ def test_list_checkpoints_calls_bindings_sortByMetric_with_sort_by_str(
 ) -> None:
     trialref = make_trialref(1)
     ckpt_resp = api_responses.sample_get_trial_checkpoints()
-    mock_bindings.side_effect = api_responses.iter_pages(
-        pageable_resp=ckpt_resp,
-        pageable_attribute="checkpoints",
-    )
+    mock_bindings.side_effect = [ckpt_resp]
 
     sort_by_metric = "val_metric"
     trialref.list_checkpoints(sort_by=sort_by_metric, order_by=checkpoint.CheckpointOrderBy.ASC)
@@ -123,10 +120,7 @@ def test_list_checkpoints_calls_bindings_sortByAttr_with_sort_by_attr(
 ) -> None:
     trialref = make_trialref(1)
     ckpt_resp = api_responses.sample_get_trial_checkpoints()
-    mock_bindings.side_effect = api_responses.iter_pages(
-        pageable_resp=ckpt_resp,
-        pageable_attribute="checkpoints",
-    )
+    mock_bindings.side_effect = [ckpt_resp]
 
     sort_by_attr = checkpoint.CheckpointSortBy.SEARCHER_METRIC
     trialref.list_checkpoints(sort_by=sort_by_attr, order_by=checkpoint.CheckpointOrderBy.ASC)
