@@ -174,7 +174,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		(*expconf.PodSpec)(taskContainerPodSpec),
 	))
 
-	var modelDef []byte
+	var contextDirectory []byte
 	if len(req.Files) > 0 {
 		userFiles := filesToArchive(req.Files)
 
@@ -186,7 +186,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		}
 		config.WorkDir = nil
 
-		modelDef, err = archive.ToTarGz(userFiles)
+		contextDirectory, err = archive.ToTarGz(userFiles)
 		if err != nil {
 			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
 				fmt.Errorf("compressing files context files: %w", err).Error())
@@ -217,8 +217,8 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	cmdSpec.Config = config
 
 	return &command.CreateGeneric{
-		Spec:     &cmdSpec,
-		ModelDef: modelDef,
+		Spec:             &cmdSpec,
+		ContextDirectory: contextDirectory,
 	}, launchWarnings, nil
 }
 

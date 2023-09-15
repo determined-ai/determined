@@ -90,14 +90,14 @@ WHERE task_id = $1
 	return &t, nil
 }
 
-// NonExperimentTasksModelDef returns a non experiment's tasks model def.
-func NonExperimentTasksModelDef(ctx context.Context, tID model.TaskID) ([]byte, error) {
-	res := &model.NTSCModelDef{}
+// NonExperimentTasksContextDirectory returns a non experiment's context directory.
+func NonExperimentTasksContextDirectory(ctx context.Context, tID model.TaskID) ([]byte, error) {
+	res := &model.TaskContextDirectory{}
 	if err := Bun().NewSelect().Model(res).Where("task_id = ?", tID).Scan(ctx, res); err != nil {
 		return nil, fmt.Errorf("querying task ID %s context directory files: %w", tID, err)
 	}
 
-	return res.ModelDefinition, nil
+	return res.ContextDirectory, nil
 }
 
 // CompleteTask persists the completion of a task.

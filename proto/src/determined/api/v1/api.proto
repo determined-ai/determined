@@ -395,10 +395,10 @@ service Determined {
     option deprecated = true;  // Use GetTaskModelDef instead.
   }
   // Get the model definition of a task.
-  rpc GetTaskModelDef(GetTaskModelDefRequest)
-      returns (GetTaskModelDefResponse) {
+  rpc GetTaskContextDirectory(GetTaskContextDirectoryRequest)
+      returns (GetTaskContextDirectoryResponse) {
     option (google.api.http) = {
-      get: "/api/v1/tasks/{task_id}/model_def"
+      get: "/api/v1/tasks/{task_id}/context_directory"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Tasks"

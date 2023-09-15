@@ -59,7 +59,7 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		msg.Spec.CommandID = string(taskID)
 		if err := createGenericCommandActor(
 			ctx, n.db, n.rm, taskID, model.TaskTypeNotebook, jobID,
-			model.JobTypeNotebook, msg.Spec, msg.ModelDef,
+			model.JobTypeNotebook, msg.Spec, msg.ContextDirectory,
 		); err != nil {
 			ctx.Log().WithError(err).Error("failed to launch notebook")
 			ctx.Respond(err)

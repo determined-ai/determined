@@ -13,7 +13,7 @@ fi
 # available in the container, and the "determined*.whl" must be installed,
 # which contains the "determined/exec/prep_container.py" script that's needed
 # to register the proxy with the Determined master.
-"$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --proxy --download_model_def
+"$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --proxy --download_context_directory
 
 trap_and_forward_signals
 if [ "$#" -eq 1 ]; then

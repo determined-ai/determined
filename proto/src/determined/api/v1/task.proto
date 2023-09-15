@@ -30,14 +30,14 @@ message GetTaskResponse {
   determined.task.v1.Task task = 1;
 }
 
-// Request for an task's files.
-message GetTaskModelDefRequest {
+// Request for an task's context directory.
+message GetTaskContextDirectoryRequest {
   // The id of the experiment.
   string task_id = 1;
 }
 
-// Response to GetTaskModelDefRequest.
-message GetTaskModelDefResponse {
+// Response to GetTaskContextDirectoryRequest.
+message GetTaskContextDirectoryResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "b64_tgz" ] }
   };

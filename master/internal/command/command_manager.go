@@ -20,8 +20,8 @@ import (
 
 // CreateGeneric is a request to managers to create a generic command.
 type CreateGeneric struct {
-	ModelDef []byte
-	Spec     *tasks.GenericCommandSpec
+	ContextDirectory []byte
+	Spec             *tasks.GenericCommandSpec
 }
 
 type commandManager struct {
@@ -63,7 +63,7 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 		msg.Spec.CommandID = string(taskID)
 		if err := createGenericCommandActor(
 			ctx, c.db, c.rm, taskID, model.TaskTypeCommand, jobID,
-			model.JobTypeCommand, msg.Spec, msg.ModelDef,
+			model.JobTypeCommand, msg.Spec, msg.ContextDirectory,
 		); err != nil {
 			ctx.Log().WithError(err).Error("failed to launch command")
 			ctx.Respond(err)

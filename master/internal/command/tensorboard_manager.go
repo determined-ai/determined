@@ -58,7 +58,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 		msg.Spec.CommandID = string(taskID)
 		if err := createGenericCommandActor(
 			ctx, t.db, t.rm, taskID, model.TaskTypeTensorboard, jobID,
-			model.JobTypeTensorboard, msg.Spec, msg.ModelDef,
+			model.JobTypeTensorboard, msg.Spec, msg.ContextDirectory,
 		); err != nil {
 			ctx.Log().WithError(err).Error("failed to launch tensorboard")
 			ctx.Respond(err)

@@ -58,7 +58,7 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		msg.Spec.CommandID = string(taskID)
 		if err := createGenericCommandActor(
 			ctx, s.db, s.rm, taskID, model.TaskTypeShell, jobID, model.JobTypeShell,
-			msg.Spec, msg.ModelDef,
+			msg.Spec, msg.ContextDirectory,
 		); err != nil {
 			ctx.Log().WithError(err).Error("failed to launch shell")
 			ctx.Respond(err)

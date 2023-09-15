@@ -1,4 +1,4 @@
-CREATE TABLE ntsc_model_definition (
+CREATE TABLE task_context_directory (
     task_id text REFERENCES tasks(task_id) ON DELETE CASCADE NOT NULL UNIQUE PRIMARY KEY,
-    model_definition bytea NOT NULL
+    context_directory bytea NOT NULL
 );

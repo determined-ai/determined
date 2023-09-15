@@ -1,1 +1,1 @@
-DROP TABLE ntsc_model_definition;
+DROP TABLE task_context_directory;

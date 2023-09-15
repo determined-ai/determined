@@ -68,7 +68,7 @@ func createGenericCommandActor(
 	jobID model.JobID,
 	jobType model.JobType,
 	spec *tasks.GenericCommandSpec,
-	modelDef []byte,
+	contextDirectory []byte,
 ) error {
 	spec.TaskType = taskType
 	cmd := &command{
@@ -88,7 +88,7 @@ func createGenericCommandActor(
 			"task-type": taskType,
 		},
 
-		modelDef: modelDef,
+		contextDirectory: contextDirectory,
 	}
 
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
@@ -219,7 +219,7 @@ type command struct {
 	exitStatus     *task.AllocationExited
 	restored       bool
 
-	modelDef []byte // Don't rely on this being set outsides of PreStart non restore case.
+	contextDirectory []byte // Don't rely on this being set outsides of PreStart non restore case.
 
 	logCtx logger.Context
 }
@@ -251,7 +251,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				return errors.Wrapf(err, "persisting task %v", c.taskID)
 			}
 
-			if err := c.persistAndEvictModelDefFromMemory(); err != nil {
+			if err := c.persistAndEvictContextDirectoryFromMemory(); err != nil {
 				return err
 			}
 		}
@@ -664,19 +664,19 @@ func (c *command) toV1Job() *jobv1.Job {
 	return &j
 }
 
-func (c *command) persistAndEvictModelDefFromMemory() error {
-	if c.modelDef == nil {
-		c.modelDef = make([]byte, 0)
+func (c *command) persistAndEvictContextDirectoryFromMemory() error {
+	if c.contextDirectory == nil {
+		c.contextDirectory = make([]byte, 0)
 	}
 
-	if _, err := db.Bun().NewInsert().Model(&model.NTSCModelDef{
-		TaskID:          c.taskID,
-		ModelDefinition: c.modelDef,
+	if _, err := db.Bun().NewInsert().Model(&model.TaskContextDirectory{
+		TaskID:           c.taskID,
+		ContextDirectory: c.contextDirectory,
 	}).Exec(context.TODO()); err != nil {
 		return fmt.Errorf("persisting context directory files: %w", err)
 	}
 
-	c.modelDef = nil
+	c.contextDirectory = nil
 	return nil
 }
 

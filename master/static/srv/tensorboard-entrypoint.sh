@@ -16,7 +16,7 @@ if [ -z "$DET_SKIP_PIP_INSTALL" ]; then
     "$DET_PYTHON_EXECUTABLE" -m pip install tensorboard tensorboard-plugin-profile
 fi
 
-"$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --proxy --download_model_def
+"$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --proxy --download_context_directory
 
 set -x
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"

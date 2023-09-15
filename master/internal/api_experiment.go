@@ -2268,9 +2268,9 @@ func (a *apiServer) GetModelDef(
 	return &apiv1.GetModelDefResponse{B64Tgz: b64Tgz}, nil
 }
 
-func (a *apiServer) GetTaskModelDef(
-	ctx context.Context, req *apiv1.GetTaskModelDefRequest,
-) (*apiv1.GetTaskModelDefResponse, error) {
+func (a *apiServer) GetTaskContextDirectory(
+	ctx context.Context, req *apiv1.GetTaskContextDirectoryRequest,
+) (*apiv1.GetTaskContextDirectoryResponse, error) {
 	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId),
 		exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -2290,14 +2290,14 @@ func (a *apiServer) GetTaskModelDef(
 				req.TaskId, err)
 		}
 	} else {
-		tgz, err = db.NonExperimentTasksModelDef(ctx, model.TaskID(req.TaskId))
+		tgz, err = db.NonExperimentTasksContextDirectory(ctx, model.TaskID(req.TaskId))
 		if err != nil {
 			return nil, fmt.Errorf(
 				"fetching taskID %s context directory from database: %s", req.TaskId, err)
 		}
 	}
 
-	return &apiv1.GetTaskModelDefResponse{
+	return &apiv1.GetTaskContextDirectoryResponse{
 		B64Tgz: base64.StdEncoding.EncodeToString(tgz),
 	}, nil
 }

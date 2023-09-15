@@ -154,7 +154,6 @@ def test_basic_workflows(tmp_path: Path) -> None:
 
 
 @pytest.mark.slow
-@pytest.mark.e2e_k8s
 @pytest.mark.e2e_cpu
 def test_large_uploads(tmp_path: Path) -> None:
     with pytest.raises(subprocess.CalledProcessError):
@@ -202,6 +201,10 @@ def test_large_uploads(tmp_path: Path) -> None:
             ]
         )
 
+
+# TODO we could move this test to nightly or even per release to save CI cost.
+@pytest.mark.e2e_k8s
+def test_context_directory_larger_than_config_map_k8s(tmp_path: Path) -> None:
     with FileTree(tmp_path, {"hello.py": "print('hello world')"}) as tree:
         large = tree.joinpath("large-file.bin")
         large.touch()
