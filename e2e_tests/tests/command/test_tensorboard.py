@@ -106,6 +106,8 @@ def test_start_tensorboard_for_s3_experiment(
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 @pytest.mark.tensorflow2
 def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[str, str]) -> None:
     """

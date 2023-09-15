@@ -200,6 +200,8 @@ def test_hf_trainer_api_integration() -> None:
 
 @pytest.mark.deepspeed
 @pytest.mark.gpu_required
+@pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_deepspeed_moe() -> None:
     config = conf.load_config(conf.deepspeed_examples_path("cifar10_moe/moe.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -209,6 +211,8 @@ def test_deepspeed_moe() -> None:
 
 @pytest.mark.deepspeed
 @pytest.mark.gpu_required
+@pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_deepspeed_zero() -> None:
     config = conf.load_config(conf.deepspeed_examples_path("cifar10_moe/zero_stages.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -245,6 +249,8 @@ def test_gpt_neox_zero1() -> None:
 
 @pytest.mark.deepspeed
 @pytest.mark.gpu_required
+@pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_deepspeed_dcgan() -> None:
     config = conf.load_config(conf.deepspeed_examples_path("deepspeed_dcgan/mnist.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -254,6 +260,8 @@ def test_deepspeed_dcgan() -> None:
 
 @pytest.mark.deepspeed
 @pytest.mark.gpu_required
+@pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_deepspeed_cpu_offloading() -> None:
     config = conf.load_config(
         conf.deepspeed_examples_path("cifar10_cpu_offloading/zero_3_cpu_offload.yaml")

@@ -12,6 +12,8 @@ from tests.cluster.test_users import ADMIN_CREDENTIALS
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_basic_notebook_start_and_kill() -> None:
     lines = []  # type: List[str]
     with cmd.interactive_command("notebook", "start") as notebook:

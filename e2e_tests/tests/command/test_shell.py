@@ -8,6 +8,8 @@ from tests import command as cmd
 
 @pytest.mark.slow
 @pytest.mark.e2e_gpu
+@pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_start_and_write_to_shell(tmp_path: Path) -> None:
     with cmd.interactive_command("shell", "start") as shell:
         # Call our cli to ensure that PATH and PYTHONUSERBASE are properly set.

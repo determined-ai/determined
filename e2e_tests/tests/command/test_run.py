@@ -89,6 +89,8 @@ def _run_cmd_with_config_expecting_failure(
 
 
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_exit_code_reporting() -> None:
     """
     Confirm that failed commands are not reported as successful, and confirm
@@ -100,6 +102,8 @@ def test_exit_code_reporting() -> None:
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_basic_workflows(tmp_path: Path) -> None:
     with FileTree(tmp_path, {"hello.py": "print('hello world')"}) as tree:
         _run_and_verify_exit_code_zero(
@@ -242,6 +246,8 @@ if test != "TEST":
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_singleton_command() -> None:
     _run_and_verify_exit_code_zero(
         ["det", "-m", conf.make_master_url(), "cmd", "run", "echo hello && echo world"]
@@ -250,6 +256,8 @@ def test_singleton_command() -> None:
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_environment_variables_command() -> None:
     _run_and_verify_exit_code_zero(
         [
@@ -389,6 +397,8 @@ bind_mounts:
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_cmd_kill() -> None:
     """Start a command, extract its task ID, and then kill it."""
 
@@ -601,6 +611,8 @@ def test_k8_resource_limits(using_k8s: bool, slots: int) -> None:
 
 
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
 def test_log_wait_timeout(tmp_path: Path, secrets: Dict[str, str]) -> None:
     # Start a subshell that prints after 5 and 20 seconds, then exit.
     cmd = 'sh -c "sleep 5; echo after 5; sleep 15; echo after 20" & echo main shell exiting'
