@@ -134,8 +134,6 @@ export const useInputNumberEscape = (
   const inputRef = useRef<HTMLInputElement>(null);
   useImperativeHandle(ref, () => inputRef?.current as HTMLInputElement);
 
-  const input = inputRef?.current;
-
   const [focused, setFocused] = useState(false);
   const [blurred, setBlurred] = useState(false);
 
@@ -154,7 +152,7 @@ export const useInputNumberEscape = (
       window.removeEventListener('keydown', handleEsc, true);
       window.removeEventListener('click', handleClick, true);
     };
-  }, [blurred, focused, input, inputRef]);
+  }, [blurred, focused]);
 
   const handleBlur = <HTMLInputElement>(
     e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>,
@@ -198,7 +196,7 @@ export const useInputEscape = <T>(
       document.removeEventListener('keydown', handleEsc, true);
       document.removeEventListener('click', handleClick, true);
     };
-  }, [focused, inputRef, blurred]);
+  }, [focused, blurred]);
 
   const handleBlur = <T extends HTMLInputElement | HTMLTextAreaElement>(
     e: React.FocusEvent<T> | React.KeyboardEvent<T>,
@@ -259,7 +257,7 @@ export const useSelectEscape = (
 
       window.removeEventListener('click', handleClick, true);
     };
-  }, [blurred, containerRef, focused, inputRef, setFocused, isOpen, hasOpened]);
+  }, [blurred, containerRef, focused, setFocused, isOpen, hasOpened]);
 
   const handleBlur = (
     e: React.FocusEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>,
