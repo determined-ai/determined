@@ -24,4 +24,6 @@
 /e2e_tests/tests/experiment       @determined-ai/ml-sys
 /e2e_tests/tests/nightly          @determined-ai/ml-sys
 
+# WebUI directory mapped to web team, except for auto-generated TS bindings.
 /webui @determined-ai/web
+/webui/react/src/services/api-ts-sdk/api.ts
