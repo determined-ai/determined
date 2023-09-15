@@ -202,3 +202,28 @@ message GetTaskAcceleratorDataResponse {
   // The accelerator data for each allocation associated with the task.
   repeated AcceleratorData accelerator_data = 1;
 }
+
+// Gets some allocation.
+message GetAllocationRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "allocation_id" ] }
+  };
+  // The id of the allocation.
+  string allocation_id = 1;
+}
+// Response to GetAllocationRequest
+message GetAllocationResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "allocation_id", "state", "slots" ] }
+  };
+  // The id of the allocation.
+  string allocation_id = 1;
+  // The state of the allocation.
+  determined.task.v1.State state = 2;
+  // The number of slots associated with the allocation.
+  int32 slots = 3;
+  // The exit reason for the allocation.
+  optional string exit_reason = 4;
+  // The status code the allocation exits with.
+  optional int32 status_code = 5;
+}

@@ -489,6 +489,7 @@ export const mapV1Experiment = (
     jobId: data.jobId,
     jobSummary: jobSummary,
     labels: data.labels || [],
+    modelDefinitionSize: data.modelDefinitionSize,
     name: data.name,
     notes: data.notes,
     numTrials: data.numTrials || 0,

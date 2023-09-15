@@ -743,6 +743,15 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Get details about an Allocation.
+  rpc GetAllocation(GetAllocationRequest) returns (GetAllocationResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/allocations/{allocation_id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Set allocation to waiting state.
   rpc AllocationWaiting(AllocationWaitingRequest)
       returns (AllocationWaitingResponse) {
