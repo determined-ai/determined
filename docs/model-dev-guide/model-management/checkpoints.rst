@@ -48,7 +48,6 @@ associated with the experiment and selects the one with the best validation metr
    from determined.experimental import client
 
    checkpoint = client.get_experiment(id).list_checkpoints()[0]
-   specific_checkpoint = client.get_checkpoint(uuid="uuid-for-checkpoint")
 
 Checkpoints can be sorted by any metric using the ``sort_by`` keyword argument, which defines which
 metric to use, and ``order_by``, which defines whether to sort the checkpoints in ascending or
@@ -83,7 +82,7 @@ selection within a trial. It contains a
 :meth:`~determined.experimental.client.Trial.list_checkpoints` method, which mirrors
 :meth:`~determined.experimental.client.Experiment.list_checkpoints` for an experiment.
 
-The snippet below demonstrates how to select the most recent checkpoint for a trial.
+The snippet below demonstrates various ways of selecting a checkpoint from a trial.
 
 .. code:: python
 
@@ -91,11 +90,20 @@ The snippet below demonstrates how to select the most recent checkpoint for a tr
 
    trial = client.get_trial(id)
 
-   latest_checkpoint = trial.list_checkpoints(
+   most_recent_checkpoint = trial.list_checkpoints(
        sort_by=checkpoint.CheckpointSortBy.END_TIME,
        order_by=checkpoint.CheckpointOrderBy.DESC,
        limit=1
    )[0]
+
+   # Sort checkpoints by "accuracy" metric, if your training code reports it.
+   most_accurate_checkpoint = trial.list_checkpoints(
+       sort_by="accuracy",
+       order_by=checkpoint.CheckpointOrderBy.DESC,
+       limit=1
+   )[0]
+
+   specific_checkpoint = client.get_checkpoint(uuid="uuid-for-checkpoint")
 
 ********************************
  Using the ``Checkpoint`` Class
