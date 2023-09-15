@@ -26,4 +26,4 @@
 
 # Owned by @determined-ai/web except for generated files
 /webui    @determined-ai/web
-/webui/react/src/services/api-ts-sdk/**/*
+/webui/react/src/services/api-ts-sdk/
