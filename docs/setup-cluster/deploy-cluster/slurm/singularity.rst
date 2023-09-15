@@ -230,9 +230,9 @@ If you only want the sharable .sqsh file without the overhead of container creat
 
    manage-enroot-cache -s /shared/enroot --nocreate determinedai/environments:cuda-10.2-base-gpu-mpi-0.19.4
 
-Credentials for image download may optionally be configured by following the `enroot documentation
-<https://github.com/NVIDIA/enroot/blob/master/doc/cmd/import.md>`__. Specify the user name to use
-with the ``--username`` option:
+To optionally configure credentials for image downloads, follow the `enroot documentation
+<https://github.com/NVIDIA/enroot/blob/master/doc/cmd/import.md>`__. Specify the user name with the
+``--username`` option:
 
 .. code:: bash
 
