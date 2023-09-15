@@ -515,7 +515,7 @@ func (k *kubernetesResourcePool) assignResources(
 		// This call must happen after we publish ResourcesAllocated, otherwise the allocation will
 		// receive an update for resources it does not know about, ignore it, then hang if it missed
 		// the termination.
-		err := k.pods.refreshPodStates(req.AllocationID)
+		err := k.pods.RefreshPodStates(req.AllocationID)
 		if err != nil {
 			ctx.Log().WithError(err).Error("failed to refresh pod states after reattach")
 		}

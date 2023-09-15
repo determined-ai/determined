@@ -252,7 +252,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			poolNamespaces[k.poolsConfig[i].KubernetesNamespace] = k.poolsConfig[i].PoolName
 		}
 
-		podStatusUpdates := make(chan sproto.UpdatePodStatus)
+		podStatusUpdates := make(chan sproto.UpdatePodStatus, 1)
 		pods, err := newPodsService(
 			k.config.Namespace,
 			poolNamespaces,

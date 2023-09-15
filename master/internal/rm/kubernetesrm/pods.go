@@ -51,7 +51,7 @@ type podMetadata struct {
 	containerID string
 }
 
-// High lever overview of the actors within the kubernetes package:
+// High lever overview of the components within the kubernetes package:
 //
 //	pods
 //	  +- pod(s): manages pod lifecycle. One per container in a task.
@@ -60,8 +60,6 @@ type podMetadata struct {
 //	  +- events: sends updates about kubernetes events.
 //	  +- requestQueue: queues requests to create / delete kubernetes resources.
 //	     +- requestProcessingWorkers: processes request to create / delete kubernetes resources.
-//
-// TODO(!!!): renames, etc.
 type pods struct {
 	mu sync.RWMutex
 	wg waitgroupx.Group
@@ -102,7 +100,7 @@ type pods struct {
 	summarizeCacheTime time.Time
 
 	syslog           *logrus.Entry
-	podStatusUpdates chan<- sproto.UpdatePodStatus // TODO(!!!): Close this channel.
+	podStatusUpdates chan<- sproto.UpdatePodStatus
 }
 
 type summarizeResult struct {
@@ -159,9 +157,9 @@ func newPodsService(
 		podInterfaces:                make(map[string]typedV1.PodInterface),
 		configMapInterfaces:          make(map[string]typedV1.ConfigMapInterface),
 		syslog:                       logrus.WithField("pod-name", namespace),
+		podStatusUpdates:             podStatusUpdates,
 	}
 
-	// TODO(!!!): destructor of some kind. but this does crash the whole system.
 	if err := p.startClientSet(); err != nil {
 		return nil, err
 	}
@@ -644,7 +642,7 @@ func (p *pods) reattachPod(
 	return reattachPodResponse{containerID: containerID, started: started}, nil
 }
 
-func (p *pods) refreshPodStates(allocationID model.AllocationID) error {
+func (p *pods) RefreshPodStates(allocationID model.AllocationID) error {
 	if allocationID == "" {
 		return fmt.Errorf("invalid call: allocationID missing")
 	}
@@ -764,7 +762,7 @@ func (p *pods) startPodInformer() error {
 			func(event watch.Event) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
-				p.podStatusCallback(event) // TODO(!!!): i probably need to step back and think about this one.
+				p.podStatusCallback(event)
 			},
 		)
 		if err != nil {
@@ -1133,7 +1131,6 @@ func (p *pods) preemptionCallback(event watch.Event) {
 	ref.PreemptTaskPod()
 }
 
-// TODO(!!!): structured errors. At least errors, for context.
 func (p *pods) verifyPodAndGetRef(podID string) *pod {
 	podName, ok := p.containerIDToPodName[podID]
 	if !ok {
@@ -1297,9 +1294,10 @@ func (p *pods) computeSummary() (map[string]model.AgentSummary, error) {
 			}
 		}
 
+		// TODO(Brad): AgentSummary isn't resource pool summary.
 		summaries[poolName] = model.AgentSummary{
 			ID:             poolName,
-			RegisteredTime: time.Time{}, // TODO(!!!): What is worse, zero or a fake wrong answer.
+			RegisteredTime: time.Time{},
 			NumContainers:  numContainersInPool,
 			ResourcePool:   []string{poolName},
 			Slots:          slots,
