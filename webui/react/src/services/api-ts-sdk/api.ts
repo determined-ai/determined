@@ -3038,6 +3038,43 @@ export interface V1GetAgentsResponse {
     pagination?: V1Pagination;
 }
 /**
+ * 
+ * @export
+ * @interface V1GetAllocationResponse
+ */
+export interface V1GetAllocationResponse {
+    /**
+     * The id of the allocation.
+     * @type {string}
+     * @memberof V1GetAllocationResponse
+     */
+    allocationId: string;
+    /**
+     * The state of the allocation.
+     * @type {Taskv1State}
+     * @memberof V1GetAllocationResponse
+     */
+    state: Taskv1State;
+    /**
+     * The number of slots associated with the allocation.
+     * @type {number}
+     * @memberof V1GetAllocationResponse
+     */
+    slots: number;
+    /**
+     * The exit reason for the allocation.
+     * @type {string}
+     * @memberof V1GetAllocationResponse
+     */
+    exitReason?: string;
+    /**
+     * The status code the allocation exits with.
+     * @type {number}
+     * @memberof V1GetAllocationResponse
+     */
+    statusCode?: number;
+}
+/**
  * Response to GetBestSearcherValidationMetricRequest.
  * @export
  * @interface V1GetBestSearcherValidationMetricResponse
@@ -16994,6 +17031,42 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get details about an Allocation.
+         * @param {string} allocationId The id of the allocation.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAllocation(allocationId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'allocationId' is not null or undefined
+            if (allocationId === null || allocationId === undefined) {
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling getAllocation.');
+            }
+            const localVarPath = `/api/v1/allocations/{allocationId}`
+                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -19267,6 +19340,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get details about an Allocation.
+         * @param {string} allocationId The id of the allocation.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAllocation(allocationId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAllocationResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getAllocation(allocationId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -20329,6 +20421,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get details about an Allocation.
+         * @param {string} allocationId The id of the allocation.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAllocation(allocationId: string, options?: any) {
+            return InternalApiFp(configuration).getAllocation(allocationId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -21020,6 +21122,18 @@ export class InternalApi extends BaseAPI {
      */
     public expMetricNames(ids: Array<number>, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).expMetricNames(ids, periodSeconds, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get details about an Allocation.
+     * @param {string} allocationId The id of the allocation.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getAllocation(allocationId: string, options?: any) {
+        return InternalApiFp(this.configuration).getAllocation(allocationId, options)(this.fetch, this.basePath)
     }
     
     /**
