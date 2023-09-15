@@ -209,7 +209,7 @@ func (m *launcherMonitor) watch() {
 	for {
 		select {
 		case msg := <-m.newLauncherJob:
-			m.syslog.Infof("Starting monitoring of %s", msg.dispatcherID)
+			m.syslog.Infof("Starting monitoring of dispatch with DispatchID %s", msg.dispatcherID)
 			// Add job to collection of those being monitored.
 			m.addJobToMonitoredJobs(msg)
 
