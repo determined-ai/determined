@@ -198,7 +198,7 @@ the following features:
 -  Download the Determined default cuda, cpu, or rocm environment images
 -  Download an arbitrary Docker image reference
 -  Share a directory of re-usable imported .sqsh files
--  Create a per-user container from a shared .sqsh file
+-  Optionally, create a per-user container from a shared .sqsh file
 -  List the currently available images in the shared .sqsh file cache
 
 When using ``manage-enroot-cache`` you must provide a temporary directory via the ``-s`` option
@@ -229,6 +229,16 @@ If you only want the sharable .sqsh file without the overhead of container creat
 .. code:: bash
 
    manage-enroot-cache -s /shared/enroot --nocreate determinedai/environments:cuda-10.2-base-gpu-mpi-0.19.4
+
+Credentials for image download may optionally be configured by following the `enroot documentation
+<https://github.com/NVIDIA/enroot/blob/master/doc/cmd/import.md>`__. Specify the user name to use
+with the ``--username`` option:
+
+.. code:: bash
+
+   manage-enroot-cache -s /shared/enroot --username <username-here> --cuda --cpu
+
+``--username`` is positional -- if used it should appear before any image reference.
 
 You can view the current set of Docker image names in the cache with the ``-l`` option.
 
