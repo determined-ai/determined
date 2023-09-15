@@ -24,4 +24,6 @@
 /e2e_tests/tests/experiment       @determined-ai/ml-sys
 /e2e_tests/tests/nightly          @determined-ai/ml-sys
 
-/webui @determined-ai/web
+# Owned by @determined-ai/web except for generated files
+/webui    @determined-ai/web
+/webui/react/src/services/api-ts-sdk/
