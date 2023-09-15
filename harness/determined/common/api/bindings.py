@@ -1171,52 +1171,76 @@ class v1AggregateQueueStats(Printable):
 class v1Allocation(Printable):
     """Allocation tracks a specific instance of a Task."""
     endTime: "typing.Optional[str]" = None
+    exitReason: "typing.Optional[str]" = None
+    isReady: "typing.Optional[bool]" = None
     startTime: "typing.Optional[str]" = None
+    statusCode: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
         allocationId: str,
-        isReady: bool,
+        slots: int,
         state: "taskv1State",
         taskId: str,
         endTime: "typing.Union[str, None, Unset]" = _unset,
+        exitReason: "typing.Union[str, None, Unset]" = _unset,
+        isReady: "typing.Union[bool, None, Unset]" = _unset,
         startTime: "typing.Union[str, None, Unset]" = _unset,
+        statusCode: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.allocationId = allocationId
-        self.isReady = isReady
+        self.slots = slots
         self.state = state
         self.taskId = taskId
         if not isinstance(endTime, Unset):
             self.endTime = endTime
+        if not isinstance(exitReason, Unset):
+            self.exitReason = exitReason
+        if not isinstance(isReady, Unset):
+            self.isReady = isReady
         if not isinstance(startTime, Unset):
             self.startTime = startTime
+        if not isinstance(statusCode, Unset):
+            self.statusCode = statusCode
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Allocation":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "allocationId": obj["allocationId"],
-            "isReady": obj["isReady"],
+            "slots": obj["slots"],
             "state": taskv1State(obj["state"]),
             "taskId": obj["taskId"],
         }
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
+        if "exitReason" in obj:
+            kwargs["exitReason"] = obj["exitReason"]
+        if "isReady" in obj:
+            kwargs["isReady"] = obj["isReady"]
         if "startTime" in obj:
             kwargs["startTime"] = obj["startTime"]
+        if "statusCode" in obj:
+            kwargs["statusCode"] = obj["statusCode"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "allocationId": self.allocationId,
-            "isReady": self.isReady,
+            "slots": self.slots,
             "state": self.state.value,
             "taskId": self.taskId,
         }
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
+        if not omit_unset or "exitReason" in vars(self):
+            out["exitReason"] = self.exitReason
+        if not omit_unset or "isReady" in vars(self):
+            out["isReady"] = self.isReady
         if not omit_unset or "startTime" in vars(self):
             out["startTime"] = self.startTime
+        if not omit_unset or "statusCode" in vars(self):
+            out["statusCode"] = self.statusCode
         return out
 
 class v1AllocationAllGatherRequest(Printable):
@@ -3904,49 +3928,25 @@ class v1GetAgentsResponse(Printable):
         return out
 
 class v1GetAllocationResponse(Printable):
-    exitReason: "typing.Optional[str]" = None
-    statusCode: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
-        allocationId: str,
-        slots: int,
-        state: "taskv1State",
-        exitReason: "typing.Union[str, None, Unset]" = _unset,
-        statusCode: "typing.Union[int, None, Unset]" = _unset,
+        allocation: "v1Allocation",
     ):
-        self.allocationId = allocationId
-        self.slots = slots
-        self.state = state
-        if not isinstance(exitReason, Unset):
-            self.exitReason = exitReason
-        if not isinstance(statusCode, Unset):
-            self.statusCode = statusCode
+        self.allocation = allocation
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetAllocationResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "allocationId": obj["allocationId"],
-            "slots": obj["slots"],
-            "state": taskv1State(obj["state"]),
+            "allocation": v1Allocation.from_json(obj["allocation"]),
         }
-        if "exitReason" in obj:
-            kwargs["exitReason"] = obj["exitReason"]
-        if "statusCode" in obj:
-            kwargs["statusCode"] = obj["statusCode"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "allocationId": self.allocationId,
-            "slots": self.slots,
-            "state": self.state.value,
+            "allocation": self.allocation.to_json(omit_unset),
         }
-        if not omit_unset or "exitReason" in vars(self):
-            out["exitReason"] = self.exitReason
-        if not omit_unset or "statusCode" in vars(self):
-            out["statusCode"] = self.statusCode
         return out
 
 class v1GetBestSearcherValidationMetricResponse(Printable):

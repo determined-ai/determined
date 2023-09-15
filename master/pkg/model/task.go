@@ -118,6 +118,9 @@ type Allocation struct {
 	// ProxyAddress stores the explicitly provided task-provided proxy address for resource
 	// managers that do not supply us with it. Comes from `determined.exec.prep_container --proxy`.
 	ProxyAddress *string `db:"proxy_address" bun:"proxy_address"`
+	ExitReason   *string `db:"exit_reason" bun:"exit_reason"`
+	ExitErr      *string `db:"exit_error" bun:"exit_error"`
+	StatusCode   *int32  `db:"status_code" bun:"status_code"`
 }
 
 // AcceleratorData is the model for an allocation accelerator data in the database.
@@ -235,6 +238,23 @@ func (s AllocationState) Proto() taskv1.State {
 		return taskv1.State_STATE_TERMINATED
 	default:
 		return taskv1.State_STATE_UNSPECIFIED
+	}
+}
+
+// Proto returns the proto representation of the allocation state.
+func (a Allocation) Proto() *taskv1.Allocation {
+	startTime := a.StartTime.String()
+	endTime := a.EndTime.String()
+	return &taskv1.Allocation{
+		TaskId:       string(a.TaskID),
+		IsReady:      a.IsReady,
+		StartTime:    &startTime,
+		EndTime:      &endTime,
+		AllocationId: string(a.AllocationID),
+		State:        a.State.Proto(),
+		Slots:        int32(a.Slots),
+		ExitReason:   a.ExitReason,
+		StatusCode:   a.StatusCode,
 	}
 }
 

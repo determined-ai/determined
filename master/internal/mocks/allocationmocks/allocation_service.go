@@ -94,6 +94,32 @@ func (_m *AllocationService) GetAllAllocationIDs() []model.AllocationID {
 	return r0
 }
 
+// GetAllocation provides a mock function with given fields: ctx, allocallocationID
+func (_m *AllocationService) GetAllocation(ctx context.Context, allocallocationID string) (*model.Allocation, error) {
+	ret := _m.Called(ctx, allocallocationID)
+
+	var r0 *model.Allocation
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*model.Allocation, error)); ok {
+		return rf(ctx, allocallocationID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *model.Allocation); ok {
+		r0 = rf(ctx, allocallocationID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Allocation)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, allocallocationID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SendLog provides a mock function with given fields: ctx, id, log
 func (_m *AllocationService) SendLog(ctx context.Context, id model.AllocationID, log *sproto.ContainerLog) {
 	_m.Called(ctx, id, log)

@@ -42,6 +42,10 @@ type AllocationService interface {
 		id model.AllocationID,
 		addr string,
 	) error
+	GetAllocation(
+		ctx context.Context,
+		allocallocationID string,
+	) (*model.Allocation, error)
 	SetAcceleratorData(
 		ctx context.Context,
 		accData model.AcceleratorData,

@@ -1145,7 +1145,7 @@ export interface V1Allocation {
      * @type {boolean}
      * @memberof V1Allocation
      */
-    isReady: boolean;
+    isReady?: boolean;
     /**
      * Start timestamp.
      * @type {string}
@@ -1164,6 +1164,24 @@ export interface V1Allocation {
      * @memberof V1Allocation
      */
     allocationId: string;
+    /**
+     * The number of slots associated with the allocation.
+     * @type {number}
+     * @memberof V1Allocation
+     */
+    slots: number;
+    /**
+     * The exit reason for the allocation.
+     * @type {string}
+     * @memberof V1Allocation
+     */
+    exitReason?: string;
+    /**
+     * The status code the allocation exits with.
+     * @type {number}
+     * @memberof V1Allocation
+     */
+    statusCode?: number;
 }
 /**
  * Arguments to an all gather.
@@ -3121,34 +3139,10 @@ export interface V1GetAgentsResponse {
 export interface V1GetAllocationResponse {
     /**
      * The id of the allocation.
-     * @type {string}
+     * @type {V1Allocation}
      * @memberof V1GetAllocationResponse
      */
-    allocationId: string;
-    /**
-     * The state of the allocation.
-     * @type {Taskv1State}
-     * @memberof V1GetAllocationResponse
-     */
-    state: Taskv1State;
-    /**
-     * The number of slots associated with the allocation.
-     * @type {number}
-     * @memberof V1GetAllocationResponse
-     */
-    slots: number;
-    /**
-     * The exit reason for the allocation.
-     * @type {string}
-     * @memberof V1GetAllocationResponse
-     */
-    exitReason?: string;
-    /**
-     * The status code the allocation exits with.
-     * @type {number}
-     * @memberof V1GetAllocationResponse
-     */
-    statusCode?: number;
+    allocation: V1Allocation;
 }
 /**
  * Response to GetBestSearcherValidationMetricRequest.
