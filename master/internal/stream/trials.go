@@ -26,7 +26,6 @@ type TrialMsg struct {
 
 	// immutable attributes
 	ID           int              `bun:"id,pk" json:"id"`
-	TaskID       model.TaskID     `bun:"task_id" json:"task_id"`
 	ExperimentID int              `bun:"experiment_id" json:"experiment_id"`
 	RequestID    *model.RequestID `bun:"request_id" json:"request_id"`
 	Seed         int64            `bun:"seed" json:"seed"`
@@ -46,7 +45,7 @@ type TrialMsg struct {
 	Seq int64 `bun:"seq" json:"seq"`
 
 	// permission scope
-	WorkspaceID int `bun:"workspace_id" json:"-"`
+	WorkspaceID int `json:"-"`
 
 	upsertCache *websocket.PreparedMessage
 	deleteCache *websocket.PreparedMessage
@@ -80,9 +79,23 @@ type TrialSubscriptionSpec struct {
 }
 
 func getTrialMsgsWithWorkspaceID(trialMsgs []*TrialMsg) *bun.SelectQuery {
-	return db.Bun().NewSelect().Model(&trialMsgs).
-		Join("JOIN experiments e ON trials.experiment_id = e.id").
-		Join("JOIN projects p ON e.project_id = p.id")
+	q := db.Bun().NewSelect().Model(&trialMsgs).
+		Column("id").
+		Column("experiment_id").
+		Column("request_id").
+		Column("seed").
+		Column("hparams").
+		Column("state").
+		Column("start_time").
+		Column("end_time").
+		Column("runner_state").
+		Column("restarts").
+		Column("tags").
+		Column("seq").
+		Column("projects.workspace_id").
+		Join("JOIN experiments ON trial_msg.experiment_id = experiments.id").
+		Join("JOIN projects ON experiments.project_id = projects.id")
+	return q
 }
 
 // TrialCollectStartupMsgs collects TrialMsg's that were missed prior to startup.
@@ -158,7 +171,7 @@ func TrialCollectStartupMsgs(
 		query := getTrialMsgsWithWorkspaceID(trialMsgs).
 			Where("trial_msg.id in (?)", bun.In(appeared))
 		query = permFilter(query)
-		err := query.Scan(ctx)
+		err := query.Scan(ctx, &trialMsgs)
 		if err != nil && errors.Cause(err) != sql.ErrNoRows {
 			log.Errorf("error: %v\n", err)
 			return nil, err
