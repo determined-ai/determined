@@ -21,8 +21,8 @@ export const generateEndpointUrl = (
 
 export const authenticateVU = (clusterURL: string) => {
     const loginCredentials = {
-        username: __ENV.DET_ADMIN_USERNAME ?? "admin",
-        password: __ENV.DET_ADMIN_PASSWORD ?? "",
+        username: __ENV.DET_ADMIN_USERNAME,
+        password: __ENV.DET_ADMIN_PASSWORD,
     };
     const params = {
         headers: { "Content-Type": "application/json" },
