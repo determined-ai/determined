@@ -99,17 +99,26 @@ const onClickSelect = (
   hasOpened: boolean,
   setHasOpened: (hasOpened: boolean) => void,
 ) => {
-  const overlayClassname = getOverlayAndMenuBodyElement()?.overlay?.className;
-  if (isOpen && (event.target as HTMLElement).className === overlayClassname) {
+  const isTargetOverlay =
+    getOverlayAndMenuBodyElement()?.overlay?.className === (event.target as HTMLElement).className;
+  if (isTargetOverlay && (isOpen || hasOpened)) {
     event.stopPropagation();
+    if (!isOpen) setHasOpened(false);
   }
+};
 
-  if (hasOpened && !isOpen && (event.target as HTMLElement).className === overlayClassname) {
+const onEscSelect = (
+  focused: boolean,
+  inputRef: React.RefObject<HTMLInputElement | AntdInputRef | RefSelectProps>,
+  event: KeyboardEvent,
+  handleFocused: (focused: boolean) => void,
+  setHasOpened: (hasOpened: boolean) => void,
+) => {
+  if (focused && event.key === 'Escape') {
     event.stopPropagation();
-    // If hasOpened is true in this instance
-    // then the event above will close the
-    // currently open Modal or Menu so we must stop the
-    // event.
+    inputRef.current?.blur();
+    getOverlayAndMenuBodyElement()?.menuBody?.focus();
+    handleFocused(false);
     setHasOpened(false);
   }
 };
@@ -239,7 +248,7 @@ export const useSelectEscape = (
     };
 
     const handleEsc = (event: KeyboardEvent) => {
-      onEsc(focused, inputRef, event, setFocused);
+      onEscSelect(focused, inputRef, event, setFocused, setHasOpened);
     };
 
     containerRef.current?.addEventListener('keydown', handleEsc);
