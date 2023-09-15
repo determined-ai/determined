@@ -231,12 +231,14 @@ export const useSelectEscape = (
   useImperativeHandle(ref, () => inputRef.current as RefSelectProps);
 
   useEffect(() => {
-    // By the time a click event is captured in an
-    // event handler the Select will have otherwise already
-    // become unfocused and isOpen will be false.
-    // hasOpened is used in place of "isOpen" to check
-    // if the select is still open at the time of the click
-    // event.
+    /**
+    By the time a click event is captured in an
+    event handler the Select will have otherwise already
+    become unfocused and isOpen will be false.
+    hasOpened is used in place of "isOpen" to check
+    if the select is still open at the time of the click
+    event.
+     */
     if (isOpen) setHasOpened(true);
   }, [isOpen]);
 
@@ -248,6 +250,17 @@ export const useSelectEscape = (
     const handleEsc = (event: KeyboardEvent) => {
       onEscSelect(focused, inputRef, event, setFocused, setHasOpened);
     };
+
+    /**
+     *  The Select component is a special case where
+     *  a seperate container is needed in order to
+     *  properly handle blurring the component.
+     *  In this implementation the event handler is attached to the
+     *  containerRef, when the Select is unfocused
+     *  the containerRef is unmounted which allows
+     *  the "Escape" events to propogate
+     *  normally.
+     */
 
     containerRef.current?.addEventListener('keydown', handleEsc);
     window.addEventListener('click', handleClick, true);
