@@ -152,7 +152,7 @@ export const useInputNumberEscape = (
     previousValue?: string,
   ) => {
     setBlurred(true);
-    if (onBlur) onBlur(e, previousValue);
+    onBlur?.(e, previousValue);
   };
 
   const onFocus = () => {
@@ -196,7 +196,7 @@ export const useInputEscape = <T>(
     previousValue?: string,
   ) => {
     setBlurred(true);
-    if (onBlur) onBlur(e, previousValue);
+    onBlur?.(e, previousValue);
   };
 
   const onFocus = () => {
@@ -230,9 +230,7 @@ export const useSelectEscape = (
     // hasOpened is used in place of "isOpen" to check
     // if the select is still open at the time of the click
     // event.
-    if (isOpen) {
-      setHasOpened(true);
-    }
+    if (isOpen) setHasOpened(true);
   }, [isOpen]);
 
   useEffect(() => {
@@ -259,7 +257,7 @@ export const useSelectEscape = (
     previousValue?: string,
   ) => {
     setBlurred(true);
-    if (onBlur) onBlur(e, previousValue);
+    onBlur?.(e, previousValue);
   };
 
   const onFocus = () => {
