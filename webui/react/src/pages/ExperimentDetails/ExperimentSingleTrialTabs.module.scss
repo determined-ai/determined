@@ -1,0 +1,10 @@
+.pivoter {
+  [role='tablist'] > div {
+    &::before {
+      box-shadow: none !important;
+    }
+    > div {
+      transform: translate(0) !important;
+    }
+  }
+}
