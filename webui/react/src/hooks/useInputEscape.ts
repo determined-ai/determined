@@ -94,17 +94,31 @@ const onClick = (
 };
 
 const onClickSelect = (
+  blurred: boolean,
   event: MouseEvent,
   isOpen: boolean,
   hasOpened: boolean,
   setHasOpened: (hasOpened: boolean) => void,
 ) => {
-  const isTargetOverlay =
-    getOverlayAndMenuBodyElement()?.overlayClassname === (event.target as HTMLElement).className;
-  if (isTargetOverlay && (isOpen || hasOpened)) {
+  const targetClassname = (event.target as HTMLElement).className;
+  const overlayClassname = getOverlayAndMenuBodyElement()?.overlayClassname;
+  if (isOpen && targetClassname === overlayClassname) {
     event.stopPropagation();
-    if (!isOpen) setHasOpened(false);
   }
+
+  if (hasOpened && !isOpen && targetClassname === overlayClassname) {
+    event.stopPropagation();
+    // If hasOpened is true in this instance
+    // then the event above will close the
+    // currently open Modal or Menu so we must stop the
+    // event.
+    setHasOpened(false);
+  }
+
+  // If any element besides the overlay has been clicked
+  // set hasOpened as false to signify that the
+  // dropdown is now closed
+  if (blurred && hasOpened && targetClassname !== overlayClassname) setHasOpened(false);
 };
 
 const onEscSelect = (
@@ -244,7 +258,7 @@ export const useSelectEscape = (
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
-      onClickSelect(event, isOpen, hasOpened, setHasOpened);
+      onClickSelect(blurred, event, isOpen, hasOpened, setHasOpened);
     };
 
     const handleEsc = (event: KeyboardEvent) => {
@@ -277,6 +291,7 @@ export const useSelectEscape = (
     previousValue?: string,
   ) => {
     setBlurred(true);
+    setFocused(false);
     onBlur?.(e, previousValue);
   };
 
