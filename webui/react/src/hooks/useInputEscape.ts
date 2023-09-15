@@ -94,7 +94,9 @@ const onInputNumberClick = (
   const overlayClicked = (event.target as HTMLElement).className === overlayClassname;
 
   if (focused && (overlayClicked || event.target !== inputRef.current)) {
-    event.stopPropagation();
+    if (overlayClicked) {
+      event.stopPropagation();
+    }
     handleFocused(false);
     // If the input is not already blurred then perform the blur
     if (!blurred) inputRef.current?.blur();
@@ -113,7 +115,9 @@ const onInputClick = (
   const overlayClicked = (event.target as HTMLElement).className === overlayClassname;
 
   if (focused && (overlayClicked || event.target !== inputRef.current?.input)) {
-    event.stopPropagation();
+    if (overlayClicked) {
+      event.stopPropagation();
+    }
     handleFocused(false);
     // If the input is not already blurred then perform the blur
     if (!blurred) inputRef.current?.blur();
