@@ -1,15 +1,16 @@
 import { RefObject, useMemo } from 'react';
 
-import useResize from 'components/kit/internal/useResize';
+import { SizeInfo } from 'components/kit/internal/useResize';
 
 export interface CharMeasure {
   height: number;
   width: number;
 }
 
-const useGetCharMeasureInContainer = (container: RefObject<HTMLElement>): CharMeasure => {
-  const { size } = useResize(container);
-
+const useGetCharMeasureInContainer = (
+  container: RefObject<HTMLElement>,
+  containerSize?: SizeInfo,
+): CharMeasure => {
   return useMemo(() => {
     if (!container.current) {
       return {
@@ -36,7 +37,7 @@ const useGetCharMeasureInContainer = (container: RefObject<HTMLElement>): CharMe
       width: charRect.width,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [size, container]);
+  }, [container, containerSize]);
 };
 
 export default useGetCharMeasureInContainer;

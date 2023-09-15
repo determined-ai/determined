@@ -144,7 +144,7 @@ const LogViewer: React.FC<Props> = ({
   const [logs, setLogs] = useState<ViewerLog[]>([]);
   const { refObject: logsRef, refCallback, size: containerSize } = useResize();
   const { size: pageSize } = useResize();
-  const charMeasures = useGetCharMeasureInContainer(logsRef);
+  const charMeasures = useGetCharMeasureInContainer(logsRef, containerSize);
 
   const { dateTimeWidth, maxCharPerLine } = useMemo(() => {
     const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;

@@ -1,6 +1,6 @@
 import { RefCallback, RefObject, useCallback, useEffect, useRef, useState } from 'react';
 
-interface SizeInfo {
+export interface SizeInfo {
   height: number;
   width: number;
   x: number;
