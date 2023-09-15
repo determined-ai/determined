@@ -24,8 +24,8 @@ const getOverlayAndMenuBodyElement = () => {
       : (document.getElementsByClassName(DRAWER_BODY_CLASSNAME)?.[0] as HTMLElement);
 
   return {
-    menuBody,
-    overlay,
+    focusMenu: () => menuBody.focus(),
+    overlayClassname: overlay?.className,
   };
 };
 
@@ -68,7 +68,7 @@ const onEsc = (
   if (focused && event.key === 'Escape') {
     event.stopPropagation();
     inputRef.current?.blur();
-    getOverlayAndMenuBodyElement()?.menuBody?.focus();
+    getOverlayAndMenuBodyElement()?.focusMenu();
     handleFocused(false);
   }
 };
@@ -81,7 +81,7 @@ const onClick = (
   handleFocused: (focused: boolean) => void,
 ) => {
   const overlayClicked =
-    (event.target as HTMLElement).className === getOverlayAndMenuBodyElement()?.overlay?.className;
+    (event.target as HTMLElement).className === getOverlayAndMenuBodyElement()?.overlayClassname;
 
   if (blurred && focused && overlayClicked) {
     event.stopPropagation();
@@ -100,7 +100,7 @@ const onClickSelect = (
   setHasOpened: (hasOpened: boolean) => void,
 ) => {
   const isTargetOverlay =
-    getOverlayAndMenuBodyElement()?.overlay?.className === (event.target as HTMLElement).className;
+    getOverlayAndMenuBodyElement()?.overlayClassname === (event.target as HTMLElement).className;
   if (isTargetOverlay && (isOpen || hasOpened)) {
     event.stopPropagation();
     if (!isOpen) setHasOpened(false);
@@ -117,7 +117,7 @@ const onEscSelect = (
   if (focused && event.key === 'Escape') {
     event.stopPropagation();
     inputRef.current?.blur();
-    getOverlayAndMenuBodyElement()?.menuBody?.focus();
+    getOverlayAndMenuBodyElement()?.focusMenu();
     handleFocused(false);
     setHasOpened(false);
   }
