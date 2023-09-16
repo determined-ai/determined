@@ -1,6 +1,7 @@
 import { InputNumber as AntdInputNumber } from 'antd';
-import React from 'react';
+import React, { forwardRef } from 'react';
 
+import { useInputNumberEscape } from 'hooks/useInputEscape';
 interface InputNumberProps {
   className?: string;
   defaultValue?: number;
@@ -15,7 +16,11 @@ interface InputNumberProps {
   onPressEnter?: (e: React.KeyboardEvent) => void;
 }
 
-const InputNumber: React.FC<InputNumberProps> = (props: InputNumberProps) => {
-  return <AntdInputNumber {...props} />;
-};
+const InputNumber: React.FC<InputNumberProps> = forwardRef(
+  ({ ...props }: InputNumberProps, ref: React.ForwardedRef<HTMLInputElement>) => {
+    const { onFocus, onBlur, inputRef } = useInputNumberEscape(ref);
+    return <AntdInputNumber {...props} ref={inputRef} onBlur={onBlur} onFocus={onFocus} />;
+  },
+);
+
 export default InputNumber;

@@ -67,25 +67,22 @@ const Tags: React.FC<Props> = ({ compact, disabled = false, ghost, tags, onActio
 
   const stopPropagation = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
 
-  const handleInputConfirm = useCallback(
-    (
-      e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>,
-      previousValue?: string,
-      tagID?: number,
-    ) => {
-      const newTag = (e.target as HTMLInputElement).value.trim();
-      const oldTag = previousValue?.trim();
-      if (newTag) {
-        if (oldTag && newTag !== oldTag) {
-          onAction?.(TagAction.Update, newTag, tagID);
-        } else {
-          onAction?.(TagAction.Add, newTag);
-        }
+  const handleInputConfirm = (
+    e: React.FocusEvent | React.KeyboardEvent,
+    previousValue?: string,
+    tagID?: number,
+  ) => {
+    const newTag = (e.target as HTMLInputElement).value.trim();
+    const oldTag = previousValue?.trim();
+    if (newTag) {
+      if (oldTag && newTag !== oldTag) {
+        onAction?.(TagAction.Update, newTag, tagID);
+      } else {
+        onAction?.(TagAction.Add, newTag);
       }
-      setState((state) => ({ ...state, editInputIndex: -1, inputVisible: false }));
-    },
-    [onAction],
-  );
+    }
+    setState((state) => ({ ...state, editInputIndex: -1, inputVisible: false }));
+  };
 
   const { editInputIndex, inputVisible, inputWidth } = state;
 
