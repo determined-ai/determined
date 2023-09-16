@@ -114,7 +114,10 @@ const onInputClick = (
   if (!overlayExists) return;
   const overlayClicked = (event.target as HTMLElement).className === overlayClassname;
 
-  if (focused && (overlayClicked || event.target !== inputRef.current?.input)) {
+  if (
+    focused &&
+    (overlayClicked || (!!inputRef.current?.input && event.target !== inputRef.current?.input))
+  ) {
     if (overlayClicked) {
       event.stopPropagation();
     }
