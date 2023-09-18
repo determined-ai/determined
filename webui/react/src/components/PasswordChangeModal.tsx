@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -23,6 +23,8 @@ const PASSWORDS_NOT_MATCHING_MESSAGE = 'Passwords do not match.';
 export const API_SUCCESS_MESSAGE = 'Password updated.';
 const API_ERROR_MESSAGE = 'Could not update password.';
 
+const FORM_ID = 'edit-password-form';
+
 interface FormInputs {
   [OLD_PASSWORD_NAME]: string;
   [NEW_PASSWORD_NAME]: string;
@@ -35,6 +37,7 @@ interface Props {
 }
 
 const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const [disabled, setDisabled] = useState<boolean>(true);
@@ -55,7 +58,7 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
   };
 
   const handleSubmit = async () => {
-    await form.validateFields();
+    form.validateFields();
 
     try {
       const password = newPassword;
@@ -82,6 +85,7 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
       size="small"
       submit={{
         disabled,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: OK_BUTTON_LABEL,
@@ -89,7 +93,7 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
       title={MODAL_HEADER_LABEL}
       onClose={handleClose}>
       <p>Please confirm your password change</p>
-      <Form form={form} onFieldsChange={handleFieldsChange}>
+      <Form form={form} id={idPrefix + FORM_ID} onFieldsChange={handleFieldsChange}>
         <Form.Item
           label={OLD_PASSWORD_LABEL}
           name={OLD_PASSWORD_NAME}

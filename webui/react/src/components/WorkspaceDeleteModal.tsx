@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useId } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -10,6 +10,8 @@ import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { routeToReactUrl } from 'utils/routes';
 
 import css from './WorkspaceDeleteModal.module.scss';
+
+const FORM_ID = 'delete-workspace-form';
 
 interface FormInputs {
   workspaceName: string;
@@ -26,6 +28,7 @@ const WorkspaceDeleteModalComponent: React.FC<Props> = ({
   returnIndexOnDelete,
   workspace,
 }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const workspaceNameValue = Form.useWatch('workspaceName', form);
 
@@ -53,13 +56,14 @@ const WorkspaceDeleteModalComponent: React.FC<Props> = ({
       size="small"
       submit={{
         disabled: workspaceNameValue !== workspace.name,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Delete Workspace',
       }}
       title="Delete Workspace"
       onClose={onClose}>
-      <Form autoComplete="off" form={form} layout="vertical">
+      <Form autoComplete="off" form={form} id={idPrefix + FORM_ID} layout="vertical">
         <p>
           Are you sure you want to delete{' '}
           <strong className={css.workspaceName}>&quot;{workspace.name}&quot;</strong>?

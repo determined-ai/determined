@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -11,6 +11,8 @@ import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
 
+const FORM_ID = 'configure-agent-form';
+
 interface Props {
   user: DetailedUser;
   onClose?: () => void;
@@ -19,6 +21,7 @@ interface Props {
 const requiredFields = ['agentUid', 'agentUser', 'agentGid', 'agentGroup'];
 
 const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm();
   const [disabled, setDisabled] = useState<boolean>(true);
 
@@ -29,9 +32,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
   };
 
   const handleSubmit = async () => {
-    await form.validateFields();
-
-    const formData = form.getFieldsValue();
+    const formData = await form.validateFields();
     const { agentUid, agentUser, agentGid, agentGroup } = formData;
     const agentUserGroup: V1AgentUserGroup = { agentGid, agentGroup, agentUid, agentUser };
     formData.agentUserGroup = agentUserGroup;
@@ -64,6 +65,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
       size="small"
       submit={{
         disabled,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Save',
@@ -73,6 +75,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
       <Spinner spinning={!user}>
         <Form
           form={form}
+          id={idPrefix + FORM_ID}
           initialValues={
             user?.agentUserGroup
               ? {

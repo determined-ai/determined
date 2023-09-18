@@ -1,8 +1,8 @@
 import { Select, Switch, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 
-import Form from 'components/kit/Form';
+import Form, { hasErrors } from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
@@ -41,6 +41,7 @@ const ROLE_LABEL = 'Global Roles';
 const ROLE_NAME = 'roles';
 export const BUTTON_NAME = 'Save';
 const ACTIVE_NAME = 'active';
+const FORM_ID = 'create-user-form';
 
 interface Props {
   user?: DetailedUser;
@@ -57,6 +58,7 @@ interface FormInputs {
 }
 
 const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const { rbacEnabled } = useObservable(determinedStore.info);
   // Null means the roles have not yet loaded
@@ -65,8 +67,6 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
   const canAssignRolesFlag: boolean = canAssignRoles({});
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const checkAuth = useAuthCheck();
-
-  const username = Form.useWatch(USER_NAME_NAME, form);
 
   const knownRoles = useObservable(roleStore.roles);
   const fetchUserRoles = useCallback(async () => {
@@ -84,14 +84,13 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
     fetchUserRoles();
   }, [fetchUserRoles]);
 
-  const handleSubmit = async (viewOnly?: boolean) => {
+  const handleSubmit = async () => {
     if (viewOnly) {
       form.resetFields();
       return;
     }
-    await form.validateFields();
 
-    const formData = form.getFieldsValue();
+    const formData = await form.validateFields();
 
     const newRoles: Set<number> = new Set(formData[ROLE_NAME]);
     const oldRoles = new Set((userRoles ?? []).map((r) => r.id));
@@ -108,7 +107,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
             (await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id }));
         }
         fetchUserRoles();
-        if (currentUser && currentUser.id === user.id) checkAuth();
+        if (currentUser?.id === user.id) checkAuth();
         message.success('User has been updated');
       } else {
         formData[ACTIVE_NAME] = true;
@@ -144,7 +143,8 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
       cancel
       size="small"
       submit={{
-        disabled: !username,
+        disabled: hasErrors(form),
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: viewOnly ? 'Close' : BUTTON_NAME,
@@ -160,7 +160,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
       <Spinner
         spinning={user !== undefined && userRoles === null && rbacEnabled && canAssignRoles({})}
         tip="Loading roles...">
-        <Form form={form}>
+        <Form form={form} id={idPrefix + FORM_ID}>
           <Form.Item
             initialValue={user?.username}
             label={USER_NAME_LABEL}
