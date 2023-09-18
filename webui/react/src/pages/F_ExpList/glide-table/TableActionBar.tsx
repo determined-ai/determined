@@ -14,7 +14,6 @@ import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
-import { type handleSelectionChangeType } from 'pages/F_ExpList/F_ExperimentList';
 import {
   activateExperiments,
   archiveExperiments,
@@ -95,7 +94,6 @@ interface Props {
   onRowHeightChange?: (rowHeight: RowHeight) => void;
   onTableViewModeChange?: (mode: TableViewMode) => void;
   onSortChange?: (sorts: Sort[]) => void;
-  onSelectionChange?: handleSelectionChangeType;
   onVisibleColumnChange?: (newColumns: string[]) => void;
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
@@ -124,7 +122,6 @@ const TableActionBar: React.FC<Props> = ({
   onIsOpenFilterChange,
   onRowHeightChange,
   onSortChange,
-  onSelectionChange,
   onTableViewModeChange,
   onVisibleColumnChange,
   project,
@@ -198,38 +195,28 @@ const TableActionBar: React.FC<Props> = ({
           return;
         }
         case ExperimentAction.Move:
-          ExperimentMoveModal.open();
-          break;
+          return ExperimentMoveModal.open();
         case ExperimentAction.Activate:
-          await activateExperiments(params);
-          break;
+          return await activateExperiments(params);
         case ExperimentAction.Archive:
-          await archiveExperiments(params);
-          break;
+          return await archiveExperiments(params);
         case ExperimentAction.Cancel:
-          await cancelExperiments(params);
-          break;
+          return await cancelExperiments(params);
         case ExperimentAction.Kill:
-          await killExperiments(params);
-          break;
+          return await killExperiments(params);
         case ExperimentAction.Pause:
-          await pauseExperiments(params);
-          break;
+          return await pauseExperiments(params);
         case ExperimentAction.Unarchive:
-          await unarchiveExperiments(params);
-          break;
+          return await unarchiveExperiments(params);
         case ExperimentAction.Delete:
-          await deleteExperiments(params);
-          break;
+          return await deleteExperiments(params);
       }
-      onSelectionChange?.('remove-all', [0, selectedExperiments.length]);
     },
     [
       selectedExperiments,
       selectAll,
       filters,
       excludedExperimentIds,
-      onSelectionChange,
       ExperimentMoveModal,
       openExperimentTensorBoardModal,
       project?.workspaceId,

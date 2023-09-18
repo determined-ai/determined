@@ -423,71 +423,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     await fetchExperiments();
   }, [fetchExperiments, setSelectAll, setSelection]);
 
-  const handleActionSuccess = useCallback(
-    (action: ExperimentAction, successfulIds: number[]) => {
-      const idSet = new Set(successfulIds);
-      const updateExperiment = (updated: Partial<ExperimentItem>) => {
-        setExperiments((prev) =>
-          prev.map((expLoadable) =>
-            Loadable.map(expLoadable, (experiment) =>
-              idSet.has(experiment.experiment.id)
-                ? { ...experiment, experiment: { ...experiment.experiment, ...updated } }
-                : experiment,
-            ),
-          ),
-        );
-      };
-      switch (action) {
-        case ExperimentAction.Activate:
-          updateExperiment({ state: RunState.Active });
-          break;
-        case ExperimentAction.Archive:
-          updateExperiment({ archived: true });
-          break;
-        case ExperimentAction.Cancel:
-          updateExperiment({ state: RunState.StoppingCanceled });
-          break;
-        case ExperimentAction.Kill:
-          updateExperiment({ state: RunState.StoppingKilled });
-          break;
-        case ExperimentAction.Pause:
-          updateExperiment({ state: RunState.Paused });
-          break;
-        case ExperimentAction.Unarchive:
-          updateExperiment({ archived: false });
-          break;
-        case ExperimentAction.Move:
-        case ExperimentAction.Delete:
-          setExperiments((prev) =>
-            prev.filter((expLoadable) =>
-              Loadable.match(expLoadable, {
-                Loaded: (experiment) => !idSet.has(experiment.experiment.id),
-                NotLoaded: () => true,
-              }),
-            ),
-          );
-          break;
-        // Exhaustive cases to ignore.
-        case ExperimentAction.CompareTrials:
-        case ExperimentAction.ContinueTrial:
-        case ExperimentAction.DownloadCode:
-        case ExperimentAction.Edit:
-        case ExperimentAction.Fork:
-        case ExperimentAction.HyperparameterSearch:
-        case ExperimentAction.OpenTensorBoard:
-        case ExperimentAction.SwitchPin:
-        case ExperimentAction.ViewLogs:
-          break;
-      }
-    },
-    [setExperiments],
-  );
-
-  const handleContextMenuComplete = useCallback(
-    (action: ExperimentAction, id: number) => handleActionSuccess(action, [id]),
-    [handleActionSuccess],
-  );
-
   const rowRangeToIds = useCallback(
     (range: [number, number]) => {
       return Loadable.filterNotLoaded(experiments.slice(range[0], range[1])).map(
@@ -576,6 +511,72 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       total,
       updateSettings,
     ],
+  );
+
+  const handleActionSuccess = useCallback(
+    (action: ExperimentAction, successfulIds: number[]): void => {
+      const idSet = new Set(successfulIds);
+      const updateExperiment = (updated: Partial<ExperimentItem>) => {
+        setExperiments((prev) =>
+          prev.map((expLoadable) =>
+            Loadable.map(expLoadable, (experiment) =>
+              idSet.has(experiment.experiment.id)
+                ? { ...experiment, experiment: { ...experiment.experiment, ...updated } }
+                : experiment,
+            ),
+          ),
+        );
+      };
+      switch (action) {
+        case ExperimentAction.Activate:
+          updateExperiment({ state: RunState.Active });
+          break;
+        case ExperimentAction.Archive:
+          updateExperiment({ archived: true });
+          break;
+        case ExperimentAction.Cancel:
+          updateExperiment({ state: RunState.StoppingCanceled });
+          break;
+        case ExperimentAction.Kill:
+          updateExperiment({ state: RunState.StoppingKilled });
+          break;
+        case ExperimentAction.Pause:
+          updateExperiment({ state: RunState.Paused });
+          break;
+        case ExperimentAction.Unarchive:
+          updateExperiment({ archived: false });
+          break;
+        case ExperimentAction.Move:
+        case ExperimentAction.Delete:
+          setExperiments((prev) =>
+            prev.filter((expLoadable) =>
+              Loadable.match(expLoadable, {
+                Loaded: (experiment) => !idSet.has(experiment.experiment.id),
+                NotLoaded: () => true,
+              }),
+            ),
+          );
+          break;
+        // Exhaustive cases to ignore.
+        case ExperimentAction.CompareTrials:
+        case ExperimentAction.ContinueTrial:
+        case ExperimentAction.DownloadCode:
+        case ExperimentAction.Edit:
+        case ExperimentAction.Fork:
+        case ExperimentAction.HyperparameterSearch:
+        case ExperimentAction.OpenTensorBoard:
+        case ExperimentAction.SwitchPin:
+        case ExperimentAction.ViewLogs:
+          break;
+      }
+      handleSelectionChange('remove-all', [0, selectedExperimentIds.size]);
+    },
+    [handleSelectionChange, selectedExperimentIds],
+  );
+
+  const handleContextMenuComplete = useCallback(
+    (action: ExperimentAction, id: number) => handleActionSuccess(action, [id]),
+    [handleActionSuccess],
   );
 
   const handleVisibleColumnChange = useCallback(
@@ -760,7 +761,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         onHeatmapToggle={handleHeatmapToggle}
         onIsOpenFilterChange={handleIsOpenFilterChange}
         onRowHeightChange={handleRowHeightChange}
-        onSelectionChange={handleSelectionChange}
         onSortChange={handleSortChange}
         onTableViewModeChange={handleTableViewModeChange}
         onVisibleColumnChange={handleVisibleColumnChange}
