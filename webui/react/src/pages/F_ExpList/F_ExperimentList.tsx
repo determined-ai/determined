@@ -62,9 +62,9 @@ interface Props {
   project: Project;
 }
 
-type selectionType = 'add' | 'add-all' | 'remove' | 'remove-all' | 'set';
-export type handleSelectionChangeType = (
-  selectionType: selectionType,
+type SelectionType = 'add' | 'add-all' | 'remove' | 'remove-all' | 'set';
+export type HandleSelectionChangeType = (
+  selectionType: SelectionType,
   range: [number, number],
 ) => void;
 
@@ -432,8 +432,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [experiments],
   );
 
-  const handleSelectionChange: handleSelectionChangeType = useCallback(
-    (selectionType: selectionType, range: [number, number]) => {
+  const handleSelectionChange: HandleSelectionChangeType = useCallback(
+    (selectionType: SelectionType, range: [number, number]) => {
       const totalCount = Loadable.getOrElse(0, total);
       if (!totalCount) return;
 
@@ -558,15 +558,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           );
           break;
         // Exhaustive cases to ignore.
-        case ExperimentAction.CompareTrials:
-        case ExperimentAction.ContinueTrial:
-        case ExperimentAction.DownloadCode:
-        case ExperimentAction.Edit:
-        case ExperimentAction.Fork:
-        case ExperimentAction.HyperparameterSearch:
-        case ExperimentAction.OpenTensorBoard:
-        case ExperimentAction.SwitchPin:
-        case ExperimentAction.ViewLogs:
+        default:
           break;
       }
       handleSelectionChange('remove-all', [0, selectedExperimentIds.size]);

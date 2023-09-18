@@ -30,7 +30,7 @@ import Icon from 'components/kit/Icon';
 import useUI, { getCssVar } from 'components/kit/Theme';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
-import { type handleSelectionChangeType, PAGE_SIZE } from 'pages/F_ExpList/F_ExperimentList';
+import { type HandleSelectionChangeType, PAGE_SIZE } from 'pages/F_ExpList/F_ExperimentList';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import usersStore from 'stores/users';
@@ -85,7 +85,7 @@ export interface GlideTableProps {
   onIsOpenFilterChange?: (value: boolean) => void;
   onPinnedColumnsCountChange?: (count: number) => void;
   onScroll?: (r: Rectangle) => void;
-  onSelectionChange?: handleSelectionChangeType;
+  onSelectionChange?: HandleSelectionChangeType;
   onSortableColumnChange?: (newColumns: string[]) => void;
   onSortChange?: (sorts: Sort[]) => void;
   page: number;
