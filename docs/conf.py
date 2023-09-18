@@ -113,6 +113,9 @@ extensions = [
     "myst_parser",
 ]
 
+# To disable the default sphinx tabs CSS from loading, set the following value to True
+sphinx_tabs_disable_css_loading = False
+
 myst_extensions = [
     "colon_fence",
 ]
