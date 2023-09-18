@@ -4,11 +4,12 @@
 *
 
 # team-specific repo segments
-/.github  @determined-ai/infrastructure
-/docs     @determined-ai/docs
-/master   @determined-ai/backend
-/agent    @determined-ai/backend
-/proto    @determined-ai/backend
+/.github        @determined-ai/infrastructure
+/docs           @determined-ai/docs
+/master         @determined-ai/backend
+/agent          @determined-ai/backend
+/proto          @determined-ai/backend
+/performance    @determined-ai/web
 
 # Harness is mapped to ml-sys by default, except for `cli`, `deploy`,
 # and auto-generated bindings and version files.
