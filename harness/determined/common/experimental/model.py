@@ -23,7 +23,7 @@ class ModelVersion:
         model_name: (str) Name of the parent model.
         checkpoint: (Mutable, Optional[checkpoint.Checkpoint]) Checkpoint associated with this
             model version.
-        model_id: (int) ID of the model version.
+        model_id: (int) ID of the parent model.
         metadata: (Mutable, Optional[Dict]) Metadata of this model version.
         name: (Mutable, Optional[str]) Human-friendly name of this model version.
 
