@@ -116,7 +116,7 @@ class ModelVersion:
         self.comment = model_version.comment or ""
         self.notes = model_version.notes or ""
         self.model_version = model_version.version
-        self.model_id = model_version.id
+        self.model_id = model_version.model.id
 
     def reload(self) -> None:
         resp = bindings.get_GetModelVersion(
@@ -132,7 +132,7 @@ class ModelVersion:
             session,
             model_version=version_bindings.version,
             model_name=version_bindings.model.name,
-            model_id=version_bindings.id,
+            model_id=version_bindings.model.id,
         )
         version._hydrate(version_bindings)
         return version
