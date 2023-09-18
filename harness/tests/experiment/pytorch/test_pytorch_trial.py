@@ -1058,20 +1058,38 @@ class TestPyTorchTrial:
             (6, 10),
         ],
     )
-    def test_max_batches_leq_steps_completed(self, max_batches: int, steps_completed: int):
-        trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
+    def test_max_batches_leq_steps_completed(
+        self, max_batches: int, steps_completed: int, tmp_path: pathlib.Path
+    ):
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        trial_A, trial_controller_A = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrial,
+            checkpoint_dir=checkpoint_dir,
+            hparams=self.hparams,
+            trial_seed=self.trial_seed,
+            max_batches=steps_completed,
+            min_validation_batches=steps_completed,
+            min_checkpoint_batches=steps_completed,
+        )
+        trial_controller_A.run()
+
+        checkpoint_callback = trial_A.checkpoint_callback
+        assert len(checkpoint_callback.uuids) == 1  # , "trial did not return a checkpoint UUID"
+
+        trial_B, trial_controller_B = pytorch_utils.create_trial_and_trial_controller(
+            trial_class=pytorch_onevar_model.OneVarTrial,
+            checkpoint_dir=checkpoint_dir,
             hparams=self.hparams,
             trial_seed=self.trial_seed,
             max_batches=max_batches,
             min_validation_batches=1,
             min_checkpoint_batches=1,
-            steps_completed=steps_completed,
+            latest_checkpoint=checkpoint_callback.uuids[0],
         )
-        trial_controller.run()
+        trial_controller_B.run()
 
-        assert len(trial.metrics_callback.validation_metrics) == 0
-        assert len(trial.metrics_callback.training_metrics) == 0
+        assert len(trial_B.metrics_callback.validation_metrics) == 0
+        assert len(trial_B.metrics_callback.training_metrics) == 0
 
     def checkpoint_and_check_metrics(
         self,

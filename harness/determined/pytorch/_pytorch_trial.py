@@ -739,26 +739,15 @@ class _PyTorchTrialController:
     def _train_for_op(
         self, op: core.SearcherOperation, train_boundaries: List[_TrainBoundary]
     ) -> None:
-        searcher_complete = op._completed
+        if self.local_training:
+            searcher_length = self.max_length
+        else:
+            searcher_length = TrainUnit._from_searcher_unit(
+                op.length, self.searcher_unit, self.global_batch_size
+            )
+        assert searcher_length
 
-        epoch_len = self.context._epoch_len
-        assert epoch_len, "Training dataloader uninitialized."
-        epoch_idx = divmod(self.start_from_batch, epoch_len)
-
-        # This can occur when we have already trained more than our trial
-        # will train for. For example, if we are provided a steps_completed
-        # larger than our searcher max length.
-        already_done = False
-        for step in train_boundaries:
-            if step.step_type == _TrainBoundaryType.TRAIN and (
-                (isinstance(step.unit, Batch) and self.start_from_batch >= step.unit.value)
-                or (isinstance(step.unit, Epoch) and epoch_idx >= step.unit.value)
-            ):
-                already_done = True
-                op._completed = True
-                break
-
-        while not searcher_complete and not already_done:
+        while self._steps_until_complete(searcher_length) > 0:
             train_boundaries, training_metrics = self._train_with_boundaries(
                 self.training_enumerator, train_boundaries
             )
@@ -779,7 +768,6 @@ class _PyTorchTrialController:
                 if train_boundary.step_type == _TrainBoundaryType.TRAIN:
                     if not op._completed and self.is_chief:
                         self._report_searcher_progress(op, self.searcher_unit)
-                    searcher_complete = train_boundary.limit_reached
                 elif train_boundary.step_type == _TrainBoundaryType.VALIDATE:
                     if not self._validation_is_current():
                         self._validate(op)
@@ -800,10 +788,6 @@ class _PyTorchTrialController:
             self._validate(op)
         if not self._checkpoint_is_current():
             self._checkpoint(already_exiting=False)
-
-        # Test mode will break after one batch despite not completing op.
-        if self.is_chief and not self.test_mode:
-            assert op._completed, "logic error; op was never completed."
 
     def _check_searcher_metric(self, val_metrics: Dict) -> Any:
         if self.searcher_metric_name not in val_metrics:
