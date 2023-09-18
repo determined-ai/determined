@@ -2554,11 +2554,14 @@ jobs:
                 # Sed command reduces the slots to 8 for the cifar10_pytorch test since znode does not allocate more than 8 on agent
                 command: |
                   DET_MASTER_HOST=<<parameters.determined_master_host>>
-                  MASTER_HOST=$(echo $DET_MASTER_HOST | cut -d: -f1)
+                  # determined_master_host is localhost, so use actual hostname to pass to the agent
+                  MASTER_HOST=$(hostname)
                   MASTER_PORT=$(echo $DET_MASTER_HOST | cut -d: -f2)
                   sed -i 's/slots_per_trial: 16/slots_per_trial: 8/' examples/computer_vision/cifar10_pytorch/distributed.yaml
                   sudo cp agent/dist/determined-agent_linux_amd64_v1/determined-agent /scratch/launcher/.launcher.$HOSTNAME
-                  sudo srun --uid launcher --export=ALL -N2 --gpus-per-node=4  /scratch/launcher/.launcher.$HOSTNAME/determined-agent \
+                  # Include 15 minute time limit, name the job (determined-agent-$HOSTNAME) so we can selectively kill it
+                  sudo srun --uid launcher --export=ALL -N2 --gpus-per-node=4 --time=15 -Jdetermined-agent-$HOSTNAME \
+                  --chdir=/scratch/launcher/.launcher.$HOSTNAME  /scratch/launcher/.launcher.$HOSTNAME/determined-agent \
                   --master-host=$MASTER_HOST  --master-port=$MASTER_PORT --resource-pool=default --container-runtime=singularity  --slot-type=cuda
                 background: true
             - run: 
@@ -2592,7 +2595,7 @@ jobs:
             - run: 
                 name: Deallocate Agent Resources on cluster
                 command: |
-                  scancel -u $USER
+                  scancel -u $USER --jobname=determined-agent-$HOSTNAME
 
       - slack/status:
           fail_only: True
