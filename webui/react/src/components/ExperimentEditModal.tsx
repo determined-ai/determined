@@ -35,6 +35,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
   const [disabled, setDisabled] = useState<boolean>(true);
 
   const handleSubmit = async () => {
+    await new Promise((resolve) => setTimeout(resolve)); // delays form validation until next event cycle to prevent validation conflicts
     const formData = await form.validateFields();
     try {
       await patchExperiment({

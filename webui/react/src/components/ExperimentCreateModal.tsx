@@ -284,6 +284,7 @@ const ExperimentCreateModalComponent = ({
     if (isAdvancedMode) {
       userConfig = (yaml.load(modalState.configString) || {}) as RawJson;
     } else {
+      await new Promise((resolve) => setTimeout(resolve)); // delays form validation until next event cycle to prevent validation conflicts
       await form.validateFields();
       userConfig = modalState.config;
     }

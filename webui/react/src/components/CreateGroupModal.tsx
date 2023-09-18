@@ -104,6 +104,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
 
   const handleSubmit = async () => {
     try {
+      await new Promise((resolve) => setTimeout(resolve)); // delays form validation until next event cycle to prevent validation conflicts
       const formData = await form.validateFields();
 
       if (group) {
