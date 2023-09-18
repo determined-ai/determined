@@ -4,6 +4,7 @@
 package db
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"go/ast"
@@ -24,6 +25,57 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
+
+// TestAddAllocationTimes checks that an allocation's start time is always < end time.
+// Allocations are allowed to be inserted/updated in to the table multiple times in
+// the event of a master restart -- check that the start & end times are set accordingly.
+func TestAddAllocationTimes(t *testing.T) {
+	// Set up the DB.
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	// Set up the allocation.
+	mockUser := RequireMockUser(t, db)
+	mockTask := RequireMockTask(t, db, &mockUser.ID)
+	mockAllocation := model.Allocation{
+		AllocationID: model.AllocationID(fmt.Sprintf("%s-1", mockTask.TaskID)),
+		TaskID:       mockTask.TaskID,
+		StartTime:    ptrs.Ptr(time.Now().UTC()),
+	}
+
+	// First add an allocation.
+	err := db.AddAllocation(&mockAllocation)
+	require.NoError(t, err)
+
+	// Check that it's in the table.
+	_, err = db.AllocationByID(mockAllocation.AllocationID)
+	require.NoError(t, err)
+
+	// Update the allocation's end time manually.
+	_, err = Bun().NewUpdate().Table("allocations").
+		Where("allocation_id = ?", mockAllocation.AllocationID).
+		Set("end_time = ?", time.Now().UTC()).Exec(context.TODO())
+	require.NoError(t, err)
+
+	// Now check that the end time is greater than the start time.
+	a, err := db.AllocationByID(mockAllocation.AllocationID)
+	require.NoError(t, err)
+	require.Greater(t, fmt.Sprint(a.EndTime), fmt.Sprint(a.StartTime))
+
+	// Now add the allocation again, but with a NEW start time.
+	// (should only overwrite the start time in buggy code). This mimics behavior
+	// when a cluster crashes/master restarts, and the allocation starts over
+	// again, even if the original allocation already completed.
+	mockAllocation.StartTime = ptrs.Ptr(time.Now().UTC())
+	err = db.AddAllocation(&mockAllocation)
+	require.NoError(t, err)
+
+	a, err = db.AllocationByID(mockAllocation.AllocationID)
+	require.NoError(t, err)
+	require.Nil(t, a.EndTime)
+	require.NotNil(t, a.StartTime)
+}
 
 // TestJobTaskAndAllocationAPI, in lieu of an ORM, ensures that the mappings into and out of the
 // database are total. We should look into an ORM in the near to medium term future.
